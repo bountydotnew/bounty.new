@@ -1,0 +1,20 @@
+{
+  "buildCommand": "bun run build",
+  "outputDirectory": "apps/web/.next",
+  "installCommand": "bun install",
+  "functions": {
+    "apps/server/src/app/api/**/*.ts": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/trpc/(.*)",
+      "destination": "/api/trpc/$1"
+    }
+  ]
+} 
