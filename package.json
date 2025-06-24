@@ -1,0 +1,29 @@
+{
+  "name": "bounty.new",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "check-types": "turbo check-types",
+    "dev:native": "turbo -F native dev",
+    "dev:web": "turbo -F web dev",
+    "dev:server": "turbo -F server dev",
+    "db:push": "turbo -F server db:push",
+    "db:studio": "turbo -F server db:studio",
+    "db:generate": "turbo -F server db:generate",
+    "db:migrate": "turbo -F server db:migrate"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.1.1",
+    "@number-flow/react": "^0.5.10",
+    "react-hook-form": "^7.58.1"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4"
+  },
+  "packageManager": "bun@1.2.17"
+}

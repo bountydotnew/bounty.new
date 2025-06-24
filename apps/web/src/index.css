@@ -1,0 +1,134 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", "Geist", ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+html,
+body {
+  @apply bg-white dark:bg-background;
+
+  @media (prefers-color-scheme: dark) {
+    color-scheme: dark;
+  }
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: rgb(255, 255, 255);
+  --foreground: rgb(40, 40, 40);
+  --card: rgb(255, 255, 255);
+  --card-foreground: rgb(40, 40, 40);
+  --popover: rgb(255, 255, 255);
+  --popover-foreground: rgb(40, 40, 40);
+  --primary: rgb(52, 52, 52);
+  --primary-foreground: rgb(251, 251, 251);
+  --secondary: rgb(247, 247, 247);
+  --secondary-foreground: rgb(52, 52, 52);
+  --muted: rgb(247, 247, 247);
+  --muted-foreground: rgb(128, 128, 128);
+  --accent: rgb(247, 247, 247);
+  --accent-foreground: rgb(52, 52, 52);
+  --destructive: rgb(255, 87, 87);
+  --border: rgb(235, 235, 235);
+  --input: rgb(235, 235, 235);
+  --ring: rgb(181, 181, 181);
+  --chart-1: rgb(200, 160, 80);
+  --chart-2: rgb(120, 180, 230);
+  --chart-3: rgb(90, 110, 180);
+  --chart-4: rgb(255, 220, 100);
+  --chart-5: rgb(255, 200, 100);
+  --sidebar: rgb(251, 251, 251);
+  --sidebar-foreground: rgb(40, 40, 40);
+  --sidebar-primary: rgb(52, 52, 52);
+  --sidebar-primary-foreground: rgb(251, 251, 251);
+  --sidebar-accent: rgb(247, 247, 247);
+  --sidebar-accent-foreground: rgb(52, 52, 52);
+  --sidebar-border: rgb(235, 235, 235);
+  --sidebar-ring: rgb(181, 181, 181);
+}
+
+.dark {
+  --background: rgb(19, 19, 19);
+  --foreground: rgb(251, 251, 251);
+  --card: rgb(52, 52, 52);
+  --card-foreground: rgb(251, 251, 251);
+  --popover: rgb(52, 52, 52);
+  --popover-foreground: rgb(251, 251, 251);
+  --primary: rgb(235, 235, 235);
+  --primary-foreground: rgb(52, 52, 52);
+  --secondary: rgb(69, 69, 69);
+  --secondary-foreground: rgb(251, 251, 251);
+  --muted: rgb(69, 69, 69);
+  --muted-foreground: rgb(181, 181, 181);
+  --accent: rgb(69, 69, 69);
+  --accent-foreground: rgb(251, 251, 251);
+  --destructive: rgb(200, 80, 60);
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: rgb(128, 128, 128);
+  --chart-1: rgb(80, 120, 200);
+  --chart-2: rgb(180, 200, 120);
+  --chart-3: rgb(255, 200, 100);
+  --chart-4: rgb(100, 120, 200);
+  --chart-5: rgb(200, 180, 100);
+  --sidebar: rgb(52, 52, 52);
+  --sidebar-foreground: rgb(251, 251, 251);
+  --sidebar-primary: rgb(80, 120, 200);
+  --sidebar-primary-foreground: rgb(251, 251, 251);
+  --sidebar-accent: rgb(69, 69, 69);
+  --sidebar-accent-foreground: rgb(251, 251, 251);
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: rgb(128, 128, 128);
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

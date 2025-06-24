@@ -1,0 +1,31 @@
+{
+  "name": "server",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
+  },
+  "dependencies": {
+    "next": "15.3.0",
+    "dotenv": "^16.5.0",
+    "@trpc/server": "^11.4.2",
+    "@trpc/client": "^11.4.2",
+    "drizzle-orm": "^0.44.2",
+    "pg": "^8.14.1",
+    "better-auth": "^1.2.10"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "typescript": "^5",
+    "@types/bun": "^1.2.6",
+    "drizzle-kit": "^0.31.2",
+    "@types/pg": "^8.11.11"
+  }
+}
