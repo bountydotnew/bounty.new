@@ -27,6 +27,10 @@ const trpcClient = createTRPCClient<AppRouter>({
         return fetch(url, {
           ...options,
           credentials: "include",
+          headers: {
+            ...options?.headers,
+            'Content-Type': 'application/json',
+          },
         });
       },
     }),
