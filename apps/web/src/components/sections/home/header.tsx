@@ -13,7 +13,7 @@ export function Header() {
         <nav className="flex flex-row items-center justify-center gap-1.5">
           <Button asChild variant="ghost" size="sm">
             <a
-              href="https://github.com/jeanmeijer/analog"
+              href="https://github.com/ripgrim/bounty.new"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -24,7 +24,7 @@ export function Header() {
 
           <Button asChild variant="ghost" size="sm">
             <a
-              href="https://x.com/analogdotnow"
+              href="https://x.com/ripgrim"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -35,7 +35,7 @@ export function Header() {
 
           <Button asChild variant="ghost" size="sm">
             <a
-              href="https://discord.gg/K3AsABDKUm"
+              href="#"
               target="_blank"
               rel="noopener noreferrer"
             >
