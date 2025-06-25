@@ -20,7 +20,8 @@
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
     "@number-flow/react": "^0.5.10",
-    "react-hook-form": "^7.58.1"
+    "react-hook-form": "^7.58.1",
+    "recharts": "^3.0.0"
   },
   "devDependencies": {
     "turbo": "^2.5.4"

@@ -19,7 +19,7 @@ export function Hero() {
             <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle,rgba(128,128,128,0.08)_1px,transparent_1px)] dark:bg-[radial-gradient(circle,rgba(181,181,181,0.08)_1px,transparent_1px)] [background-size:18px_18px]" />
             <main className="relative z-10 mx-auto flex w-full flex-col items-center justify-center gap-8 text-center py-16 px-4">
                 <div className="z-10 flex w-full max-w-4xl flex-col items-center gap-8">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-black text-white px-4 py-2 text-sm font-medium dark:bg-neutral-800">
+                    <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-xs border border-white/20 rounded-full px-4 py-1.5 mb-2">
                         <GCombinator />
                         Backed by G Combinator
                     </div>

@@ -1,169 +1,180 @@
 # bounty.new
 
-A Modern Bounty Platform for the Future of Incentivized Work
+A modern bounty platform for developers and creators.
 
 ## What is bounty.new?
 
-bounty.new is an open-source bounty platform that connects creators, developers, and organizations with skilled contributors through incentivized tasks and challenges. Built with modern web technologies, it provides a seamless experience for posting bounties, managing submissions, and rewarding quality work.
+bounty.new connects talented developers with rewarding opportunities through structured bounties. Post tasks, complete challenges, earn rewards.
 
-## Why bounty.new?
+**For Contributors**
+- Browse available bounties
+- Submit quality work
+- Get paid for your skills
+- Build your reputation
 
-Traditional freelancing platforms are often complex, expensive, and lack transparency. bounty.new is different:
-
-- **Open Source** - Fully transparent and community-driven development
-- **Type-Safe** - Built with TypeScript for reliability and developer experience  
-- **Modern Stack** - Leverages cutting-edge web technologies for performance
-- **Fair Rewards** - Transparent bounty system with clear payout structures
-- **Developer First** - Built by developers, for developers and creators
-- **Self-Hostable** - Deploy your own instance with full control
-- **Fast Setup** - Get running locally in minutes with minimal configuration
+**For Project Owners**
+- Post bounty tasks
+- Access skilled developers
+- Get quality work done
+- Pay only for results
 
 ## Tech Stack
 
-bounty.new is built with modern and reliable technologies:
+**Frontend**
+- Next.js 14 with App Router
+- React with TypeScript
+- TailwindCSS
+- shadcn/ui components
 
-- **Frontend**: Next.js, React, TypeScript, TailwindCSS, shadcn/ui
-- **Backend**: Next.js API Routes, tRPC for type-safe APIs
-- **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: Better Auth with GitHub OAuth support
-- **Runtime**: Bun for fast package management and execution
-- **Monorepo**: Turborepo for optimized builds and development
+**Backend**
+- Next.js API routes
+- tRPC for type-safe APIs
+- PostgreSQL with Drizzle ORM
+- Better Auth with GitHub OAuth
 
-## Getting Started
+**Development**
+- Bun runtime
+- Turborepo monorepo
+- TypeScript throughout
 
-### Prerequisites
+## Quick Start
 
-Before running bounty.new, ensure you have:
+**Prerequisites**
+- Bun v1.0+
+- PostgreSQL v14+
+- Node.js v18+
 
-- [Bun](https://bun.sh) (v1.0 or higher)
-- [PostgreSQL](https://postgresql.org) (v14 or higher)
-- [Node.js](https://nodejs.org) (v18 or higher)
+**Setup**
 
-### Quick Start
+```bash
+# Clone and install
+git clone https://github.com/ripgrim/bounty.new.git
+cd bounty.new
+bun install
 
-1. **Clone and Install**
+# Setup database
+createdb bounty_new
+cp apps/server/.env.example apps/server/.env
+cp apps/web/.env.example apps/web/.env
 
-   ```bash
-   git clone https://github.com/ripgrim/bounty.new.git
-   cd bounty.new
-   
-   # Install dependencies
-   bun install
-   ```
+# Configure environment (edit apps/server/.env)
+DATABASE_URL="postgresql://username:password@localhost:5432/bounty_new"
+BETTER_AUTH_SECRET="your-secret-key"
+GITHUB_CLIENT_ID="your-github-client-id"
+GITHUB_CLIENT_SECRET="your-github-client-secret"
 
-2. **Database Setup**
+# Initialize database and start
+bun db:push
+bun dev
+```
 
-   Set up your PostgreSQL database and update the connection string in `apps/server/.env`:
-
-   ```env
-   DATABASE_URL="postgresql://username:password@localhost:5432/bounty_new"
-   ```
-
-   Apply the database schema:
-
-   ```bash
-   bun db:push
-   ```
-
-3. **Environment Configuration**
-
-   Copy the example environment files and configure your settings:
-
-   ```bash
-   cp apps/server/.env.example apps/server/.env
-   cp apps/web/.env.example apps/web/.env
-   ```
-
-   Update the environment variables with your configuration.
-
-4. **Start Development**
-
-   ```bash
-   bun dev
-   ```
-
-5. **Open in Browser**
-
-   - Web Application: [http://localhost:3001](http://localhost:3001)
-   - API Server: [http://localhost:3000](http://localhost:3000)
+**Access**
+- Web: http://localhost:3001
+- API: http://localhost:3000
 
 ## Project Structure
 
 ```
 bounty.new/
 ├── apps/
-│   ├── web/         # Frontend application (Next.js)
-│   └── server/      # Backend API (Next.js, tRPC)
-├── packages/        # Shared packages and utilities
-└── docs/           # Documentation
+│   ├── web/           # Frontend application
+│   │   ├── src/
+│   │   │   ├── app/           # App router pages
+│   │   │   ├── components/    # UI components
+│   │   │   └── lib/           # Utilities and hooks
+│   │   └── ...
+│   └── server/        # Backend API
+│       ├── src/
+│       │   ├── app/           # API routes
+│       │   ├── db/            # Database schema
+│       │   ├── lib/           # Server utilities
+│       │   └── routers/       # tRPC routers
+│       └── ...
+├── packages/          # Shared packages
+└── docs/             # Documentation
 ```
 
-## Available Scripts
+## Available Commands
 
-- `bun dev` - Start all applications in development mode
-- `bun build` - Build all applications for production
-- `bun dev:web` - Start only the web application
-- `bun dev:server` - Start only the API server
-- `bun check-types` - Type check all applications
-- `bun db:push` - Push schema changes to database
-- `bun db:studio` - Open Drizzle Studio for database management
-- `bun db:generate` - Generate new database migrations
+**Development**
+```bash
+bun dev              # Start all apps
+bun dev:web          # Frontend only
+bun dev:server       # Backend only
+bun build            # Build for production
+```
 
-## Environment Variables
+**Database**
+```bash
+bun db:push          # Apply schema changes
+bun db:studio        # Open database UI
+bun db:generate      # Generate migrations
+```
 
-### Server Configuration
+**Quality**
+```bash
+bun check-types      # Type checking
+bun lint             # Code linting
+bun test             # Run tests
+```
 
-Required environment variables for `apps/server/.env`:
+## Environment Setup
 
+**Server (.env)**
 ```env
-# Database
 DATABASE_URL="postgresql://username:password@localhost:5432/bounty_new"
-
-# Authentication
-BETTER_AUTH_SECRET="your-secret-key-here"
+BETTER_AUTH_SECRET="your-secret-key"
 BETTER_AUTH_URL="http://localhost:3000"
-
-# Application
-NODE_ENV="development"
+GITHUB_CLIENT_ID="your-github-client-id"
+GITHUB_CLIENT_SECRET="your-github-client-secret"
 ```
 
-### Web Configuration
-
-Required environment variables for `apps/web/.env`:
-
+**Web (.env)**
 ```env
-# API Connection
 NEXT_PUBLIC_API_URL="http://localhost:3000"
-
-# Application
-NODE_ENV="development"
+NEXT_PUBLIC_APP_URL="http://localhost:3001"
 ```
+
+## GitHub OAuth Setup
+
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+2. Create new OAuth App
+3. Set callback URL: `http://localhost:3000/api/auth/callback/github`
+4. Copy Client ID and Secret to your `.env` file
 
 ## Contributing
-
-We welcome contributions to bounty.new! Please read our contributing guidelines before submitting pull requests.
-
-### Development Workflow
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
-5. Ensure all checks pass
-6. Submit a pull request
+4. Run tests: `bun test`
+5. Submit a pull request
 
-## License
+**Guidelines**
+- Follow TypeScript best practices
+- Write tests for new features
+- Keep components focused
+- Use semantic commits
 
-This project is open source and available under the [MIT License](LICENSE).
+## Deployment
 
-## Support
+**Vercel**
+1. Connect GitHub repository
+2. Configure environment variables
+3. Deploy on push to main
 
-If you encounter any issues or have questions:
+**Self-hosting**
+1. Build: `bun build`
+2. Setup PostgreSQL
+3. Configure environment
+4. Start: `bun start`
 
-- Check the [documentation](docs/)
-- Open an [issue](https://github.com/ripgrim/bounty.new/issues)
-- Join our community discussions
+## Links
+
+- [Issues](https://github.com/ripgrim/bounty.new/issues)
+- [Discussions](https://github.com/ripgrim/bounty.new/discussions)
+- [License](LICENSE)
 
 ---
 
-Built with ❤️ for the open source community
+Ready to earn? Start contributing to bounty.new.
