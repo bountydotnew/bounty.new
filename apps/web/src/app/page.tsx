@@ -11,6 +11,7 @@ import { GitHub } from "@/components/icons/github";
 import { Twitter } from "@/components/icons/twitter";
 import { Discord } from "@/components/icons/discord";
 import { ModeToggle } from "@/components/mode-toggle";
+import V0Hero from "@/components/sections/home/v0-hero";
 
 export default function Home() {
   const healthCheck = useQuery(trpc.healthCheck.queryOptions());
@@ -23,8 +24,8 @@ export default function Home() {
 
     <div className="bg-landing-background mx-auto w-full">
       <Header />
-      <Hero />
-      <Footer />
+      <V0Hero />
+      <Footer />  
     </div>
   );
 }
