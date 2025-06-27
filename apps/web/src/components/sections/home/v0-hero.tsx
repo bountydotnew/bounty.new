@@ -122,7 +122,7 @@ export default function BountyPlatform() {
         data-nimg="1" 
         className="pointer-events-none absolute top-0 right-0 left-0 z-0 h-full w-full object-cover object-right-bottom opacity-50 mix-blend-screen" 
         style={{ color: "transparent" }} 
-         src="https://oss.now/_next/image?url=%2Fhome-background.png&w=1920&q=75"
+         src="/landing-page-bg.png"
       />
 
       <section className="relative pt-32 pb-32">
