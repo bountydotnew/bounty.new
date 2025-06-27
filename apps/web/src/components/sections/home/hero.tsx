@@ -1,15 +1,5 @@
-import Image from "next/image";
-
-import PreviewLight from "@/assets/preview.png";
-import { AnimatedGroup } from "@/components/ui/animated-group";
-import { trpc } from "@/utils/trpc";
-import { WaitlistForm } from "./waitlist-form";
-import { Button } from "@/components/ui/button";
-import { Discord } from "@/components/icons/discord";
-import { Twitter } from "@/components/icons/twitter";
-import { ModeToggle } from "@/components/mode-toggle";
-import { GitHub } from "@/components/icons/github";
 import { BackedByBadge } from "@/components/ui/backed-by-badge";
+import { WaitlistForm } from "./waitlist-form";
 
 export function Hero() {
 
@@ -32,3 +22,4 @@ export function Hero() {
         </div>
     );
 }
+    

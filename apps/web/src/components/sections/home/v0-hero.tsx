@@ -20,9 +20,9 @@ import {
 } from "lucide-react"
 import { WaitlistForm } from "./waitlist-form"
 import { BackedByBadge } from "@/components/ui/backed-by-badge"
+import Image from "next/image"
 
 export default function BountyPlatform() {
-  const [email, setEmail] = useState("")
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [selectedBounty, setSelectedBounty] = useState<number | null>(null)
   const [approvedSubmissions, setApprovedSubmissions] = useState<number[]>([])
@@ -120,7 +120,7 @@ export default function BountyPlatform() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden">
-      <img alt="" aria-hidden="true"
+      <Image alt="" aria-hidden="true"
         loading="lazy"
         width="960" 
         height="860" 
