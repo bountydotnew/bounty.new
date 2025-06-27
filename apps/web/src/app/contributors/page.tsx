@@ -1,30 +1,24 @@
 'use client';
 
 import {
-    Github,
-    Star,
-    GitFork,
-    Users,
-    Code,
-    GitGraph,
-    ArrowUpRight,
-    Target,
-    Zap,
-    GitPullRequest,
-  } from 'lucide-react';
-  import {
-    Area,
-    AreaChart,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis,
-    YAxis,
-  } from 'recharts';
-  import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-  import { useEffect, useState, useMemo } from 'react';
-  import { useQuery } from '@tanstack/react-query';
-  import { Button } from '@/components/ui/button';
-  import NumberFlow from '@number-flow/react';
+  Github, GitGraph,
+  ArrowUpRight,
+  Target,
+  Zap
+} from 'lucide-react';
+import {
+  Area,
+  AreaChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useEffect, useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import NumberFlow from '@number-flow/react';
   
   interface Contributor {
     login: string;

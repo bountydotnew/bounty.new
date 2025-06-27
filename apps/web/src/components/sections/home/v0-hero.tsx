@@ -5,7 +5,6 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import NumberFlow from "@number-flow/react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -13,18 +12,11 @@ import V0Button from "@/components/v0-button"
 import V0Icon from "@/components/v0-icon"
 import { HandCoins } from "lucide-react"
 import {
-  ArrowRight,
-  Zap,
-  CreditCard,
+  ArrowRight, CreditCard,
   Users,
   CheckCircle,
   Clock,
-  Star,
-  Sparkles,
-  Shield,
-  Github,
-  Activity,
-  Banknote,
+  Star, Shield, Banknote
 } from "lucide-react"
 import { WaitlistForm } from "./waitlist-form"
 import { BackedByBadge } from "@/components/ui/backed-by-badge"

@@ -1,16 +1,8 @@
 "use client"
 import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
-import { useAccess } from "@/lib/hooks/use-access";
-import { user } from "../../../server/src/db/schema/auth";
 import { Footer } from "@/components/sections/home/footer";
 import { Header } from "@/components/sections/home/header";
-import { Hero } from "@/components/sections/home/hero";
-import { Button } from "@/components/ui/button";
-import { GitHub } from "@/components/icons/github";
-import { Twitter } from "@/components/icons/twitter";
-import { Discord } from "@/components/icons/discord";
-import { ModeToggle } from "@/components/mode-toggle";
 import V0Hero from "@/components/sections/home/v0-hero";
 
 export default function Home() {
