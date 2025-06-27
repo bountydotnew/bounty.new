@@ -23,7 +23,6 @@ import { BackedByBadge } from "@/components/ui/backed-by-badge"
 import Image from "next/image"
 
 export default function BountyPlatform() {
-  const [isSubmitted, setIsSubmitted] = useState(false)
   const [selectedBounty, setSelectedBounty] = useState<number | null>(null)
   const [approvedSubmissions, setApprovedSubmissions] = useState<number[]>([])
   const [paymentProcessing, setPaymentProcessing] = useState<number | null>(null)
@@ -44,14 +43,9 @@ export default function BountyPlatform() {
     return () => clearInterval(interval)
   }, [])
 
-  const handleWaitlistSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitted(true)
-    setTimeout(() => setIsSubmitted(false), 5000)
-  }
-
   const handleApproveSubmission = (id: number, bountyReward: number) => {
     setPaymentProcessing(id)
+    console.log("approving submission", id, bountyReward)
     setTimeout(() => {
       setApprovedSubmissions((prev) => [...prev, id])
       setPaymentProcessing(null)

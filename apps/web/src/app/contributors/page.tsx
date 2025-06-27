@@ -50,7 +50,6 @@ import NumberFlow from '@number-flow/react';
       openPRs: 0,
     });
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [allContributors, setAllContributors] = useState<Contributor[]>([]);
     const [activityData, setActivityData] = useState<Array<{ date: string; commits: number; issues: number; pullRequests: number }>>([]);
   
@@ -64,14 +63,14 @@ import NumberFlow from '@number-flow/react';
   
     const { data: repoData } = useQuery({
       queryFn: () =>
-        fetch(`https://api.github.com/repos/${REPOSITORY}`).then((res) => res.json() as any),
+        fetch(`https://api.github.com/repos/${REPOSITORY}`).then((res) => res.json()),
       queryKey: ['repo-data', REPOSITORY],
     });
   
     const { data: prsData, error: prsError } = useQuery({
       queryFn: () =>
         fetch(`https://api.github.com/repos/${REPOSITORY}/pulls?state=open`).then(
-          (res) => res.json() as any,
+          (res) => res.json(),
         ),
       queryKey: ['prs-data', REPOSITORY],
     });
@@ -79,24 +78,19 @@ import NumberFlow from '@number-flow/react';
     const { data: commitsData, error: commitsError } = useQuery({
       queryFn: () =>
         fetch(`https://api.github.com/repos/${REPOSITORY}/commits?per_page=100`).then(
-          (res) => res.json() as any,
+          (res) => res.json(),
         ),
       queryKey: ['commits-data', REPOSITORY],
     });
   
     useEffect(() => {
       if (contributors) {
-        setAllContributors(contributors.filter(c => !excludedUsernames.includes(c.login)));
+        setAllContributors(contributors.filter((c: Contributor) => !excludedUsernames.includes(c.login)));
       }
     }, [contributors]);
 
     useEffect(() => {
       if (prsError || commitsError) {
-        setError(
-          prsError?.message ||
-            commitsError?.message ||
-            'An error occurred while fetching data',
-        );
         generateFallbackData();
         return;
       }
@@ -107,14 +101,13 @@ import NumberFlow from '@number-flow/react';
       }
 
       setIsLoading(false);
-      setError(null);
 
       setRepoStats({
-        stars: repoData.stargazers_count,
-        forks: repoData.forks_count,
-        watchers: repoData.subscribers_count,
-        openIssues: repoData.open_issues_count - prsData.length,
-        openPRs: prsData.length,
+        stars: repoData.stargazers_count ?? 0,
+        forks: repoData.forks_count ?? 0,
+        watchers: repoData.subscribers_count ?? 0,
+        openIssues: (repoData.open_issues_count ?? 0) - prsData.length,
+        openPRs: prsData.length ?? 0,
       });
 
       const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -274,7 +267,7 @@ import NumberFlow from '@number-flow/react';
                 <div>
                   <h2 className="text-3xl font-bold mb-8 text-center">Core Team</h2>
                   <div className="space-y-6">
-                    {filteredCoreTeam.map((member: Contributor, index: number) => (
+                    {filteredCoreTeam.map((member: Contributor) => (
                       <div
                         key={member.login}
                         className="group bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all"
@@ -348,7 +341,7 @@ import NumberFlow from '@number-flow/react';
                           color: 'white'
                         }}
                         labelStyle={{ color: '#ffffff60' }}
-                        formatter={(value, name) => [
+                        formatter={(value) => [
                           `${value} commits`,
                           'Activity'
                         ]}
@@ -374,7 +367,7 @@ import NumberFlow from '@number-flow/react';
             <h2 className="text-3xl font-bold mb-8 text-center">Top Contributors</h2>
             
             <div className="grid grid-cols-4 md:grid-cols-8 gap-4 max-w-5xl mx-auto">
-              {filteredContributors && filteredContributors.map((contributor: Contributor, index: number) => (
+              {filteredContributors && filteredContributors.map((contributor: Contributor) => (
                 <a
                   key={contributor.login}
                   href={contributor.html_url}
