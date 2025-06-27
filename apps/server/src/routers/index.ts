@@ -7,7 +7,14 @@ import { userRouter } from "./user";
 
 export const appRouter = router({
   healthCheck: publicProcedure.query(() => {
-    return "OK";
+    return "IM ALIVE!!!!";
+  }),
+  ping: publicProcedure.query(() => {
+    return {
+      message: "pong",
+      timestamp: new Date().toISOString(),
+      status: "healthy"
+    };
   }),
   privateData: protectedProcedure.query(({ ctx }) => {
     return {
