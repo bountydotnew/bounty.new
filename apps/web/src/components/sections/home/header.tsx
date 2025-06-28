@@ -6,7 +6,7 @@ import { ArrowRight, HandCoins } from "lucide-react";
 import { HeaderBase } from "@/components/sections/home/header-base";
 import { getStars } from "@/lib/fetchGhStars";
 import { useEffect, useState } from "react";
-import Image from "next/image";
+// import Image from "next/image";
 
 export function Header() {
   const [star, setStar] = useState<string>("");

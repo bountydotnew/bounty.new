@@ -1,7 +1,6 @@
 "use client"
 import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
-import { Footer } from "@/components/sections/home/footer";
 import { Header } from "@/components/sections/home/header";
 import V0Hero from "@/components/sections/home/v0-hero";
 

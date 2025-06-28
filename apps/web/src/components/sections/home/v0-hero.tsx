@@ -21,7 +21,6 @@ import {
 import { WaitlistForm } from "./waitlist-form"
 import { BackedByBadge } from "@/components/ui/backed-by-badge"
 import Image from "next/image"
-import { GCombinator } from "@/components/icons/g-combinator"
 
 export default function BountyPlatform() {
   const [selectedBounty, setSelectedBounty] = useState<number | null>(null)
