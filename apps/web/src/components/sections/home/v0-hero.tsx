@@ -1,6 +1,5 @@
 "use client"
 
-import type React from "react"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import NumberFlow from "@number-flow/react"
