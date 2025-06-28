@@ -17,7 +17,6 @@ export default function Home() {
     <div className="bg-landing-background mx-auto w-full">
       <Header />
       <V0Hero />
-      <Footer />  
     </div>
   );
 }
