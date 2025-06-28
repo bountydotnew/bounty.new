@@ -47,7 +47,7 @@ export function Header() {
           </Button>
         </Link>
       ) : (
-        <Link href="https://github.com/OpenCut-app/OpenCut" target="_blank">
+        <Link href="https://github.com/ripgrim/bounty.new" target="_blank">
           <Button size="sm" className="text-sm ml-4">
             GitHub {star}+
             <ArrowRight className="h-4 w-4" />
