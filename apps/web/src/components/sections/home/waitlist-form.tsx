@@ -100,7 +100,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
             disabled={waitlist.isPending}
           />
           <Button
-            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 aria-invalid:border-destructive bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10"
+            className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10"
             type="submit"
             disabled={waitlist.isPending}
           >
@@ -113,7 +113,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
         <span className="size-2 rounded-full bg-green-600 dark:bg-green-400" />
         <span className="absolute left-0 size-2 rounded-full bg-green-600 blur-xs dark:bg-green-400" />
         <span className="text-sm text-green-600 sm:text-base dark:text-green-400">
-          <NumberFlow value={waitlist.count} /> people already joined
+          <NumberFlow value={waitlist.count} /> {waitlist.count === 1 ? 'person' : 'people'} already joined
         </span>
       </div>
     </div>
