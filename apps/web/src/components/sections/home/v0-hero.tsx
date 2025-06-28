@@ -21,6 +21,7 @@ import {
 import { WaitlistForm } from "./waitlist-form"
 import { BackedByBadge } from "@/components/ui/backed-by-badge"
 import Image from "next/image"
+import { GCombinator } from "@/components/icons/g-combinator"
 
 export default function BountyPlatform() {
   const [selectedBounty, setSelectedBounty] = useState<number | null>(null)
@@ -114,27 +115,29 @@ export default function BountyPlatform() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden">
-      <Image alt="" aria-hidden="true"
-        loading="lazy"
-        width="960" 
-        height="860" 
-        decoding="async" 
-        data-nimg="1" 
-        className="pointer-events-none absolute top-0 right-0 left-0 z-0 h-full w-full object-cover object-right-bottom opacity-50 mix-blend-screen" 
-        style={{ color: "transparent" }} 
-         src="/landing-page-bg.png"
-      />
-
-      <section className="relative pt-32 pb-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto text-center space-y-8">
+      <section className="relative pt-32 pb-32 overflow-hidden">
+        <Image
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          width={960}
+          height={860}
+          decoding="async"
+          data-nimg="1"
+          className="pointer-events-none absolute top-0 right-0 left-0 z-0 h-full w-full object-cover object-right-bottom opacity-50 mix-blend-screen"
+          style={{ color: "transparent" }}
+          src="/landing-page-bg.png"
+        />
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 z-10" style={{background: "linear-gradient(to bottom, rgba(10,10,10,0) 0%, #0a0a0a 100%)"}} />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
+          <div className="max-w-4xl mx-auto text-center space-y-8 my-10">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
               className="space-y-6"
             >
-              <BackedByBadge className="mb-6" text="Backed by G Combinator" style="thin" />
+              <BackedByBadge />
 
               <h1 className="text-5xl md:text-7xl font-light tracking-tighter leading-[0.9]">
                 Ship faster.
@@ -147,11 +150,16 @@ export default function BountyPlatform() {
 
               <p className="text-xl text-white/50 font-light max-w-2xl mx-auto leading-relaxed">
                 The bounty platform where creators post challenges and developers deliver solutions. Instant Stripe
-                payouts, <V0Icon className="inline h-4 w-4 mx-1 bg-white text-black" /> integration, zero friction.
+                payouts, <V0Icon className="inline h-4 w-4" /> integration, zero friction.
               </p>
             </motion.div>
-
-            <WaitlistForm />
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <WaitlistForm />
+            </motion.div>
 
             {/* Live Stats */}
             <motion.div
@@ -318,7 +326,7 @@ export default function BountyPlatform() {
               className="space-y-6"
             >
               <Card className="bg-gradient-to-br from-white/8 to-white/4 border-white/8 backdrop-blur-xl">
-                <CardContent className="p-6 space-y-4">
+                <CardContent className="px-6 py-2 space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="font-medium text-white">Submissions</h3>
                     <Badge className="bg-white text-black">{mockSubmissions.length} entries</Badge>
