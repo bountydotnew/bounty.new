@@ -124,7 +124,7 @@ export default function BountyPlatform() {
           height={860}
           decoding="async"
           data-nimg="1"
-          className="pointer-events-none absolute top-0 right-0 left-0 z-0 h-full w-full object-cover object-right-bottom opacity-50 mix-blend-screen"
+          className="pointer-events-none absolute top-0 right-0 left-0 z-0 h-full w-full object-cover object-right-bottom opacity-10 blur-[5px] mix-blend-screen"
           style={{ color: "transparent" }}
           src="/landing-page-bg.png"
         />
