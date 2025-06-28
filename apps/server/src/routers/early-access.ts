@@ -8,18 +8,29 @@ import { publicProcedure, router } from "../lib/trpc";
 
 export const earlyAccessRouter = router({
   getWaitlistCount: publicProcedure.query(async () => {
-    const waitlistCount = await db.select({ count: count() }).from(waitlist);
+    try {
+      console.log("[getWaitlistCount] called");
+      const waitlistCount = await db.select({ count: count() }).from(waitlist);
+      console.log("[getWaitlistCount] db result:", waitlistCount);
 
-    if (!waitlistCount[0]) {
+      if (!waitlistCount[0] || typeof waitlistCount[0].count !== "number") {
+        console.error("[getWaitlistCount] Invalid result:", waitlistCount);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to get waitlist count",
+        });
+      }
+
+      return {
+        count: waitlistCount[0].count,
+      };
+    } catch (err) {
+      console.error("[getWaitlistCount] Error:", err);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to get waitlist count",
       });
     }
-
-    return {
-      count: waitlistCount[0].count,
-    };
   }),
   joinWaitlist: publicProcedure
     .input(
