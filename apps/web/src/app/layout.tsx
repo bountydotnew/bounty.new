@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "bounty.new",
-  description: "bounty.new",
+  description: "Ship faster. Get paid instantly.",
   openGraph: {
     images: [
       {
