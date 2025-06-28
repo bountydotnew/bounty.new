@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import V0Button from "@/components/v0-button"
 import V0Icon from "@/components/v0-icon"
+import { Stripe } from "@/components/icons/stripe"
 import { HandCoins } from "lucide-react"
 import {
   ArrowRight, CreditCard,
@@ -148,8 +149,8 @@ export default function BountyPlatform() {
               </h1>
 
               <p className="text-xl text-white/50 font-light max-w-2xl mx-auto leading-relaxed">
-                The bounty platform where creators post challenges and developers deliver solutions. Instant Stripe
-                payouts, <V0Icon className="inline h-4 w-4" /> integration, zero friction.
+                The bounty platform where creators post challenges and developers deliver solutions. Instant <Stripe className="inline-block ml-[-6px] w-14 h-14 fill-[#635BFF]" />
+                payouts, <V0Icon className="inline h-6 w-6 fill-white opacity-100 text-white/100" /> integration, <span className="italic font-normal">zero</span> friction.
               </p>
             </motion.div>
             <motion.div
@@ -324,8 +325,8 @@ export default function BountyPlatform() {
               viewport={{ once: true }}
               className="space-y-6"
             >
-              <Card className="bg-gradient-to-br from-white/8 to-white/4 border-white/8 backdrop-blur-xl">
-                <CardContent className="px-6 py-2 space-y-4">
+              <Card className="bg-gradient-to-br from-white/8 to-white/4 border-white/8 backdrop-blur-xl p-2">
+                <CardContent className="px-2 py-2 space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="font-medium text-white">Submissions</h3>
                     <Badge className="bg-white text-black">{mockSubmissions.length} entries</Badge>
@@ -401,7 +402,7 @@ export default function BountyPlatform() {
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
               viewport={{ once: true }}
-              className="space-y-6"
+              className="space-y-4"
             >
               <div className="space-y-4">
                 <Badge className="bg-white text-black">Instant Stripe Payouts</Badge>
@@ -416,7 +417,6 @@ export default function BountyPlatform() {
                 </p>
               </div>
 
-              {/* Stripe Payment Flow - Staggered Z-Index Effect */}
               <div className="relative">
                 <AnimatePresence>
                   {approvedSubmissions.map((submissionId, index) => {
@@ -430,7 +430,7 @@ export default function BountyPlatform() {
                           opacity: 0,
                           y: -30,
                           scale: 0.9,
-                          rotate: -2,
+                          rotate: -6,
                         }}
                         animate={{
                           opacity: 1,
@@ -448,7 +448,7 @@ export default function BountyPlatform() {
                           stiffness: 300,
                         }}
                         style={{
-                          zIndex: 10 - index,
+                          zIndex: 10 + index,
                           position: index === 0 ? "relative" : "absolute",
                           top: index === 0 ? 0 : 0,
                           left: index === 0 ? 0 : 0,
@@ -456,16 +456,16 @@ export default function BountyPlatform() {
                         }}
                         className="w-full"
                       >
-                        <Card className="bg-gradient-to-br from-white/12 to-white/4 border-white/15 backdrop-blur-xl shadow-2xl">
+                        <Card className="bg-gradient-to-br from-zinc-900 to-[#0a0a0a] border-white/15 backdrop-blur-xl shadow-2xl">
                           <CardContent className="p-6 space-y-4">
                             <div className="flex items-center justify-between">
                               <h3 className="font-medium text-white">Payment Processing</h3>
                               <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 bg-[#635bff] rounded flex items-center justify-center">
+                                {/* <div className="w-6 h-6 bg-[#635bff] rounded flex items-center justify-center">
                                   <span className="text-white text-xs font-bold">S</span>
-                                </div>
-                                <span className="text-xs text-white/60">Powered by Stripe</span>
-                              </div>
+                                </div> */}
+                                <span className="text-xs text-white/60 flex items-center">Powered by <Stripe className="w-12 h-12 fill-[#635BFF]" /></span>
+                              </div>  
                             </div>
 
                             <div className="space-y-3">
