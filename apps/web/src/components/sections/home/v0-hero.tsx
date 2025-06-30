@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import NumberFlow from "@number-flow/react"
 import { Button } from "@/components/ui/button"
@@ -31,6 +32,9 @@ export default function BountyPlatform() {
     bounties: 127,
     developers: 1840,
   })
+
+  const searchParams = useSearchParams()
+  const isWaitlistHighlighted = searchParams.get('waitlist') === 'true'
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -157,7 +161,7 @@ export default function BountyPlatform() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             >
-              <WaitlistForm />
+              <WaitlistForm highlighted={isWaitlistHighlighted} />
             </motion.div>
 
             {/* Live Stats */}
