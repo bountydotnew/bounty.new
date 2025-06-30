@@ -33,8 +33,12 @@ export default function BountyPlatform() {
     developers: 1840,
   })
 
-  const searchParams = useSearchParams()
-  const isWaitlistHighlighted = searchParams.get('waitlist') === 'true'
+  const [isWaitlistHighlighted, setIsWaitlistHighlighted] = useState(false)
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search)
+    setIsWaitlistHighlighted(searchParams.get('waitlist') === 'true')
+  }, [])
 
   useEffect(() => {
     const interval = setInterval(() => {
