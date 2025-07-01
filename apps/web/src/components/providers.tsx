@@ -25,6 +25,16 @@ export function Providers({
           {children}
           <Databuddy
             clientId="bounty"
+            trackHashChanges={true}
+            trackAttributes={true}
+            trackOutgoingLinks={true}
+            trackInteractions={true}
+            trackEngagement={true}
+            trackScrollDepth={true}
+            trackExitIntent={true}
+            trackBounceRate={true}
+            trackWebVitals={true}
+            trackErrors={true}
             enableBatching={true}
           />
         </ConfettiProvider>
