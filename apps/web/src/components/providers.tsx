@@ -6,6 +6,7 @@ import { queryClient } from "@/utils/trpc";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "./ui/sonner";
 import { ConfettiProvider } from "@/lib/context/confetti-context";
+import { Databuddy } from "@databuddy/sdk";
 
 export function Providers({
   children
@@ -22,6 +23,10 @@ export function Providers({
       <QueryClientProvider client={queryClient}>
         <ConfettiProvider>
           {children}
+          <Databuddy
+            clientId="GpnTrAMQ_lIfH4Pc6oqm_"
+            enableBatching={true}
+          />
         </ConfettiProvider>
         <ReactQueryDevtools />
       </QueryClientProvider>
