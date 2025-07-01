@@ -24,7 +24,7 @@ export function Providers({
         <ConfettiProvider>
           {children}
           <Databuddy
-            clientId="GpnTrAMQ_lIfH4Pc6oqm_"
+            clientId="bounty"
             enableBatching={true}
           />
         </ConfettiProvider>
