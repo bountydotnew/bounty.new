@@ -1,4 +1,3 @@
-
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "../db";
@@ -12,7 +11,9 @@ export const auth = betterAuth({
   }),
   trustedOrigins: [
     process.env.CORS_ORIGIN || "",
-  ],
+    "https://bounty.new",
+    "https://www.bounty.new"
+  ].filter(Boolean),
   socialProviders: {
     github: {
       clientId: process.env.GITHUB_CLIENT_ID as string,
