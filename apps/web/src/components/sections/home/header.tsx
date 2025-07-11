@@ -6,7 +6,8 @@ import { ArrowRight, HandCoins } from "lucide-react";
 import { HeaderBase } from "@/components/sections/home/header-base";
 import { getStars } from "@/lib/fetchGhStars";
 import { useEffect, useState } from "react";
-// import Image from "next/image";
+import Image from "next/image";
+import { useTheme } from "next-themes";
 
 export function Header() {
   const [star, setStar] = useState<string>("");
@@ -24,10 +25,12 @@ export function Header() {
     fetchStars();
   }, []);
 
+  const theme = useTheme();
+
   const leftContent = (
     <Link href="/" className="flex items-center gap-3">
       {/* <Image src="https://opencut.app/logo.svg" alt="Bounty.new Logo" width={32} height={32} /> */}
-      <HandCoins className="h-4 w-4" />
+      <Image src="/bdn-b-w-trans.png" alt="Bounty.new Logo" width={32} height={32} />
       <span className="text-xl font-medium hidden md:block">bounty.new</span>
     </Link>
   );
