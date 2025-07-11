@@ -6,7 +6,10 @@ export function middleware() {
   const allowedOrigins = [
     process.env.CORS_ORIGIN || "",
     "https://bounty.new",
-    "https://www.bounty.new"
+    "https://www.bounty.new",
+    "https://bounty-new-server.vercel.app/",
+    "https://bounty.ripgrim.com",
+    "https://bounty-new-web.vercel.app/"
   ].filter(Boolean);
 
   const origin = res.headers.get('origin');
