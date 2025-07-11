@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, HandCoins } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { HeaderBase } from "@/components/sections/home/header-base";
 import { getStars } from "@/lib/fetchGhStars";
 import { useEffect, useState } from "react";
@@ -24,8 +24,6 @@ export function Header() {
 
     fetchStars();
   }, []);
-
-  const theme = useTheme();
 
   const leftContent = (
     <Link href="/" className="flex items-center gap-3">
