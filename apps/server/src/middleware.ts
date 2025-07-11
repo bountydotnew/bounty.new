@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export function middleware() {
+export function middleware(request: NextRequest) {
   const res = NextResponse.next()
 
   const allowedOrigins = [
@@ -12,20 +12,28 @@ export function middleware() {
     "https://bounty-new-web.vercel.app/"
   ].filter(Boolean);
 
-  const origin = res.headers.get('origin');
+  const origin = request.headers.get('origin');
   const allowedOrigin = allowedOrigins.includes(origin || '') ? origin : allowedOrigins[0];
 
-  res.headers.append('Access-Control-Allow-Credentials', "true")
-  res.headers.append('Access-Control-Allow-Origin', allowedOrigin || "")
-  res.headers.append('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-  res.headers.append(
+  res.headers.set('Access-Control-Allow-Credentials', "true")
+  res.headers.set('Access-Control-Allow-Origin', allowedOrigin || "*")
+  res.headers.set('Access-Control-Allow-Methods', 'GET,POST,OPTIONS,PUT,DELETE')
+  res.headers.set(
     'Access-Control-Allow-Headers',
-    'Content-Type, Authorization'
+    'Content-Type, Authorization, X-Requested-With'
   )
+
+  // Handle preflight requests
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 200, headers: res.headers });
+  }
 
   return res
 }
 
 export const config = {
-  matcher: '/:path*',
+  matcher: [
+    '/trpc/:path*',
+    '/api/:path*'
+  ],
 }
