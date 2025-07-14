@@ -56,12 +56,30 @@ export default function BountiesPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {bounties.data.map((bounty) => (
-             <div className="border border-gray-200 rounded-md p-4">
-              <h2 className="text-lg font-bold">{bounty.title}</h2>
-              <p className="text-gray-600">{bounty.description}</p>
-              <p className="text-gray-600">{bounty.amount}</p>
-              <p className="text-gray-600">{bounty.currency}</p>
-              <p className="text-gray-600">{bounty.difficulty}</p>
+             <div key={bounty.id} className="border border-gray-200 rounded-md p-4 hover:shadow-lg transition-shadow">
+              <h2 className="text-lg font-bold mb-2">{bounty.title}</h2>
+              <p className="text-gray-600 mb-3 line-clamp-2">{bounty.description}</p>
+              
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-2xl font-bold text-green-600">
+                  {formatCurrency(Number(bounty.amount))} {bounty.currency}
+                </span>
+                <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                  {bounty.difficulty}
+                </span>
+              </div>
+              
+                             <div className="flex justify-between items-center text-sm text-gray-500">
+                 <span>Status: {bounty.status}</span>
+                 <span>by {bounty.creator.name}</span>
+               </div>
+              
+              <Link 
+                href={`/bounty/${bounty.id}`} 
+                className="inline-block mt-3 text-blue-600 hover:underline font-medium"
+              >
+                View Details →
+              </Link>
              </div>
             ))}
           </div>

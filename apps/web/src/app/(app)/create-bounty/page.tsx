@@ -16,7 +16,7 @@ const createBountySchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters"),
   requirements: z.string().min(10, "Requirements must be at least 10 characters"),
   deliverables: z.string().min(10, "Deliverables must be at least 10 characters"),
-  amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, "Amount must be less than 10 trillion and have at most 2 decimal places"),
+  amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, "Incorrect amount."),
   currency: z.string().min(1, "Currency is required"),
   difficulty: z.enum(["beginner", "intermediate", "advanced", "expert"]),
   deadline: z.string().optional(),
