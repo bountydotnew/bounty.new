@@ -12,13 +12,15 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 const createBountySchema = z.object({
-  title: z.string().min(1, "Title is required").max(200, "Title too long"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  requirements: z.string().min(10, "Requirements must be at least 10 characters"),
-  deliverables: z.string().min(10, "Deliverables must be at least 10 characters"),
+  title: z.string().min(1, "Title cannot be empty").max(200, "Title too long"),
+  description: z.string().min(10, "Description cannot be empty").max(1000, "Description too long"),
+  requirements: z.string().min(10, "Requirements cannot be empty").max(1000, "Requirements too long"),
+  deliverables: z.string().min(10, "Deliverables cannot be empty").max(1000, "Deliverables too long"),
   amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, "Incorrect amount."),
-  currency: z.string().min(1, "Currency is required"),
-  difficulty: z.enum(["beginner", "intermediate", "advanced", "expert"]),
+  currency: z.string().min(1, "Currency cannot be empty"),
+  difficulty: z.enum(["beginner", "intermediate", "advanced", "expert"], {
+    errorMap: () => ({ message: "Difficulty cannot be empty" }),
+  }),
   deadline: z.string().optional(),
   tags: z.array(z.string()).optional(),
   repositoryUrl: z.string().url().optional().or(z.literal("")),
