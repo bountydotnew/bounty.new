@@ -4,13 +4,14 @@ import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from "../lib/trpc";
 import { db } from "../db";
 import { bounty, submission, bountyApplication } from "../db/schema/bounties";
+import { user } from "../db/schema/auth";
 
 const createBountySchema = z.object({
   title: z.string().min(1, "Title is required").max(200, "Title too long"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   requirements: z.string().min(10, "Requirements must be at least 10 characters"),
   deliverables: z.string().min(10, "Deliverables must be at least 10 characters"),
-  amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, "Amount must be less than 10 trillion and have at most 2 decimal places"),
+  amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, "Incorrect amount."),
   currency: z.string().default("USD"),
   difficulty: z.enum(["beginner", "intermediate", "advanced", "expert"]),
   deadline: z.string().datetime().optional(),
@@ -25,7 +26,7 @@ const updateBountySchema = z.object({
   description: z.string().min(10).optional(),
   requirements: z.string().min(10).optional(),
   deliverables: z.string().min(10).optional(),
-  amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, "Amount must be less than 10 trillion and have at most 2 decimal places").optional(),
+  amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, "Incorrect amount.").optional(),
   currency: z.string().optional(),
   difficulty: z.enum(["beginner", "intermediate", "advanced", "expert"]).optional(),
   deadline: z.string().datetime().optional(),
@@ -129,8 +130,14 @@ export const bountiesRouter = router({
             repositoryUrl: bounty.repositoryUrl,
             createdAt: bounty.createdAt,
             updatedAt: bounty.updatedAt,
+            creator: {
+              id: user.id,
+              name: user.name,
+              image: user.image,
+            },
           })
           .from(bounty)
+          .innerJoin(user, eq(bounty.createdById, user.id))
           .where(conditions.length > 0 ? and(...conditions) : undefined)
           .orderBy(input.sortOrder === "asc" ? bounty.createdAt : desc(bounty.createdAt))
           .limit(input.limit)
@@ -165,8 +172,32 @@ export const bountiesRouter = router({
     .query(async ({ input }) => {
       try {
         const [result] = await db
-          .select()
+          .select({
+            id: bounty.id,
+            title: bounty.title,
+            description: bounty.description,
+            requirements: bounty.requirements,
+            deliverables: bounty.deliverables,
+            amount: bounty.amount,
+            currency: bounty.currency,
+            status: bounty.status,
+            difficulty: bounty.difficulty,
+            deadline: bounty.deadline,
+            tags: bounty.tags,
+            repositoryUrl: bounty.repositoryUrl,
+            issueUrl: bounty.issueUrl,
+            createdById: bounty.createdById,
+            assignedToId: bounty.assignedToId,
+            createdAt: bounty.createdAt,
+            updatedAt: bounty.updatedAt,
+            creator: {
+              id: user.id,
+              name: user.name,
+              image: user.image,
+            },
+          })
           .from(bounty)
+          .innerJoin(user, eq(bounty.createdById, user.id))
           .where(eq(bounty.id, input.id));
 
         if (!result) {
@@ -415,8 +446,32 @@ export const bountiesRouter = router({
         }
 
         const results = await db
-          .select()
+          .select({
+            id: bounty.id,
+            title: bounty.title,
+            description: bounty.description,
+            requirements: bounty.requirements,
+            deliverables: bounty.deliverables,
+            amount: bounty.amount,
+            currency: bounty.currency,
+            status: bounty.status,
+            difficulty: bounty.difficulty,
+            deadline: bounty.deadline,
+            tags: bounty.tags,
+            repositoryUrl: bounty.repositoryUrl,
+            issueUrl: bounty.issueUrl,
+            createdById: bounty.createdById,
+            assignedToId: bounty.assignedToId,
+            createdAt: bounty.createdAt,
+            updatedAt: bounty.updatedAt,
+            creator: {
+              id: user.id,
+              name: user.name,
+              image: user.image,
+            },
+          })
           .from(bounty)
+          .innerJoin(user, eq(bounty.createdById, user.id))
           .where(and(...conditions))
           .orderBy(desc(bounty.createdAt))
           .limit(input.limit)
