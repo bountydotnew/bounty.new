@@ -1,7 +1,6 @@
 "use client"
 import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
-import { Header } from "@/components/sections/home/header";
 import V0Hero from "@/components/sections/home/v0-hero";
 
 export default function Home() {
@@ -14,7 +13,6 @@ export default function Home() {
   return (
 
     <div className="bg-landing-background mx-auto w-full">
-      <Header />
       <V0Hero />
     </div>
   );

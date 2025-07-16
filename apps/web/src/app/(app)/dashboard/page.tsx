@@ -4,8 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { formatCurrency } from "@/lib/utils";
-import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 export default function Dashboard() {

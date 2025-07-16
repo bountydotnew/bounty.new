@@ -1,11 +1,10 @@
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import Loader from "./loader";
-import { Button } from "./ui/button";
-import { GitHub } from "./icons/github";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SignInPage } from "./sections/auth/sign-in";
+import { SignUpPage } from "./sections/auth/sign-up";
+import { baseUrl } from "@/lib/constants";
 
 export default function SignInForm({
   onSwitchToSignUp,
@@ -14,14 +13,13 @@ export default function SignInForm({
   onSwitchToSignUp: () => void;
   redirectUrl?: string | null;
 }) {
-  const router = useRouter();
   const { isPending } = authClient.useSession();
-  const [isSigningIn, setIsSigningIn] = useState(false);
+  const  [, setIsSigningIn] = useState(false);
 
   const handleGitHubSignIn = async () => {
     setIsSigningIn(true);
     try {
-      const callbackURL = redirectUrl || "http://localhost:3001/dashboard";
+      const callbackURL = redirectUrl || `${baseUrl}/dashboard`;
 
       await authClient.signIn.social(
         {
@@ -47,15 +45,24 @@ export default function SignInForm({
   if (isPending) {
     return <Loader />;
   }
-
+  if (!onSwitchToSignUp) {
+    return <SignUpPage
+      onSignUp={() => {}}
+      onGitHubSignUp={handleGitHubSignIn}
+      onResetPassword={() => {}}
+      onCreateAccount={() => {}}
+      onSwitchToSignUp={() => {}}
+    />;
+  }
   return (
         <div className="bg-background text-foreground">
           <SignInPage
             heroImageSrc="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTAs_TDUTeHiZQ1tqLJlvItaBOjcmRTeoSbHw&s"
             onSignIn={handleGitHubSignIn}
             onGitHubSignIn={handleGitHubSignIn}
-            onResetPassword={() => {}}
-            onCreateAccount={() => {}}
+            onSwitchToSignUp={onSwitchToSignUp}
+            onResetPassword={() => {}}  
+            onCreateAccount={onSwitchToSignUp}
           />
         </div>
   );

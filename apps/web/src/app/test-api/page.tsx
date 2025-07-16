@@ -1,10 +1,9 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
 
 export default function TestAPIPage() {
-  const queryClient = useQueryClient();
   
   // Test queries using tRPC hooks
   const healthCheck = useQuery(trpc.healthCheck.queryOptions());
@@ -18,7 +17,7 @@ export default function TestAPIPage() {
       console.log("Bounty created!");
       bounties.refetch();
     },
-    onError: (error: any) => {
+    onError: (error) => {
       console.error("Error creating bounty:", error.message);
     }
   });
@@ -63,7 +62,7 @@ export default function TestAPIPage() {
           <div>
             <p>Total: {bounties.data.pagination?.total}</p>
             <div className="space-y-2 mt-2">
-              {bounties.data.data.map((bounty: any) => (
+              {bounties.data.data.map((bounty) => (
                 <div key={bounty.id} className="p-2 bg-gray-50 rounded">
                   <h3 className="font-medium">{bounty.title}</h3>
                   <p className="text-sm text-gray-600">${bounty.amount} {bounty.currency}</p>

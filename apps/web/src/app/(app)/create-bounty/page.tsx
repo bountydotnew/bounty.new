@@ -85,7 +85,7 @@ export default function CreateBountyPage() {
       queryClient.invalidateQueries({ queryKey: ["bounties"] });
       router.push(`/bounty/${data.data.id}`);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(`Failed to create bounty: ${error.message}`);
     },
   });
@@ -107,7 +107,7 @@ export default function CreateBountyPage() {
   };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="p-8 max-w-4xl mx-auto overflow-y-auto">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Create New Bounty</h1>
         {draftId && (

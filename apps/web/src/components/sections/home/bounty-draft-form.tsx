@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useDrafts } from "@/hooks/use-drafts";
+import { baseUrl } from "@/lib/constants";
 
 const bountyDraftSchema = z.object({
   title: z.string().min(1, "Title is required").max(200, "Title too long"),
@@ -52,7 +53,7 @@ export function BountyDraftForm({ className }: BountyDraftFormProps) {
     toast.success("Draft saved! Redirecting to login...");
 
     setTimeout(() => {
-      const redirectUrl = `/create-bounty?draft=${draftId}`;
+      const redirectUrl = `${baseUrl}/create-bounty?draft=${draftId}`;
       router.push(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
     }, 1500);
   }

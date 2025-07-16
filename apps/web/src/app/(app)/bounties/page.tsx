@@ -3,11 +3,8 @@
 import { trpc } from "@/utils/trpc";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export default function BountiesPage() {
   const { data: bounties, isLoading, error } = useQuery(

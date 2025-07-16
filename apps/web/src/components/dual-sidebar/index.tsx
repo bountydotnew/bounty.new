@@ -4,7 +4,7 @@ import {
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/dual-sidebar/app-sidebar";
 import { Header } from "@/components/dual-sidebar/header";
-import { RightSidebar } from "@/components/dual-sidebar/right-sidebar";
+// import { RightSidebar } from "@/components/dual-sidebar/right-sidebar";
 
 const Sidebar = ({ children }: { children: React.ReactNode }) => {
   return (

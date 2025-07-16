@@ -15,13 +15,13 @@ export interface Testimonial {
   text: string;
 }
 
-interface SignInPageProps {
+interface SignUpPageProps {
   title?: React.ReactNode;
   description?: React.ReactNode;
   heroImageSrc?: string;
   testimonials?: Testimonial[];
-  onSignIn?: (event: React.FormEvent<HTMLFormElement>) => void;
-  onGitHubSignIn?: () => void;
+  onSignUp?: (event: React.FormEvent<HTMLFormElement>) => void;
+  onGitHubSignUp?: () => void;
   onResetPassword?: () => void;
   onCreateAccount?: () => void;
   onSwitchToSignUp?: () => void;
@@ -48,13 +48,13 @@ const TestimonialCard = ({ testimonial, delay }: { testimonial: Testimonial, del
 
 // --- MAIN COMPONENT ---
 
-export const SignInPage: React.FC<SignInPageProps> = ({
+export const SignUpPage: React.FC<SignUpPageProps> = ({
   title = <span className="font-light text-foreground tracking-tighter">Welcome</span>,
   description = "Access your account and continue your journey with us",
   heroImageSrc,
   testimonials = [],
-  onSignIn,
-  onGitHubSignIn,
+  onSignUp,
+  onGitHubSignUp,
   onResetPassword,
   onCreateAccount,
   onSwitchToSignUp,
@@ -62,7 +62,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="h-[100dvh] flex flex-col md:flex-row font-geist w-full">
+    <div className="h-[100dvh] flex flex-col md:flex-row font-geist w-[100dvw]">
       {/* Left column: sign-in form */}
       <section className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
@@ -70,7 +70,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             <h1 className="animate-element animate-delay-100 text-4xl md:text-5xl font-semibold leading-tight">{title}</h1>
             <p className="animate-element animate-delay-200 text-muted-foreground">{description}</p>
 
-            <form className="space-y-5" onSubmit={onSignIn}>
+            <form className="space-y-5" onSubmit={onSignUp}>
               <div className="animate-element animate-delay-300">
                 <label className="text-sm font-medium text-muted-foreground">Email Address</label>
                 <GlassInputWrapper>
@@ -108,7 +108,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
               <span className="px-4 text-sm text-muted-foreground bg-background absolute">Or continue with</span>
             </div>
 
-            <button onClick={onGitHubSignIn} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-2xl py-4 hover:bg-secondary transition-colors">
+            <button onClick={onGitHubSignUp} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-2xl py-4 hover:bg-secondary transition-colors">
                 <GitHub className="w-5 h-5 fill-foreground" />
                 Continue with GitHub
             </button>
@@ -119,6 +119,20 @@ export const SignInPage: React.FC<SignInPageProps> = ({
           </div>
         </div>
       </section>
+
+      {/* Right column: hero image + testimonials */}
+      {heroImageSrc && (
+        <section className="hidden md:block flex-1 relative p-4">
+          <div className="animate-slide-right animate-delay-300 absolute inset-4 rounded-3xl bg-cover bg-center" style={{ backgroundImage: `url(${heroImageSrc})` }}></div>
+          {testimonials.length > 0 && (
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-4 px-8 w-full justify-center">
+              <TestimonialCard testimonial={testimonials[0]} delay="animate-delay-1000" />
+              {testimonials[1] && <div className="hidden xl:flex"><TestimonialCard testimonial={testimonials[1]} delay="animate-delay-1200" /></div>}
+              {testimonials[2] && <div className="hidden 2xl:flex"><TestimonialCard testimonial={testimonials[2]} delay="animate-delay-1400" /></div>}
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 };  
