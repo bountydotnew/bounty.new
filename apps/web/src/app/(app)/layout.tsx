@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Header from "@/components/header";
+import Sidebar from "@/components/dual-sidebar";
 
 export const metadata: Metadata = {
   title: "bounty.new",
@@ -13,8 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <>
-      <Header />
-      {children}
+      <Sidebar>
+        <Header />
+        {children}
+      </Sidebar>
     </>
   );
 }
