@@ -15,7 +15,7 @@ export const auth = betterAuth({
     "https://www.bounty.new",
     "https://*.vercel.app",
     "http://localhost:3001",
-    "https://preview.bounty.new/",
+    "https://preview.bounty.new",
     "https://grim.local:3001",
   ].filter(Boolean),
   socialProviders: {
