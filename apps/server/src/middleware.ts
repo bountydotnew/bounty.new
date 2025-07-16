@@ -7,15 +7,25 @@ export function middleware(request: NextRequest) {
     process.env.CORS_ORIGIN || "",
     "https://bounty.new",
     "https://www.bounty.new",
-    "https://bounty-new-server.vercel.app/",
+    "https://*.vercel.app",
     "https://bounty.ripgrim.com",
-    "https://bounty-new-web.vercel.app/",
-    "https://preview.bounty.new",
-    "https://preview.api.bounty.new",
+    "http://grim.local:3001",
+    "http://localhost:3001"
   ].filter(Boolean);
 
   const origin = request.headers.get('origin');
-  const allowedOrigin = allowedOrigins.includes(origin || '') ? origin : allowedOrigins[0];
+  
+  function isOriginAllowed(origin: string, allowedOrigins: string[]): boolean {
+    return allowedOrigins.some(allowed => {
+      if (allowed.includes('*')) {
+        const regex = new RegExp('^' + allowed.replace(/\*/g, '.*') + '$');
+        return regex.test(origin);
+      }
+      return allowed === origin;
+    });
+  }
+
+  const allowedOrigin = origin && isOriginAllowed(origin, allowedOrigins) ? origin : allowedOrigins[0];
 
   res.headers.set('Access-Control-Allow-Credentials', "true")
   res.headers.set('Access-Control-Allow-Origin', allowedOrigin || "*")

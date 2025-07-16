@@ -40,7 +40,7 @@ export function Header() {
         </Button>
       </Link>
       {process.env.NODE_ENV === "development" ? (
-        <Link href="/editor">
+        <Link href="/dashboard">
           <Button size="sm" className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10">
             Create bounties
             <ArrowRight className="h-4 w-4" />
