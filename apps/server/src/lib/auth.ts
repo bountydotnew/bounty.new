@@ -12,7 +12,8 @@ export const auth = betterAuth({
   trustedOrigins: [
     process.env.CORS_ORIGIN || "",
     "https://bounty.new",
-    "https://www.bounty.new"
+    "https://www.bounty.new",
+    "https://preview.vercel.app/",
   ].filter(Boolean),
   socialProviders: {
     github: {

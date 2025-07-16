@@ -9,7 +9,9 @@ export function middleware(request: NextRequest) {
     "https://www.bounty.new",
     "https://bounty-new-server.vercel.app/",
     "https://bounty.ripgrim.com",
-    "https://bounty-new-web.vercel.app/"
+    "https://bounty-new-web.vercel.app/",
+    "https://preview.bounty.new",
+    "https://preview.api.bounty.new",
   ].filter(Boolean);
 
   const origin = request.headers.get('origin');
