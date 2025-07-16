@@ -7,12 +7,14 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: schema,
-    usePlural: true,
+    usePlural: false,
   }),
   trustedOrigins: [
     process.env.CORS_ORIGIN || "",
     "https://bounty.new",
-    "https://www.bounty.new"
+    "https://www.bounty.new",
+    "https://*.vercel.app",
+    "http://localhost:3001"
   ].filter(Boolean),
   socialProviders: {
     github: {
@@ -21,7 +23,7 @@ export const auth = betterAuth({
     },
   },
   emailAndPassword: {
-    enabled: false,
+    enabled: true,
   },
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL,

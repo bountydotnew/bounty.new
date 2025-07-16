@@ -4,10 +4,16 @@ import {
 } from "../lib/trpc";
 import { earlyAccessRouter } from "./early-access";
 import { userRouter } from "./user";
+import { bountiesRouter } from "./bounties";
+import { profilesRouter } from "./profiles";
 
 export const appRouter = router({
   healthCheck: publicProcedure.query(() => {
-    return "IM ALIVE!!!!";
+    return {
+      message: "IM ALIVE!!!!",
+      timestamp: new Date().toISOString(),
+      status: "healthy"
+    };
   }),
   ping: publicProcedure.query(() => {
     return {
@@ -24,5 +30,7 @@ export const appRouter = router({
   }),
   earlyAccess: earlyAccessRouter,
   user: userRouter,
+  bounties: bountiesRouter,
+  profiles: profilesRouter,
 });
 export type AppRouter = typeof appRouter;

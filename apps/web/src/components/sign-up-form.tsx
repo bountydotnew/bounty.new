@@ -10,8 +10,10 @@ import { useRouter } from "next/navigation";
 
 export default function SignUpForm({
   onSwitchToSignIn,
+  redirectUrl,
 }: {
   onSwitchToSignIn: () => void;
+  redirectUrl?: string | null;
 }) {
   const router = useRouter();
   const { isPending } = authClient.useSession();
@@ -23,6 +25,8 @@ export default function SignUpForm({
       name: "",
     },
     onSubmit: async ({ value }) => {
+      const targetUrl = redirectUrl || "/dashboard";
+      
       await authClient.signUp.email(
         {
           email: value.email,
@@ -31,7 +35,7 @@ export default function SignUpForm({
         },
         {
           onSuccess: () => {
-            router.push("/dashboard");
+            router.push(targetUrl);
             toast.success("Sign up successful");
           },
           onError: (error) => {
@@ -56,6 +60,11 @@ export default function SignUpForm({
   return (
     <div className="mx-auto w-full mt-10 max-w-md p-6">
       <h1 className="mb-6 text-center text-3xl font-bold">Create Account</h1>
+      {redirectUrl && (
+        <p className="mb-4 text-sm text-center text-muted-foreground">
+          Create an account to continue with your bounty
+        </p>
+      )}
 
       <form
         onSubmit={(e) => {
