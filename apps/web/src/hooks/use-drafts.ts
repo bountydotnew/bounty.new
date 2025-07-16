@@ -1,4 +1,4 @@
-import { useCallback } from "react"
+import { useCallback, useState } from "react"
 
 export interface StoredDraft {
   id: string
@@ -9,8 +9,13 @@ export interface StoredDraft {
 }
 
 const DRAFTS_STORAGE_KEY = "bounty-drafts"
+const ACTIVE_DRAFT_KEY = "active-draft-id"
 
 export function useDrafts() {
+  const [activeDraftId, setActiveDraftId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null
+    return localStorage.getItem(ACTIVE_DRAFT_KEY)
+  })
   const getDrafts = useCallback((): StoredDraft[] => {
     if (typeof window === "undefined") return []
     
@@ -53,7 +58,27 @@ export function useDrafts() {
   const clearAllDrafts = useCallback((): void => {
     if (typeof window === "undefined") return
     localStorage.removeItem(DRAFTS_STORAGE_KEY)
+    localStorage.removeItem(ACTIVE_DRAFT_KEY)
+    setActiveDraftId(null)
   }, [])
+
+  const setActiveDraft = useCallback((id: string): void => {
+    if (typeof window === "undefined") return
+    localStorage.setItem(ACTIVE_DRAFT_KEY, id)
+    setActiveDraftId(id)
+  }, [])
+
+  const clearActiveDraft = useCallback((): void => {
+    if (typeof window === "undefined") return
+    localStorage.removeItem(ACTIVE_DRAFT_KEY)
+    setActiveDraftId(null)
+  }, [])
+
+  const deleteActiveDraft = useCallback((): void => {
+    if (!activeDraftId) return
+    deleteDraft(activeDraftId)
+    clearActiveDraft()
+  }, [activeDraftId, deleteDraft, clearActiveDraft])
 
   return {
     getDrafts,
@@ -61,5 +86,9 @@ export function useDrafts() {
     getDraft,
     deleteDraft,
     clearAllDrafts,
+    setActiveDraft,
+    clearActiveDraft,
+    deleteActiveDraft,
+    activeDraftId,
   }
 } 

@@ -6,6 +6,7 @@ import { earlyAccessRouter } from "./early-access";
 import { userRouter } from "./user";
 import { bountiesRouter } from "./bounties";
 import { profilesRouter } from "./profiles";
+import { newsRouter } from "./news";
 
 export const appRouter = router({
   healthCheck: publicProcedure.query(() => {
@@ -32,5 +33,6 @@ export const appRouter = router({
   user: userRouter,
   bounties: bountiesRouter,
   profiles: profilesRouter,
+  news: newsRouter,
 });
 export type AppRouter = typeof appRouter;

@@ -5,11 +5,16 @@ import { SignInPage } from "@/components/sections/auth/sign-in";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { baseUrl } from "@/lib/constants";
+import { Header } from "@/components/sections/home/header";
+import { useSearchParams } from "next/navigation";
 
 function LoginContent() {
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect");
+  
   const handleGitHubSignIn = async () => {
     try {
-      const callbackURL = `${baseUrl}/dashboard`;
+      const callbackURL = redirectUrl ? `${redirectUrl}` : `${baseUrl}/dashboard`;
 
       await authClient.signIn.social(
         {
@@ -41,8 +46,11 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <LoginContent />
-    </Suspense>
+    <div className="bg-landing-background mx-auto w-full">
+      <Header />
+      <Suspense fallback={<div>Loading...</div>}>
+        <LoginContent />
+      </Suspense>
+    </div>
   );
 }

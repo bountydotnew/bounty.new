@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,23 @@ const formSchema = z.object({
 
 type FormSchema = z.infer<typeof formSchema>;
 
+function setCookie(name: string, value: string, days: number = 365) {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Strict`;
+}
+
+function getCookie(name: string): string | null {
+  const nameEQ = name + "=";
+  const ca = document.cookie.split(';');
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+  }
+  return null;
+}
+
 function useWaitlistCount() {
   const queryClient = useQueryClient();
   const { celebrate } = useConfetti();
@@ -31,8 +48,16 @@ function useWaitlistCount() {
 
   const { mutate, isPending } = useMutation({
     ...trpc.earlyAccess.joinWaitlist.mutationOptions(),
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       setSuccess(true);
+      const cookieData = {
+        submitted: true,
+        timestamp: new Date().toISOString(),
+        email: btoa(variables.email).substring(0, 16)
+      };
+      setCookie("waitlist_data", JSON.stringify(cookieData), 365);
+      console.log("Waitlist cookie set:", cookieData);
+      
       if (data.message === "You've been added to the waitlist!") {
         celebrate();
         queryClient.setQueryData(
@@ -45,12 +70,16 @@ function useWaitlistCount() {
         toast.info("You're already on the waitlist! 🎉");
       }
     },
-    onError: () => {
-      toast.error("Something went wrong. Please try again.");
+    onError: (error) => {
+      if (error?.message?.includes("Rate limit exceeded")) {
+        toast.error(error.message);
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
     },
   });
 
-  return { count: query.data?.count ?? 0, mutate, success, isPending };
+  return { count: query.data?.count ?? 0, mutate, success, setSuccess, isPending };
 }
 
 interface WaitlistFormProps {
@@ -67,7 +96,22 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
 
   const waitlist = useWaitlistCount();
 
-  function joinWaitlist({ email }: FormSchema) {
+  useEffect(() => {
+    const waitlistData = getCookie("waitlist_data");
+    if (waitlistData) {
+      try {
+        const data = JSON.parse(waitlistData);
+        console.log("Found waitlist cookie:", data);
+        if (data.submitted) {
+          waitlist.setSuccess(true);
+        }
+      } catch (error) {
+        console.error("Error parsing waitlist cookie:", error);
+      }
+    }
+  }, [waitlist]);
+
+  async function joinWaitlist({ email }: FormSchema) {
     waitlist.mutate({ email });
   }
 

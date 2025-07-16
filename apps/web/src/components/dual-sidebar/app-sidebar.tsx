@@ -24,6 +24,8 @@ import { NavMain } from "@/components/dual-sidebar/nav-main";
 import { NavProjects } from "@/components/dual-sidebar/nav-projects";
 import { NavUser } from "@/components/dual-sidebar/nav-user";
 import { TeamSwitcher } from "@/components/dual-sidebar/team-switcher";
+import { News } from "@/components/ui/sidebar-news";
+
 
 // This is sample data.
 const data = {
@@ -156,6 +158,28 @@ const data = {
       icon: Map,
     },
   ],
+  news: [
+    {
+      href: "https://dub.co/changelog/regions-support",
+      title: "Regions support in analytics",
+      summary: "You can now filter your analytics by regions",
+      image: "https://assets.dub.co/changelog/regions-support.png",
+    },
+    {
+      href: "https://dub.co/blog/soc2",
+      title: "Dub is now SOC 2 Type II Compliant",
+      summary:
+        "We're excited to announce that Dub has successfully completed a SOC 2 Type II audit to further demonstrate our commitment to security.",
+      image: "https://assets.dub.co/blog/soc2.jpg",
+    },
+    {
+      href: "https://dub.co/changelog/utm-templates",
+      title: "UTM Templates",
+      summary:
+        "You can now create UTM templates to streamline UTM campaign management across your team.",
+      image: "https://assets.dub.co/changelog/utm-templates.jpg",
+    },
+  ],
 };
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
@@ -169,9 +193,11 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
+        <News />
         <NavUser user={data.user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );
 }
+  

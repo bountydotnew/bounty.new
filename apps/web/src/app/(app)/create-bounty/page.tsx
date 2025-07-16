@@ -4,59 +4,58 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, Suspense } from "react";
-import { z } from "zod";
+import { useEffect, Suspense, useState } from "react";
 import { trpc } from "@/utils/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useDrafts } from "@/hooks/use-drafts";
+import { useDrafts, StoredDraft } from "@/hooks/use-drafts";
+import { DraftNavigator } from "@/components/sections/home/draft-navigator";
+import { 
+  createBountySchema, 
+  CreateBountyForm, 
+  createBountyDefaults,
+  bountyDraftTemplates,
+  currencyOptions,
+  difficultyOptions,
+  formatFormData,
+  parseTagsInput,
+  formatTagsOutput
+} from "@/lib/forms";
 
-const createBountySchema = z.object({
-  title: z.string().min(1, "Title cannot be empty").max(200, "Title too long"),
-  description: z.string().min(10, "Description cannot be empty").max(1000, "Description too long"),
-  requirements: z.string().min(10, "Requirements cannot be empty").max(1000, "Requirements too long"),
-  deliverables: z.string().min(10, "Deliverables cannot be empty").max(1000, "Deliverables too long"),
-  amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, "Incorrect amount."),
-  currency: z.string().min(1, "Currency cannot be empty"),
-  difficulty: z.enum(["beginner", "intermediate", "advanced", "expert"], {
-    errorMap: () => ({ message: "Difficulty cannot be empty" }),
-  }),
-  deadline: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  repositoryUrl: z.string().url().optional().or(z.literal("")),
-  issueUrl: z.string().url().optional().or(z.literal("")),
-});
 
-type CreateBountyForm = z.infer<typeof createBountySchema>;
+
 
 function CreateBountyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const draftId = searchParams.get("draft");
-  const { getDraft, deleteDraft } = useDrafts();
+  const { getDraft, getDrafts, setActiveDraft, deleteActiveDraft } = useDrafts();
+
+  const [availableDrafts, setAvailableDrafts] = useState<StoredDraft[]>([]);
+  const [showDraftNavigator, setShowDraftNavigator] = useState(false);
 
   const form = useForm<CreateBountyForm>({
     resolver: zodResolver(createBountySchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      requirements: "",
-      deliverables: "",
-      amount: "",
-      currency: "USD",
-      difficulty: "intermediate",
-      deadline: "",
-      tags: [],
-      repositoryUrl: "",
-      issueUrl: "",
-    },
+    defaultValues: createBountyDefaults,
   });
 
-  const { control, handleSubmit, formState: { errors, isSubmitting }, reset, watch, setValue } = form;
+    const { control, handleSubmit, formState: { errors, isSubmitting }, reset, watch, setValue } = form;
 
+  // Check for available drafts on mount
+  useEffect(() => {
+    const drafts = getDrafts();
+    
+    // Only show navigator if there are multiple drafts AND no specific draft is being loaded from URL
+    if (drafts.length > 1 && !draftId) {
+      setAvailableDrafts(drafts);
+      setShowDraftNavigator(true);
+    }
+  }, [getDrafts, draftId]);
+
+  // Load specific draft from URL parameter
   useEffect(() => {
     if (draftId) {
       const draft = getDraft(draftId);
@@ -65,22 +64,42 @@ function CreateBountyContent() {
         setValue("title", draft.title);
         setValue("description", draft.description);
         setValue("amount", draft.amount);
-        setValue("requirements", "Please specify the technical requirements for this bounty");
-        setValue("deliverables", "Please specify what should be delivered for this bounty");
+        setValue("requirements", bountyDraftTemplates.requirements);
+        setValue("deliverables", bountyDraftTemplates.deliverables);
+        setActiveDraft(draftId);
         toast.success("Draft loaded! Complete the remaining details to publish your bounty.");
       } else {
         toast.error("Draft not found. Starting with a blank form.");
       }
     }
-  }, [draftId, setValue, getDraft]);
+  }, [draftId, setValue, getDraft, setActiveDraft]);
 
-  const createBounty = useMutation({
+
+
+  const handlePreviewDraft = (draft: StoredDraft) => {
+    setValue("title", draft.title);
+    setValue("description", draft.description);
+    setValue("amount", draft.amount);
+    setValue("requirements", bountyDraftTemplates.requirements);
+    setValue("deliverables", bountyDraftTemplates.deliverables);
+    // Don't set active draft or show toast - this is just a preview
+  };
+
+  const handleLoadDraft = (draft: StoredDraft) => {
+    setValue("title", draft.title);
+    setValue("description", draft.description);
+    setValue("amount", draft.amount);
+    setValue("requirements", bountyDraftTemplates.requirements);
+    setValue("deliverables", bountyDraftTemplates.deliverables);
+    setActiveDraft(draft.id);
+    setShowDraftNavigator(false);
+    toast.success("Draft loaded successfully!");
+  };
+
+    const createBounty = useMutation({
     ...trpc.bounties.create.mutationOptions(),
     onSuccess: (data) => {
-      if (draftId) {
-        deleteDraft(draftId);
-      }
-      
+      deleteActiveDraft();
       toast.success("Bounty created successfully!");
       queryClient.invalidateQueries({ queryKey: ["bounties"] });
       router.push(`/bounty/${data.data.id}`);
@@ -91,33 +110,34 @@ function CreateBountyContent() {
   });
 
   const onSubmit = handleSubmit((data: CreateBountyForm) => {
-    const formattedData = {
-      ...data,
-      deadline: data.deadline ? new Date(data.deadline).toISOString() : undefined,
-      repositoryUrl: data.repositoryUrl || undefined,
-      issueUrl: data.issueUrl || undefined,
-    };
+    const formattedData = formatFormData.createBounty(data);
     createBounty.mutate(formattedData);
   });
 
   const tagsInput = watch("tags");
   const handleTagsChange = (value: string) => {
-    const tags = value.split(",").map(tag => tag.trim()).filter(Boolean);
+    const tags = parseTagsInput(value);
     setValue("tags", tags);
   };
 
+
+
   return (
-    <div className="p-8 max-w-4xl mx-auto overflow-y-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Create New Bounty</h1>
-        {draftId && (
-          <p className="text-sm text-muted-foreground mt-2">
-            Completing bounty from draft • Fill in the remaining details to publish
-          </p>
-        )}
+    <div className="h-full flex flex-col">
+      <div className="flex-none p-8 pb-0 max-w-4xl mx-auto w-full">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">Create New Bounty</h1>
+          {draftId && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Completing bounty from draft • Fill in the remaining details to publish
+            </p>
+          )}
+        </div>
       </div>
-      
-      <form onSubmit={onSubmit} className="space-y-6">
+
+      <div className="flex-1">
+        <div className="p-8 pt-0 max-w-4xl mx-auto w-full">
+          <form onSubmit={onSubmit} className={`space-y-6 ${showDraftNavigator ? 'pb-20' : 'pb-6'}`}>
         <div>
           <Label htmlFor="title">Title *</Label>
           <Controller
@@ -148,9 +168,8 @@ function CreateBountyContent() {
                 id="description"
                 rows={4}
                 placeholder="Describe what needs to be done"
-                className={`w-full px-3 py-2 border rounded-md ${
-                  errors.description ? "border-red-500" : "border-gray-300"
-                }`}
+                className={`w-full px-3 py-2 border rounded-md ${errors.description ? "border-red-500" : "border-gray-300"
+                  }`}
               />
             )}
           />
@@ -170,9 +189,8 @@ function CreateBountyContent() {
                 id="requirements"
                 rows={3}
                 placeholder="List the technical requirements"
-                className={`w-full px-3 py-2 border rounded-md ${
-                  errors.requirements ? "border-red-500" : "border-gray-300"
-                }`}
+                className={`w-full px-3 py-2 border rounded-md ${errors.requirements ? "border-red-500" : "border-gray-300"
+                  }`}
               />
             )}
           />
@@ -192,9 +210,8 @@ function CreateBountyContent() {
                 id="deliverables"
                 rows={3}
                 placeholder="What should be delivered?"
-                className={`w-full px-3 py-2 border rounded-md ${
-                  errors.deliverables ? "border-red-500" : "border-gray-300"
-                }`}
+                className={`w-full px-3 py-2 border rounded-md ${errors.deliverables ? "border-red-500" : "border-gray-300"
+                  }`}
               />
             )}
           />
@@ -222,7 +239,7 @@ function CreateBountyContent() {
               <p className="text-red-500 text-sm mt-1">{errors.amount.message}</p>
             )}
           </div>
-          
+
           <div>
             <Label htmlFor="currency">Currency</Label>
             <Controller
@@ -234,9 +251,11 @@ function CreateBountyContent() {
                   id="currency"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 >
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                  <option value="GBP">GBP</option>
+                  {currencyOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
               )}
             />
@@ -249,18 +268,18 @@ function CreateBountyContent() {
             name="difficulty"
             control={control}
             render={({ field }) => (
-              <select
-                {...field}
-                id="difficulty"
-                className={`w-full px-3 py-2 border rounded-md ${
-                  errors.difficulty ? "border-red-500" : "border-gray-300"
-                }`}
-              >
-                <option value="beginner">Beginner</option>
-                <option value="intermediate">Intermediate</option>
-                <option value="advanced">Advanced</option>
-                <option value="expert">Expert</option>
-              </select>
+                              <select
+                  {...field}
+                  id="difficulty"
+                  className={`w-full px-3 py-2 border rounded-md ${errors.difficulty ? "border-red-500" : "border-gray-300"
+                    }`}
+                >
+                  {difficultyOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
             )}
           />
           {errors.difficulty && (
@@ -293,7 +312,7 @@ function CreateBountyContent() {
             id="tags"
             placeholder="javascript, react, node (comma-separated)"
             onChange={(e) => handleTagsChange(e.target.value)}
-            defaultValue={tagsInput?.join(", ") || ""}
+            defaultValue={tagsInput ? formatTagsOutput(tagsInput) : ""}
           />
           <p className="text-sm text-gray-500 mt-1">
             Enter tags separated by commas
@@ -348,7 +367,7 @@ function CreateBountyContent() {
           >
             {createBounty.isPending ? "Creating..." : "Create Bounty"}
           </Button>
-          
+
           <Button
             type="button"
             variant="outline"
@@ -357,17 +376,28 @@ function CreateBountyContent() {
           >
             Reset Form
           </Button>
-          
+
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.back()}
+            onClick={() => router.replace("/dashboard")}
             disabled={isSubmitting || createBounty.isPending}
           >
             Cancel
           </Button>
         </div>
       </form>
+        </div>
+      </div>
+
+      {showDraftNavigator && (
+        <DraftNavigator
+          drafts={availableDrafts}
+          onPreviewDraft={handlePreviewDraft}
+          onLoadDraft={handleLoadDraft}
+          onClose={() => setShowDraftNavigator(false)}
+        />
+      )}
     </div>
   );
 }
