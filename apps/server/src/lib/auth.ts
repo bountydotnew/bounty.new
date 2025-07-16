@@ -12,7 +12,8 @@ export const auth = betterAuth({
   trustedOrigins: [
     process.env.CORS_ORIGIN || "",
     "https://bounty.new",
-    "https://www.bounty.new"
+    "https://www.bounty.new",
+    "http://localhost:3001"
   ].filter(Boolean),
   socialProviders: {
     github: {

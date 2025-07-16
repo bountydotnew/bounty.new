@@ -3,13 +3,15 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { z } from "zod";
 import { trpc } from "@/utils/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useDrafts } from "@/hooks/use-drafts";
 
 const createBountySchema = z.object({
   title: z.string().min(1, "Title cannot be empty").max(200, "Title too long"),
@@ -31,7 +33,10 @@ type CreateBountyForm = z.infer<typeof createBountySchema>;
 
 export default function CreateBountyPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  const draftId = searchParams.get("draft");
+  const { getDraft, deleteDraft } = useDrafts();
 
   const form = useForm<CreateBountyForm>({
     resolver: zodResolver(createBountySchema),
@@ -52,9 +57,30 @@ export default function CreateBountyPage() {
 
   const { control, handleSubmit, formState: { errors, isSubmitting }, reset, watch, setValue } = form;
 
+  useEffect(() => {
+    if (draftId) {
+      const draft = getDraft(draftId);
+      
+      if (draft) {
+        setValue("title", draft.title);
+        setValue("description", draft.description);
+        setValue("amount", draft.amount);
+        setValue("requirements", "Please specify the technical requirements for this bounty");
+        setValue("deliverables", "Please specify what should be delivered for this bounty");
+        toast.success("Draft loaded! Complete the remaining details to publish your bounty.");
+      } else {
+        toast.error("Draft not found. Starting with a blank form.");
+      }
+    }
+  }, [draftId, setValue, getDraft]);
+
   const createBounty = useMutation({
     ...trpc.bounties.create.mutationOptions(),
     onSuccess: (data) => {
+      if (draftId) {
+        deleteDraft(draftId);
+      }
+      
       toast.success("Bounty created successfully!");
       queryClient.invalidateQueries({ queryKey: ["bounties"] });
       router.push(`/bounty/${data.data.id}`);
@@ -82,10 +108,16 @@ export default function CreateBountyPage() {
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Create New Bounty</h1>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Create New Bounty</h1>
+        {draftId && (
+          <p className="text-sm text-muted-foreground mt-2">
+            Completing bounty from draft • Fill in the remaining details to publish
+          </p>
+        )}
+      </div>
       
       <form onSubmit={onSubmit} className="space-y-6">
-        {/* Title */}
         <div>
           <Label htmlFor="title">Title *</Label>
           <Controller
@@ -105,7 +137,6 @@ export default function CreateBountyPage() {
           )}
         </div>
 
-        {/* Description */}
         <div>
           <Label htmlFor="description">Description *</Label>
           <Controller
@@ -128,7 +159,6 @@ export default function CreateBountyPage() {
           )}
         </div>
 
-        {/* Requirements */}
         <div>
           <Label htmlFor="requirements">Requirements *</Label>
           <Controller
@@ -151,7 +181,6 @@ export default function CreateBountyPage() {
           )}
         </div>
 
-        {/* Deliverables */}
         <div>
           <Label htmlFor="deliverables">Deliverables *</Label>
           <Controller
@@ -174,7 +203,6 @@ export default function CreateBountyPage() {
           )}
         </div>
 
-        {/* Amount and Currency */}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="amount">Amount *</Label>
@@ -215,7 +243,6 @@ export default function CreateBountyPage() {
           </div>
         </div>
 
-        {/* Difficulty */}
         <div>
           <Label htmlFor="difficulty">Difficulty *</Label>
           <Controller
@@ -241,7 +268,6 @@ export default function CreateBountyPage() {
           )}
         </div>
 
-        {/* Deadline */}
         <div>
           <Label htmlFor="deadline">Deadline (Optional)</Label>
           <Controller
@@ -261,7 +287,6 @@ export default function CreateBountyPage() {
           )}
         </div>
 
-        {/* Tags */}
         <div>
           <Label htmlFor="tags">Tags (Optional)</Label>
           <Input
@@ -275,7 +300,6 @@ export default function CreateBountyPage() {
           </p>
         </div>
 
-        {/* Repository URL */}
         <div>
           <Label htmlFor="repositoryUrl">Repository URL (Optional)</Label>
           <Controller
@@ -296,7 +320,6 @@ export default function CreateBountyPage() {
           )}
         </div>
 
-        {/* Issue URL */}
         <div>
           <Label htmlFor="issueUrl">Issue URL (Optional)</Label>
           <Controller
@@ -317,7 +340,6 @@ export default function CreateBountyPage() {
           )}
         </div>
 
-        {/* Submit Buttons */}
         <div className="flex gap-4 pt-6">
           <Button
             type="submit"

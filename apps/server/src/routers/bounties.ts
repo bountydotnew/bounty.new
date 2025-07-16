@@ -70,6 +70,7 @@ export const bountiesRouter = router({
             ...input,
             deadline: input.deadline ? new Date(input.deadline) : undefined,
             createdById: ctx.session.user.id,
+            status: "open",
           })
           .returning();
 
@@ -500,4 +501,6 @@ export const bountiesRouter = router({
         });
       }
     }),
+
+
 }); 

@@ -18,7 +18,7 @@ import {
   Clock,
   Star, Shield, Banknote
 } from "lucide-react"
-import { WaitlistForm } from "./waitlist-form"
+import { ConditionalForm } from "./conditional-form"
 import { BackedByBadge } from "@/components/ui/backed-by-badge"
 import Image from "next/image"
 
@@ -157,7 +157,7 @@ export default function BountyPlatform() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             >
-              <WaitlistForm />
+              <ConditionalForm />
             </motion.div>
 
             {/* Live Stats */}
