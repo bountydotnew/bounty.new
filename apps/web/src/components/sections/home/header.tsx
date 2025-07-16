@@ -8,7 +8,7 @@ import { useGithubStars } from "@/lib/fetchGhStars";
 import Image from "next/image";
 
 export function Header() {
-  const { data: starCount, isLoading, error } = useGithubStars("ripgrim/bounty.new");
+  const { data: starCount } = useGithubStars("ripgrim/bounty.new");
 
   // Format the star count for display
   const formatStarCount = (count: number): string => {

@@ -93,7 +93,7 @@ function useWaitlistSubmission() {
         }),
       );
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error('Waitlist submission error:', error);
 
       if (error.message.includes("Rate limit exceeded")) {
