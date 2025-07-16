@@ -2,13 +2,18 @@
 
 import SignInForm from "@/components/sign-in-form";
 import SignUpForm from "@/components/sign-up-form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function LoginPage() {
+function LoginContent() {
   const [showSignIn, setShowSignIn] = useState(false);
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect");
+
+  useEffect(() => {
+    setRedirectUrl(searchParams.get("redirect"));
+  }, [searchParams]);
 
   return showSignIn ? (
     <SignInForm 
@@ -20,5 +25,13 @@ export default function LoginPage() {
       onSwitchToSignIn={() => setShowSignIn(true)}
       redirectUrl={redirectUrl}
     />
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
