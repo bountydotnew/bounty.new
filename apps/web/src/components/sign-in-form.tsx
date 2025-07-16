@@ -6,10 +6,8 @@ import { SignInPage } from "./sections/auth/sign-in";
 import { baseUrl } from "@/lib/constants";
 
 export default function SignInForm({
-  onSwitchToSignUp,
   redirectUrl,
 }: {
-  onSwitchToSignUp: () => void;
   redirectUrl?: string | null;
 }) {
   const { isPending } = authClient.useSession();
@@ -50,7 +48,6 @@ export default function SignInForm({
       <SignInPage
         onSignIn={handleGitHubSignIn}
         onGitHubSignIn={handleGitHubSignIn}
-        onSwitchToSignUp={onSwitchToSignUp}
         onResetPassword={() => { }}
       />
     </div>

@@ -1,13 +1,11 @@
 "use client"
 
 import SignInForm from "@/components/sign-in-form";
-import SignUpForm from "@/components/sign-up-form";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 function LoginContent() {
-  const [showSignIn, setShowSignIn] = useState(false);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const searchParams = useSearchParams();
 
@@ -15,17 +13,11 @@ function LoginContent() {
     setRedirectUrl(searchParams.get("redirect"));
   }, [searchParams]);
 
-  return showSignIn ? (
+  return (
     <SignInForm 
-      onSwitchToSignUp={() => setShowSignIn(false)} 
       redirectUrl={redirectUrl}
     />
-  ) : (
-    <SignUpForm 
-      onSwitchToSignIn={() => setShowSignIn(true)}
-      redirectUrl={redirectUrl}
-    />
-  );
+  )
 }
 
 export default function LoginPage() {
