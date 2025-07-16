@@ -49,7 +49,6 @@ export interface thumbmarkResponse {
   
   // Validate that the provided hash matches the components
   export function validateFingerprintHash(
-    _components: Record<string, unknown>,
     providedHash: string,
   ): boolean {
     // For now, we'll skip hash validation since thumbmark.js uses its own algorithm
@@ -156,7 +155,7 @@ export interface thumbmarkResponse {
     // Get components for further validation
     const components = data.components as Record<string, unknown>;
   
-    if (!validateFingerprintHash(components, data.thumbmark as string)) {
+    if (!validateFingerprintHash(data.thumbmark as string)) {
       errors.push("Fingerprint hash validation failed");
     }
   
