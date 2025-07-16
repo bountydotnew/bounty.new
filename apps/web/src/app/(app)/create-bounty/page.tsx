@@ -4,7 +4,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { z } from "zod";
 import { trpc } from "@/utils/trpc";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ const createBountySchema = z.object({
 
 type CreateBountyForm = z.infer<typeof createBountySchema>;
 
-export default function CreateBountyPage() {
+function CreateBountyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -369,5 +369,13 @@ export default function CreateBountyPage() {
         </div>
       </form>
     </div>
+  );
+}
+
+export default function CreateBountyPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CreateBountyContent />
+    </Suspense>
   );
 } 
