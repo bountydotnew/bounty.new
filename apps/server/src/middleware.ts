@@ -7,8 +7,11 @@ export function middleware(request: NextRequest) {
     process.env.CORS_ORIGIN || "",
     "https://bounty.new",
     "https://www.bounty.new",
-    "https://*.vercel.app",
+    "https://bounty-new-web.vercel.app/",
+    "https://preview.bounty.new",
+    "https://preview.api.bounty.new",
     "https://bounty.ripgrim.com",
+    "https://*.vercel.app",
     "http://grim.local:3001",
     "http://localhost:3001"
   ].filter(Boolean);
