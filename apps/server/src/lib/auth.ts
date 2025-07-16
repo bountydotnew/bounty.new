@@ -13,6 +13,7 @@ export const auth = betterAuth({
     process.env.CORS_ORIGIN || "",
     "https://bounty.new",
     "https://www.bounty.new",
+    "https://*.vercel.app",
     "http://localhost:3001"
   ].filter(Boolean),
   socialProviders: {
