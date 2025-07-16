@@ -1,25 +1,15 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { GitHub } from '@/components/icons/github';
-import Image from 'next/image';
 
 // --- HELPER COMPONENTS (ICONS) ---
 
 
 // --- TYPE DEFINITIONS ---
 
-export interface Testimonial {
-  avatarSrc: string;
-  name: string;
-  handle: string;
-  text: string;
-}
-
 interface SignInPageProps {
   title?: React.ReactNode;
   description?: React.ReactNode;
-  heroImageSrc?: string;
-  testimonials?: Testimonial[];
   onSignIn?: (event: React.FormEvent<HTMLFormElement>) => void;
   onGitHubSignIn?: () => void;
   onResetPassword?: () => void;
@@ -35,28 +25,14 @@ const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-const TestimonialCard = ({ testimonial, delay }: { testimonial: Testimonial, delay: string }) => (
-  <div className={`animate-testimonial ${delay} flex items-start gap-3 rounded-3xl bg-card/40 dark:bg-zinc-800/40 backdrop-blur-xl border border-white/10 p-5 w-64`}>
-    <Image src={testimonial.avatarSrc} className="h-10 w-10 object-cover rounded-2xl" alt="avatar" />
-    <div className="text-sm leading-snug">
-      <p className="flex items-center gap-1 font-medium">{testimonial.name}</p>
-      <p className="text-muted-foreground">{testimonial.handle}</p>
-      <p className="mt-1 text-foreground/80">{testimonial.text}</p>
-    </div>
-  </div>
-);
-
 // --- MAIN COMPONENT ---
 
 export const SignInPage: React.FC<SignInPageProps> = ({
   title = <span className="font-light text-foreground tracking-tighter">Welcome</span>,
   description = "Access your account and continue your journey with us",
-  heroImageSrc,
-  testimonials = [],
   onSignIn,
   onGitHubSignIn,
   onResetPassword,
-  onCreateAccount,
   onSwitchToSignUp,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
