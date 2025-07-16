@@ -1,21 +1,40 @@
 "use client"
 
-import SignInForm from "@/components/sign-in-form";
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { SignInPage } from "@/components/sections/auth/sign-in";
+import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
+import { baseUrl } from "@/lib/constants";
 
 function LoginContent() {
-  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
-  const searchParams = useSearchParams();
+  const handleGitHubSignIn = async () => {
+    try {
+      const callbackURL = `${baseUrl}/dashboard`;
 
-  useEffect(() => {
-    setRedirectUrl(searchParams.get("redirect"));
-  }, [searchParams]);
+      await authClient.signIn.social(
+        {
+          provider: "github",
+          callbackURL
+        },
+        {
+          onSuccess: () => {
+            toast.success("Sign in successful");
+          },
+          onError: (error) => {
+            toast.error(error.error.message || "Sign in failed");
+          },
+        }
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Sign in failed");
+    }
+  };
 
   return (
-    <SignInForm 
-      redirectUrl={redirectUrl}
+    <SignInPage
+      onSignIn={handleGitHubSignIn}
+      onGitHubSignIn={handleGitHubSignIn}
+      onResetPassword={() => { }}
     />
   )
 }
