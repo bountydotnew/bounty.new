@@ -4,25 +4,22 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { HeaderBase } from "@/components/sections/home/header-base";
-import { getStars } from "@/lib/fetchGhStars";
-import { useEffect, useState } from "react";
+import { useGithubStars } from "@/lib/fetchGhStars";
 import Image from "next/image";
 
 export function Header() {
-  const [star, setStar] = useState<string>("");
+  const { data: starCount, isLoading, error } = useGithubStars("ripgrim/bounty.new");
 
-  useEffect(() => {
-    const fetchStars = async () => {
-      try {
-        const data = await getStars();
-        setStar(data);
-      } catch (err) {
-        console.error("Failed to fetch GitHub stars", err);
-      }
-    };
+  // Format the star count for display
+  const formatStarCount = (count: number): string => {
+    if (count >= 1_000_000)
+      return (count / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+    if (count >= 1_000)
+      return (count / 1_000).toFixed(1).replace(/\.0$/, "") + "k";
+    return count.toString();
+  };
 
-    fetchStars();
-  }, []);
+  const displayStars = starCount ? formatStarCount(starCount) : "1.5k";
 
   const leftContent = (
     <Link href="/" className="flex items-center gap-3">
@@ -49,7 +46,7 @@ export function Header() {
       ) : (
         <Link href="https://github.com/ripgrim/bounty.new" target="_blank">
           <Button size="sm" className="text-sm ml-4">
-            GitHub {star}+
+            GitHub {displayStars}+
             <ArrowRight className="h-4 w-4" />
           </Button>
         </Link>

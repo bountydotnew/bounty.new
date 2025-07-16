@@ -2,3 +2,4 @@ node_modules
 .turbo
 .vercel
 /.cursor
+/.vscode

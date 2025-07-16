@@ -43,7 +43,7 @@ export const account = pgTable("account", {
   updatedAt: timestamp("updated_at").notNull(),
 });
 
-export const verification = pgTable("verification", {
+export const verifications = pgTable("verifications", {
   id: text("id").primaryKey(),
   identifier: text("identifier").notNull(),
   value: text("value").notNull(),
@@ -57,4 +57,5 @@ export const waitlist = pgTable("waitlist", {
   email: text("email").notNull(),
   createdAt: timestamp("created_at").notNull(),
   hasAccess: boolean("has_access").notNull().default(false),
+  ipAddress: text("ip_address"),
 });

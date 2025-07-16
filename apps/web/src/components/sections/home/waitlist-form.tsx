@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Shield, AlertCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -14,6 +14,8 @@ import NumberFlow from "@/components/ui/number-flow";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/utils/trpc";
 import { useConfetti } from "@/lib/context/confetti-context";
+import { getThumbmark } from "@thumbmarkjs/thumbmarkjs";
+import type { thumbmarkResponse } from "@/lib/fingerprint-validation";
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -38,48 +40,78 @@ function getCookie(name: string): string | null {
   return null;
 }
 
-function useWaitlistCount() {
+function useWaitlistSubmission() {
   const queryClient = useQueryClient();
   const { celebrate } = useConfetti();
-
-  const query = useQuery(trpc.earlyAccess.getWaitlistCount.queryOptions());
-
   const [success, setSuccess] = useState(false);
+  const [rateLimitInfo, setRateLimitInfo] = useState<{
+    remaining: number;
+    limit: number;
+    resetTime?: string;
+  } | null>(null);
 
   const { mutate, isPending } = useMutation({
-    ...trpc.earlyAccess.joinWaitlist.mutationOptions(),
+    mutationFn: async ({ email, fingerprintData }: { email: string; fingerprintData: thumbmarkResponse }) => {
+      const response = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, fingerprintData }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to join waitlist');
+      }
+
+      return data;
+    },
     onSuccess: (data, variables) => {
       setSuccess(true);
+      setRateLimitInfo({
+        remaining: data.remaining,
+        limit: data.limit,
+      });
+
       const cookieData = {
         submitted: true,
         timestamp: new Date().toISOString(),
         email: btoa(variables.email).substring(0, 16)
       };
       setCookie("waitlist_data", JSON.stringify(cookieData), 365);
-      console.log("Waitlist cookie set:", cookieData);
-      
-      if (data.message === "You've been added to the waitlist!") {
-        celebrate();
-        queryClient.setQueryData(
-          trpc.earlyAccess.getWaitlistCount.queryKey(),
-          (oldData: { count: number } | undefined) => ({
-            count: (oldData?.count ?? 0) + 1,
-          }),
-        );
-      } else {
-        toast.info("You're already on the waitlist! 🎉");
-      }
+
+      celebrate();
+      toast.success("Successfully added to waitlist! 🎉");
+
+      // Update waitlist count optimistically
+      queryClient.setQueryData(
+        trpc.earlyAccess.getWaitlistCount.queryKey(),
+        (oldData: { count: number } | undefined) => ({
+          count: (oldData?.count ?? 0) + 1,
+        }),
+      );
     },
-    onError: (error) => {
-      if (error?.message?.includes("Rate limit exceeded")) {
-        toast.error(error.message);
+    onError: (error: any) => {
+      console.error('Waitlist submission error:', error);
+
+      if (error.message.includes("Rate limit exceeded")) {
+        toast.error("You've reached the limit of 3 attempts per hour. Please try again later.");
+      } else if (error.message.includes("Invalid device fingerprint")) {
+        toast.error("Security validation failed. Please refresh the page and try again.");
       } else {
-        toast.error("Something went wrong. Please try again.");
+        toast.error(error.message || "Something went wrong. Please try again.");
       }
     },
   });
 
-  return { count: query.data?.count ?? 0, mutate, success, setSuccess, isPending };
+  return { mutate, isPending, success, setSuccess, rateLimitInfo };
+}
+
+function useWaitlistCount() {
+  const query = useQuery(trpc.earlyAccess.getWaitlistCount.queryOptions());
+  return { count: query.data?.count ?? 0 };
 }
 
 interface WaitlistFormProps {
@@ -87,33 +119,64 @@ interface WaitlistFormProps {
 }
 
 export function WaitlistForm({ className }: WaitlistFormProps) {
-  const { register, handleSubmit } = useForm<z.infer<typeof formSchema>>({
+  const { register, handleSubmit, formState: { errors } } = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
     },
   });
 
-  const waitlist = useWaitlistCount();
+  const [fingerprintData, setFingerprintData] = useState<thumbmarkResponse | null>(null);
+  const [fingerprintLoading, setFingerprintLoading] = useState(true);
+  const [fingerprintError, setFingerprintError] = useState<string | null>(null);
+
+  const waitlistSubmission = useWaitlistSubmission();
+  const waitlistCount = useWaitlistCount();
 
   useEffect(() => {
     const waitlistData = getCookie("waitlist_data");
     if (waitlistData) {
       try {
         const data = JSON.parse(waitlistData);
-        console.log("Found waitlist cookie:", data);
         if (data.submitted) {
-          waitlist.setSuccess(true);
+          waitlistSubmission.setSuccess(true);
         }
       } catch (error) {
         console.error("Error parsing waitlist cookie:", error);
       }
     }
-  }, [waitlist]);
+  }, [waitlistSubmission]);
+
+  useEffect(() => {
+    // Generate device fingerprint when component mounts
+    const generateFingerprint = async () => {
+      try {
+        setFingerprintLoading(true);
+        setFingerprintError(null);
+        const result = await getThumbmark();
+        setFingerprintData(result);
+      } catch (error) {
+        console.error("Error generating fingerprint:", error);
+        setFingerprintError("Unable to generate device fingerprint. Please refresh and try again.");
+        toast.error("Device fingerprinting failed. Please refresh the page and try again.");
+      } finally {
+        setFingerprintLoading(false);
+      }
+    };
+
+    generateFingerprint();
+  }, []);
 
   async function joinWaitlist({ email }: FormSchema) {
-    waitlist.mutate({ email });
+    if (!fingerprintData) {
+      toast.error("Device fingerprint not ready. Please wait a moment and try again.");
+      return;
+    }
+
+    waitlistSubmission.mutate({ email, fingerprintData });
   }
+
+  const isFormDisabled = waitlistSubmission.isPending || fingerprintLoading || !fingerprintData;
 
   return (
     <div
@@ -122,7 +185,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
         className,
       )}
     >
-      {waitlist.success ? (
+      {waitlistSubmission.success ? (
         <div className="flex flex-col items-center justify-center gap-4 text-center">
           <p className="text-xl font-semibold">
             You&apos;re on the waitlist! 🎉
@@ -131,33 +194,78 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
             We&apos;ll let you know when we&apos;re ready to show you what
             we&apos;ve been working on.
           </p>
+          {waitlistSubmission.rateLimitInfo && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Shield className="h-4 w-4" />
+              <span>
+                {waitlistSubmission.rateLimitInfo.remaining} of {waitlistSubmission.rateLimitInfo.limit} attempts remaining this hour
+              </span>
+            </div>
+          )}
         </div>
       ) : (
-        <form
-          className="mx-auto flex w-full max-w-lg flex-col gap-3 sm:flex-row"
-          onSubmit={handleSubmit(joinWaitlist)}
-        >
-          <Input
-            placeholder="grim@0.email"
-            className="file:text-foreground selection:bg-primary selection:text-primary-foreground bg-input/10 backdrop-blur-sm shadow-xs flex h-9 w-full min-w-0 px-3 py-1 outline-none transition-[color,box-shadow] file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 aria-invalid:border-destructive border border-border z-10 rounded-lg text-base text-foreground placeholder:text-muted-foreground"
-            {...register("email")}
-            disabled={waitlist.isPending}
-          />
-          <Button
-            className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10"
-            type="submit"
-            disabled={waitlist.isPending}
+        <div className="w-full max-w-lg">
+          <form
+            className="mx-auto flex w-full flex-col gap-3 sm:flex-row"
+            onSubmit={handleSubmit(joinWaitlist)}
           >
-            Join Waitlist <ChevronRight className="h-5 w-5" />
-          </Button>
-        </form>
+            <div className="flex-1">
+              <Input
+                placeholder="grim@0.email"
+                className="file:text-foreground selection:bg-primary selection:text-primary-foreground bg-input/10 backdrop-blur-sm shadow-xs flex h-9 w-full min-w-0 px-3 py-1 outline-none transition-[color,box-shadow] file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 aria-invalid:border-destructive border border-border z-10 rounded-lg text-base text-foreground placeholder:text-muted-foreground"
+                {...register("email")}
+                disabled={isFormDisabled}
+              />
+              {errors.email && (
+                <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
+              )}
+            </div>
+            <Button
+              className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10"
+              type="submit"
+              disabled={isFormDisabled}
+            >
+              {waitlistSubmission.isPending ? (
+                "Joining..."
+              ) : (
+                <>
+                  Join Waitlist <ChevronRight className="h-5 w-5" />
+                </>
+              )}
+            </Button>
+          </form>
+
+          {/* Security and status indicators */}
+          <div className="mt-4 space-y-2">
+            {fingerprintLoading && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center">
+                <Shield className="h-4 w-4 animate-pulse" />
+                <span>Initializing security validation...</span>
+              </div>
+            )}
+
+            {fingerprintError && (
+              <div className="flex items-center gap-2 text-sm text-destructive justify-center">
+                <AlertCircle className="h-4 w-4" />
+                <span>Security validation failed. Please refresh the page.</span>
+              </div>
+            )}
+
+            {fingerprintData && !fingerprintLoading && (
+              <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 justify-center">
+                <Shield className="h-4 w-4" />
+                <span>Device verified • Rate limited to 3 attempts per hour</span>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       <div className="relative flex flex-row items-center justify-center gap-2">
         <span className="size-2 rounded-full bg-green-600 dark:bg-green-400" />
         <span className="absolute left-0 size-2 rounded-full bg-green-600 blur-xs dark:bg-green-400" />
         <span className="text-sm text-green-600 sm:text-base dark:text-green-400">
-          <NumberFlow value={waitlist.count} /> {waitlist.count === 1 ? 'person' : 'people'} already joined
+          <NumberFlow value={waitlistCount.count} /> {waitlistCount.count === 1 ? 'person' : 'people'} already joined
         </span>
       </div>
     </div>
