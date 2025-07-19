@@ -9,13 +9,13 @@ const { info, error, warn } = grim();
 const sendWebhookSchema = z.object({
   message: z.string().min(1).max(2000),
   title: z.string().min(1).max(100).optional(),
-  context: z.record(z.unknown()).optional(),
+  context: z.record(z.string(), z.unknown()).optional(),
   type: z.enum(["log", "info", "warning", "error"]).default("log"),
 });
 
 const sendErrorSchema = z.object({
   error: z.string().min(1),
-  context: z.record(z.unknown()).optional(),
+  context: z.record(z.string(), z.unknown()).optional(),
   location: z.string().optional(),
 });
 

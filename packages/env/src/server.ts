@@ -1,10 +1,10 @@
 import { createEnv } from '@t3-oss/env-nextjs';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 export const env = createEnv({
   server: {
     // Database
-    DATABASE_URL: z.string().url().refine((url) => url.startsWith('postgresql://')),
+    DATABASE_URL: z.url().startsWith('postgresql://'),
     // CORS
     CORS_ORIGIN: z.string().url(),
     // Auth

@@ -15,7 +15,7 @@ export const env = createEnv({
     NEXT_PUBLIC_VERCEL_ENV: z.enum(['development', 'preview', 'production']).optional(),
     NEXT_PUBLIC_VERCEL_URL: z.string().optional(),
   },
-  runtimeEnv: {
+  experimental__runtimeEnv: {
     NEXT_PUBLIC_SERVER_URL: process.env.NEXT_PUBLIC_SERVER_URL,
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
     NEXT_PUBLIC_UNKEY_ROOT_KEY: process.env.NEXT_PUBLIC_UNKEY_ROOT_KEY,
