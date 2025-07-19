@@ -25,6 +25,14 @@ import NumberFlow from '@number-flow/react';
     avatar_url: string;
     contributions: number;
     html_url: string;
+    biggestCommit?: {
+      sha: string;
+      message: string;
+      additions: number;
+      deletions: number;
+      coAuthors: string[];
+      url: string;
+    };
   }
   
   const excludedUsernames = [
@@ -39,6 +47,66 @@ import NumberFlow from '@number-flow/react';
 
   const specialRoles: Record<string, { role: string; color: string; position: number }> = {
     ripgrim: { role: 'Founder', color: 'from-blue-500 to-purple-600', position: 1 },
+  };
+
+  // Helper function to parse co-authors from commit message
+  const parseCoAuthors = (message: string): string[] => {
+    const coAuthorRegex = /Co-authored-by:\s*(.+?)\s*<[^>]+>/g;
+    const coAuthors: string[] = [];
+    let match;
+    
+    while ((match = coAuthorRegex.exec(message)) !== null) {
+      coAuthors.push(match[1].trim());
+    }
+    
+    return coAuthors;
+  };
+
+  // Helper function to fetch biggest commit for a contributor
+  const fetchBiggestCommit = async (username: string) => {
+    try {
+      const commitsResponse = await fetch(
+        `https://api.github.com/repos/${REPOSITORY}/commits?author=${username}&per_page=100`
+      );
+      const commits = await commitsResponse.json();
+      
+      if (!Array.isArray(commits) || commits.length === 0) return undefined;
+      
+             let biggestCommit = undefined;
+       let maxChanges = 0;
+       
+       for (const commit of commits.slice(0, 20)) { // Check first 20 commits for performance
+         try {
+           const detailResponse = await fetch(commit.url);
+           const detail = await detailResponse.json();
+           
+           const additions = detail.stats?.additions || 0;
+           const deletions = detail.stats?.deletions || 0;
+           const totalChanges = additions + deletions;
+           
+           if (totalChanges > maxChanges) {
+             maxChanges = totalChanges;
+             const coAuthors = parseCoAuthors(commit.commit.message);
+             
+             biggestCommit = {
+               sha: commit.sha.substring(0, 7),
+               message: commit.commit.message.split('\n')[0].substring(0, 50),
+               additions,
+               deletions,
+               coAuthors,
+               url: commit.html_url,
+             };
+           }
+         } catch (error) {
+           console.log(`Error fetching commit details for ${commit.sha}:`, error);
+         }
+       }
+       
+       return biggestCommit;
+     } catch (error) {
+       console.log(`Error fetching commits for ${username}:`, error);
+       return undefined;
+     }
   };
   
   export default function ContributorsPage() {
@@ -84,9 +152,26 @@ import NumberFlow from '@number-flow/react';
     });
   
     useEffect(() => {
-      if (contributors) {
-        setAllContributors(contributors.filter((c: Contributor) => !excludedUsernames.includes(c.login)));
-      }
+      const loadContributorsWithCommits = async () => {
+        if (contributors) {
+          const filtered = contributors.filter((c: Contributor) => !excludedUsernames.includes(c.login));
+          
+          // Fetch biggest commits for core team and top contributors
+          const enhancedContributors = await Promise.all(
+            filtered.map(async (contributor) => {
+              const biggestCommit = await fetchBiggestCommit(contributor.login);
+              return {
+                ...contributor,
+                biggestCommit,
+              };
+            })
+          );
+          
+          setAllContributors(enhancedContributors);
+        }
+      };
+      
+      loadContributorsWithCommits();
     }, [contributors]);
 
     useEffect(() => {
@@ -252,6 +337,13 @@ import NumberFlow from '@number-flow/react';
                   </div>
                   <div className="text-white/60 text-xs">Active PRs</div>
                 </div>
+
+                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg aspect-[4/3] flex flex-col items-center justify-center p-4">
+                  <div className="text-2xl font-bold">
+                    <NumberFlow value={repoStats.openIssues} />
+                  </div>
+                  <div className="text-white/60 text-xs">Active issues</div>
+                </div>
               </div>
             </div>
           </div>
@@ -285,6 +377,42 @@ import NumberFlow from '@number-flow/react';
                               <GitGraph className="w-4 h-4" />
                               <span><NumberFlow value={member.contributions} /> commits</span>
                             </div>
+                            
+                            {member.biggestCommit && (
+                              <div className="mt-3 p-3 bg-white/5 rounded-lg border border-white/10">
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <div className="flex-1">
+                                    <a 
+                                      href={member.biggestCommit.url}
+                                      target="_blank"
+                                      className="text-sm font-mono text-white/80 hover:text-white transition-colors"
+                                    >
+                                      Largest commit
+                                    </a>
+                                    <p className="text-sm text-white/60 mt-1">
+                                      {member.biggestCommit.message}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs">
+                                    <span className="text-green-400">+{member.biggestCommit.additions}</span>
+                                    <span className="text-red-400">-{member.biggestCommit.deletions}</span>
+                                  </div>
+                                </div>
+                                
+                                {member.biggestCommit.coAuthors.length > 0 && (
+                                  <div className="flex items-center gap-2 text-xs text-white/50">
+                                    <span>Co-authored with:</span>
+                                    <div className="flex gap-1">
+                                      {member.biggestCommit.coAuthors.map((coAuthor, i) => (
+                                        <span key={i} className="bg-white/10 px-2 py-1 rounded">
+                                          {coAuthor}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                           
                           <div className="flex gap-2">
