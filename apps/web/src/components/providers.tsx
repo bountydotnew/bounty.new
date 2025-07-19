@@ -9,13 +9,15 @@ import { ConfettiProvider } from "@/lib/context/confetti-context";
 import { Databuddy } from "@databuddy/sdk";
 import { TOAST_ICONS, TOAST_OPTIONS } from "@/constants/toast";
 import { PostHogProvider } from "posthog-js/react";
-import { env } from "@bounty/env/client";
+
 
 export function Providers({
   children
 }: {
   children: React.ReactNode
 }) {
+  const posthogApiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+
   return (
     <ThemeProvider
       attribute="class"
@@ -24,7 +26,28 @@ export function Providers({
       disableTransitionOnChange
     >
       <QueryClientProvider client={queryClient}>
-        <PostHogProvider apiKey={env.NEXT_PUBLIC_POSTHOG_KEY!}>
+        {posthogApiKey ? (
+          <PostHogProvider apiKey={posthogApiKey}>
+            <ConfettiProvider>
+              {children}
+              <Databuddy
+                clientId="bounty"
+                trackHashChanges={true}
+                trackAttributes={true}
+                trackOutgoingLinks={true}
+                trackInteractions={true}
+                trackEngagement={true}
+                trackScrollDepth={true}
+                trackExitIntent={true}
+                trackBounceRate={true}
+                trackWebVitals={true}
+                trackErrors={true}
+                enableBatching={true}
+              />
+            </ConfettiProvider>
+            <ReactQueryDevtools />
+          </PostHogProvider>
+        ) : (
           <ConfettiProvider>
             {children}
             <Databuddy
@@ -42,8 +65,7 @@ export function Providers({
               enableBatching={true}
             />
           </ConfettiProvider>
-          <ReactQueryDevtools />
-        </PostHogProvider>
+        )}
       </QueryClientProvider>
       <Toaster
         richColors

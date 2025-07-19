@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { WaitlistForm } from "./waitlist-form";
 import { BountyDraftForm } from "./bounty-draft-form";
 import { useSearchParams } from "next/navigation";
@@ -8,7 +9,7 @@ interface ConditionalFormProps {
   className?: string;
 }
 
-export function ConditionalForm({ className }: ConditionalFormProps) {
+function ConditionalFormContent({ className }: ConditionalFormProps) {
   const searchParams = useSearchParams();
   const isDevelopment = process.env.NODE_ENV === "production" || searchParams.get("dev") === "true";
 
@@ -16,5 +17,13 @@ export function ConditionalForm({ className }: ConditionalFormProps) {
     <BountyDraftForm className={className} />
   ) : (
     <WaitlistForm className={className} />
+  );
+}
+
+export function ConditionalForm({ className }: ConditionalFormProps) {
+  return (
+    <Suspense fallback={<WaitlistForm className={className} />}>
+      <ConditionalFormContent className={className} />
+    </Suspense>
   );
 } 
