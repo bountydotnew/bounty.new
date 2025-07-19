@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { Ratelimit } from '@unkey/ratelimit';
 import { validateFingerprint } from '@/lib/fingerprint-validation';
+import { grim } from '@/hooks/use-dev-log';
+
+const { log, error, warn } = grim();
+
 
 const unkey = new Ratelimit({
   rootKey: process.env.UNKEY_ROOT_KEY || "",
@@ -42,7 +46,7 @@ export async function POST(request: NextRequest) {
     // Validate fingerprint
     const fingerprintValidation = validateFingerprint(fingerprintData);
     if (!fingerprintValidation.isValid) {
-      console.log('[Waitlist] Fingerprint validation failed:', fingerprintValidation.errors);
+      log('[Waitlist] Fingerprint validation failed:', fingerprintValidation.errors);
       return NextResponse.json(
         {
           error: 'Invalid device fingerprint: ' + fingerprintValidation.errors.join(', '),
@@ -55,21 +59,21 @@ export async function POST(request: NextRequest) {
     // Use the thumbmark hash as the rate limit identifier
     const identifier = fingerprintData.thumbmark;
 
-    console.log('[Waitlist] Processing request for email:', email);
-    console.log('[Waitlist] Using fingerprint identifier:', identifier.substring(0, 8) + '...');
+    log('[Waitlist] Processing request for email:', email);
+    log('[Waitlist] Using fingerprint identifier:', identifier.substring(0, 8) + '...');
 
     // Check rate limit with Unkey
     let rateLimitResult;
     try {
       rateLimitResult = await unkey.limit(identifier);
-      console.log('[Waitlist] Rate limit result:', {
+      log('[Waitlist] Rate limit result:', {
         success: rateLimitResult.success,
         remaining: rateLimitResult.remaining,
         limit: rateLimitResult.limit,
         reset: rateLimitResult.reset
       });
     } catch (error) {
-      console.error('[Waitlist] Unkey error:', error);
+      warn('[Waitlist] Unkey error:', error);
       return NextResponse.json(
         {
           error: 'Rate limiting service unavailable',
@@ -108,12 +112,12 @@ export async function POST(request: NextRequest) {
       });
 
       if (response.ok) {
-        console.log('[Waitlist] Successfully added email to waitlist:', email);
+        log('[Waitlist] Successfully added email to waitlist:', email);
       } else {
-        console.error('[Waitlist] Failed to save to database:', response.status);
+        warn('[Waitlist] Failed to save to database:', response.status);
       }
     } catch (dbError) {
-      console.error('[Waitlist] Database error:', dbError);
+      error('[Waitlist] Database error:', dbError);
       // Continue anyway - we've already validated the rate limit and fingerprint
       // The user will still get a success response since rate limiting passed
     }
@@ -126,7 +130,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[Waitlist] Unexpected error:', error);
+    warn('[Waitlist] Unexpected error:', error);
     return NextResponse.json(
       {
         error: 'Internal server error',

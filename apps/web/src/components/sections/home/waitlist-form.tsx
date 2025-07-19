@@ -140,7 +140,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
         const data = JSON.parse(waitlistData);
         if (data.submitted) {
           waitlistSubmission.setSuccess(true);
-        }
+        } 
       } catch (error) {
         console.error("Error parsing waitlist cookie:", error);
       }

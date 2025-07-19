@@ -21,8 +21,15 @@ import {
 import { ConditionalForm } from "./conditional-form"
 import { BackedByBadge } from "@/components/ui/backed-by-badge"
 import Image from "next/image"
+import { grim } from "@/hooks/use-dev-log";
 
+const { log } = grim();
 export default function BountyPlatform() {
+  // the useState hook is a function that returns an array with two elements:
+  // the first element is the variable, which is the initial value of the variable
+  // the second element is the function to update the variable, which is the function that updates the variable
+  //
+  // so if you use the set function, it will update the variable and re-render the component
   const [selectedBounty, setSelectedBounty] = useState<number | null>(null)
   const [approvedSubmissions, setApprovedSubmissions] = useState<number[]>([])
   const [paymentProcessing, setPaymentProcessing] = useState<number | null>(null)
@@ -45,7 +52,7 @@ export default function BountyPlatform() {
 
   const handleApproveSubmission = (id: number, bountyReward: number) => {
     setPaymentProcessing(id)
-    console.log("approving submission", id, bountyReward)
+    log("approving submission", id, bountyReward)
     setTimeout(() => {
       setApprovedSubmissions((prev) => [...prev, id])
       setPaymentProcessing(null)

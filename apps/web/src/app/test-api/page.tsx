@@ -2,6 +2,9 @@
 
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
+import { grim } from "@/hooks/use-dev-log";
+
+const { log, warn } = grim();
 
 export default function TestAPIPage() {
   
@@ -14,11 +17,11 @@ export default function TestAPIPage() {
   const createBounty = useMutation({
     ...trpc.bounties.create.mutationOptions(),
     onSuccess: () => {
-      console.log("Bounty created!");
+      log("Bounty created!");
       bounties.refetch();
     },
     onError: (error) => {
-      console.error("Error creating bounty:", error.message);
+      warn("Error creating bounty:", error.message);
     }
   });
 
