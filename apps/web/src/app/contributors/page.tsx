@@ -19,6 +19,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import NumberFlow from '@number-flow/react';
+import { LINKS } from '@/constants/links';
   
   interface Contributor {
     login: string;
@@ -553,7 +554,7 @@ import NumberFlow from '@number-flow/react';
                   size="lg"
                   className="bg-white text-black hover:bg-white/90 rounded-full px-8"
                 >
-                  <a href={`https://github.com/${REPOSITORY}`} target="_blank">
+                  <a href={LINKS.SOCIALS.GITHUB} target="_blank">
                     <Github className="w-5 h-5 mr-2" />
                     Start Contributing
                   </a>

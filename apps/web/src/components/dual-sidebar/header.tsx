@@ -5,9 +5,9 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import Link from "next/link";
 
 const links = [
-  { to: "/", label: "Home" },
-  { to: "/dashboard", label: "Dashboard" },
+  { to: "/dashboard", label: "Home" },
   { to: "/bounties", label: "Bounties" },
+  { to: "#", label: "Settings" },
 ];
 
 export function Header() {

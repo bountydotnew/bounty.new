@@ -160,16 +160,16 @@ export default function Dashboard() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5" />
+                    {/* <MessageSquare className="h-5 w-5" /> */}
                     Recent Activity
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">
-                      <div className="bg-blue-100 dark:bg-blue-900 p-1 rounded-full">
+                      {/* <div className="bg-blue-100 dark:bg-blue-900 p-1 rounded-full">
                         <MessageSquare className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-                      </div>
+                      </div> */}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm">New comment on bounty</p>
                         <p className="text-xs text-muted-foreground truncate">Build a React component...</p>
@@ -178,9 +178,9 @@ export default function Dashboard() {
                     </div>
 
                     <div className="flex items-start gap-3">
-                      <div className="bg-green-100 dark:bg-green-900 p-1 rounded-full">
+                      {/* <div className="bg-green-100 dark:bg-green-900 p-1 rounded-full">
                         <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
-                      </div>
+                      </div> */}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm">Bounty completed</p>
                         <p className="text-xs text-muted-foreground truncate">API integration task</p>
@@ -189,9 +189,9 @@ export default function Dashboard() {
                     </div>
 
                     <div className="flex items-start gap-3">
-                      <div className="bg-yellow-100 dark:bg-yellow-900 p-1 rounded-full">
+                      {/* <div className="bg-yellow-100 dark:bg-yellow-900 p-1 rounded-full">
                         <DollarSign className="h-3 w-3 text-yellow-600 dark:text-yellow-400" />
-                      </div>
+                      </div> */}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm">Payment received</p>
                         <p className="text-xs text-muted-foreground truncate">$500 for mobile app bug fix</p>
