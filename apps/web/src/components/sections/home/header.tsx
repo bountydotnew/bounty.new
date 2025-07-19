@@ -15,7 +15,6 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
-import Logo from "@/components/icons/logo";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export function Header() {
@@ -99,9 +98,9 @@ export function Header() {
           <Link href={LINKS.LOGIN}>
             <Button size="sm" className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10">
               Log in
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </Link>
         )
       ) : (
         <Link href={LINKS.SOCIALS.GITHUB} target="_blank">
@@ -116,13 +115,13 @@ export function Header() {
 
   return (
     <>
-      <div className="mx-auto fixed top-0 left-0 z-30 w-full">
-        <HeaderBase
-          className="bg-[#1D1D1D]/80 backdrop-blur-sm border border-white/10 rounded-2xl max-w-3xl mx-auto mt-4 pl-4 pr-[14px]"
-          leftContent={leftContent}
-          rightContent={rightContent}
-        />
-      </div>
+    <div className="mx-auto fixed top-0 left-0 z-30 w-full">
+      <HeaderBase
+        className="bg-[#1D1D1D]/80 backdrop-blur-sm border border-white/10 rounded-2xl max-w-3xl mx-auto mt-4 pl-4 pr-[14px]"
+        leftContent={leftContent}
+        rightContent={rightContent}
+      />
+    </div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="bg-[#2D2D2D] border-white/20 text-white max-w-md">

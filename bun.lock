@@ -55,6 +55,8 @@
         "@radix-ui/react-tabs": "^1.1.12",
         "@radix-ui/react-toggle": "^1.1.9",
         "@radix-ui/react-tooltip": "^1.2.7",
+        "@stagewise-plugins/react": "^0.6.1",
+        "@stagewise/toolbar-next": "^0.6.1",
         "@tanstack/react-form": "^1.12.3",
         "@tanstack/react-query": "^5.80.5",
         "@thumbmarkjs/thumbmarkjs": "^1.0.0",
@@ -435,6 +437,14 @@
     "@simplewebauthn/browser": ["@simplewebauthn/browser@13.1.0", "", {}, "sha512-WuHZ/PYvyPJ9nxSzgHtOEjogBhwJfC8xzYkPC+rR/+8chl/ft4ngjiK8kSU5HtRJfczupyOh33b25TjYbvwAcg=="],
 
     "@simplewebauthn/server": ["@simplewebauthn/server@13.1.1", "", { "dependencies": { "@hexagon/base64": "^1.1.27", "@levischuck/tiny-cbor": "^0.2.2", "@peculiar/asn1-android": "^2.3.10", "@peculiar/asn1-ecc": "^2.3.8", "@peculiar/asn1-rsa": "^2.3.8", "@peculiar/asn1-schema": "^2.3.8", "@peculiar/asn1-x509": "^2.3.8" } }, "sha512-1hsLpRHfSuMB9ee2aAdh0Htza/X3f4djhYISrggqGe3xopNjOcePiSDkDDoPzDYaaMCrbqGP1H2TYU7bgL9PmA=="],
+
+    "@stagewise-plugins/react": ["@stagewise-plugins/react@0.6.1", "", { "peerDependencies": { "@stagewise/toolbar": "0.6.1" } }, "sha512-2qNfDMy8hUz6vDRa7kzeGxhCXpobNs+w/dRiJx/2aaXRHBU+/8/SJ7hUSA21TGyxDCPB8adP2I6SCFkd49mXZA=="],
+
+    "@stagewise/toolbar": ["@stagewise/toolbar@0.6.1", "", {}, "sha512-+oEDavuKT6QsGzTD44g3sxDLPa6RAbtvQMT7PIyL8YWYUNWbK2OJVgzxdinP/osGCdcomsNGk2VbtQQfO/ToXw=="],
+
+    "@stagewise/toolbar-next": ["@stagewise/toolbar-next@0.6.1", "", { "dependencies": { "@stagewise/toolbar-react": "0.6.1" }, "peerDependencies": { "@types/react": ">=18.0.0", "next": ">=14.0.0", "react": ">=18.0.0" } }, "sha512-DPmVS8ng9StLBQDVghCKz814HEj0l90tzUMTHfEf3cB+cC4cjP273zydEAW7sQkEicUXH05DLfjiiC0zJy9p4w=="],
+
+    "@stagewise/toolbar-react": ["@stagewise/toolbar-react@0.6.1", "", { "dependencies": { "@stagewise/toolbar": "0.6.1" }, "peerDependencies": { "@types/react": ">=18.0.0", "react": ">=18.0.0" } }, "sha512-Sb0ZNeOLBFoB/JkQ5KzuozxSdqi1yKHJak9MMHNNXcvKNqG1Rj9+ghkFSXibYtYqmzKTjzPVQy/cCfChD6HAfg=="],
 
     "@standard-schema/spec": ["@standard-schema/spec@1.0.0", "", {}, "sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA=="],
 

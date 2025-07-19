@@ -521,7 +521,7 @@ import { LINKS } from '@/constants/links';
                 ))
               ) : (
                 <div className="col-span-4 md:col-span-8 text-center py-8">
-                  <div className="text-white/60">Nobody's contributed yet 😔</div>
+                  <div className="text-white/60">Nobody&apos;s contributed yet 😔</div>
                 </div>
               )}
             </div>
