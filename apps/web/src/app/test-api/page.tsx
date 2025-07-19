@@ -84,10 +84,6 @@ export default function TestAPIPage() {
     });
   };
 
-  const handleTestLogError = () => {
-    error("This is a test error using grim error function");
-  };
-
   return (
     <div className="bg-landing-background mx-auto w-full">
       <Header />
@@ -212,32 +208,58 @@ export default function TestAPIPage() {
           <h3 className="text-md font-medium mb-2">Client-side Log Testing</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             <button
+              onClick={() => sendWebhook.mutate({ message: "This is a test log message", title: "Test Log" })}
+              className="px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm"
+            >
+              Test Log → Discord
+            </button>
+            <button
+              onClick={() => sendWebhook.mutate({ message: "This is a test info message", title: "Test Info", type: "info" })}
+              className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+            >
+              Test Info → Discord
+            </button>
+            <button
+              onClick={() => sendWebhook.mutate({ message: "This is a test warning message", title: "Test Warning", type: "warning" })}
+              className="px-3 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
+            >
+              Test Warn → Discord
+            </button>
+            <button
+              onClick={() => reportError.mutate({ error: "This is a test error using direct tRPC call", location: "test-page" })}
+              className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+            >
+              Test Error → Discord
+            </button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+            <button
               onClick={() => log("This is a test log message")}
               className="px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm"
             >
-              Test Log
+              Test grim().log
             </button>
             <button
               onClick={() => info("This is a test info message")}
               className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
             >
-              Test Info
+              Test grim().info
             </button>
             <button
               onClick={() => warn("This is a test warning message")}
               className="px-3 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
             >
-              Test Warn
+              Test grim().warn
             </button>
             <button
-              onClick={handleTestLogError}
+              onClick={() => error("This is a test error using grim")}
               className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
             >
-              Test Error
+              Test grim().error
             </button>
           </div>
           <p className="text-xs text-gray-500 mt-2">
-            Tests all grim() log types - in production, these automatically send to Discord
+            Tests grim() logging - dev: console + webhook, prod: webhook only
           </p>
         </div>
         

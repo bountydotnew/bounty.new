@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
 import V0Hero from "@/components/sections/home/v0-hero";
 import { Header } from "@/components/sections/home/header";
-import { grim } from "@/hooks/use-dev-log";
+import { grim } from "@bounty/dev-logger";
 
 const { log } = grim();
 

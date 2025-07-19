@@ -10,7 +10,7 @@ const sendWebhookSchema = z.object({
   message: z.string().min(1).max(2000),
   title: z.string().min(1).max(100).optional(),
   context: z.record(z.unknown()).optional(),
-  type: z.enum(["info", "warning", "error"]).default("info"),
+  type: z.enum(["log", "info", "warning", "error"]).default("log"),
 });
 
 const sendErrorSchema = z.object({
@@ -36,9 +36,10 @@ export const notificationsRouter = router({
         info("[sendWebhook] Sending webhook:", { type: input.type, title: input.title });
 
         const colorMap = {
-          info: 0x00FF00,   // Green
-          warning: 0xFFFF00, // Yellow
-          error: 0xFF0000,   // Red
+          log: 0xFFFFFF,  
+          info: 0x808080,  
+          warning: 0xFFFF00, 
+          error: 0xFF0000,  
         };
 
         const success = await sendInfoWebhook({
@@ -204,7 +205,7 @@ export const notificationsRouter = router({
         }
 
         // Only send to Discord in production
-        if (process.env.NODE_ENV === 'production') {
+        if (process.env.NODE_ENV === 'development') {
           info("[reportError] Reporting client-side error:", { location: input.location });
 
           const success = await sendErrorWebhook({
