@@ -80,6 +80,9 @@ const fetchBiggestCommit = async (username: string) => {
     const commitsResponse = await fetch(
       `https://api.github.com/repos/${REPOSITORY}/commits?author=${username}&per_page=20`
     );
+    
+    if (!commitsResponse.ok) return undefined;
+    
     const commits = await commitsResponse.json();
     
     if (!Array.isArray(commits) || commits.length === 0) return undefined;
@@ -176,33 +179,50 @@ export default function ContributorsPage() {
   const lastCommitRef = useRef<string>('');
 
   const { data: contributors } = useQuery({
-    queryFn: () =>
-      fetch(`https://api.github.com/repos/${REPOSITORY}/contributors?per_page=100`).then(
-        (res) => res.json(),
-      ) as Promise<Contributor[]>,
+    queryFn: async () => {
+      const res = await fetch(`https://api.github.com/repos/${REPOSITORY}/contributors?per_page=100`);
+      if (!res.ok) throw new Error('Failed to fetch contributors');
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
     queryKey: ['contributors', REPOSITORY],
+    retry: 3,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   const { data: repoData } = useQuery({
-    queryFn: () =>
-      fetch(`https://api.github.com/repos/${REPOSITORY}`).then((res) => res.json()),
+    queryFn: async () => {
+      const res = await fetch(`https://api.github.com/repos/${REPOSITORY}`);
+      if (!res.ok) throw new Error('Failed to fetch repo data');
+      return res.json();
+    },
     queryKey: ['repo-data', REPOSITORY],
+    retry: 3,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   const { data: prsData } = useQuery({
-    queryFn: () =>
-      fetch(`https://api.github.com/repos/${REPOSITORY}/pulls?state=open`).then(
-        (res) => res.json(),
-      ),
+    queryFn: async () => {
+      const res = await fetch(`https://api.github.com/repos/${REPOSITORY}/pulls?state=open`);
+      if (!res.ok) throw new Error('Failed to fetch PRs');
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
     queryKey: ['prs-data', REPOSITORY],
+    retry: 3,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   const { data: commitsData } = useQuery({
-    queryFn: () =>
-      fetch(`https://api.github.com/repos/${REPOSITORY}/commits?per_page=100`).then(
-        (res) => res.json(),
-      ),
+    queryFn: async () => {
+      const res = await fetch(`https://api.github.com/repos/${REPOSITORY}/commits?per_page=100`);
+      if (!res.ok) throw new Error('Failed to fetch commits');
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
     queryKey: ['commits-data', REPOSITORY],
+    retry: 3,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Real-time commit polling
@@ -212,7 +232,7 @@ export default function ContributorsPage() {
         const response = await fetch(`https://api.github.com/repos/${REPOSITORY}/commits?per_page=5`);
         const commits: CommitData[] = await response.json();
         
-        if (commits && commits.length > 0) {
+        if (commits && Array.isArray(commits) && commits.length > 0) {
           const latestCommit = commits[0];
           
           if (lastCommitRef.current && lastCommitRef.current !== latestCommit.sha) {
@@ -246,7 +266,7 @@ export default function ContributorsPage() {
 
   useEffect(() => {
     const loadContributorsWithCommits = async () => {
-      if (contributors) {
+      if (contributors && Array.isArray(contributors)) {
         const filtered = contributors.filter((c: Contributor) => !excludedUsernames.includes(c.login));
         
         const enhancedContributors = await Promise.all(
@@ -267,7 +287,11 @@ export default function ContributorsPage() {
   }, [contributors]);
 
   useEffect(() => {
-    if (!repoData || !commitsData || !prsData) {
+    // Set default values if API calls fail
+    const safeCommitsData = commitsData && Array.isArray(commitsData) ? commitsData : [];
+    const safePrsData = prsData && Array.isArray(prsData) ? prsData : [];
+    
+    if (!repoData) {
       setIsLoading(true);
       return;
     }
@@ -278,8 +302,8 @@ export default function ContributorsPage() {
       stars: repoData.stargazers_count ?? 0,
       forks: repoData.forks_count ?? 0,
       watchers: repoData.subscribers_count ?? 0,
-      openIssues: (repoData.open_issues_count ?? 0) - prsData.length,
-      openPRs: prsData.length ?? 0,
+      openIssues: (repoData.open_issues_count ?? 0) - safePrsData.length,
+      openPRs: safePrsData.length ?? 0,
     });
 
     const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -290,7 +314,7 @@ export default function ContributorsPage() {
 
       const dateStr = date.toISOString().split('T')[0];
 
-      const dayCommits = commitsData.filter((commit: { commit: { author: { date: string } } }) =>
+      const dayCommits = safeCommitsData.filter((commit: { commit: { author: { date: string } } }) =>
         commit.commit.author.date.startsWith(dateStr ?? ''),
       ).length;
 
@@ -308,8 +332,9 @@ export default function ContributorsPage() {
   }, [repoData, commitsData, prsData]);
 
   const filteredCoreTeam = useMemo(() => {
-    return allContributors
-      ?.filter(
+    const safeContributors = allContributors || [];
+    return safeContributors
+      .filter(
         (contributor) =>
           !excludedUsernames.includes(contributor.login) &&
           coreTeamMembers.some(
@@ -323,20 +348,19 @@ export default function ContributorsPage() {
       });
   }, [allContributors]);
 
-  const filteredContributors = useMemo(
-    () =>
-      allContributors
-        ?.filter(
-          (contributor) =>
-            !excludedUsernames.includes(contributor.login) &&
-            !coreTeamMembers.some(
-              (member) => member.toLowerCase() === contributor.login.toLowerCase(),
-            ),
-        )
-        .sort((a, b) => b.contributions - a.contributions)
-        .slice(0, 12),
-    [allContributors],
-  );
+  const filteredContributors = useMemo(() => {
+    const safeContributors = allContributors || [];
+    return safeContributors
+      .filter(
+        (contributor) =>
+          !excludedUsernames.includes(contributor.login) &&
+          !coreTeamMembers.some(
+            (member) => member.toLowerCase() === contributor.login.toLowerCase(),
+          ),
+      )
+      .sort((a, b) => b.contributions - a.contributions)
+      .slice(0, 12);
+  }, [allContributors]);
 
   if (isLoading) {
     return (
