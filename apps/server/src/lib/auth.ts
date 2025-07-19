@@ -15,6 +15,7 @@ export const auth = betterAuth({
     "https://www.bounty.new",
     "https://*.vercel.app",
     "http://localhost:3001",
+    "http://localhost:3000",
     "https://preview.bounty.new",
     "http://192.168.1.147:3001"
   ].filter(Boolean),
