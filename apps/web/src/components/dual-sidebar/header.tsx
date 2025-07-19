@@ -2,6 +2,13 @@
 
 import { cn } from "@/lib/utils";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import Link from "next/link";
+
+const links = [
+  { to: "/", label: "Home" },
+  { to: "/dashboard", label: "Dashboard" },
+  { to: "/bounties", label: "Bounties" },
+];
 
 export function Header() {
   return (
@@ -12,7 +19,15 @@ export function Header() {
     >
       <div className="flex items-center gap-1 sm:gap-4">
         <SidebarTrigger className="-ml-1" />
-        <div>Dual Sidebar</div>
+        <div className="flex gap-4 text-lg">
+          {links.map(({ to, label }) => {
+            return (
+              <Link key={to} href={to}>
+                {label}
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       {/* <div className="flex items-center gap-2">

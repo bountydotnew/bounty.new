@@ -134,38 +134,49 @@ export default function BountyPlatform() {
           style={{ color: "transparent" }}
           src="/landing-page-bg.png"
         />
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 z-10" style={{background: "linear-gradient(to bottom, rgba(10,10,10,0) 0%, #0a0a0a 100%)"}} />
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 z-10" style={{ background: "linear-gradient(to bottom, rgba(10,10,10,0) 0%, #0a0a0a 100%)" }} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
-          <div className="max-w-4xl mx-auto text-center space-y-8 my-10">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="space-y-6"
-            >
-              <BackedByBadge />
+          <div className="max-w-4xl lg:max-w-7xl mx-auto text-center lg:text-left space-y-8 my-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-32 items-center">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                className="space-y-6 text-center lg:text-left"
+              >
+                <div className="lg:hidden">
+                  <BackedByBadge />
+                </div>
+                <div className="hidden lg:block">
+                  <div className="flex justify-start">
+                    <BackedByBadge />
+                  </div>
+                </div>
 
-              <h1 className="text-5xl md:text-7xl font-light tracking-tighter leading-[0.9]">
-                Ship faster.
-                <br />
-                <span className="bg-gradient-to-r from-blue-400 via-white to-green-400 bg-clip-text text-transparent font-medium">
-                  Get paid
-                  <span className="ml-2 italic font-normal font-serif">instantly.</span>
-                </span>
-              </h1>
+                <h1 className="text-5xl md:text-7xl font-light tracking-tighter leading-[0.9]">
+                  Ship faster.
+                  <br />
+                  <span className="bg-gradient-to-r from-blue-400 via-white to-green-400 bg-clip-text text-transparent font-medium">
+                    Get paid
+                    <span className="ml-2 italic font-normal font-serif">instantly.</span>
+                  </span>
+                </h1>
 
-              <p className="text-xl text-white/50 font-light max-w-2xl mx-auto leading-relaxed">
-                The bounty platform where creators post challenges and developers deliver solutions. Instant <Stripe className="inline-block ml-[-6px] w-14 h-14 fill-[#635BFF]" />
-                payouts, <V0Icon className="inline h-6 w-6 fill-white opacity-100 text-white/100" /> integration, <span className="italic font-normal">zero</span> friction.
-              </p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <ConditionalForm />
-            </motion.div>
+                <p className="text-xl text-white/50 font-light max-w-2xl lg:max-w-none mx-auto lg:mx-0 leading-relaxed">
+                  The bounty platform where creators post challenges and developers deliver solutions. Instant <Stripe className="inline-block ml-[-6px] w-14 h-14 fill-[#635BFF]" />
+                  payouts, <V0Icon className="inline h-6 w-6 fill-white opacity-100 text-white/100" /> integration, <span className="italic font-normal">zero</span> friction.
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                className="flex justify-center lg:justify-end"
+              >
+                <ConditionalForm />
+              </motion.div>
+            </div>
 
             {/* Live Stats */}
             <motion.div
@@ -210,39 +221,6 @@ export default function BountyPlatform() {
       <section className="relative py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              viewport={{ once: true }}
-              className="space-y-6"
-            >
-              <div className="space-y-4">
-                <Badge className="bg-white text-black">Live Bounties</Badge>
-                <h2 className="text-3xl md:text-4xl font-light tracking-tight leading-tight">
-                  Post your challenge.
-                  <br />
-                  <span className="text-white/50">Watch solutions flow in.</span>
-                </h2>
-                <p className="text-white/50 leading-relaxed">
-                  Define exactly what you need. Set bounty types, requirements, and rewards. Our smart categorization
-                  ensures the right developers see your challenge.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {[
-                  { icon: <V0Icon className="inline h-3 w-3 mr-1" />, text: "for UI/UX components" },
-                  "Full-stack applications",
-                  "Design and creative work",
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3 text-sm text-white/60">
-                    {typeof item === "object" ? item.icon : <div className="w-1 h-1 bg-white/30 rounded-full" />}
-                    <span>{typeof item === "object" ? item.text : item}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
 
             <motion.div
               initial={{ opacity: 0, x: 30 }}
@@ -316,6 +294,40 @@ export default function BountyPlatform() {
                 </motion.div>
               ))}
             </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              viewport={{ once: true }}
+              className="space-y-6"
+            >
+              <div className="space-y-4">
+                <Badge className="bg-white text-black">Live Bounties</Badge>
+                <h2 className="text-3xl md:text-4xl font-light tracking-tight leading-tight">
+                  Post your challenge.
+                  <br />
+                  <span className="text-white/50">Watch solutions flow in.</span>
+                </h2>
+                <p className="text-white/50 leading-relaxed">
+                  Define exactly what you need. Set bounty types, requirements, and rewards. Our smart categorization
+                  ensures the right developers see your challenge.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  { icon: <V0Icon className="inline h-3 w-3 mr-1" />, text: "for UI/UX components" },
+                  "Full-stack applications",
+                  "Design and creative work",
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3 text-sm text-white/60">
+                    {typeof item === "object" ? item.icon : <div className="w-1 h-1 bg-white/30 rounded-full" />}
+                    <span>{typeof item === "object" ? item.text : item}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -324,6 +336,150 @@ export default function BountyPlatform() {
       <section className="relative py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              viewport={{ once: true }}
+              className="space-y-4"
+            >
+              <div className="space-y-4">
+                <Badge className="bg-white text-black">Instant Stripe Payouts</Badge>
+                <h2 className="text-3xl md:text-4xl font-light tracking-tight leading-tight">
+                  Approve once.
+                  <br />
+                  <span className="text-white/50">Money moves instantly.</span>
+                </h2>
+                <p className="text-white/50 leading-relaxed">
+                  Powered by Stripe, payments happen the moment you approve a submission. No escrow delays, no manual
+                  transfers. Just instant rewards for great work.
+                </p>
+              </div>
+
+              <div className="relative">
+                <AnimatePresence>
+                  {approvedSubmissions.map((submissionId, index) => {
+                    const submission = mockSubmissions.find((s) => s.id === submissionId)
+                    if (!submission) return null
+
+                    return (
+                      <motion.div
+                        key={submissionId}
+                        initial={{
+                          opacity: 0,
+                          y: -30,
+                          scale: 0.9,
+                          rotate: -6,
+                        }}
+                        animate={{
+                          opacity: 1,
+                          y: index * -8,
+                          x: index * 4,
+                          scale: 1,
+                          rotate: index * 1.5,
+                        }}
+                        transition={{
+                          duration: 0.6,
+                          delay: index * 0.1,
+                          ease: [0.16, 1, 0.3, 1],
+                          type: "spring",
+                          damping: 20,
+                          stiffness: 300,
+                        }}
+                        style={{
+                          zIndex: 10 + index,
+                          position: index === 0 ? "relative" : "absolute",
+                          top: index === 0 ? 0 : 0,
+                          left: index === 0 ? 0 : 0,
+                          width: index === 0 ? "100%" : "100%",
+                        }}
+                        className="w-full"
+                      >
+                        <Card className="bg-gradient-to-br from-zinc-900 to-[#0a0a0a] border-white/15 backdrop-blur-xl shadow-2xl">
+                          <CardContent className="p-6 space-y-4">
+                            <div className="flex items-center justify-between">
+                              <h3 className="font-medium text-white">Payment Processing</h3>
+                              <div className="flex items-center gap-2">
+                                {/* <div className="w-6 h-6 bg-[#635bff] rounded flex items-center justify-center">
+                                  <span className="text-white text-xs font-bold">S</span>
+                                </div> */}
+                                <span className="text-xs text-white/60 flex items-center">Powered by <Stripe className="w-12 h-12 fill-[#635BFF]" /></span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between p-3 bg-gradient-to-br from-green-500/20 to-green-500/5 border border-green-500/30 rounded-lg backdrop-blur-sm">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                    <CheckCircle className="w-4 h-4 text-white" />
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Avatar className="w-6 h-6 border border-green-300/30">
+                                      <AvatarImage
+                                        src={submission.avatar || "/placeholder.svg"}
+                                        alt={submission.author}
+                                      />
+                                      <AvatarFallback className="bg-green-500/20 text-green-300 text-xs">
+                                        {submission.author.slice(0, 2).toUpperCase()}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                      <p className="text-sm font-medium text-white">Payment Sent</p>
+                                      <p className="text-xs text-white/60">to {submission.author}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm font-medium text-green-400">${submission.bountyReward}</p>
+                                  <p className="text-xs text-white/50">Just now</p>
+                                </div>
+                              </div>
+
+                              <div className="space-y-2 text-xs">
+                                <div className="flex justify-between text-white/50">
+                                  <span>Bounty reward</span>
+                                  <span>${submission.bountyReward}</span>
+                                </div>
+                                <div className="flex justify-between text-white/50">
+                                  <span>Platform fee (5%)</span>
+                                  <span>${(submission.bountyReward * 0.05).toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between text-white/50">
+                                  <span>Stripe processing</span>
+                                  <span>$13.05</span>
+                                </div>
+                                <div className="border-t border-white/10 pt-2">
+                                  <div className="flex justify-between text-sm font-medium text-white">
+                                    <span>Total charged</span>
+                                    <span>${(submission.bountyReward * 1.05 + 13.05).toFixed(2)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 text-xs text-white/40">
+                              <Shield className="w-3 h-3" />
+                              <span>Secure payments processed by Stripe</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    )
+                  })}
+                </AnimatePresence>
+              </div>
+
+              <div className="space-y-3 pt-8">
+                {["Instant payouts to winners", "Transparent fee structure", "Global payment support"].map(
+                  (item, i) => (
+                    <div key={i} className="flex items-center gap-3 text-sm text-white/60">
+                      <div className="w-1 h-1 bg-white/30 rounded-full" />
+                      <span>{item}</span>
+                    </div>
+                  ),
+                )}
+              </div>
+            </motion.div>
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -403,150 +559,7 @@ export default function BountyPlatform() {
               </Card>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              viewport={{ once: true }}
-              className="space-y-4"
-            >
-              <div className="space-y-4">
-                <Badge className="bg-white text-black">Instant Stripe Payouts</Badge>
-                <h2 className="text-3xl md:text-4xl font-light tracking-tight leading-tight">
-                  Approve once.
-                  <br />
-                  <span className="text-white/50">Money moves instantly.</span>
-                </h2>
-                <p className="text-white/50 leading-relaxed">
-                  Powered by Stripe, payments happen the moment you approve a submission. No escrow delays, no manual
-                  transfers. Just instant rewards for great work.
-                </p>
-              </div>
 
-              <div className="relative">
-                <AnimatePresence>
-                  {approvedSubmissions.map((submissionId, index) => {
-                    const submission = mockSubmissions.find((s) => s.id === submissionId)
-                    if (!submission) return null
-
-                    return (
-                      <motion.div
-                        key={submissionId}
-                        initial={{
-                          opacity: 0,
-                          y: -30,
-                          scale: 0.9,
-                          rotate: -6,
-                        }}
-                        animate={{
-                          opacity: 1,
-                          y: index * -8,
-                          x: index * 4,
-                          scale: 1,
-                          rotate: index * 1.5,
-                        }}
-                        transition={{
-                          duration: 0.6,
-                          delay: index * 0.1,
-                          ease: [0.16, 1, 0.3, 1],
-                          type: "spring",
-                          damping: 20,
-                          stiffness: 300,
-                        }}
-                        style={{
-                          zIndex: 10 + index,
-                          position: index === 0 ? "relative" : "absolute",
-                          top: index === 0 ? 0 : 0,
-                          left: index === 0 ? 0 : 0,
-                          width: index === 0 ? "100%" : "100%",
-                        }}
-                        className="w-full"
-                      >
-                        <Card className="bg-gradient-to-br from-zinc-900 to-[#0a0a0a] border-white/15 backdrop-blur-xl shadow-2xl">
-                          <CardContent className="p-6 space-y-4">
-                            <div className="flex items-center justify-between">
-                              <h3 className="font-medium text-white">Payment Processing</h3>
-                              <div className="flex items-center gap-2">
-                                {/* <div className="w-6 h-6 bg-[#635bff] rounded flex items-center justify-center">
-                                  <span className="text-white text-xs font-bold">S</span>
-                                </div> */}
-                                <span className="text-xs text-white/60 flex items-center">Powered by <Stripe className="w-12 h-12 fill-[#635BFF]" /></span>
-                              </div>  
-                            </div>
-
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between p-3 bg-gradient-to-br from-green-500/20 to-green-500/5 border border-green-500/30 rounded-lg backdrop-blur-sm">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                                    <CheckCircle className="w-4 h-4 text-white" />
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Avatar className="w-6 h-6 border border-green-300/30">
-                                      <AvatarImage
-                                        src={submission.avatar || "/placeholder.svg"}
-                                        alt={submission.author}
-                                      />
-                                      <AvatarFallback className="bg-green-500/20 text-green-300 text-xs">
-                                        {submission.author.slice(0, 2).toUpperCase()}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                      <p className="text-sm font-medium text-white">Payment Sent</p>
-                                      <p className="text-xs text-white/60">to {submission.author}</p>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <p className="text-sm font-medium text-green-400">${submission.bountyReward}</p>
-                                  <p className="text-xs text-white/50">Just now</p>
-                                </div>
-                              </div>
-
-                              <div className="space-y-2 text-xs">
-                                <div className="flex justify-between text-white/50">
-                                  <span>Bounty reward</span>
-                                  <span>${submission.bountyReward}</span>
-                                </div>
-                                <div className="flex justify-between text-white/50">
-                                  <span>Platform fee (5%)</span>
-                                  <span>${(submission.bountyReward * 0.05).toFixed(2)}</span>
-                                </div>
-                                <div className="flex justify-between text-white/50">
-                                  <span>Stripe processing</span>
-                                  <span>$13.05</span>
-                                </div>
-                                <div className="border-t border-white/10 pt-2">
-                                  <div className="flex justify-between text-sm font-medium text-white">
-                                    <span>Total charged</span>
-                                    <span>${(submission.bountyReward * 1.05 + 13.05).toFixed(2)}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 text-xs text-white/40">
-                              <Shield className="w-3 h-3" />
-                              <span>Secure payments processed by Stripe</span>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    )
-                  })}
-                </AnimatePresence>
-              </div>
-
-              <div className="space-y-3 pt-8">
-                {["Instant payouts to winners", "Transparent fee structure", "Global payment support"].map(
-                  (item, i) => (
-                    <div key={i} className="flex items-center gap-3 text-sm text-white/60">
-                      <div className="w-1 h-1 bg-white/30 rounded-full" />
-                      <span>{item}</span>
-                    </div>
-                  ),
-                )}
-              </div>
-            </motion.div>
           </div>
         </div>
       </section>

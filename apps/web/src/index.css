@@ -165,3 +165,7 @@ body {
     transform: translateY(0px) scale(1);
   }
 }
+
+html, body{
+  overscroll-behavior: none;
+}

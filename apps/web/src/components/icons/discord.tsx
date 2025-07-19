@@ -1,4 +1,6 @@
-export function Discord(props: React.HTMLAttributes<SVGElement>) {
+import { IconProps } from "@/types";
+
+export default function Discord(props: IconProps) {
     return (
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
         <title>Discord</title>

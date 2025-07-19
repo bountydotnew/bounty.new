@@ -23,6 +23,7 @@ import {
   parseTagsInput,
   formatTagsOutput
 } from "@/lib/forms";
+import { LINKS } from "@/constants/links";
 
 
 
@@ -380,7 +381,7 @@ function CreateBountyContent() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.replace("/dashboard")}
+            onClick={() => router.replace(LINKS.BOUNTIES)}
             disabled={isSubmitting || createBounty.isPending}
           >
             Cancel

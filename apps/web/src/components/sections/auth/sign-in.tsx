@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { GitHub } from '@/components/icons/github';
-import { Google } from '@/components/icons/google';
-import { Wendys } from '@/components/icons/wendys';
+import GitHub from '@/components/icons/github';
+import Wendys from '@/components/icons/wendys';
 
 // --- HELPER COMPONENTS (ICONS) ---
 

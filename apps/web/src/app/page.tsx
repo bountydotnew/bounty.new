@@ -15,7 +15,6 @@ export default function Home() {
   log(`healthCheck: ${healthCheck.data?.status}`);  
 
   return (
-
     <div className="bg-landing-background mx-auto w-full">
       <Header />
       <V0Hero />

@@ -2,22 +2,17 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, StarIcon } from "lucide-react";
 import { HeaderBase } from "@/components/sections/home/header-base";
 import { useGithubStars } from "@/lib/fetchGhStars";
+import { authClient } from "@/lib/auth-client";
 import Image from "next/image";
+import { formatStarCount } from "@/lib/utils";
 
 export function Header() {
   const { data: starCount } = useGithubStars("ripgrim/bounty.new");
+  const { data: session, isPending } = authClient.useSession();
 
-  // Format the star count for display
-  const formatStarCount = (count: number): string => {
-    if (count >= 1_000_000)
-      return (count / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
-    if (count >= 1_000)
-      return (count / 1_000).toFixed(1).replace(/\.0$/, "") + "k";
-    return count.toString();
-  };
 
   const displayStars = starCount ? formatStarCount(starCount) : "1.5k";
 
@@ -37,16 +32,25 @@ export function Header() {
         </Button>
       </Link>
       {process.env.NODE_ENV === "development" ? (
-        <Link href="/dashboard">
-          <Button size="sm" className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10">
-            Create bounties
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </Link>
+        session ? (
+          <Link href="/dashboard">
+            <Button size="sm" className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10">
+              Create bounties
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+        ) : (
+          <Link href="/login">
+            <Button size="sm" className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10">
+              Log in
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+        )
       ) : (
         <Link href="https://github.com/ripgrim/bounty.new" target="_blank">
           <Button size="sm" className="text-sm ml-4">
-            GitHub {displayStars}+
+            GitHub
             <ArrowRight className="h-4 w-4" />
           </Button>
         </Link>

@@ -10,9 +10,9 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
   return (
     <SidebarProvider>
       <AppSidebar side="left" />
-      <SidebarInset className="h-screen flex flex-col">
+      <SidebarInset className="h-screen flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-hidden">
         {children}
         </main>
       </SidebarInset>

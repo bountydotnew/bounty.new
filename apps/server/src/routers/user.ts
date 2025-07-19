@@ -5,7 +5,7 @@ import { eq, desc, sql } from "drizzle-orm";
 import { db } from "../db";
 import { user, session } from "../db/schema/auth";
 import { userProfile, userReputation } from "../db/schema/profiles";
-import { protectedProcedure, router } from "../lib/trpc";
+import { protectedProcedure, publicProcedure, router } from "../lib/trpc";
 
 export const userRouter = router({
   hasAccess: protectedProcedure.query(async ({ ctx }) => {
@@ -30,8 +30,16 @@ export const userRouter = router({
     };
   }),
   
-  getCurrentUser: protectedProcedure.query(async ({ ctx }) => {
+  getCurrentUser: publicProcedure.query(async ({ ctx }) => {
     try {
+      // Return null if user is not authenticated
+      if (!ctx.session?.user?.id) {
+        return {
+          success: true,
+          data: null,
+        };
+      }
+      
       const userId = ctx.session.user.id;
       
       const [userRecord] = await db

@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "./ui/sonner";
 import { ConfettiProvider } from "@/lib/context/confetti-context";
 import { Databuddy } from "@databuddy/sdk";
+import { TOAST_ICONS, TOAST_OPTIONS } from "@/constants/toast";
 
 export function Providers({
   children
@@ -40,7 +41,13 @@ export function Providers({
         </ConfettiProvider>
         <ReactQueryDevtools />
       </QueryClientProvider>
-      <Toaster richColors />
+      <Toaster
+        richColors
+        position="bottom-right"
+        toastOptions={TOAST_OPTIONS}
+        icons={TOAST_ICONS}
+        visibleToasts={4}
+      />
     </ThemeProvider>
   );
 }

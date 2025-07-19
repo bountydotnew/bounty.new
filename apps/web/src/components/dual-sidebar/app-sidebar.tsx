@@ -25,7 +25,7 @@ import { NavProjects } from "@/components/dual-sidebar/nav-projects";
 import { NavUser } from "@/components/dual-sidebar/nav-user";
 import { TeamSwitcher } from "@/components/dual-sidebar/team-switcher";
 import { News } from "@/components/ui/sidebar-news";
-
+import { authClient } from "@/lib/auth-client";
 
 // This is sample data.
 const data = {
@@ -183,6 +183,15 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
+
+  const { data: session, isPending } = authClient.useSession();
+
+  const user = {
+    name: session?.user?.name || "Guest",
+    email: session?.user?.email || "guest@example.com",
+    avatar: session?.user?.image || "/avatars/guest.jpg",
+  }
+  
   return (
     <Sidebar variant="inset" collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -194,10 +203,9 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter>
         <News />
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );
 }
-  

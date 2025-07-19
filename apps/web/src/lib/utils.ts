@@ -32,3 +32,11 @@ export function deleteCookie(name: string) {
   if (typeof document === 'undefined') return;
   document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
 }
+
+export function formatStarCount(count: number): string {
+  if (count >= 1_000_000)
+    return (count / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+  if (count >= 1_000)
+    return (count / 1_000).toFixed(1).replace(/\.0$/, "") + "k";
+  return count.toString();
+}

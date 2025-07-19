@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, PersonStanding, User } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useDrafts } from "@/hooks/use-drafts";
 import { baseUrl } from "@/lib/constants";
+import { PlusIcon } from "@/components/icons/icon";
 
 const bountyDraftSchema = z.object({
     title: z.string().min(1, "Title is required").max(200, "Title too long"),
@@ -53,7 +54,7 @@ export function BountyDraftForm({ className }: BountyDraftFormProps) {
         toast.success("Draft saved! Redirecting to login...");
 
         setTimeout(() => {
-            const redirectUrl = `${baseUrl}/create-bounty?draft=${draftId}`;
+            const redirectUrl = `${baseUrl}/bounty/create?draft=${draftId}`;
             router.push(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
         }, 1500);
     }
@@ -139,7 +140,7 @@ export function BountyDraftForm({ className }: BountyDraftFormProps) {
                         type="submit"
                     >
                         <>
-                            Create Bounty
+                            Sign in & create
                             <ArrowRight className="h-4 w-4" />
                         </>
                     </Button>

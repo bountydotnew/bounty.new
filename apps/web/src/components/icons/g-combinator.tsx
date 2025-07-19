@@ -1,4 +1,6 @@
-export function GCombinator() {
+import { IconProps } from "@/types";
+
+export default function GCombinator(props: IconProps) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30.12 30.5" className="w-5 h-5 rounded-[2px]">
       <path fill="#f15c22" d="m0,0h30.12v30.5H0V0Z"/>

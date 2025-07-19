@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
+import { LINKS } from "@/constants/links";
 
 export default function BountiesPage() {
   const { data: bounties, isLoading, error } = useQuery(
@@ -36,7 +37,7 @@ export default function BountiesPage() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Available Bounties</h1>
         <Button asChild>
-          <Link href="/create-bounty">
+          <Link href={LINKS.BOUNTY.CREATE}>
             Create Bounty
           </Link>
         </Button>
@@ -86,7 +87,7 @@ export default function BountiesPage() {
           <h2 className="text-xl font-semibold text-gray-600 mb-4">No bounties available</h2>
           <p className="text-gray-500 mb-6">Be the first to create a bounty!</p>
           <Button asChild>
-            <Link href="/create-bounty">
+            <Link href="/bounty/create">
               Create First Bounty
             </Link>
           </Button>

@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { GCombinator } from "@/components/icons/g-combinator";
+import GCombinator from "@/components/icons/g-combinator";
 
 /**
  * Usage:
