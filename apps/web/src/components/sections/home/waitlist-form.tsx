@@ -250,13 +250,6 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
                 <span>Security validation failed. Please refresh the page.</span>
               </div>
             )}
-
-            {fingerprintData && !fingerprintLoading && (
-              <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 justify-center">
-                <Shield className="h-4 w-4" />
-                <span>Device verified • Rate limited to 3 attempts per hour</span>
-              </div>
-            )}
           </div>
         </div>
       )}

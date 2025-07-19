@@ -73,7 +73,7 @@ export default function BountiesPage() {
                </div>
               
               <Link 
-                href={`/bounty/${bounty.id}`} 
+                href={`${LINKS.BOUNTY.VIEW}/${bounty.id}`} 
                 className="inline-block mt-3 text-blue-600 hover:underline font-medium"
               >
                 View Details →
@@ -87,7 +87,7 @@ export default function BountiesPage() {
           <h2 className="text-xl font-semibold text-gray-600 mb-4">No bounties available</h2>
           <p className="text-gray-500 mb-6">Be the first to create a bounty!</p>
           <Button asChild>
-            <Link href="/bounty/create">
+            <Link href={LINKS.BOUNTY.CREATE}>
               Create First Bounty
             </Link>
           </Button>

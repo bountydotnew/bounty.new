@@ -5,7 +5,6 @@ import V0Hero from "@/components/sections/home/v0-hero";
 import { Header } from "@/components/sections/home/header";
 import { grim } from "@/hooks/use-dev-log";
 
-
 const { log } = grim();
 
 export default function Home() {
@@ -16,6 +15,7 @@ export default function Home() {
   log(`healthCheck: ${healthCheck.data?.status}`);  
 
   return (
+
     <div className="bg-landing-background mx-auto w-full">
       <Header />
       <V0Hero />

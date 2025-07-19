@@ -6,6 +6,7 @@ const SOCIALS = {
     SOCIALS: SOCIALS,
     HOME: "/",
     DASHBOARD: "/dashboard",
+    LOGIN: "/login",
     CONTRIBUTORS: "/contributors",
     BLOG: "/blog",
     PRICING: "/pricing",
@@ -16,6 +17,7 @@ const SOCIALS = {
       CREATE: "/bounty/create",
       EDIT: "/bounty/edit",
       DELETE: "/bounty/delete",
+      VIEW: "/bounty",
     },
     BOUNTIES: "/bounties",
   };

@@ -136,47 +136,36 @@ export default function BountyPlatform() {
         />
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 z-10" style={{ background: "linear-gradient(to bottom, rgba(10,10,10,0) 0%, #0a0a0a 100%)" }} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
-          <div className="max-w-4xl lg:max-w-7xl mx-auto text-center lg:text-left space-y-8 my-10">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-32 items-center">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className="space-y-6 text-center lg:text-left"
-              >
-                <div className="lg:hidden">
-                  <BackedByBadge />
-                </div>
-                <div className="hidden lg:block">
-                  <div className="flex justify-start">
-                    <BackedByBadge />
-                  </div>
-                </div>
+          <div className="max-w-4xl mx-auto text-center space-y-8 my-10">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              className="space-y-6"
+            >
+              <BackedByBadge />
 
-                <h1 className="text-5xl md:text-7xl font-light tracking-tighter leading-[0.9]">
-                  Ship faster.
-                  <br />
-                  <span className="bg-gradient-to-r from-blue-400 via-white to-green-400 bg-clip-text text-transparent font-medium">
-                    Get paid
-                    <span className="ml-2 italic font-normal font-serif">instantly.</span>
-                  </span>
-                </h1>
+              <h1 className="text-5xl md:text-7xl font-light tracking-tighter leading-[0.9]">
+                Ship faster.
+                <br />
+                <span className="bg-gradient-to-r from-blue-400 via-white to-green-400 bg-clip-text text-transparent font-medium">
+                  Get paid
+                  <span className="ml-2 italic font-normal font-serif">instantly.</span>
+                </span>
+              </h1>
 
-                <p className="text-xl text-white/50 font-light max-w-2xl lg:max-w-none mx-auto lg:mx-0 leading-relaxed">
-                  The bounty platform where creators post challenges and developers deliver solutions. Instant <Stripe className="inline-block ml-[-6px] w-14 h-14 fill-[#635BFF]" />
-                  payouts, <V0Icon className="inline h-6 w-6 fill-white opacity-100 text-white/100" /> integration, <span className="italic font-normal">zero</span> friction.
-                </p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                className="flex justify-center lg:justify-end"
-              >
-                <ConditionalForm />
-              </motion.div>
-            </div>
+              <p className="text-xl text-white/50 font-light max-w-2xl mx-auto leading-relaxed">
+                The bounty platform where creators post challenges and developers deliver solutions. Instant <Stripe className="inline-block ml-[-6px] w-14 h-14 fill-[#635BFF]" />
+                payouts, <V0Icon className="inline h-6 w-6 fill-white opacity-100 text-white/100" /> integration, <span className="italic font-normal">zero</span> friction.
+              </p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <ConditionalForm />
+            </motion.div>
 
             {/* Live Stats */}
             <motion.div
@@ -221,6 +210,39 @@ export default function BountyPlatform() {
       <section className="relative py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              viewport={{ once: true }}
+              className="space-y-6"
+            >
+              <div className="space-y-4">
+                <Badge className="bg-white text-black">Live Bounties</Badge>
+                <h2 className="text-3xl md:text-4xl font-light tracking-tight leading-tight">
+                  Post your challenge.
+                  <br />
+                  <span className="text-white/50">Watch solutions flow in.</span>
+                </h2>
+                <p className="text-white/50 leading-relaxed">
+                  Define exactly what you need. Set bounty types, requirements, and rewards. Our smart categorization
+                  ensures the right developers see your challenge.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  { icon: <V0Icon className="inline h-3 w-3 mr-1" />, text: "for UI/UX components" },
+                  "Full-stack applications",
+                  "Design and creative work",
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3 text-sm text-white/60">
+                    {typeof item === "object" ? item.icon : <div className="w-1 h-1 bg-white/30 rounded-full" />}
+                    <span>{typeof item === "object" ? item.text : item}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
 
             <motion.div
               initial={{ opacity: 0, x: 30 }}
@@ -294,40 +316,6 @@ export default function BountyPlatform() {
                 </motion.div>
               ))}
             </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              viewport={{ once: true }}
-              className="space-y-6"
-            >
-              <div className="space-y-4">
-                <Badge className="bg-white text-black">Live Bounties</Badge>
-                <h2 className="text-3xl md:text-4xl font-light tracking-tight leading-tight">
-                  Post your challenge.
-                  <br />
-                  <span className="text-white/50">Watch solutions flow in.</span>
-                </h2>
-                <p className="text-white/50 leading-relaxed">
-                  Define exactly what you need. Set bounty types, requirements, and rewards. Our smart categorization
-                  ensures the right developers see your challenge.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {[
-                  { icon: <V0Icon className="inline h-3 w-3 mr-1" />, text: "for UI/UX components" },
-                  "Full-stack applications",
-                  "Design and creative work",
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3 text-sm text-white/60">
-                    {typeof item === "object" ? item.icon : <div className="w-1 h-1 bg-white/30 rounded-full" />}
-                    <span>{typeof item === "object" ? item.text : item}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
           </div>
         </div>
       </section>
@@ -336,6 +324,85 @@ export default function BountyPlatform() {
       <section className="relative py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              viewport={{ once: true }}
+              className="space-y-6"
+            >
+              <Card className="bg-gradient-to-br from-white/8 to-white/4 border-white/8 backdrop-blur-xl p-2">
+                <CardContent className="px-2 py-2 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium text-white">Submissions</h3>
+                    <Badge className="bg-white text-black">{mockSubmissions.length} entries</Badge>
+                  </div>
+
+                  <div className="space-y-3">
+                    {mockSubmissions.map((submission, index) => (
+                      <motion.div
+                        key={submission.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                        viewport={{ once: true }}
+                        className={`p-3 bg-gradient-to-br from-white/4 to-white/[0.01] border border-white/8 rounded-lg hover:from-white/8 hover:to-white/4 transition-all duration-300 backdrop-blur-sm ${approvedSubmissions.includes(submission.id)
+                          ? "from-green-500/10 to-green-500/5 border-green-500/30"
+                          : ""
+                          }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-3 flex-1">
+                            <Avatar className="w-8 h-8 border border-white/20">
+                              <AvatarImage src={submission.avatar || "/placeholder.svg"} alt={submission.author} />
+                              <AvatarFallback className="bg-gradient-to-br from-white/20 to-white/10 text-white text-xs border border-white/10">
+                                {submission.author.slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="space-y-2 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-white">{submission.author}</span>
+                                <div className="flex items-center gap-1">
+                                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                  <span className="text-xs text-white/50">{submission.rating}</span>
+                                </div>
+                                <span className="text-xs text-green-400 font-medium">{submission.earnings}</span>
+                              </div>
+                              <p className="text-xs text-white/60">{submission.preview}</p>
+                              <V0Button href={submission.v0Link} />
+                            </div>
+                          </div>
+
+                          {approvedSubmissions.includes(submission.id) ? (
+                            <Badge className="bg-green-600 text-white text-xs shrink-0">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Paid
+                            </Badge>
+                          ) : (
+                            <Button
+                              size="sm"
+                              className="bg-white text-black hover:bg-white/90 h-7 px-3 text-xs font-medium rounded-lg shrink-0 transition-all duration-200"
+                              onClick={() => handleApproveSubmission(submission.id, submission.bountyReward)}
+                              disabled={paymentProcessing === submission.id}
+                            >
+                              {paymentProcessing === submission.id ? (
+                                <div className="w-3 h-3 border border-black/20 border-t-black rounded-full animate-spin" />
+                              ) : (
+                                <>
+                                  <CreditCard className="w-3 h-3 mr-1" />
+                                  Pay ${submission.bountyReward}
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
             <motion.div
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -480,86 +547,6 @@ export default function BountyPlatform() {
                 )}
               </div>
             </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              viewport={{ once: true }}
-              className="space-y-6"
-            >
-              <Card className="bg-gradient-to-br from-white/8 to-white/4 border-white/8 backdrop-blur-xl p-2">
-                <CardContent className="px-2 py-2 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-medium text-white">Submissions</h3>
-                    <Badge className="bg-white text-black">{mockSubmissions.length} entries</Badge>
-                  </div>
-
-                  <div className="space-y-3">
-                    {mockSubmissions.map((submission, index) => (
-                      <motion.div
-                        key={submission.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                        viewport={{ once: true }}
-                        className={`p-3 bg-gradient-to-br from-white/4 to-white/[0.01] border border-white/8 rounded-lg hover:from-white/8 hover:to-white/4 transition-all duration-300 backdrop-blur-sm ${approvedSubmissions.includes(submission.id)
-                          ? "from-green-500/10 to-green-500/5 border-green-500/30"
-                          : ""
-                          }`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start gap-3 flex-1">
-                            <Avatar className="w-8 h-8 border border-white/20">
-                              <AvatarImage src={submission.avatar || "/placeholder.svg"} alt={submission.author} />
-                              <AvatarFallback className="bg-gradient-to-br from-white/20 to-white/10 text-white text-xs border border-white/10">
-                                {submission.author.slice(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="space-y-2 flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-white">{submission.author}</span>
-                                <div className="flex items-center gap-1">
-                                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                  <span className="text-xs text-white/50">{submission.rating}</span>
-                                </div>
-                                <span className="text-xs text-green-400 font-medium">{submission.earnings}</span>
-                              </div>
-                              <p className="text-xs text-white/60">{submission.preview}</p>
-                              <V0Button href={submission.v0Link} />
-                            </div>
-                          </div>
-
-                          {approvedSubmissions.includes(submission.id) ? (
-                            <Badge className="bg-green-600 text-white text-xs shrink-0">
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Paid
-                            </Badge>
-                          ) : (
-                            <Button
-                              size="sm"
-                              className="bg-white text-black hover:bg-white/90 h-7 px-3 text-xs font-medium rounded-lg shrink-0 transition-all duration-200"
-                              onClick={() => handleApproveSubmission(submission.id, submission.bountyReward)}
-                              disabled={paymentProcessing === submission.id}
-                            >
-                              {paymentProcessing === submission.id ? (
-                                <div className="w-3 h-3 border border-black/20 border-t-black rounded-full animate-spin" />
-                              ) : (
-                                <>
-                                  <CreditCard className="w-3 h-3 mr-1" />
-                                  Pay ${submission.bountyReward}
-                                </>
-                              )}
-                            </Button>
-                          )}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-
           </div>
         </div>
       </section>

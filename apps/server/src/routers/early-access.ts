@@ -1,9 +1,9 @@
 import { TRPCError } from "@trpc/server";
 import { count, eq } from "drizzle-orm";
 import { z } from "zod";
-import { grim } from "@/lib/use-dev-log";
+import { grim } from "../lib/use-dev-log";
 
-const { log, error, info, warn } = grim();
+const { error, info, warn } = grim();
 
 
 import { db } from "../db";
