@@ -7,13 +7,14 @@ import { grim } from '@/hooks/use-dev-log';
 const { log, error, warn } = grim();
 
 
-const unkey = new Ratelimit({
-  rootKey: process.env.UNKEY_ROOT_KEY || "",
+// Only initialize Unkey if the root key is available
+const unkey = process.env.UNKEY_ROOT_KEY ? new Ratelimit({
+  rootKey: process.env.UNKEY_ROOT_KEY,
   namespace: "waitlist",
   limit: 3,
   duration: "1h",
   async: false,
-});
+}) : null;
 
 const requestSchema = z.object({
   email: z.string().email('Invalid email format'),
@@ -62,40 +63,40 @@ export async function POST(request: NextRequest) {
     log('[Waitlist] Processing request for email:', email);
     log('[Waitlist] Using fingerprint identifier:', identifier.substring(0, 8) + '...');
 
-    // Check rate limit with Unkey
-    let rateLimitResult;
-    try {
-      rateLimitResult = await unkey.limit(identifier);
-      log('[Waitlist] Rate limit result:', {
-        success: rateLimitResult.success,
-        remaining: rateLimitResult.remaining,
-        limit: rateLimitResult.limit,
-        reset: rateLimitResult.reset
-      });
-    } catch (error) {
-      warn('[Waitlist] Unkey error:', error);
-      return NextResponse.json(
-        {
-          error: 'Rate limiting service unavailable',
-          success: false
-        },
-        { status: 503 }
-      );
-    }
+    // Check rate limit with Unkey (if available)
+    let rateLimitResult: any = { remaining: null, limit: null };
+    if (unkey) {
+      try {
+        const result = await unkey.limit(identifier);
+        rateLimitResult = result;
+        log('[Waitlist] Rate limit result:', {
+          success: result.success,
+          remaining: result.remaining,
+          limit: result.limit,
+          reset: result.reset
+        });
 
-    if (!rateLimitResult.success) {
-      const resetTime = new Date(rateLimitResult.reset);
-      return NextResponse.json(
-        {
-          error: 'Rate limit exceeded. Please try again later.',
-          success: false,
-          rateLimited: true,
-          resetTime: resetTime.toISOString(),
-          remaining: rateLimitResult.remaining,
-          limit: rateLimitResult.limit,
-        },
-        { status: 429 }
-      );
+        if (!result.success) {
+          const resetTime = new Date(result.reset);
+          return NextResponse.json(
+            {
+              error: 'Rate limit exceeded. Please try again later.',
+              success: false,
+              rateLimited: true,
+              resetTime: resetTime.toISOString(),
+              remaining: result.remaining,
+              limit: result.limit,
+            },
+            { status: 429 }
+          );
+        }
+      } catch (err) {
+        error('[Waitlist] Unkey error:', err);
+        // Continue without rate limiting if Unkey fails
+        warn('[Waitlist] Continuing without rate limiting due to Unkey unavailability');
+      }
+    } else {
+      warn('[Waitlist] UNKEY_ROOT_KEY not configured, skipping rate limiting');
     }
 
     // Add email to waitlist database via HTTP request to tRPC endpoint
