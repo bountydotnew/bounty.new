@@ -387,7 +387,7 @@ import NumberFlow from '@number-flow/react';
                                       target="_blank"
                                       className="text-sm font-mono text-white/80 hover:text-white transition-colors"
                                     >
-                                      Largest commit
+                                      Largest PR
                                     </a>
                                     <p className="text-sm text-white/60 mt-1">
                                       {member.biggestCommit.message}
@@ -495,28 +495,34 @@ import NumberFlow from '@number-flow/react';
             <h2 className="text-3xl font-bold mb-8 text-center">Top Contributors</h2>
             
             <div className="grid grid-cols-4 md:grid-cols-8 gap-4 max-w-5xl mx-auto">
-              {filteredContributors && filteredContributors.map((contributor: Contributor) => (
-                <a
-                  key={contributor.login}
-                  href={contributor.html_url}
-                  target="_blank"
-                  className="group block text-center"
-                >
-                  <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-3 hover:bg-white/10 hover:scale-105 transition-all">
-                    <Avatar className="w-12 h-12 mx-auto mb-2 ring-1 ring-white/20 group-hover:ring-white/40">
-                      <AvatarImage src={contributor.avatar_url} />
-                      <AvatarFallback className="text-xs">{contributor.login.slice(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    
-                    <div className="text-xs text-white/60 truncate" title={contributor.login}>
-                      {contributor.login}
+              {filteredContributors.length > 0 ? (
+                filteredContributors.map((contributor: Contributor) => (
+                  <a
+                    key={contributor.login}
+                    href={contributor.html_url}
+                    target="_blank"
+                    className="group block text-center"
+                  >
+                    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-3 hover:bg-white/10 hover:scale-105 transition-all">
+                      <Avatar className="w-12 h-12 mx-auto mb-2 ring-1 ring-white/20 group-hover:ring-white/40">
+                        <AvatarImage src={contributor.avatar_url} />
+                        <AvatarFallback className="text-xs">{contributor.login.slice(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      
+                      <div className="text-xs text-white/60 truncate" title={contributor.login}>
+                        {contributor.login}
+                      </div>
+                      <div className="text-xs text-white/40 mt-1">
+                        <NumberFlow value={contributor.contributions} />
+                      </div>
                     </div>
-                    <div className="text-xs text-white/40 mt-1">
-                      <NumberFlow value={contributor.contributions} />
-                    </div>
-                  </div>
-                </a>
-              ))}
+                  </a>
+                ))
+              ) : (
+                <div className="col-span-4 md:col-span-8 text-center py-8">
+                  <div className="text-white/60">Nobody's contributed yet 😔</div>
+                </div>
+              )}
             </div>
           </div>
         </div>
