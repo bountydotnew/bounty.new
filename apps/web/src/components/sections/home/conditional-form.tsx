@@ -11,7 +11,7 @@ interface ConditionalFormProps {
 
 function ConditionalFormContent({ className }: ConditionalFormProps) {
   const searchParams = useSearchParams();
-  const isDevelopment = process.env.NODE_ENV === "production" || searchParams.get("dev") === "true";
+  const isDevelopment = process.env.NODE_ENV === "development" || searchParams.get("dev") === "true";
 
   return isDevelopment ? (
     <BountyDraftForm className={className} />
