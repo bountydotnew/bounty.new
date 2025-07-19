@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { GitHub } from '@/components/icons/github';
+import { Google } from '@/components/icons/google';
+import { Wendys } from '@/components/icons/wendys';
 
 // --- HELPER COMPONENTS (ICONS) ---
 
@@ -84,11 +86,16 @@ export const SignInPage: React.FC<SignInPageProps> = ({
               <span className="px-4 text-sm text-muted-foreground bg-background absolute">Or continue with</span>
             </div>
 
-            <button onClick={onGitHubSignIn} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-2xl py-4 hover:bg-secondary transition-colors">
+            <div className="flex flex-col gap-2">
+              <button onClick={onGitHubSignIn} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-2xl py-4 hover:bg-secondary transition-colors">
                 <GitHub className="w-5 h-5 fill-foreground" />
                 Continue with GitHub
-            </button>
-
+              </button>
+              <button onClick={() => alert('just kidding lmao')} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-2xl py-4 hover:bg-secondary transition-colors">
+                <Wendys className="w-6 h-6 fill-foreground" />
+                Continue with Wendy's
+              </button>
+            </div>
             <p className="animate-element animate-delay-900 text-center text-sm text-muted-foreground">
               New to our platform? <a href="#" onClick={(e) => { e.preventDefault(); onSwitchToSignUp?.(); }} className="text-violet-400 hover:underline transition-colors">Create Account</a>
             </p>
