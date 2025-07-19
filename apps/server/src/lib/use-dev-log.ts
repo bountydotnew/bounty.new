@@ -1,64 +1,117 @@
-import { sendErrorWebhook } from './use-discord-webhook';
+const sendToDiscord = async (message: string, type: 'log' | 'warn' | 'info' | 'error', location: string) => {
+  if (process.env.NODE_ENV !== 'production') {
+    return;
+  }
+
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000';
+    
+    if (type === 'error') {
+      // Use reportError endpoint for errors
+      fetch(`${baseUrl}/api/trpc/notifications.reportError`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          json: {
+            error: message,
+            location,
+            userAgent: 'Server/Node.js',
+            url: 'server-side',
+          }
+        }),
+      }).catch((fetchError) => {
+        console.error('[grim::discord] Failed to report error:', fetchError);
+      });
+    } else {
+      // Use sendWebhook endpoint for other log types
+      const typeMap = {
+        log: 'info',
+        warn: 'warning', 
+        info: 'info',
+      };
+
+      fetch(`${baseUrl}/api/trpc/notifications.sendWebhook`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          json: {
+            message,
+            title: `🔍 Server ${type.toUpperCase()}`,
+            type: typeMap[type as keyof typeof typeMap],
+            context: {
+              location,
+              timestamp: new Date().toISOString(),
+              environment: 'server',
+              nodeEnv: process.env.NODE_ENV,
+            },
+          }
+        }),
+      }).catch((fetchError) => {
+        console.error('[grim::discord] Failed to send webhook:', fetchError);
+      });
+    }
+  } catch (reportError) {
+    console.error('[grim::discord] Discord reporting failed:', reportError);
+  }
+};
 
 const log = (...args: unknown[]) => {
-  if (process.env.NODE_ENV === 'development') {
+  const isDev = process.env.NODE_ENV === 'development';
+  const message = args.join(' ');
+  
+  if (isDev) {
     console.log("%c[grim::log]", "color: #7a7a7a; font-weight: bold;", ...args);
+  } else {
+    console.log("[grim::log]", ...args);
+    // Send to Discord in production
+    const location = getCallerLocation();
+    sendToDiscord(message, 'log', location);
   }
 };
 
 const error = (...args: unknown[]) => {
   const isDev = process.env.NODE_ENV === 'development';
-  const isProd = process.env.NODE_ENV === 'production';
+  const message = args.join(' ');
   
   if (isDev) {
     console.error("%c[grim::error]", "color: #ef4444; font-weight: bold;", ...args);
   } else {
-    // Always log to console in production too for server logs
     console.error("[grim::error]", ...args);
-  }
-
-  // Send to Discord webhook in production
-  if (isProd && process.env.DISCORD_WEBHOOK_URL) {
-    try {
-      const errorMessage = args.join(' ');
-      const location = getCallerLocation();
-      
-      // Fire and forget - don't await to avoid blocking
-      sendErrorWebhook({
-        webhookUrl: process.env.DISCORD_WEBHOOK_URL,
-        error: errorMessage,
-        location,
-        context: {
-          timestamp: new Date().toISOString(),
-          environment: 'server',
-          nodeEnv: process.env.NODE_ENV,
-        }
-      }).catch((webhookError) => {
-        console.error('[grim::error] Failed to send Discord webhook:', webhookError);
-      });
-    } catch (webhookError) {
-      console.error('[grim::error] Discord webhook error:', webhookError);
-    }
+    // Send to Discord in production
+    const location = getCallerLocation();
+    sendToDiscord(message, 'error', location);
   }
 };
 
 const warn = (...args: unknown[]) => {
   const isDev = process.env.NODE_ENV === 'development';
+  const message = args.join(' ');
   
   if (isDev) {
     console.warn("%c[grim::warn]", "color: #f59e0b; font-weight: bold;", ...args);
   } else {
     console.warn("[grim::warn]", ...args);
+    // Send to Discord in production
+    const location = getCallerLocation();
+    sendToDiscord(message, 'warn', location);
   }
 };
 
 const info = (...args: unknown[]) => {
   const isDev = process.env.NODE_ENV === 'development';
+  const message = args.join(' ');
   
   if (isDev) {
     console.info("%c[grim::info]", "color: #10b981; font-weight: bold;", ...args);
   } else {
     console.info("[grim::info]", ...args);
+    // Send to Discord in production
+    const location = getCallerLocation();
+    sendToDiscord(message, 'info', location);
   }
 };
 

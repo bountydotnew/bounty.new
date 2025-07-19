@@ -5,7 +5,7 @@ import { trpc } from "@/utils/trpc";
 import { grim } from "@/hooks/use-dev-log";
 import { Header } from "@/components/sections/home/header";
 
-const { log, warn, error } = grim();
+const { log, warn, error, info } = grim();
 
 export default function TestAPIPage() {
   
@@ -207,17 +207,37 @@ export default function TestAPIPage() {
           </p>
         </div>
 
-        {/* Client-side error testing (no auth required) */}
+        {/* Client-side log testing (no auth required) */}
         <div className="mt-4 pt-4 border-t">
-          <h3 className="text-md font-medium mb-2">Client-side Error Testing</h3>
-          <button
-            onClick={handleTestLogError}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-          >
-            Test Log Error (grim)
-          </button>
+          <h3 className="text-md font-medium mb-2">Client-side Log Testing</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <button
+              onClick={() => log("This is a test log message")}
+              className="px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm"
+            >
+              Test Log
+            </button>
+            <button
+              onClick={() => info("This is a test info message")}
+              className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+            >
+              Test Info
+            </button>
+            <button
+              onClick={() => warn("This is a test warning message")}
+              className="px-3 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
+            >
+              Test Warn
+            </button>
+            <button
+              onClick={handleTestLogError}
+              className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+            >
+              Test Error
+            </button>
+          </div>
           <p className="text-xs text-gray-500 mt-2">
-            Tests client-side error logging (no authentication required)
+            Tests all grim() log types - in production, these automatically send to Discord
           </p>
         </div>
         
