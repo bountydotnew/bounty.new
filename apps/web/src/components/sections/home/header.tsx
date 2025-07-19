@@ -63,7 +63,7 @@ export function Header() {
       setCookie('hide-dev-warning', 'true', 365); // Store for 1 year
     }
     setShowDialog(false);
-    
+
     if (action === 'continue') {
       window.location.href = LINKS.DASHBOARD;
     }
@@ -89,22 +89,24 @@ export function Header() {
           <Button
             onClick={onButtonPress}
             size="sm"
-            className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10"
+            className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-white text-black shadow-xs hover:bg-white/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10"
           >
             Create bounties
             <ArrowRight className="h-4 w-4" />
           </Button>
         ) : (
           <Link href={LINKS.LOGIN}>
-            <Button size="sm" className="rounded-2xl transition-[color,box-shadow] [&_svg]:size-4 bg-white text-black shadow-xs hover:bg-white/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10">
+            <Button size="sm"
+              className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-white text-black shadow-xs hover:bg-white/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10"
+            >
               Log in
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </Link>
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
         )
       ) : (
         <Link href={LINKS.SOCIALS.GITHUB} target="_blank">
-          <Button size="sm" className="text-sm ml-4">
+          <Button size="sm" className="text-sm ml-4 bg-white text-black">
             GitHub
             <ArrowRight className="h-4 w-4" />
           </Button>
@@ -115,13 +117,13 @@ export function Header() {
 
   return (
     <>
-    <div className="mx-auto fixed top-0 left-0 z-30 w-full">
-      <HeaderBase
-        className="bg-[#1D1D1D]/80 backdrop-blur-sm border border-white/10 rounded-2xl max-w-3xl mx-auto mt-4 pl-4 pr-[14px]"
-        leftContent={leftContent}
-        rightContent={rightContent}
-      />
-    </div>
+      <div className="mx-auto fixed top-0 left-0 z-30 w-full">
+        <HeaderBase
+          className="bg-[#1D1D1D]/80 backdrop-blur-sm border border-white/10 rounded-radius max-w-3xl mx-auto mt-4 pl-4 pr-[14px]"
+          leftContent={leftContent}
+          rightContent={rightContent}
+        />
+      </div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="bg-[#2D2D2D] border-white/20 text-white max-w-md">
@@ -137,31 +139,31 @@ export function Header() {
             </DialogDescription>
           </DialogHeader>
 
-                    <div className="space-y-4">
+          <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <Checkbox 
+              <Checkbox
                 id="dont-show-again"
                 checked={dontShowAgain}
                 onCheckedChange={(checked) => setDontShowAgain(checked as boolean)}
                 className="border-white/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               />
-              <label 
-                htmlFor="dont-show-again" 
+              <label
+                htmlFor="dont-show-again"
                 className="text-sm text-white/60 cursor-pointer"
               >
                 Don&apos;t show this message again
               </label>
             </div>
-            
+
             <div className="flex gap-3">
-              <Button 
+              <Button
                 onClick={() => handleDialogClose('okay')}
                 variant="outline"
                 className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20"
               >
                 Okay
               </Button>
-              <Button 
+              <Button
                 onClick={() => handleDialogClose('continue')}
                 className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
               >

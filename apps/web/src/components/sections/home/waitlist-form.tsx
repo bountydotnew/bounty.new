@@ -238,7 +238,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
               )}
             </div>
             <Button
-              className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10"
+              className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-white text-black shadow-xs hover:bg-white/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10"
               type="submit"
               disabled={isFormDisabled}
             >
