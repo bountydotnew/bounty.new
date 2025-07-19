@@ -4,8 +4,9 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
 import { grim } from "@/hooks/use-dev-log";
 import { Header } from "@/components/sections/home/header";
+import posthog from "posthog-js";
 
-const { log, warn, error, info } = grim();
+const { log, warn, info } = grim();
 
 export default function TestAPIPage() {
   
@@ -25,6 +26,15 @@ export default function TestAPIPage() {
       warn("Error creating bounty:", error.message);
     }
   });
+
+  const testException = () => {
+    posthog.captureException(new Error("This is a test exception"), {
+      message: "This is a test exception",
+      location: "test-api page",
+      userAgent: navigator.userAgent,
+      url: window.location.href,
+    })
+  };
 
   // Discord webhook mutations
   const sendWebhook = useMutation({
@@ -140,6 +150,16 @@ export default function TestAPIPage() {
         )}
       </div>
 
+      <div className="mb-6 p-4 border rounded">
+        <h2 className="text-lg font-semibold mb-2">Test Exception</h2>
+        <button
+          onClick={testException}
+          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
+        >
+          Test Exception
+        </button>
+      </div>
+
       {/* Discord Webhook Testing */}
       <div className="mb-6 p-4 border rounded">
         <h2 className="text-lg font-semibold mb-4">Discord Webhook Testing</h2>
@@ -252,7 +272,9 @@ export default function TestAPIPage() {
               Test grim().warn
             </button>
             <button
-              onClick={() => error("This is a test error using grim")}
+              onClick={() => {
+                throw new Error("This is a test error using grim");
+              }}
               className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
             >
               Test grim().error

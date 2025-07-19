@@ -8,7 +8,7 @@ interface ConditionalFormProps {
 }
 
 export function ConditionalForm({ className }: ConditionalFormProps) {
-  const isDevelopment = process.env.NODE_ENV === "development";
+  const isDevelopment = process.env.NODE_ENV === "production";
 
   return isDevelopment ? (
     <BountyDraftForm className={className} />

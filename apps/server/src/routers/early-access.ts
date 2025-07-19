@@ -6,8 +6,7 @@ import { grim } from "../lib/use-dev-log";
 const { error, info, warn } = grim();
 
 
-import { db } from "../db";
-import { waitlist } from "../db/schema/auth";
+import { db, waitlist } from "@bounty/db";
 import { publicProcedure, router } from "../lib/trpc";
 
 export const earlyAccessRouter = router({

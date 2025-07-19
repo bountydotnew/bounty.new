@@ -1,20 +1,46 @@
 {
   "name": "@bounty/dev-logger",
   "version": "1.0.0",
+  "description": "Development logging utility for bounty.new workspace",
   "private": true,
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
       "default": "./dist/index.js"
     }
   },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "prebuild": "npm run clean",
+    "lint": "echo 'No linting configured'"
+  },
+  "keywords": [
+    "logging",
+    "development",
+    "bounty",
+    "typescript"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
   },
   "devDependencies": {
+    "@types/node": "^20",
     "typescript": "^5"
+  },
+  "publishConfig": {
+    "access": "restricted"
   }
 }

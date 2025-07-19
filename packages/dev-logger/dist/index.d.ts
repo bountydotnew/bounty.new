@@ -4,3 +4,4 @@ export declare const grim: () => {
     warn: (...args: unknown[]) => void;
     error: (...args: unknown[]) => void;
 };
+//# sourceMappingURL=index.d.ts.map

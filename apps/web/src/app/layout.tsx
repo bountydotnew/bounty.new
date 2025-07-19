@@ -5,9 +5,6 @@ import { Providers } from "@/components/providers";
 import { StagewiseToolbar } from "@stagewise/toolbar-next";
 import ReactPlugin from "@stagewise-plugins/react";
 
-
-
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -61,11 +58,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <StagewiseToolbar config={{ plugins: [ReactPlugin] }} />
-          <div className="grid grid-rows-[auto_1fr] h-svh">
-            {children}
-          </div>
-        </Providers>
+            <StagewiseToolbar config={{ plugins: [ReactPlugin] }} />
+            <div className="grid grid-rows-[auto_1fr] h-svh">
+              {children}
+            </div>
+          </Providers>
       </body>
     </html>
   );

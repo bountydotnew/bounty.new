@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     log('[Waitlist] Using fingerprint identifier:', identifier.substring(0, 8) + '...');
 
     // Check rate limit with Unkey (if available)
-    let rateLimitResult: any = { remaining: null, limit: null };
+    let rateLimitResult: { remaining: number | null; limit: number | null; reset?: number } = { remaining: null, limit: null };
     if (unkey) {
       try {
         const result = await unkey.limit(identifier);

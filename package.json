@@ -6,29 +6,32 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build",
+    "build": "dotenv -- turbo run build",
+    "dev": "dotenv -- turbo run dev",
+    "start": "dotenv -- turbo run start",
+    "lint": "turbo lint",
     "check-types": "turbo check-types",
-    "dev:native": "turbo -F native dev",
-    "dev:web": "turbo -F web dev",
-    "dev:server": "turbo -F server dev",
-    "db:push": "turbo -F server db:push",
-    "db:studio": "turbo -F server db:studio",
-    "db:generate": "turbo -F server db:generate",
-    "db:migrate": "turbo -F server db:migrate"
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "db:generate": "turbo run db:generate",
+    "db:migrate": "dotenv -- turbo run db:migrate",
+    "db:push": "dotenv -- turbo run db:push",
+    "db:studio": "dotenv -- turbo run db:studio"
   },
   "dependencies": {
     "@databuddy/sdk": "^1.3.0",
     "@hookform/resolvers": "^5.1.1",
     "@number-flow/react": "^0.5.10",
+    "@t3-oss/env-nextjs": "^0.13.8",
     "next": "^15.3.4",
     "posthog-js": "^1.257.0",
     "posthog-node": "^5.5.1",
     "react-hook-form": "^7.58.1",
-    "recharts": "^3.0.0"
+    "recharts": "^3.0.0",
+    "zod": "^4.0.5"
   },
   "devDependencies": {
-    "turbo": "^2.5.4"
+    "turbo": "^2.5.4",
+    "dotenv-cli": "^8.0.0"
   },
   "packageManager": "bun@1.2.17"
 }

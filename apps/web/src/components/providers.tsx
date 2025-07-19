@@ -8,6 +8,7 @@ import { Toaster } from "./ui/sonner";
 import { ConfettiProvider } from "@/lib/context/confetti-context";
 import { Databuddy } from "@databuddy/sdk";
 import { TOAST_ICONS, TOAST_OPTIONS } from "@/constants/toast";
+import { PostHogProvider } from "posthog-js/react";
 
 export function Providers({
   children
@@ -22,24 +23,26 @@ export function Providers({
       disableTransitionOnChange
     >
       <QueryClientProvider client={queryClient}>
-        <ConfettiProvider>
-          {children}
-          <Databuddy
-            clientId="bounty"
-            trackHashChanges={true}
-            trackAttributes={true}
-            trackOutgoingLinks={true}
-            trackInteractions={true}
-            trackEngagement={true}
-            trackScrollDepth={true}
-            trackExitIntent={true}
-            trackBounceRate={true}
-            trackWebVitals={true}
-            trackErrors={true}
-            enableBatching={true}
-          />
-        </ConfettiProvider>
-        <ReactQueryDevtools />
+        <PostHogProvider apiKey={process.env.NEXT_PUBLIC_POSTHOG_KEY!}>
+          <ConfettiProvider>
+            {children}
+            <Databuddy
+              clientId="bounty"
+              trackHashChanges={true}
+              trackAttributes={true}
+              trackOutgoingLinks={true}
+              trackInteractions={true}
+              trackEngagement={true}
+              trackScrollDepth={true}
+              trackExitIntent={true}
+              trackBounceRate={true}
+              trackWebVitals={true}
+              trackErrors={true}
+              enableBatching={true}
+            />
+          </ConfettiProvider>
+          <ReactQueryDevtools />
+        </PostHogProvider>
       </QueryClientProvider>
       <Toaster
         richColors
