@@ -4,19 +4,19 @@ import { z } from 'zod/v4';
 export const env = createEnv({
   server: {
     // Database
-    DATABASE_URL: z.url().startsWith('postgresql://'),
+    DATABASE_URL: z.string().min(1),
     // CORS
-    CORS_ORIGIN: z.string().url(),
+    CORS_ORIGIN: z.string().min(1),
     // Auth
     BETTER_AUTH_SECRET: z.string().min(1),
-    BETTER_AUTH_URL: z.string().url(),
+    BETTER_AUTH_URL: z.string().min(1),
     // GitHub OAuth
     GITHUB_CLIENT_ID: z.string().min(1),
     GITHUB_CLIENT_SECRET: z.string().min(1),
     // Rate limiting
     UNKEY_ROOT_KEY: z.string().min(1).optional(),
     // Discord webhook
-    DISCORD_WEBHOOK_URL: z.string().url().optional(),
+    DISCORD_WEBHOOK_URL: z.string().min(1).optional(),
     // Node environment
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   },
