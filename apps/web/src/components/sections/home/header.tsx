@@ -96,7 +96,7 @@ export function Header() {
           </Button>
         ) : (
           <Link href={LINKS.LOGIN}>
-            <Button size="sm" className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10">
+            <Button size="sm" className="rounded-2xl transition-[color,box-shadow] [&_svg]:size-4 bg-white text-black shadow-xs hover:bg-white/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10">
               Log in
             <ArrowRight className="h-4 w-4" />
           </Button>

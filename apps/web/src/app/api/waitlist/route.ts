@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Add email to waitlist database via HTTP request to tRPC endpoint
+    let dbError = null;
     try {
       const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000';
       const response = await fetch(`${serverUrl}/trpc/earlyAccess.addToWaitlist`, {
@@ -114,19 +115,21 @@ export async function POST(request: NextRequest) {
       if (response.ok) {
         log('[Waitlist] Successfully added email to waitlist:', email);
       } else {
-        warn('[Waitlist] Failed to save to database:', response.status);
+        const errorData = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
+        warn('[Waitlist] Failed to save to database:', response.status, errorData);
+        dbError = `Database error: ${errorData.error?.message || 'Failed to save'}`;
       }
-    } catch (dbError) {
-      error('[Waitlist] Database error:', dbError);
-      // Continue anyway - we've already validated the rate limit and fingerprint
-      // The user will still get a success response since rate limiting passed
+    } catch (dbConnectionError) {
+      error('[Waitlist] Database connection error:', dbConnectionError);
+      dbError = 'Database temporarily unavailable';
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Successfully added to waitlist!',
+      message: dbError ? 'Request validated but may not be saved to database' : 'Successfully added to waitlist!',
       remaining: rateLimitResult.remaining,
       limit: rateLimitResult.limit,
+      warning: dbError || undefined,
     });
 
   } catch (error) {

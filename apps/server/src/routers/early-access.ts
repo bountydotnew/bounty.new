@@ -21,7 +21,7 @@ export const earlyAccessRouter = router({
         error("[getWaitlistCount] Invalid result:", waitlistCount);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to get waitlist count",
+          message: "Invalid database response",
         });
       }
 
@@ -30,9 +30,32 @@ export const earlyAccessRouter = router({
       };
     } catch (err) {
       error("[getWaitlistCount] Error:", err);
+      
+      // Provide more specific error messages
+      if (err instanceof TRPCError) {
+        throw err;
+      }
+      
+      // Database connection errors
+      if (err instanceof Error) {
+        if (err.message.includes('connect') || err.message.includes('ECONNREFUSED')) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Database connection failed",
+          });
+        }
+        
+        if (err.message.includes('does not exist') || err.message.includes('relation')) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Database table not found - migrations may not be applied",
+          });
+        }
+      }
+      
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to get waitlist count",
+        message: "Database error occurred",
       });
     }
   }),
