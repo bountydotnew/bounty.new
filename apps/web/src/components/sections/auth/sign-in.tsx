@@ -92,7 +92,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
               </button>
               <button onClick={() => alert('just kidding lmao')} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-2xl py-4 hover:bg-secondary transition-colors">
                 <Wendys className="w-6 h-6 fill-foreground" />
-                Continue with Wendy's
+                Continue with Wendy&apos;s
               </button>
             </div>
             <p className="animate-element animate-delay-900 text-center text-sm text-muted-foreground">

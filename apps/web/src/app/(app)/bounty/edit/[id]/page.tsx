@@ -9,7 +9,7 @@ import { trpc } from "@/utils/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ArrowLeft, Save } from "lucide-react";
 import { 
@@ -103,7 +103,7 @@ function EditBountyContent() {
           <CardContent className="p-6 text-center">
             <h2 className="text-xl font-semibold text-red-600 mb-2">Bounty Not Found</h2>
             <p className="text-muted-foreground mb-4">
-              The bounty you're trying to edit could not be found.
+              The bounty you&apos;re trying to edit could not be found.
             </p>
             <Button onClick={() => router.push("/dashboard")} variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />

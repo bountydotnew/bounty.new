@@ -2,19 +2,13 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, StarIcon } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { HeaderBase } from "@/components/sections/home/header-base";
-import { useGithubStars } from "@/lib/fetchGhStars";
 import { authClient } from "@/lib/auth-client";
 import Image from "next/image";
-import { formatStarCount } from "@/lib/utils";
 
 export function Header() {
-  const { data: starCount } = useGithubStars("ripgrim/bounty.new");
-  const { data: session, isPending } = authClient.useSession();
-
-
-  const displayStars = starCount ? formatStarCount(starCount) : "1.5k";
+  const { data: session } = authClient.useSession();
 
   const leftContent = (
     <Link href="/" className="flex items-center gap-3">

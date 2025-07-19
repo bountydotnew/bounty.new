@@ -3,7 +3,7 @@ import { IconProps } from "@/types";
 export default function Wendys(props: IconProps) {
     return (
         <svg viewBox="0 0 60 56" xmlns="http://www.w3.org/2000/svg" {...props}>
-            <title>Wendy's Logo</title>
+            <title>Wendy&apos;s Logo</title>
             <g id="Rachel---VD" stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
                 <g id="branding/cameo/full-color">
                     <g id="Cameo_Full_RGB">

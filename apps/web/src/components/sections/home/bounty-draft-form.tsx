@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
-import { ArrowRight, PersonStanding, User } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useDrafts } from "@/hooks/use-drafts";
 import { baseUrl } from "@/lib/constants";
-import { PlusIcon } from "@/components/icons/icon";
+
 
 const bountyDraftSchema = z.object({
     title: z.string().min(1, "Title is required").max(200, "Title too long"),
