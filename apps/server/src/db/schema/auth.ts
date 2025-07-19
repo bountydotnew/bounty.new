@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, timestamp, boolean, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -57,4 +57,5 @@ export const waitlist = pgTable("waitlist", {
   email: text("email").notNull(),
   createdAt: timestamp("created_at").notNull(),
   hasAccess: boolean("has_access").notNull().default(false),
+  ipAddress: text("ip_address"),
 });

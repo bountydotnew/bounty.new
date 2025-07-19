@@ -11,6 +11,7 @@ import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { LINKS } from "@/constants/links";
 
 export default function UserMenu() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function UserMenu() {
   if (!session) {
     return (
       <Button variant="outline" asChild>
-        <Link href="/login">Sign In</Link>
+        <Link href={LINKS.LOGIN}>Sign In</Link>
       </Button>
     );
   }

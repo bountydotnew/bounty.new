@@ -2,7 +2,28 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ["opencut.app", "oss.now"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "opencut.app",
+      },
+      {
+        protocol: "https",
+        hostname: "oss.now",
+      },
+      {
+        protocol: "https",
+        hostname: "mail0.com",
+      },
+      {
+        protocol: "https",
+        hostname: "inbound.new",
+      },
+      {
+        protocol: "https",
+        hostname: "assets.dub.co",
+      },
+    ],
   },
 };
 

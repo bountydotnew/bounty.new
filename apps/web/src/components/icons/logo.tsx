@@ -1,4 +1,6 @@
-export function Logo(props: React.HTMLAttributes<SVGElement>) {
+import { IconProps } from "@/types";
+
+export default function Logo(props: IconProps) {
     return (
       <svg
         width="72"

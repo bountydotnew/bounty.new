@@ -1,6 +1,7 @@
-export * from "./discord";
-export * from "./github";
-export * from "./google";
-export * from "./logo";
-export * from "./twitter";
-export * from "./g-combinator";
+export { default as DiscordIcon } from "./discord";
+export { default as GithubIcon } from "./github";
+export { default as GoogleIcon } from "./google";
+export { default as LogoIcon } from "./logo";
+export { default as TwitterIcon } from "./twitter";
+export { default as GCombinator } from "./g-combinator";
+export { default as Wendys } from "./wendys";

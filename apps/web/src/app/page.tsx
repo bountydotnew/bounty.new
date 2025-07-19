@@ -1,15 +1,18 @@
 "use client"
 import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
-import { Header } from "@/components/sections/home/header";
 import V0Hero from "@/components/sections/home/v0-hero";
+import { Header } from "@/components/sections/home/header";
+import { grim } from "@/hooks/use-dev-log";
+
+const { log } = grim();
 
 export default function Home() {
   const healthCheck = useQuery(trpc.healthCheck.queryOptions());
   const waitlistCount = useQuery(trpc.earlyAccess.getWaitlistCount.queryOptions());
 
-  console.log(`waitlistCount: ${waitlistCount.data}`);
-  console.log(`healthCheck: ${healthCheck.data}`);
+  log(`waitlistCount: ${waitlistCount.data?.count}`);
+  log(`healthCheck: ${healthCheck.data?.status}`);  
 
   return (
 

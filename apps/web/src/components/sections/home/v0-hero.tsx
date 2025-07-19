@@ -18,11 +18,18 @@ import {
   Clock,
   Star, Shield, Banknote
 } from "lucide-react"
-import { WaitlistForm } from "./waitlist-form"
+import { ConditionalForm } from "./conditional-form"
 import { BackedByBadge } from "@/components/ui/backed-by-badge"
 import Image from "next/image"
+import { grim } from "@/hooks/use-dev-log";
 
+const { log } = grim();
 export default function BountyPlatform() {
+  // the useState hook is a function that returns an array with two elements:
+  // the first element is the variable, which is the initial value of the variable
+  // the second element is the function to update the variable, which is the function that updates the variable
+  //
+  // so if you use the set function, it will update the variable and re-render the component
   const [selectedBounty, setSelectedBounty] = useState<number | null>(null)
   const [approvedSubmissions, setApprovedSubmissions] = useState<number[]>([])
   const [paymentProcessing, setPaymentProcessing] = useState<number | null>(null)
@@ -45,7 +52,7 @@ export default function BountyPlatform() {
 
   const handleApproveSubmission = (id: number, bountyReward: number) => {
     setPaymentProcessing(id)
-    console.log("approving submission", id, bountyReward)
+    log("approving submission", id, bountyReward)
     setTimeout(() => {
       setApprovedSubmissions((prev) => [...prev, id])
       setPaymentProcessing(null)
@@ -127,7 +134,7 @@ export default function BountyPlatform() {
           style={{ color: "transparent" }}
           src="/landing-page-bg.png"
         />
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 z-10" style={{background: "linear-gradient(to bottom, rgba(10,10,10,0) 0%, #0a0a0a 100%)"}} />
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 z-10" style={{ background: "linear-gradient(to bottom, rgba(10,10,10,0) 0%, #0a0a0a 100%)" }} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
           <div className="max-w-4xl mx-auto text-center space-y-8 my-10">
             <motion.div
@@ -157,7 +164,7 @@ export default function BountyPlatform() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             >
-              <WaitlistForm />
+              <ConditionalForm />
             </motion.div>
 
             {/* Live Stats */}
@@ -464,7 +471,7 @@ export default function BountyPlatform() {
                                   <span className="text-white text-xs font-bold">S</span>
                                 </div> */}
                                 <span className="text-xs text-white/60 flex items-center">Powered by <Stripe className="w-12 h-12 fill-[#635BFF]" /></span>
-                              </div>  
+                              </div>
                             </div>
 
                             <div className="space-y-3">

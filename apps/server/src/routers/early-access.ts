@@ -1,6 +1,10 @@
 import { TRPCError } from "@trpc/server";
 import { count, eq } from "drizzle-orm";
 import { z } from "zod";
+import { grim } from "../lib/use-dev-log";
+
+const { error, info, warn } = grim();
+
 
 import { db } from "../db";
 import { waitlist } from "../db/schema/auth";
@@ -9,12 +13,12 @@ import { publicProcedure, router } from "../lib/trpc";
 export const earlyAccessRouter = router({
   getWaitlistCount: publicProcedure.query(async () => {
     try {
-      console.log("[getWaitlistCount] called");
+      info("[getWaitlistCount] called");
       const waitlistCount = await db.select({ count: count() }).from(waitlist);
-      console.log("[getWaitlistCount] db result:", waitlistCount);
+      info("[getWaitlistCount] db result:", waitlistCount);
 
       if (!waitlistCount[0] || typeof waitlistCount[0].count !== "number") {
-        console.error("[getWaitlistCount] Invalid result:", waitlistCount);
+        error("[getWaitlistCount] Invalid result:", waitlistCount);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to get waitlist count",
@@ -25,34 +29,46 @@ export const earlyAccessRouter = router({
         count: waitlistCount[0].count,
       };
     } catch (err) {
-      console.error("[getWaitlistCount] Error:", err);
+      error("[getWaitlistCount] Error:", err);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to get waitlist count",
       });
     }
   }),
-  joinWaitlist: publicProcedure
+  // Simplified endpoint for adding emails to waitlist (rate limiting handled by web app)
+  addToWaitlist: publicProcedure
     .input(
       z.object({
         email: z.string().email(),
       }),
     )
     .mutation(async ({ input }) => {
-      const userAlreadyInWaitlist = await db
-        .select()
-        .from(waitlist)
-        .where(eq(waitlist.email, input.email));
+      try {
+        info("[addToWaitlist] Processing email:", input.email);
 
-      if (userAlreadyInWaitlist[0]) {
-        return { message: "You're already on the waitlist!" };
+        const userAlreadyInWaitlist = await db
+          .select()
+          .from(waitlist)
+          .where(eq(waitlist.email, input.email));
+
+        if (userAlreadyInWaitlist[0]) {
+          return { message: "You're already on the waitlist!" };
+        }
+
+        await db.insert(waitlist).values({
+          email: input.email,
+          createdAt: new Date(),
+        });
+
+        info("[addToWaitlist] Successfully added email to waitlist:", input.email);
+        return { message: "You've been added to the waitlist!" };
+      } catch (error) {
+        warn("[addToWaitlist] Error:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to join waitlist",
+        });
       }
-
-      await db.insert(waitlist).values({
-        email: input.email,
-        createdAt: new Date(),
-      });
-
-      return { message: "You've been added to the waitlist!" };
     }),
 }); 

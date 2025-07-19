@@ -1,5 +1,5 @@
 import { BackedByBadge } from "@/components/ui/backed-by-badge";
-import { WaitlistForm } from "./waitlist-form";
+import { ConditionalForm } from "./conditional-form";
 
 export function Hero() {
 
@@ -16,7 +16,7 @@ export function Hero() {
                     <p className="z-10 mx-auto text-center text-balance text-muted-foreground sm:text-lg">
                         Instantly create bounties. Seamless submissions and payouts with Stripe. <span className="font-medium text-foreground">Launching soon.</span>
                     </p>
-                    <WaitlistForm />
+                    <ConditionalForm />
                 </div>
             </main>
         </div>
