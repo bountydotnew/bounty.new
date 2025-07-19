@@ -13,9 +13,12 @@ function ConditionalFormContent({ className }: ConditionalFormProps) {
   const searchParams = useSearchParams();
   const isDevelopment = process.env.NODE_ENV === "development" || searchParams.get("dev") === "true";
 
-  return isDevelopment ? (
-    <BountyDraftForm className={className} />
-  ) : (
+  // return isDevelopment ? (
+  //   <BountyDraftForm className={className} />
+  // ) : (
+  //   <WaitlistForm className={className} />
+  // );
+  return (
     <WaitlistForm className={className} />
   );
 }
