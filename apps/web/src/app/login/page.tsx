@@ -1,11 +1,11 @@
 "use client"
 
-import { Suspense } from "react";
 import { SignInPage } from "@/components/sections/auth/sign-in";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { baseUrl } from "@/lib/constants";
 import { Header } from "@/components/sections/home/header";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 function LoginContent() {

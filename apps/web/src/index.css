@@ -171,7 +171,7 @@ body {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-card text-primary-foreground;
+    @apply bg-background text-foreground;
   }
 }
 

@@ -1,6 +1,7 @@
-import posthog from "posthog-js"
+import posthog from "posthog-js"  
+import { env } from "@bounty/env/client";
 
-posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+posthog.init(env.NEXT_PUBLIC_POSTHOG_KEY!, {
   api_host: "/ingest",
   ui_host: "https://us.posthog.com",
   defaults: '2025-05-24',

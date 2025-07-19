@@ -1,6 +1,7 @@
 import { createAuthClient } from "better-auth/react";
+import { env } from "@bounty/env/client";
 
 export const authClient = createAuthClient({
   baseURL:
-      process.env.NEXT_PUBLIC_SERVER_URL,
+      env.NEXT_PUBLIC_SERVER_URL,
 });

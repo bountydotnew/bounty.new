@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { env } from "@bounty/env/server";
 
 export function middleware(request: NextRequest) {
   const res = NextResponse.next()
 
   const allowedOrigins = [
-    process.env.CORS_ORIGIN || "",
+    env.CORS_ORIGIN || "",
     "https://bounty.new",
     "https://www.bounty.new",
     "https://bounty-new-web.vercel.app/",

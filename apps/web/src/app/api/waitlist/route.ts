@@ -3,13 +3,15 @@ import { z } from 'zod';
 import { Ratelimit } from '@unkey/ratelimit';
 import { validateFingerprint } from '@/lib/fingerprint-validation';
 import { grim } from '@/hooks/use-dev-log';
+import { env } from '@bounty/env/server';
+import { env as clientEnv } from '@bounty/env/client';
 
 const { log, error, warn } = grim();
 
 
 // Only initialize Unkey if the root key is available
-const unkey = process.env.UNKEY_ROOT_KEY ? new Ratelimit({
-  rootKey: process.env.UNKEY_ROOT_KEY,
+const unkey = env.UNKEY_ROOT_KEY ? new Ratelimit({
+  rootKey: env.UNKEY_ROOT_KEY,
   namespace: "waitlist",
   limit: 3,
   duration: "1h",
@@ -102,7 +104,7 @@ export async function POST(request: NextRequest) {
     // Add email to waitlist database via HTTP request to tRPC endpoint
     let dbError = null;
     try {
-      const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000';
+      const serverUrl = clientEnv.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000';
       const response = await fetch(`${serverUrl}/trpc/earlyAccess.addToWaitlist`, {
         method: 'POST',
         headers: {

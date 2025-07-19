@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { publicProcedure, router } from "../lib/trpc";
 import { sendErrorWebhook, sendInfoWebhook } from "../lib/use-discord-webhook";
 import { grim } from "../lib/use-dev-log";
+import { env } from "@bounty/env/server";
 
 const { info, error, warn } = grim();
 
@@ -24,7 +25,7 @@ export const notificationsRouter = router({
     .input(sendWebhookSchema)
     .mutation(async ({ input }) => {
       try {
-        const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+        const webhookUrl = env.DISCORD_WEBHOOK_URL;
         
         if (!webhookUrl) {
           throw new TRPCError({
@@ -71,7 +72,7 @@ export const notificationsRouter = router({
     .input(sendErrorSchema)
     .mutation(async ({ input }) => {
       try {
-        const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+        const webhookUrl = env.DISCORD_WEBHOOK_URL;
         
         if (!webhookUrl) {
           warn("[sendError] Discord webhook not configured");
@@ -100,7 +101,7 @@ export const notificationsRouter = router({
   testWebhook: publicProcedure
     .query(async () => {
       try {
-        const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+        const webhookUrl = env.DISCORD_WEBHOOK_URL;
         
         if (!webhookUrl) {
           throw new TRPCError({
@@ -145,7 +146,7 @@ export const notificationsRouter = router({
   testPublicWebhook: publicProcedure
     .query(async () => {
       try {
-        const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+        const webhookUrl = env.DISCORD_WEBHOOK_URL;
         
         if (!webhookUrl) {
           return { 
@@ -197,7 +198,7 @@ export const notificationsRouter = router({
     }))
     .mutation(async ({ input }) => {
       try {
-        const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+          const webhookUrl = env.DISCORD_WEBHOOK_URL;
         
         if (!webhookUrl) {
           warn("[reportError] Discord webhook not configured");

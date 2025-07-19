@@ -9,6 +9,7 @@ import { ConfettiProvider } from "@/lib/context/confetti-context";
 import { Databuddy } from "@databuddy/sdk";
 import { TOAST_ICONS, TOAST_OPTIONS } from "@/constants/toast";
 import { PostHogProvider } from "posthog-js/react";
+import { env } from "@bounty/env/client";
 
 export function Providers({
   children
@@ -23,7 +24,7 @@ export function Providers({
       disableTransitionOnChange
     >
       <QueryClientProvider client={queryClient}>
-        <PostHogProvider apiKey={process.env.NEXT_PUBLIC_POSTHOG_KEY!}>
+        <PostHogProvider apiKey={env.NEXT_PUBLIC_POSTHOG_KEY!}>
           <ConfettiProvider>
             {children}
             <Databuddy

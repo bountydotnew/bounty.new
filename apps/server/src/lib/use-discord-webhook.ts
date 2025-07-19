@@ -1,3 +1,5 @@
+import { env } from "@bounty/env/server";
+
 interface DiscordWebhookPayload {
   content?: string;
   embeds?: DiscordEmbed[];
@@ -95,7 +97,7 @@ export async function sendErrorWebhook({
     fields: [
       {
         name: 'Environment',
-        value: process.env.NODE_ENV || 'unknown',
+        value: env.NODE_ENV || 'unknown',
         inline: true,
       },
       {
