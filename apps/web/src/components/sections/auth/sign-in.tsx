@@ -4,6 +4,7 @@ import OnlyFans from '@/components/icons/onlyfans';
 import OSS from '@/components/icons/oss';
 import Mail0 from '@/components/icons/mail0';
 import Analog from '@/components/icons/analog';
+import GitHub from '@/components/icons/github';
 // --- HELPER COMPONENTS (ICONS) ---
 
 
@@ -87,10 +88,10 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             </div>
 
             <div className="flex flex-col gap-2">
-              {/* <button onClick={onGitHubSignIn} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
+              <button onClick={onGitHubSignIn} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
                 <GitHub className="w-5 h-5 fill-foreground" />
                 Continue with GitHub
-              </button> */}
+              </button>
               <button onClick={() => alert('just kidding lmao')} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
                 <OnlyFans className="w-5 h-5 fill-foreground" />
                 Continue with OnlyFans
