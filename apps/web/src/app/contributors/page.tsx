@@ -175,7 +175,7 @@ export default function ContributorsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [allContributors, setAllContributors] = useState<Contributor[]>([]);
   const [activityData, setActivityData] = useState<Array<{ date: string; commits: number; issues: number; pullRequests: number }>>([]);
-  const [lastCommitSha, setLastCommitSha] = useState<string>('');
+  const [, setLastCommitSha] = useState<string>('');
   const lastCommitRef = useRef<string>('');
 
   const { data: contributors } = useQuery({
@@ -237,7 +237,7 @@ export default function ContributorsPage() {
           
           if (lastCommitRef.current && lastCommitRef.current !== latestCommit.sha) {
             // New commit detected
-            toast.custom((t) => (
+            toast.custom(() => (
               <div className="bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-lg p-3 shadow-lg">
                 <CommitToast commit={latestCommit} />
               </div>

@@ -2,16 +2,16 @@
 
 import { Suspense } from "react";
 import { WaitlistForm } from "./waitlist-form";
-import { BountyDraftForm } from "./bounty-draft-form";
-import { useSearchParams } from "next/navigation";
+// import { BountyDraftForm } from "./bounty-draft-form";
+// import { useSearchParams } from "next/navigation";
 
 interface ConditionalFormProps {
   className?: string;
 }
 
 function ConditionalFormContent({ className }: ConditionalFormProps) {
-  const searchParams = useSearchParams();
-  const isDevelopment = process.env.NODE_ENV === "development" || searchParams.get("dev") === "true";
+  // const searchParams = useSearchParams();
+  // const isDevelopment = process.env.NODE_ENV === "development" || searchParams.get("dev") === "true";
 
   // return isDevelopment ? (
   //   <BountyDraftForm className={className} />

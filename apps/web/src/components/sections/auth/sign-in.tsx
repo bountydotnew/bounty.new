@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import GitHub from '@/components/icons/github';
-import Wendys from '@/components/icons/wendys';
-
+import OnlyFans from '@/components/icons/onlyfans';
+import OSS from '@/components/icons/oss';
+import Mail0 from '@/components/icons/mail0';
+import Analog from '@/components/icons/analog';
 // --- HELPER COMPONENTS (ICONS) ---
 
 
@@ -86,13 +87,29 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             </div>
 
             <div className="flex flex-col gap-2">
-              <button onClick={onGitHubSignIn} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
+              {/* <button onClick={onGitHubSignIn} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
                 <GitHub className="w-5 h-5 fill-foreground" />
                 Continue with GitHub
-              </button>
+              </button> */}
               <button onClick={() => alert('just kidding lmao')} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
+                <OnlyFans className="w-5 h-5 fill-foreground" />
+                Continue with OnlyFans
+              </button>
+              {/* <button onClick={() => alert('just kidding lmao')} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
                 <Wendys className="w-6 h-6 fill-foreground" />
                 Continue with Wendy&apos;s
+              </button> */}
+              <button onClick={() => alert('just kidding lmao')} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
+                <OSS className="w-6 h-6 fill-foreground" />
+                Continue with oss.now
+              </button>
+              <button onClick={() => alert('just kidding lmao')} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
+                <Mail0 className="w-6 h-6 fill-foreground" />
+                Continue with Mail0
+              </button>
+              <button onClick={() => alert('just kidding lmao')} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
+                <Analog className="w-6 h-6 fill-foreground" />
+                Continue with Analog
               </button>
             </div>
             <p className="animate-element animate-delay-900 text-center text-sm text-muted-foreground">
