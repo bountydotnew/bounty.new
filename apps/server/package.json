@@ -13,6 +13,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@bounty/dev-logger": "workspace:*",
+    "@bounty/db": "workspace:*",
     "@trpc/client": "^11.4.2",
     "@trpc/server": "^11.4.2",
     "@unkey/ratelimit": "^2.0.0",

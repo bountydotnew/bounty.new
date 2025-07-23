@@ -136,7 +136,7 @@ export function BountyDraftForm({ className }: BountyDraftFormProps) {
                     </div>
 
                     <Button
-                        className="rounded-lg transition-[color,box-shadow] bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-10 px-4 py-2"
+                        className="rounded-lg transition-[color,box-shadow] bg-white text-black shadow-xs hover:bg-white/90 h-10 px-4 py-2"
                         type="submit"
                     >
                         <>

@@ -2,9 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { eq, desc, sql } from "drizzle-orm";
 
-import { db } from "../db";
-import { user, session } from "../db/schema/auth";
-import { userProfile, userReputation } from "../db/schema/profiles";
+import { db, user, session, userProfile, userReputation } from "@bounty/db";
 import { protectedProcedure, publicProcedure, router } from "../lib/trpc";
 
 export const userRouter = router({

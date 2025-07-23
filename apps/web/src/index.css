@@ -56,7 +56,7 @@ body {
 }
 
 .dark {
-  --background: rgb(19, 19, 19);
+  --background: rgb(37, 37, 37);
   --foreground: rgb(251, 251, 251);
   --card: rgb(52, 52, 52);
   --card-foreground: rgb(251, 251, 251);
@@ -166,6 +166,99 @@ body {
   }
 }
 
-html, body{
+html,
+body {
   overscroll-behavior: none;
+}
+
+:root {
+  --sds-size-depth-0: 0px;
+  --sds-color-background-brand-default: #2c2c2c;
+  --sds-color-background-brand-secondary: #e6e6e6;
+  --sds-size-radius-200: 8px;
+  --sds-size-space-600: 24px;
+  --sds-size-space-300: 12px;
+}
+
+.bountyCard {
+  border-radius: 8px;
+  background: var(--sds-color-background-brand-default);
+
+  /* 3D */
+  box-shadow: var(--sds-size-depth-0) -1px 1px var(--sds-size-depth-0) rgba(
+        30,
+        30,
+        30,
+        0.2
+      ) inset,
+    var(--sds-size-depth-0) 1px 1px var(--sds-size-depth-0)
+      rgba(255, 255, 255, 0.2) inset;
+}
+
+.previewButton {
+  border-radius: 8px;
+  background: var(--sds-color-background-brand-secondary);
+  box-shadow: var(--sds-size-depth-0) -1px 1px var(--sds-size-depth-0) rgba(
+        30,
+        30,
+        30,
+        0.2
+      ) inset,
+    var(--sds-size-depth-0) 1px 1px var(--sds-size-depth-0) #fff inset;
+}
+
+.oauthButton {
+  border-radius: 8px;
+  background: var(--sds-color-background-brand-default);
+  box-shadow: 0px 0px 8.5px 0px rgba(0, 0, 0, 0.25),
+    var(--sds-size-depth-0) -1px 1px var(--sds-size-depth-0) rgba(
+        30,
+        30,
+        30,
+        0.2
+      ) inset,
+    var(--sds-size-depth-0) 1px 1px var(--sds-size-depth-0)
+      rgba(255, 255, 255, 0.2) inset;
+  display: flex;
+  min-width: 240px;
+  padding: 12px var(--sds-size-space-600);
+  justify-content: center;
+  align-items: center;
+  gap: var(--sds-size-space-300);
+  cursor: pointer;
+}
+
+.oauthButton:hover {
+  background: #383838;
+}
+
+.oauthCard {
+  border-radius: 12px;
+  border: 1px solid var(--sds-color-border-default-tertiary);
+  background: #1d1d1d;
+  box-shadow: var(--sds-size-depth-0) 23px 38.1px -5px rgba(12, 12, 13, 0.1);
+  display: flex;
+  padding: 60px 30px 40px 30px;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.cardBorder {
+  box-shadow: 0px 0px 8.5px 0px rgba(0, 0, 0, 0.25),
+    var(--sds-size-depth-0) -1px 1px var(--sds-size-depth-0) rgba(
+        30,
+        30,
+        30,
+        0.2
+      ) inset,
+    var(--sds-size-depth-0) 1px 1px var(--sds-size-depth-0)
+      rgba(255, 255, 255, 0.2) inset;
+}
+
+.cardContainer {
+  height: 95%;
+  border-radius: 25px;
+  margin: 20px;
+  background: #1d1d1d;
 }

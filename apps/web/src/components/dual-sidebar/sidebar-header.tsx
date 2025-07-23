@@ -1,13 +1,14 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+// import { SidebarTrigger } from "@/components/ui/sidebar";
 import Link from "next/link";
+import { LINKS } from "@/constants/links";
 
 const links = [
-  { to: "/", label: "Home" },
-  { to: "/dashboard", label: "Dashboard" },
-  { to: "/bounties", label: "Bounties" },
+  { to: LINKS.DASHBOARD, label: "Dashboard" },
+  { to: LINKS.BOUNTIES, label: "Bounties" },
+  { to: "#", label: "Settings" },
 ];
 
 export function Header() {
@@ -18,7 +19,7 @@ export function Header() {
       )}
     >
       <div className="flex items-center gap-1 sm:gap-4">
-        <SidebarTrigger className="-ml-1" />
+        {/* <SidebarTrigger className="-ml-1" /> */}
         <div className="flex gap-4 text-lg">
           {links.map(({ to, label }) => {
             return (

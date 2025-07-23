@@ -83,15 +83,22 @@ function useWaitlistSubmission() {
       setCookie("waitlist_data", JSON.stringify(cookieData), 365);
 
       celebrate();
-      toast.success("Successfully added to waitlist! 🎉");
+      
+      if (data.warning) {
+        toast.warning(`${data.message} - ${data.warning}`);
+      } else {
+        toast.success("Successfully added to waitlist! 🎉");
+      }
 
-      // Update waitlist count optimistically
-      queryClient.setQueryData(
-        trpc.earlyAccess.getWaitlistCount.queryKey(),
-        (oldData: { count: number } | undefined) => ({
-          count: (oldData?.count ?? 0) + 1,
-        }),
-      );
+      // Update waitlist count optimistically only if no database error
+      if (!data.warning) {
+        queryClient.setQueryData(
+          trpc.earlyAccess.getWaitlistCount.queryKey(),
+          (oldData: { count: number } | undefined) => ({
+            count: (oldData?.count ?? 0) + 1,
+          }),
+        );
+      }
     },
     onError: (error: Error) => {
       console.error('Waitlist submission error:', error);
@@ -110,8 +117,18 @@ function useWaitlistSubmission() {
 }
 
 function useWaitlistCount() {
-  const query = useQuery(trpc.earlyAccess.getWaitlistCount.queryOptions());
-  return { count: query.data?.count ?? 0 };
+  const query = useQuery({
+    ...trpc.earlyAccess.getWaitlistCount.queryOptions(),
+    retry: 2,
+    retryDelay: 1000,
+  });
+  
+  return { 
+    count: query.data?.count ?? 0, 
+    isLoading: query.isLoading,
+    error: query.error,
+    isError: query.isError
+  };
 }
 
 interface WaitlistFormProps {
@@ -194,14 +211,6 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
             We&apos;ll let you know when we&apos;re ready to show you what
             we&apos;ve been working on.
           </p>
-          {waitlistSubmission.rateLimitInfo && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Shield className="h-4 w-4" />
-              <span>
-                {waitlistSubmission.rateLimitInfo.remaining} of {waitlistSubmission.rateLimitInfo.limit} attempts remaining this hour
-              </span>
-            </div>
-          )}
         </div>
       ) : (
         <div className="w-full max-w-lg">
@@ -221,7 +230,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
               )}
             </div>
             <Button
-              className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10"
+              className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-white text-black shadow-xs hover:bg-white/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10"
               type="submit"
               disabled={isFormDisabled}
             >
@@ -255,11 +264,31 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
       )}
 
       <div className="relative flex flex-row items-center justify-center gap-2">
-        <span className="size-2 rounded-full bg-green-600 dark:bg-green-400" />
-        <span className="absolute left-0 size-2 rounded-full bg-green-600 blur-xs dark:bg-green-400" />
-        <span className="text-sm text-green-600 sm:text-base dark:text-green-400">
-          <NumberFlow value={waitlistCount.count} /> {waitlistCount.count === 1 ? 'person' : 'people'} already joined
-        </span>
+        {waitlistCount.isError ? (
+          <>
+            <span className="size-2 rounded-full bg-orange-600 dark:bg-orange-400" />
+            <span className="absolute left-0 size-2 rounded-full bg-orange-600 blur-xs dark:bg-orange-400" />
+            <span className="text-sm text-orange-600 sm:text-base dark:text-orange-400">
+              Unable to load waitlist count
+            </span>
+          </>
+        ) : waitlistCount.isLoading ? (
+          <>
+            <span className="size-2 rounded-full bg-gray-600 dark:bg-gray-400 animate-pulse" />
+            <span className="absolute left-0 size-2 rounded-full bg-gray-600 blur-xs dark:bg-gray-400 animate-pulse" />
+            <span className="text-sm text-gray-600 sm:text-base dark:text-gray-400">
+              Loading waitlist count...
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="size-2 rounded-full bg-green-600 dark:bg-green-400" />
+            <span className="absolute left-0 size-2 rounded-full bg-green-600 blur-xs dark:bg-green-400" />
+            <span className="text-sm text-green-600 sm:text-base dark:text-green-400">
+              <NumberFlow value={waitlistCount.count} /> {waitlistCount.count === 1 ? 'person' : 'people'} already joined
+            </span>
+          </>
+        )}
       </div>
     </div>
   );

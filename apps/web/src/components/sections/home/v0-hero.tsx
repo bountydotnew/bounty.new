@@ -21,7 +21,7 @@ import {
 import { ConditionalForm } from "./conditional-form"
 import { BackedByBadge } from "@/components/ui/backed-by-badge"
 import Image from "next/image"
-import { grim } from "@/hooks/use-dev-log";
+import { grim } from "@bounty/dev-logger";
 
 const { log } = grim();
 export default function BountyPlatform() {

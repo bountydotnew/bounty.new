@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/index.css";
 import { Providers } from "@/components/providers";
-
-
-
+import { StagewiseToolbar } from "@stagewise/toolbar-next";
+import ReactPlugin from "@stagewise-plugins/react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -59,10 +58,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <div className="grid grid-rows-[auto_1fr] h-svh">
-            {children}
-          </div>
-        </Providers>
+            <StagewiseToolbar config={{ plugins: [ReactPlugin] }} />
+            <div className="grid grid-rows-[auto_1fr] h-svh">
+              {children}
+            </div>
+          </Providers>
       </body>
     </html>
   );

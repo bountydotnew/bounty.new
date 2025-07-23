@@ -1,19 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { Ratelimit } from '@unkey/ratelimit';
 import { validateFingerprint } from '@/lib/fingerprint-validation';
 import { grim } from '@/hooks/use-dev-log';
 
 const { log, error, warn } = grim();
-
-
-const unkey = new Ratelimit({
-  rootKey: process.env.UNKEY_ROOT_KEY || "",
-  namespace: "waitlist",
-  limit: 3,
-  duration: "1h",
-  async: false,
-});
 
 const requestSchema = z.object({
   email: z.string().email('Invalid email format'),
@@ -27,7 +17,6 @@ const requestSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    // Parse and validate request body
     const body = await request.json();
     const validation = requestSchema.safeParse(body);
 
@@ -43,7 +32,8 @@ export async function POST(request: NextRequest) {
 
     const { email, fingerprintData } = validation.data;
 
-    // Validate fingerprint
+    log('[Waitlist] Processing request for email:', email);
+
     const fingerprintValidation = validateFingerprint(fingerprintData);
     if (!fingerprintValidation.isValid) {
       log('[Waitlist] Fingerprint validation failed:', fingerprintValidation.errors);
@@ -56,78 +46,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use the thumbmark hash as the rate limit identifier
-    const identifier = fingerprintData.thumbmark;
-
-    log('[Waitlist] Processing request for email:', email);
-    log('[Waitlist] Using fingerprint identifier:', identifier.substring(0, 8) + '...');
-
-    // Check rate limit with Unkey
-    let rateLimitResult;
-    try {
-      rateLimitResult = await unkey.limit(identifier);
-      log('[Waitlist] Rate limit result:', {
-        success: rateLimitResult.success,
-        remaining: rateLimitResult.remaining,
-        limit: rateLimitResult.limit,
-        reset: rateLimitResult.reset
-      });
-    } catch (error) {
-      warn('[Waitlist] Unkey error:', error);
-      return NextResponse.json(
-        {
-          error: 'Rate limiting service unavailable',
-          success: false
-        },
-        { status: 503 }
-      );
-    }
-
-    if (!rateLimitResult.success) {
-      const resetTime = new Date(rateLimitResult.reset);
-      return NextResponse.json(
-        {
-          error: 'Rate limit exceeded. Please try again later.',
-          success: false,
-          rateLimited: true,
-          resetTime: resetTime.toISOString(),
-          remaining: rateLimitResult.remaining,
-          limit: rateLimitResult.limit,
-        },
-        { status: 429 }
-      );
-    }
-
-    // Add email to waitlist database via HTTP request to tRPC endpoint
     try {
       const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000';
+      
+      const payload = { email };
+      log('[Waitlist] Sending tRPC request with payload:', JSON.stringify(payload));
+      
       const response = await fetch(`${serverUrl}/trpc/earlyAccess.addToWaitlist`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          json: { email }
-        }),
+        body: JSON.stringify(payload),
       });
+
+      const responseData = await response.json();
+      log('[Waitlist] tRPC response:', JSON.stringify(responseData));
 
       if (response.ok) {
         log('[Waitlist] Successfully added email to waitlist:', email);
+        return NextResponse.json({
+          success: true,
+          message: 'Successfully added to waitlist!',
+        });
       } else {
-        warn('[Waitlist] Failed to save to database:', response.status);
+        warn('[Waitlist] Failed to save to database:', response.status, responseData);
+        return NextResponse.json(
+          {
+            error: 'Failed to add to waitlist',
+            success: false
+          },
+          { status: 500 }
+        );
       }
-    } catch (dbError) {
-      error('[Waitlist] Database error:', dbError);
-      // Continue anyway - we've already validated the rate limit and fingerprint
-      // The user will still get a success response since rate limiting passed
+    } catch (dbConnectionError) {
+      error('[Waitlist] Database connection error:', dbConnectionError);
+      return NextResponse.json(
+        {
+          error: 'Database temporarily unavailable',
+          success: false
+        },
+        { status: 500 }
+      );
     }
-
-    return NextResponse.json({
-      success: true,
-      message: 'Successfully added to waitlist!',
-      remaining: rateLimitResult.remaining,
-      limit: rateLimitResult.limit,
-    });
 
   } catch (error) {
     warn('[Waitlist] Unexpected error:', error);

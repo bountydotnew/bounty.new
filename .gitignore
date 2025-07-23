@@ -4,3 +4,7 @@ node_modules
 /.cursor
 /.vscode
 /.grim
+
+.env
+*.env
+apps/server/_.env.local

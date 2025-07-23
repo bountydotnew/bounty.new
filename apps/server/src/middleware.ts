@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { env } from "@bounty/env/server";
 
 export function middleware(request: NextRequest) {
   const res = NextResponse.next()
 
   const allowedOrigins = [
-    process.env.CORS_ORIGIN || "",
+    env.CORS_ORIGIN || "",
     "https://bounty.new",
     "https://www.bounty.new",
     "https://bounty-new-web.vercel.app/",
@@ -15,7 +16,8 @@ export function middleware(request: NextRequest) {
     "http://grim.local:3000",
     "http://localhost:3000",
     "http://localhost:3001",
-    "http://192.168.1.147:3000"
+    "http://192.168.1.147:3000",
+    "https://app.databuddy.cc"
   ].filter(Boolean);
 
   const origin = request.headers.get('origin');

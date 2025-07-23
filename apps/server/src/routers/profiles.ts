@@ -2,9 +2,7 @@ import { z } from "zod";
 import { eq, desc, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from "../lib/trpc";
-import { db } from "../db";
-import { userProfile, userReputation, userRating } from "../db/schema/profiles";
-import { user } from "../db/schema/auth";
+import { db, userProfile, userReputation, userRating, user } from "@bounty/db";
 
 const updateProfileSchema = z.object({
   bio: z.string().max(500).optional(),

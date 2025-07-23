@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import OnlyFans from '@/components/icons/onlyfans';
+import OSS from '@/components/icons/oss';
+import Mail0 from '@/components/icons/mail0';
+import Analog from '@/components/icons/analog';
 import GitHub from '@/components/icons/github';
-import Wendys from '@/components/icons/wendys';
-
 // --- HELPER COMPONENTS (ICONS) ---
 
 
@@ -21,7 +23,7 @@ interface SignInPageProps {
 // --- SUB-COMPONENTS ---
 
 const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
-  <div className="rounded-2xl border border-border bg-foreground/5 backdrop-blur-sm transition-colors focus-within:border-violet-400/70 focus-within:bg-violet-500/10">
+  <div className="rounded-radius border border-border bg-foreground/5 backdrop-blur-sm transition-colors focus-within:border-violet-400/70 focus-within:bg-violet-500/10">
     {children}
   </div>
 );
@@ -51,7 +53,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
               <div className="animate-element animate-delay-300">
                 <label className="text-sm font-medium text-muted-foreground">Email Address</label>
                 <GlassInputWrapper>
-                  <input name="email" type="email" placeholder="Enter your email address" className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none" />
+                  <input name="email" type="email" placeholder="Enter your email address" className="w-full bg-transparent text-sm p-4 rounded-radius focus:outline-none" />
                 </GlassInputWrapper>
               </div>
 
@@ -59,7 +61,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                 <label className="text-sm font-medium text-muted-foreground">Password</label>
                 <GlassInputWrapper>
                   <div className="relative">
-                    <input name="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" className="w-full bg-transparent text-sm p-4 pr-12 rounded-2xl focus:outline-none" />
+                    <input name="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" className="w-full bg-transparent text-sm p-4 pr-12 rounded-radius focus:outline-none" />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-3 flex items-center">
                       {showPassword ? <EyeOff className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" /> : <Eye className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />}
                     </button>
@@ -75,7 +77,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                 <a href="#" onClick={(e) => { e.preventDefault(); onResetPassword?.(); }} className="hover:underline text-violet-400 transition-colors">Reset password</a>
               </div>
 
-              <button type="submit" className="animate-element animate-delay-600 w-full rounded-2xl bg-primary py-4 font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+              <button type="submit" className="animate-element animate-delay-600 w-full rounded-radius bg-white py-4 font-medium text-black hover:bg-primary/90 transition-colors">
                 Sign In
               </button>
             </form>
@@ -86,13 +88,29 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             </div>
 
             <div className="flex flex-col gap-2">
-              <button onClick={onGitHubSignIn} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-2xl py-4 hover:bg-secondary transition-colors">
+              <button onClick={onGitHubSignIn} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
                 <GitHub className="w-5 h-5 fill-foreground" />
                 Continue with GitHub
               </button>
-              <button onClick={() => alert('just kidding lmao')} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-2xl py-4 hover:bg-secondary transition-colors">
+              <button onClick={() => alert('just kidding lmao')} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
+                <OnlyFans className="w-5 h-5 fill-foreground" />
+                Continue with OnlyFans
+              </button>
+              {/* <button onClick={() => alert('just kidding lmao')} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
                 <Wendys className="w-6 h-6 fill-foreground" />
                 Continue with Wendy&apos;s
+              </button> */}
+              <button onClick={() => alert('just kidding lmao')} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
+                <OSS className="w-6 h-6 fill-foreground" />
+                Continue with oss.now
+              </button>
+              <button onClick={() => alert('just kidding lmao')} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
+                <Mail0 className="w-6 h-6 fill-foreground" />
+                Continue with Mail0
+              </button>
+              <button onClick={() => alert('just kidding lmao')} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
+                <Analog className="w-6 h-6 fill-foreground" />
+                Continue with Analog
               </button>
             </div>
             <p className="animate-element animate-delay-900 text-center text-sm text-muted-foreground">

@@ -2,9 +2,7 @@ import { z } from "zod";
 import { eq, desc, and, or, ilike, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from "../lib/trpc";
-import { db } from "../db";
-import { bounty, submission, bountyApplication } from "../db/schema/bounties";
-import { user } from "../db/schema/auth";
+import { db, bounty, submission, bountyApplication, user } from "@bounty/db";
 
 const createBountySchema = z.object({
   title: z.string().min(1, "Title is required").max(200, "Title too long"),
