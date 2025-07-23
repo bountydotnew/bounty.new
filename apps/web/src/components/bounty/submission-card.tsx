@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Github } from "lucide-react";
 import { Badge } from "@/components/bounty/badge";
 
-export interface BountyCardProps {
+export interface SubmissionCardProps {
   user: string;
   description?: string;
   avatarSrc?: string;
@@ -13,7 +13,7 @@ export interface BountyCardProps {
   previewSrc?: string;
 }
 
-export default function BountyCard({ user, description = "", avatarSrc = "", rank = "Rank 100", previewSrc = "" }: BountyCardProps) {
+export default function SubmissionCard({ user, description = "", avatarSrc = "", rank = "Rank 100", previewSrc = "" }: SubmissionCardProps) {
   return (
     <div className="bountyCard flex w-full max-w-[466px] min-w-[466px] flex-col items-start gap-3 rounded-lg bg-[#2C2C2C] p-6 shadow-card-custom">
       <div className="flex w-full items-center justify-between">

@@ -119,7 +119,7 @@ export function Header() {
     <>
       <div className="mx-auto fixed top-0 left-0 z-30 w-full">
         <HeaderBase
-          className="bg-[#1D1D1D]/80 backdrop-blur-sm border border-white/10 rounded-radius max-w-3xl mx-auto mt-4 pl-4 pr-[14px]"
+          className="bg-[#1D1D1D]/80 backdrop-blur-sm border border-white/10 rounded-sm max-w-3xl mx-auto mt-4 pl-4 pr-[14px]"
           leftContent={leftContent}
           rightContent={rightContent}
         />

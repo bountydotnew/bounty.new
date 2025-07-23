@@ -1,14 +1,15 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Github } from "lucide-react"
-import BountyCard from "@/components/bounty/card"
+import SubmissionCard from "@/components/bounty/submission-card"
 import { useState, useRef } from "react"
 import { authClient } from "@/lib/auth-client"
 import { toast } from "sonner"
 import { baseUrl } from "@/lib/constants"
 import { useRouter } from "next/navigation"
+import { LINKS } from "@/constants/links";
 
-export default function Component() {
+export default function Login() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -59,7 +60,7 @@ export default function Component() {
   };
 
   const handleGoToDashboard = () => {
-    router.push("/dashboard");
+    router.push(LINKS.DASHBOARD);
   };
 
   return (
@@ -203,7 +204,7 @@ export default function Component() {
               transform: `translate(${-mousePosition.x * 3}px, ${-mousePosition.y * 3}px) rotate(-22deg)`
             }}
           >
-            <BountyCard
+            <SubmissionCard
               user="F1shy"
               rank="Rank 5"
               description="Hello sir pls look at my submission"
@@ -220,7 +221,7 @@ export default function Component() {
               transform: `translate(${-mousePosition.x * 5}px, ${-mousePosition.y * 5}px) rotate(-22deg)`
             }}
           >
-            <BountyCard
+            <SubmissionCard
               user="Sergio"
               rank="Rank 2"
               description="I one shotted this with v0"
@@ -237,7 +238,7 @@ export default function Component() {
               transform: `translate(${-mousePosition.x * 2}px, ${-mousePosition.y * 2}px) rotate(22deg)`
             }}
           >
-            <BountyCard
+            <SubmissionCard
               user="Ahmet"
               rank="New user"
               description="Here is my try"
@@ -253,7 +254,7 @@ export default function Component() {
               transform: `translate(${-mousePosition.x * 4}px, ${-mousePosition.y * 4}px) rotate(22deg)`
             }}
           >
-            <BountyCard
+            <SubmissionCard
               user="F1shy"
               rank="Rank 5"
               description="There, fatty. I added color theming to ur app."

@@ -3,7 +3,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/dual-sidebar/app-sidebar";
-import { Header } from "@/components/dual-sidebar/header";
+import { Header } from "@/components/dual-sidebar/sidebar-header";
 // import { RightSidebar } from "@/components/dual-sidebar/right-sidebar";
 
 const Sidebar = ({ children }: { children: React.ReactNode }) => {

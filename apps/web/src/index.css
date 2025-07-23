@@ -56,7 +56,7 @@ body {
 }
 
 .dark {
-  --background: rgb(19, 19, 19);
+  --background: rgb(37, 37, 37);
   --foreground: rgb(251, 251, 251);
   --card: rgb(52, 52, 52);
   --card-foreground: rgb(251, 251, 251);

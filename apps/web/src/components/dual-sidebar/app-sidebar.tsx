@@ -2,7 +2,9 @@
 
 import { ComponentProps } from "react";
 import {
+  Archive,
   AudioWaveform,
+  Award,
   BookOpen,
   Bot,
   Command,
@@ -24,9 +26,25 @@ import { NavProjects } from "@/components/dual-sidebar/nav-projects";
 import { NavUser } from "@/components/dual-sidebar/nav-user";
 import { TeamSwitcher } from "@/components/dual-sidebar/team-switcher";
 import { authClient } from "@/lib/auth-client";
+import Image from "next/image";
+import { Divider } from "@/components/ui/divider";
+import Bookmark from "../icons/bookmark";
+import Medal from "../icons/medal";
+import Bounty from "../icons/bounty";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { LINKS } from "@/constants/links";
 
-// This is sample data.
-const data = {
+export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
+  const { data: session } = authClient.useSession();
+
+  function isActive(path: string) {
+    return pathname === path;
+  }
+
+  // This is sample data.
+  const data = {
   user: {
     name: "shadcn",
     email: "m@example.com",
@@ -54,43 +72,16 @@ const data = {
   ],
   navMain: [
     {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
-      isActive: true,
-      items: [
-        {
-          title: "History",
-          url: "#",
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
-      ],
+      title: "Dashboard",
+      url: LINKS.DASHBOARD,
+      icon: Bookmark,
+      isActive: isActive("/dashboard"),
     },
     {
-      title: "Models",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
+      title: "Bounties",
+      url: LINKS.BOUNTIES,
+      icon: Award,
+      isActive: isActive("/bounties"),
     },
     {
       title: "Documentation",
@@ -178,11 +169,7 @@ const data = {
       image: "https://assets.dub.co/changelog/utm-templates.jpg",
     },
   ],
-};
-
-export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
-
-  const { data: session } = authClient.useSession();
+  };
 
   const user = {
     name: session?.user?.name || "Guest",
@@ -193,9 +180,13 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar variant="icononly" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        {/* <TeamSwitcher teams={data.teams} /> */}
+        <Link href={LINKS.DASHBOARD}>
+          <Bounty className="h-6 w-6" />
+        </Link>
       </SidebarHeader>
-      <SidebarContent>
+      <Divider className="h-[2px] w-8 my-2 bg-white"/>
+        <SidebarContent>
         <NavMain items={data.navMain} />
         <NavProjects projects={data.projects} />
       </SidebarContent>
