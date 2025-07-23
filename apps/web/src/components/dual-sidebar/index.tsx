@@ -8,7 +8,7 @@ import { Header } from "@/components/dual-sidebar/header";
 
 const Sidebar = ({ children }: { children: React.ReactNode }) => {
   return (
-    <SidebarProvider>
+    <SidebarProvider variant="icononly">
       <AppSidebar side="left" />
       <SidebarInset className="h-screen flex flex-col overflow-hidden">
         <Header />

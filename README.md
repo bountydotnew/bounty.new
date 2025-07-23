@@ -1,3 +1,12 @@
+<br />
+<br />
+<a href="https://vercel.com/oss">
+  <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge.svg" />
+</a>
+<br />
+<br />
+
+
 # bounty.new
 
 A modern bounty platform for developers and creators.

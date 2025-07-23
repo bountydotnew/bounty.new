@@ -7,6 +7,7 @@ import { baseUrl } from "@/lib/constants";
 import { Header } from "@/components/sections/home/header";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import Login from "@/components/bounty/login";
 
 function LoginContent() {
   const searchParams = useSearchParams();
@@ -36,10 +37,10 @@ function LoginContent() {
   };
 
   return (
-    <SignInPage
-      onSignIn={handleGitHubSignIn}
-      onGitHubSignIn={handleGitHubSignIn}
-      onResetPassword={() => { }}
+    <Login
+      // onSignIn={handleGitHubSignIn}
+      // onGitHubSignIn={handleGitHubSignIn}
+      // onResetPassword={() => { }}
     />
   )
 }
@@ -47,7 +48,7 @@ function LoginContent() {
 export default function LoginPage() {
   return (
     <div className="bg-landing-background mx-auto w-full">
-      <Header />
+      {/* <Header /> */}
       <Suspense fallback={<div>Loading...</div>}>
         <LoginContent />
       </Suspense>
