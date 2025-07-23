@@ -211,14 +211,6 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
             We&apos;ll let you know when we&apos;re ready to show you what
             we&apos;ve been working on.
           </p>
-          {waitlistSubmission.rateLimitInfo && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Shield className="h-4 w-4" />
-              <span>
-                {waitlistSubmission.rateLimitInfo.remaining} of {waitlistSubmission.rateLimitInfo.limit} attempts remaining this hour
-              </span>
-            </div>
-          )}
         </div>
       ) : (
         <div className="w-full max-w-lg">
