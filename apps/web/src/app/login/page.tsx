@@ -1,15 +1,9 @@
 "use client"
 
-import { toast } from "sonner";
-import { authClient } from "@/lib/auth-client";
-import { baseUrl } from "@/lib/constants";
 import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 import Login from "@/components/bounty/login";
 
 function LoginContent() {
-  const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect");
   
   // const handleGitHubSignIn = async () => {
   //   try {
