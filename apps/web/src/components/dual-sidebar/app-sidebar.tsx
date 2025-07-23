@@ -2,18 +2,14 @@
 
 import { ComponentProps } from "react";
 import {
-  Archive,
   AudioWaveform,
   Award,
-  BookOpen,
-  Bot,
-  Command,
+  BookOpen, Command,
   Frame,
   GalleryVerticalEnd,
   Map,
   PieChart,
-  Settings2,
-  SquareTerminal,
+  Settings2
 } from "lucide-react";
 import {
   Sidebar,
@@ -24,12 +20,9 @@ import {
 import { NavMain } from "@/components/dual-sidebar/nav-main";
 import { NavProjects } from "@/components/dual-sidebar/nav-projects";
 import { NavUser } from "@/components/dual-sidebar/nav-user";
-import { TeamSwitcher } from "@/components/dual-sidebar/team-switcher";
 import { authClient } from "@/lib/auth-client";
-import Image from "next/image";
 import { Divider } from "@/components/ui/divider";
 import Bookmark from "../icons/bookmark";
-import Medal from "../icons/medal";
 import Bounty from "../icons/bounty";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
