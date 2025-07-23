@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Github } from "lucide-react"
+import { Github, LogOut } from "lucide-react"
 import SubmissionCard from "@/components/bounty/submission-card"
 import { useState, useRef } from "react"
 import { authClient } from "@/lib/auth-client"
@@ -8,24 +8,32 @@ import { toast } from "sonner"
 import { baseUrl } from "@/lib/constants"
 import { useRouter } from "next/navigation"
 import { LINKS } from "@/constants/links";
+import Bounty from "@/components/icons/bounty"
 
 export default function Login() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !svgRef.current) return;
 
-    const rect = containerRef.current.getBoundingClientRect();
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
+    const svgRect = svgRef.current.getBoundingClientRect();
+    const svgCenterX = svgRect.left + svgRect.width / 2;
+    const svgCenterY = svgRect.top + svgRect.height / 2;
 
-    const x = (e.clientX - rect.left - centerX) / centerX;
-    const y = (e.clientY - rect.top - centerY) / centerY;
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const maxDistance = Math.min(containerRect.width, containerRect.height) / 2;
 
-    setMousePosition({ x, y });
+    const deltaX = e.clientX - svgCenterX;
+    const deltaY = e.clientY - svgCenterY;
+
+    const x = deltaX / maxDistance;
+    const y = deltaY / maxDistance;
+
+    setMousePosition({ x: Math.max(-1, Math.min(1, x)), y: Math.max(-1, Math.min(1, y)) });
   };
 
   const handleMouseLeave = () => {
@@ -68,6 +76,11 @@ export default function Login() {
       {/* Left Column: Login Section */}
       <div className="flex-1 flex items-center justify-center p-8 md:p-12">
         <div className="max-w-md w-full space-y-8">
+          {/* Mobile Bounty Icon */}
+          <div className="lg:hidden flex justify-center mb-8">
+            <Bounty className="w-24 h-28 text-primary" />
+          </div>
+
           {isPending ? (
             <div className="text-center space-y-4">
               <div className="animate-pulse">
@@ -79,12 +92,12 @@ export default function Login() {
           ) : session ? (
             <div className="text-center space-y-6">
               <div className="space-y-2">
-                <h1 className="text-4xl md:text-5xl font-bold">Welcome back!</h1>
+                <h1 className="text-4xl md:text-4xl font-bold">Welcome back!</h1>
                 <p className="text-lg text-[#757575]">You&apos;re already signed in</p>
               </div>
               <div className="bg-[#1D1D1D] rounded-xl p-6 md:p-8 space-y-4 shadow-[0px_23px_38.1px_-5px_rgba(12,12,13,0.10)]">
                 <div className="flex flex-col items-center space-y-4">
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center w-full space-x-3">
                     {session.user.image && (
                       <img
                         src={session.user.image}
@@ -104,9 +117,11 @@ export default function Login() {
                     Go to Dashboard
                   </Button>
                   <Button
+                    variant="destructive"
+                    className="oauthButton w-full max-w-[466px] min-w-[240px] h-12 px-6 py-3 rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
                     onClick={() => authClient.signOut({ fetchOptions: { onSuccess: () => { toast.success("Signed out successfully"); } } })}
-                    className="oauthButton w-full max-w-[466px] min-w-[240px] h-12 px-6 py-3 bg-[#303030] text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
                   >
+                    <LogOut className="w-5 h-5" />
                     Sign Out
                   </Button>
                 </div>
@@ -167,6 +182,7 @@ export default function Login() {
           }}
         >
           <svg
+            ref={svgRef}
             xmlns="http://www.w3.org/2000/svg"
             width="153"
             height="179"
@@ -174,7 +190,7 @@ export default function Login() {
             fill="none"
             className="absolute z-0 transition-transform duration-300 ease-out"
             style={{
-              transform: `translate(${mousePosition.x * 1}px, ${mousePosition.y * 1}px)`
+              transform: `translate(${mousePosition.x * 8}px, ${mousePosition.y * 8}px)`
             }}
           >
             <path
@@ -201,7 +217,7 @@ export default function Login() {
           <div
             className="absolute -rotate-[22deg] top-[30%] left-[0%] transform -translate-x-1/2 -translate-y-1/2 z-10 transition-transform duration-300 ease-out"
             style={{
-              transform: `translate(${-mousePosition.x * 3}px, ${-mousePosition.y * 3}px) rotate(-22deg)`
+              transform: `translate(${-mousePosition.x * 25}px, ${-mousePosition.y * 25}px) rotate(-22deg)`
             }}
           >
             <SubmissionCard
@@ -218,7 +234,7 @@ export default function Login() {
           <div
             className="absolute -rotate-[22deg] bottom-[25%] right-[5%] transform translate-x-1/2 translate-y-1/2 z-10 transition-transform duration-300 ease-out"
             style={{
-              transform: `translate(${-mousePosition.x * 5}px, ${-mousePosition.y * 5}px) rotate(-22deg)`
+              transform: `translate(${-mousePosition.x * 30}px, ${-mousePosition.y * 30}px) rotate(-22deg)`
             }}
           >
             <SubmissionCard
@@ -235,7 +251,7 @@ export default function Login() {
           <div
             className="absolute rotate-[22deg] bottom-[25%] left-[0%] transform -translate-x-1/2 translate-y-1/2 z-10 transition-transform duration-300 ease-out"
             style={{
-              transform: `translate(${-mousePosition.x * 2}px, ${-mousePosition.y * 2}px) rotate(22deg)`
+              transform: `translate(${-mousePosition.x * 20}px, ${-mousePosition.y * 20}px) rotate(22deg)`
             }}
           >
             <SubmissionCard
@@ -251,7 +267,7 @@ export default function Login() {
           <div
             className="absolute rotate-[22deg] top-[30%] right-[0%] transform translate-x-1/2 -translate-y-1/2 z-10 transition-transform duration-300 ease-out"
             style={{
-              transform: `translate(${-mousePosition.x * 4}px, ${-mousePosition.y * 4}px) rotate(22deg)`
+              transform: `translate(${-mousePosition.x * 28}px, ${-mousePosition.y * 28}px) rotate(22deg)`
             }}
           >
             <SubmissionCard
