@@ -25,8 +25,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
-const SIDEBAR_COOKIE_NAME = "sidebar_state"
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
+// const SIDEBAR_COOKIE_NAME = "sidebar_state"
+// const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 const SIDEBAR_WIDTH = "16rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "4rem"
@@ -264,7 +264,7 @@ function SidebarTrigger({
   ...props
 }: React.ComponentProps<typeof Button>) {
   const { toggleSidebar, isMobile } = useSidebar()
-
+  
   const sidebarWrapper = document.querySelector('[data-slot="sidebar-wrapper"]')
   const variant = sidebarWrapper?.getAttribute('data-variant')
 
@@ -292,14 +292,14 @@ function SidebarTrigger({
 }
 
 function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
+  const { toggleSidebar } = useSidebar()
+  
   const sidebarWrapper = document.querySelector('[data-slot="sidebar-wrapper"]')
   const variant = sidebarWrapper?.getAttribute('data-variant')
 
   if (variant === "icononly") {
     return null
   }
-
-  const { toggleSidebar } = useSidebar()
 
   return (
     <button

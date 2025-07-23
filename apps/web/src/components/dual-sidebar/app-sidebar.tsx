@@ -17,14 +17,12 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarHeader,
-  SidebarRail,
+  SidebarHeader
 } from "@/components/ui/sidebar";
 import { NavMain } from "@/components/dual-sidebar/nav-main";
 import { NavProjects } from "@/components/dual-sidebar/nav-projects";
 import { NavUser } from "@/components/dual-sidebar/nav-user";
 import { TeamSwitcher } from "@/components/dual-sidebar/team-switcher";
-import { News } from "@/components/ui/sidebar-news";
 import { authClient } from "@/lib/auth-client";
 
 // This is sample data.

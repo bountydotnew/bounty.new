@@ -2,7 +2,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Github } from "lucide-react"
 import BountyCard from "@/components/bounty/card"
-import { useState, useEffect, useRef } from "react"
+import { useState, useRef } from "react"
 import { authClient } from "@/lib/auth-client"
 import { toast } from "sonner"
 import { baseUrl } from "@/lib/constants"
@@ -58,15 +58,6 @@ export default function Component() {
     toast.info("Google sign-in coming soon!");
   };
 
-  const handleEmailSignIn = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    toast.info("Email sign-in coming soon!");
-  };
-
-  const handleResetPassword = () => {
-    toast.info("Password reset coming soon!");
-  };
-
   const handleGoToDashboard = () => {
     router.push("/dashboard");
   };
@@ -88,7 +79,7 @@ export default function Component() {
             <div className="text-center space-y-6">
               <div className="space-y-2">
                 <h1 className="text-4xl md:text-5xl font-bold">Welcome back!</h1>
-                <p className="text-lg text-[#757575]">You're already signed in</p>
+                <p className="text-lg text-[#757575]">You&apos;re already signed in</p>
               </div>
               <div className="bg-[#1D1D1D] rounded-xl p-6 md:p-8 space-y-4 shadow-[0px_23px_38.1px_-5px_rgba(12,12,13,0.10)]">
                 <div className="flex flex-col items-center space-y-4">
