@@ -167,7 +167,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const user = {
     name: session?.user?.name || "Guest",
     email: session?.user?.email || "guest@example.com",
-    avatar: session?.user?.image || "/avatars/guest.jpg",
+    image: session?.user?.image || null,
   }
   
   return (

@@ -40,6 +40,8 @@ export default function SubmissionCard({ user, description = "", avatarSrc = "",
         {description}
       </p>
       <Image
+        width={80}  
+        height={80}
         src={previewSrc}
         alt="Theme preview screenshot"
         className="h-20 w-20 rounded-md object-cover"
