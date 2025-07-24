@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { DollarSign, Clock, TrendingUp, LogInIcon } from "lucide-react";
+import { DollarSign, Clock, TrendingUp } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { isBeta } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
