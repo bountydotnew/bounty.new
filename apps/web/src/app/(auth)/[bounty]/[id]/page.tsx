@@ -8,19 +8,19 @@ import { use } from "react";
 export default function BountyPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const bounty = useQuery(trpc.bounties.getById.queryOptions({ id: resolvedParams.id }));
-
+    
   if (bounty.isLoading) {
     return <div>Loading bounty...</div>;
   }
-
+  
   if (bounty.error) {
     return <div>Error: {bounty.error.message}</div>;
   }
-
+  
   if (!bounty.data?.data) {
     return <div>Bounty not found</div>;
   }
-
+  
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-4">{bounty.data.data.title}</h1>

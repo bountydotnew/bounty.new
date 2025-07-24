@@ -3,14 +3,23 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { LINKS } from "@/constants/links";
+import { isBeta } from "@/lib/constants";
 
-const navigationLinks = [
+
+const betaNavigationLinks = [
   { href: LINKS.DASHBOARD, label: "Dashboard" },
   { href: LINKS.BOUNTIES, label: "Bounties" },
-  { href: "#", label: "Settings" },
+  { href: LINKS.BOUNTY.CREATE, label: "Create Bounty" },
+];
+
+const productionNavigationLinks = [
+  { href: LINKS.DASHBOARD, label: "Apply for Beta Testing" }
 ];
 
 export function Header() {
+  const navigationLinks = isBeta ? productionNavigationLinks : betaNavigationLinks;
+
+
   return (
     <header
       className={cn(

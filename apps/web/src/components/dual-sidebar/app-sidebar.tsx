@@ -5,6 +5,7 @@ import {
   AudioWaveform,
   Award,
   BookOpen, Command,
+  FileUser,
   Frame,
   GalleryVerticalEnd,
   Map,
@@ -18,7 +19,7 @@ import {
   SidebarHeader
 } from "@/components/ui/sidebar";
 import { NavMain } from "@/components/dual-sidebar/nav-main";
-import { NavProjects } from "@/components/dual-sidebar/nav-projects";
+// import { NavProjects } from "@/components/dual-sidebar/nav-projects";
 import { NavUser } from "@/components/dual-sidebar/nav-user";
 
 import { Divider } from "@/components/ui/divider";
@@ -27,6 +28,7 @@ import Bounty from "../icons/bounty";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { LINKS } from "@/constants/links";
+import { isBeta } from "@/lib/constants";
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
@@ -36,7 +38,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   }
 
   // This is sample data.
-  const data = {
+  const productionData = {
     user: {
       name: "shadcn",
       email: "m@example.com",
@@ -163,11 +165,49 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
     ],
   };
 
+  const betaData = {
+    user: {
+      name: "shadcn",
+      email: "m@example.com",
+      avatar: "/avatars/shadcn.jpg",
+    },
+    teams: [
+      {
+        name: "Mail0 Inc.",
+        logo: GalleryVerticalEnd,
+        logoUrl: "https://0.email/white-icon.svg",
+        plan: "Enterprise",
+      },
+      {
+        name: "oss.now",
+        logo: AudioWaveform,
+        logoUrl: "https://oss.now/logo.png",
+        plan: "Startup",
+      },
+      {
+        name: "Inbound.new",
+        logo: Command,
+        logoUrl: "https://inbound.new/_next/image?url=https%3A%2F%2Finbound.new%2Finbound-logo-3.png&w=64&q=75",
+        plan: "Free",
+      },
+    ],
+    navMain: [
+      {
+        title: "Apply for Beta Testing",
+        url: LINKS.DASHBOARD,
+        icon: FileUser
+      }
+    ],
+  }
+
   const user = {
     name: "Guest",
     email: "guest@example.com",
     image: null,
   }
+
+
+  const data = isBeta ? betaData : productionData;
 
   return (
     <Sidebar variant="icononly" {...props}>
@@ -180,7 +220,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       <Divider className="h-[2px] w-8 my-2 bg-white" />
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Sidebar from "@/components/dual-sidebar";
-import { SignedOut } from "@daveyplate/better-auth-ui";
-import RedirectToSignIn from "@/components/auth/redirect-to-signin";
+// import { SignedOut } from "@daveyplate/better-auth-ui";
+// import RedirectToSignIn from "@/components/auth/redirect-to-signin";
 
 export const metadata: Metadata = {
   title: "bounty.new",
@@ -18,12 +18,12 @@ export default function RootLayout({
 }>) {
   return (
     <>
-      <Sidebar>
-        <SignedOut>
+        <Sidebar>
+          {/* <SignedOut>
           <RedirectToSignIn />
-        </SignedOut>
-        {children}
-      </Sidebar>
+        </SignedOut> */}
+          {children}
+        </Sidebar>
     </>
   );
 }

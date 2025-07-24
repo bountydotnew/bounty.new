@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Github, LogOut } from "lucide-react"
+import { LogOut } from "lucide-react"
 import SubmissionCard from "@/components/bounty/submission-card"
 import { useState, useRef } from "react"
 import { authClient } from "@/lib/auth-client"
@@ -9,7 +9,8 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { LINKS } from "@/constants/links";
 import Bounty from "@/components/icons/bounty"
 import Image from "next/image"
-import { Wendys } from "../icons"
+import { GithubIcon, Wendys } from "../icons"
+import Google from "../icons/google"
 
 const cards = {
   "ahmet": {
@@ -176,7 +177,7 @@ export default function Login() {
                   onClick={handleGitHubSignIn}
                   className="oauthButton w-full max-w-[466px] min-w-[240px] h-12 px-6 py-3 bg-[#303030] text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
                 >
-                  <Github className="w-5 h-5" />
+                  <GithubIcon className="w-5 h-5 fill-white" />
                   Continue with GitHub
                 </Button>
                 <Button
@@ -190,7 +191,7 @@ export default function Login() {
                   onClick={handleGoogleSignIn}
                   className="oauthButton w-full max-w-[466px] min-w-[240px] h-12 px-6 py-3 bg-[#303030] text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
                 >
-                  <span className="text-xl font-bold">G</span>
+                  <Google className="w-6 h-6" />
                   Continue with Google
                 </Button>
                 <p className="text-center text-sm text-[#757575] mt-8 ">
