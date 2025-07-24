@@ -5,7 +5,6 @@ export const env = createEnv({
   client: {
     // Server URLs
     NEXT_PUBLIC_BASE_URL: z.string().url(),
-    NEXT_PUBLIC_BASE_URL: z.string().url(),
     // Rate limiting (client-side)
     NEXT_PUBLIC_UNKEY_ROOT_KEY: z.string().min(1).optional(),
     // PostHog analytics
@@ -16,7 +15,6 @@ export const env = createEnv({
     NEXT_PUBLIC_VERCEL_URL: z.string().optional(),
   },
   experimental__runtimeEnv: {
-    NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
     NEXT_PUBLIC_UNKEY_ROOT_KEY: process.env.NEXT_PUBLIC_UNKEY_ROOT_KEY,
     NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
