@@ -10,6 +10,39 @@ import { LINKS } from "@/constants/links";
 import Bounty from "@/components/icons/bounty"
 import Image from "next/image"
 
+const cards = {
+  "ahmet": {
+    name: "Ahmet",
+    description: "look sir coderabbit says my code good",
+    bounty: 100,
+    status: "open",
+    rank: "Rank 500",
+    image: "https://avatars.githubusercontent.com/u/37756565?v=4",
+    id: "ahmet",
+    screenshot: "https://pbs.twimg.com/media/Gwi-mbBWUBc90r_?format=jpg&name=large"
+  },
+  "sergio": {
+    name: "Sergio",
+    description: "I made ur website use tweakcn now pay me!!",
+    bounty: 25,
+    status: "open",
+    rank: "Rank 0",
+    image: "https://pbs.twimg.com/profile_images/1939906364119109632/vu8pOSiH_400x400.jpg",
+    id: "ahmet",
+    screenshot: "https://pbs.twimg.com/media/GwjyS7FX0AMIz4H?format=png&name=small"
+  },
+  "nizzy": {
+    name: "nizzy",
+    description: "Here's my submission",
+    bounty: 1000,
+    status: "open",
+    rank: "Rank 186",
+    image: "https://pbs.twimg.com/profile_images/1884987569961570304/TP3OWz64_400x400.jpg",
+    id: "ahmet",
+    screenshot: "https://pbs.twimg.com/media/Gwl0qdhWgAAoJdK?format=jpg&name=large"
+  }
+}
+
 export default function Login() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
@@ -225,9 +258,9 @@ export default function Login() {
             }}
           >
             <SubmissionCard
-              user="F1shy"
-              rank="Rank 5"
-              description="Hello sir pls look at my submission"
+              user="Adam"
+              rank="Rank 1000"
+              description="look sir coderabbit shows the code is good"
               avatarSrc="/public/images/grim-avatar.jpg"
               previewSrc="https://i.redd.it/slm52i26jbtb1.jpg"
               hasBadge={true}
@@ -242,12 +275,12 @@ export default function Login() {
             }}
           >
             <SubmissionCard
-              user="Sergio"
-              rank="Rank 2"
+              user={cards.sergio.name}
+              rank={cards.sergio.rank}
               description="I one shotted this with v0"
-              avatarSrc="https://preview.redd.it/buff-shrek-v0-9ggsitun5d9a1.png?auto=webp&s=1753870ab37e1d71330bfefe331c3dde281f8bcc"
-              previewSrc="https://i.redd.it/slm52i26jbtb1.jpg"
-              hasBadge={true}
+              avatarSrc={cards.sergio.image}
+              previewSrc={cards.sergio.screenshot}
+              hasBadge={false}
             />
           </div>
 
@@ -262,7 +295,7 @@ export default function Login() {
               user="Ahmet"
               rank="New user"
               description="Here is my try"
-              avatarSrc="https://preview.redd.it/buff-shrek-v0-9ggsitun5d9a1.png?auto=webp&s=1753870ab37e1d71330bfefe331c3dde281f8bcc"
+              avatarSrc="https://avatars.githubusercontent.com/u/37756565?v=4"
               previewSrc="https://i.redd.it/slm52i26jbtb1.jpg"
             />
           </div>
@@ -275,11 +308,11 @@ export default function Login() {
             }}
           >
             <SubmissionCard
-              user="F1shy"
-              rank="Rank 5"
-              description="There, fatty. I added color theming to ur app."
-              avatarSrc="https://preview.redd.it/buff-shrek-v0-9ggsitun5d9a1.png?auto=webp&s=1753870ab37e1d71330bfefe331c3dde281f8bcc"
-              previewSrc="https://i.redd.it/slm52i26jbtb1.jpg"
+              user={cards.ahmet.name}
+              rank={cards.ahmet.rank}
+              description={cards.ahmet.description}
+              avatarSrc={cards.ahmet.image}
+              previewSrc={cards.ahmet.screenshot}
               hasBadge={true}
             />
           </div>

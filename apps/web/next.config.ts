@@ -30,6 +30,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "i.redd.it"
+      },
+      {
+        protocol: "https",
+        hostname: "pbs.twimg.com"
       }
     ],
   },
