@@ -5,7 +5,7 @@ import SubmissionCard from "@/components/bounty/submission-card"
 import { useState, useRef } from "react"
 import { authClient } from "@/lib/auth-client"
 import { toast } from "sonner"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { LINKS } from "@/constants/links";
 import Bounty from "@/components/icons/bounty"
 import Image from "next/image"
@@ -15,7 +15,11 @@ export default function Login() {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, isPending } = authClient.useSession();
+
+  // Get callback URL from search params, default to dashboard
+  const callbackUrl = searchParams.get('callback') || LINKS.DASHBOARD;
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current || !svgRef.current) return;
@@ -42,12 +46,10 @@ export default function Login() {
 
   const handleGitHubSignIn = async () => {
     try {
-      const callbackURL = LINKS.DASHBOARD;
-
       await authClient.signIn.social(
         {
           provider: "github",
-          callbackURL
+          callbackURL: callbackUrl
         },
         {
           onSuccess: () => {
@@ -68,7 +70,7 @@ export default function Login() {
   };
 
   const handleGoToDashboard = () => {
-    router.push(LINKS.DASHBOARD);
+    router.push(callbackUrl);
   };
 
   return (

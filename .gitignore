@@ -10,3 +10,4 @@ node_modules
 apps/server/_.env.local
 /apps/server
 /packages/dev-logger/dist
+/.kiro
