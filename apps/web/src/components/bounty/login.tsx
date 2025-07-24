@@ -9,6 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { LINKS } from "@/constants/links";
 import Bounty from "@/components/icons/bounty"
 import Image from "next/image"
+import { Wendys } from "../icons"
 
 const cards = {
   "ahmet": {
@@ -99,7 +100,7 @@ export default function Login() {
   };
 
   const handleGoogleSignIn = () => {
-    toast.info("Google sign-in coming soon!");
+    toast.info("Coming soon!");
   };
 
   const handleGoToDashboard = () => {
@@ -177,6 +178,13 @@ export default function Login() {
                 >
                   <Github className="w-5 h-5" />
                   Continue with GitHub
+                </Button>
+                <Button
+                  onClick={handleGoogleSignIn}
+                  className="oauthButton w-full max-w-[466px] min-w-[240px] h-12 px-6 py-3 bg-[#303030] text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
+                >
+                  <Wendys className="w-6 h-6" />
+                  Continue with Wendy&apos;s
                 </Button>
                 <Button
                   onClick={handleGoogleSignIn}

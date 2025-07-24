@@ -3,7 +3,6 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { LINKS } from "@/constants/links";
-import { SmartBreadcrumbs } from "@/components/smart-breadcrumbs";
 
 const navigationLinks = [
   { href: LINKS.DASHBOARD, label: "Dashboard" },
