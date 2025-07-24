@@ -274,7 +274,8 @@ function SidebarTrigger({
 }: React.ComponentProps<typeof Button>) {
   const { toggleSidebar, isMobile } = useSidebar()
 
-  const sidebarWrapper = document.querySelector('[data-slot="sidebar-wrapper"]')
+  // Only run on client side
+  const sidebarWrapper = typeof document !== 'undefined' ? document.querySelector('[data-slot="sidebar-wrapper"]') : null
   const variant = sidebarWrapper?.getAttribute('data-variant')
 
   if (variant === "icononly" && !isMobile) {
@@ -303,7 +304,8 @@ function SidebarTrigger({
 function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
   const { toggleSidebar } = useSidebar()
 
-  const sidebarWrapper = document.querySelector('[data-slot="sidebar-wrapper"]')
+  // Only run on client side
+  const sidebarWrapper = typeof document !== 'undefined' ? document.querySelector('[data-slot="sidebar-wrapper"]') : null
   const variant = sidebarWrapper?.getAttribute('data-variant')
 
   if (variant === "icononly") {
