@@ -1,0 +1,25 @@
+{
+  "name": "@bounty/db",
+  "version": "0.1.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.44.2",
+    "pg": "^8.14.1"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.2",
+    "@types/pg": "^8.11.11",
+    "typescript": "^5"
+  },
+  "exports": {
+    "./index": "./src/index.ts",
+    "./schema": "./src/schema/index.ts"
+  }
+}

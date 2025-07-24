@@ -3,10 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack --port=3001",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:push": "turbo -F @bounty/db db:push",
+    "db:studio": "turbo -F @bounty/db db:studio",
+    "db:generate": "turbo -F @bounty/db db:generate",
+    "db:migrate": "turbo -F @bounty/db db:migrate"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
@@ -29,6 +33,9 @@
     "@tanstack/react-query": "^5.80.5",
     "@thumbmarkjs/thumbmarkjs": "^1.0.0",
     "@bounty/dev-logger": "workspace:*",
+    "@bounty/db": "workspace:*",
+    "@bounty/auth": "workspace:*",
+    "@bounty/api": "workspace:*",
     "@trpc/client": "^11.4.2",
     "@trpc/server": "^11.4.2",
     "@trpc/tanstack-react-query": "^11.4.2",
@@ -37,6 +44,7 @@
     "better-auth": "^1.2.10",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dotenv": "^16.5.0",
     "lucide-react": "^0.525.0",
     "motion": "^12.19.1",
     "next": "^15.3.4",
