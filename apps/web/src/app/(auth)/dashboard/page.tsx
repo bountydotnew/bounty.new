@@ -12,13 +12,22 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Bounty from "@/components/icons/bounty";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 
 export default function Dashboard() {
   const bounties = useQuery(trpc.bounties.getAll.queryOptions({ page: 1, limit: 10 }));
   const myBounties = useQuery(trpc.bounties.getAll.queryOptions({ page: 1, limit: 5 }));
 
   const router = useRouter();
-
   const { data: session } = authClient.useSession();
 
   const handleLoginRedirect = () => {
@@ -26,11 +35,12 @@ export default function Dashboard() {
   }
 
 
+
   if (bounties.isLoading || myBounties.isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-full space-y-4">
         <h1 className="text-2xl font-bold">Loading...</h1>
-       <Loader2 className="animate-spin" />
+        <Loader2 className="animate-spin" />
       </div>
     );
   }
@@ -39,18 +49,86 @@ export default function Dashboard() {
     return (
       session?.user ? (
         <div className="flex flex-col items-center justify-center min-h-full space-y-4">
-           <Bounty className="w-20 h-20 mb-10" />
+          <Bounty className="w-20 h-20 mb-10" />
           <h1 className="text-2xl font-bold">Hi, {session.user.name}!</h1>
           <p className="text-muted-foreground text-center max-w-md">
             This feature hasn&apos;t been enabled yet. We&apos;re currently in beta testing phase.
           </p>
-          <Button
-            onClick={() => alert("Not ready yet!")}
-            variant="link"
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-          >
-            Apply for Beta Testing Program
-          </Button>
+          <Drawer>
+            <DrawerTrigger asChild>
+              <Button
+                variant="link"
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+              >
+                Fill application form
+              </Button>
+            </DrawerTrigger>
+            <DrawerContent className="max-h-[82vh]">
+              <div className="mx-auto w-full max-w-md">
+                <DrawerHeader>
+                  <DrawerTitle className="mt-8">Beta Application</DrawerTitle>
+                  <DrawerDescription className="leading-6 mt-2">
+                    Get started by filling in the information below to apply for beta testing.
+                  </DrawerDescription>
+                </DrawerHeader>
+                <div className="p-4 pb-0">
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <label htmlFor="user-name" className="text-sm font-medium text-foreground">
+                        Your name
+                      </label>
+                      <input
+                        id="user-name"
+                        className="border border-border bg-background w-full px-3 h-9 rounded-lg outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground"
+                        placeholder="Ahmet"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="twitter" className="text-sm font-medium text-foreground">
+                        Twitter handle
+                      </label>
+                      <input
+                        id="twitter"
+                        className="border border-border bg-background w-full px-3 h-9 rounded-lg outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground"
+                        placeholder="@bruvimtired"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="project-name" className="text-sm font-medium text-foreground">
+                        Project name
+                      </label>
+                      <input
+                        id="project-name"
+                        className="border border-border bg-background w-full px-3 h-9 rounded-lg outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground"
+                        placeholder="oss.now"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="description" className="text-sm font-medium text-foreground">
+                        Description
+                      </label>
+                      <textarea
+                        id="description"
+                        rows={6}
+                        className="border border-border bg-background w-full resize-none rounded-lg p-3 pt-2.5 text-foreground outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0 placeholder:text-muted-foreground"
+                        placeholder="Enter project description"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <DrawerFooter>
+                  <Button className="w-full h-[44px] font-medium">
+                    Submit Application
+                  </Button>
+                  <DrawerClose asChild>
+                    <Button variant="outline" className="w-full">
+                      Cancel
+                    </Button>
+                  </DrawerClose>
+                </DrawerFooter>
+              </div>
+            </DrawerContent>
+          </Drawer>
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center min-h-full space-y-4">

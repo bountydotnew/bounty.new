@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { LINKS } from "@/constants/links";
 import { isBeta } from "@/lib/constants";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 
 const betaNavigationLinks = [
@@ -28,6 +29,7 @@ export function Header() {
       )}
     >
       <div className="flex items-center gap-6">
+        <SidebarTrigger />
         <nav className="flex items-center">
           <div className="flex items-center gap-6">
             {navigationLinks.map(({ href, label }) => (

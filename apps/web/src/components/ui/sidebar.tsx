@@ -28,7 +28,7 @@ import {
 // const SIDEBAR_COOKIE_NAME = "sidebar_state"
 // const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 const SIDEBAR_WIDTH = "16rem"
-const SIDEBAR_WIDTH_MOBILE = "18rem"
+// const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "4rem"
 const SIDEBAR_WIDTH_ICON_HOVER = "4.3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
@@ -196,10 +196,10 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
+          className="bg-[#151515] text-sidebar-foreground w-(--sidebar-width-icon) p-0 [&>button]:hidden border-0"
           style={
             {
-              "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+              "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
             } as React.CSSProperties
           }
           side={side}
@@ -208,7 +208,14 @@ function Sidebar({
             <SheetTitle>Sidebar</SheetTitle>
             <SheetDescription>Displays the mobile sidebar.</SheetDescription>
           </SheetHeader>
-          <div className="flex h-full w-full flex-col">{children}</div>
+          <div
+            className="bg-[#151515] rounded-r-2xl shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)] flex h-full w-full flex-col justify-center items-center px-3 py-4 group"
+            data-state="collapsed"
+            data-collapsible="icon"
+            data-variant={variant}
+          >
+            {children}
+          </div>
         </SheetContent>
       </Sheet>
     )
