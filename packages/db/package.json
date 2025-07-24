@@ -1,34 +1,21 @@
 {
   "name": "@bounty/db",
   "version": "0.1.0",
-  "private": true,
-  "exports": {
-    ".": "./src/index.ts",
-    "./schema": "./src/schema/index.ts",
-    "./schema/*": "./src/schema/*.ts"
-  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "scripts": {
-    "dev": "drizzle-kit studio",
-    "lint": "eslint .",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "bun --conditions=react-server run src/seed/seed-db.ts",
-    "db:make-all-admin": "bun --conditions=react-server run src/seed/make-all-admin.ts",
-    "format": "prettier --write \"**/*.{ts,tsx,css,md}\""
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
-    "@bounty/env": "workspace:*",
     "drizzle-orm": "^0.44.2",
-    "pg": "^8.12.0",
-    "server-only": "^0.0.1"
+    "pg": "^8.14.1"
   },
   "devDependencies": {
-    "@types/node": "^24",
-    "@types/pg": "^8.11.0",
-    "drizzle-kit": "^0.31.1",
+    "drizzle-kit": "^0.31.2",
+    "@types/pg": "^8.11.11",
     "typescript": "^5"
   }
 }
-  

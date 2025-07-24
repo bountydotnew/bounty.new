@@ -6,23 +6,20 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "dotenv -- turbo run build",
-    "dev": "dotenv -- turbo run dev",
-    "start": "dotenv -- turbo run start",
-    "lint": "turbo lint",
-    "check-types": "turbo check-types",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "db:generate": "turbo run db:generate",
-    "db:migrate": "dotenv -- turbo run db:migrate",
-    "db:push": "dotenv -- turbo run db:push",
-    "db:studio": "dotenv -- turbo run db:studio"
+    "dev": "dotenv -- turbo dev",
+    "build": "dotenv -- turbo build",
+    "check-types": "dotenv -- turbo check-types",
+    "dev:web": "dotenv -- turbo -F web dev",
+    "db:push": "dotenv -- turbo -F @bounty/db db:push",
+    "db:studio": "dotenv -- turbo -F @bounty/db db:studio",
+    "db:generate": "dotenv -- turbo -F @bounty/db db:generate",
+    "db:migrate": "dotenv -- turbo -F @bounty/db db:migrate"
   },
   "dependencies": {
     "@databuddy/sdk": "^1.3.0",
     "@hookform/resolvers": "^5.1.1",
     "@number-flow/react": "^0.5.10",
     "@t3-oss/env-nextjs": "^0.13.8",
-    "next": "^15.3.4",
     "posthog-js": "^1.257.0",
     "posthog-node": "^5.5.1",
     "react-hook-form": "^7.58.1",
