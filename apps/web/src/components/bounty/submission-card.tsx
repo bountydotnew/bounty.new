@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Github } from "lucide-react";
 import { Badge } from "@/components/bounty/badge";
+import Image from "next/image";
 
 export interface SubmissionCardProps {
   user: string;
@@ -38,7 +39,7 @@ export default function SubmissionCard({ user, description = "", avatarSrc = "",
       <p className="font-light text-[#FFFFFF]">
         {description}
       </p>
-      <img
+      <Image
         src={previewSrc}
         alt="Theme preview screenshot"
         className="h-20 w-20 rounded-md object-cover"

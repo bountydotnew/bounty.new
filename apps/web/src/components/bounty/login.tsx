@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { LINKS } from "@/constants/links";
 import Bounty from "@/components/icons/bounty"
+import Image from "next/image"
 
 export default function Login() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -98,10 +99,12 @@ export default function Login() {
                 <div className="flex flex-col items-center space-y-4">
                   <div className="flex items-center w-full space-x-3">
                     {session.user.image && (
-                      <img
+                      <Image
                         src={session.user.image}
                         alt={session.user.name || "User"}
                         className="w-12 h-12 rounded-full border-2 border-[#383838]"
+                        width={48}
+                        height={48}
                       />
                     )}
                     <div className="text-left">
