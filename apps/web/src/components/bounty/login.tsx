@@ -5,7 +5,6 @@ import SubmissionCard from "@/components/bounty/submission-card"
 import { useState, useRef } from "react"
 import { authClient } from "@/lib/auth-client"
 import { toast } from "sonner"
-import { baseUrl } from "@/lib/constants"
 import { useRouter } from "next/navigation"
 import { LINKS } from "@/constants/links";
 import Bounty from "@/components/icons/bounty"
@@ -42,7 +41,7 @@ export default function Login() {
 
   const handleGitHubSignIn = async () => {
     try {
-      const callbackURL = `${baseUrl}/dashboard`;
+      const callbackURL = LINKS.DASHBOARD;
 
       await authClient.signIn.social(
         {

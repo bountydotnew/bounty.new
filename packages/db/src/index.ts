@@ -21,8 +21,7 @@ export const db = drizzle(pool, {
   },
 });
 
+// Export all schemas
 export * from "./schema/auth";
-export * from "./schema/bounties"; 
+export * from "./schema/bounties";
 export * from "./schema/profiles";
-
-export type Database = typeof db; 

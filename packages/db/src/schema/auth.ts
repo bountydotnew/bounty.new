@@ -58,4 +58,4 @@ export const waitlist = pgTable("waitlist", {
   createdAt: timestamp("created_at").notNull(),
   hasAccess: boolean("has_access").notNull().default(false),
   ipAddress: text("ip_address"),
-}); 
+});
