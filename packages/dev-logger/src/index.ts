@@ -18,18 +18,18 @@ const sendToPostHog = (message: string, type: string) => {
 export const grim = () => ({
   log: (...args: unknown[]) => {
     console.log('%c[grim::log]', 'color: white', ...args);
-    sendToPostHog(args.join(' '), 'log');
+    sendToPostHog(args, 'log');
   },
   info: (...args: unknown[]) => {
     console.info('%c[grim::info]', 'color: grey', ...args);
-    sendToPostHog(args.join(' '), 'info');
+    sendToPostHog(args, 'info');
   },
   warn: (...args: unknown[]) => {
     console.warn('%c[grim::warn]', 'color: yellow', ...args);
-    sendToPostHog(args.join(' '), 'warn');
+    sendToPostHog(args, 'warn');
   },
   error: (...args: unknown[]) => {
     console.error('%c[grim::error]', 'color: red', ...args);
-    sendToPostHog(args.join(' '), 'error');
+    sendToPostHog(args, 'error');
   },
 }); 
