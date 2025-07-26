@@ -79,7 +79,7 @@ export default function BountiesPage() {
 
                     <div className="flex justify-between items-center text-sm text-gray-500">
                       <span>Status: {bounty.status}</span>
-                      <span>by {bounty.creator.name}</span>
+                      <span>by {bounty.creator?.name || 'Unknown'}</span>
                     </div>
 
                     <Link
