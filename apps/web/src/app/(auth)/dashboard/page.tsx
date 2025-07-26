@@ -71,50 +71,42 @@ export default function Dashboard() {
                     Get started by filling in the information below to apply for beta testing.
                   </DrawerDescription>
                 </DrawerHeader>
-                <div className="p-4 pb-0">
-                  <div className="space-y-6">
-                    <div className="space-y-2">
-                      <label htmlFor="user-name" className="text-sm font-medium text-foreground">
-                        Your name
-                      </label>
-                      <input
-                        id="user-name"
-                        className="border border-border bg-background w-full px-3 h-9 rounded-lg outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground"
-                        placeholder="Ahmet"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label htmlFor="twitter" className="text-sm font-medium text-foreground">
-                        Twitter handle
-                      </label>
-                      <input
-                        id="twitter"
-                        className="border border-border bg-background w-full px-3 h-9 rounded-lg outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground"
-                        placeholder="@bruvimtired"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label htmlFor="project-name" className="text-sm font-medium text-foreground">
-                        Project name
-                      </label>
-                      <input
-                        id="project-name"
-                        className="border border-border bg-background w-full px-3 h-9 rounded-lg outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground"
-                        placeholder="oss.now"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label htmlFor="description" className="text-sm font-medium text-foreground">
-                        Description
-                      </label>
-                      <textarea
-                        id="description"
-                        rows={6}
-                        className="border border-border bg-background w-full resize-none rounded-lg p-3 pt-2.5 text-foreground outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0 placeholder:text-muted-foreground"
-                        placeholder="Enter project description"
-                      />
-                    </div>
-                  </div>
++import { useState } from "react";
++import { toast } from "sonner";
+ 
+ export default function Dashboard() {
++  const [formData, setFormData] = useState({
++    userName: "",
++    twitter: "",
++    projectName: "",
++    description: ""
++  });
++
++  const handleSubmit = async () => {
++    // TODO: Implement API call to submit beta application
++    toast.success("Application submitted successfully!");
++  };
+ 
+   // ... existing code ...
+ 
+                 <div className="p-4 pb-0">
+                   <div className="space-y-6">
+                     <div className="space-y-2">
+                       <label htmlFor="user-name" className="text-sm font-medium text-foreground">
+                         Your name
+                       </label>
+                       <input
+                         id="user-name"
++                        value={formData.userName}
++                        onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
+                         className="border border-border bg-background w-full px-3 h-9 rounded-lg outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground"
+                         placeholder="Ahmet"
+                       />
+                     </div>
+                     {/* apply similar value/onChange to twitter, project-name, description */}
+                     {/* update your submit button to call `handleSubmit` */}
+                   </div>
+                 </div>
                 </div>
                 <DrawerFooter>
                   <Button className="w-full h-[44px] font-medium">
