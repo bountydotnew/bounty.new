@@ -40,3 +40,17 @@ export function formatStarCount(count: number): string {
     return (count / 1_000).toFixed(1).replace(/\.0$/, "") + "k";
   return count.toString();
 }
+
+export function parseAmount(amount: string | number | null | undefined): number {
+  if (amount === null || amount === undefined) return 0;
+  const parsed = Number(amount);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+export function formatCurrencySafe(amount: string | number | null | undefined): string {
+  const parsedAmount = parseAmount(amount);
+  if (parsedAmount === 0 && amount !== 0) {
+    console.warn(`Invalid amount provided to formatCurrencySafe: ${amount}`);
+  }
+  return formatCurrency(parsedAmount);
+}

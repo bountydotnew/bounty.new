@@ -25,7 +25,7 @@ import {
 
 export default function Dashboard() {
   const bounties = useQuery(trpc.bounties.getAll.queryOptions({ page: 1, limit: 10 }));
-  const myBounties = useQuery(trpc.bounties.getAll.queryOptions({ page: 1, limit: 5 }));
+  const myBounties = useQuery(trpc.bounties.getMyBounties.queryOptions({ page: 1, limit: 5 }));
 
   const router = useRouter();
   const { data: session } = authClient.useSession();

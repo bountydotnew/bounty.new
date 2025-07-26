@@ -4,6 +4,12 @@ import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from "../trpc";
 import { db, bounty, submission, bountyApplication, user } from "@bounty/db";
 
+const parseAmount = (amount: string | number | null): number => {
+  if (amount === null || amount === undefined) return 0;
+  const parsed = Number(amount);
+  return isNaN(parsed) ? 0 : parsed;
+};
+
 const createBountySchema = z.object({
   title: z.string().min(1, "Title is required").max(200, "Title too long"),
   description: z.string().min(10, "Description must be at least 10 characters"),
@@ -141,9 +147,14 @@ export const bountiesRouter = router({
         .from(bounty)
         .where(conditions.length > 0 ? and(...conditions) : undefined);
 
+      const processedResults = results.map(result => ({
+        ...result,
+        amount: parseAmount(result.amount),
+      }));
+
       return {
         success: true,
-        data: results,
+        data: processedResults,
         pagination: {
           page: input.page,
           limit: input.limit,
@@ -200,7 +211,10 @@ export const bountiesRouter = router({
 
       return {
         success: true,
-        data: result,
+        data: {
+          ...result,
+          amount: parseAmount(result.amount),
+        },
       };
     } catch (error) {
       if (error instanceof TRPCError) throw error;
@@ -447,9 +461,14 @@ export const bountiesRouter = router({
           .from(bounty)
           .where(eq(bounty.createdById, ctx.session.user.id));
 
+        const processedResults = results.map(result => ({
+          ...result,
+          amount: parseAmount(result.amount),
+        }));
+
         return {
           success: true,
-          data: results,
+          data: processedResults,
           pagination: {
             page: input.page,
             limit: input.limit,

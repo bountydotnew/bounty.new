@@ -105,40 +105,44 @@ export const profilesRouter = router({
 
   updateProfile: protectedProcedure.input(updateProfileSchema).mutation(async ({ ctx, input }) => {
     try {
-      const [existingProfile] = await db.select().from(userProfile).where(eq(userProfile.userId, ctx.session.user.id));
+      const result = await db.transaction(async (tx) => {
+        const [existingProfile] = await tx.select().from(userProfile).where(eq(userProfile.userId, ctx.session.user.id));
 
-      let updatedProfile;
+        let updatedProfile;
 
-      if (existingProfile) {
-        [updatedProfile] = await db
-          .update(userProfile)
-          .set({
-            ...input,
-            updatedAt: new Date(),
-          })
-          .where(eq(userProfile.userId, ctx.session.user.id))
-          .returning();
-      } else {
-        [updatedProfile] = await db
-          .insert(userProfile)
-          .values({
-            ...input,
+        if (existingProfile) {
+          [updatedProfile] = await tx
+            .update(userProfile)
+            .set({
+              ...input,
+              updatedAt: new Date(),
+            })
+            .where(eq(userProfile.userId, ctx.session.user.id))
+            .returning();
+        } else {
+          [updatedProfile] = await tx
+            .insert(userProfile)
+            .values({
+              ...input,
+              userId: ctx.session.user.id,
+            })
+            .returning();
+        }
+
+        const [existingReputation] = await tx.select().from(userReputation).where(eq(userReputation.userId, ctx.session.user.id));
+
+        if (!existingReputation) {
+          await tx.insert(userReputation).values({
             userId: ctx.session.user.id,
-          })
-          .returning();
-      }
+          });
+        }
 
-      const [existingReputation] = await db.select().from(userReputation).where(eq(userReputation.userId, ctx.session.user.id));
-
-      if (!existingReputation) {
-        await db.insert(userReputation).values({
-          userId: ctx.session.user.id,
-        });
-      }
+        return updatedProfile;
+      });
 
       return {
         success: true,
-        data: updatedProfile,
+        data: result,
         message: "Profile updated successfully",
       };
     } catch (error) {

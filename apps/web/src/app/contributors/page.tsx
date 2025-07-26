@@ -63,6 +63,18 @@ const specialRoles: Record<string, { role: string; color: string; position: numb
   ripgrim: { role: 'Founder', color: 'from-blue-500 to-purple-600', position: 1 },
 };
 
+const getGitHubHeaders = () => {
+  const headers: Record<string, string> = {
+    'Accept': 'application/vnd.github.v3+json',
+  };
+  
+  if (process.env.NEXT_PUBLIC_GITHUB_TOKEN) {
+    headers['Authorization'] = `token ${process.env.NEXT_PUBLIC_GITHUB_TOKEN}`;
+  }
+  
+  return headers;
+};
+
 const parseCoAuthors = (message: string): string[] => {
   const coAuthorRegex = /Co-authored-by:\s*(.+?)\s*<[^>]+>/g;
   const coAuthors: string[] = [];
@@ -78,7 +90,8 @@ const parseCoAuthors = (message: string): string[] => {
 const fetchBiggestCommit = async (username: string) => {
   try {
     const commitsResponse = await fetch(
-      `https://api.github.com/repos/${REPOSITORY}/commits?author=${username}&per_page=20`
+      `https://api.github.com/repos/${REPOSITORY}/commits?author=${username}&per_page=20`,
+      { headers: getGitHubHeaders() }
     );
     
     if (!commitsResponse.ok) return undefined;
@@ -92,7 +105,7 @@ const fetchBiggestCommit = async (username: string) => {
     
     for (const commit of commits.slice(0, 10)) {
       try {
-        const detailResponse = await fetch(commit.url);
+        const detailResponse = await fetch(commit.url, { headers: getGitHubHeaders() });
         const detail = await detailResponse.json();
         
         const additions = detail.stats?.additions || 0;
@@ -180,7 +193,7 @@ export default function ContributorsPage() {
 
   const { data: contributors } = useQuery({
     queryFn: async () => {
-      const res = await fetch(`https://api.github.com/repos/${REPOSITORY}/contributors?per_page=100`);
+      const res = await fetch(`https://api.github.com/repos/${REPOSITORY}/contributors?per_page=100`, { headers: getGitHubHeaders() });
       if (!res.ok) throw new Error('Failed to fetch contributors');
       const data = await res.json();
       return Array.isArray(data) ? data : [];
@@ -192,7 +205,7 @@ export default function ContributorsPage() {
 
   const { data: repoData } = useQuery({
     queryFn: async () => {
-      const res = await fetch(`https://api.github.com/repos/${REPOSITORY}`);
+      const res = await fetch(`https://api.github.com/repos/${REPOSITORY}`, { headers: getGitHubHeaders() });
       if (!res.ok) throw new Error('Failed to fetch repo data');
       return res.json();
     },
@@ -203,7 +216,7 @@ export default function ContributorsPage() {
 
   const { data: prsData } = useQuery({
     queryFn: async () => {
-      const res = await fetch(`https://api.github.com/repos/${REPOSITORY}/pulls?state=open`);
+      const res = await fetch(`https://api.github.com/repos/${REPOSITORY}/pulls?state=open`, { headers: getGitHubHeaders() });
       if (!res.ok) throw new Error('Failed to fetch PRs');
       const data = await res.json();
       return Array.isArray(data) ? data : [];
@@ -215,7 +228,7 @@ export default function ContributorsPage() {
 
   const { data: commitsData } = useQuery({
     queryFn: async () => {
-      const res = await fetch(`https://api.github.com/repos/${REPOSITORY}/commits?per_page=100`);
+      const res = await fetch(`https://api.github.com/repos/${REPOSITORY}/commits?per_page=100`, { headers: getGitHubHeaders() });
       if (!res.ok) throw new Error('Failed to fetch commits');
       const data = await res.json();
       return Array.isArray(data) ? data : [];
@@ -229,7 +242,7 @@ export default function ContributorsPage() {
   useEffect(() => {
     const pollCommits = async () => {
       try {
-        const response = await fetch(`https://api.github.com/repos/${REPOSITORY}/commits?per_page=5`);
+        const response = await fetch(`https://api.github.com/repos/${REPOSITORY}/commits?per_page=5`, { headers: getGitHubHeaders() });
         const commits: CommitData[] = await response.json();
         
         if (commits && Array.isArray(commits) && commits.length > 0) {
