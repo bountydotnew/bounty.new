@@ -105,44 +105,40 @@ export const profilesRouter = router({
 
   updateProfile: protectedProcedure.input(updateProfileSchema).mutation(async ({ ctx, input }) => {
     try {
-      const result = await db.transaction(async (tx) => {
-        const [existingProfile] = await tx.select().from(userProfile).where(eq(userProfile.userId, ctx.session.user.id));
+      const [existingProfile] = await db.select().from(userProfile).where(eq(userProfile.userId, ctx.session.user.id));
 
-        let updatedProfile;
+      let updatedProfile;
 
-        if (existingProfile) {
-          [updatedProfile] = await tx
-            .update(userProfile)
-            .set({
-              ...input,
-              updatedAt: new Date(),
-            })
-            .where(eq(userProfile.userId, ctx.session.user.id))
-            .returning();
-        } else {
-          [updatedProfile] = await tx
-            .insert(userProfile)
-            .values({
-              ...input,
-              userId: ctx.session.user.id,
-            })
-            .returning();
-        }
-
-        const [existingReputation] = await tx.select().from(userReputation).where(eq(userReputation.userId, ctx.session.user.id));
-
-        if (!existingReputation) {
-          await tx.insert(userReputation).values({
+      if (existingProfile) {
+        [updatedProfile] = await db
+          .update(userProfile)
+          .set({
+            ...input,
+            updatedAt: new Date(),
+          })
+          .where(eq(userProfile.userId, ctx.session.user.id))
+          .returning();
+      } else {
+        [updatedProfile] = await db
+          .insert(userProfile)
+          .values({
+            ...input,
             userId: ctx.session.user.id,
-          });
-        }
+          })
+          .returning();
+      }
 
-        return updatedProfile;
-      });
+      const [existingReputation] = await db.select().from(userReputation).where(eq(userReputation.userId, ctx.session.user.id));
+
+      if (!existingReputation) {
+        await db.insert(userReputation).values({
+          userId: ctx.session.user.id,
+        });
+      }
 
       return {
         success: true,
-        data: result,
+        data: updatedProfile,
         message: "Profile updated successfully",
       };
     } catch (error) {
@@ -216,38 +212,31 @@ export const profilesRouter = router({
         });
       }
 
-      return await db.transaction(async (tx) => {
-        const [newRating] = await tx
-          .insert(userRating)
-          .values({
-            ...input,
-            raterUserId: ctx.session.user.id,
-          })
-          .returning();
+      const [newRating] = await db
+        .insert(userRating)
+        .values({
+          ...input,
+          raterUserId: ctx.session.user.id,
+        })
+        .returning();
 
-        const [{ averageRating, totalRatings }] = await tx
-          .select({
-            averageRating: sql<number>`AVG(${userRating.rating})`,
-            totalRatings: sql<number>`COUNT(*)`,
-          })
-          .from(userRating)
-          .where(eq(userRating.ratedUserId, input.ratedUserId));
+      const [{ averageRating, totalRatings }] = await db
+        .select({
+          averageRating: sql<number>`AVG(${userRating.rating})`,
+          totalRatings: sql<number>`COUNT(*)`,
+        })
+        .from(userRating)
+        .where(eq(userRating.ratedUserId, input.ratedUserId));
 
-        await tx
-          .update(userReputation)
-          .set({
-            averageRating: averageRating.toString(),
-            totalRatings: totalRatings,
-            updatedAt: new Date(),
-          })
-          .where(eq(userReputation.userId, input.ratedUserId));
+      await db
+        .update(userReputation)
+        .set({
+          averageRating: averageRating.toString(),
+          totalRatings: totalRatings,
+          updatedAt: new Date(),
+        })
+        .where(eq(userReputation.userId, input.ratedUserId));
 
-        return {
-          success: true,
-          data: newRating,
-          message: "Rating submitted successfully",
-        };
-      });
       return {
         success: true,
         data: newRating,
@@ -330,44 +319,30 @@ export const profilesRouter = router({
       try {
         const offset = (input.page - 1) * input.limit;
 
-// at the top of packages/api/src/routers/profiles.ts
--import { eq, desc, sql } from "drizzle-orm";
-+import { eq, desc, sql, and, or } from "drizzle-orm";
+        const conditions = [sql`${user.name} ILIKE ${"%" + input.query + "%"} OR ${userProfile.bio} ILIKE ${"%" + input.query + "%"}`];
 
-        // …
-        // Lines 322–345: build up WHERE conditions safely
+        if (input.skills && input.skills.length > 0) {
+          conditions.push(sql`${userProfile.skills} && ${input.skills}`);
+        }
 
--        const conditions = [sql`${user.name} ILIKE ${"%" + input.query + "%"} OR ${userProfile.bio} ILIKE ${"%" + input.query + "%"}`];
-+        const conditions = [
-+          or(
-+            sql`${user.name} ILIKE ${`%${input.query}%`}`,
-+            sql`${userProfile.bio} ILIKE ${`%${input.query}%`}`
-+          )
-+        ];
+        if (input.availableForWork !== undefined) {
+          conditions.push(eq(userProfile.availableForWork, input.availableForWork));
+        }
 
-         if (input.skills && input.skills.length > 0) {
-           conditions.push(sql`${userProfile.skills} && ${input.skills}`);
-         }
-
-         if (input.availableForWork !== undefined) {
-           conditions.push(eq(userProfile.availableForWork, input.availableForWork));
-         }
-
-         const results = await db
-           .select({
-             user: {
-               id: user.id,
-               name: user.name,
-               image: user.image,
-             },
-             profile: userProfile,
-             reputation: userReputation,
-           })
-           .from(user)
-           .leftJoin(userProfile, eq(user.id, userProfile.userId))
-           .leftJoin(userReputation, eq(user.id, userReputation.userId))
--          .where(sql`${conditions.join(" AND ")}`)
-+          .where(conditions.length > 0 ? and(...conditions) : undefined);
+        const results = await db
+          .select({
+            user: {
+              id: user.id,
+              name: user.name,
+              image: user.image,
+            },
+            profile: userProfile,
+            reputation: userReputation,
+          })
+          .from(user)
+          .leftJoin(userProfile, eq(user.id, userProfile.userId))
+          .leftJoin(userReputation, eq(user.id, userReputation.userId))
+          .where(sql`${conditions.join(" AND ")}`)
           .orderBy(desc(userReputation.averageRating))
           .limit(input.limit)
           .offset(offset);
