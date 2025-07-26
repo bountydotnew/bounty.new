@@ -212,31 +212,38 @@ export const profilesRouter = router({
         });
       }
 
-      const [newRating] = await db
-        .insert(userRating)
-        .values({
-          ...input,
-          raterUserId: ctx.session.user.id,
-        })
-        .returning();
+      return await db.transaction(async (tx) => {
+        const [newRating] = await tx
+          .insert(userRating)
+          .values({
+            ...input,
+            raterUserId: ctx.session.user.id,
+          })
+          .returning();
 
-      const [{ averageRating, totalRatings }] = await db
-        .select({
-          averageRating: sql<number>`AVG(${userRating.rating})`,
-          totalRatings: sql<number>`COUNT(*)`,
-        })
-        .from(userRating)
-        .where(eq(userRating.ratedUserId, input.ratedUserId));
+        const [{ averageRating, totalRatings }] = await tx
+          .select({
+            averageRating: sql<number>`AVG(${userRating.rating})`,
+            totalRatings: sql<number>`COUNT(*)`,
+          })
+          .from(userRating)
+          .where(eq(userRating.ratedUserId, input.ratedUserId));
 
-      await db
-        .update(userReputation)
-        .set({
-          averageRating: averageRating.toString(),
-          totalRatings: totalRatings,
-          updatedAt: new Date(),
-        })
-        .where(eq(userReputation.userId, input.ratedUserId));
+        await tx
+          .update(userReputation)
+          .set({
+            averageRating: averageRating.toString(),
+            totalRatings: totalRatings,
+            updatedAt: new Date(),
+          })
+          .where(eq(userReputation.userId, input.ratedUserId));
 
+        return {
+          success: true,
+          data: newRating,
+          message: "Rating submitted successfully",
+        };
+      });
       return {
         success: true,
         data: newRating,
