@@ -331,7 +331,7 @@ export default function ContributorsPage() {
         commit.commit.author.date.startsWith(dateStr ?? ''),
       ).length;
 
-      const commits = dayCommits || Math.floor(Math.random() * 5) + 1;
+      const commits = dayCommits;
 
       return {
         date: date.toLocaleDateString('en-US', { weekday: 'short' }),

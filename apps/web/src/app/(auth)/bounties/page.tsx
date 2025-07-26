@@ -8,12 +8,19 @@ import { formatCurrencySafe } from "@/lib/utils";
 import { LINKS } from "@/constants/links";
 
 export default function BountiesPage() {
+export default function BountiesPage() {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20); // More reasonable default
+
   const { data: bounties, isLoading, error } = useQuery(
     trpc.bounties.getAll.queryOptions({
-      page: 1,
-      limit: 50
+      page: currentPage,
+      limit: pageSize
     })
   );
+
+  // ...rest of the component
+}
 
   if (error) {
     return (
@@ -72,7 +79,7 @@ export default function BountiesPage() {
 
                     <div className="flex justify-between items-center text-sm text-gray-500">
                       <span>Status: {bounty.status}</span>
-                      <span>by {bounty.creator.name}</span>
+                      <span>by {bounty.creator?.name || 'Unknown'}</span>
                     </div>
 
                     <Link
