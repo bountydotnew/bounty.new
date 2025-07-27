@@ -5,7 +5,7 @@ import { getDeviceType } from "@/lib/device-detection";
 
 interface DeviceContextType {
   isMobile: boolean;
-  deviceType: 'mobile' | 'desktop';
+  deviceType: 'mobile' | 'tablet' | 'desktop';
 }
 
 const DeviceContext = createContext<DeviceContextType | null>(null);
@@ -25,7 +25,7 @@ interface DeviceProviderProps {
 
 export function DeviceProvider({ userAgent, children }: DeviceProviderProps) {
   const deviceType = getDeviceType(userAgent);
-  const isMobile = deviceType === 'mobile';
+  const isMobile = deviceType === 'mobile' || deviceType === 'tablet';
 
   return (
     <DeviceContext.Provider value={{ isMobile, deviceType }}>
