@@ -8,12 +8,21 @@ import { Toaster } from "./ui/sonner";
 import { ConfettiProvider } from "@/lib/context/confetti-context";
 import { Databuddy } from "@databuddy/sdk";
 import { TOAST_ICONS, TOAST_OPTIONS } from "@/constants/toast";
+import { PostHogProvider } from "posthog-js/react";
+import { AuthUIProvider } from "@daveyplate/better-auth-ui"
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation"
+import Link from "next/link";
+
 
 export function Providers({
   children
 }: {
   children: React.ReactNode
 }) {
+  const posthogApiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+  const router = useRouter()
+
   return (
     <ThemeProvider
       attribute="class"
@@ -22,24 +31,57 @@ export function Providers({
       disableTransitionOnChange
     >
       <QueryClientProvider client={queryClient}>
-        <ConfettiProvider>
-          {children}
-          <Databuddy
-            clientId="bounty"
-            trackHashChanges={true}
-            trackAttributes={true}
-            trackOutgoingLinks={true}
-            trackInteractions={true}
-            trackEngagement={true}
-            trackScrollDepth={true}
-            trackExitIntent={true}
-            trackBounceRate={true}
-            trackWebVitals={true}
-            trackErrors={true}
-            enableBatching={true}
-          />
-        </ConfettiProvider>
-        <ReactQueryDevtools />
+        {posthogApiKey ? (
+          <PostHogProvider apiKey={posthogApiKey}>
+            <ConfettiProvider>
+              <AuthUIProvider
+                authClient={authClient}
+                navigate={router.push}
+                replace={router.replace}
+                onSessionChange={() => {
+                  // Clear router cache (protected routes)
+                  router.refresh()
+                }}
+                Link={Link}
+              >
+                {children}
+              </AuthUIProvider>
+              <Databuddy
+                clientId="bounty"
+                trackHashChanges={true}
+                trackAttributes={true}
+                trackOutgoingLinks={true}
+                trackInteractions={true}
+                trackEngagement={true}
+                trackScrollDepth={true}
+                trackExitIntent={true}
+                trackBounceRate={true}
+                trackWebVitals={true}
+                trackErrors={true}
+                enableBatching={true}
+              />
+            </ConfettiProvider>
+            <ReactQueryDevtools />
+          </PostHogProvider>
+        ) : (
+          <ConfettiProvider>
+            {children}
+            <Databuddy
+              clientId="bounty"
+              trackHashChanges={true}
+              trackAttributes={true}
+              trackOutgoingLinks={true}
+              trackInteractions={true}
+              trackEngagement={true}
+              trackScrollDepth={true}
+              trackExitIntent={true}
+              trackBounceRate={true}
+              trackWebVitals={true}
+              trackErrors={true}
+              enableBatching={true}
+            />
+          </ConfettiProvider>
+        )}
       </QueryClientProvider>
       <Toaster
         richColors

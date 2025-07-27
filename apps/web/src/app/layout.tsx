@@ -2,11 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/index.css";
 import { Providers } from "@/components/providers";
-import { StagewiseToolbar } from "@stagewise/toolbar-next";
-import ReactPlugin from "@stagewise-plugins/react";
-
-
-
+// import { StagewiseToolbar } from "@stagewise/toolbar-next";
+// import ReactPlugin from "@stagewise-plugins/react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,7 +20,7 @@ export const metadata: Metadata = {
   title: "bounty.new",
   description: "Ship faster. Get paid instantly.",
   icons: {
-    icon: "/bdn-b-w-trans.png",
+    icon: '/icon.svg',
   },
   openGraph: {
     title: "bounty.new",
@@ -32,7 +29,7 @@ export const metadata: Metadata = {
     siteName: "bounty.new",
     images: [
       {
-        url: "/og-image.png",
+        url: "/ogimage.png",
         width: 1200,
         height: 630,
         alt: "bounty.new - Ship faster. Get paid instantly.",
@@ -56,16 +53,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <link rel="icon" href="/bdn-favicon.ico" sizes="any" />
+
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <StagewiseToolbar config={{ plugins: [ReactPlugin] }} />
-          <div className="grid grid-rows-[auto_1fr] h-svh">
-            {children}
-          </div>
-        </Providers>
+        <script async id="toolbar-script" data-toolbar-api-key="4570028d-502a-49d8-9435-ce0fc1569093" src="https://get.usetool.bar/embedded-app.js"></script>
+            {/* <StagewiseToolbar config={{ plugins: [ReactPlugin] }} /> */}
+            <div className="grid grid-rows-[auto_1fr] h-svh">
+              {children}
+            </div>
+          </Providers>
       </body>
     </html>
   );

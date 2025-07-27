@@ -6,3 +6,8 @@ node_modules
 /.grim
 
 .env
+*.env
+apps/server/_.env.local
+/apps/server
+/packages/dev-logger/dist
+/.kiro

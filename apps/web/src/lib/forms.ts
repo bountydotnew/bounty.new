@@ -81,6 +81,34 @@ export const formatTagsOutput = (tags: string[]): string => {
 };
 
 // =====================
+// BETA APPLICATION FORM
+// =====================
+
+export const betaApplicationSchema = z.object({
+  name: z.string().min(1, "Name is required").max(100, "Name too long"),
+  twitter: z.string().min(1, "X/Twitter handle is required").max(50, "X/Twitter handle too long"),
+  projectName: z.string().min(1, "Project name is required").max(200, "Project name too long"),
+  projectLink: z.string()
+    .url("Please enter a valid URL")
+    .min(1, "Project link is required")
+    .refine(
+      (url) => url.startsWith("http://") || url.startsWith("https://"),
+      "Project link must start with https://"
+    ),
+  description: z.string().min(10, "Description must be at least 10 characters").max(1000, "Description too long"),
+});
+
+export type BetaApplicationForm = z.infer<typeof betaApplicationSchema>;
+
+export const betaApplicationDefaults: BetaApplicationForm = {
+  name: "",
+  twitter: "",
+  projectName: "",
+  projectLink: "",
+  description: "",
+};
+
+// =====================
 // FUTURE FORMS
 // =====================
 

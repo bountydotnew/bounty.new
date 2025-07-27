@@ -211,14 +211,6 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
             We&apos;ll let you know when we&apos;re ready to show you what
             we&apos;ve been working on.
           </p>
-          {waitlistSubmission.rateLimitInfo && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Shield className="h-4 w-4" />
-              <span>
-                {waitlistSubmission.rateLimitInfo.remaining} of {waitlistSubmission.rateLimitInfo.limit} attempts remaining this hour
-              </span>
-            </div>
-          )}
         </div>
       ) : (
         <div className="w-full max-w-lg">
@@ -238,7 +230,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
               )}
             </div>
             <Button
-              className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10"
+              className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-white text-black shadow-xs hover:bg-white/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10"
               type="submit"
               disabled={isFormDisabled}
             >
