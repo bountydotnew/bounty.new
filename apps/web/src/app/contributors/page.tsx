@@ -22,7 +22,10 @@ import { Button } from '@/components/ui/button';
 import NumberFlow from '@number-flow/react';
 import { LINKS } from '@/constants/links';
 import { toast } from 'sonner';
-  
+import { grim } from "@bounty/dev-logger";
+
+const { log } = grim();
+
 interface Contributor {
   login: string;
   avatar_url: string;
@@ -126,13 +129,13 @@ const fetchBiggestCommit = async (username: string) => {
           };
         }
       } catch (error) {
-        console.log(`Error fetching commit details for ${commit.sha}:`, error);
+        log(`Error fetching commit details for ${commit.sha}:`, error);
       }
     }
     
     return biggestCommit;
   } catch (error) {
-    console.log(`Error fetching commits for ${username}:`, error);
+    log(`Error fetching commits for ${username}:`, error);
     return undefined;
   }
 };

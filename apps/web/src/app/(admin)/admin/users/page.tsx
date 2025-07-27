@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Search, User, Mail, Calendar, Crown, Users } from "lucide-react";
+import type { TRPCClientErrorLike } from "@trpc/client";
+import type { AppRouter } from "@bounty/api";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,26 +15,61 @@ import { trpc } from "@/utils/trpc";
 
 export default function UsersPage() {
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
 
-  const { data: users, isLoading, error } = useQuery({
-    ...trpc.user.getMe.queryOptions(),
+  const { data, isLoading, error } = useQuery({
+    ...trpc.user.getAllUsers.queryOptions({
+      search: search || undefined,
+      page,
+      limit: 20,
+    }),
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: async () => {
-      // This would need a new tRPC procedure for updating user roles
-      // For now, showing a placeholder
-      return { success: true };
-    },
+    ...trpc.user.updateUserRole.mutationOptions(),
     onSuccess: () => {
       toast.success("User role updated successfully");
-      queryClient.invalidateQueries({ queryKey: ["user", "getMe"] });
+      queryClient.invalidateQueries({ queryKey: ["user", "getAllUsers"] });
     },
-    onError: (error: unknown) => {
-      toast.error(error instanceof Error ? error.message : "Failed to update user role");
+    onError: (error: TRPCClientErrorLike<AppRouter>) => {
+      toast.error(error.message || "Failed to update user role");
     },
   });
+
+  const users = useMemo(() => data?.users || [], [data?.users]);
+  const total = data?.total || 0;
+  const totalPages = data?.totalPages || 1;
+
+  const stats = useMemo(() => {
+    const currentPageUsers = users.length;
+    const adminCount = users.filter(user => user.role === "admin").length;
+    const regularUserCount = currentPageUsers - adminCount;
+    
+    return {
+      total: total,
+      currentPage: currentPageUsers,
+      admins: adminCount,
+      regularUsers: regularUserCount,
+    };
+  }, [users, total]);
+
+  const handleRoleUpdate = (userId: string, newRole: "user" | "admin") => {
+    setUpdatingIds(prev => new Set(prev).add(userId));
+    updateRoleMutation.mutate(
+      { userId, role: newRole },
+      {
+        onSettled: () => {
+          setUpdatingIds(prev => {
+            const next = new Set(prev);
+            next.delete(userId);
+            return next;
+          });
+        }
+      }
+    );
+  };
 
   if (error) {
     return (
@@ -51,14 +88,26 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1</div>
+            <div className="text-2xl font-bold">{stats.total}</div>
+            <p className="text-xs text-muted-foreground">Across all pages</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Current Page</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.currentPage}</div>
+            <p className="text-xs text-muted-foreground">Users on this page</p>
           </CardContent>
         </Card>
 
@@ -68,7 +117,8 @@ export default function UsersPage() {
             <Crown className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">1</div>
+            <div className="text-2xl font-bold text-yellow-600">{stats.admins}</div>
+            <p className="text-xs text-muted-foreground">On this page</p>
           </CardContent>
         </Card>
 
@@ -78,7 +128,8 @@ export default function UsersPage() {
             <User className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">0</div>
+            <div className="text-2xl font-bold text-blue-600">{stats.regularUsers}</div>
+            <p className="text-xs text-muted-foreground">On this page</p>
           </CardContent>
         </Card>
       </div>
@@ -108,24 +159,24 @@ export default function UsersPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {users && (
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                {users.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
                         <User className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{users.name}</span>
+                        <span className="font-medium">{user.name}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">{users.email}</span>
+                        <span className="text-sm text-muted-foreground">{user.email}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm text-muted-foreground">
-                          {new Date(users.createdAt).toLocaleDateString()}
+                          {new Date(user.createdAt).toLocaleDateString()}
                         </span>
                       </div>
-                      {users.role === "admin" ? (
+                      {user.role === "admin" ? (
                         <Badge variant="default" className="bg-yellow-600">
                           <Crown className="h-3 w-3 mr-1" />
                           Admin
@@ -139,22 +190,57 @@ export default function UsersPage() {
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={updateRoleMutation.isPending}
-                      >
-                        Change Role
-                      </Button>
+                      {user.role === "admin" ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRoleUpdate(user.id, "user")}
+                          disabled={updatingIds.has(user.id)}
+                        >
+                          Remove Admin
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => handleRoleUpdate(user.id, "admin")}
+                          disabled={updatingIds.has(user.id)}
+                        >
+                          Make Admin
+                        </Button>
+                      )}
                     </div>
                   </div>
-                )}
+                ))}
 
-                {!users && (
+                {users.length === 0 && (
                   <div className="text-center py-8">
                     <p className="text-muted-foreground">No users found</p>
                   </div>
                 )}
+              </div>
+            )}
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(page - 1)}
+                  disabled={page === 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm">
+                  Page {page} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(page + 1)}
+                  disabled={page === totalPages}
+                >
+                  Next
+                </Button>
               </div>
             )}
           </div>

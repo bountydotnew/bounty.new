@@ -16,6 +16,7 @@ import { trpc } from "@/utils/trpc";
 export default function WaitlistPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
@@ -38,7 +39,19 @@ export default function WaitlistPage() {
   });
 
   const handleUpdateAccess = (id: string, hasAccess: boolean) => {
-    updateAccessMutation.mutate({ id, hasAccess });
+    setUpdatingIds(prev => new Set(prev).add(id));
+    updateAccessMutation.mutate(
+      { id, hasAccess },
+      {
+        onSettled: () => {
+          setUpdatingIds(prev => {
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+          });
+        }
+      }
+    );
   };
 
   if (error) {
@@ -146,7 +159,7 @@ export default function WaitlistPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleUpdateAccess(entry.id, false)}
-                          disabled={updateAccessMutation.isPending}
+                          disabled={updatingIds.has(entry.id)}
                         >
                           Revoke Access
                         </Button>
@@ -154,7 +167,7 @@ export default function WaitlistPage() {
                         <Button
                           size="sm"
                           onClick={() => handleUpdateAccess(entry.id, true)}
-                          disabled={updateAccessMutation.isPending}
+                          disabled={updatingIds.has(entry.id)}
                         >
                           Grant Access
                         </Button>

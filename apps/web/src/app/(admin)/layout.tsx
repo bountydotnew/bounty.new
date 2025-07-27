@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
-import { trpcServer } from "@/lib/trpc-server";
+// import { redirect } from "next/navigation";
+//import { authClient } from "@/lib/auth-client";
+// import { trpcServer } from "@/lib/trpc-server";
 
 export const metadata: Metadata = {
   title: "Admin - bounty.new",
@@ -13,7 +13,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { data: session } = await authClient.getSession();
+//    const { data: session } = await authClient.getSession();
 
 //   if (!session?.user) {
 //     redirect("/login?callback=/admin");

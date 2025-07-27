@@ -31,14 +31,14 @@ export const userReputation = pgTable("user_reputation", {
     .notNull()
     .unique()
     .references(() => user.id, { onDelete: "cascade" }),
-  totalEarned: decimal("total_earned", { precision: 12, scale: 2 }).default("0.00"),
+  totalEarned: decimal("total_earned", { precision: 12, scale: 2 }).default(sql`0.00`),
   bountiesCompleted: integer("bounties_completed").default(0),
   bountiesCreated: integer("bounties_created").default(0),
-  averageRating: decimal("average_rating", { precision: 3, scale: 2 }).default("0.00"),
+  averageRating: decimal("average_rating", { precision: 3, scale: 2 }).default(sql`0.00`),
   totalRatings: integer("total_ratings").default(0),
-  successRate: decimal("success_rate", { precision: 5, scale: 2 }).default("0.00"),
+  successRate: decimal("success_rate", { precision: 5, scale: 2 }).default(sql`0.00`),
   responseTime: integer("response_time"),
-  completionRate: decimal("completion_rate", { precision: 5, scale: 2 }).default("0.00"),
+  completionRate: decimal("completion_rate", { precision: 5, scale: 2 }).default(sql`0.00`),
   createdAt: timestamp("created_at").notNull().default(sql`now()`),
   updatedAt: timestamp("updated_at").notNull().default(sql`now()`),
 });

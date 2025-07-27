@@ -10,31 +10,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, Eye, ExternalLink } from "lucide-react";
+import { CheckCircle, XCircle, Eye, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { Favicon } from "@/components/ui/favicon";
 import type { TRPCClientErrorLike } from "@trpc/client";
 import type { AppRouter } from "@bounty/api";
-
-type BetaApplication = {
-    id: string;
-    name: string;
-    twitter: string;
-    projectName: string;
-    projectLink: string;
-    description: string;
-    status: "pending" | "approved" | "rejected";
-    reviewNotes?: string | null;
-    createdAt: string;
-    updatedAt: string;
-    user?: {
-        id: string;
-        name?: string | null;
-        email?: string | null;
-    } | null;
-};
+import type { BetaApplication } from "@/types/beta-application";
 
 export default function BetaApplicationsPage() {
     const [statusFilter, setStatusFilter] = useState<string>("");
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(20);
     const [selectedApplication, setSelectedApplication] = useState<BetaApplication | null>(null);
     const [reviewNotes, setReviewNotes] = useState("");
     const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
@@ -44,8 +29,8 @@ export default function BetaApplicationsPage() {
     const { data, isLoading } = useQuery(
         trpc.betaApplications.getAll.queryOptions({
             status: statusFilter === "all" || statusFilter === "" ? undefined : (statusFilter as "pending" | "approved" | "rejected"),
-            page: 1,
-            limit: 50,
+            page,
+            limit: pageSize,
         })
     );
 
@@ -86,6 +71,18 @@ export default function BetaApplicationsPage() {
         }
     };
 
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage);
+    };
+
+    const handlePageSizeChange = (newPageSize: number) => {
+        setPageSize(newPageSize);
+        setPage(1); // Reset to first page when changing page size
+    };
+
+    const totalPages = data?.totalPages || 1;
+    const total = data?.total || 0;
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -93,22 +90,35 @@ export default function BetaApplicationsPage() {
                     <h1 className="text-2xl font-bold">Beta Applications</h1>
                     <p className="text-muted-foreground">Review and manage beta access applications</p>
                 </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Filter by status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Status</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="approved">Approved</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
-                </Select>
+                <div className="flex items-center gap-4">
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Filter by status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Status</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="approved">Approved</SelectItem>
+                            <SelectItem value="rejected">Rejected</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Select value={pageSize.toString()} onValueChange={(value) => handlePageSizeChange(Number(value))}>
+                        <SelectTrigger className="w-[120px]">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="10">10 per page</SelectItem>
+                            <SelectItem value="20">20 per page</SelectItem>
+                            <SelectItem value="50">50 per page</SelectItem>
+                            <SelectItem value="100">100 per page</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Applications ({data?.total || 0})</CardTitle>
+                    <CardTitle>Applications ({total})</CardTitle>
                     <CardDescription>
                         Review applications and grant beta access
                     </CardDescription>
@@ -185,6 +195,50 @@ export default function BetaApplicationsPage() {
                             {data?.applications.length === 0 && (
                                 <div className="text-center py-8">
                                     <p className="text-muted-foreground">No applications found</p>
+                                </div>
+                            )}
+
+                            {totalPages > 1 && (
+                                <div className="flex items-center justify-between pt-4 border-t">
+                                    <div className="text-sm text-muted-foreground">
+                                        Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, total)} of {total} applications
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handlePageChange(page - 1)}
+                                            disabled={page === 1}
+                                        >
+                                            <ChevronLeft className="h-4 w-4 mr-1" />
+                                            Previous
+                                        </Button>
+                                        <div className="flex items-center space-x-1">
+                                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                                const pageNum = i + 1;
+                                                return (
+                                                    <Button
+                                                        key={pageNum}
+                                                        variant={page === pageNum ? "default" : "outline"}
+                                                        size="sm"
+                                                        onClick={() => handlePageChange(pageNum)}
+                                                        className="w-8 h-8 p-0"
+                                                    >
+                                                        {pageNum}
+                                                    </Button>
+                                                );
+                                            })}
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handlePageChange(page + 1)}
+                                            disabled={page === totalPages}
+                                        >
+                                            Next
+                                            <ChevronRight className="h-4 w-4 ml-1" />
+                                        </Button>
+                                    </div>
                                 </div>
                             )}
                         </div>

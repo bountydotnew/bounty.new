@@ -232,6 +232,57 @@ export const userRouter = router({
     return userData;
   }),
 
+  getAllUsers: adminProcedure
+    .input(
+      z.object({
+        search: z.string().optional(),
+        page: z.number().min(1).default(1),
+        limit: z.number().min(1).max(100).default(20),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { search, page, limit } = input;
+      const offset = (page - 1) * limit;
+
+      let whereClause = undefined;
+      if (search) {
+        whereClause = sql`(${user.name} ILIKE ${`%${search}%`} OR ${user.email} ILIKE ${`%${search}%`})`;
+      }
+
+      const [users, total] = await Promise.all([
+        ctx.db
+          .select({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            role: user.role,
+            hasAccess: user.hasAccess,
+            betaAccessStatus: user.betaAccessStatus,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+          })
+          .from(user)
+          .where(whereClause)
+          .orderBy(desc(user.createdAt))
+          .limit(limit)
+          .offset(offset),
+        ctx.db
+          .select({ count: sql<number>`count(*)` })
+          .from(user)
+          .where(whereClause)
+          .then((result) => result[0]?.count || 0),
+      ]);
+
+      return {
+        users,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    }),
+
   updateUserRole: adminProcedure
     .input(z.object({
       userId: z.string(),

@@ -10,6 +10,7 @@ import type { AppRouter } from "@bounty/api";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Favicon } from "@/components/ui/favicon";
 import { betaApplicationSchema, betaApplicationDefaults, type BetaApplicationForm } from "@/lib/forms";
 
@@ -135,12 +136,12 @@ export function BetaApplicationForm({ onSubmit, onCancel, className }: BetaAppli
           <label htmlFor="description" className="text-sm font-medium text-foreground">
             Description
           </label>
-          <textarea
+          <Textarea
             id="description"
             rows={6}
             placeholder="Enter project description"
             {...register("description")}
-            className={`border border-border bg-background w-full resize-none rounded-lg p-3 pt-2.5 text-foreground outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0 placeholder:text-muted-foreground ${errors.description ? "border-destructive" : ""}`}
+            className={errors.description ? "border-destructive" : ""}
             disabled={isFormDisabled}
           />
           {errors.description && (

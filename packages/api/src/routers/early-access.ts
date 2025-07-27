@@ -81,8 +81,37 @@ export const earlyAccessRouter = router({
 
         info("[addToWaitlist] Successfully added email to waitlist:", input.email);
         return { message: "You've been added to the waitlist!" };
-      } catch (error) {
+      } catch (error: unknown) {
         warn("[addToWaitlist] Error:", error);
+        
+        if (error instanceof Error && error.message.includes("unique constraint")) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Email already exists in waitlist",
+          });
+        }
+        
+        if (error instanceof Error && error.message.includes("violates not-null constraint")) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid email format",
+          });
+        }
+        
+        if (error instanceof Error && (error.message.includes("connect") || error.message.includes("ECONNREFUSED"))) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Database connection failed",
+          });
+        }
+        
+        if (error instanceof Error && (error.message.includes("does not exist") || error.message.includes("relation"))) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Database table not found - migrations may not be applied",
+          });
+        }
+        
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to join waitlist",
