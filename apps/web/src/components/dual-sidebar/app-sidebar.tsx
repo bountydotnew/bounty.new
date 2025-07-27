@@ -28,10 +28,12 @@ import Bounty from "../icons/bounty";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { LINKS } from "@/constants/links";
-import { isBeta } from "@/lib/constants";
+import { useQuery } from "@tanstack/react-query";
+import { trpc } from "@/utils/trpc";
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const userData = useQuery(trpc.user.getMe.queryOptions());
 
   function isActive(path: string) {
     return pathname === path;
@@ -207,7 +209,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   }
 
 
-  const data = isBeta ? betaData : productionData;
+  const data = userData.data?.betaAccessStatus === "approved" ? productionData : betaData;
 
   return (
     <Sidebar variant="icononly" {...props}>

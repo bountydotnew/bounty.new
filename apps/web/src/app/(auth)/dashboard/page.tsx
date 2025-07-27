@@ -7,34 +7,32 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DollarSign, Clock, TrendingUp } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import { isBeta } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import Bounty from "@/components/icons/bounty";
 import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
+  Drawer, DrawerContent,
+  DrawerDescription, DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
+  DrawerTrigger
 } from "@/components/ui/drawer";
+import {
+  Dialog, DialogContent,
+  DialogDescription, DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from "@/components/ui/dialog";
+import { BetaApplicationForm } from "@/components/sections/home/beta-application-form";
+import { useDevice } from "@/components/device-provider";
 
 export default function Dashboard() {
   const bounties = useQuery(trpc.bounties.getAll.queryOptions({ page: 1, limit: 10 }));
   const myBounties = useQuery(trpc.bounties.getMyBounties.queryOptions({ page: 1, limit: 5 }));
+  const existingSubmission = useQuery(trpc.betaApplications.checkExisting.queryOptions());
+  const userData = useQuery(trpc.user.getMe.queryOptions());
 
-  const router = useRouter();
   const { data: session } = authClient.useSession();
-
-  const handleLoginRedirect = () => {
-    router.push("/login?callback=/dashboard");
-  }
-
-
+  const { isMobile } = useDevice();
 
   if (bounties.isLoading || myBounties.isLoading) {
     return (
@@ -45,22 +43,25 @@ export default function Dashboard() {
     );
   }
 
-  if (isBeta) {
+  if (userData.data?.betaAccessStatus !== "approved") {
     return (
-      session?.user ? (
-        <div className="flex flex-col items-center justify-center min-h-full space-y-4">
-          <Bounty className="w-20 h-20 mb-10" />
-          <h1 className="text-2xl font-bold">Hi, {session.user.name}!</h1>
-          <p className="text-muted-foreground text-center max-w-md">
-            This feature hasn&apos;t been enabled yet. We&apos;re currently in beta testing phase.
-          </p>
+      <div className="flex flex-col items-center justify-center min-h-full space-y-4">
+        <Bounty className="w-20 h-20 mb-10" />
+        <h1 className="text-2xl font-bold">Hi, {userData.data?.name || session?.user.name}!</h1>
+        <p className="text-muted-foreground text-center max-w-md">
+          This feature hasn&apos;t been enabled yet. We&apos;re currently in beta testing phase.
+        </p>
+        {isMobile ? (
           <Drawer>
             <DrawerTrigger asChild>
               <Button
                 variant="link"
                 className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                disabled={existingSubmission?.data?.hasSubmitted}
               >
-                Fill application form
+                {existingSubmission?.data?.hasSubmitted
+                  ? (userData.data?.betaAccessStatus === "denied" ? "Application Denied" : "Application Submitted")
+                  : "Fill application form"}
               </Button>
             </DrawerTrigger>
             <DrawerContent className="max-h-[82vh]">
@@ -72,80 +73,36 @@ export default function Dashboard() {
                   </DrawerDescription>
                 </DrawerHeader>
                 <div className="p-4 pb-0">
-                  <div className="space-y-6">
-                    <div className="space-y-2">
-                      <label htmlFor="user-name" className="text-sm font-medium text-foreground">
-                        Your name
-                      </label>
-                      <input
-                        id="user-name"
-                        className="border border-border bg-background w-full px-3 h-9 rounded-lg outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground"
-                        placeholder="Ahmet"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label htmlFor="twitter" className="text-sm font-medium text-foreground">
-                        Twitter handle
-                      </label>
-                      <input
-                        id="twitter"
-                        className="border border-border bg-background w-full px-3 h-9 rounded-lg outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground"
-                        placeholder="@bruvimtired"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label htmlFor="project-name" className="text-sm font-medium text-foreground">
-                        Project name
-                      </label>
-                      <input
-                        id="project-name"
-                        className="border border-border bg-background w-full px-3 h-9 rounded-lg outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground"
-                        placeholder="oss.now"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label htmlFor="description" className="text-sm font-medium text-foreground">
-                        Description
-                      </label>
-                      <textarea
-                        id="description"
-                        rows={6}
-                        className="border border-border bg-background w-full resize-none rounded-lg p-3 pt-2.5 text-foreground outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0 placeholder:text-muted-foreground"
-                        placeholder="Enter project description"
-                      />
-                    </div>
-                  </div>
+                  <BetaApplicationForm />
                 </div>
-                <DrawerFooter>
-                  <Button className="w-full h-[44px] font-medium">
-                    Submit Application
-                  </Button>
-                  <DrawerClose asChild>
-                    <Button variant="outline" className="w-full">
-                      Cancel
-                    </Button>
-                  </DrawerClose>
-                </DrawerFooter>
               </div>
             </DrawerContent>
           </Drawer>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center min-h-full space-y-4">
-          <Bounty className="w-20 h-20 mb-10" />
-          <h1 className="text-2xl font-bold">Welcome!</h1>
-          <p className="text-muted-foreground text-center max-w-md">
-            Please sign in to access the dashboard and apply for our beta testing program.
-          </p>
-          <Button
-            onClick={handleLoginRedirect}
-            variant="link"
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-          >
-            Log in to apply
-          </Button>
-        </div>
-      )
+        ) : (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                variant="link"
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                disabled={existingSubmission?.data?.hasSubmitted}
+              >
+                {existingSubmission?.data?.hasSubmitted
+                  ? (userData.data?.betaAccessStatus === "denied" ? "Application Denied" : "Application Submitted")
+                  : "Fill application form"}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Beta Application</DialogTitle>
+                <DialogDescription>
+                  Get started by filling in the information below to apply for beta testing.
+                </DialogDescription>
+              </DialogHeader>
+              <BetaApplicationForm />
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
     );
   }
 

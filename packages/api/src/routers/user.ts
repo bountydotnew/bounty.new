@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { eq, desc, sql } from "drizzle-orm";
 
 import { db, user, session, userProfile, userReputation } from "@bounty/db";
-import { protectedProcedure, publicProcedure, router } from "../trpc";
+import { protectedProcedure, publicProcedure, router, adminProcedure } from "../trpc";
 
 export const userRouter = router({
   hasAccess: protectedProcedure.query(async ({ ctx }) => {
@@ -215,5 +215,36 @@ export const userRouter = router({
           cause: error,
         });
       }
+    }),
+
+  getMe: protectedProcedure.query(async ({ ctx }) => {
+    const userData = await ctx.db.query.user.findFirst({
+      where: (user, { eq }) => eq(user.id, ctx.session.user.id),
+    });
+
+    if (!userData) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "User not found",
+      });
+    }
+
+    return userData;
+  }),
+
+  updateUserRole: adminProcedure
+    .input(z.object({
+      userId: z.string(),
+      role: z.enum(["user", "admin"]),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { userId, role } = input;
+
+      await ctx.db
+        .update(user)
+        .set({ role })
+        .where(eq(user.id, userId));
+
+      return { success: true };
     }),
 });

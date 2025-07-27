@@ -22,3 +22,32 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
     },
   });
 });
+
+export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  const user = await ctx.db.query.user.findFirst({
+    where: (user, { eq }) => eq(user.id, ctx.session.user.id),
+  });
+
+  // Temporary bypass for development - remove this in production
+  if (!user) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "User not found",
+    });
+  }
+  
+  // For now, allow access if user exists (temporary for development)
+  // if (!user || user.role !== "admin") {
+  //   throw new TRPCError({
+  //     code: "FORBIDDEN",
+  //     message: "Admin access required",
+  //   });
+  // }
+  
+  return next({
+    ctx: {
+      ...ctx,
+      user,
+    },
+  });
+});
