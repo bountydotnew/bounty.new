@@ -3,8 +3,9 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { LINKS } from "@/constants/links";
-import { isBeta } from "@/lib/constants";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useQuery } from "@tanstack/react-query";
+import { trpc } from "@/utils/trpc";
 
 
 const betaNavigationLinks = [
@@ -18,7 +19,8 @@ const productionNavigationLinks = [
 ];
 
 export function Header() {
-  const navigationLinks = isBeta ? productionNavigationLinks : betaNavigationLinks;
+  const userData = useQuery(trpc.user.getMe.queryOptions());
+  const navigationLinks = userData.data?.betaAccessStatus === "approved" ? betaNavigationLinks : productionNavigationLinks;
 
 
   return (

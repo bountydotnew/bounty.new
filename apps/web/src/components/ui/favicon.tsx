@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+import Image from "next/image";
 
 interface FaviconProps {
   url: string;
@@ -23,7 +24,7 @@ export function Favicon({ url, className, size = 16 }: FaviconProps) {
         {loading && (
           <Loader2 className={cn("animate-spin", className)} size={size} />
         )}
-        <img
+        <Image
           src={faviconUrl}
           alt={`${domain} favicon`}
           className={cn("rounded-sm", className)}

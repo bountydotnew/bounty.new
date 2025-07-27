@@ -1,6 +1,5 @@
 export const baseUrl =
   process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3001";
-export const isBeta = process.env.NEXT_PUBLIC_IS_APP_BETA;
 
 // sidebar
 export const SIDEBAR_COOKIE_NAME = "sidebar_state";

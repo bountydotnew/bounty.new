@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Search, Mail, Calendar, Users, CheckCircle, XCircle } from "lucide-react";
+import { TRPCClientErrorLike } from "@trpc/client";
+import type { AppRouter } from "@bounty/api";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,7 +32,7 @@ export default function WaitlistPage() {
       toast.success("Access updated successfully");
       queryClient.invalidateQueries({ queryKey: ["earlyAccess", "getAdminWaitlist"] });
     },
-    onError: (error: any) => {
+    onError: (error: TRPCClientErrorLike<AppRouter>) => {
       toast.error(error.message || "Failed to update access");
     },
   });

@@ -1,5 +1,12 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, pgEnum } from "drizzle-orm/pg-core";
+
+export const betaAccessStatusEnum = pgEnum("beta_access_status", [
+  "none",
+  "pending", 
+  "approved",
+  "denied"
+]);
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -8,7 +15,7 @@ export const user = pgTable("user", {
   emailVerified: boolean("email_verified").notNull(),
   image: text("image"),
   hasAccess: boolean("has_access").notNull().default(false),
-  betaAccess: boolean("beta_access").notNull().default(false),
+  betaAccessStatus: betaAccessStatusEnum("beta_access_status").notNull().default("none"),
   role: text("role").notNull().default("user"),
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),

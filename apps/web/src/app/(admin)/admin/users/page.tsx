@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Search, User, Mail, Calendar, Shield, Crown, Users } from "lucide-react";
+import { Search, User, Mail, Calendar, Crown, Users } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,7 @@ export default function UsersPage() {
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+    mutationFn: async () => {
       // This would need a new tRPC procedure for updating user roles
       // For now, showing a placeholder
       return { success: true };
@@ -29,8 +29,8 @@ export default function UsersPage() {
       toast.success("User role updated successfully");
       queryClient.invalidateQueries({ queryKey: ["user", "getMe"] });
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to update user role");
+    onError: (error: unknown) => {
+      toast.error(error instanceof Error ? error.message : "Failed to update user role");
     },
   });
 

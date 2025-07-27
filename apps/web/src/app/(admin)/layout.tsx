@@ -15,15 +15,15 @@ export default async function AdminLayout({
 }) {
   const { data: session } = await authClient.getSession();
 
-//   if (!session?.user) {
-//     redirect("/login?callback=/admin");
-//   }
+  if (!session?.user) {
+    redirect("/login?callback=/admin");
+  }
 
-//   const user = await trpcServer.user.getMe.query();
+  const user = await trpcServer.user.getMe.query();
   
-//   if (!user || user.role !== "admin") {
-//     redirect("/dashboard");
-//   }
+  if (!user || user.role !== "admin") {
+    redirect("/dashboard");
+  }
 
   return (
     <div className="min-h-screen bg-background">
