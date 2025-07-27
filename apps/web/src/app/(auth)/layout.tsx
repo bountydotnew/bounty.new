@@ -9,6 +9,20 @@ export const metadata: Metadata = {
   icons: {
     icon: "/icon.svg",
   },
+  openGraph: {
+    title: "bounty.new - App",
+    description: "Ship fast, get paid faster.",
+    url: "https://bounty.new",
+    siteName: "bounty.new",
+    images: [
+      {
+        url: "/ogimage.png",
+        width: 1200,
+        height: 630,
+        alt: "bounty.new - Ship fast, get paid faster.",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({

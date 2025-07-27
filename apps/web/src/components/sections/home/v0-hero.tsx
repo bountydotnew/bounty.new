@@ -146,11 +146,11 @@ export default function BountyPlatform() {
               <BackedByBadge />
 
               <h1 className="text-5xl md:text-7xl font-light tracking-tighter leading-[0.9]">
-                Ship faster.
+                Ship fast.
                 <br />
                 <span className="bg-gradient-to-r from-blue-400 via-white to-green-400 bg-clip-text text-transparent font-medium">
                   Get paid
-                  <span className="ml-2 italic font-normal font-serif">instantly.</span>
+                  <span className="ml-2 italic font-normal font-serif">faster.</span>
                 </span>
               </h1>
 
