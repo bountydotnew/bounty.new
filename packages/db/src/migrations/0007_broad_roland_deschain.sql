@@ -1,0 +1,1 @@
+ALTER TABLE "user" ADD COLUMN "beta_access_denied" boolean DEFAULT false NOT NULL;

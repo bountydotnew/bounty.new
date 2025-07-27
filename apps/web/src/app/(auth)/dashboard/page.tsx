@@ -7,10 +7,8 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DollarSign, Clock, TrendingUp } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import { isBeta } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import Bounty from "@/components/icons/bounty";
 import {
   Drawer, DrawerContent,
@@ -31,16 +29,10 @@ export default function Dashboard() {
   const bounties = useQuery(trpc.bounties.getAll.queryOptions({ page: 1, limit: 10 }));
   const myBounties = useQuery(trpc.bounties.getMyBounties.queryOptions({ page: 1, limit: 5 }));
   const existingSubmission = useQuery(trpc.betaApplications.checkExisting.queryOptions());
+  const userData = useQuery(trpc.user.getMe.queryOptions());
 
-  const router = useRouter();
   const { data: session } = authClient.useSession();
   const { isMobile } = useDevice();
-
-  const handleLoginRedirect = () => {
-    router.push("/login?callback=/dashboard");
-  }
-
-
 
   if (bounties.isLoading || myBounties.isLoading) {
     return (
@@ -51,79 +43,66 @@ export default function Dashboard() {
     );
   }
 
-  if (isBeta) {
+  if (userData.data?.betaAccessStatus !== "approved") {
     return (
-      session?.user ? (
-        <div className="flex flex-col items-center justify-center min-h-full space-y-4">
-          <Bounty className="w-20 h-20 mb-10" />
-          <h1 className="text-2xl font-bold">Hi, {session.user.name}!</h1>
-          <p className="text-muted-foreground text-center max-w-md">
-            This feature hasn&apos;t been enabled yet. We&apos;re currently in beta testing phase.
-          </p>
-          {isMobile ? (
-            <Drawer>
-              <DrawerTrigger asChild>
-                <Button
-                  variant="link"
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-                  disabled={existingSubmission?.data?.hasSubmitted}
-                >
-                  {existingSubmission?.data?.hasSubmitted ? "Application Submitted" : "Fill application form"}
-                </Button>
-              </DrawerTrigger>
-                  <DrawerContent className="max-h-[82vh]">
-                    <div className="mx-auto w-full max-w-md">
-                      <DrawerHeader>
-                        <DrawerTitle className="mt-8">Beta Application</DrawerTitle>
-                        <DrawerDescription className="leading-6 mt-2">
-                          Get started by filling in the information below to apply for beta testing.
-                        </DrawerDescription>
-                      </DrawerHeader>
-                      <div className="p-4 pb-0">
-                        <BetaApplicationForm />
-                      </div>
-                    </div>
-                  </DrawerContent>
-                </Drawer>
-              ) : (
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="link"
-                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-                      disabled={existingSubmission?.data?.hasSubmitted}
-                    >
-                      {existingSubmission?.data?.hasSubmitted ? "Application Submitted" : "Fill application form"}
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Beta Application</DialogTitle>
-                      <DialogDescription>
-                        Get started by filling in the information below to apply for beta testing.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <BetaApplicationForm />
-                  </DialogContent>
-                </Dialog>
-              )}
-            </div>
-          ) : (
-        <div className="flex flex-col items-center justify-center min-h-full space-y-4">
-          <Bounty className="w-20 h-20 mb-10" />
-          <h1 className="text-2xl font-bold">Welcome!</h1>
-          <p className="text-muted-foreground text-center max-w-md">
-            Please sign in to access the dashboard and apply for our beta testing program.
-          </p>
-          <Button
-            onClick={handleLoginRedirect}
-            variant="link"
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-          >
-            Log in to apply
-          </Button>
-        </div>
-      )
+      <div className="flex flex-col items-center justify-center min-h-full space-y-4">
+        <Bounty className="w-20 h-20 mb-10" />
+        <h1 className="text-2xl font-bold">Hi, {userData.data?.name || session?.user.name}!</h1>
+        <p className="text-muted-foreground text-center max-w-md">
+          This feature hasn&apos;t been enabled yet. We&apos;re currently in beta testing phase.
+        </p>
+        {isMobile ? (
+          <Drawer>
+            <DrawerTrigger asChild>
+              <Button
+                variant="link"
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                disabled={existingSubmission?.data?.hasSubmitted}
+              >
+                {existingSubmission?.data?.hasSubmitted
+                  ? (userData.data?.betaAccessStatus === "denied" ? "Application Denied" : "Application Submitted")
+                  : "Fill application form"}
+              </Button>
+            </DrawerTrigger>
+            <DrawerContent className="max-h-[82vh]">
+              <div className="mx-auto w-full max-w-md">
+                <DrawerHeader>
+                  <DrawerTitle className="mt-8">Beta Application</DrawerTitle>
+                  <DrawerDescription className="leading-6 mt-2">
+                    Get started by filling in the information below to apply for beta testing.
+                  </DrawerDescription>
+                </DrawerHeader>
+                <div className="p-4 pb-0">
+                  <BetaApplicationForm />
+                </div>
+              </div>
+            </DrawerContent>
+          </Drawer>
+        ) : (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                variant="link"
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                disabled={existingSubmission?.data?.hasSubmitted}
+              >
+                {existingSubmission?.data?.hasSubmitted
+                  ? (userData.data?.betaAccessStatus === "denied" ? "Application Denied" : "Application Submitted")
+                  : "Fill application form"}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Beta Application</DialogTitle>
+                <DialogDescription>
+                  Get started by filling in the information below to apply for beta testing.
+                </DialogDescription>
+              </DialogHeader>
+              <BetaApplicationForm />
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
     );
   }
 

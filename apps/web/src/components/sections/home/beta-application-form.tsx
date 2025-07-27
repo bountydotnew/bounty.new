@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
 import type { TRPCClientErrorLike } from "@trpc/client";
+import type { AppRouter } from "@bounty/api";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,7 +46,7 @@ export function BetaApplicationForm({ onSubmit, onCancel, className }: BetaAppli
         onSubmit({} as BetaApplicationForm);
       }
         },
-            onError: (error: TRPCClientErrorLike<any>) => {
+            onError: (error: TRPCClientErrorLike<AppRouter>) => {
       toast.error(error.message || "Failed to submit application. Please try again.");
     },
   });
@@ -152,7 +153,7 @@ export function BetaApplicationForm({ onSubmit, onCancel, className }: BetaAppli
         {existingSubmission?.hasSubmitted ? (
           <div className="w-full text-center py-4">
             <p className="text-lg font-medium text-green-600">
-              You'll hear from us shortly!
+              You&apos;ll hear from us shortly!
             </p>
             <p className="text-sm text-muted-foreground mt-1">
               Your beta application has been submitted and is under review.
