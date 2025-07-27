@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { validateFingerprint } from "@/lib/fingerprint-validation";
 import { grim } from "@/hooks/use-dev-log";
+import { db } from "@bounty/db";
+import { waitlist } from "@bounty/db";
 
 const { log, error, warn } = grim();
 
@@ -47,38 +49,19 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const serverUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+      log("[Waitlist] Adding email to waitlist:", email);
 
-      const payload = { email };
-      log("[Waitlist] Sending tRPC request with payload:", JSON.stringify(payload));
-
-      const response = await fetch(`${serverUrl}/trpc/earlyAccess.addToWaitlist`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+      await db.insert(waitlist).values({
+        email,
+        hasAccess: false,
+        createdAt: new Date(),
       });
 
-      const responseData = await response.json();
-      log("[Waitlist] tRPC response:", JSON.stringify(responseData));
-
-      if (response.ok) {
-        log("[Waitlist] Successfully added email to waitlist:", email);
-        return NextResponse.json({
-          success: true,
-          message: "Successfully added to waitlist!",
-        });
-      } else {
-        warn("[Waitlist] Failed to save to database:", response.status, responseData);
-        return NextResponse.json(
-          {
-            error: "Failed to add to waitlist",
-            success: false,
-          },
-          { status: 500 }
-        );
-      }
+      log("[Waitlist] Successfully added email to waitlist:", email);
+      return NextResponse.json({
+        success: true,
+        message: "Successfully added to waitlist!",
+      });
     } catch (dbConnectionError) {
       error("[Waitlist] Database connection error:", dbConnectionError);
       return NextResponse.json(

@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { auth } from "@bounty/auth";
+import { db } from "@bounty/db";
 
 function getClientIP(req: NextRequest): string {
   const forwarded = req.headers.get("x-forwarded-for");
@@ -26,6 +27,7 @@ export async function createContext(req: NextRequest) {
     session,
     clientIP,
     req,
+    db,
   };
 }
 

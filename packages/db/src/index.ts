@@ -3,6 +3,7 @@ import { Pool } from "pg";
 import * as authSchema from "./schema/auth";
 import * as bountiesSchema from "./schema/bounties";
 import * as profilesSchema from "./schema/profiles";
+import * as betaApplicationsSchema from "./schema/beta-applications";
 
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL environment variable is required");
@@ -18,6 +19,7 @@ export const db = drizzle(pool, {
     ...authSchema,
     ...bountiesSchema,
     ...profilesSchema,
+    ...betaApplicationsSchema,
   },
 });
 
@@ -25,3 +27,4 @@ export const db = drizzle(pool, {
 export * from "./schema/auth";
 export * from "./schema/bounties";
 export * from "./schema/profiles";
+export * from "./schema/beta-applications";
