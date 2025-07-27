@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { BetaApplicationForm } from "@/components/sections/home/beta-application-form";
 import { useDevice } from "@/components/device-provider";
+import { Onboarding } from "@/components/onboarding";
 
 export default function Dashboard() {
   const bounties = useQuery(trpc.bounties.getAll.queryOptions({ page: 1, limit: 10 }));
@@ -108,6 +109,7 @@ export default function Dashboard() {
 
   return (
     <>
+      <Onboarding />
       <div className="bg-background">
         <div className="container mx-auto px-4 py-4 rounded-lg">
           {/* <div className="mb-6">
