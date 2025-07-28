@@ -1,9 +1,9 @@
 import { auth } from "@bounty/auth";
 import { toNextJsHandler } from "better-auth/next-js";
-import { grim } from "@bounty/dev-logger";
+// import { grim } from "@bounty/dev-logger";
 import { NextRequest, NextResponse } from "next/server";
 
-const { log } = grim();
+// const { log } = grim();
 
 const handler = toNextJsHandler(auth.handler);
 
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
   return response;
 }
 
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {
