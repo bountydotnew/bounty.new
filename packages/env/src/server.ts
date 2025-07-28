@@ -5,8 +5,6 @@ export const env = createEnv({
   server: {
     // Database
     DATABASE_URL: z.string().startsWith('postgresql://'),
-    // CORS
-    CORS_ORIGIN: z.string().url(),
     // Auth
     BETTER_AUTH_SECRET: z.string().min(1),
     BETTER_AUTH_URL: z.string().url(),

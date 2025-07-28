@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DollarSign, Clock, TrendingUp } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@bounty/auth/client";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import Bounty from "@/components/icons/bounty";

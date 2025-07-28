@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { HeaderBase } from "@/components/sections/home/header-base";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@bounty/auth/client";
 import Image from "next/image";
 import { LINKS } from "@/constants/links";
 import {

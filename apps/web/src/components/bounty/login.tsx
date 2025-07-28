@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { LogOut } from "lucide-react"
 import SubmissionCard from "@/components/bounty/submission-card"
 import { useState, useRef } from "react"
-import { authClient } from "@/lib/auth-client"
+import { authClient } from "@bounty/auth/client"
 import { toast } from "sonner"
 import { useRouter, useSearchParams } from "next/navigation"
 import { LINKS } from "@/constants/links";

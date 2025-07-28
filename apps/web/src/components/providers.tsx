@@ -10,7 +10,7 @@ import { Databuddy } from "@databuddy/sdk";
 import { TOAST_ICONS, TOAST_OPTIONS } from "@/constants/toast";
 import { PostHogProvider } from "posthog-js/react";
 import { AuthUIProvider } from "@daveyplate/better-auth-ui"
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@bounty/auth/client";
 import { useRouter } from "next/navigation"
 import Link from "next/link";
 
