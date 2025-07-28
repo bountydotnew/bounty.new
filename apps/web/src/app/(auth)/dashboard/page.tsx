@@ -25,6 +25,7 @@ import {
 import { BetaApplicationForm } from "@/components/sections/home/beta-application-form";
 import { useDevice } from "@/components/device-provider";
 import { Onboarding } from "@/components/onboarding";
+import { useState } from "react";
 
 export default function Dashboard() {
   const bounties = useQuery(trpc.bounties.getAll.queryOptions({ page: 1, limit: 10 }));
@@ -34,6 +35,7 @@ export default function Dashboard() {
 
   const { data: session } = authClient.useSession();
   const { isMobile } = useDevice();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   if (bounties.isLoading || myBounties.isLoading) {
     return (
@@ -44,7 +46,7 @@ export default function Dashboard() {
     );
   }
 
-  if (userData.data?.betaAccessStatus !== "approved") {
+      if (userData.data?.betaAccessStatus !== "approved") {
     return (
       <div className="flex flex-col items-center justify-center min-h-full space-y-4">
         <Bounty className="w-20 h-20 mb-10" />
@@ -53,7 +55,7 @@ export default function Dashboard() {
           This feature hasn&apos;t been enabled yet. We&apos;re currently in beta testing phase.
         </p>
         {isMobile ? (
-          <Drawer>
+            <Drawer open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DrawerTrigger asChild>
               <Button
                 variant="link"
@@ -74,13 +76,18 @@ export default function Dashboard() {
                   </DrawerDescription>
                 </DrawerHeader>
                 <div className="p-4 pb-0">
-                  <BetaApplicationForm />
+                  <BetaApplicationForm 
+                    onSuccess={() => {
+                      setIsModalOpen(false);
+                      existingSubmission.refetch();
+                    }}
+                  />
                 </div>
               </div>
             </DrawerContent>
           </Drawer>
         ) : (
-          <Dialog>
+          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DialogTrigger asChild>
               <Button
                 variant="link"
@@ -99,7 +106,12 @@ export default function Dashboard() {
                   Get started by filling in the information below to apply for beta testing.
                 </DialogDescription>
               </DialogHeader>
-              <BetaApplicationForm />
+              <BetaApplicationForm 
+                onSuccess={() => {
+                  setIsModalOpen(false);
+                  existingSubmission.refetch();
+                }}
+              />
             </DialogContent>
           </Dialog>
         )}
