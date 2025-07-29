@@ -38,7 +38,15 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "s2.googleusercontent.com"
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.marblecms.com',
+      },
     ],
   },
   async rewrites() {
