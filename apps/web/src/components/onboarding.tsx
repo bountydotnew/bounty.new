@@ -5,13 +5,14 @@ import { Button } from "./ui/button";
 import { ArrowRightIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import { useConfetti } from "@/lib/context/confetti-context";
 
 export function Onboarding() {
   const [step, setStep] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
-
+  const { celebrate } = useConfetti();
+  const hasSeenOnboarding = localStorage.getItem("hasSeenOnboarding");
   useEffect(() => {
-    const hasSeenOnboarding = localStorage.getItem("hasSeenOnboarding");
     if (!hasSeenOnboarding) {
       setIsOpen(true);
     }
@@ -29,6 +30,9 @@ export function Onboarding() {
   const renderStepContent = () => {
     switch (step) {
       case 0:
+        if (!hasSeenOnboarding) {
+          celebrate();
+        }
         return (
           <div className="space-y-5">
             <div className="space-y-3">

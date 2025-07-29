@@ -1,0 +1,138 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "id": "0010_snapshot",
+  "prevId": "0009_tense_mysterio",
+  "tables": {
+    "beta_application": {
+      "name": "beta_application",
+      "schema": "",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": null
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": null
+        },
+        {
+          "name": "twitter",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": null
+        },
+        {
+          "name": "project_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": null
+        },
+        {
+          "name": "project_link",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": null
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": null
+        },
+        {
+          "name": "status",
+          "type": "beta_application_status",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        {
+          "name": "reviewed_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": null
+        },
+        {
+          "name": "reviewed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": null
+        },
+        {
+          "name": "review_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      ],
+      "indexes": [],
+      "foreignKeys": [
+        {
+          "name": "beta_application_user_id_user_id_fk",
+          "tableName": "beta_application",
+          "columnName": "user_id",
+          "referencedTableName": "user",
+          "referencedColumnName": "id",
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        {
+          "name": "beta_application_reviewed_by_user_id_fk",
+          "tableName": "beta_application",
+          "columnName": "reviewed_by",
+          "referencedTableName": "user",
+          "referencedColumnName": "id",
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      ],
+      "uniqueConstraints": []
+    }
+  },
+  "enums": {
+    "beta_application_status": {
+      "name": "beta_application_status",
+      "schema": "",
+      "values": [
+        "pending",
+        "approved",
+        "rejected"
+      ]
+    }
+  }
+}

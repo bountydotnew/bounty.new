@@ -25,6 +25,7 @@ import {
 import { BetaApplicationForm } from "@/components/sections/home/beta-application-form";
 import { useDevice } from "@/components/device-provider";
 import { Onboarding } from "@/components/onboarding";
+import { Glimpse, GlimpseContent, GlimpseDescription, GlimpseImage, GlimpseTitle, GlimpseTrigger } from "@/components/ui/kibo-ui/glimpse";
 
 export default function Dashboard() {
   const bounties = useQuery(trpc.bounties.getAll.queryOptions({ page: 1, limit: 10 }));
@@ -108,6 +109,7 @@ export default function Dashboard() {
   }
 
   return (
+    
     <>
       <Onboarding />
       <div className="bg-background">
@@ -191,11 +193,23 @@ export default function Dashboard() {
                         </div>
                       )}
 
+
                       {bounties.data?.data.map((bounty) => (
                         <Card key={bounty.id} className="hover:shadow-md transition-shadow">
                           <CardHeader className="pb-3">
                             <div className="flex items-center justify-between">
-                              <CardTitle className="text-lg">{bounty.title}</CardTitle>
+                              <Glimpse closeDelay={0} openDelay={0}>
+                                <GlimpseTrigger asChild>
+                                  <CardTitle className="text-lg cursor-pointer hover:text-primary transition-colors">
+                                    {bounty.title}
+                                  </CardTitle>
+                                </GlimpseTrigger>
+                                <GlimpseContent className="w-80">
+                                  <GlimpseImage src={bounty.creator?.image ?? ''} />
+                                  <GlimpseTitle>{bounty.title}</GlimpseTitle>
+                                  <GlimpseDescription>{bounty.description}</GlimpseDescription>
+                                </GlimpseContent>
+                              </Glimpse>
                               <div className="flex items-center gap-2">
                                 <Badge variant={bounty.status === 'open' ? 'default' : 'secondary'}>
                                   {bounty.status}
