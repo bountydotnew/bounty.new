@@ -93,7 +93,7 @@
         "@bounty/db": "workspace:*",
         "@bounty/dev-logger": "workspace:*",
         "@trpc/server": "^11.4.2",
-        "@unkey/ratelimit": "^2.0.0",
+        "@unkey/ratelimit": "^2.1.0",
         "zod": "^3.23.8",
       },
       "devDependencies": {
@@ -742,7 +742,7 @@
 
     "@unkey/api": ["@unkey/api@2.0.0-alpha.7", "", { "peerDependencies": { "@modelcontextprotocol/sdk": "^1.5.0", "zod": ">= 3" }, "optionalPeers": ["@modelcontextprotocol/sdk"], "bin": { "mcp": "bin/mcp-server.js" } }, "sha512-iiA+PVXn5T3dlZT8woKrnr0kB15XLtmkFWHV2+ox+980W/7vQLP1gdgcU/lrX/qA09Z+0w0wN+n0C88RLd4nvw=="],
 
-    "@unkey/ratelimit": ["@unkey/ratelimit@2.0.0", "", { "dependencies": { "@unkey/api": "2.0.0-alpha.7" } }, "sha512-QwOBO7n7BngOZ8yknh4KyHVFweBYk9gVED33y7BpBZMLXnBeLnc2ttMXqTUH7b5rhyQkqnWrqHw4fbxLu8UnkQ=="],
+    "@unkey/ratelimit": ["@unkey/ratelimit@2.1.0", "", { "dependencies": { "@unkey/api": "2.0.0-alpha.7" } }, "sha512-beBXluABoMI8QLEVQbC6XZmVcueenRQ7f0UWLmPHo/c99hCTZ3Xc0PG9HMC5Ki890sgJT+aJFpT1tx/pnzi9HA=="],
 
     "@unrs/resolver-binding-android-arm-eabi": ["@unrs/resolver-binding-android-arm-eabi@1.11.1", "", { "os": "android", "cpu": "arm" }, "sha512-ppLRUgHVaGRWUx0R0Ut06Mjo9gBaBkg3v/8AxusGLhsIotbBLuRk51rAzqLC8gq6NyyAojEXglNjzf6R948DNw=="],
 
@@ -1857,6 +1857,8 @@
     "sharp/semver": ["semver@7.7.2", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-RF0Fw+rO5AMf9MAyaRXI4AV0Ulj5lMHqVxxdSgiVbixSCXoEmmX/jk0CuJw4+3SqroYO9VoUh+HcuJivvtJemA=="],
 
     "tinyglobby/picomatch": ["picomatch@4.0.3", "", {}, "sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q=="],
+
+    "web/@unkey/ratelimit": ["@unkey/ratelimit@2.0.0", "", { "dependencies": { "@unkey/api": "2.0.0-alpha.7" } }, "sha512-QwOBO7n7BngOZ8yknh4KyHVFweBYk9gVED33y7BpBZMLXnBeLnc2ttMXqTUH7b5rhyQkqnWrqHw4fbxLu8UnkQ=="],
 
     "web/zod": ["zod@3.25.76", "", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
 
