@@ -23,8 +23,22 @@ import NumberFlow from '@number-flow/react';
 import { LINKS } from '@/constants/links';
 import { toast } from 'sonner';
 import { grim } from "@bounty/dev-logger";
+import { MarbleIcon } from '@/components/icons/marble';
+import { DataBuddyIcon } from '@/components/icons/databuddy';
+import { ComponentType } from 'react';
+import Link from 'next/link';
 
 const { log } = grim();
+
+interface ExternalTool {
+  id: number;
+  name: string;
+  description: string;
+  icon: string | ComponentType<{ size?: number; className?: string }>;
+  url: string;
+  category: string;
+  color: string;
+}
 
 interface Contributor {
   login: string;
@@ -65,6 +79,27 @@ const coreTeamMembers = ['ripgrim'];
 const specialRoles: Record<string, { role: string; color: string; position: number }> = {
   ripgrim: { role: 'Founder', color: 'from-blue-500 to-purple-600', position: 1 },
 };
+
+const externalTools: ExternalTool[] = [
+  {
+    id: 1,
+    name: "Databuddy",
+    description: "GDPR compliant analysis",
+    icon: DataBuddyIcon,
+    url: "https://databuddy.cc",
+    category: "Analytics",
+    color: "from-gray-500 to-gray-600"
+  },
+  {
+    id: 2,
+    name: "Marble",
+    description: "Headless CMS",
+    icon: MarbleIcon,
+    url: "https://marblecms.com",
+    category: "Blog CMS",
+    color: "from-black to-gray-800"
+  },
+];
 
 const getGitHubHeaders = () => {
   const headers: Record<string, string> = {
@@ -391,7 +426,6 @@ export default function ContributorsPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Hero Section */}
       <div className="relative py-20">
         <div className="absolute inset-0 bg-gradient-to-b from-blue-500/10 via-purple-500/5 to-black" />
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl" />
@@ -424,12 +458,10 @@ export default function ContributorsPage() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="relative py-12 bg-black">
         <div className="container mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-12 items-start">
             
-            {/* Core Team */}
             {filteredCoreTeam && filteredCoreTeam.length > 0 && (
               <div>
                 <h2 className="text-3xl font-bold mb-8 text-center">Core Team</h2>
@@ -457,13 +489,13 @@ export default function ContributorsPage() {
                             <div className="mt-3 p-3 bg-white/5 rounded-lg border border-white/10">
                               <div className="flex items-start justify-between gap-2 mb-2">
                                 <div className="flex-1">
-                                  <a 
+                                  <Link
                                     href={member.biggestCommit.url}
                                     target="_blank"
                                     className="text-sm font-mono text-white/80 hover:text-white transition-colors"
                                   >
                                     Largest PR
-                                  </a>
+                                  </Link>
                                   <p className="text-sm text-white/60 mt-1">
                                     {member.biggestCommit.message}
                                   </p>
@@ -491,20 +523,20 @@ export default function ContributorsPage() {
                         </div>
                         
                         <div className="flex gap-2">
-                          <a
+                          <Link
                             href={member.html_url}
                             target="_blank"
                             className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
                           >
                             <Github className="w-4 h-4" />
-                          </a>
-                          <a
+                          </Link>
+                          <Link
                             href={`https://x.com/${member.login}`}
                             target="_blank"
                             className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
                           >
                             <ArrowUpRight className="w-4 h-4" />
-                          </a>
+                          </Link>
                         </div>
                       </div>
                     </div>
@@ -513,7 +545,6 @@ export default function ContributorsPage() {
               </div>
             )}
 
-            {/* Activity Chart */}
             <div>
               <h2 className="text-3xl font-bold mb-8 text-center">Weekly Activity</h2>
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
@@ -564,45 +595,117 @@ export default function ContributorsPage() {
         </div>
       </div>
 
-      {/* Contributors Grid */}
-      <div className="relative py-12 bg-black">
+      <div className="relative py-16 bg-black">
         <div className="container mx-auto px-6">
-          <h2 className="text-3xl font-bold mb-8 text-center">Top Contributors</h2>
+          <h2 className="text-4xl font-bold mb-4 text-center bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent">
+            Top Contributors
+          </h2>
+          <p className="text-center text-white/60 mb-12 text-lg">Our amazing community builders</p>
           
-          <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-12 gap-4 max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-8 max-w-7xl mx-auto">
             {filteredContributors?.length > 0 ? (
               filteredContributors.map((contributor: Contributor) => (
-                <a
+                <Link
                   key={contributor.login}
                   href={contributor.html_url}
                   target="_blank"
                   className="group block text-center"
                 >
-                  <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-3 hover:bg-white/10 hover:scale-105 transition-all">
-                    <Avatar className="w-12 h-12 mx-auto mb-2 ring-1 ring-white/20 group-hover:ring-white/40">
-                      <AvatarImage src={contributor.avatar_url} />
-                      <AvatarFallback className="text-xs">{contributor.login.slice(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    
-                    <div className="text-xs text-white/60 truncate" title={contributor.login}>
-                      {contributor.login}
+                  <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/15 hover:border-white/30 hover:scale-110 hover:-translate-y-2 transition-all duration-300">
+                    <div className="relative inline-block mb-4">
+                      <Avatar className="w-20 h-20 mx-auto ring-2 ring-white/20 group-hover:ring-white/50 transition-all duration-300 group-hover:scale-110">
+                        <AvatarImage src={contributor.avatar_url} className="object-cover" />
+                        <AvatarFallback className="text-sm font-bold bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                          {contributor.login.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
                     </div>
-                    <div className="text-xs text-white/40 mt-1">
-                      <NumberFlow value={contributor.contributions} />
+                    
+                    <div className="space-y-2">
+                      <div className="text-sm font-semibold text-white/90 truncate group-hover:text-white transition-colors" title={contributor.login}>
+                        {contributor.login}
+                      </div>
+                      <div className="flex items-center justify-center gap-2 text-sm text-white/60">
+                        <GitGraph className="w-4 h-4" />
+                        <span className="font-mono">
+                          <NumberFlow value={contributor.contributions} />
+                        </span>
+                        <span className="text-xs">commits</span>
+                      </div>
+                      
+                      <div className="mt-3">
+                        {contributor.contributions > 50 ? (
+                          <span className="inline-flex items-center gap-1 text-xs bg-gradient-to-r from-purple-500/30 to-pink-500/30 text-purple-300 px-3 py-1.5 rounded-full border border-purple-500/40">
+                            <Zap className="w-3 h-3" />
+                            Pro Contributor
+                          </span>
+                        ) : contributor.contributions > 20 ? (
+                          <span className="inline-flex items-center gap-1 text-xs bg-gradient-to-r from-blue-500/30 to-cyan-500/30 text-blue-300 px-3 py-1.5 rounded-full border border-blue-500/40">
+                            <Target className="w-3 h-3" />
+                            Active
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
-                </a>
+                </Link>
               ))
             ) : (
-              <div className="col-span-full text-center py-8">
-                <div className="text-white/60">Nobody&apos;s contributed yet 😔</div>
+              <div className="col-span-full text-center py-12">
+                <div className="text-white/40 text-lg">Nobody&apos;s contributed yet 😔</div>
+                <p className="text-white/60 text-sm mt-2">Be the first to make a difference!</p>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* CTA Section */}
+      <div className="relative py-12 bg-black">
+        <div className="container mx-auto px-6">
+          <h2 className="text-3xl font-bold mb-8 text-center">External Tools</h2>
+          <p className="text-center text-white/60 mb-8 max-w-2xl mx-auto">
+            The tools and platforms that power our development workflow
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {externalTools.map((tool: ExternalTool) => (
+              <Link
+                key={tool.id}
+                href={tool.url}
+                target="_blank"
+                className="group bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 hover:scale-105 transition-all"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 flex items-center justify-center">
+                    {typeof tool.icon === 'string' ? (
+                      <span className="text-3xl">{tool.icon}</span>
+                    ) : (
+                      <tool.icon size={48} className="text-white" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-semibold group-hover:text-white transition-colors">
+                        {tool.name}
+                      </h3>
+                      <span className="text-xs bg-white/10 px-2 py-1 rounded-full text-white/60">
+                        {tool.category}
+                      </span>
+                    </div>
+                    <p className="text-white/60 text-sm group-hover:text-white/80 transition-colors">
+                      {tool.description}
+                    </p>
+                    <div className="flex items-center gap-1 mt-3 text-white/40 group-hover:text-white/60 transition-colors">
+                      <ArrowUpRight className="w-3 h-3" />
+                      <span className="text-xs">Visit tool</span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <div className="relative py-16">
         <div className="absolute inset-0 bg-gradient-to-b from-black via-30% to-blue-500/15" />
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
@@ -627,10 +730,10 @@ export default function ContributorsPage() {
               size="lg"
               className="bg-white text-black hover:bg-white/90 rounded-full px-8"
             >
-              <a href={LINKS.SOCIALS.GITHUB} target="_blank">
+              <Link href={LINKS.SOCIALS.GITHUB} target="_blank">
                 <Github className="w-5 h-5 mr-2" />
                 Start Contributing
-              </a>
+              </Link>
             </Button>
           </div>
         </div>

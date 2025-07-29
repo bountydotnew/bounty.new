@@ -5,3 +5,5 @@ export { default as LogoIcon } from "./logo";
 export { default as TwitterIcon } from "./twitter";
 export { default as GCombinator } from "./g-combinator";
 export { default as Wendys } from "./wendys";
+export { MarbleIcon } from "./marble";
+export { DataBuddyIcon } from "./databuddy";
