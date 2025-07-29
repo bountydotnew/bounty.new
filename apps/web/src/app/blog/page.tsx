@@ -11,6 +11,10 @@ import { Footer } from "@/components/sections/home/footer";
 export default async function BlogPage() {
   const postsData = await getPosts();
   const { posts } = postsData;
+  
+  if (!posts) {
+    return <div>Error loading blog posts. Please try again later.</div>;
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -77,12 +81,12 @@ export default async function BlogPage() {
                 <Link key={post.id} href={`/blog/${post.slug}`}>
                   <Card className="h-full pt-0 hover:shadow-lg transition-shadow overflow-hidden">
                     {post.coverImage && (
-                      <div className="relative aspect-video">
+                      <div className="relative aspect-video overflow-hidden rounded-xl">
                         <Image
                           src={post.coverImage}
                           alt={post.title}
                           fill
-                          className="object-cover rounded-xl"
+                          className="object-cover"
                         />
                       </div>
                     )}
