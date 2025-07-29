@@ -11,14 +11,15 @@ import Prose from "@/components/prose";
 import { notFound } from "next/navigation";
 
 interface BlogPostPageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   try {
-    const postData = await getSinglePost(params.slug);
+    const { slug } = await params;
+    const postData = await getSinglePost(slug);
     const { post } = postData;
     
     const processedContent = await processHtmlContent(post.content);
