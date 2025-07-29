@@ -38,10 +38,10 @@ export const earlyAccessRouter = router({
 
       // Database connection errors
       if (err instanceof Error) {
-        if (err.message.includes("connect") || err.message.includes("ECONNREFUSED")) {
+        if (err.message.includes("connect") || err.message.includes("ECONNREFUSED") || err.message.includes("timeout")) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Database connection failed",
+            message: "Database connection failed - please try again later",
           });
         }
 
@@ -53,10 +53,11 @@ export const earlyAccessRouter = router({
         }
       }
 
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Database error occurred",
-      });
+      // Return a default count instead of throwing an error
+      warn("[getWaitlistCount] Returning default count due to error:", err);
+      return {
+        count: 0,
+      };
     }
   }),
   // Simplified endpoint for adding emails to waitlist (rate limiting handled by web app)

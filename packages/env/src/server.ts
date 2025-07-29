@@ -3,9 +3,10 @@ import { z } from "zod/v4";
 
 export const env = createEnv({
   server: {
-    // Database
-    DATABASE_URL: z.string().startsWith("postgresql://"),
-    // Auth
+    DATABASE_URL: z.string().refine(
+      (url) => url.startsWith("postgresql://") || url.startsWith("postgres://"),
+      { message: "DATABASE_URL must start with postgresql:// or postgres://" }
+    ),
     BETTER_AUTH_SECRET: z.string().min(1),
     BETTER_AUTH_URL: z.string().url(),
     // GitHub OAuth
