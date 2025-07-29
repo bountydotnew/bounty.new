@@ -1,12 +1,10 @@
-import { createEnv } from '@t3-oss/env-nextjs';
-import { z } from 'zod/v4';
+import { createEnv } from "@t3-oss/env-nextjs";
+import { z } from "zod/v4";
 
 export const env = createEnv({
   server: {
     // Database
-    DATABASE_URL: z.string().startsWith('postgresql://'),
-    // CORS
-    CORS_ORIGIN: z.string().url(),
+    DATABASE_URL: z.string().startsWith("postgresql://"),
     // Auth
     BETTER_AUTH_SECRET: z.string().min(1),
     BETTER_AUTH_URL: z.string().url(),
@@ -14,14 +12,12 @@ export const env = createEnv({
     GITHUB_CLIENT_ID: z.string().min(1),
     GITHUB_CLIENT_SECRET: z.string().min(1),
     // Rate limiting
-    UNKEY_ROOT_KEY: z.string().min(1).optional(),
+    UNKEY_ROOT_KEY: z.string().min(1),
     // Discord webhook
     DISCORD_WEBHOOK_URL: z.string().url().optional(),
     // Node environment
-    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+    NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   },
   experimental__runtimeEnv: process.env,
-  skipValidation: !!process.env.SKIP_ENV_VALIDATION || process.env.NODE_ENV === 'test',
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION || process.env.NODE_ENV === "test",
 });
-
-
