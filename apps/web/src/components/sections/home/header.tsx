@@ -79,6 +79,11 @@ export function Header() {
 
   const rightContent = (
     <nav className="flex items-center gap-3">
+      <Link href={LINKS.BLOG} className="text-sm p-0 hover:no-underline hover:text-primary">
+        <Button variant="text" className="text-sm p-0">
+          Blog
+        </Button>
+      </Link>
       <Link href={LINKS.CONTRIBUTORS} className="text-sm p-0 hover:no-underline hover:text-primary">
         <Button variant="text" className="text-sm p-0">
           Contributors
