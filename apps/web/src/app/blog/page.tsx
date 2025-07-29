@@ -2,7 +2,7 @@ import { getPosts } from "@/lib/blog-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Calendar, Clock } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { Header } from "@/components/sections/home/header";
@@ -11,7 +11,7 @@ import { Footer } from "@/components/sections/home/footer";
 export default async function BlogPage() {
   const postsData = await getPosts();
   const { posts } = postsData;
-  
+
   if (!posts) {
     return <div>Error loading blog posts. Please try again later.</div>;
   }
