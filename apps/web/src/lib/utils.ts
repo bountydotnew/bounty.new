@@ -1,56 +1,57 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(amount: number) {
-  return amount.toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
+/**
+ * Format date consistently for SSR/hydration compatibility
+ */
+export function formatDate(date: string | Date | null | undefined, options?: Intl.DateTimeFormatOptions): string {
+  // Handle null, undefined, or invalid dates
+  if (!date) {
+    return 'Invalid date';
+  }
+  
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  // Check if the date object is valid
+  if (isNaN(dateObj.getTime())) {
+    return 'Invalid date';
+  }
+  
+  // Use consistent locale and options to prevent hydration mismatches
+  return dateObj.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    ...options
   });
 }
 
-export function getCookie(name: string): string | null {
-  if (typeof document === 'undefined') return null;
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
-  return null;
+/**
+ * Format currency consistently
+ */
+export function formatCurrency(amount: number, currency: string = 'USD'): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
 }
 
-export function setCookie(name: string, value: string, days: number = 30) {
-  if (typeof document === 'undefined') return;
-  const date = new Date();
-  date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-  const expires = `expires=${date.toUTCString()}`;
-  document.cookie = `${name}=${value}; ${expires}; path=/`;
+/**
+ * Format number with consistent locale
+ */
+export function formatNumber(num: number): string {
+  return num.toLocaleString('en-US');
 }
 
-export function deleteCookie(name: string) {
-  if (typeof document === 'undefined') return;
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-}
-
-export function formatStarCount(count: number): string {
-  if (count >= 1_000_000)
-    return (count / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
-  if (count >= 1_000)
-    return (count / 1_000).toFixed(1).replace(/\.0$/, "") + "k";
-  return count.toString();
-}
-
-export function parseAmount(amount: string | number | null | undefined): number {
-  if (amount === null || amount === undefined) return 0;
-  const parsed = Number(amount);
-  return isNaN(parsed) ? 0 : parsed;
-}
-
-export function formatCurrencySafe(amount: string | number | null | undefined): string {
-  const parsedAmount = parseAmount(amount);
-  if (parsedAmount === 0 && amount !== 0) {
-    console.warn(`Invalid amount provided to formatCurrencySafe: ${amount}`);
-  }
-  return formatCurrency(parsedAmount);
+/**
+ * Parse number with consistent locale
+ */
+export function parseNumber(num: string): number {
+  return Number(num);
 }
