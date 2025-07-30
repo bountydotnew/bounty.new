@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useBilling } from "@/hooks/use-billing";
 import Sidebar from "@/components/dual-sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,7 @@ import { authClient } from "@bounty/auth/client";
 import Bounty from "@/components/icons/bounty";
 import { useConfetti } from "@/lib/context/confetti-context";
 
-export default function SuccessPage() {
+function SuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const checkoutId = searchParams.get("checkout_id");
@@ -156,4 +156,22 @@ export default function SuccessPage() {
       </div>
     </Sidebar>
   );
-} 
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={
+      <Sidebar>
+        <div className="container mx-auto py-8">
+          <Card>
+            <CardContent className="p-6">
+              <p>Loading...</p>
+            </CardContent>
+          </Card>
+        </div>
+      </Sidebar>
+    }>
+      <SuccessContent />
+    </Suspense>
+  );
+}
