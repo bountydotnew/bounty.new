@@ -54,14 +54,14 @@ export function News() {
           setDismissedNews(dismissed);
         } else {
           setDismissedNews([]);
-          setCookie(NEWS_COOKIE_NAME, JSON.stringify({ hash: currentHash, dismissed: [] }));
+          setCookie(NEWS_COOKIE_NAME, JSON.stringify({ hash: currentHash, dismissed: [] }), 30);
         }
       } catch {
         setDismissedNews([]);
-        setCookie(NEWS_COOKIE_NAME, JSON.stringify({ hash: currentHash, dismissed: [] }));
+        setCookie(NEWS_COOKIE_NAME, JSON.stringify({ hash: currentHash, dismissed: [] }), 30);
       }
     } else {
-      setCookie(NEWS_COOKIE_NAME, JSON.stringify({ hash: currentHash, dismissed: [] }));
+      setCookie(NEWS_COOKIE_NAME, JSON.stringify({ hash: currentHash, dismissed: [] }), 30);
     }
 
     setDismissedLoading(false);
@@ -80,7 +80,7 @@ export function News() {
 
     if (articles.length > 0) {
       const currentHash = generateNewsHash(articles);
-      setCookie(NEWS_COOKIE_NAME, JSON.stringify({ hash: currentHash, dismissed: newDismissed }));
+      setCookie(NEWS_COOKIE_NAME, JSON.stringify({ hash: currentHash, dismissed: newDismissed }), 30);
     }
   }, [dismissedNews, articles]);
 

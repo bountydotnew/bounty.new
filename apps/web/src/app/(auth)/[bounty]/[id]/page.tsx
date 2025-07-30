@@ -1,6 +1,6 @@
 "use client";
 
-import { formatCurrencySafe } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { trpc } from "@/utils/trpc";
 import { useQuery } from "@tanstack/react-query";
 import { use } from "react";
@@ -29,7 +29,7 @@ export default function BountyPage({ params }: { params: Promise<{ id: string }>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <h3 className="font-semibold">Amount</h3>
-            <p>{formatCurrencySafe(bounty.data.data.amount)} {bounty.data.data.currency}</p>
+            <p>{formatCurrency(bounty.data.data.amount)} {bounty.data.data.currency}</p>
           </div>
           <div>
             <h3 className="font-semibold">Status</h3>

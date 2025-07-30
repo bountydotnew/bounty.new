@@ -7,8 +7,14 @@
     "./client": "./src/client.ts",
     "./server": "./src/server.ts"
   },
+  "typesVersions": {
+    "*": {
+      "client": ["./src/client.ts"],
+      "server": ["./src/server.ts"]
+    }
+  },
   "dependencies": {
-    "better-auth": "^1.2.10",
+    "better-auth": "1.3.0",
     "@bounty/db": "workspace:*",
     "@bounty/env": "workspace:*"
   },

@@ -4,7 +4,7 @@ import { trpc } from "@/utils/trpc";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { formatCurrencySafe } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { LINKS } from "@/constants/links";
 
 export default function BountiesPage() {
@@ -63,7 +63,7 @@ export default function BountiesPage() {
 
                     <div className="flex justify-between items-center mb-3">
                       <span className="text-2xl font-bold text-green-600">
-                        {formatCurrencySafe(bounty.amount)} {bounty.currency}
+                        {formatCurrency(bounty.amount)} {bounty.currency}
                       </span>
                       <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
                         {bounty.difficulty}

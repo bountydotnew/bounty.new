@@ -51,6 +51,7 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return [
+      // PostHog rewrites
       {
         source: "/ingest/static/:path*",
         destination: "https://us-assets.i.posthog.com/static/:path*",
