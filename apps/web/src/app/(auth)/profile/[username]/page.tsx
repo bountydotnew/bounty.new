@@ -16,13 +16,6 @@ import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
-interface User {
-    id: string;
-    email: string;
-    name?: string;
-    image?: string;
-}
-
 export default function ProfilePage() {
     const params = useParams();
     const username = params.username as string;
