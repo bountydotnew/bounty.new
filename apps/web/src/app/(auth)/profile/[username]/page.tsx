@@ -66,6 +66,7 @@ export default function ProfilePage() {
             await authClient.signOut();
             window.location.href = "/";
         } catch (error) {
+            console.error(error);
             toast.error("Failed to sign out");
         }
     };
@@ -78,6 +79,7 @@ export default function ProfilePage() {
             setIsAddDialogOpen(false);
             setNewPasskeyName("");
         } catch (error) {
+            console.error(error);
             toast.error("Failed to add passkey");
         }
     };
@@ -87,6 +89,7 @@ export default function ProfilePage() {
             await deletePasskey(id);
             toast.success("Passkey deleted successfully");
         } catch (error) {
+            console.error(error);
             toast.error("Failed to delete passkey");
         }
     };
@@ -101,6 +104,7 @@ export default function ProfilePage() {
             setEditName("");
             setIsEditDialogOpen(false);
         } catch (error) {
+            console.error(error);
             toast.error("Failed to update passkey");
         }
     };

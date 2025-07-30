@@ -23,7 +23,7 @@ export default function SuccessPage() {
 
   useEffect(() => {
     celebrate();
-  }, []);
+  }, [celebrate]);
 
   useEffect(() => {
     if (!checkoutId) {
@@ -38,12 +38,12 @@ export default function SuccessPage() {
     return null;
   }
 
-  const isPro = customer?.activeSubscriptions?.some((sub: any) => 
-    ["pro-monthly", "pro-annual"].includes(sub.productId)
-  );
+  interface Subscription {
+    productId: string;
+  }
 
   const getPlanName = () => {
-    const subscription = customer?.activeSubscriptions?.find((sub: any) => 
+    const subscription = customer?.activeSubscriptions?.find((sub: Subscription) =>
       ["pro-monthly", "pro-annual"].includes(sub.productId)
     );
     
@@ -53,7 +53,7 @@ export default function SuccessPage() {
   };
 
   const getPlanPrice = () => {
-    const subscription = customer?.activeSubscriptions?.find((sub: any) => 
+    const subscription = customer?.activeSubscriptions?.find((sub: Subscription) =>
       ["pro-monthly", "pro-annual"].includes(sub.productId)
     );
     

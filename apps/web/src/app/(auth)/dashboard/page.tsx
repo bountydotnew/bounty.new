@@ -74,7 +74,7 @@ export default function Dashboard() {
     return (
       <ErrorBoundary>
         <BetaAccessScreen
-          userData={userData.data as any}
+          userData={userData.data}
           sessionUserName={session?.user.name}
           existingSubmission={existingSubmission.data}
           isMobile={isMobile}

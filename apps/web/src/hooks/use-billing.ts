@@ -62,7 +62,7 @@ export const useBilling = () => {
         const { data: customerState } = await authClient.customer.state();
         console.log("Customer state:", customerState); // Debug log
         return customerState;
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Handle Polar's specific error types
         const polarError = error as PolarError;
         const errorMessage = String(polarError?.message || polarError?.body$ || "");
@@ -104,7 +104,7 @@ export const useBilling = () => {
     if (error) {
       const polarError = error as PolarError;
       const errorMessage = String(polarError?.message || polarError?.body$ || "");
-      const errorDetail = String(polarError?.detail || "");
+      //const _errorDetail = String(polarError?.detail || "");
       
       // Only sign out for auth/permission errors, not missing customers
       if (errorMessage.includes("NotPermitted") || 
@@ -119,7 +119,21 @@ export const useBilling = () => {
   }, [error]);
 
   const { isPro, ...customerFeatures } = useMemo(() => {
-    const customerState = customer as any;
+    const customerState = customer as {
+      products?: Array<{ id?: string; name?: string; slug?: string }>;
+      activeSubscriptions?: Array<{
+        product?: { id?: string; name?: string; slug?: string }
+      }>;
+      grantedBenefits?: Array<unknown>;
+      features?: Record<string, {
+        included_usage?: number;
+        balance?: number;
+        unlimited?: boolean;
+        usage?: number;
+        next_reset_at?: number;
+        interval?: string;
+      }>;
+    };
     
     // If still loading, don't show Pro status yet
     if (isLoading) {
@@ -133,9 +147,9 @@ export const useBilling = () => {
     
     // Check if they have any Pro products, subscriptions, or granted benefits
     const hasProProducts = customerState?.products && Array.isArray(customerState.products)
-      ? customerState.products.some((product: any) =>
-          PRO_PLANS.some((plan) => 
-            product.id?.includes(plan) || 
+      ? customerState.products.some((product) =>
+          PRO_PLANS.some((plan) =>
+            product.id?.includes(plan) ||
             product.name?.includes(plan) ||
             product.slug?.includes(plan)
           )
@@ -143,9 +157,9 @@ export const useBilling = () => {
       : false;
       
     const hasProSubscriptions = customerState?.activeSubscriptions && Array.isArray(customerState.activeSubscriptions)
-      ? customerState.activeSubscriptions.some((subscription: any) =>
-          PRO_PLANS.some((plan) => 
-            subscription.product?.id?.includes(plan) || 
+      ? customerState.activeSubscriptions.some((subscription) =>
+          PRO_PLANS.some((plan) =>
+            subscription.product?.id?.includes(plan) ||
             subscription.product?.name?.includes(plan) ||
             subscription.product?.slug?.includes(plan)
           )
@@ -153,7 +167,7 @@ export const useBilling = () => {
       : false;
       
     const hasProBenefits = customerState?.grantedBenefits && Array.isArray(customerState.grantedBenefits)
-      ? customerState.grantedBenefits.some((benefit: any) => {
+      ? customerState.grantedBenefits.some(() => {
           // If they have any granted benefits, consider them Pro
           return true;
         })
@@ -194,12 +208,12 @@ export const useBilling = () => {
     }
 
     return { isPro, ...features };
-  }, [customer]);
+  }, [customer, isLoading]);
 
   const openBillingPortal = async () => {
     try {
       await authClient.customer.portal();
-    } catch (error: any) {
+    } catch (error: unknown) {
       const polarError = error as PolarError;
       const errorMessage = String(polarError?.message || polarError?.body$ || "");
       const errorDetail = String(polarError.detail || "");

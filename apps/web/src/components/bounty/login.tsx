@@ -6,12 +6,11 @@ import { useState, useRef, useEffect } from "react"
 import { authClient } from "@bounty/auth/client"
 import { toast } from "sonner"
 import { useRouter, useSearchParams } from "next/navigation"
-import { LINKS } from "@/constants/links";
+import { LINKS } from "@/constants/links"
 import Bounty from "@/components/icons/bounty"
 import Image from "next/image"
 import { GithubIcon, Wendys } from "../icons"
 import Google from "../icons/google"
-import { Input } from "@/components/ui/input"
 
 const cards = {
   "ahmet": {
