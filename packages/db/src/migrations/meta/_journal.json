@@ -78,6 +78,13 @@
       "when": 1753862383491,
       "tag": "0010_friendly_callisto",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1753878172128,
+      "tag": "0011_goofy_network",
+      "breakpoints": true
     }
   ]
 }
