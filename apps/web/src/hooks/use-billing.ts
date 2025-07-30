@@ -202,7 +202,7 @@ export const useBilling = () => {
     } catch (error: any) {
       const polarError = error as PolarError;
       const errorMessage = String(polarError?.message || polarError?.body$ || "");
-      const errorDetail = String(polarError?.detail || "");
+      const errorDetail = String(polarError.detail || "");
       
       // 404 - Customer doesn't exist (expected for new users)
       if (errorMessage.includes("ResourceNotFound") || 

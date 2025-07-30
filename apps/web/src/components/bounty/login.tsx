@@ -1,8 +1,8 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { LogOut } from "lucide-react"
+import { Key, LogOut } from "lucide-react"
 import SubmissionCard from "@/components/bounty/submission-card"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { authClient } from "@bounty/auth/client"
 import { toast } from "sonner"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -11,6 +11,7 @@ import Bounty from "@/components/icons/bounty"
 import Image from "next/image"
 import { GithubIcon, Wendys } from "../icons"
 import Google from "../icons/google"
+import { Input } from "@/components/ui/input"
 
 const cards = {
   "ahmet": {
@@ -74,6 +75,14 @@ export default function Login() {
 
     setMousePosition({ x: Math.max(-1, Math.min(1, x)), y: Math.max(-1, Math.min(1, y)) });
   };
+  useEffect(() => {
+   if (!PublicKeyCredential.isConditionalMediationAvailable ||
+       !PublicKeyCredential.isConditionalMediationAvailable()) {
+     return;
+   }
+ 
+  void authClient.signIn.passkey({ autoFill: true })
+}, [])
 
   const handleMouseLeave = () => {
     setMousePosition({ x: 0, y: 0 });
@@ -106,6 +115,22 @@ export default function Login() {
 
   const handleGoToDashboard = () => {
     router.push(callbackUrl);
+  };
+
+  const handlePasskeySignIn = async () => {
+    try {
+      await authClient.signIn.passkey({
+        autoFill: false,
+        fetchOptions: {
+          onSuccess: () => {
+            toast.success("Signed in successfully");
+            router.push(callbackUrl);
+          },
+        },
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Sign in failed");
+    }
   };
 
   return (
@@ -158,7 +183,14 @@ export default function Login() {
                   <Button
                     variant="destructive"
                     className="oauthButton w-full max-w-[466px] min-w-[240px] h-12 px-6 py-3 rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
-                    onClick={() => authClient.signOut({ fetchOptions: { onSuccess: () => { toast.success("Signed out successfully"); } } })}
+                    onClick={() => authClient.signOut({
+                      fetchOptions: {
+                        onSuccess: () => {
+                          toast.success("Signed out successfully");
+                          window.location.href = "/login";
+                        }
+                      }
+                    })}
                   >
                     <LogOut className="w-5 h-5" />
                     Sign Out
@@ -171,6 +203,12 @@ export default function Login() {
               <div className="text-center space-y-2">
                 <h1 className="text-4xl md:text-5xl font-bold">Get started</h1>
                 <p className="text-lg text-[#757575]">Sign in to your account</p>
+              </div>
+              <div className="hidden">
+                <label htmlFor="name">Username:</label>
+                <input type="text" name="name" autoComplete="username webauthn" />
+                <label htmlFor="password">Password:</label>
+                <input type="password" name="password" autoComplete="current-password webauthn" />
               </div>
               <div className="bg-[#1D1D1D] rounded-xl p-6 md:p-8 space-y-4 shadow-[0px_23px_38.1px_-5px_rgba(12,12,13,0.10)]">
                 <Button
@@ -193,6 +231,14 @@ export default function Login() {
                 >
                   <Google className="w-6 h-6" />
                   Continue with Google
+                </Button>
+                <Button
+                  onClick={handlePasskeySignIn}
+                  variant="text"
+                  className="oauthButton w-full max-w-[466px] min-w-[240px] h-12 px-6 py-3 bg-[#303030] text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
+                >
+                  <Key className="w-6 h-6" />
+                  Have a passkey?
                 </Button>
                 <p className="text-center text-sm text-[#757575] mt-8 ">
                   {"By continuing, you accept our "}
