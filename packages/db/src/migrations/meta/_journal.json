@@ -71,6 +71,13 @@
       "when": 1753667554645,
       "tag": "0009_tense_mysterio",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1753862383491,
+      "tag": "0010_friendly_callisto",
+      "breakpoints": true
     }
   ]
 }

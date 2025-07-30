@@ -1,4 +1,5 @@
-import { betterAuth } from "better-auth";
+import { betterAuth } from "better-auth"
+import { passkey } from "better-auth/plugins/passkey"
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@bounty/db";
 import * as schema from "@bounty/db";
@@ -9,6 +10,7 @@ import {
   usage,
   webhooks,
 } from "@polar-sh/better-auth";
+
 import { Polar } from "@polar-sh/sdk";
 
 const polarClient = new Polar({
@@ -40,7 +42,7 @@ export const auth = betterAuth({
     enabled: true,
   },
   plugins: [
-    polar({
+    polar({ 
       client: polarClient,
       createCustomerOnSignUp: true,
       getCustomerCreateParams: async ({ user }) => ({
@@ -116,6 +118,11 @@ export const auth = betterAuth({
           },
         }),
       ],
+    }),
+    passkey({
+      rpID: process.env.NODE_ENV === "production" ? "bounty.new" : "localhost",
+      rpName: "Bounty.new",
+      origin: process.env.NODE_ENV === "production" ? "https://bounty.new" : "http://localhost:3000",
     }),
   ],
   secret: process.env.BETTER_AUTH_SECRET,
