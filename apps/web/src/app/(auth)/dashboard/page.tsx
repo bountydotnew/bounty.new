@@ -40,7 +40,6 @@ export default function Dashboard() {
   if (bounties.isLoading || myBounties.isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-full space-y-4">
-        <h1 className="text-2xl font-bold">Loading...</h1>
         <Loader2 className="animate-spin" />
       </div>
     );
