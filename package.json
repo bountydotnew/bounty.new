@@ -21,6 +21,7 @@
     "@hookform/resolvers": "^5.1.1",
     "@number-flow/react": "^0.5.10",
     "@t3-oss/env-nextjs": "^0.13.8",
+    "better-auth": "1.3.0",
     "posthog-js": "^1.257.0",
     "posthog-node": "^5.5.1",
     "react-hook-form": "^7.58.1",
