@@ -209,7 +209,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   }
 
 
-      const data = userData.data?.betaAccessStatus === "approved" ? productionData : betaData;
+  const data = userData.data?.betaAccessStatus === "approved" ? productionData : betaData;
 
   return (
     <Sidebar variant="icononly" {...props}>
