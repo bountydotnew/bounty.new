@@ -71,8 +71,9 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
       toast.success("Bounty updated successfully!");
       
       // Invalidate all bounty-related queries to trigger refetch
+      // Invalidate all bounty-related queries to trigger refetch
       queryClient.invalidateQueries({
-        queryKey: [["bounties"]],
+        queryKey: ["bounties"],
         type: "all"
       });
       
