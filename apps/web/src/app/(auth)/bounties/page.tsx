@@ -8,6 +8,7 @@ import { formatCurrency } from "@/lib/utils";
 import { LINKS } from "@/constants/links";
 import { CreateBountyModal } from "@/components/bounty/create-bounty-modal";
 import { useBountyModals } from "@/lib/bounty-utils";
+import { useRouter } from "next/navigation";
 
 export default function BountiesPage() {
   const { data: bounties, isLoading, error } = useQuery(
@@ -16,6 +17,8 @@ export default function BountiesPage() {
       limit: 50
     })
   );
+
+  const router = useRouter();
 
   const {
     createModalOpen,
@@ -30,7 +33,7 @@ export default function BountiesPage() {
           <h1 className="text-2xl font-bold text-red-600 mb-4">Error Loading Bounties</h1>
           <p className="text-gray-600">{error.message}</p>
           <Button
-            onClick={() => window.location.reload()}
+            onClick={() => router.refresh()}
             className="mt-4"
           >
             Try Again

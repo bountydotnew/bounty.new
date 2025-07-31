@@ -16,12 +16,13 @@ import {
 } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useRouter } from "next/navigation";
 
 export function Header() {
   const { data: session } = authClient.useSession();
   const [showDialog, setShowDialog] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
-
+  const router = useRouter();
   // Cookie helpers
   const setCookie = (name: string, value: string, days: number) => {
     const expires = new Date();
@@ -52,7 +53,7 @@ export function Header() {
     const hiddenPref = getCookie("hide-dev-warning");
     if (hiddenPref === "true") {
       // Skip dialog, go directly to dashboard
-      window.location.href = LINKS.DASHBOARD;
+      router.push(LINKS.DASHBOARD);
     } else {
       setShowDialog(true);
     }
@@ -65,7 +66,7 @@ export function Header() {
     setShowDialog(false);
 
     if (action === "continue") {
-      window.location.href = LINKS.DASHBOARD;
+      router.push(LINKS.DASHBOARD);
     }
   };
 

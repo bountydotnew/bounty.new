@@ -9,12 +9,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-
+import { useRouter } from "next/navigation";
+    
 export function GeneralSettings() {
   const [isClientMounted, setIsClientMounted] = useState(false);
   const { data: session } = authClient.useSession();
   const { isPro, isLoading: billingLoading } = useBilling();
-
+  const router = useRouter();
   // Prevent hydration mismatch by ensuring client-side rendering
   useEffect(() => {
     setIsClientMounted(true);
@@ -23,7 +24,7 @@ export function GeneralSettings() {
   const handleSignOut = async () => {
     try {
       await authClient.signOut();
-      window.location.href = "/";
+      router.push("/");
     } catch (error) {
       console.error(error);
       toast.error("Failed to sign out");

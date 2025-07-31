@@ -29,6 +29,8 @@ import { authClient } from "@bounty/auth/client";
 import { useBilling } from "@/hooks/use-billing";
 import { toast } from "sonner";
 import { LINKS } from "@/constants/links";
+import { useRouter } from "next/navigation";
+import { useCallback } from "react";
 
 // Constants for better maintainability
 const MESSAGES = {
@@ -118,15 +120,16 @@ function useBillingPortal() {
 
 // Custom hook for sign out functionality
 function useSignOut() {
-  return React.useCallback(() => {
+  const router = useRouter();
+  return useCallback(() => {
     authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          window.location.href = LOGIN_REDIRECT;
+          router.push(LOGIN_REDIRECT);
         },
       },
     });
-  }, []);
+  }, [router]);
 }
 
 // Memoized Avatar component to prevent unnecessary re-renders
@@ -227,6 +230,7 @@ UpgradeMenuItem.displayName = "UpgradeMenuItem";
 
 // Main component
 export function AccountDropdown({ user, onUpgradeClick }: AccountDropdownProps) {
+  const router = useRouter();
   const { isMobile } = useSidebar();
   const { data: session } = authClient.useSession();
   const { isPro, isLoading: isBillingLoading } = useBilling();
@@ -244,9 +248,9 @@ export function AccountDropdown({ user, onUpgradeClick }: AccountDropdownProps) 
     sideOffset: 4,
   }), [isMobile]);
 
-  const handleAccountClick = () => {
-    window.location.href = LINKS.ACCOUNT;
-  };
+  const handleAccountClick = useCallback(() => {
+    router.push(LINKS.ACCOUNT);
+  }, [router]);
 
   return (
     <SidebarMenu>
