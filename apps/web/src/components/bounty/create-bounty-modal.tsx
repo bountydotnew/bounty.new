@@ -70,7 +70,7 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
 
       // Invalidate all bounty-related queries to trigger refetch
       queryClient.invalidateQueries({
-        queryKey: [["bounties"]],
+        queryKey: ["bounties"],
         type: "all"
       });
 

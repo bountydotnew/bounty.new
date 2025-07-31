@@ -52,8 +52,15 @@ export function GeneralSettings() {
         <CardContent className="space-y-4">
           <div className="flex items-center space-x-4">
             <Avatar className="h-16 w-16">
-              <AvatarImage src={session?.user?.image || ""} alt={session?.user?.name || session?.user?.email} />
-              <AvatarFallback>{session?.user?.name?.[0] || session?.user?.email[0]}</AvatarFallback>
+              <AvatarImage
+                src={session?.user?.image || ""}
+                alt={session?.user?.name || session?.user?.email}
+              />
+              <AvatarFallback>
+                {session?.user?.name?.[0] ||
+                  session?.user?.email?.[0] ||
+                  "U"}
+              </AvatarFallback>
             </Avatar>
             <div className="space-y-1">
               <div className="flex items-center gap-2">

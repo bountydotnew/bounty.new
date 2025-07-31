@@ -56,16 +56,12 @@ export default function PaymentPage({ params }: PaymentPageProps) {
     },
   });
 
-  // Auto-open payment modal when landing from external source (no useEffect needed)
-  const shouldAutoOpenModal = useMemo(() => {
-    return userQuery.data && apiKey;
-  }, [userQuery.data, apiKey]);
-
-  // Open modal when conditions are met
-  if (shouldAutoOpenModal && !paymentModalOpen) {
-    setPaymentModalOpen(true);
-  }
-
+  // Auto-open payment modal when landing from external source
+  useEffect(() => {
+    if (userQuery.data && apiKey && !paymentModalOpen) {
+      setPaymentModalOpen(true);
+    }
+  }, [userQuery.data, apiKey, paymentModalOpen]);
   if (userQuery.isLoading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-4xl">
