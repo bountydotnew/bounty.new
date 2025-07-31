@@ -54,12 +54,12 @@ const getBountiesSchema = z.object({
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
-const submitApplicationSchema = z.object({
+const submitBountyApplicationSchema = z.object({
   bountyId: z.string().uuid(),
   message: z.string().min(10, "Application message must be at least 10 characters"),
 });
 
-const submitWorkSchema = z.object({
+const submitBountyWorkSchema = z.object({
   bountyId: z.string().uuid(),
   description: z.string().min(10, "Submission description must be at least 10 characters"),
   deliverableUrl: z.string().url("Invalid deliverable URL"),
@@ -67,7 +67,7 @@ const submitWorkSchema = z.object({
 });
 
 export const bountiesRouter = router({
-  create: protectedProcedure.input(createBountySchema).mutation(async ({ ctx, input }) => {
+  createBounty: protectedProcedure.input(createBountySchema).mutation(async ({ ctx, input }) => {
     try {
       const [newBounty] = await db
         .insert(bounty)
@@ -93,7 +93,7 @@ export const bountiesRouter = router({
     }
   }),
 
-  getAll: publicProcedure.input(getBountiesSchema).query(async ({ input }) => {
+  fetchAllBounties: publicProcedure.input(getBountiesSchema).query(async ({ input }) => {
     try {
       const offset = (input.page - 1) * input.limit;
 
@@ -171,7 +171,7 @@ export const bountiesRouter = router({
     }
   }),
 
-  getById: publicProcedure.input(z.object({ id: z.string().uuid() })).query(async ({ input }) => {
+  fetchBountyById: publicProcedure.input(z.object({ id: z.string().uuid() })).query(async ({ input }) => {
     try {
       const [result] = await db
         .select({
@@ -227,7 +227,23 @@ export const bountiesRouter = router({
     }
   }),
 
-  update: protectedProcedure.input(updateBountySchema).mutation(async ({ ctx, input }) => {
+  getBountiesByUserId: publicProcedure.input(z.object({ userId: z.string().uuid() })).query(async ({ input }) => {
+    try {
+      const results = await db.select().from(bounty).where(eq(bounty.createdById, input.userId));
+      return {
+        success: true,
+        data: results,
+      };
+    } catch (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to fetch bounties",
+        cause: error,
+      });
+    }
+  }),
+
+  updateBounty: protectedProcedure.input(updateBountySchema).mutation(async ({ ctx, input }) => {
     try {
       const { id, ...updateData } = input;
 
@@ -273,7 +289,7 @@ export const bountiesRouter = router({
     }
   }),
 
-  delete: protectedProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
+  deleteBounty: protectedProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
     try {
       const [existingBounty] = await db.select().from(bounty).where(eq(bounty.id, input.id));
 
@@ -308,7 +324,7 @@ export const bountiesRouter = router({
     }
   }),
 
-  applyToBounty: protectedProcedure.input(submitApplicationSchema).mutation(async ({ ctx, input }) => {
+  applyToBounty: protectedProcedure.input(submitBountyApplicationSchema).mutation(async ({ ctx, input }) => {
     try {
       const [existingBounty] = await db.select().from(bounty).where(eq(bounty.id, input.bountyId));
 
@@ -362,7 +378,7 @@ export const bountiesRouter = router({
     }
   }),
 
-  submitWork: protectedProcedure.input(submitWorkSchema).mutation(async ({ ctx, input }) => {
+  submitBountyWork: protectedProcedure.input(submitBountyWorkSchema).mutation(async ({ ctx, input }) => {
     try {
       const [existingBounty] = await db.select().from(bounty).where(eq(bounty.id, input.bountyId));
 
@@ -406,7 +422,7 @@ export const bountiesRouter = router({
     }
   }),
 
-  getMyBounties: protectedProcedure
+  fetchMyBounties: protectedProcedure
     .input(
       z.object({
         page: z.number().int().positive().default(1),

@@ -11,7 +11,6 @@ import { trpc } from "@/utils/trpc";
 const betaNavigationLinks = [
   { href: LINKS.DASHBOARD, label: "Dashboard" },
   { href: LINKS.BOUNTIES, label: "Bounties" },
-  { href: LINKS.BOUNTY.CREATE, label: "Create Bounty" },
 ];
 
 const productionNavigationLinks = [
