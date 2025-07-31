@@ -29,7 +29,7 @@ export function PaymentButton({
 
   return (
     <a
-      href={`${process.env.NEXT_PUBLIC_APP_URL}/pay/${username}${apiKey ? `?key=${apiKey}` : ''}`}
+      href={`${process.env.NEXT_PUBLIC_APP_URL}/pay/${username}`}
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
