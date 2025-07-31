@@ -17,9 +17,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { 
-  createBountySchema, 
-  CreateBountyForm, 
+import {
+  createBountySchema,
+  CreateBountyForm,
   createBountyDefaults,
   bountyDraftTemplates,
   currencyOptions,
@@ -53,9 +53,8 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
       if (draft) {
         setValue("title", draft.title);
         setValue("description", draft.description);
-        setValue("amount", draft.amount);
-        setValue("requirements", bountyDraftTemplates.requirements);
-        setValue("deliverables", bountyDraftTemplates.deliverables);
+        setValue("requirements", draft.requirements || bountyDraftTemplates.requirements);
+        setValue("deliverables", draft.deliverables || bountyDraftTemplates.deliverables);
         toast.success("Draft loaded! Complete the remaining details.");
       }
     }
@@ -68,13 +67,13 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
         deleteActiveDraft();
       }
       toast.success("Bounty created successfully!");
-      
+
       // Invalidate all bounty-related queries to trigger refetch
       queryClient.invalidateQueries({
         queryKey: [["bounties"]],
         type: "all"
       });
-      
+
       reset();
       onOpenChange(false);
     },
@@ -139,9 +138,8 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
                   id="description"
                   rows={3}
                   placeholder="Describe what needs to be done"
-                  className={`w-full px-3 py-2 border rounded-md ${
-                    errors.description ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-md ${errors.description ? "border-red-500" : "border-gray-300"
+                    }`}
                 />
               )}
             />
@@ -161,9 +159,8 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
                   id="requirements"
                   rows={2}
                   placeholder="List the technical requirements"
-                  className={`w-full px-3 py-2 border rounded-md ${
-                    errors.requirements ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-md ${errors.requirements ? "border-red-500" : "border-gray-300"
+                    }`}
                 />
               )}
             />
@@ -183,9 +180,8 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
                   id="deliverables"
                   rows={2}
                   placeholder="What should be delivered?"
-                  className={`w-full px-3 py-2 border rounded-md ${
-                    errors.deliverables ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-md ${errors.deliverables ? "border-red-500" : "border-gray-300"
+                    }`}
                 />
               )}
             />
@@ -245,9 +241,8 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
                 <select
                   {...field}
                   id="difficulty"
-                  className={`w-full px-3 py-2 border rounded-md ${
-                    errors.difficulty ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-md ${errors.difficulty ? "border-red-500" : "border-gray-300"
+                    }`}
                 >
                   {difficultyOptions.map((option) => (
                     <option key={option.value} value={option.value}>

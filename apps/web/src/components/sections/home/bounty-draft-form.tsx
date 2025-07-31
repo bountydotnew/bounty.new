@@ -20,6 +20,8 @@ const bountyDraftSchema = z.object({
     title: z.string().min(1, "Title is required").max(200, "Title too long"),
     description: z.string().min(10, "Description must be at least 10 characters"),
     amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, "Enter a valid amount"),
+    requirements: z.string().min(10, "Requirements must be at least 10 characters").optional(),
+    deliverables: z.string().min(10, "Deliverables must be at least 10 characters").optional(),
 });
 
 type BountyDraftForm = z.infer<typeof bountyDraftSchema>;
@@ -44,11 +46,13 @@ export function BountyDraftForm({ className }: BountyDraftFormProps) {
             title: "",
             description: "",
             amount: "",
+            requirements: "",
+            deliverables: "",
         },
     });
 
     function handleCreateDraft(data: BountyDraftForm) {
-        saveDraft(data.title, data.description, data.amount);
+        saveDraft(data.title, data.description, data.amount, data.requirements || "", data.deliverables || "");
         setSuccess(true);
         reset();
         toast.success("Draft saved! Redirecting to dashboard...");
