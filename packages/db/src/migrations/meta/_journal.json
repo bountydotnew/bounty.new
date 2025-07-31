@@ -85,6 +85,13 @@
       "when": 1753878172128,
       "tag": "0011_goofy_network",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1753924184180,
+      "tag": "0012_great_thanos",
+      "breakpoints": true
     }
   ]
 }

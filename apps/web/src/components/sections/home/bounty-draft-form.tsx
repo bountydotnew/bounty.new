@@ -48,14 +48,14 @@ export function BountyDraftForm({ className }: BountyDraftFormProps) {
     });
 
     function handleCreateDraft(data: BountyDraftForm) {
-        const draftId = saveDraft(data.title, data.description, data.amount);
+        saveDraft(data.title, data.description, data.amount);
         setSuccess(true);
         reset();
-        toast.success("Draft saved! Redirecting to login...");
+        toast.success("Draft saved! Redirecting to dashboard...");
 
         setTimeout(() => {
-            const redirectUrl = `${baseUrl}/bounty/create?draft=${draftId}`;
-            router.push(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
+            // Redirect to dashboard where they can access the create bounty modal
+            router.push(`/login?redirect=${encodeURIComponent(`${baseUrl}/dashboard`)}`);
         }, 1500);
     }
 

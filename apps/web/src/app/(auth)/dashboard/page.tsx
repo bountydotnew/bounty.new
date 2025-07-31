@@ -22,14 +22,14 @@ import type { Bounty } from "@/types/dashboard";
 export default function Dashboard() {
   // Memoized query options for better performance
   const bountiesQuery = useMemo(() => 
-    trpc.bounties.getAll.queryOptions({ 
+    trpc.bounties.fetchAllBounties.queryOptions({ 
       page: PAGINATION_DEFAULTS.PAGE, 
       limit: PAGINATION_LIMITS.ALL_BOUNTIES 
     }), []
   );
 
   const myBountiesQuery = useMemo(() => 
-    trpc.bounties.getMyBounties.queryOptions({ 
+    trpc.bounties.fetchMyBounties.queryOptions({ 
       page: PAGINATION_DEFAULTS.PAGE, 
       limit: PAGINATION_LIMITS.MY_BOUNTIES 
     }), []

@@ -7,6 +7,7 @@ const SOCIALS = {
     HOME: "/",
     DASHBOARD: "/dashboard",
     ACCOUNT: "/profile/me",
+    SETTINGS: "/settings",
     LOGIN: "/login",
     CONTRIBUTORS: "/contributors",
     BLOG: "/blog",
@@ -15,9 +16,6 @@ const SOCIALS = {
     PRIVACY: "/privacy",
     CONTACT: "/contact",
     BOUNTY: {
-      CREATE: "/bounty/create",
-      EDIT: "/bounty/edit",
-      DELETE: "/bounty/delete",
       VIEW: "/bounty",
     },
     BOUNTIES: "/bounties",
