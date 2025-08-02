@@ -9,7 +9,9 @@
     "@bounty/db": "workspace:*",
     "@bounty/auth": "workspace:*",
     "@bounty/dev-logger": "workspace:*",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "@octokit/core": "^7.0.3",
+    "@octokit/plugin-rest-endpoint-methods": "16.0.0"
   },
   "devDependencies": {
     "typescript": "^5"

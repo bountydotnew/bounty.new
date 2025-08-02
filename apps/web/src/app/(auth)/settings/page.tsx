@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useCallback, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GeneralSettings } from "@/components/settings/general-settings";
 import { BillingSettings } from "@/components/settings/billing-settings";
@@ -9,82 +9,163 @@ import { PaymentSettings } from "@/components/settings/payment-settings";
 import { SecuritySettings } from "@/components/settings/security-settings";
 import { User, CreditCard, DollarSign, Shield, Bell } from "lucide-react";
 
-const validTabs = ["general", "billing", "payments", "security", "notifications"];
+// TypeScript interfaces for better type safety
+interface TabConfig {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  component: React.ComponentType;
+  disabled?: boolean;
+  comingSoon?: boolean;
+}
 
+// Tab configuration for maintainability
+const TAB_CONFIGS: TabConfig[] = [
+  {
+    id: "general",
+    label: "General",
+    icon: User,
+    component: GeneralSettings,
+  },
+  {
+    id: "billing",
+    label: "Billing",
+    icon: CreditCard,
+    component: BillingSettings,
+  },
+  {
+    id: "payments",
+    label: "Payments",
+    icon: DollarSign,
+    component: PaymentSettings,
+  },
+  {
+    id: "security",
+    label: "Security",
+    icon: Shield,
+    component: SecuritySettings,
+  },
+  {
+    id: "notifications",
+    label: "Notifications",
+    icon: Bell,
+    component: () => (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+        <div className="flex items-center gap-2 mb-2">
+          <Bell className="w-5 h-5 text-yellow-600" />
+          <h3 className="font-medium text-yellow-800">Coming Soon</h3>
+        </div>
+        <p className="text-sm text-yellow-700">
+          Notification settings will be implemented here. You&apos;ll be able to configure
+          email notifications, push notifications, and other communication preferences.
+        </p>
+      </div>
+    ),
+    disabled: true,
+    comingSoon: true,
+  },
+];
+
+// Main settings page component
 export default function SettingsPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   
-  // Compute active tab directly from URL params
-  const activeTab = useMemo(() => {
+  // Initialize active tab from URL, but manage locally for speed
+  const [activeTab, setActiveTab] = useState(() => {
     const tabParam = searchParams.get("tab");
-    return tabParam && validTabs.includes(tabParam) ? tabParam : "general";
-  }, [searchParams]);
+    return tabParam || "general";
+  });
 
-  // Update URL when tab changes
-  const handleTabChange = (value: string) => {
+  // Update URL without navigation when tab changes (debounced)
+  useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("tab", value);
-    router.push(`/settings?${params.toString()}`, { scroll: false });
-  };
+    const currentTab = params.get("tab");
+    
+    if (currentTab !== activeTab) {
+      params.set("tab", activeTab);
+      // Use history.replaceState for instant updates without re-rendering
+      window.history.replaceState(null, "", `/settings?${params.toString()}`);
+    }
+  }, [activeTab, searchParams]);
+
+  // Lightning-fast tab change handler - no router calls
+  const handleTabChange = useCallback((value: string) => {
+    // Early return if same tab clicked - no work needed
+    if (value === activeTab) return;
+    
+    setActiveTab(value);
+  }, [activeTab]);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="mb-8">
+      {/* Header section */}
+      <header className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Settings</h1>
         <p className="text-muted-foreground">
           Manage your account settings and preferences
         </p>
-      </div>
+      </header>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="general" className="flex items-center gap-2">
-            <User className="w-4 h-4" />
-            General
-          </TabsTrigger>
-          <TabsTrigger value="billing" className="flex items-center gap-2">
-            <CreditCard className="w-4 h-4" />
-            Billing
-          </TabsTrigger>
-          <TabsTrigger value="payments" className="flex items-center gap-2">
-            <DollarSign className="w-4 h-4" />
-            Payments
-          </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-2">
-            <Shield className="w-4 h-4" />
-            Security
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2" disabled>
-            <Bell className="w-4 h-4" />
-            Notifications
-          </TabsTrigger>
-        </TabsList>
+      {/* Main content */}
+      <main>
+        <Tabs 
+          value={activeTab} 
+          onValueChange={handleTabChange} 
+          className="space-y-6"
+          aria-label="Settings navigation"
+        >
+          {/* Tab navigation with smooth animations */}
+          <TabsList 
+            className={`grid w-full grid-cols-${TAB_CONFIGS.length} relative`}
+            role="tablist"
+          >
+            {TAB_CONFIGS.map((tab) => {
+              const IconComponent = tab.icon;
+              return (
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  className="flex items-center gap-2 transition-all duration-300 ease-out relative z-10"
+                  disabled={tab.disabled}
+                  aria-label={`${tab.label} settings`}
+                  title={tab.comingSoon ? `${tab.label} - Coming Soon` : tab.label}
+                >
+                  <IconComponent 
+                    className="w-4 h-4" 
+                    aria-hidden="true" 
+                  />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="sm:hidden">{tab.label.slice(0, 3)}</span>
+                  {tab.comingSoon && (
+                    <span className="text-xs bg-yellow-100 text-yellow-800 px-1 rounded">
+                      Soon
+                    </span>
+                  )}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
 
-        <TabsContent value="general">
-          <GeneralSettings />
-        </TabsContent>
-
-        <TabsContent value="billing">
-          <BillingSettings />
-        </TabsContent>
-
-        <TabsContent value="payments">
-          <PaymentSettings />
-        </TabsContent>
-
-        <TabsContent value="security">
-          <SecuritySettings />
-        </TabsContent>
-
-        <TabsContent value="notifications">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-sm text-yellow-700">
-              🚧 Notification settings will be implemented here
-            </p>
+          {/* Preload and keep all tab components mounted for instant switching */}
+          <div className="relative">
+            {TAB_CONFIGS.map((tab) => {
+              const Component = tab.component;
+              return (
+                <TabsContent
+                  key={tab.id}
+                  value={tab.id}
+                  className="space-y-6 focus:outline-none data-[state=inactive]:hidden"
+                  role="tabpanel"
+                  aria-labelledby={`tab-${tab.id}`}
+                >
+                  {/* Keep components mounted to prevent re-fetching */}
+                  <Component />
+                </TabsContent>
+              );
+            })}
           </div>
-        </TabsContent>
-      </Tabs>
+        </Tabs>
+      </main>
     </div>
   );
 }

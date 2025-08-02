@@ -1,5 +1,5 @@
 const SOCIALS = {
-    GITHUB: "https://github.com/ripgrim/bounty.new",
+    GITHUB: "https://github.com/bountydotnew/bounty.new",
   };
   
   export const LINKS = {

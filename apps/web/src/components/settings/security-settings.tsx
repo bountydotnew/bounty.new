@@ -317,9 +317,8 @@ export function SecuritySettings() {
                       </div>
                     </div>
                     <Button
-                      variant="outline"
+                      variant="destructive"
                       size="sm"
-                      className="text-red-500 border-red-200 hover:bg-red-50 hover:border-red-300"
                       onClick={() => handleTerminateSession(session)}
                       disabled={terminatingSession === session.id}
                     >
