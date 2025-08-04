@@ -51,7 +51,7 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
       >
         <DialogTitle className="text-center text-2xl"></DialogTitle>
 
-        <div className="relative inline-flex h-[535px] w-96 flex-col items-center justify-center overflow-hidden rounded-2xl border border-gray-400 bg-zinc-900/50 p-5 outline outline-2 outline-offset-[4px] outline-gray-400 dark:border-[#2D2D2D] dark:outline-[#2D2D2D]">
+        <div className="relative inline-flex h-[535px] w-96 flex-col items-center justify-center overflow-hidden rounded-2xl border border-gray-400 bg-zinc-900/50 p-5 outline outline-offset-[4px] outline-gray-400 dark:border-[#2D2D2D] dark:outline-[#2D2D2D]">
           <div className="absolute inset-0 z-0 h-full w-full overflow-hidden">
             <div className="absolute -right-0 -top-52 h-auto w-full bg-gradient-to-br from-blue-600/20 to-purple-600/20 blur-3xl" />
           </div>

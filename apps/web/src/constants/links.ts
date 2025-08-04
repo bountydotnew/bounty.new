@@ -6,7 +6,7 @@ const SOCIALS = {
     SOCIALS: SOCIALS,
     HOME: "/",
     DASHBOARD: "/dashboard",
-    ACCOUNT: "/profile/me",
+    ACCOUNT: "/settings",
     SETTINGS: "/settings",
     LOGIN: "/login",
     CONTRIBUTORS: "/contributors",

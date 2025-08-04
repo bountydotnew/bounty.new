@@ -22,7 +22,7 @@ export function HeaderBase({
   // If children is provided, render it directly without the grid layout
   if (children) {
     return (
-      <header className={cn("px-6 h-16 flex items-center", className)}>
+      <header className={cn("px-6 min-h-16 flex items-center", className)}>
         {children}
       </header>
     );
