@@ -74,7 +74,12 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined') {
       const fromUrl = searchParams.get("tab");
-      const fromStorage = window.localStorage.getItem('settings.activeTab');
+      let fromStorage = null;
+      try {
+        fromStorage = window.localStorage.getItem('settings.activeTab');
+      } catch {
+        console.error('Error getting active tab from localStorage');
+      }
       return (fromUrl || fromStorage || 'general');
     }
     return 'general';

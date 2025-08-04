@@ -96,7 +96,7 @@ function Tabs<T extends string = string>({
   return (
     <TabsContext.Provider
       value={{
-        activeValue: (value ?? activeValue)!,
+        activeValue: (value ?? activeValue)! as T,
         handleValueChange,
         registerTrigger,
       }}

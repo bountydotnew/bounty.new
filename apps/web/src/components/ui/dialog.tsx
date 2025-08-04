@@ -54,9 +54,7 @@ const DialogContent = React.forwardRef<
         'data-[state=open]:animate-in data-[state=closed]:animate-out',
         'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
         'data-[state=closed]:scale-90 data-[state=open]:scale-100',
-        showOverlay
-          ? 'bg-background w-full max-w-[500px] rounded-xl border p-6'
-          : 'bg-background w-full max-w-[500px] rounded-xl border p-6',
+        'bg-background w-full max-w-[500px] rounded-xl border p-6',
         className,
       )}
       {...props}
