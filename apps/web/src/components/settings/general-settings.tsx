@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-    
+
 export function GeneralSettings() {
   const [isClientMounted, setIsClientMounted] = useState(false);
   const { data: session } = authClient.useSession();
@@ -66,7 +66,7 @@ export function GeneralSettings() {
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-semibold">{session?.user?.name || "No name set"}</h3>
                 {isPro && (
-                  <Badge variant="default" className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+                  <Badge variant="default" >
                     Pro
                   </Badge>
                 )}

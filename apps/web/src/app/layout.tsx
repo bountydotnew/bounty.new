@@ -17,16 +17,16 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://bounty.new'),
-  title: "bounty.new",
+  title: "bounty",
   description: "Ship faster. Get paid instantly.",
   icons: {
     icon: '/icon.svg',
   },
   openGraph: {
-    title: "bounty.new",
+    title: "bounty",
     description: "Ship faster. Get paid instantly.",
     url: "https://bounty.new",
-    siteName: "bounty.new",
+    siteName: "bounty",
     images: [
       {
         url: "/ogimage.png",

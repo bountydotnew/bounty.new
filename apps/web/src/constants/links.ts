@@ -1,12 +1,12 @@
 const SOCIALS = {
-    GITHUB: "https://github.com/ripgrim/bounty.new",
+    GITHUB: "https://github.com/bountydotnew/bounty.new",
   };
   
   export const LINKS = {
     SOCIALS: SOCIALS,
     HOME: "/",
     DASHBOARD: "/dashboard",
-    ACCOUNT: "/profile/me",
+    ACCOUNT: "/settings",
     SETTINGS: "/settings",
     LOGIN: "/login",
     CONTRIBUTORS: "/contributors",

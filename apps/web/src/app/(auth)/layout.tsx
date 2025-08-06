@@ -6,16 +6,16 @@ import { DeviceProvider } from "@/components/device-provider";
 // import RedirectToSignIn from "@/components/auth/redirect-to-signin";
 
 export const metadata: Metadata = {
-  title: "bounty.new",
-  description: "bounty.new",
+  title: "bounty",
+  description: "bounty",
   icons: {
     icon: "/icon.svg",
   },
   openGraph: {
-    title: "bounty.new - App",
+    title: "bounty - App",
     description: "Ship fast, get paid faster.",
-    url: "https://bounty.new",
-    siteName: "bounty.new",
+    url: "https://bounty",
+    siteName: "bounty",
     images: [
       {
         url: "/ogimage.png",

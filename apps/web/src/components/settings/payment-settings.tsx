@@ -29,7 +29,7 @@ export function PaymentSettings() {
       toast.error("Please enter a valid amount");
       return;
     }
-    
+
     if (presetAmounts.includes(amount)) {
       toast.error("This amount already exists");
       return;
@@ -51,12 +51,15 @@ export function PaymentSettings() {
   };
 
   const generateHTMLSnippet = () => {
-    return `<br>
-<div style="display: flex; width: 100%; justify-content: flex-end;">
-<a href="https://bounty.new/pay/${username}">
-  <img alt="Pay with Bounty.new" src="https://bounty.new/github/bounty.svg" />
-</a>
-</div>`;
+    return `
+    <br>
+    <div style="display: flex; width: 100%; justify-content: flex-end;">
+      <a href="https://bounty.new/pay/${username}">
+        <img alt="Pay with Bounty.new" src="https://bounty.new/github/bounty.svg" />
+      </a>
+    </div>
+    <br>
+    `;
   };
 
   const copyHTMLSnippet = () => {
@@ -139,7 +142,7 @@ export function PaymentSettings() {
                   min="1"
                   max="10000"
                 />
-                <Button 
+                <Button
                   onClick={handleAddPresetAmount}
                   size="sm"
                   disabled={presetAmounts.length >= 6}

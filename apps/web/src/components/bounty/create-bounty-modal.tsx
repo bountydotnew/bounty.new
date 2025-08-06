@@ -102,7 +102,7 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" showOverlay>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" showOverlay>
         <DialogHeader>
           <DialogTitle>Create New Bounty</DialogTitle>
         </DialogHeader>

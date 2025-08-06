@@ -209,7 +209,7 @@ export default function Login() {
                 <label htmlFor="password">Password:</label>
                 <input type="password" name="password" autoComplete="current-password webauthn" />
               </div>
-              <div className="bg-[#1D1D1D] rounded-xl p-6 md:p-8 space-y-4 shadow-[0px_23px_38.1px_-5px_rgba(12,12,13,0.10)]">
+              <div className="bg-[#1D1D1D] flex flex-col justify-center items-center rounded-xl p-6 md:p-8 space-y-4 shadow-[0px_23px_38.1px_-5px_rgba(12,12,13,0.10)]">
                 <Button
                   onClick={handleGitHubSignIn}
                   className="oauthButton w-full max-w-[466px] min-w-[240px] h-12 px-6 py-3 bg-[#303030] text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
@@ -234,7 +234,7 @@ export default function Login() {
                 <Button
                   onClick={handlePasskeySignIn}
                   variant="text"
-                  className="oauthButton w-full max-w-[466px] min-w-[240px] h-12 px-6 py-3 bg-[#303030] text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
+                  className="h-4 px-6 text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom"
                 >
                   <Key className="w-6 h-6" />
                   Have a passkey?

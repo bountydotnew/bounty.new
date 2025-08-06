@@ -45,13 +45,49 @@ export const auth = betterAuth({
     polar({ 
       client: polarClient,
       createCustomerOnSignUp: true,
-      getCustomerCreateParams: async ({ user }) => ({
-        email: user.email,
-        name: user.name || user.email,
-        metadata: {
-          userId: user.id,
-        },
-      }),
+      getCustomerCreateParams: async ({ user }) => {
+        try {
+          const existing = await polarClient.customers.getExternal({ externalId: user.id });
+          if (existing && typeof (existing as any).id === "string" && (existing as any).id.length > 0) {
+            return null as any;
+          }
+        } catch (err) {
+          const e = err as { status?: number; message?: string; body$?: string };
+          const message = String(e?.message || "");
+          const body$ = String((e as any)?.body$ || "");
+          if (
+            e?.status === 409 ||
+            message.includes("external ID cannot be updated") ||
+            body$.includes("external ID cannot be updated")
+          ) {
+            return null as any;
+          }
+          if (e?.status && e.status !== 404) {
+            console.warn("Polar getExternal unexpected error; proceeding to attempt create", e);
+          }
+        }
+        return {
+          email: user.email,
+          name: user.name || user.email,
+          metadata: {
+            userId: user.id,
+          },
+        };
+      },
+      onCustomerCreateError: async ({ error }: { error: unknown }) => {
+        const e = error as { status?: number; message?: string; body$?: string };
+        const message = String(e?.message || "");
+        const body$ = String(e?.body$ || "");
+        if (
+          e?.status === 409 ||
+          message.includes("external ID cannot be updated") ||
+          body$.includes("external ID cannot be updated") ||
+          body$.includes("\"error\":\"PolarRequestValidationError\"")
+        ) {
+          return;
+        }
+        throw error as Error;
+      },
       use: [
         checkout({
           products: [
@@ -79,18 +115,8 @@ export const auth = betterAuth({
             console.log("Order paid:", payload);
             
             try {
-              // Log the full payload for debugging
               console.log("Order paid payload:", JSON.stringify(payload, null, 2));
-              
-              // The webhook ensures the user's subscription is now active
-              // This happens server-side regardless of whether they visit the success page
               console.log("User subscription activated via webhook");
-              
-              // You could also:
-              // - Send welcome email
-              // - Update user profile
-              // - Grant access to Pro features
-              // - Send analytics event
             } catch (error) {
               console.error("Error handling order paid webhook:", error);
             }
@@ -101,11 +127,8 @@ export const auth = betterAuth({
             console.log("Subscription active:", payload);
             
             try {
-              // Log the full payload for debugging
               console.log("Subscription active payload:", JSON.stringify(payload, null, 2));
-              
               console.log("User subscription is now active");
-              // Additional subscription activation logic
             } catch (error) {
               console.error("Error handling subscription active webhook:", error);
             }

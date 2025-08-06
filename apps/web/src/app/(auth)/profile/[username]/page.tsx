@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Settings } from "lucide-react";
-import { LINKS } from "@/constants/links";
+import { useBilling } from "@/hooks/use-billing";
 
 export default function ProfilePage() {
     const params = useParams();
@@ -18,18 +18,13 @@ export default function ProfilePage() {
 
     const { data: session, isPending: loading } = authClient.useSession();
     const isOwnProfile = username === "me";
-
+    const { isPro } = useBilling();
     // Prevent hydration mismatch by ensuring client-side rendering
     useEffect(() => {
         setIsClientMounted(true);
     }, []);
 
     // Redirect to settings for own profile
-    useEffect(() => {
-        if (isClientMounted && isOwnProfile && session) {
-            router.replace(LINKS.SETTINGS);
-        }
-    }, [isClientMounted, isOwnProfile, session, router]);
 
     // Don't render until client is mounted to prevent hydration issues
     if (!isClientMounted) {
@@ -73,18 +68,49 @@ export default function ProfilePage() {
         return (
             <div className="container mx-auto py-8">
                 <Card>
-                    <CardContent className="p-6 text-center">
-                        <Settings className="mx-auto mb-4" size={48} />
-                        <h2 className="text-xl font-semibold mb-2">Redirecting to Settings</h2>
-                        <p className="text-muted-foreground mb-4">
-                          Your account settings have been moved to a dedicated page.
-                        </p>
-                        <Button onClick={() => router.replace(LINKS.SETTINGS)}>
-                          Go to Settings
-                        </Button>
+                    <CardHeader>
+                        <CardTitle>Profile Information</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                                <Avatar className="h-16 w-16">
+                                    <AvatarImage
+                                        src={session?.user?.image || ""}
+                                        alt={session?.user?.name || session?.user?.email}
+                                    />
+                                    <AvatarFallback>
+                                        {session?.user?.name?.[0] ||
+                                            session?.user?.email?.[0] ||
+                                            "U"}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="text-lg font-semibold">{session?.user?.name || "No name set"}</h3>
+                                        {isPro && (
+                                            <Badge variant="default" >
+                                                Pro
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">{session?.user?.email}</p>
+                                    <Badge variant="secondary">User ID: {session?.user?.id}</Badge>
+                                </div>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => router.push('/settings')}
+                                className="flex items-center gap-2"
+                            >
+                                <Settings className="w-4 h-4" />
+                                Settings
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
-            </div>
+            </div >
         );
     }
 

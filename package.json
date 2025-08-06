@@ -1,10 +1,15 @@
 {
   "name": "bounty.new",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
+    "catalog": { 
+      "@octokit/plugin-rest-endpoint-methods": "16.0.0"
+    }
+  },
   "scripts": {
     "dev": "dotenv -- turbo dev",
     "start": "dotenv -- turbo start",

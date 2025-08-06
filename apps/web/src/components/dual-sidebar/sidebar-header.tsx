@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { LINKS } from "@/constants/links";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+// import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
 
@@ -30,7 +30,7 @@ export function Header() {
       )}
     >
       <div className="flex items-center gap-6">
-        <SidebarTrigger />
+        {/* <SidebarTrigger /> */}
         <nav className="flex items-center">
           <div className="flex items-center gap-6">
             {navigationLinks.map(({ href, label }) => (

@@ -137,24 +137,25 @@ export function SecuritySettings() {
               <DialogTrigger asChild>
                 <Button onClick={() => setIsAddDialogOpen(true)}>Add Passkey</Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent showOverlay className="max-w-md gap-4">
                 <DialogHeader>
                   <DialogTitle>Add New Passkey</DialogTitle>
                   <DialogDescription>
                     Choose the type of authenticator you want to register
                   </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4">
+                <div className="space-y-4 gap-4">
                   <div>
-                    <Label htmlFor="passkey-name">Passkey Name (Optional)</Label>
+                    <Label className="mt-4" htmlFor="passkey-name">Passkey Name (Optional)</Label>
                     <Input
                       id="passkey-name"
                       placeholder="e.g., iPhone, MacBook, Security Key"
                       value={newPasskeyName}
                       onChange={(e) => setNewPasskeyName(e.target.value)}
+                      className="mt-2"
                     />
                   </div>
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-2 mt-4">
                     <Button
                       onClick={() => handleAddPasskey("platform")}
                       disabled={passkeyLoading}
@@ -317,9 +318,8 @@ export function SecuritySettings() {
                       </div>
                     </div>
                     <Button
-                      variant="outline"
+                      variant="destructive"
                       size="sm"
-                      className="text-red-500 border-red-200 hover:bg-red-50 hover:border-red-300"
                       onClick={() => handleTerminateSession(session)}
                       disabled={terminatingSession === session.id}
                     >
