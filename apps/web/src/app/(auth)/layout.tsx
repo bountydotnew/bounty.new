@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Sidebar from "@/components/dual-sidebar";
 import { DeviceProvider } from "@/components/device-provider";
+import RedirectToSignIn from "@/components/auth/redirect-to-signin";
 // import { SignedOut } from "@daveyplate/better-auth-ui";
 // import RedirectToSignIn from "@/components/auth/redirect-to-signin";
 
@@ -39,9 +40,7 @@ export default async function RootLayout({
     <>
       <DeviceProvider userAgent={userAgent}>
         <Sidebar>
-          {/* <SignedOut>
           <RedirectToSignIn />
-        </SignedOut> */}
           {children}
         </Sidebar>
       </DeviceProvider>

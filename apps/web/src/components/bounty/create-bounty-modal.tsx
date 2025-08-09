@@ -4,6 +4,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { trpc } from "@/utils/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,15 +34,22 @@ interface CreateBountyModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   draftId?: string;
+  initialValues?: Partial<CreateBountyForm>;
+  redirectOnClose?: string;
+  replaceOnSuccess?: boolean;
 }
 
-export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyModalProps) {
+export function CreateBountyModal({ open, onOpenChange, draftId, initialValues, redirectOnClose, replaceOnSuccess }: CreateBountyModalProps) {
   const queryClient = useQueryClient();
   const { getDraft, deleteActiveDraft } = useDrafts();
+  const router = useRouter();
 
   const form = useForm<CreateBountyForm>({
     resolver: zodResolver(createBountySchema),
-    defaultValues: createBountyDefaults,
+    defaultValues: {
+      ...createBountyDefaults,
+      ...(initialValues || {}),
+    },
   });
 
   const { control, handleSubmit, formState: { errors, isSubmitting }, reset, watch, setValue } = form;
@@ -53,16 +61,23 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
       if (draft) {
         setValue("title", draft.title);
         setValue("description", draft.description);
-        setValue("requirements", draft.requirements || bountyDraftTemplates.requirements);
-        setValue("deliverables", draft.deliverables || bountyDraftTemplates.deliverables);
         toast.success("Draft loaded! Complete the remaining details.");
       }
     }
   }, [draftId, open, getDraft, setValue]);
 
+  useEffect(() => {
+    if (open && initialValues) {
+      Object.entries(initialValues).forEach(([k, v]) => {
+        // @ts-expect-error runtime set
+        setValue(k, v as any);
+      });
+    }
+  }, [open, initialValues, setValue]);
+
   const createBounty = useMutation({
     ...trpc.bounties.createBounty.mutationOptions(),
-    onSuccess: () => {
+    onSuccess: (result) => {
       if (draftId) {
         deleteActiveDraft();
       }
@@ -76,6 +91,11 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
 
       reset();
       onOpenChange(false);
+      if (result?.data?.id) {
+        const href = `/bounty/${result.data.id}${replaceOnSuccess ? "?from=gh-issue" : ""}`;
+        if (replaceOnSuccess) router.replace(href);
+        else router.push(href);
+      }
     },
     onError: (error) => {
       toast.error(`Failed to create bounty: ${error.message}`);
@@ -97,18 +117,21 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
     if (!isSubmitting && !createBounty.isPending) {
       reset();
       onOpenChange(false);
+      if (redirectOnClose) {
+        router.push(redirectOnClose);
+      }
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" showOverlay>
-        <DialogHeader>
-          <DialogTitle>Create New Bounty</DialogTitle>
+        <DialogContent className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg max-h-[75vh] overflow-y-auto p-0 sm:rounded-lg" showOverlay>
+        <DialogHeader className="px-6 pt-6">
+          <DialogTitle className="text-xl">Create New Bounty</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div>
+        <form onSubmit={onSubmit} className="px-6 pb-6 space-y-6">
+          <div className="space-y-2">
             <Label htmlFor="title">Title *</Label>
             <Controller
               name="title"
@@ -127,7 +150,7 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
             )}
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="description">Description *</Label>
             <Controller
               name="description"
@@ -138,7 +161,7 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
                   id="description"
                   rows={3}
                   placeholder="Describe what needs to be done"
-                  className={`w-full px-3 py-2 border rounded-md ${errors.description ? "border-red-500" : "border-gray-300"
+                  className={`w-full px-3 py-2 border rounded-md ${errors.description ? "border-red-500" : "border-border"
                     }`}
                 />
               )}
@@ -148,50 +171,12 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
             )}
           </div>
 
-          <div>
-            <Label htmlFor="requirements">Requirements *</Label>
-            <Controller
-              name="requirements"
-              control={control}
-              render={({ field }) => (
-                <textarea
-                  {...field}
-                  id="requirements"
-                  rows={2}
-                  placeholder="List the technical requirements"
-                  className={`w-full px-3 py-2 border rounded-md ${errors.requirements ? "border-red-500" : "border-gray-300"
-                    }`}
-                />
-              )}
-            />
-            {errors.requirements && (
-              <p className="text-red-500 text-sm mt-1">{errors.requirements.message}</p>
-            )}
-          </div>
+          {/* temporarily removed requirements */}
 
-          <div>
-            <Label htmlFor="deliverables">Deliverables *</Label>
-            <Controller
-              name="deliverables"
-              control={control}
-              render={({ field }) => (
-                <textarea
-                  {...field}
-                  id="deliverables"
-                  rows={2}
-                  placeholder="What should be delivered?"
-                  className={`w-full px-3 py-2 border rounded-md ${errors.deliverables ? "border-red-500" : "border-gray-300"
-                    }`}
-                />
-              )}
-            />
-            {errors.deliverables && (
-              <p className="text-red-500 text-sm mt-1">{errors.deliverables.message}</p>
-            )}
-          </div>
+          {/* temporarily removed deliverables */}
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="amount">Amount *</Label>
               <Controller
                 name="amount"
@@ -210,7 +195,7 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
               )}
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="currency">Currency</Label>
               <Controller
                 name="currency"
@@ -219,7 +204,7 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
                   <select
                     {...field}
                     id="currency"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border rounded-md"
                   >
                     {currencyOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -232,7 +217,7 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
             </div>
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="difficulty">Difficulty *</Label>
             <Controller
               name="difficulty"
@@ -241,7 +226,7 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
                 <select
                   {...field}
                   id="difficulty"
-                  className={`w-full px-3 py-2 border rounded-md ${errors.difficulty ? "border-red-500" : "border-gray-300"
+                  className={`w-full px-3 py-2 border rounded-md ${errors.difficulty ? "border-red-500" : "border-border"
                     }`}
                 >
                   {difficultyOptions.map((option) => (
@@ -257,7 +242,7 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
             )}
           </div>
 
-          <div>
+          {/* <div className="space-y-2">
             <Label htmlFor="deadline">Deadline (Optional)</Label>
             <Controller
               name="deadline"
@@ -274,9 +259,9 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
             {errors.deadline && (
               <p className="text-red-500 text-sm mt-1">{errors.deadline.message}</p>
             )}
-          </div>
+          </div> */}
 
-          <div>
+          {/* <div className="space-y-2">
             <Label htmlFor="tags">Tags (Optional)</Label>
             <Input
               id="tags"
@@ -287,9 +272,9 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
             <p className="text-sm text-gray-500 mt-1">
               Enter tags separated by commas
             </p>
-          </div>
+          </div> */}
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="repositoryUrl">Repository URL (Optional)</Label>
             <Controller
               name="repositoryUrl"
@@ -309,7 +294,7 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
             )}
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="issueUrl">Issue URL (Optional)</Label>
             <Controller
               name="issueUrl"
@@ -329,7 +314,7 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
             )}
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="mt-6">
             <Button
               type="button"
               variant="outline"

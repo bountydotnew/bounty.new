@@ -25,7 +25,7 @@ export function NavMain({
   items: {
     title: string;
     url: string;
-    icon?: LucideIcon | React.ComponentType<React.SVGProps<SVGSVGElement>>;
+    icon?: React.ComponentType<any>;
     isActive?: boolean;
     items?: {
       title: string;

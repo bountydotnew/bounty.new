@@ -6,10 +6,10 @@ import { z } from "zod";
 
 export const createBountySchema = z.object({
   title: z.string().min(1, "Title cannot be empty").max(200, "Title too long"),
-  description: z.string().min(10, "Description cannot be empty").max(1000, "Description too long"),
-  requirements: z.string().min(10, "Requirements cannot be empty").max(1000, "Requirements too long"),
-  deliverables: z.string().min(10, "Deliverables cannot be empty").max(1000, "Deliverables too long"),
-  amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, "Incorrect amount."),
+  description: z.string().min(1, "Description cannot be empty").max(1000, "Description too long"),
+  // requirements: z.string().max(1000).optional(),
+  // deliverables: z.string().max(1000).optional(),
+  amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, "Incorrect amount.").min(1, "Amount cannot be empty").max(100000, "Amount cannot be greater than 100,000"),
   currency: z.string().min(1, "Currency cannot be empty"),
   difficulty: z.enum(["beginner", "intermediate", "advanced", "expert"], {
     errorMap: () => ({ message: "Difficulty cannot be empty" }),
@@ -25,8 +25,6 @@ export type CreateBountyForm = z.infer<typeof createBountySchema>;
 export const createBountyDefaults: CreateBountyForm = {
   title: "",
   description: "",
-  requirements: "",
-  deliverables: "",
   amount: "",
   currency: "USD",
   difficulty: "intermediate",

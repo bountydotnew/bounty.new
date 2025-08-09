@@ -30,6 +30,8 @@ import Link from "next/link";
 import { LINKS } from "@/constants/links";
 import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
+import { SettingsIcon } from "@/components/ui/settings";
+import { BookTextIcon } from "@/components/ui/book-text";
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
@@ -76,54 +78,18 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       {
         title: "Bounties",
         url: LINKS.BOUNTIES,
-        icon: Award,
+        icon: (p: any) => <Award {...p} size={18} />,
         isActive: isActive("/bounties"),
       },
       {
         title: "Documentation",
         url: "#",
-        icon: BookOpen,
-        items: [
-          {
-            title: "Introduction",
-            url: "#",
-          },
-          {
-            title: "Get Started",
-            url: "#",
-          },
-          {
-            title: "Tutorials",
-            url: "#",
-          },
-          {
-            title: "Changelog",
-            url: "#",
-          },
-        ],
+        icon: (p: any) => <BookTextIcon {...p} size={22} />,
       },
       {
-        title: "Settings",
-        url: "#",
-        icon: Settings2,
-        items: [
-          {
-            title: "General",
-            url: "#",
-          },
-          {
-            title: "Team",
-            url: "#",
-          },
-          {
-            title: "Billing",
-            url: "#",
-          },
-          {
-            title: "Limits",
-            url: "#",
-          },
-        ],
+        title: "Settings", 
+        url: LINKS.SETTINGS,
+        icon: (p: any) => <SettingsIcon {...p} size={22} />,
       },
     ],
     projects: [

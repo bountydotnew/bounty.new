@@ -32,4 +32,33 @@ export const repositoryRouter = router({
     .query(async ({ input }) => {
       return github.getBiggestCommitByUser(input.repo, input.username);
     }),
+  issueFromUrl: publicProcedure
+    .input(z.object({ url: z.string().url() }))
+    .query(async ({ input }) => {
+      return github.getIssueFromUrl(input.url); 
+    }),
+  userRepos: publicProcedure
+    .input(z.object({ username: z.string() }))
+    .query(async ({ input }) => {
+      try {
+        const username = input.username?.trim();
+        if (!username) return [];
+        return await github.getUserRepos(username);
+      } catch {
+        return [];
+      }
+    }),
+  searchIssues: publicProcedure
+    .input(z.object({ owner: z.string(), repo: z.string(), q: z.string().optional() }))
+    .query(async ({ input }) => {
+      try {
+        const owner = input.owner?.trim();
+        const repo = input.repo?.trim();
+        const q = (input.q || "").trim();
+        if (!owner || !repo || !q) return [];
+        return await github.searchIssues(owner, repo, q);
+      } catch {
+        return [];
+      }
+    }),
 });

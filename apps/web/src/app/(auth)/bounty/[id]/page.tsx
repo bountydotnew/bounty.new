@@ -5,15 +5,18 @@ import { trpc } from "@/utils/trpc";
 import { useQuery } from "@tanstack/react-query";
 import { use } from "react";
 import { Button } from "@/components/ui/button";
+import Composer from "@/components/markdown/Composer";
 import { EditBountyModal } from "@/components/bounty/edit-bounty-modal";
 import { useBountyModals, canEditBounty } from "@/lib/bounty-utils";
 import { authClient } from "@bounty/auth/client";
 import { Edit, ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { BountyDetailSkeleton } from "@/components/dashboard/skeletons/bounty-skeleton";
 
 export default function BountyPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = authClient.useSession();
   
   const bounty = useQuery(trpc.bounties.fetchBountyById.queryOptions({ id: resolvedParams.id }));
@@ -26,7 +29,7 @@ export default function BountyPage({ params }: { params: Promise<{ id: string }>
   } = useBountyModals();
     
   if (bounty.isLoading) {
-    return <div>Loading bounty...</div>;
+    return <BountyDetailSkeleton />;
   }
   
   if (bounty.error) {
@@ -46,7 +49,11 @@ export default function BountyPage({ params }: { params: Promise<{ id: string }>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => router.back()}
+          onClick={() => {
+            const from = searchParams.get("from");
+            if (from === "gh-issue") router.push("/bounties");
+            else router.back();
+          }}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
@@ -65,7 +72,7 @@ export default function BountyPage({ params }: { params: Promise<{ id: string }>
       
       <h1 className="text-3xl font-bold mb-4">{bounty.data.data.title}</h1>
       <div className="space-y-4">
-        <p className="text-lg">{bounty.data.data.description}</p>
+        <Composer>{bounty.data.data.description}</Composer>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <h3 className="font-semibold">Amount</h3>
@@ -86,14 +93,7 @@ export default function BountyPage({ params }: { params: Promise<{ id: string }>
             </div>
           )}
         </div>
-        <div>
-          <h3 className="font-semibold">Requirements</h3>
-          <p>{bounty.data.data.requirements}</p>
-        </div>
-        <div>
-          <h3 className="font-semibold">Deliverables</h3>
-          <p>{bounty.data.data.deliverables}</p>
-        </div>
+
         {bounty.data.data.tags && bounty.data.data.tags.length > 0 && (
           <div>
             <h3 className="font-semibold">Tags</h3>
