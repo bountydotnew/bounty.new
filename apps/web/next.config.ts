@@ -47,6 +47,14 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'images.marblecms.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'github.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'user-attachments.githubusercontent.com',
+      },
     ],
   },
   async rewrites() {

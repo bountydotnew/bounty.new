@@ -14,3 +14,6 @@ apps/server/_.env.local
 /.crush
 AGENT.md
 CODEBASE_RULES.md
+lefthook.yml
+stagewise.json
+/.husky
