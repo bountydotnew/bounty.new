@@ -55,6 +55,14 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'user-attachments.githubusercontent.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'raw.githubusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'objects.githubusercontent.com',
+      },
     ],
   },
   async rewrites() {
