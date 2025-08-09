@@ -61,12 +61,10 @@ git clone https://github.com/ripgrim/bounty.new.git
 cd bounty.new
 bun install
 
-# Setup database
-createdb bounty_new
-cp apps/server/.env.example apps/server/.env
-cp apps/web/.env.example apps/web/.env
+#
+Grab a DB string from https://neon.new :3
 
-# Configure environment (edit apps/server/.env)
+# Configure environment (edit .env)
 DATABASE_URL="postgresql://username:password@localhost:5432/bounty_new"
 BETTER_AUTH_SECRET="your-secret-key"
 GITHUB_CLIENT_ID="your-github-client-id"
@@ -78,71 +76,9 @@ bun dev
 ```
 
 **Access**
-- Web: http://localhost:3001
-- API: http://localhost:3000
+- Everything: http://localhost:3000
 
 ## Project Structure
-
-```
-bounty.new/
-├── apps/
-│   ├── web/           # Frontend application
-│   │   ├── src/
-│   │   │   ├── app/           # App router pages
-│   │   │   ├── components/    # UI components
-│   │   │   └── lib/           # Utilities and hooks
-│   │   └── ...
-│   └── server/        # Backend API
-│       ├── src/
-│       │   ├── app/           # API routes
-│       │   ├── db/            # Database schema
-│       │   ├── lib/           # Server utilities
-│       │   └── routers/       # tRPC routers
-│       └── ...
-├── packages/          # Shared packages
-└── docs/             # Documentation
-```
-
-## Available Commands
-
-**Development**
-```bash
-bun dev              # Start all apps
-bun dev:web          # Frontend only
-bun dev:server       # Backend only
-bun build            # Build for production
-```
-
-**Database**
-```bash
-bun db:push          # Apply schema changes
-bun db:studio        # Open database UI
-bun db:generate      # Generate migrations
-```
-
-**Quality**
-```bash
-bun check-types      # Type checking
-bun lint             # Code linting
-bun test             # Run tests
-```
-
-## Environment Setup
-
-**Server (.env)**
-```env
-DATABASE_URL="postgresql://username:password@localhost:5432/bounty_new"
-BETTER_AUTH_SECRET="your-secret-key"
-BETTER_AUTH_URL="http://localhost:3000"
-GITHUB_CLIENT_ID="your-github-client-id"
-GITHUB_CLIENT_SECRET="your-github-client-secret"
-```
-
-**Web (.env)**
-```env
-NEXT_PUBLIC_API_URL="http://localhost:3000"
-NEXT_PUBLIC_APP_URL="http://localhost:3001"
-```
 
 ## GitHub OAuth Setup
 

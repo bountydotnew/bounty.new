@@ -11,3 +11,4 @@ apps/server/_.env.local
 /apps/server
 /packages/dev-logger/dist
 /.kiro
+/.crush
