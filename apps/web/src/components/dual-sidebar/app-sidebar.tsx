@@ -28,13 +28,10 @@ import Bounty from "../icons/bounty";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { LINKS } from "@/constants/links";
-import { useQuery } from "@tanstack/react-query";
-import { trpc } from "@/utils/trpc";
 import { AccessGate } from "@/components/access-gate";
 
-export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
+export const AppSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
   const pathname = usePathname();
-  const userData = useQuery(trpc.user.getMe.queryOptions());
 
   function isActive(path: string) {
     return pathname === path;

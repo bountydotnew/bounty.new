@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 /**
  * Example component demonstrating various AccessGate usage patterns
  */
-export function AccessGateExamples() {
+export const AccessGateExamples = () => {
   return (
     <div className="space-y-6 p-6">
       <h2 className="text-2xl font-bold">AccessGate Examples</h2>

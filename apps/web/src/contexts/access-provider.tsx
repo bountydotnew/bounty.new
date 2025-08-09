@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
+
 import { trpc } from "@/utils/trpc";
 
 export type AccessStage = "none" | "alpha" | "beta" | "production";
@@ -19,7 +20,7 @@ interface AccessProviderProps {
   children: ReactNode;
 }
 
-export function AccessProvider({ children }: AccessProviderProps) {
+export const AccessProvider = ({ children }: AccessProviderProps) => {
   const userData = useQuery(trpc.user.getMe.queryOptions());
   
   const userStage: AccessStage = userData.data?.accessStage || "none";
@@ -48,7 +49,7 @@ export function AccessProvider({ children }: AccessProviderProps) {
     userStage,
     hasStageAccess,
     isLoading: userData.isLoading,
-    error: userData.error,
+    error: userData.error as Error | null,
   };
 
   return (
@@ -58,7 +59,7 @@ export function AccessProvider({ children }: AccessProviderProps) {
   );
 }
 
-export function useAccess(): AccessContextType {
+export const useAccess = (): AccessContextType => {
   const context = useContext(AccessContext);
   if (context === undefined) {
     throw new Error("useAccess must be used within an AccessProvider");

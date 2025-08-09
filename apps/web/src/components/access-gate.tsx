@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+
 import { useAccess, type AccessStage } from "@/contexts/access-provider";
 
 interface AccessGateProps {
@@ -14,12 +15,12 @@ interface AccessGateProps {
   condition?: boolean;
 }
 
-export function AccessGate({ 
+export const AccessGate = ({ 
   stage, 
   fallback = null, 
   children, 
   condition = true 
-}: AccessGateProps) {
+}: AccessGateProps) => {
   const { hasStageAccess, isLoading } = useAccess();
 
   // Show nothing while loading user data
