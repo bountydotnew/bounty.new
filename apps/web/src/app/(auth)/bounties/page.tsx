@@ -7,10 +7,16 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { LINKS } from "@/constants/links";
 import { CreateBountyModal } from "@/components/bounty/create-bounty-modal";
+import GithubImportModal from "@/components/bounty/github-import-modal";
 import { useBountyModals } from "@/lib/bounty-utils";
 import { useRouter } from "next/navigation";
+import { authClient } from "@bounty/auth/client";
+import { Spinner } from "@/components/ui/spinner";
+import React from "react";
 
 export default function BountiesPage() {
+  const { data: session } = authClient.useSession();
+  
   const { data: bounties, isLoading, error } = useQuery(
     trpc.bounties.fetchAllBounties.queryOptions({
       page: 1,
@@ -25,6 +31,7 @@ export default function BountiesPage() {
     openCreateModal,
     closeCreateModal,
   } = useBountyModals();
+  const [importOpen, setImportOpen] = React.useState(false);
 
   if (error) {
     return (
@@ -50,14 +57,17 @@ export default function BountiesPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold">Available Bounties</h1>
-            <Button onClick={() => openCreateModal()}>
-              Create Bounty
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" disabled={!session?.user} onClick={() => setImportOpen(true)}>Import from GitHub</Button>
+              <Button disabled={!session?.user} onClick={() => openCreateModal()}>
+                Create Bounty
+              </Button>
+            </div>
           </div>
 
           {isLoading ? (
-            <div>
-              loading...
+            <div className="flex justify-center items-center h-screen">
+              <Spinner />
             </div>
           ) : bounties?.data && bounties.data.length > 0 ? (
             <>
@@ -109,6 +119,7 @@ export default function BountiesPage() {
           open={createModalOpen}
           onOpenChange={closeCreateModal}
         />
+        <GithubImportModal open={importOpen} onOpenChange={setImportOpen} />
     </>
   );
 }
