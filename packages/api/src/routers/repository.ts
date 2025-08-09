@@ -35,7 +35,16 @@ export const repositoryRouter = router({
   issueFromUrl: publicProcedure
     .input(z.object({ url: z.string().url() }))
     .query(async ({ input }) => {
-      return github.getIssueFromUrl(input.url); 
+      try {
+        const data = await github.getIssueFromUrl(input.url);
+        return { success: true, data };
+      } catch (err) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Failed to resolve issue from URL",
+          cause: err,
+        });
+      }
     }),
   userRepos: publicProcedure
     .input(z.object({ username: z.string().trim().min(1, "username is required") }))
