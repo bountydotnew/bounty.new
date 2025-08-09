@@ -1,6 +1,7 @@
 import { publicProcedure, router } from "../trpc";
 import { z } from "zod";
 import { GithubManager } from "../../driver/github";
+import { TRPCError } from "@trpc/server";
 
 const github = new GithubManager({ token: process.env.GITHUB_TOKEN || process.env.NEXT_PUBLIC_GITHUB_TOKEN });
 
