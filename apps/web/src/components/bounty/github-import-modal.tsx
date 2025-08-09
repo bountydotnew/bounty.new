@@ -52,7 +52,11 @@ export default function GithubImportModal({ open, onOpenChange }: { open: boolea
   });
 
   const repoOptions: RepoOption[] = useMemo(() => {
-    const repos = (userRepos.data ?? []) as (import("@bounty/api/driver/github").UserRepo & { stargazersCount?: number })[];
+    const result = userRepos.data;
+    if (!result || !result.success) {
+      return [];
+    }
+    const repos = result.data as (import("@bounty/api/driver/github").UserRepo & { stargazersCount?: number })[];
     const ownerName = username.trim();
     return repos.map((r) => ({ name: r.name, full_name: ownerName ? `${ownerName}/${r.name}` : r.name, private: Boolean(r.private) }));
   }, [userRepos.data, username]);
@@ -97,7 +101,12 @@ export default function GithubImportModal({ open, onOpenChange }: { open: boolea
                 items={repoOptions.filter((r) => r.name.toLowerCase().includes(repoQuery.toLowerCase()))}
                 getKey={(r) => r.full_name}
                 renderItem={(r) => (
-                  <RepoResultCard name={r.name} fullName={r.full_name} private={r.private} stars={(userRepos.data as any)?.find?.((x: any) => x.name === r.name)?.stargazersCount} />
+                  <RepoResultCard
+                    name={r.name}
+                    fullName={r.full_name}
+                    private={r.private}
+                    stars={userRepos.data?.success ? (userRepos.data.data as any)?.find?.((x: any) => x.name === r.name)?.stargazersCount : undefined}
+                  />
                 )}
                 onSelect={(r) => {
                   setRepoQuery(r.name);

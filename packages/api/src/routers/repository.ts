@@ -1,6 +1,6 @@
 import { publicProcedure, router } from "../trpc";
 import { z } from "zod";
-import { GithubManager } from "../../driver/github";
+import { GithubManager, GetUserReposResult } from "../../driver/github";
 import { TRPCError } from "@trpc/server";
 
 const github = new GithubManager({ token: process.env.GITHUB_TOKEN || process.env.NEXT_PUBLIC_GITHUB_TOKEN });
@@ -50,16 +50,14 @@ export const repositoryRouter = router({
   userRepos: publicProcedure
     .input(z.object({ username: z.string().trim().min(1, "username is required") }))
     .query(async ({ input }) => {
-      try {
-        const data = await github.getUserRepos(input.username);
-        return { success: true, data };
-      } catch (err) {
+      const result = await github.getUserRepos(input.username);
+      if (!result.success) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch user repositories",
-          cause: err,
+          message: result.error,
         });
       }
+      return result;
     }),
   searchIssues: publicProcedure
     .input(z.object({ owner: z.string(), repo: z.string(), q: z.string().optional() }))

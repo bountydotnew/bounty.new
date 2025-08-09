@@ -40,6 +40,10 @@ export type UserRepo = {
   private?: boolean;
 };
 
+export type GetUserReposResult =
+  | { success: true; data: UserRepo[] }
+  | { success: false; error: string };
+
 function parseRepo(identifier: string) {
   const [owner, repo] = identifier.split("/");
   if (!owner || !repo) throw new Error("Invalid repo id. Use owner/repo.");
@@ -79,14 +83,14 @@ export class GithubManager {
     };
   }
 
-  async getUserRepos(username: string): Promise<UserRepo[]> {
+  async getUserRepos(username: string): Promise<GetUserReposResult> {
     try {
       const { data } = await this.octokit.rest.repos.listForUser({
         username,
         per_page: 50,
         sort: "pushed",
       });
-      return (data as any[]).map((r: any) => ({
+      const repos = (data as any[]).map((r: any) => ({
         id: r.id,
         name: r.name,
         description: r.description ?? undefined,
@@ -94,8 +98,13 @@ export class GithubManager {
         stargazersCount: r.stargazers_count,
         private: r.private,
       }));
-    } catch {
-      return [];
+      return { success: true, data: repos };
+    } catch (error) {
+      // Fix: Return discriminated union with error information instead of empty array
+      const errorMessage = error instanceof Error
+        ? error.message
+        : 'Unknown error occurred while fetching repositories';
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -105,7 +114,8 @@ export class GithubManager {
       const parts = [`repo:${owner}/${repo}`, `is:issue`];
       if (term) {
         if (/^\d+$/.test(term)) {
-          parts.push(`in:number ${term}`);
+          // Fix: Remove invalid 'in:number' qualifier and push bare number term
+          parts.push(term);
         } else {
           parts.push(`in:title,body ${term}`);
         }

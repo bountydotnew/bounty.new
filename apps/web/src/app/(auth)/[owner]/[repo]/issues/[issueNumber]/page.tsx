@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
 import { Button } from "@/components/ui/button";
 import { CreateBountyModal } from "@/components/bounty/create-bounty-modal";
-import Markdown from "@/components/markdown/Markdown";
+import { Markdown } from "@/components/markdown/Markdown";
 import { useBountyModals } from "@/lib/bounty-utils";
 import { BountyDetailSkeleton } from "@/components/dashboard/skeletons/bounty-skeleton";
 
