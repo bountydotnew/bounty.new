@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import BountyPage from "./page.client";
 import { db, bounty } from "@bounty/db";
 import { eq } from "drizzle-orm";
+import { baseUrl } from "@/lib/constants";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -16,8 +17,6 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       description: "The requested bounty could not be found.",
     };
   }
-
-  const baseUrl = "http://localhost:3000";
 
   const ogImageUrl = `${baseUrl}/api/og-image/${id}`;
 

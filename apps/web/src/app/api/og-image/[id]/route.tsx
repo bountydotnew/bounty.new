@@ -5,6 +5,7 @@ import { env } from "@bounty/env/server";
 import { ImageResponse } from "@vercel/og";
 import { NextRequest } from "next/server";
 import { formatCurrency } from "@/lib/utils";
+import { baseUrl } from "@/lib/constants";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -80,8 +81,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     repoData = await response.json();
-
-    const baseUrl = "http://localhost:3000";
 
     return new ImageResponse(
       (
