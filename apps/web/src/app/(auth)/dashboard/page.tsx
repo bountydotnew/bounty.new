@@ -6,6 +6,7 @@ import { trpc } from "@/utils/trpc";
 import { authClient } from "@bounty/auth/client";
 import { useDevice } from "@/components/device-provider";
 import { Onboarding } from "@/components/onboarding";
+import { Glimpse, GlimpseContent, GlimpseDescription, GlimpseImage, GlimpseTitle, GlimpseTrigger } from "@/components/ui/kibo-ui/glimpse";
 
 // Dashboard components
 import { ErrorBoundary } from "@/components/dashboard/error-boundary";
