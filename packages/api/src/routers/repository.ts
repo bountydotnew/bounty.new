@@ -38,14 +38,17 @@ export const repositoryRouter = router({
       return github.getIssueFromUrl(input.url); 
     }),
   userRepos: publicProcedure
-    .input(z.object({ username: z.string() }))
+    .input(z.object({ username: z.string().trim().min(1, "username is required") }))
     .query(async ({ input }) => {
       try {
-        const username = input.username?.trim();
-        if (!username) return [];
-        return await github.getUserRepos(username);
-      } catch {
-        return [];
+        const data = await github.getUserRepos(input.username);
+        return { success: true, data };
+      } catch (err) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch user repositories",
+          cause: err,
+        });
       }
     }),
   searchIssues: publicProcedure
