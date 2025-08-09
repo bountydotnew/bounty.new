@@ -25,7 +25,7 @@ type MarkdownProps = {
     className?: string;
 };
 
-export default function Markdown({ children, className }: MarkdownProps) {
+export const Markdown = ({ children, className }: MarkdownProps) => {
     const { displayMd, attachments } = React.useMemo(() => {
         const lines = children.split(/\r?\n/);
         const atts: string[] = [];
