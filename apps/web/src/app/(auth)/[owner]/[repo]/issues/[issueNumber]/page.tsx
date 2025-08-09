@@ -56,7 +56,7 @@ export default function GithubIssueToBountyPage() {
 
       <CreateBountyModal
         open={createModalOpen}
-        onOpenChange={closeCreateModal}
+        onOpenChange={(o) => (o ? openCreateModal() : closeCreateModal())}
         initialValues={initialValues}
         redirectOnClose="/bounties"
         replaceOnSuccess
