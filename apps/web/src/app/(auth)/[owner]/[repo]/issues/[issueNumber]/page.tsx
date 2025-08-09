@@ -26,11 +26,10 @@ export default function GithubIssueToBountyPage() {
     trpc.repository.issueFromUrl.queryOptions({ url: issueUrl })
   );
   useEffect(() => {
-    if (!isLoading && !error) {
+    if (!isLoading && !error && data) {
       openCreateModal();
     }
-  }, [isLoading, error, openCreateModal]);
-
+  }, [isLoading, error, data, openCreateModal]);
   const initialValues = useMemo(() => {
     if (!data) return undefined;
     return {
