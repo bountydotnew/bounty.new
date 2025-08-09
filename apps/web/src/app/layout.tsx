@@ -16,14 +16,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://bounty.new'),
-  title: "bounty",
+  metadataBase: new URL("https://bounty.new"),
+  title: {
+    default: "bounty",
+    template: "%s | bounty",
+  },
   description: "Ship faster. Get paid instantly.",
   icons: {
     icon: '/icon.svg',
   },
   openGraph: {
-    title: "bounty",
+    title: {
+      default: "bounty",
+      template: "%s | bounty",
+    },
     description: "Ship faster. Get paid instantly.",
     url: "https://bounty.new",
     siteName: "bounty",
@@ -40,7 +46,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "bounty.new",
+    title: {
+      default: "bounty",
+      template: "%s | bounty",
+    },
     description: "Ship faster. Get paid instantly.",
     images: ["/og-image.png"],
   },
