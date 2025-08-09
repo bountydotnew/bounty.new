@@ -6,6 +6,7 @@ import { LINKS } from "@/constants/links";
 // import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
+import { AccessGate } from "@/components/access-gate";
 
 
 const betaNavigationLinks = [
@@ -18,8 +19,6 @@ const productionNavigationLinks = [
 ];
 
 export function Header() {
-  const userData = useQuery(trpc.user.getMe.queryOptions());
-  const navigationLinks = userData.data?.betaAccessStatus === "approved" ? betaNavigationLinks : productionNavigationLinks;
 
 
   return (
@@ -33,18 +32,36 @@ export function Header() {
         {/* <SidebarTrigger /> */}
         <nav className="flex items-center">
           <div className="flex items-center gap-6">
-            {navigationLinks.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
-                  "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {label}
-              </Link>
-            ))}
+            <AccessGate 
+              stage="beta"
+              fallback={
+                productionNavigationLinks.map(({ href, label }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={cn(
+                      "text-sm font-medium transition-colors hover:text-primary",
+                      "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {label}
+                  </Link>
+                ))
+              }
+            >
+              {betaNavigationLinks.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    "text-sm font-medium transition-colors hover:text-primary",
+                    "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {label}
+                </Link>
+              ))}
+            </AccessGate>
           </div>
         </nav>
       </div>

@@ -260,6 +260,7 @@ export const userRouter = router({
             role: user.role,
             hasAccess: user.hasAccess,
             betaAccessStatus: user.betaAccessStatus,
+            accessStage: user.accessStage,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
           })

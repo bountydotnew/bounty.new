@@ -14,6 +14,7 @@ import { BetaAccessScreen } from "@/components/dashboard/beta-access-screen";
 import { BountiesFeed } from "@/components/dashboard/bounties-feed";
 import { MyBountiesSidebar } from "@/components/dashboard/my-bounties-sidebar";
 import { ActivitySidebar } from "@/components/dashboard/activity-sidebar";
+import { AccessGate } from "@/components/access-gate";
 
 // Constants and types
 import { PAGINATION_LIMITS, PAGINATION_DEFAULTS } from "@/constants/dashboard";
@@ -69,52 +70,50 @@ export default function Dashboard() {
     return <LoadingState message="Loading dashboard..." />;
   }
 
-  // Beta access check
-  if (userData.data?.betaAccessStatus !== "approved") {
-    return (
-      <ErrorBoundary>
-        <BetaAccessScreen
-          userData={userData.data}
-          sessionUserName={session?.user.name}
-          existingSubmission={existingSubmission.data}
-          isMobile={isMobile}
-          onSubmissionRefetch={handleSubmissionRefetch}
-        />
-      </ErrorBoundary>
-    );
-  }
-
   return (
     <ErrorBoundary>
-      <Onboarding />
-      <div className="bg-background">
-        <div className="container mx-auto px-4 py-4 rounded-lg">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:h-[calc(100vh-8rem)] rounded-lg py-4">
-            {/* Center - Bounties Feed */}
-            <div className="lg:col-span-2 lg:overflow-y-auto lg:h-full rounded-lg">
-              <BountiesFeed
-                bounties={bounties.data?.data as Bounty[] | undefined}
-                isLoading={bounties.isLoading}
-                isError={bounties.isError}
-                error={bounties.error as Error | null | undefined}
-                onBountyClick={handleBountyClick}
-              />
-            </div>
-
-            {/* Right Sidebar - Activity & My Bounties */}
-            <div className="lg:col-span-1 lg:overflow-y-auto lg:h-full rounded-lg">
-              <div className="space-y-6 lg:pr-2">
-                <ActivitySidebar />
-                <MyBountiesSidebar
-                  myBounties={myBounties.data?.data as Bounty[] | undefined}
-                  isLoading={myBounties.isLoading}
+      <AccessGate 
+        stage="beta" 
+        fallback={
+          <BetaAccessScreen
+            userData={userData.data}
+            sessionUserName={session?.user.name}
+            existingSubmission={existingSubmission.data}
+            isMobile={isMobile}
+            onSubmissionRefetch={handleSubmissionRefetch}
+          />
+        }
+      >
+        <Onboarding />
+        <div className="bg-background">
+          <div className="container mx-auto px-4 py-4 rounded-lg">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:h-[calc(100vh-8rem)] rounded-lg py-4">
+              {/* Center - Bounties Feed */}
+              <div className="lg:col-span-2 lg:overflow-y-auto lg:h-full rounded-lg">
+                <BountiesFeed
+                  bounties={bounties.data?.data as Bounty[] | undefined}
+                  isLoading={bounties.isLoading}
+                  isError={bounties.isError}
+                  error={bounties.error as Error | null | undefined}
                   onBountyClick={handleBountyClick}
                 />
+              </div>
+
+              {/* Right Sidebar - Activity & My Bounties */}
+              <div className="lg:col-span-1 lg:overflow-y-auto lg:h-full rounded-lg">
+                <div className="space-y-6 lg:pr-2">
+                  <ActivitySidebar />
+                  <MyBountiesSidebar
+                    myBounties={myBounties.data?.data as Bounty[] | undefined}
+                    isLoading={myBounties.isLoading}
+                    onBountyClick={handleBountyClick}
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </AccessGate>
     </ErrorBoundary>
   );
 }
