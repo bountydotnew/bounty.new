@@ -2,10 +2,11 @@ import { auth } from "./server";
 import { Polar } from "@polar-sh/sdk";
 
 const polarEnv = process.env.NODE_ENV === "production" ? "production" : "sandbox";
-const polarClient = new Polar({
-  accessToken: process.env.POLAR_ACCESS_TOKEN as string,
-  server: polarEnv,
-});
+const token = process.env.POLAR_ACCESS_TOKEN;
+if (!token) {
+  throw new Error("[auth/customer-ensure] Missing POLAR_ACCESS_TOKEN");
+}
+const polarClient = new Polar({ accessToken: token, server: polarEnv });
 
 export const customerEnsure = auth.createRoute({
   method: "POST",
