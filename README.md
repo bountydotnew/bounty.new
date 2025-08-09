@@ -46,6 +46,10 @@ bounty.new connects talented developers with rewarding opportunities through str
 - Turborepo monorepo
 - TypeScript throughout
 
+**Frontend**
+- Blog powered by [Marble](https://marblecms.com?utm_source=bountydotnew), Headless CMS.
+- Analytics by [Databuddy](https://www.databuddy.cc?utm_source=bountydotnew), 100% Anonymized and Non-invasive.
+
 ## Quick Start
 
 **Prerequisites**
@@ -71,6 +75,8 @@ DATABASE_URL="postgresql://username:password@localhost:5432/bounty_new"
 BETTER_AUTH_SECRET="your-secret-key"
 GITHUB_CLIENT_ID="your-github-client-id"
 GITHUB_CLIENT_SECRET="your-github-client-secret"
+NEXT_PUBLIC_MARBLE_API_URL="https://api.marblecms.com"
+MARBLE_WORKSPACE_KEY="your-workspace-key"
 
 # Initialize database and start
 bun db:push

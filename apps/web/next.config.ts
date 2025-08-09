@@ -38,11 +38,20 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "s2.googleusercontent.com"
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.marblecms.com',
+      },
     ],
   },
   async rewrites() {
     return [
+      // PostHog rewrites
       {
         source: "/ingest/static/:path*",
         destination: "https://us-assets.i.posthog.com/static/:path*",

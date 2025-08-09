@@ -1,12 +1,18 @@
 {
   "name": "bounty.new",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
+    "catalog": { 
+      "@octokit/plugin-rest-endpoint-methods": "16.0.0"
+    }
+  },
   "scripts": {
     "dev": "dotenv -- turbo dev",
+    "start": "dotenv -- turbo start",
     "build": "dotenv -- turbo build",
     "check-types": "dotenv -- turbo check-types",
     "dev:web": "dotenv -- turbo -F web dev",
@@ -20,10 +26,12 @@
     "@hookform/resolvers": "^5.1.1",
     "@number-flow/react": "^0.5.10",
     "@t3-oss/env-nextjs": "^0.13.8",
+    "better-auth": "1.3.0",
     "posthog-js": "^1.257.0",
     "posthog-node": "^5.5.1",
     "react-hook-form": "^7.58.1",
     "react-markdown": "^10.1.0",
+    "react-svg-credit-card-payment-icons": "^4.0.0",
     "recharts": "^3.0.0",
     "usehooks-ts": "^3.1.1",
     "vaul": "^1.1.2",

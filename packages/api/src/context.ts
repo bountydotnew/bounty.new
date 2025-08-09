@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { auth } from "@bounty/auth";
+import { auth } from "@bounty/auth/server";
 import { db } from "@bounty/db";
 
 function getClientIP(req: NextRequest): string {

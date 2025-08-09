@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "bounty.new",
+  title: "bounty.new - Login",
   description: "Ship fast, get paid faster.",  
   icons: {
     icon: "/icon.svg",
@@ -9,8 +9,8 @@ export const metadata: Metadata = {
   openGraph: {
     title: "bounty.new - Login",
     description: "Ship fast, get paid faster.",
-    url: "https://bounty.new",
-    siteName: "bounty.new",
+    url: "https://bounty.new/login",
+    siteName: "bounty.new - Login",
     images: [
       {
         url: "/ogimage.png",

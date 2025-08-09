@@ -17,10 +17,11 @@ import { betaApplicationSchema, betaApplicationDefaults, type BetaApplicationFor
 interface BetaApplicationFormProps {
   onSubmit?: (data: BetaApplicationForm) => void;
   onCancel?: () => void;
+  onSuccess?: () => void;
   className?: string;
 }
 
-export function BetaApplicationForm({ onSubmit, onCancel, className }: BetaApplicationFormProps) {
+export function BetaApplicationForm({ onSubmit, onCancel, onSuccess, className }: BetaApplicationFormProps) {
   const {
     register,
     handleSubmit,
@@ -43,11 +44,14 @@ export function BetaApplicationForm({ onSubmit, onCancel, className }: BetaAppli
     onSuccess: () => {
       toast.success("Application submitted successfully!");
       reset();
+      if (onSuccess) {
+        onSuccess();
+      }
       if (onSubmit) {
         onSubmit({} as BetaApplicationForm);
       }
-        },
-            onError: (error: TRPCClientErrorLike<AppRouter>) => {
+    },
+    onError: (error: TRPCClientErrorLike<AppRouter>) => {
       toast.error(error.message || "Failed to submit application. Please try again.");
     },
   });

@@ -1,4 +1,4 @@
-import { auth } from "@bounty/auth";
+import { auth } from "@bounty/auth/server";
 import { toNextJsHandler } from "better-auth/next-js";
 import { grim } from "@bounty/dev-logger";
 

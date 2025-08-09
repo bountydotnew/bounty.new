@@ -11,3 +11,6 @@ apps/server/_.env.local
 /apps/server
 /packages/dev-logger/dist
 /.kiro
+/.crush
+AGENT.md
+CODEBASE_RULES.md

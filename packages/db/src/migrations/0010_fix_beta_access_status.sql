@@ -1,0 +1,1 @@
+ALTER TABLE "user" ALTER COLUMN "beta_access_status" TYPE "beta_access_status" USING "beta_access_status"::text::"beta_access_status"; 

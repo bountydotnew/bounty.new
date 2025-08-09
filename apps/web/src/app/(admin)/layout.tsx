@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 // import { redirect } from "next/navigation";
-//import { authClient } from "@/lib/auth-client";
+//import { authClient } from "@bounty/auth/client";
 
 export const metadata: Metadata = {
   title: "Admin - bounty.new",
