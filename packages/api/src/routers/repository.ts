@@ -32,4 +32,45 @@ export const repositoryRouter = router({
     .query(async ({ input }) => {
       return github.getBiggestCommitByUser(input.repo, input.username);
     }),
+  issueFromUrl: publicProcedure
+    .input(z.object({ url: z.string().url() }))
+    .query(async ({ input }) => {
+      try {
+        const data = await github.getIssueFromUrl(input.url);
+        return { success: true, data };
+      } catch (err) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Failed to resolve issue from URL",
+          cause: err,
+        });
+      }
+    }),
+  userRepos: publicProcedure
+    .input(z.object({ username: z.string().trim().min(1, "username is required") }))
+    .query(async ({ input }) => {
+      try {
+        const data = await github.getUserRepos(input.username);
+        return { success: true, data };
+      } catch (err) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch user repositories",
+          cause: err,
+        });
+      }
+    }),
+  searchIssues: publicProcedure
+    .input(z.object({ owner: z.string(), repo: z.string(), q: z.string().optional() }))
+    .query(async ({ input }) => {
+      try {
+        const owner = input.owner?.trim();
+        const repo = input.repo?.trim();
+        const q = (input.q || "").trim();
+        if (!owner || !repo || !q) return [];
+        return await github.searchIssues(owner, repo, q);
+      } catch {
+        return [];
+      }
+    }),
 });

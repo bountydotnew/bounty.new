@@ -12,6 +12,7 @@ import { ArrowRight } from 'lucide-react';
 import { authClient } from "@bounty/auth/client";
 import Bounty from "@/components/icons/bounty";
 import { useConfetti } from "@/lib/context/confetti-context";
+import { Spinner } from "@/components/ui/spinner";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -165,7 +166,7 @@ export default function SuccessPage() {
         <div className="container mx-auto py-8">
           <Card>
             <CardContent className="p-6">
-              <p>Loading...</p>
+              <Spinner />
             </CardContent>
           </Card>
         </div>

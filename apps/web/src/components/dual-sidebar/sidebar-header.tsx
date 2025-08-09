@@ -3,9 +3,10 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { LINKS } from "@/constants/links";
-// import { SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 
 const betaNavigationLinks = [
@@ -20,6 +21,7 @@ const productionNavigationLinks = [
 export function Header() {
   const userData = useQuery(trpc.user.getMe.queryOptions());
   const navigationLinks = userData.data?.betaAccessStatus === "approved" ? betaNavigationLinks : productionNavigationLinks;
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
 
   return (
@@ -30,7 +32,7 @@ export function Header() {
       )}
     >
       <div className="flex items-center gap-6">
-        {/* <SidebarTrigger /> */}
+        {isMobile && <SidebarTrigger />}
         <nav className="flex items-center">
           <div className="flex items-center gap-6">
             {navigationLinks.map(({ href, label }) => (

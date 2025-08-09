@@ -10,17 +10,21 @@ import { Glimpse, GlimpseContent, GlimpseDescription, GlimpseImage, GlimpseTitle
 
 // Dashboard components
 import { ErrorBoundary } from "@/components/dashboard/error-boundary";
-import { LoadingState } from "@/components/dashboard/loading-state";
 import { BetaAccessScreen } from "@/components/dashboard/beta-access-screen";
 import { BountiesFeed } from "@/components/dashboard/bounties-feed";
 import { MyBountiesSidebar } from "@/components/dashboard/my-bounties-sidebar";
 import { ActivitySidebar } from "@/components/dashboard/activity-sidebar";
+import { Spinner } from "@/components/ui/spinner";
 
 // Constants and types
 import { PAGINATION_LIMITS, PAGINATION_DEFAULTS } from "@/constants/dashboard";
 import type { Bounty } from "@/types/dashboard";
-
+import { useRouter } from "next/navigation";
+import { LINKS } from "@/constants/links";
+  
 export default function Dashboard() {
+  const router = useRouter();
+
   // Memoized query options for better performance
   const bountiesQuery = useMemo(() => 
     trpc.bounties.fetchAllBounties.queryOptions({ 
@@ -55,9 +59,8 @@ export default function Dashboard() {
 
   // Memoized handlers
   const handleBountyClick = useCallback((bounty: Bounty) => {
-    // TODO: Navigate to bounty detail page
-    console.log('Navigate to bounty:', bounty.id);
-  }, []);
+    router.push(`/bounty/${bounty.id}`);
+  }, [router]);
 
   const handleSubmissionRefetch = useCallback(() => {
     existingSubmission.refetch();
@@ -67,7 +70,11 @@ export default function Dashboard() {
   const isInitialLoading = bounties.isLoading || myBounties.isLoading || userData.isLoading;
   
   if (isInitialLoading) {
-    return <LoadingState message="Loading dashboard..." />;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Spinner />
+      </div>
+    );
   }
 
   // Beta access check

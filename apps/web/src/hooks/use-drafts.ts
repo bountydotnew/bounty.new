@@ -6,8 +6,6 @@ export interface StoredDraft {
   description: string
   amount: string
   createdAt: string
-  requirements: string
-  deliverables: string
 }
 
 const DRAFTS_STORAGE_KEY = "bounty-drafts"
@@ -25,7 +23,7 @@ export function useDrafts() {
     return stored ? JSON.parse(stored) : []
   }, [])
 
-  const saveDraft = useCallback((title: string, description: string, amount: string, requirements: string, deliverables: string): string => {
+  const saveDraft = useCallback((title: string, description: string, amount: string): string => {
     if (typeof window === "undefined") return ""
     
     const draftId = Date.now().toString()
@@ -35,8 +33,6 @@ export function useDrafts() {
       description,
       amount,
       createdAt: new Date().toISOString(),
-      requirements,
-      deliverables,
     }
 
     const existingDrafts = getDrafts()
