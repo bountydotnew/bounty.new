@@ -1,11 +1,13 @@
 const SOCIALS = {
-    GITHUB: "https://github.com/ripgrim/bounty.new",
+    GITHUB: "https://github.com/bountydotnew/bounty.new",
   };
   
   export const LINKS = {
     SOCIALS: SOCIALS,
     HOME: "/",
     DASHBOARD: "/dashboard",
+    ACCOUNT: "/settings",
+    SETTINGS: "/settings",
     LOGIN: "/login",
     CONTRIBUTORS: "/contributors",
     BLOG: "/blog",
@@ -14,9 +16,6 @@ const SOCIALS = {
     PRIVACY: "/privacy",
     CONTACT: "/contact",
     BOUNTY: {
-      CREATE: "/bounty/create",
-      EDIT: "/bounty/edit",
-      DELETE: "/bounty/delete",
       VIEW: "/bounty",
     },
     BOUNTIES: "/bounties",

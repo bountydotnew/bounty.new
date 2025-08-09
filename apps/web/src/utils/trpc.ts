@@ -19,7 +19,7 @@ export const queryClient = new QueryClient({
   }),
 });
 
-const trpcClient = createTRPCClient<AppRouter>({
+export const trpcClient = createTRPCClient<AppRouter>({
   links: [
     httpLink({
       url: `${process.env.NEXT_PUBLIC_API_URL || ""}/api/trpc`,

@@ -273,12 +273,15 @@ function SidebarTrigger({
 }: React.ComponentProps<typeof Button>) {
   const { toggleSidebar, isMobile } = useSidebar()
 
-  // Only run on client side
-  const sidebarWrapper = typeof document !== 'undefined' ? document.querySelector('[data-slot="sidebar-wrapper"]') : null
-  const variant = sidebarWrapper?.getAttribute('data-variant')
+  // Stable SSR/CSR: derive variant from context via data attribute passed on provider; avoid document.querySelector
+  // Render the same element on server and client and only no-op the click when icononly on desktop
 
-  if (variant === "icononly" && !isMobile) {
-    return null
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    onClick?.(event)
+    if (!(typeof window === 'undefined') && (document?.querySelector('[data-slot="sidebar-wrapper"]')?.getAttribute('data-variant') === 'icononly') && !isMobile) {
+      return
+    }
+    toggleSidebar()
   }
 
   return (
@@ -288,10 +291,7 @@ function SidebarTrigger({
       variant="outline"
       size="icon"
       className={cn("size-7", className)}
-      onClick={(event) => {
-        onClick?.(event)
-        toggleSidebar()
-      }}
+      onClick={handleClick}
       {...props}
     >
       <PanelLeftIcon />

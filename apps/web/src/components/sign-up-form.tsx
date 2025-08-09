@@ -1,4 +1,4 @@
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@bounty/auth/client";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
 import z from "zod/v4";

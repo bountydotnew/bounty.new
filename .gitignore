@@ -12,3 +12,8 @@ apps/server/_.env.local
 /packages/dev-logger/dist
 /.kiro
 /.crush
+AGENT.md
+CODEBASE_RULES.md
+lefthook.yml
+stagewise.json
+/.husky

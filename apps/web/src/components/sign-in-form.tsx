@@ -1,4 +1,4 @@
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@bounty/auth/client";
 import { toast } from "sonner";
 import Loader from "./loader";
 import { useState } from "react";

@@ -2,20 +2,21 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Sidebar from "@/components/dual-sidebar";
 import { DeviceProvider } from "@/components/device-provider";
+import RedirectToSignIn from "@/components/auth/redirect-to-signin";
 // import { SignedOut } from "@daveyplate/better-auth-ui";
 // import RedirectToSignIn from "@/components/auth/redirect-to-signin";
 
 export const metadata: Metadata = {
-  title: "bounty.new",
-  description: "bounty.new",
+  title: "bounty",
+  description: "bounty",
   icons: {
     icon: "/icon.svg",
   },
   openGraph: {
-    title: "bounty.new - App",
+    title: "bounty - App",
     description: "Ship fast, get paid faster.",
-    url: "https://bounty.new",
-    siteName: "bounty.new",
+    url: "https://bounty",
+    siteName: "bounty",
     images: [
       {
         url: "/ogimage.png",
@@ -39,9 +40,7 @@ export default async function RootLayout({
     <>
       <DeviceProvider userAgent={userAgent}>
         <Sidebar>
-          {/* <SignedOut>
           <RedirectToSignIn />
-        </SignedOut> */}
           {children}
         </Sidebar>
       </DeviceProvider>

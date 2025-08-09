@@ -1,30 +1,10 @@
 "use client";
 
-import {
-  BadgeCheck,
-  Bell,
-  CreditCard,
-  LogOut,
-  Sparkles,
-} from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
-import { authClient } from "@/lib/auth-client";
-
+import { authClient } from "@bounty/auth/client";
+import { useState } from "react";
+import { toast } from "sonner";
+import { PricingDialog } from "@/components/billing/pricing-dialog";
+import { AccountDropdown } from "@/components/billing/account-dropdown";
 
 export function NavUser({
   user,
@@ -35,73 +15,26 @@ export function NavUser({
     image: string | null;
   };
 }) {
-  const { isMobile } = useSidebar();
+  const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
+  const { data: session } = authClient.useSession();
+
+  const handleUpgrade = async () => {
+    if (!session?.user) {
+      toast.error("Please sign in to upgrade your account.");
+      return;
+    }
+
+    setPricingDialogOpen(true);
+  };
+
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton>
-              <div>
-                <Avatar className="h-8 w-8 rounded-lg">
-                  {user.image && <AvatarImage src={user.image} alt={user.name} />}
-                  <AvatarFallback className="rounded-lg">{user.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                {/* <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
-                </div> */}
-              </div>
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
-            align="end"
-            sideOffset={4}
-          >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  {user.image && <AvatarImage src={user.image} alt={user.name} />}
-                  <AvatarFallback className="rounded-lg">{user.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
-                </div>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => authClient.signOut()}>
-              <LogOut />
-              Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
+    <>
+      <AccountDropdown user={user} onUpgradeClick={handleUpgrade} />
+      
+      <PricingDialog
+        open={pricingDialogOpen}
+        onOpenChange={setPricingDialogOpen}
+      />
+    </>
   );
 }
