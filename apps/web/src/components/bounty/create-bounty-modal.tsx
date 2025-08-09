@@ -68,13 +68,9 @@ export function CreateBountyModal({ open, onOpenChange, draftId, initialValues, 
 
   useEffect(() => {
     if (open && initialValues) {
-      Object.entries(initialValues).forEach(([k, v]) => {
-        // @ts-expect-error runtime set
-        setValue(k, v as any);
-      });
+      reset({ ...createBountyDefaults, ...initialValues });
     }
-  }, [open, initialValues, setValue]);
-
+  }, [open, initialValues, reset]);
   const createBounty = useMutation({
     ...trpc.bounties.createBounty.mutationOptions(),
     onSuccess: (result) => {
