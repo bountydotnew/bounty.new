@@ -6,6 +6,10 @@ import { cn } from "@/lib/utils";
 import { LINKS } from "@/constants/links";
 import { AccessGate } from "@/components/access-gate";
 // import { SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useQuery } from "@tanstack/react-query";
+import { trpc } from "@/utils/trpc";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 type NavItem = { href: string; label: string };
 
@@ -37,6 +41,9 @@ const productionNavigationLinks = [
 ];
 
 export const Header = () => {
+  const userData = useQuery(trpc.user.getMe.queryOptions());
+  const navigationLinks = userData.data?.betaAccessStatus === "approved" ? betaNavigationLinks : productionNavigationLinks;
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
 
   return (
@@ -47,7 +54,7 @@ export const Header = () => {
       )}
     >
       <div className="flex items-center gap-6">
-        {/* <SidebarTrigger /> */}
+        {isMobile && <SidebarTrigger />}
         <nav className="flex items-center">
           <AccessGate
             stage="beta"

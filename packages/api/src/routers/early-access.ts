@@ -7,6 +7,8 @@ const { error, info, warn } = grim();
 
 import { db, waitlist } from "@bounty/db";
 import { publicProcedure, router, adminProcedure } from "../trpc";
+import { getRateLimiter } from "../lib/ratelimiter";
+import { getClientIP } from "../lib/utils";
 
 export const earlyAccessRouter = router({
   getWaitlistCount: publicProcedure.query(async () => {
@@ -36,10 +38,10 @@ export const earlyAccessRouter = router({
 
       // Database connection errors
       if (err instanceof Error) {
-        if (err.message.includes("connect") || err.message.includes("ECONNREFUSED")) {
+        if (err.message.includes("connect") || err.message.includes("ECONNREFUSED") || err.message.includes("timeout")) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Database connection failed",
+            message: "Database connection failed - please try again later",
           });
         }
 
@@ -51,10 +53,11 @@ export const earlyAccessRouter = router({
         }
       }
 
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Database error occurred",
-      });
+      // Return a default count instead of throwing an error
+      warn("[getWaitlistCount] Returning default count due to error:", err);
+      return {
+        count: 0,
+      };
     }
   }),
   // Simplified endpoint for adding emails to waitlist (rate limiting handled by web app)
@@ -64,8 +67,20 @@ export const earlyAccessRouter = router({
         email: z.string().email(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       try {
+        const limiter = getRateLimiter("waitlist");
+        if (limiter) {
+          const safeIp = ctx.clientIP || `anonymous-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+          const { success } = await limiter.limit(safeIp);
+
+          if (!success) {
+            throw new TRPCError({
+              code: "TOO_MANY_REQUESTS",
+              message: "Too many requests. Please try again later.",
+            });
+          }
+        }
         info("[addToWaitlist] Processing email:", input.email);
 
         const userAlreadyInWaitlist = await db.select().from(waitlist).where(eq(waitlist.email, input.email));
@@ -83,35 +98,35 @@ export const earlyAccessRouter = router({
         return { message: "You've been added to the waitlist!" };
       } catch (error: unknown) {
         warn("[addToWaitlist] Error:", error);
-        
+
         if (error instanceof Error && error.message.includes("unique constraint")) {
           throw new TRPCError({
             code: "CONFLICT",
             message: "Email already exists in waitlist",
           });
         }
-        
+
         if (error instanceof Error && error.message.includes("violates not-null constraint")) {
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "Invalid email format",
           });
         }
-        
+
         if (error instanceof Error && (error.message.includes("connect") || error.message.includes("ECONNREFUSED"))) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Database connection failed",
           });
         }
-        
+
         if (error instanceof Error && (error.message.includes("does not exist") || error.message.includes("relation"))) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Database table not found - migrations may not be applied",
           });
         }
-        
+
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to join waitlist",
@@ -120,11 +135,13 @@ export const earlyAccessRouter = router({
     }),
 
   getAdminWaitlist: adminProcedure
-    .input(z.object({
-      page: z.number().min(1).default(1),
-      limit: z.number().min(1).max(100).default(20),
-      search: z.string().optional(),
-    }))
+    .input(
+      z.object({
+        page: z.number().min(1).default(1),
+        limit: z.number().min(1).max(100).default(20),
+        search: z.string().optional(),
+      })
+    )
     .query(async ({ input }) => {
       try {
         const { page, limit, search } = input;
@@ -140,10 +157,13 @@ export const earlyAccessRouter = router({
         const totalCount = await db.select({ count: count() }).from(waitlist);
         const total = totalCount[0]?.count || 0;
 
-        const stats = await db.select({
-          total: count(),
-          withAccess: count(),
-        }).from(waitlist).where(eq(waitlist.hasAccess, true));
+        const stats = await db
+          .select({
+            total: count(),
+            withAccess: count(),
+          })
+          .from(waitlist)
+          .where(eq(waitlist.hasAccess, true));
 
         const totalWithAccess = stats[0]?.withAccess || 0;
 
@@ -169,18 +189,17 @@ export const earlyAccessRouter = router({
     }),
 
   updateWaitlistAccess: adminProcedure
-    .input(z.object({
-      id: z.string(),
-      hasAccess: z.boolean(),
-    }))
+    .input(
+      z.object({
+        id: z.string(),
+        hasAccess: z.boolean(),
+      })
+    )
     .mutation(async ({ input }) => {
       try {
         const { id, hasAccess } = input;
 
-        await db
-          .update(waitlist)
-          .set({ hasAccess })
-          .where(eq(waitlist.id, id));
+        await db.update(waitlist).set({ hasAccess }).where(eq(waitlist.id, id));
 
         info("[updateWaitlistAccess] Updated access for ID:", id, "hasAccess:", hasAccess);
         return { success: true };

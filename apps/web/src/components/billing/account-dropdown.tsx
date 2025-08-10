@@ -31,6 +31,8 @@ import { toast } from "sonner";
 import { LINKS } from "@/constants/links";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
+import { UserIcon } from "@/components/ui/user";
+import { BellIcon } from "@/components/ui/bell";
 
 // Constants for better maintainability
 const MESSAGES = {
@@ -45,7 +47,7 @@ const MESSAGES = {
 
 const MENU_ITEMS = {
   UPGRADE: "Upgrade to Pro",
-  ACCOUNT: "Account", 
+  ACCOUNT: "Account",
   BILLING: "Billing",
   NOTIFICATIONS: "Notifications",
   LOGOUT: "Log out",
@@ -140,8 +142,8 @@ const UserAvatar = React.memo<{
 }>(({ userDisplay, isLoading, className = "h-8 w-8 rounded-lg" }) => (
   <Avatar className={className}>
     {userDisplay.image && (
-      <AvatarImage 
-        src={userDisplay.image} 
+      <AvatarImage
+        src={userDisplay.image}
         alt={userDisplay.name}
         onError={(e) => {
           // Fallback to initials if image fails to load
@@ -213,7 +215,7 @@ const UpgradeMenuItem = React.memo<{
 
   if (!isPro) {
     return (
-      <DropdownMenuItem 
+      <DropdownMenuItem
         onClick={onUpgradeClick}
         aria-label="Upgrade to Pro plan"
       >
@@ -234,7 +236,7 @@ export function AccountDropdown({ user, onUpgradeClick }: AccountDropdownProps) 
   const { isMobile } = useSidebar();
   const { data: session } = authClient.useSession();
   const { isPro, isLoading: isBillingLoading } = useBilling();
-  
+
   // Custom hooks for better separation of concerns
   const userDisplay = useUserDisplay(session?.user, user);
   const handleBillingPortal = useBillingPortal();
@@ -269,16 +271,16 @@ export function AccountDropdown({ user, onUpgradeClick }: AccountDropdownProps) 
               </div>
             </SidebarMenuButton>
           </DropdownMenuTrigger>
-          
+
           <DropdownMenuContent {...dropdownProps}>
             <DropdownHeader
               userDisplay={userDisplay}
               isPro={isPro}
               isLoading={isBillingLoading}
             />
-            
+
             <DropdownMenuSeparator />
-            
+
             {/* Upgrade section */}
             <DropdownMenuGroup>
               <UpgradeMenuItem
@@ -287,17 +289,17 @@ export function AccountDropdown({ user, onUpgradeClick }: AccountDropdownProps) 
                 onUpgradeClick={onUpgradeClick}
               />
             </DropdownMenuGroup>
-            
+
             {/* Account actions */}
             <DropdownMenuGroup>
-              <DropdownMenuItem 
-              onClick={handleAccountClick}
+              <DropdownMenuItem
+                onClick={handleAccountClick}
                 aria-label="View account settings">
-                <BadgeCheck />
+                <UserIcon />
                 {MENU_ITEMS.ACCOUNT}
               </DropdownMenuItem>
-              
-              <DropdownMenuItem 
+
+              <DropdownMenuItem
                 onClick={handleBillingPortal}
                 disabled={isBillingLoading}
                 aria-label="Open billing portal"
@@ -305,17 +307,17 @@ export function AccountDropdown({ user, onUpgradeClick }: AccountDropdownProps) 
                 <CreditCard />
                 {isBillingLoading ? MESSAGES.LOADING : MENU_ITEMS.BILLING}
               </DropdownMenuItem>
-              
+
               <DropdownMenuItem aria-label="View notifications">
-                <Bell />
+                <BellIcon />
                 {MENU_ITEMS.NOTIFICATIONS}
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            
+
             <DropdownMenuSeparator />
-            
+
             {/* Sign out */}
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onClick={handleSignOut}
               aria-label="Sign out of account"
               variant="destructive"

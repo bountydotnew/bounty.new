@@ -2,6 +2,7 @@
 
 import { Suspense } from "react";
 import Login from "@/components/bounty/login";
+import { Spinner } from "@/components/ui/spinner";
 
 function LoginContent() {
   
@@ -37,7 +38,9 @@ export default function LoginPage() {
   return (
     <div className="bg-landing-background mx-auto w-full">
       {/* <Header /> */}
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<div className="flex justify-center items-center h-screen">
+        <Spinner />
+      </div>}>
         <LoginContent />
       </Suspense>
     </div>

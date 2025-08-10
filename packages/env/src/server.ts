@@ -1,11 +1,12 @@
-import { createEnv } from '@t3-oss/env-nextjs';
-import { z } from 'zod/v4';
+import { createEnv } from "@t3-oss/env-nextjs";
+import { z } from "zod/v4";
 
 export const env = createEnv({
   server: {
-    // Database
-    DATABASE_URL: z.string().startsWith('postgresql://').or(z.string().startsWith('postgres://')),
-    // Auth
+    DATABASE_URL: z.string().refine(
+      (url) => url.startsWith("postgresql://") || url.startsWith("postgres://"),
+      { message: "DATABASE_URL must start with postgresql:// or postgres://" }
+    ),
     BETTER_AUTH_SECRET: z.string().min(1),
     BETTER_AUTH_URL: z.string().url(),
     GITHUB_TOKEN: z.string().min(1),
@@ -13,7 +14,7 @@ export const env = createEnv({
     GITHUB_CLIENT_ID: z.string().min(1),
     GITHUB_CLIENT_SECRET: z.string().min(1),
     // Rate limiting
-    UNKEY_ROOT_KEY: z.string().min(1).optional(),
+    UNKEY_ROOT_KEY: z.string().min(1),
     // Discord webhook
     DISCORD_WEBHOOK_URL: z.string().url().optional(),
     // Node environment
@@ -26,7 +27,5 @@ export const env = createEnv({
     POLAR_WEBHOOK_SECRET: z.string().min(1),
   },
   experimental__runtimeEnv: process.env,
-  skipValidation: !!process.env.SKIP_ENV_VALIDATION || process.env.NODE_ENV === 'test',
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION || process.env.NODE_ENV === "test",
 });
-
-

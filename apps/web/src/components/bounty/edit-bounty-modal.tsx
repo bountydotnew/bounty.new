@@ -16,6 +16,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
 import { 
   createBountySchema, 
   CreateBountyForm, 
@@ -34,6 +35,7 @@ interface EditBountyModalProps {
 
 export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModalProps) {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const bountyQuery = useQuery({
     ...trpc.bounties.fetchBountyById.queryOptions({ id: bountyId }),
@@ -53,8 +55,6 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
       
       setValue("title", bounty.title);
       setValue("description", bounty.description);
-      setValue("requirements", bounty.requirements || "");
-      setValue("deliverables", bounty.deliverables || "");
       setValue("amount", bounty.amount.toString());
       setValue("currency", bounty.currency);
       setValue("difficulty", bounty.difficulty);
@@ -71,13 +71,17 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
       toast.success("Bounty updated successfully!");
       
       // Invalidate all bounty-related queries to trigger refetch
-      // Invalidate all bounty-related queries to trigger refetch
       queryClient.invalidateQueries({
         queryKey: ["bounties"],
         type: "all"
       });
+      // Invalidate and refetch the specific bounty detail query
+      const detailKey = trpc.bounties.fetchBountyById.queryOptions({ id: bountyId }).queryKey;
+      queryClient.invalidateQueries({ queryKey: detailKey });
+      queryClient.refetchQueries({ queryKey: detailKey });
       
       onOpenChange(false);
+      router.refresh();
     },
     onError: (error) => {
       toast.error(`Failed to update bounty: ${error.message}`);
@@ -105,9 +109,9 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
   if (bountyQuery.isLoading) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-2xl" showOverlay>
-          <div className="flex items-center justify-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <DialogContent className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg max-h-[75vh] overflow-y-auto p-0 sm:rounded-lg" showOverlay>
+          <div className="flex items-center justify-center h-40">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
           </div>
         </DialogContent>
       </Dialog>
@@ -117,9 +121,9 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
   if (bountyQuery.error || !bountyQuery.data?.data) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-md" showOverlay>
-          <DialogHeader>
-            <DialogTitle>Error</DialogTitle>
+        <DialogContent className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg p-0 sm:rounded-lg" showOverlay>
+          <DialogHeader className="px-6 pt-6">
+            <DialogTitle className="text-xl">Error</DialogTitle>
           </DialogHeader>
           <p className="text-center text-muted-foreground">
             Failed to load bounty data. Please try again.
@@ -136,13 +140,13 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" showOverlay>
-        <DialogHeader>
-          <DialogTitle>Edit Bounty</DialogTitle>
+      <DialogContent className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg max-h-[75vh] overflow-y-auto p-0 sm:rounded-lg" showOverlay>
+        <DialogHeader className="px-6 pt-6">
+          <DialogTitle className="text-xl">Edit Bounty</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div>
+        <form onSubmit={onSubmit} className="px-6 pb-6 space-y-6">
+          <div className="space-y-2">
             <Label htmlFor="title">Title *</Label>
             <Controller
               name="title"
@@ -161,7 +165,7 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
             )}
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="description">Description *</Label>
             <Controller
               name="description"
@@ -172,9 +176,7 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
                   id="description"
                   rows={3}
                   placeholder="Describe what needs to be done"
-                  className={`w-full px-3 py-2 border rounded-md ${
-                    errors.description ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-md ${errors.description ? "border-red-500" : "border-border"}`}
                 />
               )}
             />
@@ -183,52 +185,12 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
             )}
           </div>
 
-          <div>
-            <Label htmlFor="requirements">Requirements *</Label>
-            <Controller
-              name="requirements"
-              control={control}
-              render={({ field }) => (
-                <textarea
-                  {...field}
-                  id="requirements"
-                  rows={2}
-                  placeholder="List the technical requirements"
-                  className={`w-full px-3 py-2 border rounded-md ${
-                    errors.requirements ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-              )}
-            />
-            {errors.requirements && (
-              <p className="text-red-500 text-sm mt-1">{errors.requirements.message}</p>
-            )}
-          </div>
+          {/* temporarily removed requirements */}
 
-          <div>
-            <Label htmlFor="deliverables">Deliverables *</Label>
-            <Controller
-              name="deliverables"
-              control={control}
-              render={({ field }) => (
-                <textarea
-                  {...field}
-                  id="deliverables"
-                  rows={2}
-                  placeholder="What should be delivered?"
-                  className={`w-full px-3 py-2 border rounded-md ${
-                    errors.deliverables ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-              )}
-            />
-            {errors.deliverables && (
-              <p className="text-red-500 text-sm mt-1">{errors.deliverables.message}</p>
-            )}
-          </div>
+          {/* temporarily removed deliverables */}
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="amount">Amount *</Label>
               <Controller
                 name="amount"
@@ -247,7 +209,7 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
               )}
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="currency">Currency</Label>
               <Controller
                 name="currency"
@@ -256,7 +218,7 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
                   <select
                     {...field}
                     id="currency"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border rounded-md"
                   >
                     {currencyOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -269,7 +231,7 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
             </div>
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="difficulty">Difficulty *</Label>
             <Controller
               name="difficulty"
@@ -278,9 +240,7 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
                 <select
                   {...field}
                   id="difficulty"
-                  className={`w-full px-3 py-2 border rounded-md ${
-                    errors.difficulty ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-md ${errors.difficulty ? "border-red-500" : "border-border"}`}
                 >
                   {difficultyOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -295,7 +255,7 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
             )}
           </div>
 
-          <div>
+          {/* <div className="space-y-2">
             <Label htmlFor="deadline">Deadline (Optional)</Label>
             <Controller
               name="deadline"
@@ -312,9 +272,9 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
             {errors.deadline && (
               <p className="text-red-500 text-sm mt-1">{errors.deadline.message}</p>
             )}
-          </div>
+          </div> */}
 
-          <div>
+          {/* <div className="space-y-2">
             <Label htmlFor="tags">Tags (Optional)</Label>
             <Input
               id="tags"
@@ -325,9 +285,9 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
             <p className="text-sm text-gray-500 mt-1">
               Enter tags separated by commas
             </p>
-          </div>
+          </div> */}
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="repositoryUrl">Repository URL (Optional)</Label>
             <Controller
               name="repositoryUrl"
@@ -347,7 +307,7 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
             )}
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="issueUrl">Issue URL (Optional)</Label>
             <Controller
               name="issueUrl"
@@ -367,7 +327,7 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
             )}
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="mt-6">
             <Button
               type="button"
               variant="outline"

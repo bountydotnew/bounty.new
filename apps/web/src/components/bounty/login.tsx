@@ -47,6 +47,7 @@ const cards = {
 
 export default function Login() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();
@@ -89,6 +90,7 @@ export default function Login() {
 
   const handleGitHubSignIn = async () => {
     try {
+      setLoading(true)
       await authClient.signIn.social(
         {
           provider: "github",
@@ -100,11 +102,13 @@ export default function Login() {
           },
           onError: (error) => {
             toast.error(error.error.message || "Sign in failed");
+            setLoading(false)
           },
         }
       );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Sign in failed");
+      setLoading(false)
     }
   };
 
@@ -212,10 +216,15 @@ export default function Login() {
               <div className="bg-[#1D1D1D] flex flex-col justify-center items-center rounded-xl p-6 md:p-8 space-y-4 shadow-[0px_23px_38.1px_-5px_rgba(12,12,13,0.10)]">
                 <Button
                   onClick={handleGitHubSignIn}
+                  disabled={loading}
                   className="oauthButton w-full max-w-[466px] min-w-[240px] h-12 px-6 py-3 bg-[#303030] text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
                 >
-                  <GithubIcon className="w-5 h-5 fill-white" />
-                  Continue with GitHub
+                  {loading ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <GithubIcon className="w-5 h-5 fill-white" />
+                  )}
+                  {loading ? 'Signing in…' : 'Continue with GitHub'}
                 </Button>
                 <Button
                   onClick={handleGoogleSignIn}
@@ -233,11 +242,12 @@ export default function Login() {
                 </Button>
                 <Button
                   onClick={handlePasskeySignIn}
+                  disabled={loading}
                   variant="text"
                   className="h-4 px-6 text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom"
                 >
                   <Key className="w-6 h-6" />
-                  Have a passkey?
+                  {loading ? 'Signing in…' : 'Have a passkey?'}
                 </Button>
                 <p className="text-center text-sm text-[#757575] mt-8 ">
                   {"By continuing, you accept our "}

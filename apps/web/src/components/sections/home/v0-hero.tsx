@@ -202,6 +202,7 @@ export default function BountyPlatform() {
                 </div>
               </div>
             </motion.div>
+            <p className="text-[10px] md:text-xs text-white/40 pt-2 max-w-2xl mx-auto text-center">Statistics shown are fictitious and for artistic/demo purposes only.</p>
           </div>
         </div>
       </section>
