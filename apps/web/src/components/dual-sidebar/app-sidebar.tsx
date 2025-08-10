@@ -28,14 +28,14 @@ import Bounty from "../icons/bounty";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { LINKS } from "@/constants/links";
+import { AccessGate } from "@/components/access-gate";
 import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
 import { SettingsIcon } from "@/components/ui/settings";
 import { BookTextIcon } from "@/components/ui/book-text";
 
-export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
+export const AppSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
   const pathname = usePathname();
-  const userData = useQuery(trpc.user.getMe.queryOptions());
 
   function isActive(path: string) {
     return pathname === path;
@@ -175,8 +175,6 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   }
 
 
-  const data = userData.data?.betaAccessStatus === "approved" ? productionData : betaData;
-
   return (
     <Sidebar variant="icononly" {...props}>
       <SidebarHeader>
@@ -187,7 +185,12 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <Divider className="h-[2px] w-8 my-2 bg-white" />
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <AccessGate 
+          stage="beta"
+          fallback={<NavMain items={betaData.navMain} />}
+        >
+          <NavMain items={productionData.navMain} />
+        </AccessGate>
         {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
       <SidebarFooter>

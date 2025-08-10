@@ -1,13 +1,35 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import Link from "next/link";
+
+import { cn } from "@/lib/utils";
 import { LINKS } from "@/constants/links";
+import { AccessGate } from "@/components/access-gate";
+// import { SidebarTrigger } from "@/components/ui/sidebar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
+type NavItem = { href: string; label: string };
+
+const NavLinks = ({ items }: { items: ReadonlyArray<NavItem> }) => (
+  <ul className="flex items-center gap-6">
+    {items.map(({ href, label }) => (
+      <li key={href}>
+        <Link
+          href={href}
+          className={cn(
+            "text-sm font-medium transition-colors hover:text-primary",
+            "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {label}
+        </Link>
+      </li>
+    ))}
+  </ul>
+);
 
 const betaNavigationLinks = [
   { href: LINKS.DASHBOARD, label: "Dashboard" },
@@ -18,7 +40,7 @@ const productionNavigationLinks = [
   { href: LINKS.DASHBOARD, label: "Apply for Beta Testing" }
 ];
 
-export function Header() {
+export const Header = () => {
   const userData = useQuery(trpc.user.getMe.queryOptions());
   const navigationLinks = userData.data?.betaAccessStatus === "approved" ? betaNavigationLinks : productionNavigationLinks;
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -34,20 +56,12 @@ export function Header() {
       <div className="flex items-center gap-6">
         {isMobile && <SidebarTrigger />}
         <nav className="flex items-center">
-          <div className="flex items-center gap-6">
-            {navigationLinks.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
-                  "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
+          <AccessGate
+            stage="beta"
+            fallback={<NavLinks items={productionNavigationLinks} />}
+          >
+            <NavLinks items={betaNavigationLinks} />
+          </AccessGate>
         </nav>
       </div>
     </header>

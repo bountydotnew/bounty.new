@@ -8,6 +8,13 @@ export const betaAccessStatusEnum = pgEnum("beta_access_status", [
   "denied"
 ]);
 
+export const accessStageEnum = pgEnum("access_stage", [
+  "none",
+  "alpha", 
+  "beta",
+  "production"
+]);
+
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -16,6 +23,7 @@ export const user = pgTable("user", {
   image: text("image"),
   hasAccess: boolean("has_access").notNull().default(false),
   betaAccessStatus: betaAccessStatusEnum("beta_access_status").notNull().default("none"),
+  accessStage: accessStageEnum("access_stage").notNull().default("none"),
   role: text("role").notNull().default("user"),
   // Note: Consider using timestamptz for timezone-aware timestamps in production
   createdAt: timestamp("created_at").notNull().default(sql`now()`),
