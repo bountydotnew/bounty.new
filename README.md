@@ -67,10 +67,10 @@ bun install
 
 # Setup database
 createdb bounty_new
-cp apps/server/.env.example apps/server/.env
+cp packages/db/.env.example packages/db/.env
 cp apps/web/.env.example apps/web/.env
 
-# Configure environment (edit apps/server/.env)
+# Configure environment (edit packages/db/.env)
 DATABASE_URL="postgresql://username:password@localhost:5432/bounty_new"
 BETTER_AUTH_SECRET="your-secret-key"
 GITHUB_CLIENT_ID="your-github-client-id"
