@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
 import { CreateBountyModal } from "@/components/bounty/create-bounty-modal";
 import { useBountyModals } from "@/lib/bounty-utils";
-import { BountyDetailSkeleton } from "@/components/dashboard/skeletons/bounty-skeleton";
+import { BountyDetailSkeleton } from "@/components/dashboard/skeletons/bounty-detail-skeleton";
 
 export default function GithubIssueToBountyPage() {
   const params = useParams();
@@ -31,17 +31,17 @@ export default function GithubIssueToBountyPage() {
   const initialValues = useMemo(() => {
     if (!data) return undefined;
     return {
-      title: data.title || "",
-      description: (data.body || "").slice(0, 1000),
-      issueUrl: data.html_url,
-      repositoryUrl: `https://github.com/${data.owner}/${data.repo}`,
-      tags: Array.isArray(data.labels) ? data.labels.slice(0, 5) : [],
-      amount: data.detectedAmount || "",
-      currency: data.detectedCurrency || "USD",
+      title: data.data.title || "",
+      description: (data.data.body || "").slice(0, 1000),
+      issueUrl: data.data.html_url,
+      repositoryUrl: `https://github.com/${data.data.owner}/${data.data.repo}`,
+      tags: Array.isArray(data.data.labels) ? data.data.labels.slice(0, 5) : [],
+      amount: data.data.detectedAmount || "",
+      currency: data.data.detectedCurrency || "USD",
     };
   }, [data]);
 
-  console.warn("html", data?.body_html);
+  console.warn("html", data?.data.body_html);
 
   return (
     <div className="container mx-auto px-4 py-8">
