@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Shield, AlertCircle } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -31,10 +31,10 @@ function setCookie(name: string, value: string, days: number = 365) {
 
 function getCookie(name: string): string | null {
   const nameEQ = name + "=";
-  const ca = document.cookie.split(';');
+  const ca = document.cookie.split(";");
   for (let i = 0; i < ca.length; i++) {
     let c = ca[i];
-    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+    while (c.charAt(0) === " ") c = c.substring(1, c.length);
     if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
   }
   return null;
@@ -51,11 +51,17 @@ function useWaitlistSubmission() {
   } | null>(null);
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async ({ email, fingerprintData }: { email: string; fingerprintData: thumbmarkResponse }) => {
-      const response = await fetch('/api/waitlist', {
-        method: 'POST',
+    mutationFn: async ({
+      email,
+      fingerprintData,
+    }: {
+      email: string;
+      fingerprintData: thumbmarkResponse;
+    }) => {
+      const response = await fetch("/api/waitlist", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, fingerprintData }),
       });
@@ -63,7 +69,7 @@ function useWaitlistSubmission() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to join waitlist');
+        throw new Error(data.error || "Failed to join waitlist");
       }
 
       return data;
@@ -78,12 +84,12 @@ function useWaitlistSubmission() {
       const cookieData = {
         submitted: true,
         timestamp: new Date().toISOString(),
-        email: btoa(variables.email).substring(0, 16)
+        email: btoa(variables.email).substring(0, 16),
       };
       setCookie("waitlist_data", JSON.stringify(cookieData), 365);
 
       celebrate();
-      
+
       if (data.warning) {
         toast.warning(`${data.message} - ${data.warning}`);
       } else {
@@ -101,12 +107,16 @@ function useWaitlistSubmission() {
       }
     },
     onError: (error: Error) => {
-      console.error('Waitlist submission error:', error);
+      console.error("Waitlist submission error:", error);
 
       if (error.message.includes("Rate limit exceeded")) {
-        toast.error("You've reached the limit of 3 attempts per hour. Please try again later.");
+        toast.error(
+          "You've reached the limit of 3 attempts per hour. Please try again later.",
+        );
       } else if (error.message.includes("Invalid device fingerprint")) {
-        toast.error("Security validation failed. Please refresh the page and try again.");
+        toast.error(
+          "Security validation failed. Please refresh the page and try again.",
+        );
       } else {
         toast.error(error.message || "Something went wrong. Please try again.");
       }
@@ -122,12 +132,12 @@ function useWaitlistCount() {
     retry: 2,
     retryDelay: 1000,
   });
-  
-  return { 
-    count: query.data?.count ?? 0, 
+
+  return {
+    count: query.data?.count ?? 0,
     isLoading: query.isLoading,
     error: query.error,
-    isError: query.isError
+    isError: query.isError,
   };
 }
 
@@ -136,16 +146,21 @@ interface WaitlistFormProps {
 }
 
 export function WaitlistForm({ className }: WaitlistFormProps) {
-  const { register, handleSubmit, formState: { errors } } = useForm<FormSchema>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
     },
   });
 
-  const [fingerprintData, setFingerprintData] = useState<thumbmarkResponse | null>(null);
+  const [fingerprintData, setFingerprintData] =
+    useState<thumbmarkResponse | null>(null);
   const [fingerprintLoading, setFingerprintLoading] = useState(true);
-  const [fingerprintError, setFingerprintError] = useState<string | null>(null);
+  const [, setFingerprintError] = useState<string | null>(null);
 
   const waitlistSubmission = useWaitlistSubmission();
   const waitlistCount = useWaitlistCount();
@@ -157,7 +172,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
         const data = JSON.parse(waitlistData);
         if (data.submitted) {
           waitlistSubmission.setSuccess(true);
-        } 
+        }
       } catch (error) {
         console.error("Error parsing waitlist cookie:", error);
       }
@@ -174,8 +189,12 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
         setFingerprintData(result);
       } catch (error) {
         console.error("Error generating fingerprint:", error);
-        setFingerprintError("Unable to generate device fingerprint. Please refresh and try again.");
-        toast.error("Device fingerprinting failed. Please refresh the page and try again.");
+        setFingerprintError(
+          "Unable to generate device fingerprint. Please refresh and try again.",
+        );
+        toast.error(
+          "Device fingerprinting failed. Please refresh the page and try again.",
+        );
       } finally {
         setFingerprintLoading(false);
       }
@@ -186,28 +205,31 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
 
   async function joinWaitlist({ email }: FormSchema) {
     if (!fingerprintData) {
-      toast.error("Device fingerprint not ready. Please wait a moment and try again.");
+      toast.error(
+        "Device fingerprint not ready. Please wait a moment and try again.",
+      );
       return;
     }
 
     waitlistSubmission.mutate({ email, fingerprintData });
   }
 
-  const isFormDisabled = waitlistSubmission.isPending || fingerprintLoading || !fingerprintData;
+  const isFormDisabled =
+    waitlistSubmission.isPending || fingerprintLoading || !fingerprintData;
 
   return (
     <div
       className={cn(
-        "mx-auto flex w-full max-w-3xl flex-col items-center justify-center gap-6",
+        "max-w-4xl",
         className,
       )}
     >
       {waitlistSubmission.success ? (
-        <div className="flex flex-col items-center justify-center gap-4 text-center">
-          <p className="text-xl font-semibold">
-            You&apos;re on the waitlist! 🎉
+        <div className="flex flex-col gap-4">
+          <p className="text-xl font-semibold font-display-book" style={{ color: "rgba(239, 239, 239, 1)" }}>
+            You&apos;re on the waitlist!
           </p>
-          <p className="text-base text-muted-foreground">
+          <p className="text-base font-display-book max-w-2xl leading-relaxed mb-4" style={{ color: "rgba(146, 146, 146, 1)" }}>
             We&apos;ll let you know when we&apos;re ready to show you what
             we&apos;ve been working on.
           </p>
@@ -215,22 +237,38 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
       ) : (
         <div className="w-full max-w-lg">
           <form
-            className="mx-auto flex w-full flex-col gap-3 sm:flex-row"
+            className="flex gap-3 mb-8 max-w-md"
             onSubmit={handleSubmit(joinWaitlist)}
           >
             <div className="flex-1">
               <Input
+                type="email"
                 placeholder="grim@0.email"
-                className="file:text-foreground selection:bg-primary selection:text-primary-foreground bg-input/10 backdrop-blur-sm shadow-xs flex h-9 w-full min-w-0 px-3 py-1 outline-none transition-[color,box-shadow] file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 aria-invalid:border-destructive border border-border z-10 rounded-lg text-base text-foreground placeholder:text-muted-foreground"
+                className="flex-1 border-0 text-white placeholder:text-gray-400 font-display-book"
+                style={{
+                  background: "rgba(40, 40, 40, 1)",
+                  borderRadius: "14px",
+                  padding: "12px 16px",
+                  height: "44px",
+                }}
                 {...register("email")}
                 disabled={isFormDisabled}
               />
               {errors.email && (
-                <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
+                <p className="mt-1 text-sm text-destructive font-display-book">
+                  {errors.email.message}
+                </p>
               )}
             </div>
             <Button
-              className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-white text-black shadow-xs hover:bg-white/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10"
+              className="text-black hover:bg-gray-100 font-display-book"
+              style={{
+                background: "rgba(255, 255, 255, 1)",
+                borderRadius: "14px",
+                padding: "12px 16px",
+                height: "44px",
+                width: "122px",
+              }}
               type="submit"
               disabled={isFormDisabled}
             >
@@ -244,50 +282,28 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
             </Button>
           </form>
 
-          {/* Security and status indicators */}
-          <div className="mt-4 space-y-2">
-            {fingerprintLoading && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center">
-                <Shield className="h-4 w-4 animate-pulse" />
-                <span>Initializing security validation...</span>
-              </div>
-            )}
 
-            {fingerprintError && (
-              <div className="flex items-center gap-2 text-sm text-destructive justify-center">
-                <AlertCircle className="h-4 w-4" />
-                <span>Security validation failed. Please refresh the page.</span>
-              </div>
-            )}
-          </div>
         </div>
       )}
 
-      <div className="relative flex flex-row items-center justify-center gap-2">
+      <div className="flex items-center gap-3 mb-20">
+        <div className="flex -space-x-2">
+          <div className="w-8 h-8 bg-orange-500 rounded-full border-2 border-black font-display-book"></div>
+          <div className="w-8 h-8 bg-blue-500 rounded-full border-2 border-black font-display-book"></div>
+          <div className="w-8 h-8 bg-green-500 rounded-full border-2 border-black font-display-book"></div>
+        </div>
         {waitlistCount.isError ? (
-          <>
-            <span className="size-2 rounded-full bg-orange-600 dark:bg-orange-400" />
-            <span className="absolute left-0 size-2 rounded-full bg-orange-600 blur-xs dark:bg-orange-400" />
-            <span className="text-sm text-orange-600 sm:text-base dark:text-orange-400">
-              Unable to load waitlist count
-            </span>
-          </>
+          <span className="text-orange-400 font-medium font-display-book">
+            Unable to load waitlist count
+          </span>
         ) : waitlistCount.isLoading ? (
-          <>
-            <span className="size-2 rounded-full bg-gray-600 dark:bg-gray-400 animate-pulse" />
-            <span className="absolute left-0 size-2 rounded-full bg-gray-600 blur-xs dark:bg-gray-400 animate-pulse" />
-            <span className="text-sm text-gray-600 sm:text-base dark:text-gray-400">
-              Loading waitlist count...
-            </span>
-          </>
+          <span className="text-gray-400 font-medium font-display-book">
+            Loading waitlist count...
+          </span>
         ) : (
-          <>
-            <span className="size-2 rounded-full bg-green-600 dark:bg-green-400" />
-            <span className="absolute left-0 size-2 rounded-full bg-green-600 blur-xs dark:bg-green-400" />
-            <span className="text-sm text-green-600 sm:text-base dark:text-green-400">
-              <NumberFlow value={waitlistCount.count} /> {waitlistCount.count === 1 ? 'person' : 'people'} already joined
-            </span>
-          </>
+          <span className="text-green-400 font-medium font-display-book">
+            <NumberFlow value={waitlistCount.count} />+ people already joined
+          </span>
         )}
       </div>
     </div>

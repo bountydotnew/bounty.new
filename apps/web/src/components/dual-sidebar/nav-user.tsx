@@ -30,7 +30,7 @@ export function NavUser({
   return (
     <>
       <AccountDropdown user={user} onUpgradeClick={handleUpgrade} />
-      
+
       <PricingDialog
         open={pricingDialogOpen}
         onOpenChange={setPricingDialogOpen}

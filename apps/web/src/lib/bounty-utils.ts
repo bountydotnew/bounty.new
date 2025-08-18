@@ -35,7 +35,7 @@ export function useBountyModals() {
     openCreateModal,
     closeCreateModal,
     createDraftId,
-    
+
     // Edit modal
     editModalOpen,
     openEditModal,
@@ -79,56 +79,70 @@ export const getBountyDifficultyColor = (difficulty: string) => {
 
 // Format bounty amount for display
 export const formatBountyAmount = (amount: number, currency: string) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
     currency: currency,
   }).format(amount);
 };
 
 // Check if user can edit bounty
-export const canEditBounty = (bounty: { createdById: string; status: string }, userId: string) => {
-  return bounty.createdById === userId && bounty.status !== "completed" && bounty.status !== "cancelled";
+export const canEditBounty = (
+  bounty: { createdById: string; status: string },
+  userId: string,
+) => {
+  return (
+    bounty.createdById === userId &&
+    bounty.status !== "completed" &&
+    bounty.status !== "cancelled"
+  );
 };
 
 // Get relative time string
 export const getRelativeTime = (date: string | Date) => {
   const now = new Date();
   const bountyDate = new Date(date);
-  const diffInSeconds = Math.floor((now.getTime() - bountyDate.getTime()) / 1000);
+  const diffInSeconds = Math.floor(
+    (now.getTime() - bountyDate.getTime()) / 1000,
+  );
 
   if (diffInSeconds < 60) {
     return "just now";
   } else if (diffInSeconds < 3600) {
     const minutes = Math.floor(diffInSeconds / 60);
-    return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+    return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`;
   } else if (diffInSeconds < 86400) {
     const hours = Math.floor(diffInSeconds / 3600);
-    return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+    return `${hours} hour${hours !== 1 ? "s" : ""} ago`;
   } else if (diffInSeconds < 2592000) {
     const days = Math.floor(diffInSeconds / 86400);
-    return `${days} day${days !== 1 ? 's' : ''} ago`;
+    return `${days} day${days !== 1 ? "s" : ""} ago`;
   } else {
     return bountyDate.toLocaleDateString();
   }
 };
 
 // Check if deadline is approaching
-export const isDeadlineApproaching = (deadline: string | Date, daysThreshold = 3) => {
+export const isDeadlineApproaching = (
+  deadline: string | Date,
+  daysThreshold = 3,
+) => {
   if (!deadline) return false;
-  
+
   const now = new Date();
   const deadlineDate = new Date(deadline);
-  const diffInDays = Math.floor((deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  
+  const diffInDays = Math.floor(
+    (deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+  );
+
   return diffInDays <= daysThreshold && diffInDays >= 0;
 };
 
 // Check if deadline has passed
 export const isDeadlinePassed = (deadline: string | Date) => {
   if (!deadline) return false;
-  
+
   const now = new Date();
   const deadlineDate = new Date(deadline);
-  
+
   return deadlineDate < now;
 };

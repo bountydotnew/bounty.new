@@ -5,6 +5,6 @@ export async function GET() {
     message: "pong",
     timestamp: new Date().toISOString(),
     status: "healthy",
-    source: "server"
+    source: "server",
   });
 }

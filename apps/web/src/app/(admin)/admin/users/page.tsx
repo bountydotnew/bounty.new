@@ -7,7 +7,13 @@ import { Search, User, Mail, Calendar, Crown, Users } from "lucide-react";
 import type { TRPCClientErrorLike } from "@trpc/client";
 import type { AppRouter } from "@bounty/api";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,9 +50,9 @@ export default function UsersPage() {
 
   const stats = useMemo(() => {
     const currentPageUsers = users.length;
-    const adminCount = users.filter(user => user.role === "admin").length;
+    const adminCount = users.filter((user) => user.role === "admin").length;
     const regularUserCount = currentPageUsers - adminCount;
-    
+
     return {
       total: total,
       currentPage: currentPageUsers,
@@ -56,18 +62,18 @@ export default function UsersPage() {
   }, [users, total]);
 
   const handleRoleUpdate = (userId: string, newRole: "user" | "admin") => {
-    setUpdatingIds(prev => new Set(prev).add(userId));
+    setUpdatingIds((prev) => new Set(prev).add(userId));
     updateRoleMutation.mutate(
       { userId, role: newRole },
       {
         onSettled: () => {
-          setUpdatingIds(prev => {
+          setUpdatingIds((prev) => {
             const next = new Set(prev);
             next.delete(userId);
             return next;
           });
-        }
-      }
+        },
+      },
     );
   };
 
@@ -84,7 +90,9 @@ export default function UsersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground">Manage user roles and permissions</p>
+          <p className="text-muted-foreground">
+            Manage user roles and permissions
+          </p>
         </div>
       </div>
 
@@ -117,7 +125,9 @@ export default function UsersPage() {
             <Crown className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.admins}</div>
+            <div className="text-2xl font-bold text-yellow-600">
+              {stats.admins}
+            </div>
             <p className="text-xs text-muted-foreground">On this page</p>
           </CardContent>
         </Card>
@@ -128,7 +138,9 @@ export default function UsersPage() {
             <User className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.regularUsers}</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {stats.regularUsers}
+            </div>
             <p className="text-xs text-muted-foreground">On this page</p>
           </CardContent>
         </Card>
@@ -137,9 +149,7 @@ export default function UsersPage() {
       <Card>
         <CardHeader>
           <CardTitle>Users</CardTitle>
-          <CardDescription>
-            Manage user roles and permissions
-          </CardDescription>
+          <CardDescription>Manage user roles and permissions</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -160,7 +170,10 @@ export default function UsersPage() {
             ) : (
               <div className="space-y-4">
                 {users.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div
+                    key={user.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
                         <User className="h-4 w-4 text-muted-foreground" />
@@ -168,7 +181,9 @@ export default function UsersPage() {
                       </div>
                       <div className="flex items-center space-x-2">
                         <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">{user.email}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {user.email}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -248,4 +263,4 @@ export default function UsersPage() {
       </Card>
     </div>
   );
-} 
+}

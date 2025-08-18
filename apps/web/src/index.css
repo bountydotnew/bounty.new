@@ -5,9 +5,34 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Custom Font Definitions */
+@font-face {
+  font-family: 'Kraftig';
+  src: url('/fonts/sohne-kraftig.woff2') format('woff2'),
+       url('/fonts/sohne-kraftig.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Kraftig-Buch';
+  src: url('/fonts/sohne-buch.woff2') format('woff2'),
+       url('/fonts/sohne-buch.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+
 @theme {
-  --font-sans: "Inter", "Geist", ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-sans:
+    "Inter", "Geist", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-display:
+    "Kraftig", ui-serif, serif;
+  --font-display-book:
+    "Kraftig-Buch", ui-serif, serif;
 }
 
 html,
@@ -187,12 +212,9 @@ body {
   background: var(--sds-color-background-brand-default);
 
   /* 3D */
-  box-shadow: var(--sds-size-depth-0) -1px 1px var(--sds-size-depth-0) rgba(
-        30,
-        30,
-        30,
-        0.2
-      ) inset,
+  box-shadow:
+    var(--sds-size-depth-0) -1px 1px var(--sds-size-depth-0)
+      rgba(30, 30, 30, 0.2) inset,
     var(--sds-size-depth-0) 1px 1px var(--sds-size-depth-0)
       rgba(255, 255, 255, 0.2) inset;
 }
@@ -200,25 +222,19 @@ body {
 .previewButton {
   border-radius: 8px;
   background: var(--sds-color-background-brand-secondary);
-  box-shadow: var(--sds-size-depth-0) -1px 1px var(--sds-size-depth-0) rgba(
-        30,
-        30,
-        30,
-        0.2
-      ) inset,
+  box-shadow:
+    var(--sds-size-depth-0) -1px 1px var(--sds-size-depth-0)
+      rgba(30, 30, 30, 0.2) inset,
     var(--sds-size-depth-0) 1px 1px var(--sds-size-depth-0) #fff inset;
 }
 
 .oauthButton {
   border-radius: 8px;
   background: var(--sds-color-background-brand-default);
-  box-shadow: 0px 0px 8.5px 0px rgba(0, 0, 0, 0.25),
-    var(--sds-size-depth-0) -1px 1px var(--sds-size-depth-0) rgba(
-        30,
-        30,
-        30,
-        0.2
-      ) inset,
+  box-shadow:
+    0px 0px 8.5px 0px rgba(0, 0, 0, 0.25),
+    var(--sds-size-depth-0) -1px 1px var(--sds-size-depth-0)
+      rgba(30, 30, 30, 0.2) inset,
     var(--sds-size-depth-0) 1px 1px var(--sds-size-depth-0)
       rgba(255, 255, 255, 0.2) inset;
   display: flex;
@@ -247,13 +263,10 @@ body {
 }
 
 .cardBorder {
-  box-shadow: 0px 0px 8.5px 0px rgba(0, 0, 0, 0.25),
-    var(--sds-size-depth-0) -1px 1px var(--sds-size-depth-0) rgba(
-        30,
-        30,
-        30,
-        0.2
-      ) inset,
+  box-shadow:
+    0px 0px 8.5px 0px rgba(0, 0, 0, 0.25),
+    var(--sds-size-depth-0) -1px 1px var(--sds-size-depth-0)
+      rgba(30, 30, 30, 0.2) inset,
     var(--sds-size-depth-0) 1px 1px var(--sds-size-depth-0)
       rgba(255, 255, 255, 0.2) inset;
 }
@@ -263,4 +276,23 @@ body {
   border-radius: 25px;
   margin: 20px;
   background: #1d1d1d;
+}
+
+/* Added responsive SVG sizing for desktop screens */
+@media (min-width: 1024px) {
+  .desktop-svg {
+    width: 100vw !important;
+    height: 120vh !important;
+    min-width: 1400px !important;
+    min-height: 1600px !important;
+  }
+}
+
+@media (min-width: 1280px) {
+  .desktop-svg {
+    width: 140vw !important;
+    height: 160vh !important;
+    min-width: 1600px !important;
+    min-height: 1800px !important;
+  }
 }

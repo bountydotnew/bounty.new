@@ -6,10 +6,17 @@ import { z } from "zod";
 
 export const createBountySchema = z.object({
   title: z.string().min(1, "Title cannot be empty").max(200, "Title too long"),
-  description: z.string().min(10, "Description cannot be empty").max(1000, "Description too long"),
-  requirements: z.string().min(10, "Requirements cannot be empty").max(1000, "Requirements too long"),
-  deliverables: z.string().min(10, "Deliverables cannot be empty").max(1000, "Deliverables too long"),
-  amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, "Incorrect amount."),
+  description: z
+    .string()
+    .min(1, "Description cannot be empty")
+    .max(1000, "Description too long"),
+  // requirements: z.string().max(1000).optional(),
+  // deliverables: z.string().max(1000).optional(),
+  amount: z
+    .string()
+    .regex(/^\d{1,13}(\.\d{1,2})?$/, "Incorrect amount.")
+    .min(1, "Amount cannot be empty")
+    .max(10000000000, "Amount cannot be greater than 100,000"),
   currency: z.string().min(1, "Currency cannot be empty"),
   difficulty: z.enum(["beginner", "intermediate", "advanced", "expert"], {
     errorMap: () => ({ message: "Difficulty cannot be empty" }),
@@ -25,8 +32,6 @@ export type CreateBountyForm = z.infer<typeof createBountySchema>;
 export const createBountyDefaults: CreateBountyForm = {
   title: "",
   description: "",
-  requirements: "",
-  deliverables: "",
   amount: "",
   currency: "USD",
   difficulty: "intermediate",
@@ -73,7 +78,10 @@ export const formatFormData = {
 };
 
 export const parseTagsInput = (value: string): string[] => {
-  return value.split(",").map(tag => tag.trim()).filter(Boolean);
+  return value
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
 };
 
 export const formatTagsOutput = (tags: string[]): string => {
@@ -86,16 +94,26 @@ export const formatTagsOutput = (tags: string[]): string => {
 
 export const betaApplicationSchema = z.object({
   name: z.string().min(1, "Name is required").max(100, "Name too long"),
-  twitter: z.string().min(1, "X/Twitter handle is required").max(50, "X/Twitter handle too long"),
-  projectName: z.string().min(1, "Project name is required").max(200, "Project name too long"),
-  projectLink: z.string()
+  twitter: z
+    .string()
+    .min(1, "X/Twitter handle is required")
+    .max(50, "X/Twitter handle too long"),
+  projectName: z
+    .string()
+    .min(1, "Project name is required")
+    .max(200, "Project name too long"),
+  projectLink: z
+    .string()
     .url("Please enter a valid URL")
     .min(1, "Project link is required")
     .refine(
       (url) => url.startsWith("http://") || url.startsWith("https://"),
-      "Project link must start with https://"
+      "Project link must start with https://",
     ),
-  description: z.string().min(10, "Description must be at least 10 characters").max(1000, "Description too long"),
+  description: z
+    .string()
+    .min(10, "Description must be at least 10 characters")
+    .max(1000, "Description too long"),
 });
 
 export type BetaApplicationForm = z.infer<typeof betaApplicationSchema>;
@@ -114,7 +132,10 @@ export const betaApplicationDefaults: BetaApplicationForm = {
 
 // Profile form schema (placeholder for future)
 export const profileSchema = z.object({
-  displayName: z.string().min(1, "Display name is required").max(50, "Display name too long"),
+  displayName: z
+    .string()
+    .min(1, "Display name is required")
+    .max(50, "Display name too long"),
   bio: z.string().max(500, "Bio too long").optional(),
   location: z.string().max(100, "Location too long").optional(),
   website: z.string().url("Invalid URL").optional().or(z.literal("")),
@@ -124,4 +145,4 @@ export const profileSchema = z.object({
 
 export type ProfileForm = z.infer<typeof profileSchema>;
 
-// Add more form schemas as needed... 
+// Add more form schemas as needed...

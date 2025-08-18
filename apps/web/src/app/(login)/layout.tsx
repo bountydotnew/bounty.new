@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "bounty.new - Login",
-  description: "Ship fast, get paid faster.",  
+  description: "Ship fast, get paid faster.",
   icons: {
     icon: "/icon.svg",
   },
@@ -27,9 +27,5 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <>
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }

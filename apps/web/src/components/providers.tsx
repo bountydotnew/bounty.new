@@ -6,22 +6,18 @@ import { queryClient } from "@/utils/trpc";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "./ui/sonner";
 import { ConfettiProvider } from "@/lib/context/confetti-context";
+import { AccessProvider } from "@/contexts/access-provider";
 import { Databuddy } from "@databuddy/sdk";
 import { TOAST_ICONS, TOAST_OPTIONS } from "@/constants/toast";
 import { PostHogProvider } from "posthog-js/react";
-import { AuthUIProvider } from "@daveyplate/better-auth-ui"
+import { AuthUIProvider } from "@daveyplate/better-auth-ui";
 import { authClient } from "@bounty/auth/client";
-import { useRouter } from "next/navigation"
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-
-export function Providers({
-  children
-}: {
-  children: React.ReactNode
-}) {
+export function Providers({ children }: { children: React.ReactNode }) {
   const posthogApiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-  const router = useRouter()
+  const router = useRouter();
 
   return (
     <ThemeProvider
@@ -34,18 +30,20 @@ export function Providers({
         {posthogApiKey ? (
           <PostHogProvider apiKey={posthogApiKey}>
             <ConfettiProvider>
-              <AuthUIProvider
-                authClient={authClient}
-                navigate={router.push}
-                replace={router.replace}
-                onSessionChange={() => {
-                  // Clear router cache (protected routes)
-                  router.refresh()
-                }}
-                Link={Link}
-              >
-                {children}
-              </AuthUIProvider>
+              <AccessProvider>
+                <AuthUIProvider
+                  authClient={authClient}
+                  navigate={router.push}
+                  replace={router.replace}
+                  onSessionChange={() => {
+                    // Clear router cache (protected routes)
+                    router.refresh();
+                  }}
+                  Link={Link}
+                >
+                  {children}
+                </AuthUIProvider>
+              </AccessProvider>
               <Databuddy
                 clientId="bounty"
                 trackHashChanges={true}
@@ -65,7 +63,7 @@ export function Providers({
           </PostHogProvider>
         ) : (
           <ConfettiProvider>
-            {children}
+            <AccessProvider>{children}</AccessProvider>
             <Databuddy
               clientId="bounty"
               trackHashChanges={true}

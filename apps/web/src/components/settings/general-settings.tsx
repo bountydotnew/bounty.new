@@ -57,21 +57,19 @@ export function GeneralSettings() {
                 alt={session?.user?.name || session?.user?.email}
               />
               <AvatarFallback>
-                {session?.user?.name?.[0] ||
-                  session?.user?.email?.[0] ||
-                  "U"}
+                {session?.user?.name?.[0] || session?.user?.email?.[0] || "U"}
               </AvatarFallback>
             </Avatar>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-semibold">{session?.user?.name || "No name set"}</h3>
-                {isPro && (
-                  <Badge variant="default" >
-                    Pro
-                  </Badge>
-                )}
+                <h3 className="text-lg font-semibold">
+                  {session?.user?.name || "No name set"}
+                </h3>
+                {isPro && <Badge variant="default">Pro</Badge>}
               </div>
-              <p className="text-sm text-muted-foreground">{session?.user?.email}</p>
+              <p className="text-sm text-muted-foreground">
+                {session?.user?.email}
+              </p>
               <Badge variant="secondary">User ID: {session?.user?.id}</Badge>
             </div>
           </div>
@@ -87,7 +85,9 @@ export function GeneralSettings() {
           {billingLoading ? (
             <div className="flex items-center space-x-2">
               <Loader2 className="animate-spin" size={16} />
-              <span className="text-sm text-muted-foreground">Loading features...</span>
+              <span className="text-sm text-muted-foreground">
+                Loading features...
+              </span>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -116,9 +116,7 @@ export function GeneralSettings() {
               <div className="p-3 border rounded-lg">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">Payment Button</span>
-                  <Badge variant="default">
-                    Available
-                  </Badge>
+                  <Badge variant="default">Available</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
                   Embeddable payment buttons for GitHub
@@ -127,9 +125,7 @@ export function GeneralSettings() {
               <div className="p-3 border rounded-lg">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">Passkey Security</span>
-                  <Badge variant="default">
-                    Available
-                  </Badge>
+                  <Badge variant="default">Available</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
                   Passwordless authentication
@@ -149,7 +145,9 @@ export function GeneralSettings() {
           <div className="flex justify-between items-center">
             <div>
               <h4 className="font-medium">Sign Out</h4>
-              <p className="text-sm text-muted-foreground">Sign out of your account</p>
+              <p className="text-sm text-muted-foreground">
+                Sign out of your account
+              </p>
             </div>
             <Button variant="outline" onClick={handleSignOut}>
               Sign Out

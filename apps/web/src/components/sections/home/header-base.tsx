@@ -34,15 +34,17 @@ export function HeaderBase({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeInOut" }}
     >
-    <header
-      className={cn("px-6 h-14 flex justify-between items-center", className)}
-    >
-      {leftContent && <div className="flex items-center">{leftContent}</div>}
-      {centerContent && (
-        <div className="flex items-center">{centerContent}</div>
-      )}
-      {rightContent && <div className="flex items-center">{rightContent}</div>}
-    </header>
+      <header
+        className={cn("px-6 h-14 flex justify-between items-center", className)}
+      >
+        {leftContent && <div className="flex items-center">{leftContent}</div>}
+        {centerContent && (
+          <div className="flex items-center">{centerContent}</div>
+        )}
+        {rightContent && (
+          <div className="flex items-center">{rightContent}</div>
+        )}
+      </header>
     </motion.div>
   );
 }

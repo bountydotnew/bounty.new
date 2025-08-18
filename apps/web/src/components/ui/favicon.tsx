@@ -12,7 +12,7 @@ interface FaviconProps {
 export function Favicon({ url, className, size = 16 }: FaviconProps) {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
-  
+
   if (!url) return null;
 
   try {
@@ -42,4 +42,4 @@ export function Favicon({ url, className, size = 16 }: FaviconProps) {
   } catch {
     return null;
   }
-} 
+}

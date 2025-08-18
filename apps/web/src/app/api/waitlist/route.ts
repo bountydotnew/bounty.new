@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
           error: validation.error.errors[0]?.message || "Invalid request data",
           success: false,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -38,13 +38,18 @@ export async function POST(request: NextRequest) {
 
     const fingerprintValidation = validateFingerprint(fingerprintData);
     if (!fingerprintValidation.isValid) {
-      log("[Waitlist] Fingerprint validation failed:", fingerprintValidation.errors);
+      log(
+        "[Waitlist] Fingerprint validation failed:",
+        fingerprintValidation.errors,
+      );
       return NextResponse.json(
         {
-          error: "Invalid device fingerprint: " + fingerprintValidation.errors.join(", "),
+          error:
+            "Invalid device fingerprint: " +
+            fingerprintValidation.errors.join(", "),
           success: false,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -69,7 +74,7 @@ export async function POST(request: NextRequest) {
           error: "Database temporarily unavailable",
           success: false,
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
   } catch (error) {
@@ -79,7 +84,7 @@ export async function POST(request: NextRequest) {
         error: "Internal server error",
         success: false,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

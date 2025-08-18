@@ -44,14 +44,23 @@ export function BillingSettings() {
           {billingLoading ? (
             <div className="flex items-center space-x-2">
               <Loader2 className="animate-spin" size={16} />
-              <span className="text-sm text-muted-foreground">Loading subscription...</span>
+              <span className="text-sm text-muted-foreground">
+                Loading subscription...
+              </span>
             </div>
           ) : (
             <>
               {/* Plan Status */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Badge variant={isPro ? "default" : "secondary"} className={isPro ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white" : ""}>
+                  <Badge
+                    variant={isPro ? "default" : "secondary"}
+                    className={
+                      isPro
+                        ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                        : ""
+                    }
+                  >
                     {isPro ? "Pro" : "Free"}
                   </Badge>
                   {isPro && (
@@ -61,36 +70,45 @@ export function BillingSettings() {
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {isPro ? "You have access to all Pro features" : "Upgrade to unlock all features"}
+                  {isPro
+                    ? "You have access to all Pro features"
+                    : "Upgrade to unlock all features"}
                 </p>
               </div>
 
               {/* Active Subscriptions - Only show if Pro */}
-              {customer && isPro && customer.activeSubscriptions && customer.activeSubscriptions.length > 0 && (
-                <>
-                  <Separator />
-                  <div className="space-y-3">
-                    <h5 className="text-sm font-medium text-muted-foreground">Active Subscriptions</h5>
-                    <div className="space-y-2">
-                      {customer.activeSubscriptions.map((subscription, index) => (
-                        <div key={index} className="p-3 border rounded-lg">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-medium">
-                                {subscription.productId || "Pro Plan"}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                Active subscription
-                              </p>
+              {customer &&
+                isPro &&
+                customer.activeSubscriptions &&
+                customer.activeSubscriptions.length > 0 && (
+                  <>
+                    <Separator />
+                    <div className="space-y-3">
+                      <h5 className="text-sm font-medium text-muted-foreground">
+                        Active Subscriptions
+                      </h5>
+                      <div className="space-y-2">
+                        {customer.activeSubscriptions.map(
+                          (subscription, index) => (
+                            <div key={index} className="p-3 border rounded-lg">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="font-medium">
+                                    {subscription.productId || "Pro Plan"}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    Active subscription
+                                  </p>
+                                </div>
+                                <Badge variant="outline">Active</Badge>
+                              </div>
                             </div>
-                            <Badge variant="outline">Active</Badge>
-                          </div>
-                        </div>
-                      ))}
+                          ),
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </>
-              )}
+                  </>
+                )}
 
               {/* Billing Portal Info - Only show if Pro */}
               {isPro && (
@@ -99,7 +117,8 @@ export function BillingSettings() {
                   <div className="space-y-2">
                     <h4 className="font-medium">Billing Portal Access</h4>
                     <p className="text-sm text-muted-foreground">
-                      Manage your subscription, payment methods, and billing history through the Stripe billing portal.
+                      Manage your subscription, payment methods, and billing
+                      history through the Stripe billing portal.
                     </p>
                   </div>
                 </>
@@ -108,10 +127,7 @@ export function BillingSettings() {
               {/* Single Action Button */}
               <Separator />
               <div className="flex justify-end">
-                <Button
-                  onClick={openBillingPortal}
-                  variant="outline"
-                >
+                <Button onClick={openBillingPortal} variant="outline">
                   {isPro ? "Manage Billing" : "Upgrade to Pro"}
                 </Button>
               </div>
@@ -127,7 +143,9 @@ export function BillingSettings() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className={`p-3 border rounded-lg ${!isPro ? 'opacity-60' : ''}`}>
+            <div
+              className={`p-3 border rounded-lg ${!isPro ? "opacity-60" : ""}`}
+            >
               <div className="flex items-center justify-between">
                 <span className="font-medium">Lower Fees</span>
                 <Badge variant={isPro ? "default" : "secondary"}>
@@ -138,9 +156,13 @@ export function BillingSettings() {
                 Reduced platform fees on bounties
               </p>
             </div>
-            <div className={`p-3 border rounded-lg ${!isPro ? 'opacity-60' : ''}`}>
+            <div
+              className={`p-3 border rounded-lg ${!isPro ? "opacity-60" : ""}`}
+            >
               <div className="flex items-center justify-between">
-                <span className="font-medium">Unlimited Concurrent Bounties</span>
+                <span className="font-medium">
+                  Unlimited Concurrent Bounties
+                </span>
                 <Badge variant={isPro ? "default" : "secondary"}>
                   {isPro ? "Enabled" : "Pro Only"}
                 </Badge>
@@ -163,9 +185,7 @@ export function BillingSettings() {
             <div className="p-3 border rounded-lg">
               <div className="flex items-center justify-between">
                 <span className="font-medium">Advanced Analytics</span>
-                <Badge variant="secondary">
-                  Coming Soon
-                </Badge>
+                <Badge variant="secondary">Coming Soon</Badge>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
                 Detailed insights into your bounty performance
@@ -179,7 +199,8 @@ export function BillingSettings() {
               <div className="text-center space-y-3">
                 <h4 className="font-medium">Upgrade to Pro</h4>
                 <p className="text-sm text-muted-foreground">
-                  Get access to lower fees, unlimited concurrent bounties, and more features.
+                  Get access to lower fees, unlimited concurrent bounties, and
+                  more features.
                 </p>
               </div>
             </>

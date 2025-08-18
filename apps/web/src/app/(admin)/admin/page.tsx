@@ -1,6 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, FileText, Clock } from "lucide-react";
 import Link from "next/link";
@@ -49,9 +55,7 @@ export default function AdminPage() {
               <Clock className="h-5 w-5" />
               Waitlist
             </CardTitle>
-            <CardDescription>
-              View and manage waitlist entries
-            </CardDescription>
+            <CardDescription>View and manage waitlist entries</CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/admin/waitlist">
@@ -62,4 +66,4 @@ export default function AdminPage() {
       </div>
     </div>
   );
-} 
+}

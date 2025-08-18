@@ -1,5 +1,5 @@
-'use client';
-import { cn } from '@/lib/utils';
+"use client";
+import { cn } from "@/lib/utils";
 import {
   ComponentProps,
   type HTMLAttributes,
@@ -8,16 +8,16 @@ import {
   useContext,
   useEffect,
   useState,
-} from 'react';
-import { PaymentIcon } from 'react-svg-credit-card-payment-icons';
+} from "react";
+import { PaymentIcon } from "react-svg-credit-card-payment-icons";
 const useSupportsHover = () => {
   const [supportsHover, setSupportsHover] = useState(false);
   useEffect(() => {
-    const mql = window.matchMedia('(hover: hover)');
+    const mql = window.matchMedia("(hover: hover)");
     const handler = (e: MediaQueryListEvent) => setSupportsHover(e.matches);
     setSupportsHover(mql.matches);
-    mql.addEventListener('change', handler);
-    return () => mql.removeEventListener('change', handler);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
   }, []);
   return supportsHover;
 };
@@ -25,9 +25,9 @@ export type CreditCardProps = HTMLAttributes<HTMLDivElement>;
 export const CreditCard = ({ className, ...props }: CreditCardProps) => (
   <div
     className={cn(
-      'group/kibo-credit-card perspective-distant aspect-[8560/5398] w-full max-w-96 text-white',
-      '@container',
-      className
+      "group/kibo-credit-card perspective-distant aspect-[8560/5398] w-full max-w-96 text-white",
+      "@container",
+      className,
     )}
     {...props}
   />
@@ -53,13 +53,13 @@ export const CreditCardFlipper = ({
         onClick={handleClick}
         aria-label="Flip credit card"
         className={cn(
-          'h-full w-full',
-          '@xs:rounded-2xl rounded-lg',
-          'transform-3d transition duration-700 ease-in-out',
+          "h-full w-full",
+          "@xs:rounded-2xl rounded-lg",
+          "transform-3d transition duration-700 ease-in-out",
           supportsHover &&
-          'group-hover/kibo-credit-card:-rotate-y-180 group-hover/kibo-credit-card:shadow-lg',
-          !supportsHover && isFlipped && '-rotate-y-180 shadow-lg',
-          className
+            "group-hover/kibo-credit-card:-rotate-y-180 group-hover/kibo-credit-card:shadow-lg",
+          !supportsHover && isFlipped && "-rotate-y-180 shadow-lg",
+          className,
         )}
         {...props}
       >
@@ -75,9 +75,9 @@ export const CreditCardName = ({
   ...props
 }: CreditCardNameProps) => (
   <p
-    className={cn('font-semibold uppercase', className)}
+    className={cn("font-semibold uppercase", className)}
     style={{
-      lineHeight: '100%',
+      lineHeight: "100%",
       ...style,
     }}
     {...props}
@@ -92,8 +92,8 @@ export const CreditCardChip = ({
   children ? (
     <div
       className={cn(
-        '-translate-y-1/2 absolute top-1/2 left-0 w-1/6 shrink-0 rounded-[18%]',
-        className
+        "-translate-y-1/2 absolute top-1/2 left-0 w-1/6 shrink-0 rounded-[18%]",
+        className,
       )}
     >
       {children}
@@ -104,8 +104,8 @@ export const CreditCardChip = ({
       viewBox="0 0 110 92"
       xmlns="http://www.w3.org/2000/svg"
       className={cn(
-        '-translate-y-1/2 absolute top-1/2 left-0 w-1/6 shrink-0 rounded-[18%]',
-        className
+        "-translate-y-1/2 absolute top-1/2 left-0 w-1/6 shrink-0 rounded-[18%]",
+        className,
       )}
       {...props}
     >
@@ -139,7 +139,7 @@ export const CreditCardLogo = ({
   ...props
 }: CreditCardLogoProps) => (
   <div
-    className={cn('absolute top-0 right-0 size-1/6', className)}
+    className={cn("absolute top-0 right-0 size-1/6", className)}
     {...props}
   />
 );
@@ -154,9 +154,9 @@ export const CreditCardFront = ({
 }: CreditCardFrontProps) => (
   <div
     className={cn(
-      'backface-hidden absolute inset-0 flex overflow-hidden bg-foreground/90',
-      '@xs:rounded-2xl rounded-lg',
-      className
+      "backface-hidden absolute inset-0 flex overflow-hidden bg-foreground/90",
+      "@xs:rounded-2xl rounded-lg",
+      className,
     )}
     {...props}
   >
@@ -174,16 +174,16 @@ export type CreditCardServiceProviderProps = ComponentProps<typeof PaymentIcon>;
 export const CreditCardServiceProvider = ({
   className,
   children,
-  type = 'Visa',
+  type = "Visa",
   ...props
 }: CreditCardServiceProviderProps) => {
   if (children) {
     return (
       <div
         className={cn(
-          'absolute right-0 bottom-0',
-          'max-h-1/3 max-w-1/3',
-          className
+          "absolute right-0 bottom-0",
+          "max-h-1/3 max-w-1/3",
+          className,
         )}
       >
         {children}
@@ -194,9 +194,9 @@ export const CreditCardServiceProvider = ({
     <PaymentIcon
       type={type}
       className={cn(
-        'absolute right-0 bottom-0',
-        'max-h-1/3 max-w-1/3',
-        className
+        "absolute right-0 bottom-0",
+        "max-h-1/3 max-w-1/3",
+        className,
       )}
       {...props}
     />
@@ -223,10 +223,10 @@ export const CreditCardBack = ({
     <CreditCardBackContext.Provider value={{ safeArea }}>
       <div
         className={cn(
-          'backface-hidden absolute inset-0 flex overflow-hidden bg-foreground/90',
-          '@xs:rounded-2xl rounded-lg',
-          isInsideFlipper && 'rotate-y-180',
-          className
+          "backface-hidden absolute inset-0 flex overflow-hidden bg-foreground/90",
+          "@xs:rounded-2xl rounded-lg",
+          isInsideFlipper && "rotate-y-180",
+          className,
         )}
         {...props}
       >
@@ -250,8 +250,8 @@ export const CreditCardMagStripe = ({
   return (
     <div
       className={cn(
-        '-translate-x-1/2 absolute top-[3%] left-1/2 h-1/4 bg-gray-900',
-        className
+        "-translate-x-1/2 absolute top-[3%] left-1/2 h-1/4 bg-gray-900",
+        className,
       )}
       style={{
         width: `calc(100% + 2 * ${context.safeArea}px)`,
@@ -268,9 +268,9 @@ export const CreditCardNumber = ({
   ...props
 }: CreditCardNumberProps) => (
   <p
-    className={cn('font-mono', '@xs:text-2xl', className)}
+    className={cn("font-mono", "@xs:text-2xl", className)}
     style={{
-      lineHeight: '100%',
+      lineHeight: "100%",
       ...style,
     }}
     {...props}
@@ -285,9 +285,9 @@ export const CreditCardExpiry = ({
   ...props
 }: CreditCardExpiryProps) => (
   <p
-    className={cn('font-mono', className)}
+    className={cn("font-mono", className)}
     style={{
-      lineHeight: '100%',
+      lineHeight: "100%",
       ...style,
     }}
     {...props}
@@ -300,9 +300,9 @@ export const CreditCardCvv = ({
   ...props
 }: CreditCardCvvProps) => (
   <p
-    className={cn('font-mono', className)}
+    className={cn("font-mono", className)}
     style={{
-      lineHeight: '100%',
+      lineHeight: "100%",
       ...style,
     }}
     {...props}

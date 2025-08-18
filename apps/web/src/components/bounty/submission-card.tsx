@@ -14,7 +14,14 @@ export interface SubmissionCardProps {
   previewSrc?: string;
 }
 
-export default function SubmissionCard({ user, description = "", avatarSrc = "", rank = "Rank 100", previewSrc = "", hasBadge}: SubmissionCardProps) {
+export default function SubmissionCard({
+  user,
+  description = "",
+  avatarSrc = "",
+  rank = "Rank 100",
+  previewSrc = "",
+  hasBadge,
+}: SubmissionCardProps) {
   return (
     <div className="bountyCard flex w-full max-w-[466px] min-w-[466px] flex-col items-start gap-3 rounded-lg bg-[#2C2C2C] p-6 shadow-card-custom">
       <div className="flex w-full items-center justify-between">
@@ -25,10 +32,10 @@ export default function SubmissionCard({ user, description = "", avatarSrc = "",
           </Avatar>
           <div className="flex flex-col">
             <div className="flex items-center gap-1">
-              <span className="text-base font-semibold text-[#F3F3F3]">{user}</span>
-              {(hasBadge) && (
-              <Badge />
-              )}
+              <span className="text-base font-semibold text-[#F3F3F3]">
+                {user}
+              </span>
+              {hasBadge && <Badge />}
             </div>
             <span className="text-sm text-foreground">{rank}</span>
           </div>
@@ -38,16 +45,14 @@ export default function SubmissionCard({ user, description = "", avatarSrc = "",
           <span className="text-sm font-medium">Preview</span>
         </Button>
       </div>
-      <p className="font-light text-[#FFFFFF]">
-        {description}
-      </p>
+      <p className="font-light text-[#FFFFFF]">{description}</p>
       <Image
-        width={80}  
+        width={80}
         height={80}
         src={previewSrc}
         alt="Theme preview screenshot"
         className="h-20 w-20 rounded-md object-cover"
       />
     </div>
-  )
+  );
 }

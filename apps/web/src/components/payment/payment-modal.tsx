@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { DollarSign, Heart } from "lucide-react";
@@ -55,21 +55,21 @@ export function PaymentModal({
 
   const handlePayment = async () => {
     const amount = getSelectedAmount();
-    
+
     if (!amount || amount <= 0) {
       toast.error("Please select or enter a valid amount");
       return;
     }
 
     setIsProcessing(true);
-    
+
     // TODO: Implement actual payment processing
     // For now, just simulate processing
     setTimeout(() => {
       toast.success(`Payment of $${amount} sent to ${recipientName}!`);
       setIsProcessing(false);
       onOpenChange(false);
-      
+
       // Reset form
       setSelectedAmount(null);
       setCustomAmount("");
@@ -100,7 +100,9 @@ export function PaymentModal({
         <div className="space-y-6">
           {/* Preset Amounts */}
           <div>
-            <Label className="text-sm font-medium mb-3 block">Quick amounts</Label>
+            <Label className="text-sm font-medium mb-3 block">
+              Quick amounts
+            </Label>
             <div className="grid grid-cols-2 gap-2">
               {presetAmounts.map((amount) => (
                 <Button
@@ -119,7 +121,10 @@ export function PaymentModal({
           {/* Custom Amount */}
           {allowCustomAmount && (
             <div>
-              <Label htmlFor="custom-amount" className="text-sm font-medium mb-2 block">
+              <Label
+                htmlFor="custom-amount"
+                className="text-sm font-medium mb-2 block"
+              >
                 Custom amount
               </Label>
               <div className="relative">
@@ -162,21 +167,23 @@ export function PaymentModal({
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex justify-between items-center">
                 <span className="font-medium">Total</span>
-                <span className="text-xl font-bold">${getSelectedAmount().toFixed(2)}</span>
+                <span className="text-xl font-bold">
+                  ${getSelectedAmount().toFixed(2)}
+                </span>
               </div>
             </div>
           )}
         </div>
 
         <DialogFooter>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isProcessing}
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={handlePayment}
             disabled={!isValidAmount() || isProcessing}
             className="min-w-24"

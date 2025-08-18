@@ -35,7 +35,7 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
       message: "User not found",
     });
   }
-  
+
   // For now, allow access if user exists (temporary for development)
   // if (!user || user.role !== "admin") {
   //   throw new TRPCError({
@@ -43,7 +43,7 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   //     message: "Admin access required",
   //   });
   // }
-  
+
   return next({
     ctx: {
       ...ctx,

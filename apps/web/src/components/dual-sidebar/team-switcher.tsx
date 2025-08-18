@@ -47,7 +47,13 @@ export function TeamSwitcher({
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                 {activeTeam.logoUrl ? (
-                  <Image src={activeTeam.logoUrl} alt={activeTeam.name} width={32} height={32} className="size-4" />
+                  <Image
+                    src={activeTeam.logoUrl}
+                    alt={activeTeam.name}
+                    width={32}
+                    height={32}
+                    className="size-4"
+                  />
                 ) : (
                   <activeTeam.logo className="size-4" />
                 )}
@@ -76,7 +82,13 @@ export function TeamSwitcher({
               >
                 <div className="flex size-6 items-center justify-center rounded-md border">
                   {team.logoUrl ? (
-                    <Image src={team.logoUrl} alt={team.name} width={24} height={24} className="size-3.5 shrink-0" />
+                    <Image
+                      src={team.logoUrl}
+                      alt={team.name}
+                      width={24}
+                      height={24}
+                      className="size-3.5 shrink-0"
+                    />
                   ) : (
                     <team.logo className="size-3.5 shrink-0" />
                   )}

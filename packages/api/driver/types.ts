@@ -26,7 +26,7 @@ export interface ProjectWithRelations {
   ownerId: string | null;
   logoUrl: string | null;
   gitRepoUrl: string;
-  gitHost: 'github' | 'gitlab' | null;
+  gitHost: "github" | "gitlab" | null;
   name: string;
   description: string | null;
   socialLinks: {
@@ -36,7 +36,7 @@ export interface ProjectWithRelations {
     website?: string;
     [key: string]: string | undefined;
   } | null;
-  approvalStatus: 'pending' | 'approved' | 'rejected';
+  approvalStatus: "pending" | "approved" | "rejected";
   isPinned: boolean;
   hasBeenAcquired: boolean;
   isLookingForContributors: boolean;
@@ -103,7 +103,7 @@ export interface PullRequestData {
 
 export interface FileData {
   content: string;
-  encoding: 'base64' | 'utf8';
+  encoding: "base64" | "utf8";
   name: string;
   path: string;
   size: number;
@@ -150,7 +150,7 @@ export interface UserPullRequestData extends PullRequestData {
 }
 
 export interface UserData {
-  provider: 'github' | 'gitlab';
+  provider: "github" | "gitlab";
   login: string;
   id: string | number;
   avatarUrl?: string;
@@ -177,11 +177,11 @@ export interface ContributionDay {
   date: string;
   contributionCount: number;
   contributionLevel:
-    | 'NONE'
-    | 'FIRST_QUARTILE'
-    | 'SECOND_QUARTILE'
-    | 'THIRD_QUARTILE'
-    | 'FOURTH_QUARTILE';
+    | "NONE"
+    | "FIRST_QUARTILE"
+    | "SECOND_QUARTILE"
+    | "THIRD_QUARTILE"
+    | "FOURTH_QUARTILE";
   color: string;
 }
 
@@ -203,7 +203,7 @@ export interface GitManager {
   getUserPullRequests(
     username: string,
     options?: {
-      state?: 'open' | 'closed' | 'merged' | 'all';
+      state?: "open" | "closed" | "merged" | "all";
       limit?: number;
     },
   ): Promise<UserPullRequestData[]>;
@@ -226,7 +226,7 @@ export interface GitManager {
   getRepoPermissions(
     identifier: string,
   ): Promise<
-    RestEndpointMethodTypes['repos']['getCollaboratorPermissionLevel']['response']['data']
+    RestEndpointMethodTypes["repos"]["getCollaboratorPermissionLevel"]["response"]["data"]
   >;
   getCurrentUser(): Promise<{
     id: string;
@@ -235,7 +235,9 @@ export interface GitManager {
   getOrgMembership(
     org: string,
     username: string,
-  ): Promise<RestEndpointMethodTypes['orgs']['getMembershipForUser']['response']['data']>;
+  ): Promise<
+    RestEndpointMethodTypes["orgs"]["getMembershipForUser"]["response"]["data"]
+  >;
   getContributions(username: string): Promise<ContributionData>;
   getUserDetails(username: string): Promise<UserData>;
 }

@@ -46,7 +46,7 @@ export function PaymentSettings() {
   };
 
   const handleRemovePresetAmount = (amount: number) => {
-    setPresetAmounts(presetAmounts.filter(a => a !== amount));
+    setPresetAmounts(presetAmounts.filter((a) => a !== amount));
     toast.success("Preset amount removed");
   };
 
@@ -83,11 +83,15 @@ export function PaymentSettings() {
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="payment-enabled" className="text-base font-medium">
+              <Label
+                htmlFor="payment-enabled"
+                className="text-base font-medium"
+              >
                 Enable Payment Button
               </Label>
               <p className="text-sm text-muted-foreground">
-                Allow others to send you payments via GitHub PRs and other platforms
+                Allow others to send you payments via GitHub PRs and other
+                platforms
               </p>
             </div>
             <Switch
@@ -100,7 +104,8 @@ export function PaymentSettings() {
           {paymentEnabled && (
             <div className="bg-background border border-border rounded-lg p-4">
               <p className="text-sm text-muted-foreground">
-                Payment processing is not yet implemented. This is UI-only for now.
+                Payment processing is not yet implemented. This is UI-only for
+                now.
               </p>
             </div>
           )}
@@ -116,10 +121,16 @@ export function PaymentSettings() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label className="text-sm font-medium mb-2 block">Current presets</Label>
+                <Label className="text-sm font-medium mb-2 block">
+                  Current presets
+                </Label>
                 <div className="flex flex-wrap gap-2">
                   {presetAmounts.map((amount) => (
-                    <Badge key={amount} variant="secondary" className="flex items-center gap-1">
+                    <Badge
+                      key={amount}
+                      variant="secondary"
+                      className="flex items-center gap-1"
+                    >
                       ${amount}
                       <button
                         onClick={() => handleRemovePresetAmount(amount)}
@@ -165,7 +176,10 @@ export function PaymentSettings() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="allow-custom" className="text-base font-medium">
+                  <Label
+                    htmlFor="allow-custom"
+                    className="text-base font-medium"
+                  >
                     Allow Custom Amounts
                   </Label>
                   <p className="text-sm text-muted-foreground">
@@ -189,7 +203,9 @@ export function PaymentSettings() {
                       id="min-amount"
                       type="number"
                       value={minAmount}
-                      onChange={(e) => setMinAmount(parseInt(e.target.value) || 1)}
+                      onChange={(e) =>
+                        setMinAmount(parseInt(e.target.value) || 1)
+                      }
                       min="1"
                       max="100"
                       disabled
@@ -203,7 +219,9 @@ export function PaymentSettings() {
                       id="max-amount"
                       type="number"
                       value={maxAmount}
-                      onChange={(e) => setMaxAmount(parseInt(e.target.value) || 1000)}
+                      onChange={(e) =>
+                        setMaxAmount(parseInt(e.target.value) || 1000)
+                      }
                       min="1"
                       max="10000"
                       disabled
@@ -226,7 +244,9 @@ export function PaymentSettings() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label className="text-sm font-medium mb-2 block">Button Preview</Label>
+                <Label className="text-sm font-medium mb-2 block">
+                  Button Preview
+                </Label>
                 <div className="p-4 bg-background border border-border rounded-lg">
                   <PaymentButton username={username} apiKey={apiKey} />
                 </div>
@@ -241,9 +261,12 @@ export function PaymentSettings() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label className="text-sm font-medium mb-2 block">GitHub HTML Snippet</Label>
+                <Label className="text-sm font-medium mb-2 block">
+                  GitHub HTML Snippet
+                </Label>
                 <p className="text-sm text-muted-foreground mb-2">
-                  Copy this HTML code to embed the payment button in GitHub PRs, issues, or README files
+                  Copy this HTML code to embed the payment button in GitHub PRs,
+                  issues, or README files
                 </p>
                 <div className="relative">
                   <pre className="bg-background border border-border p-4 rounded-lg text-xs overflow-x-auto whitespace-pre-wrap">
@@ -261,13 +284,16 @@ export function PaymentSettings() {
                 </div>
                 <div className="mt-2 p-3 bg-background border border-border rounded-lg">
                   <p className="text-xs text-muted-foreground">
-                    💡 This creates a right-aligned payment button using the official Bounty.new badge image
+                    💡 This creates a right-aligned payment button using the
+                    official Bounty.new badge image
                   </p>
                 </div>
               </div>
 
               <div>
-                <Label className="text-sm font-medium mb-2 block">Direct Payment Link</Label>
+                <Label className="text-sm font-medium mb-2 block">
+                  Direct Payment Link
+                </Label>
                 <p className="text-sm text-muted-foreground mb-2">
                   Share this direct link to your payment page
                 </p>

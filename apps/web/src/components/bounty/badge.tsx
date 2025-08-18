@@ -1,4 +1,4 @@
-import { Check } from "lucide-react"
+import { Check } from "lucide-react";
 
 export function Badge() {
   return (
@@ -8,5 +8,5 @@ export function Badge() {
     >
       <Check className="h-[9.6px] w-[9.6px] -rotate-45 text-[#F5F5F5]" />
     </div>
-  )
+  );
 }

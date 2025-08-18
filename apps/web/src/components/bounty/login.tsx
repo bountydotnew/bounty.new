@@ -1,19 +1,19 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Key, LogOut } from "lucide-react"
-import SubmissionCard from "@/components/bounty/submission-card"
-import { useState, useRef, useEffect } from "react"
-import { authClient } from "@bounty/auth/client"
-import { toast } from "sonner"
-import { useRouter, useSearchParams } from "next/navigation"
-import { LINKS } from "@/constants/links"
-import Bounty from "@/components/icons/bounty"
-import Image from "next/image"
-import { GithubIcon, Wendys } from "../icons"
-import Google from "../icons/google"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Key, LogOut } from "lucide-react";
+import SubmissionCard from "@/components/bounty/submission-card";
+import { useState, useRef, useEffect } from "react";
+import { authClient } from "@bounty/auth/client";
+import { toast } from "sonner";
+import { useRouter, useSearchParams } from "next/navigation";
+import { LINKS } from "@/constants/links";
+import Bounty from "@/components/icons/bounty";
+import Image from "next/image";
+import { GithubIcon, Wendys } from "../icons";
+import Google from "../icons/google";
 
 const cards = {
-  "ahmet": {
+  ahmet: {
     name: "Ahmet",
     description: "look sir coderabbit says my code good",
     bounty: 100,
@@ -21,32 +21,38 @@ const cards = {
     rank: "Rank 500",
     image: "https://avatars.githubusercontent.com/u/37756565?v=4",
     id: "ahmet",
-    screenshot: "https://pbs.twimg.com/media/Gwi-mbBWUBc90r_?format=jpg&name=large"
+    screenshot:
+      "https://pbs.twimg.com/media/Gwi-mbBWUBc90r_?format=jpg&name=large",
   },
-  "sergio": {
+  sergio: {
     name: "Sergio",
     description: "I made ur website use tweakcn now pay me!!",
     bounty: 25,
     status: "open",
     rank: "Rank 0",
-    image: "https://pbs.twimg.com/profile_images/1939906364119109632/vu8pOSiH_400x400.jpg",
+    image:
+      "https://pbs.twimg.com/profile_images/1939906364119109632/vu8pOSiH_400x400.jpg",
     id: "ahmet",
-    screenshot: "https://pbs.twimg.com/media/GwjyS7FX0AMIz4H?format=png&name=small"
+    screenshot:
+      "https://pbs.twimg.com/media/GwjyS7FX0AMIz4H?format=png&name=small",
   },
-  "nizzy": {
+  nizzy: {
     name: "nizzy",
     description: "Here's my submission",
     bounty: 1000,
     status: "open",
     rank: "Rank 186",
-    image: "https://pbs.twimg.com/profile_images/1884987569961570304/TP3OWz64_400x400.jpg",
+    image:
+      "https://pbs.twimg.com/profile_images/1884987569961570304/TP3OWz64_400x400.jpg",
     id: "ahmet",
-    screenshot: "https://pbs.twimg.com/media/Gwl0qdhWgAAoJdK?format=jpg&name=large"
-  }
-}
+    screenshot:
+      "https://pbs.twimg.com/media/Gwl0qdhWgAAoJdK?format=jpg&name=large",
+  },
+};
 
 export default function Login() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();
@@ -54,7 +60,7 @@ export default function Login() {
   const { data: session, isPending } = authClient.useSession();
 
   // Get callback URL from search params, default to dashboard
-  const callbackUrl = searchParams.get('callback') || LINKS.DASHBOARD;
+  const callbackUrl = searchParams.get("callback") || LINKS.DASHBOARD;
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current || !svgRef.current) return;
@@ -72,16 +78,21 @@ export default function Login() {
     const x = deltaX / maxDistance;
     const y = deltaY / maxDistance;
 
-    setMousePosition({ x: Math.max(-1, Math.min(1, x)), y: Math.max(-1, Math.min(1, y)) });
+    setMousePosition({
+      x: Math.max(-1, Math.min(1, x)),
+      y: Math.max(-1, Math.min(1, y)),
+    });
   };
   useEffect(() => {
-   if (!PublicKeyCredential.isConditionalMediationAvailable ||
-       !PublicKeyCredential.isConditionalMediationAvailable()) {
-     return;
-   }
- 
-  void authClient.signIn.passkey({ autoFill: true })
-}, [])
+    if (
+      !PublicKeyCredential.isConditionalMediationAvailable ||
+      !PublicKeyCredential.isConditionalMediationAvailable()
+    ) {
+      return;
+    }
+
+    void authClient.signIn.passkey({ autoFill: true });
+  }, []);
 
   const handleMouseLeave = () => {
     setMousePosition({ x: 0, y: 0 });
@@ -89,10 +100,11 @@ export default function Login() {
 
   const handleGitHubSignIn = async () => {
     try {
+      setLoading(true);
       await authClient.signIn.social(
         {
           provider: "github",
-          callbackURL: callbackUrl
+          callbackURL: callbackUrl,
         },
         {
           onSuccess: () => {
@@ -100,11 +112,13 @@ export default function Login() {
           },
           onError: (error) => {
             toast.error(error.error.message || "Sign in failed");
+            setLoading(false);
           },
-        }
+        },
       );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Sign in failed");
+      setLoading(false);
     }
   };
 
@@ -153,8 +167,12 @@ export default function Login() {
           ) : session ? (
             <div className="text-center space-y-6">
               <div className="space-y-2">
-                <h1 className="text-4xl md:text-4xl font-bold">Welcome back!</h1>
-                <p className="text-lg text-[#757575]">You&apos;re already signed in</p>
+                <h1 className="text-4xl md:text-4xl font-bold">
+                  Welcome back!
+                </h1>
+                <p className="text-lg text-[#757575]">
+                  You&apos;re already signed in
+                </p>
               </div>
               <div className="bg-[#1D1D1D] rounded-xl p-6 md:p-8 space-y-4 shadow-[0px_23px_38.1px_-5px_rgba(12,12,13,0.10)]">
                 <div className="flex flex-col items-center space-y-4">
@@ -169,8 +187,12 @@ export default function Login() {
                       />
                     )}
                     <div className="text-left">
-                      <p className="text-[#f3f3f3] font-medium">{session.user.name}</p>
-                      <p className="text-[#757575] text-sm">{session.user.email}</p>
+                      <p className="text-[#f3f3f3] font-medium">
+                        {session.user.name}
+                      </p>
+                      <p className="text-[#757575] text-sm">
+                        {session.user.email}
+                      </p>
                     </div>
                   </div>
                   <Button
@@ -182,14 +204,16 @@ export default function Login() {
                   <Button
                     variant="destructive"
                     className="oauthButton w-full max-w-[466px] min-w-[240px] h-12 px-6 py-3 rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
-                    onClick={() => authClient.signOut({
-                      fetchOptions: {
-                        onSuccess: () => {
-                          toast.success("Signed out successfully");
-                          window.location.href = "/login";
-                        }
-                      }
-                    })}
+                    onClick={() =>
+                      authClient.signOut({
+                        fetchOptions: {
+                          onSuccess: () => {
+                            toast.success("Signed out successfully");
+                            window.location.href = "/login";
+                          },
+                        },
+                      })
+                    }
                   >
                     <LogOut className="w-5 h-5" />
                     Sign Out
@@ -201,21 +225,36 @@ export default function Login() {
             <>
               <div className="text-center space-y-2">
                 <h1 className="text-4xl md:text-5xl font-bold">Get started</h1>
-                <p className="text-lg text-[#757575]">Sign in to your account</p>
+                <p className="text-lg text-[#757575]">
+                  Sign in to your account
+                </p>
               </div>
               <div className="hidden">
                 <label htmlFor="name">Username:</label>
-                <input type="text" name="name" autoComplete="username webauthn" />
+                <input
+                  type="text"
+                  name="name"
+                  autoComplete="username webauthn"
+                />
                 <label htmlFor="password">Password:</label>
-                <input type="password" name="password" autoComplete="current-password webauthn" />
+                <input
+                  type="password"
+                  name="password"
+                  autoComplete="current-password webauthn"
+                />
               </div>
               <div className="bg-[#1D1D1D] flex flex-col justify-center items-center rounded-xl p-6 md:p-8 space-y-4 shadow-[0px_23px_38.1px_-5px_rgba(12,12,13,0.10)]">
                 <Button
                   onClick={handleGitHubSignIn}
+                  disabled={loading}
                   className="oauthButton w-full max-w-[466px] min-w-[240px] h-12 px-6 py-3 bg-[#303030] text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
                 >
-                  <GithubIcon className="w-5 h-5 fill-white" />
-                  Continue with GitHub
+                  {loading ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <GithubIcon className="w-5 h-5 fill-white" />
+                  )}
+                  {loading ? "Signing in…" : "Continue with GitHub"}
                 </Button>
                 <Button
                   onClick={handleGoogleSignIn}
@@ -233,19 +272,26 @@ export default function Login() {
                 </Button>
                 <Button
                   onClick={handlePasskeySignIn}
+                  disabled={loading}
                   variant="text"
                   className="h-4 px-6 text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom"
                 >
                   <Key className="w-6 h-6" />
-                  Have a passkey?
+                  {loading ? "Signing in…" : "Have a passkey?"}
                 </Button>
                 <p className="text-center text-sm text-[#757575] mt-8 ">
                   {"By continuing, you accept our "}
-                  <Link href="#" className="underline text-[#b3b3b3] hover:text-[#f3f3f3]">
+                  <Link
+                    href="#"
+                    className="underline text-[#b3b3b3] hover:text-[#f3f3f3]"
+                  >
                     Terms of Service
                   </Link>
                   {" and "}
-                  <Link href="#" className="underline text-[#b3b3b3] hover:text-[#f3f3f3]">
+                  <Link
+                    href="#"
+                    className="underline text-[#b3b3b3] hover:text-[#f3f3f3]"
+                  >
                     Privacy Policy
                   </Link>
                   .
@@ -264,7 +310,8 @@ export default function Login() {
           onMouseLeave={handleMouseLeave}
           className="flex-1 relative flex items-center justify-center p-8 md:p-12 overflow-hidden min-h-[95%] border-[#383838] border-1 cursor-pointer"
           style={{
-            backgroundImage: "radial-gradient(circle at 1px 1px, #383838 1px, transparent 0)",
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, #383838 1px, transparent 0)",
             backgroundSize: "16px 16px",
             borderRadius: "25px",
             margin: "20px",
@@ -281,7 +328,7 @@ export default function Login() {
             fill="none"
             className="absolute z-0 transition-transform duration-300 ease-out"
             style={{
-              transform: `translate(${mousePosition.x * 8}px, ${mousePosition.y * 8}px)`
+              transform: `translate(${mousePosition.x * 8}px, ${mousePosition.y * 8}px)`,
             }}
           >
             <path
@@ -308,7 +355,7 @@ export default function Login() {
           <div
             className="absolute -rotate-[22deg] top-[30%] left-[0%] transform -translate-x-1/2 -translate-y-1/2 z-10 transition-transform duration-300 ease-out"
             style={{
-              transform: `translate(${-mousePosition.x * 25}px, ${-mousePosition.y * 25}px) rotate(-22deg)`
+              transform: `translate(${-mousePosition.x * 25}px, ${-mousePosition.y * 25}px) rotate(-22deg)`,
             }}
           >
             <SubmissionCard
@@ -325,7 +372,7 @@ export default function Login() {
           <div
             className="absolute -rotate-[22deg] bottom-[25%] right-[5%] transform translate-x-1/2 translate-y-1/2 z-10 transition-transform duration-300 ease-out"
             style={{
-              transform: `translate(${-mousePosition.x * 30}px, ${-mousePosition.y * 30}px) rotate(-22deg)`
+              transform: `translate(${-mousePosition.x * 30}px, ${-mousePosition.y * 30}px) rotate(-22deg)`,
             }}
           >
             <SubmissionCard
@@ -342,7 +389,7 @@ export default function Login() {
           <div
             className="absolute rotate-[22deg] bottom-[25%] left-[0%] transform -translate-x-1/2 translate-y-1/2 z-10 transition-transform duration-300 ease-out"
             style={{
-              transform: `translate(${-mousePosition.x * 20}px, ${-mousePosition.y * 20}px) rotate(22deg)`
+              transform: `translate(${-mousePosition.x * 20}px, ${-mousePosition.y * 20}px) rotate(22deg)`,
             }}
           >
             <SubmissionCard
@@ -358,7 +405,7 @@ export default function Login() {
           <div
             className="absolute rotate-[22deg] top-[30%] right-[0%] transform translate-x-1/2 -translate-y-1/2 z-10 transition-transform duration-300 ease-out"
             style={{
-              transform: `translate(${-mousePosition.x * 28}px, ${-mousePosition.y * 28}px) rotate(22deg)`
+              transform: `translate(${-mousePosition.x * 28}px, ${-mousePosition.y * 28}px) rotate(22deg)`,
             }}
           >
             <SubmissionCard
@@ -373,5 +420,5 @@ export default function Login() {
         </div>
       </div>
     </div>
-  )
+  );
 }

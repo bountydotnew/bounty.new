@@ -14,3 +14,5 @@ apps/server/_.env.local
 /.crush
 AGENT.md
 CODEBASE_RULES.md
+stagewise.json
+*.tsbuildinfo

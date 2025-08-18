@@ -21,7 +21,7 @@ export default function SignInForm({
       await authClient.signIn.social(
         {
           provider: "github",
-          callbackURL
+          callbackURL,
         },
         {
           onSuccess: () => {
@@ -31,7 +31,7 @@ export default function SignInForm({
             toast.error(error.error.message || "Sign in failed");
             setIsSigningIn(false);
           },
-        }
+        },
       );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Sign in failed");
@@ -48,7 +48,7 @@ export default function SignInForm({
       <SignInPage
         onSignIn={handleGitHubSignIn}
         onGitHubSignIn={handleGitHubSignIn}
-        onResetPassword={() => { }}
+        onResetPassword={() => {}}
       />
     </div>
   );

@@ -12,7 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Favicon } from "@/components/ui/favicon";
-import { betaApplicationSchema, betaApplicationDefaults, type BetaApplicationForm } from "@/lib/forms";
+import {
+  betaApplicationSchema,
+  betaApplicationDefaults,
+  type BetaApplicationForm,
+} from "@/lib/forms";
 
 interface BetaApplicationFormProps {
   onSubmit?: (data: BetaApplicationForm) => void;
@@ -21,7 +25,12 @@ interface BetaApplicationFormProps {
   className?: string;
 }
 
-export function BetaApplicationForm({ onSubmit, onCancel, onSuccess, className }: BetaApplicationFormProps) {
+export function BetaApplicationForm({
+  onSubmit,
+  onCancel,
+  onSuccess,
+  className,
+}: BetaApplicationFormProps) {
   const {
     register,
     handleSubmit,
@@ -52,7 +61,9 @@ export function BetaApplicationForm({ onSubmit, onCancel, onSuccess, className }
       }
     },
     onError: (error: TRPCClientErrorLike<AppRouter>) => {
-      toast.error(error.message || "Failed to submit application. Please try again.");
+      toast.error(
+        error.message || "Failed to submit application. Please try again.",
+      );
     },
   });
 
@@ -82,7 +93,10 @@ export function BetaApplicationForm({ onSubmit, onCancel, onSuccess, className }
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="twitter" className="text-sm font-medium text-foreground">
+          <label
+            htmlFor="twitter"
+            className="text-sm font-medium text-foreground"
+          >
             Twitter handle
           </label>
           <Input
@@ -98,7 +112,10 @@ export function BetaApplicationForm({ onSubmit, onCancel, onSuccess, className }
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="projectName" className="text-sm font-medium text-foreground">
+          <label
+            htmlFor="projectName"
+            className="text-sm font-medium text-foreground"
+          >
             Project name*
           </label>
           <Input
@@ -109,12 +126,17 @@ export function BetaApplicationForm({ onSubmit, onCancel, onSuccess, className }
             disabled={isFormDisabled}
           />
           {errors.projectName && (
-            <p className="text-sm text-destructive">{errors.projectName.message}</p>
+            <p className="text-sm text-destructive">
+              {errors.projectName.message}
+            </p>
           )}
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="projectLink" className="text-sm font-medium text-foreground">
+          <label
+            htmlFor="projectLink"
+            className="text-sm font-medium text-foreground"
+          >
             Project link*
           </label>
           <div className="relative">
@@ -132,12 +154,17 @@ export function BetaApplicationForm({ onSubmit, onCancel, onSuccess, className }
             )}
           </div>
           {errors.projectLink && (
-            <p className="text-sm text-destructive">{errors.projectLink.message}</p>
+            <p className="text-sm text-destructive">
+              {errors.projectLink.message}
+            </p>
           )}
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="description" className="text-sm font-medium text-foreground">
+          <label
+            htmlFor="description"
+            className="text-sm font-medium text-foreground"
+          >
             Description
           </label>
           <Textarea
@@ -149,7 +176,9 @@ export function BetaApplicationForm({ onSubmit, onCancel, onSuccess, className }
             disabled={isFormDisabled}
           />
           {errors.description && (
-            <p className="text-sm text-destructive">{errors.description.message}</p>
+            <p className="text-sm text-destructive">
+              {errors.description.message}
+            </p>
           )}
         </div>
       </div>
@@ -166,12 +195,14 @@ export function BetaApplicationForm({ onSubmit, onCancel, onSuccess, className }
           </div>
         ) : (
           <>
-            <Button 
-              type="submit" 
-              className="flex-1" 
+            <Button
+              type="submit"
+              className="flex-1"
               disabled={isSubmitting || submitMutation.isPending}
             >
-              {isSubmitting || submitMutation.isPending ? "Submitting..." : "Submit Application"}
+              {isSubmitting || submitMutation.isPending
+                ? "Submitting..."
+                : "Submit Application"}
             </Button>
             {onCancel && (
               <Button type="button" variant="outline" onClick={onCancel}>
@@ -183,4 +214,4 @@ export function BetaApplicationForm({ onSubmit, onCancel, onSuccess, className }
       </div>
     </form>
   );
-} 
+}

@@ -1,5 +1,5 @@
-import { betterAuth } from "better-auth"
-import { passkey } from "better-auth/plugins/passkey"
+import { betterAuth } from "better-auth";
+import { passkey } from "better-auth/plugins/passkey";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@bounty/db";
 import * as schema from "@bounty/db";
@@ -13,9 +13,11 @@ import {
 
 import { Polar } from "@polar-sh/sdk";
 
+const polarEnv =
+  process.env.NODE_ENV === "production" ? "production" : "sandbox";
 const polarClient = new Polar({
-  accessToken: process.env.POLAR_ACCESS_TOKEN,
-  server: process.env.NODE_ENV === "production" ? "production" : "sandbox",
+  accessToken: process.env.POLAR_ACCESS_TOKEN as string,
+  server: polarEnv,
 });
 
 export const auth = betterAuth({
@@ -42,50 +44,73 @@ export const auth = betterAuth({
     enabled: true,
   },
   plugins: [
-    polar({ 
+    polar({
       client: polarClient,
-      createCustomerOnSignUp: true,
+      createCustomerOnSignUp: false,
       getCustomerCreateParams: async ({ user }) => {
+        const externalId = user.id;
         try {
-          const existing = await polarClient.customers.getExternal({ externalId: user.id });
-          if (existing && typeof (existing as any).id === "string" && (existing as any).id.length > 0) {
-            return null as any;
-          }
+          const found = await polarClient.customers.getExternal({ externalId });
+          console.log(
+            `[polar:getCustomerCreateParams] env=${polarEnv} externalId=${externalId} found=${!!found}`,
+          );
+          return null as any;
         } catch (err) {
-          const e = err as { status?: number; message?: string; body$?: string };
-          const message = String(e?.message || "");
-          const body$ = String((e as any)?.body$ || "");
-          if (
+          const e = err as {
+            status?: number;
+            message?: string;
+            body$?: string;
+            detail?: string;
+          };
+          const msg = String(e?.message || e?.body$ || e?.detail || "");
+          if (e?.status === 404) {
+            console.log(
+              `[polar:getCustomerCreateParams] env=${polarEnv} externalId=${externalId} not_found->create`,
+            );
+          } else if (
             e?.status === 409 ||
-            message.includes("external ID cannot be updated") ||
-            body$.includes("external ID cannot be updated")
+            msg.includes("external ID cannot be updated") ||
+            msg.toLowerCase().includes("external_id cannot be updated")
           ) {
+            console.warn(
+              `[polar:getCustomerCreateParams] env=${polarEnv} externalId=${externalId} conflict/immutable external_id -> skip`,
+            );
             return null as any;
-          }
-          if (e?.status && e.status !== 404) {
-            console.warn("Polar getExternal unexpected error; proceeding to attempt create", e);
+          } else {
+            console.warn(
+              `[polar:getCustomerCreateParams] env=${polarEnv} externalId=${externalId} unexpected_error=${e?.status} -> proceed to create`,
+            );
           }
         }
         return {
+          external_id: externalId,
           email: user.email,
           name: user.name || user.email,
-          metadata: {
-            userId: user.id,
-          },
-        };
+          metadata: { userId: externalId },
+        } as any;
       },
       onCustomerCreateError: async ({ error }: { error: unknown }) => {
-        const e = error as { status?: number; message?: string; body$?: string };
-        const message = String(e?.message || "");
-        const body$ = String(e?.body$ || "");
+        const e = error as {
+          status?: number;
+          message?: string;
+          body$?: string;
+          detail?: string;
+        };
+        const msg = String(e?.message || e?.body$ || e?.detail || "");
         if (
           e?.status === 409 ||
-          message.includes("external ID cannot be updated") ||
-          body$.includes("external ID cannot be updated") ||
-          body$.includes("\"error\":\"PolarRequestValidationError\"")
+          msg.includes("external ID cannot be updated") ||
+          msg.toLowerCase().includes("external_id cannot be updated") ||
+          msg.includes('"error":"PolarRequestValidationError"')
         ) {
+          console.warn(
+            `[polar:onCustomerCreateError] env=${polarEnv} swallow status=${e?.status}`,
+          );
           return;
         }
+        console.error(
+          `[polar:onCustomerCreateError] env=${polarEnv} rethrow status=${e?.status}`,
+        );
         throw error as Error;
       },
       use: [
@@ -113,26 +138,35 @@ export const auth = betterAuth({
           },
           onOrderPaid: async (payload) => {
             console.log("Order paid:", payload);
-            
+
             try {
-              console.log("Order paid payload:", JSON.stringify(payload, null, 2));
+              console.log(
+                "Order paid payload:",
+                JSON.stringify(payload, null, 2),
+              );
               console.log("User subscription activated via webhook");
             } catch (error) {
               console.error("Error handling order paid webhook:", error);
             }
-            
+
             return Promise.resolve();
           },
           onSubscriptionActive: async (payload) => {
             console.log("Subscription active:", payload);
-            
+
             try {
-              console.log("Subscription active payload:", JSON.stringify(payload, null, 2));
+              console.log(
+                "Subscription active payload:",
+                JSON.stringify(payload, null, 2),
+              );
               console.log("User subscription is now active");
             } catch (error) {
-              console.error("Error handling subscription active webhook:", error);
+              console.error(
+                "Error handling subscription active webhook:",
+                error,
+              );
             }
-            
+
             return Promise.resolve();
           },
           onPayload: (payload) => {
@@ -145,7 +179,10 @@ export const auth = betterAuth({
     passkey({
       rpID: process.env.NODE_ENV === "production" ? "bounty.new" : "localhost",
       rpName: "Bounty.new",
-      origin: process.env.NODE_ENV === "production" ? "https://bounty.new" : "http://localhost:3000",
+      origin:
+        process.env.NODE_ENV === "production"
+          ? "https://bounty.new"
+          : "http://localhost:3000",
     }),
   ],
   secret: process.env.BETTER_AUTH_SECRET,

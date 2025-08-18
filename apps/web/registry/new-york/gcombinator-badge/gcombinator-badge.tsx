@@ -21,18 +21,20 @@ interface BackedByBadgeProps {
  * <BackedByBadge text="Backed by G Combinator" />
  */
 
-export function BackedByBadge({ 
-  text, 
-  icon = <GCombinator />, 
-  className 
+export function BackedByBadge({
+  text,
+  icon = <GCombinator />,
+  className,
 }: BackedByBadgeProps) {
   return (
-    <div className={cn(
-      "inline-flex items-center gap-2 bg-white/10 backdrop-blur-xs border border-white/20 rounded-full px-4 py-1.5 mb-2",
-      className
-    )}>
+    <div
+      className={cn(
+        "inline-flex items-center gap-2 bg-white/10 backdrop-blur-xs border border-white/20 rounded-full px-4 py-1.5 mb-2",
+        className,
+      )}
+    >
       {icon}
       {text}
     </div>
   );
-} 
+}

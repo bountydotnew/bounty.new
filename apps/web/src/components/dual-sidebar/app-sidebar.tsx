@@ -4,19 +4,18 @@ import { ComponentProps } from "react";
 import {
   AudioWaveform,
   Award,
-  BookOpen, Command,
+  Command,
   FileUser,
   Frame,
   GalleryVerticalEnd,
   Map,
   PieChart,
-  Settings2
 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarHeader
+  SidebarHeader,
 } from "@/components/ui/sidebar";
 import { NavMain } from "@/components/dual-sidebar/nav-main";
 // import { NavProjects } from "@/components/dual-sidebar/nav-projects";
@@ -28,12 +27,13 @@ import Bounty from "../icons/bounty";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { LINKS } from "@/constants/links";
-import { useQuery } from "@tanstack/react-query";
-import { trpc } from "@/utils/trpc";
+import { AccessGate } from "@/components/access-gate";
 
-export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
+import { SettingsIcon } from "@/components/ui/settings";
+import { BookTextIcon } from "@/components/ui/book-text";
+
+export const AppSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
   const pathname = usePathname();
-  const userData = useQuery(trpc.user.getMe.queryOptions());
 
   function isActive(path: string) {
     return pathname === path;
@@ -62,7 +62,8 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       {
         name: "Inbound.new",
         logo: Command,
-        logoUrl: "https://inbound.new/_next/image?url=https%3A%2F%2Finbound.new%2Finbound-logo-3.png&w=64&q=75",
+        logoUrl:
+          "https://inbound.new/_next/image?url=https%3A%2F%2Finbound.new%2Finbound-logo-3.png&w=64&q=75",
         plan: "Free",
       },
     ],
@@ -76,54 +77,22 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       {
         title: "Bounties",
         url: LINKS.BOUNTIES,
-        icon: Award,
+        icon: (p: ComponentProps<typeof Award>) => <Award {...p} size={18} />,
         isActive: isActive("/bounties"),
       },
       {
         title: "Documentation",
         url: "#",
-        icon: BookOpen,
-        items: [
-          {
-            title: "Introduction",
-            url: "#",
-          },
-          {
-            title: "Get Started",
-            url: "#",
-          },
-          {
-            title: "Tutorials",
-            url: "#",
-          },
-          {
-            title: "Changelog",
-            url: "#",
-          },
-        ],
+        icon: (p: ComponentProps<typeof BookTextIcon>) => (
+          <BookTextIcon {...p} size={22} />
+        ),
       },
       {
         title: "Settings",
-        url: "#",
-        icon: Settings2,
-        items: [
-          {
-            title: "General",
-            url: "#",
-          },
-          {
-            title: "Team",
-            url: "#",
-          },
-          {
-            title: "Billing",
-            url: "#",
-          },
-          {
-            title: "Limits",
-            url: "#",
-          },
-        ],
+        url: LINKS.SETTINGS,
+        icon: (p: ComponentProps<typeof SettingsIcon>) => (
+          <SettingsIcon {...p} size={22} />
+        ),
       },
     ],
     projects: [
@@ -189,7 +158,8 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       {
         name: "Inbound.new",
         logo: Command,
-        logoUrl: "https://inbound.new/_next/image?url=https%3A%2F%2Finbound.new%2Finbound-logo-3.png&w=64&q=75",
+        logoUrl:
+          "https://inbound.new/_next/image?url=https%3A%2F%2Finbound.new%2Finbound-logo-3.png&w=64&q=75",
         plan: "Free",
       },
     ],
@@ -197,19 +167,16 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       {
         title: "Apply for Beta Testing",
         url: LINKS.DASHBOARD,
-        icon: FileUser
-      }
+        icon: FileUser,
+      },
     ],
-  }
+  };
 
   const user = {
     name: "Guest",
     email: "guest@example.com",
     image: null,
-  }
-
-
-  const data = userData.data?.betaAccessStatus === "approved" ? productionData : betaData;
+  };
 
   return (
     <Sidebar variant="icononly" {...props}>
@@ -221,7 +188,12 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <Divider className="h-[2px] w-8 my-2 bg-white" />
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <AccessGate
+          stage="beta"
+          fallback={<NavMain items={betaData.navMain} />}
+        >
+          <NavMain items={productionData.navMain} />
+        </AccessGate>
         {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
       <SidebarFooter>
@@ -229,4 +201,4 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       </SidebarFooter>
     </Sidebar>
   );
-}
+};

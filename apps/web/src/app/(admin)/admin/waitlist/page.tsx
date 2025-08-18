@@ -3,11 +3,24 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Search, Mail, Calendar, Users, CheckCircle, XCircle } from "lucide-react";
+import {
+  Search,
+  Mail,
+  Calendar,
+  Users,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import { TRPCClientErrorLike } from "@trpc/client";
 import type { AppRouter } from "@bounty/api";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +44,9 @@ export default function WaitlistPage() {
     ...trpc.earlyAccess.updateWaitlistAccess.mutationOptions(),
     onSuccess: () => {
       toast.success("Access updated successfully");
-      queryClient.invalidateQueries({ queryKey: ["earlyAccess", "getAdminWaitlist"] });
+      queryClient.invalidateQueries({
+        queryKey: ["earlyAccess", "getAdminWaitlist"],
+      });
     },
     onError: (error: TRPCClientErrorLike<AppRouter>) => {
       toast.error(error.message || "Failed to update access");
@@ -39,18 +54,18 @@ export default function WaitlistPage() {
   });
 
   const handleUpdateAccess = (id: string, hasAccess: boolean) => {
-    setUpdatingIds(prev => new Set(prev).add(id));
+    setUpdatingIds((prev) => new Set(prev).add(id));
     updateAccessMutation.mutate(
       { id, hasAccess },
       {
         onSettled: () => {
-          setUpdatingIds(prev => {
+          setUpdatingIds((prev) => {
             const next = new Set(prev);
             next.delete(id);
             return next;
           });
-        }
-      }
+        },
+      },
     );
   };
 
@@ -67,7 +82,9 @@ export default function WaitlistPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Waitlist Management</h1>
-          <p className="text-muted-foreground">Manage waitlist entries and access permissions</p>
+          <p className="text-muted-foreground">
+            Manage waitlist entries and access permissions
+          </p>
         </div>
       </div>
 
@@ -88,7 +105,9 @@ export default function WaitlistPage() {
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{data?.stats.withAccess || 0}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {data?.stats.withAccess || 0}
+            </div>
           </CardContent>
         </Card>
 
@@ -98,7 +117,9 @@ export default function WaitlistPage() {
             <XCircle className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{data?.stats.pending || 0}</div>
+            <div className="text-2xl font-bold text-orange-600">
+              {data?.stats.pending || 0}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -124,7 +145,9 @@ export default function WaitlistPage() {
 
             {isLoading ? (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">Loading waitlist entries...</p>
+                <p className="text-muted-foreground">
+                  Loading waitlist entries...
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -178,7 +201,9 @@ export default function WaitlistPage() {
 
                 {data?.entries.length === 0 && (
                   <div className="text-center py-8">
-                    <p className="text-muted-foreground">No waitlist entries found</p>
+                    <p className="text-muted-foreground">
+                      No waitlist entries found
+                    </p>
                   </div>
                 )}
               </div>
@@ -212,4 +237,4 @@ export default function WaitlistPage() {
       </Card>
     </div>
   );
-} 
+}

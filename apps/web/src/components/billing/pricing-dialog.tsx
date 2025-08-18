@@ -1,16 +1,12 @@
 "use client";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Switch } from '@/components/ui/switch';
-import { useBilling } from '@/hooks/use-billing';
-import { useState } from 'react';
-import { toast } from 'sonner';
-import { Check } from 'lucide-react';
-import Image from 'next/image';
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { useBilling } from "@/hooks/use-billing";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Check } from "lucide-react";
+import Image from "next/image";
 
 interface PricingDialogProps {
   open: boolean;
@@ -20,7 +16,9 @@ interface PricingDialogProps {
 export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
   const { checkout } = useBilling();
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<"pro-monthly" | "pro-annual">("pro-annual");
+  const [selectedPlan, setSelectedPlan] = useState<
+    "pro-monthly" | "pro-annual"
+  >("pro-annual");
 
   const handleUpgrade = async () => {
     try {
@@ -40,7 +38,7 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
     "Lower fees on bounty transactions",
     "Create multiple concurrent bounties",
     "Priority support",
-    "Early access to new features"
+    "Early access to new features",
   ];
 
   return (
@@ -64,7 +62,13 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
               <div className="h-full w-full bg-gradient-to-br from-blue-600/30 to-purple-600/30">
                 {/* Image will be placed here */}
                 <div className="h-full w-full flex items-center justify-center text-white/50 text-sm">
-                  <Image className="object-cover h-full w-full" src="https://pbs.twimg.com/profile_banners/1841743506332909569/1753299877/1500x500" alt="Bounty Pro" width={1000} height={1000} />
+                  <Image
+                    className="object-cover h-full w-full"
+                    src="https://pbs.twimg.com/profile_banners/1841743506332909569/1753299877/1500x500"
+                    alt="Bounty Pro"
+                    width={1000}
+                    height={1000}
+                  />
                 </div>
               </div>
               <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/10 via-zinc-900/10 to-zinc-900/90 z-30" />
@@ -74,14 +78,16 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
           <div className="relative right-5 top-[-70px] h-56 w-[720px]">
             <div className="absolute left-[-157px] top-[-68.43px] h-36 w-[1034px] rounded-full bg-white/10 mix-blend-overlay blur-[100px]" />
           </div>
-          
+
           <div className="relative z-10 flex flex-col items-start justify-start gap-5 self-stretch h-full">
             <div className="flex flex-col items-start justify-start gap-4 self-stretch">
               <div className="flex w-full items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Switch
                     checked={selectedPlan === "pro-annual"}
-                    onCheckedChange={(checked) => setSelectedPlan(checked ? "pro-annual" : "pro-monthly")}
+                    onCheckedChange={(checked) =>
+                      setSelectedPlan(checked ? "pro-annual" : "pro-monthly")
+                    }
                   />
                   <p className="text-sm text-white/70">Billed Annually</p>
                   <div className="rounded-full border border-[#656565] bg-[#3F3F3F] px-2 py-1 text-xs text-white">
@@ -108,7 +114,8 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
                 </div>
                 <div className="flex flex-col items-start justify-start gap-2 self-stretch">
                   <div className="justify-center self-stretch text-sm font-normal leading-normal text-white opacity-70 lg:text-base">
-                    For developers and teams who want to streamline open source contributions.
+                    For developers and teams who want to streamline open source
+                    contributions.
                   </div>
                 </div>
               </div>
@@ -116,7 +123,10 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
             <div className="h-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-white/10"></div>
             <div className="flex flex-col items-start justify-start gap-2.5 self-stretch">
               {features.map((feature, index) => (
-                <div key={index} className="inline-flex items-center justify-start gap-2.5">
+                <div
+                  key={index}
+                  className="inline-flex items-center justify-start gap-2.5"
+                >
                   <div className="flex h-5 w-5 items-center justify-center gap-3 rounded-[125px] bg-[#1F1F1F] p-[5px] dark:bg-white/10">
                     <Check className="h-3 w-3 text-white" />
                   </div>
@@ -134,7 +144,7 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
             >
               <div className="flex items-center justify-center gap-2.5 px-1">
                 <div className="justify-start text-center font-semibold leading-none text-black">
-                  {isLoading ? 'Processing...' : `Upgrade to Pro`}
+                  {isLoading ? "Processing..." : `Upgrade to Pro`}
                 </div>
               </div>
             </button>
@@ -143,4 +153,4 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
       </DialogContent>
     </Dialog>
   );
-} 
+}

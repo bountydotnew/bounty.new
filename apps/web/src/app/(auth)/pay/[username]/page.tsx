@@ -9,7 +9,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Github, Twitter, Globe, DollarSign, Heart, Star, User, GitFork, Users, Activity } from "lucide-react";
+import {
+  ArrowLeft,
+  Github,
+  Twitter,
+  Globe,
+  DollarSign,
+  Heart,
+  Star,
+  User,
+  GitFork,
+  Users,
+  Activity,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -22,24 +34,25 @@ export default function PaymentPage({ params }: PaymentPageProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  
-  const apiKey = searchParams.get('key');
+
+  const apiKey = searchParams.get("key");
   const username = resolvedParams.username;
 
   // TODO: Replace with actual user query
   const userQuery = useQuery({
-    queryKey: ['user', username],
+    queryKey: ["user", username],
     queryFn: async () => {
       // Mock user data for now
       return {
-        id: '1',
+        id: "1",
         username: username,
         name: username.charAt(0).toUpperCase() + username.slice(1),
         image: `https://github.com/${username}.png`,
-        bio: 'Software developer passionate about open source contributions. Building tools that make developers more productive.',
+        bio: "Software developer passionate about open source contributions. Building tools that make developers more productive.",
         githubUrl: `https://github.com/${username}`,
-        twitterUrl: username !== 'example' ? `https://twitter.com/${username}` : null,
-        websiteUrl: username === 'example' ? 'https://example.dev' : null,
+        twitterUrl:
+          username !== "example" ? `https://twitter.com/${username}` : null,
+        websiteUrl: username === "example" ? "https://example.dev" : null,
         stats: {
           repositories: 42,
           followers: 1234,
@@ -51,7 +64,7 @@ export default function PaymentPage({ params }: PaymentPageProps) {
           allowCustomAmount: true,
           minAmount: 1,
           maxAmount: 1000,
-        }
+        },
       };
     },
   });
@@ -98,25 +111,24 @@ export default function PaymentPage({ params }: PaymentPageProps) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="space-y-6">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.back()}
-          >
+          <Button variant="outline" size="sm" onClick={() => router.back()}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
-          
+
           <Card>
             <CardContent className="p-8 text-center">
               <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
                 <User className="w-8 h-8 text-red-600" />
               </div>
-              <CardTitle className="mb-2 text-red-600">User Not Found</CardTitle>
+              <CardTitle className="mb-2 text-red-600">
+                User Not Found
+              </CardTitle>
               <p className="text-muted-foreground mb-6">
-                The user @{username} could not be found or doesn&apos;t have payments enabled.
+                The user @{username} could not be found or doesn&apos;t have
+                payments enabled.
               </p>
-              <Button onClick={() => router.push('/')} variant="outline">
+              <Button onClick={() => router.push("/")} variant="outline">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Go Home
               </Button>
@@ -134,11 +146,7 @@ export default function PaymentPage({ params }: PaymentPageProps) {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.back()}
-          >
+          <Button variant="outline" size="sm" onClick={() => router.back()}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
@@ -164,13 +172,15 @@ export default function PaymentPage({ params }: PaymentPageProps) {
                   <p className="text-muted-foreground">@{user.username}</p>
                 </div>
                 {user.bio && (
-                  <p className="text-sm text-muted-foreground leading-relaxed">{user.bio}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {user.bio}
+                  </p>
                 )}
-                
+
                 {/* Social Links */}
                 <div className="flex gap-4 pt-2">
                   {user.githubUrl && (
-                    <Link 
+                    <Link
                       href={user.githubUrl}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -181,7 +191,7 @@ export default function PaymentPage({ params }: PaymentPageProps) {
                     </Link>
                   )}
                   {user.twitterUrl && (
-                    <Link 
+                    <Link
                       href={user.twitterUrl}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -192,7 +202,7 @@ export default function PaymentPage({ params }: PaymentPageProps) {
                     </Link>
                   )}
                   {user.websiteUrl && (
-                    <Link 
+                    <Link
                       href={user.websiteUrl}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -206,37 +216,43 @@ export default function PaymentPage({ params }: PaymentPageProps) {
               </div>
             </div>
           </CardHeader>
-          
+
           <CardContent className="space-y-6">
             <Separator />
-            
+
             {/* Stats */}
             <div className="grid grid-cols-3 gap-6">
               <div className="text-center space-y-2">
                 <div className="flex items-center justify-center">
                   <GitFork className="w-5 h-5 text-muted-foreground mr-2" />
-                  <p className="text-2xl font-bold">{user.stats.repositories}</p>
+                  <p className="text-2xl font-bold">
+                    {user.stats.repositories}
+                  </p>
                 </div>
                 <p className="text-sm text-muted-foreground">Repositories</p>
               </div>
               <div className="text-center space-y-2">
                 <div className="flex items-center justify-center">
                   <Users className="w-5 h-5 text-muted-foreground mr-2" />
-                  <p className="text-2xl font-bold">{user.stats.followers.toLocaleString()}</p>
+                  <p className="text-2xl font-bold">
+                    {user.stats.followers.toLocaleString()}
+                  </p>
                 </div>
                 <p className="text-sm text-muted-foreground">Followers</p>
               </div>
               <div className="text-center space-y-2">
                 <div className="flex items-center justify-center">
                   <Activity className="w-5 h-5 text-muted-foreground mr-2" />
-                  <p className="text-2xl font-bold">{user.stats.contributions}</p>
+                  <p className="text-2xl font-bold">
+                    {user.stats.contributions}
+                  </p>
                 </div>
                 <p className="text-sm text-muted-foreground">Contributions</p>
               </div>
             </div>
-            
+
             <Separator />
-            
+
             {/* Payment CTA */}
             <div className="text-center space-y-4">
               <div className="space-y-2">
@@ -248,9 +264,9 @@ export default function PaymentPage({ params }: PaymentPageProps) {
                   Show your appreciation for their open source contributions
                 </p>
               </div>
-              
+
               <div className="flex gap-3 justify-center">
-                <Button 
+                <Button
                   size="lg"
                   onClick={() => setPaymentModalOpen(true)}
                   className="gap-2"
@@ -258,7 +274,7 @@ export default function PaymentPage({ params }: PaymentPageProps) {
                   <Heart className="w-4 h-4" />
                   Send Payment
                 </Button>
-                <Button 
+                <Button
                   variant="outline"
                   size="lg"
                   onClick={() => setPaymentModalOpen(true)}
@@ -268,7 +284,7 @@ export default function PaymentPage({ params }: PaymentPageProps) {
                   Tip
                 </Button>
               </div>
-              
+
               <p className="text-xs text-muted-foreground">
                 Secure payments processed through Bounty.new
               </p>

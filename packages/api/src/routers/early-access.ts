@@ -38,14 +38,21 @@ export const earlyAccessRouter = router({
 
       // Database connection errors
       if (err instanceof Error) {
-        if (err.message.includes("connect") || err.message.includes("ECONNREFUSED") || err.message.includes("timeout")) {
+        if (
+          err.message.includes("connect") ||
+          err.message.includes("ECONNREFUSED") ||
+          err.message.includes("timeout")
+        ) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Database connection failed - please try again later",
           });
         }
 
-        if (err.message.includes("does not exist") || err.message.includes("relation")) {
+        if (
+          err.message.includes("does not exist") ||
+          err.message.includes("relation")
+        ) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Database table not found - migrations may not be applied",
@@ -65,13 +72,15 @@ export const earlyAccessRouter = router({
     .input(
       z.object({
         email: z.string().email(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       try {
         const limiter = getRateLimiter("waitlist");
         if (limiter) {
-          const safeIp = ctx.clientIP || `anonymous-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+          const safeIp =
+            ctx.clientIP ||
+            `anonymous-${Date.now()}-${Math.random().toString(36).substring(7)}`;
           const { success } = await limiter.limit(safeIp);
 
           if (!success) {
@@ -83,7 +92,10 @@ export const earlyAccessRouter = router({
         }
         info("[addToWaitlist] Processing email:", input.email);
 
-        const userAlreadyInWaitlist = await db.select().from(waitlist).where(eq(waitlist.email, input.email));
+        const userAlreadyInWaitlist = await db
+          .select()
+          .from(waitlist)
+          .where(eq(waitlist.email, input.email));
 
         if (userAlreadyInWaitlist[0]) {
           return { message: "You're already on the waitlist!" };
@@ -94,33 +106,50 @@ export const earlyAccessRouter = router({
           createdAt: new Date(),
         });
 
-        info("[addToWaitlist] Successfully added email to waitlist:", input.email);
+        info(
+          "[addToWaitlist] Successfully added email to waitlist:",
+          input.email,
+        );
         return { message: "You've been added to the waitlist!" };
       } catch (error: unknown) {
         warn("[addToWaitlist] Error:", error);
 
-        if (error instanceof Error && error.message.includes("unique constraint")) {
+        if (
+          error instanceof Error &&
+          error.message.includes("unique constraint")
+        ) {
           throw new TRPCError({
             code: "CONFLICT",
             message: "Email already exists in waitlist",
           });
         }
 
-        if (error instanceof Error && error.message.includes("violates not-null constraint")) {
+        if (
+          error instanceof Error &&
+          error.message.includes("violates not-null constraint")
+        ) {
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "Invalid email format",
           });
         }
 
-        if (error instanceof Error && (error.message.includes("connect") || error.message.includes("ECONNREFUSED"))) {
+        if (
+          error instanceof Error &&
+          (error.message.includes("connect") ||
+            error.message.includes("ECONNREFUSED"))
+        ) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Database connection failed",
           });
         }
 
-        if (error instanceof Error && (error.message.includes("does not exist") || error.message.includes("relation"))) {
+        if (
+          error instanceof Error &&
+          (error.message.includes("does not exist") ||
+            error.message.includes("relation"))
+        ) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Database table not found - migrations may not be applied",
@@ -140,7 +169,7 @@ export const earlyAccessRouter = router({
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(20),
         search: z.string().optional(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       try {
@@ -149,7 +178,10 @@ export const earlyAccessRouter = router({
 
         let entries;
         if (search) {
-          entries = await db.select().from(waitlist).where(eq(waitlist.email, search));
+          entries = await db
+            .select()
+            .from(waitlist)
+            .where(eq(waitlist.email, search));
         } else {
           entries = await db.select().from(waitlist);
         }
@@ -193,7 +225,7 @@ export const earlyAccessRouter = router({
       z.object({
         id: z.string(),
         hasAccess: z.boolean(),
-      })
+      }),
     )
     .mutation(async ({ input }) => {
       try {
@@ -201,7 +233,12 @@ export const earlyAccessRouter = router({
 
         await db.update(waitlist).set({ hasAccess }).where(eq(waitlist.id, id));
 
-        info("[updateWaitlistAccess] Updated access for ID:", id, "hasAccess:", hasAccess);
+        info(
+          "[updateWaitlistAccess] Updated access for ID:",
+          id,
+          "hasAccess:",
+          hasAccess,
+        );
         return { success: true };
       } catch (err) {
         error("[updateWaitlistAccess] Error:", err);

@@ -3,9 +3,16 @@ import { pgTable, text, timestamp, boolean, pgEnum } from "drizzle-orm/pg-core";
 
 export const betaAccessStatusEnum = pgEnum("beta_access_status", [
   "none",
-  "pending", 
+  "pending",
   "approved",
-  "denied"
+  "denied",
+]);
+
+export const accessStageEnum = pgEnum("access_stage", [
+  "none",
+  "alpha",
+  "beta",
+  "production",
 ]);
 
 export const user = pgTable("user", {
@@ -15,19 +22,30 @@ export const user = pgTable("user", {
   emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
   hasAccess: boolean("has_access").notNull().default(false),
-  betaAccessStatus: betaAccessStatusEnum("beta_access_status").notNull().default("none"),
+  betaAccessStatus: betaAccessStatusEnum("beta_access_status")
+    .notNull()
+    .default("none"),
+  accessStage: accessStageEnum("access_stage").notNull().default("none"),
   role: text("role").notNull().default("user"),
   // Note: Consider using timestamptz for timezone-aware timestamps in production
-  createdAt: timestamp("created_at").notNull().default(sql`now()`),
-  updatedAt: timestamp("updated_at").notNull().default(sql`now()`),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .default(sql`now()`),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .default(sql`now()`),
 });
 
 export const session = pgTable("session", {
   id: text("id").primaryKey(),
   expiresAt: timestamp("expires_at").notNull(),
   token: text("token").notNull().unique(),
-  createdAt: timestamp("created_at").notNull().default(sql`now()`),
-  updatedAt: timestamp("updated_at").notNull().default(sql`now()`),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .default(sql`now()`),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .default(sql`now()`),
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
   userId: text("user_id")
@@ -49,8 +67,12 @@ export const account = pgTable("account", {
   refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
   scope: text("scope"),
   password: text("password"),
-  createdAt: timestamp("created_at").notNull().default(sql`now()`),
-  updatedAt: timestamp("updated_at").notNull().default(sql`now()`),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .default(sql`now()`),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .default(sql`now()`),
 });
 
 export const verification = pgTable("verification", {
@@ -63,9 +85,13 @@ export const verification = pgTable("verification", {
 });
 
 export const waitlist = pgTable("waitlist", {
-  id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: text("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   email: text("email").notNull(),
-  createdAt: timestamp("created_at").notNull().default(sql`now()`),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .default(sql`now()`),
   hasAccess: boolean("has_access").notNull().default(false),
   ipAddress: text("ip_address"),
 });

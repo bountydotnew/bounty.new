@@ -38,7 +38,7 @@ export function useBreadcrumbs({
     // Build breadcrumbs from path segments
     segments.forEach((segment, index) => {
       const href = "/" + segments.slice(0, index + 1).join("/");
-      
+
       // Skip if path is excluded
       if (excludePaths.includes(href)) {
         return;

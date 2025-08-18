@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ChevronRight, type LucideIcon } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import {
   Collapsible,
@@ -25,7 +25,7 @@ export function NavMain({
   items: {
     title: string;
     url: string;
-    icon?: LucideIcon | React.ComponentType<React.SVGProps<SVGSVGElement>>;
+    icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
     isActive?: boolean;
     items?: {
       title: string;
@@ -37,7 +37,7 @@ export function NavMain({
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) => (
+        {items.map((item) =>
           item.items && item.items.length > 0 ? (
             <Collapsible
               key={item.title}
@@ -70,15 +70,19 @@ export function NavMain({
             </Collapsible>
           ) : (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title} asChild isActive={item.isActive}>
+              <SidebarMenuButton
+                tooltip={item.title}
+                asChild
+                isActive={item.isActive}
+              >
                 <Link href={item.url}>
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          )
-        ))}
+          ),
+        )}
       </SidebarMenu>
     </SidebarGroup>
   );

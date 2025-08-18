@@ -6,7 +6,7 @@ interface LoadingStateProps {
 
 export function LoadingState({ message = "Loading..." }: LoadingStateProps) {
   return (
-    <div 
+    <div
       className="flex flex-col items-center justify-center min-h-full space-y-4"
       role="status"
       aria-label={message}

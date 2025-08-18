@@ -1,4 +1,4 @@
-import type { Config } from "tailwindcss"
+import type { Config } from "tailwindcss";
 
 const config: Config = {
   darkMode: "class",
@@ -79,7 +79,9 @@ const config: Config = {
         "accordion-up": "accordion-up 0.2s ease-out",
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
+        display: ["Kraftig", "system-ui", "serif"],
+        "display-book": ["Kraftig-Buch", "system-ui", "serif"],
       },
       letterSpacing: {
         tighter: "-0.02em",
@@ -87,7 +89,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
-} satisfies Config
+  plugins: [require("@tailwindcss/typography"), require("tailwindcss-animate")],
+} satisfies Config;
 
-export default config
+export default config;

@@ -43,7 +43,8 @@ export function BetaAccessScreen({
   const isDenied = userData?.betaAccessStatus === "denied";
 
   const getButtonText = () => {
-    if (!hasSubmitted) return BETA_APPLICATION_MESSAGES.BUTTON_LABELS.FILL_APPLICATION;
+    if (!hasSubmitted)
+      return BETA_APPLICATION_MESSAGES.BUTTON_LABELS.FILL_APPLICATION;
     return isDenied
       ? BETA_APPLICATION_MESSAGES.BUTTON_LABELS.APPLICATION_DENIED
       : BETA_APPLICATION_MESSAGES.BUTTON_LABELS.APPLICATION_SUBMITTED;
@@ -65,16 +66,14 @@ export function BetaAccessScreen({
     </Button>
   );
 
-  const FormContent = (
-    <BetaApplicationForm onSuccess={handleFormSuccess} />
-  );
+  const FormContent = <BetaApplicationForm onSuccess={handleFormSuccess} />;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-full space-y-4">
       <Bounty className="w-20 h-20 mb-10" aria-hidden="true" />
-      
+
       <h1 className="text-2xl font-bold">Hi, {userName}!</h1>
-      
+
       <p className="text-muted-foreground text-center max-w-md">
         {BETA_APPLICATION_MESSAGES.BETA_PHASE_MESSAGE}
       </p>
@@ -91,7 +90,9 @@ export function BetaAccessScreen({
           <DrawerContent className="max-h-[82vh]">
             <div className="mx-auto w-full max-w-md">
               <DrawerHeader>
-                <DrawerTitle className="mt-8">{BETA_APPLICATION_MESSAGES.TITLE}</DrawerTitle>
+                <DrawerTitle className="mt-8">
+                  {BETA_APPLICATION_MESSAGES.TITLE}
+                </DrawerTitle>
                 <DrawerDescription className="leading-6 mt-2">
                   {BETA_APPLICATION_MESSAGES.DESCRIPTION}
                 </DrawerDescription>
@@ -106,7 +107,9 @@ export function BetaAccessScreen({
           <DialogContent className="max-w-md" showOverlay>
             <DialogHeader>
               <DialogTitle>{BETA_APPLICATION_MESSAGES.TITLE}</DialogTitle>
-              <DialogDescription>{BETA_APPLICATION_MESSAGES.DESCRIPTION}</DialogDescription>
+              <DialogDescription>
+                {BETA_APPLICATION_MESSAGES.DESCRIPTION}
+              </DialogDescription>
             </DialogHeader>
             {FormContent}
           </DialogContent>
