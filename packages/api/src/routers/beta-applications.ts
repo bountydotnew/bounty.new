@@ -20,21 +20,20 @@ const updateStatusSchema = z.object({
 });
 
 export const betaApplicationsRouter = router({
-  checkExisting: protectedProcedure
-    .query(async ({ ctx }) => {
-      const userId = ctx.session.user.id;
+  checkExisting: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
 
-      const existingApplication = await ctx.db
-        .select()
-        .from(betaApplication)
-        .where(eq(betaApplication.userId, userId))
-        .limit(1);
+    const existingApplication = await ctx.db
+      .select()
+      .from(betaApplication)
+      .where(eq(betaApplication.userId, userId))
+      .limit(1);
 
-      return {
-        hasSubmitted: existingApplication.length > 0,
-        application: existingApplication[0] || null,
-      };
-    }),
+    return {
+      hasSubmitted: existingApplication.length > 0,
+      application: existingApplication[0] || null,
+    };
+  }),
 
   create: protectedProcedure
     .input(createBetaApplicationSchema)
@@ -75,13 +74,15 @@ export const betaApplicationsRouter = router({
         status: z.enum(["pending", "approved", "rejected"]).optional(),
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(20),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const { status, page, limit } = input;
       const offset = (page - 1) * limit;
 
-      const whereClause = status ? eq(betaApplication.status, status) : undefined;
+      const whereClause = status
+        ? eq(betaApplication.status, status)
+        : undefined;
 
       const [applications, total] = await Promise.all([
         ctx.db
@@ -163,4 +164,4 @@ export const betaApplicationsRouter = router({
 
       return application;
     }),
-}); 
+});

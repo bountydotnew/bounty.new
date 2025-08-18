@@ -4,7 +4,11 @@ import { db, bounty } from "@bounty/db";
 import { eq } from "drizzle-orm";
 import { baseUrl } from "@/lib/constants";
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
   const { id } = await params;
 
   const thisBounty = await db.query.bounty.findFirst({

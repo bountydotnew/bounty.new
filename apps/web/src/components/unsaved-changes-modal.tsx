@@ -21,11 +21,11 @@ export function UnsavedChangesModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onCancel}
       />
-      
+
       {/* Modal */}
       <div className="relative bg-background border border-border rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl">
         <div className="flex flex-col gap-4">
@@ -36,27 +36,23 @@ export function UnsavedChangesModal({
               You have unsaved changes. What would you like to do?
             </p>
           </div>
-          
+
           <div className="flex flex-col gap-2">
             <Button onClick={onSaveAsDraft} className="w-full">
               <FileText className="h-4 w-4 mr-2" />
               Save as Draft
             </Button>
-            
-            <Button 
-              onClick={onDiscard} 
-              variant="destructive" 
+
+            <Button
+              onClick={onDiscard}
+              variant="destructive"
               className="w-full"
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Discard Changes
             </Button>
-            
-            <Button 
-              onClick={onCancel} 
-              variant="outline" 
-              className="w-full"
-            >
+
+            <Button onClick={onCancel} variant="outline" className="w-full">
               Cancel
             </Button>
           </div>
@@ -64,4 +60,4 @@ export function UnsavedChangesModal({
       </div>
     </div>
   );
-} 
+}

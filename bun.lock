@@ -105,6 +105,7 @@
         "@types/react-dom": "^19",
         "eslint": "^9",
         "eslint-config-next": "15.3.4",
+        "prettier": "^3.6.2",
         "tailwindcss": "^4.1.10",
         "typescript": "^5",
       },

@@ -1,6 +1,7 @@
 CRUSH.md
 
 Build/lint/test
+
 - Install: bun install
 - Dev (all): bun run dev
 - Dev web only: bun run dev:web
@@ -12,10 +13,12 @@ Build/lint/test
 - Single test: no tests configured. If adding vitest/jest, prefer Bun+Vitest; run a single test with: bunx vitest run path/to/file.test.ts -t "test name"
 
 Monorepo
+
 - Package manager: Bun ("packageManager": "bun@1.x"); tasks orchestrated with Turbo (turbo.json)
-- Workspaces: apps/*, packages/*; prefer bun --filter <pkg> run <script> for scoped scripts
+- Workspaces: apps/_, packages/_; prefer bun --filter <pkg> run <script> for scoped scripts
 
 Code style
+
 - Language: TypeScript (strict). Prefer interfaces over types for object shapes; use generics and type guards
 - Imports: path-aliases via TS configs; group: std -> deps -> workspace -> absolute -> relative; no default exports for shared libs
 - Formatting: Prettier-style, 2 spaces, single quotes where applicable; keep files comment-light
@@ -30,8 +33,10 @@ Code style
 - Errors: throw typed errors; handle at boundaries; avoid swallowing; surface user-safe messages; never leak secrets
 
 Testing
-- Add Vitest for units; colocate *.test.ts; use bunx vitest; mock network/DB; snapshot only for stable UI
+
+- Add Vitest for units; colocate \*.test.ts; use bunx vitest; mock network/DB; snapshot only for stable UI
 
 Cursor rules to honor
+
 - .cursor/rules: bun, drizzle-orm, nextjs, trpc, react-hook-form, tailwindcss, useEffect, typescript, better-auth, posthog
 - Follow: minimize useEffect, SSR/SSG appropriately, Zod validation, Bun PM, Drizzle migrations, never hallucinate API keys

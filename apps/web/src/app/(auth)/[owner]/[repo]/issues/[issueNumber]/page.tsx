@@ -1,19 +1,17 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
-import { Button } from "@/components/ui/button";
 import { CreateBountyModal } from "@/components/bounty/create-bounty-modal";
-import { Markdown } from "@/components/markdown/Markdown";
 import { useBountyModals } from "@/lib/bounty-utils";
 import { BountyDetailSkeleton } from "@/components/dashboard/skeletons/bounty-skeleton";
 
 export default function GithubIssueToBountyPage() {
   const params = useParams();
-  const router = useRouter();
-  const { createModalOpen, openCreateModal, closeCreateModal } = useBountyModals();
+  const { createModalOpen, openCreateModal, closeCreateModal } =
+    useBountyModals();
 
   const issueUrl = useMemo(() => {
     const owner = String(params?.owner || "");
@@ -23,7 +21,7 @@ export default function GithubIssueToBountyPage() {
   }, [params]);
 
   const { data, isLoading, error } = useQuery(
-    trpc.repository.issueFromUrl.queryOptions({ url: issueUrl })
+    trpc.repository.issueFromUrl.queryOptions({ url: issueUrl }),
   );
   useEffect(() => {
     if (!isLoading && !error && data) {
@@ -47,7 +45,6 @@ export default function GithubIssueToBountyPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-
       {isLoading && <BountyDetailSkeleton />}
       {error && (
         <div className="text-red-600">Invalid or inaccessible issue URL.</div>
@@ -64,5 +61,3 @@ export default function GithubIssueToBountyPage() {
     </div>
   );
 }
-
-

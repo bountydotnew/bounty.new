@@ -13,10 +13,15 @@ interface DraftNavigatorProps {
   onClose: () => void;
 }
 
-export function DraftNavigator({ drafts, onPreviewDraft, onLoadDraft, onClose }: DraftNavigatorProps) {
+export function DraftNavigator({
+  drafts,
+  onPreviewDraft,
+  onLoadDraft,
+  onClose,
+}: DraftNavigatorProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  
+
   if (drafts.length === 0) return null;
 
   const currentDraft = drafts[currentIndex];
@@ -40,7 +45,9 @@ export function DraftNavigator({ drafts, onPreviewDraft, onLoadDraft, onClose }:
       {!isCollapsed && (
         <div className="flex flex-col">
           <span className="text-sm font-medium">
-            {hasMultiple ? `Draft ${currentIndex + 1} of ${drafts.length}` : "Draft Found"}
+            {hasMultiple
+              ? `Draft ${currentIndex + 1} of ${drafts.length}`
+              : "Draft Found"}
           </span>
           <span className="text-xs text-muted-foreground truncate max-w-48">
             {currentDraft.title || "Untitled Draft"}
@@ -92,7 +99,11 @@ export function DraftNavigator({ drafts, onPreviewDraft, onLoadDraft, onClose }:
         onClick={() => setIsCollapsed(!isCollapsed)}
         className="h-7 w-7 p-0 ml-1"
       >
-        {isCollapsed ? <ArrowLeft className="h-3 w-3" /> : <ArrowRight className="h-3 w-3" />}
+        {isCollapsed ? (
+          <ArrowLeft className="h-3 w-3" />
+        ) : (
+          <ArrowRight className="h-3 w-3" />
+        )}
       </Button>
       <Button
         variant="outline"
@@ -109,11 +120,11 @@ export function DraftNavigator({ drafts, onPreviewDraft, onLoadDraft, onClose }:
     <div className="fixed bottom-0 right-0 z-30 w-full md:w-[calc(100%-var(--sidebar-width))] p-2">
       <HeaderBase
         className={`bg-[#1D1D1D]/90 backdrop-blur-sm border border-white/10 rounded-xl max-w-4xl mx-auto transition-all duration-200 pl-3 pr-2 ${
-          isCollapsed ? 'h-10' : 'h-12'
+          isCollapsed ? "h-10" : "h-12"
         }`}
         leftContent={leftContent}
         rightContent={rightContent}
       />
     </div>
   );
-} 
+}

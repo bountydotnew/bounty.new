@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { motion, useAnimation } from 'motion/react';
-import type { HTMLAttributes } from 'react';
-import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
-import { cn } from '@/lib/utils';
+import { motion, useAnimation } from "motion/react";
+import type { HTMLAttributes } from "react";
+import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import { cn } from "@/lib/utils";
 
 export interface BookTextIconHandle {
   startAnimation: () => void;
@@ -23,31 +23,31 @@ const BookTextIcon = forwardRef<BookTextIconHandle, BookTextIconProps>(
       isControlledRef.current = true;
 
       return {
-        startAnimation: () => controls.start('animate'),
-        stopAnimation: () => controls.start('normal'),
+        startAnimation: () => controls.start("animate"),
+        stopAnimation: () => controls.start("normal"),
       };
     });
 
     const handleMouseEnter = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
         if (!isControlledRef.current) {
-          controls.start('animate');
+          controls.start("animate");
         } else {
           onMouseEnter?.(e);
         }
       },
-      [controls, onMouseEnter]
+      [controls, onMouseEnter],
     );
 
     const handleMouseLeave = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
         if (!isControlledRef.current) {
-          controls.start('normal');
+          controls.start("normal");
         } else {
           onMouseLeave?.(e);
         }
       },
-      [controls, onMouseLeave]
+      [controls, onMouseLeave],
     );
 
     return (
@@ -66,7 +66,7 @@ const BookTextIcon = forwardRef<BookTextIconHandle, BookTextIconProps>(
               y: [0, -2, 0],
               transition: {
                 duration: 0.6,
-                ease: 'easeInOut',
+                ease: "easeInOut",
                 times: [0, 0.2, 0.5, 0.8, 1],
               },
             },
@@ -92,9 +92,9 @@ const BookTextIcon = forwardRef<BookTextIconHandle, BookTextIconProps>(
         </motion.svg>
       </div>
     );
-  }
+  },
 );
 
-BookTextIcon.displayName = 'BookTextIcon';
+BookTextIcon.displayName = "BookTextIcon";
 
 export { BookTextIcon };

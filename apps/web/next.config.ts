@@ -29,39 +29,43 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "i.redd.it"
+        hostname: "i.redd.it",
       },
       {
         protocol: "https",
-        hostname: "pbs.twimg.com"
+        hostname: "pbs.twimg.com",
       },
       {
         protocol: "https",
-        hostname: "s2.googleusercontent.com"
+        hostname: "s2.googleusercontent.com",
       },
       {
-        protocol: 'https',
-        hostname: 'lh3.googleusercontent.com',
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
       },
       {
-        protocol: 'https',
-        hostname: 'images.marblecms.com',
+        protocol: "https",
+        hostname: "images.marblecms.com",
       },
       {
-        protocol: 'https',
-        hostname: 'github.com',
+        protocol: "https",
+        hostname: "github.com",
       },
       {
-        protocol: 'https',
-        hostname: 'user-attachments.githubusercontent.com',
+        protocol: "https",
+        hostname: "user-attachments.githubusercontent.com",
       },
       {
-        protocol: 'https',
-        hostname: 'raw.githubusercontent.com',
+        protocol: "https",
+        hostname: "raw.githubusercontent.com",
       },
       {
-        protocol: 'https',
-        hostname: 'objects.githubusercontent.com',
+        protocol: "https",
+        hostname: "objects.githubusercontent.com",
+      },
+      {
+        protocol: "https",
+        hostname: "via.placeholder.com",
       },
     ],
   },

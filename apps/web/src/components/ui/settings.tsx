@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import type { Transition } from 'motion/react';
-import { motion, useAnimation } from 'motion/react';
-import type { HTMLAttributes } from 'react';
-import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
-import { cn } from '@/lib/utils';
+import type { Transition } from "motion/react";
+import { motion, useAnimation } from "motion/react";
+import type { HTMLAttributes } from "react";
+import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import { cn } from "@/lib/utils";
 
 export interface SettingsIconHandle {
   startAnimation: () => void;
@@ -16,7 +16,7 @@ interface SettingsIconProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const defaultTransition: Transition = {
-  type: 'spring',
+  type: "spring",
   stiffness: 100,
   damping: 12,
   mass: 0.4,
@@ -31,31 +31,31 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
       isControlledRef.current = true;
 
       return {
-        startAnimation: () => controls.start('animate'),
-        stopAnimation: () => controls.start('normal'),
+        startAnimation: () => controls.start("animate"),
+        stopAnimation: () => controls.start("normal"),
       };
     });
 
     const handleMouseEnter = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
         if (!isControlledRef.current) {
-          controls.start('animate');
+          controls.start("animate");
         } else {
           onMouseEnter?.(e);
         }
       },
-      [controls, onMouseEnter]
+      [controls, onMouseEnter],
     );
 
     const handleMouseLeave = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
         if (!isControlledRef.current) {
-          controls.start('normal');
+          controls.start("normal");
         } else {
           onMouseLeave?.(e);
         }
       },
-      [controls, onMouseLeave]
+      [controls, onMouseLeave],
     );
 
     return (
@@ -237,9 +237,9 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
         </svg>
       </div>
     );
-  }
+  },
 );
 
-SettingsIcon.displayName = 'SettingsIcon';
+SettingsIcon.displayName = "SettingsIcon";
 
 export { SettingsIcon };

@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { motion, type Transition, type HTMLMotionProps } from 'motion/react';
+import * as React from "react";
+import { motion, type Transition, type HTMLMotionProps } from "motion/react";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 import {
   MotionHighlight,
   MotionHighlightItem,
-} from '@/components/animate-ui/effects/motion-highlight';
+} from "@/components/animate-ui/effects/motion-highlight";
 
 type TabsContextType<T extends string> = {
   activeValue: T;
@@ -23,12 +23,12 @@ const TabsContext = React.createContext<TabsContextType<any> | undefined>(
 function useTabs<T extends string = string>(): TabsContextType<T> {
   const context = React.useContext(TabsContext);
   if (!context) {
-    throw new Error('useTabs must be used within a TabsProvider');
+    throw new Error("useTabs must be used within a TabsProvider");
   }
   return context;
 }
 
-type BaseTabsProps = React.ComponentProps<'div'> & {
+type BaseTabsProps = React.ComponentProps<"div"> & {
   children: React.ReactNode;
 };
 
@@ -103,7 +103,7 @@ function Tabs<T extends string = string>({
     >
       <div
         data-slot="tabs"
-        className={cn('flex flex-col gap-2', className)}
+        className={cn("flex flex-col gap-2", className)}
         {...props}
       >
         {children}
@@ -112,7 +112,7 @@ function Tabs<T extends string = string>({
   );
 }
 
-type TabsListProps = React.ComponentProps<'div'> & {
+type TabsListProps = React.ComponentProps<"div"> & {
   children: React.ReactNode;
   activeClassName?: string;
   transition?: Transition;
@@ -123,7 +123,7 @@ function TabsList({
   className,
   activeClassName,
   transition = {
-    type: 'spring',
+    type: "spring",
     stiffness: 200,
     damping: 25,
   },
@@ -134,7 +134,7 @@ function TabsList({
   return (
     <MotionHighlight
       controlledItems
-      className={cn('rounded-sm bg-background shadow-sm', activeClassName)}
+      className={cn("rounded-sm bg-background shadow-sm", activeClassName)}
       value={activeValue}
       transition={transition}
     >
@@ -142,7 +142,7 @@ function TabsList({
         role="tablist"
         data-slot="tabs-list"
         className={cn(
-          'bg-muted text-muted-foreground inline-flex h-10 w-fit items-center justify-center rounded-lg p-[4px]',
+          "bg-muted text-muted-foreground inline-flex h-10 w-fit items-center justify-center rounded-lg p-[4px]",
           className,
         )}
         {...props}
@@ -153,7 +153,7 @@ function TabsList({
   );
 }
 
-type TabsTriggerProps = HTMLMotionProps<'button'> & {
+type TabsTriggerProps = HTMLMotionProps<"button"> & {
   value: string;
   children: React.ReactNode;
 };
@@ -183,9 +183,9 @@ function TabsTrigger({
         role="tab"
         whileTap={{ scale: 0.95 }}
         onClick={() => handleValueChange(value)}
-        data-state={activeValue === value ? 'active' : 'inactive'}
+        data-state={activeValue === value ? "active" : "inactive"}
         className={cn(
-          'inline-flex cursor-pointer items-center size-full justify-center whitespace-nowrap rounded-sm px-2 py-1 text-sm font-medium ring-offset-background transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-foreground z-[1]',
+          "inline-flex cursor-pointer items-center size-full justify-center whitespace-nowrap rounded-sm px-2 py-1 text-sm font-medium ring-offset-background transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-foreground z-[1]",
           className,
         )}
         {...props}
@@ -196,7 +196,7 @@ function TabsTrigger({
   );
 }
 
-type TabsContentsProps = React.ComponentProps<'div'> & {
+type TabsContentsProps = React.ComponentProps<"div"> & {
   children: React.ReactNode;
   transition?: Transition;
 };
@@ -205,7 +205,7 @@ function TabsContents({
   children,
   className,
   transition = {
-    type: 'spring',
+    type: "spring",
     stiffness: 300,
     damping: 30,
     bounce: 0,
@@ -218,21 +218,21 @@ function TabsContents({
   const activeIndex = childrenArray.findIndex(
     (child): child is React.ReactElement<{ value: string }> =>
       React.isValidElement(child) &&
-      typeof child.props === 'object' &&
+      typeof child.props === "object" &&
       child.props !== null &&
-      'value' in child.props &&
+      "value" in child.props &&
       child.props.value === activeValue,
   );
 
   return (
     <div
       data-slot="tabs-contents"
-      className={cn('overflow-hidden', className)}
+      className={cn("overflow-hidden", className)}
       {...props}
     >
       <motion.div
         className="flex -mx-2"
-        animate={{ x: activeIndex * -100 + '%' }}
+        animate={{ x: activeIndex * -100 + "%" }}
         transition={transition}
       >
         {childrenArray.map((child, index) => (
@@ -245,7 +245,7 @@ function TabsContents({
   );
 }
 
-type TabsContentProps = HTMLMotionProps<'div'> & {
+type TabsContentProps = HTMLMotionProps<"div"> & {
   value: string;
   children: React.ReactNode;
 };
@@ -262,10 +262,10 @@ function TabsContent({
     <motion.div
       role="tabpanel"
       data-slot="tabs-content"
-      className={cn('overflow-hidden', className)}
-      initial={{ filter: 'blur(0px)' }}
-      exit={{ filter: 'blur(0px)' }}
-      transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+      className={cn("overflow-hidden", className)}
+      initial={{ filter: "blur(0px)" }}
+      exit={{ filter: "blur(0px)" }}
+      transition={{ type: "spring", stiffness: 200, damping: 25 }}
       {...props}
     >
       {children}

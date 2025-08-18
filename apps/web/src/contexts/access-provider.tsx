@@ -22,12 +22,12 @@ interface AccessProviderProps {
 
 export const AccessProvider = ({ children }: AccessProviderProps) => {
   const userData = useQuery(trpc.user.getMe.queryOptions());
-  
+
   const userStage: AccessStage = userData.data?.accessStage || "none";
-  
+
   const hasStageAccess = (stage: AccessStage | AccessStage[]): boolean => {
     const requiredStages = Array.isArray(stage) ? stage : [stage];
-    
+
     // Define stage hierarchy: production > beta > alpha > none
     const stageHierarchy: Record<AccessStage, number> = {
       none: 0,
@@ -35,11 +35,11 @@ export const AccessProvider = ({ children }: AccessProviderProps) => {
       beta: 2,
       production: 3,
     };
-    
+
     const userLevel = stageHierarchy[userStage];
-    
+
     // User has access if their stage level meets or exceeds any required stage
-    return requiredStages.some(requiredStage => {
+    return requiredStages.some((requiredStage) => {
       const requiredLevel = stageHierarchy[requiredStage];
       return userLevel >= requiredLevel;
     });
@@ -57,7 +57,7 @@ export const AccessProvider = ({ children }: AccessProviderProps) => {
       {children}
     </AccessContext.Provider>
   );
-}
+};
 
 export const useAccess = (): AccessContextType => {
   const context = useContext(AccessContext);
@@ -65,4 +65,4 @@ export const useAccess = (): AccessContextType => {
     throw new Error("useAccess must be used within an AccessProvider");
   }
   return context;
-}
+};

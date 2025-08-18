@@ -15,7 +15,10 @@ interface ErrorBoundaryProps {
   fallback?: ReactNode;
 }
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -45,10 +48,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             <p className="text-sm text-muted-foreground">
               Please try refreshing the page.
             </p>
-            <Button
-              onClick={() => window.location.reload()}
-              className="w-full"
-            >
+            <Button onClick={() => window.location.reload()} className="w-full">
               Refresh Page
             </Button>
           </CardContent>

@@ -15,11 +15,11 @@ interface AccessGateProps {
   condition?: boolean;
 }
 
-export const AccessGate = ({ 
-  stage, 
-  fallback = null, 
-  children, 
-  condition = true 
+export const AccessGate = ({
+  stage,
+  fallback = null,
+  children,
+  condition = true,
 }: AccessGateProps) => {
   const { hasStageAccess, isLoading } = useAccess();
 
@@ -36,4 +36,4 @@ export const AccessGate = ({
   }
 
   return <>{children}</>;
-}
+};

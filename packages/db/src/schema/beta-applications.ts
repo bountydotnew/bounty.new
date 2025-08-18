@@ -4,12 +4,14 @@ import { user } from "./auth";
 
 export const betaApplicationStatusEnum = pgEnum("beta_application_status", [
   "pending",
-  "approved", 
-  "rejected"
+  "approved",
+  "rejected",
 ]);
 
 export const betaApplication = pgTable("beta_application", {
-  id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: text("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
@@ -19,10 +21,15 @@ export const betaApplication = pgTable("beta_application", {
   projectLink: text("project_link").notNull(),
   description: text("description").notNull(),
   status: betaApplicationStatusEnum("status").notNull().default("pending"),
-  reviewedBy: text("reviewed_by")
-    .references(() => user.id, { onDelete: "set null" }),
+  reviewedBy: text("reviewed_by").references(() => user.id, {
+    onDelete: "set null",
+  }),
   reviewedAt: timestamp("reviewed_at"),
   reviewNotes: text("review_notes"),
-  createdAt: timestamp("created_at").notNull().default(sql`now()`),
-  updatedAt: timestamp("updated_at").notNull().default(sql`now()`),
-}); 
+  createdAt: timestamp("created_at")
+    .notNull()
+    .default(sql`now()`),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .default(sql`now()`),
+});

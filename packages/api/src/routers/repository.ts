@@ -3,7 +3,9 @@ import { z } from "zod";
 import { GithubManager, GetUserReposResult } from "../../driver/github";
 import { TRPCError } from "@trpc/server";
 
-const github = new GithubManager({ token: process.env.GITHUB_TOKEN || process.env.NEXT_PUBLIC_GITHUB_TOKEN });
+const github = new GithubManager({
+  token: process.env.GITHUB_TOKEN || process.env.NEXT_PUBLIC_GITHUB_TOKEN,
+});
 
 export const repositoryRouter = router({
   stats: publicProcedure
@@ -24,7 +26,12 @@ export const repositoryRouter = router({
       return github.getContributors(input.repo);
     }),
   recentCommits: publicProcedure
-    .input(z.object({ repo: z.string(), limit: z.number().min(1).max(100).default(20) }))
+    .input(
+      z.object({
+        repo: z.string(),
+        limit: z.number().min(1).max(100).default(20),
+      }),
+    )
     .query(async ({ input }) => {
       return github.getRecentCommits(input.repo, input.limit);
     }),
@@ -48,19 +55,25 @@ export const repositoryRouter = router({
       }
     }),
   userRepos: publicProcedure
-    .input(z.object({ username: z.string().trim().min(1, "username is required") }))
+    .input(
+      z.object({ username: z.string().trim().min(1, "username is required") }),
+    )
     .query(async ({ input }) => {
-      const result = await github.getUserRepos(input.username);
-      if (!result.success) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: result.error,
-        });
+      try {
+        const repos = await github.getUserRepos(input.username);
+        return repos;
+      } catch (err) {
+        return [];
       }
-      return result;
     }),
   searchIssues: publicProcedure
-    .input(z.object({ owner: z.string(), repo: z.string(), q: z.string().optional() }))
+    .input(
+      z.object({
+        owner: z.string(),
+        repo: z.string(),
+        q: z.string().optional(),
+      }),
+    )
     .query(async ({ input }) => {
       try {
         const owner = input.owner?.trim();

@@ -17,16 +17,16 @@ export function useMediaQuery(query: string): boolean {
       setMatches(false);
       return;
     }
-    
+
     const updateMatches = () => {
       setMatches(media.matches);
     };
 
     updateMatches();
     media.addEventListener("change", updateMatches);
-    
+
     return () => media.removeEventListener("change", updateMatches);
   }, [query]);
 
   return matches ?? false;
-} 
+}

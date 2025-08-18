@@ -21,13 +21,10 @@ import {
 import {
   createBountySchema,
   CreateBountyForm,
-  createBountyDefaults,
-  bountyDraftTemplates,
-  currencyOptions,
+  createBountyDefaults, currencyOptions,
   difficultyOptions,
   formatFormData,
-  parseTagsInput,
-  formatTagsOutput
+  parseTagsInput
 } from "@/lib/forms";
 
 interface CreateBountyModalProps {
@@ -103,11 +100,11 @@ export function CreateBountyModal({ open, onOpenChange, draftId, initialValues, 
     createBounty.mutate(formattedData);
   });
 
-  const tagsInput = watch("tags");
-  const handleTagsChange = (value: string) => {
-    const tags = parseTagsInput(value);
-    setValue("tags", tags);
-  };
+  // const tagsInput = watch("tags");
+  // const handleTagsChange = (value: string) => {
+  //   const tags = parseTagsInput(value);
+  //   setValue("tags", tags);
+  // };
 
   const handleClose = () => {
     if (!isSubmitting && !createBounty.isPending) {
@@ -120,7 +117,7 @@ export function CreateBountyModal({ open, onOpenChange, draftId, initialValues, 
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={(open) => open ? onOpenChange(open) : handleClose()}>
         <DialogContent className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg max-h-[75vh] overflow-y-auto p-0 sm:rounded-lg" showOverlay>
         <DialogHeader className="px-6 pt-6">
           <DialogTitle className="text-xl">Create New Bounty</DialogTitle>

@@ -1,10 +1,19 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, timestamp, integer, decimal, boolean } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  integer,
+  decimal,
+  boolean,
+} from "drizzle-orm/pg-core";
 import { user } from "./auth";
 import { bounty } from "./bounties";
 
 export const userProfile = pgTable("user_profile", {
-  id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: text("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   userId: text("user_id")
     .notNull()
     .unique()
@@ -21,30 +30,51 @@ export const userProfile = pgTable("user_profile", {
   currency: text("currency").default("USD"),
   timezone: text("timezone"),
   availableForWork: boolean("available_for_work").default(true),
-  createdAt: timestamp("created_at").notNull().default(sql`now()`),
-  updatedAt: timestamp("updated_at").notNull().default(sql`now()`),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .default(sql`now()`),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .default(sql`now()`),
 });
 
 export const userReputation = pgTable("user_reputation", {
-  id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: text("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   userId: text("user_id")
     .notNull()
     .unique()
     .references(() => user.id, { onDelete: "cascade" }),
-  totalEarned: decimal("total_earned", { precision: 12, scale: 2 }).default(sql`0.00`),
+  totalEarned: decimal("total_earned", { precision: 12, scale: 2 }).default(
+    sql`0.00`,
+  ),
   bountiesCompleted: integer("bounties_completed").default(0),
   bountiesCreated: integer("bounties_created").default(0),
-  averageRating: decimal("average_rating", { precision: 3, scale: 2 }).default(sql`0.00`),
+  averageRating: decimal("average_rating", { precision: 3, scale: 2 }).default(
+    sql`0.00`,
+  ),
   totalRatings: integer("total_ratings").default(0),
-  successRate: decimal("success_rate", { precision: 5, scale: 2 }).default(sql`0.00`),
+  successRate: decimal("success_rate", { precision: 5, scale: 2 }).default(
+    sql`0.00`,
+  ),
   responseTime: integer("response_time"),
-  completionRate: decimal("completion_rate", { precision: 5, scale: 2 }).default(sql`0.00`),
-  createdAt: timestamp("created_at").notNull().default(sql`now()`),
-  updatedAt: timestamp("updated_at").notNull().default(sql`now()`),
+  completionRate: decimal("completion_rate", {
+    precision: 5,
+    scale: 2,
+  }).default(sql`0.00`),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .default(sql`now()`),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .default(sql`now()`),
 });
 
 export const userRating = pgTable("user_rating", {
-  id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: text("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   ratedUserId: text("rated_user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
@@ -56,6 +86,10 @@ export const userRating = pgTable("user_rating", {
     .references(() => bounty.id, { onDelete: "cascade" }),
   rating: integer("rating").notNull(),
   comment: text("comment"),
-  createdAt: timestamp("created_at").notNull().default(sql`now()`),
-  updatedAt: timestamp("updated_at").notNull().default(sql`now()`),
-}); 
+  createdAt: timestamp("created_at")
+    .notNull()
+    .default(sql`now()`),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .default(sql`now()`),
+});

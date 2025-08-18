@@ -1,1 +1,1 @@
-export { useAccess, useCurrentUser } from "./use-access"; 
+export { useAccess, useCurrentUser } from "./use-access";

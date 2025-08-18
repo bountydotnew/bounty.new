@@ -9,15 +9,11 @@
   "orm": "drizzle",
   "backend": "next",
   "runtime": "bun",
-  "frontend": [
-    "next"
-  ],
-  "addons": [
-    "turborepo"
-  ],
+  "frontend": ["next"],
+  "addons": ["turborepo"],
   "examples": [],
   "auth": true,
   "packageManager": "bun",
   "dbSetup": "neon",
-  "api": "trpc"
+  "api": "trpc",
 }

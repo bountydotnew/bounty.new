@@ -7,9 +7,5 @@ interface NumberFlowProps {
 }
 
 export default function NumberFlow({ value }: NumberFlowProps) {
-  return (
-    <motion.span>
-      {value.toLocaleString()}
-    </motion.span>
-  );
-} 
+  return <motion.span>{value.toLocaleString()}</motion.span>;
+}

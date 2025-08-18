@@ -9,13 +9,21 @@ type AutocompleteProps<T> = {
   className?: string;
 };
 
-export function AutocompleteDropdown<T>({ open, items, getKey, renderItem, onSelect, className }: AutocompleteProps<T>) {
+export function AutocompleteDropdown<T>({
+  open,
+  items,
+  getKey,
+  renderItem,
+  onSelect,
+  className,
+}: AutocompleteProps<T>) {
   if (!open || items.length === 0) return null;
   return (
-    <div className={[
-      "absolute left-0 right-0 top-full -mt-2 z-0 rounded-md border border-border bg-popover shadow-sm",
-      className || "",
-    ].join(" ")}
+    <div
+      className={[
+        "absolute left-0 right-0 top-full -mt-2 z-0 rounded-md border border-border bg-popover shadow-sm",
+        className || "",
+      ].join(" ")}
     >
       <div className="max-h-64 overflow-auto py-1">
         {items.map((item) => (
@@ -32,5 +40,3 @@ export function AutocompleteDropdown<T>({ open, items, getKey, renderItem, onSel
     </div>
   );
 }
-
-

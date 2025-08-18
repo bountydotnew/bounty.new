@@ -1,4 +1,10 @@
-import { pgTable, text, timestamp, integer, boolean } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  integer,
+  boolean,
+} from "drizzle-orm/pg-core";
 import { user } from "./auth";
 
 export const passkey = pgTable("passkey", {

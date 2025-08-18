@@ -9,7 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 import { Laptop, Smartphone, Loader2 } from "lucide-react";
@@ -18,17 +25,23 @@ import { UAParser } from "ua-parser-js";
 export function SecuritySettings() {
   const router = useRouter();
   const [newPasskeyName, setNewPasskeyName] = useState("");
-  const [editingPasskey, setEditingPasskey] = useState<{ id: string; name: string } | null>(null);
+  const [editingPasskey, setEditingPasskey] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [editName, setEditName] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [terminatingSession, setTerminatingSession] = useState<string | null>(null);
+  const [terminatingSession, setTerminatingSession] = useState<string | null>(
+    null,
+  );
 
   // Mock active sessions data - in real implementation this would come from API
   const [activeSessions, setActiveSessions] = useState([
     {
       id: "current-session",
-      userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      userAgent:
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       createdAt: new Date(),
       lastAccessedAt: new Date(),
       ipAddress: "192.168.1.1",
@@ -36,7 +49,8 @@ export function SecuritySettings() {
     },
     {
       id: "mobile-session",
-      userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+      userAgent:
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
       createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
       lastAccessedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
       ipAddress: "10.0.0.1",
@@ -55,22 +69,26 @@ export function SecuritySettings() {
   } = usePasskey();
 
   const removeActiveSession = (sessionId: string) => {
-    setActiveSessions(sessions => sessions.filter(session => session.id !== sessionId));
+    setActiveSessions((sessions) =>
+      sessions.filter((session) => session.id !== sessionId),
+    );
   };
 
-  const handleTerminateSession = async (session: typeof activeSessions[0]) => {
+  const handleTerminateSession = async (
+    session: (typeof activeSessions)[0],
+  ) => {
     setTerminatingSession(session.id);
-    
+
     try {
       // In real implementation, this would call the API to revoke the session
       // const result = await authClient.revokeSession({ token: session.token });
-      
+
       // Mock successful termination
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       toast.success("Session terminated successfully");
       removeActiveSession(session.id);
-      
+
       // If terminating current session, refresh the page
       if (session.isCurrent) {
         router.refresh();
@@ -82,7 +100,9 @@ export function SecuritySettings() {
     }
   };
 
-  const handleAddPasskey = async (authenticatorAttachment?: "platform" | "cross-platform") => {
+  const handleAddPasskey = async (
+    authenticatorAttachment?: "platform" | "cross-platform",
+  ) => {
     try {
       await addPasskey({ authenticatorAttachment });
       toast.success("Passkey added successfully");
@@ -131,11 +151,15 @@ export function SecuritySettings() {
           <div className="flex justify-between items-center">
             <div>
               <h4 className="font-medium">Add New Passkey</h4>
-              <p className="text-sm text-muted-foreground">Add a new passkey to your account for secure authentication</p>
+              <p className="text-sm text-muted-foreground">
+                Add a new passkey to your account for secure authentication
+              </p>
             </div>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={() => setIsAddDialogOpen(true)}>Add Passkey</Button>
+                <Button onClick={() => setIsAddDialogOpen(true)}>
+                  Add Passkey
+                </Button>
               </DialogTrigger>
               <DialogContent showOverlay className="max-w-md gap-4">
                 <DialogHeader>
@@ -146,7 +170,9 @@ export function SecuritySettings() {
                 </DialogHeader>
                 <div className="space-y-4 gap-4">
                   <div>
-                    <Label className="mt-4" htmlFor="passkey-name">Passkey Name (Optional)</Label>
+                    <Label className="mt-4" htmlFor="passkey-name">
+                      Passkey Name (Optional)
+                    </Label>
                     <Input
                       id="passkey-name"
                       placeholder="e.g., iPhone, MacBook, Security Key"
@@ -187,31 +213,48 @@ export function SecuritySettings() {
 
             {passkeys.length === 0 ? (
               <div className="text-center py-8 border border-dashed rounded-lg">
-                <p className="text-sm text-muted-foreground mb-2">No passkeys found</p>
-                <p className="text-xs text-muted-foreground">Add your first passkey above for secure authentication</p>
+                <p className="text-sm text-muted-foreground mb-2">
+                  No passkeys found
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Add your first passkey above for secure authentication
+                </p>
               </div>
             ) : (
               <div className="space-y-2">
                 {passkeys.map((passkey) => (
-                  <div key={passkey.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div
+                    key={passkey.id}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
                     <div className="space-y-1">
-                      <p className="font-medium">{passkey.name || "Unnamed Passkey"}</p>
+                      <p className="font-medium">
+                        {passkey.name || "Unnamed Passkey"}
+                      </p>
                       <div className="flex space-x-2 text-xs text-muted-foreground">
                         <span>Device: {passkey.deviceType || "Unknown"}</span>
                         <span>•</span>
-                        <span>Backed up: {passkey.backedUp ? "Yes" : "No"}</span>
+                        <span>
+                          Backed up: {passkey.backedUp ? "Yes" : "No"}
+                        </span>
                         <span>•</span>
                         <span>Created: {formatDate(passkey.createdAt)}</span>
                       </div>
                     </div>
                     <div className="flex space-x-2">
-                      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                      <Dialog
+                        open={isEditDialogOpen}
+                        onOpenChange={setIsEditDialogOpen}
+                      >
                         <DialogTrigger asChild>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              setEditingPasskey({ id: passkey.id, name: passkey.name || "" });
+                              setEditingPasskey({
+                                id: passkey.id,
+                                name: passkey.name || "",
+                              });
                               setEditName(passkey.name || "");
                               setIsEditDialogOpen(true);
                             }}
@@ -237,7 +280,10 @@ export function SecuritySettings() {
                               />
                             </div>
                             <div className="flex space-x-2">
-                              <Button onClick={handleUpdatePasskey} disabled={!editName.trim()}>
+                              <Button
+                                onClick={handleUpdatePasskey}
+                                disabled={!editName.trim()}
+                              >
                                 Update
                               </Button>
                               <Button
@@ -278,7 +324,9 @@ export function SecuritySettings() {
         </CardHeader>
         <CardContent className="space-y-4">
           {activeSessions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No active sessions found.</p>
+            <p className="text-sm text-muted-foreground">
+              No active sessions found.
+            </p>
           ) : (
             <div className="space-y-3">
               {activeSessions.map((session) => {
@@ -287,7 +335,7 @@ export function SecuritySettings() {
                 const os = parser.getOS();
                 const browser = parser.getBrowser();
                 const isMobile = device.type === "mobile";
-                
+
                 return (
                   <div
                     key={session.id}
@@ -313,7 +361,9 @@ export function SecuritySettings() {
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span>IP: {session.ipAddress}</span>
                           <span>•</span>
-                          <span>Last active: {formatDate(session.lastAccessedAt)}</span>
+                          <span>
+                            Last active: {formatDate(session.lastAccessedAt)}
+                          </span>
                         </div>
                       </div>
                     </div>

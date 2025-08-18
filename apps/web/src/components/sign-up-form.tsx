@@ -26,7 +26,7 @@ export default function SignUpForm({
     },
     onSubmit: async ({ value }) => {
       const targetUrl = redirectUrl || "/dashboard";
-      
+
       await authClient.signUp.email(
         {
           email: value.email,

@@ -5,9 +5,9 @@ import { trpc } from "@/utils/trpc";
 
 export function useAccess() {
   const { data, isLoading, error } = useQuery(
-    trpc.user.hasAccess.queryOptions()
+    trpc.user.hasAccess.queryOptions(),
   );
-  
+
   return {
     hasAccess: data?.hasAccess ?? false,
     isLoading,
@@ -17,12 +17,12 @@ export function useAccess() {
 
 export function useCurrentUser() {
   const { data, isLoading, error } = useQuery(
-    trpc.user.getCurrentUser.queryOptions()
+    trpc.user.getCurrentUser.queryOptions(),
   );
-  
+
   return {
     user: data,
     isLoading,
     error,
   };
-} 
+}

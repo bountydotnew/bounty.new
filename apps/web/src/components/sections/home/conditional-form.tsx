@@ -18,9 +18,7 @@ function ConditionalFormContent({ className }: ConditionalFormProps) {
   // ) : (
   //   <WaitlistForm className={className} />
   // );
-  return (
-    <WaitlistForm className={className} />
-  );
+  return <WaitlistForm className={className} />;
 }
 
 export function ConditionalForm({ className }: ConditionalFormProps) {
@@ -29,4 +27,4 @@ export function ConditionalForm({ className }: ConditionalFormProps) {
       <ConditionalFormContent className={className} />
     </Suspense>
   );
-} 
+}

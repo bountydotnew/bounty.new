@@ -57,13 +57,21 @@ const PRO_PLANS = ["pro-monthly", "pro-annual"] as const;
 
 export const useBilling = () => {
   const [needsCustomerCreation, setNeedsCustomerCreation] = useState(false);
-  const [pendingAction, setPendingAction] = useState<{ type: 'portal' | 'usage' | 'checkout'; params?: any } | null>(null);
+  const [pendingAction, setPendingAction] = useState<{
+    type: "portal" | "usage" | "checkout";
+    params?: any;
+  } | null>(null);
 
   const ensurePolarCustomerMutation = useMutation({
     ...trpc.billing.ensurePolarCustomer.mutationOptions(),
   });
 
-  const { data: customer, isLoading, error, refetch } = useQuery({
+  const {
+    data: customer,
+    isLoading,
+   // error,
+    refetch,
+  } = useQuery({
     queryKey: ["billing"],
     queryFn: async () => {
       try {
@@ -72,15 +80,23 @@ export const useBilling = () => {
         return customerState;
       } catch (error: unknown) {
         const polarError = error as PolarError;
-        const errorMessage = String(polarError?.message || polarError?.body$ || "");
+        const errorMessage = String(
+          polarError?.message || polarError?.body$ || "",
+        );
         const errorDetail = String(polarError?.detail || "");
-        const notFound = errorMessage.includes("ResourceNotFound") || errorDetail.includes("Customer does not exist") || polarError?.status === 404;
+        const notFound =
+          errorMessage.includes("ResourceNotFound") ||
+          errorDetail.includes("Customer does not exist") ||
+          polarError?.status === 404;
         if (notFound) {
           // Instead of calling mutation here, set flag to trigger customer creation
           setNeedsCustomerCreation(true);
           return null;
         }
-        if (errorMessage.includes("NotPermitted") || polarError?.status === 403) {
+        if (
+          errorMessage.includes("NotPermitted") ||
+          polarError?.status === 403
+        ) {
           console.error("Polar permission denied:", error);
           return null;
         }
@@ -107,17 +123,17 @@ export const useBilling = () => {
           setNeedsCustomerCreation(false);
           // Refetch the customer data after creation
           await refetch();
-          
+
           // If there was a pending action, execute it now
           if (pendingAction) {
             const action = pendingAction;
             setPendingAction(null);
-            
-            if (action.type === 'portal') {
+
+            if (action.type === "portal") {
               await authClient.customer.portal();
-            } else if (action.type === 'usage') {
+            } else if (action.type === "usage") {
               await authClient.usage.ingest(action.params);
-            } else if (action.type === 'checkout') {
+            } else if (action.type === "checkout") {
               await authClient.checkout(action.params);
             }
           }
@@ -127,68 +143,81 @@ export const useBilling = () => {
           setPendingAction(null);
         }
       };
-      
+
       createCustomer();
     }
-  }, [needsCustomerCreation, ensurePolarCustomerMutation, refetch, pendingAction]);
-
-
+  }, [
+    needsCustomerCreation,
+    ensurePolarCustomerMutation,
+    refetch,
+    pendingAction,
+  ]);
 
   const { isPro, ...customerFeatures } = useMemo(() => {
     const customerState = customer as {
       products?: Array<{ id?: string; name?: string; slug?: string }>;
       activeSubscriptions?: Array<{
-        product?: { id?: string; name?: string; slug?: string }
+        product?: { id?: string; name?: string; slug?: string };
       }>;
       grantedBenefits?: Array<unknown>;
-      features?: Record<string, {
-        included_usage?: number;
-        balance?: number;
-        unlimited?: boolean;
-        usage?: number;
-        next_reset_at?: number;
-        interval?: string;
-      }>;
+      features?: Record<
+        string,
+        {
+          included_usage?: number;
+          balance?: number;
+          unlimited?: boolean;
+          usage?: number;
+          next_reset_at?: number;
+          interval?: string;
+        }
+      >;
     };
-    
+
     // If still loading, don't show Pro status yet
     if (isLoading) {
       return { isPro: false, ...DEFAULT_FEATURES };
     }
-    
+
     // If no customer state (new user or error), they're not Pro
     if (!customerState) {
       return { isPro: false, ...DEFAULT_FEATURES };
     }
-    
+
     // Check if they have any Pro products, subscriptions, or granted benefits
-    const hasProProducts = customerState?.products && Array.isArray(customerState.products)
-      ? customerState.products.some((product) =>
-          PRO_PLANS.some((plan) =>
-            product.id?.includes(plan) ||
-            product.name?.includes(plan) ||
-            product.slug?.includes(plan)
+    const hasProProducts =
+      customerState?.products && Array.isArray(customerState.products)
+        ? customerState.products.some((product) =>
+            PRO_PLANS.some(
+              (plan) =>
+                product.id?.includes(plan) ||
+                product.name?.includes(plan) ||
+                product.slug?.includes(plan),
+            ),
           )
-        )
-      : false;
-      
-    const hasProSubscriptions = customerState?.activeSubscriptions && Array.isArray(customerState.activeSubscriptions)
-      ? customerState.activeSubscriptions.some((subscription) =>
-          PRO_PLANS.some((plan) =>
-            subscription.product?.id?.includes(plan) ||
-            subscription.product?.name?.includes(plan) ||
-            subscription.product?.slug?.includes(plan)
+        : false;
+
+    const hasProSubscriptions =
+      customerState?.activeSubscriptions &&
+      Array.isArray(customerState.activeSubscriptions)
+        ? customerState.activeSubscriptions.some((subscription) =>
+            PRO_PLANS.some(
+              (plan) =>
+                subscription.product?.id?.includes(plan) ||
+                subscription.product?.name?.includes(plan) ||
+                subscription.product?.slug?.includes(plan),
+            ),
           )
-        )
-      : false;
-      
-    const hasProBenefits = customerState?.grantedBenefits && Array.isArray(customerState.grantedBenefits)
-      ? customerState.grantedBenefits.some(() => {
-          // If they have any granted benefits, consider them Pro
-          return true;
-        })
-      : false;
-      
+        : false;
+
+    const hasProBenefits =
+      customerState?.grantedBenefits &&
+      Array.isArray(customerState.grantedBenefits)
+        ? customerState.grantedBenefits.some(() => {
+            // If they have any granted benefits, consider them Pro
+            return true;
+          })
+        : false;
+
     const isPro = hasProProducts || hasProSubscriptions || hasProBenefits;
 
     if (!customerState?.features) return { isPro, ...DEFAULT_FEATURES };
@@ -232,12 +261,17 @@ export const useBilling = () => {
         await authClient.customer.portal();
       } catch (error: unknown) {
         const polarError = error as PolarError;
-        const errorMessage = String(polarError?.message || polarError?.body$ || "");
+        const errorMessage = String(
+          polarError?.message || polarError?.body$ || "",
+        );
         const errorDetail = String(polarError.detail || "");
-        const notFound = errorMessage.includes("ResourceNotFound") || errorDetail.includes("Customer does not exist") || polarError?.status === 404;
+        const notFound =
+          errorMessage.includes("ResourceNotFound") ||
+          errorDetail.includes("Customer does not exist") ||
+          polarError?.status === 404;
         if (notFound) {
           // Set pending action and trigger customer creation
-          setPendingAction({ type: 'portal' });
+          setPendingAction({ type: "portal" });
           setNeedsCustomerCreation(true);
           return;
         }
@@ -245,37 +279,50 @@ export const useBilling = () => {
       }
     } catch (error: unknown) {
       const polarError = error as PolarError;
-      const errorMessage = String(polarError?.message || polarError?.body$ || "");
-      const errorDetail = String(polarError.detail || "");
-      if (errorMessage.includes("NotPermitted") || polarError?.status === 403) {
-        console.error("Polar permission denied:", error);
-        return;
-      }
+      const errorMessage = String(
+        polarError?.message || polarError?.body$ || "",
+      );
+      // const errorDetail = String(polarError.detail || "");
+      // if (errorMessage.includes("NotPermitted") || polarError?.status === 403) {
+      //   console.error("Polar permission denied:", error);
+      //   return;
+      // }
       console.error("Failed to open billing portal:", error);
     }
   }, []);
 
-  const trackUsage = useCallback(async (event: string, metadata: Record<string, string | number | boolean> = {}) => {
-    try {
+  const trackUsage = useCallback(
+    async (
+      event: string,
+      metadata: Record<string, string | number | boolean> = {},
+    ) => {
       try {
-        await authClient.usage.ingest({ event, metadata });
-      } catch (error: unknown) {
-        const polarError = error as PolarError;
-        const errorMessage = String(polarError?.message || polarError?.body$ || "");
-        const errorDetail = String(polarError.detail || "");
-        const notFound = errorMessage.includes("ResourceNotFound") || errorDetail.includes("Customer does not exist") || polarError?.status === 404;
-        if (notFound) {
-          // Set pending action and trigger customer creation
-          setPendingAction({ type: 'usage', params: { event, metadata } });
-          setNeedsCustomerCreation(true);
-          return;
+        try {
+          await authClient.usage.ingest({ event, metadata });
+        } catch (error: unknown) {
+          const polarError = error as PolarError;
+          const errorMessage = String(
+            polarError?.message || polarError?.body$ || "",
+          );
+          const errorDetail = String(polarError.detail || "");
+          const notFound =
+            errorMessage.includes("ResourceNotFound") ||
+            errorDetail.includes("Customer does not exist") ||
+            polarError?.status === 404;
+          if (notFound) {
+            // Set pending action and trigger customer creation
+            setPendingAction({ type: "usage", params: { event, metadata } });
+            setNeedsCustomerCreation(true);
+            return;
+          }
+          throw error;
         }
-        throw error;
+      } catch (error) {
+        console.error("Failed to track usage:", error);
       }
-    } catch (error) {
-      console.error("Failed to track usage:", error);
-    }
-  }, []);
+    },
+    [],
+  );
 
   const checkout = useCallback(async (slug: "pro-monthly" | "pro-annual") => {
     try {
@@ -283,12 +330,17 @@ export const useBilling = () => {
         await authClient.checkout({ slug });
       } catch (error: unknown) {
         const polarError = error as PolarError;
-        const errorMessage = String(polarError?.message || polarError?.body$ || "");
+        const errorMessage = String(
+          polarError?.message || polarError?.body$ || "",
+        );
         const errorDetail = String(polarError.detail || "");
-        const notFound = errorMessage.includes("ResourceNotFound") || errorDetail.includes("Customer does not exist") || polarError?.status === 404;
+        const notFound =
+          errorMessage.includes("ResourceNotFound") ||
+          errorDetail.includes("Customer does not exist") ||
+          polarError?.status === 404;
         if (notFound) {
           // Set pending action and trigger customer creation
-          setPendingAction({ type: 'checkout', params: { slug } });
+          setPendingAction({ type: "checkout", params: { slug } });
           setNeedsCustomerCreation(true);
           return;
         }
@@ -314,5 +366,3 @@ export const useBilling = () => {
 
 export { DEFAULT_FEATURES, FEATURE_IDS, PRO_PLANS };
 export type { Features, FeatureState };
-
-

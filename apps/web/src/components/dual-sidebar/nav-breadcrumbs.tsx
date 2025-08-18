@@ -23,7 +23,7 @@ export function NavBreadcrumbs({ items = [], className }: NavBreadcrumbsProps) {
   // Find the current navigation context from sidebar items
   const findCurrentNavigation = () => {
     const breadcrumbs: { title: string; url: string }[] = [];
-    
+
     // Always start with home
     breadcrumbs.push({ title: "Home", url: "/" });
 
@@ -31,11 +31,14 @@ export function NavBreadcrumbs({ items = [], className }: NavBreadcrumbsProps) {
     for (const item of items) {
       if (pathname.startsWith(item.url) && item.url !== "/") {
         breadcrumbs.push({ title: item.title, url: item.url });
-        
+
         // Check sub-items
         if (item.items) {
           for (const subItem of item.items) {
-            if (pathname === subItem.url || pathname.startsWith(subItem.url + "/")) {
+            if (
+              pathname === subItem.url ||
+              pathname.startsWith(subItem.url + "/")
+            ) {
               breadcrumbs.push({ title: subItem.title, url: subItem.url });
               break;
             }
@@ -53,7 +56,7 @@ export function NavBreadcrumbs({ items = [], className }: NavBreadcrumbsProps) {
         const title = decodeURIComponent(segment)
           .replace(/-/g, " ")
           .replace(/\b\w/g, (char) => char.toUpperCase());
-        
+
         breadcrumbs.push({ title, url });
       });
     }
@@ -70,7 +73,10 @@ export function NavBreadcrumbs({ items = [], className }: NavBreadcrumbsProps) {
   return (
     <nav
       aria-label="Breadcrumb"
-      className={cn("flex items-center space-x-1 text-sm text-muted-foreground", className)}
+      className={cn(
+        "flex items-center space-x-1 text-sm text-muted-foreground",
+        className,
+      )}
     >
       {breadcrumbs.map((breadcrumb, index) => {
         const isLast = index === breadcrumbs.length - 1;
@@ -97,10 +103,8 @@ export function NavBreadcrumbs({ items = [], className }: NavBreadcrumbsProps) {
                 {breadcrumb.title}
               </Link>
             )}
-            
-            {!isLast && (
-              <ChevronRight className="h-4 w-4 mx-1 flex-shrink-0" />
-            )}
+
+            {!isLast && <ChevronRight className="h-4 w-4 mx-1 flex-shrink-0" />}
           </div>
         );
       })}

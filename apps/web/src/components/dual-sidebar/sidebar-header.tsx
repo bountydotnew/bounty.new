@@ -7,8 +7,6 @@ import { LINKS } from "@/constants/links";
 import { AccessGate } from "@/components/access-gate";
 // import { SidebarTrigger } from "@/components/ui/sidebar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { useQuery } from "@tanstack/react-query";
-import { trpc } from "@/utils/trpc";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
 type NavItem = { href: string; label: string };
@@ -21,7 +19,7 @@ const NavLinks = ({ items }: { items: ReadonlyArray<NavItem> }) => (
           href={href}
           className={cn(
             "text-sm font-medium transition-colors hover:text-primary",
-            "text-muted-foreground hover:text-foreground"
+            "text-muted-foreground hover:text-foreground",
           )}
         >
           {label}
@@ -37,20 +35,17 @@ const betaNavigationLinks = [
 ];
 
 const productionNavigationLinks = [
-  { href: LINKS.DASHBOARD, label: "Apply for Beta Testing" }
+  { href: LINKS.DASHBOARD, label: "Apply for Beta Testing" },
 ];
 
 export const Header = () => {
-  const userData = useQuery(trpc.user.getMe.queryOptions());
-  const navigationLinks = userData.data?.betaAccessStatus === "approved" ? betaNavigationLinks : productionNavigationLinks;
   const isMobile = useMediaQuery("(max-width: 768px)");
-
 
   return (
     <header
       className={cn(
         "flex h-16 items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-        "px-4 sm:px-6"
+        "px-4 sm:px-6",
       )}
     >
       <div className="flex items-center gap-6">
@@ -66,4 +61,4 @@ export const Header = () => {
       </div>
     </header>
   );
-}
+};

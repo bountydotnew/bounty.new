@@ -39,7 +39,13 @@ interface SendErrorWebhookOptions {
   userId?: string;
 }
 
-export async function sendDiscordWebhook({ webhookUrl, content, embed, username = "bounty.new", avatarUrl }: SendWebhookOptions): Promise<boolean> {
+export async function sendDiscordWebhook({
+  webhookUrl,
+  content,
+  embed,
+  username = "bounty.new",
+  avatarUrl,
+}: SendWebhookOptions): Promise<boolean> {
   try {
     const payload: DiscordWebhookPayload = {
       username,
@@ -74,7 +80,13 @@ export async function sendDiscordWebhook({ webhookUrl, content, embed, username 
   }
 }
 
-export async function sendErrorWebhook({ webhookUrl, error, context, location, userId }: SendErrorWebhookOptions): Promise<boolean> {
+export async function sendErrorWebhook({
+  webhookUrl,
+  error,
+  context,
+  location,
+  userId,
+}: SendErrorWebhookOptions): Promise<boolean> {
   const errorMessage = error instanceof Error ? error.message : String(error);
   const errorStack = error instanceof Error ? error.stack : undefined;
 
@@ -107,7 +119,8 @@ export async function sendErrorWebhook({ webhookUrl, error, context, location, u
   if (context && Object.keys(context).length > 0) {
     embed.fields?.push({
       name: "Context",
-      value: "```json\n" + JSON.stringify(context, null, 2).slice(0, 1000) + "\n```",
+      value:
+        "```json\n" + JSON.stringify(context, null, 2).slice(0, 1000) + "\n```",
       inline: false,
     });
   }
@@ -153,7 +166,8 @@ export async function sendInfoWebhook({
   if (context && Object.keys(context).length > 0) {
     embed.fields?.push({
       name: "Details",
-      value: "```json\n" + JSON.stringify(context, null, 2).slice(0, 1000) + "\n```",
+      value:
+        "```json\n" + JSON.stringify(context, null, 2).slice(0, 1000) + "\n```",
       inline: false,
     });
   }

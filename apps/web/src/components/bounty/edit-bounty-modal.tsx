@@ -17,14 +17,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
-import { 
-  createBountySchema, 
-  CreateBountyForm, 
+import {
+  createBountySchema,
+  CreateBountyForm,
   currencyOptions,
   difficultyOptions,
-  formatFormData,
-  parseTagsInput,
-  formatTagsOutput
+  formatFormData
 } from "@/lib/forms";
 
 interface EditBountyModalProps {
@@ -33,7 +31,11 @@ interface EditBountyModalProps {
   bountyId: string;
 }
 
-export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModalProps) {
+export function EditBountyModal({
+  open,
+  onOpenChange,
+  bountyId,
+}: EditBountyModalProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -46,19 +48,31 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
     resolver: zodResolver(createBountySchema),
   });
 
-  const { control, handleSubmit, formState: { errors, isSubmitting }, reset, watch, setValue } = form;
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    //watch,
+    setValue,
+  } = form;
 
   // Load bounty data when modal opens
   useEffect(() => {
     if (bountyQuery.data?.data && open) {
       const bounty = bountyQuery.data.data;
-      
+
       setValue("title", bounty.title);
       setValue("description", bounty.description);
       setValue("amount", bounty.amount.toString());
       setValue("currency", bounty.currency);
       setValue("difficulty", bounty.difficulty);
-      setValue("deadline", bounty.deadline ? new Date(bounty.deadline).toISOString().slice(0, 16) : "");
+      setValue(
+        "deadline",
+        bounty.deadline
+          ? new Date(bounty.deadline).toISOString().slice(0, 16)
+          : "",
+      );
       setValue("tags", bounty.tags || []);
       setValue("repositoryUrl", bounty.repositoryUrl || "");
       setValue("issueUrl", bounty.issueUrl || "");
@@ -69,17 +83,19 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
     ...trpc.bounties.updateBounty.mutationOptions(),
     onSuccess: () => {
       toast.success("Bounty updated successfully!");
-      
+
       // Invalidate all bounty-related queries to trigger refetch
       queryClient.invalidateQueries({
         queryKey: ["bounties"],
-        type: "all"
+        type: "all",
       });
       // Invalidate and refetch the specific bounty detail query
-      const detailKey = trpc.bounties.fetchBountyById.queryOptions({ id: bountyId }).queryKey;
+      const detailKey = trpc.bounties.fetchBountyById.queryOptions({
+        id: bountyId,
+      }).queryKey;
       queryClient.invalidateQueries({ queryKey: detailKey });
       queryClient.refetchQueries({ queryKey: detailKey });
-      
+
       onOpenChange(false);
       router.refresh();
     },
@@ -93,12 +109,6 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
     updateBounty.mutate({ id: bountyId, ...formattedData });
   });
 
-  const tagsInput = watch("tags");
-  const handleTagsChange = (value: string) => {
-    const tags = parseTagsInput(value);
-    setValue("tags", tags);
-  };
-
   const handleClose = () => {
     if (!isSubmitting && !updateBounty.isPending) {
       reset();
@@ -109,7 +119,10 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
   if (bountyQuery.isLoading) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg max-h-[75vh] overflow-y-auto p-0 sm:rounded-lg" showOverlay>
+        <DialogContent
+          className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg max-h-[75vh] overflow-y-auto p-0 sm:rounded-lg"
+          showOverlay
+        >
           <div className="flex items-center justify-center h-40">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
           </div>
@@ -121,7 +134,10 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
   if (bountyQuery.error || !bountyQuery.data?.data) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg p-0 sm:rounded-lg" showOverlay>
+        <DialogContent
+          className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg p-0 sm:rounded-lg"
+          showOverlay
+        >
           <DialogHeader className="px-6 pt-6">
             <DialogTitle className="text-xl">Error</DialogTitle>
           </DialogHeader>
@@ -140,7 +156,10 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg max-h-[75vh] overflow-y-auto p-0 sm:rounded-lg" showOverlay>
+      <DialogContent
+        className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg max-h-[75vh] overflow-y-auto p-0 sm:rounded-lg"
+        showOverlay
+      >
         <DialogHeader className="px-6 pt-6">
           <DialogTitle className="text-xl">Edit Bounty</DialogTitle>
         </DialogHeader>
@@ -161,7 +180,9 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
               )}
             />
             {errors.title && (
-              <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>
+              <p className="text-red-500 text-sm mt-1">
+                {errors.title.message}
+              </p>
             )}
           </div>
 
@@ -181,7 +202,9 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
               )}
             />
             {errors.description && (
-              <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
+              <p className="text-red-500 text-sm mt-1">
+                {errors.description.message}
+              </p>
             )}
           </div>
 
@@ -205,7 +228,9 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
                 )}
               />
               {errors.amount && (
-                <p className="text-red-500 text-sm mt-1">{errors.amount.message}</p>
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.amount.message}
+                </p>
               )}
             </div>
 
@@ -251,7 +276,9 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
               )}
             />
             {errors.difficulty && (
-              <p className="text-red-500 text-sm mt-1">{errors.difficulty.message}</p>
+              <p className="text-red-500 text-sm mt-1">
+                {errors.difficulty.message}
+              </p>
             )}
           </div>
 
@@ -303,7 +330,9 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
               )}
             />
             {errors.repositoryUrl && (
-              <p className="text-red-500 text-sm mt-1">{errors.repositoryUrl.message}</p>
+              <p className="text-red-500 text-sm mt-1">
+                {errors.repositoryUrl.message}
+              </p>
             )}
           </div>
 
@@ -323,7 +352,9 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
               )}
             />
             {errors.issueUrl && (
-              <p className="text-red-500 text-sm mt-1">{errors.issueUrl.message}</p>
+              <p className="text-red-500 text-sm mt-1">
+                {errors.issueUrl.message}
+              </p>
             )}
           </div>
 

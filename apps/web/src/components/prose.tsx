@@ -1,13 +1,13 @@
-import { cn } from '@/lib/utils';
-import React from 'react';
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
-import remarkRehype from 'remark-rehype';
-import rehypeSanitize from 'rehype-sanitize';
-import rehypeStringify from 'rehype-stringify';
+import { cn } from "@/lib/utils";
+import React from "react";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import remarkRehype from "remark-rehype";
+import rehypeSanitize from "rehype-sanitize";
+import rehypeStringify from "rehype-stringify";
 
 type ProseProps = React.HTMLAttributes<HTMLElement> & {
-  as?: 'article';
+  as?: "article";
   html?: string;
   markdown?: string;
 };
@@ -44,11 +44,15 @@ function Prose({ children, html, markdown, className }: ProseProps) {
   return (
     <article
       className={cn(
-        'prose prose-zinc dark:prose-invert max-w-none prose-headings:font-semibold prose-h1:text-2xl prose-h2:text-xl prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-muted-foreground prose-img:rounded-xl mx-auto',
-        className
+        "prose prose-zinc dark:prose-invert max-w-none prose-headings:font-semibold prose-h1:text-2xl prose-h2:text-xl prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-muted-foreground prose-img:rounded-xl mx-auto",
+        className,
       )}
     >
-      {rendered ? <div dangerouslySetInnerHTML={{ __html: rendered }} /> : children}
+      {rendered ? (
+        <div dangerouslySetInnerHTML={{ __html: rendered }} />
+      ) : (
+        children
+      )}
     </article>
   );
 }

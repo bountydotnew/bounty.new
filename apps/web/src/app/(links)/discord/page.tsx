@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: "bounty.new - Discord",  
+  title: "bounty.new - Discord",
   description: "Join our Discord server",
   icons: {
     icon: "/icon.svg",
-  },  
+  },
 };
 const DISCORD_URL = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL;
 

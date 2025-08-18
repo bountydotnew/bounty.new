@@ -63,7 +63,7 @@ export class GithubManager {
 
   constructor(config: { token?: string } | string = {}) {
     const token = typeof config === "string" ? config : config.token;
-    const auth = token || process.env.GITHUB_TOKEN || process.env.NEXT_PUBLIC_GITHUB_TOKEN;
+    const auth = token || process.env.GITHUB_TOKEN;
     this.octokit = new MyOctokit(auth ? { auth } : {});
   }
 
@@ -101,14 +101,21 @@ export class GithubManager {
       return { success: true, data: repos };
     } catch (error) {
       // Fix: Return discriminated union with error information instead of empty array
-      const errorMessage = error instanceof Error
-        ? error.message
-        : 'Unknown error occurred while fetching repositories';
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Unknown error occurred while fetching repositories";
       return { success: false, error: errorMessage };
     }
   }
 
-  async searchIssues(owner: string, repo: string, q: string): Promise<{ number: number; title: string; state: string; html_url: string }[]> {
+  async searchIssues(
+    owner: string,
+    repo: string,
+    q: string,
+  ): Promise<
+    { number: number; title: string; state: string; html_url: string }[]
+  > {
     try {
       const term = q.trim();
       const parts = [`repo:${owner}/${repo}`, `is:issue`];
@@ -135,7 +142,10 @@ export class GithubManager {
     }
   }
 
-  async getContributors(identifier: string, perPage = 100): Promise<Contributor[]> {
+  async getContributors(
+    identifier: string,
+    perPage = 100,
+  ): Promise<Contributor[]> {
     const { owner, repo } = parseRepo(identifier);
     const { data } = await this.octokit.rest.repos.listContributors({
       owner,
@@ -172,7 +182,10 @@ export class GithubManager {
     return data as any[];
   }
 
-  async getBiggestCommitByUser(identifier: string, username: string): Promise<CommitLite | undefined> {
+  async getBiggestCommitByUser(
+    identifier: string,
+    username: string,
+  ): Promise<CommitLite | undefined> {
     const { owner, repo } = parseRepo(identifier);
     const { data: commits } = await this.octokit.rest.repos.listCommits({
       owner,
@@ -183,11 +196,14 @@ export class GithubManager {
     let best: CommitLite | undefined;
     let max = 0;
     for (const c of commits.slice(0, 10)) {
-      const { data: detail } = await this.octokit.request("GET /repos/{owner}/{repo}/commits/{ref}", {
-        owner,
-        repo,
-        ref: c.sha,
-      });
+      const { data: detail } = await this.octokit.request(
+        "GET /repos/{owner}/{repo}/commits/{ref}",
+        {
+          owner,
+          repo,
+          ref: c.sha,
+        },
+      );
       const additions = detail.stats?.additions || 0;
       const deletions = detail.stats?.deletions || 0;
       const total = additions + deletions;
@@ -195,7 +211,9 @@ export class GithubManager {
         max = total;
         best = {
           sha: String(c.sha).slice(0, 7),
-          message: String(c.commit?.message || "").split("\n")[0].slice(0, 50),
+          message: String(c.commit?.message || "")
+            .split("\n")[0]
+            .slice(0, 50),
           additions,
           deletions,
           coAuthors: parseCoAuthors(String(c.commit?.message || "")),
@@ -216,12 +234,19 @@ export class GithubManager {
   }
 
   async getIssueFromUrl(url: string) {
-    const match = url.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/issues\/(\d+)/i);
+    const match = url.match(
+      /^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/issues\/(\d+)/i,
+    );
     if (!match) throw new Error("Invalid GitHub issue URL");
     const [, owner, repo, num] = match;
     const issue = await this.getIssue(owner, repo, Number(num));
-    const bodyHtml = await this.renderMarkdown(issue.body || "", `${owner}/${repo}`);
-    const { amount, currency } = this.extractAmountAndCurrency(`${issue.title}\n${issue.body || ""}`);
+    const bodyHtml = await this.renderMarkdown(
+      issue.body || "",
+      `${owner}/${repo}`,
+    );
+    const { amount, currency } = this.extractAmountAndCurrency(
+      `${issue.title}\n${issue.body || ""}`,
+    );
     return {
       owner,
       repo,
@@ -233,12 +258,20 @@ export class GithubManager {
       state: issue.state,
       detectedAmount: amount,
       detectedCurrency: currency,
-      labels: Array.isArray(issue.labels) ? (issue.labels as any[]).map((l: any) => (typeof l === "string" ? l : l?.name)).filter(Boolean) : [],
-      assignees: Array.isArray(issue.assignees) ? (issue.assignees as any[]).map((a: any) => a?.login).filter(Boolean) : [],
+      labels: Array.isArray(issue.labels)
+        ? (issue.labels as any[])
+            .map((l: any) => (typeof l === "string" ? l : l?.name))
+            .filter(Boolean)
+        : [],
+      assignees: Array.isArray(issue.assignees)
+        ? (issue.assignees as any[]).map((a: any) => a?.login).filter(Boolean)
+        : [],
     };
   }
 
-  async getIssues(identifier: string): Promise<{ id: number; title: string; state: string; url: string }[]> {
+  async getIssues(
+    identifier: string,
+  ): Promise<{ id: number; title: string; state: string; url: string }[]> {
     const { owner, repo } = parseRepo(identifier);
     const { data } = await this.octokit.rest.issues.listForRepo({
       owner,
@@ -264,7 +297,10 @@ export class GithubManager {
     return typeof data === "string" ? data : "";
   }
 
-  private extractAmountAndCurrency(text: string): { amount?: string; currency?: string } {
+  private extractAmountAndCurrency(text: string): {
+    amount?: string;
+    currency?: string;
+  } {
     if (!text) return {};
     const lower = text.toLowerCase();
     let currency: string | undefined;
@@ -276,7 +312,8 @@ export class GithubManager {
     if (!currency) {
       if (lower.includes("usd")) currency = "USD";
       else if (lower.includes("eur")) currency = "EUR";
-      else if (lower.includes("gbp") || lower.includes("pound")) currency = "GBP";
+      else if (lower.includes("gbp") || lower.includes("pound"))
+        currency = "GBP";
     }
     const patterns: RegExp[] = [
       /\$\s*(\d{1,13}(?:[.,]\d{1,2})?)/i,

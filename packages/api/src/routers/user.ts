@@ -3,13 +3,22 @@ import { TRPCError } from "@trpc/server";
 import { eq, desc, sql } from "drizzle-orm";
 
 import { db, user, session, userProfile, userReputation } from "@bounty/db";
-import { protectedProcedure, publicProcedure, router, adminProcedure } from "../trpc";
+import {
+  protectedProcedure,
+  publicProcedure,
+  router,
+  adminProcedure,
+} from "../trpc";
 
 export const userRouter = router({
   hasAccess: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 
-    const userRecord = await db.select({ hasAccess: user.hasAccess }).from(user).where(eq(user.id, userId)).limit(1);
+    const userRecord = await db
+      .select({ hasAccess: user.hasAccess })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
 
     if (!userRecord[0]) {
       throw new TRPCError({
@@ -105,40 +114,45 @@ export const userRouter = router({
     }
   }),
 
-  revokeSession: protectedProcedure.input(z.object({ sessionId: z.string() })).mutation(async ({ ctx, input }) => {
-    try {
-      const [sessionToRevoke] = await db.select().from(session).where(eq(session.id, input.sessionId));
+  revokeSession: protectedProcedure
+    .input(z.object({ sessionId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const [sessionToRevoke] = await db
+          .select()
+          .from(session)
+          .where(eq(session.id, input.sessionId));
 
-      if (!sessionToRevoke) {
+        if (!sessionToRevoke) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Session not found",
+          });
+        }
+
+        if (sessionToRevoke.userId !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only revoke your own sessions",
+          });
+        }
+
+        await db.delete(session).where(eq(session.id, input.sessionId));
+
+        return {
+          success: true,
+          message: "Session revoked successfully",
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Session not found",
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to revoke session",
+          cause: error,
         });
       }
-
-      if (sessionToRevoke.userId !== ctx.session.user.id) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You can only revoke your own sessions",
-        });
-      }
-
-      await db.delete(session).where(eq(session.id, input.sessionId));
-
-      return {
-        success: true,
-        message: "Session revoked successfully",
-      };
-    } catch (error) {
-      if (error instanceof TRPCError) throw error;
-
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to revoke session",
-        cause: error,
-      });
-    }
-  }),
+    }),
 
   getUserStats: protectedProcedure.query(async ({ ctx }) => {
     try {
@@ -148,7 +162,10 @@ export const userRouter = router({
         })
         .from(user);
 
-      const [userRep] = await db.select().from(userReputation).where(eq(userReputation.userId, ctx.session.user.id));
+      const [userRep] = await db
+        .select()
+        .from(userReputation)
+        .where(eq(userReputation.userId, ctx.session.user.id));
 
       return {
         success: true,
@@ -181,11 +198,15 @@ export const userRouter = router({
       z.object({
         userId: z.string().uuid(),
         hasAccess: z.boolean(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const currentUser = await db.select().from(user).where(eq(user.id, ctx.session.user.id)).limit(1);
+        const currentUser = await db
+          .select()
+          .from(user)
+          .where(eq(user.id, ctx.session.user.id))
+          .limit(1);
 
         if (!currentUser[0]?.hasAccess) {
           throw new TRPCError({
@@ -232,14 +253,13 @@ export const userRouter = router({
     return userData;
   }),
 
-
   getAllUsers: adminProcedure
     .input(
       z.object({
         search: z.string().optional(),
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(20),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const { search, page, limit } = input;
@@ -286,17 +306,16 @@ export const userRouter = router({
     }),
 
   updateUserRole: adminProcedure
-    .input(z.object({
-      userId: z.string(),
-      role: z.enum(["user", "admin"]),
-    }))
+    .input(
+      z.object({
+        userId: z.string(),
+        role: z.enum(["user", "admin"]),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       const { userId, role } = input;
 
-      await ctx.db
-        .update(user)
-        .set({ role })
-        .where(eq(user.id, userId));
+      await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
 
       return { success: true };
     }),

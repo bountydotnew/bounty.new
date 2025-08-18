@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
-import OnlyFans from '@/components/icons/onlyfans';
-import OSS from '@/components/icons/oss';
-import Mail0 from '@/components/icons/mail0';
-import Analog from '@/components/icons/analog';
-import GitHub from '@/components/icons/github';
+import React, { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import OnlyFans from "@/components/icons/onlyfans";
+import OSS from "@/components/icons/oss";
+import Mail0 from "@/components/icons/mail0";
+import Analog from "@/components/icons/analog";
+import GitHub from "@/components/icons/github";
 // --- HELPER COMPONENTS (ICONS) ---
-
 
 // --- TYPE DEFINITIONS ---
 
@@ -31,7 +30,9 @@ const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
 // --- MAIN COMPONENT ---
 
 export const SignInPage: React.FC<SignInPageProps> = ({
-  title = <span className="font-light text-foreground tracking-tighter">Welcome</span>,
+  title = (
+    <span className="font-light text-foreground tracking-tighter">Welcome</span>
+  ),
   description = "Access your account and continue your journey with us",
   onSignIn,
   onGitHubSignIn,
@@ -46,24 +47,50 @@ export const SignInPage: React.FC<SignInPageProps> = ({
       <section className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <div className="flex flex-col gap-6">
-            <h1 className="animate-element animate-delay-100 text-4xl md:text-5xl font-semibold leading-tight">{title}</h1>
-            <p className="animate-element animate-delay-200 text-muted-foreground">{description}</p>
+            <h1 className="animate-element animate-delay-100 text-4xl md:text-5xl font-semibold leading-tight">
+              {title}
+            </h1>
+            <p className="animate-element animate-delay-200 text-muted-foreground">
+              {description}
+            </p>
 
             <form className="space-y-5" onSubmit={onSignIn}>
               <div className="animate-element animate-delay-300">
-                <label className="text-sm font-medium text-muted-foreground">Email Address</label>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Email Address
+                </label>
                 <GlassInputWrapper>
-                  <input name="email" type="email" placeholder="Enter your email address" className="w-full bg-transparent text-sm p-4 rounded-radius focus:outline-none" />
+                  <input
+                    name="email"
+                    type="email"
+                    placeholder="Enter your email address"
+                    className="w-full bg-transparent text-sm p-4 rounded-radius focus:outline-none"
+                  />
                 </GlassInputWrapper>
               </div>
 
               <div className="animate-element animate-delay-400">
-                <label className="text-sm font-medium text-muted-foreground">Password</label>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Password
+                </label>
                 <GlassInputWrapper>
                   <div className="relative">
-                    <input name="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" className="w-full bg-transparent text-sm p-4 pr-12 rounded-radius focus:outline-none" />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-3 flex items-center">
-                      {showPassword ? <EyeOff className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" /> : <Eye className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />}
+                    <input
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      className="w-full bg-transparent text-sm p-4 pr-12 rounded-radius focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-3 flex items-center"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+                      ) : (
+                        <Eye className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+                      )}
                     </button>
                   </div>
                 </GlassInputWrapper>
@@ -71,28 +98,52 @@ export const SignInPage: React.FC<SignInPageProps> = ({
 
               <div className="animate-element animate-delay-500 flex items-center justify-between text-sm">
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" name="rememberMe" className="custom-checkbox" />
+                  <input
+                    type="checkbox"
+                    name="rememberMe"
+                    className="custom-checkbox"
+                  />
                   <span className="text-foreground/90">Keep me signed in</span>
                 </label>
-                <a href="#" onClick={(e) => { e.preventDefault(); onResetPassword?.(); }} className="hover:underline text-violet-400 transition-colors">Reset password</a>
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onResetPassword?.();
+                  }}
+                  className="hover:underline text-violet-400 transition-colors"
+                >
+                  Reset password
+                </a>
               </div>
 
-              <button type="submit" className="animate-element animate-delay-600 w-full rounded-radius bg-white py-4 font-medium text-black hover:bg-primary/90 transition-colors">
+              <button
+                type="submit"
+                className="animate-element animate-delay-600 w-full rounded-radius bg-white py-4 font-medium text-black hover:bg-primary/90 transition-colors"
+              >
                 Sign In
               </button>
             </form>
 
             <div className="animate-element animate-delay-700 relative flex items-center justify-center">
               <span className="w-full border-t border-border"></span>
-              <span className="px-4 text-sm text-muted-foreground bg-background absolute">Or continue with</span>
+              <span className="px-4 text-sm text-muted-foreground bg-background absolute">
+                Or continue with
+              </span>
             </div>
 
             <div className="flex flex-col gap-2">
-              <button onClick={onGitHubSignIn} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
+              <button
+                onClick={onGitHubSignIn}
+                className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors"
+              >
                 <GitHub className="w-5 h-5 fill-foreground" />
                 Continue with GitHub
               </button>
-              <button onClick={() => alert('just kidding lmao')} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
+              <button
+                onClick={() => alert("just kidding lmao")}
+                className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors"
+              >
                 <OnlyFans className="w-5 h-5 fill-foreground" />
                 Continue with OnlyFans
               </button>
@@ -100,25 +151,44 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                 <Wendys className="w-6 h-6 fill-foreground" />
                 Continue with Wendy&apos;s
               </button> */}
-              <button onClick={() => alert('just kidding lmao')} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
+              <button
+                onClick={() => alert("just kidding lmao")}
+                className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors"
+              >
                 <OSS className="w-6 h-6 fill-foreground" />
                 Continue with oss.now
               </button>
-              <button onClick={() => alert('just kidding lmao')} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
+              <button
+                onClick={() => alert("just kidding lmao")}
+                className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors"
+              >
                 <Mail0 className="w-6 h-6 fill-foreground" />
                 Continue with Mail0
               </button>
-              <button onClick={() => alert('just kidding lmao')} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors">
+              <button
+                onClick={() => alert("just kidding lmao")}
+                className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-radius py-4 hover:bg-secondary transition-colors"
+              >
                 <Analog className="w-6 h-6 fill-foreground" />
                 Continue with Analog
               </button>
             </div>
             <p className="animate-element animate-delay-900 text-center text-sm text-muted-foreground">
-              New to our platform? <a href="#" onClick={(e) => { e.preventDefault(); onSwitchToSignUp?.(); }} className="text-violet-400 hover:underline transition-colors">Create Account</a>
+              New to our platform?{" "}
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onSwitchToSignUp?.();
+                }}
+                className="text-violet-400 hover:underline transition-colors"
+              >
+                Create Account
+              </a>
             </p>
           </div>
         </div>
       </section>
     </div>
   );
-};  
+};

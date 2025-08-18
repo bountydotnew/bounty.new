@@ -2,7 +2,8 @@ import { router, protectedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { Polar } from "@polar-sh/sdk";
 
-const polarEnv = process.env.NODE_ENV === "production" ? "production" : "sandbox";
+const polarEnv =
+  process.env.NODE_ENV === "production" ? "production" : "sandbox";
 const polarClient = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN as string,
   server: polarEnv,
@@ -12,7 +13,10 @@ export const billingRouter = router({
   ensurePolarCustomer: protectedProcedure.mutation(async ({ ctx }) => {
     const user = ctx.session?.user;
     if (!user?.id) {
-      throw new TRPCError({ code: "UNAUTHORIZED", message: "Authentication required" });
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Authentication required",
+      });
     }
 
     const externalId = user.id;
@@ -33,7 +37,9 @@ export const billingRouter = router({
         } as any);
         return { ok: true } as const;
       } catch (createErr: any) {
-        const msg = String(createErr?.message || createErr?.body$ || createErr?.detail || "");
+        const msg = String(
+          createErr?.message || createErr?.body$ || createErr?.detail || "",
+        );
         if (
           createErr?.status === 409 ||
           msg.includes("external ID cannot be updated") ||

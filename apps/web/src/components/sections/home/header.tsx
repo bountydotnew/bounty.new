@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import { HeaderBase } from "@/components/sections/home/header-base";
+
 import { authClient } from "@bounty/auth/client";
 import Image from "next/image";
 import { LINKS } from "@/constants/links";
@@ -71,61 +71,51 @@ export function Header() {
   };
 
   const leftContent = (
-    <Link href="/" className="flex items-center gap-3">
+    <Link href="/"> 
       <Image
         src="/bdn-b-w-trans.png"
-        alt="Bounty.new Logo"
-        width={32}
-        height={32}
+        alt="Bounty Logo"
+        width={40}
+        height={40}
+        className="w-10 h-10"
       />
-      <span className="text-xl font-medium hidden md:block">bounty.new</span>
     </Link>
   );
 
   const rightContent = (
-    <nav className="flex items-center gap-3">
-      <Button variant="text" className="text-sm p-0" asChild>
-        <Link
-          href={LINKS.BLOG}
-          className="hover:no-underline hover:text-primary"
-        >
-          Blog
-        </Link>
-      </Button>
-      <Button variant="text" className="text-sm p-0" asChild>
-        <Link
-          href={LINKS.CONTRIBUTORS}
-          className="hover:no-underline hover:text-primary"
-        >
-          Contributors
-        </Link>
-      </Button>
+    <nav className="flex items-center gap-8">
+      <Link href={LINKS.BLOG} className="text-gray-300 hover:text-white transition-colors">
+        Blog
+      </Link>
+      <Link href={LINKS.CONTRIBUTORS} className="text-gray-300 hover:text-white transition-colors">
+        Contributors
+      </Link>
       {process.env.NODE_ENV === "development" ? (
         session ? (
           <Button
             onClick={onButtonPress}
-            size="sm"
-            className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-white text-black shadow-xs hover:bg-white/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10"
+            variant="secondary"
+            className="bg-white text-black hover:bg-gray-100"
           >
             Create bounties
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         ) : (
           <Link href={LINKS.LOGIN}>
             <Button
-              size="sm"
-              className="rounded-lg transition-[color,box-shadow] [&_svg]:size-4 bg-white text-black shadow-xs hover:bg-white/90 h-9 px-4 py-2 has-[>svg]:px-3 z-10"
+              variant="secondary"
+              className="bg-white text-black hover:bg-gray-100"
             >
               Log in
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
         )
       ) : (
         <Link href={LINKS.SOCIALS.GITHUB} target="_blank">
-          <Button size="sm" className="text-sm ml-4 bg-white text-black">
+          <Button variant="secondary" className="bg-white text-black hover:bg-gray-100">
             GitHub
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </Link>
       )}
@@ -134,13 +124,10 @@ export function Header() {
 
   return (
     <>
-      <div className="mx-auto fixed top-0 left-0 z-30 w-full">
-        <HeaderBase
-          className="bg-[#1D1D1D]/80 backdrop-blur-sm border border-white/10 rounded-xl max-w-3xl mx-auto mt-4 pl-4 pr-[14px]"
-          leftContent={leftContent}
-          rightContent={rightContent}
-        />
-      </div>
+      <header className="relative z-10 flex items-center justify-between p-6 max-w-7xl mx-auto">
+        {leftContent}
+        {rightContent}
+      </header>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="bg-[#2D2D2D] border-white/20 text-white max-w-md">

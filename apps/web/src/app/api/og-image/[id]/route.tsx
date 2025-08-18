@@ -7,7 +7,10 @@ import { NextRequest } from "next/server";
 import { formatCurrency } from "@/lib/utils";
 import { baseUrl } from "@/lib/constants";
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     const { id } = await params;
 
@@ -22,10 +25,32 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { repositoryUrl, issueUrl } = thisBounty;
 
     if (!repositoryUrl || !issueUrl) {
-      return new Response("Bounty does not have a repository or issue", { status: 400 });
+      return new Response("Bounty does not have a repository or issue", {
+        status: 400,
+      });
     }
 
-    let repoData: {
+    const [owner, repo] = repositoryUrl.split("/").slice(-2);
+
+    const repoResponse = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}`,
+      {
+        headers: {
+          Accept: "application/vnd.github+json",
+          ...(env.GITHUB_TOKEN && {
+            Authorization: `Bearer ${env.GITHUB_TOKEN}`,
+          }),
+        },
+      },
+    );
+
+    if (!repoResponse.ok) {
+      throw new Error(
+        `GitHub API Error: ${repoResponse.status} ${repoResponse.statusText}`,
+      );
+    }
+
+    const repoData: {
       name: string;
       description: string;
       stargazers_count: number;
@@ -35,20 +60,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         login: string;
         avatar_url: string;
       };
-    };
-
-    const [owner, repo] = repositoryUrl.split("/").slice(-2);
-
-    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
-      headers: {
-        Accept: "application/vnd.github+json",
-        ...(env.GITHUB_TOKEN && { Authorization: `Bearer ${env.GITHUB_TOKEN}` }),
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`GitHub API Error: ${response.status} ${response.statusText}`);
-    }
+    } = await repoResponse.json();
 
     let difficultyStyles: {
       border: string;
@@ -192,7 +204,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                 borderRadius: "50%",
               }}
             />
-            <div style={{ position: "absolute", top: "366px", left: "80px", display: "flex", flexDirection: "column", gap: "20px" }}>
+            <div
+              style={{
+                position: "absolute",
+                top: "366px",
+                left: "80px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "20px",
+              }}
+            >
               <div
                 style={{
                   fontSize: "44px",
@@ -202,7 +223,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                   display: "flex",
                 }}
               >
-                {owner}/{repo} <span style={{ color: "#D0D0D070" }}>#{thisBounty.issueUrl?.split("/").pop()}</span>
+                {owner}/{repo}{" "}
+                <span style={{ color: "#D0D0D070" }}>
+                  #{thisBounty.issueUrl?.split("/").pop()}
+                </span>
               </div>
               <div
                 style={{
@@ -242,7 +266,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                     boxShadow: "0px 0px 8.5px 0px rgba(0, 0, 0, 0.25)",
                   }}
                 >
-                  {formatCurrency(Number(thisBounty.amount), thisBounty.currency)}
+                  {formatCurrency(
+                    Number(thisBounty.amount),
+                    thisBounty.currency,
+                  )}
                 </div>
                 <div
                   style={{
@@ -290,7 +317,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                 filter: "invert(1)",
               }}
             >
-              Claim {formatCurrency(Number(thisBounty.amount), thisBounty.currency)}
+              Claim{" "}
+              {formatCurrency(Number(thisBounty.amount), thisBounty.currency)}
             </div>
           </div>
         </div>
@@ -299,12 +327,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         width: 1200,
         height: 630,
         headers: {
-          "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400",
+          "Cache-Control":
+            "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400",
         },
-      }
+      },
     );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-    return new Response(`Failed to generate OG image: ${errorMessage}`, { status: 500 });
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    return new Response(`Failed to generate OG image: ${errorMessage}`, {
+      status: 500,
+    });
   }
 }

@@ -1,13 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  BadgeCheck,
-  Bell,
-  CreditCard,
-  LogOut,
-  Sparkles,
-} from "lucide-react";
+import { CreditCard, LogOut, Sparkles } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -85,7 +79,10 @@ interface UserDisplayData {
 }
 
 // Custom hook for user display logic
-function useUserDisplay(sessionUser?: SessionUser | null, fallbackUser?: User): UserDisplayData {
+function useUserDisplay(
+  sessionUser?: SessionUser | null,
+  fallbackUser?: User,
+): UserDisplayData {
   return React.useMemo(() => {
     const user = sessionUser || fallbackUser;
     const name = user?.name || "";
@@ -147,7 +144,7 @@ const UserAvatar = React.memo<{
         alt={userDisplay.name}
         onError={(e) => {
           // Fallback to initials if image fails to load
-          e.currentTarget.style.display = 'none';
+          e.currentTarget.style.display = "none";
         }}
       />
     )}
@@ -231,7 +228,10 @@ const UpgradeMenuItem = React.memo<{
 UpgradeMenuItem.displayName = "UpgradeMenuItem";
 
 // Main component
-export function AccountDropdown({ user, onUpgradeClick }: AccountDropdownProps) {
+export function AccountDropdown({
+  user,
+  onUpgradeClick,
+}: AccountDropdownProps) {
   const router = useRouter();
   const { isMobile } = useSidebar();
   const { data: session } = authClient.useSession();
@@ -243,12 +243,16 @@ export function AccountDropdown({ user, onUpgradeClick }: AccountDropdownProps) 
   const handleSignOut = useSignOut();
 
   // Memoize dropdown content positioning
-  const dropdownProps = React.useMemo(() => ({
-    className: "w-[var(--radix-dropdown-menu-trigger-width)] min-w-56 rounded-lg",
-    side: isMobile ? "bottom" as const : "right" as const,
-    align: "end" as const,
-    sideOffset: 4,
-  }), [isMobile]);
+  const dropdownProps = React.useMemo(
+    () => ({
+      className:
+        "w-[var(--radix-dropdown-menu-trigger-width)] min-w-56 rounded-lg",
+      side: isMobile ? ("bottom" as const) : ("right" as const),
+      align: "end" as const,
+      sideOffset: 4,
+    }),
+    [isMobile],
+  );
 
   const handleAccountClick = useCallback(() => {
     router.push(LINKS.ACCOUNT);
@@ -294,7 +298,8 @@ export function AccountDropdown({ user, onUpgradeClick }: AccountDropdownProps) 
             <DropdownMenuGroup>
               <DropdownMenuItem
                 onClick={handleAccountClick}
-                aria-label="View account settings">
+                aria-label="View account settings"
+              >
                 <UserIcon />
                 {MENU_ITEMS.ACCOUNT}
               </DropdownMenuItem>

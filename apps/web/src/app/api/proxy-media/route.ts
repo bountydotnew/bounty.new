@@ -23,7 +23,10 @@ export async function GET(req: Request) {
       return new Response("Host not allowed", { status: 403 });
     }
 
-    if (url.hostname === "github.com" && !url.pathname.startsWith("/user-attachments/assets/")) {
+    if (
+      url.hostname === "github.com" &&
+      !url.pathname.startsWith("/user-attachments/assets/")
+    ) {
       return new Response("Path not allowed", { status: 403 });
     }
 
@@ -53,9 +56,7 @@ export async function GET(req: Request) {
       status: upstream.status,
       headers,
     });
-  } catch (err) {
+  } catch {
     return new Response("Proxy error", { status: 500 });
   }
 }
-
-

@@ -4,19 +4,18 @@ import { ComponentProps } from "react";
 import {
   AudioWaveform,
   Award,
-  BookOpen, Command,
+  Command,
   FileUser,
   Frame,
   GalleryVerticalEnd,
   Map,
   PieChart,
-  Settings2
 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarHeader
+  SidebarHeader,
 } from "@/components/ui/sidebar";
 import { NavMain } from "@/components/dual-sidebar/nav-main";
 // import { NavProjects } from "@/components/dual-sidebar/nav-projects";
@@ -29,8 +28,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { LINKS } from "@/constants/links";
 import { AccessGate } from "@/components/access-gate";
-import { useQuery } from "@tanstack/react-query";
-import { trpc } from "@/utils/trpc";
+
 import { SettingsIcon } from "@/components/ui/settings";
 import { BookTextIcon } from "@/components/ui/book-text";
 
@@ -64,7 +62,8 @@ export const AppSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
       {
         name: "Inbound.new",
         logo: Command,
-        logoUrl: "https://inbound.new/_next/image?url=https%3A%2F%2Finbound.new%2Finbound-logo-3.png&w=64&q=75",
+        logoUrl:
+          "https://inbound.new/_next/image?url=https%3A%2F%2Finbound.new%2Finbound-logo-3.png&w=64&q=75",
         plan: "Free",
       },
     ],
@@ -78,18 +77,22 @@ export const AppSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
       {
         title: "Bounties",
         url: LINKS.BOUNTIES,
-        icon: (p: any) => <Award {...p} size={18} />,
+        icon: (p: ComponentProps<typeof Award>) => <Award {...p} size={18} />,
         isActive: isActive("/bounties"),
       },
       {
         title: "Documentation",
         url: "#",
-        icon: (p: any) => <BookTextIcon {...p} size={22} />,
+        icon: (p: ComponentProps<typeof BookTextIcon>) => (
+          <BookTextIcon {...p} size={22} />
+        ),
       },
       {
-        title: "Settings", 
+        title: "Settings",
         url: LINKS.SETTINGS,
-        icon: (p: any) => <SettingsIcon {...p} size={22} />,
+        icon: (p: ComponentProps<typeof SettingsIcon>) => (
+          <SettingsIcon {...p} size={22} />
+        ),
       },
     ],
     projects: [
@@ -155,7 +158,8 @@ export const AppSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
       {
         name: "Inbound.new",
         logo: Command,
-        logoUrl: "https://inbound.new/_next/image?url=https%3A%2F%2Finbound.new%2Finbound-logo-3.png&w=64&q=75",
+        logoUrl:
+          "https://inbound.new/_next/image?url=https%3A%2F%2Finbound.new%2Finbound-logo-3.png&w=64&q=75",
         plan: "Free",
       },
     ],
@@ -163,17 +167,16 @@ export const AppSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
       {
         title: "Apply for Beta Testing",
         url: LINKS.DASHBOARD,
-        icon: FileUser
-      }
+        icon: FileUser,
+      },
     ],
-  }
+  };
 
   const user = {
     name: "Guest",
     email: "guest@example.com",
     image: null,
-  }
-
+  };
 
   return (
     <Sidebar variant="icononly" {...props}>
@@ -185,7 +188,7 @@ export const AppSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
       </SidebarHeader>
       <Divider className="h-[2px] w-8 my-2 bg-white" />
       <SidebarContent>
-        <AccessGate 
+        <AccessGate
           stage="beta"
           fallback={<NavMain items={betaData.navMain} />}
         >
@@ -198,4 +201,4 @@ export const AppSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
       </SidebarFooter>
     </Sidebar>
   );
-}
+};

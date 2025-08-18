@@ -24,5 +24,5 @@ export const TOAST_ICONS = {
   error: <CircleX className="size-4" />,
   success: <CircleCheckIcon className="size-4" />,
   warning: <TriangleAlert className="size-4" />,
-  info: <Info className="size-4" />,    
+  info: <Info className="size-4" />,
 } satisfies ToasterProps["icons"];

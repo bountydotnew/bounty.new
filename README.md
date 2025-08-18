@@ -6,7 +6,6 @@
 <br />
 <br />
 
-
 # bounty.new
 
 A modern bounty platform for developers and creators.
@@ -16,12 +15,14 @@ A modern bounty platform for developers and creators.
 bounty.new connects talented developers with rewarding opportunities through structured bounties. Post tasks, complete challenges, earn rewards.
 
 **For Contributors**
+
 - Browse available bounties
 - Submit quality work
 - Get paid for your skills
 - Build your reputation
 
 **For Project Owners**
+
 - Post bounty tasks
 - Access skilled developers
 - Get quality work done
@@ -30,29 +31,34 @@ bounty.new connects talented developers with rewarding opportunities through str
 ## Tech Stack
 
 **Frontend**
+
 - Next.js 14 with App Router
 - React with TypeScript
 - TailwindCSS
 - shadcn/ui components
 
 **Backend**
+
 - Next.js API routes
 - tRPC for type-safe APIs
 - PostgreSQL with Drizzle ORM
 - Better Auth with GitHub OAuth
 
 **Development**
+
 - Bun runtime
 - Turborepo monorepo
 - TypeScript throughout
 
 **Frontend**
+
 - Blog powered by [Marble](https://marblecms.com?utm_source=bountydotnew), Headless CMS.
 - Analytics by [Databuddy](https://www.databuddy.cc?utm_source=bountydotnew), 100% Anonymized and Non-invasive.
 
 ## Quick Start
 
 **Prerequisites**
+
 - Bun v1.0+
 - PostgreSQL v14+
 - Node.js v18+
@@ -82,6 +88,7 @@ bun dev
 ```
 
 **Access**
+
 - Everything: http://localhost:3000
 
 ## Project Structure
@@ -102,6 +109,7 @@ bun dev
 5. Submit a pull request
 
 **Guidelines**
+
 - Follow TypeScript best practices
 - Write tests for new features
 - Keep components focused
@@ -110,11 +118,13 @@ bun dev
 ## Deployment
 
 **Vercel**
+
 1. Connect GitHub repository
 2. Configure environment variables
 3. Deploy on push to main
 
 **Self-hosting**
+
 1. Build: `bun build`
 2. Setup PostgreSQL
 3. Configure environment

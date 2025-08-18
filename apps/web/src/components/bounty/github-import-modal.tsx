@@ -1,32 +1,54 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { trpc, trpcClient, queryClient } from "@/utils/trpc";
+import { trpcClient } from "@/utils/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { AutocompleteDropdown } from "@/components/ui/autocomplete";
-import { RepoResultCard, IssueResultCard } from "@/components/bounty/github-result-cards";
+import {
+  RepoResultCard,
+  IssueResultCard,
+} from "@/components/bounty/github-result-cards";
 import { useCurrentUser } from "@/lib/hooks/use-access";
 
 type RepoOption = { name: string; full_name: string; private: boolean };
 
-export default function GithubImportModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+export default function GithubImportModal({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+}) {
   const router = useRouter();
   const { user: currentUser } = useCurrentUser();
-  const defaultUsername = (currentUser as any)?.data?.profile?.githubUsername || "";
+  const defaultUsername =
+    (currentUser as { data?: { profile?: { githubUsername?: string } } })?.data
+      ?.profile?.githubUsername || "";
   const [username, setUsername] = useState<string>(defaultUsername);
   const [repoQuery, setRepoQuery] = useState("");
   const [issueQuery, setIssueQuery] = useState("");
   const [repoOpen, setRepoOpen] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
 
-  const usernameInputRef = useRef<HTMLInputElement>(null as unknown as HTMLInputElement);
-  const repoInputRef = useRef<HTMLInputElement>(null as unknown as HTMLInputElement);
-  const issueInputRef = useRef<HTMLInputElement>(null as unknown as HTMLInputElement);
+  const usernameInputRef = useRef<HTMLInputElement>(
+    null as unknown as HTMLInputElement,
+  );
+  const repoInputRef = useRef<HTMLInputElement>(
+    null as unknown as HTMLInputElement,
+  );
+  const issueInputRef = useRef<HTMLInputElement>(
+    null as unknown as HTMLInputElement,
+  );
 
   const debouncedUsername = useDebouncedValue(username, 300);
   const debouncedRepoQuery = useDebouncedValue(repoQuery, 300);
@@ -34,12 +56,15 @@ export default function GithubImportModal({ open, onOpenChange }: { open: boolea
 
   const userRepos = useQuery({
     queryKey: ["repository.userRepos", debouncedUsername],
-    queryFn: () => trpcClient.repository.userRepos.query({ username: debouncedUsername }),
+    queryFn: () =>
+      trpcClient.repository.userRepos.query({ username: debouncedUsername }),
     enabled: !!debouncedUsername && open,
   });
 
   useEffect(() => {
-    const next = (currentUser as any)?.data?.profile?.githubUsername;
+    const next = (
+      currentUser as { data?: { profile?: { githubUsername?: string } } }
+    )?.data?.profile?.githubUsername;
     if (next && !username) setUsername(next);
   }, [currentUser, username]);
 
@@ -47,7 +72,12 @@ export default function GithubImportModal({ open, onOpenChange }: { open: boolea
   const repo = debouncedRepoQuery.trim();
   const issues = useQuery({
     queryKey: ["repository.searchIssues", owner, repo, debouncedIssueQuery],
-    queryFn: () => trpcClient.repository.searchIssues.query({ owner, repo, q: debouncedIssueQuery }),
+    queryFn: () =>
+      trpcClient.repository.searchIssues.query({
+        owner,
+        repo,
+        q: debouncedIssueQuery,
+      }),
     enabled: !!owner && !!repo && open && debouncedIssueQuery.length > 0,
   });
 
@@ -56,12 +86,20 @@ export default function GithubImportModal({ open, onOpenChange }: { open: boolea
     if (!result || !result.success) {
       return [];
     }
-    const repos = result.data as (import("@bounty/api/driver/github").UserRepo & { stargazersCount?: number })[];
+    const repos =
+      result.data as (import("@bounty/api/driver/github").UserRepo & {
+        stargazersCount?: number;
+      })[];
     const ownerName = username.trim();
-    return repos.map((r) => ({ name: r.name, full_name: ownerName ? `${ownerName}/${r.name}` : r.name, private: Boolean(r.private) }));
+    return repos.map((r) => ({
+      name: r.name,
+      full_name: ownerName ? `${ownerName}/${r.name}` : r.name,
+      private: Boolean(r.private),
+    }));
   }, [userRepos.data, username]);
 
-  const canSubmit = owner.length > 0 && repo.length > 0 && issueQuery.length > 0;
+  const canSubmit =
+    owner.length > 0 && repo.length > 0 && issueQuery.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -98,14 +136,25 @@ export default function GithubImportModal({ open, onOpenChange }: { open: boolea
               />
               <AutocompleteDropdown
                 open={repoOpen}
-                items={repoOptions.filter((r) => r.name.toLowerCase().includes(repoQuery.toLowerCase()))}
+                items={repoOptions.filter((r) =>
+                  r.name.toLowerCase().includes(repoQuery.toLowerCase()),
+                )}
                 getKey={(r) => r.full_name}
                 renderItem={(r) => (
                   <RepoResultCard
                     name={r.name}
                     fullName={r.full_name}
                     private={r.private}
-                    stars={userRepos.data?.success ? (userRepos.data.data as any)?.find?.((x: any) => x.name === r.name)?.stargazersCount : undefined}
+                    stars={
+                      userRepos.data?.success
+                        ? (
+                            userRepos.data.data as {
+                              name: string;
+                              stargazersCount?: number;
+                            }[]
+                          )?.find?.((x) => x.name === r.name)?.stargazersCount
+                        : undefined
+                    }
                   />
                 )}
                 onSelect={(r) => {
@@ -134,9 +183,13 @@ export default function GithubImportModal({ open, onOpenChange }: { open: boolea
               />
               <AutocompleteDropdown
                 open={issueOpen}
-                items={((issues.data ?? []) as { number: number; title: string }[])}
+                items={
+                  (issues.data ?? []) as { number: number; title: string }[]
+                }
                 getKey={(i) => i.number}
-                renderItem={(i) => <IssueResultCard number={i.number} title={i.title} />}
+                renderItem={(i) => (
+                  <IssueResultCard number={i.number} title={i.title} />
+                )}
                 onSelect={(i) => {
                   setIssueQuery(String(i.number));
                   setIssueOpen(false);
@@ -146,14 +199,23 @@ export default function GithubImportModal({ open, onOpenChange }: { open: boolea
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button disabled={!canSubmit} onClick={() => {
-              if (!canSubmit) return;
-              const immediateOwner = username.trim();
-              const immediateRepo = repoQuery.trim();
-              router.push(`/${immediateOwner}/${immediateRepo}/issues/${issueQuery}`);
-              onOpenChange(false);
-            }}>Go</Button>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!canSubmit}
+              onClick={() => {
+                if (!canSubmit) return;
+                const immediateOwner = username.trim();
+                const immediateRepo = repoQuery.trim();
+                router.push(
+                  `/${immediateOwner}/${immediateRepo}/issues/${issueQuery}`,
+                );
+                onOpenChange(false);
+              }}
+            >
+              Go
+            </Button>
           </div>
         </div>
       </DialogContent>
@@ -169,5 +231,3 @@ function useDebouncedValue<T>(value: T, delay: number): T {
   }, [value, delay]);
   return debouncedValue;
 }
-
-

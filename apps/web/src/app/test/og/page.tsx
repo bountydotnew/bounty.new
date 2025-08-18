@@ -6,8 +6,18 @@ export default function TestOgPage() {
   return (
     <div className="p-6">
       <div className="text-xl mb-4">OG Preview</div>
-      <div className="border rounded-lg overflow-hidden" style={{ width: 600, height: 315 }}>
-        <div style={{ transform: "scale(0.5)", transformOrigin: "top left", width: 1200, height: 630 }}>
+      <div
+        className="border rounded-lg overflow-hidden"
+        style={{ width: 600, height: 315 }}
+      >
+        <div
+          style={{
+            transform: "scale(0.5)",
+            transformOrigin: "top left",
+            width: 1200,
+            height: 630,
+          }}
+        >
           <BountyIssueOgCard
             owner="bountydotnew"
             repo="bounty.new"
@@ -21,5 +31,3 @@ export default function TestOgPage() {
     </div>
   );
 }
-
-

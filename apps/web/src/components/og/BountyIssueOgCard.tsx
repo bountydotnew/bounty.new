@@ -16,7 +16,8 @@ function gradientFor(key: string) {
     ["#f59e0b", "#ef4444"],
   ];
   let hash = 0;
-  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+  for (let i = 0; i < key.length; i++)
+    hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
   const [a, b] = palettes[hash % palettes.length];
   return `linear-gradient(135deg, ${a}, ${b})`;
 }
@@ -34,7 +35,15 @@ function currencyToSymbol(code?: string) {
   }
 }
 
-export function BountyIssueOgCard({ owner, repo, issueNumber, title, amount, currency, logo }: Props) {
+export function BountyIssueOgCard({
+  owner,
+  repo,
+  issueNumber,
+  title,
+  amount,
+  currency,
+  logo,
+}: Props) {
   const displayAmount = amount ? `${currencyToSymbol(currency)} ${amount}` : "";
 
   return (
@@ -49,18 +58,43 @@ export function BountyIssueOgCard({ owner, repo, issueNumber, title, amount, cur
         background: "#252525",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           {logo}
           <div style={{ fontSize: 32, fontWeight: 700 }}>Bounty.new</div>
         </div>
-        {displayAmount && <div style={{ fontSize: 36, fontWeight: 800 }}>{displayAmount}</div>}
+        {displayAmount && (
+          <div style={{ fontSize: 36, fontWeight: 800 }}>{displayAmount}</div>
+        )}
       </div>
 
-      <div style={{ marginTop: 48, border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, background: "#343434" }}>
+      <div
+        style={{
+          marginTop: 48,
+          border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: 20,
+          background: "#343434",
+        }}
+      >
         <div style={{ padding: 36 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 26, color: "#b5b5b5" }}>
-            <span>{owner}/{repo}</span>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              fontSize: 26,
+              color: "#b5b5b5",
+            }}
+          >
+            <span>
+              {owner}/{repo}
+            </span>
             <span>•</span>
             <span>#{String(issueNumber)}</span>
           </div>
@@ -85,5 +119,3 @@ export function BountyIssueOgCard({ owner, repo, issueNumber, title, amount, cur
 }
 
 export default BountyIssueOgCard;
-
-

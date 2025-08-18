@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-} from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import Confetti from "react-confetti";
 import { useWindowSize } from "@/lib/hooks/use-window-size";
 import type { ReactNode } from "react";
@@ -61,4 +56,4 @@ export function useConfetti() {
     throw new Error("useConfetti must be used within a ConfettiProvider");
   }
   return context;
-} 
+}

@@ -20,78 +20,91 @@ const sendErrorSchema = z.object({
 });
 
 export const notificationsRouter = router({
-  sendWebhook: publicProcedure.input(sendWebhookSchema).mutation(async ({ input }) => {
-    try {
-      const webhookUrl = process.env.DISCORD_WEBHOOK_URL as string;
+  sendWebhook: publicProcedure
+    .input(sendWebhookSchema)
+    .mutation(async ({ input }) => {
+      try {
+        const webhookUrl = process.env.DISCORD_WEBHOOK_URL as string;
 
-      if (!webhookUrl) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Discord webhook not configured",
+        if (!webhookUrl) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Discord webhook not configured",
+          });
+        }
+
+        info("[sendWebhook] Sending webhook:", {
+          type: input.type,
+          title: input.title,
         });
-      }
 
-      info("[sendWebhook] Sending webhook:", { type: input.type, title: input.title });
+        const colorMap = {
+          log: 0xffffff,
+          info: 0x808080,
+          warning: 0xffff00,
+          error: 0xff0000,
+        };
 
-      const colorMap = {
-        log: 0xffffff,
-        info: 0x808080,
-        warning: 0xffff00,
-        error: 0xff0000,
-      };
+        const success = await sendInfoWebhook({
+          webhookUrl,
+          title:
+            input.title ||
+            `${input.type.charAt(0).toUpperCase() + input.type.slice(1)} from bounty.new`,
+          message: input.message,
+          context: input.context,
+          color: colorMap[input.type],
+        });
 
-      const success = await sendInfoWebhook({
-        webhookUrl,
-        title: input.title || `${input.type.charAt(0).toUpperCase() + input.type.slice(1)} from bounty.new`,
-        message: input.message,
-        context: input.context,
-        color: colorMap[input.type],
-      });
+        if (!success) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to send webhook",
+          });
+        }
 
-      if (!success) {
+        return { success: true, message: "Webhook sent successfully" };
+      } catch (err) {
+        error("[sendWebhook] Error:", err);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to send webhook",
         });
       }
+    }),
 
-      return { success: true, message: "Webhook sent successfully" };
-    } catch (err) {
-      error("[sendWebhook] Error:", err);
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to send webhook",
-      });
-    }
-  }),
+  sendError: publicProcedure
+    .input(sendErrorSchema)
+    .mutation(async ({ input }) => {
+      try {
+        const webhookUrl = process.env.DISCORD_WEBHOOK_URL as string;
 
-  sendError: publicProcedure.input(sendErrorSchema).mutation(async ({ input }) => {
-    try {
-      const webhookUrl = process.env.DISCORD_WEBHOOK_URL as string;
+        if (!webhookUrl) {
+          warn("[sendError] Discord webhook not configured");
+          return { success: false, message: "Webhook not configured" };
+        }
 
-      if (!webhookUrl) {
-        warn("[sendError] Discord webhook not configured");
-        return { success: false, message: "Webhook not configured" };
+        info("[sendError] Sending error webhook:", {
+          location: input.location,
+        });
+
+        const success = await sendErrorWebhook({
+          webhookUrl,
+          error: input.error,
+          context: input.context,
+          location: input.location,
+        });
+
+        return {
+          success,
+          message: success
+            ? "Error webhook sent"
+            : "Failed to send error webhook",
+        };
+      } catch (err) {
+        error("[sendError] Error:", err);
+        return { success: false, message: "Failed to send error webhook" };
       }
-
-      info("[sendError] Sending error webhook:", { location: input.location });
-
-      const success = await sendErrorWebhook({
-        webhookUrl,
-        error: input.error,
-        context: input.context,
-        location: input.location,
-      });
-
-      return {
-        success,
-        message: success ? "Error webhook sent" : "Failed to send error webhook",
-      };
-    } catch (err) {
-      error("[sendError] Error:", err);
-      return { success: false, message: "Failed to send error webhook" };
-    }
-  }),
+    }),
 
   testWebhook: publicProcedure.query(async () => {
     try {
@@ -164,7 +177,9 @@ export const notificationsRouter = router({
 
         return {
           success,
-          message: success ? "Public test webhook sent successfully" : "Webhook test failed",
+          message: success
+            ? "Public test webhook sent successfully"
+            : "Webhook test failed",
         };
       } else {
         return {
@@ -189,7 +204,7 @@ export const notificationsRouter = router({
         location: z.string().optional(),
         userAgent: z.string().optional(),
         url: z.string().optional(),
-      })
+      }),
     )
     .mutation(async ({ input }) => {
       try {
@@ -202,7 +217,9 @@ export const notificationsRouter = router({
 
         // Only send to Discord in production
         if (process.env.NODE_ENV === "development") {
-          info("[reportError] Reporting client-side error:", { location: input.location });
+          info("[reportError] Reporting client-side error:", {
+            location: input.location,
+          });
 
           const success = await sendErrorWebhook({
             webhookUrl,
@@ -221,7 +238,10 @@ export const notificationsRouter = router({
             message: success ? "Error reported" : "Failed to report error",
           };
         } else {
-          info("[reportError] Error reported (dev mode - not sent to Discord):", input.error);
+          info(
+            "[reportError] Error reported (dev mode - not sent to Discord):",
+            input.error,
+          );
           return { success: true, message: "Error logged in development" };
         }
       } catch (err) {
