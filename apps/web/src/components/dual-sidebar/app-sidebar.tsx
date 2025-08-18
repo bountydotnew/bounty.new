@@ -1,15 +1,17 @@
 "use client";
 
-import { ComponentProps } from "react";
+
 import {
   AudioWaveform,
   Award,
+  BookText,
   Command,
   FileUser,
   Frame,
   GalleryVerticalEnd,
   Map,
   PieChart,
+  Settings,
 } from "lucide-react";
 import {
   Sidebar,
@@ -29,10 +31,7 @@ import Link from "next/link";
 import { LINKS } from "@/constants/links";
 import { AccessGate } from "@/components/access-gate";
 
-import { SettingsIcon } from "@/components/ui/settings";
-import { BookTextIcon } from "@/components/ui/book-text";
-
-export const AppSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
+export const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
   const pathname = usePathname();
 
   function isActive(path: string) {
@@ -77,22 +76,18 @@ export const AppSidebar = ({ ...props }: ComponentProps<typeof Sidebar>) => {
       {
         title: "Bounties",
         url: LINKS.BOUNTIES,
-        icon: (p: ComponentProps<typeof Award>) => <Award {...p} size={18} />,
+        icon: Award,
         isActive: isActive("/bounties"),
       },
       {
         title: "Documentation",
         url: "#",
-        icon: (p: ComponentProps<typeof BookTextIcon>) => (
-          <BookTextIcon {...p} size={22} />
-        ),
+        icon: BookText,
       },
       {
         title: "Settings",
         url: LINKS.SETTINGS,
-        icon: (p: ComponentProps<typeof SettingsIcon>) => (
-          <SettingsIcon {...p} size={22} />
-        ),
+        icon: Settings,
       },
     ],
     projects: [

@@ -83,7 +83,7 @@ export default function GithubImportModal({
 
   const repoOptions: RepoOption[] = useMemo(() => {
     const result = userRepos.data;
-    if (!result || !result.success) {
+    if (!result || Array.isArray(result) || !('success' in result) || !result.success) {
       return [];
     }
     const repos =
@@ -146,7 +146,7 @@ export default function GithubImportModal({
                     fullName={r.full_name}
                     private={r.private}
                     stars={
-                      userRepos.data?.success
+                      userRepos.data && !Array.isArray(userRepos.data) && 'success' in userRepos.data && userRepos.data.success
                         ? (
                             userRepos.data.data as {
                               name: string;

@@ -50,7 +50,7 @@ export async function GET(
       );
     }
 
-    const repoData: {
+    let repoData: {
       name: string;
       description: string;
       stargazers_count: number;
@@ -92,7 +92,7 @@ export async function GET(
       };
     }
 
-    repoData = await response.json();
+    repoData = await repoResponse.json();
 
     return new ImageResponse(
       (
