@@ -10,8 +10,7 @@ export const createBountySchema = z.object({
     .string()
     .min(10, "Description must be at least 10 characters")
     .max(1000, "Description too long"),
-  // requirements: z.string().max(1000).optional(),
-  // deliverables: z.string().max(1000).optional(),
+
   amount: z
     .string()
     .regex(/^\d{1,13}(\.\d{1,2})?$/, "Incorrect amount.")
@@ -42,10 +41,9 @@ export const createBountyDefaults: CreateBountyForm = {
 };
 
 // Draft templates for bounty creation
-export const bountyDraftTemplates = {
-  requirements: "Please specify the technical requirements for this bounty",
-  deliverables: "Please specify what should be delivered for this bounty",
-};
+ //export const bountyDraftTemplates = {
+
+//   };
 
 // =====================
 // FORM UTILITIES

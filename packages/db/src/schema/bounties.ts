@@ -35,8 +35,6 @@ export const bounty = pgTable("bounty", {
     .default(sql`gen_random_uuid()`),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  requirements: text("requirements").array(),
-  deliverables: text("deliverables").array(),
   amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
   currency: text("currency").notNull().default("USD"),
   status: bountyStatusEnum("status").notNull().default("draft"),

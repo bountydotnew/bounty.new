@@ -41,7 +41,7 @@ export default function BountyPage({
   const detailUser: string = bounty.data.data.creator.name ?? "";
   const detailAvatarSrc: string = bounty.data.data.creator.image ?? "";
   // const detailRank: string = bounty.data.data.difficulty;
-  const detailRequirements: string[] = bounty.data.data.requirements ?? [];
+
 
   return (
     // <div className="p-8 max-w-4xl mx-auto">
@@ -117,7 +117,7 @@ export default function BountyPage({
       user={detailUser}
       rank={bounty.data.data.difficulty}
       avatarSrc={detailAvatarSrc}
-      requirements={detailRequirements}
+
       hasBadge={false}
       canEditBounty={canEdit}
     />

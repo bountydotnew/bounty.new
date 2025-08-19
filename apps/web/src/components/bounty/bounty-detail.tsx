@@ -17,7 +17,6 @@ interface BountyDetailPageProps {
   rank: string;
   avatarSrc: string;
   hasBadge: boolean;
-  requirements: string[];
   canEditBounty: boolean;
 }
 
@@ -29,7 +28,6 @@ export default function BountyDetailPage({
   user,
   rank,
   avatarSrc,
-  requirements,
   canEditBounty,
 }: BountyDetailPageProps) {
   const { editModalOpen, openEditModal, closeEditModal, editingBountyId } = useBountyModals();
@@ -147,49 +145,7 @@ export default function BountyDetailPage({
               <Composer>{description}</Composer>
             </div>
 
-            {/* Requirements and Details */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Requirements */}
-              <div className="p-6 rounded-lg bg-card shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)]">
-                <h3 className="text-2xl font-bold leading-[120%] tracking-[-0.48px] text-foreground mb-4">
-                  Requirements
-                </h3>
-                <div className="space-y-3">
-                  {requirements.map((requirement, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <div className="w-2 h-2 rounded-full bg-[#A62220] shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)]">
-                        <Check className="w-2.5 h-2.5 text-white transform -rotate-45" />
-                      </div>
-                      <span className="text-foreground">{requirement}</span>
-                    </div>
-                  ))}
-                  {requirements.length === 0 && (
-                    <span className="text-foreground">
-                      No requirements provided.
-                    </span>
-                  )}
-                </div>
-              </div>
 
-              {/* Details */}
-              {/* <div className="p-6 rounded-lg bg-[#2C2C2C] shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)]">
-                <h3 className="text-2xl font-bold leading-[120%] tracking-[-0.48px] text-[#EFEFEF] mb-4">Details</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-[#A62220] shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)]"></div>
-                    <span className="text-[#F3F3F3]">Due date: September 12, 2025</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-[#A62220] shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)]"></div>
-                    <span className="text-[#F3F3F3]">Difficulty: Medium</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-[#A62220] shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)]"></div>
-                    <span className="text-[#F3F3F3]">Last submission: 2 hours ago</span>
-                  </div>
-                </div>
-              </div> */}
-            </div>
           </div>
 
           {/* Submissions Sidebar */}
