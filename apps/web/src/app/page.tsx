@@ -1,6 +1,5 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
-import { trpc } from "@/utils/trpc";
+
 import { Header } from "@/components/sections/home/header";
 import { grim } from "@bounty/dev-logger";
 import { WaitlistForm } from "@/components/sections/home/waitlist-form";
@@ -9,9 +8,6 @@ import { BountyStatistics } from "@/components/sections/home/bounty-statistics";
 const { log } = grim();
 
 export default function Home() {
-  const healthCheck = useQuery(trpc.healthCheck.queryOptions());
-
-  log(`healthCheck: ${healthCheck.data?.status}`);
 
   return (
     // <div className="bg-landing-background mx-auto w-full">
