@@ -36,9 +36,9 @@ export function SmartNavigation() {
         variant="default"
         size="sm"
         onClick={handleBack}
-        className="previewButton flex items-center gap-2 text-[#2C2C2C] border-[rgba(239,239,239,0.2)]"
+        className="buttonShadow flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-white dark:text-black shadow-button-custom"
       >
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeft className="w-4 h-4 text-white dark:text-black" />
         <span className="hidden sm:inline">Back to {context.backLabel}</span>
         <span className="sm:hidden">Back</span>
       </Button>

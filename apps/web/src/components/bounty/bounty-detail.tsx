@@ -40,13 +40,13 @@ export default function BountyDetailPage({
         {/* Smart Navigation */}
         <SmartNavigation />
 
-        <div className="flex gap-8">
+        <div className="flex flex-col xl:flex-row gap-8">
           {/* Main Content */}
-          <div className="flex-1">
+          <div className="flex-1 xl:flex-[2]">
             {/* Header */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
-                <h1 className="text-5xl font-bold leading-[120%] tracking-[-0.96px] text-[#EFEFEF]">
+                <h1 className="text-5xl font-bold leading-[120%] tracking-[-0.96px] text-foreground">
                   {title}
                 </h1>
                 <span className="text-4xl font-bold text-[#0CA223]">
@@ -101,12 +101,12 @@ export default function BountyDetailPage({
                   </Avatar>
                   <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-[#EFEFEF] font-medium">{user}</span>
+                      <span className="text-foreground font-medium">{user}</span>
                       <div className="w-4 h-4 bg-[#1F8CEC] rounded transform rotate-45 flex items-center justify-center shadow-[inset_0_-0.6px_0.6px_0_rgba(30,30,30,0.2),inset_0_0.6px_0.6px_0_#FFF]">
                         <Check className="w-2.5 h-2.5 text-white transform -rotate-45" />
                       </div>
                     </div>
-                    <span className="text-[#B3B3B3] text-sm">{rank}</span>
+                    <span className="text-muted-foreground text-sm">{rank}</span>
                   </div>
                 </div>
 
@@ -140,8 +140,8 @@ export default function BountyDetailPage({
             </div>
 
             {/* About Section */}
-            <div className="mb-8 p-6 rounded-lg bg-[#2C2C2C] shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)]">
-              <h2 className="text-2xl font-bold leading-[120%] tracking-[-0.48px] text-[#EFEFEF] mb-4">
+            <div className="mb-8 p-6 rounded-lg bg-card shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)]">
+              <h2 className="text-2xl font-bold leading-[120%] tracking-[-0.48px] text-foreground mb-4">
                 About
               </h2>
               <Composer>{description}</Composer>
@@ -150,8 +150,8 @@ export default function BountyDetailPage({
             {/* Requirements and Details */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Requirements */}
-              <div className="p-6 rounded-lg bg-[#2C2C2C] shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)]">
-                <h3 className="text-2xl font-bold leading-[120%] tracking-[-0.48px] text-[#EFEFEF] mb-4">
+              <div className="p-6 rounded-lg bg-card shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)]">
+                <h3 className="text-2xl font-bold leading-[120%] tracking-[-0.48px] text-foreground mb-4">
                   Requirements
                 </h3>
                 <div className="space-y-3">
@@ -160,11 +160,11 @@ export default function BountyDetailPage({
                       <div className="w-2 h-2 rounded-full bg-[#A62220] shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)]">
                         <Check className="w-2.5 h-2.5 text-white transform -rotate-45" />
                       </div>
-                      <span className="text-[#F3F3F3]">{requirement}</span>
+                      <span className="text-foreground">{requirement}</span>
                     </div>
                   ))}
                   {requirements.length === 0 && (
-                    <span className="text-[#F3F3F3]">
+                    <span className="text-foreground">
                       No requirements provided.
                     </span>
                   )}
@@ -192,10 +192,11 @@ export default function BountyDetailPage({
             </div>
           </div>
 
-          <div className="bg-[#1E1E1E]">
+          {/* Submissions Sidebar */}
+          <div className="w-full xl:w-96 xl:flex-shrink-0">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-[#EFEFEF]">Submissions</h3>
-              <Button className="previewButton flex items-center justify-center gap-2 px-4 py-2 bg-[#E6E6E6] hover:bg-[#E6E6E6]/80 text-[#1E1E1E] shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_#FFF]">
+              <h3 className="text-xl font-bold text-foreground">Submissions</h3>
+              <Button className="buttonShadow flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-white dark:text-black shadow-button-custom">
                 Add submission
               </Button>
             </div>
@@ -208,6 +209,7 @@ export default function BountyDetailPage({
                 avatarSrc="/placeholder.svg?height=40&width=40"
                 hasBadge={true}
                 previewSrc="/placeholder.svg?height=80&width=80"
+                className="max-w-full xl:max-w-[466px]"
               />
 
               <SubmissionCard
@@ -217,6 +219,7 @@ export default function BountyDetailPage({
                 avatarSrc="/placeholder.svg?height=40&width=40"
                 hasBadge={true}
                 previewSrc="/placeholder.svg?height=80&width=80"
+                className="max-w-full xl:max-w-[466px]"
               />
 
               <SubmissionCard
@@ -226,6 +229,7 @@ export default function BountyDetailPage({
                 avatarSrc="/placeholder.svg?height=40&width=40"
                 hasBadge={false}
                 previewSrc="/placeholder.svg?height=80&width=80"
+                className="max-w-full xl:max-w-[466px]"
               />
 
               <div className="text-center text-[#767676] text-sm mt-6">

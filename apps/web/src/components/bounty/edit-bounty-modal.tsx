@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import {
   createBountySchema,
   CreateBountyForm,
+  createBountyDefaults,
   currencyOptions,
   difficultyOptions,
   formatFormData
@@ -46,6 +47,7 @@ export function EditBountyModal({
 
   const form = useForm<CreateBountyForm>({
     resolver: zodResolver(createBountySchema),
+    defaultValues: createBountyDefaults,
   });
 
   const {
@@ -61,23 +63,22 @@ export function EditBountyModal({
   useEffect(() => {
     if (bountyQuery.data?.data && open) {
       const bounty = bountyQuery.data.data;
-
-      setValue("title", bounty.title);
-      setValue("description", bounty.description);
-      setValue("amount", bounty.amount.toString());
-      setValue("currency", bounty.currency);
-      setValue("difficulty", bounty.difficulty);
-      setValue(
-        "deadline",
-        bounty.deadline
+      
+      reset({
+        title: bounty.title,
+        description: bounty.description,
+        amount: bounty.amount.toString(),
+        currency: bounty.currency,
+        difficulty: bounty.difficulty,
+        deadline: bounty.deadline
           ? new Date(bounty.deadline).toISOString().slice(0, 16)
           : "",
-      );
-      setValue("tags", bounty.tags || []);
-      setValue("repositoryUrl", bounty.repositoryUrl || "");
-      setValue("issueUrl", bounty.issueUrl || "");
+        tags: bounty.tags || [],
+        repositoryUrl: bounty.repositoryUrl || "",
+        issueUrl: bounty.issueUrl || "",
+      });
     }
-  }, [bountyQuery.data, open, setValue]);
+  }, [bountyQuery.data, open, reset]);
 
   const updateBounty = useMutation({
     ...trpc.bounties.updateBounty.mutationOptions(),
@@ -111,7 +112,7 @@ export function EditBountyModal({
 
   const handleClose = () => {
     if (!isSubmitting && !updateBounty.isPending) {
-      reset();
+      reset(createBountyDefaults);
       onOpenChange(false);
     }
   };
@@ -171,12 +172,12 @@ export function EditBountyModal({
               name="title"
               control={control}
               render={({ field }) => (
-                <Input
-                  {...field}
-                  id="title"
-                  placeholder="Enter bounty title"
-                  className={errors.title ? "border-red-500" : ""}
-                />
+                                  <Input
+                    {...field}
+                    id="title"
+                    placeholder="Enter bounty title"
+                    className={errors.title ? "border-red-500" : "border-border"}
+                  />
               )}
             />
             {errors.title && (
@@ -223,7 +224,7 @@ export function EditBountyModal({
                     {...field}
                     id="amount"
                     placeholder="100.00"
-                    className={errors.amount ? "border-red-500" : ""}
+                    className={errors.amount ? "border-red-500" : "border-border"}
                   />
                 )}
               />
@@ -243,7 +244,7 @@ export function EditBountyModal({
                   <select
                     {...field}
                     id="currency"
-                    className="w-full px-3 py-2 border rounded-md"
+                    className={`w-full px-3 py-2 border rounded-md ${errors.currency ? "border-red-500" : "border-border"}`}
                   >
                     {currencyOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -253,6 +254,11 @@ export function EditBountyModal({
                   </select>
                 )}
               />
+              {errors.currency && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.currency.message}
+                </p>
+              )}
             </div>
           </div>
 
@@ -320,13 +326,13 @@ export function EditBountyModal({
               name="repositoryUrl"
               control={control}
               render={({ field }) => (
-                <Input
-                  {...field}
-                  id="repositoryUrl"
-                  type="url"
-                  placeholder="https://github.com/user/repo"
-                  className={errors.repositoryUrl ? "border-red-500" : ""}
-                />
+                                  <Input
+                    {...field}
+                    id="repositoryUrl"
+                    type="url"
+                    placeholder="https://github.com/user/repo"
+                    className={errors.repositoryUrl ? "border-red-500" : "border-border"}
+                  />
               )}
             />
             {errors.repositoryUrl && (
@@ -342,13 +348,13 @@ export function EditBountyModal({
               name="issueUrl"
               control={control}
               render={({ field }) => (
-                <Input
-                  {...field}
-                  id="issueUrl"
-                  type="url"
-                  placeholder="https://github.com/user/repo/issues/123"
-                  className={errors.issueUrl ? "border-red-500" : ""}
-                />
+                                  <Input
+                    {...field}
+                    id="issueUrl"
+                    type="url"
+                    placeholder="https://github.com/user/repo/issues/123"
+                    className={errors.issueUrl ? "border-red-500" : "border-border"}
+                  />
               )}
             />
             {errors.issueUrl && (

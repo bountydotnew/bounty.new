@@ -8,7 +8,7 @@ export const createBountySchema = z.object({
   title: z.string().min(1, "Title cannot be empty").max(200, "Title too long"),
   description: z
     .string()
-    .min(1, "Description cannot be empty")
+    .min(10, "Description must be at least 10 characters")
     .max(1000, "Description too long"),
   // requirements: z.string().max(1000).optional(),
   // deliverables: z.string().max(1000).optional(),

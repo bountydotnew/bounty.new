@@ -82,7 +82,7 @@ body {
 }
 
 .dark {
-  --background: #1e1e1e;
+  --background: #0E0E0E;
   --foreground: rgb(251, 251, 251);
   --card: rgb(52, 52, 52);
   --card-foreground: rgb(251, 251, 251);
@@ -206,9 +206,16 @@ body {
   --sds-size-space-300: 12px;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sds-color-background-brand-default: #1a1a1a;
+    --sds-color-background-brand-secondary: #3a3a3a;
+  }
+}
+
 .bountyCard {
   border-radius: 8px;
-  background: var(--sds-color-background-brand-default);
+  /* background: var(--sds-color-background-brand-default); */
 
   /* 3D */
   box-shadow:
@@ -218,9 +225,7 @@ body {
       rgba(255, 255, 255, 0.2) inset;
 }
 
-.previewButton {
-  border-radius: 8px;
-  background: var(--sds-color-background-brand-secondary);
+.buttonShadow {
   box-shadow:
     var(--sds-size-depth-0) -1px 1px var(--sds-size-depth-0)
       rgba(30, 30, 30, 0.2) inset,

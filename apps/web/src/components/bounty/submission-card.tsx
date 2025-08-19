@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Github } from "lucide-react";
 import { Badge } from "@/components/bounty/badge";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 export interface SubmissionCardProps {
   user: string;
@@ -12,6 +13,7 @@ export interface SubmissionCardProps {
   rank?: string;
   hasBadge?: boolean;
   previewSrc?: string;
+  className?: string;
 }
 
 export default function SubmissionCard({
@@ -21,9 +23,10 @@ export default function SubmissionCard({
   rank = "Rank 100",
   previewSrc = "",
   hasBadge,
+  className,
 }: SubmissionCardProps) {
   return (
-    <div className="bountyCard flex w-full max-w-[466px] min-w-[466px] flex-col items-start gap-3 rounded-lg bg-[#2C2C2C] p-6 shadow-card-custom">
+    <div className={cn("bountyCard flex w-full max-w-[466px] min-w-[466px] flex-col items-start gap-3 rounded-lg bg-card p-6 shadow-card-custom", className)}>
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
           <Avatar className="h-10 w-10">
@@ -32,7 +35,7 @@ export default function SubmissionCard({
           </Avatar>
           <div className="flex flex-col">
             <div className="flex items-center gap-1">
-              <span className="text-base font-semibold text-[#F3F3F3]">
+              <span className="text-base font-semibold text-foreground">
                 {user}
               </span>
               {hasBadge && <Badge />}
@@ -40,12 +43,12 @@ export default function SubmissionCard({
             <span className="text-sm text-foreground">{rank}</span>
           </div>
         </div>
-        <Button className="previewButton flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-white dark:text-black shadow-button-custom">
+        <Button className="buttonShadow flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-white dark:text-black shadow-button-custom">
           <Github className="h-4 w-4 text-white dark:text-black" />
           <span className="text-sm font-medium">Preview</span>
         </Button>
       </div>
-      <p className="font-light text-[#FFFFFF]">{description}</p>
+      <p className="font-light text-foreground">{description}</p>
       <Image
         width={80}
         height={80}
