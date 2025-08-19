@@ -1,11 +1,8 @@
 "use client";
 
 import { Header } from "@/components/sections/home/header";
-import { grim } from "@bounty/dev-logger";
 import { WaitlistForm } from "@/components/sections/home/waitlist-form";
 import { BountyStatistics } from "@/components/sections/home/bounty-statistics";
-
-const { log } = grim();
 
 export default function Home() {
 
