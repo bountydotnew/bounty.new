@@ -106,7 +106,7 @@ export default function ContributorsPage() {
       {/* Content container */}
       <div className="min-h-screen text-white relative">
         {/* Background geometric shapes */}
-        <div className="absolute inset-0 overflow-hidden">
+        {/* <div className="absolute inset-0 overflow-hidden">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="153"
@@ -138,7 +138,7 @@ export default function ContributorsPage() {
               </linearGradient>
             </defs>
           </svg>
-        </div>
+        </div> */}
 
         <Header />
 
