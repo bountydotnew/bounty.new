@@ -279,7 +279,7 @@ body {
 }
 
 /* Added responsive SVG sizing for desktop screens */
-@media (min-width: 1024px) {
+/* @media (min-width: 1024px) {
   .desktop-svg {
     width: 100vw !important;
     height: 120vh !important;
@@ -295,4 +295,4 @@ body {
     min-width: 1600px !important;
     min-height: 1800px !important;
   }
-}
+} */

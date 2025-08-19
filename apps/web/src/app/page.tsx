@@ -34,13 +34,10 @@ export default function Home() {
           height="179"
           viewBox="0 0 153 179"
           fill="none"
-          className="absolute bottom-0 right-0 z-0 transition-transform duration-300 ease-out desktop-svg md:opacity-20 lg:opacity-10 opacity-10"
+          className="absolute top-0 -right-[35rem] z-0 transition-transform duration-300 ease-out desktop-svg md:opacity-20 lg:opacity-10 opacity-10"
           style={{
-            transform: "translate(50%, 20%)",
-            width: "70vw",
-            height: "80vh",
-            minWidth: "800px",
-            minHeight: "900px",
+            width: "75rem",
+            height: "75rem",
           }}
         >
           <path
