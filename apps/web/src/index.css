@@ -7,32 +7,31 @@
 
 /* Custom Font Definitions */
 @font-face {
-  font-family: 'Kraftig';
-  src: url('/fonts/sohne-kraftig.woff2') format('woff2'),
-       url('/fonts/sohne-kraftig.woff') format('woff');
+  font-family: "Kraftig";
+  src:
+    url("/fonts/sohne-kraftig.woff2") format("woff2"),
+    url("/fonts/sohne-kraftig.woff") format("woff");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Kraftig-Buch';
-  src: url('/fonts/sohne-buch.woff2') format('woff2'),
-       url('/fonts/sohne-buch.woff') format('woff');
+  font-family: "Kraftig-Buch";
+  src:
+    url("/fonts/sohne-buch.woff2") format("woff2"),
+    url("/fonts/sohne-buch.woff") format("woff");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
-
 @theme {
   --font-sans:
     "Inter", "Geist", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-display:
-    "Kraftig", ui-serif, serif;
-  --font-display-book:
-    "Kraftig-Buch", ui-serif, serif;
+  --font-display: "Kraftig", ui-serif, serif;
+  --font-display-book: "Kraftig-Buch", ui-serif, serif;
 }
 
 html,
@@ -83,7 +82,7 @@ body {
 }
 
 .dark {
-  --background: #1E1E1E;
+  --background: #1e1e1e;
   --foreground: rgb(251, 251, 251);
   --card: rgb(52, 52, 52);
   --card-foreground: rgb(251, 251, 251);
