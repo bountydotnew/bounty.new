@@ -35,7 +35,7 @@ export default function BountyDetailPage({
   const { editModalOpen, openEditModal, closeEditModal, editingBountyId } = useBountyModals();
 
   return (
-    <div className="min-h-screen bg-[#1E1E1E] text-[#EFEFEF] p-6">
+    <div className="min-h-screen bg-background text-[#EFEFEF] p-6">
       <div className="max-w-[90%] mx-auto">
         {/* Smart Navigation */}
         <SmartNavigation />
@@ -195,7 +195,7 @@ export default function BountyDetailPage({
           <div className="bg-[#1E1E1E]">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-[#EFEFEF]">Submissions</h3>
-              <Button className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-[#E6E6E6] hover:bg-[#E6E6E6]/80 text-[#1E1E1E] shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_#FFF]">
+              <Button className="previewButton flex items-center justify-center gap-2 px-4 py-2 bg-[#E6E6E6] hover:bg-[#E6E6E6]/80 text-[#1E1E1E] shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_#FFF]">
                 Add submission
               </Button>
             </div>
@@ -235,11 +235,11 @@ export default function BountyDetailPage({
           </div>
         </div>
       </div>
-      
-      <EditBountyModal 
-        open={editModalOpen} 
-        onOpenChange={closeEditModal} 
-        bountyId={editingBountyId} 
+
+      <EditBountyModal
+        open={editModalOpen}
+        onOpenChange={closeEditModal}
+        bountyId={editingBountyId}
       />
     </div>
   );

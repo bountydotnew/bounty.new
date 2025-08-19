@@ -99,11 +99,9 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:h-[calc(100vh-8rem)] rounded-lg py-4">
               {/* Center - Bounties Feed */}
               <div className="lg:col-span-2 flex flex-col rounded-lg">
-                <div className="sticky top-0 bg-background z-10 pb-4">
-                  <h1 className="text-2xl font-semibold lg:pr-2">
+                  <h1 className="text-2xl font-semibold lg:pr-2 mb-4">
                     All Bounties
                   </h1>
-                </div>
                 <div className="lg:overflow-y-auto lg:h-full rounded-lg">
                   <BountiesFeed
                     layout="list"

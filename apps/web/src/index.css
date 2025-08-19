@@ -83,7 +83,7 @@ body {
 }
 
 .dark {
-  --background: rgb(37, 37, 37);
+  --background: #1E1E1E;
   --foreground: rgb(251, 251, 251);
   --card: rgb(52, 52, 52);
   --card-foreground: rgb(251, 251, 251);

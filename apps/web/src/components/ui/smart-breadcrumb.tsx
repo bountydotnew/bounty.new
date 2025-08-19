@@ -33,10 +33,10 @@ export function SmartNavigation() {
     <div className="flex items-center justify-between my-6">
       {/* Smart Back Button */}
       <Button
-        variant="outline"
+        variant="default"
         size="sm"
         onClick={handleBack}
-        className="flex items-center gap-2 text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] hover:bg-[#2C2C2C] border-[rgba(239,239,239,0.2)]"
+        className="previewButton flex items-center gap-2 text-[#2C2C2C] border-[rgba(239,239,239,0.2)]"
       >
         <ArrowLeft className="w-4 h-4" />
         <span className="hidden sm:inline">Back to {context.backLabel}</span>
@@ -44,7 +44,7 @@ export function SmartNavigation() {
       </Button>
 
       {/* Context indicator for special cases */}
-      {context.from === "gh-issue" && context.referrerInfo && (
+      {/* {context.from === "gh-issue" && context.referrerInfo && (
         <div className="flex items-center gap-2 text-xs text-[rgba(239,239,239,0.5)]">
           <span>from GitHub Issue #{context.referrerInfo.issueNumber}</span>
         </div>
@@ -54,7 +54,7 @@ export function SmartNavigation() {
         <div className="flex items-center gap-2 text-xs text-[rgba(239,239,239,0.5)]">
           <span>from Dashboard</span>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

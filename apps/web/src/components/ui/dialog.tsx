@@ -26,7 +26,7 @@ const DialogOverlay = React.forwardRef<
     <div
       className={cn(
         "absolute inset-0 z-[99]",
-        showOverlay ? "bg-black/50" : "bg-black/20",
+        showOverlay ? "bg-black/80" : "bg-black/20",
         className,
       )}
     />
