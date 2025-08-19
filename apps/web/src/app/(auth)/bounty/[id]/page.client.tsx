@@ -35,13 +35,13 @@ export default function BountyPage({
 
   const canEdit = session?.user?.id && bounty.data?.data ? canEditBounty(bounty.data.data, session.user.id) : false;
 
+  const detailAmount: number = bounty.data.data.amount;
   const detailTitle: string = bounty.data.data.title;
   const detailDescription: string = bounty.data.data.description;
   const detailTags: string[] = bounty.data.data.tags ?? [];
   const detailUser: string = bounty.data.data.creator.name ?? "";
   const detailAvatarSrc: string = bounty.data.data.creator.image ?? "";
-  // const detailRank: string = bounty.data.data.difficulty;
-
+  const detailRank: string = bounty.data.data.difficulty;
 
   return (
     // <div className="p-8 max-w-4xl mx-auto">
@@ -112,10 +112,11 @@ export default function BountyPage({
     <BountyDetailPage
       id={resolvedParams.id}
       title={detailTitle}
+      amount={detailAmount}
       description={detailDescription}
       tags={detailTags}
       user={detailUser}
-      rank={bounty.data.data.difficulty}
+      rank={detailRank}
       avatarSrc={detailAvatarSrc}
 
       hasBadge={false}

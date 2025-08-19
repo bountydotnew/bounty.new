@@ -6,11 +6,12 @@ import Composer from "../markdown/Composer";
 import { Badge } from "../ui/badge";
 import { SmartNavigation } from "@/components/ui/smart-breadcrumb";
 import { EditBountyModal } from "@/components/bounty/edit-bounty-modal";
-import { useBountyModals } from "@/lib/bounty-utils";
+import { formatBountyAmount, useBountyModals } from "@/lib/bounty-utils";
 
 interface BountyDetailPageProps {
   id: string;
   title: string;
+  amount: number;
   description: string;
   tags: string[];
   user: string;
@@ -24,6 +25,7 @@ export default function BountyDetailPage({
   id,
   title,
   description,
+  amount,
   tags,
   user,
   rank,
@@ -48,7 +50,7 @@ export default function BountyDetailPage({
                   {title}
                 </h1>
                 <span className="text-4xl font-bold text-[#0CA223]">
-                  $750.00
+                  {formatBountyAmount(amount, "USD")}
                 </span>
               </div>
 
@@ -149,7 +151,7 @@ export default function BountyDetailPage({
           </div>
 
           {/* Submissions Sidebar */}
-          <div className="w-full xl:w-96 xl:flex-shrink-0">
+          <div className="w-full xl:w-[480px] xl:flex-shrink-0">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-foreground">Submissions</h3>
               <Button className="buttonShadow flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-white dark:text-black shadow-button-custom">
@@ -165,7 +167,7 @@ export default function BountyDetailPage({
                 avatarSrc="/placeholder.svg?height=40&width=40"
                 hasBadge={true}
                 previewSrc="/placeholder.svg?height=80&width=80"
-                className="max-w-full xl:max-w-[466px]"
+                className="w-full"
               />
 
               <SubmissionCard
@@ -175,7 +177,7 @@ export default function BountyDetailPage({
                 avatarSrc="/placeholder.svg?height=40&width=40"
                 hasBadge={true}
                 previewSrc="/placeholder.svg?height=80&width=80"
-                className="max-w-full xl:max-w-[466px]"
+                className="w-full"
               />
 
               <SubmissionCard
@@ -185,7 +187,7 @@ export default function BountyDetailPage({
                 avatarSrc="/placeholder.svg?height=40&width=40"
                 hasBadge={false}
                 previewSrc="/placeholder.svg?height=80&width=80"
-                className="max-w-full xl:max-w-[466px]"
+                className="w-full"
               />
 
               <div className="text-center text-[#767676] text-sm mt-6">
