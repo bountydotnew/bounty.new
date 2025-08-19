@@ -81,6 +81,47 @@ const submitBountyWorkSchema = z.object({
 });
 
 export const bountiesRouter = router({
+  getBountyStats: publicProcedure.query(async () => {
+    try {
+      const [totalBounties] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(bounty);
+
+      const [activeBounties] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(bounty)
+        .where(eq(bounty.status, "open"));
+
+      const [totalBountiesValue] = await db
+        .select({ total: sql<number>`coalesce(sum(cast(${bounty.amount} as decimal)), 0)` })
+        .from(bounty)
+        .where(eq(bounty.status, "open"));
+
+      const [totalPayout] = await db
+        .select({ 
+          total: sql<number>`coalesce(sum(cast(${bounty.amount} as decimal)), 0)` 
+        })
+        .from(bounty)
+        .where(eq(bounty.status, "completed"));
+
+      return {
+        success: true,
+        data: {
+          totalBounties: totalBounties.count,
+          activeBounties: activeBounties.count,
+          totalBountiesValue: Number(totalBountiesValue.total) || 0,
+          totalPayout: Number(totalPayout.total) || 0,
+        },
+      };
+    } catch (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to fetch bounty statistics",
+        cause: error,
+      });
+    }
+  }),
+
   createBounty: protectedProcedure
     .input(createBountySchema)
     .mutation(async ({ ctx, input }) => {

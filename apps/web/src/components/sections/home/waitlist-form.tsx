@@ -16,6 +16,7 @@ import { trpc } from "@/utils/trpc";
 import { useConfetti } from "@/lib/context/confetti-context";
 import { getThumbmark } from "@thumbmarkjs/thumbmarkjs";
 import type { thumbmarkResponse } from "@/lib/fingerprint-validation";
+import Image from "next/image";
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -288,9 +289,18 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
 
       <div className="flex items-center gap-3 mb-20">
         <div className="flex -space-x-2">
-          <div className="w-8 h-8 bg-orange-500 rounded-full border-2 border-black font-display-book"></div>
-          <div className="w-8 h-8 bg-blue-500 rounded-full border-2 border-black font-display-book"></div>
-          <div className="w-8 h-8 bg-green-500 rounded-full border-2 border-black font-display-book"></div>
+          <div className="w-8 h-8 bg-orange-500 rounded-full overflow-hidden border-2 border-black font-display-book">
+            <Image src="/nizzy.jpg" alt="waitlist" width={32} height={32} />
+          </div>
+          <div className="w-8 h-8 bg-blue-500 rounded-full overflow-hidden border-2 border-black font-display-book">
+            <Image src="/brandon.jpg" alt="waitlist" width={32} height={32} />
+          </div>
+          <div className="w-8 h-8 bg-blue-500 rounded-full overflow-hidden border-2 border-black font-display-book">
+            <Image src="/adam.jpg" alt="waitlist" width={32} height={32} />
+          </div>
+          <div className="w-8 h-8 bg-green-500 rounded-full overflow-hidden border-2 border-black font-display-book">
+            <Image src="/ryan.jpg" alt="waitlist" width={32} height={32} />
+          </div>
         </div>
         {waitlistCount.isError ? (
           <span className="text-orange-400 font-medium font-display-book">

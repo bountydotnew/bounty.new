@@ -77,3 +77,13 @@ export function formatNumber(num: number): string {
 export function parseNumber(num: string): number {
   return Number(num);
 }
+
+/**
+ * Format large numbers with M+ suffix for millions
+ */
+export function formatLargeNumber(num: number): string {
+  if (num >= 1000000) {
+    return `${Math.floor(num / 1000000)}M+`;
+  }
+  return num.toLocaleString("en-US");
+}
