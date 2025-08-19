@@ -5,14 +5,7 @@ import { WaitlistForm } from "@/components/sections/home/waitlist-form";
 import { BountyStatistics } from "@/components/sections/home/bounty-statistics";
 
 export default function Home() {
-
   return (
-    // <div className="bg-landing-background mx-auto w-full">
-    //   <Header />
-    //   <V0Hero />
-    //   <Footer />
-    // </div>
-
     <div
       className="min-h-screen text-white relative overflow-hidden"
       style={{

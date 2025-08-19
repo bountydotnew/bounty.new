@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "@/index.css";
 import { Providers } from "@/components/providers";
-// import { StagewiseToolbar } from "@stagewise/toolbar-next";
-// import ReactPlugin from "@stagewise-plugins/react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -78,7 +76,6 @@ export default function RootLayout({
             data-toolbar-api-key="4570028d-502a-49d8-9435-ce0fc1569093"
             src="https://get.usetool.bar/embedded-app.js"
           ></script>
-          {/* <StagewiseToolbar config={{ plugins: [ReactPlugin] }} /> */}
           <div className="grid grid-rows-[auto_1fr] h-svh">{children}</div>
         </Providers>
       </body>
