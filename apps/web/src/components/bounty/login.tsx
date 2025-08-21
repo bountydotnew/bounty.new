@@ -11,6 +11,7 @@ import Bounty from "@/components/icons/bounty";
 import Image from "next/image";
 import { GithubIcon, Wendys } from "../icons";
 import Google from "../icons/google";
+import { Badge } from "@/components/ui/badge";
 
 const cards = {
   ahmet: {
@@ -53,6 +54,7 @@ const cards = {
 export default function Login() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(false);
+  const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();
@@ -84,6 +86,10 @@ export default function Login() {
     });
   };
   useEffect(() => {
+    // Load last used login method from localStorage
+    const lastMethod = localStorage.getItem('bounty-last-login-method');
+    setLastUsedMethod(lastMethod);
+
     if (
       !PublicKeyCredential.isConditionalMediationAvailable ||
       !PublicKeyCredential.isConditionalMediationAvailable()
@@ -101,6 +107,9 @@ export default function Login() {
   const handleGitHubSignIn = async () => {
     try {
       setLoading(true);
+      // Save login method to localStorage
+      localStorage.setItem('bounty-last-login-method', 'github');
+      
       await authClient.signIn.social(
         {
           provider: "github",
@@ -123,6 +132,14 @@ export default function Login() {
   };
 
   const handleGoogleSignIn = () => {
+    // Save login method to localStorage
+    localStorage.setItem('bounty-last-login-method', 'google');
+    toast.info("Coming soon!");
+  };
+
+  const handleWendysSignIn = () => {
+    // Save login method to localStorage
+    localStorage.setItem('bounty-last-login-method', 'wendys');
     toast.info("Coming soon!");
   };
 
@@ -132,6 +149,9 @@ export default function Login() {
 
   const handlePasskeySignIn = async () => {
     try {
+      // Save login method to localStorage
+      localStorage.setItem('bounty-last-login-method', 'passkey');
+      
       await authClient.signIn.passkey({
         autoFill: false,
         fetchOptions: {
@@ -244,41 +264,69 @@ export default function Login() {
                 />
               </div>
               <div className="bg-[#1D1D1D] flex flex-col justify-center items-center rounded-xl p-6 md:p-8 space-y-4 shadow-[0px_23px_38.1px_-5px_rgba(12,12,13,0.10)]">
-                <Button
-                  onClick={handleGitHubSignIn}
-                  disabled={loading}
-                  className="oauthButton w-full max-w-[466px] min-w-[240px] h-12 px-6 py-3 bg-[#303030] text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
-                >
-                  {loading ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <GithubIcon className="w-5 h-5 fill-white" />
+                <div className="relative w-full max-w-[466px]">
+                  <Button
+                    onClick={handleGitHubSignIn}
+                    disabled={loading}
+                    className="oauthButton w-full min-w-[240px] h-12 px-6 py-3 bg-[#303030] text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
+                  >
+                    {loading ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <GithubIcon className="w-5 h-5 fill-white" />
+                    )}
+                    {loading ? "Signing in…" : "Continue with GitHub"}
+                  </Button>
+                  {lastUsedMethod === 'github' && (
+                    <Badge className="absolute -top-2 -right-2 bg-[#0D0D0D] text-white text-xs px-2 py-1">
+                      Last used
+                    </Badge>
                   )}
-                  {loading ? "Signing in…" : "Continue with GitHub"}
-                </Button>
-                <Button
-                  onClick={handleGoogleSignIn}
-                  className="oauthButton w-full max-w-[466px] min-w-[240px] h-12 px-6 py-3 bg-[#303030] text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
-                >
-                  <Wendys className="w-6 h-6" />
-                  Continue with Wendy&apos;s
-                </Button>
-                <Button
-                  onClick={handleGoogleSignIn}
-                  className="oauthButton w-full max-w-[466px] min-w-[240px] h-12 px-6 py-3 bg-[#303030] text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
-                >
-                  <Google className="w-6 h-6" />
-                  Continue with Google
-                </Button>
-                <Button
-                  onClick={handlePasskeySignIn}
-                  disabled={loading}
-                  variant="text"
-                  className="h-4 px-6 text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom"
-                >
-                  <Key className="w-6 h-6" />
-                  {loading ? "Signing in…" : "Have a passkey?"}
-                </Button>
+                </div>
+                <div className="relative w-full max-w-[466px]">
+                  <Button
+                    onClick={handleWendysSignIn}
+                    className="oauthButton w-full min-w-[240px] h-12 px-6 py-3 bg-[#303030] text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
+                  >
+                    <Wendys className="w-6 h-6" />
+                    Continue with Wendy&apos;s
+                  </Button>
+                  {lastUsedMethod === 'wendys' && (
+                    <Badge className="absolute -top-2 -right-2 bg-[#0D0D0D] text-white text-xs px-2 py-1">
+                      Last used
+                    </Badge>
+                  )}
+                </div>
+                <div className="relative w-full max-w-[466px]">
+                  <Button
+                    onClick={handleGoogleSignIn}
+                    className="oauthButton w-full min-w-[240px] h-12 px-6 py-3 bg-[#303030] text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
+                  >
+                    <Google className="w-6 h-6" />
+                    Continue with Google
+                  </Button>
+                  {lastUsedMethod === 'google' && (
+                    <Badge className="absolute -top-2 -right-2 bg-[#0D0D0D] text-white text-xs px-2 py-1">
+                      Last used
+                    </Badge>
+                  )}
+                </div>
+                <div className="relative w-full max-w-[466px] flex justify-center">
+                  <Button
+                    onClick={handlePasskeySignIn}
+                    disabled={loading}
+                    variant="text"
+                    className="h-4 px-6 text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom"
+                  >
+                    <Key className="w-6 h-6" />
+                    {loading ? "Signing in…" : "Have a passkey?"}
+                  </Button>
+                  {lastUsedMethod === 'passkey' && (
+                    <Badge className="absolute -top-2 -right-2 bg-[#0CA223] text-white text-xs px-2 py-1">
+                      Last used
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-center text-sm text-[#757575] mt-8 ">
                   {"By continuing, you accept our "}
                   <Link
