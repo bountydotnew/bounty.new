@@ -82,8 +82,29 @@ export function parseNumber(num: string): number {
  * Format large numbers with M+ suffix for millions
  */
 export function formatLargeNumber(num: number): string {
+  if (num >= 1000000000000) {
+    const trillions = num / 1000000000000;
+    return trillions >= 10 
+      ? `${Math.floor(trillions)}T` 
+      : `${(trillions).toFixed(1)}T`;
+  }
+  if (num >= 1000000000) {
+    const billions = num / 1000000000;
+    return billions >= 10 
+      ? `${Math.floor(billions)}B` 
+      : `${(billions).toFixed(1)}B`;
+  }
   if (num >= 1000000) {
-    return `${Math.floor(num / 1000000)}M+`;
+    const millions = num / 1000000;
+    return millions >= 10 
+      ? `${Math.floor(millions)}M` 
+      : `${(millions).toFixed(1)}M`;
+  }
+  if (num >= 1000) {
+    const thousands = num / 1000;
+    return thousands >= 10 
+      ? `${Math.floor(thousands)}K` 
+      : `${(thousands).toFixed(1)}K`;
   }
   return num.toLocaleString("en-US");
 }

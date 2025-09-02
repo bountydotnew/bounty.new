@@ -4,6 +4,7 @@ import React, { createContext, useContext, ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { trpc } from "@/utils/trpc";
+import { authClient } from "@bounty/auth/client";
 
 export type AccessStage = "none" | "alpha" | "beta" | "production";
 
@@ -21,7 +22,12 @@ interface AccessProviderProps {
 }
 
 export const AccessProvider = ({ children }: AccessProviderProps) => {
-  const userData = useQuery(trpc.user.getMe.queryOptions());
+  const { data: session } = authClient.useSession();
+
+  const userData = useQuery({
+    ...trpc.user.getMe.queryOptions(),
+    enabled: !!session,
+  });
 
   const userStage: AccessStage = userData.data?.accessStage || "none";
 

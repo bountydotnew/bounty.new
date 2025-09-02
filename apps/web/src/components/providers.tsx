@@ -30,7 +30,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
         {posthogApiKey ? (
           <PostHogProvider apiKey={posthogApiKey}>
             <ConfettiProvider>
-              <AccessProvider>
                 <AuthUIProvider
                   authClient={authClient}
                   navigate={router.push}
@@ -43,7 +42,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 >
                   {children}
                 </AuthUIProvider>
-              </AccessProvider>
               <Databuddy
                 clientId="bounty"
                 trackHashChanges={true}

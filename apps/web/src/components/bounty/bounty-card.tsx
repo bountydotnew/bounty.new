@@ -5,6 +5,7 @@ import { formatDate } from "@/lib/utils";
 import type { Bounty } from "@/types/dashboard";
 import { useRouter, usePathname } from "next/navigation";
 import { addNavigationContext } from "@/hooks/use-navigation-context";
+import { formatLargeNumber } from "@/lib/utils";
 
 interface BountyCardProps {
   bounty: Bounty;
@@ -36,7 +37,7 @@ export const BountyCard = memo(function BountyCard({
     <div
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      className="cursor-pointer bountyCard flex w-full flex-col items-start gap-3 rounded-lg bg-[#2C2C2C] p-6 shadow-card-custom hover:bg-[#2C2C2C]/80 transition-colors"
+      className="cursor-pointer bountyCard flex w-full flex-col items-start gap-3 rounded-lg bg-[#1D1D1D] p-6 hover:bg-[#2A2A28] transition-colors border border-[#383838]/20"
       tabIndex={0}
       role="button"
       aria-label={`View bounty: ${bounty.title}`}
@@ -52,33 +53,30 @@ export const BountyCard = memo(function BountyCard({
           </Avatar>
           <div className="flex flex-col">
             <div className="flex items-center gap-1">
-              <span className="text-base font-semibold text-[#F3F3F3]">
+              <span className="text-sm font-medium text-white">
                 {creatorName}
               </span>
             </div>
-            <span className="text-sm text-foreground capitalize">
+            <span className="text-xs text-gray-400 capitalize">
               {bounty.status.replace("_", " ")}
             </span>
           </div>
         </div>
-        <div
-          className="text-lg font-bold text-[#0CA223]"
-          aria-label={`Bounty amount: $${bounty.amount}`}
-        >
-          ${bounty.amount}
-        </div>
+        <span className="text-sm font-semibold text-green-400">
+          ${formatLargeNumber(bounty.amount)}
+        </span>
       </div>
 
       <div className="w-full">
-        <h3 className="text-lg font-semibold text-[#EFEFEF] mb-2 line-clamp-2">
+        <h3 className="text-base font-medium text-white mb-2 line-clamp-2">
           {bounty.title}
         </h3>
-        <p className="font-light text-[#FFFFFF] line-clamp-3">
+        <p className="text-sm text-gray-400 line-clamp-3">
           {bounty.description}
         </p>
       </div>
 
-      <div className="flex items-center gap-2 text-sm text-[#B3B3B3] mt-auto">
+      <div className="flex items-center gap-2 text-xs text-gray-400 mt-auto">
         <Clock className="h-4 w-4" aria-hidden="true" />
         <time
           dateTime={bounty.createdAt}

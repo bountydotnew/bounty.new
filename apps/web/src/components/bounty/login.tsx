@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Key, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import SubmissionCard from "@/components/bounty/submission-card";
 import { useState, useRef, useEffect } from "react";
 import { authClient } from "@bounty/auth/client";
@@ -9,8 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { LINKS } from "@/constants/links";
 import Bounty from "@/components/icons/bounty";
 import Image from "next/image";
-import { GithubIcon, Wendys } from "../icons";
-import Google from "../icons/google";
+import { GithubIcon } from "../icons";
 import { Badge } from "@/components/ui/badge";
 
 const cards = {
@@ -109,7 +108,7 @@ export default function Login() {
       setLoading(true);
       // Save login method to localStorage
       localStorage.setItem('bounty-last-login-method', 'github');
-      
+
       await authClient.signIn.social(
         {
           provider: "github",
@@ -131,99 +130,103 @@ export default function Login() {
     }
   };
 
-  const handleGoogleSignIn = () => {
-    // Save login method to localStorage
-    localStorage.setItem('bounty-last-login-method', 'google');
-    toast.info("Coming soon!");
-  };
-
-  const handleWendysSignIn = () => {
-    // Save login method to localStorage
-    localStorage.setItem('bounty-last-login-method', 'wendys');
-    toast.info("Coming soon!");
-  };
 
   const handleGoToDashboard = () => {
     router.push(callbackUrl);
   };
 
-  const handlePasskeySignIn = async () => {
-    try {
-      // Save login method to localStorage
-      localStorage.setItem('bounty-last-login-method', 'passkey');
-      
-      await authClient.signIn.passkey({
-        autoFill: false,
-        fetchOptions: {
-          onSuccess: () => {
-            toast.success("Signed in successfully");
-            router.push(callbackUrl);
-          },
-        },
-      });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Sign in failed");
-    }
-  };
+  // const handlePasskeySignIn = async () => {
+  //   try {
+  //     // Save login method to localStorage
+  //     localStorage.setItem('bounty-last-login-method', 'passkey');
+
+  //     await authClient.signIn.passkey({
+  //       autoFill: false,
+  //       fetchOptions: {
+  //         onSuccess: () => {
+  //           toast.success("Signed in successfully");
+  //           router.push(callbackUrl);
+  //         },
+  //       },
+  //     });
+  //   } catch (error) {
+  //     toast.error(error instanceof Error ? error.message : "Sign in failed");
+  //   }
+  // };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[#252525] border border-[#B3B3B3] text-[#f3f3f3]">
+    <div className="min-h-screen flex flex-col md:flex-row bg-[#111110] text-[#f3f3f3]">
       {/* Left Column: Login Section */}
       <div className="flex-1 flex items-center justify-center p-8 md:p-12">
         <div className="max-w-md w-full space-y-8">
-          {/* Mobile Bounty Icon */}
+          {/* Mobile Bounty Icon 
           <div className="lg:hidden flex justify-center mb-8">
             <Bounty className="w-24 h-28 text-primary" />
           </div>
+          */}
 
           {isPending ? (
-            <div className="text-center space-y-4">
-              <div className="animate-pulse">
-                <div className="h-12 bg-[#383838] rounded mb-4"></div>
-                <div className="h-4 bg-[#383838] rounded mb-2"></div>
-                <div className="h-4 bg-[#383838] rounded w-3/4 mx-auto"></div>
+            <div className="w-full max-w-96 space-y-8">
+              <div className="text-center space-y-4 animate-pulse">
+                <div className="w-16 h-16 mx-auto bg-[#383838] rounded-lg"></div>
+                <div className="h-7 bg-[#383838] rounded w-48 mx-auto"></div>
+              </div>
+
+              <div className="space-y-3 animate-pulse">
+                <div className="w-full h-12 bg-[#383838] rounded-lg"></div>
+              </div>
+
+              <div className="text-center animate-pulse">
+                <div className="h-4 bg-[#383838] rounded w-64 mx-auto"></div>
               </div>
             </div>
           ) : session ? (
-            <div className="text-center space-y-6">
-              <div className="space-y-2">
-                <h1 className="text-4xl md:text-4xl font-bold">
-                  Welcome back!
-                </h1>
-                <p className="text-lg text-[#757575]">
-                  You&apos;re already signed in
-                </p>
+            <div className="w-full max-w-96 space-y-8">
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 mx-auto rounded-lg flex items-center justify-center">
+                  <Bounty className="w-12 h-12 text-primary" />
+                </div>
+                <div className="space-y-2">
+                  <h1 className="flex h-7 items-center justify-center font-medium text-sand-12 text-xl tracking-tight">
+                    Welcome back!
+                  </h1>
+                  <p className="text-sm text-gray-400">
+                    You&apos;re already signed in
+                  </p>
+                </div>
               </div>
-              <div className="bg-[#1D1D1D] rounded-xl p-6 md:p-8 space-y-4 shadow-[0px_23px_38.1px_-5px_rgba(12,12,13,0.10)]">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="flex items-center w-full space-x-3">
-                    {session.user.image && (
-                      <Image
-                        src={session.user.image}
-                        alt={session.user.name || "User"}
-                        className="w-12 h-12 rounded-full border-2 border-[#383838]"
-                        width={48}
-                        height={48}
-                      />
-                    )}
-                    <div className="text-left">
-                      <p className="text-[#f3f3f3] font-medium">
-                        {session.user.name}
-                      </p>
-                      <p className="text-[#757575] text-sm">
-                        {session.user.email}
-                      </p>
-                    </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3 p-3 bg-[#1D1D1D] rounded-lg">
+                  {session.user.image && (
+                    <Image
+                      src={session.user.image}
+                      alt={session.user.name || "User"}
+                      className="w-10 h-10 rounded-full"
+                      width={40}
+                      height={40}
+                    />
+                  )}
+                  <div className="text-left">
+                    <p className="text-white font-medium text-sm">
+                      {session.user.name}
+                    </p>
+                    <p className="text-gray-400 text-xs">
+                      {session.user.email}
+                    </p>
                   </div>
+                </div>
+
+                <div className="space-y-3">
                   <Button
                     onClick={handleGoToDashboard}
-                    className="oauthButton w-full max-w-[466px] min-w-[240px] h-12 px-6 py-3 bg-[#303030] text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom"
+                    className="w-full py-3 bg-[#2A2A28] hover:bg-[#383838] text-gray-200 rounded-lg font-medium transition-colors"
                   >
-                    Go to Dashboard
+                    Continue
                   </Button>
                   <Button
-                    variant="destructive"
-                    className="oauthButton w-full max-w-[466px] min-w-[240px] h-12 px-6 py-3 rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
+                    variant="text"
+                    className="w-full py-3 text-gray-400 hover:text-gray-200 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
                     onClick={() =>
                       authClient.signOut({
                         fetchOptions: {
@@ -235,40 +238,27 @@ export default function Login() {
                       })
                     }
                   >
-                    <LogOut className="w-5 h-5" />
-                    Sign Out
+                    <LogOut className="w-4 h-4" />
+                    Nevermind, log me out.
                   </Button>
                 </div>
               </div>
             </div>
           ) : (
-            <>
-              <div className="text-center space-y-2">
-                <h1 className="text-4xl md:text-5xl font-bold">Get started</h1>
-                <p className="text-lg text-[#757575]">
-                  Sign in to your account
-                </p>
+            <div className="w-full max-w-96 space-y-8">
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 mx-auto rounded-lg flex items-center justify-center">
+                  <Bounty className="w-12 h-12 text-primary" />
+                </div>
+                <h1 className="flex h-7 items-center justify-center font-medium text-sand-12 text-xl tracking-tight">Sign in to bounty</h1>
               </div>
-              <div className="hidden">
-                <label htmlFor="name">Username:</label>
-                <input
-                  type="text"
-                  name="name"
-                  autoComplete="username webauthn"
-                />
-                <label htmlFor="password">Password:</label>
-                <input
-                  type="password"
-                  name="password"
-                  autoComplete="current-password webauthn"
-                />
-              </div>
-              <div className="bg-[#1D1D1D] flex flex-col justify-center items-center rounded-xl p-6 md:p-8 space-y-4 shadow-[0px_23px_38.1px_-5px_rgba(12,12,13,0.10)]">
-                <div className="relative w-full max-w-[466px]">
+
+              <div className="space-y-3">
+                <div className="relative">
                   <Button
                     onClick={handleGitHubSignIn}
                     disabled={loading}
-                    className="oauthButton w-full min-w-[240px] h-12 px-6 py-3 bg-[#303030] text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
+                    className="w-full py-3 bg-[#2A2A28] hover:bg-[#383838] text-gray-200 rounded-lg font-medium transition-colors flex items-center justify-center gap-3"
                   >
                     {loading ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -278,74 +268,36 @@ export default function Login() {
                     {loading ? "Signing in…" : "Continue with GitHub"}
                   </Button>
                   {lastUsedMethod === 'github' && (
-                    <Badge className="absolute -top-2 -right-2 bg-[#0D0D0D] text-white text-xs px-2 py-1">
+                    <Badge className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs px-1 py-0.5">
                       Last used
                     </Badge>
                   )}
                 </div>
-                <div className="relative w-full max-w-[466px]">
-                  <Button
-                    onClick={handleWendysSignIn}
-                    className="oauthButton w-full min-w-[240px] h-12 px-6 py-3 bg-[#303030] text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
-                  >
-                    <Wendys className="w-6 h-6" />
-                    Continue with Wendy&apos;s
-                  </Button>
-                  {lastUsedMethod === 'wendys' && (
-                    <Badge className="absolute -top-2 -right-2 bg-[#0D0D0D] text-white text-xs px-2 py-1">
-                      Last used
-                    </Badge>
-                  )}
-                </div>
-                <div className="relative w-full max-w-[466px]">
-                  <Button
-                    onClick={handleGoogleSignIn}
-                    className="oauthButton w-full min-w-[240px] h-12 px-6 py-3 bg-[#303030] text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom hover:bg-[#383838]"
-                  >
-                    <Google className="w-6 h-6" />
-                    Continue with Google
-                  </Button>
-                  {lastUsedMethod === 'google' && (
-                    <Badge className="absolute -top-2 -right-2 bg-[#0D0D0D] text-white text-xs px-2 py-1">
-                      Last used
-                    </Badge>
-                  )}
-                </div>
-                <div className="relative w-full max-w-[466px] flex justify-center">
+                {/* <div className="relative flex justify-center pt-2">
                   <Button
                     onClick={handlePasskeySignIn}
                     disabled={loading}
                     variant="text"
-                    className="h-4 px-6 text-[#f3f3f3] rounded-lg flex items-center justify-center gap-3 shadow-button-custom"
+                    className="text-gray-400 hover:text-gray-200 flex items-center justify-center gap-2"
                   >
-                    <Key className="w-6 h-6" />
+                    <Key className="w-4 h-4" />
                     {loading ? "Signing in…" : "Have a passkey?"}
                   </Button>
                   {lastUsedMethod === 'passkey' && (
-                    <Badge className="absolute -top-2 -right-2 bg-[#0CA223] text-white text-xs px-2 py-1">
+                    <Badge className="absolute -top-2 -right-2 bg-green-600 text-white text-xs px-2 py-1">
                       Last used
                     </Badge>
                   )}
-                </div>
-                <p className="text-center text-sm text-[#757575] mt-8 ">
-                  {"By continuing, you accept our "}
-                  <Link
-                    href="#"
-                    className="underline text-[#b3b3b3] hover:text-[#f3f3f3]"
-                  >
-                    Terms of Service
-                  </Link>
-                  {" and "}
-                  <Link
-                    href="#"
-                    className="underline text-[#b3b3b3] hover:text-[#f3f3f3]"
-                  >
-                    Privacy Policy
-                  </Link>
-                  .
-                </p>
+                </div> */}
               </div>
-            </>
+
+              <div className="flex h-8 items-center justify-center text-center text-sm">
+                <span className="text-gray-400">Don&apos;t have an account? </span>
+                <Link href="/waitlist" className="rounded px-1 py-1 font-medium text-white outline-none transition-colors hover:bg-neutral-800 focus-visible:bg-neutral-800">
+                  Join the waitlist
+                </Link>
+              </div>
+            </div>
           )}
         </div>
       </div>

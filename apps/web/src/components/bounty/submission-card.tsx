@@ -26,7 +26,7 @@ export default function SubmissionCard({
   className,
 }: SubmissionCardProps) {
   return (
-    <div className={cn("bountyCard flex w-full max-w-[466px] min-w-[466px] flex-col items-start gap-3 rounded-lg bg-card p-6 shadow-card-custom", className)}>
+    <div className={cn("flex w-full max-w-[466px] min-w-[466px] flex-col items-start gap-3 rounded-lg bg-[#222222] p-6 hover:bg-[#2A2A28] transition-colors", className)}>
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
           <Avatar className="h-10 w-10">
@@ -35,20 +35,20 @@ export default function SubmissionCard({
           </Avatar>
           <div className="flex flex-col">
             <div className="flex items-center gap-1">
-              <span className="text-base font-semibold text-foreground">
+              <span className="text-sm font-medium text-white">
                 {user}
               </span>
               {hasBadge && <Badge />}
             </div>
-            <span className="text-sm text-foreground">{rank}</span>
+            <span className="text-xs text-gray-400">{rank}</span>
           </div>
         </div>
-        <Button className="buttonShadow flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-white dark:text-black shadow-button-custom">
+        <Button className="flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-white dark:text-black">
           <Github className="h-4 w-4 text-white dark:text-black" />
           <span className="text-sm font-medium">Preview</span>
         </Button>
       </div>
-      <p className="font-light text-foreground">{description}</p>
+      <p className="text-sm text-gray-400">{description}</p>
       <Image
         width={80}
         height={80}

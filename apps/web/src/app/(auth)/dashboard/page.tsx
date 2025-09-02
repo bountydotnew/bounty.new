@@ -13,7 +13,7 @@ import { BountiesFeed } from "@/components/bounty/bounties-feed";
 import { MyBountiesSidebar } from "@/components/dashboard/my-bounties-sidebar";
 import { ActivitySidebar } from "@/components/dashboard/activity-sidebar";
 import { AccessGate } from "@/components/access-gate";
-import { Spinner } from "@/components/ui/spinner";
+import { Header } from "@/components/dual-sidebar/sidebar-header";
 
 // Constants and types
 import { PAGINATION_LIMITS, PAGINATION_DEFAULTS } from "@/constants/dashboard";
@@ -68,16 +68,16 @@ export default function Dashboard() {
   }, [existingSubmission]);
 
   // Loading state for critical data
-  const isInitialLoading =
-    bounties.isLoading || myBounties.isLoading || userData.isLoading;
+  // const isInitialLoading =
+  //   bounties.isLoading || myBounties.isLoading || userData.isLoading;
 
-  if (isInitialLoading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <Spinner />
-      </div>
-    );
-  }
+  // if (isInitialLoading) {
+  //   return (
+  //     <div className="flex justify-center items-center h-screen">
+  //       <Spinner />
+  //     </div>
+  //   );
+  // }
 
   return (
     <ErrorBoundary>
@@ -94,6 +94,7 @@ export default function Dashboard() {
         }
       >
         <Onboarding />
+        <Header />
         <div className="bg-background">
           <div className="container mx-auto px-4 py-4 rounded-lg">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:h-[calc(100vh-8rem)] rounded-lg py-4">
