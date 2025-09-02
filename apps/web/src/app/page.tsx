@@ -50,7 +50,7 @@ export default function Home() {
         {/* Main content */}
         <main className="relative z-10 max-w-7xl mx-auto px-6 pt-20">
           <div className="max-w-4xl">
-            <h1 className="text-7xl mb-8 leading-tight font-display" style={{ color: "rgba(239, 239, 239, 1)" }}>
+            <h1 className="text-5xl md:text-7xl mb-8 leading-tight font-display" style={{ color: "rgba(239, 239, 239, 1)" }}>
               Ship fast.
               <br />
               Get paid faster.
