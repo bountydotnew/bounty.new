@@ -27,6 +27,8 @@ export const AccessProvider = ({ children }: AccessProviderProps) => {
   const userData = useQuery({
     ...trpc.user.getMe.queryOptions(),
     enabled: !!session,
+    retry: false, // Don't retry on auth pages
+    throwOnError: false, // Don't throw errors that could break SSR
   });
 
   const userStage: AccessStage = userData.data?.accessStage || "none";
