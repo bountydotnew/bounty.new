@@ -1,11 +1,14 @@
 import { memo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Clock } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { Clock, MessageCircle } from "lucide-react";
+import { formatDate, formatRelativeTime } from "@/lib/utils";
 import type { Bounty } from "@/types/dashboard";
 import { useRouter, usePathname } from "next/navigation";
 import { addNavigationContext } from "@/hooks/use-navigation-context";
 import { formatLargeNumber } from "@/lib/utils";
+import { ArrowUpCircle } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { trpc } from "@/utils/trpc";
 
 interface BountyCardProps {
   bounty: Bounty;
@@ -16,6 +19,7 @@ export const BountyCard = memo(function BountyCard({
 }: BountyCardProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const comments = useQuery(trpc.bounties.getBountyComments.queryOptions({ bountyId: bounty.id }));
 
   const handleClick = () => {
     const url = addNavigationContext(`/bounty/${bounty.id}`, pathname);
@@ -32,6 +36,31 @@ export const BountyCard = memo(function BountyCard({
   const formattedDate = formatDate(bounty.createdAt);
   const creatorInitial = bounty.creator.name?.charAt(0)?.toUpperCase() || "U";
   const creatorName = bounty.creator.name || "Anonymous";
+  const queryClient = useQueryClient();
+  const votes = useQuery(trpc.bounties.getBountyVotes.queryOptions({ bountyId: bounty.id }));
+  const voteMutation = useMutation({
+    ...trpc.bounties.voteBounty.mutationOptions(),
+  });
+
+  const handleUpvote = () => {
+    const key = trpc.bounties.getBountyVotes.queryKey({ bountyId: bounty.id });
+    const previous = queryClient.getQueryData<{ count: number; isVoted: boolean }>(key);
+    const next = previous
+      ? { count: previous.isVoted ? Math.max(0, Number(previous.count) - 1) : Number(previous.count) + 1, isVoted: !previous.isVoted }
+      : { count: 1, isVoted: true };
+    queryClient.setQueryData(key, next);
+    voteMutation.mutate(
+      { bountyId: bounty.id },
+      {
+        onError: () => {
+          if (previous) queryClient.setQueryData(key, previous);
+        },
+        onSettled: () => {
+          queryClient.invalidateQueries({ queryKey: key });
+        },
+      },
+    );
+  };
 
   return (
     <div
@@ -62,9 +91,23 @@ export const BountyCard = memo(function BountyCard({
             </span>
           </div>
         </div>
-        <span className="text-sm font-semibold text-green-400">
-          ${formatLargeNumber(bounty.amount)}
-        </span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleUpvote();
+            }}
+            aria-pressed={Boolean(votes.data?.isVoted)}
+            className={`flex items-center gap-1 rounded-md border border-neutral-700 bg-neutral-800/40 px-2 py-1 text-xs text-neutral-300 hover:bg-neutral-700/40 ${votes.data?.isVoted ? "border-green-500/50 bg-green-500/10 text-green-400" : ""}`}
+            aria-label="Upvote bounty"
+          >
+            <ArrowUpCircle className={`h-4 w-4 ${votes.data?.isVoted ? "text-green-400" : ""}`} />
+            <span>{votes.data?.count ?? 0}</span>
+          </button>
+          <span className="text-sm font-semibold text-green-400">
+            ${formatLargeNumber(bounty.amount)}
+          </span>
+        </div>
       </div>
 
       <div className="w-full">
@@ -76,14 +119,22 @@ export const BountyCard = memo(function BountyCard({
         </p>
       </div>
 
-      <div className="flex items-center gap-2 text-xs text-gray-400 mt-auto">
-        <Clock className="h-4 w-4" aria-hidden="true" />
-        <time
-          dateTime={bounty.createdAt}
-          title={new Date(bounty.createdAt).toLocaleString()}
-        >
-          {formattedDate}
-        </time>
+      <div className="flex items-center gap-4 text-xs text-gray-400 mt-auto">
+        <div className="flex items-center gap-1">
+          <Clock className="h-4 w-4" aria-hidden="true" />
+          <time
+            dateTime={bounty.createdAt}
+            title={new Date(bounty.createdAt).toLocaleString()}
+          >
+            {formatRelativeTime(bounty.createdAt)}
+          </time>
+        </div>
+        <div className="flex items-center gap-1">
+          <MessageCircle className="h-4 w-4" aria-hidden="true" />
+          <span>
+            {comments.data?.length ?? 0} {comments.data?.length === 1 ? "comment" : "comments"}
+          </span>
+        </div>
       </div>
     </div>
   );

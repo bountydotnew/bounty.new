@@ -18,6 +18,7 @@ export interface Bounty {
     name: string | null;
     image: string | null;
   };
+  votes?: number;
 }
 
 export interface UserData {
