@@ -713,7 +713,7 @@ export default function BountyPlatform() {
               Join the waitlist and be among the first to experience the new way
               to collaborate, create, and get paid for exceptional work.
             </p>
-            <Button className="bg-white text-black hover:bg-white/90 h-10 px-8 font-medium rounded-lg transition-all duration-200">
+            <Button variant="default">
               Join Waitlist
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
