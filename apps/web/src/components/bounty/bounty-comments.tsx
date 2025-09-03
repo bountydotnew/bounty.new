@@ -74,10 +74,15 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
     return () => cancelAnimationFrame(id);
   }, [page]);
 
+  const [formError, setFormError] = useState<string | null>(null);
+
   const postComment = (content: string, parentId?: string) => {
     const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
-    const dup = previous.find((c) => c.content.trim() === content.trim());
+    const dup = previous.find(
+      (c) => c.content.trim() === content.trim() && c.user?.id && session?.user?.id && c.user.id === session.user.id,
+    );
     if (dup) {
+      setFormError("You've already said this.");
       return;
     }
     const optimistic: import("@/types/comments").BountyCommentCacheItem[] = [
@@ -94,10 +99,16 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
       ...previous,
     ];
     queryClient.setQueryData(key, optimistic);
+    setFormError(null);
     addComment.mutate(
       { bountyId, content, parentId },
       {
-        onError: () => queryClient.setQueryData(key, previous),
+        onError: (err: any) => {
+          if (err?.message?.toLowerCase().includes("duplicate")) {
+            setFormError("Duplicate comment on this bounty");
+          }
+          queryClient.setQueryData(key, previous);
+        },
         onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
       },
     );
@@ -168,7 +179,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
         </div>
       </div>
 
-      <BountyCommentForm maxChars={245} isSubmitting={addComment.isPending} onSubmit={(content) => postComment(content)} />
+      <BountyCommentForm maxChars={245} isSubmitting={addComment.isPending} onSubmit={(content) => postComment(content)} error={formError} />
 
       <CommentEditDialog
         open={Boolean(editState)}

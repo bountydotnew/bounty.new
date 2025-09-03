@@ -543,7 +543,7 @@ export const bountiesRouter = router({
             ),
           );
         if (dup) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "Duplicate comment" });
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Duplicate comment by same user on this bounty" });
         }
 
         const [inserted] = await db
