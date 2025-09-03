@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { use } from "react";
 import { BountyDetailSkeleton } from "@/components/dashboard/skeletons/bounty-detail-skeleton";
 import BountyDetailPage from "@/components/bounty/bounty-detail";
+import Bounty from "@/components/icons/bounty";
 
 import { canEditBounty } from "@/lib/bounty-utils";
 import { authClient } from "@bounty/auth/client";
@@ -33,6 +34,7 @@ export default function BountyPage({
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="px-6 py-5 text-center max-w-lg mx-auto">
+          <Bounty className="w-10 h-10 mx-auto mb-10" />
           <h1 className="text-xl font-semibold text-white">You got us scratching our heads... 😅</h1>
           <p className="mt-1 text-sm text-neutral-400">Either you typed out the entire url and still got it wrong, someone is trolling you, or you arrived too late!</p>
           <Button onClick={() => router.push("/dashboard")} variant="outline" className="mt-6">
@@ -51,9 +53,14 @@ export default function BountyPage({
   if (bounty.error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900 px-6 py-5 text-center">
+        <div className="px-6 py-5 text-center max-w-lg mx-auto">
+          <Bounty className="w-10 h-10 mx-auto mb-10" />
           <h1 className="text-xl font-semibold text-white">Couldn&apos;t load bounty</h1>
           <p className="mt-1 text-sm text-neutral-400">Please try again in a moment.</p>
+          <Button onClick={() => router.push("/dashboard")} variant="outline" className="mt-6">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Take me home
+          </Button>
         </div>
       </div>
     );
@@ -62,9 +69,14 @@ export default function BountyPage({
   if (!bounty.data?.data) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900 px-6 py-5 text-center">
+        <div className="px-6 py-5 text-center max-w-lg mx-auto">
+          <Bounty className="w-10 h-10 mx-auto mb-10" />
           <h1 className="text-xl font-semibold text-white">Bounty not found</h1>
           <p className="mt-1 text-sm text-neutral-400">It may have been removed or never existed.</p>
+          <Button onClick={() => router.push("/dashboard")} variant="outline" className="mt-6">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Take me home
+          </Button>
         </div>
       </div>
     );
