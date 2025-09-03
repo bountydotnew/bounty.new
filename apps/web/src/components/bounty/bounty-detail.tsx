@@ -252,11 +252,13 @@ export default function BountyDetailPage({
                     voteCount={votes.data?.count ?? 0}
                     onUpvote={handleUpvote}
                     onEdit={() => openEditModal(id)}
-                    onShare={() => {navigator.share({
-                      title: title,
-                      text: description,
-                      url: `${window.location.origin}/bounty/${id}`,
-                    });}}
+                    onShare={() => {
+                      navigator.share({
+                        title: title,
+                        text: description,
+                        url: `${window.location.origin}/bounty/${id}`,
+                      });
+                    }}
                   />
                 </div>
               </div>

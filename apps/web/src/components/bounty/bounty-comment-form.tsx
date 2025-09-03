@@ -69,7 +69,7 @@ export default function BountyCommentForm({ maxChars = 245, onSubmit, isSubmitti
         </div>
       </div>
       <div className="flex justify-end">
-        <HotkeyButton hotkey={"⌘ Enter"} size="sm" disabled={isSubmitting || value.trim().length === 0}>Post</HotkeyButton>
+        <HotkeyButton hotkey={"⏎"} size="sm" disabled={isSubmitting || value.trim().length === 0}>Post</HotkeyButton>
       </div>
       <style jsx>{`
         @keyframes wiggle { 0%{transform:translateX(0)} 25%{transform:translateX(-4px)} 50%{transform:translateX(4px)} 75%{transform:translateX(-2px)} 100%{transform:translateX(0)} }

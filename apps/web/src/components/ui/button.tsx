@@ -71,7 +71,7 @@ const HotkeyButton = React.forwardRef<HTMLButtonElement, HotkeyButtonProps>(
         {...props}
       >
         <span className="mr-1">{children}</span>
-        <kbd className="ml-auto inline-flex items-center gap-1 rounded-md border border-white/20 bg-white/10 px-1.5 py-0.5 text-[11px] font-medium">
+        <kbd className="ml-auto inline-flex items-center gap-1 rounded-md border border-white/20 bg-[#cbcbcb] px-1.5 text-[15px] font-medium">
           {hotkey}
         </kbd>
       </Button>
