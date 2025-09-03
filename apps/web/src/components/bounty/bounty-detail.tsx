@@ -21,6 +21,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import CommentEditDialog from "@/components/bounty/comment-edit-dialog";
+import { SubmissionsMobileSidebar } from "@/components/bounty/submissions-mobile-sidebar";
 
 interface BountyDetailPageProps {
   id: string;
@@ -221,7 +222,7 @@ export default function BountyDetailPage({
               </div> */}
 
               {/* User Profile with Actions */}
-              <div className="flex items-center justify-between w-full">
+              <div className="flex items-center justify-between w-full flex-col md:flex-row items-start md:items-center gap-4">
                 <div className="flex items-center gap-3">
                   <Avatar className="w-10 h-10">
                     <AvatarImage src={avatarSrc} />
@@ -277,9 +278,12 @@ export default function BountyDetailPage({
             <div className="sticky top-0 xl:h-[calc(100vh-8rem)] xl:overflow-y-auto xl:pr-2">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-medium text-white">Submissions</h3>
-                <Button className="flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-primary-foreground transition-colors">
-                  Add submission
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button className="hidden xl:inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-primary-foreground transition-colors">
+                    Add submission
+                  </Button>
+                  <SubmissionsMobileSidebar />
+                </div>
               </div>
 
               <div className="space-y-4">
