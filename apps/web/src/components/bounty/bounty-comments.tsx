@@ -184,27 +184,28 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
         </button>
       </div>
 
-      {showFloatingPager && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 rounded-full border border-neutral-800 bg-neutral-900/90 backdrop-blur px-3.5 py-3 shadow">
-          <div className="flex items-center gap-3">
-            <button
-              className="px-2 py-1 rounded-md border border-neutral-700 bg-neutral-800/60 text-[11px] text-neutral-300 disabled:opacity-50"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-            >
-              Prev
-            </button>
-            <span className="text-[11px] text-neutral-400">{page} / {pages}</span>
-            <button
-              className="px-2 py-1 rounded-md border border-neutral-700 bg-neutral-800/60 text-[11px] text-neutral-300 disabled:opacity-50"
-              onClick={() => setPage((p) => Math.min(pages, p + 1))}
-              disabled={page >= pages}
-            >
-              Next
-            </button>
-          </div>
+      <div
+        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-30 rounded-full border border-neutral-800 bg-neutral-900/90 backdrop-blur px-3.5 py-3 shadow transition-all duration-200 ease-out ${showFloatingPager ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" : "opacity-0 translate-y-2 scale-95 pointer-events-none"}`}
+        aria-hidden={!showFloatingPager}
+      >
+        <div className="flex items-center gap-3">
+          <button
+            className="px-2 py-1 rounded-md border border-neutral-700 bg-neutral-800/60 text-[11px] text-neutral-300 disabled:opacity-50"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+          >
+            Prev
+          </button>
+          <span className="text-[11px] text-neutral-400">{page} / {pages}</span>
+          <button
+            className="px-2 py-1 rounded-md border border-neutral-700 bg-neutral-800/60 text-[11px] text-neutral-300 disabled:opacity-50"
+            onClick={() => setPage((p) => Math.min(pages, p + 1))}
+            disabled={page >= pages}
+          >
+            Next
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
