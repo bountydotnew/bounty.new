@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 interface BountyCommentFormProps {
@@ -13,6 +13,15 @@ interface BountyCommentFormProps {
 export default function BountyCommentForm({ maxChars = 245, onSubmit, isSubmitting, error }: BountyCommentFormProps) {
   const [value, setValue] = useState("");
   const remaining = useMemo(() => maxChars - value.length, [maxChars, value]);
+  const [shake, setShake] = useState(false);
+
+  useEffect(() => {
+    if (error) {
+      setShake(true);
+      const t = setTimeout(() => setShake(false), 200);
+      return () => clearTimeout(t);
+    }
+  }, [error]);
   return (
     <form
       onSubmit={(e) => {
@@ -24,7 +33,7 @@ export default function BountyCommentForm({ maxChars = 245, onSubmit, isSubmitti
       }}
       className="space-y-2"
     >
-      <div>
+      <div className={shake ? "wiggle" : undefined}>
         <textarea
           value={value}
           onChange={(e) => {
@@ -42,6 +51,10 @@ export default function BountyCommentForm({ maxChars = 245, onSubmit, isSubmitti
       <div className="flex justify-end">
         <Button size="sm" disabled={isSubmitting || value.trim().length === 0}>Post</Button>
       </div>
+      <style jsx>{`
+        @keyframes wiggle { 0%{transform:translateX(0)} 25%{transform:translateX(-4px)} 50%{transform:translateX(4px)} 75%{transform:translateX(-2px)} 100%{transform:translateX(0)} }
+        .wiggle { animation: wiggle 150ms ease-in-out; }
+      `}</style>
     </form>
   );
 }
