@@ -1,7 +1,8 @@
 "use client";
 
-import { ArrowUpCircle, Bookmark, Edit, Share2 } from "lucide-react";
+import { ArrowUpCircle, Bookmark, Edit, MoreHorizontal, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface BountyActionsProps {
   bountyId: string;
@@ -10,50 +11,54 @@ interface BountyActionsProps {
   voteCount: number;
   onUpvote: () => void;
   onEdit: () => void;
-  onShare: () => void;
+  onShare?: () => void;
+  onBookmark?: () => void;
 }
 
-export default function BountyActions({ bountyId, canEdit, isVoted, voteCount, onUpvote, onEdit, onShare }: BountyActionsProps) {
+export default function BountyActions({ bountyId, canEdit, isVoted, voteCount, onUpvote, onEdit, onShare, onBookmark }: BountyActionsProps) {
+  const handleShare = () => {
+    if (onShare) return onShare();
+    try {
+      if (typeof window !== "undefined" && navigator.share) navigator.share({ url: window.location.href });
+    } catch {}
+  };
   return (
-    <div className="flex gap-2">
-      <Button
-        variant="default"
-        size="sm"
-        onClick={onUpvote}
-        aria-pressed={isVoted}
-        className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[#2A2A28] hover:bg-[#383838] text-gray-200 transition-colors ${isVoted ? "border border-[#1D1D1D] bg-[#383838] text-neutral-200" : ""}`}
-      >
-        <ArrowUpCircle className={`w-4 h-4 ${isVoted ? "fill-green-400 stroke-black" : ""}`} />
-        <span>{voteCount}</span>
-      </Button>
-      {canEdit && (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
         <Button
-          variant="default"
-          size="sm"
-          onClick={onEdit}
-          className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white transition-colors"
+          variant="outline"
+          size="icon"
+          className="rounded-md border border-neutral-700 bg-neutral-800/40 p-1 text-neutral-300 hover:bg-neutral-700/40"
+          aria-label="Open bounty actions"
         >
-          <Edit className="w-4 h-4" />
-          Edit
+          <MoreHorizontal className="h-4 w-4" />
         </Button>
-      )}
-      <Button
-        variant="default"
-        onClick={onShare}
-        size="sm"
-        className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[#2A2A28] hover:bg-[#383838] text-gray-200 transition-colors"
-      >
-        <Share2 className="w-4 h-4" />
-        Share
-      </Button>
-      <Button
-        variant="default"
-        size="sm"
-        className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white hover:bg-gray-100 text-black transition-colors"
-      >
-        <Bookmark className="w-4 h-4" />
-        Bookmark
-      </Button>
-    </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="z-10 w-44 rounded-md border border-neutral-800 bg-neutral-900 p-1 shadow">
+        <DropdownMenuItem
+          className={`text-neutral-200 hover:bg-neutral-800 ${isVoted ? "bg-neutral-800/50" : ""}`}
+          onClick={onUpvote}
+          aria-pressed={isVoted}
+        >
+          <ArrowUpCircle className={`h-3.5 w-3.5 ${isVoted ? "text-neutral-200 fill-neutral-200 stroke-black" : ""}`} />
+          Upvote
+          <span className="ml-auto text-neutral-500">{voteCount}</span>
+        </DropdownMenuItem>
+        {canEdit && (
+          <DropdownMenuItem className="text-neutral-200 hover:bg-neutral-800" onClick={onEdit}>
+            <Edit className="h-3.5 w-3.5" />
+            Edit
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem className="text-neutral-200 hover:bg-neutral-800" onClick={handleShare}>
+          <Share2 className="h-3.5 w-3.5" />
+          Share
+        </DropdownMenuItem>
+        <DropdownMenuItem className="text-neutral-200 hover:bg-neutral-800" onClick={onBookmark}>
+          <Bookmark className="h-3.5 w-3.5" />
+          Bookmark
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
