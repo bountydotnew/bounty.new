@@ -139,11 +139,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
   return (
     <div className="mb-8 p-6 rounded-lg bg-[#1D1D1D] border border-[#383838]/20">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-medium text-white">Comments</h2>
-        <div className="flex items-center gap-2 text-neutral-400 text-sm">
-          <MessageCircle className="w-4 h-4" />
-          <span>{commentsQuery.data?.length ?? 0}</span>
-        </div>
+        <h2 className="text-xl font-medium text-white">Comments <span className="text-sm text-neutral-400">({commentsQuery.data?.length ?? 0})</span></h2>
       </div>
 
       <div className="flex items-center justify-between mb-3">

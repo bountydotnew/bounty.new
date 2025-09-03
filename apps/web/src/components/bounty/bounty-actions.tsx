@@ -10,9 +10,10 @@ interface BountyActionsProps {
   voteCount: number;
   onUpvote: () => void;
   onEdit: () => void;
+  onShare: () => void;
 }
 
-export default function BountyActions({ bountyId, canEdit, isVoted, voteCount, onUpvote, onEdit }: BountyActionsProps) {
+export default function BountyActions({ bountyId, canEdit, isVoted, voteCount, onUpvote, onEdit, onShare }: BountyActionsProps) {
   return (
     <div className="flex gap-2">
       <Button
@@ -22,7 +23,7 @@ export default function BountyActions({ bountyId, canEdit, isVoted, voteCount, o
         aria-pressed={isVoted}
         className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[#2A2A28] hover:bg-[#383838] text-gray-200 transition-colors ${isVoted ? "border border-[#1D1D1D] bg-[#383838] text-neutral-200" : ""}`}
       >
-        <ArrowUpCircle className={`w-4 h-4 ${isVoted ? "text-neutral-200 fill-neutral-200 stroke-black" : ""}`} />
+        <ArrowUpCircle className={`w-4 h-4 ${isVoted ? "fill-green-400 stroke-black" : ""}`} />
         <span>{voteCount}</span>
       </Button>
       {canEdit && (
@@ -38,6 +39,7 @@ export default function BountyActions({ bountyId, canEdit, isVoted, voteCount, o
       )}
       <Button
         variant="default"
+        onClick={onShare}
         size="sm"
         className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[#2A2A28] hover:bg-[#383838] text-gray-200 transition-colors"
       >
