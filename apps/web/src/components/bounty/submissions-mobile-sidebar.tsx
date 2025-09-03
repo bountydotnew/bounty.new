@@ -10,9 +10,10 @@ import SubmissionCard from "@/components/bounty/submission-card";
 
 interface SubmissionsMobileSidebarProps {
   className?: string;
+  inline?: boolean;
 }
 
-export function SubmissionsMobileSidebar({ className }: SubmissionsMobileSidebarProps) {
+export function SubmissionsMobileSidebar({ className, inline = false }: SubmissionsMobileSidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 1024px)");
 
@@ -21,16 +22,29 @@ export function SubmissionsMobileSidebar({ className }: SubmissionsMobileSidebar
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <button
-          className={cn(
-            "fixed bottom-20 right-4 z-40 flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-900/90 px-3.5 py-2 text-xs text-neutral-300 backdrop-blur transition-colors hover:bg-neutral-800/90",
-            className,
-          )}
-          aria-label="Open submissions"
-        >
-          <PanelRightIcon className="h-4 w-4" />
-          <span>Submissions</span>
-        </button>
+        {inline ? (
+          <button
+            className={cn(
+              "flex items-center gap-2 rounded-md border border-neutral-800 bg-neutral-900/70 px-2.5 py-1.5 text-xs text-neutral-300 hover:bg-neutral-800/80",
+              className,
+            )}
+            aria-label="Open submissions"
+          >
+            <PanelRightIcon className="h-4 w-4" />
+            <span>Submissions</span>
+          </button>
+        ) : (
+          <button
+            className={cn(
+              "fixed bottom-20 right-4 z-40 flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-900/90 px-3.5 py-2 text-xs text-neutral-300 backdrop-blur transition-colors hover:bg-neutral-800/90",
+              className,
+            )}
+            aria-label="Open submissions"
+          >
+            <PanelRightIcon className="h-4 w-4" />
+            <span>Submissions</span>
+          </button>
+        )}
       </SheetTrigger>
       <SheetContent
         side="right"

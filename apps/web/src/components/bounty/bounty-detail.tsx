@@ -170,8 +170,13 @@ export default function BountyDetailPage({
   return (
     <div className="min-h-screen bg-[#111110] text-white p-6">
       <div className="max-w-[90%] mx-auto">
-        {/* Smart Navigation */}
-        <SmartNavigation />
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4 w-full">
+          <div className="flex items-center justify-between gap-2 w-full">
+            <SmartNavigation />
+            <SubmissionsMobileSidebar inline />
+          </div>
+        </div>
 
         <div className="flex flex-col xl:flex-row gap-8">
           {/* Main Content */}
@@ -247,6 +252,11 @@ export default function BountyDetailPage({
                     voteCount={votes.data?.count ?? 0}
                     onUpvote={handleUpvote}
                     onEdit={() => openEditModal(id)}
+                    onShare={() => {navigator.share({
+                      title: title,
+                      text: description,
+                      url: `${window.location.origin}/bounty/${id}`,
+                    });}}
                   />
                   <SubmissionsMobileSidebar />
                 </div>
