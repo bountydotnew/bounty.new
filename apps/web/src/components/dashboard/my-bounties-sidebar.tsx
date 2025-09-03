@@ -8,7 +8,7 @@ import {
   LOADING_SKELETON_COUNTS,
   PAGINATION_LIMITS,
 } from "@/constants/dashboard";
-import { formatNumber } from "@/lib/utils";
+import { formatNumber, formatLargeNumber } from "@/lib/utils";
 import type { Bounty } from "@/types/dashboard";
 
 interface MyBountiesSidebarProps {
@@ -28,10 +28,10 @@ export const MyBountiesSidebar = memo(function MyBountiesSidebar({
   );
 
   return (
-    <Card className="bountyCard border-none shadow-none">
+    <Card className="bg-[#1D1D1D] border border-[#383838]/20">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" aria-hidden="true" />
+        <CardTitle className="flex items-center gap-2 text-white">
+          <TrendingUp className="h-5 w-5 text-white" aria-hidden="true" />
           My Bounties
         </CardTitle>
       </CardHeader>
@@ -46,7 +46,7 @@ export const MyBountiesSidebar = memo(function MyBountiesSidebar({
           displayBounties.map((bounty, index) => (
             <div key={bounty.id}>
               <div
-                className="space-y-2 cursor-pointer hover:bg-muted/50 rounded p-2 -m-2 transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+                className="space-y-2 cursor-pointer hover:bg-[#2A2A28] rounded p-2 -m-2 transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
                 onClick={() => onBountyClick?.(bounty)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
@@ -62,7 +62,7 @@ export const MyBountiesSidebar = memo(function MyBountiesSidebar({
               >
                 <div className="flex items-center justify-between">
                   <h4
-                    className="text-sm font-medium truncate pr-2"
+                    className="text-sm font-medium truncate pr-2 text-white"
                     title={bounty.title}
                   >
                     {bounty.title}
@@ -74,27 +74,27 @@ export const MyBountiesSidebar = memo(function MyBountiesSidebar({
                         ? "default"
                         : "secondary"
                     }
-                    className="flex-shrink-0"
+                    className="flex-shrink-0 border-[#383838] text-gray-400"
                     aria-label={`Status: ${bounty.status}`}
                   >
                     {bounty.status.replace("_", " ")}
                   </Badge>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <DollarSign className="h-3 w-3" aria-hidden="true" />
-                  <span aria-label={`Amount: $${bounty.amount}`}>
-                    ${formatNumber(bounty.amount)}
+                <div className="flex items-center gap-2 text-xs text-gray-400">
+                  <DollarSign className="h-3 w-3 text-green-400" aria-hidden="true" />
+                  <span aria-label={`Amount: $${bounty.amount}`} className="text-green-400 font-medium">
+                    ${formatLargeNumber(bounty.amount)}
                   </span>
                 </div>
               </div>
               {index < displayBounties.length - 1 && (
-                <Separator className="mt-4" />
+                <Separator className="mt-4 bg-[#383838]" />
               )}
             </div>
           ))}
 
         {!isLoading && (!myBounties || myBounties.length === 0) && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-400">
             No bounties created yet
           </p>
         )}

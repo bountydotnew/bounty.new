@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatNumber } from "@/lib/utils";
+import { formatNumber, formatLargeNumber } from "@/lib/utils";
 import type { ActivityItem, RecommendedBounty } from "@/types/dashboard";
 
 interface ActivitySidebarProps {
@@ -60,16 +60,16 @@ export const ActivitySidebar = memo(function ActivitySidebar({
   if (isLoading) {
     return (
       <div className="space-y-6 lg:pr-2">
-        <Card>
+        <Card className="bg-[#1D1D1D] border border-[#383838]/20">
           <CardHeader>
-            <div className="h-6 bg-muted rounded w-32 animate-pulse"></div>
+            <div className="h-6 bg-[#383838] rounded w-32 animate-pulse"></div>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {Array.from({ length: 3 }, (_, i) => (
                 <div key={i} className="animate-pulse">
-                  <div className="h-4 bg-muted rounded w-3/4 mb-1"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
+                  <div className="h-4 bg-[#383838] rounded w-3/4 mb-1"></div>
+                  <div className="h-3 bg-[#383838] rounded w-1/2"></div>
                 </div>
               ))}
             </div>
@@ -81,23 +81,23 @@ export const ActivitySidebar = memo(function ActivitySidebar({
 
   return (
     <div className="space-y-6 lg:pr-2">
-      <Card className="bountyCard border-none shadow-none">
+      <Card className="bg-[#1D1D1D] border border-[#383838]/20">
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
+          <CardTitle className="text-white">Recent Activity</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {activities.map((activity) => (
               <div key={activity.id} className="flex items-start gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">{activity.title}</p>
+                  <p className="text-sm font-medium text-white">{activity.title}</p>
                   <p
-                    className="text-xs text-muted-foreground truncate"
+                    className="text-xs text-gray-400 truncate"
                     title={activity.description}
                   >
                     {activity.description}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-gray-400">
                     {activity.timestamp}
                   </p>
                 </div>
@@ -107,33 +107,33 @@ export const ActivitySidebar = memo(function ActivitySidebar({
         </CardContent>
       </Card>
 
-      <Card className="bountyCard border-none shadow-none">
+      <Card className="bg-[#1D1D1D] border border-[#383838]/20">
         <CardHeader>
-          <CardTitle>Recommended</CardTitle>
+          <CardTitle className="text-white">Recommended</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {recommendations.map((bounty) => (
               <div
                 key={bounty.id}
-                className="border rounded-lg p-3 hover:bg-muted/50 transition-colors cursor-pointer focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+                className="border border-[#383838]/20 rounded-lg p-3 hover:bg-[#2A2A28] transition-colors cursor-pointer focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
                 tabIndex={0}
                 role="button"
                 aria-label={`View recommended bounty: ${bounty.title}`}
               >
-                <h4 className="text-sm font-medium mb-1">{bounty.title}</h4>
+                <h4 className="text-sm font-medium mb-1 text-white">{bounty.title}</h4>
                 <p
-                  className="text-xs text-muted-foreground mb-2"
+                  className="text-xs text-gray-400 mb-2"
                   title={bounty.description}
                 >
                   {bounty.description}
                 </p>
                 <div className="flex items-center justify-between">
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs border-[#383838] text-gray-400">
                     {bounty.technology}
                   </Badge>
-                  <span className="text-sm font-medium text-primary">
-                    ${formatNumber(bounty.amount)}
+                  <span className="text-sm font-medium text-green-400">
+                    ${formatLargeNumber(bounty.amount)}
                   </span>
                 </div>
               </div>
