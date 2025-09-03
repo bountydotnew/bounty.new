@@ -244,7 +244,7 @@ export default function BountyDetailPage({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full justify-end">
                   <BountyActions
                     bountyId={id}
                     canEdit={canEditBounty}
@@ -258,7 +258,6 @@ export default function BountyDetailPage({
                       url: `${window.location.origin}/bounty/${id}`,
                     });}}
                   />
-                  <SubmissionsMobileSidebar />
                 </div>
               </div>
               <CommentEditDialog

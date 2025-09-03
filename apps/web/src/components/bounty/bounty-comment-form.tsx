@@ -7,9 +7,10 @@ interface BountyCommentFormProps {
   maxChars?: number;
   onSubmit: (content: string) => void;
   isSubmitting?: boolean;
+  error?: string | null;
 }
 
-export default function BountyCommentForm({ maxChars = 245, onSubmit, isSubmitting }: BountyCommentFormProps) {
+export default function BountyCommentForm({ maxChars = 245, onSubmit, isSubmitting, error }: BountyCommentFormProps) {
   const [value, setValue] = useState("");
   const remaining = useMemo(() => maxChars - value.length, [maxChars, value]);
   return (
@@ -33,7 +34,8 @@ export default function BountyCommentForm({ maxChars = 245, onSubmit, isSubmitti
           placeholder="Add a comment"
           className={`w-full min-h-20 rounded-md bg-neutral-900 border p-3 text-sm text-neutral-200 placeholder:text-neutral-500 focus:outline-none ${remaining < 0 ? "border-red-700" : "border-neutral-800"}`}
         />
-        <div className="mt-1 flex items-center justify-end text-[11px]">
+        <div className="mt-1 flex items-center justify-between text-[11px]">
+          <span className={`truncate ${error ? "text-red-500" : "text-transparent"}`}>{error || " "}</span>
           <span className={`${remaining < 0 ? "text-red-500" : "text-neutral-500"}`}>{remaining}</span>
         </div>
       </div>
