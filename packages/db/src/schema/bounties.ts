@@ -6,8 +6,12 @@ import {
   boolean,
   decimal,
   pgEnum,
+  index,
+  uniqueIndex,
+  integer,
 } from "drizzle-orm/pg-core";
 import { user } from "./auth";
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
 
 export const bountyStatusEnum = pgEnum("bounty_status", [
   "draft",
@@ -107,3 +111,67 @@ export const bountyApplication = pgTable("bounty_application", {
     .notNull()
     .default(sql`now()`),
 });
+
+export const bountyVote = pgTable(
+  "bounty_vote",
+  {
+    id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+    bountyId: text("bounty_id")
+      .notNull()
+      .references(() => bounty.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().default(sql`now()`),
+  },
+  (t) => [
+    uniqueIndex("bounty_vote_unique_idx").on(t.bountyId, t.userId),
+    index("bounty_vote_bounty_id_idx").on(t.bountyId),
+    index("bounty_vote_user_id_idx").on(t.userId),
+  ],
+);
+
+export const bountyComment = pgTable(
+  "bounty_comment",
+  {
+    id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+    bountyId: text("bounty_id")
+      .notNull()
+      .references(() => bounty.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    parentId: text("parent_id").references(
+      (): AnyPgColumn => bountyComment.id,
+      { onDelete: "cascade" },
+    ),
+    content: text("content").notNull(),
+    editCount: integer("edit_count").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().default(sql`now()`),
+    updatedAt: timestamp("updated_at").notNull().default(sql`now()`),
+  },
+  (t) => [
+    index("bounty_comment_bounty_id_idx").on(t.bountyId),
+    index("bounty_comment_user_id_idx").on(t.userId),
+    index("bounty_comment_parent_id_idx").on(t.parentId),
+  ],
+);
+
+export const bountyCommentLike = pgTable(
+  "bounty_comment_like",
+  {
+    id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+    commentId: text("comment_id")
+      .notNull()
+      .references(() => bountyComment.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().default(sql`now()`),
+  },
+  (t) => [
+    uniqueIndex("bounty_comment_like_unique_idx").on(t.commentId, t.userId),
+    index("bounty_comment_like_comment_id_idx").on(t.commentId),
+    index("bounty_comment_like_user_id_idx").on(t.userId),
+  ],
+);
