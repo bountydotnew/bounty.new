@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { containsBadWord } from "@/lib/bad-words";
 import { Button, HotkeyButton } from "@/components/ui/button";
 
 interface BountyCommentFormProps {
@@ -16,7 +20,18 @@ interface BountyCommentFormProps {
 }
 
 export default function BountyCommentForm({ maxChars = 245, onSubmit, isSubmitting, error, errorKey, placeholder, submitLabel, onCancel, autoFocus }: BountyCommentFormProps) {
-  const [value, setValue] = useState("");
+  const schema = z.object({
+    content: z
+      .string()
+      .min(1, "Required")
+      .max(maxChars, `Max ${maxChars} characters`),
+  });
+
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<{ content: string }>({
+    resolver: zodResolver(schema),
+    defaultValues: { content: "" },
+  });
+  const value = watch("content");
   const remaining = useMemo(() => maxChars - value.length, [maxChars, value]);
   const [shake, setShake] = useState(false);
 
@@ -32,13 +47,12 @@ export default function BountyCommentForm({ maxChars = 245, onSubmit, isSubmitti
   }, [error, errorKey]);
   return (
     <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        const content = value.trim();
-        if (!content || content.length > maxChars) return;
-        onSubmit(content);
-        setValue("");
-      }}
+      onSubmit={handleSubmit(({ content }) => {
+        const c = content.trim();
+        if (!c) return;
+        onSubmit(c);
+        reset();
+      })}
       className="space-y-2"
       onKeyDown={(e) => {
         if (e.key === "Enter" && !e.shiftKey && !(e.metaKey || e.ctrlKey)) {
@@ -46,30 +60,26 @@ export default function BountyCommentForm({ maxChars = 245, onSubmit, isSubmitti
           const content = value.trim();
           if (!content || content.length > maxChars) return;
           onSubmit(content);
-          setValue("");
+          setValue("content", "");
         }
         if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
           e.preventDefault();
           const content = value.trim();
           if (!content || content.length > maxChars) return;
           onSubmit(content);
-          setValue("");
+          setValue("content", "");
         }
       }}
     >
       <div className={shake ? "wiggle" : undefined}>
         <textarea
-          value={value}
-          onChange={(e) => {
-            const v = e.target.value;
-            if (v.length <= maxChars) setValue(v);
-          }}
+          {...register("content")}
           placeholder={placeholder ?? "Add a comment"}
           className={`w-full min-h-20 rounded-md bg-neutral-900 border p-3 text-sm text-neutral-200 placeholder:text-neutral-500 focus:outline-none ${remaining < 0 ? "border-red-700" : "border-neutral-800"}`}
           autoFocus={autoFocus}
         />
         <div className="mt-1 flex items-center justify-between text-[11px]">
-          <span className={`truncate ${error ? "text-red-500" : "text-transparent"}`}>{error || " "}</span>
+          <span className={`truncate ${error || errors.content ? "text-red-500" : "text-transparent"}`}>{(errors.content?.message as string) || error || " "}</span>
           <span className={`${remaining < 0 ? "text-red-500" : "text-neutral-500"}`}>{remaining}</span>
         </div>
       </div>

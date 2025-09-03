@@ -234,7 +234,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
                   onLike={likeComment}
                   onEdit={(id) => setEditState({ id, initial: (root as any).content || "" })}
                   onDelete={onDeleteComment}
-                  onReply={(id) => setReplyTo(id)}
+                  onReply={(id) => { setFormError(null); setFormErrorKey((k) => k + 1); setReplyTo(id); }}
                   allowReply={true}
                 />
                 {replyTo === root.id && (
@@ -242,12 +242,12 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
                     <BountyCommentForm
                       maxChars={245}
                       isSubmitting={addComment.isPending}
-                      onSubmit={(content) => { postComment(content, root.id); setReplyTo(null); }}
+                      onSubmit={(content) => { postComment(content, root.id); setReplyTo(null); setFormError(null); }}
                       error={formError}
                       errorKey={formErrorKey}
                       placeholder={`Reply to ${root.user?.name || "user"}`}
                       submitLabel="Reply"
-                      onCancel={() => setReplyTo(null)}
+                      onCancel={() => { setReplyTo(null); setFormError(null); setFormErrorKey((k) => k + 1); }}
                       autoFocus
                     />
                   </div>

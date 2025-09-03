@@ -57,7 +57,7 @@ export default function BountyDetailPage({
 
   const handleUpvote = () => {
     const key = trpc.bounties.getBountyVotes.queryKey({ bountyId: id });
-    const previous = queryClient.getQueryData<{ count: number; isVoted: boolean }>(key);
+    const previous = votes.data;
     const next = previous
       ? { count: previous.isVoted ? Math.max(0, Number(previous.count) - 1) : Number(previous.count) + 1, isVoted: !previous.isVoted }
       : { count: 1, isVoted: true };
@@ -85,7 +85,7 @@ export default function BountyDetailPage({
 
   const postComment = (content: string, parentId?: string) => {
     const key = trpc.bounties.getBountyComments.queryKey({ bountyId: id });
-    const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
+    const previous: import("@/types/comments").BountyCommentCacheItem[] = (commentsQuery.data as any) || [];
     const optimistic: import("@/types/comments").BountyCommentCacheItem[] = [
       {
         id: `temp-${Date.now()}`,
@@ -118,7 +118,7 @@ export default function BountyDetailPage({
 
   const likeComment = (commentId: string) => {
     const key = trpc.bounties.getBountyComments.queryKey({ bountyId: id });
-    const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
+    const previous: import("@/types/comments").BountyCommentCacheItem[] = (commentsQuery.data as any) || [];
     const next = previous.map((c) =>
       c.id === commentId ? { ...c, likeCount: Number(c.likeCount || 0) + (c.isLiked ? -1 : 1), isLiked: !c.isLiked } : c,
     );
@@ -141,7 +141,7 @@ export default function BountyDetailPage({
 
   const onEditComment = (commentId: string, newContent: string) => {
     const key = trpc.bounties.getBountyComments.queryKey({ bountyId: id });
-    const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
+    const previous: import("@/types/comments").BountyCommentCacheItem[] = (commentsQuery.data as any) || [];
     const next = previous.map((c) => (c.id === commentId ? { ...c, content: newContent, editCount: Number(c.editCount || 0) + 1 } : c));
     queryClient.setQueryData(key, next);
     updateComment.mutate(
@@ -155,7 +155,7 @@ export default function BountyDetailPage({
 
   const onDeleteComment = (commentId: string) => {
     const key = trpc.bounties.getBountyComments.queryKey({ bountyId: id });
-    const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
+    const previous: import("@/types/comments").BountyCommentCacheItem[] = (commentsQuery.data as any) || [];
     const next = previous.filter((c) => c.id !== commentId);
     queryClient.setQueryData(key, next);
     deleteComment.mutate(
