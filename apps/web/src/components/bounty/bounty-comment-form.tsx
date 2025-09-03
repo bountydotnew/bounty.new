@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, HotkeyButton } from "@/components/ui/button";
 
 interface BountyCommentFormProps {
   maxChars?: number;
@@ -36,6 +36,22 @@ export default function BountyCommentForm({ maxChars = 245, onSubmit, isSubmitti
         setValue("");
       }}
       className="space-y-2"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && !e.shiftKey && !(e.metaKey || e.ctrlKey)) {
+          e.preventDefault();
+          const content = value.trim();
+          if (!content || content.length > maxChars) return;
+          onSubmit(content);
+          setValue("");
+        }
+        if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+          e.preventDefault();
+          const content = value.trim();
+          if (!content || content.length > maxChars) return;
+          onSubmit(content);
+          setValue("");
+        }
+      }}
     >
       <div className={shake ? "wiggle" : undefined}>
         <textarea
@@ -53,7 +69,7 @@ export default function BountyCommentForm({ maxChars = 245, onSubmit, isSubmitti
         </div>
       </div>
       <div className="flex justify-end">
-        <Button size="sm" disabled={isSubmitting || value.trim().length === 0}>Post</Button>
+        <HotkeyButton hotkey={"⌘ Enter"} size="sm" disabled={isSubmitting || value.trim().length === 0}>Post</HotkeyButton>
       </div>
       <style jsx>{`
         @keyframes wiggle { 0%{transform:translateX(0)} 25%{transform:translateX(-4px)} 50%{transform:translateX(4px)} 75%{transform:translateX(-2px)} 100%{transform:translateX(0)} }

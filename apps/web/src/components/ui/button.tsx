@@ -19,6 +19,8 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 active:scale-[0.98]",
         text: "bg-transparent p-0 rounded-none hover:text-muted-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        hotkey:
+          "bg-primary text-primary-foreground shadow hover:bg-primary/90 active:scale-[0.98]",
       },
       size: {
         default: "h-9 px-4 py-2",
@@ -54,4 +56,28 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 Button.displayName = "Button";
 
-export { Button, buttonVariants };
+interface HotkeyButtonProps extends Omit<ButtonProps, "variant"> {
+  hotkey: string;
+}
+
+const HotkeyButton = React.forwardRef<HTMLButtonElement, HotkeyButtonProps>(
+  ({ hotkey, children, className, size, asChild = false, ...props }, ref) => {
+    return (
+      <Button
+        ref={ref}
+        variant="hotkey"
+        size={size}
+        className={cn("pl-3 pr-2", className)}
+        {...props}
+      >
+        <span className="mr-1">{children}</span>
+        <kbd className="ml-auto inline-flex items-center gap-1 rounded-md border border-white/20 bg-white/10 px-1.5 py-0.5 text-[11px] font-medium">
+          {hotkey}
+        </kbd>
+      </Button>
+    );
+  },
+);
+HotkeyButton.displayName = "HotkeyButton";
+
+export { Button, buttonVariants, HotkeyButton };
