@@ -75,6 +75,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
   }, [page]);
 
   const [formError, setFormError] = useState<string | null>(null);
+  const [formErrorKey, setFormErrorKey] = useState(0);
 
   const postComment = (content: string, parentId?: string) => {
     const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
@@ -83,6 +84,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
     );
     if (dup) {
       setFormError("You've already said this.");
+      setFormErrorKey((k) => k + 1);
       return;
     }
     const optimistic: import("@/types/comments").BountyCommentCacheItem[] = [
@@ -106,6 +108,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
         onError: (err: any) => {
           if (err?.message?.toLowerCase().includes("duplicate")) {
             setFormError("Duplicate comment on this bounty");
+            setFormErrorKey((k) => k + 1);
           }
           queryClient.setQueryData(key, previous);
         },
@@ -179,7 +182,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
         </div>
       </div>
 
-      <BountyCommentForm maxChars={245} isSubmitting={addComment.isPending} onSubmit={(content) => postComment(content)} error={formError} />
+      <BountyCommentForm maxChars={245} isSubmitting={addComment.isPending} onSubmit={(content) => postComment(content)} error={formError} errorKey={formErrorKey} />
 
       <CommentEditDialog
         open={Boolean(editState)}

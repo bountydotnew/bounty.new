@@ -8,20 +8,24 @@ interface BountyCommentFormProps {
   onSubmit: (content: string) => void;
   isSubmitting?: boolean;
   error?: string | null;
+  errorKey?: number;
 }
 
-export default function BountyCommentForm({ maxChars = 245, onSubmit, isSubmitting, error }: BountyCommentFormProps) {
+export default function BountyCommentForm({ maxChars = 245, onSubmit, isSubmitting, error, errorKey }: BountyCommentFormProps) {
   const [value, setValue] = useState("");
   const remaining = useMemo(() => maxChars - value.length, [maxChars, value]);
   const [shake, setShake] = useState(false);
 
   useEffect(() => {
-    if (error) {
+    if (!error) return;
+    setShake(false);
+    const id = requestAnimationFrame(() => {
       setShake(true);
-      const t = setTimeout(() => setShake(false), 200);
+      const t = setTimeout(() => setShake(false), 260);
       return () => clearTimeout(t);
-    }
-  }, [error]);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [error, errorKey]);
   return (
     <form
       onSubmit={(e) => {
@@ -53,7 +57,7 @@ export default function BountyCommentForm({ maxChars = 245, onSubmit, isSubmitti
       </div>
       <style jsx>{`
         @keyframes wiggle { 0%{transform:translateX(0)} 25%{transform:translateX(-4px)} 50%{transform:translateX(4px)} 75%{transform:translateX(-2px)} 100%{transform:translateX(0)} }
-        .wiggle { animation: wiggle 150ms ease-in-out; }
+        .wiggle { animation: wiggle 220ms ease-out; }
       `}</style>
     </form>
   );
