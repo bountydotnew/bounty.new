@@ -21,14 +21,16 @@ export function SubmissionsMobileSidebar({ className }: SubmissionsMobileSidebar
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button
-          variant="text"
-          size="sm"
-          className={cn("h-8 w-8 p-0 text-white hover:bg-[#383838] hover:text-white", className)}
+        <button
+          className={cn(
+            "fixed bottom-20 right-4 z-40 flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-900/90 px-3.5 py-2 text-xs text-neutral-300 backdrop-blur transition-colors hover:bg-neutral-800/90",
+            className,
+          )}
+          aria-label="Open submissions"
         >
           <PanelRightIcon className="h-4 w-4" />
-          <span className="sr-only">Open submissions</span>
-        </Button>
+          <span>Submissions</span>
+        </button>
       </SheetTrigger>
       <SheetContent
         side="right"
