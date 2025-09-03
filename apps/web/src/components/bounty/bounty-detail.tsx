@@ -1,13 +1,27 @@
-import { Share2, Bookmark, Check, Target, Edit } from "lucide-react";
+import { Share2, Bookmark, Check, Target, Edit, ArrowUpCircle, MessageCircle, Heart, MoreHorizontal, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import SubmissionCard from "@/components/bounty/submission-card";
+import BountyActions from "@/components/bounty/bounty-actions";
+import BountyComment from "@/components/bounty/bounty-comment";
+import BountyCommentForm from "@/components/bounty/bounty-comment-form";
 import Composer from "../markdown/Composer";
 import { Badge } from "../ui/badge";
 import { SmartNavigation } from "@/components/ui/smart-breadcrumb";
 import { EditBountyModal } from "@/components/bounty/edit-bounty-modal";
 import { formatBountyAmount, useBountyModals } from "@/lib/bounty-utils";
 import { formatLargeNumber } from "@/lib/utils";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { trpc } from "@/utils/trpc";
+import { useMemo, useState } from "react";
+import { authClient } from "@bounty/auth/client";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import CommentEditDialog from "@/components/bounty/comment-edit-dialog";
 
 interface BountyDetailPageProps {
   id: string;
@@ -34,6 +48,124 @@ export default function BountyDetailPage({
   canEditBounty,
 }: BountyDetailPageProps) {
   const { editModalOpen, openEditModal, closeEditModal, editingBountyId } = useBountyModals();
+  const queryClient = useQueryClient();
+  const { data: session } = authClient.useSession();
+  const votes = useQuery(trpc.bounties.getBountyVotes.queryOptions({ bountyId: id }));
+  const voteMutation = useMutation({
+    ...trpc.bounties.voteBounty.mutationOptions(),
+  });
+
+  const handleUpvote = () => {
+    const key = trpc.bounties.getBountyVotes.queryKey({ bountyId: id });
+    const previous = queryClient.getQueryData<{ count: number; isVoted: boolean }>(key);
+    const next = previous
+      ? { count: previous.isVoted ? Math.max(0, Number(previous.count) - 1) : Number(previous.count) + 1, isVoted: !previous.isVoted }
+      : { count: 1, isVoted: true };
+    queryClient.setQueryData(key, next);
+    voteMutation.mutate(
+      { bountyId: id },
+      {
+        onError: () => {
+          if (previous) queryClient.setQueryData(key, previous);
+        },
+        onSettled: () => {
+          queryClient.invalidateQueries({ queryKey: key });
+        },
+      },
+    );
+  };
+  const commentsQuery = useQuery(trpc.bounties.getBountyComments.queryOptions({ bountyId: id }));
+  const [commentText, setCommentText] = useState("");
+  const maxChars = 245;
+  const remaining = maxChars - commentText.length;
+  const addComment = useMutation({
+    ...trpc.bounties.addBountyComment.mutationOptions(),
+  });
+  const [editState, setEditState] = useState<{ id: string; initial: string } | null>(null);
+
+  const postComment = (content: string, parentId?: string) => {
+    const key = trpc.bounties.getBountyComments.queryKey({ bountyId: id });
+    const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
+    const optimistic: import("@/types/comments").BountyCommentCacheItem[] = [
+      {
+        id: `temp-${Date.now()}`,
+        content,
+        parentId: parentId ?? null,
+        createdAt: new Date().toISOString(),
+        user: session?.user ? { id: session.user.id, name: session.user.name || "You", image: session.user.image || null } : { id: "me", name: "You", image: null },
+        likeCount: 0,
+        isLiked: false,
+        editCount: 0,
+      },
+      ...previous,
+    ];
+    queryClient.setQueryData(key, optimistic);
+    addComment.mutate(
+      { bountyId: id, content, parentId },
+      {
+        onError: () => {
+          queryClient.setQueryData(key, previous);
+        },
+        onSettled: () => {
+          queryClient.invalidateQueries({ queryKey: key });
+        },
+      },
+    );
+  };
+  const toggleLike = useMutation({
+    ...trpc.bounties.toggleCommentLike.mutationOptions(),
+  });
+
+  const likeComment = (commentId: string) => {
+    const key = trpc.bounties.getBountyComments.queryKey({ bountyId: id });
+    const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
+    const next = previous.map((c) =>
+      c.id === commentId ? { ...c, likeCount: Number(c.likeCount || 0) + (c.isLiked ? -1 : 1), isLiked: !c.isLiked } : c,
+    );
+    queryClient.setQueryData(key, next);
+    toggleLike.mutate(
+      { commentId },
+      {
+        onError: () => {
+          queryClient.setQueryData(key, previous);
+        },
+        onSettled: () => {
+          queryClient.invalidateQueries({ queryKey: key });
+        },
+      },
+    );
+  };
+
+  const updateComment = useMutation({ ...trpc.bounties.updateBountyComment.mutationOptions() });
+  const deleteComment = useMutation({ ...trpc.bounties.deleteBountyComment.mutationOptions() });
+
+  const onEditComment = (commentId: string, newContent: string) => {
+    const key = trpc.bounties.getBountyComments.queryKey({ bountyId: id });
+    const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
+    const next = previous.map((c) => (c.id === commentId ? { ...c, content: newContent, editCount: Number(c.editCount || 0) + 1 } : c));
+    queryClient.setQueryData(key, next);
+    updateComment.mutate(
+      { commentId, content: newContent },
+      {
+        onError: () => queryClient.setQueryData(key, previous),
+        onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
+      },
+    );
+  };
+
+  const onDeleteComment = (commentId: string) => {
+    const key = trpc.bounties.getBountyComments.queryKey({ bountyId: id });
+    const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
+    const next = previous.filter((c) => c.id !== commentId);
+    queryClient.setQueryData(key, next);
+    deleteComment.mutate(
+      { commentId },
+      {
+        onError: () => queryClient.setQueryData(key, previous),
+        onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
+      },
+    );
+  };
 
   return (
     <div className="min-h-screen bg-[#111110] text-white p-6">
@@ -107,36 +239,28 @@ export default function BountyDetailPage({
                   </div>
                 </div>
 
-                <div className="flex gap-2">
-                  {canEditBounty && (
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={() => openEditModal(id)}
-                      className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white transition-colors"
-                    >
-                      <Edit className="w-4 h-4" />
-                      Edit
-                    </Button>
-                  )}
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[#2A2A28] hover:bg-[#383838] text-gray-200 transition-colors"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    Share
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white hover:bg-gray-100 text-black transition-colors"
-                  >
-                    <Bookmark className="w-4 h-4" />
-                    Bookmark
-                  </Button>
-                </div>
+                <BountyActions
+                  bountyId={id}
+                  canEdit={canEditBounty}
+                  isVoted={Boolean(votes.data?.isVoted)}
+                  voteCount={votes.data?.count ?? 0}
+                  onUpvote={handleUpvote}
+                  onEdit={() => openEditModal(id)}
+                />
               </div>
+              <CommentEditDialog
+                open={Boolean(editState)}
+                onOpenChange={(o) => {
+                  if (!o) setEditState(null);
+                }}
+                initialValue={editState?.initial || ""}
+                onSave={(val) => {
+                  if (!editState) return;
+                  onEditComment(editState.id, val);
+                  setEditState(null);
+                }}
+                isSaving={updateComment.isPending}
+              />
             </div>
 
             {/* About Section */}
@@ -146,7 +270,34 @@ export default function BountyDetailPage({
               </h2>
               <Composer>{description}</Composer>
             </div>
-
+            <div className="mb-8 p-6 rounded-lg bg-[#1D1D1D] border border-[#383838]/20">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-medium text-white">Comments</h2>
+                <div className="flex items-center gap-2 text-neutral-400 text-sm">
+                  <MessageCircle className="w-4 h-4" />
+                  <span>{commentsQuery.data?.length ?? 0}</span>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <BountyCommentForm
+                  maxChars={maxChars}
+                  isSubmitting={addComment.isPending}
+                  onSubmit={(content) => postComment(content)}
+                />
+                <div className="space-y-2">
+                  {(commentsQuery.data || []).map((c) => (
+                    <BountyComment
+                      key={c.id}
+                      comment={c as any}
+                      isOwner={Boolean((c as any).user?.id && session?.user?.id && (c as any).user?.id === session.user.id)}
+                      onLike={likeComment}
+                      onEdit={(id) => setEditState({ id, initial: (c as any).content || "" })}
+                      onDelete={onDeleteComment}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
 
           </div>
 
