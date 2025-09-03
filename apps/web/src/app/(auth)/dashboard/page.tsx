@@ -104,7 +104,7 @@ export default function Dashboard() {
               {/* Center - Bounties Feed */}
               <div className="lg:col-span-2 flex flex-col rounded-lg">
                 <div className="lg:overflow-y-auto lg:h-full rounded-lg">
-                  <BountiesFeed
+                <BountiesFeed
                     layout="list"
                     bounties={bounties.data?.data as Bounty[] | undefined}
                     isLoading={bounties.isLoading}
