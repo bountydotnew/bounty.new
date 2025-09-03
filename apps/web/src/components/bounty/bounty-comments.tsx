@@ -8,6 +8,7 @@ import BountyComment from "@/components/bounty/bounty-comment";
 import CommentEditDialog from "@/components/bounty/comment-edit-dialog";
 import { MessageCircle } from "lucide-react";
 import { authClient } from "@bounty/auth/client";
+import type { BountyCommentCacheItem } from "@/types/comments";
 
 export interface BountyCommentsProps {
   bountyId: string;
@@ -40,6 +41,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
 
   const pages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const current = useMemo(() => sorted.slice((page - 1) * pageSize, page * pageSize), [sorted, page, pageSize]);
+  const [replyTo, setReplyTo] = useState<string | null>(null);
 
   const pagerRef = useRef<HTMLDivElement | null>(null);
   const [showFloatingPager, setShowFloatingPager] = useState(false);
@@ -78,7 +80,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
   const [formErrorKey, setFormErrorKey] = useState(0);
 
   const postComment = (content: string, parentId?: string) => {
-    const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
+    const previous: BountyCommentCacheItem[] = (commentsQuery.data as BountyCommentCacheItem[] | undefined) || [];
     const dup = previous.find(
       (c) => c.content.trim() === content.trim() && c.user?.id && session?.user?.id && c.user.id === session.user.id,
     );
@@ -87,7 +89,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
       setFormErrorKey((k) => k + 1);
       return;
     }
-    const optimistic: import("@/types/comments").BountyCommentCacheItem[] = [
+    const optimistic: BountyCommentCacheItem[] = [
       {
         id: `temp-${Date.now()}`,
         content,
@@ -118,7 +120,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
   };
 
   const likeComment = (commentId: string) => {
-    const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
+    const previous: BountyCommentCacheItem[] = (commentsQuery.data as BountyCommentCacheItem[] | undefined) || [];
     const next = previous.map((c) => (c.id === commentId ? { ...c, likeCount: Number(c.likeCount || 0) + (c.isLiked ? -1 : 1), isLiked: !c.isLiked } : c));
     queryClient.setQueryData(key, next);
     toggleLike.mutate(
@@ -131,7 +133,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
   };
 
   const onEditComment = (commentId: string, newContent: string) => {
-    const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
+    const previous: BountyCommentCacheItem[] = (commentsQuery.data as BountyCommentCacheItem[] | undefined) || [];
     const next = previous.map((c) => (c.id === commentId ? { ...c, content: newContent, editCount: Number(c.editCount || 0) + 1 } : c));
     queryClient.setQueryData(key, next);
     updateComment.mutate(
@@ -144,7 +146,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
   };
 
   const onDeleteComment = (commentId: string) => {
-    const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
+    const previous: BountyCommentCacheItem[] = (commentsQuery.data as BountyCommentCacheItem[] | undefined) || [];
     const next = previous.filter((c) => c.id !== commentId);
     queryClient.setQueryData(key, next);
     deleteComment.mutate(
@@ -182,7 +184,17 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
         </div>
       </div>
 
-      <BountyCommentForm maxChars={245} isSubmitting={addComment.isPending} onSubmit={(content) => postComment(content)} error={formError} errorKey={formErrorKey} />
+      {!replyTo && (
+        <BountyCommentForm
+          maxChars={245}
+          isSubmitting={addComment.isPending}
+          onSubmit={(content) => postComment(content)}
+          error={formError}
+          errorKey={formErrorKey}
+          placeholder="Add a comment"
+          submitLabel="Post"
+        />
+      )}
 
       <CommentEditDialog
         open={Boolean(editState)}
@@ -201,16 +213,71 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
       <div
         className={`space-y-2 mt-4 transition-all duration-200 ${entering ? (animDir > 0 ? "opacity-0 translate-y-2" : "opacity-0 -translate-y-2") : "opacity-100 translate-y-0"}`}
       >
-        {current.map((c) => (
-          <BountyComment
-            key={c.id}
-            comment={c as any}
-            isOwner={Boolean((c as any).user?.id && session?.user?.id && (c as any).user?.id === session.user.id)}
-            onLike={likeComment}
-            onEdit={(id) => setEditState({ id, initial: (c as any).content || "" })}
-            onDelete={onDeleteComment}
-          />
-        ))}
+        {commentsQuery.isLoading ? (
+          <div className="space-y-2 mt-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="animate-pulse rounded-md border border-neutral-800 bg-neutral-900/30 p-3">
+                <div className="h-4 w-24 bg-neutral-800 rounded mb-2" />
+                <div className="h-3 w-full bg-neutral-800 rounded" />
+              </div>
+            ))}
+          </div>
+        ) : current
+          .filter((c: any) => !c.parentId)
+          .map((root: any) => {
+            const children = (commentsQuery.data || []).filter((x: any) => x.parentId === root.id);
+            return (
+              <div key={root.id} className="space-y-2">
+                <BountyComment
+                  comment={root}
+                  isOwner={Boolean(root.user?.id && session?.user?.id && root.user?.id === session.user.id)}
+                  onLike={likeComment}
+                  onEdit={(id) => setEditState({ id, initial: (root as any).content || "" })}
+                  onDelete={onDeleteComment}
+                  onReply={(id) => setReplyTo(id)}
+                  allowReply={true}
+                />
+                {replyTo === root.id && (
+                  <div className="ml-4 mt-2">
+                    <BountyCommentForm
+                      maxChars={245}
+                      isSubmitting={addComment.isPending}
+                      onSubmit={(content) => { postComment(content, root.id); setReplyTo(null); }}
+                      error={formError}
+                      errorKey={formErrorKey}
+                      placeholder={`Reply to ${root.user?.name || "user"}`}
+                      submitLabel="Reply"
+                      onCancel={() => setReplyTo(null)}
+                      autoFocus
+                    />
+                  </div>
+                )}
+                {children.length > 0 && (
+                  <div className="ml-4 pl-3 border-l border-neutral-800 space-y-2">
+                    {children.map((child: any) => (
+                      <BountyComment
+                        key={child.id}
+                        comment={child}
+                        isOwner={Boolean(child.user?.id && session?.user?.id && child.user?.id === session.user.id)}
+                        onLike={likeComment}
+                        onEdit={(id) => setEditState({ id, initial: (child as any).content || "" })}
+                        onDelete={(id) => {
+                          const key = trpc.bounties.getBountyComments.queryKey({ bountyId });
+                          const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
+                          const next = previous.map((c) => (c.id === id ? { ...c, _removing: true } as any : c));
+                          queryClient.setQueryData(key, next);
+                          onDeleteComment(id);
+                        }}
+                        allowReply={false}
+                        parentRef={{ userName: root.user?.name || "Anonymous", snippet: String(root.content).slice(0, 40) + (String(root.content).length > 40 ? "…" : "") }}
+                        isRemoving={(child as any)._removing}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
       </div>
 
       <div ref={pagerRef} className="mt-4 flex items-center justify-between">

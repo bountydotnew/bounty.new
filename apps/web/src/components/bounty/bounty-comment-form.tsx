@@ -9,9 +9,13 @@ interface BountyCommentFormProps {
   isSubmitting?: boolean;
   error?: string | null;
   errorKey?: number;
+  placeholder?: string;
+  submitLabel?: string;
+  onCancel?: () => void;
+  autoFocus?: boolean;
 }
 
-export default function BountyCommentForm({ maxChars = 245, onSubmit, isSubmitting, error, errorKey }: BountyCommentFormProps) {
+export default function BountyCommentForm({ maxChars = 245, onSubmit, isSubmitting, error, errorKey, placeholder, submitLabel, onCancel, autoFocus }: BountyCommentFormProps) {
   const [value, setValue] = useState("");
   const remaining = useMemo(() => maxChars - value.length, [maxChars, value]);
   const [shake, setShake] = useState(false);
@@ -60,16 +64,20 @@ export default function BountyCommentForm({ maxChars = 245, onSubmit, isSubmitti
             const v = e.target.value;
             if (v.length <= maxChars) setValue(v);
           }}
-          placeholder="Add a comment"
+          placeholder={placeholder ?? "Add a comment"}
           className={`w-full min-h-20 rounded-md bg-neutral-900 border p-3 text-sm text-neutral-200 placeholder:text-neutral-500 focus:outline-none ${remaining < 0 ? "border-red-700" : "border-neutral-800"}`}
+          autoFocus={autoFocus}
         />
         <div className="mt-1 flex items-center justify-between text-[11px]">
           <span className={`truncate ${error ? "text-red-500" : "text-transparent"}`}>{error || " "}</span>
           <span className={`${remaining < 0 ? "text-red-500" : "text-neutral-500"}`}>{remaining}</span>
         </div>
       </div>
-      <div className="flex justify-end">
-        <HotkeyButton hotkey={"⏎"} size="sm" disabled={isSubmitting || value.trim().length === 0}>Post</HotkeyButton>
+      <div className="flex justify-end gap-2">
+        {onCancel && (
+          <Button type="button" size="sm" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancel</Button>
+        )}
+        <HotkeyButton hotkey={"⏎"} size="sm" disabled={isSubmitting || value.trim().length === 0}>{submitLabel ?? "Post"}</HotkeyButton>
       </div>
       <style jsx>{`
         @keyframes wiggle { 0%{transform:translateX(0)} 25%{transform:translateX(-4px)} 50%{transform:translateX(4px)} 75%{transform:translateX(-2px)} 100%{transform:translateX(0)} }

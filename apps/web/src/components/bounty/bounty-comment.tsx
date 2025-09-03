@@ -3,9 +3,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Heart, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Heart, MoreHorizontal, Pencil, Trash2, MessageSquareReply } from "lucide-react";
 import type { BountyCommentCacheItem } from "@/types/comments";
 import { formatRelativeTime } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 interface BountyCommentProps {
     comment: BountyCommentCacheItem;
@@ -13,12 +14,21 @@ interface BountyCommentProps {
     onLike: (id: string) => void;
     onEdit: (id: string) => void;
     onDelete: (id: string) => void;
+    onReply?: (id: string) => void;
+    allowReply?: boolean;
+    parentRef?: { userName: string; snippet: string } | null;
+    isRemoving?: boolean;
 }
 
-export default function BountyComment({ comment, isOwner, onLike, onEdit, onDelete }: BountyCommentProps) {
+export default function BountyComment({ comment, isOwner, onLike, onEdit, onDelete, onReply, allowReply = false, parentRef, isRemoving = false }: BountyCommentProps) {
     const edits = Number(comment.editCount || 0);
+    const [entered, setEntered] = useState(false);
+    useEffect(() => {
+        const id = requestAnimationFrame(() => setEntered(true));
+        return () => cancelAnimationFrame(id);
+    }, []);
     return (
-        <div className="rounded-md border border-neutral-800 bg-neutral-900/30 p-3">
+        <div className={`rounded-md border border-neutral-800 bg-neutral-900/30 p-3 overflow-x-hidden transition-all duration-200 will-change-transform ${entered && !isRemoving ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"} ${isRemoving ? "opacity-0 -translate-y-1" : ""}`}>
             <div className="flex items-center gap-2 mb-2">
                 <Avatar className="h-6 w-6">
                     <AvatarImage src={comment.user?.image || ""} />
@@ -38,6 +48,16 @@ export default function BountyComment({ comment, isOwner, onLike, onEdit, onDele
                         <Heart className={`h-3.5 w-3.5 ${comment.isLiked ? "text-red-400 fill-red-400 stroke-black" : ""}`} />
                         <span>{comment.likeCount || 0}</span>
                     </button>
+                    {allowReply && onReply && (
+                        <button
+                            onClick={() => onReply(comment.id)}
+                            className="flex items-center gap-1 rounded-md border border-neutral-700 bg-neutral-800/40 px-2 py-0.5 text-[11px] text-neutral-300 hover:bg-neutral-700/40"
+                            aria-label="Reply to comment"
+                        >
+                            <MessageSquareReply className="h-3.5 w-3.5" />
+                            Reply
+                        </button>
+                    )}
                     {isOwner && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -73,7 +93,12 @@ export default function BountyComment({ comment, isOwner, onLike, onEdit, onDele
                     )}
                 </div>
             </div>
-            <div className="text-sm text-neutral-200 whitespace-pre-wrap">{comment.content}</div>
+            {parentRef && (
+                <div className="mb-1 text-[11px] text-neutral-500">
+                    replying to <span className="text-neutral-300">{parentRef.userName}</span>: {parentRef.snippet}
+                </div>
+            )}
+            <div className="text-sm text-neutral-200 whitespace-pre-wrap text-wrap break-normal">{comment.content}</div>
         </div>
     );
 }
