@@ -269,52 +269,53 @@ export default function BountyDetailPage({
               </h2>
               <Composer>{description}</Composer>
             </div>
-            <BountyComments bountyId={id} pageSize={10} />
+            <BountyComments bountyId={id} pageSize={5} />
 
           </div>
 
-          {/* Submissions Sidebar */}
-          <div className="w-full xl:w-[480px] xl:flex-shrink-0">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-medium text-white">Submissions</h3>
-              <Button className="flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-primary-foreground transition-colors">
-                Add submission
-              </Button>
-            </div>
+          <div className="hidden xl:block xl:w-[480px] xl:flex-shrink-0">
+            <div className="sticky top-0 xl:h-[calc(100vh-8rem)] xl:overflow-y-auto xl:pr-2">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-medium text-white">Submissions</h3>
+                <Button className="flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-primary-foreground transition-colors">
+                  Add submission
+                </Button>
+              </div>
 
-            <div className="space-y-4">
-              <SubmissionCard
-                user="Fishy"
-                rank="Rank 5"
-                description="Here is my submission for the shadcn styling, in the ss you can se how the user can select the theme"
-                avatarSrc="/placeholder.svg?height=40&width=40"
-                hasBadge={true}
-                previewSrc="/placeholder.svg?height=80&width=80"
-                className="w-full"
-              />
+              <div className="space-y-4">
+                <SubmissionCard
+                  user="Fishy"
+                  rank="Rank 5"
+                  description="Here is my submission for the shadcn styling, in the ss you can se how the user can select the theme"
+                  avatarSrc="/placeholder.svg?height=40&width=40"
+                  hasBadge={true}
+                  previewSrc="/placeholder.svg?height=80&width=80"
+                  className="w-full"
+                />
 
-              <SubmissionCard
-                user="Sergio"
-                rank="Rank 2"
-                description="I one shotted this with v0"
-                avatarSrc="/placeholder.svg?height=40&width=40"
-                hasBadge={true}
-                previewSrc="/placeholder.svg?height=80&width=80"
-                className="w-full"
-              />
+                <SubmissionCard
+                  user="Sergio"
+                  rank="Rank 2"
+                  description="I one shotted this with v0"
+                  avatarSrc="/placeholder.svg?height=40&width=40"
+                  hasBadge={true}
+                  previewSrc="/placeholder.svg?height=80&width=80"
+                  className="w-full"
+                />
 
-              <SubmissionCard
-                user="Ahmet"
-                rank="New user"
-                description="There is my try"
-                avatarSrc="/placeholder.svg?height=40&width=40"
-                hasBadge={false}
-                previewSrc="/placeholder.svg?height=80&width=80"
-                className="w-full"
-              />
+                <SubmissionCard
+                  user="Ahmet"
+                  rank="New user"
+                  description="There is my try"
+                  avatarSrc="/placeholder.svg?height=40&width=40"
+                  hasBadge={false}
+                  previewSrc="/placeholder.svg?height=80&width=80"
+                  className="w-full"
+                />
 
-              <div className="text-center text-gray-400 text-sm mt-6">
-                That&apos;s all for now...
+                <div className="text-center text-gray-400 text-sm mt-6">
+                  That&apos;s all for now...
+                </div>
               </div>
             </div>
           </div>
