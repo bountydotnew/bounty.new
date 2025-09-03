@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import SubmissionCard from "@/components/bounty/submission-card";
 import BountyActions from "@/components/bounty/bounty-actions";
-import BountyComment from "@/components/bounty/bounty-comment";
-import BountyCommentForm from "@/components/bounty/bounty-comment-form";
+import BountyComments from "@/components/bounty/bounty-comments";
 import Composer from "../markdown/Composer";
 import { Badge } from "../ui/badge";
 import { SmartNavigation } from "@/components/ui/smart-breadcrumb";
@@ -270,34 +269,7 @@ export default function BountyDetailPage({
               </h2>
               <Composer>{description}</Composer>
             </div>
-            <div className="mb-8 p-6 rounded-lg bg-[#1D1D1D] border border-[#383838]/20">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-medium text-white">Comments</h2>
-                <div className="flex items-center gap-2 text-neutral-400 text-sm">
-                  <MessageCircle className="w-4 h-4" />
-                  <span>{commentsQuery.data?.length ?? 0}</span>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <BountyCommentForm
-                  maxChars={maxChars}
-                  isSubmitting={addComment.isPending}
-                  onSubmit={(content) => postComment(content)}
-                />
-                <div className="space-y-2">
-                  {(commentsQuery.data || []).map((c) => (
-                    <BountyComment
-                      key={c.id}
-                      comment={c as any}
-                      isOwner={Boolean((c as any).user?.id && session?.user?.id && (c as any).user?.id === session.user.id)}
-                      onLike={likeComment}
-                      onEdit={(id) => setEditState({ id, initial: (c as any).content || "" })}
-                      onDelete={onDeleteComment}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
+            <BountyComments bountyId={id} pageSize={10} />
 
           </div>
 
