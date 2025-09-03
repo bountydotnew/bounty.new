@@ -239,14 +239,17 @@ export default function BountyDetailPage({
                   </div>
                 </div>
 
-                <BountyActions
-                  bountyId={id}
-                  canEdit={canEditBounty}
-                  isVoted={Boolean(votes.data?.isVoted)}
-                  voteCount={votes.data?.count ?? 0}
-                  onUpvote={handleUpvote}
-                  onEdit={() => openEditModal(id)}
-                />
+                <div className="flex items-center gap-2">
+                  <BountyActions
+                    bountyId={id}
+                    canEdit={canEditBounty}
+                    isVoted={Boolean(votes.data?.isVoted)}
+                    voteCount={votes.data?.count ?? 0}
+                    onUpvote={handleUpvote}
+                    onEdit={() => openEditModal(id)}
+                  />
+                  <SubmissionsMobileSidebar />
+                </div>
               </div>
               <CommentEditDialog
                 open={Boolean(editState)}
@@ -278,11 +281,10 @@ export default function BountyDetailPage({
             <div className="sticky top-0 xl:h-[calc(100vh-8rem)] xl:overflow-y-auto xl:pr-2">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-medium text-white">Submissions</h3>
-                <div className="flex items-center gap-2">
-                  <Button className="hidden xl:inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-primary-foreground transition-colors">
+                <div className="hidden xl:flex items-center gap-2">
+                  <Button className="items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-primary-foreground transition-colors">
                     Add submission
                   </Button>
-                  <SubmissionsMobileSidebar />
                 </div>
               </div>
 
