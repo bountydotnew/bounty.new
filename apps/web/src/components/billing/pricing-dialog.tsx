@@ -35,10 +35,9 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
   };
 
   const features = [
-    "Lower fees on bounty transactions",
+    "Lower fees on bounties (-50%)",
     "Create multiple concurrent bounties",
-    "Priority support",
-    "Early access to new features",
+    "Edit comments as many times as you want",
   ];
 
   return (
