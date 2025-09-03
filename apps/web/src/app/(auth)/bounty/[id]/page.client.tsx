@@ -8,6 +8,9 @@ import BountyDetailPage from "@/components/bounty/bounty-detail";
 
 import { canEditBounty } from "@/lib/bounty-utils";
 import { authClient } from "@bounty/auth/client";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function BountyPage({
   params,
@@ -15,22 +18,56 @@ export default function BountyPage({
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = use(params);
+  const isValidUuid = (v: string | undefined | null) =>
+    typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+  const validId = isValidUuid(resolvedParams?.id);
 
   const { data: session } = authClient.useSession();
-  const bounty = useQuery(
-    trpc.bounties.fetchBountyById.queryOptions({ id: resolvedParams.id }),
-  );
+  const bounty = useQuery({
+    ...trpc.bounties.fetchBountyById.queryOptions({ id: resolvedParams.id }),
+    enabled: validId,
+  });
+  const router = useRouter();
+
+  if (!validId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="px-6 py-5 text-center max-w-lg mx-auto">
+          <h1 className="text-xl font-semibold text-white">You got us scratching our heads... 😅</h1>
+          <p className="mt-1 text-sm text-neutral-400">Either you typed out the entire url and still got it wrong, someone is trolling you, or you arrived too late!</p>
+          <Button onClick={() => router.push("/dashboard")} variant="outline" className="mt-6">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Take me home
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (bounty.isLoading) {
     return <BountyDetailSkeleton />;
   }
 
   if (bounty.error) {
-    return <div>Error: {bounty.error.message}</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="rounded-lg border border-neutral-800 bg-neutral-900 px-6 py-5 text-center">
+          <h1 className="text-xl font-semibold text-white">Couldn&apos;t load bounty</h1>
+          <p className="mt-1 text-sm text-neutral-400">Please try again in a moment.</p>
+        </div>
+      </div>
+    );
   }
 
   if (!bounty.data?.data) {
-    return <div>Bounty not found</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="rounded-lg border border-neutral-800 bg-neutral-900 px-6 py-5 text-center">
+          <h1 className="text-xl font-semibold text-white">Bounty not found</h1>
+          <p className="mt-1 text-sm text-neutral-400">It may have been removed or never existed.</p>
+        </div>
+      </div>
+    );
   }
 
   const canEdit = session?.user?.id && bounty.data?.data ? canEditBounty(bounty.data.data, session.user.id) : false;
