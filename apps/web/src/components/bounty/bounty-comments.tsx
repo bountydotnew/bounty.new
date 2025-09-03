@@ -42,6 +42,10 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
   const pagerRef = useRef<HTMLDivElement | null>(null);
   const [showFloatingPager, setShowFloatingPager] = useState(false);
 
+  const prevPageRef = useRef(page);
+  const [entering, setEntering] = useState(false);
+  const [animDir, setAnimDir] = useState<1 | -1>(1);
+
   useEffect(() => {
     const onScroll = () => {
       const el = pagerRef.current;
@@ -57,6 +61,16 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
       window.removeEventListener("resize", onScroll);
     };
   }, []);
+
+  useEffect(() => {
+    const old = prevPageRef.current;
+    const dir = page >= old ? 1 : -1;
+    setAnimDir(dir);
+    setEntering(true);
+    const id = requestAnimationFrame(() => setEntering(false));
+    prevPageRef.current = page;
+    return () => cancelAnimationFrame(id);
+  }, [page]);
 
   const postComment = (content: string, parentId?: string) => {
     const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
@@ -154,7 +168,9 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
 
       <BountyCommentForm maxChars={245} isSubmitting={addComment.isPending} onSubmit={(content) => postComment(content)} />
 
-      <div className="space-y-2 mt-4">
+      <div
+        className={`space-y-2 mt-4 transition-all duration-200 ${entering ? (animDir > 0 ? "opacity-0 translate-y-2" : "opacity-0 -translate-y-2") : "opacity-100 translate-y-0"}`}
+      >
         {current.map((c) => (
           <BountyComment
             key={c.id}
