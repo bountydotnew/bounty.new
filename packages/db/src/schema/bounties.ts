@@ -154,6 +154,11 @@ export const bountyComment = pgTable(
     index("bounty_comment_bounty_id_idx").on(t.bountyId),
     index("bounty_comment_user_id_idx").on(t.userId),
     index("bounty_comment_parent_id_idx").on(t.parentId),
+    uniqueIndex("bounty_comment_unique_user_content_per_bounty").on(
+      t.bountyId,
+      t.userId,
+      t.content,
+    ),
   ],
 );
 

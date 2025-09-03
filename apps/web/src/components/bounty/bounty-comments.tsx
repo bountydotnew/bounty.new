@@ -76,6 +76,10 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
 
   const postComment = (content: string, parentId?: string) => {
     const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
+    const dup = previous.find((c) => c.content.trim() === content.trim());
+    if (dup) {
+      return;
+    }
     const optimistic: import("@/types/comments").BountyCommentCacheItem[] = [
       {
         id: `temp-${Date.now()}`,

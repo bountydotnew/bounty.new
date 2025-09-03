@@ -532,6 +532,20 @@ export const bountiesRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       try {
+        const [dup] = await db
+          .select({ id: bountyComment.id })
+          .from(bountyComment)
+          .where(
+            and(
+              eq(bountyComment.bountyId, input.bountyId),
+              eq(bountyComment.userId, ctx.session.user.id),
+              eq(bountyComment.content, input.content),
+            ),
+          );
+        if (dup) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Duplicate comment" });
+        }
+
         const [inserted] = await db
           .insert(bountyComment)
           .values({

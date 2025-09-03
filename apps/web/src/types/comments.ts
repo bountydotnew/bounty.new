@@ -35,3 +35,8 @@ export interface BountyCommentCacheItem {
   likeCount: number;
   isLiked: boolean;
 }
+
+export interface DuplicateCommentError {
+  code: "DUPLICATE_COMMENT";
+  message: string;
+}
