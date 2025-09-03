@@ -17,6 +17,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   createBountySchema,
   CreateBountyForm,
@@ -117,13 +119,23 @@ export function EditBountyModal({
     }
   };
 
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
   if (bountyQuery.isLoading) {
+    if (isMobile) {
+      return (
+        <Sheet open={open} onOpenChange={handleClose}>
+          <SheetContent side="bottom" className="w-full max-h-[80vh] overflow-y-auto p-0 rounded-t-2xl">
+            <div className="flex items-center justify-center h-40">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
+            </div>
+          </SheetContent>
+        </Sheet>
+      );
+    }
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent
-          className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg max-h-[75vh] overflow-y-auto p-0 sm:rounded-lg"
-          showOverlay
-        >
+        <DialogContent className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg max-h-[75vh] overflow-y-auto p-0 sm:rounded-lg" showOverlay>
           <div className="flex items-center justify-center h-40">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
           </div>
@@ -133,12 +145,26 @@ export function EditBountyModal({
   }
 
   if (bountyQuery.error || !bountyQuery.data?.data) {
+    if (isMobile) {
+      return (
+        <Sheet open={open} onOpenChange={handleClose}>
+          <SheetContent side="bottom" className="w-full max-h-[80vh] overflow-y-auto p-0 rounded-t-2xl">
+            <div className="px-6 pt-6 pb-4">
+              <div className="text-xl font-medium">Error</div>
+            </div>
+            <p className="text-center text-muted-foreground px-6">
+              Failed to load bounty data. Please try again.
+            </p>
+            <div className="px-6 py-4 flex justify-end gap-2">
+              <Button onClick={handleClose} variant="outline">Close</Button>
+            </div>
+          </SheetContent>
+        </Sheet>
+      );
+    }
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent
-          className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg p-0 sm:rounded-lg"
-          showOverlay
-        >
+        <DialogContent className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg p-0 sm:rounded-lg" showOverlay>
           <DialogHeader className="px-6 pt-6">
             <DialogTitle className="text-xl">Error</DialogTitle>
           </DialogHeader>
@@ -146,21 +172,100 @@ export function EditBountyModal({
             Failed to load bounty data. Please try again.
           </p>
           <DialogFooter>
-            <Button onClick={handleClose} variant="outline">
-              Close
-            </Button>
+            <Button onClick={handleClose} variant="outline">Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     );
   }
 
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={handleClose}>
+        <SheetContent side="bottom" className="w-full max-h-[85vh] overflow-y-auto p-0 rounded-t-2xl">
+          <div className="px-6 pt-6 pb-2">
+            <div className="text-xl font-medium">Edit Bounty</div>
+          </div>
+          <form onSubmit={onSubmit} className="px-6 pb-6 space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title *</Label>
+              <Controller name="title" control={control} render={({ field }) => (
+                <Input {...field} id="title" placeholder="Enter bounty title" className={errors.title ? "border-red-500" : "border-border"} />
+              )} />
+              {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description *</Label>
+              <Controller name="description" control={control} render={({ field }) => (
+                <textarea {...field} id="description" rows={3} placeholder="Describe what needs to be done" className={`w-full px-3 py-2 border rounded-md ${errors.description ? "border-red-500" : "border-border"}`} />
+              )} />
+              {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="amount">Amount *</Label>
+                <Controller name="amount" control={control} render={({ field }) => (
+                  <Input {...field} id="amount" placeholder="100.00" className={errors.amount ? "border-red-500" : "border-border"} />
+                )} />
+                {errors.amount && <p className="text-red-500 text-sm mt-1">{errors.amount.message}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="currency">Currency</Label>
+                <Controller name="currency" control={control} render={({ field }) => (
+                  <select {...field} id="currency" className={`w-full px-3 py-2 border rounded-md ${errors.currency ? "border-red-500" : "border-border"}`}>
+                    {currencyOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                )} />
+                {errors.currency && <p className="text-red-500 text-sm mt-1">{errors.currency.message}</p>}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="difficulty">Difficulty *</Label>
+              <Controller name="difficulty" control={control} render={({ field }) => (
+                <select {...field} id="difficulty" className={`w-full px-3 py-2 border rounded-md ${errors.difficulty ? "border-red-500" : "border-border"}`}>
+                  {difficultyOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              )} />
+              {errors.difficulty && <p className="text-red-500 text-sm mt-1">{errors.difficulty.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="repositoryUrl">Repository URL (Optional)</Label>
+              <Controller name="repositoryUrl" control={control} render={({ field }) => (
+                <Input {...field} id="repositoryUrl" type="url" placeholder="https://github.com/user/repo" className={errors.repositoryUrl ? "border-red-500" : "border-border"} />
+              )} />
+              {errors.repositoryUrl && <p className="text-red-500 text-sm mt-1">{errors.repositoryUrl.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="issueUrl">Issue URL (Optional)</Label>
+              <Controller name="issueUrl" control={control} render={({ field }) => (
+                <Input {...field} id="issueUrl" type="url" placeholder="https://github.com/user/repo/issues/123" className={errors.issueUrl ? "border-red-500" : "border-border"} />
+              )} />
+              {errors.issueUrl && <p className="text-red-500 text-sm mt-1">{errors.issueUrl.message}</p>}
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting || updateBounty.isPending}>Cancel</Button>
+              <Button type="submit" disabled={isSubmitting || updateBounty.isPending}>{updateBounty.isPending ? "Updating..." : "Update Bounty"}</Button>
+            </div>
+          </form>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent
-        className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg max-h-[75vh] overflow-y-auto p-0 sm:rounded-lg"
-        showOverlay
-      >
+      <DialogContent className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg max-h-[75vh] overflow-y-auto p-0 sm:rounded-lg" showOverlay>
         <DialogHeader className="px-6 pt-6">
           <DialogTitle className="text-xl">Edit Bounty</DialogTitle>
         </DialogHeader>
