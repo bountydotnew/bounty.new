@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
 import BountyCommentForm from "@/components/bounty/bounty-comment-form";
 import BountyComment from "@/components/bounty/bounty-comment";
+import CommentEditDialog from "@/components/bounty/comment-edit-dialog";
 import { MessageCircle } from "lucide-react";
 import { authClient } from "@bounty/auth/client";
 
@@ -27,6 +28,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
   const toggleLike = useMutation({ ...trpc.bounties.toggleCommentLike.mutationOptions() });
   const updateComment = useMutation({ ...trpc.bounties.updateBountyComment.mutationOptions() });
   const deleteComment = useMutation({ ...trpc.bounties.deleteBountyComment.mutationOptions() });
+  const [editState, setEditState] = useState<{ id: string; initial: string } | null>(null);
 
   const sorted = useMemo(() => {
     const items = (commentsQuery.data || []).slice();
@@ -164,6 +166,20 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
 
       <BountyCommentForm maxChars={245} isSubmitting={addComment.isPending} onSubmit={(content) => postComment(content)} />
 
+      <CommentEditDialog
+        open={Boolean(editState)}
+        onOpenChange={(o) => {
+          if (!o) setEditState(null);
+        }}
+        initialValue={editState?.initial || ""}
+        onSave={(val) => {
+          if (!editState) return;
+          onEditComment(editState.id, val);
+          setEditState(null);
+        }}
+        isSaving={updateComment.isPending}
+      />
+
       <div
         className={`space-y-2 mt-4 transition-all duration-200 ${entering ? (animDir > 0 ? "opacity-0 translate-y-2" : "opacity-0 -translate-y-2") : "opacity-100 translate-y-0"}`}
       >
@@ -173,7 +189,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
             comment={c as any}
             isOwner={Boolean((c as any).user?.id && session?.user?.id && (c as any).user?.id === session.user.id)}
             onLike={likeComment}
-            onEdit={(id) => onEditComment(id, (c as any).content || "")}
+            onEdit={(id) => setEditState({ id, initial: (c as any).content || "" })}
             onDelete={onDeleteComment}
           />
         ))}
