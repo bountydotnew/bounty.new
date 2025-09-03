@@ -5,11 +5,17 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { LINKS } from "@/constants/links";
 import { AccessGate } from "@/components/access-gate";
-// import { SidebarTrigger } from "@/components/ui/sidebar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { MobileSidebar } from "@/components/dual-sidebar/mobile-sidebar";
+import type { Bounty } from "@/types/dashboard";
 
 type NavItem = { href: string; label: string };
+
+interface HeaderProps {
+  myBounties?: Bounty[];
+  isMyBountiesLoading?: boolean;
+}
 
 const NavLinks = ({ items }: { items: ReadonlyArray<NavItem> }) => (
   <ul className="flex items-center gap-6">
@@ -38,7 +44,7 @@ const productionNavigationLinks = [
   { href: LINKS.DASHBOARD, label: "Apply for Beta Testing" },
 ];
 
-export const Header = () => {
+export const Header = ({ myBounties, isMyBountiesLoading }: HeaderProps = {}) => {
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   return (
@@ -58,6 +64,13 @@ export const Header = () => {
             <NavLinks items={betaNavigationLinks} />
           </AccessGate>
         </nav>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <MobileSidebar 
+          myBounties={myBounties}
+          isMyBountiesLoading={isMyBountiesLoading}
+        />
       </div>
     </header>
   );

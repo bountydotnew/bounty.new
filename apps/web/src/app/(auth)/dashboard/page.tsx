@@ -94,7 +94,10 @@ export default function Dashboard() {
         }
       >
         <Onboarding />
-        <Header />
+        <Header 
+          myBounties={myBounties.data?.data as Bounty[] | undefined}
+          isMyBountiesLoading={myBounties.isLoading}
+        />
         <div className="bg-background">
           <div className="container mx-auto px-4 py-4 rounded-lg">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:h-[calc(100vh-8rem)] rounded-lg py-4">
@@ -115,8 +118,8 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Right Sidebar - Activity & My Bounties */}
-              <div className="lg:col-span-1 rounded-lg">
+              {/* Right Sidebar - Activity & My Bounties (Desktop Only) */}
+              <div className="hidden lg:block lg:col-span-1 rounded-lg">
                 <div className="sticky top-0 lg:h-[calc(100vh-8rem)] lg:overflow-y-auto">
                   <div className="space-y-6 lg:pr-2">
                     <ActivitySidebar />
