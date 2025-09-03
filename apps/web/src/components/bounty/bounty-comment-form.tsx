@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { containsBadWord } from "@/lib/bad-words";
 import { Button, HotkeyButton } from "@/components/ui/button";
 
 interface BountyCommentFormProps {
