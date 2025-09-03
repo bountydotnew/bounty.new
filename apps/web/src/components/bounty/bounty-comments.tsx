@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
 import BountyCommentForm from "@/components/bounty/bounty-comment-form";
@@ -38,6 +38,25 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
 
   const pages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const current = useMemo(() => sorted.slice((page - 1) * pageSize, page * pageSize), [sorted, page, pageSize]);
+
+  const pagerRef = useRef<HTMLDivElement | null>(null);
+  const [showFloatingPager, setShowFloatingPager] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const el = pagerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setShowFloatingPager(rect.top > window.innerHeight || rect.bottom < 0);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
 
   const postComment = (content: string, parentId?: string) => {
     const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
@@ -148,7 +167,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
         ))}
       </div>
 
-      <div className="mt-4 flex items-center justify-between">
+      <div ref={pagerRef} className="mt-4 flex items-center justify-between">
         <button
           className="px-3 py-1 rounded-md border border-neutral-700 bg-neutral-800/60 text-xs text-neutral-300 disabled:opacity-50"
           onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -164,6 +183,28 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
           Next
         </button>
       </div>
+
+      {showFloatingPager && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 rounded-full border border-neutral-800 bg-neutral-900/90 backdrop-blur px-3.5 py-3 shadow">
+          <div className="flex items-center gap-3">
+            <button
+              className="px-2 py-1 rounded-md border border-neutral-700 bg-neutral-800/60 text-[11px] text-neutral-300 disabled:opacity-50"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+            >
+              Prev
+            </button>
+            <span className="text-[11px] text-neutral-400">{page} / {pages}</span>
+            <button
+              className="px-2 py-1 rounded-md border border-neutral-700 bg-neutral-800/60 text-[11px] text-neutral-300 disabled:opacity-50"
+              onClick={() => setPage((p) => Math.min(pages, p + 1))}
+              disabled={page >= pages}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
