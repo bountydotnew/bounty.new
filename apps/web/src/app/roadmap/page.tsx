@@ -129,7 +129,7 @@ export default function RoadmapPage() {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-10">
               <Link
-                href="https://github.com/ripgrim/bounty.new"
+                href="https://github.com/bountydotnew/bounty.new"
                 target="_blank"
               >
                 <Badge variant="secondary" className="gap-2 mb-6">
@@ -141,7 +141,7 @@ export default function RoadmapPage() {
                 Roadmap
               </h1>
               <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-                What's coming next for bounty.new - no bullshit, just the real deal (last updated: January 20, 2025)
+                What&apos;s coming next for bounty.new - no bullshit, just the real deal (last updated: January 20, 2025)
               </p>
             </div>
             <div className="space-y-6">
@@ -206,11 +206,11 @@ export default function RoadmapPage() {
                 <h3 className="text-xl font-semibold">Want to Help?</h3>
                 <p className="text-muted-foreground max-w-2xl mx-auto">
                   bounty.new is open source and built by the community. Every
-                  contribution, no matter how small, helps us build something that doesn't suck.
+                  contribution, no matter how small, helps us build something that doesn&apos;t suck.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6">
                   <Link
-                    href="https://github.com/ripgrim/bounty.new"
+                    href="https://github.com/bountydotnew/bounty.new"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -223,7 +223,7 @@ export default function RoadmapPage() {
                     </Badge>
                   </Link>
                   <Link
-                    href="https://github.com/ripgrim/bounty.new/issues"
+                    href="https://github.com/bountydotnew/bounty.new/issues"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
