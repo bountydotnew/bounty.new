@@ -72,9 +72,17 @@ const config: Config = {
           "0%, 100%": { transform: "rotate(-10deg)" },
           "50%": { transform: "rotate(10deg)" },
         },
+        "wiggle-x": {
+          "0%": { transform: "translateX(0)" },
+          "25%": { transform: "translateX(-4px)" },
+          "50%": { transform: "translateX(4px)" },
+          "75%": { transform: "translateX(-2px)" },
+          "100%": { transform: "translateX(0)" },
+        },
       },
       animation: {
         wiggle: "wiggle infinite 1s ease-in-out",
+        "wiggle-x": "wiggle-x 220ms ease-out",
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },

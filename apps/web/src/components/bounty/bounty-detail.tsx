@@ -5,6 +5,7 @@ import SubmissionCard from "@/components/bounty/submission-card";
 import BountyActions from "@/components/bounty/bounty-actions";
 import BountyComments from "@/components/bounty/bounty-comments";
 import Composer from "../markdown/Composer";
+import CollapsibleText from "@/components/bounty/collapsible-text";
 import { Badge } from "../ui/badge";
 import { SmartNavigation } from "@/components/ui/smart-breadcrumb";
 import { EditBountyModal } from "@/components/bounty/edit-bounty-modal";
@@ -282,7 +283,9 @@ export default function BountyDetailPage({
               <h2 className="text-xl font-medium text-white mb-4">
                 About
               </h2>
-              <Composer>{description}</Composer>
+              <CollapsibleText>
+                <Composer>{description}</Composer>
+              </CollapsibleText>
             </div>
             <BountyComments bountyId={id} pageSize={5} />
 

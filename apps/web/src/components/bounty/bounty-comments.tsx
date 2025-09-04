@@ -6,7 +6,7 @@ import { trpc } from "@/utils/trpc";
 import BountyCommentForm from "@/components/bounty/bounty-comment-form";
 import BountyComment from "@/components/bounty/bounty-comment";
 import CommentEditDialog from "@/components/bounty/comment-edit-dialog";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, ChevronDown } from "lucide-react";
 import { authClient } from "@bounty/auth/client";
 import type { BountyCommentCacheItem } from "@/types/comments";
 
@@ -31,17 +31,31 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
   const deleteComment = useMutation({ ...trpc.bounties.deleteBountyComment.mutationOptions() });
   const [editState, setEditState] = useState<{ id: string; initial: string } | null>(null);
 
-  const sorted = useMemo(() => {
-    const items = (commentsQuery.data || []).slice();
+  const roots = useMemo(() => (commentsQuery.data || []).filter((c: any) => !c.parentId), [commentsQuery.data]);
+  const sortedRoots = useMemo(() => {
+    const items = roots.slice();
     if (sort === "top") {
       items.sort((a: any, b: any) => (b.likeCount ?? 0) - (a.likeCount ?? 0));
+    } else {
+      items.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
     return items;
-  }, [commentsQuery.data, sort]);
+  }, [roots, sort]);
 
-  const pages = Math.max(1, Math.ceil(sorted.length / pageSize));
-  const current = useMemo(() => sorted.slice((page - 1) * pageSize, page * pageSize), [sorted, page, pageSize]);
+  const pages = Math.max(1, Math.ceil(sortedRoots.length / pageSize));
+  const current = useMemo(() => sortedRoots.slice((page - 1) * pageSize, page * pageSize), [sortedRoots, page, pageSize]);
+  const hasComments = (commentsQuery.data?.length ?? 0) > 0;
+  const hasPages = pages > 1;
   const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set());
+  const toggleThread = (id: string) => {
+    setExpandedThreads((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const pagerRef = useRef<HTMLDivElement | null>(null);
   const [showFloatingPager, setShowFloatingPager] = useState(false);
@@ -81,13 +95,28 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
 
   const postComment = (content: string, parentId?: string) => {
     const previous: BountyCommentCacheItem[] = (commentsQuery.data as BountyCommentCacheItem[] | undefined) || [];
-    const dup = previous.find(
-      (c) => c.content.trim() === content.trim() && c.user?.id && session?.user?.id && c.user.id === session.user.id,
-    );
-    if (dup) {
-      setFormError("You've already said this.");
-      setFormErrorKey((k) => k + 1);
-      return;
+    const trimmed = content.trim();
+    const userId = session?.user?.id;
+    if (userId) {
+      if (!parentId) {
+        const hasDuplicateRoot = previous.some(
+          (c) => !c.parentId && c.user?.id === userId && c.content.trim() === trimmed,
+        );
+        if (hasDuplicateRoot) {
+          setFormError("You've already said this.");
+          setFormErrorKey((k) => k + 1);
+          return;
+        }
+      } else {
+        const duplicateRepliesCount = previous.filter(
+          (c) => c.parentId && c.user?.id === userId && c.content.trim() === trimmed,
+        ).length;
+        if (duplicateRepliesCount >= 2) {
+          setFormError("Duplicate reply limit reached (2 per bounty).");
+          setFormErrorKey((k) => k + 1);
+          return;
+        }
+      }
     }
     const optimistic: BountyCommentCacheItem[] = [
       {
@@ -159,7 +188,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
   };
 
   return (
-    <div className="mb-8 p-6 rounded-lg bg-[#1D1D1D] border border-[#383838]/20">
+    <div className="mb-8 p-6 rounded-lg bg-none border-none">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-medium text-white">Comments <span className="text-sm text-neutral-400">({commentsQuery.data?.length ?? 0})</span></h2>
       </div>
@@ -179,9 +208,11 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
             Top
           </button>
         </div>
+        {hasPages && (
         <div className="text-xs text-neutral-400">
-          Page {page} / {pages}
-        </div>
+            Page {page} / {pages}
+          </div>
+        )}
       </div>
 
       {!replyTo && (
@@ -226,6 +257,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
           .filter((c: any) => !c.parentId)
           .map((root: any) => {
             const children = (commentsQuery.data || []).filter((x: any) => x.parentId === root.id);
+            const expanded = expandedThreads.has(root.id);
             return (
               <div key={root.id} className="space-y-2">
                 <BountyComment
@@ -242,7 +274,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
                     <BountyCommentForm
                       maxChars={245}
                       isSubmitting={addComment.isPending}
-                      onSubmit={(content) => { postComment(content, root.id); setReplyTo(null); setFormError(null); }}
+                      onSubmit={(content) => { postComment(content, root.id); setReplyTo(null); setFormError(null); setExpandedThreads((prev) => new Set(prev).add(root.id)); }}
                       error={formError}
                       errorKey={formErrorKey}
                       placeholder={`Reply to ${root.user?.name || "user"}`}
@@ -253,26 +285,35 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
                   </div>
                 )}
                 {children.length > 0 && (
-                  <div className="ml-4 pl-3 border-l border-neutral-800 space-y-2">
-                    {children.map((child: any) => (
-                      <BountyComment
-                        key={child.id}
-                        comment={child}
-                        isOwner={Boolean(child.user?.id && session?.user?.id && child.user?.id === session.user.id)}
-                        onLike={likeComment}
-                        onEdit={(id) => setEditState({ id, initial: (child as any).content || "" })}
-                        onDelete={(id) => {
-                          const key = trpc.bounties.getBountyComments.queryKey({ bountyId });
-                          const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
-                          const next = previous.map((c) => (c.id === id ? { ...c, _removing: true } as any : c));
-                          queryClient.setQueryData(key, next);
-                          onDeleteComment(id);
-                        }}
-                        allowReply={false}
-                        parentRef={{ userName: root.user?.name || "Anonymous", snippet: String(root.content).slice(0, 40) + (String(root.content).length > 40 ? "…" : "") }}
-                        isRemoving={(child as any)._removing}
-                      />
-                    ))}
+                  <div className="ml-4">
+                    <button
+                      className="flex items-center gap-1 text-[11px] text-neutral-400 hover:text-neutral-200"
+                      onClick={() => toggleThread(root.id)}
+                    >
+                      <ChevronDown className={`h-3 w-3 transition-transform ${expanded ? "rotate-180" : ""}`} />
+                      {expanded ? "Hide replies" : `Show ${children.length} ${children.length === 1 ? "reply" : "replies"}`}
+                    </button>
+                    <div className={`mt-2 pl-3 border-l border-neutral-800 space-y-2 transition-all duration-200 ${expanded ? "max-h-[999px] opacity-100" : "max-h-0 opacity-0 overflow-hidden"}`}>
+                        {children.map((child: any) => (
+                          <BountyComment
+                            key={child.id}
+                            comment={child}
+                            isOwner={Boolean(child.user?.id && session?.user?.id && child.user?.id === session.user.id)}
+                            onLike={likeComment}
+                            onEdit={(id) => setEditState({ id, initial: (child as any).content || "" })}
+                            onDelete={(id) => {
+                              const key = trpc.bounties.getBountyComments.queryKey({ bountyId });
+                              const previous = queryClient.getQueryData<import("@/types/comments").BountyCommentCacheItem[]>(key) || [];
+                              const next = previous.map((c) => (c.id === id ? { ...c, _removing: true } as any : c));
+                              queryClient.setQueryData(key, next);
+                              onDeleteComment(id);
+                            }}
+                            allowReply={false}
+                            parentRef={{ userName: root.user?.name || "Anonymous", snippet: String(root.content).slice(0, 40) + (String(root.content).length > 40 ? "…" : "") }}
+                            isRemoving={(child as any)._removing}
+                          />
+                        ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -280,45 +321,49 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
           })}
       </div>
 
-      <div ref={pagerRef} className="mt-4 flex items-center justify-between">
-        <button
-          className="px-3 py-1 rounded-md border border-neutral-700 bg-neutral-800/60 text-xs text-neutral-300 disabled:opacity-50"
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page <= 1}
-        >
-          Previous
-        </button>
-        <button
-          className="px-3 py-1 rounded-md border border-neutral-700 bg-neutral-800/60 text-xs text-neutral-300 disabled:opacity-50"
-          onClick={() => setPage((p) => Math.min(pages, p + 1))}
-          disabled={page >= pages}
-        >
-          Next
-        </button>
-      </div>
-
-      <div
-        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-30 rounded-full border border-neutral-800 bg-neutral-900/90 backdrop-blur px-3.5 py-3 shadow transition-all duration-200 ease-out ${showFloatingPager ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" : "opacity-0 translate-y-2 scale-95 pointer-events-none"}`}
-        aria-hidden={!showFloatingPager}
-      >
-        <div className="flex items-center gap-3">
+      {hasPages && (
+        <div ref={pagerRef} className="mt-4 flex items-center justify-end gap-2">
           <button
-            className="px-2 py-1 rounded-md border border-neutral-700 bg-neutral-800/60 text-[11px] text-neutral-300 disabled:opacity-50"
+            className="px-3 py-1 rounded-md border border-neutral-700 bg-neutral-800/60 text-xs text-neutral-300 disabled:opacity-50"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1}
           >
-            Prev
+            Previous
           </button>
-          <span className="text-[11px] text-neutral-400">{page} / {pages}</span>
           <button
-            className="px-2 py-1 rounded-md border border-neutral-700 bg-neutral-800/60 text-[11px] text-neutral-300 disabled:opacity-50"
+            className="px-3 py-1 rounded-md border border-neutral-700 bg-neutral-800/60 text-xs text-neutral-300 disabled:opacity-50"
             onClick={() => setPage((p) => Math.min(pages, p + 1))}
             disabled={page >= pages}
           >
             Next
           </button>
         </div>
-      </div>
+      )}
+
+      {hasPages && (
+        <div
+          className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-30 rounded-full border border-neutral-800 bg-neutral-900/90 backdrop-blur px-3.5 py-3 shadow transition-all duration-200 ease-out ${showFloatingPager ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" : "opacity-0 translate-y-2 scale-95 pointer-events-none"}`}
+          aria-hidden={!showFloatingPager}
+        >
+          <div className="flex items-center gap-3">
+            <button
+              className="px-2 py-1 rounded-md border border-neutral-700 bg-neutral-800/60 text-[11px] text-neutral-300 disabled:opacity-50"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+            >
+              Prev
+            </button>
+            <span className="text-[11px] text-neutral-400">{page} / {pages}</span>
+            <button
+              className="px-2 py-1 rounded-md border border-neutral-700 bg-neutral-800/60 text-[11px] text-neutral-300 disabled:opacity-50"
+              onClick={() => setPage((p) => Math.min(pages, p + 1))}
+              disabled={page >= pages}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
