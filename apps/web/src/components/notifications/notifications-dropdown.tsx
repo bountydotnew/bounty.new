@@ -134,7 +134,7 @@ export function NotificationsDropdown() {
             </div>
           ) : showCaughtUp ? (
             <div className="px-3 py-6 text-center">
-              <p className="mb-3 text-sm text-neutral-300">You're all caught up!</p>
+              <p className="mb-3 text-sm text-neutral-300">You&apos;re all caught up!</p>
               <Button variant="text" onClick={() => setShowAll(true)} className="gap-2 rounded-none border">Show all notifications</Button>
             </div>
           ) : filtered.length > 0 ? (
