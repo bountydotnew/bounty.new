@@ -9,9 +9,8 @@ import { Onboarding } from "@/components/onboarding";
 // Dashboard components
 import { ErrorBoundary } from "@/components/dashboard/error-boundary";
 import { BetaAccessScreen } from "@/components/dashboard/beta-access-screen";
+import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { BountiesFeed } from "@/components/bounty/bounties-feed";
-import { MyBountiesSidebar } from "@/components/dashboard/my-bounties-sidebar";
-import { ActivitySidebar } from "@/components/dashboard/activity-sidebar";
 import { AccessGate } from "@/components/access-gate";
 import { Header } from "@/components/dual-sidebar/sidebar-header";
 import { Button } from "@/components/ui/button";
@@ -102,8 +101,8 @@ export default function Dashboard() {
         }
       >
         <Onboarding />
-        <Header 
-          myBounties={myBounties.data?.data as Bounty[] | undefined}
+        <Header
+          myBounties={myBounties.data?.data ?? []}
           isMyBountiesLoading={myBounties.isLoading}
         />
         <div className="bg-background">
@@ -127,12 +126,12 @@ export default function Dashboard() {
               {/* Center - Bounties Feed */}
               <div className="lg:col-span-2 flex flex-col rounded-lg">
                 <div className="lg:overflow-y-auto lg:h-full rounded-lg">
-                <BountiesFeed
+                  <BountiesFeed
                     layout="list"
-                    bounties={bounties.data?.data as Bounty[] | undefined}
+                    bounties={bounties.data?.data ?? []}
                     isLoading={bounties.isLoading}
                     isError={bounties.isError}
-                    error={bounties.error as Error | null | undefined}
+                    error={bounties.error instanceof Error ? bounties.error : undefined}
                     className="lg:pr-2"
                   />
                 </div>
@@ -142,10 +141,13 @@ export default function Dashboard() {
               <div className="hidden lg:block lg:col-span-1 rounded-lg">
                 <div className="sticky top-0 lg:h-[calc(100vh-8rem)] lg:overflow-y-auto">
                   <div className="space-y-6 lg:pr-2">
-                    <ActivitySidebar />
-                    <MyBountiesSidebar
-                      myBounties={myBounties.data?.data as Bounty[] | undefined}
-                      isLoading={myBounties.isLoading}
+                    <DashboardSidebar
+                      myBounties={myBounties.data?.data ?? []}
+                      isLoadingMyBounties={myBounties.isLoading}
+                      onBountyClick={(bounty) => {
+                        console.log("Bounty clicked:", bounty);
+                        // setIsOpen(false);
+                      }}
                     />
                   </div>
                 </div>

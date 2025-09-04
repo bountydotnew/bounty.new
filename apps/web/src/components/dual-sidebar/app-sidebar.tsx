@@ -75,7 +75,7 @@ export const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) =
       {
         title: "Dashboard",
         url: LINKS.DASHBOARD,
-        icon: Bookmark,
+        icon: Home,
         isActive: isActive("/dashboard"),
       },
       {
@@ -93,6 +93,13 @@ export const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) =
         title: "Settings",
         url: LINKS.SETTINGS,
         icon: Settings,
+        isActive: isActive("/settings"),
+      },
+      {
+        title: "Bookmarks",
+        url: LINKS.BOOKMARKS,
+        icon: Bookmark,
+        isActive: isActive("/bookmarks"),
       },
     ],
     projects: [

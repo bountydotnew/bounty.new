@@ -4,8 +4,7 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu, PanelRightIcon, X } from "lucide-react";
-import { ActivitySidebar } from "@/components/dashboard/activity-sidebar";
-import { MyBountiesSidebar } from "@/components/dashboard/my-bounties-sidebar";
+import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import type { Bounty } from "@/types/dashboard";
@@ -58,21 +57,15 @@ export function MobileSidebar({
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-6">
-            <div className="space-y-4">
-              <ActivitySidebar />
-            </div>
-            
-            <div className="space-y-4">
-              <MyBountiesSidebar 
-                myBounties={myBounties}
-                isLoading={isMyBountiesLoading}
-                onBountyClick={(bounty) => {
-                  console.log("Bounty clicked:", bounty);
-                  setIsOpen(false);
-                }}
-              />
-            </div>
+          <div className="flex-1 overflow-y-auto p-4">
+            <DashboardSidebar
+              myBounties={myBounties}
+              isLoadingMyBounties={isMyBountiesLoading}
+              onBountyClick={(bounty) => {
+                console.log("Bounty clicked:", bounty);
+                setIsOpen(false);
+              }}
+            />
           </div>
         </div>
       </SheetContent>

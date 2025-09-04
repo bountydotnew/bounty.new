@@ -30,8 +30,9 @@ export function SubmissionsMobileSidebar({ className, inline = false }: Submissi
             )}
             aria-label="Open submissions"
           >
-            <PanelRightIcon className="h-4 w-4" />
+
             <span>Submissions</span>
+            <PanelRightIcon className="h-4 w-4" />
           </button>
         ) : (
           <button
@@ -41,8 +42,9 @@ export function SubmissionsMobileSidebar({ className, inline = false }: Submissi
             )}
             aria-label="Open submissions"
           >
-            <PanelRightIcon className="h-4 w-4" />
+
             <span>Submissions</span>
+            <PanelRightIcon className="h-4 w-4" />
           </button>
         )}
       </SheetTrigger>

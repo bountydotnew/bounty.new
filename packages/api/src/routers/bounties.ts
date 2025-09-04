@@ -11,6 +11,7 @@ import {
   bountyVote,
   bountyComment,
   bountyCommentLike,
+  bountyBookmark,
 } from "@bounty/db";
 
 const parseAmount = (amount: string | number | null): number => {
@@ -519,6 +520,103 @@ export const bountiesRouter = router({
           message: "Failed to fetch votes",
           cause: error,
         });
+      }
+    }),
+  toggleBountyBookmark: protectedProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const inserted = await db
+          .insert(bountyBookmark)
+          .values({ bountyId: input.bountyId, userId: ctx.session.user.id })
+          .onConflictDoNothing({ target: [bountyBookmark.bountyId, bountyBookmark.userId] })
+          .returning();
+
+        if (inserted.length === 0) {
+          await db
+            .delete(bountyBookmark)
+            .where(
+              and(
+                eq(bountyBookmark.bountyId, input.bountyId),
+                eq(bountyBookmark.userId, ctx.session.user.id),
+              ),
+            );
+          return { bookmarked: false };
+        }
+        return { bookmarked: true };
+      } catch (error) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to toggle bookmark", cause: error });
+      }
+    }),
+
+  getBountyBookmark: publicProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        if (!ctx.session?.user?.id) return { bookmarked: false };
+        const [existing] = await db
+          .select({ id: bountyBookmark.id })
+          .from(bountyBookmark)
+          .where(and(eq(bountyBookmark.bountyId, input.bountyId), eq(bountyBookmark.userId, ctx.session.user.id)));
+        return { bookmarked: Boolean(existing) };
+      } catch (error) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch bookmark", cause: error });
+      }
+    }),
+
+  listBookmarkedBounties: protectedProcedure
+    .input(z.object({ page: z.number().int().positive().default(1), limit: z.number().int().positive().max(100).default(20) }).optional())
+    .query(async ({ ctx, input }) => {
+      try {
+        const page = input?.page ?? 1;
+        const limit = input?.limit ?? 20;
+        const offset = (page - 1) * limit;
+
+        const rows = await db
+          .select({
+            id: bounty.id,
+            title: bounty.title,
+            description: bounty.description,
+            amount: bounty.amount,
+            currency: bounty.currency,
+            status: bounty.status,
+            difficulty: bounty.difficulty,
+            deadline: bounty.deadline,
+            tags: bounty.tags,
+            repositoryUrl: bounty.repositoryUrl,
+            createdAt: bounty.createdAt,
+            updatedAt: bounty.updatedAt,
+            creator: {
+              id: user.id,
+              name: user.name,
+              image: user.image,
+            },
+          })
+          .from(bountyBookmark)
+          .innerJoin(bounty, eq(bountyBookmark.bountyId, bounty.id))
+          .innerJoin(user, eq(bounty.createdById, user.id))
+          .where(eq(bountyBookmark.userId, ctx.session.user.id))
+          .orderBy(desc(bountyBookmark.createdAt))
+          .limit(limit)
+          .offset(offset);
+
+        const [{ count }] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(bountyBookmark)
+          .where(eq(bountyBookmark.userId, ctx.session.user.id));
+
+        return {
+          success: true,
+          data: rows.map((r) => ({ ...r, amount: parseAmount(r.amount) })),
+          pagination: {
+            page,
+            limit,
+            total: count,
+            totalPages: Math.ceil(count / limit),
+          },
+        };
+      } catch (error) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to list bookmarks", cause: error });
       }
     }),
 

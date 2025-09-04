@@ -181,7 +181,7 @@ export default function BountyDetailPage({
 
         <div className="flex flex-col xl:flex-row gap-8">
           {/* Main Content */}
-          <div className="flex-1 xl:flex-[2]">
+          <div className="flex-1 xl:flex-[2] p-8">
             {/* Header */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
@@ -228,7 +228,7 @@ export default function BountyDetailPage({
               </div> */}
 
               {/* User Profile with Actions */}
-              <div className="flex items-center justify-between w-full flex-col md:flex-row items-start md:items-center gap-4">
+              <div className="flex justify-between w-full flex-col md:flex-row items-start md:items-center gap-4">
                 <div className="flex items-center gap-3">
                   <Avatar className="w-10 h-10">
                     <AvatarImage src={avatarSrc} />

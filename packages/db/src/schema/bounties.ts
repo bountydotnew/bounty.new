@@ -175,3 +175,22 @@ export const bountyCommentLike = pgTable(
     index("bounty_comment_like_user_id_idx").on(t.userId),
   ],
 );
+
+export const bountyBookmark = pgTable(
+  "bounty_bookmark",
+  {
+    id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+    bountyId: text("bounty_id")
+      .notNull()
+      .references(() => bounty.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().default(sql`now()`),
+  },
+  (t) => [
+    uniqueIndex("bounty_bookmark_unique_idx").on(t.bountyId, t.userId),
+    index("bounty_bookmark_bounty_id_idx").on(t.bountyId),
+    index("bounty_bookmark_user_id_idx").on(t.userId),
+  ],
+);

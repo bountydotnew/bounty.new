@@ -9,6 +9,7 @@ export const LINKS = {
   ACCOUNT: "/settings",
   SETTINGS: "/settings",
   LOGIN: "/login",
+  BOOKMARKS: "/bookmarks",
   CONTRIBUTORS: "/contributors",
   BLOG: "/blog",
   PRICING: "/pricing",

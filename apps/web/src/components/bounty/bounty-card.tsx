@@ -5,11 +5,12 @@ import type { Bounty } from "@/types/dashboard";
 import { useRouter, usePathname } from "next/navigation";
 import { addNavigationContext } from "@/hooks/use-navigation-context";
 import { formatLargeNumber } from "@/lib/utils";
-import { ArrowUpIcon } from "lucide-react";
+import { ArrowUpIcon, Bookmark } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
 import { formatDistanceToNow } from "date-fns";
 import { UpvoteButton } from "@/components/bounty/bounty-actions";
+import BookmarkButton from "@/components/bounty/bookmark-button";
 
 interface BountyCardProps {
   bounty: Bounty;
@@ -102,6 +103,7 @@ export const BountyCard = memo(function BountyCard({
             onUpvote={handleUpvote}
 
           />
+          <BookmarkButton bountyId={bounty.id} />
           <span className="text-sm font-semibold text-green-400">
             ${formatLargeNumber(bounty.amount)}
           </span>
