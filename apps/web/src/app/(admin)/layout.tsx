@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Sidebar } from "@/components/dual-sidebar";
 
 export const metadata: Metadata = {
   title: "Admin - bounty.new",
@@ -10,18 +11,11 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground">
-            Manage beta applications and users
-          </p>
-        </div>
-        {children}
+    <Sidebar admin={true}>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">{children}</div>
       </div>
-    </div>
+    </Sidebar>
   );
 }

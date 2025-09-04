@@ -14,12 +14,14 @@ interface MobileSidebarProps {
   className?: string;
   myBounties?: Bounty[];
   isMyBountiesLoading?: boolean;
+  trigger?: React.ReactNode;
 }
 
 export function MobileSidebar({ 
   className, 
   myBounties, 
-  isMyBountiesLoading = false 
+  isMyBountiesLoading = false,
+  trigger,
 }: MobileSidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 1024px)");
@@ -31,17 +33,19 @@ export function MobileSidebar({
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button
-          variant="text"
-          size="sm"
-          className={cn(
-            "h-8 w-8 p-0 text-white hover:bg-[#383838] hover:text-white",
-            className
-          )}
-        >
-          <PanelRightIcon className="h-4 w-4" />
-          <span className="sr-only">Open activity sidebar</span>
-        </Button>
+        {trigger || (
+          <Button
+            variant="text"
+            size="sm"
+            className={cn(
+              "h-8 w-8 p-0 text-white hover:bg-[#383838] hover:text-white",
+              className
+            )}
+          >
+            <PanelRightIcon className="h-4 w-4" />
+            <span className="sr-only">Open activity sidebar</span>
+          </Button>
+        )}
       </SheetTrigger>
       <SheetContent 
         side="right" 

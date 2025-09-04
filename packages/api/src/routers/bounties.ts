@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { eq, desc, and, or, ilike, sql, inArray } from "drizzle-orm";
+import { eq, desc, and, or, ilike, sql, inArray, isNull, isNotNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from "../trpc";
 import {
@@ -532,12 +532,47 @@ export const bountiesRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       try {
+        const trimmed = input.content.trim();
+
+        if (!input.parentId) {
+          const [existing] = await db
+            .select({ id: bountyComment.id })
+            .from(bountyComment)
+            .where(
+              and(
+                eq(bountyComment.bountyId, input.bountyId),
+                eq(bountyComment.userId, ctx.session.user.id),
+                isNull(bountyComment.parentId),
+                eq(bountyComment.content, trimmed),
+              ),
+            )
+            .limit(1);
+          if (existing) {
+            throw new TRPCError({ code: "CONFLICT", message: "Duplicate comment on this bounty" });
+          }
+        } else {
+          const [dupCount] = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(bountyComment)
+            .where(
+              and(
+                eq(bountyComment.bountyId, input.bountyId),
+                eq(bountyComment.userId, ctx.session.user.id),
+                isNotNull(bountyComment.parentId),
+                eq(bountyComment.content, trimmed),
+              ),
+            );
+          if ((dupCount?.count ?? 0) >= 2) {
+            throw new TRPCError({ code: "CONFLICT", message: "Duplicate reply limit reached (2 per bounty)" });
+          }
+        }
+
         const [inserted] = await db
           .insert(bountyComment)
           .values({
             bountyId: input.bountyId,
             userId: ctx.session.user.id,
-            content: input.content,
+            content: trimmed,
             parentId: input.parentId,
           })
           .returning();
@@ -549,11 +584,13 @@ export const bountiesRouter = router({
         return inserted;
       } catch (error) {
         if (error instanceof TRPCError) throw error;
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to add comment",
-          cause: error,
-        });
+        if (
+          error instanceof Error &&
+          (error.message.includes("unique constraint") || error.message.includes("duplicate key value"))
+        ) {
+          throw new TRPCError({ code: "CONFLICT", message: "Duplicate comment on this bounty" });
+        }
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to add comment", cause: error });
       }
     }),
 

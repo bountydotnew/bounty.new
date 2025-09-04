@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/utils/trpc";
+import { AdminHeader } from "@/components/admin";
 
 export default function WaitlistPage() {
   const [search, setSearch] = useState("");
@@ -79,17 +80,13 @@ export default function WaitlistPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Waitlist Management</h1>
-          <p className="text-muted-foreground">
-            Manage waitlist entries and access permissions
-          </p>
-        </div>
-      </div>
+      <AdminHeader
+        title="Waitlist Management"
+        description="Manage waitlist entries and access permissions"
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="border-neutral-800 bg-neutral-900/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Entries</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -99,7 +96,7 @@ export default function WaitlistPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-neutral-800 bg-neutral-900/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">With Access</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
@@ -111,7 +108,7 @@ export default function WaitlistPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-neutral-800 bg-neutral-900/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending</CardTitle>
             <XCircle className="h-4 w-4 text-orange-600" />
@@ -124,7 +121,7 @@ export default function WaitlistPage() {
         </Card>
       </div>
 
-      <Card>
+      <Card className="border-neutral-800 bg-neutral-900/50">
         <CardHeader>
           <CardTitle>Waitlist Entries</CardTitle>
           <CardDescription>
@@ -139,7 +136,7 @@ export default function WaitlistPage() {
                 placeholder="Search by email..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="max-w-sm"
+                className="max-w-sm bg-neutral-900 border-neutral-800"
               />
             </div>
 
@@ -154,7 +151,7 @@ export default function WaitlistPage() {
                 {data?.entries.map((entry) => (
                   <div
                     key={entry.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
+                    className="flex items-center justify-between p-4 border rounded-lg border-neutral-800 bg-neutral-900/40"
                   >
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
@@ -210,7 +207,7 @@ export default function WaitlistPage() {
             )}
 
             {data && data.totalPages > 1 && (
-              <div className="flex items-center justify-center space-x-2">
+              <div className="flex items-center justify-center space-x-2 border-top border-neutral-800 pt-4">
                 <Button
                   variant="outline"
                   size="sm"

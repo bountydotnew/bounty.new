@@ -72,13 +72,13 @@ export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
 
   return (
     <>
-      <div className="border rounded-lg p-4 space-y-3">
+      <div className="border border-neutral-800 rounded-xl p-5 space-y-4 bg-neutral-900/50">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <Favicon url={application.projectLink} size={24} />
             <div>
-              <h3 className="font-semibold">{application.projectName}</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="font-semibold tracking-tight">{application.projectName}</h3>
+              <p className="text-xs text-neutral-400">
                 by {application.user?.name || "Unknown"} (
                 {application.user?.email || "No email"})
               </p>
@@ -89,6 +89,7 @@ export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
             <Button
               variant="outline"
               size="sm"
+              className="border-neutral-800 bg-neutral-900/70"
               onClick={() => {
                 setSelectedApplication(application);
                 setIsReviewDialogOpen(true);
@@ -138,7 +139,7 @@ export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
       </div>
 
       <Dialog open={isReviewDialogOpen} onOpenChange={setIsReviewDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl border border-neutral-800 bg-[#111111]">
           <DialogHeader>
             <DialogTitle>Review Application</DialogTitle>
             <DialogDescription>
@@ -188,7 +189,7 @@ export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
                   value={reviewNotes}
                   onChange={(e) => setReviewNotes(e.target.value)}
                   placeholder="Add notes about your decision..."
-                  className="mt-1"
+                  className="mt-1 bg-[#0f0f0f] border-neutral-800"
                 />
               </div>
             </div>

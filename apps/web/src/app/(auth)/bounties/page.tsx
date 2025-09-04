@@ -12,6 +12,9 @@ import { authClient } from "@bounty/auth/client";
 import React from "react";
 import { BountiesFeed } from "@/components/bounty/bounties-feed";
 import { Header } from "@/components/dual-sidebar/sidebar-header";
+import { Github, GithubIcon } from "lucide-react";
+import GitHub from "@/components/icons/github";
+import { FloatingCreateMenu } from "@/components/bounty/floating-create-menu";
 
 export default function BountiesPage() {
   const { data: session } = authClient.useSession();
@@ -54,14 +57,14 @@ export default function BountiesPage() {
       <Header />
       <div className="container mx-auto px-4 py-8">
 
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Available Bounties</h1>
+        <div className="flex justify-end items-center mb-6">
           <div className="flex gap-2">
             <Button
               variant="outline"
               disabled={!session?.user}
               onClick={() => setImportOpen(true)}
             >
+              <GitHub className="h-4 w-4 fill-white" />
               Import from GitHub
             </Button>
             <Button disabled={!session?.user} onClick={() => openCreateModal()}>
@@ -85,6 +88,11 @@ export default function BountiesPage() {
         onOpenChange={closeCreateModal}
       />
       <GithubImportModal open={importOpen} onOpenChange={setImportOpen} />
+      <FloatingCreateMenu
+        disabled={!session?.user}
+        onCreate={() => openCreateModal()}
+        onImport={() => setImportOpen(true)}
+      />
     </>
   );
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import Sidebar from "@/components/dual-sidebar";
+import { Sidebar } from "@/components/dual-sidebar";
 import { DeviceProvider } from "@/components/device-provider";
 import RedirectToSignIn from "@/components/auth/redirect-to-signin";
 import { AccessProvider } from "@/contexts/access-provider";
@@ -41,7 +41,7 @@ export default async function RootLayout({
     <>
       <AccessProvider>
         <DeviceProvider userAgent={userAgent}>
-          <Sidebar>
+          <Sidebar admin={false}>
 
             <RedirectToSignIn />
             {children}

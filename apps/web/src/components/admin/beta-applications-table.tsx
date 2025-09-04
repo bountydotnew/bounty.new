@@ -22,7 +22,7 @@ export function BetaApplicationsTable({
   isLoading,
 }: BetaApplicationsTableProps) {
   return (
-    <Card>
+    <Card className="border-neutral-800 bg-neutral-900/50">
       <CardHeader>
         <CardTitle>Applications ({total})</CardTitle>
         <CardDescription>
@@ -31,8 +31,11 @@ export function BetaApplicationsTable({
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="text-center py-8">
-            <p>Loading applications...</p>
+          <div className="space-y-3 py-6">
+            <div className="h-6 w-40 rounded bg-neutral-800 animate-pulse" />
+            <div className="h-24 w-full rounded bg-neutral-800 animate-pulse" />
+            <div className="h-24 w-full rounded bg-neutral-800 animate-pulse" />
+            <div className="h-24 w-full rounded bg-neutral-800 animate-pulse" />
           </div>
         ) : (
           <div className="space-y-4">

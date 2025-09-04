@@ -153,12 +153,12 @@ export const betaApplicationsRouter = router({
       if (status === "approved") {
         await ctx.db
           .update(user)
-          .set({ betaAccessStatus: "approved" })
+          .set({ accessStage: "beta" })
           .where(eq(user.id, application.userId));
       } else if (status === "rejected") {
         await ctx.db
           .update(user)
-          .set({ betaAccessStatus: "denied" })
+          .set({ accessStage: "none" })
           .where(eq(user.id, application.userId));
       }
 

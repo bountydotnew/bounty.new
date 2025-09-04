@@ -4,14 +4,19 @@
 import {
   AudioWaveform,
   Award,
+  Badge,
   BookText,
+  Calendar,
   Command,
   FileUser,
   Frame,
   GalleryVerticalEnd,
+  Home,
   Map,
   PieChart,
   Settings,
+  Shield,
+  Users,
 } from "lucide-react";
 import {
   Sidebar,
@@ -190,6 +195,45 @@ export const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) =
           <NavMain items={productionData.navMain} />
         </AccessGate>
         {/* <NavProjects projects={data.projects} /> */}
+      </SidebarContent>
+      <SidebarFooter>
+        <NavUser user={user} />
+      </SidebarFooter>
+    </Sidebar>
+  );
+};
+
+export const AdminAppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
+  const pathname = usePathname();
+
+  function isActive(path: string) {
+    return pathname === path;
+  }
+
+  const adminNav = [
+    { title: "Overview", url: "/admin", icon: Home, isActive: isActive("/admin") },
+    { title: "Beta Applications", url: "/admin/beta-applications", icon: FileUser, isActive: isActive("/admin/beta-applications") },
+    { title: "Users", url: "/admin/users", icon:  Users, isActive: isActive("/admin/users") },
+    { title: "Waitlist", url: "/admin/waitlist", icon: Calendar, isActive: isActive("/admin/waitlist") },
+  ];
+
+  const user = { name: "Admin", email: "admin@example.com", image: null };
+
+  return (
+    <Sidebar variant="icononly" {...props}>
+      <SidebarHeader>
+        <Link href={LINKS.DASHBOARD}>
+          <div className="relative inline-block">
+            <div className="rounded-md bg-neutral-800 p-2">
+              <Bounty className="h-6 w-6" />
+            </div>
+            <Shield className="fill-white h-5 w-5 absolute -bottom-1 -right-1" />
+          </div>
+        </Link>
+      </SidebarHeader>
+      <Divider className="h-[2px] w-8 my-2 bg-white" />
+      <SidebarContent>
+        <NavMain items={adminNav} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />

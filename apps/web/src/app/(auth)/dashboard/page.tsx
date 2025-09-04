@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import { trpc } from "@/utils/trpc";
 import { authClient } from "@bounty/auth/client";
 import { useDevice } from "@/components/device-provider";
@@ -14,6 +14,12 @@ import { MyBountiesSidebar } from "@/components/dashboard/my-bounties-sidebar";
 import { ActivitySidebar } from "@/components/dashboard/activity-sidebar";
 import { AccessGate } from "@/components/access-gate";
 import { Header } from "@/components/dual-sidebar/sidebar-header";
+import { Button } from "@/components/ui/button";
+import { useBountyModals } from "@/lib/bounty-utils";
+import { CreateBountyModal } from "@/components/bounty/create-bounty-modal";
+import GithubImportModal from "@/components/bounty/github-import-modal";
+import GitHub from "@/components/icons/github";
+import { FloatingCreateMenu } from "@/components/bounty/floating-create-menu";
 
 // Constants and types
 import { PAGINATION_LIMITS, PAGINATION_DEFAULTS } from "@/constants/dashboard";
@@ -54,6 +60,8 @@ export default function Dashboard() {
 
   const { data: session } = authClient.useSession();
   const { isMobile } = useDevice();
+  const { createModalOpen, openCreateModal, closeCreateModal } = useBountyModals();
+  const [importOpen, setImportOpen] = useState(false);
 
   // Memoized handlers
   // const handleBountyClick = useCallback(
@@ -100,6 +108,21 @@ export default function Dashboard() {
         />
         <div className="bg-background">
           <div className="container mx-auto px-4 py-4 rounded-lg">
+            <div className="flex justify-end items-center mb-4">
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  disabled={!session?.user}
+                  onClick={() => setImportOpen(true)}
+                >
+                  <GitHub className="h-4 w-4 fill-white" />
+                  Import from GitHub
+                </Button>
+                <Button disabled={!session?.user} onClick={() => openCreateModal()}>
+                  Create Bounty
+                </Button>
+              </div>
+            </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:h-[calc(100vh-8rem)] rounded-lg py-4">
               {/* Center - Bounties Feed */}
               <div className="lg:col-span-2 flex flex-col rounded-lg">
@@ -130,6 +153,13 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+        <FloatingCreateMenu
+          disabled={!session?.user}
+          onCreate={() => openCreateModal()}
+          onImport={() => setImportOpen(true)}
+        />
+        <CreateBountyModal open={createModalOpen} onOpenChange={closeCreateModal} />
+        <GithubImportModal open={importOpen} onOpenChange={setImportOpen} />
       </AccessGate>
     </ErrorBoundary>
   );

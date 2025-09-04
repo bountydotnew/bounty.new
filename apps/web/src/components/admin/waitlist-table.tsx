@@ -78,7 +78,7 @@ export function WaitlistTable({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="border-neutral-800 bg-neutral-900/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Entries</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -88,7 +88,7 @@ export function WaitlistTable({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-neutral-800 bg-neutral-900/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">With Access</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
@@ -100,7 +100,7 @@ export function WaitlistTable({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-neutral-800 bg-neutral-900/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending</CardTitle>
             <XCircle className="h-4 w-4 text-orange-600" />
@@ -113,7 +113,7 @@ export function WaitlistTable({
         </Card>
       </div>
 
-      <Card>
+      <Card className="border-neutral-800 bg-neutral-900/50">
         <CardHeader>
           <CardTitle>Waitlist Entries</CardTitle>
           <CardDescription>
@@ -128,7 +128,7 @@ export function WaitlistTable({
                 placeholder="Search by email..."
                 value={search}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="max-w-sm"
+                className="max-w-sm bg-neutral-900 border-neutral-800"
               />
             </div>
 
@@ -143,7 +143,7 @@ export function WaitlistTable({
                 {entries.map((entry) => (
                   <div
                     key={entry.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
+                    className="flex items-center justify-between p-4 border rounded-lg border-neutral-800 bg-neutral-900/40"
                   >
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
