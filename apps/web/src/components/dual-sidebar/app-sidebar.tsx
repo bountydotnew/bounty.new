@@ -23,6 +23,7 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { NavMain } from "@/components/dual-sidebar/nav-main";
 // import { NavProjects } from "@/components/dual-sidebar/nav-projects";
@@ -32,7 +33,7 @@ import { Divider } from "@/components/ui/divider";
 import Bookmark from "../icons/bookmark";
 import Bounty from "../icons/bounty";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
+import Link from '@/components/ui/link';
 import { LINKS } from "@/constants/links";
 import { AccessGate } from "@/components/access-gate";
 
@@ -201,7 +202,9 @@ export const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) =
         >
           <NavMain items={productionData.navMain} />
         </AccessGate>
+
         {/* <NavProjects projects={data.projects} /> */}
+
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />
@@ -220,7 +223,7 @@ export const AdminAppSidebar = ({ ...props }: React.ComponentProps<typeof Sideba
   const adminNav = [
     { title: "Overview", url: "/admin", icon: Home, isActive: isActive("/admin") },
     { title: "Beta Applications", url: "/admin/beta-applications", icon: FileUser, isActive: isActive("/admin/beta-applications") },
-    { title: "Users", url: "/admin/users", icon:  Users, isActive: isActive("/admin/users") },
+    { title: "Users", url: "/admin/users", icon: Users, isActive: isActive("/admin/users") },
     { title: "Waitlist", url: "/admin/waitlist", icon: Calendar, isActive: isActive("/admin/waitlist") },
   ];
 

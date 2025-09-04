@@ -1,19 +1,13 @@
 "use client";
 
-import Link from "next/link";
+import Link from '@/components/ui/link';
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
 import { authClient } from "@bounty/auth/client";
 import Image from "next/image";
 import { LINKS } from "@/constants/links";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { DevWarningDialog } from "@/components/ui/dev-warning-dialog";
 import { useState, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
@@ -129,63 +123,12 @@ export function Header() {
         {rightContent}
       </header>
 
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="bg-[#2D2D2D] border-white/20 text-white max-w-md">
-          <DialogHeader className="text-center">
-            <div className="w-16 h-16 mx-auto bg-background/20 rounded-full flex items-center justify-center mb-4">
-              <Image
-                src="/bdn-b-w-trans.png"
-                alt="Bounty.new Logo"
-                width={32}
-                height={32}
-              />
-            </div>
-            <DialogTitle className="text-lg font-semibold">
-              App in Development
-            </DialogTitle>
-            <DialogDescription className="text-white/60">
-              This app isn&apos;t released yet and you should expect bugs.
-              Functionality is limited, so don&apos;t expect everything to work,
-              or even a good looking UI.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="dont-show-again"
-                checked={dontShowAgain}
-                onCheckedChange={(checked) =>
-                  setDontShowAgain(checked as boolean)
-                }
-                className="border-white/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-              />
-              <label
-                htmlFor="dont-show-again"
-                className="text-sm text-white/60 cursor-pointer"
-              >
-                Don&apos;t show this message again
-              </label>
-            </div>
-
-            <div className="flex gap-3">
-              <Button
-                onClick={() => handleDialogClose("okay")}
-                variant="outline"
-                className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20"
-              >
-                Okay
-              </Button>
-              <Button
-                onClick={() => handleDialogClose("continue")}
-                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                Continue Anyway
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <DevWarningDialog
+        open={showDialog}
+        onOpenChange={setShowDialog}
+        onOkay={(hide) => { if (hide) setCookie("hide-dev-warning", "true", 365); setShowDialog(false); }}
+        onContinue={(hide) => { if (hide) setCookie("hide-dev-warning", "true", 365); setShowDialog(false); router.push(LINKS.DASHBOARD); }}
+      />
     </>
   );
 }

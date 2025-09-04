@@ -10,7 +10,7 @@ import { authClient } from "@bounty/auth/client";
 import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from '@/components/ui/link';
 import { LINKS } from "@/constants/links";
 
 export default function UserMenu() {

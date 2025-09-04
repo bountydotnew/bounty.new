@@ -30,9 +30,14 @@ export default function GithubIssueToBountyPage() {
   }, [isLoading, error, data, openCreateModal]);
   const initialValues = useMemo(() => {
     if (!data) return undefined;
+    let description = (data.data.body || "").slice(0, 1000);
+    try {
+      const cached = window.sessionStorage.getItem("bounty.importIssueBody");
+      if (cached) description = cached.slice(0, 1000);
+    } catch {}
     return {
       title: data.data.title || "",
-      description: (data.data.body || "").slice(0, 1000),
+      description,
       issueUrl: data.data.html_url,
       repositoryUrl: `https://github.com/${data.data.owner}/${data.data.repo}`,
       tags: Array.isArray(data.data.labels) ? data.data.labels.slice(0, 5) : [],
@@ -41,7 +46,13 @@ export default function GithubIssueToBountyPage() {
     };
   }, [data]);
 
-  console.warn("html", data?.data.body_html);
+  useEffect(() => {
+    return () => {
+      try {
+        window.sessionStorage.removeItem("bounty.importIssueBody");
+      } catch {}
+    };
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-8">

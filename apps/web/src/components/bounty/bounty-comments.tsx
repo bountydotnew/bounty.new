@@ -28,6 +28,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
   const addComment = useMutation({ ...trpc.bounties.addBountyComment.mutationOptions() });
   const toggleLike = useMutation({ ...trpc.bounties.toggleCommentLike.mutationOptions() });
   const updateComment = useMutation({ ...trpc.bounties.updateBountyComment.mutationOptions() });
+  const [editError, setEditError] = useState<string | null>(null);
   const deleteComment = useMutation({ ...trpc.bounties.deleteBountyComment.mutationOptions() });
   const [editState, setEditState] = useState<{ id: string; initial: string } | null>(null);
 
@@ -165,10 +166,19 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
     const previous: BountyCommentCacheItem[] = (commentsQuery.data as BountyCommentCacheItem[] | undefined) || [];
     const next = previous.map((c) => (c.id === commentId ? { ...c, content: newContent, editCount: Number(c.editCount || 0) + 1 } : c));
     queryClient.setQueryData(key, next);
+    setEditError(null);
     updateComment.mutate(
       { commentId, content: newContent },
       {
-        onError: () => queryClient.setQueryData(key, previous),
+        onSuccess: () => {
+          setEditState(null);
+        },
+        onError: (err: any) => {
+          queryClient.setQueryData(key, previous);
+          if (err?.message?.toLowerCase?.().includes("inappropriate")) {
+            setEditError("Inappropriate content detected. Please review your comment and try again.");
+          }
+        },
         onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
       },
     );
@@ -230,7 +240,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
       <CommentEditDialog
         open={Boolean(editState)}
         onOpenChange={(o) => {
-          if (!o) setEditState(null);
+          if (!o) { setEditState(null); setEditError(null); }
         }}
         initialValue={editState?.initial || ""}
         onSave={(val) => {
@@ -239,6 +249,7 @@ export default function BountyComments({ bountyId, pageSize = 10 }: BountyCommen
           setEditState(null);
         }}
         isSaving={updateComment.isPending}
+        error={editError}
       />
 
       <div

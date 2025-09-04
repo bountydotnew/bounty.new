@@ -18,9 +18,10 @@ export default function RedirectToSignIn() {
 
   if (isPending) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <Spinner />
-      </div>
+      // <div className="flex justify-center items-center h-screen">
+      //   <Spinner />
+      // </div>
+      <h1>hi</h1>
     );
   }
 

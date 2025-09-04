@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useEffect, useState, useRef, useCallback } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import Link from '@/components/ui/link';
 import { cn, getCookie, setCookie } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";

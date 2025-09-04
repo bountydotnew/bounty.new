@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { eq, desc, and, or, ilike, sql, inArray, isNull, isNotNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { moderateComment } from "../lib/content-moderation";
 import { router, publicProcedure, protectedProcedure } from "../trpc";
 import {
   db,
@@ -12,6 +13,7 @@ import {
   bountyComment,
   bountyCommentLike,
   bountyBookmark,
+  createNotification,
 } from "@bounty/db";
 
 const parseAmount = (amount: string | number | null): number => {
@@ -131,8 +133,8 @@ export const bountiesRouter = router({
   }),
 
   createBounty: protectedProcedure
-    .input(createBountySchema)
-    .mutation(async ({ ctx, input }) => {
+      .input(createBountySchema)
+      .mutation(async ({ ctx, input }) => {
       try {
         const normalizedAmount = String(input.amount);
         const cleanedTags =
@@ -182,8 +184,8 @@ export const bountiesRouter = router({
     }),
 
   fetchAllBounties: publicProcedure
-    .input(getBountiesSchema)
-    .query(async ({ input }) => {
+      .input(getBountiesSchema)
+      .query(async ({ input }) => {
       try {
         const offset = (input.page - 1) * input.limit;
 
@@ -632,6 +634,11 @@ export const bountiesRouter = router({
       try {
         const trimmed = input.content.trim();
 
+        const moderation = await moderateComment(trimmed);
+        if (!moderation.isClean) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Inappropriate content detected. Please review your comment and try again." });
+        }
+
         if (!input.parentId) {
           const [existing] = await db
             .select({ id: bountyComment.id })
@@ -677,6 +684,25 @@ export const bountiesRouter = router({
 
         if (!inserted) {
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create comment" });
+        }
+
+        try {
+          const [owner] = await db
+            .select({ createdById: bounty.createdById, title: bounty.title })
+            .from(bounty)
+            .where(eq(bounty.id, input.bountyId))
+            .limit(1);
+          if (owner?.createdById && owner.createdById !== ctx.session.user.id) {
+            await createNotification({
+              userId: owner.createdById,
+              type: "bounty_comment",
+              title: `New comment on "${owner.title}"`,
+              message: trimmed.length > 100 ? trimmed.slice(0, 100) + "..." : trimmed,
+              data: { bountyId: input.bountyId, commentId: inserted.id },
+            });
+          }
+        } catch (e) {
+          console.error("[bounties.createComment] notification error", e);
         }
 
         return inserted;
@@ -763,6 +789,11 @@ export const bountiesRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       try {
+        const moderation = await moderateComment(input.content.trim());
+        if (!moderation.isClean) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Inappropriate content detected. Please review your comment and try again." });
+        }
+
         const [existing] = await db
           .select()
           .from(bountyComment)

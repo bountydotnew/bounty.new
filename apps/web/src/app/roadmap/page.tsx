@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { GithubIcon } from "@/components/icons";
-import Link from "next/link";
+import Link from '@/components/ui/link';
 import { Footer } from "@/components/sections/home/footer";
 import { Header } from "@/components/sections/home/header";
 import ReactMarkdown from "react-markdown";

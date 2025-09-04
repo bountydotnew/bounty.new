@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { PricingDialog } from "@/components/billing/pricing-dialog";
 import { AccountDropdown } from "@/components/billing/account-dropdown";
+import { NotificationsDropdown } from "@/components/notifications/notifications-dropdown";
 
 export function NavUser({
   user,
@@ -29,6 +30,7 @@ export function NavUser({
 
   return (
     <>
+      <NotificationsDropdown />
       <AccountDropdown user={user} onUpgradeClick={handleUpgrade} />
 
       <PricingDialog

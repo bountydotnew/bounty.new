@@ -4,7 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import SubmissionCard from "@/components/bounty/submission-card";
 import BountyActions from "@/components/bounty/bounty-actions";
 import BountyComments from "@/components/bounty/bounty-comments";
-import Composer from "../markdown/Composer";
+ 
+import { MarkdownContent } from "@/components/bounty/markdown-content";
 import CollapsibleText from "@/components/bounty/collapsible-text";
 import { Badge } from "../ui/badge";
 import { SmartNavigation } from "@/components/ui/smart-breadcrumb";
@@ -278,15 +279,14 @@ export default function BountyDetailPage({
               />
             </div>
 
-            {/* About Section */}
-            <div className="mb-8 p-6 rounded-lg bg-[#1D1D1D] border border-[#383838]/20">
-              <h2 className="text-xl font-medium text-white mb-4">
-                About
-              </h2>
-              <CollapsibleText>
-                <Composer>{description}</Composer>
-              </CollapsibleText>
-            </div>
+            {(description) && (
+              <div className="mb-8 p-6 rounded-lg bg-[#1D1D1D] border border-[#383838]/20">
+                <h2 className="text-xl font-medium text-white mb-4">About</h2>
+                <CollapsibleText>
+                  <MarkdownContent content={description} />
+                </CollapsibleText>
+              </div>
+            )}
             <BountyComments bountyId={id} pageSize={5} />
 
           </div>

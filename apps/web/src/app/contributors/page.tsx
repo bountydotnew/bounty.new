@@ -10,7 +10,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
+import Link from '@/components/ui/link';
 import { trpc } from "@/utils/trpc";
 import { DataBuddyIcon, MarbleIcon } from "@/components/icons";
 import React from "react";

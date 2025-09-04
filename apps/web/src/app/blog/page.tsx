@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import Link from "next/link";
+import Link from '@/components/ui/link';
 import Image from "next/image";
 import { Header } from "@/components/sections/home/header";
 import { Footer } from "@/components/sections/home/footer";

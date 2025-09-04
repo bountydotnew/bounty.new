@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useDrafts } from "@/hooks/use-drafts";
+import { MarkdownTextarea } from "@/components/bounty/markdown-editor";
 import {
   Dialog,
   DialogContent,
@@ -149,13 +150,14 @@ export function CreateBountyModal({ open, onOpenChange, draftId, initialValues, 
               name="description"
               control={control}
               render={({ field }) => (
-                <textarea
-                  {...field}
+                <MarkdownTextarea
                   id="description"
-                  rows={3}
+                  value={field.value}
+                  onChange={(val) => field.onChange(val)}
+                  onBlur={field.onBlur}
+                  name={field.name}
                   placeholder="Describe what needs to be done"
-                  className={`w-full px-3 py-2 border rounded-md ${errors.description ? "border-red-500" : "border-border"
-                    }`}
+                  className={errors.description ? "border-red-500" : "border-border"}
                 />
               )}
             />

@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { publicProcedure, router } from "../trpc";
+import { publicProcedure, router, protectedProcedure } from "../trpc";
+import { db, notification } from "@bounty/db";
+import { and, count, desc, eq, lt } from "drizzle-orm";
 import { sendErrorWebhook, sendInfoWebhook } from "../lib/use-discord-webhook";
 import { grim } from "../lib/use-dev-log";
 
@@ -20,6 +22,70 @@ const sendErrorSchema = z.object({
 });
 
 export const notificationsRouter = router({
+  getAll: protectedProcedure
+    .input(
+      z
+        .object({
+          limit: z.number().min(1).max(100).default(50),
+          offset: z.number().min(0).default(0),
+          unreadOnly: z.boolean().default(false),
+        })
+        .optional()
+        .default({})
+    )
+    .query(async ({ ctx, input }) => {
+      const where = input.unreadOnly
+        ? and(eq(notification.userId, ctx.session.user.id), eq(notification.read, false))
+        : eq(notification.userId, ctx.session.user.id);
+
+      const items = await db.query.notification.findMany({
+        where,
+        orderBy: [desc(notification.createdAt)],
+        limit: input.limit,
+        offset: input.offset,
+      });
+      return items;
+    }),
+
+  getUnreadCount: protectedProcedure.query(async ({ ctx }) => {
+    const [row] = await db
+      .select({ count: count() })
+      .from(notification)
+      .where(and(eq(notification.userId, ctx.session.user.id), eq(notification.read, false)));
+    return row?.count ?? 0;
+  }),
+
+  markAsRead: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const [updated] = await db
+        .update(notification)
+        .set({ read: true, updatedAt: new Date() })
+        .where(and(eq(notification.id, input.id), eq(notification.userId, ctx.session.user.id)))
+        .returning();
+      return updated;
+    }),
+
+  markAllAsRead: protectedProcedure.mutation(async ({ ctx }) => {
+    const updated = await db
+      .update(notification)
+      .set({ read: true, updatedAt: new Date() })
+      .where(eq(notification.userId, ctx.session.user.id))
+      .returning();
+    return updated;
+  }),
+
+  cleanup: protectedProcedure
+    .input(z.object({ daysToKeep: z.number().min(1).max(365).default(30) }).optional().default({}))
+    .mutation(async ({ ctx, input }) => {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - input.daysToKeep);
+      const deleted = await db
+        .delete(notification)
+        .where(and(eq(notification.userId, ctx.session.user.id), eq(notification.read, true), lt(notification.createdAt, cutoff)))
+        .returning();
+      return deleted;
+    }),
   sendWebhook: publicProcedure
     .input(sendWebhookSchema)
     .mutation(async ({ input }) => {

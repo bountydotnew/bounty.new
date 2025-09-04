@@ -19,6 +19,7 @@ import {
   IssueResultCard,
 } from "@/components/bounty/github-result-cards";
 import { useCurrentUser } from "@/lib/hooks/use-access";
+import { MarkdownTextarea } from "@/components/bounty/markdown-editor";
 
 type RepoOption = { name: string; full_name: string; private: boolean };
 
@@ -39,6 +40,7 @@ export default function GithubImportModal({
   const [issueQuery, setIssueQuery] = useState("");
   const [repoOpen, setRepoOpen] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
+  const [body, setBody] = useState("");
 
   const usernameInputRef = useRef<HTMLInputElement>(
     null as unknown as HTMLInputElement,
@@ -54,11 +56,24 @@ export default function GithubImportModal({
   const debouncedRepoQuery = useDebouncedValue(repoQuery, 300);
   const debouncedIssueQuery = useDebouncedValue(issueQuery, 300);
 
+  const parseGithubInput = (raw: string) => {
+    const v = raw.trim();
+    const r1 = v.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/(issues|pull)\/(\d+)/i);
+    if (r1) return { owner: r1[1], repo: r1[2], number: r1[4] } as const;
+    const r2 = v.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/?$/i);
+    if (r2) return { owner: r2[1], repo: r2[2] } as const;
+    const r3 = v.match(/^([^\/\s]+)\/([^\/\s]+)(?:#(\d+))?$/);
+    if (r3) return { owner: r3[1], repo: r3[2], number: r3[3] } as const;
+    return null;
+  };
+
   const userRepos = useQuery({
     queryKey: ["repository.userRepos", debouncedUsername],
     queryFn: () =>
       trpcClient.repository.userRepos.query({ username: debouncedUsername }),
     enabled: !!debouncedUsername && open,
+    staleTime: 120_000,
+    gcTime: 600_000,
   });
 
   useEffect(() => {
@@ -79,7 +94,13 @@ export default function GithubImportModal({
         q: debouncedIssueQuery,
       }),
     enabled: !!owner && !!repo && open && debouncedIssueQuery.length > 0,
+    staleTime: 60_000,
+    gcTime: 600_000,
   });
+
+  
+
+  
 
   const repoOptions: RepoOption[] = useMemo(() => {
     const result = userRepos.data;
@@ -103,23 +124,56 @@ export default function GithubImportModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[92vw] max-w-lg p-0 sm:rounded-lg">
+      <DialogContent className="w-[92vw] max-w-lg p-0 sm:rounded-lg border border-neutral-800 bg-neutral-900/90 backdrop-blur">
         <DialogHeader className="px-6 pt-6">
-          <DialogTitle className="text-xl">Import from GitHub</DialogTitle>
+          <DialogTitle className="text-xl text-white">Import from GitHub</DialogTitle>
         </DialogHeader>
-        <div className="px-6 pb-6 space-y-4">
-          <div className="space-y-2">
+        <div className="px-6 pb-6 space-y-4 transition-all duration-200">
+          <div className="space-y-2 rounded-lg  bg-neutral-900/50 p-3">
             <Label htmlFor="gh-username">Username</Label>
             <Input
               id="gh-username"
               ref={usernameInputRef}
-              placeholder="username"
+              placeholder="Paste a GitHub URL or enter username"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onPaste={(e) => {
+                const text = e.clipboardData.getData("text");
+                const parsed = parseGithubInput(text);
+                if (parsed) {
+                  e.preventDefault();
+                  if (parsed.owner) setUsername(parsed.owner);
+                  if (parsed.repo) setRepoQuery(parsed.repo);
+                  if (parsed.number) {
+                    setIssueQuery(String(parsed.number));
+                    setIssueOpen(false);
+                    const url = `https://github.com/${parsed.owner}/${parsed.repo}/issues/${parsed.number}`;
+                    trpcClient.repository.issueFromUrl
+                      .query({ url })
+                      .then((res) => {
+                        if (res?.data?.body) setBody(res.data.body);
+                      })
+                      .catch(() => {});
+                    issueInputRef.current?.focus();
+                  } else {
+                    repoInputRef.current?.focus();
+                  }
+                }
+              }}
+              onChange={(e) => {
+                const v = e.target.value;
+                const parsed = v.includes("github.com") ? parseGithubInput(v) : null;
+                if (parsed) {
+                  if (parsed.owner) setUsername(parsed.owner);
+                  if (parsed.repo) setRepoQuery(parsed.repo);
+                  if (parsed.number) setIssueQuery(String(parsed.number));
+                } else {
+                  setUsername(v);
+                }
+              }}
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 rounded-lg  bg-neutral-900/50 p-3">
             <Label htmlFor="gh-repo">Repository</Label>
             <div className="relative">
               <Input
@@ -157,16 +211,19 @@ export default function GithubImportModal({
                     }
                   />
                 )}
+                loading={userRepos.isLoading || userRepos.isFetching}
+                skeletonCount={5}
                 onSelect={(r) => {
                   setRepoQuery(r.name);
                   setRepoOpen(false);
                   issueInputRef.current?.focus();
                 }}
+                className="z-20 rounded-md border border-neutral-800 bg-neutral-900/90 backdrop-blur"
               />
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 rounded-lg  bg-neutral-900/50 p-3">
             <Label htmlFor="gh-issue">Issue</Label>
             <div className="relative">
               <Input
@@ -183,17 +240,36 @@ export default function GithubImportModal({
               />
               <AutocompleteDropdown
                 open={issueOpen}
-                items={
-                  (issues.data ?? []) as { number: number; title: string }[]
-                }
+                items={(issues.data ?? []) as { number: number; title: string }[]}
                 getKey={(i) => i.number}
                 renderItem={(i) => (
                   <IssueResultCard number={i.number} title={i.title} />
                 )}
+                loading={issues.isLoading || issues.isFetching}
+                skeletonCount={6}
                 onSelect={(i) => {
                   setIssueQuery(String(i.number));
                   setIssueOpen(false);
+                  const immediateOwner = username.trim();
+                  const immediateRepo = repoQuery.trim();
+                  const url = `https://github.com/${immediateOwner}/${immediateRepo}/issues/${i.number}`;
+                  trpcClient.repository.issueFromUrl.query({ url }).then((res) => {
+                    if (res?.data?.body) setBody(res.data.body);
+                  }).catch(() => {});
                 }}
+                className="z-20 rounded-md border border-neutral-800 bg-neutral-900/90 backdrop-blur"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="gh-body">Body</Label>
+            <div className="rounded-lg border border-neutral-800 bg-[#222222] p-3">
+              <MarkdownTextarea
+                id="gh-body"
+                value={body}
+                onChange={setBody}
+                placeholder="Edit the issue body before creating a bounty"
               />
             </div>
           </div>
@@ -208,6 +284,14 @@ export default function GithubImportModal({
                 if (!canSubmit) return;
                 const immediateOwner = username.trim();
                 const immediateRepo = repoQuery.trim();
+                try {
+                  if (body && body.length > 0) {
+                    window.sessionStorage.setItem(
+                      "bounty.importIssueBody",
+                      body.slice(0, 1000),
+                    );
+                  }
+                } catch {}
                 router.push(
                   `/${immediateOwner}/${immediateRepo}/issues/${issueQuery}`,
                 );

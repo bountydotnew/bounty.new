@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { AlertTriangle, RefreshCw, Home, Copy } from "lucide-react";
 import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import Link from '@/components/ui/link';
 
 export default function Error({
   error,

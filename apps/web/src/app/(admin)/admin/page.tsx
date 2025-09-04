@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, FileText, Clock } from "lucide-react";
-import Link from "next/link";
+import Link from '@/components/ui/link';
 import { AdminHeader } from "@/components/admin";
 import { StatCard } from "@/components/admin/stat-card";
 import { useQuery } from "@tanstack/react-query";

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from '@/components/ui/link';
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import SubmissionCard from "@/components/bounty/submission-card";

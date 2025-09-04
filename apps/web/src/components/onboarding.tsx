@@ -18,6 +18,12 @@ export function Onboarding() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!hasSeenOnboarding && isOpen && step === 0) {
+      celebrate();
+    }
+  }, [hasSeenOnboarding, isOpen, step, celebrate]);
+
   const handleNext = () => {
     setStep(step + 1);
   };
@@ -30,9 +36,6 @@ export function Onboarding() {
   const renderStepContent = () => {
     switch (step) {
       case 0:
-        if (!hasSeenOnboarding) {
-          celebrate();
-        }
         return (
           <div className="space-y-5">
             <div className="space-y-3">

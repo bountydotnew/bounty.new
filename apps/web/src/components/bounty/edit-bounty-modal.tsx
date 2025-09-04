@@ -19,6 +19,7 @@ import {
 import { useRouter } from "next/navigation";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { MarkdownTextarea } from "@/components/bounty/markdown-editor";
 import {
   createBountySchema,
   CreateBountyForm,
@@ -198,7 +199,7 @@ export function EditBountyModal({
             <div className="space-y-2">
               <Label htmlFor="description">Description *</Label>
               <Controller name="description" control={control} render={({ field }) => (
-                <textarea {...field} id="description" rows={3} placeholder="Describe what needs to be done" className={`w-full px-3 py-2 border rounded-md ${errors.description ? "border-red-500" : "border-border"}`} />
+                <MarkdownTextarea id="description" value={field.value} onChange={(val) => field.onChange(val)} onBlur={field.onBlur} name={field.name} placeholder="Describe what needs to be done" className={errors.description ? "border-red-500" : "border-border"} />
               )} />
               {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
             </div>
@@ -298,12 +299,14 @@ export function EditBountyModal({
               name="description"
               control={control}
               render={({ field }) => (
-                <textarea
-                  {...field}
+                <MarkdownTextarea
                   id="description"
-                  rows={3}
+                  value={field.value}
+                  onChange={(val) => field.onChange(val)}
+                  onBlur={field.onBlur}
+                  name={field.name}
                   placeholder="Describe what needs to be done"
-                  className={`w-full px-3 py-2 border rounded-md ${errors.description ? "border-red-500" : "border-border"}`}
+                  className={errors.description ? "border-red-500" : "border-border"}
                 />
               )}
             />

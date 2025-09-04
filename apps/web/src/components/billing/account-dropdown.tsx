@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CreditCard, LogOut, Sparkles } from "lucide-react";
+import { CreditCard, LogOut, Sparkles, Shield } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -27,6 +27,8 @@ import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { UserIcon } from "@/components/ui/user";
 import { BellIcon } from "@/components/ui/bell";
+import { useQuery } from "@tanstack/react-query";
+import { trpc } from "@/utils/trpc";
 
 // Constants for better maintainability
 const MESSAGES = {
@@ -236,6 +238,7 @@ export function AccountDropdown({
   const { isMobile } = useSidebar();
   const { data: session } = authClient.useSession();
   const { isPro, isLoading: isBillingLoading } = useBilling();
+  const { data: me } = useQuery({ ...trpc.user.getMe.queryOptions(), enabled: !!session?.user });
 
   // Custom hooks for better separation of concerns
   const userDisplay = useUserDisplay(session?.user, user);
@@ -256,6 +259,10 @@ export function AccountDropdown({
 
   const handleAccountClick = useCallback(() => {
     router.push(LINKS.ACCOUNT);
+  }, [router]);
+
+  const handleAdminClick = useCallback(() => {
+    router.push("/admin");
   }, [router]);
 
   return (
@@ -303,6 +310,16 @@ export function AccountDropdown({
                 <UserIcon />
                 {MENU_ITEMS.ACCOUNT}
               </DropdownMenuItem>
+
+              {me?.role === "admin" && (
+                <DropdownMenuItem
+                  onClick={handleAdminClick}
+                  aria-label="Open admin panel"
+                >
+                  <Shield />
+                  Admin
+                </DropdownMenuItem>
+              )}
 
               <DropdownMenuItem
                 onClick={handleBillingPortal}

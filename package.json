@@ -28,6 +28,7 @@
     "@t3-oss/env-nextjs": "^0.13.8",
     "better-auth": "1.3.0",
     "date-fns": "^4.1.0",
+    "js-base64": "^3.7.8",
     "posthog-js": "^1.257.0",
     "posthog-node": "^5.5.1",
     "react-hook-form": "^7.58.1",

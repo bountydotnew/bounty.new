@@ -14,9 +14,10 @@ interface CommentEditDialogProps {
   maxChars?: number;
   onSave: (value: string) => void;
   isSaving?: boolean;
+  error?: string | null;
 }
 
-export default function CommentEditDialog({ open, onOpenChange, initialValue, maxChars = 245, onSave, isSaving }: CommentEditDialogProps) {
+export default function CommentEditDialog({ open, onOpenChange, initialValue, maxChars = 245, onSave, isSaving, error }: CommentEditDialogProps) {
   const [value, setValue] = useState(initialValue);
   useEffect(() => {
     if (open) setValue(initialValue);
@@ -86,7 +87,8 @@ export default function CommentEditDialog({ open, onOpenChange, initialValue, ma
               }
             }}
           />
-          <div className="mt-1 flex items-center justify-end text-[11px]">
+          <div className="mt-1 flex items-center justify-between text-[11px]">
+            {error && <span className="text-red-400">{error}</span>}
             <span className={`${remaining < 0 ? "text-red-500" : "text-neutral-500"}`}>{remaining}</span>
           </div>
         </div>

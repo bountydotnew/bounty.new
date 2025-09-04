@@ -13,7 +13,7 @@ import { PostHogProvider } from "posthog-js/react";
 import { AuthUIProvider } from "@daveyplate/better-auth-ui";
 import { authClient } from "@bounty/auth/client";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from '@/components/ui/link';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const posthogApiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
