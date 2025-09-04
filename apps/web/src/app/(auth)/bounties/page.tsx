@@ -88,11 +88,11 @@ export default function BountiesPage() {
         onOpenChange={closeCreateModal}
       />
       <GithubImportModal open={importOpen} onOpenChange={setImportOpen} />
-      <FloatingCreateMenu
+      {/* <FloatingCreateMenu
         disabled={!session?.user}
         onCreate={() => openCreateModal()}
         onImport={() => setImportOpen(true)}
-      />
+      /> */}
     </>
   );
 }

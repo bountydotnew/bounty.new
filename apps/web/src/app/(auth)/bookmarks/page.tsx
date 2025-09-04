@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
 import { BountyCard } from "@/components/bounty/bounty-card";
+import { Header } from "@/components/dual-sidebar/sidebar-header";
 
 export default function BookmarksPage() {
   const [page, setPage] = useState(1);
@@ -14,6 +15,8 @@ export default function BookmarksPage() {
   const totalPages = data?.pagination?.totalPages ?? 1;
 
   return (
+    <>
+      <Header />
     <div className="p-6">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-medium text-white">Bookmarks</h1>
@@ -60,6 +63,7 @@ export default function BookmarksPage() {
         </div>
       )}
     </div>
+    </>
   );
 }
 

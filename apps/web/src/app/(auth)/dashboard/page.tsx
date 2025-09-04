@@ -155,11 +155,11 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <FloatingCreateMenu
+        {/* <FloatingCreateMenu
           disabled={!session?.user}
           onCreate={() => openCreateModal()}
           onImport={() => setImportOpen(true)}
-        />
+        /> */}
         <CreateBountyModal open={createModalOpen} onOpenChange={closeCreateModal} />
         <GithubImportModal open={importOpen} onOpenChange={setImportOpen} />
       </AccessGate>

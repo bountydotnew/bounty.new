@@ -85,6 +85,12 @@ export const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) =
         isActive: isActive("/bounties"),
       },
       {
+        title: "Bookmarks",
+        url: LINKS.BOOKMARKS,
+        icon: Bookmark,
+        isActive: isActive("/bookmarks"),
+      },
+      {
         title: "Documentation",
         url: "#",
         icon: BookText,
@@ -94,12 +100,6 @@ export const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) =
         url: LINKS.SETTINGS,
         icon: Settings,
         isActive: isActive("/settings"),
-      },
-      {
-        title: "Bookmarks",
-        url: LINKS.BOOKMARKS,
-        icon: Bookmark,
-        isActive: isActive("/bookmarks"),
       },
     ],
     projects: [
