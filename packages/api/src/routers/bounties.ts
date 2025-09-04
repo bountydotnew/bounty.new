@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { eq, desc, and, or, ilike, sql, inArray, isNull, isNotNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { moderateComment } from "../lib/content-moderation";
 import { router, publicProcedure, protectedProcedure } from "../trpc";
 import {
   db,
@@ -634,10 +633,7 @@ export const bountiesRouter = router({
       try {
         const trimmed = input.content.trim();
 
-        const moderation = await moderateComment(trimmed);
-        if (!moderation.isClean) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "Inappropriate content detected. Please review your comment and try again." });
-        }
+        
 
         if (!input.parentId) {
           const [existing] = await db
@@ -789,10 +785,7 @@ export const bountiesRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const moderation = await moderateComment(input.content.trim());
-        if (!moderation.isClean) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "Inappropriate content detected. Please review your comment and try again." });
-        }
+        
 
         const [existing] = await db
           .select()

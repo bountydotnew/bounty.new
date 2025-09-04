@@ -115,6 +115,8 @@ export default function BountyCommentForm({
   disabled = false,
 }: BountyCommentFormProps) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
   
   const { form, handleFormSubmit, handleKeyDown } = useCommentForm({
     maxChars,
@@ -146,9 +148,16 @@ export default function BountyCommentForm({
   const hasError = Boolean(errorMessage);
 
 
+  const onValidatedSubmit = async (data: FormData) => {
+    const trimmed = data.content.trim();
+    if (!trimmed) return;
+    onSubmit(trimmed);
+    form.reset();
+  };
+
   return (
     <form
-      onSubmit={handleSubmit(handleFormSubmit)}
+      onSubmit={handleSubmit(onValidatedSubmit)}
       onKeyDown={handleKeyDown}
       className="space-y-3"
       noValidate
