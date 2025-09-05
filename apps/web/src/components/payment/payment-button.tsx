@@ -1,13 +1,6 @@
 import { cn } from '@/lib/utils';
+import type { PaymentButtonProps } from '@/types/billing-components';
 import Bounty from '../icons/bounty';
-
-interface PaymentButtonProps {
-  username: string;
-  apiKey?: string;
-  size?: 'sm' | 'md' | 'lg';
-  variant?: 'default' | 'outline';
-  className?: string;
-}
 
 export function PaymentButton({
   username,

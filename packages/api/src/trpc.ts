@@ -1,5 +1,4 @@
 import { initTRPC, TRPCError } from '@trpc/server';
-import { auth } from '@bounty/auth/server';
 import type { Context } from './context';
 
 export const t = initTRPC.context<Context>().create();
@@ -28,7 +27,10 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   const raw = ctx.session as any;
   const impersonatedBy = raw?.impersonatedBy ?? raw?.session?.impersonatedBy;
   if (impersonatedBy) {
-    throw new TRPCError({ code: 'FORBIDDEN', message: 'Stop impersonating to view the admin panel' });
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'Stop impersonating to view the admin panel',
+    });
   }
 
   const user = await ctx.db.query.user.findFirst({
@@ -36,7 +38,10 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   });
 
   if (!user || user.role !== 'admin') {
-    throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin access required' });
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'Admin access required',
+    });
   }
 
   return next({

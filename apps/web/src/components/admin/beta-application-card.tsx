@@ -142,7 +142,7 @@ export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
       </div>
 
       <Dialog onOpenChange={setIsReviewDialogOpen} open={isReviewDialogOpen}>
-        <DialogContent className="max-w-2xl border border-neutral-800 bg-neutral-900/90 backdrop-blur p-0">
+        <DialogContent className="max-w-2xl border border-neutral-800 bg-neutral-900/90 p-0 backdrop-blur">
           <DialogHeader className="px-6 pt-6 pb-2">
             <DialogTitle className="text-white">Review Application</DialogTitle>
             <DialogDescription className="text-neutral-400">
@@ -151,7 +151,7 @@ export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
           </DialogHeader>
 
           {selectedApplication && (
-            <div className="px-6 pb-6 space-y-5">
+            <div className="space-y-5 px-6 pb-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <span className="font-medium">Name:</span>
@@ -192,13 +192,19 @@ export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
                   placeholder="Add notes about your decision..."
                   value={reviewNotes}
                 />
-                <div className="text-neutral-500 text-xs">{reviewNotes.length}/500</div>
+                <div className="text-neutral-500 text-xs">
+                  {reviewNotes.length}/500
+                </div>
               </div>
             </div>
           )}
 
           <DialogFooter className="gap-2 px-6 pb-6">
-            <Button onClick={() => setIsReviewDialogOpen(false)} variant="outline" className="border-neutral-800">
+            <Button
+              className="border-neutral-800"
+              onClick={() => setIsReviewDialogOpen(false)}
+              variant="outline"
+            >
               Cancel
             </Button>
             <Button
@@ -207,15 +213,19 @@ export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
               variant="destructive"
             >
               <XCircle className="mr-2 h-4 w-4" />
-              {reviewNotes.trim().length === 0 ? 'Reject without reason' : 'Reject'}
+              {reviewNotes.trim().length === 0
+                ? 'Reject without reason'
+                : 'Reject'}
             </Button>
             <Button
+              className="border-neutral-800"
               disabled={updateStatusMutation.isPending}
               onClick={() => handleStatusUpdate('approved')}
-              className="border-neutral-800"
             >
               <CheckCircle className="mr-2 h-4 w-4" />
-              {reviewNotes.trim().length === 0 ? 'Approve without reason' : 'Approve'}
+              {reviewNotes.trim().length === 0
+                ? 'Approve without reason'
+                : 'Approve'}
             </Button>
           </DialogFooter>
         </DialogContent>

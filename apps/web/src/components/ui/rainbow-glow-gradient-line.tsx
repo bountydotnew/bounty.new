@@ -1,36 +1,35 @@
-"use client";
+'use client';
 
-import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
-
+import { TrendingDown } from 'lucide-react';
+import { CartesianGrid, Line, LineChart, XAxis } from 'recharts';
+import { Badge } from '@/components/ui/badge';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
-  ChartConfig,
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
-import { Badge } from "@/components/ui/badge";
-import { TrendingDown } from "lucide-react";
+} from '@/components/ui/chart';
 
 const chartData = [
-  { month: "January", desktop: 186 },
-  { month: "February", desktop: 305 },
-  { month: "March", desktop: 237 },
-  { month: "April", desktop: 73 },
-  { month: "May", desktop: 209 },
-  { month: "June", desktop: 214 },
+  { month: 'January', desktop: 186 },
+  { month: 'February', desktop: 305 },
+  { month: 'March', desktop: 237 },
+  { month: 'April', desktop: 73 },
+  { month: 'May', desktop: 209 },
+  { month: 'June', desktop: 214 },
 ];
 
 const chartConfig = {
   desktop: {
-    label: "Desktop",
-    color: "var(--chart-2)",
+    label: 'Desktop',
+    color: 'var(--chart-2)',
   },
 } satisfies ChartConfig;
 
@@ -41,8 +40,8 @@ export function RainbowGlowGradientLineChart() {
         <CardTitle>
           Rainbow Line Chart
           <Badge
+            className="ml-2 border-none bg-red-500/10 text-red-500"
             variant="outline"
-            className="text-red-500 bg-red-500/10 border-none ml-2"
           >
             <TrendingDown className="h-4 w-4" />
             <span>-5.2%</span>
@@ -62,26 +61,26 @@ export function RainbowGlowGradientLineChart() {
           >
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="month"
-              tickLine={false}
               axisLine={false}
-              tickMargin={8}
+              dataKey="month"
               tickFormatter={(value) => value.slice(0, 3)}
+              tickLine={false}
+              tickMargin={8}
             />
             <ChartTooltip
-              cursor={false}
               content={<ChartTooltipContent hideLabel />}
+              cursor={false}
             />
             <Line
               dataKey="desktop"
-              type="bump"
-              stroke="url(#colorUv)"
               dot={false}
-              strokeWidth={2}
               filter="url(#rainbow-line-glow)"
+              stroke="url(#colorUv)"
+              strokeWidth={2}
+              type="bump"
             />
             <defs>
-              <linearGradient id="colorUv" x1="0" y1="0" x2="1" y2="0">
+              <linearGradient id="colorUv" x1="0" x2="1" y1="0" y2="0">
                 <stop offset="0%" stopColor="#0B84CE" stopOpacity={0.8} />
                 <stop offset="20%" stopColor="#224CD1" stopOpacity={0.8} />
                 <stop offset="40%" stopColor="#3A11C7" stopOpacity={0.8} />
@@ -90,13 +89,13 @@ export function RainbowGlowGradientLineChart() {
                 <stop offset="100%" stopColor="#D80155" stopOpacity={0.8} />
               </linearGradient>
               <filter
+                height="140%"
                 id="rainbow-line-glow"
+                width="140%"
                 x="-20%"
                 y="-20%"
-                width="140%"
-                height="140%"
               >
-                <feGaussianBlur stdDeviation="10" result="blur" />
+                <feGaussianBlur result="blur" stdDeviation="10" />
                 <feComposite in="SourceGraphic" in2="blur" operator="over" />
               </filter>
             </defs>

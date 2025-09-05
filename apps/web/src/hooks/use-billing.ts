@@ -1,29 +1,16 @@
 import { authClient } from '@bounty/auth/client';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type {
+  BillingHookResult,
+  CustomerState,
+  FeatureState,
+  Features,
+  PendingAction,
+  PolarError,
+  UsageMetadata,
+} from '@/types/billing';
 import { trpc } from '@/utils/trpc';
-
-type PolarError = Error & {
-  body$?: string;
-  detail?: string;
-  status?: number;
-};
-
-type FeatureState = {
-  total: number;
-  remaining: number;
-  unlimited: boolean;
-  enabled: boolean;
-  usage: number;
-  nextResetAt: number | null;
-  interval: string;
-  included_usage: number;
-};
-
-type Features = {
-  lowerFees: FeatureState;
-  concurrentBounties: FeatureState;
-};
 
 const DEFAULT_FEATURES: Features = {
   lowerFees: {
@@ -55,12 +42,11 @@ const FEATURE_IDS = {
 
 const PRO_PLANS = ['pro-monthly', 'pro-annual'] as const;
 
-export const useBilling = () => {
+export const useBilling = (): BillingHookResult => {
   const [needsCustomerCreation, setNeedsCustomerCreation] = useState(false);
-  const [pendingAction, setPendingAction] = useState<{
-    type: 'portal' | 'usage' | 'checkout';
-    params?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  } | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(
+    null
+  );
 
   const ensurePolarCustomerMutation = useMutation({
     ...trpc.billing.ensurePolarCustomer.mutationOptions(),
@@ -126,13 +112,13 @@ export const useBilling = () => {
 
             if (action.type === 'portal') {
               await authClient.customer.portal();
-            } else if (action.type === 'usage') {
+            } else if (action.type === 'usage' && action.params) {
               await authClient.usage.ingest(action.params);
-            } else if (action.type === 'checkout') {
+            } else if (action.type === 'checkout' && action.params) {
               await authClient.checkout(action.params);
             }
           }
-        } catch (e) {
+        } catch (_e) {
           setNeedsCustomerCreation(false);
           setPendingAction(null);
         }
@@ -148,24 +134,7 @@ export const useBilling = () => {
   ]);
 
   const { isPro, ...customerFeatures } = useMemo(() => {
-    const customerState = customer as {
-      products?: Array<{ id?: string; name?: string; slug?: string }>;
-      activeSubscriptions?: Array<{
-        product?: { id?: string; name?: string; slug?: string };
-      }>;
-      grantedBenefits?: unknown[];
-      features?: Record<
-        string,
-        {
-          included_usage?: number;
-          balance?: number;
-          unlimited?: boolean;
-          usage?: number;
-          next_reset_at?: number;
-          interval?: string;
-        }
-      >;
-    };
+    const customerState = customer as CustomerState;
 
     // If still loading, don't show Pro status yet
     if (isLoading) {
@@ -286,10 +255,7 @@ export const useBilling = () => {
   }, []);
 
   const trackUsage = useCallback(
-    async (
-      event: string,
-      metadata: Record<string, string | number | boolean> = {}
-    ) => {
+    async (event: string, metadata: UsageMetadata = {}) => {
       try {
         try {
           await authClient.usage.ingest({ event, metadata });

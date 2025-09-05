@@ -28,6 +28,12 @@ import { Spinner } from '@/components/ui/spinner';
 import { UserIcon } from '@/components/ui/user';
 import { LINKS } from '@/constants/links';
 import { useBilling } from '@/hooks/use-billing';
+import type {
+  AccountDropdownProps,
+  SessionUser,
+  User,
+  UserDisplayData,
+} from '@/types/billing-components';
 import { trpc } from '@/utils/trpc';
 
 // Constants for better maintainability
@@ -50,35 +56,6 @@ const MENU_ITEMS = {
 } as const;
 
 const LOGIN_REDIRECT = '/login';
-
-// Enhanced TypeScript interfaces
-interface User {
-  name: string;
-  email: string;
-  image?: string | null;
-}
-
-interface SessionUser {
-  id: string;
-  email: string;
-  emailVerified: boolean;
-  name: string;
-  createdAt: Date;
-  updatedAt: Date;
-  image?: string | null;
-}
-
-interface AccountDropdownProps {
-  user: User;
-  onUpgradeClick: () => void;
-}
-
-interface UserDisplayData {
-  name: string;
-  email: string;
-  image: string | null;
-  initials: string;
-}
 
 // Custom hook for user display logic
 function useUserDisplay(
@@ -242,7 +219,10 @@ export function AccountDropdown({
     ...trpc.user.getMe.queryOptions(),
     enabled: !!session?.user,
   });
-  const isImpersonating = Boolean((session as any)?.session?.impersonatedBy || (session as any)?.impersonatedBy);
+  const isImpersonating = Boolean(
+    (session as any)?.session?.impersonatedBy ||
+      (session as any)?.impersonatedBy
+  );
 
   // Custom hooks for better separation of concerns
   const userDisplay = useUserDisplay(session?.user, user);
@@ -266,8 +246,11 @@ export function AccountDropdown({
   }, [router]);
 
   const handleAdminClick = useCallback(() => {
-    if (pathname?.startsWith('/admin')) router.push('/');
-    else router.push('/admin');
+    if (pathname?.startsWith('/admin')) {
+      router.push('/');
+    } else {
+      router.push('/admin');
+    }
   }, [router, pathname]);
 
   return (
@@ -299,8 +282,7 @@ export function AccountDropdown({
 
             {/* Upgrade section */}
             <DropdownMenuGroup>
-
-            {(me?.role === 'admin' || isImpersonating) && (
+              {(me?.role === 'admin' || isImpersonating) && (
                 <DropdownMenuItem
                   aria-label="Open admin panel"
                   onClick={handleAdminClick}

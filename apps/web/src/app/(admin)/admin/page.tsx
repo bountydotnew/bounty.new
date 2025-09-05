@@ -3,16 +3,21 @@
 import { useQuery } from '@tanstack/react-query';
 import { Clock, FileText, Users } from 'lucide-react';
 import { AdminHeader } from '@/components/admin';
+import {
+  OverviewKPIs,
+  OverviewTimeseries,
+} from '@/components/admin/analytics/overview';
 import { StatCard } from '@/components/admin/stat-card';
 import { trpc } from '@/utils/trpc';
-import { OverviewKPIs, OverviewTimeseries } from '@/components/admin/analytics/overview';
 
 export default function AdminPage() {
   const { data: betaApps } = useQuery(
     trpc.betaApplications.getAll.queryOptions({ page: 1, limit: 1 })
   );
   const { data: userStats } = useQuery(trpc.user.getUserStats.queryOptions());
-  const { data: notifications } = useQuery(trpc.notifications.getStats.queryOptions());
+  const { data: notifications } = useQuery(
+    trpc.notifications.getStats.queryOptions()
+  );
   const { data: waitlist } = useQuery(
     trpc.earlyAccess.getAdminWaitlist.queryOptions({ page: 1, limit: 1 })
   );
@@ -37,32 +42,31 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <StatCard
           hint="Total"
+          href="/admin/beta-applications"
           icon={<FileText className="h-4 w-4" />}
-          
           title="Beta Applications"
           value={betaTotal}
-          href="/admin/beta-applications"
         />
         <StatCard
           hint="Total registered"
+          href="/admin/users"
           icon={<Users className="h-4 w-4" />}
           title="Users"
           value={usersTotal}
-          href="/admin/users"
         />
         <StatCard
           hint="Pending approvals"
+          href="/admin/waitlist"
           icon={<Clock className="h-4 w-4" />}
           title="Waitlist"
           value={waitlistPending}
-          href="/admin/waitlist"
         />
         <StatCard
           hint="Sent"
+          href="/admin/notifications"
           icon={<Clock className="h-4 w-4" />}
           title="Notifications"
           value={notificationsSent}
-          href="/admin/notifications"
         />
       </div>
 

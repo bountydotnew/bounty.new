@@ -1,17 +1,15 @@
 'use client';
 
-import { GradientAreaChart } from '@/components/ui/gradient-chart';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DefaultBarChart } from '@/components/ui/default-bar-chart';
+import { GradientAreaChart } from '@/components/ui/gradient-chart';
+import { DefaultRadialChart } from '@/components/ui/radial-chart';
 import { RainbowGlowGradientLineChart } from '@/components/ui/rainbow-glow-gradient-line';
 import { RoundedPieChart } from '@/components/ui/rounded-pie-chart';
-import { DefaultRadialChart } from '@/components/ui/radial-chart';
-
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 type Props = { websiteId: string; timezone?: string };
 
 export function SummaryCards({}: Props) {
-
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <Card className="border-neutral-800 bg-neutral-900/60">
@@ -38,5 +36,3 @@ export function SummaryCards({}: Props) {
     </div>
   );
 }
-
-

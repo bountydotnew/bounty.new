@@ -16,42 +16,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import type {
+  ActionItem,
+  ActionsDropdownProps,
+  BountyActionsProps,
+  UpvoteButtonProps,
+} from '@/types/bounty-actions';
 import { trpc } from '@/utils/trpc';
-
-interface BountyActionsProps {
-  bountyId: string;
-  canEdit: boolean;
-  isVoted: boolean;
-  voteCount: number;
-  onUpvote: () => void;
-  onEdit: () => void;
-  onShare?: () => void;
-  onBookmark?: () => void;
-  actions?: ActionItem[];
-}
-
-interface UpvoteButtonProps {
-  isVoted: boolean;
-  voteCount: number;
-  onUpvote: () => void;
-  className?: string;
-}
-
-export type ActionItem = {
-  key: string;
-  label: string;
-  onSelect: () => void;
-  icon?: React.ReactNode;
-  disabled?: boolean;
-};
-
-interface ActionsDropdownProps {
-  onShare?: () => void;
-  onBookmark?: () => void;
-  actions?: ActionItem[];
-  ariaLabel?: string;
-  bookmarked?: boolean;
-}
 
 export function UpvoteButton({
   isVoted,

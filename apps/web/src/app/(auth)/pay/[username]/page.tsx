@@ -18,7 +18,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { use, useEffect, useState } from 'react';
 import { PaymentModal } from '@/components/payment/payment-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from '@/components/ui/link';
@@ -159,10 +158,16 @@ export default function PaymentPage({ params }: PaymentPageProps) {
               </Avatar>
               <div className="flex-1 space-y-2">
                 <div>
-                  <CardTitle className="text-2xl text-white">{user.name}</CardTitle>
+                  <CardTitle className="text-2xl text-white">
+                    {user.name}
+                  </CardTitle>
                   <p className="text-neutral-400">@{user.username}</p>
                 </div>
-                {user.bio && <p className="text-neutral-400 text-sm leading-relaxed">{user.bio}</p>}
+                {user.bio && (
+                  <p className="text-neutral-400 text-sm leading-relaxed">
+                    {user.bio}
+                  </p>
+                )}
 
                 <div className="flex gap-4 pt-2">
                   {user.githubUrl && (
@@ -209,47 +214,66 @@ export default function PaymentPage({ params }: PaymentPageProps) {
               <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-4 text-center">
                 <div className="flex items-center justify-center text-white">
                   <GitFork className="mr-2 h-5 w-5 text-neutral-400" />
-                  <p className="font-semibold text-xl">{user.stats.repositories}</p>
+                  <p className="font-semibold text-xl">
+                    {user.stats.repositories}
+                  </p>
                 </div>
-                <p className="text-neutral-400 text-xs mt-1">Repositories</p>
+                <p className="mt-1 text-neutral-400 text-xs">Repositories</p>
               </div>
               <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-4 text-center">
                 <div className="flex items-center justify-center text-white">
                   <Users className="mr-2 h-5 w-5 text-neutral-400" />
-                  <p className="font-semibold text-xl">{user.stats.followers.toLocaleString()}</p>
+                  <p className="font-semibold text-xl">
+                    {user.stats.followers.toLocaleString()}
+                  </p>
                 </div>
-                <p className="text-neutral-400 text-xs mt-1">Followers</p>
+                <p className="mt-1 text-neutral-400 text-xs">Followers</p>
               </div>
               <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-4 text-center">
                 <div className="flex items-center justify-center text-white">
                   <Activity className="mr-2 h-5 w-5 text-neutral-400" />
-                  <p className="font-semibold text-xl">{user.stats.contributions}</p>
+                  <p className="font-semibold text-xl">
+                    {user.stats.contributions}
+                  </p>
                 </div>
-                <p className="text-neutral-400 text-xs mt-1">Contributions</p>
+                <p className="mt-1 text-neutral-400 text-xs">Contributions</p>
               </div>
             </div>
 
             <Separator className="bg-neutral-800" />
 
-            <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-6 text-center space-y-4">
+            <div className="space-y-4 rounded-lg border border-neutral-800 bg-neutral-900/60 p-6 text-center">
               <div className="space-y-2">
                 <h3 className="flex items-center justify-center gap-2 font-semibold text-lg text-white">
                   <DollarSign className="h-5 w-5 text-neutral-300" />
                   Support {user.name}
                 </h3>
-                <p className="text-neutral-400">Show your appreciation for their open source contributions</p>
+                <p className="text-neutral-400">
+                  Show your appreciation for their open source contributions
+                </p>
               </div>
               <div className="flex justify-center gap-3">
-                <Button className="gap-2 rounded-lg border border-neutral-800 bg-neutral-900/90 backdrop-blur text-white hover:bg-neutral-800" onClick={() => setPaymentModalOpen(true)} size="lg">
+                <Button
+                  className="gap-2 rounded-lg border border-neutral-800 bg-neutral-900/90 text-white backdrop-blur hover:bg-neutral-800"
+                  onClick={() => setPaymentModalOpen(true)}
+                  size="lg"
+                >
                   <Heart className="h-4 w-4" />
                   Send Payment
                 </Button>
-                <Button className="gap-2 rounded-lg border border-neutral-800 hover:bg-neutral-900/50" onClick={() => setPaymentModalOpen(true)} size="lg" variant="outline">
+                <Button
+                  className="gap-2 rounded-lg border border-neutral-800 hover:bg-neutral-900/50"
+                  onClick={() => setPaymentModalOpen(true)}
+                  size="lg"
+                  variant="outline"
+                >
                   <Star className="h-4 w-4" />
                   Tip
                 </Button>
               </div>
-              <p className="text-neutral-500 text-xs">Secure payments processed through Bounty.new</p>
+              <p className="text-neutral-500 text-xs">
+                Secure payments processed through Bounty.new
+              </p>
             </div>
           </CardContent>
         </Card>

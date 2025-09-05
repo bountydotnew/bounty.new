@@ -26,22 +26,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCurrentUser } from '@/hooks/use-access';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import type {
+  CurrentUser,
+  GithubImportModalProps,
+  GithubParseResult,
+  RepoOption,
+} from '@/types/github';
 import { trpcClient } from '@/utils/trpc';
-
-type RepoOption = { name: string; full_name: string; private: boolean };
 
 export default function GithubImportModal({
   open,
   onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
-}) {
+}: GithubImportModalProps) {
   const router = useRouter();
   const { user: currentUser } = useCurrentUser();
   const defaultUsername =
-    (currentUser as { data?: { profile?: { githubUsername?: string } } })?.data
-      ?.profile?.githubUsername || '';
+    (currentUser as CurrentUser)?.data?.profile?.githubUsername || '';
   const [username, setUsername] = useState<string>(defaultUsername);
   const [repoQuery, setRepoQuery] = useState('');
   const [issueQuery, setIssueQuery] = useState('');
@@ -69,15 +69,15 @@ export default function GithubImportModal({
       /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/(issues|pull)\/(\d+)/i
     );
     if (r1) {
-      return { owner: r1[1], repo: r1[2], number: r1[4] } as const;
+      return { owner: r1[1], repo: r1[2], number: r1[4] } as GithubParseResult;
     }
     const r2 = v.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/?$/i);
     if (r2) {
-      return { owner: r2[1], repo: r2[2] } as const;
+      return { owner: r2[1], repo: r2[2] } as GithubParseResult;
     }
     const r3 = v.match(/^([^/\s]+)\/([^/\s]+)(?:#(\d+))?$/);
     if (r3) {
-      return { owner: r3[1], repo: r3[2], number: r3[3] } as const;
+      return { owner: r3[1], repo: r3[2], number: r3[3] } as GithubParseResult;
     }
     return null;
   };
@@ -92,9 +92,7 @@ export default function GithubImportModal({
   });
 
   useEffect(() => {
-    const next = (
-      currentUser as { data?: { profile?: { githubUsername?: string } } }
-    )?.data?.profile?.githubUsername;
+    const next = (currentUser as CurrentUser)?.data?.profile?.githubUsername;
     if (next && !username) {
       setUsername(next);
     }

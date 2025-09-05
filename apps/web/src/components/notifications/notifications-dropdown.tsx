@@ -21,18 +21,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useNotifications } from '@/hooks/use-notifications';
 import { cn } from '@/lib/utils';
+import type {
+  NotificationData,
+  NotificationItem,
+  NotificationRowProps,
+} from '@/types/notifications';
 
-type Item = {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  read: boolean;
-  createdAt: Date | string;
-  data: Record<string, unknown> | null;
-};
-
-function Row({ item, onRead }: { item: Item; onRead: (id: string) => void }) {
+function Row({ item, onRead }: NotificationRowProps) {
   const router = useRouter();
   const ts =
     typeof item.createdAt === 'string'
@@ -45,7 +40,7 @@ function Row({ item, onRead }: { item: Item; onRead: (id: string) => void }) {
     if (!item.read) {
       onRead(item.id);
     }
-    const data = (item.data || {}) as Record<string, unknown>;
+    const data = (item.data || {}) as NotificationData;
     if (typeof data.linkTo === 'string' && data.linkTo.length > 0) {
       router.push(String(data.linkTo));
       return;
@@ -164,7 +159,7 @@ export function NotificationsDropdown() {
       <DropdownMenuContent
         align="end"
         alignOffset={-8}
-        className="w-80 rounded-lg border border-neutral-800 bg-neutral-900 p-0 sm:w-96 ml-2 sm:ml-4"
+        className="ml-2 w-80 rounded-lg border border-neutral-800 bg-neutral-900 p-0 sm:ml-4 sm:w-96"
         side="bottom"
         sideOffset={4}
       >
@@ -246,7 +241,7 @@ export function NotificationsDropdown() {
               </Button> */}
             </div>
           ) : filtered.length > 0 ? (
-            (filtered as Item[]).map((n) => (
+            (filtered as NotificationItem[]).map((n) => (
               <Row item={n} key={n.id} onRead={markAsRead} />
             ))
           ) : (

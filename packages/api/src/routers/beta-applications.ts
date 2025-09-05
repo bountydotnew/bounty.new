@@ -1,4 +1,4 @@
-import { betaApplication, user, createNotification } from '@bounty/db';
+import { betaApplication, createNotification, user } from '@bounty/db';
 import { TRPCError } from '@trpc/server';
 import { desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -160,9 +160,13 @@ export const betaApplicationsRouter = router({
             type: 'beta_application_approved',
             title: 'Beta access approved',
             message:
-              `Your beta application was approved! ` +
+              'Your beta application was approved! ' +
               `Reason: ${reviewNotes && reviewNotes.trim().length > 0 ? reviewNotes.trim() : 'No reason specified'}`,
-            data: { applicationId: application.id, reviewNotes: reviewNotes ?? null, linkTo: '/dashboard' },
+            data: {
+              applicationId: application.id,
+              reviewNotes: reviewNotes ?? null,
+              linkTo: '/dashboard',
+            },
           });
         } catch {}
       } else if (status === 'rejected') {
@@ -176,9 +180,13 @@ export const betaApplicationsRouter = router({
             type: 'beta_application_rejected',
             title: 'Beta application update',
             message:
-              `Your beta application was not approved at this time. ` +
+              'Your beta application was not approved at this time. ' +
               `Reason: ${reviewNotes && reviewNotes.trim().length > 0 ? reviewNotes.trim() : 'No reason specified'}`,
-            data: { applicationId: application.id, reviewNotes: reviewNotes ?? null, linkTo: '/dashboard' },
+            data: {
+              applicationId: application.id,
+              reviewNotes: reviewNotes ?? null,
+              linkTo: '/dashboard',
+            },
           });
         } catch {}
       }

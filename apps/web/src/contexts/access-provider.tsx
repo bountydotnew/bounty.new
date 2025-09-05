@@ -2,23 +2,15 @@
 
 import { authClient } from '@bounty/auth/client';
 import { useQuery } from '@tanstack/react-query';
-import { createContext, type ReactNode, useContext } from 'react';
+import { createContext, useContext } from 'react';
+import type {
+  AccessContextType,
+  AccessProviderProps,
+  AccessStage,
+} from '@/types/access';
 import { trpc } from '@/utils/trpc';
 
-export type AccessStage = 'none' | 'alpha' | 'beta' | 'production';
-
-interface AccessContextType {
-  userStage: AccessStage;
-  hasStageAccess: (stage: AccessStage | AccessStage[]) => boolean;
-  isLoading: boolean;
-  error: Error | null;
-}
-
 const AccessContext = createContext<AccessContextType | undefined>(undefined);
-
-interface AccessProviderProps {
-  children: ReactNode;
-}
 
 export const AccessProvider = ({ children }: AccessProviderProps) => {
   const { data: session } = authClient.useSession();

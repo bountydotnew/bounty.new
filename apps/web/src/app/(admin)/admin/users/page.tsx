@@ -1,8 +1,16 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { authClient } from '@bounty/auth/client';
-import { Calendar, Crown, Mail, MoreHorizontal, Search, User, Users } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Calendar,
+  Crown,
+  Mail,
+  MoreHorizontal,
+  Search,
+  User,
+  Users,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { AdminHeader } from '@/components/admin';
@@ -15,20 +23,19 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
- 
+import { Input } from '@/components/ui/input';
 
 export default function UsersPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
-  const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
+  const [_updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
   const [newUserName, setNewUserName] = useState('');
@@ -49,22 +56,34 @@ export default function UsersPage() {
           sortDirection: 'desc',
         },
       });
-      if (error) throw new Error(error.message || 'Failed to load users');
+      if (error) {
+        throw new Error(error.message || 'Failed to load users');
+      }
       return data;
     },
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: 'user' | 'admin' }) => {
+    mutationFn: async ({
+      userId,
+      role,
+    }: {
+      userId: string;
+      role: 'user' | 'admin';
+    }) => {
       const { error } = await authClient.admin.setRole({ userId, role });
-      if (error) throw new Error(error.message || 'Failed to update user role');
+      if (error) {
+        throw new Error(error.message || 'Failed to update user role');
+      }
     },
     onSuccess: () => {
       toast.success('User role updated successfully');
       queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
     },
     onError: (error: unknown) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to update user role');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to update user role'
+      );
     },
   });
 
@@ -108,10 +127,16 @@ export default function UsersPage() {
     authClient.admin
       .stopImpersonating({})
       .then(({ error }) => {
-        if (error) throw new Error(error.message || 'Failed to stop impersonating');
+        if (error) {
+          throw new Error(error.message || 'Failed to stop impersonating');
+        }
         toast.success('Stopped impersonating');
       })
-      .catch((e) => toast.error(e instanceof Error ? e.message : 'Failed to stop impersonating'));
+      .catch((e) =>
+        toast.error(
+          e instanceof Error ? e.message : 'Failed to stop impersonating'
+        )
+      );
   };
 
   const createUserMutation = useMutation({
@@ -123,7 +148,9 @@ export default function UsersPage() {
         role: newUserRole,
         data: {},
       });
-      if (error) throw new Error(error.message || 'Failed to create user');
+      if (error) {
+        throw new Error(error.message || 'Failed to create user');
+      }
     },
     onSuccess: () => {
       setNewUserEmail('');
@@ -134,7 +161,9 @@ export default function UsersPage() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
     },
     onError: (error: unknown) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to create user');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to create user'
+      );
     },
   });
 
@@ -145,11 +174,15 @@ export default function UsersPage() {
     authClient.admin
       .banUser({ userId, banReason: reason, banExpiresIn: duration })
       .then(({ error }) => {
-        if (error) throw new Error(error.message || 'Failed to ban user');
+        if (error) {
+          throw new Error(error.message || 'Failed to ban user');
+        }
         toast.success('User banned');
         queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
       })
-      .catch((e) => toast.error(e instanceof Error ? e.message : 'Failed to ban user'))
+      .catch((e) =>
+        toast.error(e instanceof Error ? e.message : 'Failed to ban user')
+      )
       .finally(() => {
         setUpdatingIds((prev) => {
           const next = new Set(prev);
@@ -164,11 +197,15 @@ export default function UsersPage() {
     authClient.admin
       .unbanUser({ userId })
       .then(({ error }) => {
-        if (error) throw new Error(error.message || 'Failed to unban user');
+        if (error) {
+          throw new Error(error.message || 'Failed to unban user');
+        }
         toast.success('User unbanned');
         queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
       })
-      .catch((e) => toast.error(e instanceof Error ? e.message : 'Failed to unban user'))
+      .catch((e) =>
+        toast.error(e instanceof Error ? e.message : 'Failed to unban user')
+      )
       .finally(() => {
         setUpdatingIds((prev) => {
           const next = new Set(prev);
@@ -183,10 +220,16 @@ export default function UsersPage() {
     authClient.admin
       .impersonateUser({ userId })
       .then(({ error }) => {
-        if (error) throw new Error(error.message || 'Failed to impersonate user');
+        if (error) {
+          throw new Error(error.message || 'Failed to impersonate user');
+        }
         toast.success('Impersonation started');
       })
-      .catch((e) => toast.error(e instanceof Error ? e.message : 'Failed to impersonate user'))
+      .catch((e) =>
+        toast.error(
+          e instanceof Error ? e.message : 'Failed to impersonate user'
+        )
+      )
       .finally(() => {
         setUpdatingIds((prev) => {
           const next = new Set(prev);
@@ -201,10 +244,16 @@ export default function UsersPage() {
     authClient.admin
       .revokeUserSessions({ userId })
       .then(({ error }) => {
-        if (error) throw new Error(error.message || 'Failed to revoke sessions');
+        if (error) {
+          throw new Error(error.message || 'Failed to revoke sessions');
+        }
         toast.success('Sessions revoked');
       })
-      .catch((e) => toast.error(e instanceof Error ? e.message : 'Failed to revoke sessions'))
+      .catch((e) =>
+        toast.error(
+          e instanceof Error ? e.message : 'Failed to revoke sessions'
+        )
+      )
       .finally(() => {
         setUpdatingIds((prev) => {
           const next = new Set(prev);
@@ -215,16 +264,22 @@ export default function UsersPage() {
   };
 
   const deleteUser = (userId: string) => {
-    if (!confirm('Delete user?')) return;
+    if (!confirm('Delete user?')) {
+      return;
+    }
     setUpdatingIds((prev) => new Set(prev).add(userId));
     authClient.admin
       .removeUser({ userId })
       .then(({ error }) => {
-        if (error) throw new Error(error.message || 'Failed to delete user');
+        if (error) {
+          throw new Error(error.message || 'Failed to delete user');
+        }
         toast.success('User deleted');
         queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
       })
-      .catch((e) => toast.error(e instanceof Error ? e.message : 'Failed to delete user'))
+      .catch((e) =>
+        toast.error(e instanceof Error ? e.message : 'Failed to delete user')
+      )
       .finally(() => {
         setUpdatingIds((prev) => {
           const next = new Set(prev);
@@ -250,7 +305,9 @@ export default function UsersPage() {
       />
 
       <div className="flex justify-end">
-        <Button size="sm" variant="outline" onClick={handleStopImpersonating}>Stop Impersonating</Button>
+        <Button onClick={handleStopImpersonating} size="sm" variant="outline">
+          Stop Impersonating
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
@@ -311,13 +368,48 @@ export default function UsersPage() {
         <CardContent>
           <div className="space-y-4">
             <div className="grid gap-2 md:grid-cols-4">
-              <Input className="border-neutral-800 bg-neutral-900" placeholder="Name" value={newUserName} onChange={(e) => setNewUserName(e.target.value)} />
-              <Input className="border-neutral-800 bg-neutral-900" placeholder="Email" type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} />
-              <Input className="border-neutral-800 bg-neutral-900" placeholder="Password" type="password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} />
+              <Input
+                className="border-neutral-800 bg-neutral-900"
+                onChange={(e) => setNewUserName(e.target.value)}
+                placeholder="Name"
+                value={newUserName}
+              />
+              <Input
+                className="border-neutral-800 bg-neutral-900"
+                onChange={(e) => setNewUserEmail(e.target.value)}
+                placeholder="Email"
+                type="email"
+                value={newUserEmail}
+              />
+              <Input
+                className="border-neutral-800 bg-neutral-900"
+                onChange={(e) => setNewUserPassword(e.target.value)}
+                placeholder="Password"
+                type="password"
+                value={newUserPassword}
+              />
               <div className="flex items-center gap-2">
-                <Button size="sm" variant={newUserRole === 'user' ? 'default' : 'outline'} onClick={() => setNewUserRole('user')}>User</Button>
-                <Button size="sm" variant={newUserRole === 'admin' ? 'default' : 'outline'} onClick={() => setNewUserRole('admin')}>Admin</Button>
-                <Button size="sm" onClick={() => createUserMutation.mutate()} disabled={!newUserEmail || !newUserPassword || !newUserName}>Create</Button>
+                <Button
+                  onClick={() => setNewUserRole('user')}
+                  size="sm"
+                  variant={newUserRole === 'user' ? 'default' : 'outline'}
+                >
+                  User
+                </Button>
+                <Button
+                  onClick={() => setNewUserRole('admin')}
+                  size="sm"
+                  variant={newUserRole === 'admin' ? 'default' : 'outline'}
+                >
+                  Admin
+                </Button>
+                <Button
+                  disabled={!(newUserEmail && newUserPassword && newUserName)}
+                  onClick={() => createUserMutation.mutate()}
+                  size="sm"
+                >
+                  Create
+                </Button>
               </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -370,43 +462,70 @@ export default function UsersPage() {
                         </Badge>
                       )}
                       {user.banned ? (
-                        <Badge className="bg-red-600" variant="default">Banned</Badge>
+                        <Badge className="bg-red-600" variant="default">
+                          Banned
+                        </Badge>
                       ) : null}
                     </div>
 
                     <div className="flex items-center space-x-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button className="h-7 rounded-lg border border-neutral-700 bg-[#222222] p-1 text-neutral-300 hover:bg-neutral-700/40" size="icon" variant="outline">
+                          <Button
+                            className="h-7 rounded-lg border border-neutral-700 bg-[#222222] p-1 text-neutral-300 hover:bg-neutral-700/40"
+                            size="icon"
+                            variant="outline"
+                          >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="z-10 w-44 rounded-md border border-neutral-800 bg-neutral-900 p-1 shadow">
                           {user.role === 'admin' ? (
-                            <DropdownMenuItem className="text-neutral-200 hover:bg-neutral-800" onClick={() => handleRoleUpdate(user.id, 'user')}>
+                            <DropdownMenuItem
+                              className="text-neutral-200 hover:bg-neutral-800"
+                              onClick={() => handleRoleUpdate(user.id, 'user')}
+                            >
                               Remove Admin
                             </DropdownMenuItem>
                           ) : (
-                            <DropdownMenuItem className="text-neutral-200 hover:bg-neutral-800" onClick={() => handleRoleUpdate(user.id, 'admin')}>
+                            <DropdownMenuItem
+                              className="text-neutral-200 hover:bg-neutral-800"
+                              onClick={() => handleRoleUpdate(user.id, 'admin')}
+                            >
                               Make Admin
                             </DropdownMenuItem>
                           )}
                           {user.banned ? (
-                            <DropdownMenuItem className="text-neutral-200 hover:bg-neutral-800" onClick={() => unbanUser(user.id)}>
+                            <DropdownMenuItem
+                              className="text-neutral-200 hover:bg-neutral-800"
+                              onClick={() => unbanUser(user.id)}
+                            >
                               Unban
                             </DropdownMenuItem>
                           ) : (
-                            <DropdownMenuItem className="text-neutral-200 hover:bg-neutral-800" onClick={() => banUser(user.id)}>
+                            <DropdownMenuItem
+                              className="text-neutral-200 hover:bg-neutral-800"
+                              onClick={() => banUser(user.id)}
+                            >
                               Ban
                             </DropdownMenuItem>
                           )}
-                          <DropdownMenuItem className="text-neutral-200 hover:bg-neutral-800" onClick={() => revokeUserSessions(user.id)}>
+                          <DropdownMenuItem
+                            className="text-neutral-200 hover:bg-neutral-800"
+                            onClick={() => revokeUserSessions(user.id)}
+                          >
                             Revoke Sessions
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-neutral-200 hover:bg-neutral-800" onClick={() => impersonateUser(user.id)}>
+                          <DropdownMenuItem
+                            className="text-neutral-200 hover:bg-neutral-800"
+                            onClick={() => impersonateUser(user.id)}
+                          >
                             Impersonate
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-400 hover:bg-red-950/40" onClick={() => deleteUser(user.id)}>
+                          <DropdownMenuItem
+                            className="text-red-400 hover:bg-red-950/40"
+                            onClick={() => deleteUser(user.id)}
+                          >
                             Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
