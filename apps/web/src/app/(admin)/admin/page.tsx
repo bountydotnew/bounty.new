@@ -4,19 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Clock, FileText, Users } from 'lucide-react';
 import { AdminHeader } from '@/components/admin';
 import { StatCard } from '@/components/admin/stat-card';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import Link from '@/components/ui/link';
 import { trpc } from '@/utils/trpc';
-import { SummaryCards } from '@/components/admin/analytics/summary-cards';
-import { OverviewKPIs, OverviewTraffic, OverviewTimeseries } from '@/components/admin/analytics/overview';
-import { AudienceDevices } from '@/components/admin/analytics/audience';
+import { OverviewKPIs, OverviewTimeseries } from '@/components/admin/analytics/overview';
 
 export default function AdminPage() {
   const { data: betaApps } = useQuery(
@@ -49,6 +38,7 @@ export default function AdminPage() {
         <StatCard
           hint="Total"
           icon={<FileText className="h-4 w-4" />}
+          
           title="Beta Applications"
           value={betaTotal}
           href="/admin/beta-applications"

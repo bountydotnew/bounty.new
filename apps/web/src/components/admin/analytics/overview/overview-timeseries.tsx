@@ -27,18 +27,20 @@ export function OverviewTimeseries({ websiteId }: Props) {
 
   const { data, isLoading } = useDatabuddyParameters({ websiteId, parameters: ['events_by_date'], startDate: start, endDate: end });
   const mapped = useMemo(() => (data ? mapBatchByParameter(data) : {}), [data]);
-  const rows = (mapped['events_by_date'] as any[]) || [];
+  const rows = useMemo(() => ((mapped['events_by_date'] as any[]) || []), [mapped]);
 
-  const chartData = useMemo(
-    () =>
-      rows.map((r) => ({
-        date: r.date || r.day || r.period || 'n/a',
-        pageviews: Number(r.pageviews || 0),
-        sessions: Number(r.sessions || 0),
-        visitors: Number(r.visitors || 0),
-      })),
-    [rows]
-  );
+  const chartData = useMemo(() => {
+    const r1 = (v: unknown) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? Math.round(n * 10) / 10 : 0;
+    };
+    return rows.map((r) => ({
+      date: r.date || r.day || r.period || 'n/a',
+      pageviews: r1(r.pageviews || 0),
+      sessions: r1(r.sessions || 0),
+      visitors: r1(r.visitors || 0),
+    }));
+  }, [rows]);
 
   const config = {
     pageviews: { label: 'Pageviews', color: 'var(--chart-1)' },
