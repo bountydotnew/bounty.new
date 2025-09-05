@@ -15,14 +15,24 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return (await res.json()) as T;
 }
 
+export type DatabuddyParamEntry = {
+  parameter: string;
+  success?: boolean;
+  data: unknown[];
+  error?: string;
+};
+
 export type DatabuddyBatchResult = {
   success: boolean;
   batch?: boolean;
+  queryId?: string;
   results?: Array<{
     queryId?: string;
-    data?: Array<{ parameter: string; success: boolean; data: unknown[] }>;
+    data?: DatabuddyParamEntry[];
     meta?: unknown;
   }>;
+  data?: DatabuddyParamEntry[];
+  meta?: unknown;
 };
 
 export function useDatabuddyParameters(args: {
@@ -56,16 +66,13 @@ export function useDatabuddyParameters(args: {
   });
 }
 
-export function mapBatchByParameter(
-  json: DatabuddyBatchResult,
-): Record<string, unknown[]> {
+export function mapBatchByParameter(json: DatabuddyBatchResult): Record<string, unknown[]> {
   const out: Record<string, unknown[]> = {};
-  const arr = Array.isArray((json as any)?.data)
-    ? ((json as any).data as Array<any>)
-    : (json?.results?.[0]?.data as Array<any>) || [];
-  for (const entry of arr) {
-    if (entry?.parameter)
-      out[entry.parameter] = (entry.data as unknown[]) || [];
+  const direct = Array.isArray(json.data) ? json.data : undefined;
+  const nested = Array.isArray(json.results) && json.results[0]?.data ? json.results[0].data : undefined;
+  const entries: DatabuddyParamEntry[] = direct ?? nested ?? [];
+  for (const entry of entries) {
+    if (entry && typeof entry.parameter === 'string') out[entry.parameter] = Array.isArray(entry.data) ? entry.data : [];
   }
   return out;
 }

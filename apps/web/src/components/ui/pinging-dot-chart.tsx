@@ -13,6 +13,7 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  ChartConfig,
 } from "@/components/ui/chart";
 
 type PingingDotChartProps = {
@@ -27,7 +28,7 @@ type PingingDotChartProps = {
 };
 
 export function PingingDotChart({ title, description, data, xKey, yKey, colorVar = "var(--chart-2)", dashed = true, height = 180 }: PingingDotChartProps) {
-  const config = { [yKey]: { label: title || yKey, color: colorVar } } as any;
+  const config: ChartConfig = { [yKey]: { label: title || yKey, color: colorVar } };
   return (
     <Card>
       {(title || description) && (
