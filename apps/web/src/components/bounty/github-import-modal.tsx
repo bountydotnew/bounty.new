@@ -11,6 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { AutocompleteDropdown } from "@/components/ui/autocomplete";
@@ -121,6 +123,199 @@ export default function GithubImportModal({
 
   const canSubmit =
     owner.length > 0 && repo.length > 0 && issueQuery.length > 0;
+
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent className="border border-neutral-800 bg-neutral-900/90 backdrop-blur">
+          <DrawerHeader className="px-6 pt-4">
+            <DrawerTitle className="text-xl text-white">Import from GitHub</DrawerTitle>
+          </DrawerHeader>
+          <div className="px-6 pb-6 space-y-4 transition-all duration-200">
+            <div className="space-y-2 rounded-lg  bg-neutral-900/50 p-3">
+              <Label htmlFor="gh-username">Username</Label>
+              <Input
+                id="gh-username"
+                ref={usernameInputRef}
+                placeholder="Paste a GitHub URL or enter username"
+                value={username}
+                onPaste={(e) => {
+                  const text = e.clipboardData.getData("text");
+                  const parsed = parseGithubInput(text);
+                  if (parsed) {
+                    e.preventDefault();
+                    if (parsed.owner) setUsername(parsed.owner);
+                    if (parsed.repo) setRepoQuery(parsed.repo);
+                    if (parsed.number) {
+                      setIssueQuery(String(parsed.number));
+                      setIssueOpen(false);
+                      const url = `https://github.com/${parsed.owner}/${parsed.repo}/issues/${parsed.number}`;
+                      trpcClient.repository.issueFromUrl
+                        .query({ url })
+                        .then((res) => {
+                          if (res?.data?.body) setBody(res.data.body);
+                        })
+                        .catch(() => {});
+                      issueInputRef.current?.focus();
+                    } else {
+                      repoInputRef.current?.focus();
+                    }
+                  }
+                }}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  const parsed = v.includes("github.com") ? parseGithubInput(v) : null;
+                  if (parsed) {
+                    if (parsed.owner) setUsername(parsed.owner);
+                    if (parsed.repo) setRepoQuery(parsed.repo);
+                    if (parsed.number) setIssueQuery(String(parsed.number));
+                  } else {
+                    setUsername(v);
+                  }
+                }}
+              />
+            </div>
+
+            <div className="space-y-2 rounded-lg  bg-neutral-900/50 p-3">
+              <Label htmlFor="gh-repo">Repository</Label>
+              <div className="relative">
+                <Input
+                  id="gh-repo"
+                  placeholder="hello-world"
+                  ref={repoInputRef}
+                  value={repoQuery}
+                  onFocus={() => setRepoOpen(true)}
+                  onBlur={() => setTimeout(() => setRepoOpen(false), 100)}
+                  onChange={(e) => {
+                    setRepoQuery(e.target.value);
+                    setRepoOpen(true);
+                  }}
+                />
+                <AutocompleteDropdown
+                  open={repoOpen}
+                  items={repoOptions.filter((r) =>
+                    r.name.toLowerCase().includes(repoQuery.toLowerCase()),
+                  )}
+                  getKey={(r) => r.full_name}
+                  renderItem={(r) => (
+                    <RepoResultCard
+                      name={r.name}
+                      fullName={r.full_name}
+                      private={r.private}
+                      stars={
+                        userRepos.data && !Array.isArray(userRepos.data) && 'success' in userRepos.data && userRepos.data.success
+                          ? (
+                              userRepos.data.data as {
+                                name: string;
+                                stargazersCount?: number;
+                              }[]
+                            )?.find?.((x) => x.name === r.name)?.stargazersCount
+                          : undefined
+                      }
+                    />
+                  )}
+                  loading={userRepos.isLoading || userRepos.isFetching}
+                  skeletonCount={5}
+                  onSelect={(r) => {
+                    setRepoQuery(r.name);
+                    setRepoOpen(false);
+                    issueInputRef.current?.focus();
+                  }}
+                  className="z-20 rounded-md border border-neutral-800 bg-neutral-900/90 backdrop-blur"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2 rounded-lg  bg-neutral-900/50 p-3">
+              <Label htmlFor="gh-issue">Issue</Label>
+              <div className="relative">
+                <Input
+                  id="gh-issue"
+                  placeholder="123 or search text"
+                  ref={issueInputRef}
+                  value={issueQuery}
+                  onFocus={() => setIssueOpen(true)}
+                  onBlur={() => setTimeout(() => setIssueOpen(false), 100)}
+                  onChange={(e) => {
+                    setIssueQuery(e.target.value);
+                    setIssueOpen(true);
+                  }}
+                />
+                <AutocompleteDropdown
+                  open={issueOpen}
+                  items={
+                    (issues.data ?? []) as { number: number; title: string }[]
+                  }
+                  getKey={(i) => i.number}
+                  renderItem={(i) => (
+                    <IssueResultCard number={i.number} title={i.title} />
+                  )}
+                  loading={issues.isLoading || issues.isFetching}
+                  skeletonCount={6}
+                  onSelect={(i) => {
+                    setIssueQuery(String(i.number));
+                    setIssueOpen(false);
+                    const immediateOwner = username.trim();
+                    const immediateRepo = repoQuery.trim();
+                    const url = `https://github.com/${immediateOwner}/${immediateRepo}/issues/${i.number}`;
+                    trpcClient.repository.issueFromUrl
+                      .query({ url })
+                      .then((res) => {
+                        if (res?.data?.body) setBody(res.data.body);
+                      })
+                      .catch(() => {});
+                  }}
+                  className="z-20 rounded-md border border-neutral-800 bg-neutral-900/90 backdrop-blur"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="gh-body">Body</Label>
+              <div className="rounded-lg border border-neutral-800 bg-[#222222] p-3">
+                <MarkdownTextarea
+                  id="gh-body"
+                  value={body}
+                  onChange={setBody}
+                  placeholder="Edit the issue body before creating a bounty"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button
+                disabled={!canSubmit}
+                onClick={() => {
+                  if (!canSubmit) return;
+                  const immediateOwner = username.trim();
+                  const immediateRepo = repoQuery.trim();
+                  try {
+                    if (body && body.length > 0) {
+                      window.sessionStorage.setItem(
+                        "bounty.importIssueBody",
+                        body.slice(0, 1000),
+                      );
+                    }
+                  } catch {}
+                  router.push(
+                    `/${immediateOwner}/${immediateRepo}/issues/${issueQuery}`,
+                  );
+                  onOpenChange(false);
+                }}
+              >
+                Go
+              </Button>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

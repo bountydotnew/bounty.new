@@ -79,6 +79,8 @@ body {
   --offset: 10px;
   --slide-up-fade: slide-up-fade 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --fade-in: fade-in 0.2s ease-in-out forwards;
+  --sf-color-primary: var(--primary);
+  --sf-color-tertiary: var(--background);
 }
 
 .dark {
@@ -116,6 +118,8 @@ body {
   --offset: 10px;
   --slide-up-fade: slide-up-fade 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --fade-in: fade-in 0.2s ease-in-out forwards;
+  --sf-color-primary: var(--primary);
+  --sf-color-tertiary: var(--background);
 }
 
 @theme inline {
@@ -300,3 +304,11 @@ body {
     min-height: 1800px !important;
   }
 } */
+
+.sf-color-primary {
+  fill: var(--sf-color-primary);
+}
+
+.sf-color-tertiary {
+  fill: var(--sf-color-tertiary);
+}

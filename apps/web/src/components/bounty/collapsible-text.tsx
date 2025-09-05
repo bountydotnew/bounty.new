@@ -10,7 +10,7 @@ interface CollapsibleTextProps {
 }
 
 export default function CollapsibleText({ children, collapsedHeight = 160, buttonLabel = "Show more" }: CollapsibleTextProps) {
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery("(max-width: 1280px)");
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [isCollapsible, setIsCollapsible] = useState(false);
   const [expanded, setExpanded] = useState(false);

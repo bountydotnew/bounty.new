@@ -43,7 +43,7 @@ export default async function RootLayout({
         <DeviceProvider userAgent={userAgent}>
           <Sidebar admin={false}>
 
-            <RedirectToSignIn />
+            {/* <RedirectToSignIn /> */}
             {children}
 
           </Sidebar>

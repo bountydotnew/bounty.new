@@ -20,6 +20,8 @@ const config: Config = {
     },
     extend: {
       colors: {
+        sfcolorprimary: "hsl(var(--sf-color-primary))",
+        sfcolortertiary: "hsl(var(--sf-color-tertiary))",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

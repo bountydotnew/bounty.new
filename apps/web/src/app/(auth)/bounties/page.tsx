@@ -12,9 +12,7 @@ import { authClient } from "@bounty/auth/client";
 import React from "react";
 import { BountiesFeed } from "@/components/bounty/bounties-feed";
 import { Header } from "@/components/dual-sidebar/sidebar-header";
-import { Github, GithubIcon } from "lucide-react";
 import GitHub from "@/components/icons/github";
-import { FloatingCreateMenu } from "@/components/bounty/floating-create-menu";
 
 export default function BountiesPage() {
   const { data: session } = authClient.useSession();

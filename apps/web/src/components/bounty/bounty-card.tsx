@@ -11,6 +11,7 @@ import { trpc } from "@/utils/trpc";
 import { formatDistanceToNow } from "date-fns";
 import { UpvoteButton } from "@/components/bounty/bounty-actions";
 import BookmarkButton from "@/components/bounty/bookmark-button";
+import { MarkdownContent } from "./markdown-content";
 
 interface BountyCardProps {
   bounty: Bounty;
@@ -114,9 +115,12 @@ export const BountyCard = memo(function BountyCard({
         <h3 className="text-base font-medium text-white mb-2 line-clamp-2">
           {bounty.title}
         </h3>
-        <p className="text-sm text-gray-400 line-clamp-3">
-          {bounty.description}
-        </p>
+        <div className="relative text-sm text-gray-400">
+          <div className="overflow-hidden max-h-24 pr-1">
+            <MarkdownContent content={bounty.description} />
+          </div>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-b from-transparent to-[#191919]" />
+        </div>
       </div>
 
       <div className="flex items-center gap-4 text-xs text-gray-400 mt-auto">
