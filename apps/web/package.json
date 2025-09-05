@@ -32,8 +32,6 @@
     "@radix-ui/react-tabs": "catalog:",
     "@radix-ui/react-toggle": "catalog:",
     "@radix-ui/react-tooltip": "catalog:",
-    "@stagewise-plugins/react": "catalog:",
-    "@stagewise/toolbar-next": "catalog:",
     "@tanstack/react-form": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@thumbmarkjs/thumbmarkjs": "catalog:",
