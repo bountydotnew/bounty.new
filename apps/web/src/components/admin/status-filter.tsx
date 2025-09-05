@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Select,
@@ -6,7 +6,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 
 interface StatusFilterProps {
   value: string;
@@ -20,8 +20,8 @@ export function StatusFilter({
   className,
 }: StatusFilterProps) {
   return (
-    <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className={className || "w-[180px]"}>
+    <Select onValueChange={onValueChange} value={value}>
+      <SelectTrigger className={className || 'w-[180px]'}>
         <SelectValue placeholder="Filter by status" />
       </SelectTrigger>
       <SelectContent>

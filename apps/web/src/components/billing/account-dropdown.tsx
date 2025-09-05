@@ -1,8 +1,14 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { CreditCard, LogOut, Sparkles, Shield } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { authClient } from '@bounty/auth/client';
+import { useQuery } from '@tanstack/react-query';
+import { CreditCard, LogOut, Shield, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import * as React from 'react';
+import { useCallback } from 'react';
+import { toast } from 'sonner';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { BellIcon } from '@/components/ui/bell';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,45 +17,39 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar";
-import { Spinner } from "@/components/ui/spinner";
-import { authClient } from "@bounty/auth/client";
-import { useBilling } from "@/hooks/use-billing";
-import { toast } from "sonner";
-import { LINKS } from "@/constants/links";
-import { useRouter } from "next/navigation";
-import { useCallback } from "react";
-import { UserIcon } from "@/components/ui/user";
-import { BellIcon } from "@/components/ui/bell";
-import { useQuery } from "@tanstack/react-query";
-import { trpc } from "@/utils/trpc";
+} from '@/components/ui/sidebar';
+import { Spinner } from '@/components/ui/spinner';
+import { UserIcon } from '@/components/ui/user';
+import { LINKS } from '@/constants/links';
+import { useBilling } from '@/hooks/use-billing';
+import { trpc } from '@/utils/trpc';
 
 // Constants for better maintainability
 const MESSAGES = {
-  SIGN_IN_REQUIRED: "Please sign in to access billing.",
-  BILLING_PORTAL_SUCCESS: "Opening billing portal...",
-  BILLING_PORTAL_ERROR: "Failed to open billing portal. Please try again.",
-  LOADING: "Loading...",
-  CHECKING_SUBSCRIPTION: "Checking...",
-  VERIFYING_SUBSCRIPTION: "Verifying subscription...",
-  PRO_BADGE: "Pro",
+  SIGN_IN_REQUIRED: 'Please sign in to access billing.',
+  BILLING_PORTAL_SUCCESS: 'Opening billing portal...',
+  BILLING_PORTAL_ERROR: 'Failed to open billing portal. Please try again.',
+  LOADING: 'Loading...',
+  CHECKING_SUBSCRIPTION: 'Checking...',
+  VERIFYING_SUBSCRIPTION: 'Verifying subscription...',
+  PRO_BADGE: 'Pro',
 } as const;
 
 const MENU_ITEMS = {
-  UPGRADE: "Upgrade to Pro",
-  ACCOUNT: "Account",
-  BILLING: "Billing",
-  NOTIFICATIONS: "Notifications",
-  LOGOUT: "Log out",
+  UPGRADE: 'Upgrade to Pro',
+  ACCOUNT: 'Account',
+  BILLING: 'Billing',
+  NOTIFICATIONS: 'Notifications',
+  LOGOUT: 'Log out',
 } as const;
 
-const LOGIN_REDIRECT = "/login";
+const LOGIN_REDIRECT = '/login';
 
 // Enhanced TypeScript interfaces
 interface User {
@@ -83,14 +83,14 @@ interface UserDisplayData {
 // Custom hook for user display logic
 function useUserDisplay(
   sessionUser?: SessionUser | null,
-  fallbackUser?: User,
+  fallbackUser?: User
 ): UserDisplayData {
   return React.useMemo(() => {
     const user = sessionUser || fallbackUser;
-    const name = user?.name || "";
-    const email = user?.email || "";
+    const name = user?.name || '';
+    const email = user?.email || '';
     const image = user?.image || null;
-    const initials = name ? name.charAt(0).toUpperCase() : "?";
+    const initials = name ? name.charAt(0).toUpperCase() : '?';
 
     return { name, email, image, initials };
   }, [sessionUser, fallbackUser]);
@@ -110,8 +110,7 @@ function useBillingPortal() {
     try {
       await openBillingPortal();
       toast.success(MESSAGES.BILLING_PORTAL_SUCCESS);
-    } catch (error) {
-      console.error("Failed to open billing portal:", error);
+    } catch (_error) {
       toast.error(MESSAGES.BILLING_PORTAL_ERROR);
     }
   }, [session?.user, openBillingPortal]);
@@ -138,21 +137,21 @@ const UserAvatar = React.memo<{
   userDisplay: UserDisplayData;
   isLoading: boolean;
   className?: string;
-}>(({ userDisplay, isLoading, className = "h-8 w-8 rounded-lg" }) => (
+}>(({ userDisplay, isLoading, className = 'h-8 w-8 rounded-lg' }) => (
   <Avatar className={className}>
     {userDisplay.image && (
       <AvatarImage
-        src={userDisplay.image}
         alt={userDisplay.name}
         onError={(e) => {
           // Fallback to initials if image fails to load
-          e.currentTarget.style.display = "none";
+          e.currentTarget.style.display = 'none';
         }}
+        src={userDisplay.image}
       />
     )}
     <AvatarFallback className="rounded-lg">
       {isLoading ? (
-        <Spinner size="sm" aria-label="Loading user information" />
+        <Spinner aria-label="Loading user information" size="sm" />
       ) : (
         userDisplay.initials
       )}
@@ -160,7 +159,7 @@ const UserAvatar = React.memo<{
   </Avatar>
 ));
 
-UserAvatar.displayName = "UserAvatar";
+UserAvatar.displayName = 'UserAvatar';
 
 // Memoized dropdown header component
 const DropdownHeader = React.memo<{
@@ -170,19 +169,19 @@ const DropdownHeader = React.memo<{
 }>(({ userDisplay, isPro, isLoading }) => (
   <DropdownMenuLabel className="p-0 font-normal">
     <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-      <UserAvatar userDisplay={userDisplay} isLoading={isLoading} />
+      <UserAvatar isLoading={isLoading} userDisplay={userDisplay} />
       <div className="grid flex-1 text-left text-sm leading-tight">
         <div className="flex items-center gap-2">
           <span className="truncate font-medium">
             {isLoading ? MESSAGES.LOADING : userDisplay.name}
           </span>
           {!isLoading && isPro && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-muted-foreground text-xs">
               {MESSAGES.PRO_BADGE}
             </span>
           )}
           {isLoading && (
-            <span className="text-xs text-muted-foreground animate-pulse">
+            <span className="animate-pulse text-muted-foreground text-xs">
               {MESSAGES.CHECKING_SUBSCRIPTION}
             </span>
           )}
@@ -195,7 +194,7 @@ const DropdownHeader = React.memo<{
   </DropdownMenuLabel>
 ));
 
-DropdownHeader.displayName = "DropdownHeader";
+DropdownHeader.displayName = 'DropdownHeader';
 
 // Upgrade menu item component
 const UpgradeMenuItem = React.memo<{
@@ -205,8 +204,8 @@ const UpgradeMenuItem = React.memo<{
 }>(({ isPro, isLoading, onUpgradeClick }) => {
   if (isLoading) {
     return (
-      <DropdownMenuItem disabled aria-label="Loading subscription status">
-        <Spinner size="sm" className="mr-2" />
+      <DropdownMenuItem aria-label="Loading subscription status" disabled>
+        <Spinner className="mr-2" size="sm" />
         Checking subscription...
       </DropdownMenuItem>
     );
@@ -215,8 +214,8 @@ const UpgradeMenuItem = React.memo<{
   if (!isPro) {
     return (
       <DropdownMenuItem
-        onClick={onUpgradeClick}
         aria-label="Upgrade to Pro plan"
+        onClick={onUpgradeClick}
       >
         <Sparkles />
         {MENU_ITEMS.UPGRADE}
@@ -227,7 +226,7 @@ const UpgradeMenuItem = React.memo<{
   return null;
 });
 
-UpgradeMenuItem.displayName = "UpgradeMenuItem";
+UpgradeMenuItem.displayName = 'UpgradeMenuItem';
 
 // Main component
 export function AccountDropdown({
@@ -238,7 +237,10 @@ export function AccountDropdown({
   const { isMobile } = useSidebar();
   const { data: session } = authClient.useSession();
   const { isPro, isLoading: isBillingLoading } = useBilling();
-  const { data: me } = useQuery({ ...trpc.user.getMe.queryOptions(), enabled: !!session?.user });
+  const { data: me } = useQuery({
+    ...trpc.user.getMe.queryOptions(),
+    enabled: !!session?.user,
+  });
 
   // Custom hooks for better separation of concerns
   const userDisplay = useUserDisplay(session?.user, user);
@@ -249,12 +251,12 @@ export function AccountDropdown({
   const dropdownProps = React.useMemo(
     () => ({
       className:
-        "w-[var(--radix-dropdown-menu-trigger-width)] min-w-56 rounded-lg",
-      side: isMobile ? ("bottom" as const) : ("right" as const),
-      align: "end" as const,
+        'w-[var(--radix-dropdown-menu-trigger-width)] min-w-56 rounded-lg',
+      side: isMobile ? ('bottom' as const) : ('right' as const),
+      align: 'end' as const,
       sideOffset: 4,
     }),
-    [isMobile],
+    [isMobile]
   );
 
   const handleAccountClick = useCallback(() => {
@@ -262,7 +264,7 @@ export function AccountDropdown({
   }, [router]);
 
   const handleAdminClick = useCallback(() => {
-    router.push("/admin");
+    router.push('/admin');
   }, [router]);
 
   return (
@@ -271,13 +273,13 @@ export function AccountDropdown({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
-              aria-label={`Account menu for ${userDisplay.name}`}
               aria-expanded={false}
+              aria-label={`Account menu for ${userDisplay.name}`}
             >
               <div>
                 <UserAvatar
-                  userDisplay={userDisplay}
                   isLoading={isBillingLoading}
+                  userDisplay={userDisplay}
                 />
               </div>
             </SidebarMenuButton>
@@ -285,9 +287,9 @@ export function AccountDropdown({
 
           <DropdownMenuContent {...dropdownProps}>
             <DropdownHeader
-              userDisplay={userDisplay}
-              isPro={isPro}
               isLoading={isBillingLoading}
+              isPro={isPro}
+              userDisplay={userDisplay}
             />
 
             <DropdownMenuSeparator />
@@ -295,8 +297,8 @@ export function AccountDropdown({
             {/* Upgrade section */}
             <DropdownMenuGroup>
               <UpgradeMenuItem
-                isPro={isPro}
                 isLoading={isBillingLoading}
+                isPro={isPro}
                 onUpgradeClick={onUpgradeClick}
               />
             </DropdownMenuGroup>
@@ -304,17 +306,17 @@ export function AccountDropdown({
             {/* Account actions */}
             <DropdownMenuGroup>
               <DropdownMenuItem
-                onClick={handleAccountClick}
                 aria-label="View account settings"
+                onClick={handleAccountClick}
               >
                 <UserIcon />
                 {MENU_ITEMS.ACCOUNT}
               </DropdownMenuItem>
 
-              {me?.role === "admin" && (
+              {me?.role === 'admin' && (
                 <DropdownMenuItem
-                  onClick={handleAdminClick}
                   aria-label="Open admin panel"
+                  onClick={handleAdminClick}
                 >
                   <Shield />
                   Admin
@@ -322,9 +324,9 @@ export function AccountDropdown({
               )}
 
               <DropdownMenuItem
-                onClick={handleBillingPortal}
-                disabled={isBillingLoading}
                 aria-label="Open billing portal"
+                disabled={isBillingLoading}
+                onClick={handleBillingPortal}
               >
                 <CreditCard />
                 {isBillingLoading ? MESSAGES.LOADING : MENU_ITEMS.BILLING}
@@ -340,8 +342,8 @@ export function AccountDropdown({
 
             {/* Sign out */}
             <DropdownMenuItem
-              onClick={handleSignOut}
               aria-label="Sign out of account"
+              onClick={handleSignOut}
               variant="destructive"
             >
               <LogOut />

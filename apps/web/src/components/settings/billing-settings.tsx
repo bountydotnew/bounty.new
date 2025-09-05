@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useBilling } from "@/hooks/use-billing";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Loader2 } from "lucide-react";
+import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { useBilling } from '@/hooks/use-billing';
 
 export function BillingSettings() {
   const [isClientMounted, setIsClientMounted] = useState(false);
@@ -44,7 +44,7 @@ export function BillingSettings() {
           {billingLoading ? (
             <div className="flex items-center space-x-2">
               <Loader2 className="animate-spin" size={16} />
-              <span className="text-sm text-muted-foreground">
+              <span className="text-muted-foreground text-sm">
                 Loading subscription...
               </span>
             </div>
@@ -54,25 +54,25 @@ export function BillingSettings() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Badge
-                    variant={isPro ? "default" : "secondary"}
                     className={
                       isPro
-                        ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
-                        : ""
+                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                        : ''
                     }
+                    variant={isPro ? 'default' : 'secondary'}
                   >
-                    {isPro ? "Pro" : "Free"}
+                    {isPro ? 'Pro' : 'Free'}
                   </Badge>
                   {isPro && (
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-muted-foreground text-sm">
                       Active subscription
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   {isPro
-                    ? "You have access to all Pro features"
-                    : "Upgrade to unlock all features"}
+                    ? 'You have access to all Pro features'
+                    : 'Upgrade to unlock all features'}
                 </p>
               </div>
 
@@ -84,26 +84,26 @@ export function BillingSettings() {
                   <>
                     <Separator />
                     <div className="space-y-3">
-                      <h5 className="text-sm font-medium text-muted-foreground">
+                      <h5 className="font-medium text-muted-foreground text-sm">
                         Active Subscriptions
                       </h5>
                       <div className="space-y-2">
                         {customer.activeSubscriptions.map(
                           (subscription, index) => (
-                            <div key={index} className="p-3 border rounded-lg">
-                              <div className="flex justify-between items-start">
+                            <div className="rounded-lg border p-3" key={index}>
+                              <div className="flex items-start justify-between">
                                 <div>
                                   <p className="font-medium">
-                                    {subscription.productId || "Pro Plan"}
+                                    {subscription.productId || 'Pro Plan'}
                                   </p>
-                                  <p className="text-sm text-muted-foreground">
+                                  <p className="text-muted-foreground text-sm">
                                     Active subscription
                                   </p>
                                 </div>
                                 <Badge variant="outline">Active</Badge>
                               </div>
                             </div>
-                          ),
+                          )
                         )}
                       </div>
                     </div>
@@ -116,7 +116,7 @@ export function BillingSettings() {
                   <Separator />
                   <div className="space-y-2">
                     <h4 className="font-medium">Billing Portal Access</h4>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-muted-foreground text-sm">
                       Manage your subscription, payment methods, and billing
                       history through the Stripe billing portal.
                     </p>
@@ -128,7 +128,7 @@ export function BillingSettings() {
               <Separator />
               <div className="flex justify-end">
                 <Button onClick={openBillingPortal} variant="outline">
-                  {isPro ? "Manage Billing" : "Upgrade to Pro"}
+                  {isPro ? 'Manage Billing' : 'Upgrade to Pro'}
                 </Button>
               </div>
             </>
@@ -142,52 +142,52 @@ export function BillingSettings() {
           <CardTitle>Pro Features</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div
-              className={`p-3 border rounded-lg ${!isPro ? "opacity-60" : ""}`}
+              className={`rounded-lg border p-3 ${isPro ? '' : 'opacity-60'}`}
             >
               <div className="flex items-center justify-between">
                 <span className="font-medium">Lower Fees</span>
-                <Badge variant={isPro ? "default" : "secondary"}>
-                  {isPro ? "Enabled" : "Pro Only"}
+                <Badge variant={isPro ? 'default' : 'secondary'}>
+                  {isPro ? 'Enabled' : 'Pro Only'}
                 </Badge>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="mt-1 text-muted-foreground text-sm">
                 Reduced platform fees on bounties
               </p>
             </div>
             <div
-              className={`p-3 border rounded-lg ${!isPro ? "opacity-60" : ""}`}
+              className={`rounded-lg border p-3 ${isPro ? '' : 'opacity-60'}`}
             >
               <div className="flex items-center justify-between">
                 <span className="font-medium">
                   Unlimited Concurrent Bounties
                 </span>
-                <Badge variant={isPro ? "default" : "secondary"}>
-                  {isPro ? "Enabled" : "Pro Only"}
+                <Badge variant={isPro ? 'default' : 'secondary'}>
+                  {isPro ? 'Enabled' : 'Pro Only'}
                 </Badge>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="mt-1 text-muted-foreground text-sm">
                 Create multiple active bounties
               </p>
             </div>
-            <div className="p-3 border rounded-lg">
+            <div className="rounded-lg border p-3">
               <div className="flex items-center justify-between">
                 <span className="font-medium">Priority Support</span>
-                <Badge variant={isPro ? "default" : "secondary"}>
-                  {isPro ? "Enabled" : "Pro Only"}
+                <Badge variant={isPro ? 'default' : 'secondary'}>
+                  {isPro ? 'Enabled' : 'Pro Only'}
                 </Badge>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="mt-1 text-muted-foreground text-sm">
                 Get faster responses from our support team
               </p>
             </div>
-            <div className="p-3 border rounded-lg">
+            <div className="rounded-lg border p-3">
               <div className="flex items-center justify-between">
                 <span className="font-medium">Advanced Analytics</span>
                 <Badge variant="secondary">Coming Soon</Badge>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="mt-1 text-muted-foreground text-sm">
                 Detailed insights into your bounty performance
               </p>
             </div>
@@ -196,9 +196,9 @@ export function BillingSettings() {
           {!isPro && (
             <>
               <Separator className="my-4" />
-              <div className="text-center space-y-3">
+              <div className="space-y-3 text-center">
                 <h4 className="font-medium">Upgrade to Pro</h4>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Get access to lower fees, unlimited concurrent bounties, and
                   more features.
                 </p>

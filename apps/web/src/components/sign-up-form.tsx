@@ -1,12 +1,12 @@
-import { authClient } from "@bounty/auth/client";
-import { useForm } from "@tanstack/react-form";
-import { toast } from "sonner";
-import z from "zod/v4";
-import Loader from "./loader";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { useRouter } from "next/navigation";
+import { authClient } from '@bounty/auth/client';
+import { useForm } from '@tanstack/react-form';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import z from 'zod/v4';
+import Loader from './loader';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
 
 export default function SignUpForm({
   onSwitchToSignIn,
@@ -20,12 +20,12 @@ export default function SignUpForm({
 
   const form = useForm({
     defaultValues: {
-      email: "",
-      password: "",
-      name: "",
+      email: '',
+      password: '',
+      name: '',
     },
     onSubmit: async ({ value }) => {
-      const targetUrl = redirectUrl || "/dashboard";
+      const targetUrl = redirectUrl || '/dashboard';
 
       await authClient.signUp.email(
         {
@@ -36,19 +36,19 @@ export default function SignUpForm({
         {
           onSuccess: () => {
             router.push(targetUrl);
-            toast.success("Sign up successful");
+            toast.success('Sign up successful');
           },
           onError: (error) => {
             toast.error(error.error.message);
           },
-        },
+        }
       );
     },
     validators: {
       onSubmit: z.object({
-        name: z.string().min(2, "Name must be at least 2 characters"),
-        email: z.email("Invalid email address"),
-        password: z.string().min(8, "Password must be at least 8 characters"),
+        name: z.string().min(2, 'Name must be at least 2 characters'),
+        email: z.email('Invalid email address'),
+        password: z.string().min(8, 'Password must be at least 8 characters'),
       }),
     },
   });
@@ -58,21 +58,21 @@ export default function SignUpForm({
   }
 
   return (
-    <div className="mx-auto w-full mt-10 max-w-md p-6">
-      <h1 className="mb-6 text-center text-3xl font-bold">Create Account</h1>
+    <div className="mx-auto mt-10 w-full max-w-md p-6">
+      <h1 className="mb-6 text-center font-bold text-3xl">Create Account</h1>
       {redirectUrl && (
-        <p className="mb-4 text-sm text-center text-muted-foreground">
+        <p className="mb-4 text-center text-muted-foreground text-sm">
           Create an account to continue with your bounty
         </p>
       )}
 
       <form
+        className="space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
           e.stopPropagation();
           void form.handleSubmit();
         }}
-        className="space-y-4"
       >
         <div>
           <form.Field name="name">
@@ -82,12 +82,12 @@ export default function SignUpForm({
                 <Input
                   id={field.name}
                   name={field.name}
-                  value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
+                  value={field.state.value}
                 />
                 {field.state.meta.errors.map((error) => (
-                  <p key={error?.message} className="text-red-500">
+                  <p className="text-red-500" key={error?.message}>
                     {error?.message}
                   </p>
                 ))}
@@ -104,13 +104,13 @@ export default function SignUpForm({
                 <Input
                   id={field.name}
                   name={field.name}
-                  type="email"
-                  value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
+                  type="email"
+                  value={field.state.value}
                 />
                 {field.state.meta.errors.map((error) => (
-                  <p key={error?.message} className="text-red-500">
+                  <p className="text-red-500" key={error?.message}>
                     {error?.message}
                   </p>
                 ))}
@@ -127,13 +127,13 @@ export default function SignUpForm({
                 <Input
                   id={field.name}
                   name={field.name}
-                  type="password"
-                  value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
+                  type="password"
+                  value={field.state.value}
                 />
                 {field.state.meta.errors.map((error) => (
-                  <p key={error?.message} className="text-red-500">
+                  <p className="text-red-500" key={error?.message}>
                     {error?.message}
                   </p>
                 ))}
@@ -145,11 +145,11 @@ export default function SignUpForm({
         <form.Subscribe>
           {(state) => (
             <Button
-              type="submit"
               className="w-full"
               disabled={!state.canSubmit || state.isSubmitting}
+              type="submit"
             >
-              {state.isSubmitting ? "Submitting..." : "Sign Up"}
+              {state.isSubmitting ? 'Submitting...' : 'Sign Up'}
             </Button>
           )}
         </form.Subscribe>
@@ -157,9 +157,9 @@ export default function SignUpForm({
 
       <div className="mt-4 text-center">
         <Button
-          variant="link"
-          onClick={onSwitchToSignIn}
           className="text-indigo-600 hover:text-indigo-800"
+          onClick={onSwitchToSignIn}
+          variant="link"
         >
           Already have an account? Sign In
         </Button>

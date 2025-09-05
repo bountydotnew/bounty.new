@@ -1,7 +1,7 @@
-import { authClient } from "@bounty/auth/client";
-import { trpc } from "@/utils/trpc";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useMemo, useEffect, useState, useCallback } from "react";
+import { authClient } from '@bounty/auth/client';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { trpc } from '@/utils/trpc';
 
 type PolarError = Error & {
   body$?: string;
@@ -33,7 +33,7 @@ const DEFAULT_FEATURES: Features = {
     enabled: false,
     usage: 0,
     nextResetAt: null,
-    interval: "",
+    interval: '',
     included_usage: 0,
   },
   concurrentBounties: {
@@ -43,23 +43,23 @@ const DEFAULT_FEATURES: Features = {
     enabled: false,
     usage: 0,
     nextResetAt: null,
-    interval: "",
+    interval: '',
     included_usage: 0,
   },
 };
 
 const FEATURE_IDS = {
-  LOWER_FEES: "lower-fees",
-  CONCURRENT_BOUNTIES: "concurrent-bounties",
+  LOWER_FEES: 'lower-fees',
+  CONCURRENT_BOUNTIES: 'concurrent-bounties',
 } as const;
 
-const PRO_PLANS = ["pro-monthly", "pro-annual"] as const;
+const PRO_PLANS = ['pro-monthly', 'pro-annual'] as const;
 
 export const useBilling = () => {
   const [needsCustomerCreation, setNeedsCustomerCreation] = useState(false);
   const [pendingAction, setPendingAction] = useState<{
-    type: "portal" | "usage" | "checkout";
-    params?: any;
+    type: 'portal' | 'usage' | 'checkout';
+    params?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   } | null>(null);
 
   const ensurePolarCustomerMutation = useMutation({
@@ -69,24 +69,23 @@ export const useBilling = () => {
   const {
     data: customer,
     isLoading,
-   // error,
+    // error,
     refetch,
   } = useQuery({
-    queryKey: ["billing"],
+    queryKey: ['billing'],
     queryFn: async () => {
       try {
         const { data: customerState } = await authClient.customer.state();
-        console.log("Customer state:", customerState);
         return customerState;
       } catch (error: unknown) {
         const polarError = error as PolarError;
         const errorMessage = String(
-          polarError?.message || polarError?.body$ || "",
+          polarError?.message || polarError?.body$ || ''
         );
-        const errorDetail = String(polarError?.detail || "");
+        const errorDetail = String(polarError?.detail || '');
         const notFound =
-          errorMessage.includes("ResourceNotFound") ||
-          errorDetail.includes("Customer does not exist") ||
+          errorMessage.includes('ResourceNotFound') ||
+          errorDetail.includes('Customer does not exist') ||
           polarError?.status === 404;
         if (notFound) {
           // Instead of calling mutation here, set flag to trigger customer creation
@@ -94,21 +93,17 @@ export const useBilling = () => {
           return null;
         }
         if (
-          errorMessage.includes("NotPermitted") ||
+          errorMessage.includes('NotPermitted') ||
           polarError?.status === 403
         ) {
-          console.error("Polar permission denied:", error);
           return null;
         }
         if (polarError?.status === 422) {
-          console.error("Polar validation error:", error);
           return null;
         }
         if (polarError?.status === 409) {
-          console.error("Polar resource conflict:", error);
           return null;
         }
-        console.warn("Unexpected Polar error:", error);
         return null;
       }
     },
@@ -129,16 +124,15 @@ export const useBilling = () => {
             const action = pendingAction;
             setPendingAction(null);
 
-            if (action.type === "portal") {
+            if (action.type === 'portal') {
               await authClient.customer.portal();
-            } else if (action.type === "usage") {
+            } else if (action.type === 'usage') {
               await authClient.usage.ingest(action.params);
-            } else if (action.type === "checkout") {
+            } else if (action.type === 'checkout') {
               await authClient.checkout(action.params);
             }
           }
-        } catch (e) {
-          console.warn("Ensure customer failed:", e);
+        } catch (_e) {
           setNeedsCustomerCreation(false);
           setPendingAction(null);
         }
@@ -159,7 +153,7 @@ export const useBilling = () => {
       activeSubscriptions?: Array<{
         product?: { id?: string; name?: string; slug?: string };
       }>;
-      grantedBenefits?: Array<unknown>;
+      grantedBenefits?: unknown[];
       features?: Record<
         string,
         {
@@ -191,8 +185,8 @@ export const useBilling = () => {
               (plan) =>
                 product.id?.includes(plan) ||
                 product.name?.includes(plan) ||
-                product.slug?.includes(plan),
-            ),
+                product.slug?.includes(plan)
+            )
           )
         : false;
 
@@ -204,8 +198,8 @@ export const useBilling = () => {
               (plan) =>
                 subscription.product?.id?.includes(plan) ||
                 subscription.product?.name?.includes(plan) ||
-                subscription.product?.slug?.includes(plan),
-            ),
+                subscription.product?.slug?.includes(plan)
+            )
           )
         : false;
 
@@ -220,7 +214,9 @@ export const useBilling = () => {
 
     const isPro = hasProProducts || hasProSubscriptions || hasProBenefits;
 
-    if (!customerState?.features) return { isPro, ...DEFAULT_FEATURES };
+    if (!customerState?.features) {
+      return { isPro, ...DEFAULT_FEATURES };
+    }
 
     const features = { ...DEFAULT_FEATURES };
 
@@ -233,7 +229,7 @@ export const useBilling = () => {
         enabled: (feature.unlimited ?? false) || Number(feature.balance) > 0,
         usage: feature.usage || 0,
         nextResetAt: feature.next_reset_at ?? null,
-        interval: feature.interval || "",
+        interval: feature.interval || '',
         included_usage: feature.included_usage || 0,
       };
     }
@@ -247,7 +243,7 @@ export const useBilling = () => {
         enabled: (feature.unlimited ?? false) || Number(feature.balance) > 0,
         usage: feature.usage || 0,
         nextResetAt: feature.next_reset_at ?? null,
-        interval: feature.interval || "",
+        interval: feature.interval || '',
         included_usage: feature.included_usage || 0,
       };
     }
@@ -262,16 +258,16 @@ export const useBilling = () => {
       } catch (error: unknown) {
         const polarError = error as PolarError;
         const errorMessage = String(
-          polarError?.message || polarError?.body$ || "",
+          polarError?.message || polarError?.body$ || ''
         );
-        const errorDetail = String(polarError.detail || "");
+        const errorDetail = String(polarError.detail || '');
         const notFound =
-          errorMessage.includes("ResourceNotFound") ||
-          errorDetail.includes("Customer does not exist") ||
+          errorMessage.includes('ResourceNotFound') ||
+          errorDetail.includes('Customer does not exist') ||
           polarError?.status === 404;
         if (notFound) {
           // Set pending action and trigger customer creation
-          setPendingAction({ type: "portal" });
+          setPendingAction({ type: 'portal' });
           setNeedsCustomerCreation(true);
           return;
         }
@@ -280,21 +276,19 @@ export const useBilling = () => {
     } catch (error: unknown) {
       const polarError = error as PolarError;
       const errorMessage = String(
-        polarError?.message || polarError?.body$ || "",
+        polarError?.message || polarError?.body$ || ''
       );
       // const errorDetail = String(polarError.detail || "");
-      // if (errorMessage.includes("NotPermitted") || polarError?.status === 403) {
-      //   console.error("Polar permission denied:", error);
-      //   return;
-      // }
-      console.error("Failed to open billing portal:", error);
+      if (errorMessage.includes('NotPermitted') || polarError?.status === 403) {
+        return;
+      }
     }
   }, []);
 
   const trackUsage = useCallback(
     async (
       event: string,
-      metadata: Record<string, string | number | boolean> = {},
+      metadata: Record<string, string | number | boolean> = {}
     ) => {
       try {
         try {
@@ -302,52 +296,45 @@ export const useBilling = () => {
         } catch (error: unknown) {
           const polarError = error as PolarError;
           const errorMessage = String(
-            polarError?.message || polarError?.body$ || "",
+            polarError?.message || polarError?.body$ || ''
           );
-          const errorDetail = String(polarError.detail || "");
+          const errorDetail = String(polarError.detail || '');
           const notFound =
-            errorMessage.includes("ResourceNotFound") ||
-            errorDetail.includes("Customer does not exist") ||
+            errorMessage.includes('ResourceNotFound') ||
+            errorDetail.includes('Customer does not exist') ||
             polarError?.status === 404;
           if (notFound) {
             // Set pending action and trigger customer creation
-            setPendingAction({ type: "usage", params: { event, metadata } });
+            setPendingAction({ type: 'usage', params: { event, metadata } });
             setNeedsCustomerCreation(true);
             return;
           }
           throw error;
         }
-      } catch (error) {
-        console.error("Failed to track usage:", error);
-      }
+      } catch (_error) {}
     },
-    [],
+    []
   );
 
-  const checkout = useCallback(async (slug: "pro-monthly" | "pro-annual") => {
+  const checkout = useCallback(async (slug: 'pro-monthly' | 'pro-annual') => {
     try {
-      try {
-        await authClient.checkout({ slug });
-      } catch (error: unknown) {
-        const polarError = error as PolarError;
-        const errorMessage = String(
-          polarError?.message || polarError?.body$ || "",
-        );
-        const errorDetail = String(polarError.detail || "");
-        const notFound =
-          errorMessage.includes("ResourceNotFound") ||
-          errorDetail.includes("Customer does not exist") ||
-          polarError?.status === 404;
-        if (notFound) {
-          // Set pending action and trigger customer creation
-          setPendingAction({ type: "checkout", params: { slug } });
-          setNeedsCustomerCreation(true);
-          return;
-        }
-        throw error;
+      await authClient.checkout({ slug });
+    } catch (error: unknown) {
+      const polarError = error as PolarError;
+      const errorMessage = String(
+        polarError?.message || polarError?.body$ || ''
+      );
+      const errorDetail = String(polarError.detail || '');
+      const notFound =
+        errorMessage.includes('ResourceNotFound') ||
+        errorDetail.includes('Customer does not exist') ||
+        polarError?.status === 404;
+      if (notFound) {
+        // Set pending action and trigger customer creation
+        setPendingAction({ type: 'checkout', params: { slug } });
+        setNeedsCustomerCreation(true);
+        return;
       }
-    } catch (error) {
-      console.error("Checkout failed:", error);
       throw error;
     }
   }, []);

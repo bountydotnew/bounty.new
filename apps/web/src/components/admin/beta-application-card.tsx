@@ -1,12 +1,11 @@
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CheckCircle, XCircle, Eye, ExternalLink } from "lucide-react";
-import type { TRPCClientErrorLike } from "@trpc/client";
-import type { AppRouter } from "@bounty/api";
-
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import type { AppRouter } from '@bounty/api';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { TRPCClientErrorLike } from '@trpc/client';
+import { CheckCircle, ExternalLink, Eye, XCircle } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -14,11 +13,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Favicon } from "@/components/ui/favicon";
-import { trpc } from "@/utils/trpc";
-import type { BetaApplication } from "@/types/beta-application";
+} from '@/components/ui/dialog';
+import { Favicon } from '@/components/ui/favicon';
+import { Textarea } from '@/components/ui/textarea';
+import type { BetaApplication } from '@/types/beta-application';
+import { trpc } from '@/utils/trpc';
 
 interface BetaApplicationCardProps {
   application: BetaApplication;
@@ -27,28 +26,30 @@ interface BetaApplicationCardProps {
 export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
   const [selectedApplication, setSelectedApplication] =
     useState<BetaApplication | null>(null);
-  const [reviewNotes, setReviewNotes] = useState("");
+  const [reviewNotes, setReviewNotes] = useState('');
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const updateStatusMutation = useMutation({
     ...trpc.betaApplications.updateStatus.mutationOptions(),
     onSuccess: () => {
-      toast.success("Application status updated successfully");
+      toast.success('Application status updated successfully');
       queryClient.invalidateQueries({
-        queryKey: ["betaApplications", "getAll"],
+        queryKey: ['betaApplications', 'getAll'],
       });
       setIsReviewDialogOpen(false);
       setSelectedApplication(null);
-      setReviewNotes("");
+      setReviewNotes('');
     },
     onError: (error: TRPCClientErrorLike<AppRouter>) => {
-      toast.error(error.message || "Failed to update application status");
+      toast.error(error.message || 'Failed to update application status');
     },
   });
 
-  const handleStatusUpdate = (status: "approved" | "rejected") => {
-    if (!selectedApplication) return;
+  const handleStatusUpdate = (status: 'approved' | 'rejected') => {
+    if (!selectedApplication) {
+      return;
+    }
 
     updateStatusMutation.mutate({
       id: selectedApplication.id,
@@ -59,11 +60,11 @@ export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "pending":
+      case 'pending':
         return <Badge variant="secondary">Pending</Badge>;
-      case "approved":
+      case 'approved':
         return <Badge variant="default">Approved</Badge>;
-      case "rejected":
+      case 'rejected':
         return <Badge variant="destructive">Rejected</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
@@ -72,36 +73,38 @@ export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
 
   return (
     <>
-      <div className="border border-neutral-800 rounded-xl p-5 space-y-4 bg-neutral-900/50">
+      <div className="space-y-4 rounded-xl border border-neutral-800 bg-neutral-900/50 p-5">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <Favicon url={application.projectLink} size={24} />
+            <Favicon size={24} url={application.projectLink} />
             <div>
-              <h3 className="font-semibold tracking-tight">{application.projectName}</h3>
-              <p className="text-xs text-neutral-400">
-                by {application.user?.name || "Unknown"} (
-                {application.user?.email || "No email"})
+              <h3 className="font-semibold tracking-tight">
+                {application.projectName}
+              </h3>
+              <p className="text-neutral-400 text-xs">
+                by {application.user?.name || 'Unknown'} (
+                {application.user?.email || 'No email'})
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {getStatusBadge(application.status)}
             <Button
-              variant="outline"
-              size="sm"
               className="border-neutral-800 bg-neutral-900/70"
               onClick={() => {
                 setSelectedApplication(application);
                 setIsReviewDialogOpen(true);
               }}
+              size="sm"
+              variant="outline"
             >
-              <Eye className="h-4 w-4 mr-2" />
+              <Eye className="mr-2 h-4 w-4" />
               Review
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
           <div>
             <span className="font-medium">Name:</span> {application.name}
           </div>
@@ -109,12 +112,12 @@ export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
             <span className="font-medium">Twitter:</span> {application.twitter}
           </div>
           <div className="md:col-span-2">
-            <span className="font-medium">Project Link:</span>{" "}
+            <span className="font-medium">Project Link:</span>{' '}
             <a
+              className="inline-flex items-center gap-1 text-primary hover:underline"
               href={application.projectLink}
-              target="_blank"
               rel="noopener noreferrer"
-              className="text-primary hover:underline inline-flex items-center gap-1"
+              target="_blank"
             >
               {application.projectLink}
               <ExternalLink className="h-3 w-3" />
@@ -122,23 +125,23 @@ export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
           </div>
           <div className="md:col-span-2">
             <span className="font-medium">Description:</span>
-            <p className="text-muted-foreground mt-1">
+            <p className="mt-1 text-muted-foreground">
               {application.description}
             </p>
           </div>
         </div>
 
         {application.reviewNotes && (
-          <div className="bg-muted p-3 rounded-md">
+          <div className="rounded-md bg-muted p-3">
             <span className="font-medium">Review Notes:</span>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="mt-1 text-muted-foreground text-sm">
               {application.reviewNotes}
             </p>
           </div>
         )}
       </div>
 
-      <Dialog open={isReviewDialogOpen} onOpenChange={setIsReviewDialogOpen}>
+      <Dialog onOpenChange={setIsReviewDialogOpen} open={isReviewDialogOpen}>
         <DialogContent className="max-w-2xl border border-neutral-800 bg-[#111111]">
           <DialogHeader>
             <DialogTitle>Review Application</DialogTitle>
@@ -165,10 +168,10 @@ export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
                 <div className="col-span-2">
                   <span className="font-medium">Project Link:</span>
                   <a
+                    className="block text-primary hover:underline"
                     href={selectedApplication.projectLink}
-                    target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:underline block"
+                    target="_blank"
                   >
                     {selectedApplication.projectLink}
                   </a>
@@ -182,14 +185,14 @@ export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
               </div>
 
               <div>
-                <label className="text-sm font-medium">
+                <label className="font-medium text-sm">
                   Review Notes (optional):
                 </label>
                 <Textarea
-                  value={reviewNotes}
+                  className="mt-1 border-neutral-800 bg-[#0f0f0f]"
                   onChange={(e) => setReviewNotes(e.target.value)}
                   placeholder="Add notes about your decision..."
-                  className="mt-1 bg-[#0f0f0f] border-neutral-800"
+                  value={reviewNotes}
                 />
               </div>
             </div>
@@ -197,24 +200,24 @@ export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
 
           <DialogFooter className="gap-2">
             <Button
-              variant="outline"
               onClick={() => setIsReviewDialogOpen(false)}
+              variant="outline"
             >
               Cancel
             </Button>
             <Button
-              variant="destructive"
-              onClick={() => handleStatusUpdate("rejected")}
               disabled={updateStatusMutation.isPending}
+              onClick={() => handleStatusUpdate('rejected')}
+              variant="destructive"
             >
-              <XCircle className="h-4 w-4 mr-2" />
+              <XCircle className="mr-2 h-4 w-4" />
               Reject
             </Button>
             <Button
-              onClick={() => handleStatusUpdate("approved")}
               disabled={updateStatusMutation.isPending}
+              onClick={() => handleStatusUpdate('approved')}
             >
-              <CheckCircle className="h-4 w-4 mr-2" />
+              <CheckCircle className="mr-2 h-4 w-4" />
               Approve
             </Button>
           </DialogFooter>

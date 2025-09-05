@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import React from "react";
-import { ChevronRight } from "lucide-react";
-import Link from '@/components/ui/link';
+import { ChevronRight } from 'lucide-react';
+import type React from 'react';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+} from '@/components/ui/collapsible';
+import Link from '@/components/ui/link';
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -17,7 +17,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar';
 
 export function NavMain({
   items,
@@ -40,14 +40,14 @@ export function NavMain({
         {items.map((item) =>
           item.items && item.items.length > 0 ? (
             <Collapsible
-              key={item.title}
               asChild
-              defaultOpen={item.isActive}
               className="group/collapsible"
+              defaultOpen={item.isActive}
+              key={item.title}
             >
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton tooltip={item.title} className="w-full">
+                  <SidebarMenuButton className="w-full" tooltip={item.title}>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
                     <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -71,9 +71,9 @@ export function NavMain({
           ) : (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
-                tooltip={item.title}
                 asChild
                 isActive={item.isActive}
+                tooltip={item.title}
               >
                 <Link href={item.url}>
                   {item.icon && <item.icon />}
@@ -81,7 +81,7 @@ export function NavMain({
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          ),
+          )
         )}
       </SidebarMenu>
     </SidebarGroup>

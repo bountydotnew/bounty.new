@@ -1,5 +1,5 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -10,25 +10,25 @@ export function cn(...inputs: ClassValue[]) {
  */
 export function formatDate(
   date: string | Date | null | undefined,
-  options?: Intl.DateTimeFormatOptions,
+  options?: Intl.DateTimeFormatOptions
 ): string {
   // Handle null, undefined, or invalid dates
   if (!date) {
-    return "Invalid date";
+    return 'Invalid date';
   }
 
-  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
 
   // Check if the date object is valid
-  if (isNaN(dateObj.getTime())) {
-    return "Invalid date";
+  if (Number.isNaN(dateObj.getTime())) {
+    return 'Invalid date';
   }
 
   // Use consistent locale and options to prevent hydration mismatches
-  return dateObj.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
+  return dateObj.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
     ...options,
   });
 }
@@ -36,9 +36,9 @@ export function formatDate(
 export function getCookie(name: string): string | null {
   return (
     document.cookie
-      .split("; ")
+      .split('; ')
       .find((row) => row.startsWith(`${name}=`))
-      ?.split("=")[1] || null
+      ?.split('=')[1] || null
   );
 }
 
@@ -52,12 +52,9 @@ export function setCookie(name: string, value: string, days: number): void {
 /**
  * Format currency consistently
  */
-export function formatCurrency(
-  amount: number,
-  currency: string = "USD",
-): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
+export function formatCurrency(amount: number, currency = 'USD'): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
     currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
@@ -68,7 +65,7 @@ export function formatCurrency(
  * Format number with consistent locale
  */
 export function formatNumber(num: number): string {
-  return num.toLocaleString("en-US");
+  return num.toLocaleString('en-US');
 }
 
 /**
@@ -82,29 +79,29 @@ export function parseNumber(num: string): number {
  * Format large numbers with M+ suffix for millions
  */
 export function formatLargeNumber(num: number): string {
-  if (num >= 1000000000000) {
-    const trillions = num / 1000000000000;
-    return trillions >= 10 
-      ? `${Math.floor(trillions)}T` 
+  if (num >= 1_000_000_000_000) {
+    const trillions = num / 1_000_000_000_000;
+    return trillions >= 10
+      ? `${Math.floor(trillions)}T`
       : `${(trillions).toFixed(1)}T`;
   }
-  if (num >= 1000000000) {
-    const billions = num / 1000000000;
-    return billions >= 10 
-      ? `${Math.floor(billions)}B` 
+  if (num >= 1_000_000_000) {
+    const billions = num / 1_000_000_000;
+    return billions >= 10
+      ? `${Math.floor(billions)}B`
       : `${(billions).toFixed(1)}B`;
   }
-  if (num >= 1000000) {
-    const millions = num / 1000000;
-    return millions >= 10 
-      ? `${Math.floor(millions)}M` 
+  if (num >= 1_000_000) {
+    const millions = num / 1_000_000;
+    return millions >= 10
+      ? `${Math.floor(millions)}M`
       : `${(millions).toFixed(1)}M`;
   }
   if (num >= 1000) {
     const thousands = num / 1000;
-    return thousands >= 10 
-      ? `${Math.floor(thousands)}K` 
+    return thousands >= 10
+      ? `${Math.floor(thousands)}K`
       : `${(thousands).toFixed(1)}K`;
   }
-  return num.toLocaleString("en-US");
+  return num.toLocaleString('en-US');
 }

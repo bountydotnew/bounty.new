@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, FileText, X } from "lucide-react";
-import { HeaderBase } from "@/components/sections/home/header-base";
-import { StoredDraft } from "@/hooks/use-drafts";
+import { ArrowLeft, ArrowRight, FileText, X } from 'lucide-react';
+import { useState } from 'react';
+import { HeaderBase } from '@/components/sections/home/header-base';
+import { Button } from '@/components/ui/button';
+import type { StoredDraft } from '@/hooks/use-drafts';
 
 interface DraftNavigatorProps {
   drafts: StoredDraft[];
@@ -22,7 +22,9 @@ export function DraftNavigator({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  if (drafts.length === 0) return null;
+  if (drafts.length === 0) {
+    return null;
+  }
 
   const currentDraft = drafts[currentIndex];
   const hasMultiple = drafts.length > 1;
@@ -44,19 +46,19 @@ export function DraftNavigator({
       <FileText className="h-4 w-4 text-primary" />
       {!isCollapsed && (
         <div className="flex flex-col">
-          <span className="text-sm font-medium">
+          <span className="font-medium text-sm">
             {hasMultiple
               ? `Draft ${currentIndex + 1} of ${drafts.length}`
-              : "Draft Found"}
+              : 'Draft Found'}
           </span>
-          <span className="text-xs text-muted-foreground truncate max-w-48">
-            {currentDraft.title || "Untitled Draft"}
+          <span className="max-w-48 truncate text-muted-foreground text-xs">
+            {currentDraft.title || 'Untitled Draft'}
           </span>
         </div>
       )}
       {isCollapsed && (
-        <span className="text-sm font-medium">
-          {hasMultiple ? `${currentIndex + 1}/${drafts.length}` : "Draft"}
+        <span className="font-medium text-sm">
+          {hasMultiple ? `${currentIndex + 1}/${drafts.length}` : 'Draft'}
         </span>
       )}
     </div>
@@ -67,18 +69,18 @@ export function DraftNavigator({
       {!isCollapsed && hasMultiple && (
         <>
           <Button
-            variant="outline"
-            size="sm"
-            onClick={navigatePrevious}
             className="h-7 w-7 p-0"
+            onClick={navigatePrevious}
+            size="sm"
+            variant="outline"
           >
             <ArrowLeft className="h-3 w-3" />
           </Button>
           <Button
-            variant="outline"
-            size="sm"
-            onClick={navigateNext}
             className="h-7 w-7 p-0"
+            onClick={navigateNext}
+            size="sm"
+            variant="outline"
           >
             <ArrowRight className="h-3 w-3" />
           </Button>
@@ -86,18 +88,18 @@ export function DraftNavigator({
       )}
       {!isCollapsed && (
         <Button
-          size="sm"
-          onClick={() => onLoadDraft(currentDraft)}
           className="ml-2 h-7 text-xs"
+          onClick={() => onLoadDraft(currentDraft)}
+          size="sm"
         >
           Load Draft
         </Button>
       )}
       <Button
-        variant="outline"
-        size="sm"
+        className="ml-1 h-7 w-7 p-0"
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="h-7 w-7 p-0 ml-1"
+        size="sm"
+        variant="outline"
       >
         {isCollapsed ? (
           <ArrowLeft className="h-3 w-3" />
@@ -106,10 +108,10 @@ export function DraftNavigator({
         )}
       </Button>
       <Button
-        variant="outline"
-        size="sm"
-        onClick={onClose}
         className="h-7 w-7 p-0"
+        onClick={onClose}
+        size="sm"
+        variant="outline"
       >
         <X className="h-3 w-3" />
       </Button>
@@ -117,10 +119,10 @@ export function DraftNavigator({
   );
 
   return (
-    <div className="fixed bottom-0 right-0 z-30 w-full md:w-[calc(100%-var(--sidebar-width))] p-2">
+    <div className="fixed right-0 bottom-0 z-30 w-full p-2 md:w-[calc(100%-var(--sidebar-width))]">
       <HeaderBase
-        className={`bg-[#1D1D1D]/90 backdrop-blur-sm border border-white/10 rounded-xl max-w-4xl mx-auto transition-all duration-200 pl-3 pr-2 ${
-          isCollapsed ? "h-10" : "h-12"
+        className={`mx-auto max-w-4xl rounded-xl border border-white/10 bg-[#1D1D1D]/90 pr-2 pl-3 backdrop-blur-sm transition-all duration-200 ${
+          isCollapsed ? 'h-10' : 'h-12'
         }`}
         leftContent={leftContent}
         rightContent={rightContent}

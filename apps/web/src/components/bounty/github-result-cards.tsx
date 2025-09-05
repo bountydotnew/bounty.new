@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 type RepoCardProps = {
   name: string;
@@ -15,16 +15,18 @@ export function RepoResultCard({
 }: RepoCardProps) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="flex min-w-0 items-center gap-2">
         <span className="inline-flex h-5 w-5 items-center justify-center rounded-md border border-neutral-700 bg-neutral-800/60 text-[10px] text-neutral-300">
-          {isPrivate ? "🔒" : ""}
+          {isPrivate ? '🔒' : ''}
         </span>
         <div className="truncate">
-          <div className="truncate text-sm text-neutral-200">{fullName || name}</div>
+          <div className="truncate text-neutral-200 text-sm">
+            {fullName || name}
+          </div>
         </div>
       </div>
-      <div className="ml-2 flex items-center gap-1 text-xs text-neutral-400">
-        {typeof stars === "number" && (
+      <div className="ml-2 flex items-center gap-1 text-neutral-400 text-xs">
+        {typeof stars === 'number' && (
           <>
             <span>⭐</span>
             <span>{stars}</span>

@@ -1,10 +1,10 @@
 // app/error.jsx
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { AlertTriangle, RefreshCw, Home, Copy } from "lucide-react";
-import posthog from "posthog-js";
-import { Button } from "@/components/ui/button";
+import { AlertTriangle, Copy, Home, RefreshCw } from 'lucide-react';
+import posthog from 'posthog-js';
+import { useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 import Link from '@/components/ui/link';
 
 export default function Error({
@@ -19,19 +19,19 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 px-4 relative overflow-hidden">
-      <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-destructive/5 rounded-full blur-3xl animate-pulse delay-1000" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-muted/20 px-4">
+      <div className="absolute inset-0 bg-[size:50px_50px] bg-grid-white/[0.02]" />
+      <div className="absolute top-1/4 left-1/4 h-96 w-96 animate-pulse rounded-full bg-primary/5 blur-3xl" />
+      <div className="absolute right-1/4 bottom-1/4 h-96 w-96 animate-pulse rounded-full bg-destructive/5 blur-3xl delay-1000" />
 
-      <div className="max-w-lg w-full text-center space-y-8 relative z-10">
+      <div className="relative z-10 w-full max-w-lg space-y-8 text-center">
         <div className="space-y-4">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            <h1 className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text font-bold text-3xl text-transparent">
               Oops! Something went wrong
             </h1>
           </div>
-          <p className="text-muted-foreground text-lg leading-relaxed">
+          <p className="text-lg text-muted-foreground leading-relaxed">
             Don&apos;t worry, we&apos;ve been notified and our team is looking
             into it.
             <br />
@@ -39,10 +39,10 @@ export default function Error({
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex flex-col justify-center gap-4 sm:flex-row">
           <Button
+            className="flex transform items-center gap-2 bg-gradient-to-r from-primary to-primary/90 shadow-lg transition-all duration-200 hover:scale-105 hover:from-primary/90 hover:to-primary hover:shadow-xl"
             onClick={() => reset()}
-            className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
             size="lg"
           >
             <RefreshCw className="h-4 w-4" />
@@ -50,10 +50,10 @@ export default function Error({
           </Button>
 
           <Button
-            variant="outline"
             asChild
-            className="flex items-center gap-2 border-border/50 hover:border-border hover:bg-muted/50 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
+            className="flex transform items-center gap-2 border-border/50 backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:border-border hover:bg-muted/50"
             size="lg"
+            variant="outline"
           >
             <Link href="/">
               <Home className="h-4 w-4" />
@@ -62,26 +62,26 @@ export default function Error({
           </Button>
         </div>
 
-        {process.env.NODE_ENV === "development" && (
+        {process.env.NODE_ENV === 'development' && (
           <div className="space-y-4">
-            <details className="text-left bg-muted/30 backdrop-blur-sm border border-border/50 rounded-lg p-4">
-              <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+            <details className="rounded-lg border border-border/50 bg-muted/30 p-4 text-left backdrop-blur-sm">
+              <summary className="flex cursor-pointer items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground">
                 <AlertTriangle className="h-4 w-4" />
                 Error details (copy and paste this if asked)
               </summary>
-              <pre className="mt-4 p-4 bg-background/50 border border-border/30 rounded-md text-xs overflow-auto text-muted-foreground font-mono">
+              <pre className="mt-4 overflow-auto rounded-md border border-border/30 bg-background/50 p-4 font-mono text-muted-foreground text-xs">
                 {error.message}
                 {error.stack && `\n\n${error.stack}`}
               </pre>
             </details>
             <Button
-              variant="outline"
+              className="flex items-center gap-2 text-xs"
               onClick={() => {
                 navigator.clipboard.writeText(
-                  error.message + "\n\n" + error.stack,
+                  `${error.message}\n\n${error.stack}`
                 );
               }}
-              className="flex items-center gap-2 text-xs"
+              variant="outline"
             >
               <Copy className="h-3 w-3" />
               Copy error

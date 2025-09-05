@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { usePathname } from "next/navigation";
+import { ChevronRight, Home } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import Link from '@/components/ui/link';
-import { ChevronRight, Home } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 interface NavBreadcrumbsProps {
   items?: {
@@ -25,11 +25,11 @@ export function NavBreadcrumbs({ items = [], className }: NavBreadcrumbsProps) {
     const breadcrumbs: { title: string; url: string }[] = [];
 
     // Always start with home
-    breadcrumbs.push({ title: "Home", url: "/" });
+    breadcrumbs.push({ title: 'Home', url: '/' });
 
     // Find matching navigation items
     for (const item of items) {
-      if (pathname.startsWith(item.url) && item.url !== "/") {
+      if (pathname.startsWith(item.url) && item.url !== '/') {
         breadcrumbs.push({ title: item.title, url: item.url });
 
         // Check sub-items
@@ -37,7 +37,7 @@ export function NavBreadcrumbs({ items = [], className }: NavBreadcrumbsProps) {
           for (const subItem of item.items) {
             if (
               pathname === subItem.url ||
-              pathname.startsWith(subItem.url + "/")
+              pathname.startsWith(`${subItem.url}/`)
             ) {
               breadcrumbs.push({ title: subItem.title, url: subItem.url });
               break;
@@ -49,12 +49,12 @@ export function NavBreadcrumbs({ items = [], className }: NavBreadcrumbsProps) {
     }
 
     // If no navigation match found, generate from pathname
-    if (breadcrumbs.length === 1 && pathname !== "/") {
-      const segments = pathname.split("/").filter(Boolean);
+    if (breadcrumbs.length === 1 && pathname !== '/') {
+      const segments = pathname.split('/').filter(Boolean);
       segments.forEach((segment, index) => {
-        const url = "/" + segments.slice(0, index + 1).join("/");
+        const url = `/${segments.slice(0, index + 1).join('/')}`;
         const title = decodeURIComponent(segment)
-          .replace(/-/g, " ")
+          .replace(/-/g, ' ')
           .replace(/\b\w/g, (char) => char.toUpperCase());
 
         breadcrumbs.push({ title, url });
@@ -74,8 +74,8 @@ export function NavBreadcrumbs({ items = [], className }: NavBreadcrumbsProps) {
     <nav
       aria-label="Breadcrumb"
       className={cn(
-        "flex items-center space-x-1 text-sm text-muted-foreground",
-        className,
+        'flex items-center space-x-1 text-muted-foreground text-sm',
+        className
       )}
     >
       {breadcrumbs.map((breadcrumb, index) => {
@@ -83,11 +83,11 @@ export function NavBreadcrumbs({ items = [], className }: NavBreadcrumbsProps) {
         const isFirst = index === 0;
 
         return (
-          <div key={breadcrumb.url} className="flex items-center">
+          <div className="flex items-center" key={breadcrumb.url}>
             {isFirst ? (
               <Link
+                className="flex items-center transition-colors hover:text-foreground"
                 href={breadcrumb.url}
-                className="flex items-center hover:text-foreground transition-colors"
               >
                 <Home className="h-4 w-4" />
               </Link>
@@ -97,14 +97,14 @@ export function NavBreadcrumbs({ items = [], className }: NavBreadcrumbsProps) {
               </span>
             ) : (
               <Link
+                className="transition-colors hover:text-foreground"
                 href={breadcrumb.url}
-                className="hover:text-foreground transition-colors"
               >
                 {breadcrumb.title}
               </Link>
             )}
 
-            {!isLast && <ChevronRight className="h-4 w-4 mx-1 flex-shrink-0" />}
+            {!isLast && <ChevronRight className="mx-1 h-4 w-4 flex-shrink-0" />}
           </div>
         );
       })}

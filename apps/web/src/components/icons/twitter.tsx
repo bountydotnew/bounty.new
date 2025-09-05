@@ -1,4 +1,4 @@
-import { IconProps } from "@/types";
+import type { IconProps } from '@/types';
 
 export default function Twitter(props: IconProps) {
   return (

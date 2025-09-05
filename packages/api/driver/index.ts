@@ -1,5 +1,5 @@
-import { GitManager, GitManagerConfig } from "./types";
-import { GithubManager } from "./github";
+import { GithubManager } from './github';
+import type { GitManager, GitManagerConfig } from './types';
 
 const supportedProviders = {
   github: (config: GitManagerConfig): GitManager =>
@@ -8,12 +8,13 @@ const supportedProviders = {
 
 export const createDriver = (
   provider: keyof typeof supportedProviders,
-  config: GitManagerConfig,
+  config: GitManagerConfig
 ): GitManager => {
   const factory = supportedProviders[provider];
-  if (!factory)
+  if (!factory) {
     throw new Error(
-      `Provider "${provider}" not supported. Supported providers: ${Object.keys(supportedProviders).join(", ")}`,
+      `Provider "${provider}" not supported. Supported providers: ${Object.keys(supportedProviders).join(', ')}`
     );
+  }
   return factory(config);
 };

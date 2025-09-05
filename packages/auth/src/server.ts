@@ -1,20 +1,19 @@
-import { betterAuth } from "better-auth";
-import { passkey } from "better-auth/plugins/passkey";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { db } from "@bounty/db";
-import * as schema from "@bounty/db";
+import * as schema from '@bounty/db';
+import { db } from '@bounty/db';
 import {
-  polar,
   checkout,
+  polar,
   portal,
   usage,
   webhooks,
-} from "@polar-sh/better-auth";
-
-import { Polar } from "@polar-sh/sdk";
+} from '@polar-sh/better-auth';
+import { Polar } from '@polar-sh/sdk';
+import { betterAuth } from 'better-auth';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { passkey } from 'better-auth/plugins/passkey';
 
 const polarEnv =
-  process.env.NODE_ENV === "production" ? "production" : "sandbox";
+  process.env.NODE_ENV === 'production' ? 'production' : 'sandbox';
 const polarClient = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN as string,
   server: polarEnv,
@@ -22,17 +21,17 @@ const polarClient = new Polar({
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
-    provider: "pg",
-    schema: schema,
+    provider: 'pg',
+    schema,
     usePlural: false,
   }),
   trustedOrigins: [
-    "https://bounty.new",
-    "https://www.bounty.new",
-    "https://*.vercel.app",
-    "http://localhost:3001",
-    "http://localhost:3000",
-    "https://preview.bounty.new",
+    'https://bounty.new',
+    'https://www.bounty.new',
+    'https://*.vercel.app',
+    'http://localhost:3001',
+    'http://localhost:3000',
+    'https://preview.bounty.new',
   ].filter(Boolean),
   socialProviders: {
     github: {
@@ -50,10 +49,9 @@ export const auth = betterAuth({
       getCustomerCreateParams: async ({ user }) => {
         const externalId = user.id;
         try {
-          const found = await polarClient.customers.getExternal({ externalId });
-          console.log(
-            `[polar:getCustomerCreateParams] env=${polarEnv} externalId=${externalId} found=${!!found}`,
-          );
+          const _found = await polarClient.customers.getExternal({
+            externalId,
+          });
           return null as any;
         } catch (err) {
           const e = err as {
@@ -62,24 +60,15 @@ export const auth = betterAuth({
             body$?: string;
             detail?: string;
           };
-          const msg = String(e?.message || e?.body$ || e?.detail || "");
+          const msg = String(e?.message || e?.body$ || e?.detail || '');
           if (e?.status === 404) {
-            console.log(
-              `[polar:getCustomerCreateParams] env=${polarEnv} externalId=${externalId} not_found->create`,
-            );
           } else if (
             e?.status === 409 ||
-            msg.includes("external ID cannot be updated") ||
-            msg.toLowerCase().includes("external_id cannot be updated")
+            msg.includes('external ID cannot be updated') ||
+            msg.toLowerCase().includes('external_id cannot be updated')
           ) {
-            console.warn(
-              `[polar:getCustomerCreateParams] env=${polarEnv} externalId=${externalId} conflict/immutable external_id -> skip`,
-            );
             return null as any;
           } else {
-            console.warn(
-              `[polar:getCustomerCreateParams] env=${polarEnv} externalId=${externalId} unexpected_error=${e?.status} -> proceed to create`,
-            );
           }
         }
         return {
@@ -96,21 +85,15 @@ export const auth = betterAuth({
           body$?: string;
           detail?: string;
         };
-        const msg = String(e?.message || e?.body$ || e?.detail || "");
+        const msg = String(e?.message || e?.body$ || e?.detail || '');
         if (
           e?.status === 409 ||
-          msg.includes("external ID cannot be updated") ||
-          msg.toLowerCase().includes("external_id cannot be updated") ||
+          msg.includes('external ID cannot be updated') ||
+          msg.toLowerCase().includes('external_id cannot be updated') ||
           msg.includes('"error":"PolarRequestValidationError"')
         ) {
-          console.warn(
-            `[polar:onCustomerCreateError] env=${polarEnv} swallow status=${e?.status}`,
-          );
           return;
         }
-        console.error(
-          `[polar:onCustomerCreateError] env=${polarEnv} rethrow status=${e?.status}`,
-        );
         throw error as Error;
       },
       use: [
@@ -118,11 +101,11 @@ export const auth = betterAuth({
           products: [
             {
               productId: process.env.BOUNTY_PRO_ANNUAL_ID!,
-              slug: "pro-annual",
+              slug: 'pro-annual',
             },
             {
               productId: process.env.BOUNTY_PRO_MONTHLY_ID!,
-              slug: "pro-monthly",
+              slug: 'pro-monthly',
             },
           ],
           successUrl: process.env.POLAR_SUCCESS_URL!,
@@ -132,57 +115,34 @@ export const auth = betterAuth({
         usage(),
         webhooks({
           secret: process.env.POLAR_WEBHOOK_SECRET!,
-          onCustomerStateChanged: (payload) => {
-            console.log("Customer state changed:", payload);
+          onCustomerStateChanged: (_payload) => {
             return Promise.resolve();
           },
-          onOrderPaid: async (payload) => {
-            console.log("Order paid:", payload);
-
+          onOrderPaid: async (_payload) => {
             try {
-              console.log(
-                "Order paid payload:",
-                JSON.stringify(payload, null, 2),
-              );
-              console.log("User subscription activated via webhook");
-            } catch (error) {
-              console.error("Error handling order paid webhook:", error);
-            }
+            } catch (_error) {}
 
             return Promise.resolve();
           },
-          onSubscriptionActive: async (payload) => {
-            console.log("Subscription active:", payload);
-
+          onSubscriptionActive: async (_payload) => {
             try {
-              console.log(
-                "Subscription active payload:",
-                JSON.stringify(payload, null, 2),
-              );
-              console.log("User subscription is now active");
-            } catch (error) {
-              console.error(
-                "Error handling subscription active webhook:",
-                error,
-              );
-            }
+            } catch (_error) {}
 
             return Promise.resolve();
           },
-          onPayload: (payload) => {
-            console.log("Webhook payload:", payload);
+          onPayload: (_payload) => {
             return Promise.resolve();
           },
         }),
       ],
     }),
     passkey({
-      rpID: process.env.NODE_ENV === "production" ? "bounty.new" : "localhost",
-      rpName: "Bounty.new",
+      rpID: process.env.NODE_ENV === 'production' ? 'bounty.new' : 'localhost',
+      rpName: 'Bounty.new',
       origin:
-        process.env.NODE_ENV === "production"
-          ? "https://bounty.new"
-          : "http://localhost:3000",
+        process.env.NODE_ENV === 'production'
+          ? 'https://bounty.new'
+          : 'http://localhost:3000',
     }),
   ],
   secret: process.env.BETTER_AUTH_SECRET,

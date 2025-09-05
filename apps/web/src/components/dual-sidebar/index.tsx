@@ -1,13 +1,23 @@
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar, AdminAppSidebar } from "@/components/dual-sidebar/app-sidebar";
+import {
+  AdminAppSidebar,
+  AppSidebar,
+} from '@/components/dual-sidebar/app-sidebar';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+
 // import { Header } from "@/components/dual-sidebar/sidebar-header";
 // import { RightSidebar } from "@/components/dual-sidebar/right-sidebar";
 
-const Sidebar = ({ children, admin = false }: { children: React.ReactNode; admin?: boolean }) => {
+const Sidebar = ({
+  children,
+  admin = false,
+}: {
+  children: React.ReactNode;
+  admin?: boolean;
+}) => {
   return (
     <SidebarProvider variant="icononly">
       {admin ? <AdminAppSidebar side="left" /> : <AppSidebar side="left" />}
-      <SidebarInset className="h-screen flex flex-col">
+      <SidebarInset className="flex h-screen flex-col">
         {/* <Header /> */}
         <main className="flex-1">{children}</main>
       </SidebarInset>

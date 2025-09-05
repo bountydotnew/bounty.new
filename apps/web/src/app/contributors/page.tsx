@@ -1,21 +1,14 @@
-"use client";
+'use client';
 
-import {
-  Github,
-  GitGraph,
-  Star,
-  GitFork,
-  ArrowUpRight,
-} from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
+import { ArrowUpRight, GitFork, GitGraph, Github, Star } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { DataBuddyIcon, MarbleIcon } from '@/components/icons';
+import { Header } from '@/components/sections/home/header';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from '@/components/ui/link';
-import { trpc } from "@/utils/trpc";
-import { DataBuddyIcon, MarbleIcon } from "@/components/icons";
-import React from "react";
-import { LINKS } from "@/constants/links";
-import { Header } from "@/components/sections/home/header";
+import { LINKS } from '@/constants/links';
+import { trpc } from '@/utils/trpc';
 
 interface Contributor {
   login: string;
@@ -24,31 +17,32 @@ interface Contributor {
   html_url: string;
 }
 
-const REPOSITORY = "bountydotnew/bounty.new";
-const POLL_INTERVAL = 30000;
-const EXCLUDE = ["dependabot", "github-actions", "autofix-ci[bot]"];
-const CORE = ["ripgrim"];
+const REPOSITORY = 'bountydotnew/bounty.new';
+const POLL_INTERVAL = 30_000;
+const EXCLUDE = ['dependabot', 'github-actions', 'autofix-ci[bot]'];
+const CORE = ['ripgrim'];
 
 export default function ContributorsPage() {
   const [allContributors, setAllContributors] = useState<Contributor[]>([]);
-  const lastCommitRef = useRef<string>("");
+  const lastCommitRef = useRef<string>('');
 
   const { data: contributors } = useQuery(
-    trpc.repository.contributors.queryOptions({ repo: REPOSITORY }),
+    trpc.repository.contributors.queryOptions({ repo: REPOSITORY })
   );
   const { data: repoStatsServer } = useQuery(
-    trpc.repository.stats.queryOptions({ repo: REPOSITORY }),
+    trpc.repository.stats.queryOptions({ repo: REPOSITORY })
   );
   const { data: commitsData } = useQuery(
-    trpc.repository.recentCommits.queryOptions({ repo: REPOSITORY, limit: 50 }),
+    trpc.repository.recentCommits.queryOptions({ repo: REPOSITORY, limit: 50 })
   );
 
   useEffect(() => {
     const poll = async () => {
       try {
-        if (Array.isArray(commitsData) && commitsData.length)
+        if (Array.isArray(commitsData) && commitsData.length) {
           lastCommitRef.current =
-            (commitsData as { sha?: string }[])[0]?.sha ?? "";
+            (commitsData as { sha?: string }[])[0]?.sha ?? '';
+        }
       } catch {}
     };
     poll();
@@ -59,14 +53,14 @@ export default function ContributorsPage() {
   useEffect(() => {
     if (contributors && Array.isArray(contributors)) {
       setAllContributors(
-        contributors.filter((c: Contributor) => !EXCLUDE.includes(c.login)),
+        contributors.filter((c: Contributor) => !EXCLUDE.includes(c.login))
       );
     }
   }, [contributors]);
 
   const core = useMemo(
     () => allContributors.filter((c) => CORE.includes(c.login)),
-    [allContributors],
+    [allContributors]
   );
   const community = useMemo(
     () =>
@@ -74,37 +68,35 @@ export default function ContributorsPage() {
         .filter((c) => !CORE.includes(c.login))
         .sort((a, b) => b.contributions - a.contributions)
         .slice(0, 12),
-    [allContributors],
+    [allContributors]
   );
 
   const externalTools = [
     {
       id: 1,
-      name: "Databuddy",
-      description: "GDPR compliant analysis",
+      name: 'Databuddy',
+      description: 'GDPR compliant analysis',
       icon: DataBuddyIcon,
-      url: "https://databuddy.cc",
-      category: "Analytics",
+      url: 'https://databuddy.cc',
+      category: 'Analytics',
     },
     {
       id: 2,
-      name: "Marble",
-      description: "Headless CMS",
+      name: 'Marble',
+      description: 'Headless CMS',
       icon: MarbleIcon,
-      url: "https://marblecms.com",
-      category: "Blog CMS",
+      url: 'https://marblecms.com',
+      category: 'Blog CMS',
     },
   ];
 
   return (
     <>
       {/* Full viewport background container */}
-      <div 
-        className="fixed inset-0 w-full h-full -z-10"
-      />
-      
+      <div className="-z-10 fixed inset-0 h-full w-full" />
+
       {/* Content container */}
-      <div className="min-h-screen text-white relative">
+      <div className="relative min-h-screen text-white">
         {/* Background geometric shapes */}
         {/* <div className="absolute inset-0 overflow-hidden">
           <svg
@@ -143,94 +135,153 @@ export default function ContributorsPage() {
         <Header />
 
         {/* Main content */}
-        <main className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-20">
+        <main className="relative z-10 mx-auto max-w-7xl px-6 pt-20 pb-20">
           {/* Hero Section */}
-          <div className="max-w-4xl mb-20">
-            <h1 className="text-7xl mb-8 leading-tight font-display" style={{ color: "rgba(239, 239, 239, 1)" }}>
+          <div className="mb-20 max-w-4xl">
+            <h1
+              className="mb-8 font-display text-7xl leading-tight"
+              style={{ color: 'rgba(239, 239, 239, 1)' }}
+            >
               Contributors.
               <br />
               The builders.
             </h1>
 
-            <p className="text-xl mb-12 max-w-2xl font-display-book leading-relaxed" style={{ color: "rgba(146, 146, 146, 1)" }}>
-              Meet the developers building bounty.new in public. Open-source contributions, 
-              transparent development, community-driven innovation.
+            <p
+              className="mb-12 max-w-2xl font-display-book text-xl leading-relaxed"
+              style={{ color: 'rgba(146, 146, 146, 1)' }}
+            >
+              Meet the developers building bounty.new in public. Open-source
+              contributions, transparent development, community-driven
+              innovation.
             </p>
 
             {/* Repository Stats */}
-            <div className="flex flex-wrap gap-6 mb-8">
+            <div className="mb-8 flex flex-wrap gap-6">
               <div className="flex items-center gap-3">
-                <Star className="w-5 h-5" style={{ color: "rgba(146, 146, 146, 1)" }} />
-                <span className="text-3xl font-display font-bold" style={{ color: "rgba(239, 239, 239, 1)" }}>
-                  {repoStatsServer?.repo.stargazersCount?.toLocaleString() || "0"}
+                <Star
+                  className="h-5 w-5"
+                  style={{ color: 'rgba(146, 146, 146, 1)' }}
+                />
+                <span
+                  className="font-bold font-display text-3xl"
+                  style={{ color: 'rgba(239, 239, 239, 1)' }}
+                >
+                  {repoStatsServer?.repo.stargazersCount?.toLocaleString() ||
+                    '0'}
                 </span>
-                <span className="font-display-book" style={{ color: "rgba(146, 146, 146, 1)" }}>stars</span>
+                <span
+                  className="font-display-book"
+                  style={{ color: 'rgba(146, 146, 146, 1)' }}
+                >
+                  stars
+                </span>
               </div>
               <div className="flex items-center gap-3">
-                <GitFork className="w-5 h-5" style={{ color: "rgba(146, 146, 146, 1)" }} />
-                <span className="text-3xl font-display font-bold" style={{ color: "rgba(239, 239, 239, 1)" }}>
-                  {repoStatsServer?.repo.forksCount?.toLocaleString() || "0"}
+                <GitFork
+                  className="h-5 w-5"
+                  style={{ color: 'rgba(146, 146, 146, 1)' }}
+                />
+                <span
+                  className="font-bold font-display text-3xl"
+                  style={{ color: 'rgba(239, 239, 239, 1)' }}
+                >
+                  {repoStatsServer?.repo.forksCount?.toLocaleString() || '0'}
                 </span>
-                <span className="font-display-book" style={{ color: "rgba(146, 146, 146, 1)" }}>forks</span>
+                <span
+                  className="font-display-book"
+                  style={{ color: 'rgba(146, 146, 146, 1)' }}
+                >
+                  forks
+                </span>
               </div>
               <div className="flex items-center gap-3">
-                <GitGraph className="w-5 h-5" style={{ color: "rgba(146, 146, 146, 1)" }} />
-                <span className="text-3xl font-display font-bold" style={{ color: "rgba(239, 239, 239, 1)" }}>
+                <GitGraph
+                  className="h-5 w-5"
+                  style={{ color: 'rgba(146, 146, 146, 1)' }}
+                />
+                <span
+                  className="font-bold font-display text-3xl"
+                  style={{ color: 'rgba(239, 239, 239, 1)' }}
+                >
                   {allContributors.length}
                 </span>
-                <span className="font-display-book" style={{ color: "rgba(146, 146, 146, 1)" }}>contributors</span>
+                <span
+                  className="font-display-book"
+                  style={{ color: 'rgba(146, 146, 146, 1)' }}
+                >
+                  contributors
+                </span>
               </div>
             </div>
 
             <Link
+              className="inline-flex items-center gap-2 rounded-lg border border-[#282828] px-6 py-3 font-display-book transition-colors hover:bg-white/5"
               href={LINKS.SOCIALS.GITHUB}
+              style={{ color: 'rgba(146, 146, 146, 1)' }}
               target="_blank"
-              className="inline-flex items-center gap-2 border border-[#282828] rounded-lg px-6 py-3 font-display-book hover:bg-white/5 transition-colors"
-              style={{ color: "rgba(146, 146, 146, 1)" }}
             >
-              <Github className="w-4 h-4" />
+              <Github className="h-4 w-4" />
               View on GitHub
-              <ArrowUpRight className="w-4 h-4" />
+              <ArrowUpRight className="h-4 w-4" />
             </Link>
           </div>
 
           {/* Core Team Section */}
           {core.length > 0 && (
             <section className="mb-20">
-              <h2 className="text-4xl font-bold mb-12 font-display" style={{ color: "rgba(239, 239, 239, 1)" }}>
+              <h2
+                className="mb-12 font-bold font-display text-4xl"
+                style={{ color: 'rgba(239, 239, 239, 1)' }}
+              >
                 Core Team
               </h2>
               <div className="grid gap-8">
                 {core.map((contributor) => (
-                  <Link 
-                    key={contributor.login}
+                  <Link
+                    className="group flex items-center gap-6 rounded-2xl border border-[#282828] p-8 transition-all hover:bg-white/5"
                     href={contributor.html_url}
+                    key={contributor.login}
                     target="_blank"
-                    className="group flex items-center gap-6 p-8 border border-[#282828] rounded-2xl hover:bg-white/5 transition-all"
                   >
-                    <Avatar className="w-16 h-16 ring-1 ring-[#282828]">
+                    <Avatar className="h-16 w-16 ring-1 ring-[#282828]">
                       <AvatarImage src={contributor.avatar_url} />
                       <AvatarFallback className="font-display">
                         {contributor.login.slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-2xl font-bold font-display" style={{ color: "rgba(239, 239, 239, 1)" }}>
+                      <div className="mb-2 flex items-center gap-3">
+                        <h3
+                          className="font-bold font-display text-2xl"
+                          style={{ color: 'rgba(239, 239, 239, 1)' }}
+                        >
                           {contributor.login}
                         </h3>
-                        {contributor.login === "ripgrim" && (
-                          <span className="px-3 py-1 border border-[#282828] rounded-full text-sm font-display-book" style={{ color: "rgba(146, 146, 146, 1)" }}>
+                        {contributor.login === 'ripgrim' && (
+                          <span
+                            className="rounded-full border border-[#282828] px-3 py-1 font-display-book text-sm"
+                            style={{ color: 'rgba(146, 146, 146, 1)' }}
+                          >
                             Founder
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 font-display-book" style={{ color: "rgba(146, 146, 146, 1)" }}>
-                        <GitGraph className="w-4 h-4" />
-                        <span>{contributor.contributions.toLocaleString()} contributions</span>
+                      <div
+                        className="flex items-center gap-2 font-display-book"
+                        style={{ color: 'rgba(146, 146, 146, 1)' }}
+                      >
+                        <GitGraph className="h-4 w-4" />
+                        <span>
+                          {contributor.contributions.toLocaleString()}{' '}
+                          contributions
+                        </span>
                       </div>
                     </div>
-                    <ArrowUpRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "rgba(146, 146, 146, 1)" }} />
+                    <ArrowUpRight
+                      className="h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100"
+                      style={{ color: 'rgba(146, 146, 146, 1)' }}
+                    />
                   </Link>
                 ))}
               </div>
@@ -239,28 +290,37 @@ export default function ContributorsPage() {
 
           {/* Top Contributors Grid */}
           <section className="mb-20">
-            <h2 className="text-4xl font-bold mb-12 font-display" style={{ color: "rgba(239, 239, 239, 1)" }}>
+            <h2
+              className="mb-12 font-bold font-display text-4xl"
+              style={{ color: 'rgba(239, 239, 239, 1)' }}
+            >
               Top Contributors
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {community.map((contributor) => (
                 <Link
-                  key={contributor.login}
+                  className="group rounded-2xl border border-[#282828] p-6 text-center transition-all hover:bg-white/5"
                   href={contributor.html_url}
+                  key={contributor.login}
                   target="_blank"
-                  className="group p-6 border border-[#282828] rounded-2xl hover:bg-white/5 transition-all text-center"
                 >
-                  <Avatar className="w-16 h-16 mx-auto mb-4 ring-1 ring-[#282828] group-hover:scale-105 transition-transform">
+                  <Avatar className="mx-auto mb-4 h-16 w-16 ring-1 ring-[#282828] transition-transform group-hover:scale-105">
                     <AvatarImage src={contributor.avatar_url} />
                     <AvatarFallback className="font-display">
                       {contributor.login.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <h3 className="font-semibold mb-2 font-display truncate" style={{ color: "rgba(239, 239, 239, 1)" }}>
+                  <h3
+                    className="mb-2 truncate font-display font-semibold"
+                    style={{ color: 'rgba(239, 239, 239, 1)' }}
+                  >
                     {contributor.login}
                   </h3>
-                  <div className="flex items-center justify-center gap-2 font-display-book text-sm" style={{ color: "rgba(146, 146, 146, 1)" }}>
-                    <GitGraph className="w-4 h-4" />
+                  <div
+                    className="flex items-center justify-center gap-2 font-display-book text-sm"
+                    style={{ color: 'rgba(146, 146, 146, 1)' }}
+                  >
+                    <GitGraph className="h-4 w-4" />
                     <span>{contributor.contributions}</span>
                   </div>
                 </Link>
@@ -270,38 +330,53 @@ export default function ContributorsPage() {
 
           {/* External Tools */}
           <section className="mb-20">
-            <h2 className="text-4xl font-bold mb-12 font-display" style={{ color: "rgba(239, 239, 239, 1)" }}>
+            <h2
+              className="mb-12 font-bold font-display text-4xl"
+              style={{ color: 'rgba(239, 239, 239, 1)' }}
+            >
               External Tools
             </h2>
-            <p className="text-xl mb-12 max-w-2xl font-display-book" style={{ color: "rgba(146, 146, 146, 1)" }}>
+            <p
+              className="mb-12 max-w-2xl font-display-book text-xl"
+              style={{ color: 'rgba(146, 146, 146, 1)' }}
+            >
               The tools and platforms that power our development workflow.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
               {externalTools.map((tool) => (
                 <Link
-                  key={tool.id}
+                  className="group rounded-2xl border border-[#282828] p-8 transition-all hover:bg-white/5"
                   href={tool.url}
+                  key={tool.id}
                   target="_blank"
-                  className="group p-8 border border-[#282828] rounded-2xl hover:bg-white/5 transition-all"
                 >
                   <div className="flex items-start gap-6">
-                    <div className="w-16 h-16 flex items-center justify-center">
-                      <tool.icon size={64} className="text-white" />
+                    <div className="flex h-16 w-16 items-center justify-center">
+                      <tool.icon className="text-white" size={64} />
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-2xl font-bold font-display" style={{ color: "rgba(239, 239, 239, 1)" }}>
+                      <div className="mb-3 flex items-center justify-between">
+                        <h3
+                          className="font-bold font-display text-2xl"
+                          style={{ color: 'rgba(239, 239, 239, 1)' }}
+                        >
                           {tool.name}
                         </h3>
-                        <span className="text-sm px-3 py-1 border border-[#282828] rounded-full font-display-book" style={{ color: "rgba(146, 146, 146, 1)" }}>
+                        <span
+                          className="rounded-full border border-[#282828] px-3 py-1 font-display-book text-sm"
+                          style={{ color: 'rgba(146, 146, 146, 1)' }}
+                        >
                           {tool.category}
                         </span>
                       </div>
-                      <p className="font-display-book mb-4" style={{ color: "rgba(146, 146, 146, 1)" }}>
+                      <p
+                        className="mb-4 font-display-book"
+                        style={{ color: 'rgba(146, 146, 146, 1)' }}
+                      >
                         {tool.description}
                       </p>
                       <div className="flex items-center gap-2 font-display-book text-sm opacity-70">
-                        <ArrowUpRight className="w-4 h-4" />
+                        <ArrowUpRight className="h-4 w-4" />
                         <span>Visit tool</span>
                       </div>
                     </div>

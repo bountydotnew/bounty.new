@@ -5,7 +5,7 @@ export type BetaApplication = {
   projectName: string;
   projectLink: string;
   description: string;
-  status: "pending" | "approved" | "rejected";
+  status: 'pending' | 'approved' | 'rejected';
   reviewNotes?: string | null;
   createdAt: string;
   updatedAt: string;

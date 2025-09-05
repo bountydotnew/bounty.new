@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Menu, PanelRightIcon, X } from "lucide-react";
-import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
-import { useMediaQuery } from "@/hooks/use-media-query";
-import { cn } from "@/lib/utils";
-import type { Bounty } from "@/types/dashboard";
+import { PanelRightIcon } from 'lucide-react';
+import { useState } from 'react';
+import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import { cn } from '@/lib/utils';
+import type { Bounty } from '@/types/dashboard';
 
 interface MobileSidebarProps {
   className?: string;
@@ -16,53 +16,54 @@ interface MobileSidebarProps {
   trigger?: React.ReactNode;
 }
 
-export function MobileSidebar({ 
-  className, 
-  myBounties, 
+export function MobileSidebar({
+  className,
+  myBounties,
   isMyBountiesLoading = false,
   trigger,
 }: MobileSidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const isMobile = useMediaQuery("(max-width: 1024px)");
+  const isMobile = useMediaQuery('(max-width: 1024px)');
 
   if (!isMobile) {
     return null;
   }
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+    <Sheet onOpenChange={setIsOpen} open={isOpen}>
       <SheetTrigger asChild>
         {trigger || (
           <Button
-            variant="text"
-            size="sm"
             className={cn(
-              "h-8 w-8 p-0 text-white hover:bg-[#383838] hover:text-white",
+              'h-8 w-8 p-0 text-white hover:bg-[#383838] hover:text-white',
               className
             )}
+            size="sm"
+            variant="text"
           >
             <PanelRightIcon className="h-4 w-4" />
             <span className="sr-only">Open activity sidebar</span>
           </Button>
         )}
       </SheetTrigger>
-      <SheetContent 
-        side="right" 
-        className="w-[320px] bg-[#151515] border-none p-0 rounded-l-2xl shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)]"
+      <SheetContent
+        className="w-[320px] rounded-l-2xl border-none bg-[#151515] p-0 shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)]"
+        side="right"
       >
         <div className="flex h-full flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-[#383838]/20">
-            <h2 className="text-lg font-medium text-white">Activity & Bounties</h2>
+          <div className="flex items-center justify-between border-[#383838]/20 border-b p-4">
+            <h2 className="font-medium text-lg text-white">
+              Activity & Bounties
+            </h2>
           </div>
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-4">
             <DashboardSidebar
-              myBounties={myBounties}
               isLoadingMyBounties={isMyBountiesLoading}
-              onBountyClick={(bounty) => {
-                console.log("Bounty clicked:", bounty);
+              myBounties={myBounties}
+              onBountyClick={(_bounty) => {
                 setIsOpen(false);
               }}
             />

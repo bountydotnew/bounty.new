@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState } from 'react';
 
 export interface StoredDraft {
   id: string;
@@ -8,16 +8,20 @@ export interface StoredDraft {
   createdAt: string;
 }
 
-const DRAFTS_STORAGE_KEY = "bounty-drafts";
-const ACTIVE_DRAFT_KEY = "active-draft-id";
+const DRAFTS_STORAGE_KEY = 'bounty-drafts';
+const ACTIVE_DRAFT_KEY = 'active-draft-id';
 
 export function useDrafts() {
   const [activeDraftId, setActiveDraftId] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
+    if (typeof window === 'undefined') {
+      return null;
+    }
     return localStorage.getItem(ACTIVE_DRAFT_KEY);
   });
   const getDrafts = useCallback((): StoredDraft[] => {
-    if (typeof window === "undefined") return [];
+    if (typeof window === 'undefined') {
+      return [];
+    }
 
     const stored = localStorage.getItem(DRAFTS_STORAGE_KEY);
     return stored ? JSON.parse(stored) : [];
@@ -25,7 +29,9 @@ export function useDrafts() {
 
   const saveDraft = useCallback(
     (title: string, description: string, amount: string): string => {
-      if (typeof window === "undefined") return "";
+      if (typeof window === 'undefined') {
+        return '';
+      }
 
       const draftId = Date.now().toString();
       const newDraft: StoredDraft = {
@@ -42,7 +48,7 @@ export function useDrafts() {
 
       return draftId;
     },
-    [getDrafts],
+    [getDrafts]
   );
 
   const getDraft = useCallback(
@@ -50,41 +56,51 @@ export function useDrafts() {
       const drafts = getDrafts();
       return drafts.find((draft) => draft.id === id) || null;
     },
-    [getDrafts],
+    [getDrafts]
   );
 
   const deleteDraft = useCallback(
     (id: string): void => {
-      if (typeof window === "undefined") return;
+      if (typeof window === 'undefined') {
+        return;
+      }
 
       const drafts = getDrafts();
       const filteredDrafts = drafts.filter((draft) => draft.id !== id);
       localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(filteredDrafts));
     },
-    [getDrafts],
+    [getDrafts]
   );
 
   const clearAllDrafts = useCallback((): void => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') {
+      return;
+    }
     localStorage.removeItem(DRAFTS_STORAGE_KEY);
     localStorage.removeItem(ACTIVE_DRAFT_KEY);
     setActiveDraftId(null);
   }, []);
 
   const setActiveDraft = useCallback((id: string): void => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') {
+      return;
+    }
     localStorage.setItem(ACTIVE_DRAFT_KEY, id);
     setActiveDraftId(id);
   }, []);
 
   const clearActiveDraft = useCallback((): void => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') {
+      return;
+    }
     localStorage.removeItem(ACTIVE_DRAFT_KEY);
     setActiveDraftId(null);
   }, []);
 
   const deleteActiveDraft = useCallback((): void => {
-    if (!activeDraftId) return;
+    if (!activeDraftId) {
+      return;
+    }
     deleteDraft(activeDraftId);
     clearActiveDraft();
   }, [activeDraftId, deleteDraft, clearActiveDraft]);

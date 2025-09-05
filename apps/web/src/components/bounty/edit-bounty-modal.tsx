@@ -1,33 +1,33 @@
-"use client";
+'use client';
 
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { trpc } from "@/utils/trpc";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { MarkdownTextarea } from '@/components/bounty/markdown-editor';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { useRouter } from "next/navigation";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { useMediaQuery } from "@/hooks/use-media-query";
-import { MarkdownTextarea } from "@/components/bounty/markdown-editor";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import {
-  createBountySchema,
-  CreateBountyForm,
+  type CreateBountyForm,
   createBountyDefaults,
+  createBountySchema,
   currencyOptions,
   difficultyOptions,
-  formatFormData
-} from "@/lib/forms";
+  formatFormData,
+} from '@/lib/forms';
+import { trpc } from '@/utils/trpc';
 
 interface EditBountyModalProps {
   open: boolean;
@@ -59,14 +59,14 @@ export function EditBountyModal({
     formState: { errors, isSubmitting },
     reset,
     //watch,
-    setValue,
+    //setValue,
   } = form;
 
   // Load bounty data when modal opens
   useEffect(() => {
     if (bountyQuery.data?.data && open) {
       const bounty = bountyQuery.data.data;
-      
+
       reset({
         title: bounty.title,
         description: bounty.description,
@@ -75,10 +75,10 @@ export function EditBountyModal({
         difficulty: bounty.difficulty,
         deadline: bounty.deadline
           ? new Date(bounty.deadline).toISOString().slice(0, 16)
-          : "",
+          : '',
         tags: bounty.tags || [],
-        repositoryUrl: bounty.repositoryUrl || "",
-        issueUrl: bounty.issueUrl || "",
+        repositoryUrl: bounty.repositoryUrl || '',
+        issueUrl: bounty.issueUrl || '',
       });
     }
   }, [bountyQuery.data, open, reset]);
@@ -86,12 +86,12 @@ export function EditBountyModal({
   const updateBounty = useMutation({
     ...trpc.bounties.updateBounty.mutationOptions(),
     onSuccess: () => {
-      toast.success("Bounty updated successfully!");
+      toast.success('Bounty updated successfully!');
 
       // Invalidate all bounty-related queries to trigger refetch
       queryClient.invalidateQueries({
-        queryKey: ["bounties"],
-        type: "all",
+        queryKey: ['bounties'],
+        type: 'all',
       });
       // Invalidate and refetch the specific bounty detail query
       const detailKey = trpc.bounties.fetchBountyById.queryOptions({
@@ -114,31 +114,37 @@ export function EditBountyModal({
   });
 
   const handleClose = () => {
-    if (!isSubmitting && !updateBounty.isPending) {
+    if (!(isSubmitting || updateBounty.isPending)) {
       reset(createBountyDefaults);
       onOpenChange(false);
     }
   };
 
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   if (bountyQuery.isLoading) {
     if (isMobile) {
       return (
-        <Sheet open={open} onOpenChange={handleClose}>
-          <SheetContent side="bottom" className="w-full max-h-[80vh] overflow-y-auto p-0 rounded-t-2xl">
-            <div className="flex items-center justify-center h-40">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
+        <Sheet onOpenChange={handleClose} open={open}>
+          <SheetContent
+            className="max-h-[80vh] w-full overflow-y-auto rounded-t-2xl p-0"
+            side="bottom"
+          >
+            <div className="flex h-40 items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-foreground border-b-2" />
             </div>
           </SheetContent>
         </Sheet>
       );
     }
     return (
-      <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg max-h-[75vh] overflow-y-auto p-0 sm:rounded-lg" showOverlay>
-          <div className="flex items-center justify-center h-40">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
+      <Dialog onOpenChange={handleClose} open={open}>
+        <DialogContent
+          className="max-h-[75vh] w-[92vw] max-w-lg overflow-y-auto p-0 sm:rounded-lg md:max-w-lg lg:max-w-lg"
+          showOverlay
+        >
+          <div className="flex h-40 items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-foreground border-b-2" />
           </div>
         </DialogContent>
       </Dialog>
@@ -148,24 +154,32 @@ export function EditBountyModal({
   if (bountyQuery.error || !bountyQuery.data?.data) {
     if (isMobile) {
       return (
-        <Sheet open={open} onOpenChange={handleClose}>
-          <SheetContent side="bottom" className="w-full max-h-[80vh] overflow-y-auto p-0 rounded-t-2xl">
+        <Sheet onOpenChange={handleClose} open={open}>
+          <SheetContent
+            className="max-h-[80vh] w-full overflow-y-auto rounded-t-2xl p-0"
+            side="bottom"
+          >
             <div className="px-6 pt-6 pb-4">
-              <div className="text-xl font-medium">Error</div>
+              <div className="font-medium text-xl">Error</div>
             </div>
-            <p className="text-center text-muted-foreground px-6">
+            <p className="px-6 text-center text-muted-foreground">
               Failed to load bounty data. Please try again.
             </p>
-            <div className="px-6 py-4 flex justify-end gap-2">
-              <Button onClick={handleClose} variant="outline">Close</Button>
+            <div className="flex justify-end gap-2 px-6 py-4">
+              <Button onClick={handleClose} variant="outline">
+                Close
+              </Button>
             </div>
           </SheetContent>
         </Sheet>
       );
     }
     return (
-      <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg p-0 sm:rounded-lg" showOverlay>
+      <Dialog onOpenChange={handleClose} open={open}>
+        <DialogContent
+          className="w-[92vw] max-w-lg p-0 sm:rounded-lg md:max-w-lg lg:max-w-lg"
+          showOverlay
+        >
           <DialogHeader className="px-6 pt-6">
             <DialogTitle className="text-xl">Error</DialogTitle>
           </DialogHeader>
@@ -173,7 +187,9 @@ export function EditBountyModal({
             Failed to load bounty data. Please try again.
           </p>
           <DialogFooter>
-            <Button onClick={handleClose} variant="outline">Close</Button>
+            <Button onClick={handleClose} variant="outline">
+              Close
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -182,81 +198,204 @@ export function EditBountyModal({
 
   if (isMobile) {
     return (
-      <Sheet open={open} onOpenChange={handleClose}>
-        <SheetContent side="bottom" className="w-full max-h-[85vh] overflow-y-auto p-0 rounded-t-2xl">
+      <Sheet onOpenChange={handleClose} open={open}>
+        <SheetContent
+          className="max-h-[85vh] w-full overflow-y-auto rounded-t-2xl p-0"
+          side="bottom"
+        >
           <div className="px-6 pt-6 pb-2">
-            <div className="text-xl font-medium">Edit Bounty</div>
+            <div className="font-medium text-xl">Edit Bounty</div>
           </div>
-          <form onSubmit={onSubmit} className="px-6 pb-6 space-y-6">
+          <form className="space-y-6 px-6 pb-6" onSubmit={onSubmit}>
             <div className="space-y-2">
               <Label htmlFor="title">Title *</Label>
-              <Controller name="title" control={control} render={({ field }) => (
-                <Input {...field} id="title" placeholder="Enter bounty title" className={errors.title ? "border-red-500" : "border-border"} />
-              )} />
-              {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
+              <Controller
+                control={control}
+                name="title"
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    className={
+                      errors.title ? 'border-red-500' : 'border-border'
+                    }
+                    id="title"
+                    placeholder="Enter bounty title"
+                  />
+                )}
+              />
+              {errors.title && (
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.title.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="description">Description *</Label>
-              <Controller name="description" control={control} render={({ field }) => (
-                <MarkdownTextarea id="description" value={field.value} onChange={(val) => field.onChange(val)} onBlur={field.onBlur} name={field.name} placeholder="Describe what needs to be done" className={errors.description ? "border-red-500" : "border-border"} />
-              )} />
-              {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
+              <Controller
+                control={control}
+                name="description"
+                render={({ field }) => (
+                  <MarkdownTextarea
+                    className={
+                      errors.description ? 'border-red-500' : 'border-border'
+                    }
+                    id="description"
+                    name={field.name}
+                    onBlur={field.onBlur}
+                    onChange={(val) => field.onChange(val)}
+                    placeholder="Describe what needs to be done"
+                    value={field.value}
+                  />
+                )}
+              />
+              {errors.description && (
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.description.message}
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="amount">Amount *</Label>
-                <Controller name="amount" control={control} render={({ field }) => (
-                  <Input {...field} id="amount" placeholder="100.00" className={errors.amount ? "border-red-500" : "border-border"} />
-                )} />
-                {errors.amount && <p className="text-red-500 text-sm mt-1">{errors.amount.message}</p>}
+                <Controller
+                  control={control}
+                  name="amount"
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      className={
+                        errors.amount ? 'border-red-500' : 'border-border'
+                      }
+                      id="amount"
+                      placeholder="100.00"
+                    />
+                  )}
+                />
+                {errors.amount && (
+                  <p className="mt-1 text-red-500 text-sm">
+                    {errors.amount.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="currency">Currency</Label>
-                <Controller name="currency" control={control} render={({ field }) => (
-                  <select {...field} id="currency" className={`w-full px-3 py-2 border rounded-md ${errors.currency ? "border-red-500" : "border-border"}`}>
-                    {currencyOptions.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                )} />
-                {errors.currency && <p className="text-red-500 text-sm mt-1">{errors.currency.message}</p>}
+                <Controller
+                  control={control}
+                  name="currency"
+                  render={({ field }) => (
+                    <select
+                      {...field}
+                      className={`w-full rounded-md border px-3 py-2 ${errors.currency ? 'border-red-500' : 'border-border'}`}
+                      id="currency"
+                    >
+                      {currencyOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                />
+                {errors.currency && (
+                  <p className="mt-1 text-red-500 text-sm">
+                    {errors.currency.message}
+                  </p>
+                )}
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="difficulty">Difficulty *</Label>
-              <Controller name="difficulty" control={control} render={({ field }) => (
-                <select {...field} id="difficulty" className={`w-full px-3 py-2 border rounded-md ${errors.difficulty ? "border-red-500" : "border-border"}`}>
-                  {difficultyOptions.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              )} />
-              {errors.difficulty && <p className="text-red-500 text-sm mt-1">{errors.difficulty.message}</p>}
+              <Controller
+                control={control}
+                name="difficulty"
+                render={({ field }) => (
+                  <select
+                    {...field}
+                    className={`w-full rounded-md border px-3 py-2 ${errors.difficulty ? 'border-red-500' : 'border-border'}`}
+                    id="difficulty"
+                  >
+                    {difficultyOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              />
+              {errors.difficulty && (
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.difficulty.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="repositoryUrl">Repository URL (Optional)</Label>
-              <Controller name="repositoryUrl" control={control} render={({ field }) => (
-                <Input {...field} id="repositoryUrl" type="url" placeholder="https://github.com/user/repo" className={errors.repositoryUrl ? "border-red-500" : "border-border"} />
-              )} />
-              {errors.repositoryUrl && <p className="text-red-500 text-sm mt-1">{errors.repositoryUrl.message}</p>}
+              <Controller
+                control={control}
+                name="repositoryUrl"
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    className={
+                      errors.repositoryUrl ? 'border-red-500' : 'border-border'
+                    }
+                    id="repositoryUrl"
+                    placeholder="https://github.com/user/repo"
+                    type="url"
+                  />
+                )}
+              />
+              {errors.repositoryUrl && (
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.repositoryUrl.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="issueUrl">Issue URL (Optional)</Label>
-              <Controller name="issueUrl" control={control} render={({ field }) => (
-                <Input {...field} id="issueUrl" type="url" placeholder="https://github.com/user/repo/issues/123" className={errors.issueUrl ? "border-red-500" : "border-border"} />
-              )} />
-              {errors.issueUrl && <p className="text-red-500 text-sm mt-1">{errors.issueUrl.message}</p>}
+              <Controller
+                control={control}
+                name="issueUrl"
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    className={
+                      errors.issueUrl ? 'border-red-500' : 'border-border'
+                    }
+                    id="issueUrl"
+                    placeholder="https://github.com/user/repo/issues/123"
+                    type="url"
+                  />
+                )}
+              />
+              {errors.issueUrl && (
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.issueUrl.message}
+                </p>
+              )}
             </div>
 
             <div className="mt-6 flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting || updateBounty.isPending}>Cancel</Button>
-              <Button type="submit" disabled={isSubmitting || updateBounty.isPending}>{updateBounty.isPending ? "Updating..." : "Update Bounty"}</Button>
+              <Button
+                disabled={isSubmitting || updateBounty.isPending}
+                onClick={handleClose}
+                type="button"
+                variant="outline"
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={isSubmitting || updateBounty.isPending}
+                type="submit"
+              >
+                {updateBounty.isPending ? 'Updating...' : 'Update Bounty'}
+              </Button>
             </div>
           </form>
         </SheetContent>
@@ -265,29 +404,32 @@ export function EditBountyModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-[92vw] max-w-lg md:max-w-lg lg:max-w-lg max-h-[75vh] overflow-y-auto p-0 sm:rounded-lg" showOverlay>
+    <Dialog onOpenChange={handleClose} open={open}>
+      <DialogContent
+        className="max-h-[75vh] w-[92vw] max-w-lg overflow-y-auto p-0 sm:rounded-lg md:max-w-lg lg:max-w-lg"
+        showOverlay
+      >
         <DialogHeader className="px-6 pt-6">
           <DialogTitle className="text-xl">Edit Bounty</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={onSubmit} className="px-6 pb-6 space-y-6">
+        <form className="space-y-6 px-6 pb-6" onSubmit={onSubmit}>
           <div className="space-y-2">
             <Label htmlFor="title">Title *</Label>
             <Controller
-              name="title"
               control={control}
+              name="title"
               render={({ field }) => (
-                                  <Input
-                    {...field}
-                    id="title"
-                    placeholder="Enter bounty title"
-                    className={errors.title ? "border-red-500" : "border-border"}
-                  />
+                <Input
+                  {...field}
+                  className={errors.title ? 'border-red-500' : 'border-border'}
+                  id="title"
+                  placeholder="Enter bounty title"
+                />
               )}
             />
             {errors.title && (
-              <p className="text-red-500 text-sm mt-1">
+              <p className="mt-1 text-red-500 text-sm">
                 {errors.title.message}
               </p>
             )}
@@ -296,46 +438,48 @@ export function EditBountyModal({
           <div className="space-y-2">
             <Label htmlFor="description">Description *</Label>
             <Controller
-              name="description"
               control={control}
+              name="description"
               render={({ field }) => (
                 <MarkdownTextarea
+                  className={
+                    errors.description ? 'border-red-500' : 'border-border'
+                  }
                   id="description"
-                  value={field.value}
-                  onChange={(val) => field.onChange(val)}
-                  onBlur={field.onBlur}
                   name={field.name}
+                  onBlur={field.onBlur}
+                  onChange={(val) => field.onChange(val)}
                   placeholder="Describe what needs to be done"
-                  className={errors.description ? "border-red-500" : "border-border"}
+                  value={field.value}
                 />
               )}
             />
             {errors.description && (
-              <p className="text-red-500 text-sm mt-1">
+              <p className="mt-1 text-red-500 text-sm">
                 {errors.description.message}
               </p>
             )}
           </div>
 
-
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="amount">Amount *</Label>
               <Controller
-                name="amount"
                 control={control}
+                name="amount"
                 render={({ field }) => (
                   <Input
                     {...field}
+                    className={
+                      errors.amount ? 'border-red-500' : 'border-border'
+                    }
                     id="amount"
                     placeholder="100.00"
-                    className={errors.amount ? "border-red-500" : "border-border"}
                   />
                 )}
               />
               {errors.amount && (
-                <p className="text-red-500 text-sm mt-1">
+                <p className="mt-1 text-red-500 text-sm">
                   {errors.amount.message}
                 </p>
               )}
@@ -344,13 +488,13 @@ export function EditBountyModal({
             <div className="space-y-2">
               <Label htmlFor="currency">Currency</Label>
               <Controller
-                name="currency"
                 control={control}
+                name="currency"
                 render={({ field }) => (
                   <select
                     {...field}
+                    className={`w-full rounded-md border px-3 py-2 ${errors.currency ? 'border-red-500' : 'border-border'}`}
                     id="currency"
-                    className={`w-full px-3 py-2 border rounded-md ${errors.currency ? "border-red-500" : "border-border"}`}
                   >
                     {currencyOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -361,7 +505,7 @@ export function EditBountyModal({
                 )}
               />
               {errors.currency && (
-                <p className="text-red-500 text-sm mt-1">
+                <p className="mt-1 text-red-500 text-sm">
                   {errors.currency.message}
                 </p>
               )}
@@ -371,13 +515,13 @@ export function EditBountyModal({
           <div className="space-y-2">
             <Label htmlFor="difficulty">Difficulty *</Label>
             <Controller
-              name="difficulty"
               control={control}
+              name="difficulty"
               render={({ field }) => (
                 <select
                   {...field}
+                  className={`w-full rounded-md border px-3 py-2 ${errors.difficulty ? 'border-red-500' : 'border-border'}`}
                   id="difficulty"
-                  className={`w-full px-3 py-2 border rounded-md ${errors.difficulty ? "border-red-500" : "border-border"}`}
                 >
                   {difficultyOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -388,7 +532,7 @@ export function EditBountyModal({
               )}
             />
             {errors.difficulty && (
-              <p className="text-red-500 text-sm mt-1">
+              <p className="mt-1 text-red-500 text-sm">
                 {errors.difficulty.message}
               </p>
             )}
@@ -429,20 +573,22 @@ export function EditBountyModal({
           <div className="space-y-2">
             <Label htmlFor="repositoryUrl">Repository URL (Optional)</Label>
             <Controller
-              name="repositoryUrl"
               control={control}
+              name="repositoryUrl"
               render={({ field }) => (
-                                  <Input
-                    {...field}
-                    id="repositoryUrl"
-                    type="url"
-                    placeholder="https://github.com/user/repo"
-                    className={errors.repositoryUrl ? "border-red-500" : "border-border"}
-                  />
+                <Input
+                  {...field}
+                  className={
+                    errors.repositoryUrl ? 'border-red-500' : 'border-border'
+                  }
+                  id="repositoryUrl"
+                  placeholder="https://github.com/user/repo"
+                  type="url"
+                />
               )}
             />
             {errors.repositoryUrl && (
-              <p className="text-red-500 text-sm mt-1">
+              <p className="mt-1 text-red-500 text-sm">
                 {errors.repositoryUrl.message}
               </p>
             )}
@@ -451,20 +597,22 @@ export function EditBountyModal({
           <div className="space-y-2">
             <Label htmlFor="issueUrl">Issue URL (Optional)</Label>
             <Controller
-              name="issueUrl"
               control={control}
+              name="issueUrl"
               render={({ field }) => (
-                                  <Input
-                    {...field}
-                    id="issueUrl"
-                    type="url"
-                    placeholder="https://github.com/user/repo/issues/123"
-                    className={errors.issueUrl ? "border-red-500" : "border-border"}
-                  />
+                <Input
+                  {...field}
+                  className={
+                    errors.issueUrl ? 'border-red-500' : 'border-border'
+                  }
+                  id="issueUrl"
+                  placeholder="https://github.com/user/repo/issues/123"
+                  type="url"
+                />
               )}
             />
             {errors.issueUrl && (
-              <p className="text-red-500 text-sm mt-1">
+              <p className="mt-1 text-red-500 text-sm">
                 {errors.issueUrl.message}
               </p>
             )}
@@ -472,18 +620,18 @@ export function EditBountyModal({
 
           <DialogFooter className="mt-6">
             <Button
+              disabled={isSubmitting || updateBounty.isPending}
+              onClick={handleClose}
               type="button"
               variant="outline"
-              onClick={handleClose}
-              disabled={isSubmitting || updateBounty.isPending}
             >
               Cancel
             </Button>
             <Button
-              type="submit"
               disabled={isSubmitting || updateBounty.isPending}
+              type="submit"
             >
-              {updateBounty.isPending ? "Updating..." : "Update Bounty"}
+              {updateBounty.isPending ? 'Updating...' : 'Update Bounty'}
             </Button>
           </DialogFooter>
         </form>

@@ -1,24 +1,24 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { z } from "zod";
-import { ArrowRight } from "lucide-react";
-import { toast } from "sonner";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
-import { useDrafts } from "@/hooks/use-drafts";
-import { baseUrl } from "@/lib/constants";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useDrafts } from '@/hooks/use-drafts';
+import { baseUrl } from '@/lib/constants';
+import { cn } from '@/lib/utils';
 
 const bountyDraftSchema = z.object({
-  title: z.string().min(1, "Title is required").max(200, "Title too long"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, "Enter a valid amount"),
+  title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
+  description: z.string().min(10, 'Description must be at least 10 characters'),
+  amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, 'Enter a valid amount'),
 });
 
 type BountyDraftForm = z.infer<typeof bountyDraftSchema>;
@@ -40,9 +40,9 @@ export function BountyDraftForm({ className }: BountyDraftFormProps) {
   } = useForm<BountyDraftForm>({
     resolver: zodResolver(bountyDraftSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      amount: "",
+      title: '',
+      description: '',
+      amount: '',
     },
   });
 
@@ -50,12 +50,12 @@ export function BountyDraftForm({ className }: BountyDraftFormProps) {
     saveDraft(data.title, data.description, data.amount);
     setSuccess(true);
     reset();
-    toast.success("Draft saved! Redirecting to dashboard...");
+    toast.success('Draft saved! Redirecting to dashboard...');
 
     setTimeout(() => {
       // Redirect to dashboard where they can access the create bounty modal
       router.push(
-        `/login?redirect=${encodeURIComponent(`${baseUrl}/dashboard`)}`,
+        `/login?redirect=${encodeURIComponent(`${baseUrl}/dashboard`)}`
       );
     }, 1500);
   }
@@ -63,13 +63,13 @@ export function BountyDraftForm({ className }: BountyDraftFormProps) {
   return (
     <div
       className={cn(
-        "mx-auto flex w-full max-w-3xl flex-col items-center justify-center gap-6",
-        className,
+        'mx-auto flex w-full max-w-3xl flex-col items-center justify-center gap-6',
+        className
       )}
     >
       {success ? (
         <div className="flex flex-col items-center justify-center gap-4 text-center">
-          <p className="text-xl font-semibold">Draft saved! 🎉</p>
+          <p className="font-semibold text-xl">Draft saved! 🎉</p>
           <p className="text-base text-muted-foreground">
             Redirecting you to sign in and create your bounty...
           </p>
@@ -80,75 +80,73 @@ export function BountyDraftForm({ className }: BountyDraftFormProps) {
           onSubmit={handleSubmit(handleCreateDraft)}
         >
           <div className="space-y-2">
-            <Label htmlFor="title" className="text-sm font-medium">
+            <Label className="font-medium text-sm" htmlFor="title">
               Bounty Title
             </Label>
             <Input
+              className={cn(
+                'bg-input/10 shadow-xs backdrop-blur-sm selection:bg-primary selection:text-primary-foreground file:text-foreground',
+                errors.title && 'border-red-500'
+              )}
               id="title"
               placeholder="e.g., Build a React component library"
-              className={cn(
-                "file:text-foreground selection:bg-primary selection:text-primary-foreground bg-input/10 backdrop-blur-sm shadow-xs",
-                errors.title && "border-red-500",
-              )}
-              {...register("title")}
+              {...register('title')}
             />
             {errors.title && (
-              <p className="text-sm text-red-500">{errors.title.message}</p>
+              <p className="text-red-500 text-sm">{errors.title.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm font-medium">
+            <Label className="font-medium text-sm" htmlFor="description">
               Brief Description
             </Label>
             <textarea
-              id="description"
-              rows={3}
-              placeholder="Describe what needs to be built..."
               className={cn(
-                "w-full px-3 py-2 border rounded-lg bg-input/10 backdrop-blur-sm text-foreground placeholder:text-muted-foreground",
-                errors.description ? "border-red-500" : "border-border",
+                'w-full rounded-lg border bg-input/10 px-3 py-2 text-foreground backdrop-blur-sm placeholder:text-muted-foreground',
+                errors.description ? 'border-red-500' : 'border-border'
               )}
-              {...register("description")}
+              id="description"
+              placeholder="Describe what needs to be built..."
+              rows={3}
+              {...register('description')}
             />
             {errors.description && (
-              <p className="text-sm text-red-500">
+              <p className="text-red-500 text-sm">
                 {errors.description.message}
               </p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="amount" className="text-sm font-medium">
+            <Label className="font-medium text-sm" htmlFor="amount">
               Bounty Amount (USD)
             </Label>
             <Input
+              className={cn(
+                'bg-input/10 shadow-xs backdrop-blur-sm selection:bg-primary selection:text-primary-foreground file:text-foreground',
+                errors.amount && 'border-red-500'
+              )}
               id="amount"
               placeholder="$500.00"
-              className={cn(
-                "file:text-foreground selection:bg-primary selection:text-primary-foreground bg-input/10 backdrop-blur-sm shadow-xs",
-                errors.amount && "border-red-500",
-              )}
-              {...register("amount")}
+              {...register('amount')}
             />
             {errors.amount && (
-              <p className="text-sm text-red-500">{errors.amount.message}</p>
+              <p className="text-red-500 text-sm">{errors.amount.message}</p>
             )}
           </div>
 
           <Button
-            className="rounded-lg transition-[color,box-shadow] bg-white text-black shadow-xs hover:bg-white/90 h-10 px-4 py-2"
+            className="h-10 rounded-lg bg-white px-4 py-2 text-black shadow-xs transition-[color,box-shadow] hover:bg-white/90"
             type="submit"
           >
-            <>
-              Sign in & create
-              <ArrowRight className="h-4 w-4" />
-            </>
+            Sign in & create
+            <ArrowRight className="h-4 w-4" />
           </Button>
         </form>
       )}
 
-      <div className="text-center text-sm text-muted-foreground">
+      <div className="text-center text-muted-foreground text-sm">
         <p>Start creating your bounty. Sign in to post it live.</p>
       </div>
     </div>

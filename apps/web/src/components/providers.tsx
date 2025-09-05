@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { queryClient } from "@/utils/trpc";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "./ui/sonner";
-import { ConfettiProvider } from "@/lib/context/confetti-context";
-import { AccessProvider } from "@/contexts/access-provider";
-import { Databuddy } from "@databuddy/sdk";
-import { TOAST_ICONS, TOAST_OPTIONS } from "@/constants/toast";
-import { PostHogProvider } from "posthog-js/react";
-import { AuthUIProvider } from "@daveyplate/better-auth-ui";
-import { authClient } from "@bounty/auth/client";
-import { useRouter } from "next/navigation";
+import { authClient } from '@bounty/auth/client';
+import { Databuddy } from '@databuddy/sdk';
+import { AuthUIProvider } from '@daveyplate/better-auth-ui';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { useRouter } from 'next/navigation';
+import { PostHogProvider } from 'posthog-js/react';
+import { ThemeProvider } from '@/components/theme-provider';
 import Link from '@/components/ui/link';
+import { TOAST_ICONS, TOAST_OPTIONS } from '@/constants/toast';
+import { AccessProvider } from '@/contexts/access-provider';
+import { ConfettiProvider } from '@/lib/context/confetti-context';
+import { queryClient } from '@/utils/trpc';
+import { Toaster } from './ui/sonner';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const posthogApiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
@@ -23,8 +23,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <ThemeProvider
       attribute="class"
       defaultTheme="dark"
-      enableSystem
       disableTransitionOnChange
+      enableSystem
     >
       <QueryClientProvider client={queryClient}>
         {posthogApiKey ? (
@@ -33,30 +33,30 @@ export function Providers({ children }: { children: React.ReactNode }) {
               <AccessProvider>
                 <AuthUIProvider
                   authClient={authClient}
+                  Link={Link}
                   navigate={router.push}
-                  replace={router.replace}
                   onSessionChange={() => {
                     // Clear router cache (protected routes)
                     router.refresh();
                   }}
-                  Link={Link}
+                  replace={router.replace}
                 >
                   {children}
                 </AuthUIProvider>
               </AccessProvider>
               <Databuddy
                 clientId="bounty"
-                trackHashChanges={true}
-                trackAttributes={true}
-                trackOutgoingLinks={true}
-                trackInteractions={true}
-                trackEngagement={true}
-                trackScrollDepth={true}
-                trackExitIntent={true}
-                trackBounceRate={true}
-                trackWebVitals={true}
-                trackErrors={true}
                 enableBatching={true}
+                trackAttributes={true}
+                trackBounceRate={true}
+                trackEngagement={true}
+                trackErrors={true}
+                trackExitIntent={true}
+                trackHashChanges={true}
+                trackInteractions={true}
+                trackOutgoingLinks={true}
+                trackScrollDepth={true}
+                trackWebVitals={true}
               />
             </ConfettiProvider>
             <ReactQueryDevtools />
@@ -66,39 +66,39 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <AccessProvider>
               <AuthUIProvider
                 authClient={authClient}
+                Link={Link}
                 navigate={router.push}
-                replace={router.replace}
                 onSessionChange={() => {
                   // Clear router cache (protected routes)
                   router.refresh();
                 }}
-                Link={Link}
+                replace={router.replace}
               >
                 {children}
               </AuthUIProvider>
             </AccessProvider>
             <Databuddy
               clientId="bounty"
-              trackHashChanges={true}
-              trackAttributes={true}
-              trackOutgoingLinks={true}
-              trackInteractions={true}
-              trackEngagement={true}
-              trackScrollDepth={true}
-              trackExitIntent={true}
-              trackBounceRate={true}
-              trackWebVitals={true}
-              trackErrors={true}
               enableBatching={true}
+              trackAttributes={true}
+              trackBounceRate={true}
+              trackEngagement={true}
+              trackErrors={true}
+              trackExitIntent={true}
+              trackHashChanges={true}
+              trackInteractions={true}
+              trackOutgoingLinks={true}
+              trackScrollDepth={true}
+              trackWebVitals={true}
             />
           </ConfettiProvider>
         )}
       </QueryClientProvider>
       <Toaster
-        richColors
-        position="bottom-right"
-        toastOptions={TOAST_OPTIONS}
         icons={TOAST_ICONS}
+        position="bottom-right"
+        richColors
+        toastOptions={TOAST_OPTIONS}
         visibleToasts={4}
       />
     </ThemeProvider>

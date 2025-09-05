@@ -1,23 +1,23 @@
-"use client";
+'use client';
 
-import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, Suspense } from "react";
-import { useBilling } from "@/hooks/use-billing";
-import { Sidebar } from "@/components/dual-sidebar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { ArrowRight } from "lucide-react";
-import { authClient } from "@bounty/auth/client";
-import Bounty from "@/components/icons/bounty";
-import { useConfetti } from "@/lib/context/confetti-context";
-import { Spinner } from "@/components/ui/spinner";
+import { authClient } from '@bounty/auth/client';
+import { ArrowRight } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect } from 'react';
+import { Sidebar } from '@/components/dual-sidebar';
+import Bounty from '@/components/icons/bounty';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Spinner } from '@/components/ui/spinner';
+import { useBilling } from '@/hooks/use-billing';
+import { useConfetti } from '@/lib/context/confetti-context';
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const checkoutId = searchParams.get("checkout_id");
+  const checkoutId = searchParams.get('checkout_id');
   const { refetch, customer } = useBilling();
   const { data: session } = authClient.useSession();
   const { celebrate } = useConfetti();
@@ -28,7 +28,7 @@ function SuccessContent() {
 
   useEffect(() => {
     if (!checkoutId) {
-      router.push("/dashboard");
+      router.push('/dashboard');
       return;
     }
 
@@ -46,46 +46,54 @@ function SuccessContent() {
   const getPlanName = () => {
     const subscription = customer?.activeSubscriptions?.find(
       (sub: Subscription) =>
-        ["pro-monthly", "pro-annual"].includes(sub.productId),
+        ['pro-monthly', 'pro-annual'].includes(sub.productId)
     );
 
-    if (subscription?.productId === "pro-annual") return "Pro Annual";
-    if (subscription?.productId === "pro-monthly") return "Pro Monthly";
-    return "Pro Plan";
+    if (subscription?.productId === 'pro-annual') {
+      return 'Pro Annual';
+    }
+    if (subscription?.productId === 'pro-monthly') {
+      return 'Pro Monthly';
+    }
+    return 'Pro Plan';
   };
 
   const getPlanPrice = () => {
     const subscription = customer?.activeSubscriptions?.find(
       (sub: Subscription) =>
-        ["pro-monthly", "pro-annual"].includes(sub.productId),
+        ['pro-monthly', 'pro-annual'].includes(sub.productId)
     );
 
-    if (subscription?.productId === "pro-annual") return "$15/month";
-    if (subscription?.productId === "pro-monthly") return "$20/month";
-    return "Pro Pricing";
+    if (subscription?.productId === 'pro-annual') {
+      return '$15/month';
+    }
+    if (subscription?.productId === 'pro-monthly') {
+      return '$20/month';
+    }
+    return 'Pro Pricing';
   };
 
   return (
     <Sidebar>
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          <Card className="border-0 shadow-none bg-transparent">
-            <CardHeader className="text-center pb-8">
-              <div className="flex justify-center mb-6">
-                <div className="w-20 h-20 bg-none rounded-full flex items-center justify-center">
-                  <Bounty className="w-20 h-20 text-foreground" />
+        <div className="mx-auto max-w-2xl">
+          <Card className="border-0 bg-transparent shadow-none">
+            <CardHeader className="pb-8 text-center">
+              <div className="mb-6 flex justify-center">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-none">
+                  <Bounty className="h-20 w-20 text-foreground" />
                 </div>
               </div>
 
-              <CardTitle className="text-2xl font-bold text-foreground">
+              <CardTitle className="font-bold text-2xl text-foreground">
                 Welcome to Pro!
               </CardTitle>
             </CardHeader>
 
             <CardContent className="space-y-6">
-              <Card className="bg-card border-border">
+              <Card className="border-border bg-card">
                 <CardHeader>
-                  <CardTitle className="text-xl font-semibold">
+                  <CardTitle className="font-semibold text-xl">
                     Purchase Summary
                   </CardTitle>
                 </CardHeader>
@@ -96,7 +104,7 @@ function SuccessContent() {
                         <p className="font-medium text-foreground">
                           {getPlanName()}
                         </p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-muted-foreground text-sm">
                           Bounty Pro Subscription
                         </p>
                       </div>
@@ -105,7 +113,7 @@ function SuccessContent() {
                       <p className="font-semibold text-foreground">
                         {getPlanPrice()}
                       </p>
-                      <Badge variant="secondary" className="mt-1">
+                      <Badge className="mt-1" variant="secondary">
                         Active
                       </Badge>
                     </div>
@@ -113,12 +121,12 @@ function SuccessContent() {
 
                   <Separator />
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <h4 className="font-medium text-foreground">
                         Pro Features Unlocked:
                       </h4>
-                      <ul className="space-y-1 text-sm text-muted-foreground">
+                      <ul className="space-y-1 text-muted-foreground text-sm">
                         <li>Lower fees on bounty transactions</li>
                         <li>Create multiple concurrent bounties</li>
                         <li>Priority support</li>
@@ -130,17 +138,17 @@ function SuccessContent() {
                       <h4 className="font-medium text-foreground">
                         Order Details:
                       </h4>
-                      <div className="space-y-1 text-sm text-muted-foreground">
+                      <div className="space-y-1 text-muted-foreground text-sm">
                         <p>
-                          Checkout ID:{" "}
-                          <span className="font-mono text-xs bg-muted px-2 py-1 rounded">
+                          Checkout ID:{' '}
+                          <span className="rounded bg-muted px-2 py-1 font-mono text-xs">
                             {checkoutId}
                           </span>
                         </p>
                         <p>Account: {session?.user?.email}</p>
                         <p>
-                          Status:{" "}
-                          <span className="text-foreground font-medium">
+                          Status:{' '}
+                          <span className="font-medium text-foreground">
                             Active
                           </span>
                         </p>
@@ -150,26 +158,26 @@ function SuccessContent() {
                 </CardContent>
               </Card>
 
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <Button
                   className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
-                  onClick={() => router.push("/dashboard")}
+                  onClick={() => router.push('/dashboard')}
                 >
                   Go to Dashboard
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
 
                 <Button
-                  variant="outline"
                   className="flex-1"
-                  onClick={() => router.push("/bounties")}
+                  onClick={() => router.push('/bounties')}
+                  variant="outline"
                 >
                   Browse Bounties
                 </Button>
               </div>
 
               <div className="text-center">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Need help? Contact our support team or check out our
                   documentation.
                 </p>

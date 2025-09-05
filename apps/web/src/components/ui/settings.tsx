@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import type { Transition } from "motion/react";
-import { motion, useAnimation } from "motion/react";
-import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
-import { cn } from "@/lib/utils";
+import type { Transition } from 'motion/react';
+import { motion, useAnimation } from 'motion/react';
+import type { HTMLAttributes } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
+import { cn } from '@/lib/utils';
 
 export interface SettingsIconHandle {
   startAnimation: () => void;
@@ -16,7 +16,7 @@ interface SettingsIconProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const defaultTransition: Transition = {
-  type: "spring",
+  type: 'spring',
   stiffness: 100,
   damping: 12,
   mass: 0.4,
@@ -31,31 +31,31 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
       isControlledRef.current = true;
 
       return {
-        startAnimation: () => controls.start("animate"),
-        stopAnimation: () => controls.start("normal"),
+        startAnimation: () => controls.start('animate'),
+        stopAnimation: () => controls.start('normal'),
       };
     });
 
     const handleMouseEnter = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
-        if (!isControlledRef.current) {
-          controls.start("animate");
-        } else {
+        if (isControlledRef.current) {
           onMouseEnter?.(e);
+        } else {
+          controls.start('animate');
         }
       },
-      [controls, onMouseEnter],
+      [controls, onMouseEnter]
     );
 
     const handleMouseLeave = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
-        if (!isControlledRef.current) {
-          controls.start("normal");
-        } else {
+        if (isControlledRef.current) {
           onMouseLeave?.(e);
+        } else {
+          controls.start('normal');
         }
       },
-      [controls, onMouseLeave],
+      [controls, onMouseLeave]
     );
 
     return (
@@ -66,22 +66,20 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
         {...props}
       >
         <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width={size}
-          height={size}
-          viewBox="0 0 24 24"
           fill="none"
+          height={size}
           stroke="currentColor"
-          strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+          width={size}
+          xmlns="http://www.w3.org/2000/svg"
         >
           <motion.line
-            x1="21"
-            x2="14"
-            y1="4"
-            y2="4"
+            animate={controls}
             initial={false}
+            transition={defaultTransition}
             variants={{
               normal: {
                 x2: 14,
@@ -90,14 +88,14 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
                 x2: 10,
               },
             }}
-            animate={controls}
-            transition={defaultTransition}
-          />
-          <motion.line
-            x1="10"
-            x2="3"
+            x1="21"
+            x2="14"
             y1="4"
             y2="4"
+          />
+          <motion.line
+            animate={controls}
+            transition={defaultTransition}
             variants={{
               normal: {
                 x1: 10,
@@ -106,15 +104,15 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
                 x1: 5,
               },
             }}
-            animate={controls}
-            transition={defaultTransition}
+            x1="10"
+            x2="3"
+            y1="4"
+            y2="4"
           />
 
           <motion.line
-            x1="21"
-            x2="12"
-            y1="12"
-            y2="12"
+            animate={controls}
+            transition={defaultTransition}
             variants={{
               normal: {
                 x2: 12,
@@ -123,15 +121,15 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
                 x2: 18,
               },
             }}
-            animate={controls}
-            transition={defaultTransition}
+            x1="21"
+            x2="12"
+            y1="12"
+            y2="12"
           />
 
           <motion.line
-            x1="8"
-            x2="3"
-            y1="12"
-            y2="12"
+            animate={controls}
+            transition={defaultTransition}
             variants={{
               normal: {
                 x1: 8,
@@ -140,15 +138,15 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
                 x1: 13,
               },
             }}
-            animate={controls}
-            transition={defaultTransition}
+            x1="8"
+            x2="3"
+            y1="12"
+            y2="12"
           />
 
           <motion.line
-            x1="3"
-            x2="12"
-            y1="20"
-            y2="20"
+            animate={controls}
+            transition={defaultTransition}
             variants={{
               normal: {
                 x2: 12,
@@ -157,15 +155,15 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
                 x2: 4,
               },
             }}
-            animate={controls}
-            transition={defaultTransition}
+            x1="3"
+            x2="12"
+            y1="20"
+            y2="20"
           />
 
           <motion.line
-            x1="16"
-            x2="21"
-            y1="20"
-            y2="20"
+            animate={controls}
+            transition={defaultTransition}
             variants={{
               normal: {
                 x1: 16,
@@ -174,15 +172,15 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
                 x1: 8,
               },
             }}
-            animate={controls}
-            transition={defaultTransition}
+            x1="16"
+            x2="21"
+            y1="20"
+            y2="20"
           />
 
           <motion.line
-            x1="14"
-            x2="14"
-            y1="2"
-            y2="6"
+            animate={controls}
+            transition={defaultTransition}
             variants={{
               normal: {
                 x1: 14,
@@ -193,15 +191,15 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
                 x2: 9,
               },
             }}
-            animate={controls}
-            transition={defaultTransition}
+            x1="14"
+            x2="14"
+            y1="2"
+            y2="6"
           />
 
           <motion.line
-            x1="8"
-            x2="8"
-            y1="10"
-            y2="14"
+            animate={controls}
+            transition={defaultTransition}
             variants={{
               normal: {
                 x1: 8,
@@ -212,15 +210,15 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
                 x2: 14,
               },
             }}
-            animate={controls}
-            transition={defaultTransition}
+            x1="8"
+            x2="8"
+            y1="10"
+            y2="14"
           />
 
           <motion.line
-            x1="16"
-            x2="16"
-            y1="18"
-            y2="22"
+            animate={controls}
+            transition={defaultTransition}
             variants={{
               normal: {
                 x1: 16,
@@ -231,15 +229,17 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
                 x2: 8,
               },
             }}
-            animate={controls}
-            transition={defaultTransition}
+            x1="16"
+            x2="16"
+            y1="18"
+            y2="22"
           />
         </svg>
       </div>
     );
-  },
+  }
 );
 
-SettingsIcon.displayName = "SettingsIcon";
+SettingsIcon.displayName = 'SettingsIcon';
 
 export { SettingsIcon };

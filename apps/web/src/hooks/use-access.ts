@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
-import { trpc } from "@/utils/trpc";
+import { useQuery } from '@tanstack/react-query';
+import { trpc } from '@/utils/trpc';
 
 export function useAccess() {
   const { data, isLoading, error } = useQuery(
-    trpc.user.hasAccess.queryOptions(),
+    trpc.user.hasAccess.queryOptions()
   );
 
   return {
@@ -17,7 +17,7 @@ export function useAccess() {
 
 export function useCurrentUser() {
   const { data, isLoading, error } = useQuery(
-    trpc.user.getCurrentUser.queryOptions(),
+    trpc.user.getCurrentUser.queryOptions()
   );
 
   return {

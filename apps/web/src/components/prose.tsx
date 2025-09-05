@@ -1,13 +1,13 @@
-import { cn } from "@/lib/utils";
-import React from "react";
-import { unified } from "unified";
-import remarkParse from "remark-parse";
-import remarkRehype from "remark-rehype";
-import rehypeSanitize from "rehype-sanitize";
-import rehypeStringify from "rehype-stringify";
+import React from 'react';
+import rehypeSanitize from 'rehype-sanitize';
+import rehypeStringify from 'rehype-stringify';
+import remarkParse from 'remark-parse';
+import remarkRehype from 'remark-rehype';
+import { unified } from 'unified';
+import { cn } from '@/lib/utils';
 
 type ProseProps = React.HTMLAttributes<HTMLElement> & {
-  as?: "article";
+  as?: 'article';
   html?: string;
   markdown?: string;
 };
@@ -29,7 +29,9 @@ function Prose({ children, html, markdown, className }: ProseProps) {
     let active = true;
     if (markdown) {
       renderMarkdownToHtml(markdown).then((out) => {
-        if (active) setRendered(out);
+        if (active) {
+          setRendered(out);
+        }
       });
     } else if (html) {
       setRendered(html);
@@ -44,8 +46,8 @@ function Prose({ children, html, markdown, className }: ProseProps) {
   return (
     <article
       className={cn(
-        "prose prose-zinc dark:prose-invert max-w-none prose-headings:font-semibold prose-h1:text-2xl prose-h2:text-xl prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-muted-foreground prose-img:rounded-xl mx-auto",
-        className,
+        'prose prose-zinc dark:prose-invert mx-auto max-w-none prose-ol:list-decimal prose-ul:list-disc prose-img:rounded-xl prose-headings:font-semibold prose-a:text-blue-600 prose-h1:text-2xl prose-h2:text-xl prose-li:marker:text-muted-foreground hover:prose-a:text-blue-500',
+        className
       )}
     >
       {rendered ? (

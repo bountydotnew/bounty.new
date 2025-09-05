@@ -10,9 +10,13 @@ export function isTabletDevice(userAgent: string): boolean {
 }
 
 export function getDeviceType(
-  userAgent: string,
-): "mobile" | "tablet" | "desktop" {
-  if (isTabletDevice(userAgent)) return "tablet";
-  if (isMobileDevice(userAgent)) return "mobile";
-  return "desktop";
+  userAgent: string
+): 'mobile' | 'tablet' | 'desktop' {
+  if (isTabletDevice(userAgent)) {
+    return 'tablet';
+  }
+  if (isMobileDevice(userAgent)) {
+    return 'mobile';
+  }
+  return 'desktop';
 }

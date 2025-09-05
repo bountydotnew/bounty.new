@@ -1,12 +1,12 @@
-import { IconProps } from "@/types";
+import type { IconProps } from '@/types';
 
 export default function Logo(props: IconProps) {
   return (
     <svg
-      width="72"
+      fill="none"
       height="17"
       viewBox="0 0 72 17"
-      fill="none"
+      width="72"
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >

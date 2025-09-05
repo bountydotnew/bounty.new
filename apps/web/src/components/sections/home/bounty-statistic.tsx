@@ -1,36 +1,42 @@
-import NumberFlow, { Format } from "@number-flow/react";
+import NumberFlow, { type Format } from '@number-flow/react';
 
 interface BountyStatisticProps {
-    label: string;
-    value: number;
-    color: string;
-    showDollar?: boolean;
+  label: string;
+  value: number;
+  color: string;
+  showDollar?: boolean;
 }
 
-export function BountyStatistic({ label, value, color, showDollar = true }: BountyStatisticProps) {
+export function BountyStatistic({
+  label,
+  value,
+  color,
+  showDollar = true,
+}: BountyStatisticProps) {
+  const format: Format = {
+    notation: 'compact',
+    compactDisplay: 'short',
+    roundingMode: 'trunc',
+    style: showDollar ? 'currency' : 'decimal',
+    currency: 'USD',
+  };
 
-    const format: Format = {
-        notation: 'compact',
-        compactDisplay: 'short',
-        roundingMode: 'trunc',
-        style: showDollar ? 'currency' : 'decimal',
-        currency: 'USD',
-    }
-    
-    return (
-        <div className="bg-transparent p-8 min-w-[200px] relative">
-            {/* Corner brackets */}
-            <div className="absolute top-0 left-0 w-6 h-6 border-t border-l border-[#282828]"></div>
-            <div className="absolute top-0 right-0 w-6 h-6 border-t border-r border-[#282828]"></div>
-            <div className="absolute bottom-0 left-0 w-6 h-6 border-b border-l border-[#282828]"></div>
-            <div className="absolute bottom-0 right-0 w-6 h-6 border-b border-r border-[#282828]"></div>
+  return (
+    <div className="relative min-w-[200px] bg-transparent p-8">
+      {/* Corner brackets */}
+      <div className="absolute top-0 left-0 h-6 w-6 border-[#282828] border-t border-l" />
+      <div className="absolute top-0 right-0 h-6 w-6 border-[#282828] border-t border-r" />
+      <div className="absolute bottom-0 left-0 h-6 w-6 border-[#282828] border-b border-l" />
+      <div className="absolute right-0 bottom-0 h-6 w-6 border-[#282828] border-r border-b" />
 
-            <div className={`text-4xl font-bold mb-2 ${color}`}>
-                <NumberFlow respectMotionPreference={true} format={format} value={value} />
-            </div>
-            <div className="text-gray-400">
-                {label}
-            </div>
-        </div>
-    );
+      <div className={`mb-2 font-bold text-4xl ${color}`}>
+        <NumberFlow
+          format={format}
+          respectMotionPreference={true}
+          value={value}
+        />
+      </div>
+      <div className="text-gray-400">{label}</div>
+    </div>
+  );
 }

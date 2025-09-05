@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import { ElementType, useState } from "react";
-import { ChevronsUpDown, Plus } from "lucide-react";
+import { ChevronsUpDown, Plus } from 'lucide-react';
+import Image from 'next/image';
+import { type ElementType, useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,14 +11,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar";
-import Image from "next/image";
+} from '@/components/ui/sidebar';
 
 export function TeamSwitcher({
   teams,
@@ -42,17 +42,17 @@ export function TeamSwitcher({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
-              size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              size="lg"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                 {activeTeam.logoUrl ? (
                   <Image
-                    src={activeTeam.logoUrl}
                     alt={activeTeam.name}
-                    width={32}
-                    height={32}
                     className="size-4"
+                    height={32}
+                    src={activeTeam.logoUrl}
+                    width={32}
                   />
                 ) : (
                   <activeTeam.logo className="size-4" />
@@ -66,28 +66,28 @@ export function TeamSwitcher({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             align="start"
-            side={isMobile ? "bottom" : "right"}
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            side={isMobile ? 'bottom' : 'right'}
             sideOffset={4}
           >
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
+            <DropdownMenuLabel className="text-muted-foreground text-xs">
               Teams
             </DropdownMenuLabel>
             {teams.map((team, index) => (
               <DropdownMenuItem
+                className="gap-2 p-2"
                 key={team.name}
                 onClick={() => setActiveTeam(team)}
-                className="gap-2 p-2"
               >
                 <div className="flex size-6 items-center justify-center rounded-md border">
                   {team.logoUrl ? (
                     <Image
-                      src={team.logoUrl}
                       alt={team.name}
-                      width={24}
-                      height={24}
                       className="size-3.5 shrink-0"
+                      height={24}
+                      src={team.logoUrl}
+                      width={24}
                     />
                   ) : (
                     <team.logo className="size-3.5 shrink-0" />

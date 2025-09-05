@@ -1,22 +1,21 @@
-"use client";
+'use client';
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { trpc } from "@/utils/trpc";
-import type { TRPCClientErrorLike } from "@trpc/client";
-import type { AppRouter } from "@bounty/api";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Favicon } from "@/components/ui/favicon";
+import type { AppRouter } from '@bounty/api';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import type { TRPCClientErrorLike } from '@trpc/client';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Favicon } from '@/components/ui/favicon';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
-  betaApplicationSchema,
-  betaApplicationDefaults,
   type BetaApplicationForm,
-} from "@/lib/forms";
+  betaApplicationDefaults,
+  betaApplicationSchema,
+} from '@/lib/forms';
+import { trpc } from '@/utils/trpc';
 
 interface BetaApplicationFormProps {
   onSubmit?: (data: BetaApplicationForm) => void;
@@ -42,7 +41,7 @@ export function BetaApplicationForm({
     defaultValues: betaApplicationDefaults,
   });
 
-  const projectLink = watch("projectLink");
+  const projectLink = watch('projectLink');
 
   const { data: existingSubmission } = useQuery({
     ...trpc.betaApplications.checkExisting.queryOptions(),
@@ -51,7 +50,7 @@ export function BetaApplicationForm({
   const submitMutation = useMutation({
     ...trpc.betaApplications.create.mutationOptions(),
     onSuccess: () => {
-      toast.success("Application submitted successfully!");
+      toast.success('Application submitted successfully!');
       reset();
       if (onSuccess) {
         onSuccess();
@@ -62,7 +61,7 @@ export function BetaApplicationForm({
     },
     onError: (error: TRPCClientErrorLike<AppRouter>) => {
       toast.error(
-        error.message || "Failed to submit application. Please try again.",
+        error.message || 'Failed to submit application. Please try again.'
       );
     },
   });
@@ -74,59 +73,59 @@ export function BetaApplicationForm({
   const isFormDisabled = existingSubmission?.hasSubmitted;
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className={className}>
+    <form className={className} onSubmit={handleSubmit(handleFormSubmit)}>
       <div className="space-y-6">
         <div className="space-y-2">
-          <label htmlFor="name" className="text-sm font-medium text-foreground">
+          <label className="font-medium text-foreground text-sm" htmlFor="name">
             Your name*
           </label>
           <Input
             id="name"
             placeholder="Ahmet"
-            {...register("name")}
-            className={errors.name ? "border-destructive" : ""}
+            {...register('name')}
+            className={errors.name ? 'border-destructive' : ''}
             disabled={isFormDisabled}
           />
           {errors.name && (
-            <p className="text-sm text-destructive">{errors.name.message}</p>
+            <p className="text-destructive text-sm">{errors.name.message}</p>
           )}
         </div>
 
         <div className="space-y-2">
           <label
+            className="font-medium text-foreground text-sm"
             htmlFor="twitter"
-            className="text-sm font-medium text-foreground"
           >
             Twitter handle
           </label>
           <Input
             id="twitter"
             placeholder="@bruvimtired"
-            {...register("twitter")}
-            className={errors.twitter ? "border-destructive" : ""}
+            {...register('twitter')}
+            className={errors.twitter ? 'border-destructive' : ''}
             disabled={isFormDisabled}
           />
           {errors.twitter && (
-            <p className="text-sm text-destructive">{errors.twitter.message}</p>
+            <p className="text-destructive text-sm">{errors.twitter.message}</p>
           )}
         </div>
 
         <div className="space-y-2">
           <label
+            className="font-medium text-foreground text-sm"
             htmlFor="projectName"
-            className="text-sm font-medium text-foreground"
           >
             Project name*
           </label>
           <Input
             id="projectName"
             placeholder="oss.now"
-            {...register("projectName")}
-            className={errors.projectName ? "border-destructive" : ""}
+            {...register('projectName')}
+            className={errors.projectName ? 'border-destructive' : ''}
             disabled={isFormDisabled}
           />
           {errors.projectName && (
-            <p className="text-sm text-destructive">
+            <p className="text-destructive text-sm">
               {errors.projectName.message}
             </p>
           )}
@@ -134,8 +133,8 @@ export function BetaApplicationForm({
 
         <div className="space-y-2">
           <label
+            className="font-medium text-foreground text-sm"
             htmlFor="projectLink"
-            className="text-sm font-medium text-foreground"
           >
             Project link*
           </label>
@@ -143,18 +142,18 @@ export function BetaApplicationForm({
             <Input
               id="projectLink"
               placeholder="https://oss.now"
-              {...register("projectLink")}
-              className={`${errors.projectLink ? "border-destructive" : ""} ${projectLink ? "pl-10" : ""}`}
+              {...register('projectLink')}
+              className={`${errors.projectLink ? 'border-destructive' : ''} ${projectLink ? 'pl-10' : ''}`}
               disabled={isFormDisabled}
             />
             {projectLink && (
-              <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                <Favicon url={projectLink} size={16} />
+              <div className="-translate-y-1/2 absolute top-1/2 left-3">
+                <Favicon size={16} url={projectLink} />
               </div>
             )}
           </div>
           {errors.projectLink && (
-            <p className="text-sm text-destructive">
+            <p className="text-destructive text-sm">
               {errors.projectLink.message}
             </p>
           )}
@@ -162,50 +161,50 @@ export function BetaApplicationForm({
 
         <div className="space-y-2">
           <label
+            className="font-medium text-foreground text-sm"
             htmlFor="description"
-            className="text-sm font-medium text-foreground"
           >
             Description
           </label>
           <Textarea
             id="description"
-            rows={6}
             placeholder="Enter project description"
-            {...register("description")}
-            className={errors.description ? "border-destructive" : ""}
+            rows={6}
+            {...register('description')}
+            className={errors.description ? 'border-destructive' : ''}
             disabled={isFormDisabled}
           />
           {errors.description && (
-            <p className="text-sm text-destructive">
+            <p className="text-destructive text-sm">
               {errors.description.message}
             </p>
           )}
         </div>
       </div>
 
-      <div className="flex gap-2 mt-6">
+      <div className="mt-6 flex gap-2">
         {existingSubmission?.hasSubmitted ? (
-          <div className="w-full text-center py-4">
-            <p className="text-lg font-medium text-green-600">
+          <div className="w-full py-4 text-center">
+            <p className="font-medium text-green-600 text-lg">
               You&apos;ll hear from us shortly!
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="mt-1 text-muted-foreground text-sm">
               Your beta application has been submitted and is under review.
             </p>
           </div>
         ) : (
           <>
             <Button
-              type="submit"
               className="flex-1"
               disabled={isSubmitting || submitMutation.isPending}
+              type="submit"
             >
               {isSubmitting || submitMutation.isPending
-                ? "Submitting..."
-                : "Submit Application"}
+                ? 'Submitting...'
+                : 'Submit Application'}
             </Button>
             {onCancel && (
-              <Button type="button" variant="outline" onClick={onCancel}>
+              <Button onClick={onCancel} type="button" variant="outline">
                 Cancel
               </Button>
             )}

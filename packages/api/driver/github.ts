@@ -1,5 +1,5 @@
-import { Octokit } from "@octokit/core";
-import { restEndpointMethods } from "@octokit/plugin-rest-endpoint-methods";
+import { Octokit } from '@octokit/core';
+import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods';
 
 const MyOctokit = Octokit.plugin(restEndpointMethods);
 
@@ -45,8 +45,10 @@ export type GetUserReposResult =
   | { success: false; error: string };
 
 function parseRepo(identifier: string) {
-  const [owner, repo] = identifier.split("/");
-  if (!owner || !repo) throw new Error("Invalid repo id. Use owner/repo.");
+  const [owner, repo] = identifier.split('/');
+  if (!(owner && repo)) {
+    throw new Error('Invalid repo id. Use owner/repo.');
+  }
   return { owner, repo };
 }
 
@@ -54,7 +56,9 @@ function parseCoAuthors(message: string): string[] {
   const coAuthorRegex = /Co-authored-by:\s*(.+?)\s*<[^>]+>/g;
   const out: string[] = [];
   let m;
-  while ((m = coAuthorRegex.exec(message)) !== null) out.push(m[1].trim());
+  while ((m = coAuthorRegex.exec(message)) !== null) {
+    out.push(m[1].trim());
+  }
   return out;
 }
 
@@ -62,7 +66,7 @@ export class GithubManager {
   private octokit: InstanceType<typeof MyOctokit>;
 
   constructor(config: { token?: string } | string = {}) {
-    const token = typeof config === "string" ? config : config.token;
+    const token = typeof config === 'string' ? config : config.token;
     const auth = token || process.env.GITHUB_TOKEN;
     this.octokit = new MyOctokit(auth ? { auth } : {});
   }
@@ -88,7 +92,7 @@ export class GithubManager {
       const { data } = await this.octokit.rest.repos.listForUser({
         username,
         per_page: 50,
-        sort: "pushed",
+        sort: 'pushed',
       });
       const repos = (data as any[]).map((r: any) => ({
         id: r.id,
@@ -104,7 +108,7 @@ export class GithubManager {
       const errorMessage =
         error instanceof Error
           ? error.message
-          : "Unknown error occurred while fetching repositories";
+          : 'Unknown error occurred while fetching repositories';
       return { success: false, error: errorMessage };
     }
   }
@@ -112,13 +116,13 @@ export class GithubManager {
   async searchIssues(
     owner: string,
     repo: string,
-    q: string,
+    q: string
   ): Promise<
     { number: number; title: string; state: string; html_url: string }[]
   > {
     try {
       const term = q.trim();
-      const parts = [`repo:${owner}/${repo}`, `is:issue`];
+      const parts = [`repo:${owner}/${repo}`, 'is:issue'];
       if (term) {
         if (/^\d+$/.test(term)) {
           // Fix: Remove invalid 'in:number' qualifier and push bare number term
@@ -128,7 +132,7 @@ export class GithubManager {
         }
       }
       const { data } = await this.octokit.rest.search.issuesAndPullRequests({
-        q: parts.join(" "),
+        q: parts.join(' '),
         per_page: 10,
       });
       return data.items.map((i: any) => ({
@@ -144,7 +148,7 @@ export class GithubManager {
 
   async getContributors(
     identifier: string,
-    perPage = 100,
+    perPage = 100
   ): Promise<Contributor[]> {
     const { owner, repo } = parseRepo(identifier);
     const { data } = await this.octokit.rest.repos.listContributors({
@@ -165,7 +169,7 @@ export class GithubManager {
     const { data } = await this.octokit.rest.pulls.list({
       owner,
       repo,
-      state: "open",
+      state: 'open',
       per_page: 1,
     });
     const total = Number(Array.isArray(data as any) ? (data as any).length : 0);
@@ -184,7 +188,7 @@ export class GithubManager {
 
   async getBiggestCommitByUser(
     identifier: string,
-    username: string,
+    username: string
   ): Promise<CommitLite | undefined> {
     const { owner, repo } = parseRepo(identifier);
     const { data: commits } = await this.octokit.rest.repos.listCommits({
@@ -197,12 +201,12 @@ export class GithubManager {
     let max = 0;
     for (const c of commits.slice(0, 10)) {
       const { data: detail } = await this.octokit.request(
-        "GET /repos/{owner}/{repo}/commits/{ref}",
+        'GET /repos/{owner}/{repo}/commits/{ref}',
         {
           owner,
           repo,
           ref: c.sha,
-        },
+        }
       );
       const additions = detail.stats?.additions || 0;
       const deletions = detail.stats?.deletions || 0;
@@ -211,12 +215,12 @@ export class GithubManager {
         max = total;
         best = {
           sha: String(c.sha).slice(0, 7),
-          message: String(c.commit?.message || "")
-            .split("\n")[0]
+          message: String(c.commit?.message || '')
+            .split('\n')[0]
             .slice(0, 50),
           additions,
           deletions,
-          coAuthors: parseCoAuthors(String(c.commit?.message || "")),
+          coAuthors: parseCoAuthors(String(c.commit?.message || '')),
           url: c.html_url,
         };
       }
@@ -235,24 +239,26 @@ export class GithubManager {
 
   async getIssueFromUrl(url: string) {
     const match = url.match(
-      /^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/issues\/(\d+)/i,
+      /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/i
     );
-    if (!match) throw new Error("Invalid GitHub issue URL");
+    if (!match) {
+      throw new Error('Invalid GitHub issue URL');
+    }
     const [, owner, repo, num] = match;
     const issue = await this.getIssue(owner, repo, Number(num));
     const bodyHtml = await this.renderMarkdown(
-      issue.body || "",
-      `${owner}/${repo}`,
+      issue.body || '',
+      `${owner}/${repo}`
     );
     const { amount, currency } = this.extractAmountAndCurrency(
-      `${issue.title}\n${issue.body || ""}`,
+      `${issue.title}\n${issue.body || ''}`
     );
     return {
       owner,
       repo,
       number: Number(num),
       title: issue.title,
-      body: issue.body || "",
+      body: issue.body || '',
       body_html: bodyHtml,
       html_url: issue.html_url,
       state: issue.state,
@@ -260,7 +266,7 @@ export class GithubManager {
       detectedCurrency: currency,
       labels: Array.isArray(issue.labels)
         ? (issue.labels as any[])
-            .map((l: any) => (typeof l === "string" ? l : l?.name))
+            .map((l: any) => (typeof l === 'string' ? l : l?.name))
             .filter(Boolean)
         : [],
       assignees: Array.isArray(issue.assignees)
@@ -270,13 +276,13 @@ export class GithubManager {
   }
 
   async getIssues(
-    identifier: string,
+    identifier: string
   ): Promise<{ id: number; title: string; state: string; url: string }[]> {
     const { owner, repo } = parseRepo(identifier);
     const { data } = await this.octokit.rest.issues.listForRepo({
       owner,
       repo,
-      state: "all",
+      state: 'all',
       per_page: 100,
     });
     return (data as any[]).map((i: any) => ({
@@ -288,32 +294,43 @@ export class GithubManager {
   }
 
   async renderMarkdown(markdown: string, context?: string): Promise<string> {
-    if (!markdown) return "";
-    const { data } = await this.octokit.request("POST /markdown", {
+    if (!markdown) {
+      return '';
+    }
+    const { data } = await this.octokit.request('POST /markdown', {
       text: markdown,
-      mode: "gfm",
+      mode: 'gfm',
       context,
     } as any);
-    return typeof data === "string" ? data : "";
+    return typeof data === 'string' ? data : '';
   }
 
   private extractAmountAndCurrency(text: string): {
     amount?: string;
     currency?: string;
   } {
-    if (!text) return {};
+    if (!text) {
+      return {};
+    }
     const lower = text.toLowerCase();
     let currency: string | undefined;
-    if (/[\$€£]/.test(text)) {
-      if (text.includes("$")) currency = "USD";
-      else if (text.includes("€")) currency = "EUR";
-      else if (text.includes("£")) currency = "GBP";
+    if (/[$€£]/.test(text)) {
+      if (text.includes('$')) {
+        currency = 'USD';
+      } else if (text.includes('€')) {
+        currency = 'EUR';
+      } else if (text.includes('£')) {
+        currency = 'GBP';
+      }
     }
     if (!currency) {
-      if (lower.includes("usd")) currency = "USD";
-      else if (lower.includes("eur")) currency = "EUR";
-      else if (lower.includes("gbp") || lower.includes("pound"))
-        currency = "GBP";
+      if (lower.includes('usd')) {
+        currency = 'USD';
+      } else if (lower.includes('eur')) {
+        currency = 'EUR';
+      } else if (lower.includes('gbp') || lower.includes('pound')) {
+        currency = 'GBP';
+      }
     }
     const patterns: RegExp[] = [
       /\$\s*(\d{1,13}(?:[.,]\d{1,2})?)/i,
@@ -326,25 +343,28 @@ export class GithubManager {
       const m = text.match(re);
       if (m) {
         let value: string | undefined;
-        if (m[1] && /\d/.test(m[1])) value = m[1];
-        else if (m[2] && /\d/.test(m[2])) value = m[2];
+        if (m[1] && /\d/.test(m[1])) {
+          value = m[1];
+        } else if (m[2] && /\d/.test(m[2])) {
+          value = m[2];
+        }
         if (value) {
-          value = value.replace(/,/g, ".");
-          if (value.includes(".")) {
-            const [a, b = ""] = value.split(".");
-            value = `${a}.${b.slice(0, 2)}`.replace(/\.$/, "");
+          value = value.replace(/,/g, '.');
+          if (value.includes('.')) {
+            const [a, b = ''] = value.split('.');
+            value = `${a}.${b.slice(0, 2)}`.replace(/\.$/, '');
           }
           const cur = (m[1] && !/\d/.test(m[1]) ? m[1] : m[2]) || undefined;
           const normCur = cur ? cur.toString().toUpperCase() : undefined;
           const curMap: Record<string, string> = {
-            USD: "USD",
-            EUR: "EUR",
-            GBP: "GBP",
-            DOLLARS: "USD",
-            POUNDS: "GBP",
-            EUROS: "EUR",
+            USD: 'USD',
+            EUR: 'EUR',
+            GBP: 'GBP',
+            DOLLARS: 'USD',
+            POUNDS: 'GBP',
+            EUROS: 'EUR',
           };
-          return { amount: value, currency: curMap[normCur || ""] || currency };
+          return { amount: value, currency: curMap[normCur || ''] || currency };
         }
       }
     }

@@ -5,8 +5,8 @@ export interface Bounty {
   description: string;
   amount: number;
   currency: string;
-  status: "draft" | "open" | "in_progress" | "completed" | "cancelled";
-  difficulty: "beginner" | "intermediate" | "advanced" | "expert";
+  status: 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled';
+  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
   deadline?: string | null;
   tags?: string[] | null;
   repositoryUrl?: string | null;
@@ -23,8 +23,8 @@ export interface Bounty {
 
 export interface UserData {
   name?: string;
-  betaAccessStatus: "none" | "pending" | "approved" | "denied";
-  accessStage: "none" | "alpha" | "beta" | "production";
+  betaAccessStatus: 'none' | 'pending' | 'approved' | 'denied';
+  accessStage: 'none' | 'alpha' | 'beta' | 'production';
 }
 
 export interface BetaSubmission {
@@ -33,7 +33,7 @@ export interface BetaSubmission {
 
 export interface ActivityItem {
   id: string;
-  type: "comment" | "completion" | "payment";
+  type: 'comment' | 'completion' | 'payment';
   title: string;
   description: string;
   timestamp: string;

@@ -1,14 +1,13 @@
-"use client";
+'use client';
 
+import { AccessGate } from '@/components/access-gate';
+import { MobileSidebar } from '@/components/dual-sidebar/mobile-sidebar';
 import Link from '@/components/ui/link';
-
-import { cn } from "@/lib/utils";
-import { LINKS } from "@/constants/links";
-import { AccessGate } from "@/components/access-gate";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { useMediaQuery } from "@/hooks/use-media-query";
-import { MobileSidebar } from "@/components/dual-sidebar/mobile-sidebar";
-import type { Bounty } from "@/types/dashboard";
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import { LINKS } from '@/constants/links';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import { cn } from '@/lib/utils';
+import type { Bounty } from '@/types/dashboard';
 
 type NavItem = { href: string; label: string };
 
@@ -17,16 +16,16 @@ interface HeaderProps {
   isMyBountiesLoading?: boolean;
 }
 
-const NavLinks = ({ items }: { items: ReadonlyArray<NavItem> }) => (
+const NavLinks = ({ items }: { items: readonly NavItem[] }) => (
   <ul className="flex items-center gap-6">
     {items.map(({ href, label }) => (
       <li key={href}>
         <Link
-          href={href}
           className={cn(
-            "text-sm font-medium transition-colors hover:text-primary",
-            "text-muted-foreground hover:text-foreground",
+            'font-medium text-sm transition-colors hover:text-primary',
+            'text-muted-foreground hover:text-foreground'
           )}
+          href={href}
         >
           {label}
         </Link>
@@ -36,30 +35,33 @@ const NavLinks = ({ items }: { items: ReadonlyArray<NavItem> }) => (
 );
 
 const betaNavigationLinks = [
-  { href: LINKS.DASHBOARD, label: "Dashboard" },
-  { href: LINKS.BOUNTIES, label: "Bounties" },
+  { href: LINKS.DASHBOARD, label: 'Dashboard' },
+  { href: LINKS.BOUNTIES, label: 'Bounties' },
 ];
 
 const productionNavigationLinks = [
-  { href: LINKS.DASHBOARD, label: "Apply for Beta Testing" },
+  { href: LINKS.DASHBOARD, label: 'Apply for Beta Testing' },
 ];
 
-export const Header = ({ myBounties, isMyBountiesLoading }: HeaderProps = {}) => {
-  const isMobile = useMediaQuery("(max-width: 768px)");
+export const Header = ({
+  myBounties,
+  isMyBountiesLoading,
+}: HeaderProps = {}) => {
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   return (
     <header
       className={cn(
-        "flex h-16 items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-        "px-4 sm:px-6",
+        'flex h-16 items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60',
+        'px-4 sm:px-6'
       )}
     >
       <div className="flex items-center gap-6">
         {isMobile && <SidebarTrigger />}
         <nav className="flex items-center">
           <AccessGate
-            stage="beta"
             fallback={<NavLinks items={productionNavigationLinks} />}
+            stage="beta"
           >
             <NavLinks items={betaNavigationLinks} />
           </AccessGate>
@@ -67,9 +69,9 @@ export const Header = ({ myBounties, isMyBountiesLoading }: HeaderProps = {}) =>
       </div>
 
       <div className="flex items-center gap-2">
-        <MobileSidebar 
-          myBounties={myBounties}
+        <MobileSidebar
           isMyBountiesLoading={isMyBountiesLoading}
+          myBounties={myBounties}
         />
       </div>
     </header>

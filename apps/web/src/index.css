@@ -84,7 +84,7 @@ body {
 }
 
 .dark {
-  --background: #0E0E0E;
+  --background: #0e0e0e;
   --foreground: rgb(251, 251, 251);
   --card: rgb(52, 52, 52);
   --card-foreground: rgb(251, 251, 251);
@@ -224,15 +224,15 @@ body {
   /* 3D */
   box-shadow:
     var(--sds-size-depth-0) -1px 1px var(--sds-size-depth-0)
-      rgba(30, 30, 30, 0.2) inset,
+    rgba(30, 30, 30, 0.2) inset,
     var(--sds-size-depth-0) 1px 1px var(--sds-size-depth-0)
-      rgba(255, 255, 255, 0.2) inset;
+    rgba(255, 255, 255, 0.2) inset;
 }
 
 .buttonShadow {
   box-shadow:
     var(--sds-size-depth-0) -1px 1px var(--sds-size-depth-0)
-      rgba(30, 30, 30, 0.2) inset,
+    rgba(30, 30, 30, 0.2) inset,
     var(--sds-size-depth-0) 1px 1px var(--sds-size-depth-0) #fff inset;
 }
 
@@ -242,9 +242,9 @@ body {
   box-shadow:
     0px 0px 8.5px 0px rgba(0, 0, 0, 0.25),
     var(--sds-size-depth-0) -1px 1px var(--sds-size-depth-0)
-      rgba(30, 30, 30, 0.2) inset,
+    rgba(30, 30, 30, 0.2) inset,
     var(--sds-size-depth-0) 1px 1px var(--sds-size-depth-0)
-      rgba(255, 255, 255, 0.2) inset;
+    rgba(255, 255, 255, 0.2) inset;
   display: flex;
   min-width: 240px;
   padding: 12px var(--sds-size-space-600);
@@ -274,9 +274,9 @@ body {
   box-shadow:
     0px 0px 8.5px 0px rgba(0, 0, 0, 0.25),
     var(--sds-size-depth-0) -1px 1px var(--sds-size-depth-0)
-      rgba(30, 30, 30, 0.2) inset,
+    rgba(30, 30, 30, 0.2) inset,
     var(--sds-size-depth-0) 1px 1px var(--sds-size-depth-0)
-      rgba(255, 255, 255, 0.2) inset;
+    rgba(255, 255, 255, 0.2) inset;
 }
 
 .cardContainer {
