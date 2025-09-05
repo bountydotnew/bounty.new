@@ -15,6 +15,13 @@ import NumberFlow from '@/components/ui/number-flow';
 import { useConfetti } from '@/lib/context/confetti-context';
 import type { thumbmarkResponse } from '@/lib/fingerprint-validation';
 import { cn } from '@/lib/utils';
+import type {
+  RateLimitInfo,
+  WaitlistCookieData,
+  WaitlistCount,
+  WaitlistHookResult,
+  WaitlistSubmissionData,
+} from '@/types/waitlist';
 import { trpc } from '@/utils/trpc';
 
 const formSchema = z.object({
@@ -44,24 +51,16 @@ function getCookie(name: string): string | null {
   return null;
 }
 
-function useWaitlistSubmission() {
+function useWaitlistSubmission(): WaitlistHookResult {
   const queryClient = useQueryClient();
   const { celebrate } = useConfetti();
   const [success, setSuccess] = useState(false);
-  const [rateLimitInfo, setRateLimitInfo] = useState<{
-    remaining: number;
-    limit: number;
-    resetTime?: string;
-  } | null>(null);
+  const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitInfo | null>(
+    null
+  );
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async ({
-      email,
-      fingerprintData,
-    }: {
-      email: string;
-      fingerprintData: thumbmarkResponse;
-    }) => {
+    mutationFn: async ({ email, fingerprintData }: WaitlistSubmissionData) => {
       const response = await fetch('/api/waitlist', {
         method: 'POST',
         headers: {
@@ -85,7 +84,7 @@ function useWaitlistSubmission() {
         limit: data.limit,
       });
 
-      const cookieData = {
+      const cookieData: WaitlistCookieData = {
         submitted: true,
         timestamp: new Date().toISOString(),
         email: btoa(variables.email).substring(0, 16),
@@ -104,7 +103,7 @@ function useWaitlistSubmission() {
       if (!data.warning) {
         queryClient.setQueryData(
           trpc.earlyAccess.getWaitlistCount.queryKey(),
-          (oldData: { count: number } | undefined) => ({
+          (oldData: WaitlistCount | undefined) => ({
             count: (oldData?.count ?? 0) + 1,
           })
         );

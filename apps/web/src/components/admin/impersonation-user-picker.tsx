@@ -1,15 +1,19 @@
 'use client';
 
-import { authClient } from '@bounty/auth/client';
 import { useQuery } from '@tanstack/react-query';
 import { Search, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
 import { Input } from '@/components/ui/input';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { trpc } from '@/utils/trpc';
 
 interface Props {
@@ -21,9 +25,13 @@ interface Props {
 export function ImpersonationUserPicker({ open, onOpenChange, onPick }: Props) {
   const isMobile = useIsMobile();
   const [search, setSearch] = useState('');
-  
+
   const { data, isLoading } = useQuery(
-    trpc.user.getAllUsers.queryOptions({ search: search || undefined, page: 1, limit: 20 })
+    trpc.user.getAllUsers.queryOptions({
+      search: search || undefined,
+      page: 1,
+      limit: 20,
+    })
   );
 
   const users = useMemo(() => data?.users || [], [data?.users]);
@@ -37,14 +45,23 @@ export function ImpersonationUserPicker({ open, onOpenChange, onPick }: Props) {
         <CardContent className="space-y-3">
           <div className="flex items-center gap-2">
             <Search className="h-4 w-4 text-neutral-500" />
-            <Input className="border-neutral-800 bg-neutral-900" placeholder="Search users..." value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input
+              className="border-neutral-800 bg-neutral-900"
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search users..."
+              value={search}
+            />
           </div>
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             {isLoading ? (
               <div className="text-neutral-500 text-sm">Loading...</div>
             ) : users.length ? (
               users.map((u: any) => (
-                <button key={u.id} onClick={() => onPick(u.id)} className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900/40 p-3 text-left transition hover:bg-neutral-900/60">
+                <button
+                  className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900/40 p-3 text-left transition hover:bg-neutral-900/60"
+                  key={u.id}
+                  onClick={() => onPick(u.id)}
+                >
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-neutral-500" />
                     <div>
@@ -59,7 +76,13 @@ export function ImpersonationUserPicker({ open, onOpenChange, onPick }: Props) {
             )}
           </div>
           <div className="flex justify-end">
-            <Button size="sm" variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+            <Button
+              onClick={() => onOpenChange(false)}
+              size="sm"
+              variant="outline"
+            >
+              Close
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -68,7 +91,7 @@ export function ImpersonationUserPicker({ open, onOpenChange, onPick }: Props) {
 
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
+      <Drawer onOpenChange={onOpenChange} open={open}>
         <DrawerContent>
           <DrawerHeader>
             <DrawerTitle>Impersonate user</DrawerTitle>
@@ -80,12 +103,10 @@ export function ImpersonationUserPicker({ open, onOpenChange, onPick }: Props) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showOverlay className="p-0">
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent className="p-0" showOverlay>
         {content}
       </DialogContent>
     </Dialog>
   );
 }
-
-

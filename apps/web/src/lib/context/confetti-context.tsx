@@ -1,19 +1,18 @@
 'use client';
 
-import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
 import Confetti from 'react-confetti';
 import { useWindowSize } from '@/hooks/use-window-size';
-
-interface ConfettiContextType {
-  celebrate: () => void;
-}
+import type {
+  ConfettiContextType,
+  ConfettiProviderProps,
+} from '@/types/confetti';
 
 const ConfettiContext = createContext<ConfettiContextType | undefined>(
   undefined
 );
 
-export function ConfettiProvider({ children }: { children: ReactNode }) {
+export function ConfettiProvider({ children }: ConfettiProviderProps) {
   const [shouldCelebrate, setShouldCelebrate] = useState(false);
   const { width, height } = useWindowSize();
 
