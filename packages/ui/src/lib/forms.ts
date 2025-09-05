@@ -18,7 +18,7 @@ export const createBountySchema = z.object({
     .max(10_000_000_000, 'Amount cannot be greater than 100,000'),
   currency: z.string().min(1, 'Currency cannot be empty'),
   difficulty: z.enum(['beginner', 'intermediate', 'advanced', 'expert'], {
-    errorMap: () => ({ message: 'Difficulty cannot be empty' }),
+    message: 'Difficulty cannot be empty',
   }),
   deadline: z.string().optional(),
   tags: z.array(z.string()).optional(),

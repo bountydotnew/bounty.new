@@ -94,7 +94,7 @@ export function BillingSettings() {
                               <div className="flex items-start justify-between">
                                 <div>
                                   <p className="font-medium">
-                                    {subscription.productId || 'Pro Plan'}
+                                    {subscription.product?.name || 'Pro Plan'}
                                   </p>
                                   <p className="text-muted-foreground text-sm">
                                     Active subscription

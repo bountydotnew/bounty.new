@@ -28,6 +28,12 @@ import { Spinner } from '@bounty/ui/components/spinner';
 import { UserIcon } from '@bounty/ui/components/user';
 import { LINKS } from '@/constants';
 import { useBilling } from '@bounty/ui/hooks/use-billing';
+import type {
+  AccountDropdownProps,
+  SessionUser,
+  User,
+  UserDisplayData,
+} from '@/types/billing-components';
 import { trpc } from '@/utils/trpc';
 
 // Constants for better maintainability

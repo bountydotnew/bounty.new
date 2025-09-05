@@ -14,7 +14,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@bounty/ui/components/chart";
-
+import { ChartConfig } from '../types/charts';
 type DottedLineChartProps = {
   title?: string;
   description?: string;
@@ -36,7 +36,7 @@ export function DottedLineChart({
 }: DottedLineChartProps) {
   const config = {
     [yKey]: { label: title || yKey, color: 'var(--chart-2)' },
-  } as any;
+  } as ChartConfig;
   return (
     <Card>
       {(title || description) && (

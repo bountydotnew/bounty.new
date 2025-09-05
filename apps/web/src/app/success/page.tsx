@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/
 import { Separator } from '@bounty/ui/components/separator';
 import { Spinner } from '@bounty/ui/components/spinner';
 import { useBilling } from '@bounty/ui/hooks/use-billing';
-import { useConfetti } from '@bounty/ui';
+import { useConfetti } from '@/context/confetti-context';
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -39,35 +39,55 @@ function SuccessContent() {
     return null;
   }
 
-  interface Subscription {
-    productId: string;
-  }
-
   const getPlanName = () => {
-    const subscription = customer?.activeSubscriptions?.find(
-      (sub: Subscription) =>
-        ['pro-monthly', 'pro-annual'].includes(sub.productId)
+    const subscription = customer?.activeSubscriptions?.find((sub) =>
+      ['pro-monthly', 'pro-annual'].some(
+        (plan) =>
+          sub.product?.slug?.includes(plan) ||
+          sub.product?.id?.includes(plan) ||
+          sub.product?.name?.includes(plan)
+      )
     );
 
-    if (subscription?.productId === 'pro-annual') {
+    if (
+      subscription?.product?.slug?.includes('pro-annual') ||
+      subscription?.product?.id?.includes('pro-annual') ||
+      subscription?.product?.name?.includes('pro-annual')
+    ) {
       return 'Pro Annual';
     }
-    if (subscription?.productId === 'pro-monthly') {
+    if (
+      subscription?.product?.slug?.includes('pro-monthly') ||
+      subscription?.product?.id?.includes('pro-monthly') ||
+      subscription?.product?.name?.includes('pro-monthly')
+    ) {
       return 'Pro Monthly';
     }
     return 'Pro Plan';
   };
 
   const getPlanPrice = () => {
-    const subscription = customer?.activeSubscriptions?.find(
-      (sub: Subscription) =>
-        ['pro-monthly', 'pro-annual'].includes(sub.productId)
+    const subscription = customer?.activeSubscriptions?.find((sub) =>
+      ['pro-monthly', 'pro-annual'].some(
+        (plan) =>
+          sub.product?.slug?.includes(plan) ||
+          sub.product?.id?.includes(plan) ||
+          sub.product?.name?.includes(plan)
+      )
     );
 
-    if (subscription?.productId === 'pro-annual') {
+    if (
+      subscription?.product?.slug?.includes('pro-annual') ||
+      subscription?.product?.id?.includes('pro-annual') ||
+      subscription?.product?.name?.includes('pro-annual')
+    ) {
       return '$15/month';
     }
-    if (subscription?.productId === 'pro-monthly') {
+    if (
+      subscription?.product?.slug?.includes('pro-monthly') ||
+      subscription?.product?.id?.includes('pro-monthly') ||
+      subscription?.product?.name?.includes('pro-monthly')
+    ) {
       return '$20/month';
     }
     return 'Pro Pricing';

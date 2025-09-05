@@ -1,4 +1,4 @@
-import type { thumbmarkResponse } from '@/lib/fingerprint-validation';
+import type { thumbmarkResponse } from '@bounty/ui/lib/fingerprint-validation';
 
 export interface RateLimitInfo {
   remaining: number;

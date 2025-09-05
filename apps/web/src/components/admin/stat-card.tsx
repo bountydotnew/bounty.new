@@ -1,14 +1,9 @@
 import { ArrowRight } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import Link from '@/components/ui/link';
+import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
+import Link from '@bounty/ui/components/link';
+import { StatCardProps } from '@/types/admin';
 
-interface StatCardProps {
-  title: string;
-  value: string | number;
-  hint?: string;
-  icon?: React.ReactNode;
-  href?: string;
-}
+
 
 export function StatCard({ title, value, hint, icon, href }: StatCardProps) {
   return (

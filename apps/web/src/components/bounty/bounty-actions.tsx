@@ -16,6 +16,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
+import type {
+  ActionItem,
+  ActionsDropdownProps,
+  BountyActionsProps,
+  UpvoteButtonProps,
+} from '@/types/bounty-actions';
 import { trpc } from '@/utils/trpc';
 
 export function UpvoteButton({

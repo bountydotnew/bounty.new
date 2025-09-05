@@ -15,6 +15,7 @@ import {
   ChartTooltipContent,
 } from "@bounty/ui/components/chart";
 import { Badge } from "@bounty/ui/components/badge";
+import type { ChartConfig } from '../types/charts';
 
 export const description = 'A pie chart with a label list';
 
@@ -90,7 +91,7 @@ export function RoundedPieChart() {
                 fill="currentColor"
                 fontSize={12}
                 fontWeight={500}
-                formatter={(value: number) => value.toString()}
+                formatter={(value: React.ReactNode) => value?.toString()}
                 stroke="none"
               />
             </Pie>

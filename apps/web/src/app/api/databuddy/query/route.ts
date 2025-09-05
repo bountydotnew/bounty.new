@@ -2,7 +2,6 @@ import { headers } from 'next/headers';
 import type {
   DataBuddyQueryBody,
   DataBuddyUpstreamBody,
-  RequestHeaders,
 } from '@/types/api';
 
 export async function POST(request: Request) {
@@ -53,7 +52,7 @@ export async function POST(request: Request) {
     headers: {
       'content-type': 'application/json',
       ...(apiKey ? { 'x-api-key': apiKey } : cookie ? { cookie } : {}),
-    } as RequestHeaders,
+    },
     body: JSON.stringify(upstreamBody),
     cache: 'no-store',
   });

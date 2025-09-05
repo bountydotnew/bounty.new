@@ -14,6 +14,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@bounty/ui/components/chart";
+import { ChartConfig } from '../types/charts';
 
 type PingingDotChartProps = {
   title?: string;

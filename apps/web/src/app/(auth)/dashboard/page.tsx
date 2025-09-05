@@ -111,10 +111,6 @@ export default function Dashboard() {
           <div className="container mx-auto rounded-lg px-4 py-4">
             <div className="mb-4 flex items-center justify-end">
               <div className="flex gap-2">
-                <Button onClick={() => track('button_click', { button_text: 'Import from GitHub' })} variant="outline">
-                  <GitHub className="h-4 w-4 fill-white" />
-                  Import from GitHub
-                </Button>
                 <TrackedButton
                   disabled={!session?.user}
                   onClick={() => setImportOpen(true)}

@@ -10,11 +10,12 @@ import {
   CardTitle,
 } from "@bounty/ui/components/card";
 import {
-  ChartContainer, 
+  ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@bounty/ui/components/chart";
 import { Badge } from "@bounty/ui/components/badge";
+import type { ChartConfig } from "../types/charts";
 
 const chartData = [
   { month: 'January', desktop: 186 },

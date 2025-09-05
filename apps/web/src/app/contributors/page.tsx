@@ -7,7 +7,7 @@ import { DataBuddyIcon, MarbleIcon } from '@/components/icons';
 import { Header } from '@/components/sections/home/header';
 import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
 import Link from '@bounty/ui/components/link';
-import { LINKS } from '@bounty/ui';
+import { LINKS } from '@/constants';
 import { trpc } from '@/utils/trpc';
 
 interface Contributor {

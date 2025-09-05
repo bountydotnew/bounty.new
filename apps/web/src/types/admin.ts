@@ -30,6 +30,9 @@ export interface Kpi {
 export interface StatCardProps {
   title: string;
   value: string | number;
+  hint?: string;
+  icon?: React.ReactNode;
+  href?: string;
   description?: string;
   trend?: {
     value: number;

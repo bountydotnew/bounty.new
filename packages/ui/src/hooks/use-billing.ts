@@ -307,7 +307,7 @@ export const useBilling = (): BillingHookResult => {
 
   return {
     isLoading,
-    customer,
+    customer: customer as CustomerState | null | undefined,
     refetch,
     openBillingPortal,
     trackUsage,
