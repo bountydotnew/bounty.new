@@ -7,6 +7,7 @@
     "@bounty/auth": "workspace:*",
     "@bounty/db": "workspace:*",
     "@bounty/dev-logger": "workspace:*",
+    "@bounty/track": "workspace:*",
     "zod": "^3.23.8",
     "@trpc/server": "^11.4.2",
     "@unkey/ratelimit": "^2.1.0",

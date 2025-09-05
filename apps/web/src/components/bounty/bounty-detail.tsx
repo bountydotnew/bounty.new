@@ -1,29 +1,22 @@
-import { Share2, Bookmark, Check, Target, Edit, ArrowUpCircle, MessageCircle, Heart, MoreHorizontal, Trash2, Pencil } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import SubmissionCard from "@/components/bounty/submission-card";
-import BountyActions from "@/components/bounty/bounty-actions";
-import BountyComments from "@/components/bounty/bounty-comments";
- 
-import { MarkdownContent } from "@/components/bounty/markdown-content";
-import CollapsibleText from "@/components/bounty/collapsible-text";
-import { Badge } from "../ui/badge";
-import { SmartNavigation } from "@/components/ui/smart-breadcrumb";
-import { EditBountyModal } from "@/components/bounty/edit-bounty-modal";
-import { formatBountyAmount, useBountyModals } from "@/lib/bounty-utils";
-import { formatLargeNumber } from "@/lib/utils";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { trpc } from "@/utils/trpc";
-import { useMemo, useState } from "react";
-import { authClient } from "@bounty/auth/client";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import CommentEditDialog from "@/components/bounty/comment-edit-dialog";
-import { SubmissionsMobileSidebar } from "@/components/bounty/submissions-mobile-sidebar";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Check } from 'lucide-react';
+import { useState } from 'react';
+import BountyActions from '@/components/bounty/bounty-actions';
+import BountyComments from '@/components/bounty/bounty-comments';
+import CollapsibleText from '@/components/bounty/collapsible-text';
+import CommentEditDialog from '@/components/bounty/comment-edit-dialog';
+import { EditBountyModal } from '@/components/bounty/edit-bounty-modal';
+
+import { MarkdownContent } from '@/components/bounty/markdown-content';
+import SubmissionCard from '@/components/bounty/submission-card';
+import { SubmissionsMobileSidebar } from '@/components/bounty/submissions-mobile-sidebar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { SmartNavigation } from '@/components/ui/smart-breadcrumb';
+import { useBountyModals } from '@/lib/bounty-utils';
+import { formatLargeNumber } from '@/lib/utils';
+import type { BountyCommentCacheItem } from '@/types/comments';
+import { trpc } from '@/utils/trpc';
 
 interface BountyDetailPageProps {
   id: string;
@@ -43,16 +36,17 @@ export default function BountyDetailPage({
   title,
   description,
   amount,
-  tags,
   user,
   rank,
   avatarSrc,
   canEditBounty,
 }: BountyDetailPageProps) {
-  const { editModalOpen, openEditModal, closeEditModal, editingBountyId } = useBountyModals();
+  const { editModalOpen, openEditModal, closeEditModal, editingBountyId } =
+    useBountyModals();
   const queryClient = useQueryClient();
-  const { data: session } = authClient.useSession();
-  const votes = useQuery(trpc.bounties.getBountyVotes.queryOptions({ bountyId: id }));
+  const votes = useQuery(
+    trpc.bounties.getBountyVotes.queryOptions({ bountyId: id })
+  );
   const voteMutation = useMutation({
     ...trpc.bounties.voteBounty.mutationOptions(),
   });
@@ -61,135 +55,171 @@ export default function BountyDetailPage({
     const key = trpc.bounties.getBountyVotes.queryKey({ bountyId: id });
     const previous = votes.data;
     const next = previous
-      ? { count: previous.isVoted ? Math.max(0, Number(previous.count) - 1) : Number(previous.count) + 1, isVoted: !previous.isVoted }
+      ? {
+          count: previous.isVoted
+            ? Math.max(0, Number(previous.count) - 1)
+            : Number(previous.count) + 1,
+          isVoted: !previous.isVoted,
+        }
       : { count: 1, isVoted: true };
     queryClient.setQueryData(key, next);
     voteMutation.mutate(
       { bountyId: id },
       {
         onError: () => {
-          if (previous) queryClient.setQueryData(key, previous);
+          if (previous) {
+            queryClient.setQueryData(key, previous);
+          }
         },
         onSettled: () => {
           queryClient.invalidateQueries({ queryKey: key });
         },
-      },
+      }
     );
   };
-  const commentsQuery = useQuery(trpc.bounties.getBountyComments.queryOptions({ bountyId: id }));
-  const [commentText, setCommentText] = useState("");
-  const maxChars = 245;
-  const remaining = maxChars - commentText.length;
-  const addComment = useMutation({
-    ...trpc.bounties.addBountyComment.mutationOptions(),
+  const commentsQuery = useQuery(
+    trpc.bounties.getBountyComments.queryOptions({ bountyId: id })
+  );
+  // const [commentText] = useState('');
+  // const maxChars = 245;
+  // const remaining = maxChars - commentText.length;
+  // const addComment = useMutation({
+  //   ...trpc.bounties.addBountyComment.mutationOptions(),
+  // });
+  const [editState, setEditState] = useState<{
+    id: string;
+    initial: string;
+  } | null>(null);
+
+  // const postComment = (content: string, parentId?: string) => {
+  //   const key = trpc.bounties.getBountyComments.queryKey({ bountyId: id });
+  //   const previous: BountyCommentCacheItem[] =
+  //     (commentsQuery.data as BountyCommentCacheItem[]) || [];
+  //   const optimistic: BountyCommentCacheItem[] = [
+  //     {
+  //       id: `temp-${Date.now()}`,
+  //       content,
+  //       parentId: parentId ?? null,
+  //       createdAt: new Date().toISOString(),
+  //       user: session?.user
+  //         ? {
+  //             id: session.user.id,
+  //             name: session.user.name || 'You',
+  //             image: session.user.image || null,
+  //           }
+  //         : { id: 'me', name: 'You', image: null },
+  //       likeCount: 0,
+  //       isLiked: false,
+  //       editCount: 0,
+  //     },
+  //     ...previous,
+  //   ];
+  //   queryClient.setQueryData(key, optimistic);
+  //   addComment.mutate(
+  //     { bountyId: id, content, parentId },
+  //     {
+  //       onError: () => {
+  //         queryClient.setQueryData(key, previous);
+  //       },
+  //       onSettled: () => {
+  //         queryClient.invalidateQueries({ queryKey: key });
+  //       },
+  //     }
+  //   );
+  // };
+  // const toggleLike = useMutation({
+  //   ...trpc.bounties.toggleCommentLike.mutationOptions(),
+  // });
+
+  // const likeComment = (commentId: string) => {
+  //   const key = trpc.bounties.getBountyComments.queryKey({ bountyId: id });
+  //   const previous: BountyCommentCacheItem[] =
+  //     (commentsQuery.data as BountyCommentCacheItem[]) || [];
+  //   const next = previous.map((c) =>
+  //     c.id === commentId
+  //       ? {
+  //           ...c,
+  //           likeCount: Number(c.likeCount || 0) + (c.isLiked ? -1 : 1),
+  //           isLiked: !c.isLiked,
+  //         }
+  //       : c
+  //   );
+  //   queryClient.setQueryData(key, next);
+  //   toggleLike.mutate(
+  //     { commentId },
+  //     {
+  //       onError: () => {
+  //         queryClient.setQueryData(key, previous);
+  //       },
+  //       onSettled: () => {
+  //         queryClient.invalidateQueries({ queryKey: key });
+  //       },
+  //     }
+  //   );
+  // };
+
+  const updateComment = useMutation({
+    ...trpc.bounties.updateBountyComment.mutationOptions(),
   });
-  const [editState, setEditState] = useState<{ id: string; initial: string } | null>(null);
-
-  const postComment = (content: string, parentId?: string) => {
-    const key = trpc.bounties.getBountyComments.queryKey({ bountyId: id });
-    const previous: import("@/types/comments").BountyCommentCacheItem[] = (commentsQuery.data as any) || [];
-    const optimistic: import("@/types/comments").BountyCommentCacheItem[] = [
-      {
-        id: `temp-${Date.now()}`,
-        content,
-        parentId: parentId ?? null,
-        createdAt: new Date().toISOString(),
-        user: session?.user ? { id: session.user.id, name: session.user.name || "You", image: session.user.image || null } : { id: "me", name: "You", image: null },
-        likeCount: 0,
-        isLiked: false,
-        editCount: 0,
-      },
-      ...previous,
-    ];
-    queryClient.setQueryData(key, optimistic);
-    addComment.mutate(
-      { bountyId: id, content, parentId },
-      {
-        onError: () => {
-          queryClient.setQueryData(key, previous);
-        },
-        onSettled: () => {
-          queryClient.invalidateQueries({ queryKey: key });
-        },
-      },
-    );
-  };
-  const toggleLike = useMutation({
-    ...trpc.bounties.toggleCommentLike.mutationOptions(),
-  });
-
-  const likeComment = (commentId: string) => {
-    const key = trpc.bounties.getBountyComments.queryKey({ bountyId: id });
-    const previous: import("@/types/comments").BountyCommentCacheItem[] = (commentsQuery.data as any) || [];
-    const next = previous.map((c) =>
-      c.id === commentId ? { ...c, likeCount: Number(c.likeCount || 0) + (c.isLiked ? -1 : 1), isLiked: !c.isLiked } : c,
-    );
-    queryClient.setQueryData(key, next);
-    toggleLike.mutate(
-      { commentId },
-      {
-        onError: () => {
-          queryClient.setQueryData(key, previous);
-        },
-        onSettled: () => {
-          queryClient.invalidateQueries({ queryKey: key });
-        },
-      },
-    );
-  };
-
-  const updateComment = useMutation({ ...trpc.bounties.updateBountyComment.mutationOptions() });
-  const deleteComment = useMutation({ ...trpc.bounties.deleteBountyComment.mutationOptions() });
+  // const deleteComment = useMutation({
+  //   ...trpc.bounties.deleteBountyComment.mutationOptions(),
+  // });
 
   const onEditComment = (commentId: string, newContent: string) => {
     const key = trpc.bounties.getBountyComments.queryKey({ bountyId: id });
-    const previous: import("@/types/comments").BountyCommentCacheItem[] = (commentsQuery.data as any) || [];
-    const next = previous.map((c) => (c.id === commentId ? { ...c, content: newContent, editCount: Number(c.editCount || 0) + 1 } : c));
+    const previous: BountyCommentCacheItem[] =
+      (commentsQuery.data as BountyCommentCacheItem[]) || [];
+    const next = previous.map((c) =>
+      c.id === commentId
+        ? { ...c, content: newContent, editCount: Number(c.editCount || 0) + 1 }
+        : c
+    );
     queryClient.setQueryData(key, next);
     updateComment.mutate(
       { commentId, content: newContent },
       {
         onError: () => queryClient.setQueryData(key, previous),
         onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
-      },
+      }
     );
   };
 
-  const onDeleteComment = (commentId: string) => {
-    const key = trpc.bounties.getBountyComments.queryKey({ bountyId: id });
-    const previous: import("@/types/comments").BountyCommentCacheItem[] = (commentsQuery.data as any) || [];
-    const next = previous.filter((c) => c.id !== commentId);
-    queryClient.setQueryData(key, next);
-    deleteComment.mutate(
-      { commentId },
-      {
-        onError: () => queryClient.setQueryData(key, previous),
-        onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
-      },
-    );
-  };
+  // const onDeleteComment = (commentId: string) => {
+  //   const key = trpc.bounties.getBountyComments.queryKey({ bountyId: id });
+  //   const previous: BountyCommentCacheItem[] =
+  //     (commentsQuery.data as BountyCommentCacheItem[]) || [];
+  //   const next = previous.filter((c) => c.id !== commentId);
+  //   queryClient.setQueryData(key, next);
+  //   deleteComment.mutate(
+  //     { commentId },
+  //     {
+  //       onError: () => queryClient.setQueryData(key, previous),
+  //       onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
+  //     }
+  //   );
+  // };
 
   return (
     <div className="min-h-screen bg-[#111110] text-white">
-      <div className="max-w-[90%] mx-auto">
+      <div className="mx-auto max-w-[90%]">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4 w-full">
-          <div className="flex items-center justify-between gap-2 w-full">
+        <div className="mb-4 flex w-full items-center justify-between">
+          <div className="flex w-full items-center justify-between gap-2">
             <SmartNavigation />
             <SubmissionsMobileSidebar inline />
           </div>
         </div>
 
-        <div className="flex flex-col xl:flex-row gap-8">
+        <div className="flex flex-col gap-8 xl:flex-row">
           {/* Main Content */}
-          <div className="flex-1 xl:flex-[2] p-8">
+          <div className="flex-1 p-8 xl:flex-[2]">
             {/* Header */}
             <div className="mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <h1 className="text-4xl font-bold leading-[120%] tracking-tight text-white">
+              <div className="mb-4 flex items-center justify-between">
+                <h1 className="font-bold text-4xl text-white leading-[120%] tracking-tight">
                   {title}
                 </h1>
-                <span className="text-2xl font-semibold text-green-400">
+                <span className="font-semibold text-2xl text-green-400">
                   ${formatLargeNumber(amount)}
                 </span>
               </div>
@@ -229,73 +259,78 @@ export default function BountyDetailPage({
               </div> */}
 
               {/* User Profile with Actions */}
-              <div className="flex justify-between w-full flex-col md:flex-row items-start md:items-center gap-4">
+              <div className="flex w-full flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                 <div className="flex items-center gap-3">
-                  <Avatar className="w-10 h-10">
+                  <Avatar className="h-10 w-10">
                     <AvatarImage src={avatarSrc} />
                     <AvatarFallback>{user.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-white font-medium text-sm">{user}</span>
-                      <div className="w-4 h-4 bg-blue-500 rounded transform rotate-45 flex items-center justify-center">
-                        <Check className="w-2.5 h-2.5 text-white transform -rotate-45" />
+                      <span className="font-medium text-sm text-white">
+                        {user}
+                      </span>
+                      <div className="flex h-4 w-4 rotate-45 transform items-center justify-center rounded bg-blue-500">
+                        <Check className="-rotate-45 h-2.5 w-2.5 transform text-white" />
                       </div>
                     </div>
                     <span className="text-gray-400 text-xs">{rank}</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 w-full justify-end">
+                <div className="flex w-full items-center justify-end gap-2">
                   <BountyActions
                     bountyId={id}
                     canEdit={canEditBounty}
                     isVoted={Boolean(votes.data?.isVoted)}
-                    voteCount={votes.data?.count ?? 0}
-                    onUpvote={handleUpvote}
                     onEdit={() => openEditModal(id)}
                     onShare={() => {
                       navigator.share({
-                        title: title,
+                        title,
                         text: description,
                         url: `${window.location.origin}/bounty/${id}`,
                       });
                     }}
+                    onUpvote={handleUpvote}
+                    voteCount={votes.data?.count ?? 0}
                   />
                 </div>
               </div>
               <CommentEditDialog
-                open={Boolean(editState)}
+                initialValue={editState?.initial || ''}
+                isSaving={updateComment.isPending}
                 onOpenChange={(o) => {
-                  if (!o) setEditState(null);
+                  if (!o) {
+                    setEditState(null);
+                  }
                 }}
-                initialValue={editState?.initial || ""}
                 onSave={(val) => {
-                  if (!editState) return;
+                  if (!editState) {
+                    return;
+                  }
                   onEditComment(editState.id, val);
                   setEditState(null);
                 }}
-                isSaving={updateComment.isPending}
+                open={Boolean(editState)}
               />
             </div>
 
-            {(description) && (
-              <div className="mb-8 p-6 rounded-lg bg-[#1D1D1D] border border-[#383838]/20">
-                <h2 className="text-xl font-medium text-white mb-4">About</h2>
+            {description && (
+              <div className="mb-8 rounded-lg border border-[#383838]/20 bg-[#1D1D1D] p-6">
+                <h2 className="mb-4 font-medium text-white text-xl">About</h2>
                 <CollapsibleText>
                   <MarkdownContent content={description} />
                 </CollapsibleText>
               </div>
             )}
             <BountyComments bountyId={id} pageSize={5} />
-
           </div>
 
           <div className="hidden xl:block xl:w-[480px] xl:flex-shrink-0">
             <div className="sticky top-0 xl:h-[calc(100vh-8rem)] xl:overflow-y-auto xl:pr-2">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-medium text-white">Submissions</h3>
-                <div className="hidden xl:flex items-center gap-2">
+              <div className="mb-6 flex items-center justify-between">
+                <h3 className="font-medium text-lg text-white">Submissions</h3>
+                <div className="hidden items-center gap-2 xl:flex">
                   <Button className="items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-primary-foreground transition-colors">
                     Add submission
                   </Button>
@@ -304,36 +339,36 @@ export default function BountyDetailPage({
 
               <div className="space-y-4">
                 <SubmissionCard
-                  user="Fishy"
-                  rank="Rank 5"
+                  avatarSrc="/placeholder.svg?height=40&width=40"
+                  className="w-full"
                   description="Here is my submission for the shadcn styling, in the ss you can se how the user can select the theme"
-                  avatarSrc="/placeholder.svg?height=40&width=40"
                   hasBadge={true}
                   previewSrc="/placeholder.svg?height=80&width=80"
-                  className="w-full"
+                  rank="Rank 5"
+                  user="Fishy"
                 />
 
                 <SubmissionCard
-                  user="Sergio"
-                  rank="Rank 2"
+                  avatarSrc="/placeholder.svg?height=40&width=40"
+                  className="w-full"
                   description="I one shotted this with v0"
-                  avatarSrc="/placeholder.svg?height=40&width=40"
                   hasBadge={true}
                   previewSrc="/placeholder.svg?height=80&width=80"
-                  className="w-full"
+                  rank="Rank 2"
+                  user="Sergio"
                 />
 
                 <SubmissionCard
-                  user="Ahmet"
-                  rank="New user"
-                  description="There is my try"
                   avatarSrc="/placeholder.svg?height=40&width=40"
+                  className="w-full"
+                  description="There is my try"
                   hasBadge={false}
                   previewSrc="/placeholder.svg?height=80&width=80"
-                  className="w-full"
+                  rank="New user"
+                  user="Ahmet"
                 />
 
-                <div className="text-center text-gray-400 text-sm mt-6">
+                <div className="mt-6 text-center text-gray-400 text-sm">
                   That&apos;s all for now...
                 </div>
               </div>
@@ -343,9 +378,9 @@ export default function BountyDetailPage({
       </div>
 
       <EditBountyModal
-        open={editModalOpen}
-        onOpenChange={closeEditModal}
         bountyId={editingBountyId}
+        onOpenChange={closeEditModal}
+        open={editModalOpen}
       />
     </div>
   );

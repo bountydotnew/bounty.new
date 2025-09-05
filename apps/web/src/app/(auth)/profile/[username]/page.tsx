@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { authClient } from "@bounty/auth/client";
+import { authClient } from '@bounty/auth/client';
+import { Loader2, Settings } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, Settings } from "lucide-react";
-import { useBilling } from "@/hooks/use-billing";
+} from '@/components/ui/card';
+import { useBilling } from '@/hooks/use-billing';
 
 export default function ProfilePage() {
   const params = useParams();
@@ -23,7 +23,7 @@ export default function ProfilePage() {
   const [isClientMounted, setIsClientMounted] = useState(false);
 
   const { data: session, isPending: loading } = authClient.useSession();
-  const isOwnProfile = username === "me";
+  const isOwnProfile = username === 'me';
   const { isPro } = useBilling();
   // Prevent hydration mismatch by ensuring client-side rendering
   useEffect(() => {
@@ -82,23 +82,23 @@ export default function ProfilePage() {
               <div className="flex items-center space-x-4">
                 <Avatar className="h-16 w-16">
                   <AvatarImage
-                    src={session?.user?.image || ""}
                     alt={session?.user?.name || session?.user?.email}
+                    src={session?.user?.image || ''}
                   />
                   <AvatarFallback>
                     {session?.user?.name?.[0] ||
                       session?.user?.email?.[0] ||
-                      "U"}
+                      'U'}
                   </AvatarFallback>
                 </Avatar>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-semibold">
-                      {session?.user?.name || "No name set"}
+                    <h3 className="font-semibold text-lg">
+                      {session?.user?.name || 'No name set'}
                     </h3>
                     {isPro && <Badge variant="default">Pro</Badge>}
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     {session?.user?.email}
                   </p>
                   <Badge variant="secondary">
@@ -107,12 +107,12 @@ export default function ProfilePage() {
                 </div>
               </div>
               <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push("/settings")}
                 className="flex items-center gap-2"
+                onClick={() => router.push('/settings')}
+                size="sm"
+                variant="outline"
               >
-                <Settings className="w-4 h-4" />
+                <Settings className="h-4 w-4" />
                 Settings
               </Button>
             </div>
@@ -131,16 +131,16 @@ export default function ProfilePage() {
           <CardDescription>Public user profile</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8">
+          <div className="py-8 text-center">
             <Avatar className="mx-auto mb-4 h-16 w-16">
               <AvatarImage
-                src={`https://github.com/${username}.png`}
                 alt={username}
+                src={`https://github.com/${username}.png`}
               />
               <AvatarFallback>{username[0]?.toUpperCase()}</AvatarFallback>
             </Avatar>
-            <h3 className="text-lg font-semibold mb-2">@{username}</h3>
-            <p className="text-muted-foreground mb-4">
+            <h3 className="mb-2 font-semibold text-lg">@{username}</h3>
+            <p className="mb-4 text-muted-foreground">
               Public profiles are not yet fully implemented.
             </p>
             <Badge variant="secondary">Coming Soon</Badge>

@@ -1,27 +1,27 @@
-import { TRPCError } from "@trpc/server";
-import { count, eq } from "drizzle-orm";
-import { z } from "zod";
-import { grim } from "../lib/use-dev-log";
+import { track } from '@bounty/track';
+import { TRPCError } from '@trpc/server';
+import { count, eq } from 'drizzle-orm';
+import { z } from 'zod';
+import { grim } from '../lib/use-dev-log';
 
 const { error, info, warn } = grim();
 
-import { db, waitlist } from "@bounty/db";
-import { publicProcedure, router, adminProcedure } from "../trpc";
-import { getRateLimiter } from "../lib/ratelimiter";
-import { getClientIP } from "../lib/utils";
+import { db, waitlist } from '@bounty/db';
+import { getRateLimiter } from '../lib/ratelimiter';
+import { adminProcedure, publicProcedure, router } from '../trpc';
 
 export const earlyAccessRouter = router({
   getWaitlistCount: publicProcedure.query(async () => {
     try {
-      info("[getWaitlistCount] called");
+      info('[getWaitlistCount] called');
       const waitlistCount = await db.select({ count: count() }).from(waitlist);
-      info("[getWaitlistCount] db result:", waitlistCount);
+      info('[getWaitlistCount] db result:', waitlistCount);
 
-      if (!waitlistCount[0] || typeof waitlistCount[0].count !== "number") {
-        error("[getWaitlistCount] Invalid result:", waitlistCount);
+      if (!waitlistCount[0] || typeof waitlistCount[0].count !== 'number') {
+        error('[getWaitlistCount] Invalid result:', waitlistCount);
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Invalid database response",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Invalid database response',
         });
       }
 
@@ -29,7 +29,7 @@ export const earlyAccessRouter = router({
         count: waitlistCount[0].count,
       };
     } catch (err) {
-      error("[getWaitlistCount] Error:", err);
+      error('[getWaitlistCount] Error:', err);
 
       // Provide more specific error messages
       if (err instanceof TRPCError) {
@@ -39,29 +39,29 @@ export const earlyAccessRouter = router({
       // Database connection errors
       if (err instanceof Error) {
         if (
-          err.message.includes("connect") ||
-          err.message.includes("ECONNREFUSED") ||
-          err.message.includes("timeout")
+          err.message.includes('connect') ||
+          err.message.includes('ECONNREFUSED') ||
+          err.message.includes('timeout')
         ) {
           throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Database connection failed - please try again later",
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Database connection failed - please try again later',
           });
         }
 
         if (
-          err.message.includes("does not exist") ||
-          err.message.includes("relation")
+          err.message.includes('does not exist') ||
+          err.message.includes('relation')
         ) {
           throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Database table not found - migrations may not be applied",
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Database table not found - migrations may not be applied',
           });
         }
       }
 
       // Return a default count instead of throwing an error
-      warn("[getWaitlistCount] Returning default count due to error:", err);
+      warn('[getWaitlistCount] Returning default count due to error:', err);
       return {
         count: 0,
       };
@@ -72,11 +72,11 @@ export const earlyAccessRouter = router({
     .input(
       z.object({
         email: z.string().email(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const limiter = getRateLimiter("waitlist");
+        const limiter = getRateLimiter('waitlist');
         if (limiter) {
           const safeIp =
             ctx.clientIP ||
@@ -85,12 +85,12 @@ export const earlyAccessRouter = router({
 
           if (!success) {
             throw new TRPCError({
-              code: "TOO_MANY_REQUESTS",
-              message: "Too many requests. Please try again later.",
+              code: 'TOO_MANY_REQUESTS',
+              message: 'Too many requests. Please try again later.',
             });
           }
         }
-        info("[addToWaitlist] Processing email:", input.email);
+        info('[addToWaitlist] Processing email:', input.email);
 
         const userAlreadyInWaitlist = await db
           .select()
@@ -106,59 +106,63 @@ export const earlyAccessRouter = router({
           createdAt: new Date(),
         });
 
+        try {
+          await track('waitlist_joined', { source: 'api' });
+        } catch {}
+
         info(
-          "[addToWaitlist] Successfully added email to waitlist:",
-          input.email,
+          '[addToWaitlist] Successfully added email to waitlist:',
+          input.email
         );
         return { message: "You've been added to the waitlist!" };
       } catch (error: unknown) {
-        warn("[addToWaitlist] Error:", error);
+        warn('[addToWaitlist] Error:', error);
 
         if (
           error instanceof Error &&
-          error.message.includes("unique constraint")
+          error.message.includes('unique constraint')
         ) {
           throw new TRPCError({
-            code: "CONFLICT",
-            message: "Email already exists in waitlist",
+            code: 'CONFLICT',
+            message: 'Email already exists in waitlist',
           });
         }
 
         if (
           error instanceof Error &&
-          error.message.includes("violates not-null constraint")
+          error.message.includes('violates not-null constraint')
         ) {
           throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Invalid email format",
+            code: 'BAD_REQUEST',
+            message: 'Invalid email format',
           });
         }
 
         if (
           error instanceof Error &&
-          (error.message.includes("connect") ||
-            error.message.includes("ECONNREFUSED"))
+          (error.message.includes('connect') ||
+            error.message.includes('ECONNREFUSED'))
         ) {
           throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Database connection failed",
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Database connection failed',
           });
         }
 
         if (
           error instanceof Error &&
-          (error.message.includes("does not exist") ||
-            error.message.includes("relation"))
+          (error.message.includes('does not exist') ||
+            error.message.includes('relation'))
         ) {
           throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Database table not found - migrations may not be applied",
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Database table not found - migrations may not be applied',
           });
         }
 
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to join waitlist",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to join waitlist',
         });
       }
     }),
@@ -169,12 +173,12 @@ export const earlyAccessRouter = router({
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(20),
         search: z.string().optional(),
-      }),
+      })
     )
     .query(async ({ input }) => {
       try {
         const { page, limit, search } = input;
-        const offset = (page - 1) * limit;
+        const _offset = (page - 1) * limit;
 
         let entries;
         if (search) {
@@ -212,10 +216,10 @@ export const earlyAccessRouter = router({
           },
         };
       } catch (err) {
-        error("[getAdminWaitlist] Error:", err);
+        error('[getAdminWaitlist] Error:', err);
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch waitlist data",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch waitlist data',
         });
       }
     }),
@@ -225,7 +229,7 @@ export const earlyAccessRouter = router({
       z.object({
         id: z.string(),
         hasAccess: z.boolean(),
-      }),
+      })
     )
     .mutation(async ({ input }) => {
       try {
@@ -234,17 +238,17 @@ export const earlyAccessRouter = router({
         await db.update(waitlist).set({ hasAccess }).where(eq(waitlist.id, id));
 
         info(
-          "[updateWaitlistAccess] Updated access for ID:",
+          '[updateWaitlistAccess] Updated access for ID:',
           id,
-          "hasAccess:",
-          hasAccess,
+          'hasAccess:',
+          hasAccess
         );
         return { success: true };
       } catch (err) {
-        error("[updateWaitlistAccess] Error:", err);
+        error('[updateWaitlistAccess] Error:', err);
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update waitlist access",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to update waitlist access',
         });
       }
     }),

@@ -1,8 +1,8 @@
-import { Metadata } from "next";
-import BountyPage from "./page.client";
-import { db, bounty } from "@bounty/db";
-import { eq } from "drizzle-orm";
-import { baseUrl } from "@/lib/constants";
+import { bounty, db } from '@bounty/db';
+import { eq } from 'drizzle-orm';
+import type { Metadata } from 'next';
+import { baseUrl } from '@/lib/constants';
+import BountyPage from './page.client';
 
 export async function generateMetadata({
   params,
@@ -17,8 +17,8 @@ export async function generateMetadata({
 
   if (!thisBounty) {
     return {
-      title: "Bounty Not Found",
-      description: "The requested bounty could not be found.",
+      title: 'Bounty Not Found',
+      description: 'The requested bounty could not be found.',
     };
   }
 
@@ -40,10 +40,10 @@ export async function generateMetadata({
             },
           ]
         : [],
-      type: "website",
+      type: 'website',
     },
     twitter: {
-      card: "summary_large_image",
+      card: 'summary_large_image',
       title: thisBounty.title,
       description: thisBounty.description,
       images: ogImageUrl ? [ogImageUrl] : [],

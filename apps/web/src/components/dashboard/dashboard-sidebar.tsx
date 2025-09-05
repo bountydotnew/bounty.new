@@ -1,11 +1,14 @@
-import { memo } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { TrendingUp, DollarSign } from "lucide-react";
-import { formatLargeNumber } from "@/lib/utils";
-import type { ActivityItem, RecommendedBounty } from "@/types/dashboard";
-import type { Bounty } from "@/types/dashboard";
+import { DollarSign, TrendingUp } from 'lucide-react';
+import { memo } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { formatLargeNumber } from '@/lib/utils';
+import type {
+  ActivityItem,
+  Bounty,
+  RecommendedBounty,
+} from '@/types/dashboard';
 
 interface DashboardSidebarProps {
   activities?: ActivityItem[];
@@ -26,7 +29,7 @@ export const DashboardSidebar = memo(function DashboardSidebar({
 }: DashboardSidebarProps) {
   return (
     <div className="space-y-6 lg:pr-2">
-      <Card className="bg-[#1D1D1D] border border-[#383838]/20">
+      <Card className="border border-[#383838]/20 bg-[#1D1D1D]">
         <CardHeader>
           <CardTitle className="text-white">Recent Activity</CardTitle>
         </CardHeader>
@@ -34,64 +37,84 @@ export const DashboardSidebar = memo(function DashboardSidebar({
           {isLoadingActivities ? (
             <div className="space-y-3">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="h-4 bg-[#383838] rounded w-3/4 mb-1"></div>
-                  <div className="h-3 bg-[#383838] rounded w-1/2"></div>
+                <div className="animate-pulse" key={i}>
+                  <div className="mb-1 h-4 w-3/4 rounded bg-[#383838]" />
+                  <div className="h-3 w-1/2 rounded bg-[#383838]" />
                 </div>
               ))}
             </div>
           ) : (
             <div className="space-y-3">
               {activities.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white">{activity.title}</p>
-                    <p className="text-xs text-gray-400 truncate" title={activity.description}>
+                <div className="flex items-start gap-3" key={activity.id}>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm text-white">
+                      {activity.title}
+                    </p>
+                    <p
+                      className="truncate text-gray-400 text-xs"
+                      title={activity.description}
+                    >
                       {activity.description}
                     </p>
-                    <p className="text-xs text-gray-400">{activity.timestamp}</p>
+                    <p className="text-gray-400 text-xs">
+                      {activity.timestamp}
+                    </p>
                   </div>
                 </div>
               ))}
               {activities.length === 0 && (
-                <p className="text-sm text-gray-400">No recent activity</p>
+                <p className="text-gray-400 text-sm">No recent activity</p>
               )}
             </div>
           )}
         </CardContent>
       </Card>
 
-      <Card className="bg-[#1D1D1D] border border-[#383838]/20">
+      <Card className="border border-[#383838]/20 bg-[#1D1D1D]">
         <CardHeader>
           <CardTitle className="text-white">Recommended</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {recommendations.map((bounty) => (
-              <div key={bounty.id} className="border border-[#383838]/20 rounded-lg p-3 hover:bg-[#2A2A28] transition-colors cursor-pointer">
-                <h4 className="text-sm font-medium mb-1 text-white">{bounty.title}</h4>
-                <p className="text-xs text-gray-400 mb-2" title={bounty.description}>
+              <div
+                className="cursor-pointer rounded-lg border border-[#383838]/20 p-3 transition-colors hover:bg-[#2A2A28]"
+                key={bounty.id}
+              >
+                <h4 className="mb-1 font-medium text-sm text-white">
+                  {bounty.title}
+                </h4>
+                <p
+                  className="mb-2 text-gray-400 text-xs"
+                  title={bounty.description}
+                >
                   {bounty.description}
                 </p>
                 <div className="flex items-center justify-between">
-                  <Badge variant="outline" className="text-xs border-[#383838] text-gray-400">
+                  <Badge
+                    className="border-[#383838] text-gray-400 text-xs"
+                    variant="outline"
+                  >
                     {bounty.technology}
                   </Badge>
-                  <span className="text-sm font-medium text-green-400">${formatLargeNumber(bounty.amount)}</span>
+                  <span className="font-medium text-green-400 text-sm">
+                    ${formatLargeNumber(bounty.amount)}
+                  </span>
                 </div>
               </div>
             ))}
             {recommendations.length === 0 && (
-              <p className="text-sm text-gray-400">No recommendations yet</p>
+              <p className="text-gray-400 text-sm">No recommendations yet</p>
             )}
           </div>
         </CardContent>
       </Card>
 
-      <Card className="bg-[#1D1D1D] border border-[#383838]/20">
+      <Card className="border border-[#383838]/20 bg-[#1D1D1D]">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white">
-            <TrendingUp className="h-5 w-5 text-white" aria-hidden="true" />
+            <TrendingUp aria-hidden="true" className="h-5 w-5 text-white" />
             My Bounties
           </CardTitle>
         </CardHeader>
@@ -99,9 +122,9 @@ export const DashboardSidebar = memo(function DashboardSidebar({
           {isLoadingMyBounties ? (
             <div className="space-y-3">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="h-4 bg-[#383838] rounded w-3/4 mb-1"></div>
-                  <div className="h-3 bg-[#383838] rounded w-1/2"></div>
+                <div className="animate-pulse" key={i}>
+                  <div className="mb-1 h-4 w-3/4 rounded bg-[#383838]" />
+                  <div className="h-3 w-1/2 rounded bg-[#383838]" />
                 </div>
               ))}
             </div>
@@ -110,36 +133,53 @@ export const DashboardSidebar = memo(function DashboardSidebar({
               {myBounties.map((b, index) => (
                 <div key={b.id}>
                   <div
-                    className="space-y-2 cursor-pointer hover:bg-[#2A2A28] rounded p-2 -m-2 transition-colors"
+                    aria-label={
+                      onBountyClick ? `View bounty: ${b.title}` : undefined
+                    }
+                    className="-m-2 cursor-pointer space-y-2 rounded p-2 transition-colors hover:bg-[#2A2A28]"
                     onClick={() => onBountyClick?.(b)}
+                    role={onBountyClick ? 'button' : undefined}
                     tabIndex={onBountyClick ? 0 : undefined}
-                    role={onBountyClick ? "button" : undefined}
-                    aria-label={onBountyClick ? `View bounty: ${b.title}` : undefined}
                   >
                     <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-medium truncate pr-2 text-white" title={b.title}>
+                      <h4
+                        className="truncate pr-2 font-medium text-sm text-white"
+                        title={b.title}
+                      >
                         {b.title}
                       </h4>
                       <Badge
-                        variant={b.status === "open" || b.status === "in_progress" ? "default" : "secondary"}
-                        className="flex-shrink-0 border-[#383838] text-gray-400"
                         aria-label={`Status: ${b.status}`}
+                        className="flex-shrink-0 border-[#383838] text-gray-400"
+                        variant={
+                          b.status === 'open' || b.status === 'in_progress'
+                            ? 'default'
+                            : 'secondary'
+                        }
                       >
-                        {b.status.replace("_", " ")}
+                        {b.status.replace('_', ' ')}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-400">
-                      <DollarSign className="h-3 w-3 text-green-400" aria-hidden="true" />
-                      <span aria-label={`Amount: $${b.amount}`} className="text-green-400 font-medium">
+                    <div className="flex items-center gap-2 text-gray-400 text-xs">
+                      <DollarSign
+                        aria-hidden="true"
+                        className="h-3 w-3 text-green-400"
+                      />
+                      <span
+                        aria-label={`Amount: $${b.amount}`}
+                        className="font-medium text-green-400"
+                      >
                         ${formatLargeNumber(b.amount)}
                       </span>
                     </div>
                   </div>
-                  {index < myBounties.length - 1 && <Separator className="mt-4 bg-[#383838]" />}
+                  {index < myBounties.length - 1 && (
+                    <Separator className="mt-4 bg-[#383838]" />
+                  )}
                 </div>
               ))}
               {myBounties.length === 0 && (
-                <p className="text-sm text-gray-400">No bounties created yet</p>
+                <p className="text-gray-400 text-sm">No bounties created yet</p>
               )}
             </div>
           )}
@@ -148,5 +188,3 @@ export const DashboardSidebar = memo(function DashboardSidebar({
     </div>
   );
 });
-
-

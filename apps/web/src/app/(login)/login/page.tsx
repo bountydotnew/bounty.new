@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { Suspense } from "react";
-import Login from "@/components/bounty/login";
-import { Spinner } from "@/components/ui/spinner";
+import { Suspense } from 'react';
+import Login from '@/components/bounty/login';
+import { Spinner } from '@/components/ui/spinner';
 
 function LoginContent() {
   // const handleGitHubSignIn = async () => {
@@ -33,11 +33,11 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <div className="bg-landing-background mx-auto w-full">
+    <div className="mx-auto w-full bg-landing-background">
       {/* <Header /> */}
       <Suspense
         fallback={
-          <div className="flex justify-center items-center h-screen">
+          <div className="flex h-screen items-center justify-center">
             <Spinner />
           </div>
         }

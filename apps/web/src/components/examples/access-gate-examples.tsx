@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { AccessGate } from "@/components/access-gate";
-import { Button } from "@/components/ui/button";
+import { AccessGate } from '@/components/access-gate';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 
 /**
  * Example component demonstrating various AccessGate usage patterns
@@ -16,7 +16,7 @@ import {
 export const AccessGateExamples = () => {
   return (
     <div className="space-y-6 p-6">
-      <h2 className="text-2xl font-bold">AccessGate Examples</h2>
+      <h2 className="font-bold text-2xl">AccessGate Examples</h2>
 
       {/* Beta-only feature */}
       <AccessGate stage="beta">
@@ -34,7 +34,7 @@ export const AccessGateExamples = () => {
       </AccessGate>
 
       {/* Alpha or Beta users */}
-      <AccessGate stage={["alpha", "beta"]}>
+      <AccessGate stage={['alpha', 'beta']}>
         <Card>
           <CardHeader>
             <CardTitle>Alpha & Beta Feature</CardTitle>
@@ -50,7 +50,6 @@ export const AccessGateExamples = () => {
 
       {/* Production-only feature with fallback */}
       <AccessGate
-        stage="production"
         fallback={
           <Card className="border-dashed">
             <CardHeader>
@@ -61,6 +60,7 @@ export const AccessGateExamples = () => {
             </CardHeader>
           </Card>
         }
+        stage="production"
       >
         <Card>
           <CardHeader>
@@ -77,8 +77,7 @@ export const AccessGateExamples = () => {
 
       {/* Example with additional condition */}
       <AccessGate
-        stage="beta"
-        condition={new Date().getDay() === 1} // Only on Mondays
+        condition={new Date().getDay() === 1}
         fallback={
           <Card className="opacity-50">
             <CardHeader>
@@ -88,7 +87,8 @@ export const AccessGateExamples = () => {
               </CardDescription>
             </CardHeader>
           </Card>
-        }
+        } // Only on Mondays
+        stage="beta"
       >
         <Card>
           <CardHeader>

@@ -1,14 +1,13 @@
-import { z } from "zod";
-import { TRPCError } from "@trpc/server";
-import { eq, desc, sql } from "drizzle-orm";
-
-import { db, user, session, userProfile, userReputation } from "@bounty/db";
+import { db, session, user, userProfile, userReputation } from '@bounty/db';
+import { TRPCError } from '@trpc/server';
+import { desc, eq, sql } from 'drizzle-orm';
+import { z } from 'zod';
 import {
+  adminProcedure,
   protectedProcedure,
   publicProcedure,
   router,
-  adminProcedure,
-} from "../trpc";
+} from '../trpc';
 
 export const userRouter = router({
   hasAccess: protectedProcedure.query(async ({ ctx }) => {
@@ -22,8 +21,8 @@ export const userRouter = router({
 
     if (!userRecord[0]) {
       throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "User not found",
+        code: 'NOT_FOUND',
+        message: 'User not found',
       });
     }
 
@@ -67,8 +66,8 @@ export const userRouter = router({
 
       if (!userRecord) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "User not found",
+          code: 'NOT_FOUND',
+          message: 'User not found',
         });
       }
 
@@ -77,11 +76,13 @@ export const userRouter = router({
         data: userRecord,
       };
     } catch (error) {
-      if (error instanceof TRPCError) throw error;
+      if (error instanceof TRPCError) {
+        throw error;
+      }
 
       throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch current user",
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch current user',
         cause: error,
       });
     }
@@ -107,8 +108,8 @@ export const userRouter = router({
       };
     } catch (error) {
       throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch user sessions",
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch user sessions',
         cause: error,
       });
     }
@@ -125,15 +126,15 @@ export const userRouter = router({
 
         if (!sessionToRevoke) {
           throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Session not found",
+            code: 'NOT_FOUND',
+            message: 'Session not found',
           });
         }
 
         if (sessionToRevoke.userId !== ctx.session.user.id) {
           throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "You can only revoke your own sessions",
+            code: 'FORBIDDEN',
+            message: 'You can only revoke your own sessions',
           });
         }
 
@@ -141,14 +142,16 @@ export const userRouter = router({
 
         return {
           success: true,
-          message: "Session revoked successfully",
+          message: 'Session revoked successfully',
         };
       } catch (error) {
-        if (error instanceof TRPCError) throw error;
+        if (error instanceof TRPCError) {
+          throw error;
+        }
 
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to revoke session",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to revoke session',
           cause: error,
         });
       }
@@ -174,20 +177,20 @@ export const userRouter = router({
             totalUsers: stats.totalUsers,
           },
           userStats: userRep || {
-            totalEarned: "0.00",
+            totalEarned: '0.00',
             bountiesCompleted: 0,
             bountiesCreated: 0,
-            averageRating: "0.00",
+            averageRating: '0.00',
             totalRatings: 0,
-            successRate: "0.00",
-            completionRate: "0.00",
+            successRate: '0.00',
+            completionRate: '0.00',
           },
         },
       };
     } catch (error) {
       throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch user stats",
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch user stats',
         cause: error,
       });
     }
@@ -198,7 +201,7 @@ export const userRouter = router({
       z.object({
         userId: z.string().uuid(),
         hasAccess: z.boolean(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       try {
@@ -210,7 +213,7 @@ export const userRouter = router({
 
         if (!currentUser[0]?.hasAccess) {
           throw new TRPCError({
-            code: "FORBIDDEN",
+            code: 'FORBIDDEN',
             message: "You don't have permission to update user access",
           });
         }
@@ -225,14 +228,16 @@ export const userRouter = router({
 
         return {
           success: true,
-          message: "User access updated successfully",
+          message: 'User access updated successfully',
         };
       } catch (error) {
-        if (error instanceof TRPCError) throw error;
+        if (error instanceof TRPCError) {
+          throw error;
+        }
 
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update user access",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to update user access',
           cause: error,
         });
       }
@@ -245,8 +250,8 @@ export const userRouter = router({
 
     if (!userData) {
       throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "User not found",
+        code: 'NOT_FOUND',
+        message: 'User not found',
       });
     }
 
@@ -259,13 +264,13 @@ export const userRouter = router({
         search: z.string().optional(),
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(20),
-      }),
+      })
     )
     .query(async ({ ctx, input }) => {
       const { search, page, limit } = input;
       const offset = (page - 1) * limit;
 
-      let whereClause = undefined;
+      let whereClause;
       if (search) {
         whereClause = sql`(${user.name} ILIKE ${`%${search}%`} OR ${user.email} ILIKE ${`%${search}%`})`;
       }
@@ -309,8 +314,8 @@ export const userRouter = router({
     .input(
       z.object({
         userId: z.string(),
-        role: z.enum(["user", "admin"]),
-      }),
+        role: z.enum(['user', 'admin']),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const { userId, role } = input;

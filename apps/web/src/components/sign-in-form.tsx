@@ -1,9 +1,9 @@
-import { authClient } from "@bounty/auth/client";
-import { toast } from "sonner";
-import Loader from "./loader";
-import { useState } from "react";
-import { SignInPage } from "./sections/auth/sign-in";
-import { baseUrl } from "@/lib/constants";
+import { authClient } from '@bounty/auth/client';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { baseUrl } from '@/lib/constants';
+import Loader from './loader';
+import { SignInPage } from './sections/auth/sign-in';
 
 export default function SignInForm({
   redirectUrl,
@@ -20,21 +20,21 @@ export default function SignInForm({
 
       await authClient.signIn.social(
         {
-          provider: "github",
+          provider: 'github',
           callbackURL,
         },
         {
           onSuccess: () => {
-            toast.success("Sign in successful");
+            toast.success('Sign in successful');
           },
           onError: (error) => {
-            toast.error(error.error.message || "Sign in failed");
+            toast.error(error.error.message || 'Sign in failed');
             setIsSigningIn(false);
           },
-        },
+        }
       );
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Sign in failed");
+      toast.error(error instanceof Error ? error.message : 'Sign in failed');
       setIsSigningIn(false);
     }
   };
@@ -46,9 +46,9 @@ export default function SignInForm({
   return (
     <div className="bg-background text-foreground">
       <SignInPage
-        onSignIn={handleGitHubSignIn}
         onGitHubSignIn={handleGitHubSignIn}
         onResetPassword={() => {}}
+        onSignIn={handleGitHubSignIn}
       />
     </div>
   );

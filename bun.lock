@@ -4,6 +4,7 @@
     "": {
       "name": "bounty.new",
       "dependencies": {
+        "@bounty/track": "workspace:*",
         "@databuddy/sdk": "^1.3.0",
         "@hookform/resolvers": "^5.1.1",
         "@number-flow/react": "^0.5.10",
@@ -120,6 +121,7 @@
         "@bounty/auth": "workspace:*",
         "@bounty/db": "workspace:*",
         "@bounty/dev-logger": "workspace:*",
+        "@bounty/track": "workspace:*",
         "@octokit/core": "^7.0.3",
         "@octokit/plugin-rest-endpoint-methods": "16.0.0",
         "@trpc/server": "^11.4.2",
@@ -193,6 +195,16 @@
         "typescript-eslint": "^8.33.1",
       },
     },
+    "packages/track": {
+      "name": "@bounty/track",
+      "version": "0.1.0",
+      "dependencies": {
+        "@databuddy/sdk": "^1.3.0",
+      },
+      "devDependencies": {
+        "typescript": "^5",
+      },
+    },
     "packages/typescript-config": {
       "name": "@bounty/typescript-config",
       "version": "0.0.1",
@@ -243,6 +255,8 @@
     "@bounty/env": ["@bounty/env@workspace:packages/env"],
 
     "@bounty/eslint-config": ["@bounty/eslint-config@workspace:packages/eslint-config"],
+
+    "@bounty/track": ["@bounty/track@workspace:packages/track"],
 
     "@bounty/typescript-config": ["@bounty/typescript-config@workspace:packages/typescript-config"],
 

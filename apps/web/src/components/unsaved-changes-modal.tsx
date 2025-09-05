@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { FileText, Trash2 } from "lucide-react";
+import { FileText, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface UnsavedChangesModalProps {
   isOpen: boolean;
@@ -16,7 +16,9 @@ export function UnsavedChangesModal({
   onDiscard,
   onCancel,
 }: UnsavedChangesModalProps) {
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -27,32 +29,32 @@ export function UnsavedChangesModal({
       />
 
       {/* Modal */}
-      <div className="relative bg-background border border-border rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl">
+      <div className="relative mx-4 w-full max-w-md rounded-2xl border border-border bg-background p-6 shadow-xl">
         <div className="flex flex-col gap-4">
           <div className="text-center">
-            <FileText className="h-12 w-12 text-primary mx-auto mb-3" />
-            <h2 className="text-xl font-semibold">Unsaved Changes</h2>
-            <p className="text-muted-foreground mt-2">
+            <FileText className="mx-auto mb-3 h-12 w-12 text-primary" />
+            <h2 className="font-semibold text-xl">Unsaved Changes</h2>
+            <p className="mt-2 text-muted-foreground">
               You have unsaved changes. What would you like to do?
             </p>
           </div>
 
           <div className="flex flex-col gap-2">
-            <Button onClick={onSaveAsDraft} className="w-full">
-              <FileText className="h-4 w-4 mr-2" />
+            <Button className="w-full" onClick={onSaveAsDraft}>
+              <FileText className="mr-2 h-4 w-4" />
               Save as Draft
             </Button>
 
             <Button
+              className="w-full"
               onClick={onDiscard}
               variant="destructive"
-              className="w-full"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
+              <Trash2 className="mr-2 h-4 w-4" />
               Discard Changes
             </Button>
 
-            <Button onClick={onCancel} variant="outline" className="w-full">
+            <Button className="w-full" onClick={onCancel} variant="outline">
               Cancel
             </Button>
           </div>

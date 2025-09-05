@@ -1,8 +1,8 @@
-import { z } from "zod";
-import { eq, desc, sql } from "drizzle-orm";
-import { TRPCError } from "@trpc/server";
-import { router, publicProcedure, protectedProcedure } from "../trpc";
-import { db, userProfile, userReputation, userRating, user } from "@bounty/db";
+import { db, user, userProfile, userRating, userReputation } from '@bounty/db';
+import { TRPCError } from '@trpc/server';
+import { desc, eq, sql } from 'drizzle-orm';
+import { z } from 'zod';
+import { protectedProcedure, publicProcedure, router } from '../trpc';
 
 const updateProfileSchema = z.object({
   bio: z.string().max(500).optional(),
@@ -17,7 +17,7 @@ const updateProfileSchema = z.object({
     .string()
     .regex(/^\d+(\.\d{1,2})?$/)
     .optional(),
-  currency: z.string().default("USD").optional(),
+  currency: z.string().default('USD').optional(),
   timezone: z.string().optional(),
   availableForWork: z.boolean().optional(),
 });
@@ -53,8 +53,8 @@ export const profilesRouter = router({
 
         if (!profile) {
           throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "User not found",
+            code: 'NOT_FOUND',
+            message: 'User not found',
           });
         }
 
@@ -63,11 +63,13 @@ export const profilesRouter = router({
           data: profile,
         };
       } catch (error) {
-        if (error instanceof TRPCError) throw error;
+        if (error instanceof TRPCError) {
+          throw error;
+        }
 
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch profile",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch profile',
           cause: error,
         });
       }
@@ -98,8 +100,8 @@ export const profilesRouter = router({
       };
     } catch (error) {
       throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch your profile",
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch your profile',
         cause: error,
       });
     }
@@ -149,12 +151,12 @@ export const profilesRouter = router({
         return {
           success: true,
           data: updatedProfile,
-          message: "Profile updated successfully",
+          message: 'Profile updated successfully',
         };
       } catch (error) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update profile",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to update profile',
           cause: error,
         });
       }
@@ -165,9 +167,9 @@ export const profilesRouter = router({
       z.object({
         limit: z.number().int().positive().max(50).default(10),
         sortBy: z
-          .enum(["totalEarned", "bountiesCompleted", "averageRating"])
-          .default("totalEarned"),
-      }),
+          .enum(['totalEarned', 'bountiesCompleted', 'averageRating'])
+          .default('totalEarned'),
+      })
     )
     .query(async ({ input }) => {
       try {
@@ -194,8 +196,8 @@ export const profilesRouter = router({
         };
       } catch (error) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch top contributors",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch top contributors',
           cause: error,
         });
       }
@@ -207,8 +209,8 @@ export const profilesRouter = router({
       try {
         if (input.ratedUserId === ctx.session.user.id) {
           throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "You cannot rate yourself",
+            code: 'BAD_REQUEST',
+            message: 'You cannot rate yourself',
           });
         }
 
@@ -216,13 +218,13 @@ export const profilesRouter = router({
           .select()
           .from(userRating)
           .where(
-            sql`${userRating.ratedUserId} = ${input.ratedUserId} AND ${userRating.raterUserId} = ${ctx.session.user.id} AND ${userRating.bountyId} = ${input.bountyId}`,
+            sql`${userRating.ratedUserId} = ${input.ratedUserId} AND ${userRating.raterUserId} = ${ctx.session.user.id} AND ${userRating.bountyId} = ${input.bountyId}`
           );
 
         if (existingRating) {
           throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "You have already rated this user for this bounty",
+            code: 'BAD_REQUEST',
+            message: 'You have already rated this user for this bounty',
           });
         }
 
@@ -246,7 +248,7 @@ export const profilesRouter = router({
           .update(userReputation)
           .set({
             averageRating: averageRating.toString(),
-            totalRatings: totalRatings,
+            totalRatings,
             updatedAt: new Date(),
           })
           .where(eq(userReputation.userId, input.ratedUserId));
@@ -254,14 +256,16 @@ export const profilesRouter = router({
         return {
           success: true,
           data: newRating,
-          message: "Rating submitted successfully",
+          message: 'Rating submitted successfully',
         };
       } catch (error) {
-        if (error instanceof TRPCError) throw error;
+        if (error instanceof TRPCError) {
+          throw error;
+        }
 
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to submit rating",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to submit rating',
           cause: error,
         });
       }
@@ -273,7 +277,7 @@ export const profilesRouter = router({
         userId: z.string().uuid(),
         page: z.number().int().positive().default(1),
         limit: z.number().int().positive().max(50).default(10),
-      }),
+      })
     )
     .query(async ({ input }) => {
       try {
@@ -312,8 +316,8 @@ export const profilesRouter = router({
         };
       } catch (error) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch user ratings",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch user ratings',
           cause: error,
         });
       }
@@ -327,14 +331,14 @@ export const profilesRouter = router({
         availableForWork: z.boolean().optional(),
         page: z.number().int().positive().default(1),
         limit: z.number().int().positive().max(50).default(20),
-      }),
+      })
     )
     .query(async ({ input }) => {
       try {
         const offset = (input.page - 1) * input.limit;
 
         const conditions = [
-          sql`${user.name} ILIKE ${"%" + input.query + "%"} OR ${userProfile.bio} ILIKE ${"%" + input.query + "%"}`,
+          sql`${user.name} ILIKE ${`%${input.query}%`} OR ${userProfile.bio} ILIKE ${`%${input.query}%`}`,
         ];
 
         if (input.skills && input.skills.length > 0) {
@@ -343,7 +347,7 @@ export const profilesRouter = router({
 
         if (input.availableForWork !== undefined) {
           conditions.push(
-            eq(userProfile.availableForWork, input.availableForWork),
+            eq(userProfile.availableForWork, input.availableForWork)
           );
         }
 
@@ -360,7 +364,7 @@ export const profilesRouter = router({
           .from(user)
           .leftJoin(userProfile, eq(user.id, userProfile.userId))
           .leftJoin(userReputation, eq(user.id, userReputation.userId))
-          .where(sql`${conditions.join(" AND ")}`)
+          .where(sql`${conditions.join(' AND ')}`)
           .orderBy(desc(userReputation.averageRating))
           .limit(input.limit)
           .offset(offset);
@@ -371,8 +375,8 @@ export const profilesRouter = router({
         };
       } catch (error) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to search profiles",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to search profiles',
           cause: error,
         });
       }

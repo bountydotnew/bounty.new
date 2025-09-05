@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
-import { Sidebar } from "@/components/dual-sidebar";
+import type { Metadata } from 'next';
+import { Sidebar } from '@/components/dual-sidebar';
 
 export const metadata: Metadata = {
-  title: "Admin - bounty.new",
-  description: "Admin dashboard for bounty.new",
+  title: 'Admin - bounty.new',
+  description: 'Admin dashboard for bounty.new',
 };
 
 export default async function AdminLayout({

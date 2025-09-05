@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { ReactNode } from "react";
+import type { ReactNode } from 'react';
 
-import { useAccess, type AccessStage } from "@/contexts/access-provider";
+import { type AccessStage, useAccess } from '@/contexts/access-provider';
 
 interface AccessGateProps {
   /** Required access stage(s). User must have at least one of these stages */

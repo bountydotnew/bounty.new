@@ -1,7 +1,7 @@
-import { publicProcedure, router } from "../trpc";
-import { z } from "zod";
-import { GithubManager, GetUserReposResult } from "../../driver/github";
-import { TRPCError } from "@trpc/server";
+import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
+import { GithubManager } from '../../driver/github';
+import { publicProcedure, router } from '../trpc';
 
 const github = new GithubManager({
   token: process.env.GITHUB_TOKEN || process.env.NEXT_PUBLIC_GITHUB_TOKEN,
@@ -30,7 +30,7 @@ export const repositoryRouter = router({
       z.object({
         repo: z.string(),
         limit: z.number().min(1).max(100).default(20),
-      }),
+      })
     )
     .query(async ({ input }) => {
       return github.getRecentCommits(input.repo, input.limit);
@@ -48,21 +48,21 @@ export const repositoryRouter = router({
         return { success: true, data };
       } catch (err) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Failed to resolve issue from URL",
+          code: 'BAD_REQUEST',
+          message: 'Failed to resolve issue from URL',
           cause: err,
         });
       }
     }),
   userRepos: publicProcedure
     .input(
-      z.object({ username: z.string().trim().min(1, "username is required") }),
+      z.object({ username: z.string().trim().min(1, 'username is required') })
     )
     .query(async ({ input }) => {
       try {
         const repos = await github.getUserRepos(input.username);
         return repos;
-      } catch (err) {
+      } catch (_err) {
         return [];
       }
     }),
@@ -72,14 +72,16 @@ export const repositoryRouter = router({
         owner: z.string(),
         repo: z.string(),
         q: z.string().optional(),
-      }),
+      })
     )
     .query(async ({ input }) => {
       try {
         const owner = input.owner?.trim();
         const repo = input.repo?.trim();
-        const q = (input.q || "").trim();
-        if (!owner || !repo || !q) return [];
+        const q = (input.q || '').trim();
+        if (!(owner && repo && q)) {
+          return [];
+        }
         return await github.searchIssues(owner, repo, q);
       } catch {
         return [];

@@ -37,6 +37,6 @@ export interface BountyCommentCacheItem {
 }
 
 export interface DuplicateCommentError {
-  code: "DUPLICATE_COMMENT";
+  code: 'DUPLICATE_COMMENT';
   message: string;
 }

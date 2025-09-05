@@ -1,16 +1,16 @@
-import type { NextRequest } from "next/server";
-import { auth } from "@bounty/auth/server";
-import { db } from "@bounty/db";
+import { auth } from '@bounty/auth/server';
+import { db } from '@bounty/db';
+import type { NextRequest } from 'next/server';
 
 function getClientIP(req: NextRequest): string {
-  const forwarded = req.headers.get("x-forwarded-for");
-  const realIP = req.headers.get("x-real-ip");
-  const cfConnectingIP = req.headers.get("cf-connecting-ip");
+  const forwarded = req.headers.get('x-forwarded-for');
+  const realIP = req.headers.get('x-real-ip');
+  const cfConnectingIP = req.headers.get('cf-connecting-ip');
 
-  let clientIP = forwarded || realIP || cfConnectingIP || "unknown";
+  let clientIP = forwarded || realIP || cfConnectingIP || 'unknown';
 
-  if (clientIP && clientIP.includes(",")) {
-    clientIP = clientIP.split(",")[0].trim();
+  if (clientIP?.includes(',')) {
+    clientIP = clientIP.split(',')[0].trim();
   }
 
   return clientIP;

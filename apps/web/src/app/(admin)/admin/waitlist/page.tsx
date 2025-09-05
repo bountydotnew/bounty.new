@@ -1,34 +1,33 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import type { AppRouter } from '@bounty/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { TRPCClientErrorLike } from '@trpc/client';
 import {
-  Search,
-  Mail,
   Calendar,
-  Users,
   CheckCircle,
+  Mail,
+  Search,
+  Users,
   XCircle,
-} from "lucide-react";
-import { TRPCClientErrorLike } from "@trpc/client";
-import type { AppRouter } from "@bounty/api";
-
+} from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { AdminHeader } from '@/components/admin';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { trpc } from "@/utils/trpc";
-import { AdminHeader } from "@/components/admin";
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { trpc } from '@/utils/trpc';
 
 export default function WaitlistPage() {
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
@@ -44,13 +43,13 @@ export default function WaitlistPage() {
   const updateAccessMutation = useMutation({
     ...trpc.earlyAccess.updateWaitlistAccess.mutationOptions(),
     onSuccess: () => {
-      toast.success("Access updated successfully");
+      toast.success('Access updated successfully');
       queryClient.invalidateQueries({
-        queryKey: ["earlyAccess", "getAdminWaitlist"],
+        queryKey: ['earlyAccess', 'getAdminWaitlist'],
       });
     },
     onError: (error: TRPCClientErrorLike<AppRouter>) => {
-      toast.error(error.message || "Failed to update access");
+      toast.error(error.message || 'Failed to update access');
     },
   });
 
@@ -66,13 +65,13 @@ export default function WaitlistPage() {
             return next;
           });
         },
-      },
+      }
     );
   };
 
   if (error) {
     return (
-      <div className="text-center py-8">
+      <div className="py-8 text-center">
         <p className="text-destructive">Failed to load waitlist data</p>
       </div>
     );
@@ -81,28 +80,28 @@ export default function WaitlistPage() {
   return (
     <div className="space-y-6">
       <AdminHeader
-        title="Waitlist Management"
         description="Manage waitlist entries and access permissions"
+        title="Waitlist Management"
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card className="border-neutral-800 bg-neutral-900/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Entries</CardTitle>
+            <CardTitle className="font-medium text-sm">Total Entries</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data?.stats.total || 0}</div>
+            <div className="font-bold text-2xl">{data?.stats.total || 0}</div>
           </CardContent>
         </Card>
 
         <Card className="border-neutral-800 bg-neutral-900/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">With Access</CardTitle>
+            <CardTitle className="font-medium text-sm">With Access</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="font-bold text-2xl text-green-600">
               {data?.stats.withAccess || 0}
             </div>
           </CardContent>
@@ -110,11 +109,11 @@ export default function WaitlistPage() {
 
         <Card className="border-neutral-800 bg-neutral-900/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
+            <CardTitle className="font-medium text-sm">Pending</CardTitle>
             <XCircle className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
+            <div className="font-bold text-2xl text-orange-600">
               {data?.stats.pending || 0}
             </div>
           </CardContent>
@@ -133,15 +132,15 @@ export default function WaitlistPage() {
             <div className="flex items-center space-x-2">
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input
+                className="max-w-sm border-neutral-800 bg-neutral-900"
+                onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by email..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="max-w-sm bg-neutral-900 border-neutral-800"
               />
             </div>
 
             {isLoading ? (
-              <div className="text-center py-8">
+              <div className="py-8 text-center">
                 <p className="text-muted-foreground">
                   Loading waitlist entries...
                 </p>
@@ -150,8 +149,8 @@ export default function WaitlistPage() {
               <div className="space-y-4">
                 {data?.entries.map((entry) => (
                   <div
+                    className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900/40 p-4"
                     key={entry.id}
-                    className="flex items-center justify-between p-4 border rounded-lg border-neutral-800 bg-neutral-900/40"
                   >
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
@@ -160,12 +159,12 @@ export default function WaitlistPage() {
                       </div>
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-muted-foreground text-sm">
                           {new Date(entry.createdAt).toLocaleDateString()}
                         </span>
                       </div>
                       {entry.hasAccess ? (
-                        <Badge variant="default" className="bg-green-600">
+                        <Badge className="bg-green-600" variant="default">
                           Has Access
                         </Badge>
                       ) : (
@@ -176,18 +175,18 @@ export default function WaitlistPage() {
                     <div className="flex items-center space-x-2">
                       {entry.hasAccess ? (
                         <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleUpdateAccess(entry.id, false)}
                           disabled={updatingIds.has(entry.id)}
+                          onClick={() => handleUpdateAccess(entry.id, false)}
+                          size="sm"
+                          variant="outline"
                         >
                           Revoke Access
                         </Button>
                       ) : (
                         <Button
-                          size="sm"
-                          onClick={() => handleUpdateAccess(entry.id, true)}
                           disabled={updatingIds.has(entry.id)}
+                          onClick={() => handleUpdateAccess(entry.id, true)}
+                          size="sm"
                         >
                           Grant Access
                         </Button>
@@ -197,7 +196,7 @@ export default function WaitlistPage() {
                 ))}
 
                 {data?.entries.length === 0 && (
-                  <div className="text-center py-8">
+                  <div className="py-8 text-center">
                     <p className="text-muted-foreground">
                       No waitlist entries found
                     </p>
@@ -207,12 +206,12 @@ export default function WaitlistPage() {
             )}
 
             {data && data.totalPages > 1 && (
-              <div className="flex items-center justify-center space-x-2 border-top border-neutral-800 pt-4">
+              <div className="flex items-center justify-center space-x-2 border-neutral-800 border-top pt-4">
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(page - 1)}
                   disabled={page === 1}
+                  onClick={() => setPage(page - 1)}
+                  size="sm"
+                  variant="outline"
                 >
                   Previous
                 </Button>
@@ -220,10 +219,10 @@ export default function WaitlistPage() {
                   Page {page} of {data.totalPages}
                 </span>
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(page + 1)}
                   disabled={page === data.totalPages}
+                  onClick={() => setPage(page + 1)}
+                  size="sm"
+                  variant="outline"
                 >
                   Next
                 </Button>

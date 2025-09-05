@@ -1,27 +1,26 @@
-"use client";
+'use client';
 
-import { useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { Search, User, Mail, Calendar, Crown, Users } from "lucide-react";
-import type { TRPCClientErrorLike } from "@trpc/client";
-import type { AppRouter } from "@bounty/api";
-
+import type { AppRouter } from '@bounty/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { TRPCClientErrorLike } from '@trpc/client';
+import { Calendar, Crown, Mail, Search, User, Users } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import { AdminHeader } from '@/components/admin';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { trpc } from "@/utils/trpc";
-import { AdminHeader } from "@/components/admin";
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { trpc } from '@/utils/trpc';
 
 export default function UsersPage() {
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
@@ -37,11 +36,11 @@ export default function UsersPage() {
   const updateRoleMutation = useMutation({
     ...trpc.user.updateUserRole.mutationOptions(),
     onSuccess: () => {
-      toast.success("User role updated successfully");
-      queryClient.invalidateQueries({ queryKey: ["user", "getAllUsers"] });
+      toast.success('User role updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['user', 'getAllUsers'] });
     },
     onError: (error: TRPCClientErrorLike<AppRouter>) => {
-      toast.error(error.message || "Failed to update user role");
+      toast.error(error.message || 'Failed to update user role');
     },
   });
 
@@ -51,18 +50,18 @@ export default function UsersPage() {
 
   const stats = useMemo(() => {
     const currentPageUsers = users.length;
-    const adminCount = users.filter((user) => user.role === "admin").length;
+    const adminCount = users.filter((user) => user.role === 'admin').length;
     const regularUserCount = currentPageUsers - adminCount;
 
     return {
-      total: total,
+      total,
       currentPage: currentPageUsers,
       admins: adminCount,
       regularUsers: regularUserCount,
     };
   }, [users, total]);
 
-  const handleRoleUpdate = (userId: string, newRole: "user" | "admin") => {
+  const handleRoleUpdate = (userId: string, newRole: 'user' | 'admin') => {
     setUpdatingIds((prev) => new Set(prev).add(userId));
     updateRoleMutation.mutate(
       { userId, role: newRole },
@@ -74,13 +73,13 @@ export default function UsersPage() {
             return next;
           });
         },
-      },
+      }
     );
   };
 
   if (error) {
     return (
-      <div className="text-center py-8">
+      <div className="py-8 text-center">
         <p className="text-destructive">Failed to load users data</p>
       </div>
     );
@@ -89,56 +88,56 @@ export default function UsersPage() {
   return (
     <div className="space-y-6">
       <AdminHeader
-        title="User Management"
         description="Manage user roles and permissions"
+        title="User Management"
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         <Card className="border-neutral-800 bg-neutral-900/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <CardTitle className="font-medium text-sm">Total Users</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">Across all pages</p>
+            <div className="font-bold text-2xl">{stats.total}</div>
+            <p className="text-muted-foreground text-xs">Across all pages</p>
           </CardContent>
         </Card>
 
         <Card className="border-neutral-800 bg-neutral-900/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Page</CardTitle>
+            <CardTitle className="font-medium text-sm">Current Page</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.currentPage}</div>
-            <p className="text-xs text-muted-foreground">Users on this page</p>
+            <div className="font-bold text-2xl">{stats.currentPage}</div>
+            <p className="text-muted-foreground text-xs">Users on this page</p>
           </CardContent>
         </Card>
 
         <Card className="border-neutral-800 bg-neutral-900/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Admins</CardTitle>
+            <CardTitle className="font-medium text-sm">Admins</CardTitle>
             <Crown className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
+            <div className="font-bold text-2xl text-yellow-600">
               {stats.admins}
             </div>
-            <p className="text-xs text-muted-foreground">On this page</p>
+            <p className="text-muted-foreground text-xs">On this page</p>
           </CardContent>
         </Card>
 
         <Card className="border-neutral-800 bg-neutral-900/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Regular Users</CardTitle>
+            <CardTitle className="font-medium text-sm">Regular Users</CardTitle>
             <User className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="font-bold text-2xl text-blue-600">
               {stats.regularUsers}
             </div>
-            <p className="text-xs text-muted-foreground">On this page</p>
+            <p className="text-muted-foreground text-xs">On this page</p>
           </CardContent>
         </Card>
       </div>
@@ -153,23 +152,23 @@ export default function UsersPage() {
             <div className="flex items-center space-x-2">
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input
+                className="max-w-sm border-neutral-800 bg-neutral-900"
+                onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by name or email..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="max-w-sm bg-neutral-900 border-neutral-800"
               />
             </div>
 
             {isLoading ? (
-              <div className="text-center py-8">
+              <div className="py-8 text-center">
                 <p className="text-muted-foreground">Loading users...</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {users.map((user) => (
                   <div
+                    className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900/40 p-4"
                     key={user.id}
-                    className="flex items-center justify-between p-4 border rounded-lg border-neutral-800 bg-neutral-900/40"
                   >
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
@@ -178,44 +177,44 @@ export default function UsersPage() {
                       </div>
                       <div className="flex items-center space-x-2">
                         <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-muted-foreground text-sm">
                           {user.email}
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-muted-foreground text-sm">
                           {new Date(user.createdAt).toLocaleDateString()}
                         </span>
                       </div>
-                      {user.role === "admin" ? (
-                        <Badge variant="default" className="bg-yellow-600">
-                          <Crown className="h-3 w-3 mr-1" />
+                      {user.role === 'admin' ? (
+                        <Badge className="bg-yellow-600" variant="default">
+                          <Crown className="mr-1 h-3 w-3" />
                           Admin
                         </Badge>
                       ) : (
                         <Badge variant="secondary">
-                          <User className="h-3 w-3 mr-1" />
+                          <User className="mr-1 h-3 w-3" />
                           User
                         </Badge>
                       )}
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      {user.role === "admin" ? (
+                      {user.role === 'admin' ? (
                         <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRoleUpdate(user.id, "user")}
                           disabled={updatingIds.has(user.id)}
+                          onClick={() => handleRoleUpdate(user.id, 'user')}
+                          size="sm"
+                          variant="outline"
                         >
                           Remove Admin
                         </Button>
                       ) : (
                         <Button
-                          size="sm"
-                          onClick={() => handleRoleUpdate(user.id, "admin")}
                           disabled={updatingIds.has(user.id)}
+                          onClick={() => handleRoleUpdate(user.id, 'admin')}
+                          size="sm"
                         >
                           Make Admin
                         </Button>
@@ -225,7 +224,7 @@ export default function UsersPage() {
                 ))}
 
                 {users.length === 0 && (
-                  <div className="text-center py-8">
+                  <div className="py-8 text-center">
                     <p className="text-muted-foreground">No users found</p>
                   </div>
                 )}
@@ -233,12 +232,12 @@ export default function UsersPage() {
             )}
 
             {totalPages > 1 && (
-              <div className="flex items-center justify-center space-x-2 border-t border-neutral-800 pt-4">
+              <div className="flex items-center justify-center space-x-2 border-neutral-800 border-t pt-4">
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(page - 1)}
                   disabled={page === 1}
+                  onClick={() => setPage(page - 1)}
+                  size="sm"
+                  variant="outline"
                 >
                   Previous
                 </Button>
@@ -246,10 +245,10 @@ export default function UsersPage() {
                   Page {page} of {totalPages}
                 </span>
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(page + 1)}
                   disabled={page === totalPages}
+                  onClick={() => setPage(page + 1)}
+                  size="sm"
+                  variant="outline"
                 >
                   Next
                 </Button>

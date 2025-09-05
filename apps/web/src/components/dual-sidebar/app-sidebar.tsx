@@ -1,10 +1,8 @@
-"use client";
-
+'use client';
 
 import {
   AudioWaveform,
   Award,
-  Badge,
   BookText,
   Calendar,
   Command,
@@ -17,27 +15,27 @@ import {
   Settings,
   Shield,
   Users,
-} from "lucide-react";
+} from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { AccessGate } from '@/components/access-gate';
+import { NavMain } from '@/components/dual-sidebar/nav-main';
+// import { NavProjects } from "@/components/dual-sidebar/nav-projects";
+import { NavUser } from '@/components/dual-sidebar/nav-user';
+import { Divider } from '@/components/ui/divider';
+import Link from '@/components/ui/link';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarSeparator,
-} from "@/components/ui/sidebar";
-import { NavMain } from "@/components/dual-sidebar/nav-main";
-// import { NavProjects } from "@/components/dual-sidebar/nav-projects";
-import { NavUser } from "@/components/dual-sidebar/nav-user";
+} from '@/components/ui/sidebar';
+import { LINKS } from '@/constants/links';
+import Bookmark from '../icons/bookmark';
+import Bounty from '../icons/bounty';
 
-import { Divider } from "@/components/ui/divider";
-import Bookmark from "../icons/bookmark";
-import Bounty from "../icons/bounty";
-import { usePathname } from "next/navigation";
-import Link from '@/components/ui/link';
-import { LINKS } from "@/constants/links";
-import { AccessGate } from "@/components/access-gate";
-
-export const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
+export const AppSidebar = ({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) => {
   const pathname = usePathname();
 
   function isActive(path: string) {
@@ -47,133 +45,133 @@ export const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) =
   // This is sample data.
   const productionData = {
     user: {
-      name: "shadcn",
-      email: "m@example.com",
-      avatar: "/avatars/shadcn.jpg",
+      name: 'shadcn',
+      email: 'm@example.com',
+      avatar: '/avatars/shadcn.jpg',
     },
     teams: [
       {
-        name: "Mail0 Inc.",
+        name: 'Mail0 Inc.',
         logo: GalleryVerticalEnd,
-        logoUrl: "https://0.email/white-icon.svg",
-        plan: "Enterprise",
+        logoUrl: 'https://0.email/white-icon.svg',
+        plan: 'Enterprise',
       },
       {
-        name: "oss.now",
+        name: 'oss.now',
         logo: AudioWaveform,
-        logoUrl: "https://oss.now/logo.png",
-        plan: "Startup",
+        logoUrl: 'https://oss.now/logo.png',
+        plan: 'Startup',
       },
       {
-        name: "Inbound.new",
+        name: 'Inbound.new',
         logo: Command,
         logoUrl:
-          "https://inbound.new/_next/image?url=https%3A%2F%2Finbound.new%2Finbound-logo-3.png&w=64&q=75",
-        plan: "Free",
+          'https://inbound.new/_next/image?url=https%3A%2F%2Finbound.new%2Finbound-logo-3.png&w=64&q=75',
+        plan: 'Free',
       },
     ],
     navMain: [
       {
-        title: "Dashboard",
+        title: 'Dashboard',
         url: LINKS.DASHBOARD,
         icon: Home,
-        isActive: isActive("/dashboard"),
+        isActive: isActive('/dashboard'),
       },
       {
-        title: "Bounties",
+        title: 'Bounties',
         url: LINKS.BOUNTIES,
         icon: Award,
-        isActive: isActive("/bounties"),
+        isActive: isActive('/bounties'),
       },
       {
-        title: "Bookmarks",
+        title: 'Bookmarks',
         url: LINKS.BOOKMARKS,
         icon: Bookmark,
-        isActive: isActive("/bookmarks"),
+        isActive: isActive('/bookmarks'),
       },
       {
-        title: "Documentation",
-        url: "#",
+        title: 'Documentation',
+        url: '#',
         icon: BookText,
       },
       {
-        title: "Settings",
+        title: 'Settings',
         url: LINKS.SETTINGS,
         icon: Settings,
-        isActive: isActive("/settings"),
+        isActive: isActive('/settings'),
       },
     ],
     projects: [
       {
-        name: "Design Engineering",
-        url: "#",
+        name: 'Design Engineering',
+        url: '#',
         icon: Frame,
       },
       {
-        name: "Sales & Marketing",
-        url: "#",
+        name: 'Sales & Marketing',
+        url: '#',
         icon: PieChart,
       },
       {
-        name: "Travel",
-        url: "#",
+        name: 'Travel',
+        url: '#',
         icon: Map,
       },
     ],
     news: [
       {
-        href: "https://dub.co/changelog/regions-support",
-        title: "Regions support in analytics",
-        summary: "You can now filter your analytics by regions",
-        image: "https://assets.dub.co/changelog/regions-support.png",
+        href: 'https://dub.co/changelog/regions-support',
+        title: 'Regions support in analytics',
+        summary: 'You can now filter your analytics by regions',
+        image: 'https://assets.dub.co/changelog/regions-support.png',
       },
       {
-        href: "https://dub.co/blog/soc2",
-        title: "Dub is now SOC 2 Type II Compliant",
+        href: 'https://dub.co/blog/soc2',
+        title: 'Dub is now SOC 2 Type II Compliant',
         summary:
           "We're excited to announce that Dub has successfully completed a SOC 2 Type II audit to further demonstrate our commitment to security.",
-        image: "https://assets.dub.co/blog/soc2.jpg",
+        image: 'https://assets.dub.co/blog/soc2.jpg',
       },
       {
-        href: "https://dub.co/changelog/utm-templates",
-        title: "UTM Templates",
+        href: 'https://dub.co/changelog/utm-templates',
+        title: 'UTM Templates',
         summary:
-          "You can now create UTM templates to streamline UTM campaign management across your team.",
-        image: "https://assets.dub.co/changelog/utm-templates.jpg",
+          'You can now create UTM templates to streamline UTM campaign management across your team.',
+        image: 'https://assets.dub.co/changelog/utm-templates.jpg',
       },
     ],
   };
 
   const betaData = {
     user: {
-      name: "shadcn",
-      email: "m@example.com",
-      avatar: "/avatars/shadcn.jpg",
+      name: 'shadcn',
+      email: 'm@example.com',
+      avatar: '/avatars/shadcn.jpg',
     },
     teams: [
       {
-        name: "Mail0 Inc.",
+        name: 'Mail0 Inc.',
         logo: GalleryVerticalEnd,
-        logoUrl: "https://0.email/white-icon.svg",
-        plan: "Enterprise",
+        logoUrl: 'https://0.email/white-icon.svg',
+        plan: 'Enterprise',
       },
       {
-        name: "oss.now",
+        name: 'oss.now',
         logo: AudioWaveform,
-        logoUrl: "https://oss.now/logo.png",
-        plan: "Startup",
+        logoUrl: 'https://oss.now/logo.png',
+        plan: 'Startup',
       },
       {
-        name: "Inbound.new",
+        name: 'Inbound.new',
         logo: Command,
         logoUrl:
-          "https://inbound.new/_next/image?url=https%3A%2F%2Finbound.new%2Finbound-logo-3.png&w=64&q=75",
-        plan: "Free",
+          'https://inbound.new/_next/image?url=https%3A%2F%2Finbound.new%2Finbound-logo-3.png&w=64&q=75',
+        plan: 'Free',
       },
     ],
     navMain: [
       {
-        title: "Apply for Beta Testing",
+        title: 'Apply for Beta Testing',
         url: LINKS.DASHBOARD,
         icon: FileUser,
       },
@@ -181,8 +179,8 @@ export const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) =
   };
 
   const user = {
-    name: "Guest",
-    email: "guest@example.com",
+    name: 'Guest',
+    email: 'guest@example.com',
     image: null,
   };
 
@@ -194,17 +192,16 @@ export const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) =
           <Bounty className="h-6 w-6" />
         </Link>
       </SidebarHeader>
-      <Divider className="h-[2px] w-8 my-2 bg-white" />
+      <Divider className="my-2 h-[2px] w-8 bg-white" />
       <SidebarContent>
         <AccessGate
-          stage="beta"
           fallback={<NavMain items={betaData.navMain} />}
+          stage="beta"
         >
           <NavMain items={productionData.navMain} />
         </AccessGate>
 
         {/* <NavProjects projects={data.projects} /> */}
-
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />
@@ -213,7 +210,9 @@ export const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) =
   );
 };
 
-export const AdminAppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
+export const AdminAppSidebar = ({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) => {
   const pathname = usePathname();
 
   function isActive(path: string) {
@@ -221,13 +220,33 @@ export const AdminAppSidebar = ({ ...props }: React.ComponentProps<typeof Sideba
   }
 
   const adminNav = [
-    { title: "Overview", url: "/admin", icon: Home, isActive: isActive("/admin") },
-    { title: "Beta Applications", url: "/admin/beta-applications", icon: FileUser, isActive: isActive("/admin/beta-applications") },
-    { title: "Users", url: "/admin/users", icon: Users, isActive: isActive("/admin/users") },
-    { title: "Waitlist", url: "/admin/waitlist", icon: Calendar, isActive: isActive("/admin/waitlist") },
+    {
+      title: 'Overview',
+      url: '/admin',
+      icon: Home,
+      isActive: isActive('/admin'),
+    },
+    {
+      title: 'Beta Applications',
+      url: '/admin/beta-applications',
+      icon: FileUser,
+      isActive: isActive('/admin/beta-applications'),
+    },
+    {
+      title: 'Users',
+      url: '/admin/users',
+      icon: Users,
+      isActive: isActive('/admin/users'),
+    },
+    {
+      title: 'Waitlist',
+      url: '/admin/waitlist',
+      icon: Calendar,
+      isActive: isActive('/admin/waitlist'),
+    },
   ];
 
-  const user = { name: "Admin", email: "admin@example.com", image: null };
+  const user = { name: 'Admin', email: 'admin@example.com', image: null };
 
   return (
     <Sidebar variant="icononly" {...props}>
@@ -237,11 +256,11 @@ export const AdminAppSidebar = ({ ...props }: React.ComponentProps<typeof Sideba
             <div className="rounded-md bg-neutral-800 p-2">
               <Bounty className="h-6 w-6" />
             </div>
-            <Shield className="fill-white h-5 w-5 absolute -bottom-1 -right-1" />
+            <Shield className="-bottom-1 -right-1 absolute h-5 w-5 fill-white" />
           </div>
         </Link>
       </SidebarHeader>
-      <Divider className="h-[2px] w-8 my-2 bg-white" />
+      <Divider className="my-2 h-[2px] w-8 bg-white" />
       <SidebarContent>
         <NavMain items={adminNav} />
       </SidebarContent>

@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useCallback, useEffect } from "react";
-import { trpc } from "@/utils/trpc";
-import { toast } from "sonner";
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect } from 'react';
+import { toast } from 'sonner';
+import { trpc } from '@/utils/trpc';
 
-const POLL_MS = 30000;
+const POLL_MS = 30_000;
 
 export function useNotifications() {
   const notificationsQuery = useQuery({
@@ -26,8 +26,8 @@ export function useNotifications() {
         notificationsQuery.refetch();
         unreadCountQuery.refetch();
       },
-      onError: () => toast.error("Failed to mark as read"),
-    }),
+      onError: () => toast.error('Failed to mark as read'),
+    })
   );
 
   const markAllAsReadMutation = useMutation(
@@ -35,20 +35,22 @@ export function useNotifications() {
       onSuccess: () => {
         notificationsQuery.refetch();
         unreadCountQuery.refetch();
-        toast.success("All notifications marked as read");
+        toast.success('All notifications marked as read');
       },
-      onError: () => toast.error("Failed to mark all as read"),
-    }),
+      onError: () => toast.error('Failed to mark all as read'),
+    })
   );
 
   const markAsRead = useCallback(
     (id: string) => markAsReadMutation.mutate({ id }),
-    [markAsReadMutation],
+    [markAsReadMutation]
   );
 
   const markAllAsRead = useCallback(() => {
     const count = unreadCountQuery.data ?? 0;
-    if (count > 0) markAllAsReadMutation.mutate();
+    if (count > 0) {
+      markAllAsReadMutation.mutate();
+    }
   }, [markAllAsReadMutation, unreadCountQuery.data]);
 
   const refetch = useCallback(() => {
@@ -58,10 +60,12 @@ export function useNotifications() {
 
   useEffect(() => {
     const onVis = () => {
-      if (document.visibilityState === "visible") refetch();
+      if (document.visibilityState === 'visible') {
+        refetch();
+      }
     };
-    document.addEventListener("visibilitychange", onVis);
-    return () => document.removeEventListener("visibilitychange", onVis);
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
   }, [refetch]);
 
   return {
@@ -77,5 +81,3 @@ export function useNotifications() {
     isMarkingAllAsRead: markAllAsReadMutation.isPending,
   } as const;
 }
-
-

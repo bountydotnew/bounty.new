@@ -95,12 +95,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -172,12 +168,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -187,9 +179,7 @@
         "session_token_unique": {
           "name": "session_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -283,9 +273,7 @@
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -498,12 +486,8 @@
           "name": "bounty_created_by_id_user_id_fk",
           "tableFrom": "bounty",
           "tableTo": "user",
-          "columnsFrom": [
-            "created_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -511,12 +495,8 @@
           "name": "bounty_assigned_to_id_user_id_fk",
           "tableFrom": "bounty",
           "tableTo": "user",
-          "columnsFrom": [
-            "assigned_to_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["assigned_to_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -597,12 +577,8 @@
           "name": "bounty_application_bounty_id_bounty_id_fk",
           "tableFrom": "bounty_application",
           "tableTo": "bounty",
-          "columnsFrom": [
-            "bounty_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["bounty_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -610,12 +586,8 @@
           "name": "bounty_application_applicant_id_user_id_fk",
           "tableFrom": "bounty_application",
           "tableTo": "user",
-          "columnsFrom": [
-            "applicant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["applicant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -762,12 +734,8 @@
           "name": "bounty_comment_bounty_id_bounty_id_fk",
           "tableFrom": "bounty_comment",
           "tableTo": "bounty",
-          "columnsFrom": [
-            "bounty_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["bounty_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -775,12 +743,8 @@
           "name": "bounty_comment_user_id_user_id_fk",
           "tableFrom": "bounty_comment",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -788,12 +752,8 @@
           "name": "bounty_comment_parent_id_bounty_comment_id_fk",
           "tableFrom": "bounty_comment",
           "tableTo": "bounty_comment",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -893,12 +853,8 @@
           "name": "bounty_comment_like_comment_id_bounty_comment_id_fk",
           "tableFrom": "bounty_comment_like",
           "tableTo": "bounty_comment",
-          "columnsFrom": [
-            "comment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["comment_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -906,12 +862,8 @@
           "name": "bounty_comment_like_user_id_user_id_fk",
           "tableFrom": "bounty_comment_like",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1011,12 +963,8 @@
           "name": "bounty_vote_bounty_id_bounty_id_fk",
           "tableFrom": "bounty_vote",
           "tableTo": "bounty",
-          "columnsFrom": [
-            "bounty_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["bounty_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1024,12 +972,8 @@
           "name": "bounty_vote_user_id_user_id_fk",
           "tableFrom": "bounty_vote",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1129,12 +1073,8 @@
           "name": "submission_bounty_id_bounty_id_fk",
           "tableFrom": "submission",
           "tableTo": "bounty",
-          "columnsFrom": [
-            "bounty_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["bounty_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1142,12 +1082,8 @@
           "name": "submission_contributor_id_user_id_fk",
           "tableFrom": "submission",
           "tableTo": "user",
-          "columnsFrom": [
-            "contributor_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["contributor_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1270,12 +1206,8 @@
           "name": "user_profile_user_id_user_id_fk",
           "tableFrom": "user_profile",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1285,9 +1217,7 @@
         "user_profile_user_id_unique": {
           "name": "user_profile_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id"
-          ]
+          "columns": ["user_id"]
         }
       },
       "policies": {},
@@ -1356,12 +1286,8 @@
           "name": "user_rating_rated_user_id_user_id_fk",
           "tableFrom": "user_rating",
           "tableTo": "user",
-          "columnsFrom": [
-            "rated_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["rated_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1369,12 +1295,8 @@
           "name": "user_rating_rater_user_id_user_id_fk",
           "tableFrom": "user_rating",
           "tableTo": "user",
-          "columnsFrom": [
-            "rater_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["rater_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1382,12 +1304,8 @@
           "name": "user_rating_bounty_id_bounty_id_fk",
           "tableFrom": "user_rating",
           "tableTo": "bounty",
-          "columnsFrom": [
-            "bounty_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["bounty_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1491,12 +1409,8 @@
           "name": "user_reputation_user_id_user_id_fk",
           "tableFrom": "user_reputation",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1506,9 +1420,7 @@
         "user_reputation_user_id_unique": {
           "name": "user_reputation_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id"
-          ]
+          "columns": ["user_id"]
         }
       },
       "policies": {},
@@ -1609,12 +1521,8 @@
           "name": "beta_application_user_id_user_id_fk",
           "tableFrom": "beta_application",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1622,12 +1530,8 @@
           "name": "beta_application_reviewed_by_user_id_fk",
           "tableFrom": "beta_application",
           "tableTo": "user",
-          "columnsFrom": [
-            "reviewed_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["reviewed_by"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1723,12 +1627,8 @@
           "name": "passkey_userId_user_id_fk",
           "tableFrom": "passkey",
           "tableTo": "user",
-          "columnsFrom": [
-            "userId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["userId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1744,62 +1644,32 @@
     "public.access_stage": {
       "name": "access_stage",
       "schema": "public",
-      "values": [
-        "none",
-        "alpha",
-        "beta",
-        "production"
-      ]
+      "values": ["none", "alpha", "beta", "production"]
     },
     "public.beta_access_status": {
       "name": "beta_access_status",
       "schema": "public",
-      "values": [
-        "none",
-        "pending",
-        "approved",
-        "denied"
-      ]
+      "values": ["none", "pending", "approved", "denied"]
     },
     "public.bounty_status": {
       "name": "bounty_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "open",
-        "in_progress",
-        "completed",
-        "cancelled"
-      ]
+      "values": ["draft", "open", "in_progress", "completed", "cancelled"]
     },
     "public.difficulty": {
       "name": "difficulty",
       "schema": "public",
-      "values": [
-        "beginner",
-        "intermediate",
-        "advanced",
-        "expert"
-      ]
+      "values": ["beginner", "intermediate", "advanced", "expert"]
     },
     "public.submission_status": {
       "name": "submission_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "approved",
-        "rejected",
-        "revision_requested"
-      ]
+      "values": ["pending", "approved", "rejected", "revision_requested"]
     },
     "public.beta_application_status": {
       "name": "beta_application_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "approved",
-        "rejected"
-      ]
+      "values": ["pending", "approved", "rejected"]
     }
   },
   "schemas": {},

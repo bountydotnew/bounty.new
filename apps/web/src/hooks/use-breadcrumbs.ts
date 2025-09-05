@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { usePathname } from "next/navigation";
-import { useMemo } from "react";
+import { usePathname } from 'next/navigation';
+import { useMemo } from 'react';
 
 export interface BreadcrumbItem {
   label: string;
@@ -18,26 +18,26 @@ export interface UseBreadcrumbsOptions {
 export function useBreadcrumbs({
   customLabels = {},
   excludePaths = [],
-  homeLabel = "Home",
+  homeLabel = 'Home',
 }: UseBreadcrumbsOptions = {}) {
   const pathname = usePathname();
 
   const breadcrumbs = useMemo(() => {
-    const segments = pathname.split("/").filter(Boolean);
+    const segments = pathname.split('/').filter(Boolean);
     const items: BreadcrumbItem[] = [];
 
     // Add home if not excluded
-    if (!excludePaths.includes("/")) {
+    if (!excludePaths.includes('/')) {
       items.push({
         label: homeLabel,
-        href: "/",
-        isActive: pathname === "/",
+        href: '/',
+        isActive: pathname === '/',
       });
     }
 
     // Build breadcrumbs from path segments
     segments.forEach((segment, index) => {
-      const href = "/" + segments.slice(0, index + 1).join("/");
+      const href = `/${segments.slice(0, index + 1).join('/')}`;
 
       // Skip if path is excluded
       if (excludePaths.includes(href)) {
@@ -46,8 +46,8 @@ export function useBreadcrumbs({
 
       // Format label
       let label = decodeURIComponent(segment)
-        .replace(/-/g, " ")
-        .replace(/_/g, " ")
+        .replace(/-/g, ' ')
+        .replace(/_/g, ' ')
         .replace(/\b\w/g, (char) => char.toUpperCase());
 
       // Use custom label if provided
@@ -67,7 +67,7 @@ export function useBreadcrumbs({
 
   return {
     breadcrumbs,
-    currentPage: breadcrumbs[breadcrumbs.length - 1],
-    isHomePage: pathname === "/",
+    currentPage: breadcrumbs.at(-1),
+    isHomePage: pathname === '/',
   };
 }

@@ -19,13 +19,15 @@
     "db:push": "dotenv -- turbo -F @bounty/db db:push",
     "db:studio": "dotenv -- turbo -F @bounty/db db:studio",
     "db:generate": "dotenv -- turbo -F @bounty/db db:generate",
-    "db:migrate": "dotenv -- turbo -F @bounty/db db:migrate"
+    "db:migrate": "dotenv -- turbo -F @bounty/db db:migrate",
+    "prettier": "npx ultracite format"
   },
   "dependencies": {
     "@databuddy/sdk": "^1.3.0",
     "@hookform/resolvers": "^5.1.1",
     "@number-flow/react": "^0.5.10",
     "@t3-oss/env-nextjs": "^0.13.8",
+    "@bounty/track": "workspace:*",
     "better-auth": "1.3.0",
     "date-fns": "^4.1.0",
     "js-base64": "^3.7.8",

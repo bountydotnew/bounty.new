@@ -1,5 +1,5 @@
-import { Ratelimit } from "@unkey/ratelimit";
-import { env } from "@bounty/env/server";
+import { env } from '@bounty/env/server';
+import { Ratelimit } from '@unkey/ratelimit';
 
 const ratelimitCache: Record<string, Ratelimit> = {};
 

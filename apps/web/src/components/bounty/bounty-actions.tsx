@@ -1,11 +1,22 @@
-"use client";
+'use client';
 
-import { ArrowUpIcon, Bookmark, Edit, MoreHorizontal, Share2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import BookmarkButton from "@/components/bounty/bookmark-button";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { trpc } from "@/utils/trpc";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  ArrowUpIcon,
+  Bookmark,
+  Edit,
+  MoreHorizontal,
+  Share2,
+} from 'lucide-react';
+import BookmarkButton from '@/components/bounty/bookmark-button';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { trpc } from '@/utils/trpc';
 
 interface BountyActionsProps {
   bountyId: string;
@@ -42,43 +53,58 @@ interface ActionsDropdownProps {
   bookmarked?: boolean;
 }
 
-export function UpvoteButton({ isVoted, voteCount, onUpvote, className }: UpvoteButtonProps) {
+export function UpvoteButton({
+  isVoted,
+  voteCount,
+  onUpvote,
+  className,
+}: UpvoteButtonProps) {
   return (
     <button
-      onMouseDown={(e) => e.stopPropagation()}
-      onTouchStart={(e) => e.stopPropagation()}
+      aria-label="Upvote bounty"
+      aria-pressed={isVoted}
+      className={`flex items-center gap-1 rounded-md border border-neutral-700 bg-neutral-800/40 px-2 py-1 text-neutral-300 text-xs hover:bg-neutral-700/40 ${isVoted ? 'border-neutral-700/40 bg-[#343333] text-white' : ''} ${className ?? ''}`}
       onClick={(e) => {
         e.stopPropagation();
         e.preventDefault();
         onUpvote();
       }}
-      aria-pressed={isVoted}
-      aria-label="Upvote bounty"
-      className={`flex items-center gap-1 rounded-md px-2 py-1 border border-neutral-700 bg-neutral-800/40 text-xs text-neutral-300 hover:bg-neutral-700/40 ${isVoted ? "border-neutral-700/40 bg-[#343333] text-white" : ""} ${className ?? ""}`}
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
     >
-      <ArrowUpIcon className={`h-4 w-4 ${isVoted ? "text-white" : ""}`} />
+      <ArrowUpIcon className={`h-4 w-4 ${isVoted ? 'text-white' : ''}`} />
       <span>{voteCount}</span>
     </button>
   );
 }
 
-export function ActionsDropdown({ onShare, onBookmark, actions, ariaLabel, bookmarked }: ActionsDropdownProps) {
+export function ActionsDropdown({
+  onShare,
+  onBookmark,
+  actions,
+  ariaLabel,
+  bookmarked,
+}: ActionsDropdownProps) {
   const handleShare = () => {
-    if (onShare) return onShare();
+    if (onShare) {
+      return onShare();
+    }
     try {
-      if (typeof window !== "undefined" && navigator.share) navigator.share({ url: window.location.href });
+      if (typeof window !== 'undefined' && navigator.share) {
+        navigator.share({ url: window.location.href });
+      }
     } catch {}
   };
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
-          size="icon"
+          aria-label={ariaLabel ?? 'Open actions'}
           className="rounded-md border border-neutral-700 bg-neutral-800/40 p-1 text-neutral-300 hover:bg-neutral-700/40"
-          aria-label={ariaLabel ?? "Open actions"}
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
+          size="icon"
+          variant="outline"
         >
           <MoreHorizontal className="h-4 w-4" />
         </Button>
@@ -86,34 +112,62 @@ export function ActionsDropdown({ onShare, onBookmark, actions, ariaLabel, bookm
       <DropdownMenuContent className="z-10 w-44 rounded-md border border-neutral-800 bg-neutral-900 p-1 shadow">
         {actions?.map((action) => (
           <DropdownMenuItem
-            key={action.key}
             className="text-neutral-200 hover:bg-neutral-800"
-            onClick={action.onSelect}
             disabled={action.disabled}
+            key={action.key}
+            onClick={action.onSelect}
           >
             {action.icon}
             {action.label}
           </DropdownMenuItem>
         ))}
-        <DropdownMenuItem className="text-neutral-200 hover:bg-neutral-800" onClick={handleShare}>
+        <DropdownMenuItem
+          className="text-neutral-200 hover:bg-neutral-800"
+          onClick={handleShare}
+        >
           <Share2 className="h-3.5 w-3.5" />
           Share
         </DropdownMenuItem>
-        <DropdownMenuItem className="text-neutral-200 hover:bg-neutral-800" onClick={onBookmark}>
-          <Bookmark className={`h-3.5 w-3.5 ${bookmarked ? "fill-white" : ""}`} />
-          {bookmarked ? "Remove bookmark" : "Bookmark"}
+        <DropdownMenuItem
+          className="text-neutral-200 hover:bg-neutral-800"
+          onClick={onBookmark}
+        >
+          <Bookmark
+            className={`h-3.5 w-3.5 ${bookmarked ? 'fill-white' : ''}`}
+          />
+          {bookmarked ? 'Remove bookmark' : 'Bookmark'}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-export default function BountyActions({ bountyId, canEdit, isVoted, voteCount, onUpvote, onEdit, onShare, onBookmark, actions }: BountyActionsProps) {
+export default function BountyActions({
+  bountyId,
+  canEdit,
+  isVoted,
+  voteCount,
+  onUpvote,
+  onEdit,
+  onShare,
+  actions,
+}: BountyActionsProps) {
   const queryClient = useQueryClient();
-  const bookmarkQuery = useQuery(trpc.bounties.getBountyBookmark.queryOptions({ bountyId }));
-  const toggleBookmark = useMutation({ ...trpc.bounties.toggleBountyBookmark.mutationOptions() });
+  const bookmarkQuery = useQuery(
+    trpc.bounties.getBountyBookmark.queryOptions({ bountyId })
+  );
+  const toggleBookmark = useMutation({
+    ...trpc.bounties.toggleBountyBookmark.mutationOptions(),
+  });
   const baseActions: ActionItem[] = canEdit
-    ? [{ key: "edit", label: "Edit", onSelect: onEdit, icon: <Edit className="h-3.5 w-3.5" /> }]
+    ? [
+        {
+          key: 'edit',
+          label: 'Edit',
+          onSelect: onEdit,
+          icon: <Edit className="h-3.5 w-3.5" />,
+        },
+      ]
     : [];
   const mergedActions = [...baseActions, ...(actions ?? [])];
   const handleToggleBookmark = () => {
@@ -125,14 +179,28 @@ export default function BountyActions({ bountyId, canEdit, isVoted, voteCount, o
       {
         onError: () => queryClient.setQueryData(key, { bookmarked: current }),
         onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
-      },
+      }
     );
   };
   return (
     <div className="flex items-center gap-2">
-      <UpvoteButton isVoted={isVoted} voteCount={voteCount} onUpvote={onUpvote} />
-      <BookmarkButton bountyId={bountyId} bookmarked={bookmarkQuery.data?.bookmarked} onToggle={handleToggleBookmark} />
-      <ActionsDropdown onShare={onShare} onBookmark={handleToggleBookmark} actions={mergedActions} ariaLabel="Open bounty actions" bookmarked={bookmarkQuery.data?.bookmarked} />
+      <UpvoteButton
+        isVoted={isVoted}
+        onUpvote={onUpvote}
+        voteCount={voteCount}
+      />
+      <BookmarkButton
+        bookmarked={bookmarkQuery.data?.bookmarked}
+        bountyId={bountyId}
+        onToggle={handleToggleBookmark}
+      />
+      <ActionsDropdown
+        actions={mergedActions}
+        ariaLabel="Open bounty actions"
+        bookmarked={bookmarkQuery.data?.bookmarked}
+        onBookmark={handleToggleBookmark}
+        onShare={onShare}
+      />
     </div>
   );
 }

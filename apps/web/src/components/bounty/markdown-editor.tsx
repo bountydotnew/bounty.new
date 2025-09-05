@@ -1,13 +1,14 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { MarkdownContent } from '@/components/bounty/markdown-content';
-import { Eye, Edit, Split } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { Edit, Eye, Split } from 'lucide-react';
 import * as React from 'react';
+import { useState } from 'react';
+import { MarkdownContent } from '@/components/bounty/markdown-content';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
-interface MarkdownTextareaProps extends Omit<React.ComponentProps<'textarea'>, 'onChange'> {
+interface MarkdownTextareaProps
+  extends Omit<React.ComponentProps<'textarea'>, 'onChange'> {
   value?: string;
   onChange?: (value: string) => void;
   placeholder?: string;
@@ -17,11 +18,11 @@ interface MarkdownTextareaProps extends Omit<React.ComponentProps<'textarea'>, '
 function Textarea({ className, ...props }: React.ComponentProps<'textarea'>) {
   return (
     <textarea
-      data-slot="textarea"
       className={cn(
-        'border-input placeholder:text-muted-foreground flex min-h-16 w-full rounded-md bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
-        className,
+        'flex min-h-16 w-full rounded-md border-input bg-transparent px-3 py-2 text-base shadow-xs outline-none transition-[color,box-shadow] placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
+        className
       )}
+      data-slot="textarea"
       {...props}
     />
   );
@@ -49,34 +50,34 @@ export function MarkdownTextarea({
 
   return (
     <div className={cn('overflow-hidden rounded-md border', className)}>
-      <div className="bg-muted/30 flex items-center justify-between border-b">
+      <div className="flex items-center justify-between border-b bg-muted/30">
         <div className="flex items-center">
           <Button
-            variant={mode === 'write' ? 'default' : 'text'}
-            size="sm"
             className="rounded-none"
-            type="button"
             onClick={() => setMode('write')}
+            size="sm"
+            type="button"
+            variant={mode === 'write' ? 'default' : 'text'}
           >
             <Edit className="mr-1 h-4 w-4" />
             Write
           </Button>
           <Button
-            variant={mode === 'preview' ? 'default' : 'text'}
-            size="sm"
             className="rounded-none"
-            type="button"
             onClick={() => setMode('preview')}
+            size="sm"
+            type="button"
+            variant={mode === 'preview' ? 'default' : 'text'}
           >
             <Eye className="mr-1 h-4 w-4" />
             Preview
           </Button>
           <Button
-            variant={mode === 'split' ? 'default' : 'text'}
-            size="sm"
             className="rounded-none"
-            type="button"
             onClick={() => setMode('split')}
+            size="sm"
+            type="button"
+            variant={mode === 'split' ? 'default' : 'text'}
           >
             <Split className="mr-1 h-4 w-4" />
             Split
@@ -87,19 +88,19 @@ export function MarkdownTextarea({
       <div className="h-[200px]">
         {mode === 'write' && (
           <Textarea
-            value={content}
+            className="h-full resize-none overflow-y-auto rounded-none border-0 p-2"
             onChange={handleChange}
             placeholder={placeholder}
-            className="h-full resize-none overflow-y-auto rounded-none border-0 p-2"
+            value={content}
             {...props}
           />
         )}
 
         {mode === 'preview' && (
           <div
+            aria-label="Markdown preview"
             className="h-full overflow-y-auto border-0 p-2"
             role="region"
-            aria-label="Markdown preview"
           >
             <MarkdownContent content={content} />
           </div>
@@ -109,14 +110,14 @@ export function MarkdownTextarea({
           <div className="grid h-full min-w-0 grid-cols-2">
             <div className="min-w-0 border-r">
               <Textarea
-                value={content}
+                className="h-full resize-none overflow-y-auto rounded-none border-0 p-2"
                 onChange={handleChange}
                 placeholder={placeholder}
-                className="h-full resize-none overflow-y-auto rounded-none border-0 p-2"
+                value={content}
                 {...props}
               />
             </div>
-            <div className="h-full min-w-0 overflow-y-auto p-2 break-words">
+            <div className="h-full min-w-0 overflow-y-auto break-words p-2">
               <MarkdownContent content={content} />
             </div>
           </div>

@@ -1,15 +1,15 @@
-import { ImageResponse } from "next/og";
-import { NextRequest } from "next/server";
-import BountyIssueOgCard from "@/components/og/BountyIssueOgCard";
+import { ImageResponse } from 'next/og';
+import type { NextRequest } from 'next/server';
+import BountyIssueOgCard from '@/components/og/BountyIssueOgCard';
 
-export const runtime = "edge";
-export const alt = "Bounty Issue";
+export const runtime = 'edge';
+export const alt = 'Bounty Issue';
 export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+export const contentType = 'image/png';
 
 export default async function Image(
   req: NextRequest,
-  { params }: { params: { owner: string; repo: string; issueNumber: string } },
+  { params }: { params: { owner: string; repo: string; issueNumber: string } }
 ) {
   const owner = params.owner;
   const repo = params.repo;
@@ -21,7 +21,7 @@ export default async function Image(
     const base = new URL(req.url).origin;
     const url = `https://github.com/${owner}/${repo}/issues/${issueNumber}`;
     const res = await fetch(
-      `${base}/api/trpc/repository.issueFromUrl?input=${encodeURIComponent(JSON.stringify({ url }))}`,
+      `${base}/api/trpc/repository.issueFromUrl?input=${encodeURIComponent(JSON.stringify({ url }))}`
     );
     const json: unknown = await res.json();
     const issue = (
@@ -42,29 +42,27 @@ export default async function Image(
 
   const svgLogo = (
     <svg
-      width="64"
       height="64"
       viewBox="0 0 188 45"
+      width="64"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <rect width="188" height="45" rx="9" fill="#fff" />
+      <rect fill="#fff" height="45" rx="9" width="188" />
     </svg>
   );
 
   return new ImageResponse(
-    (
-      <BountyIssueOgCard
-        owner={owner}
-        repo={repo}
-        issueNumber={issueNumber}
-        title={title}
-        amount={amount}
-        currency={currency}
-        logo={svgLogo}
-      />
-    ),
+    <BountyIssueOgCard
+      amount={amount}
+      currency={currency}
+      issueNumber={issueNumber}
+      logo={svgLogo}
+      owner={owner}
+      repo={repo}
+      title={title}
+    />,
     {
       ...size,
-    },
+    }
   );
 }

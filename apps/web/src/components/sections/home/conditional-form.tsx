@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import { Suspense } from "react";
-import { WaitlistForm } from "./waitlist-form";
+import { Suspense } from 'react';
+import { WaitlistForm } from './waitlist-form';
+
 // import { BountyDraftForm } from "./bounty-draft-form";
 // import { useSearchParams } from "next/navigation";
 

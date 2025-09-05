@@ -1,13 +1,7 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
+import { useState } from 'react';
+import Bounty from '@/components/icons/bounty';
+import { BetaApplicationForm } from '@/components/sections/home/beta-application-form';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -15,11 +9,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { BetaApplicationForm } from "@/components/sections/home/beta-application-form";
-import Bounty from "@/components/icons/bounty";
-import { BETA_APPLICATION_MESSAGES } from "@/constants/dashboard";
-import type { UserData, BetaSubmission } from "@/types/dashboard";
+} from '@/components/ui/dialog';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
+import { BETA_APPLICATION_MESSAGES } from '@/constants/dashboard';
+import type { BetaSubmission, UserData } from '@/types/dashboard';
 
 interface BetaAccessScreenProps {
   userData?: UserData;
@@ -40,11 +40,12 @@ export function BetaAccessScreen({
 
   const userName = userData?.name || sessionUserName;
   const hasSubmitted = existingSubmission?.hasSubmitted;
-  const isDenied = userData?.betaAccessStatus === "denied";
+  const isDenied = userData?.betaAccessStatus === 'denied';
 
   const getButtonText = () => {
-    if (!hasSubmitted)
+    if (!hasSubmitted) {
       return BETA_APPLICATION_MESSAGES.BUTTON_LABELS.FILL_APPLICATION;
+    }
     return isDenied
       ? BETA_APPLICATION_MESSAGES.BUTTON_LABELS.APPLICATION_DENIED
       : BETA_APPLICATION_MESSAGES.BUTTON_LABELS.APPLICATION_SUBMITTED;
@@ -57,10 +58,10 @@ export function BetaAccessScreen({
 
   const ApplicationButton = (
     <Button
-      variant="default"
-      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+      aria-describedby={hasSubmitted ? 'application-status' : undefined}
+      className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground text-sm ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
       disabled={hasSubmitted}
-      aria-describedby={hasSubmitted ? "application-status" : undefined}
+      variant="default"
     >
       {getButtonText()}
     </Button>
@@ -69,23 +70,23 @@ export function BetaAccessScreen({
   const FormContent = <BetaApplicationForm onSuccess={handleFormSuccess} />;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-full space-y-4">
-      <Bounty className="w-20 h-20 mb-10" aria-hidden="true" />
+    <div className="flex min-h-full flex-col items-center justify-center space-y-4">
+      <Bounty aria-hidden="true" className="mb-10 h-20 w-20" />
 
-      <h1 className="text-2xl font-bold">Hi, {userName}!</h1>
+      <h1 className="font-bold text-2xl">Hi, {userName}!</h1>
 
-      <p className="text-muted-foreground text-center max-w-md">
+      <p className="max-w-md text-center text-muted-foreground">
         {BETA_APPLICATION_MESSAGES.BETA_PHASE_MESSAGE}
       </p>
 
       {hasSubmitted && (
-        <div id="application-status" className="sr-only">
-          Your application has been {isDenied ? "denied" : "submitted"}
+        <div className="sr-only" id="application-status">
+          Your application has been {isDenied ? 'denied' : 'submitted'}
         </div>
       )}
 
       {isMobile ? (
-        <Drawer open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <Drawer onOpenChange={setIsModalOpen} open={isModalOpen}>
           <DrawerTrigger asChild>{ApplicationButton}</DrawerTrigger>
           <DrawerContent className="max-h-[82vh]">
             <div className="mx-auto w-full max-w-md">
@@ -93,7 +94,7 @@ export function BetaAccessScreen({
                 <DrawerTitle className="mt-8">
                   {BETA_APPLICATION_MESSAGES.TITLE}
                 </DrawerTitle>
-                <DrawerDescription className="leading-6 mt-2">
+                <DrawerDescription className="mt-2 leading-6">
                   {BETA_APPLICATION_MESSAGES.DESCRIPTION}
                 </DrawerDescription>
               </DrawerHeader>
@@ -102,7 +103,7 @@ export function BetaAccessScreen({
           </DrawerContent>
         </Drawer>
       ) : (
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <Dialog onOpenChange={setIsModalOpen} open={isModalOpen}>
           <DialogTrigger asChild>{ApplicationButton}</DialogTrigger>
           <DialogContent className="max-w-md" showOverlay>
             <DialogHeader>

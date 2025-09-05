@@ -1,28 +1,28 @@
-"use client";
+'use client';
 
+import type { AppRouter } from '@bounty/api';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { TRPCClientErrorLike } from '@trpc/client';
+import {
+  Calendar,
+  CheckCircle,
+  Mail,
+  Search,
+  Users,
+  XCircle,
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
-import {
-  Search,
-  Mail,
-  Calendar,
-  Users,
-  CheckCircle,
-  XCircle,
-} from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { trpc } from "@/utils/trpc";
-import type { TRPCClientErrorLike } from "@trpc/client";
-import type { AppRouter } from "@bounty/api";
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { trpc } from '@/utils/trpc';
 
 type WaitlistEntry = {
   id: string;
@@ -61,13 +61,13 @@ export function WaitlistTable({
   const updateAccessMutation = useMutation({
     ...trpc.earlyAccess.updateWaitlistAccess.mutationOptions(),
     onSuccess: () => {
-      toast.success("Access updated successfully");
+      toast.success('Access updated successfully');
       queryClient.invalidateQueries({
-        queryKey: ["earlyAccess", "getAdminWaitlist"],
+        queryKey: ['earlyAccess', 'getAdminWaitlist'],
       });
     },
     onError: (error: TRPCClientErrorLike<AppRouter>) => {
-      toast.error(error.message || "Failed to update access");
+      toast.error(error.message || 'Failed to update access');
     },
   });
 
@@ -77,24 +77,24 @@ export function WaitlistTable({
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card className="border-neutral-800 bg-neutral-900/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Entries</CardTitle>
+            <CardTitle className="font-medium text-sm">Total Entries</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="font-bold text-2xl">{stats.total}</div>
           </CardContent>
         </Card>
 
         <Card className="border-neutral-800 bg-neutral-900/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">With Access</CardTitle>
+            <CardTitle className="font-medium text-sm">With Access</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="font-bold text-2xl text-green-600">
               {stats.withAccess}
             </div>
           </CardContent>
@@ -102,11 +102,11 @@ export function WaitlistTable({
 
         <Card className="border-neutral-800 bg-neutral-900/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
+            <CardTitle className="font-medium text-sm">Pending</CardTitle>
             <XCircle className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
+            <div className="font-bold text-2xl text-orange-600">
               {stats.pending}
             </div>
           </CardContent>
@@ -125,15 +125,15 @@ export function WaitlistTable({
             <div className="flex items-center space-x-2">
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input
+                className="max-w-sm border-neutral-800 bg-neutral-900"
+                onChange={(e) => onSearchChange(e.target.value)}
                 placeholder="Search by email..."
                 value={search}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="max-w-sm bg-neutral-900 border-neutral-800"
               />
             </div>
 
             {isLoading ? (
-              <div className="text-center py-8">
+              <div className="py-8 text-center">
                 <p className="text-muted-foreground">
                   Loading waitlist entries...
                 </p>
@@ -142,8 +142,8 @@ export function WaitlistTable({
               <div className="space-y-4">
                 {entries.map((entry) => (
                   <div
+                    className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900/40 p-4"
                     key={entry.id}
-                    className="flex items-center justify-between p-4 border rounded-lg border-neutral-800 bg-neutral-900/40"
                   >
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
@@ -152,12 +152,12 @@ export function WaitlistTable({
                       </div>
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-muted-foreground text-sm">
                           {new Date(entry.createdAt).toLocaleDateString()}
                         </span>
                       </div>
                       {entry.hasAccess ? (
-                        <Badge variant="default" className="bg-green-600">
+                        <Badge className="bg-green-600" variant="default">
                           Has Access
                         </Badge>
                       ) : (
@@ -168,18 +168,18 @@ export function WaitlistTable({
                     <div className="flex items-center space-x-2">
                       {entry.hasAccess ? (
                         <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleUpdateAccess(entry.id, false)}
                           disabled={updateAccessMutation.isPending}
+                          onClick={() => handleUpdateAccess(entry.id, false)}
+                          size="sm"
+                          variant="outline"
                         >
                           Revoke Access
                         </Button>
                       ) : (
                         <Button
-                          size="sm"
-                          onClick={() => handleUpdateAccess(entry.id, true)}
                           disabled={updateAccessMutation.isPending}
+                          onClick={() => handleUpdateAccess(entry.id, true)}
+                          size="sm"
                         >
                           Grant Access
                         </Button>
@@ -189,7 +189,7 @@ export function WaitlistTable({
                 ))}
 
                 {entries.length === 0 && (
-                  <div className="text-center py-8">
+                  <div className="py-8 text-center">
                     <p className="text-muted-foreground">
                       No waitlist entries found
                     </p>
@@ -201,10 +201,10 @@ export function WaitlistTable({
             {totalPages > 1 && (
               <div className="flex items-center justify-center space-x-2">
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onPageChange(page - 1)}
                   disabled={page === 1}
+                  onClick={() => onPageChange(page - 1)}
+                  size="sm"
+                  variant="outline"
                 >
                   Previous
                 </Button>
@@ -212,10 +212,10 @@ export function WaitlistTable({
                   Page {page} of {totalPages}
                 </span>
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onPageChange(page + 1)}
                   disabled={page === totalPages}
+                  onClick={() => onPageChange(page + 1)}
+                  size="sm"
+                  variant="outline"
                 >
                   Next
                 </Button>

@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { DollarSign, Heart } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { toast } from "sonner";
-import { DollarSign, Heart } from "lucide-react";
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface PaymentModalProps {
   open: boolean;
@@ -33,13 +33,13 @@ export function PaymentModal({
   allowCustomAmount = true,
 }: PaymentModalProps) {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
-  const [customAmount, setCustomAmount] = useState("");
-  const [message, setMessage] = useState("");
+  const [customAmount, setCustomAmount] = useState('');
+  const [message, setMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handlePresetSelect = (amount: number) => {
     setSelectedAmount(amount);
-    setCustomAmount("");
+    setCustomAmount('');
   };
 
   const handleCustomAmountChange = (value: string) => {
@@ -48,8 +48,12 @@ export function PaymentModal({
   };
 
   const getSelectedAmount = () => {
-    if (selectedAmount) return selectedAmount;
-    if (customAmount) return parseFloat(customAmount);
+    if (selectedAmount) {
+      return selectedAmount;
+    }
+    if (customAmount) {
+      return Number.parseFloat(customAmount);
+    }
     return 0;
   };
 
@@ -57,7 +61,7 @@ export function PaymentModal({
     const amount = getSelectedAmount();
 
     if (!amount || amount <= 0) {
-      toast.error("Please select or enter a valid amount");
+      toast.error('Please select or enter a valid amount');
       return;
     }
 
@@ -72,23 +76,23 @@ export function PaymentModal({
 
       // Reset form
       setSelectedAmount(null);
-      setCustomAmount("");
-      setMessage("");
+      setCustomAmount('');
+      setMessage('');
     }, 2000);
   };
 
   const isValidAmount = () => {
     const amount = getSelectedAmount();
-    return amount > 0 && amount <= 10000; // Max $10,000
+    return amount > 0 && amount <= 10_000; // Max $10,000
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-background" showOverlay>
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent className="bg-background sm:max-w-md" showOverlay>
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Heart className="w-5 h-5 text-red-500" />
+              <Heart className="h-5 w-5 text-red-500" />
               <DialogTitle>Support {recipientName}</DialogTitle>
             </div>
           </div>
@@ -100,18 +104,18 @@ export function PaymentModal({
         <div className="space-y-6">
           {/* Preset Amounts */}
           <div>
-            <Label className="text-sm font-medium mb-3 block">
+            <Label className="mb-3 block font-medium text-sm">
               Quick amounts
             </Label>
             <div className="grid grid-cols-2 gap-2">
               {presetAmounts.map((amount) => (
                 <Button
+                  className="h-12 font-semibold text-base"
                   key={amount}
-                  variant={selectedAmount === amount ? "default" : "outline"}
-                  className="h-12 text-base font-semibold"
                   onClick={() => handlePresetSelect(amount)}
+                  variant={selectedAmount === amount ? 'default' : 'outline'}
                 >
-                  <DollarSign className="w-4 h-4 mr-1" />
+                  <DollarSign className="mr-1 h-4 w-4" />
                   {amount}
                 </Button>
               ))}
@@ -122,23 +126,23 @@ export function PaymentModal({
           {allowCustomAmount && (
             <div>
               <Label
+                className="mb-2 block font-medium text-sm"
                 htmlFor="custom-amount"
-                className="text-sm font-medium mb-2 block"
               >
                 Custom amount
               </Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <DollarSign className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 transform text-gray-500" />
                 <Input
-                  id="custom-amount"
-                  type="number"
-                  placeholder="0.00"
-                  value={customAmount}
-                  onChange={(e) => handleCustomAmountChange(e.target.value)}
                   className="pl-9"
-                  min="1"
+                  id="custom-amount"
                   max="10000"
+                  min="1"
+                  onChange={(e) => handleCustomAmountChange(e.target.value)}
+                  placeholder="0.00"
                   step="0.01"
+                  type="number"
+                  value={customAmount}
                 />
               </div>
             </div>
@@ -146,28 +150,28 @@ export function PaymentModal({
 
           {/* Optional Message */}
           <div>
-            <Label htmlFor="message" className="text-sm font-medium mb-2 block">
+            <Label className="mb-2 block font-medium text-sm" htmlFor="message">
               Message (optional)
             </Label>
             <textarea
+              className="h-20 w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm"
               id="message"
+              maxLength={200}
+              onChange={(e) => setMessage(e.target.value)}
               placeholder="Thanks for the great work!"
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none h-20 text-sm"
-              maxLength={200}
             />
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="mt-1 text-gray-500 text-xs">
               {message.length}/200 characters
             </div>
           </div>
 
           {/* Amount Summary */}
           {getSelectedAmount() > 0 && (
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex justify-between items-center">
+            <div className="rounded-lg bg-gray-50 p-4">
+              <div className="flex items-center justify-between">
                 <span className="font-medium">Total</span>
-                <span className="text-xl font-bold">
+                <span className="font-bold text-xl">
                   ${getSelectedAmount().toFixed(2)}
                 </span>
               </div>
@@ -177,20 +181,20 @@ export function PaymentModal({
 
         <DialogFooter>
           <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
             disabled={isProcessing}
+            onClick={() => onOpenChange(false)}
+            variant="outline"
           >
             Cancel
           </Button>
           <Button
-            onClick={handlePayment}
-            disabled={!isValidAmount() || isProcessing}
             className="min-w-24"
+            disabled={!isValidAmount() || isProcessing}
+            onClick={handlePayment}
           >
             {isProcessing ? (
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 Processing
               </div>
             ) : (

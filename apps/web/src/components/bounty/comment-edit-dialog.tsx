@@ -1,11 +1,17 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { useMediaQuery } from "@/hooks/use-media-query";
-import { Button, HotkeyButton } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { useEffect, useMemo, useState } from 'react';
+import { Button, HotkeyButton } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Textarea } from '@/components/ui/textarea';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 interface CommentEditDialogProps {
   open: boolean;
@@ -17,46 +23,91 @@ interface CommentEditDialogProps {
   error?: string | null;
 }
 
-export default function CommentEditDialog({ open, onOpenChange, initialValue, maxChars = 245, onSave, isSaving, error }: CommentEditDialogProps) {
+export default function CommentEditDialog({
+  open,
+  onOpenChange,
+  initialValue,
+  maxChars = 245,
+  onSave,
+  isSaving,
+  error,
+}: CommentEditDialogProps) {
   const [value, setValue] = useState(initialValue);
   useEffect(() => {
-    if (open) setValue(initialValue);
+    if (open) {
+      setValue(initialValue);
+    }
   }, [open, initialValue]);
 
   const remaining = useMemo(() => maxChars - value.length, [maxChars, value]);
 
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   if (isMobile) {
     return (
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom" className="w-full max-h-[70vh] overflow-y-auto p-4 rounded-t-2xl border border-neutral-800 bg-neutral-900">
-          <div className="text-sm font-medium text-neutral-200 mb-4">Edit comment</div>
+      <Sheet onOpenChange={onOpenChange} open={open}>
+        <SheetContent
+          className="max-h-[70vh] w-full overflow-y-auto rounded-t-2xl border border-neutral-800 bg-neutral-900 p-4"
+          side="bottom"
+        >
+          <div className="mb-4 font-medium text-neutral-200 text-sm">
+            Edit comment
+          </div>
           <div className="space-y-2">
             <Textarea
-              value={value}
+              className={`min-h-20 w-full rounded-md border bg-neutral-900 p-3 text-neutral-200 text-sm placeholder:text-neutral-500 focus:outline-none ${remaining < 0 ? 'border-red-700' : 'border-neutral-800'}`}
               onChange={(e) => {
                 const v = e.target.value;
-                if (v.length <= maxChars) setValue(v);
+                if (v.length <= maxChars) {
+                  setValue(v);
+                }
               }}
-              placeholder="Update your comment"
-              className={`w-full min-h-20 rounded-md bg-neutral-900 border p-3 text-sm text-neutral-200 placeholder:text-neutral-500 focus:outline-none ${remaining < 0 ? "border-red-700" : "border-neutral-800"}`}
               onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
                   e.preventDefault();
                   const trimmed = value.trim();
-                  if (!trimmed || trimmed.length > maxChars) return;
+                  if (!trimmed || trimmed.length > maxChars) {
+                    return;
+                  }
                   onSave(trimmed);
                 }
               }}
+              placeholder="Update your comment"
+              value={value}
             />
             <div className="mt-1 flex items-center justify-end text-[11px]">
-              <span className={`${remaining < 0 ? "text-red-500" : "text-neutral-500"}`}>{remaining}</span>
+              <span
+                className={`${remaining < 0 ? 'text-red-500' : 'text-neutral-500'}`}
+              >
+                {remaining}
+              </span>
             </div>
           </div>
           <div className="mt-4 flex items-center justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="rounded-md" disabled={isSaving}>Cancel</Button>
-            <HotkeyButton hotkey={"⏎"} size="sm" onClick={() => { const trimmed = value.trim(); if (!trimmed || trimmed.length > maxChars) return; onSave(trimmed); }} className="rounded-md" disabled={isSaving || value.trim().length === 0}>Save</HotkeyButton>
+            <Button
+              className="rounded-md"
+              disabled={isSaving}
+              onClick={() => onOpenChange(false)}
+              size="sm"
+              variant="outline"
+            >
+              Cancel
+            </Button>
+            <HotkeyButton
+              className="rounded-md"
+              disabled={isSaving || value.trim().length === 0}
+              hotkey={'⏎'}
+              onClick={() => {
+                const trimmed = value.trim();
+                if (!trimmed || trimmed.length > maxChars) {
+                  return;
+                }
+                onSave(trimmed);
+              }}
+              size="sm"
+            >
+              Save
+            </HotkeyButton>
           </div>
         </SheetContent>
       </Sheet>
@@ -64,41 +115,71 @@ export default function CommentEditDialog({ open, onOpenChange, initialValue, ma
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-neutral-900 w-full max-w-[520px] rounded-xl border border-neutral-800 p-5">
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent className="w-full max-w-[520px] rounded-xl border border-neutral-800 bg-neutral-900 p-5">
         <DialogHeader>
-          <DialogTitle className="text-sm font-medium text-neutral-200 mb-2">Edit comment</DialogTitle>
+          <DialogTitle className="mb-2 font-medium text-neutral-200 text-sm">
+            Edit comment
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-2">
           <Textarea
-            value={value}
+            className={`min-h-20 w-full rounded-md border bg-neutral-900 p-3 text-neutral-200 text-sm placeholder:text-neutral-500 focus:outline-none ${remaining < 0 ? 'border-red-700' : 'border-neutral-800'}`}
             onChange={(e) => {
               const v = e.target.value;
-              if (v.length <= maxChars) setValue(v);
+              if (v.length <= maxChars) {
+                setValue(v);
+              }
             }}
-            placeholder="Update your comment"
-            className={`w-full min-h-20 rounded-md bg-neutral-900 border p-3 text-sm text-neutral-200 placeholder:text-neutral-500 focus:outline-none ${remaining < 0 ? "border-red-700" : "border-neutral-800"}`}
             onKeyDown={(e) => {
-              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
                 e.preventDefault();
                 const trimmed = value.trim();
-                if (!trimmed || trimmed.length > maxChars) return;
+                if (!trimmed || trimmed.length > maxChars) {
+                  return;
+                }
                 onSave(trimmed);
               }
             }}
+            placeholder="Update your comment"
+            value={value}
           />
           <div className="mt-1 flex items-center justify-between text-[11px]">
             {error && <span className="text-red-400">{error}</span>}
-            <span className={`${remaining < 0 ? "text-red-500" : "text-neutral-500"}`}>{remaining}</span>
+            <span
+              className={`${remaining < 0 ? 'text-red-500' : 'text-neutral-500'}`}
+            >
+              {remaining}
+            </span>
           </div>
         </div>
         <DialogFooter className="mt-4 flex items-center justify-end gap-2">
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="rounded-md" disabled={isSaving}>Cancel</Button>
-          <HotkeyButton hotkey={"⏎"} size="sm" onClick={() => { const trimmed = value.trim(); if (!trimmed || trimmed.length > maxChars) return; onSave(trimmed); }} className="rounded-md" disabled={isSaving || value.trim().length === 0}>Save</HotkeyButton>
+          <Button
+            className="rounded-md"
+            disabled={isSaving}
+            onClick={() => onOpenChange(false)}
+            size="sm"
+            variant="outline"
+          >
+            Cancel
+          </Button>
+          <HotkeyButton
+            className="rounded-md"
+            disabled={isSaving || value.trim().length === 0}
+            hotkey={'⏎'}
+            onClick={() => {
+              const trimmed = value.trim();
+              if (!trimmed || trimmed.length > maxChars) {
+                return;
+              }
+              onSave(trimmed);
+            }}
+            size="sm"
+          >
+            Save
+          </HotkeyButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
-

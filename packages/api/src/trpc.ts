@@ -1,5 +1,5 @@
-import { initTRPC, TRPCError } from "@trpc/server";
-import type { Context } from "./context";
+import { initTRPC, TRPCError } from '@trpc/server';
+import type { Context } from './context';
 
 export const t = initTRPC.context<Context>().create();
 
@@ -10,9 +10,9 @@ export const publicProcedure = t.procedure;
 export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   if (!ctx.session) {
     throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "Authentication required",
-      cause: "No session",
+      code: 'UNAUTHORIZED',
+      message: 'Authentication required',
+      cause: 'No session',
     });
   }
   return next({
@@ -31,8 +31,8 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   // Temporary bypass for development - remove this in production
   if (!user) {
     throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "User not found",
+      code: 'FORBIDDEN',
+      message: 'User not found',
     });
   }
 

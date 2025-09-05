@@ -1,12 +1,12 @@
-import { IconProps } from "@/types";
+import type { IconProps } from '@/types';
 
 export default function Mail0(props: IconProps) {
   return (
     <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="191"
       height="191"
       viewBox="0 0 191 191"
+      width="191"
+      xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
       <path

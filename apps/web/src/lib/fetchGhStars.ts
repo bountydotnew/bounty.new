@@ -1,8 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
 
 export function useGithubStars(repo: string) {
   return useQuery({
-    queryKey: ["githubStars", repo],
+    queryKey: ['githubStars', repo],
     queryFn: async () => {
       const res = await fetch(`https://api.github.com/repos/${repo}`);
       if (!res.ok) {

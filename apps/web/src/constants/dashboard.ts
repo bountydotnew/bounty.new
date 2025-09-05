@@ -15,14 +15,14 @@ export const LOADING_SKELETON_COUNTS = {
 } as const;
 
 export const BETA_APPLICATION_MESSAGES = {
-  TITLE: "Beta Application",
+  TITLE: 'Beta Application',
   DESCRIPTION:
-    "Get started by filling in the information below to apply for beta testing.",
+    'Get started by filling in the information below to apply for beta testing.',
   BETA_PHASE_MESSAGE:
     "This feature hasn't been enabled yet. We're currently in beta testing phase.",
   BUTTON_LABELS: {
-    FILL_APPLICATION: "Fill application form",
-    APPLICATION_SUBMITTED: "Application Submitted",
-    APPLICATION_DENIED: "Application Denied",
+    FILL_APPLICATION: 'Fill application form',
+    APPLICATION_SUBMITTED: 'Application Submitted',
+    APPLICATION_DENIED: 'Application Denied',
   },
 } as const;

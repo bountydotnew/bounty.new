@@ -1,6 +1,9 @@
-import { notification, type notificationTypeEnum } from "../schema/notifications";
-import { eq, and, desc, count, lt } from "drizzle-orm";
-import { db } from "../index";
+import { and, count, desc, eq, lt } from 'drizzle-orm';
+import { db } from '../index';
+import {
+  notification,
+  type notificationTypeEnum,
+} from '../schema/notifications';
 
 export type NotificationType = (typeof notificationTypeEnum.enumValues)[number];
 
@@ -40,7 +43,7 @@ export async function createNotification(input: CreateNotificationInput) {
 
 export async function getNotificationsForUser(
   userId: string,
-  options: GetNotificationsOptions = {},
+  options: GetNotificationsOptions = {}
 ) {
   const { limit = 50, offset = 0, unreadOnly = false } = options;
 
@@ -56,14 +59,19 @@ export async function getNotificationsForUser(
   });
 }
 
-export async function markNotificationAsRead(notificationId: string, userId: string) {
+export async function markNotificationAsRead(
+  notificationId: string,
+  userId: string
+) {
   const [updatedNotification] = await db
     .update(notification)
     .set({
       read: true,
       updatedAt: new Date(),
     })
-    .where(and(eq(notification.id, notificationId), eq(notification.userId, userId)))
+    .where(
+      and(eq(notification.id, notificationId), eq(notification.userId, userId))
+    )
     .returning();
 
   return updatedNotification;
@@ -91,13 +99,15 @@ export async function getUnreadNotificationCount(userId: string) {
   return result?.count ?? 0;
 }
 
-export async function cleanupOldNotifications(daysToKeep: number = 30) {
+export async function cleanupOldNotifications(daysToKeep = 30) {
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
 
   const deletedNotifications = await db
     .delete(notification)
-    .where(and(eq(notification.read, true), lt(notification.createdAt, cutoffDate)))
+    .where(
+      and(eq(notification.read, true), lt(notification.createdAt, cutoffDate))
+    )
     .returning();
 
   return deletedNotifications;

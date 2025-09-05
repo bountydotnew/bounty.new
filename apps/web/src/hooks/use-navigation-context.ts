@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { usePathname, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useMemo } from 'react';
 
 export type NavigationContext = {
-  from: "dashboard" | "bounties" | "gh-issue" | "direct";
+  from: 'dashboard' | 'bounties' | 'gh-issue' | 'direct';
   backPath: string;
   backLabel: string;
   breadcrumbs: Array<{
@@ -23,48 +23,48 @@ export function useNavigationContext(): NavigationContext {
   const searchParams = useSearchParams();
 
   return useMemo(() => {
-    const from = searchParams.get("from");
-    const ref = searchParams.get("ref");
+    const from = searchParams.get('from');
+    const ref = searchParams.get('ref');
 
     // Dashboard context
-    if (from === "dashboard" || pathname === "/dashboard") {
+    if (from === 'dashboard' || pathname === '/dashboard') {
       return {
-        from: "dashboard",
-        backPath: "/dashboard",
-        backLabel: "Dashboard",
-        breadcrumbs: [{ label: "Dashboard", href: "/dashboard" }],
+        from: 'dashboard',
+        backPath: '/dashboard',
+        backLabel: 'Dashboard',
+        breadcrumbs: [{ label: 'Dashboard', href: '/dashboard' }],
       };
     }
 
     // GitHub issue context
-    if (from === "gh-issue" || ref?.includes("github")) {
+    if (from === 'gh-issue' || ref?.includes('github')) {
       let referrerInfo: {
         owner?: string;
         repo?: string;
         issueNumber?: string;
       } = {};
 
-      if (ref && ref.includes("/issues/")) {
-        const parts = ref.split("/");
+      if (ref?.includes('/issues/')) {
+        const parts = ref.split('/');
         const githubIndex = parts.findIndex((part) =>
-          part.includes("github.com"),
+          part.includes('github.com')
         );
         if (githubIndex !== -1) {
           referrerInfo = {
             owner: parts[githubIndex + 1],
             repo: parts[githubIndex + 2],
-            issueNumber: parts[parts.indexOf("issues") + 1],
+            issueNumber: parts[parts.indexOf('issues') + 1],
           };
         }
       }
 
       if (referrerInfo.owner && referrerInfo.repo && referrerInfo.issueNumber) {
         return {
-          from: "gh-issue",
+          from: 'gh-issue',
           backPath: `/${referrerInfo.owner}/${referrerInfo.repo}/issues/${referrerInfo.issueNumber}`,
           backLabel: `Issue #${referrerInfo.issueNumber}`,
           breadcrumbs: [
-            { label: "GitHub", href: "https://github.com" },
+            { label: 'GitHub', href: 'https://github.com' },
             {
               label: `${referrerInfo.owner}/${referrerInfo.repo}`,
               href: `https://github.com/${referrerInfo.owner}/${referrerInfo.repo}`,
@@ -79,32 +79,32 @@ export function useNavigationContext(): NavigationContext {
       }
 
       return {
-        from: "gh-issue",
-        backPath: "/bounties",
-        backLabel: "Bounties",
+        from: 'gh-issue',
+        backPath: '/bounties',
+        backLabel: 'Bounties',
         breadcrumbs: [
-          { label: "Bounties", href: "/bounties" },
-          { label: "GitHub Import", href: "/bounties" },
+          { label: 'Bounties', href: '/bounties' },
+          { label: 'GitHub Import', href: '/bounties' },
         ],
       };
     }
 
     // Bounties context
-    if (from === "bounties" || pathname === "/bounties") {
+    if (from === 'bounties' || pathname === '/bounties') {
       return {
-        from: "bounties",
-        backPath: "/bounties",
-        backLabel: "Bounties",
-        breadcrumbs: [{ label: "Bounties", href: "/bounties" }],
+        from: 'bounties',
+        backPath: '/bounties',
+        backLabel: 'Bounties',
+        breadcrumbs: [{ label: 'Bounties', href: '/bounties' }],
       };
     }
 
     // Default/direct navigation
     return {
-      from: "direct",
-      backPath: "/bounties",
-      backLabel: "Bounties",
-      breadcrumbs: [{ label: "Bounties", href: "/bounties" }],
+      from: 'direct',
+      backPath: '/bounties',
+      backLabel: 'Bounties',
+      breadcrumbs: [{ label: 'Bounties', href: '/bounties' }],
     };
   }, [pathname, searchParams]);
 }
@@ -112,18 +112,18 @@ export function useNavigationContext(): NavigationContext {
 // Helper function for components to add navigation context when navigating
 export function addNavigationContext(
   targetUrl: string,
-  currentPath: string,
+  currentPath: string
 ): string {
   const params = new URLSearchParams();
 
-  if (currentPath.includes("/dashboard")) {
-    params.set("from", "dashboard");
-  } else if (currentPath.includes("/bounties")) {
-    params.set("from", "bounties");
-  } else if (currentPath.includes("/issues/")) {
-    params.set("from", "gh-issue");
-    if (typeof window !== "undefined") {
-      params.set("ref", window.location.href);
+  if (currentPath.includes('/dashboard')) {
+    params.set('from', 'dashboard');
+  } else if (currentPath.includes('/bounties')) {
+    params.set('from', 'bounties');
+  } else if (currentPath.includes('/issues/')) {
+    params.set('from', 'gh-issue');
+    if (typeof window !== 'undefined') {
+      params.set('ref', window.location.href);
     }
   }
 

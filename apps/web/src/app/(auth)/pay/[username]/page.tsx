@@ -1,29 +1,28 @@
-"use client";
+'use client';
 
-import { use, useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
-import { PaymentModal } from "@/components/payment/payment-modal";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
+import { useQuery } from '@tanstack/react-query';
 import {
+  Activity,
   ArrowLeft,
-  Github,
-  Twitter,
-  Globe,
   DollarSign,
+  GitFork,
+  Github,
+  Globe,
   Heart,
   Star,
+  Twitter,
   User,
-  GitFork,
   Users,
-  Activity,
-} from "lucide-react";
+} from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { use, useEffect, useState } from 'react';
+import { PaymentModal } from '@/components/payment/payment-modal';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from '@/components/ui/link';
-import { useRouter } from "next/navigation";
+import { Separator } from '@/components/ui/separator';
 
 interface PaymentPageProps {
   params: Promise<{ username: string }>;
@@ -35,24 +34,24 @@ export default function PaymentPage({ params }: PaymentPageProps) {
   const router = useRouter();
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
-  const apiKey = searchParams.get("key");
+  const apiKey = searchParams.get('key');
   const username = resolvedParams.username;
 
   // TODO: Replace with actual user query
   const userQuery = useQuery({
-    queryKey: ["user", username],
+    queryKey: ['user', username],
     queryFn: async () => {
       // Mock user data for now
       return {
-        id: "1",
-        username: username,
+        id: '1',
+        username,
         name: username.charAt(0).toUpperCase() + username.slice(1),
         image: `https://github.com/${username}.png`,
-        bio: "Software developer passionate about open source contributions. Building tools that make developers more productive.",
+        bio: 'Software developer passionate about open source contributions. Building tools that make developers more productive.',
         githubUrl: `https://github.com/${username}`,
         twitterUrl:
-          username !== "example" ? `https://twitter.com/${username}` : null,
-        websiteUrl: username === "example" ? "https://example.dev" : null,
+          username !== 'example' ? `https://twitter.com/${username}` : null,
+        websiteUrl: username === 'example' ? 'https://example.dev' : null,
         stats: {
           repositories: 42,
           followers: 1234,
@@ -77,27 +76,27 @@ export default function PaymentPage({ params }: PaymentPageProps) {
   }, [userQuery.data, apiKey, paymentModalOpen]);
   if (userQuery.isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto max-w-4xl px-4 py-8">
         <div className="space-y-6">
-          <div className="h-8 w-24 bg-muted rounded animate-pulse" />
+          <div className="h-8 w-24 animate-pulse rounded bg-muted" />
           <Card>
             <CardHeader>
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-muted rounded-full animate-pulse" />
+                <div className="h-16 w-16 animate-pulse rounded-full bg-muted" />
                 <div className="space-y-2">
-                  <div className="h-6 w-32 bg-muted rounded animate-pulse" />
-                  <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+                  <div className="h-6 w-32 animate-pulse rounded bg-muted" />
+                  <div className="h-4 w-24 animate-pulse rounded bg-muted" />
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="h-4 w-full bg-muted rounded animate-pulse" />
-                <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+                <div className="h-4 w-full animate-pulse rounded bg-muted" />
+                <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
                 <div className="grid grid-cols-3 gap-4">
-                  <div className="h-16 bg-muted rounded animate-pulse" />
-                  <div className="h-16 bg-muted rounded animate-pulse" />
-                  <div className="h-16 bg-muted rounded animate-pulse" />
+                  <div className="h-16 animate-pulse rounded bg-muted" />
+                  <div className="h-16 animate-pulse rounded bg-muted" />
+                  <div className="h-16 animate-pulse rounded bg-muted" />
                 </div>
               </div>
             </CardContent>
@@ -109,27 +108,27 @@ export default function PaymentPage({ params }: PaymentPageProps) {
 
   if (userQuery.error || !userQuery.data) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto max-w-4xl px-4 py-8">
         <div className="space-y-6">
-          <Button variant="outline" size="sm" onClick={() => router.back()}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
+          <Button onClick={() => router.back()} size="sm" variant="outline">
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
 
           <Card>
             <CardContent className="p-8 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
-                <User className="w-8 h-8 text-red-600" />
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+                <User className="h-8 w-8 text-red-600" />
               </div>
               <CardTitle className="mb-2 text-red-600">
                 User Not Found
               </CardTitle>
-              <p className="text-muted-foreground mb-6">
+              <p className="mb-6 text-muted-foreground">
                 The user @{username} could not be found or doesn&apos;t have
                 payments enabled.
               </p>
-              <Button onClick={() => router.push("/")} variant="outline">
-                <ArrowLeft className="w-4 h-4 mr-2" />
+              <Button onClick={() => router.push('/')} variant="outline">
+                <ArrowLeft className="mr-2 h-4 w-4" />
                 Go Home
               </Button>
             </CardContent>
@@ -142,16 +141,16 @@ export default function PaymentPage({ params }: PaymentPageProps) {
   const user = userQuery.data;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto max-w-4xl px-4 py-8">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <Button variant="outline" size="sm" onClick={() => router.back()}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
+          <Button onClick={() => router.back()} size="sm" variant="outline">
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
-          <Badge variant="secondary" className="gap-1">
-            <Heart className="w-3 h-3" />
+          <Badge className="gap-1" variant="secondary">
+            <Heart className="h-3 w-3" />
             Payment Profile
           </Badge>
         </div>
@@ -161,7 +160,7 @@ export default function PaymentPage({ params }: PaymentPageProps) {
           <CardHeader>
             <div className="flex items-start gap-6">
               <Avatar className="h-20 w-20">
-                <AvatarImage src={user.image} alt={user.name} />
+                <AvatarImage alt={user.name} src={user.image} />
                 <AvatarFallback className="text-lg">
                   {user.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
@@ -172,7 +171,7 @@ export default function PaymentPage({ params }: PaymentPageProps) {
                   <p className="text-muted-foreground">@{user.username}</p>
                 </div>
                 {user.bio && (
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-muted-foreground text-sm leading-relaxed">
                     {user.bio}
                   </p>
                 )}
@@ -181,34 +180,34 @@ export default function PaymentPage({ params }: PaymentPageProps) {
                 <div className="flex gap-4 pt-2">
                   {user.githubUrl && (
                     <Link
+                      className="inline-flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
                       href={user.githubUrl}
-                      target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      target="_blank"
                     >
-                      <Github className="w-4 h-4" />
+                      <Github className="h-4 w-4" />
                       GitHub
                     </Link>
                   )}
                   {user.twitterUrl && (
                     <Link
+                      className="inline-flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
                       href={user.twitterUrl}
-                      target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      target="_blank"
                     >
-                      <Twitter className="w-4 h-4" />
+                      <Twitter className="h-4 w-4" />
                       Twitter
                     </Link>
                   )}
                   {user.websiteUrl && (
                     <Link
+                      className="inline-flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
                       href={user.websiteUrl}
-                      target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      target="_blank"
                     >
-                      <Globe className="w-4 h-4" />
+                      <Globe className="h-4 w-4" />
                       Website
                     </Link>
                   )}
@@ -222,42 +221,42 @@ export default function PaymentPage({ params }: PaymentPageProps) {
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-6">
-              <div className="text-center space-y-2">
+              <div className="space-y-2 text-center">
                 <div className="flex items-center justify-center">
-                  <GitFork className="w-5 h-5 text-muted-foreground mr-2" />
-                  <p className="text-2xl font-bold">
+                  <GitFork className="mr-2 h-5 w-5 text-muted-foreground" />
+                  <p className="font-bold text-2xl">
                     {user.stats.repositories}
                   </p>
                 </div>
-                <p className="text-sm text-muted-foreground">Repositories</p>
+                <p className="text-muted-foreground text-sm">Repositories</p>
               </div>
-              <div className="text-center space-y-2">
+              <div className="space-y-2 text-center">
                 <div className="flex items-center justify-center">
-                  <Users className="w-5 h-5 text-muted-foreground mr-2" />
-                  <p className="text-2xl font-bold">
+                  <Users className="mr-2 h-5 w-5 text-muted-foreground" />
+                  <p className="font-bold text-2xl">
                     {user.stats.followers.toLocaleString()}
                   </p>
                 </div>
-                <p className="text-sm text-muted-foreground">Followers</p>
+                <p className="text-muted-foreground text-sm">Followers</p>
               </div>
-              <div className="text-center space-y-2">
+              <div className="space-y-2 text-center">
                 <div className="flex items-center justify-center">
-                  <Activity className="w-5 h-5 text-muted-foreground mr-2" />
-                  <p className="text-2xl font-bold">
+                  <Activity className="mr-2 h-5 w-5 text-muted-foreground" />
+                  <p className="font-bold text-2xl">
                     {user.stats.contributions}
                   </p>
                 </div>
-                <p className="text-sm text-muted-foreground">Contributions</p>
+                <p className="text-muted-foreground text-sm">Contributions</p>
               </div>
             </div>
 
             <Separator />
 
             {/* Payment CTA */}
-            <div className="text-center space-y-4">
+            <div className="space-y-4 text-center">
               <div className="space-y-2">
-                <h3 className="text-lg font-semibold flex items-center justify-center gap-2">
-                  <DollarSign className="w-5 h-5" />
+                <h3 className="flex items-center justify-center gap-2 font-semibold text-lg">
+                  <DollarSign className="h-5 w-5" />
                   Support {user.name}
                 </h3>
                 <p className="text-muted-foreground">
@@ -265,27 +264,27 @@ export default function PaymentPage({ params }: PaymentPageProps) {
                 </p>
               </div>
 
-              <div className="flex gap-3 justify-center">
+              <div className="flex justify-center gap-3">
                 <Button
-                  size="lg"
-                  onClick={() => setPaymentModalOpen(true)}
                   className="gap-2"
+                  onClick={() => setPaymentModalOpen(true)}
+                  size="lg"
                 >
-                  <Heart className="w-4 h-4" />
+                  <Heart className="h-4 w-4" />
                   Send Payment
                 </Button>
                 <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => setPaymentModalOpen(true)}
                   className="gap-2"
+                  onClick={() => setPaymentModalOpen(true)}
+                  size="lg"
+                  variant="outline"
                 >
-                  <Star className="w-4 h-4" />
+                  <Star className="h-4 w-4" />
                   Tip
                 </Button>
               </div>
 
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Secure payments processed through Bounty.new
               </p>
             </div>
@@ -294,12 +293,12 @@ export default function PaymentPage({ params }: PaymentPageProps) {
 
         {/* Payment Modal */}
         <PaymentModal
-          open={paymentModalOpen}
+          allowCustomAmount={user.paymentSettings.allowCustomAmount}
           onOpenChange={setPaymentModalOpen}
+          open={paymentModalOpen}
+          presetAmounts={user.paymentSettings.presetAmounts}
           recipientName={user.name}
           recipientUsername={user.username}
-          presetAmounts={user.paymentSettings.presetAmounts}
-          allowCustomAmount={user.paymentSettings.allowCustomAmount}
         />
       </div>
     </div>

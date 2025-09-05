@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useState, useEffect } from "react";
-import Confetti from "react-confetti";
-import { useWindowSize } from "@/lib/hooks/use-window-size";
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import Confetti from 'react-confetti';
+import { useWindowSize } from '@/hooks/use-window-size';
 
 interface ConfettiContextType {
   celebrate: () => void;
 }
 
 const ConfettiContext = createContext<ConfettiContextType | undefined>(
-  undefined,
+  undefined
 );
 
 export function ConfettiProvider({ children }: { children: ReactNode }) {
@@ -33,17 +33,17 @@ export function ConfettiProvider({ children }: { children: ReactNode }) {
       {children}
       {shouldCelebrate && width && height && (
         <Confetti
-          width={width}
-          height={height}
-          recycle={false}
-          numberOfPieces={500}
           confettiSource={{
             x: 0,
             y: 0,
             w: width,
             h: 0,
           }}
-          style={{ position: "fixed", top: 0, left: 0, zIndex: 9999 }}
+          height={height}
+          numberOfPieces={500}
+          recycle={false}
+          style={{ position: 'fixed', top: 0, left: 0, zIndex: 9999 }}
+          width={width}
         />
       )}
     </ConfettiContext.Provider>
@@ -53,7 +53,7 @@ export function ConfettiProvider({ children }: { children: ReactNode }) {
 export function useConfetti() {
   const context = useContext(ConfettiContext);
   if (context === undefined) {
-    throw new Error("useConfetti must be used within a ConfettiProvider");
+    throw new Error('useConfetti must be used within a ConfettiProvider');
   }
   return context;
 }

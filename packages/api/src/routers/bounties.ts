@@ -1,33 +1,46 @@
-import { z } from "zod";
-import { eq, desc, and, or, ilike, sql, inArray, isNull, isNotNull } from "drizzle-orm";
-import { TRPCError } from "@trpc/server";
-import { router, publicProcedure, protectedProcedure } from "../trpc";
 import {
-  db,
   bounty,
-  submission,
   bountyApplication,
-  user,
-  bountyVote,
+  bountyBookmark,
   bountyComment,
   bountyCommentLike,
-  bountyBookmark,
+  bountyVote,
   createNotification,
-} from "@bounty/db";
+  db,
+  submission,
+  user,
+} from '@bounty/db';
+import { track } from '@bounty/track';
+import { TRPCError } from '@trpc/server';
+import {
+  and,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNotNull,
+  isNull,
+  or,
+  sql,
+} from 'drizzle-orm';
+import { z } from 'zod';
+import { protectedProcedure, publicProcedure, router } from '../trpc';
 
 const parseAmount = (amount: string | number | null): number => {
-  if (amount === null || amount === undefined) return 0;
+  if (amount === null || amount === undefined) {
+    return 0;
+  }
   const parsed = Number(amount);
-  return isNaN(parsed) ? 0 : parsed;
+  return Number.isNaN(parsed) ? 0 : parsed;
 };
 
 const createBountySchema = z.object({
-  title: z.string().min(1, "Title is required").max(200, "Title too long"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
+  title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
+  description: z.string().min(10, 'Description must be at least 10 characters'),
 
-  amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, "Incorrect amount."),
-  currency: z.string().default("USD"),
-  difficulty: z.enum(["beginner", "intermediate", "advanced", "expert"]),
+  amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, 'Incorrect amount.'),
+  currency: z.string().default('USD'),
+  difficulty: z.enum(['beginner', 'intermediate', 'advanced', 'expert']),
   deadline: z.string().datetime().optional(),
   tags: z.array(z.string()).optional(),
   repositoryUrl: z.string().url().optional(),
@@ -41,18 +54,18 @@ const updateBountySchema = z.object({
 
   amount: z
     .string()
-    .regex(/^\d{1,13}(\.\d{1,2})?$/, "Incorrect amount.")
+    .regex(/^\d{1,13}(\.\d{1,2})?$/, 'Incorrect amount.')
     .optional(),
   currency: z.string().optional(),
   difficulty: z
-    .enum(["beginner", "intermediate", "advanced", "expert"])
+    .enum(['beginner', 'intermediate', 'advanced', 'expert'])
     .optional(),
   deadline: z.string().datetime().optional(),
   tags: z.array(z.string()).optional(),
   repositoryUrl: z.string().url().optional(),
   issueUrl: z.string().url().optional(),
   status: z
-    .enum(["draft", "open", "in_progress", "completed", "cancelled"])
+    .enum(['draft', 'open', 'in_progress', 'completed', 'cancelled'])
     .optional(),
 });
 
@@ -60,32 +73,32 @@ const getBountiesSchema = z.object({
   page: z.number().int().positive().default(1),
   limit: z.number().int().positive().max(100).default(20),
   status: z
-    .enum(["draft", "open", "in_progress", "completed", "cancelled"])
+    .enum(['draft', 'open', 'in_progress', 'completed', 'cancelled'])
     .optional(),
   difficulty: z
-    .enum(["beginner", "intermediate", "advanced", "expert"])
+    .enum(['beginner', 'intermediate', 'advanced', 'expert'])
     .optional(),
   search: z.string().optional(),
   tags: z.array(z.string()).optional(),
   sortBy: z
-    .enum(["created_at", "amount", "deadline", "title"])
-    .default("created_at"),
-  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+    .enum(['created_at', 'amount', 'deadline', 'title'])
+    .default('created_at'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
 const submitBountyApplicationSchema = z.object({
   bountyId: z.string().uuid(),
   message: z
     .string()
-    .min(10, "Application message must be at least 10 characters"),
+    .min(10, 'Application message must be at least 10 characters'),
 });
 
 const submitBountyWorkSchema = z.object({
   bountyId: z.string().uuid(),
   description: z
     .string()
-    .min(10, "Submission description must be at least 10 characters"),
-  deliverableUrl: z.string().url("Invalid deliverable URL"),
+    .min(10, 'Submission description must be at least 10 characters'),
+  deliverableUrl: z.string().url('Invalid deliverable URL'),
   pullRequestUrl: z.string().url().optional(),
 });
 
@@ -99,19 +112,21 @@ export const bountiesRouter = router({
       const [activeBounties] = await db
         .select({ count: sql<number>`count(*)` })
         .from(bounty)
-        .where(eq(bounty.status, "open"));
+        .where(eq(bounty.status, 'open'));
 
       const [totalBountiesValue] = await db
-        .select({ total: sql<number>`coalesce(sum(cast(${bounty.amount} as decimal)), 0)` })
-        .from(bounty)
-        .where(eq(bounty.status, "open"));
-
-      const [totalPayout] = await db
-        .select({ 
-          total: sql<number>`coalesce(sum(cast(${bounty.amount} as decimal)), 0)` 
+        .select({
+          total: sql<number>`coalesce(sum(cast(${bounty.amount} as decimal)), 0)`,
         })
         .from(bounty)
-        .where(eq(bounty.status, "completed"));
+        .where(eq(bounty.status, 'open'));
+
+      const [totalPayout] = await db
+        .select({
+          total: sql<number>`coalesce(sum(cast(${bounty.amount} as decimal)), 0)`,
+        })
+        .from(bounty)
+        .where(eq(bounty.status, 'completed'));
 
       return {
         success: true,
@@ -124,16 +139,16 @@ export const bountiesRouter = router({
       };
     } catch (error) {
       throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch bounty statistics",
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch bounty statistics',
         cause: error,
       });
     }
   }),
 
   createBounty: protectedProcedure
-      .input(createBountySchema)
-      .mutation(async ({ ctx, input }) => {
+    .input(createBountySchema)
+    .mutation(async ({ ctx, input }) => {
       try {
         const normalizedAmount = String(input.amount);
         const cleanedTags =
@@ -163,28 +178,41 @@ export const bountiesRouter = router({
             repositoryUrl,
             issueUrl,
             createdById: ctx.session.user.id,
-            status: "open",
+            status: 'open',
           })
           .returning();
+
+        try {
+          await track('bounty_created', {
+            bounty_id: newBounty.id,
+            user_id: ctx.session.user.id,
+            amount: parseAmount(normalizedAmount),
+            currency: input.currency,
+            difficulty: input.difficulty,
+            has_repo: Boolean(repositoryUrl),
+            has_issue: Boolean(issueUrl),
+            tags_count: cleanedTags?.length ?? 0,
+            source: 'api',
+          });
+        } catch {}
 
         return {
           success: true,
           data: newBounty,
-          message: "Bounty created successfully",
+          message: 'Bounty created successfully',
         };
       } catch (error) {
-        console.error("[bounties.createBounty] error", error);
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create bounty",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to create bounty',
           cause: error,
         });
       }
     }),
 
   fetchAllBounties: publicProcedure
-      .input(getBountiesSchema)
-      .query(async ({ input }) => {
+    .input(getBountiesSchema)
+    .query(async ({ input }) => {
       try {
         const offset = (input.page - 1) * input.limit;
 
@@ -202,8 +230,8 @@ export const bountiesRouter = router({
           conditions.push(
             or(
               ilike(bounty.title, `%${input.search}%`),
-              ilike(bounty.description, `%${input.search}%`),
-            ),
+              ilike(bounty.description, `%${input.search}%`)
+            )
           );
         }
 
@@ -235,9 +263,9 @@ export const bountiesRouter = router({
           .innerJoin(user, eq(bounty.createdById, user.id))
           .where(conditions.length > 0 ? and(...conditions) : undefined)
           .orderBy(
-            input.sortOrder === "asc"
+            input.sortOrder === 'asc'
               ? bounty.createdAt
-              : desc(bounty.createdAt),
+              : desc(bounty.createdAt)
           )
           .limit(input.limit)
           .offset(offset);
@@ -264,8 +292,8 @@ export const bountiesRouter = router({
         };
       } catch (error) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch bounties",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch bounties',
           cause: error,
         });
       }
@@ -306,8 +334,8 @@ export const bountiesRouter = router({
 
         if (!result) {
           throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Bounty not found",
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
           });
         }
 
@@ -319,11 +347,13 @@ export const bountiesRouter = router({
           },
         };
       } catch (error) {
-        if (error instanceof TRPCError) throw error;
+        if (error instanceof TRPCError) {
+          throw error;
+        }
 
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch bounty",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch bounty',
           cause: error,
         });
       }
@@ -343,8 +373,8 @@ export const bountiesRouter = router({
         };
       } catch (error) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch bounties",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch bounties',
           cause: error,
         });
       }
@@ -363,15 +393,15 @@ export const bountiesRouter = router({
 
         if (!existingBounty) {
           throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Bounty not found",
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
           });
         }
 
         if (existingBounty.createdById !== ctx.session.user.id) {
           throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "You can only update your own bounties",
+            code: 'FORBIDDEN',
+            message: 'You can only update your own bounties',
           });
         }
 
@@ -387,17 +417,33 @@ export const bountiesRouter = router({
           .where(eq(bounty.id, id))
           .returning();
 
+        try {
+          await track('bounty_updated', {
+            bounty_id: updatedBounty.id,
+            user_id: ctx.session.user.id,
+            amount: parseAmount(updatedBounty.amount),
+            currency: input.currency,
+            difficulty: input.difficulty,
+            has_repo: Boolean(updatedBounty.repositoryUrl),
+            has_issue: Boolean(updatedBounty.issueUrl),
+            tags_count: updatedBounty.tags?.length ?? 0,
+            source: 'api',
+          });
+        } catch {}
+
         return {
           success: true,
           data: updatedBounty,
-          message: "Bounty updated successfully",
+          message: 'Bounty updated successfully',
         };
       } catch (error) {
-        if (error instanceof TRPCError) throw error;
+        if (error instanceof TRPCError) {
+          throw error;
+        }
 
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update bounty",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to update bounty',
           cause: error,
         });
       }
@@ -414,30 +460,40 @@ export const bountiesRouter = router({
 
         if (!existingBounty) {
           throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Bounty not found",
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
           });
         }
 
         if (existingBounty.createdById !== ctx.session.user.id) {
           throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "You can only delete your own bounties",
+            code: 'FORBIDDEN',
+            message: 'You can only delete your own bounties',
           });
         }
 
         await db.delete(bounty).where(eq(bounty.id, input.id));
 
+        try {
+          await track('bounty_deleted', {
+            bounty_id: input.id,
+            user_id: ctx.session.user.id,
+            source: 'api',
+          });
+        } catch {}
+
         return {
           success: true,
-          message: "Bounty deleted successfully",
+          message: 'Bounty deleted successfully',
         };
       } catch (error) {
-        if (error instanceof TRPCError) throw error;
+        if (error instanceof TRPCError) {
+          throw error;
+        }
 
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to delete bounty",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to delete bounty',
           cause: error,
         });
       }
@@ -453,9 +509,18 @@ export const bountiesRouter = router({
           .where(
             and(
               eq(bountyVote.bountyId, input.bountyId),
-              eq(bountyVote.userId, ctx.session.user.id),
-            ),
+              eq(bountyVote.userId, ctx.session.user.id)
+            )
           );
+
+        try {
+          await track('bounty_voted', {
+            bounty_id: input.bountyId,
+            user_id: ctx.session.user.id,
+            voted: Boolean(existing),
+            source: 'api',
+          });
+        } catch {}
 
         let voted = false;
         if (existing) {
@@ -464,8 +529,8 @@ export const bountiesRouter = router({
             .where(
               and(
                 eq(bountyVote.bountyId, input.bountyId),
-                eq(bountyVote.userId, ctx.session.user.id),
-              ),
+                eq(bountyVote.userId, ctx.session.user.id)
+              )
             );
           voted = false;
         } else {
@@ -484,8 +549,8 @@ export const bountiesRouter = router({
         return { voted, count: countRes?.count ?? 0 };
       } catch (error) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to toggle vote",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to toggle vote',
           cause: error,
         });
       }
@@ -508,8 +573,8 @@ export const bountiesRouter = router({
             .where(
               and(
                 eq(bountyVote.bountyId, input.bountyId),
-                eq(bountyVote.userId, ctx.session.user.id),
-              ),
+                eq(bountyVote.userId, ctx.session.user.id)
+              )
             );
           isVoted = Boolean(existing);
         }
@@ -517,8 +582,8 @@ export const bountiesRouter = router({
         return { count: countRes?.count ?? 0, isVoted };
       } catch (error) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch votes",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch votes',
           cause: error,
         });
       }
@@ -530,7 +595,9 @@ export const bountiesRouter = router({
         const inserted = await db
           .insert(bountyBookmark)
           .values({ bountyId: input.bountyId, userId: ctx.session.user.id })
-          .onConflictDoNothing({ target: [bountyBookmark.bountyId, bountyBookmark.userId] })
+          .onConflictDoNothing({
+            target: [bountyBookmark.bountyId, bountyBookmark.userId],
+          })
           .returning();
 
         if (inserted.length === 0) {
@@ -539,14 +606,34 @@ export const bountiesRouter = router({
             .where(
               and(
                 eq(bountyBookmark.bountyId, input.bountyId),
-                eq(bountyBookmark.userId, ctx.session.user.id),
-              ),
+                eq(bountyBookmark.userId, ctx.session.user.id)
+              )
             );
+          try {
+            await track('bounty_bookmark_toggled', {
+              bounty_id: input.bountyId,
+              user_id: ctx.session.user.id,
+              bookmarked: false,
+              source: 'api',
+            });
+          } catch {}
           return { bookmarked: false };
         }
+        try {
+          await track('bounty_bookmark_toggled', {
+            bounty_id: input.bountyId,
+            user_id: ctx.session.user.id,
+            bookmarked: true,
+            source: 'api',
+          });
+        } catch {}
         return { bookmarked: true };
       } catch (error) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to toggle bookmark", cause: error });
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to toggle bookmark',
+          cause: error,
+        });
       }
     }),
 
@@ -554,19 +641,37 @@ export const bountiesRouter = router({
     .input(z.object({ bountyId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       try {
-        if (!ctx.session?.user?.id) return { bookmarked: false };
+        if (!ctx.session?.user?.id) {
+          return { bookmarked: false };
+        }
         const [existing] = await db
           .select({ id: bountyBookmark.id })
           .from(bountyBookmark)
-          .where(and(eq(bountyBookmark.bountyId, input.bountyId), eq(bountyBookmark.userId, ctx.session.user.id)));
+          .where(
+            and(
+              eq(bountyBookmark.bountyId, input.bountyId),
+              eq(bountyBookmark.userId, ctx.session.user.id)
+            )
+          );
         return { bookmarked: Boolean(existing) };
       } catch (error) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch bookmark", cause: error });
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch bookmark',
+          cause: error,
+        });
       }
     }),
 
   listBookmarkedBounties: protectedProcedure
-    .input(z.object({ page: z.number().int().positive().default(1), limit: z.number().int().positive().max(100).default(20) }).optional())
+    .input(
+      z
+        .object({
+          page: z.number().int().positive().default(1),
+          limit: z.number().int().positive().max(100).default(20),
+        })
+        .optional()
+    )
     .query(async ({ ctx, input }) => {
       try {
         const page = input?.page ?? 1;
@@ -617,7 +722,11 @@ export const bountiesRouter = router({
           },
         };
       } catch (error) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to list bookmarks", cause: error });
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to list bookmarks',
+          cause: error,
+        });
       }
     }),
 
@@ -627,31 +736,13 @@ export const bountiesRouter = router({
         bountyId: z.string().uuid(),
         content: z.string().min(1).max(245),
         parentId: z.string().uuid().optional(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       try {
         const trimmed = input.content.trim();
 
-        
-
-        if (!input.parentId) {
-          const [existing] = await db
-            .select({ id: bountyComment.id })
-            .from(bountyComment)
-            .where(
-              and(
-                eq(bountyComment.bountyId, input.bountyId),
-                eq(bountyComment.userId, ctx.session.user.id),
-                isNull(bountyComment.parentId),
-                eq(bountyComment.content, trimmed),
-              ),
-            )
-            .limit(1);
-          if (existing) {
-            throw new TRPCError({ code: "CONFLICT", message: "Duplicate comment on this bounty" });
-          }
-        } else {
+        if (input.parentId) {
           const [dupCount] = await db
             .select({ count: sql<number>`count(*)` })
             .from(bountyComment)
@@ -660,11 +751,33 @@ export const bountiesRouter = router({
                 eq(bountyComment.bountyId, input.bountyId),
                 eq(bountyComment.userId, ctx.session.user.id),
                 isNotNull(bountyComment.parentId),
-                eq(bountyComment.content, trimmed),
-              ),
+                eq(bountyComment.content, trimmed)
+              )
             );
           if ((dupCount?.count ?? 0) >= 2) {
-            throw new TRPCError({ code: "CONFLICT", message: "Duplicate reply limit reached (2 per bounty)" });
+            throw new TRPCError({
+              code: 'CONFLICT',
+              message: 'Duplicate reply limit reached (2 per bounty)',
+            });
+          }
+        } else {
+          const [existing] = await db
+            .select({ id: bountyComment.id })
+            .from(bountyComment)
+            .where(
+              and(
+                eq(bountyComment.bountyId, input.bountyId),
+                eq(bountyComment.userId, ctx.session.user.id),
+                isNull(bountyComment.parentId),
+                eq(bountyComment.content, trimmed)
+              )
+            )
+            .limit(1);
+          if (existing) {
+            throw new TRPCError({
+              code: 'CONFLICT',
+              message: 'Duplicate comment on this bounty',
+            });
           }
         }
 
@@ -679,8 +792,22 @@ export const bountiesRouter = router({
           .returning();
 
         if (!inserted) {
-          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create comment" });
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to create comment',
+          });
         }
+
+        try {
+          await track('bounty_comment_added', {
+            bounty_id: input.bountyId,
+            comment_id: inserted.id,
+            user_id: ctx.session.user.id,
+            parent_id: input.parentId ?? undefined,
+            content_length: trimmed.length,
+            source: 'api',
+          });
+        } catch {}
 
         try {
           const [owner] = await db
@@ -691,26 +818,35 @@ export const bountiesRouter = router({
           if (owner?.createdById && owner.createdById !== ctx.session.user.id) {
             await createNotification({
               userId: owner.createdById,
-              type: "bounty_comment",
+              type: 'bounty_comment',
               title: `New comment on "${owner.title}"`,
-              message: trimmed.length > 100 ? trimmed.slice(0, 100) + "..." : trimmed,
+              message:
+                trimmed.length > 100 ? `${trimmed.slice(0, 100)}...` : trimmed,
               data: { bountyId: input.bountyId, commentId: inserted.id },
             });
           }
-        } catch (e) {
-          console.error("[bounties.createComment] notification error", e);
-        }
+        } catch (_e) {}
 
         return inserted;
       } catch (error) {
-        if (error instanceof TRPCError) throw error;
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         if (
           error instanceof Error &&
-          (error.message.includes("unique constraint") || error.message.includes("duplicate key value"))
+          (error.message.includes('unique constraint') ||
+            error.message.includes('duplicate key value'))
         ) {
-          throw new TRPCError({ code: "CONFLICT", message: "Duplicate comment on this bounty" });
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: 'Duplicate comment on this bounty',
+          });
         }
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to add comment", cause: error });
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to add comment',
+          cause: error,
+        });
       }
     }),
 
@@ -741,24 +877,25 @@ export const bountiesRouter = router({
           ? await db
               .select({
                 commentId: bountyCommentLike.commentId,
-                likeCount: sql<number>`count(*)::int`.as("likeCount"),
+                likeCount: sql<number>`count(*)::int`.as('likeCount'),
               })
               .from(bountyCommentLike)
               .where(inArray(bountyCommentLike.commentId, ids))
               .groupBy(bountyCommentLike.commentId)
           : [];
 
-        const userLikes = ctx.session?.user?.id && ids.length
-          ? await db
-              .select({ commentId: bountyCommentLike.commentId })
-              .from(bountyCommentLike)
-              .where(
-                and(
-                  eq(bountyCommentLike.userId, ctx.session.user.id),
-                  inArray(bountyCommentLike.commentId, ids),
-                ),
-              )
-          : [];
+        const userLikes =
+          ctx.session?.user?.id && ids.length
+            ? await db
+                .select({ commentId: bountyCommentLike.commentId })
+                .from(bountyCommentLike)
+                .where(
+                  and(
+                    eq(bountyCommentLike.userId, ctx.session.user.id),
+                    inArray(bountyCommentLike.commentId, ids)
+                  )
+                )
+            : [];
 
         const withLikes = comments.map((c) => {
           const lc = likeCounts.find((x) => x.commentId === c.id);
@@ -769,8 +906,8 @@ export const bountiesRouter = router({
         return withLikes;
       } catch (error) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch comments",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch comments',
           cause: error,
         });
       }
@@ -781,37 +918,62 @@ export const bountiesRouter = router({
       z.object({
         commentId: z.string().uuid(),
         content: z.string().min(1).max(245),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        
-
         const [existing] = await db
           .select()
           .from(bountyComment)
           .where(eq(bountyComment.id, input.commentId));
 
         if (!existing) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Comment not found" });
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Comment not found',
+          });
         }
         if ((existing as any).userId !== ctx.session.user.id) {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Not your comment" });
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Not your comment',
+          });
         }
         if ((existing as any).editCount >= 1) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "Edit limit reached" });
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Edit limit reached',
+          });
         }
 
         const [updated] = await db
           .update(bountyComment)
-          .set({ content: input.content, editCount: sql`(${bountyComment.editCount} + 1)`, updatedAt: new Date() })
+          .set({
+            content: input.content,
+            editCount: sql`(${bountyComment.editCount} + 1)`,
+            updatedAt: new Date(),
+          })
           .where(eq(bountyComment.id, input.commentId))
           .returning();
-
+        try {
+          await track('bounty_comment_updated', {
+            comment_id: updated.id,
+            bounty_id: (updated as any).bountyId,
+            user_id: ctx.session.user.id,
+            edit_count: (updated as any).editCount,
+            source: 'api',
+          });
+        } catch {}
         return updated;
       } catch (error) {
-        if (error instanceof TRPCError) throw error;
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to update comment", cause: error });
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to update comment',
+          cause: error,
+        });
       }
     }),
 
@@ -825,17 +987,39 @@ export const bountiesRouter = router({
           .where(eq(bountyComment.id, input.commentId));
 
         if (!existing) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Comment not found" });
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Comment not found',
+          });
         }
         if ((existing as any).userId !== ctx.session.user.id) {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Not your comment" });
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Not your comment',
+          });
         }
 
-        await db.delete(bountyComment).where(eq(bountyComment.id, input.commentId));
+        await db
+          .delete(bountyComment)
+          .where(eq(bountyComment.id, input.commentId));
+        try {
+          await track('bounty_comment_deleted', {
+            comment_id: input.commentId,
+            bounty_id: (existing as any).bountyId,
+            user_id: ctx.session.user.id,
+            source: 'api',
+          });
+        } catch {}
         return { success: true };
       } catch (error) {
-        if (error instanceof TRPCError) throw error;
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to delete comment", cause: error });
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to delete comment',
+          cause: error,
+        });
       }
     }),
 
@@ -846,7 +1030,9 @@ export const bountiesRouter = router({
         const inserted = await db
           .insert(bountyCommentLike)
           .values({ commentId: input.commentId, userId: ctx.session.user.id })
-          .onConflictDoNothing({ target: [bountyCommentLike.commentId, bountyCommentLike.userId] })
+          .onConflictDoNothing({
+            target: [bountyCommentLike.commentId, bountyCommentLike.userId],
+          })
           .returning();
 
         if (inserted.length === 0) {
@@ -855,8 +1041,8 @@ export const bountiesRouter = router({
             .where(
               and(
                 eq(bountyCommentLike.commentId, input.commentId),
-                eq(bountyCommentLike.userId, ctx.session.user.id),
-              ),
+                eq(bountyCommentLike.userId, ctx.session.user.id)
+              )
             );
         }
 
@@ -864,12 +1050,22 @@ export const bountiesRouter = router({
           .select({ likeCount: sql<number>`count(*)::int` })
           .from(bountyCommentLike)
           .where(eq(bountyCommentLike.commentId, input.commentId));
-
-        return { likeCount: countRes?.likeCount || 0, isLiked: inserted.length > 0 };
+        try {
+          await track('bounty_comment_like_toggled', {
+            comment_id: input.commentId,
+            user_id: ctx.session.user.id,
+            liked: inserted.length > 0,
+            source: 'api',
+          });
+        } catch {}
+        return {
+          likeCount: countRes?.likeCount || 0,
+          isLiked: inserted.length > 0,
+        };
       } catch (error) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to toggle like",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to toggle like',
           cause: error,
         });
       }
@@ -886,15 +1082,15 @@ export const bountiesRouter = router({
 
         if (!existingBounty) {
           throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Bounty not found",
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
           });
         }
 
-        if (existingBounty.status !== "open") {
+        if (existingBounty.status !== 'open') {
           throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Cannot apply to a bounty that is not open",
+            code: 'BAD_REQUEST',
+            message: 'Cannot apply to a bounty that is not open',
           });
         }
 
@@ -904,14 +1100,14 @@ export const bountiesRouter = router({
           .where(
             and(
               eq(bountyApplication.bountyId, input.bountyId),
-              eq(bountyApplication.applicantId, ctx.session.user.id),
-            ),
+              eq(bountyApplication.applicantId, ctx.session.user.id)
+            )
           );
 
         if (existingApplication) {
           throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "You have already applied to this bounty",
+            code: 'BAD_REQUEST',
+            message: 'You have already applied to this bounty',
           });
         }
 
@@ -926,14 +1122,16 @@ export const bountiesRouter = router({
         return {
           success: true,
           data: newApplication,
-          message: "Application submitted successfully",
+          message: 'Application submitted successfully',
         };
       } catch (error) {
-        if (error instanceof TRPCError) throw error;
+        if (error instanceof TRPCError) {
+          throw error;
+        }
 
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to submit application",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to submit application',
           cause: error,
         });
       }
@@ -950,15 +1148,15 @@ export const bountiesRouter = router({
 
         if (!existingBounty) {
           throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Bounty not found",
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
           });
         }
 
         if (existingBounty.assignedToId !== ctx.session.user.id) {
           throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "You are not assigned to this bounty",
+            code: 'FORBIDDEN',
+            message: 'You are not assigned to this bounty',
           });
         }
 
@@ -972,20 +1170,22 @@ export const bountiesRouter = router({
 
         await db
           .update(bounty)
-          .set({ status: "completed", updatedAt: new Date() })
+          .set({ status: 'completed', updatedAt: new Date() })
           .where(eq(bounty.id, input.bountyId));
 
         return {
           success: true,
           data: newSubmission,
-          message: "Work submitted successfully",
+          message: 'Work submitted successfully',
         };
       } catch (error) {
-        if (error instanceof TRPCError) throw error;
+        if (error instanceof TRPCError) {
+          throw error;
+        }
 
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to submit work",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to submit work',
           cause: error,
         });
       }
@@ -997,9 +1197,9 @@ export const bountiesRouter = router({
         page: z.number().int().positive().default(1),
         limit: z.number().int().positive().max(100).default(20),
         status: z
-          .enum(["draft", "open", "in_progress", "completed", "cancelled"])
+          .enum(['draft', 'open', 'in_progress', 'completed', 'cancelled'])
           .optional(),
-      }),
+      })
     )
     .query(async ({ ctx, input }) => {
       try {
@@ -1065,8 +1265,8 @@ export const bountiesRouter = router({
         };
       } catch (error) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch your bounties",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch your bounties',
           cause: error,
         });
       }

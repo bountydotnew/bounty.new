@@ -1,28 +1,25 @@
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
-import { useMemo, useCallback, useState } from "react";
-import { trpc } from "@/utils/trpc";
-import { authClient } from "@bounty/auth/client";
-import { useDevice } from "@/components/device-provider";
-import { Onboarding } from "@/components/onboarding";
+import { authClient } from '@bounty/auth/client';
+import { useQuery } from '@tanstack/react-query';
+import { useCallback, useMemo, useState } from 'react';
+import { AccessGate } from '@/components/access-gate';
+import { BountiesFeed } from '@/components/bounty/bounties-feed';
+import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
+import GithubImportModal from '@/components/bounty/github-import-modal';
+import { BetaAccessScreen } from '@/components/dashboard/beta-access-screen';
+import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar';
 // Dashboard components
-import { ErrorBoundary } from "@/components/dashboard/error-boundary";
-import { BetaAccessScreen } from "@/components/dashboard/beta-access-screen";
-import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
-import { BountiesFeed } from "@/components/bounty/bounties-feed";
-import { AccessGate } from "@/components/access-gate";
-import { Header } from "@/components/dual-sidebar/sidebar-header";
-import { Button } from "@/components/ui/button";
-import { useBountyModals } from "@/lib/bounty-utils";
-import { CreateBountyModal } from "@/components/bounty/create-bounty-modal";
-import GithubImportModal from "@/components/bounty/github-import-modal";
-import GitHub from "@/components/icons/github";
-import { FloatingCreateMenu } from "@/components/bounty/floating-create-menu";
-
+import { ErrorBoundary } from '@/components/dashboard/error-boundary';
+import { useDevice } from '@/components/device-provider';
+import { Header } from '@/components/dual-sidebar/sidebar-header';
+import GitHub from '@/components/icons/github';
+import { Onboarding } from '@/components/onboarding';
+import { TrackedButton } from '@/components/ui/tracked-button';
 // Constants and types
-import { PAGINATION_LIMITS, PAGINATION_DEFAULTS } from "@/constants/dashboard";
-import type { Bounty } from "@/types/dashboard";
+import { PAGINATION_DEFAULTS, PAGINATION_LIMITS } from '@/constants/dashboard';
+import { useBountyModals } from '@/lib/bounty-utils';
+import { trpc } from '@/utils/trpc';
 
 export default function Dashboard() {
   // Memoized query options for better performance
@@ -32,7 +29,7 @@ export default function Dashboard() {
         page: PAGINATION_DEFAULTS.PAGE,
         limit: PAGINATION_LIMITS.ALL_BOUNTIES,
       }),
-    [],
+    []
   );
 
   const myBountiesQuery = useMemo(
@@ -41,12 +38,12 @@ export default function Dashboard() {
         page: PAGINATION_DEFAULTS.PAGE,
         limit: PAGINATION_LIMITS.MY_BOUNTIES,
       }),
-    [],
+    []
   );
 
   const existingSubmissionQuery = useMemo(
     () => trpc.betaApplications.checkExisting.queryOptions(),
-    [],
+    []
   );
 
   const userDataQuery = useMemo(() => trpc.user.getMe.queryOptions(), []);
@@ -59,7 +56,8 @@ export default function Dashboard() {
 
   const { data: session } = authClient.useSession();
   const { isMobile } = useDevice();
-  const { createModalOpen, openCreateModal, closeCreateModal } = useBountyModals();
+  const { createModalOpen, openCreateModal, closeCreateModal } =
+    useBountyModals();
   const [importOpen, setImportOpen] = useState(false);
 
   // Memoized handlers
@@ -89,63 +87,73 @@ export default function Dashboard() {
   return (
     <ErrorBoundary>
       <AccessGate
-        stage="beta"
         fallback={
           <BetaAccessScreen
-            userData={userData.data}
-            sessionUserName={session?.user.name}
             existingSubmission={existingSubmission.data}
             isMobile={isMobile}
             onSubmissionRefetch={handleSubmissionRefetch}
+            sessionUserName={session?.user.name}
+            userData={userData.data}
           />
         }
+        stage="beta"
       >
         <Onboarding />
         <Header
-          myBounties={myBounties.data?.data ?? []}
           isMyBountiesLoading={myBounties.isLoading}
+          myBounties={myBounties.data?.data ?? []}
         />
         <div className="bg-background">
-          <div className="container mx-auto px-4 py-4 rounded-lg">
-            <div className="flex justify-end items-center mb-4">
+          <div className="container mx-auto rounded-lg px-4 py-4">
+            <div className="mb-4 flex items-center justify-end">
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
+                <TrackedButton
                   disabled={!session?.user}
                   onClick={() => setImportOpen(true)}
+                  trackEventName="import_from_github"
+                  trackProperties={{ type: 'import_from_github' }}
+                  variant="outline"
                 >
                   <GitHub className="h-4 w-4 fill-white" />
                   Import from GitHub
-                </Button>
-                <Button disabled={!session?.user} onClick={() => openCreateModal()}>
+                </TrackedButton>
+                <TrackedButton
+                  disabled={!session?.user}
+                  onClick={() => openCreateModal()}
+                  trackEventName="create_bounty"
+                  trackProperties={{ type: 'create_bounty' }}
+                >
                   Create Bounty
-                </Button>
+                </TrackedButton>
               </div>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:h-[calc(100vh-8rem)] rounded-lg py-4">
+            <div className="grid grid-cols-1 gap-6 rounded-lg py-4 lg:h-[calc(100vh-8rem)] lg:grid-cols-3">
               {/* Center - Bounties Feed */}
-              <div className="lg:col-span-2 flex flex-col rounded-lg">
-                <div className="lg:overflow-y-auto lg:h-full rounded-lg">
+              <div className="flex flex-col rounded-lg lg:col-span-2">
+                <div className="rounded-lg lg:h-full lg:overflow-y-auto">
                   <BountiesFeed
-                    layout="list"
                     bounties={bounties.data?.data ?? []}
-                    isLoading={bounties.isLoading}
-                    isError={bounties.isError}
-                    error={bounties.error instanceof Error ? bounties.error : undefined}
                     className="lg:pr-2"
+                    error={
+                      bounties.error instanceof Error
+                        ? bounties.error
+                        : undefined
+                    }
+                    isError={bounties.isError}
+                    isLoading={bounties.isLoading}
+                    layout="list"
                   />
                 </div>
               </div>
 
               {/* Right Sidebar - Activity & My Bounties (Desktop Only) */}
-              <div className="hidden lg:block lg:col-span-1 rounded-lg">
+              <div className="hidden rounded-lg lg:col-span-1 lg:block">
                 <div className="sticky top-0 lg:h-[calc(100vh-8rem)] lg:overflow-y-auto">
                   <div className="space-y-6 lg:pr-2">
                     <DashboardSidebar
-                      myBounties={myBounties.data?.data ?? []}
                       isLoadingMyBounties={myBounties.isLoading}
-                      onBountyClick={(bounty) => {
-                        console.log("Bounty clicked:", bounty);
+                      myBounties={myBounties.data?.data ?? []}
+                      onBountyClick={(_bounty) => {
                         // setIsOpen(false);
                       }}
                     />
@@ -160,8 +168,11 @@ export default function Dashboard() {
           onCreate={() => openCreateModal()}
           onImport={() => setImportOpen(true)}
         /> */}
-        <CreateBountyModal open={createModalOpen} onOpenChange={closeCreateModal} />
-        <GithubImportModal open={importOpen} onOpenChange={setImportOpen} />
+        <CreateBountyModal
+          onOpenChange={closeCreateModal}
+          open={createModalOpen}
+        />
+        <GithubImportModal onOpenChange={setImportOpen} open={importOpen} />
       </AccessGate>
     </ErrorBoundary>
   );

@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { authClient } from "@bounty/auth/client";
-import { useState } from "react";
-import { toast } from "sonner";
-import { PricingDialog } from "@/components/billing/pricing-dialog";
-import { AccountDropdown } from "@/components/billing/account-dropdown";
-import { NotificationsDropdown } from "@/components/notifications/notifications-dropdown";
+import { authClient } from '@bounty/auth/client';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { AccountDropdown } from '@/components/billing/account-dropdown';
+import { PricingDialog } from '@/components/billing/pricing-dialog';
+import { NotificationsDropdown } from '@/components/notifications/notifications-dropdown';
 
 export function NavUser({
   user,
@@ -21,7 +21,7 @@ export function NavUser({
 
   const handleUpgrade = async () => {
     if (!session?.user) {
-      toast.error("Please sign in to upgrade your account.");
+      toast.error('Please sign in to upgrade your account.');
       return;
     }
 
@@ -31,11 +31,11 @@ export function NavUser({
   return (
     <>
       <NotificationsDropdown />
-      <AccountDropdown user={user} onUpgradeClick={handleUpgrade} />
+      <AccountDropdown onUpgradeClick={handleUpgrade} user={user} />
 
       <PricingDialog
-        open={pricingDialogOpen}
         onOpenChange={setPricingDialogOpen}
+        open={pricingDialogOpen}
       />
     </>
   );

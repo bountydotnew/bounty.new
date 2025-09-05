@@ -1,18 +1,17 @@
-"use client";
+'use client';
 
-import { trpc } from "@/utils/trpc";
-import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { CreateBountyModal } from "@/components/bounty/create-bounty-modal";
-import GithubImportModal from "@/components/bounty/github-import-modal";
-import { useBountyModals } from "@/lib/bounty-utils";
-import { useRouter } from "next/navigation";
-import { authClient } from "@bounty/auth/client";
-
-import React from "react";
-import { BountiesFeed } from "@/components/bounty/bounties-feed";
-import { Header } from "@/components/dual-sidebar/sidebar-header";
-import GitHub from "@/components/icons/github";
+import { authClient } from '@bounty/auth/client';
+import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import React from 'react';
+import { BountiesFeed } from '@/components/bounty/bounties-feed';
+import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
+import GithubImportModal from '@/components/bounty/github-import-modal';
+import { Header } from '@/components/dual-sidebar/sidebar-header';
+import GitHub from '@/components/icons/github';
+import { Button } from '@/components/ui/button';
+import { useBountyModals } from '@/lib/bounty-utils';
+import { trpc } from '@/utils/trpc';
 
 export default function BountiesPage() {
   const { data: session } = authClient.useSession();
@@ -25,7 +24,7 @@ export default function BountiesPage() {
     trpc.bounties.fetchAllBounties.queryOptions({
       page: 1,
       limit: 50,
-    }),
+    })
   );
 
   const router = useRouter();
@@ -38,11 +37,11 @@ export default function BountiesPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">
+          <h1 className="mb-4 font-bold text-2xl text-red-600">
             Error Loading Bounties
           </h1>
           <p className="text-gray-600">{error.message}</p>
-          <Button onClick={() => router.refresh()} className="mt-4">
+          <Button className="mt-4" onClick={() => router.refresh()}>
             Try Again
           </Button>
         </div>
@@ -54,13 +53,12 @@ export default function BountiesPage() {
     <>
       <Header />
       <div className="container mx-auto px-4 py-8">
-
-        <div className="flex justify-end items-center mb-6">
+        <div className="mb-6 flex items-center justify-end">
           <div className="flex gap-2">
             <Button
-              variant="outline"
               disabled={!session?.user}
               onClick={() => setImportOpen(true)}
+              variant="outline"
             >
               <GitHub className="h-4 w-4 fill-white" />
               Import from GitHub
@@ -72,20 +70,20 @@ export default function BountiesPage() {
         </div>
 
         <BountiesFeed
-          title=""
-          layout="grid"
           bounties={bounties?.data}
-          isLoading={isLoading}
-          isError={error !== null}
           error={error}
+          isError={error !== null}
+          isLoading={isLoading}
+          layout="grid"
+          title=""
         />
       </div>
 
       <CreateBountyModal
-        open={createModalOpen}
         onOpenChange={closeCreateModal}
+        open={createModalOpen}
       />
-      <GithubImportModal open={importOpen} onOpenChange={setImportOpen} />
+      <GithubImportModal onOpenChange={setImportOpen} open={importOpen} />
       {/* <FloatingCreateMenu
         disabled={!session?.user}
         onCreate={() => openCreateModal()}

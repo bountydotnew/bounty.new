@@ -1,12 +1,11 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { authClient } from '@bounty/auth/client';
+import { useQuery } from '@tanstack/react-query';
+import { createContext, type ReactNode, useContext } from 'react';
+import { trpc } from '@/utils/trpc';
 
-import { trpc } from "@/utils/trpc";
-import { authClient } from "@bounty/auth/client";
-
-export type AccessStage = "none" | "alpha" | "beta" | "production";
+export type AccessStage = 'none' | 'alpha' | 'beta' | 'production';
 
 interface AccessContextType {
   userStage: AccessStage;
@@ -31,7 +30,7 @@ export const AccessProvider = ({ children }: AccessProviderProps) => {
     throwOnError: false, // Don't throw errors that could break SSR
   });
 
-  const userStage: AccessStage = userData.data?.accessStage || "none";
+  const userStage: AccessStage = userData.data?.accessStage || 'none';
 
   const hasStageAccess = (stage: AccessStage | AccessStage[]): boolean => {
     const requiredStages = Array.isArray(stage) ? stage : [stage];
@@ -70,7 +69,7 @@ export const AccessProvider = ({ children }: AccessProviderProps) => {
 export const useAccess = (): AccessContextType => {
   const context = useContext(AccessContext);
   if (context === undefined) {
-    throw new Error("useAccess must be used within an AccessProvider");
+    throw new Error('useAccess must be used within an AccessProvider');
   }
   return context;
 };

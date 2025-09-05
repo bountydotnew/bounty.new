@@ -1,8 +1,8 @@
-import { memo } from "react";
-import { BountyCard } from "@/components/bounty/bounty-card";
-import { BountySkeleton } from "@/components/dashboard/skeletons/bounty-skeleton";
-import { LOADING_SKELETON_COUNTS } from "@/constants/dashboard";
-import type { Bounty } from "@/types/dashboard";
+import { memo } from 'react';
+import { BountyCard } from '@/components/bounty/bounty-card';
+import { BountySkeleton } from '@/components/dashboard/skeletons/bounty-skeleton';
+import { LOADING_SKELETON_COUNTS } from '@/constants/dashboard';
+import type { Bounty } from '@/types/dashboard';
 
 interface BountiesFeedProps {
   title?: string;
@@ -10,27 +10,27 @@ interface BountiesFeedProps {
   isLoading: boolean;
   isError: boolean;
   error?: Error | null;
-  layout?: "grid" | "list";
+  layout?: 'grid' | 'list';
   onBountyClick?: (bounty: Bounty) => void;
   className?: string;
 }
 
 export const BountiesFeed = memo(function BountiesFeed({
-  title = "",
+  title = '',
   bounties,
   isLoading,
   isError,
   error,
-  layout = "list",
+  layout = 'list',
   // onBountyClick,
-  className = "",
+  className = '',
 }: BountiesFeedProps) {
-  const isGrid = layout === "grid";
+  const isGrid = layout === 'grid';
 
   if (isLoading) {
     return (
       <div className={className}>
-        {title && <h1 className="text-2xl font-semibold mb-4">{title}</h1>}
+        {title && <h1 className="mb-4 font-semibold text-2xl">{title}</h1>}
         <BountySkeleton
           count={LOADING_SKELETON_COUNTS.BOUNTIES}
           grid={isGrid}
@@ -42,10 +42,10 @@ export const BountiesFeed = memo(function BountiesFeed({
   if (isError) {
     return (
       <div className={className}>
-        {title && <h1 className="text-2xl font-semibold mb-4">{title}</h1>}
-        <div className="text-center py-8" role="alert">
+        {title && <h1 className="mb-4 font-semibold text-2xl">{title}</h1>}
+        <div className="py-8 text-center" role="alert">
           <p className="text-destructive">
-            Error: {error?.message || "Failed to load bounties"}
+            Error: {error?.message || 'Failed to load bounties'}
           </p>
         </div>
       </div>
@@ -55,8 +55,8 @@ export const BountiesFeed = memo(function BountiesFeed({
   if (!bounties || bounties.length === 0) {
     return (
       <div className={className}>
-        {title && <h1 className="text-2xl font-semibold mb-4">{title}</h1>}
-        <div className="text-center py-8">
+        {title && <h1 className="mb-4 font-semibold text-2xl">{title}</h1>}
+        <div className="py-8 text-center">
           <p className="text-muted-foreground">
             No bounties available at the moment.
           </p>
@@ -67,16 +67,16 @@ export const BountiesFeed = memo(function BountiesFeed({
 
   return (
     <div className={className}>
-      {title && <h1 className="text-2xl font-semibold mb-4">{title}</h1>}
+      {title && <h1 className="mb-4 font-semibold text-2xl">{title}</h1>}
       <div
         className={
           isGrid
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            : "space-y-4"
+            ? 'grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'
+            : 'space-y-4'
         }
       >
         {bounties.map((bounty) => (
-          <BountyCard key={bounty.id} bounty={bounty} />
+          <BountyCard bounty={bounty} key={bounty.id} />
         ))}
       </div>
     </div>
