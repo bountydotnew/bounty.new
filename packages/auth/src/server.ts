@@ -11,6 +11,7 @@ import { Polar } from '@polar-sh/sdk';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { passkey } from 'better-auth/plugins/passkey';
+import { admin } from 'better-auth/plugins/admin';
 
 const polarEnv =
   process.env.NODE_ENV === 'production' ? 'production' : 'sandbox';
@@ -136,7 +137,7 @@ export const auth = betterAuth({
         }),
       ],
     }),
-    passkey({
+    passkey({ 
       rpID: process.env.NODE_ENV === 'production' ? 'bounty.new' : 'localhost',
       rpName: 'Bounty.new',
       origin:
@@ -144,6 +145,7 @@ export const auth = betterAuth({
           ? 'https://bounty.new'
           : 'http://localhost:3000',
     }),
+    admin(),
   ],
   secret: process.env.BETTER_AUTH_SECRET,
 });

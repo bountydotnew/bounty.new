@@ -3,7 +3,7 @@
 import { authClient } from '@bounty/auth/client';
 import { useQuery } from '@tanstack/react-query';
 import { CreditCard, LogOut, Shield, Sparkles } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import * as React from 'react';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
@@ -234,6 +234,7 @@ export function AccountDropdown({
   onUpgradeClick,
 }: AccountDropdownProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { isMobile } = useSidebar();
   const { data: session } = authClient.useSession();
   const { isPro, isLoading: isBillingLoading } = useBilling();
@@ -241,6 +242,7 @@ export function AccountDropdown({
     ...trpc.user.getMe.queryOptions(),
     enabled: !!session?.user,
   });
+  const isImpersonating = Boolean((session as any)?.session?.impersonatedBy || (session as any)?.impersonatedBy);
 
   // Custom hooks for better separation of concerns
   const userDisplay = useUserDisplay(session?.user, user);
@@ -264,8 +266,9 @@ export function AccountDropdown({
   }, [router]);
 
   const handleAdminClick = useCallback(() => {
-    router.push('/admin');
-  }, [router]);
+    if (pathname?.startsWith('/admin')) router.push('/');
+    else router.push('/admin');
+  }, [router, pathname]);
 
   return (
     <SidebarMenu>
@@ -297,7 +300,7 @@ export function AccountDropdown({
             {/* Upgrade section */}
             <DropdownMenuGroup>
 
-            {me?.role === 'admin' && (
+            {(me?.role === 'admin' || isImpersonating) && (
                 <DropdownMenuItem
                   aria-label="Open admin panel"
                   onClick={handleAdminClick}

@@ -157,7 +157,7 @@ export const userRouter = router({
       }
     }),
 
-  getUserStats: protectedProcedure.query(async ({ ctx }) => {
+  getUserStats: adminProcedure.query(async ({ ctx }) => {
     try {
       const [stats] = await db
         .select({

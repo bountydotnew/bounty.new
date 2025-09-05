@@ -14,6 +14,9 @@ import {
 } from '@/components/ui/card';
 import Link from '@/components/ui/link';
 import { trpc } from '@/utils/trpc';
+import { SummaryCards } from '@/components/admin/analytics/summary-cards';
+import { OverviewKPIs, OverviewTraffic, OverviewTimeseries } from '@/components/admin/analytics/overview';
+import { AudienceDevices } from '@/components/admin/analytics/audience';
 
 export default function AdminPage() {
   const { data: betaApps } = useQuery(
@@ -36,34 +39,44 @@ export default function AdminPage() {
         title="Admin"
       />
 
+      <OverviewKPIs websiteId="bounty" />
+      <OverviewTimeseries websiteId="bounty" />
+      {/* <OverviewTraffic websiteId="bounty" /> */}
+      {/* <SummaryCards websiteId="bounty" /> */}
+      {/* <AudienceDevices websiteId="bounty" /> */}
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <StatCard
           hint="Total"
           icon={<FileText className="h-4 w-4" />}
           title="Beta Applications"
           value={betaTotal}
+          href="/admin/beta-applications"
         />
         <StatCard
           hint="Total registered"
           icon={<Users className="h-4 w-4" />}
           title="Users"
           value={usersTotal}
+          href="/admin/users"
         />
         <StatCard
           hint="Pending approvals"
           icon={<Clock className="h-4 w-4" />}
           title="Waitlist"
           value={waitlistPending}
+          href="/admin/waitlist"
         />
-         <StatCard
+        <StatCard
           hint="Sent"
           icon={<Clock className="h-4 w-4" />}
           title="Notifications"
           value={notificationsSent}
+          href="/admin/notifications"
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      {/* <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <Card className="border-neutral-800 bg-neutral-900/60 backdrop-blur">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -127,7 +140,7 @@ export default function AdminPage() {
             </Link>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
     </div>
   );
 }

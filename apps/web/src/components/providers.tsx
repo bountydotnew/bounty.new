@@ -14,6 +14,7 @@ import { AccessProvider } from '@/contexts/access-provider';
 import { ConfettiProvider } from '@/lib/context/confetti-context';
 import { queryClient } from '@/utils/trpc';
 import { Toaster } from './ui/sonner';
+import ImpersonationBanner from './impersonation-banner';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const posthogApiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
@@ -41,6 +42,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                   }}
                   replace={router.replace}
                 >
+                  <ImpersonationBanner />
                   {children}
                 </AuthUIProvider>
               </AccessProvider>
@@ -74,6 +76,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 }}
                 replace={router.replace}
               >
+                <ImpersonationBanner />
                 {children}
               </AuthUIProvider>
             </AccessProvider>

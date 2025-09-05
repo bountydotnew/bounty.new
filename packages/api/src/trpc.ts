@@ -1,4 +1,5 @@
 import { initTRPC, TRPCError } from '@trpc/server';
+import { auth } from '@bounty/auth/server';
 import type { Context } from './context';
 
 export const t = initTRPC.context<Context>().create();
@@ -24,25 +25,19 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
 });
 
 export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  const raw = ctx.session as any;
+  const impersonatedBy = raw?.impersonatedBy ?? raw?.session?.impersonatedBy;
+  if (impersonatedBy) {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Stop impersonating to view the admin panel' });
+  }
+
   const user = await ctx.db.query.user.findFirst({
     where: (user, { eq }) => eq(user.id, ctx.session.user.id),
   });
 
-  // Temporary bypass for development - remove this in production
-  if (!user) {
-    throw new TRPCError({
-      code: 'FORBIDDEN',
-      message: 'User not found',
-    });
+  if (!user || user.role !== 'admin') {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin access required' });
   }
-
-  // For now, allow access if user exists (temporary for development)
-  // if (!user || user.role !== "admin") {
-  //   throw new TRPCError({
-  //     code: "FORBIDDEN",
-  //     message: "Admin access required",
-  //   });
-  // }
 
   return next({
     ctx: {

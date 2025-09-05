@@ -162,6 +162,13 @@
       "when": 1757050172908,
       "tag": "0022_closed_jean_grey",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1757057954997,
+      "tag": "0023_motionless_corsair",
+      "breakpoints": true
     }
   ]
 }
