@@ -88,32 +88,27 @@ export function PaymentModal({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="bg-background sm:max-w-md" showOverlay>
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Heart className="h-5 w-5 text-red-500" />
-              <DialogTitle>Support {recipientName}</DialogTitle>
-            </div>
+      <DialogContent className="border border-neutral-800 bg-neutral-900/90 backdrop-blur p-0 sm:max-w-md" showOverlay>
+        <DialogHeader className="px-6 pt-6 pb-2">
+          <div className="flex items-center gap-2">
+            <Heart className="h-5 w-5 text-red-500" />
+            <DialogTitle className="text-white">Support {recipientName}</DialogTitle>
           </div>
-          <DialogDescription>
+          <DialogDescription className="text-neutral-400">
             Send a tip to @{recipientUsername} for their contribution
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Preset Amounts */}
-          <div>
-            <Label className="mb-3 block font-medium text-sm">
-              Quick amounts
-            </Label>
-            <div className="grid grid-cols-2 gap-2">
+        <div className="px-6 pb-6 space-y-5">
+          <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
+            <Label className="text-sm">Quick amounts</Label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {presetAmounts.map((amount) => (
                 <Button
-                  className="h-12 font-semibold text-base"
                   key={amount}
                   onClick={() => handlePresetSelect(amount)}
                   variant={selectedAmount === amount ? 'default' : 'outline'}
+                  className={selectedAmount === amount ? 'h-10' : 'h-10 border-neutral-800 hover:bg-neutral-900/60'}
                 >
                   <DollarSign className="mr-1 h-4 w-4" />
                   {amount}
@@ -122,19 +117,13 @@ export function PaymentModal({
             </div>
           </div>
 
-          {/* Custom Amount */}
           {allowCustomAmount && (
-            <div>
-              <Label
-                className="mb-2 block font-medium text-sm"
-                htmlFor="custom-amount"
-              >
-                Custom amount
-              </Label>
+            <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
+              <Label htmlFor="custom-amount" className="text-sm">Custom amount</Label>
               <div className="relative">
-                <DollarSign className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 transform text-gray-500" />
+                <DollarSign className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 transform text-neutral-500" />
                 <Input
-                  className="pl-9"
+                  className="pl-9 bg-neutral-900/60 border-neutral-800 text-white placeholder-neutral-500"
                   id="custom-amount"
                   max="10000"
                   min="1"
@@ -148,50 +137,34 @@ export function PaymentModal({
             </div>
           )}
 
-          {/* Optional Message */}
-          <div>
-            <Label className="mb-2 block font-medium text-sm" htmlFor="message">
-              Message (optional)
-            </Label>
+          <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
+            <Label htmlFor="message" className="text-sm">Message (optional)</Label>
             <textarea
-              className="h-20 w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm"
               id="message"
               maxLength={200}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Thanks for the great work!"
               value={message}
+              className="h-24 w-full resize-none rounded-lg border border-neutral-800 bg-neutral-900/60 px-3 py-2 text-sm text-white placeholder-neutral-500"
             />
-            <div className="mt-1 text-gray-500 text-xs">
-              {message.length}/200 characters
-            </div>
+            <div className="text-neutral-500 text-xs">{message.length}/200 characters</div>
           </div>
 
-          {/* Amount Summary */}
           {getSelectedAmount() > 0 && (
-            <div className="rounded-lg bg-gray-50 p-4">
+            <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-4">
               <div className="flex items-center justify-between">
-                <span className="font-medium">Total</span>
-                <span className="font-bold text-xl">
-                  ${getSelectedAmount().toFixed(2)}
-                </span>
+                <span className="text-neutral-300">Total</span>
+                <span className="font-semibold text-xl text-white">${getSelectedAmount().toFixed(2)}</span>
               </div>
             </div>
           )}
         </div>
 
-        <DialogFooter>
-          <Button
-            disabled={isProcessing}
-            onClick={() => onOpenChange(false)}
-            variant="outline"
-          >
+        <DialogFooter className="px-6 pb-6 pt-2">
+          <Button disabled={isProcessing} onClick={() => onOpenChange(false)} variant="outline" className="border-neutral-800">
             Cancel
           </Button>
-          <Button
-            className="min-w-24"
-            disabled={!isValidAmount() || isProcessing}
-            onClick={handlePayment}
-          >
+          <Button className="min-w-24" disabled={!isValidAmount() || isProcessing} onClick={handlePayment}>
             {isProcessing ? (
               <div className="flex items-center gap-2">
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />

@@ -37,7 +37,6 @@ export default function PaymentPage({ params }: PaymentPageProps) {
   const apiKey = searchParams.get('key');
   const username = resolvedParams.username;
 
-  // TODO: Replace with actual user query
   const userQuery = useQuery({
     queryKey: ['user', username],
     queryFn: async () => {
@@ -68,7 +67,6 @@ export default function PaymentPage({ params }: PaymentPageProps) {
     },
   });
 
-  // Auto-open payment modal when landing from external source
   useEffect(() => {
     if (userQuery.data && apiKey && !paymentModalOpen) {
       setPaymentModalOpen(true);
@@ -76,27 +74,27 @@ export default function PaymentPage({ params }: PaymentPageProps) {
   }, [userQuery.data, apiKey, paymentModalOpen]);
   if (userQuery.isLoading) {
     return (
-      <div className="container mx-auto max-w-4xl px-4 py-8">
+      <div className="mx-auto max-w-3xl px-6 py-8 md:py-10">
         <div className="space-y-6">
-          <div className="h-8 w-24 animate-pulse rounded bg-muted" />
-          <Card>
+          <div className="h-8 w-24 animate-pulse rounded bg-neutral-800/50" />
+          <Card className="border border-neutral-800 bg-neutral-900/90 backdrop-blur">
             <CardHeader>
               <div className="flex items-center gap-4">
-                <div className="h-16 w-16 animate-pulse rounded-full bg-muted" />
+                <div className="h-16 w-16 animate-pulse rounded-full bg-neutral-800/50" />
                 <div className="space-y-2">
-                  <div className="h-6 w-32 animate-pulse rounded bg-muted" />
-                  <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+                  <div className="h-6 w-32 animate-pulse rounded bg-neutral-800/50" />
+                  <div className="h-4 w-24 animate-pulse rounded bg-neutral-800/50" />
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="h-4 w-full animate-pulse rounded bg-muted" />
-                <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+                <div className="h-4 w-full animate-pulse rounded bg-neutral-800/50" />
+                <div className="h-4 w-3/4 animate-pulse rounded bg-neutral-800/50" />
                 <div className="grid grid-cols-3 gap-4">
-                  <div className="h-16 animate-pulse rounded bg-muted" />
-                  <div className="h-16 animate-pulse rounded bg-muted" />
-                  <div className="h-16 animate-pulse rounded bg-muted" />
+                  <div className="h-16 animate-pulse rounded bg-neutral-800/50" />
+                  <div className="h-16 animate-pulse rounded bg-neutral-800/50" />
+                  <div className="h-16 animate-pulse rounded bg-neutral-800/50" />
                 </div>
               </div>
             </CardContent>
@@ -108,22 +106,22 @@ export default function PaymentPage({ params }: PaymentPageProps) {
 
   if (userQuery.error || !userQuery.data) {
     return (
-      <div className="container mx-auto max-w-4xl px-4 py-8">
+      <div className="mx-auto max-w-3xl px-6 py-8 md:py-10">
         <div className="space-y-6">
           <Button onClick={() => router.back()} size="sm" variant="outline">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
 
-          <Card>
+          <Card className="border border-neutral-800 bg-neutral-900/90 backdrop-blur">
             <CardContent className="p-8 text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-                <User className="h-8 w-8 text-red-600" />
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
+                <User className="h-8 w-8 text-red-500" />
               </div>
-              <CardTitle className="mb-2 text-red-600">
+              <CardTitle className="mb-2 text-red-500">
                 User Not Found
               </CardTitle>
-              <p className="mb-6 text-muted-foreground">
+              <p className="mb-6 text-neutral-400">
                 The user @{username} could not be found or doesn&apos;t have
                 payments enabled.
               </p>
@@ -141,23 +139,17 @@ export default function PaymentPage({ params }: PaymentPageProps) {
   const user = userQuery.data;
 
   return (
-    <div className="container mx-auto max-w-4xl px-4 py-8">
-      <div className="space-y-6">
-        {/* Header */}
+    <div className="mx-auto max-w-3xl px-6 py-8 md:py-10">
+      <div className="space-y-6 md:space-y-8">
         <div className="flex items-center justify-between">
           <Button onClick={() => router.back()} size="sm" variant="outline">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
-          <Badge className="gap-1" variant="secondary">
-            <Heart className="h-3 w-3" />
-            Payment Profile
-          </Badge>
         </div>
 
-        {/* User Profile Card */}
-        <Card>
-          <CardHeader>
+        <Card className="border border-neutral-800 bg-neutral-900/90 backdrop-blur">
+          <CardHeader className="pb-4">
             <div className="flex items-start gap-6">
               <Avatar className="h-20 w-20">
                 <AvatarImage alt={user.name} src={user.image} />
@@ -167,20 +159,15 @@ export default function PaymentPage({ params }: PaymentPageProps) {
               </Avatar>
               <div className="flex-1 space-y-2">
                 <div>
-                  <CardTitle className="text-2xl">{user.name}</CardTitle>
-                  <p className="text-muted-foreground">@{user.username}</p>
+                  <CardTitle className="text-2xl text-white">{user.name}</CardTitle>
+                  <p className="text-neutral-400">@{user.username}</p>
                 </div>
-                {user.bio && (
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    {user.bio}
-                  </p>
-                )}
+                {user.bio && <p className="text-neutral-400 text-sm leading-relaxed">{user.bio}</p>}
 
-                {/* Social Links */}
                 <div className="flex gap-4 pt-2">
                   {user.githubUrl && (
                     <Link
-                      className="inline-flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
+                      className="inline-flex items-center gap-2 text-neutral-300 text-sm transition-colors hover:text-white"
                       href={user.githubUrl}
                       rel="noopener noreferrer"
                       target="_blank"
@@ -191,7 +178,7 @@ export default function PaymentPage({ params }: PaymentPageProps) {
                   )}
                   {user.twitterUrl && (
                     <Link
-                      className="inline-flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
+                      className="inline-flex items-center gap-2 text-neutral-300 text-sm transition-colors hover:text-white"
                       href={user.twitterUrl}
                       rel="noopener noreferrer"
                       target="_blank"
@@ -202,7 +189,7 @@ export default function PaymentPage({ params }: PaymentPageProps) {
                   )}
                   {user.websiteUrl && (
                     <Link
-                      className="inline-flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
+                      className="inline-flex items-center gap-2 text-neutral-300 text-sm transition-colors hover:text-white"
                       href={user.websiteUrl}
                       rel="noopener noreferrer"
                       target="_blank"
@@ -215,83 +202,57 @@ export default function PaymentPage({ params }: PaymentPageProps) {
               </div>
             </div>
           </CardHeader>
-
           <CardContent className="space-y-6">
-            <Separator />
+            <Separator className="bg-neutral-800" />
 
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-6">
-              <div className="space-y-2 text-center">
-                <div className="flex items-center justify-center">
-                  <GitFork className="mr-2 h-5 w-5 text-muted-foreground" />
-                  <p className="font-bold text-2xl">
-                    {user.stats.repositories}
-                  </p>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-4 text-center">
+                <div className="flex items-center justify-center text-white">
+                  <GitFork className="mr-2 h-5 w-5 text-neutral-400" />
+                  <p className="font-semibold text-xl">{user.stats.repositories}</p>
                 </div>
-                <p className="text-muted-foreground text-sm">Repositories</p>
+                <p className="text-neutral-400 text-xs mt-1">Repositories</p>
               </div>
-              <div className="space-y-2 text-center">
-                <div className="flex items-center justify-center">
-                  <Users className="mr-2 h-5 w-5 text-muted-foreground" />
-                  <p className="font-bold text-2xl">
-                    {user.stats.followers.toLocaleString()}
-                  </p>
+              <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-4 text-center">
+                <div className="flex items-center justify-center text-white">
+                  <Users className="mr-2 h-5 w-5 text-neutral-400" />
+                  <p className="font-semibold text-xl">{user.stats.followers.toLocaleString()}</p>
                 </div>
-                <p className="text-muted-foreground text-sm">Followers</p>
+                <p className="text-neutral-400 text-xs mt-1">Followers</p>
               </div>
-              <div className="space-y-2 text-center">
-                <div className="flex items-center justify-center">
-                  <Activity className="mr-2 h-5 w-5 text-muted-foreground" />
-                  <p className="font-bold text-2xl">
-                    {user.stats.contributions}
-                  </p>
+              <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-4 text-center">
+                <div className="flex items-center justify-center text-white">
+                  <Activity className="mr-2 h-5 w-5 text-neutral-400" />
+                  <p className="font-semibold text-xl">{user.stats.contributions}</p>
                 </div>
-                <p className="text-muted-foreground text-sm">Contributions</p>
+                <p className="text-neutral-400 text-xs mt-1">Contributions</p>
               </div>
             </div>
 
-            <Separator />
+            <Separator className="bg-neutral-800" />
 
-            {/* Payment CTA */}
-            <div className="space-y-4 text-center">
+            <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-6 text-center space-y-4">
               <div className="space-y-2">
-                <h3 className="flex items-center justify-center gap-2 font-semibold text-lg">
-                  <DollarSign className="h-5 w-5" />
+                <h3 className="flex items-center justify-center gap-2 font-semibold text-lg text-white">
+                  <DollarSign className="h-5 w-5 text-neutral-300" />
                   Support {user.name}
                 </h3>
-                <p className="text-muted-foreground">
-                  Show your appreciation for their open source contributions
-                </p>
+                <p className="text-neutral-400">Show your appreciation for their open source contributions</p>
               </div>
-
               <div className="flex justify-center gap-3">
-                <Button
-                  className="gap-2"
-                  onClick={() => setPaymentModalOpen(true)}
-                  size="lg"
-                >
+                <Button className="gap-2 rounded-lg border border-neutral-800 bg-neutral-900/90 backdrop-blur text-white hover:bg-neutral-800" onClick={() => setPaymentModalOpen(true)} size="lg">
                   <Heart className="h-4 w-4" />
                   Send Payment
                 </Button>
-                <Button
-                  className="gap-2"
-                  onClick={() => setPaymentModalOpen(true)}
-                  size="lg"
-                  variant="outline"
-                >
+                <Button className="gap-2 rounded-lg border border-neutral-800 hover:bg-neutral-900/50" onClick={() => setPaymentModalOpen(true)} size="lg" variant="outline">
                   <Star className="h-4 w-4" />
                   Tip
                 </Button>
               </div>
-
-              <p className="text-muted-foreground text-xs">
-                Secure payments processed through Bounty.new
-              </p>
+              <p className="text-neutral-500 text-xs">Secure payments processed through Bounty.new</p>
             </div>
           </CardContent>
         </Card>
-
-        {/* Payment Modal */}
         <PaymentModal
           allowCustomAmount={user.paymentSettings.allowCustomAmount}
           onOpenChange={setPaymentModalOpen}

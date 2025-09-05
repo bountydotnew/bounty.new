@@ -4,7 +4,7 @@ import { authClient } from '@bounty/auth/client';
 import { ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { DevWarningDialog } from '@/components/ui/dev-warning-dialog';
 import Link from '@/components/ui/link';
@@ -15,13 +15,13 @@ export function Header() {
   const [showDialog, setShowDialog] = useState(false);
   const router = useRouter();
   // Cookie helpers
-  const setCookie = (name: string, value: string, days: number) => {
+  const setCookie = useCallback((name: string, value: string, days: number) => {
     const expires = new Date();
     expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
     document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
-  };
+  }, []);
 
-  const getCookie = (name: string): string | null => {
+  const getCookie = useCallback((name: string): string | null => {
     const nameEQ = `${name}=`;
     const ca = document.cookie.split(';');
     for (let i = 0; i < ca.length; i++) {
@@ -34,7 +34,7 @@ export function Header() {
       }
     }
     return null;
-  };
+  }, []);
 
   // Check cookie on mount
   useEffect(() => {
