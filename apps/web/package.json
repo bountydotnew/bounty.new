@@ -69,7 +69,8 @@
     "tailwind-merge": "catalog:",
     "tailwindcss-animate": "catalog:",
     "tw-animate-css": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@number-flow/react": "catalog:"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "catalog:",
