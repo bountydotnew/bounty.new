@@ -1,4 +1,4 @@
-import { betaApplication, user } from '@bounty/db';
+import { betaApplication, user, createNotification } from '@bounty/db';
 import { TRPCError } from '@trpc/server';
 import { desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -154,11 +154,33 @@ export const betaApplicationsRouter = router({
           .update(user)
           .set({ accessStage: 'beta' })
           .where(eq(user.id, application.userId));
+        try {
+          await createNotification({
+            userId: application.userId,
+            type: 'beta_application_approved',
+            title: 'Beta access approved',
+            message:
+              `Your beta application was approved! ` +
+              `Reason: ${reviewNotes && reviewNotes.trim().length > 0 ? reviewNotes.trim() : 'No reason specified'}`,
+            data: { applicationId: application.id, reviewNotes: reviewNotes ?? null, linkTo: '/dashboard' },
+          });
+        } catch {}
       } else if (status === 'rejected') {
         await ctx.db
           .update(user)
           .set({ accessStage: 'none' })
           .where(eq(user.id, application.userId));
+        try {
+          await createNotification({
+            userId: application.userId,
+            type: 'beta_application_rejected',
+            title: 'Beta application update',
+            message:
+              `Your beta application was not approved at this time. ` +
+              `Reason: ${reviewNotes && reviewNotes.trim().length > 0 ? reviewNotes.trim() : 'No reason specified'}`,
+            data: { applicationId: application.id, reviewNotes: reviewNotes ?? null, linkTo: '/dashboard' },
+          });
+        } catch {}
       }
 
       return application;

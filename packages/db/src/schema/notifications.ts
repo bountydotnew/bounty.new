@@ -17,6 +17,9 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'submission_approved',
   'submission_rejected',
   'bounty_awarded',
+  'beta_application_approved',
+  'beta_application_rejected',
+  'custom',
 ]);
 
 export const notification = pgTable(
@@ -33,6 +36,8 @@ export const notification = pgTable(
       bountyId?: string;
       submissionId?: string;
       commentId?: string;
+      linkTo?: string;
+      applicationId?: string;
       [key: string]: unknown;
     } | null>(),
     read: boolean('read').notNull().default(false),

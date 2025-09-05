@@ -46,6 +46,10 @@ function Row({ item, onRead }: { item: Item; onRead: (id: string) => void }) {
       onRead(item.id);
     }
     const data = (item.data || {}) as Record<string, unknown>;
+    if (typeof data.linkTo === 'string' && data.linkTo.length > 0) {
+      router.push(String(data.linkTo));
+      return;
+    }
     if (item.type === 'bounty_comment' && typeof data.bountyId === 'string') {
       router.push(`/bounty/${data.bountyId}`);
       return;
@@ -128,6 +132,7 @@ export function NotificationsDropdown() {
     hasError,
     markAsRead,
     markAllAsRead,
+    refetch,
   } = useNotifications();
   const [showAll, setShowAll] = useState(false);
 
@@ -158,7 +163,8 @@ export function NotificationsDropdown() {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-80 rounded-lg border border-neutral-800 bg-neutral-900 p-0 sm:w-96"
+        alignOffset={-8}
+        className="w-80 rounded-lg border border-neutral-800 bg-neutral-900 p-0 sm:w-96 ml-2 sm:ml-4"
         side="bottom"
         sideOffset={4}
       >
@@ -172,15 +178,24 @@ export function NotificationsDropdown() {
                 {unreadCount}
               </span>
             </div>
-            {unreadCount > 0 && (
+            <div className="flex items-center gap-2">
               <Button
-                className="h-7 gap-2 rounded-md border border-neutral-700 px-2 text-xs"
-                onClick={markAllAsRead}
+                className="h-7 rounded-md px-2 text-xs"
+                onClick={refetch}
                 variant="text"
               >
-                Mark all as read
+                Refresh
               </Button>
-            )}
+              {unreadCount > 0 && (
+                <Button
+                  className="h-7 gap-2 rounded-md border border-neutral-700 px-2 text-xs"
+                  onClick={markAllAsRead}
+                  variant="text"
+                >
+                  Mark all as read
+                </Button>
+              )}
+            </div>
           </div>
           {(unreadCount > 0 || showAll) && (
             <div className="flex gap-1">
@@ -222,13 +237,13 @@ export function NotificationsDropdown() {
               <p className="mb-3 text-neutral-300 text-sm">
                 You&apos;re all caught up!
               </p>
-              <Button
+              {/* <Button
                 className="gap-2 rounded-none border"
                 onClick={() => setShowAll(true)}
                 variant="text"
               >
                 Show all notifications
-              </Button>
+              </Button> */}
             </div>
           ) : filtered.length > 0 ? (
             (filtered as Item[]).map((n) => (
@@ -240,8 +255,7 @@ export function NotificationsDropdown() {
             </div>
           )}
         </div>
-        <div className="flex items-center justify-between border-neutral-800 border-t px-3 py-2">
-          <div className="text-neutral-400 text-xs">View all</div>
+        <div className="flex items-center justify-end border-neutral-800 border-t px-3 py-2">
           <Button
             className="h-7 gap-1 rounded-md border border-neutral-700 px-2"
             onClick={() => setShowAll(true)}
@@ -249,7 +263,7 @@ export function NotificationsDropdown() {
             variant="text"
           >
             <ArrowUpRight className="h-4 w-4" />
-            <span className="text-xs">Open</span>
+            <span className="text-xs">Show all</span>
           </Button>
         </div>
       </DropdownMenuContent>

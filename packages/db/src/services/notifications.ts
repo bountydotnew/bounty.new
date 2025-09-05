@@ -16,6 +16,8 @@ export interface CreateNotificationInput {
     bountyId?: string;
     submissionId?: string;
     commentId?: string;
+    linkTo?: string;
+    applicationId?: string;
     [key: string]: unknown;
   };
 }
