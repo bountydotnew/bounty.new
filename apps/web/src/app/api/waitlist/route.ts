@@ -1,8 +1,8 @@
 import { db, waitlist } from '@bounty/db';
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { grim } from '@/hooks/use-dev-log';
-import { validateFingerprint } from '@/lib/fingerprint-validation';
+import { grim } from '@bounty/ui/hooks/use-dev-log';
+import { validateFingerprint } from '@bounty/ui/lib/fingerprint-validation';
 import { track } from '@bounty/track';
 
 const { log, error, warn } = grim();

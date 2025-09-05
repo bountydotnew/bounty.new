@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@bounty/ui/components/dropdown-menu';
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -22,7 +22,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from '@/components/ui/sidebar';
+} from '@bounty/ui/components/sidebar';
 
 export function NavProjects({
   projects,

@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@bounty/ui/lib/utils';
 
 interface HeaderBaseProps {
   leftContent?: ReactNode;

@@ -8,24 +8,24 @@ import {
   RepoResultCard,
 } from '@/components/bounty/github-result-cards';
 import { MarkdownTextarea } from '@/components/bounty/markdown-editor';
-import { AutocompleteDropdown } from '@/components/ui/autocomplete';
-import { Button } from '@/components/ui/button';
+import { AutocompleteDropdown } from '@bounty/ui/components/autocomplete';
+import { Button } from '@bounty/ui/components/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@bounty/ui/components/dialog';
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-} from '@/components/ui/drawer';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useCurrentUser } from '@/hooks/use-access';
-import { useMediaQuery } from '@/hooks/use-media-query';
+} from '@bounty/ui/components/drawer';
+import { Input } from '@bounty/ui/components/input';
+import { Label } from '@bounty/ui/components/label';
+import { useCurrentUser } from '@bounty/ui/hooks/use-access';
+import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
 import { trpcClient } from '@/utils/trpc';
 
 type RepoOption = { name: string; full_name: string; private: boolean };

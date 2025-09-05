@@ -1,9 +1,9 @@
 import { DollarSign, TrendingUp } from 'lucide-react';
 import { memo } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { formatLargeNumber } from '@/lib/utils';
+import { Badge } from '@bounty/ui/components/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
+import { Separator } from '@bounty/ui/components/separator';
+import { formatLargeNumber } from '@bounty/ui/lib/utils';
 import type {
   ActivityItem,
   Bounty,

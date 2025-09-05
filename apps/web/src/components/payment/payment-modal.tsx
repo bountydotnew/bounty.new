@@ -3,7 +3,7 @@
 import { DollarSign, Heart } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
+import { Button } from '@bounty/ui/components/button';
 import {
   Dialog,
   DialogContent,
@@ -11,9 +11,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from '@bounty/ui/components/dialog';
+import { Input } from '@bounty/ui/components/input';
+import { Label } from '@bounty/ui/components/label';
 
 interface PaymentModalProps {
   open: boolean;

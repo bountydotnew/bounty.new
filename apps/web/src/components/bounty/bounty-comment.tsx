@@ -9,14 +9,14 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
+import { Button } from '@bounty/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@bounty/ui/components/dropdown-menu';
 import type { BountyCommentCacheItem } from '@/types/comments';
 
 interface BountyCommentProps {

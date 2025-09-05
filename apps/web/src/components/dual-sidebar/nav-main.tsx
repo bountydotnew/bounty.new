@@ -6,8 +6,8 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import Link from '@/components/ui/link';
+} from '@bounty/ui/components/collapsible';
+import Link from '@bounty/ui/components/link';
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -17,7 +17,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from '@/components/ui/sidebar';
+} from '@bounty/ui/components/sidebar';
 
 export function NavMain({
   items,

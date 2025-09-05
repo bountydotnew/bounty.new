@@ -6,13 +6,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect } from 'react';
 import { Sidebar } from '@/components/dual-sidebar';
 import Bounty from '@/components/icons/bounty';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Spinner } from '@/components/ui/spinner';
-import { useBilling } from '@/hooks/use-billing';
-import { useConfetti } from '@/lib/context/confetti-context';
+import { Badge } from '@bounty/ui/components/badge';
+import { Button } from '@bounty/ui/components/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
+import { Separator } from '@bounty/ui/components/separator';
+import { Spinner } from '@bounty/ui/components/spinner';
+import { useBilling } from '@bounty/ui/hooks/use-billing';
+import { useConfetti } from '@bounty/ui';
 
 function SuccessContent() {
   const searchParams = useSearchParams();

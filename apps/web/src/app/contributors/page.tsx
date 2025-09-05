@@ -5,9 +5,9 @@ import { ArrowUpRight, GitFork, GitGraph, Github, Star } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataBuddyIcon, MarbleIcon } from '@/components/icons';
 import { Header } from '@/components/sections/home/header';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import Link from '@/components/ui/link';
-import { LINKS } from '@/constants/links';
+import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
+import Link from '@bounty/ui/components/link';
+import { LINKS } from '@bounty/ui';
 import { trpc } from '@/utils/trpc';
 
 interface Contributor {

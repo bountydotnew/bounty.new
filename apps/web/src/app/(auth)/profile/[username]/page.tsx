@@ -4,17 +4,17 @@ import { authClient } from '@bounty/auth/client';
 import { Loader2, Settings } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
+import { Badge } from '@bounty/ui/components/badge';
+import { Button } from '@bounty/ui/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { useBilling } from '@/hooks/use-billing';
+} from '@bounty/ui/components/card';
+import { useBilling } from '@bounty/ui/hooks/use-billing';
 
 export default function ProfilePage() {
   const params = useParams();

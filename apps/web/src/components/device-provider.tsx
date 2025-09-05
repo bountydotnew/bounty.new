@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, type ReactNode, useContext } from 'react';
-import { getDeviceType } from '@/lib/device-detection';
+import { getDeviceType } from '@bounty/ui/lib/device-detection';
 
 interface DeviceContextType {
   isMobile: boolean;

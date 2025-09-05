@@ -4,8 +4,8 @@ import type { TRPCClientErrorLike } from '@trpc/client';
 import { CheckCircle, ExternalLink, Eye, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@bounty/ui/components/badge';
+import { Button } from '@bounty/ui/components/button';
 import {
   Dialog,
   DialogContent,
@@ -13,9 +13,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Favicon } from '@/components/ui/favicon';
-import { Textarea } from '@/components/ui/textarea';
+} from '@bounty/ui/components/dialog';
+import { Favicon } from '@bounty/ui/components/favicon';
+import { Textarea } from '@bounty/ui/components/textarea';
 import type { BetaApplication } from '@/types/beta-application';
 import { trpc } from '@/utils/trpc';
 

@@ -1,7 +1,7 @@
 import { bounty, db } from '@bounty/db';
 import { eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
-import { baseUrl } from '@/lib/constants';
+import { baseUrl } from '../../../../../../../packages/ui/src/lib/constants';
 import BountyPage from './page.client';
 
 export async function generateMetadata({

@@ -36,8 +36,8 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20",
-    "typescript": "^5"
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
   },
   "publishConfig": {
     "access": "restricted"

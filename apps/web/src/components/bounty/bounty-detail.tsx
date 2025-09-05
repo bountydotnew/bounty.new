@@ -10,11 +10,11 @@ import { EditBountyModal } from '@/components/bounty/edit-bounty-modal';
 import { MarkdownContent } from '@/components/bounty/markdown-content';
 import SubmissionCard from '@/components/bounty/submission-card';
 import { SubmissionsMobileSidebar } from '@/components/bounty/submissions-mobile-sidebar';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { SmartNavigation } from '@/components/ui/smart-breadcrumb';
-import { useBountyModals } from '@/lib/bounty-utils';
-import { formatLargeNumber } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
+import { Button } from '@bounty/ui/components/button';
+import { SmartNavigation } from '@bounty/ui/components/smart-breadcrumb';
+import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
+import { formatLargeNumber } from '@bounty/ui/lib/utils';
 import type { BountyCommentCacheItem } from '@/types/comments';
 import { trpc } from '@/utils/trpc';
 

@@ -4,9 +4,9 @@ import { Check } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Switch } from '@/components/ui/switch';
-import { useBilling } from '@/hooks/use-billing';
+import { Dialog, DialogContent, DialogTitle } from '@bounty/ui/components/dialog';
+import { Switch } from '@bounty/ui/components/switch';
+import { useBilling } from '@bounty/ui/hooks/use-billing';
 
 interface PricingDialogProps {
   open: boolean;

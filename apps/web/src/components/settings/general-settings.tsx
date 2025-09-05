@@ -5,11 +5,11 @@ import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useBilling } from '@/hooks/use-billing';
+import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
+import { Badge } from '@bounty/ui/components/badge';
+import { Button } from '@bounty/ui/components/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
+import { useBilling } from '@bounty/ui/hooks/use-billing';
 
 export function GeneralSettings() {
   const [isClientMounted, setIsClientMounted] = useState(false);

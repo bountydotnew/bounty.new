@@ -1,9 +1,9 @@
 'use client';
 
 import { useMemo } from 'react';
-import { DefaultRadialChart } from '@/components/ui/radial-chart';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useDatabuddyParameters } from '@/hooks/use-databuddy';
+import { DefaultRadialChart } from '@bounty/ui/components/radial-chart';
+import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
+import { useDatabuddyParameters } from '@bounty/ui/hooks/use-databuddy';
 
 type Props = { websiteId: string; timezone?: string };
 

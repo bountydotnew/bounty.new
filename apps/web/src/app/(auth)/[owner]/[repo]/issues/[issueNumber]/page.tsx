@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
 import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
 import { BountyDetailSkeleton } from '@/components/dashboard/skeletons/bounty-detail-skeleton';
-import { useBountyModals } from '@/lib/bounty-utils';
+import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { trpc } from '@/utils/trpc';
 
 export default function GithubIssueToBountyPage() {

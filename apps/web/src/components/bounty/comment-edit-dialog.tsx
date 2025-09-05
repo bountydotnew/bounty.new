@@ -1,17 +1,17 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Button, HotkeyButton } from '@/components/ui/button';
+import { Button, HotkeyButton } from '@bounty/ui/components/button';
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
-import { Textarea } from '@/components/ui/textarea';
-import { useMediaQuery } from '@/hooks/use-media-query';
+} from '@bounty/ui/components/dialog';
+import { Sheet, SheetContent } from '@bounty/ui/components/sheet';
+import { Textarea } from '@bounty/ui/components/textarea';
+import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
 
 interface CommentEditDialogProps {
   open: boolean;

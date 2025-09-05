@@ -1,6 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
 import { ArrowRight } from 'lucide-react';
-import Link from '@/components/ui/link';
+import Link from '@bounty/ui/components/link';
 
 interface StatCardProps {
   title: string;

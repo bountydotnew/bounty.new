@@ -4,12 +4,12 @@ import { authClient } from '@bounty/auth/client';
 import { useQuery } from '@tanstack/react-query';
 import { Search, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { Input } from '@/components/ui/input';
+import { useIsMobile } from '@bounty/ui/hooks/use-mobile';
+import { Button } from '@bounty/ui/components/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
+import { Dialog, DialogContent } from '@bounty/ui/components/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@bounty/ui/components/drawer';
+import { Input } from '@bounty/ui/components/input';
 import { trpc } from '@/utils/trpc';
 
 interface Props {

@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cn } from '@bounty/ui/lib/utils';
 import Bounty from '../icons/bounty';
 
 interface PaymentButtonProps {

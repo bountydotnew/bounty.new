@@ -8,16 +8,16 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useRouter } from 'next/navigation';
 import { PostHogProvider } from 'posthog-js/react';
 import { ThemeProvider } from '@/components/theme-provider';
-import Link from '@/components/ui/link';
-import { TOAST_ICONS, TOAST_OPTIONS } from '@/constants/toast';
-import { AccessProvider } from '@/contexts/access-provider';
-import { ConfettiProvider } from '@/lib/context/confetti-context';
+import Link from '@bounty/ui/components/link';
+import { TOAST_ICONS, TOAST_OPTIONS } from '@/context/toast';
+import { AccessProvider } from '@/context/access-provider';
+import { ConfettiProvider } from '@/context/confetti-context';
 import { queryClient } from '@/utils/trpc';
-import { Toaster } from './ui/sonner';
-import ImpersonationBanner from './impersonation-banner';
+import { Toaster } from '@bounty/ui/components/sonner';
+import ImpersonationBanner from '@/components/impersonation-banner';
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const posthogApiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+
   const router = useRouter();
 
   return (
@@ -28,8 +28,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       enableSystem
     >
       <QueryClientProvider client={queryClient}>
-        {posthogApiKey ? (
-          <PostHogProvider apiKey={posthogApiKey}>
+
             <ConfettiProvider>
               <AccessProvider>
                 <AuthUIProvider
@@ -62,40 +61,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
               />
             </ConfettiProvider>
             <ReactQueryDevtools />
-          </PostHogProvider>
-        ) : (
-          <ConfettiProvider>
-            <AccessProvider>
-              <AuthUIProvider
-                authClient={authClient}
-                Link={Link}
-                navigate={router.push}
-                onSessionChange={() => {
-                  // Clear router cache (protected routes)
-                  router.refresh();
-                }}
-                replace={router.replace}
-              >
-                <ImpersonationBanner />
-                {children}
-              </AuthUIProvider>
-            </AccessProvider>
-            <Databuddy
-              clientId="bounty"
-              enableBatching={true}
-              trackAttributes={true}
-              trackBounceRate={true}
-              trackEngagement={true}
-              trackErrors={true}
-              trackExitIntent={true}
-              trackHashChanges={true}
-              trackInteractions={true}
-              trackOutgoingLinks={true}
-              trackScrollDepth={true}
-              trackWebVitals={true}
-            />
-          </ConfettiProvider>
-        )}
+
       </QueryClientProvider>
       <Toaster
         icons={TOAST_ICONS}

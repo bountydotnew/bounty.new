@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import Login from '@/components/bounty/login';
-import { Spinner } from '@/components/ui/spinner';
+import { Spinner } from '@bounty/ui/components/spinner';
 
 function LoginContent() {
   // const handleGitHubSignIn = async () => {

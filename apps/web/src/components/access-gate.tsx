@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 
-import { type AccessStage, useAccess } from '@/contexts/access-provider';
+import { type AccessStage, useAccess } from '@/context/access-provider';
 
 interface AccessGateProps {
   /** Required access stage(s). User must have at least one of these stages */

@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { UAParser } from 'ua-parser-js';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@bounty/ui/components/badge';
+import { Button } from '@bounty/ui/components/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
 import {
   Dialog,
   DialogContent,
@@ -15,12 +15,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { usePasskey } from '@/hooks/use-passkey';
-import { formatDate } from '@/lib/utils';
+} from '@bounty/ui/components/dialog';
+import { Input } from '@bounty/ui/components/input';
+import { Label } from '@bounty/ui/components/label';
+import { Separator } from '@bounty/ui/components/separator';
+import { usePasskey } from '@bounty/ui/hooks/use-passkey';
+import { formatDate } from '@bounty/ui/lib/utils';
 
 export function SecuritySettings() {
   const router = useRouter();

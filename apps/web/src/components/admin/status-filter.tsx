@@ -6,7 +6,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@bounty/ui/components/select';
 
 interface StatusFilterProps {
   value: string;

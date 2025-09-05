@@ -3,7 +3,7 @@
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { MobileSidebar } from '@/components/dual-sidebar/mobile-sidebar';
-import { SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarTrigger } from '@bounty/ui/components/sidebar';
 
 interface FloatingCreateMenuProps {
   onCreate: () => void;

@@ -7,8 +7,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import * as React from 'react';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { BellIcon } from '@/components/ui/bell';
+import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
+import { BellIcon } from '@bounty/ui/components/bell';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,17 +17,17 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@bounty/ui/components/dropdown-menu';
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from '@/components/ui/sidebar';
-import { Spinner } from '@/components/ui/spinner';
-import { UserIcon } from '@/components/ui/user';
-import { LINKS } from '@/constants/links';
-import { useBilling } from '@/hooks/use-billing';
+} from '@bounty/ui/components/sidebar';
+import { Spinner } from '@bounty/ui/components/spinner';
+import { UserIcon } from '@bounty/ui/components/user';
+import { LINKS } from '@/constants';
+import { useBilling } from '@bounty/ui/hooks/use-billing';
 import { trpc } from '@/utils/trpc';
 
 // Constants for better maintainability

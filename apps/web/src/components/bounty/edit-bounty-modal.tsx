@@ -7,18 +7,18 @@ import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { MarkdownTextarea } from '@/components/bounty/markdown-editor';
-import { Button } from '@/components/ui/button';
+import { Button } from '@bounty/ui/components/button';
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
-import { useMediaQuery } from '@/hooks/use-media-query';
+} from '@bounty/ui/components/dialog';
+import { Input } from '@bounty/ui/components/input';
+import { Label } from '@bounty/ui/components/label';
+import { Sheet, SheetContent } from '@bounty/ui/components/sheet';
+import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
 import {
   type CreateBountyForm,
   createBountyDefaults,
@@ -26,7 +26,7 @@ import {
   currencyOptions,
   difficultyOptions,
   formatFormData,
-} from '@/lib/forms';
+} from '@bounty/ui/lib/forms';
 import { trpc } from '@/utils/trpc';
 
 interface EditBountyModalProps {

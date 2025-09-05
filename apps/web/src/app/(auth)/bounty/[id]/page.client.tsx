@@ -8,8 +8,8 @@ import { use } from 'react';
 import BountyDetailPage from '@/components/bounty/bounty-detail';
 import { BountyDetailSkeleton } from '@/components/dashboard/skeletons/bounty-detail-skeleton';
 import Bounty from '@/components/icons/bounty';
-import { Button } from '@/components/ui/button';
-import { canEditBounty } from '@/lib/bounty-utils';
+import { Button } from '@bounty/ui/components/button';
+import { canEditBounty } from '@bounty/ui/lib/bounty-utils';
 import { trpc } from '@/utils/trpc';
 
 export default function BountyPage({

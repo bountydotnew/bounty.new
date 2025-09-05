@@ -2,8 +2,8 @@
 
 import { AlertTriangle } from 'lucide-react';
 import { Component, type ReactNode } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@bounty/ui/components/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
 
 interface ErrorBoundaryState {
   hasError: boolean;

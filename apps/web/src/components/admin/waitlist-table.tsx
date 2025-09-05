@@ -12,16 +12,16 @@ import {
   XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@bounty/ui/components/badge';
+import { Button } from '@bounty/ui/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+} from '@bounty/ui/components/card';
+import { Input } from '@bounty/ui/components/input';
 import { trpc } from '@/utils/trpc';
 
 type WaitlistEntry = {

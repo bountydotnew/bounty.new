@@ -3,9 +3,9 @@ import ReactMarkdown from 'react-markdown';
 import { GithubIcon } from '@/components/icons';
 import { Footer } from '@/components/sections/home/footer';
 import { Header } from '@/components/sections/home/header';
-import { Badge } from '@/components/ui/badge';
-import Link from '@/components/ui/link';
-import { cn } from '@/lib/utils';
+import { Badge } from '@bounty/ui/components/badge';
+import Link from '@bounty/ui/components/link';
+import { cn } from '@bounty/ui/lib/utils';
 
 const roadmapItems: {
   title: string;

@@ -5,7 +5,7 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
-import Link from '@/components/ui/link';
+import Link from '@bounty/ui/components/link';
 
 interface MarkdownContentProps {
   content: string;

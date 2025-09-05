@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { mapBatchByParameter, useDatabuddyParameters } from '@/hooks/use-databuddy';
-import { DottedLineChart } from '@/components/ui/dotted-line';
+import { mapBatchByParameter, useDatabuddyParameters } from '@bounty/ui/hooks/use-databuddy';
+import { DottedLineChart } from '@bounty/ui/components/dotted-line';
 
 type Props = { websiteId: string };
 
