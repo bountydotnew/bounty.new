@@ -42,7 +42,7 @@ const FEATURE_IDS = {
 
 const PRO_PLANS = ['pro-monthly', 'pro-annual'] as const;
 
-export const useBilling = (): BillingHookResult => {
+export const useBilling = (options?: { enabled?: boolean }): BillingHookResult => {
   const [needsCustomerCreation, setNeedsCustomerCreation] = useState(false);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(
     null
@@ -93,6 +93,10 @@ export const useBilling = (): BillingHookResult => {
         return null;
       }
     },
+    enabled: Boolean(options?.enabled),
+    staleTime: 300_000,
+    refetchOnWindowFocus: false,
+    retry: false,
   });
 
   // Handle customer creation when needed

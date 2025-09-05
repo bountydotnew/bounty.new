@@ -15,11 +15,13 @@ import { trpc } from '@/utils/trpc';
 export interface BountyCommentsProps {
   bountyId: string;
   pageSize?: number;
+  initialComments?: BountyCommentCacheItem[];
 }
 
 export default function BountyComments({
   bountyId,
   pageSize = 10,
+  initialComments,
 }: BountyCommentsProps) {
   const { data: session } = authClient.useSession();
   const queryClient = useQueryClient();
@@ -28,9 +30,11 @@ export default function BountyComments({
   const [sort, setSort] = useState<'newest' | 'top'>('newest');
 
   const key = trpc.bounties.getBountyComments.queryKey({ bountyId });
-  const commentsQuery = useQuery(
-    trpc.bounties.getBountyComments.queryOptions({ bountyId })
-  );
+  const commentsQuery = useQuery({
+    ...trpc.bounties.getBountyComments.queryOptions({ bountyId }),
+    initialData: initialComments,
+    staleTime: Infinity,
+  });
 
   const addComment = useMutation({
     ...trpc.bounties.addBountyComment.mutationOptions(),

@@ -588,6 +588,135 @@ export const bountiesRouter = router({
         });
       }
     }),
+
+  getBountyDetail: publicProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        const [bountyRow] = await db
+          .select({
+            id: bounty.id,
+            title: bounty.title,
+            description: bounty.description,
+            amount: bounty.amount,
+            currency: bounty.currency,
+            status: bounty.status,
+            difficulty: bounty.difficulty,
+            deadline: bounty.deadline,
+            tags: bounty.tags,
+            repositoryUrl: bounty.repositoryUrl,
+            issueUrl: bounty.issueUrl,
+            createdById: bounty.createdById,
+            assignedToId: bounty.assignedToId,
+            createdAt: bounty.createdAt,
+            updatedAt: bounty.updatedAt,
+            creator: {
+              id: user.id,
+              name: user.name,
+              image: user.image,
+            },
+          })
+          .from(bounty)
+          .innerJoin(user, eq(bounty.createdById, user.id))
+          .where(eq(bounty.id, input.id));
+        if (!bountyRow) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Bounty not found' });
+        }
+
+        const [voteCountRow] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(bountyVote)
+          .where(eq(bountyVote.bountyId, input.id));
+
+        let isVoted = false;
+        let bookmarked = false;
+        if (ctx.session?.user?.id) {
+          const [existingVote] = await db
+            .select({ id: bountyVote.id })
+            .from(bountyVote)
+            .where(
+              and(
+                eq(bountyVote.bountyId, input.id),
+                eq(bountyVote.userId, ctx.session.user.id)
+              )
+            );
+          isVoted = Boolean(existingVote);
+
+          const [existingBookmark] = await db
+            .select({ id: bountyBookmark.id })
+            .from(bountyBookmark)
+            .where(
+              and(
+                eq(bountyBookmark.bountyId, input.id),
+                eq(bountyBookmark.userId, ctx.session.user.id)
+              )
+            );
+          bookmarked = Boolean(existingBookmark);
+        }
+
+        const comments = await db
+          .select({
+            id: bountyComment.id,
+            content: bountyComment.content,
+            parentId: bountyComment.parentId,
+            createdAt: bountyComment.createdAt,
+            editCount: bountyComment.editCount,
+            user: {
+              id: user.id,
+              name: user.name,
+              image: user.image,
+            },
+          })
+          .from(bountyComment)
+          .leftJoin(user, eq(bountyComment.userId, user.id))
+          .where(eq(bountyComment.bountyId, input.id))
+          .orderBy(desc(bountyComment.createdAt));
+
+        const commentIds = comments.map((c) => c.id);
+        const likeCounts = commentIds.length
+          ? await db
+              .select({
+                commentId: bountyCommentLike.commentId,
+                likeCount: sql<number>`count(*)::int`.as('likeCount'),
+              })
+              .from(bountyCommentLike)
+              .where(inArray(bountyCommentLike.commentId, commentIds))
+              .groupBy(bountyCommentLike.commentId)
+          : [];
+
+        const userLikes = ctx.session?.user?.id && commentIds.length
+          ? await db
+              .select({ commentId: bountyCommentLike.commentId })
+              .from(bountyCommentLike)
+              .where(
+                and(
+                  eq(bountyCommentLike.userId, ctx.session.user.id),
+                  inArray(bountyCommentLike.commentId, commentIds)
+                )
+              )
+          : [];
+
+        const commentsWithLikes = comments.map((c) => {
+          const lc = likeCounts.find((x) => x.commentId === c.id);
+          const isLiked = (userLikes || []).some((x) => x.commentId === c.id);
+          return { ...c, likeCount: lc?.likeCount || 0, isLiked } as const;
+        });
+
+        return {
+          bounty: { ...bountyRow, amount: parseAmount(bountyRow.amount) },
+          votes: { count: Number(voteCountRow?.count || 0), isVoted },
+          bookmarked,
+          comments: commentsWithLikes,
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch bounty detail',
+          cause: error,
+        });
+      }
+    }),
   toggleBountyBookmark: protectedProcedure
     .input(z.object({ bountyId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
@@ -658,6 +787,74 @@ export const bountiesRouter = router({
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to fetch bookmark',
+          cause: error,
+        });
+      }
+    }),
+
+  getBountyStatsMany: publicProcedure
+    .input(
+      z.object({ bountyIds: z.array(z.string().uuid()).min(1).max(100) })
+    )
+    .query(async ({ ctx, input }) => {
+      try {
+        const ids = input.bountyIds;
+        const commentRows = await db
+          .select({
+            bountyId: bountyComment.bountyId,
+            count: sql<number>`count(*)::int`,
+          })
+          .from(bountyComment)
+          .where(inArray(bountyComment.bountyId, ids))
+          .groupBy(bountyComment.bountyId);
+
+        const voteRows = await db
+          .select({
+            bountyId: bountyVote.bountyId,
+            count: sql<number>`count(*)::int`,
+          })
+          .from(bountyVote)
+          .where(inArray(bountyVote.bountyId, ids))
+          .groupBy(bountyVote.bountyId);
+
+        let userVotes: { bountyId: string }[] = [];
+        let userBookmarks: { bountyId: string }[] = [];
+
+        if (ctx.session?.user?.id) {
+          userVotes = await db
+            .select({ bountyId: bountyVote.bountyId })
+            .from(bountyVote)
+            .where(
+              and(
+                eq(bountyVote.userId, ctx.session.user.id),
+                inArray(bountyVote.bountyId, ids)
+              )
+            );
+
+          userBookmarks = await db
+            .select({ bountyId: bountyBookmark.bountyId })
+            .from(bountyBookmark)
+            .where(
+              and(
+                eq(bountyBookmark.userId, ctx.session.user.id),
+                inArray(bountyBookmark.bountyId, ids)
+              )
+            );
+        }
+
+        const out = ids.map((id) => {
+          const c = commentRows.find((r) => r.bountyId === id)?.count ?? 0;
+          const v = voteRows.find((r) => r.bountyId === id)?.count ?? 0;
+          const isVoted = userVotes.some((r) => r.bountyId === id);
+          const bookmarked = userBookmarks.some((r) => r.bountyId === id);
+          return { bountyId: id, commentCount: c, voteCount: v, isVoted, bookmarked };
+        });
+
+        return { stats: out };
+      } catch (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch bounty stats',
           cause: error,
         });
       }

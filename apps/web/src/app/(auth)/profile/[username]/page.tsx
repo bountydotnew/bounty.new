@@ -24,7 +24,7 @@ export default function ProfilePage() {
 
   const { data: session, isPending: loading } = authClient.useSession();
   const isOwnProfile = username === 'me';
-  const { isPro } = useBilling();
+  const { isPro } = useBilling({ enabled: true });
   // Prevent hydration mismatch by ensuring client-side rendering
   useEffect(() => {
     setIsClientMounted(true);

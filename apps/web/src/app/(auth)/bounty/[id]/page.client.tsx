@@ -26,9 +26,10 @@ export default function BountyPage({
   const validId = isValidUuid(resolvedParams?.id);
 
   const { data: session } = authClient.useSession();
-  const bounty = useQuery({
-    ...trpc.bounties.fetchBountyById.queryOptions({ id: resolvedParams.id }),
+  const bountyDetail = useQuery({
+    ...trpc.bounties.getBountyDetail.queryOptions({ id: resolvedParams.id }),
     enabled: validId,
+    staleTime: Infinity,
   });
   const router = useRouter();
 
@@ -57,11 +58,11 @@ export default function BountyPage({
     );
   }
 
-  if (bounty.isLoading) {
+  if (bountyDetail.isLoading) {
     return <BountyDetailSkeleton />;
   }
 
-  if (bounty.error) {
+  if (bountyDetail.error) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="mx-auto max-w-lg px-6 py-5 text-center">
@@ -85,7 +86,7 @@ export default function BountyPage({
     );
   }
 
-  if (!bounty.data?.data) {
+  if (!bountyDetail.data) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="mx-auto max-w-lg px-6 py-5 text-center">
@@ -107,18 +108,17 @@ export default function BountyPage({
     );
   }
 
-  const canEdit =
-    session?.user?.id && bounty.data?.data
-      ? canEditBounty(bounty.data.data, session.user.id)
-      : false;
+  const canEdit = session?.user?.id
+    ? canEditBounty(bountyDetail.data.bounty, session.user.id)
+    : false;
 
-  const detailAmount: number = bounty.data.data.amount;
-  const detailTitle: string = bounty.data.data.title;
-  const detailDescription: string = bounty.data.data.description;
-  const detailTags: string[] = bounty.data.data.tags ?? [];
-  const detailUser: string = bounty.data.data.creator.name ?? '';
-  const detailAvatarSrc: string = bounty.data.data.creator.image ?? '';
-  const detailRank: string = bounty.data.data.difficulty;
+  const detailAmount: number = bountyDetail.data.bounty.amount;
+  const detailTitle: string = bountyDetail.data.bounty.title;
+  const detailDescription: string = bountyDetail.data.bounty.description;
+  const detailTags: string[] = bountyDetail.data.bounty.tags ?? [];
+  const detailUser: string = bountyDetail.data.bounty.creator.name ?? '';
+  const detailAvatarSrc: string = bountyDetail.data.bounty.creator.image ?? '';
+  const detailRank: string = bountyDetail.data.bounty.difficulty;
 
   return (
     // <div className="p-8 max-w-4xl mx-auto">
@@ -192,6 +192,9 @@ export default function BountyPage({
       description={detailDescription}
       hasBadge={false}
       id={resolvedParams.id}
+      initialBookmarked={Boolean(bountyDetail.data.bookmarked)}
+      initialComments={bountyDetail.data.comments}
+      initialVotes={bountyDetail.data.votes}
       rank={detailRank}
       tags={detailTags}
       title={detailTitle}

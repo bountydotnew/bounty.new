@@ -14,7 +14,7 @@ import { useBilling } from '@bounty/ui/hooks/use-billing';
 export function GeneralSettings() {
   const [isClientMounted, setIsClientMounted] = useState(false);
   const { data: session } = authClient.useSession();
-  const { isPro, isLoading: billingLoading } = useBilling();
+  const { isPro, isLoading: billingLoading } = useBilling({ enabled: true });
   const router = useRouter();
   // Prevent hydration mismatch by ensuring client-side rendering
   useEffect(() => {

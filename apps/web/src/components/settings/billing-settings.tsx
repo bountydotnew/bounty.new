@@ -15,7 +15,7 @@ export function BillingSettings() {
     customer,
     isLoading: billingLoading,
     openBillingPortal,
-  } = useBilling();
+  } = useBilling({ enabled: true });
 
   // Prevent hydration mismatch by ensuring client-side rendering
   useEffect(() => {

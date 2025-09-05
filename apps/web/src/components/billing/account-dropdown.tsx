@@ -76,7 +76,7 @@ function useUserDisplay(
 // Custom hook for billing portal operations
 function useBillingPortal() {
   const { data: session } = authClient.useSession();
-  const { openBillingPortal } = useBilling();
+  const { openBillingPortal } = useBilling({ enabled: false });
 
   const handleBillingPortal = React.useCallback(async () => {
     if (!session?.user) {
@@ -214,7 +214,8 @@ export function AccountDropdown({
   const pathname = usePathname();
   const { isMobile } = useSidebar();
   const { data: session } = authClient.useSession();
-  const { isPro, isLoading: isBillingLoading } = useBilling();
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const { isPro, isLoading: isBillingLoading } = useBilling({ enabled: menuOpen && !!session?.user });
   const { data: me } = useQuery({
     ...trpc.user.getMe.queryOptions(),
     enabled: !!session?.user,
@@ -256,7 +257,7 @@ export function AccountDropdown({
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu>
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               aria-expanded={false}

@@ -29,6 +29,9 @@ interface BountyDetailPageProps {
   avatarSrc: string;
   hasBadge: boolean;
   canEditBounty: boolean;
+  initialVotes?: { count: number; isVoted: boolean };
+  initialComments?: BountyCommentCacheItem[];
+  initialBookmarked?: boolean;
 }
 
 export default function BountyDetailPage({
@@ -40,13 +43,18 @@ export default function BountyDetailPage({
   rank,
   avatarSrc,
   canEditBounty,
+  initialVotes,
+  initialComments,
+  initialBookmarked,
 }: BountyDetailPageProps) {
   const { editModalOpen, openEditModal, closeEditModal, editingBountyId } =
     useBountyModals();
   const queryClient = useQueryClient();
-  const votes = useQuery(
-    trpc.bounties.getBountyVotes.queryOptions({ bountyId: id })
-  );
+  const votes = useQuery({
+    ...trpc.bounties.getBountyVotes.queryOptions({ bountyId: id }),
+    initialData: initialVotes,
+    staleTime: Infinity,
+  });
   const voteMutation = useMutation({
     ...trpc.bounties.voteBounty.mutationOptions(),
   });
@@ -77,9 +85,11 @@ export default function BountyDetailPage({
       }
     );
   };
-  const commentsQuery = useQuery(
-    trpc.bounties.getBountyComments.queryOptions({ bountyId: id })
-  );
+  const commentsQuery = useQuery({
+    ...trpc.bounties.getBountyComments.queryOptions({ bountyId: id }),
+    initialData: initialComments,
+    staleTime: Infinity,
+  });
   // const [commentText] = useState('');
   // const maxChars = 245;
   // const remaining = maxChars - commentText.length;
@@ -283,6 +293,7 @@ export default function BountyDetailPage({
                     bountyId={id}
                     canEdit={canEditBounty}
                     isVoted={Boolean(votes.data?.isVoted)}
+                    bookmarked={initialBookmarked}
                     onEdit={() => openEditModal(id)}
                     onShare={() => {
                       navigator.share({
@@ -323,7 +334,7 @@ export default function BountyDetailPage({
                 </CollapsibleText>
               </div>
             )}
-            <BountyComments bountyId={id} pageSize={5} />
+            <BountyComments bountyId={id} initialComments={commentsQuery.data as BountyCommentCacheItem[] | undefined} pageSize={5} />
           </div>
 
           <div className="hidden xl:block xl:w-[480px] xl:flex-shrink-0">

@@ -18,7 +18,7 @@ function SuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const checkoutId = searchParams.get('checkout_id');
-  const { refetch, customer } = useBilling();
+  const { refetch, customer } = useBilling({ enabled: true });
   const { data: session } = authClient.useSession();
   const { celebrate } = useConfetti();
 
@@ -111,7 +111,7 @@ function SuccessContent() {
             </CardHeader>
 
             <CardContent className="space-y-6">
-              <Card className="border-border bg-card">
+              <Card className="border-border bg-[#191919]">
                 <CardHeader>
                   <CardTitle className="font-semibold text-xl">
                     Purchase Summary

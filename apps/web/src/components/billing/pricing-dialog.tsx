@@ -14,7 +14,7 @@ interface PricingDialogProps {
 }
 
 export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
-  const { checkout } = useBilling();
+  const { checkout } = useBilling({ enabled: false });
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<
     'pro-monthly' | 'pro-annual'

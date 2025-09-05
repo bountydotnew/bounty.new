@@ -121,12 +121,15 @@ export default function BountyActions({
   onUpvote,
   onEdit,
   onShare,
+  bookmarked: controlledBookmarked,
+  onToggleBookmark,
   actions,
 }: BountyActionsProps) {
   const queryClient = useQueryClient();
-  const bookmarkQuery = useQuery(
-    trpc.bounties.getBountyBookmark.queryOptions({ bountyId })
-  );
+  const bookmarkQuery = useQuery({
+    ...trpc.bounties.getBountyBookmark.queryOptions({ bountyId }),
+    enabled: !onToggleBookmark,
+  });
   const toggleBookmark = useMutation({
     ...trpc.bounties.toggleBountyBookmark.mutationOptions(),
   });
@@ -142,6 +145,7 @@ export default function BountyActions({
     : [];
   const mergedActions = [...baseActions, ...(actions ?? [])];
   const handleToggleBookmark = () => {
+    if (onToggleBookmark) return onToggleBookmark();
     const key = trpc.bounties.getBountyBookmark.queryKey({ bountyId });
     const current = bookmarkQuery.data?.bookmarked ?? false;
     queryClient.setQueryData(key, { bookmarked: !current });
@@ -161,14 +165,14 @@ export default function BountyActions({
         voteCount={voteCount}
       />
       <BookmarkButton
-        bookmarked={bookmarkQuery.data?.bookmarked}
+        bookmarked={onToggleBookmark ? controlledBookmarked : bookmarkQuery.data?.bookmarked}
         bountyId={bountyId}
         onToggle={handleToggleBookmark}
       />
       <ActionsDropdown
         actions={mergedActions}
         ariaLabel="Open bounty actions"
-        bookmarked={bookmarkQuery.data?.bookmarked}
+        bookmarked={onToggleBookmark ? controlledBookmarked : bookmarkQuery.data?.bookmarked}
         onBookmark={handleToggleBookmark}
         onShare={onShare}
       />

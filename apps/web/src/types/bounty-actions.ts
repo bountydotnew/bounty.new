@@ -17,6 +17,8 @@ export interface BountyActionsProps {
   onEdit: () => void;
   onShare?: () => void;
   onBookmark?: () => void;
+  bookmarked?: boolean;
+  onToggleBookmark?: () => void;
   actions?: ActionItem[];
 }
 

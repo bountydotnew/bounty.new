@@ -347,3 +347,9 @@ export {
   ChartLegendContent,
   ChartStyle,
 };
+
+export const CartesianGrid = RechartsPrimitive.CartesianGrid;
+export const Line = RechartsPrimitive.Line;
+export const LineChart = RechartsPrimitive.LineChart;
+export const XAxis = RechartsPrimitive.XAxis;
+export const YAxis = RechartsPrimitive.YAxis;
