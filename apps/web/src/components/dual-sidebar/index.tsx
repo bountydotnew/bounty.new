@@ -2,7 +2,7 @@ import {
   AdminAppSidebar,
   AppSidebar,
 } from '@/components/dual-sidebar/app-sidebar';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarInset, SidebarProvider } from '@bounty/ui/components/sidebar';
 
 // import { Header } from "@/components/dual-sidebar/sidebar-header";
 // import { RightSidebar } from "@/components/dual-sidebar/right-sidebar";

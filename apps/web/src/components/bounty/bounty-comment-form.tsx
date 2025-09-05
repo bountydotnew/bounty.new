@@ -4,8 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Button, HotkeyButton } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { Button, HotkeyButton } from '@bounty/ui/components/button';
+import { cn } from '@bounty/ui/lib/utils';
 
 // Types
 interface BountyCommentFormProps {

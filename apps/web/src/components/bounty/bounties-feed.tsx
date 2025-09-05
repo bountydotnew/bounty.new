@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { BountyCard } from '@/components/bounty/bounty-card';
 import { BountySkeleton } from '@/components/dashboard/skeletons/bounty-skeleton';
-import { LOADING_SKELETON_COUNTS } from '@/constants/dashboard';
+import { LOADING_SKELETON_COUNTS } from '@/constants';
 import type { Bounty } from '@/types/dashboard';
 
 interface BountiesFeedProps {

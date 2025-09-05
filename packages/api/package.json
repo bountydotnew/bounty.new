@@ -8,13 +8,13 @@
     "@bounty/db": "workspace:*",
     "@bounty/dev-logger": "workspace:*",
     "@bounty/track": "workspace:*",
-    "zod": "^3.23.8",
-    "@trpc/server": "^11.4.2",
-    "@unkey/ratelimit": "^2.1.0",
-    "@octokit/core": "^7.0.3",
-    "@octokit/plugin-rest-endpoint-methods": "16.0.0"
+    "zod": "catalog:",
+    "@trpc/server": "catalog:",
+    "@unkey/ratelimit": "catalog:",
+    "@octokit/core": "catalog:",
+    "@octokit/plugin-rest-endpoint-methods": "catalog:"
   },
   "devDependencies": {
-    "typescript": "^5"
+    "typescript": "catalog:"
   }
 }

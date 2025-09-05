@@ -2,16 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart';
-import {
-  mapBatchByParameter,
-  useDatabuddyParameters,
-} from '@/hooks/use-databuddy';
+import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@bounty/ui/components/chart';
+import { mapBatchByParameter, useDatabuddyParameters } from '@bounty/ui/hooks/use-databuddy';
 
 type Props = { websiteId: string };
 

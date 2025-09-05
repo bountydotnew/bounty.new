@@ -4,9 +4,9 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
-    "@databuddy/sdk": "^1.3.0"
+    "@databuddy/sdk": "catalog:"
   },
   "devDependencies": {
-    "typescript": "^5"
+    "typescript": "catalog:"
   }
 }

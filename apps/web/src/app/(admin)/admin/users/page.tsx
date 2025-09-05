@@ -14,22 +14,23 @@ import {
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { AdminHeader } from '@/components/admin';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@bounty/ui/components/badge';
+import { Button } from '@bounty/ui/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from '@bounty/ui/components/card';
+import { Input } from '@bounty/ui/components/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
+} from '@bounty/ui/components/dropdown-menu';
+ 
 
 export default function UsersPage() {
   const [search, setSearch] = useState('');

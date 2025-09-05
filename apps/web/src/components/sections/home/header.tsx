@@ -5,10 +5,10 @@ import { ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { DevWarningDialog } from '@/components/ui/dev-warning-dialog';
-import Link from '@/components/ui/link';
-import { LINKS } from '@/constants/links';
+import { Button } from '@bounty/ui/components/button';
+import { DevWarningDialog } from '@bounty/ui/components/dev-warning-dialog';
+import Link from '@bounty/ui/components/link';
+import { LINKS } from '@/constants';
 
 export function Header() {
   const { data: session } = authClient.useSession();

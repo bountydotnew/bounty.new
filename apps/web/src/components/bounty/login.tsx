@@ -6,10 +6,10 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import SubmissionCard from '@/components/bounty/submission-card';
 import Bounty from '@/components/icons/bounty';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import Link from '@/components/ui/link';
-import { LINKS } from '@/constants/links';
+import { Badge } from '@bounty/ui/components/badge';
+import { Button } from '@bounty/ui/components/button';
+import Link from '@bounty/ui/components/link';
+import { LINKS } from '@/constants';
 import { GithubIcon } from '../icons';
 
 const cards = {

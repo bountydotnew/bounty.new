@@ -2,7 +2,7 @@
 
 import { authClient } from '@bounty/auth/client';
 import { useEffect } from 'react';
-import { Spinner } from '../ui/spinner';
+import { Spinner } from '../../../../../packages/ui/src/ui/spinner';
 
 export default function RedirectToSignIn() {
   const { data: session, isPending } = authClient.useSession();

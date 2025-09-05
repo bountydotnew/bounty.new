@@ -9,20 +9,14 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import NumberFlow from '@/components/ui/number-flow';
-import { useConfetti } from '@/lib/context/confetti-context';
-import type { thumbmarkResponse } from '@/lib/fingerprint-validation';
-import { cn } from '@/lib/utils';
-import type {
-  RateLimitInfo,
-  WaitlistCookieData,
-  WaitlistCount,
-  WaitlistHookResult,
-  WaitlistSubmissionData,
-} from '@/types/waitlist';
+import { Button } from '@bounty/ui/components/button';
+import { Input } from '@bounty/ui/components/input';
+import NumberFlow from '@bounty/ui/components/number-flow';
+import { useConfetti } from '@/context/confetti-context';
+import type { thumbmarkResponse } from '@bounty/ui/lib/fingerprint-validation';
+import { cn } from '@bounty/ui/lib/utils';
 import { trpc } from '@/utils/trpc';
+import { WaitlistHookResult, WaitlistSubmissionData, RateLimitInfo, WaitlistCookieData, WaitlistCount } from '@/types/waitlist';
 
 const formSchema = z.object({
   email: z.string().email(),

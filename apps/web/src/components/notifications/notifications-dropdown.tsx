@@ -12,20 +12,16 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
-import { BellIcon } from '@/components/ui/bell';
-import { Button } from '@/components/ui/button';
+import { BellIcon } from '@bounty/ui/components/bell';
+import { Button } from '@bounty/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useNotifications } from '@/hooks/use-notifications';
-import { cn } from '@/lib/utils';
-import type {
-  NotificationData,
-  NotificationItem,
-  NotificationRowProps,
-} from '@/types/notifications';
+} from '@bounty/ui/components/dropdown-menu';
+import { useNotifications } from '@bounty/ui/hooks/use-notifications';
+import { cn } from '@bounty/ui/lib/utils';
+import { NotificationRowProps, NotificationData, NotificationItem } from '@/types/notifications';
 
 function Row({ item, onRead }: NotificationRowProps) {
   const router = useRouter();

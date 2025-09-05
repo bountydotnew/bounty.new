@@ -6,7 +6,7 @@ import {
   MotionHighlight,
   MotionHighlightItem,
 } from '@/components/animate-ui/effects/motion-highlight';
-import { cn } from '@/lib/utils';
+import { cn } from '@bounty/ui/lib/utils';
 
 type TabsContextType<T extends string> = {
   activeValue: T;

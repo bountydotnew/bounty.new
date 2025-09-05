@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { cn } from '@/lib/utils';
+import { cn } from '@bounty/ui/lib/utils';
 import { trpc } from '@/utils/trpc';
 import { BountyStatistic } from './bounty-statistic';
 

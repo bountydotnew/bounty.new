@@ -9,23 +9,23 @@ import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { MarkdownTextarea } from '@/components/bounty/markdown-editor';
-import { Button } from '@/components/ui/button';
+import { Button } from '@bounty/ui/components/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@bounty/ui/components/dialog';
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-} from '@/components/ui/drawer';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useDrafts } from '@/hooks/use-drafts';
-import { useMediaQuery } from '@/hooks/use-media-query';
+} from '@bounty/ui/components/drawer';
+import { Input } from '@bounty/ui/components/input';
+import { Label } from '@bounty/ui/components/label';
+import { useDrafts } from '@bounty/ui/hooks/use-drafts';
+import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
 import {
   type CreateBountyForm,
   createBountyDefaults,
@@ -33,7 +33,7 @@ import {
   currencyOptions,
   difficultyOptions,
   formatFormData,
-} from '@/lib/forms';
+} from '@bounty/ui/lib/forms';
 import { trpc } from '@/utils/trpc';
 
 interface CreateBountyModalProps {

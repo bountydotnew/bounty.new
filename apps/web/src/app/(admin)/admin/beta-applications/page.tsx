@@ -8,14 +8,14 @@ import {
   BetaApplicationsTable,
   StatusFilter,
 } from '@/components/admin';
-import { Button } from '@/components/ui/button';
+import { Button } from '@bounty/ui/components/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@bounty/ui/components/select';
 import { trpc } from '@/utils/trpc';
 
 export default function BetaApplicationsPage() {

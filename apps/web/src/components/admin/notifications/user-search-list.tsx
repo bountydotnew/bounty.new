@@ -1,8 +1,8 @@
 'use client';
 
 import { Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@bounty/ui/components/button';
+import { Input } from '@bounty/ui/components/input';
 
 type UserItem = { id: string; name: string; email: string };
 

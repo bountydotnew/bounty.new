@@ -3,9 +3,9 @@
 import { ArrowRightIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { useConfetti } from '@/lib/context/confetti-context';
-import { Button } from './ui/button';
-import { Dialog, DialogContent } from './ui/dialog';
+import { useConfetti } from '@/context/confetti-context';
+import { Button } from '@bounty/ui/components/button';
+import { Dialog, DialogContent } from '@bounty/ui/components/dialog';
 
 export function Onboarding() {
   const [step, setStep] = useState(0);

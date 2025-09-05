@@ -1,8 +1,8 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@bounty/ui/components/button';
+import { Input } from '@bounty/ui/components/input';
+import { Textarea } from '@bounty/ui/components/textarea';
 
 interface ComposeFormProps {
   count: number;

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { DeviceProvider } from '@/components/device-provider';
 import { Sidebar } from '@/components/dual-sidebar';
-import { AccessProvider } from '@/contexts/access-provider';
+import { AccessProvider } from '@/context/access-provider';
 // import { SignedOut } from "@daveyplate/better-auth-ui";
 // import RedirectToSignIn from "@/components/auth/redirect-to-signin";
 

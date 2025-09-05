@@ -3,8 +3,8 @@ import { env } from '@bounty/env/server';
 import { ImageResponse } from '@vercel/og';
 import { eq } from 'drizzle-orm';
 import type { NextRequest } from 'next/server';
-import { baseUrl } from '@/lib/constants';
-import { formatCurrency } from '@/lib/utils';
+import { baseUrl } from '../../../../../../../packages/ui/src/lib/constants';
+import { formatCurrency } from '@bounty/ui/lib/utils';
 
 export async function GET(
   _request: NextRequest,

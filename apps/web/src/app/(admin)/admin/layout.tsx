@@ -1,11 +1,11 @@
 'use client';
 
-import { authClient } from '@bounty/auth/client';
-import { ShieldAlert } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { AdminHeader } from '@/components/admin';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { authClient } from "@bounty/auth/client";
+import { ShieldAlert } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { AdminHeader } from "@/components/admin";
+import { Button } from "@bounty/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@bounty/ui/components/card";
 
 export default function AdminSectionLayout({
   children,

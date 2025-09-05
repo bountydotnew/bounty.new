@@ -4,9 +4,9 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import z from 'zod/v4';
 import Loader from './loader';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
+import { Button } from '../../../../packages/ui/src/ui/button';
+import { Input } from '../../../../packages/ui/src/ui/input';
+import { Label } from '../../../../packages/ui/src/ui/label';
 
 export default function SignUpForm({
   onSwitchToSignIn,

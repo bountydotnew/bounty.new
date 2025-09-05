@@ -4,16 +4,10 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { AdminHeader } from '@/components/admin';
-import { ComposeForm } from '@/components/admin/notifications/compose-form';
-import { UserSearchList } from '@/components/admin/notifications/user-search-list';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@bounty/ui/components/card';
 import { trpc } from '@/utils/trpc';
+import { UserSearchList } from '@/components/admin/notifications/user-search-list';
+import { ComposeForm } from '@/components/admin/notifications/compose-form';
 
 export default function AdminNotificationsPage() {
   const [search, setSearch] = useState('');

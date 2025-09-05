@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
-import { getPosts } from '@/lib/blog-query';
-import { baseUrl } from '@/lib/constants';
+import { getPosts } from '@bounty/ui/lib/blog-query';
+import { baseUrl } from '../../../../packages/ui/src/lib/constants';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const data = await getPosts();

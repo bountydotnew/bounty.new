@@ -6,15 +6,15 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import type { TRPCClientErrorLike } from '@trpc/client';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Favicon } from '@/components/ui/favicon';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@bounty/ui/components/button';
+import { Favicon } from '@bounty/ui/components/favicon';
+import { Input } from '@bounty/ui/components/input';
+import { Textarea } from '@bounty/ui/components/textarea';
 import {
   type BetaApplicationForm,
   betaApplicationDefaults,
   betaApplicationSchema,
-} from '@/lib/forms';
+} from '@bounty/ui/lib/forms';
 import { trpc } from '@/utils/trpc';
 
 interface BetaApplicationFormProps {

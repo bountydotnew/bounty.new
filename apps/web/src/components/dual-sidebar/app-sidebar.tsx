@@ -21,15 +21,15 @@ import { AccessGate } from '@/components/access-gate';
 import { NavMain } from '@/components/dual-sidebar/nav-main';
 // import { NavProjects } from "@/components/dual-sidebar/nav-projects";
 import { NavUser } from '@/components/dual-sidebar/nav-user';
-import { Divider } from '@/components/ui/divider';
-import Link from '@/components/ui/link';
+import { Divider } from '@bounty/ui/components/divider';
+import Link from '@bounty/ui/components/link';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-} from '@/components/ui/sidebar';
-import { LINKS } from '@/constants/links';
+} from '@bounty/ui/components/sidebar';
+import { LINKS } from '@/constants';
 import Bookmark from '../icons/bookmark';
 import Bounty from '../icons/bounty';
 

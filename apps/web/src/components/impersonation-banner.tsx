@@ -5,8 +5,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ShieldAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { Button } from '@bounty/ui/components/button';
 import { ImpersonationUserPicker } from '@/components/admin/impersonation-user-picker';
-import { Button } from '@/components/ui/button';
 
 export default function ImpersonationBanner() {
   const router = useRouter();

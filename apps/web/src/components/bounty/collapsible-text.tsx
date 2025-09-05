@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useMediaQuery } from '@/hooks/use-media-query';
+import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
 
 interface CollapsibleTextProps {
   children: React.ReactNode;

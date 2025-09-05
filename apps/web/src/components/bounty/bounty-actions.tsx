@@ -9,19 +9,13 @@ import {
   Share2,
 } from 'lucide-react';
 import BookmarkButton from '@/components/bounty/bookmark-button';
-import { Button } from '@/components/ui/button';
+import { Button } from '@bounty/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import type {
-  ActionItem,
-  ActionsDropdownProps,
-  BountyActionsProps,
-  UpvoteButtonProps,
-} from '@/types/bounty-actions';
+} from '@bounty/ui/components/dropdown-menu';
 import { trpc } from '@/utils/trpc';
 
 export function UpvoteButton({

@@ -8,12 +8,12 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useDrafts } from '@/hooks/use-drafts';
-import { baseUrl } from '@/lib/constants';
-import { cn } from '@/lib/utils';
+import { Button } from '@bounty/ui/components/button';
+import { Input } from '@bounty/ui/components/input';
+import { Label } from '@bounty/ui/components/label';
+import { useDrafts } from '@bounty/ui/hooks/use-drafts';
+import { baseUrl } from '../../../../../../packages/ui/src/lib/constants';
+import { cn } from '@bounty/ui/lib/utils';
 
 const bountyDraftSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title too long'),

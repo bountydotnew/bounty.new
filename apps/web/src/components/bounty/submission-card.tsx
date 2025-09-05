@@ -1,9 +1,9 @@
 import { Github } from 'lucide-react';
 import Image from 'next/image';
 import { Badge } from '@/components/bounty/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
+import { Button } from '@bounty/ui/components/button';
+import { cn } from '@bounty/ui/lib/utils';
 
 export interface SubmissionCardProps {
   user: string;

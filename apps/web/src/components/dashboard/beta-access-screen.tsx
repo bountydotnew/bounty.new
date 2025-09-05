@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Bounty from '@/components/icons/bounty';
 import { BetaApplicationForm } from '@/components/sections/home/beta-application-form';
-import { Button } from '@/components/ui/button';
+import { Button } from '@bounty/ui/components/button';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from '@bounty/ui/components/dialog';
 import {
   Drawer,
   DrawerContent,
@@ -17,8 +17,8 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from '@/components/ui/drawer';
-import { BETA_APPLICATION_MESSAGES } from '@/constants/dashboard';
+} from '@bounty/ui/components/drawer';
+import { BETA_APPLICATION_MESSAGES } from '@/constants';
 import type { BetaSubmission, UserData } from '@/types/dashboard';
 
 interface BetaAccessScreenProps {
