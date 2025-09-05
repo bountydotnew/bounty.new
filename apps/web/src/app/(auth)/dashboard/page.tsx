@@ -153,9 +153,6 @@ export default function Dashboard() {
                     <DashboardSidebar
                       isLoadingMyBounties={myBounties.isLoading}
                       myBounties={myBounties.data?.data ?? []}
-                      onBountyClick={(_bounty) => {
-                        // setIsOpen(false);
-                      }}
                     />
                   </div>
                 </div>

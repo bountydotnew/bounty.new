@@ -20,7 +20,6 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc",
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",

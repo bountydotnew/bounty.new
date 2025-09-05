@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { grim } from '@/hooks/use-dev-log';
 import { validateFingerprint } from '@/lib/fingerprint-validation';
+import { track } from '@bounty/track';
 
 const { log, error, warn } = grim();
 
@@ -62,6 +63,7 @@ export async function POST(request: NextRequest) {
       });
 
       log('[Waitlist] Successfully added email to waitlist:', email);
+      await track('waitlist_joined', { source: 'api' });
       return NextResponse.json({
         success: true,
         message: 'Successfully added to waitlist!',

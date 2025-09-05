@@ -39,7 +39,7 @@ export function PaymentButton({
       data-api-key={apiKey}
       data-bounty-payment-button
       data-username={username}
-      href={`${process.env.NEXT_PUBLIC_APP_URL}/pay/${username}`}
+      href={`/pay/${username}`}
       rel="noopener noreferrer"
       target="_blank"
     >

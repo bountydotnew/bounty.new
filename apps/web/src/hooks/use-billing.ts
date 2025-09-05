@@ -132,7 +132,7 @@ export const useBilling = () => {
               await authClient.checkout(action.params);
             }
           }
-        } catch (_e) {
+        } catch (e) {
           setNeedsCustomerCreation(false);
           setPendingAction(null);
         }

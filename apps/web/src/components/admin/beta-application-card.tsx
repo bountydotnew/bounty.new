@@ -142,16 +142,16 @@ export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
       </div>
 
       <Dialog onOpenChange={setIsReviewDialogOpen} open={isReviewDialogOpen}>
-        <DialogContent className="max-w-2xl border border-neutral-800 bg-[#111111]">
-          <DialogHeader>
-            <DialogTitle>Review Application</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="max-w-2xl border border-neutral-800 bg-neutral-900/90 backdrop-blur p-0">
+          <DialogHeader className="px-6 pt-6 pb-2">
+            <DialogTitle className="text-white">Review Application</DialogTitle>
+            <DialogDescription className="text-neutral-400">
               Review the application and decide whether to approve or reject
             </DialogDescription>
           </DialogHeader>
 
           {selectedApplication && (
-            <div className="space-y-4">
+            <div className="px-6 pb-6 space-y-5">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <span className="font-medium">Name:</span>
@@ -178,31 +178,27 @@ export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
                 </div>
                 <div className="col-span-2">
                   <span className="font-medium">Description:</span>
-                  <p className="text-muted-foreground">
+                  <p className="text-neutral-400">
                     {selectedApplication.description}
                   </p>
                 </div>
               </div>
 
-              <div>
-                <label className="font-medium text-sm">
-                  Review Notes (optional):
-                </label>
+              <div className="space-y-2 rounded-lg border border-neutral-800 bg-neutral-900/60 p-3">
+                <label className="text-sm">Review Notes (optional)</label>
                 <Textarea
-                  className="mt-1 border-neutral-800 bg-[#0f0f0f]"
+                  className="mt-1 border-neutral-800 bg-neutral-900/60 text-white"
                   onChange={(e) => setReviewNotes(e.target.value)}
                   placeholder="Add notes about your decision..."
                   value={reviewNotes}
                 />
+                <div className="text-neutral-500 text-xs">{reviewNotes.length}/500</div>
               </div>
             </div>
           )}
 
-          <DialogFooter className="gap-2">
-            <Button
-              onClick={() => setIsReviewDialogOpen(false)}
-              variant="outline"
-            >
+          <DialogFooter className="gap-2 px-6 pb-6">
+            <Button onClick={() => setIsReviewDialogOpen(false)} variant="outline" className="border-neutral-800">
               Cancel
             </Button>
             <Button
@@ -211,14 +207,15 @@ export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
               variant="destructive"
             >
               <XCircle className="mr-2 h-4 w-4" />
-              Reject
+              {reviewNotes.trim().length === 0 ? 'Reject without reason' : 'Reject'}
             </Button>
             <Button
               disabled={updateStatusMutation.isPending}
               onClick={() => handleStatusUpdate('approved')}
+              className="border-neutral-800"
             >
               <CheckCircle className="mr-2 h-4 w-4" />
-              Approve
+              {reviewNotes.trim().length === 0 ? 'Approve without reason' : 'Approve'}
             </Button>
           </DialogFooter>
         </DialogContent>

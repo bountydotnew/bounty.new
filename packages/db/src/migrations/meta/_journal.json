@@ -155,6 +155,13 @@
       "when": 1756969818694,
       "tag": "0021_blue_harry_osborn",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1757050172908,
+      "tag": "0022_closed_jean_grey",
+      "breakpoints": true
     }
   ]
 }

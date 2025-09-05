@@ -296,6 +296,17 @@ export function AccountDropdown({
 
             {/* Upgrade section */}
             <DropdownMenuGroup>
+
+            {me?.role === 'admin' && (
+                <DropdownMenuItem
+                  aria-label="Open admin panel"
+                  onClick={handleAdminClick}
+                >
+                  <Shield />
+                  Admin
+                </DropdownMenuItem>
+              )}
+
               <UpgradeMenuItem
                 isLoading={isBillingLoading}
                 isPro={isPro}
@@ -312,16 +323,6 @@ export function AccountDropdown({
                 <UserIcon />
                 {MENU_ITEMS.ACCOUNT}
               </DropdownMenuItem>
-
-              {me?.role === 'admin' && (
-                <DropdownMenuItem
-                  aria-label="Open admin panel"
-                  onClick={handleAdminClick}
-                >
-                  <Shield />
-                  Admin
-                </DropdownMenuItem>
-              )}
 
               <DropdownMenuItem
                 aria-label="Open billing portal"
