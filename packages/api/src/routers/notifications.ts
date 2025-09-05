@@ -1,10 +1,10 @@
-import { db, notification } from '@bounty/db';
+import { db, notification, createNotification } from '@bounty/db';
 import { TRPCError } from '@trpc/server';
 import { and, count, desc, eq, lt } from 'drizzle-orm';
 import { z } from 'zod';
 import { grim } from '../lib/use-dev-log';
 import { sendErrorWebhook, sendInfoWebhook } from '../lib/use-discord-webhook';
-import { protectedProcedure, publicProcedure, router } from '../trpc';
+import { adminProcedure, protectedProcedure, publicProcedure, router } from '../trpc';
 
 const { info, error, warn } = grim();
 
@@ -22,6 +22,42 @@ const sendErrorSchema = z.object({
 });
 
 export const notificationsRouter = router({
+  getStats: adminProcedure.query(async () => {
+    const [row] = await db.select({ sent: count() }).from(notification);
+    return { stats: { sent: row?.sent ?? 0 } };
+  }),
+  sendToUser: adminProcedure
+    .input(
+      z.object({
+        userId: z.string().min(1),
+        title: z.string().min(1).max(200),
+        message: z.string().min(1).max(2000),
+        type: z
+          .enum([
+            'system',
+            'bounty_comment',
+            'submission_received',
+            'submission_approved',
+            'submission_rejected',
+            'bounty_awarded',
+            'beta_application_approved',
+            'beta_application_rejected',
+            'custom',
+          ])
+          .default('custom'),
+        data: z.record(z.string(), z.unknown()).optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const n = await createNotification({
+        userId: input.userId,
+        type: input.type as any,
+        title: input.title,
+        message: input.message,
+        data: input.data as any,
+      });
+      return { success: true, data: n };
+    }),
   getAll: protectedProcedure
     .input(
       z

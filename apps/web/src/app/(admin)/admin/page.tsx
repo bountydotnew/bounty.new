@@ -20,6 +20,7 @@ export default function AdminPage() {
     trpc.betaApplications.getAll.queryOptions({ page: 1, limit: 1 })
   );
   const { data: userStats } = useQuery(trpc.user.getUserStats.queryOptions());
+  const { data: notifications } = useQuery(trpc.notifications.getStats.queryOptions());
   const { data: waitlist } = useQuery(
     trpc.earlyAccess.getAdminWaitlist.queryOptions({ page: 1, limit: 1 })
   );
@@ -27,6 +28,7 @@ export default function AdminPage() {
   const betaTotal = betaApps?.total ?? '–';
   const usersTotal = userStats?.data.platformStats.totalUsers ?? '–';
   const waitlistPending = waitlist ? waitlist.stats.pending : '–';
+  const notificationsSent = notifications ? notifications.stats.sent : '–';
   return (
     <div className="space-y-6">
       <AdminHeader
@@ -52,6 +54,12 @@ export default function AdminPage() {
           icon={<Clock className="h-4 w-4" />}
           title="Waitlist"
           value={waitlistPending}
+        />
+         <StatCard
+          hint="Sent"
+          icon={<Clock className="h-4 w-4" />}
+          title="Notifications"
+          value={notificationsSent}
         />
       </div>
 
@@ -100,6 +108,21 @@ export default function AdminPage() {
           </CardHeader>
           <CardContent>
             <Link href="/admin/waitlist">
+              <Button className="w-full">Open</Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="border-neutral-800 bg-neutral-900/60 backdrop-blur">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Send Notifications
+            </CardTitle>
+            <CardDescription>Search users and send custom notifications</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/admin/notifications">
               <Button className="w-full">Open</Button>
             </Link>
           </CardContent>
