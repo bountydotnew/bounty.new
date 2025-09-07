@@ -1,6 +1,7 @@
 'use client';
 
 import { AccessGate } from '@/components/access-gate';
+import { HeaderNavSkeleton } from '@/components/dashboard/skeletons/header-nav-skeleton';
 import { MobileSidebar } from '@/components/dual-sidebar/mobile-sidebar';
 import Link from '@bounty/ui/components/link';
 import { SidebarTrigger } from '@bounty/ui/components/sidebar';
@@ -61,6 +62,7 @@ export const Header = ({
         <nav className="flex items-center">
           <AccessGate
             fallback={<NavLinks items={productionNavigationLinks} />}
+            skeleton={<HeaderNavSkeleton />}
             stage="beta"
           >
             <NavLinks items={betaNavigationLinks} />

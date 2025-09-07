@@ -4,6 +4,7 @@ import { authClient } from '@bounty/auth/client';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import { AccessGate } from '@/components/access-gate';
+import { DashboardPageSkeleton } from '@/components/dashboard/skeletons/dashboard-page-skeleton';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
 import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
 import GithubImportModal from '@/components/bounty/github-import-modal';
@@ -100,6 +101,7 @@ export default function Dashboard() {
             userData={userData.data}
           />
         }
+        skeleton={<DashboardPageSkeleton />}
         stage="beta"
       >
         <Onboarding />

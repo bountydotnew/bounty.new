@@ -13,7 +13,7 @@ import { trpc } from '@/utils/trpc';
 const AccessContext = createContext<AccessContextType | undefined>(undefined);
 
 export const AccessProvider = ({ children }: AccessProviderProps) => {
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending: sessionLoading } = authClient.useSession();
 
   const userData = useQuery({
     ...trpc.user.getMe.queryOptions(),
@@ -47,7 +47,7 @@ export const AccessProvider = ({ children }: AccessProviderProps) => {
   const contextValue: AccessContextType = {
     userStage,
     hasStageAccess,
-    isLoading: userData.isLoading,
+    isLoading: sessionLoading || userData.isLoading,
     error: userData.error as Error | null,
   };
 

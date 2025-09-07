@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { AccessGate } from '@/components/access-gate';
+import { SidebarNavSkeleton } from '@/components/dashboard/skeletons/sidebar-nav-skeleton';
 import { NavMain } from '@/components/dual-sidebar/nav-main';
 // import { NavProjects } from "@/components/dual-sidebar/nav-projects";
 import { NavUser } from '@/components/dual-sidebar/nav-user';
@@ -196,6 +197,7 @@ export const AppSidebar = ({
       <SidebarContent>
         <AccessGate
           fallback={<NavMain items={betaData.navMain} />}
+          skeleton={<SidebarNavSkeleton />}
           stage="beta"
         >
           <NavMain items={productionData.navMain} />

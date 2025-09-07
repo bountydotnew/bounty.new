@@ -14,6 +14,8 @@ interface AccessGateProps {
   children: ReactNode;
   /** Additional condition that must be true for access */
   condition?: boolean;
+  /** Skeleton component to render while loading */
+  skeleton?: ReactNode;
 }
 
 export const AccessGate = ({
@@ -21,12 +23,13 @@ export const AccessGate = ({
   fallback = null,
   children,
   condition = true,
+  skeleton,
 }: AccessGateProps) => {
   const { hasStageAccess, isLoading } = useAccess();
 
-  // Show nothing while loading user data
+  // Show skeleton while loading user data
   if (isLoading) {
-    return null;
+    return <>{skeleton}</>;
   }
 
   // Check if user has required stage access and additional condition
