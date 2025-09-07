@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bookmark } from 'lucide-react';
 import { useCallback } from 'react';
 import { Button } from '@bounty/ui/components/button';
-import { trpc } from '@/utils/trpc';
+import { orpc } from '@/utils/orpc';
 
 interface BookmarkButtonProps {
   bountyId: string;
@@ -21,18 +21,20 @@ export default function BookmarkButton({
 }: BookmarkButtonProps) {
   const queryClient = useQueryClient();
   const bookmarkQuery = useQuery({
-    ...trpc.bounties.getBountyBookmark.queryOptions({ bountyId }),
+    queryKey: ['orpc', 'bounties', 'getBountyBookmark', bountyId],
+    queryFn: () => (orpc as any).bounties.getBountyBookmark({ bountyId }),
     enabled: !onToggle,
   });
   const toggle = useMutation({
-    ...trpc.bounties.toggleBountyBookmark.mutationOptions(),
+    mutationFn: (vars: { bountyId: string }) =>
+      (orpc as any).bounties.toggleBountyBookmark({ bountyId: vars.bountyId }),
   });
 
   const handleClick = useCallback(() => {
     if (onToggle) {
       return onToggle();
     }
-    const key = trpc.bounties.getBountyBookmark.queryKey({ bountyId });
+    const key = ['orpc', 'bounties', 'getBountyBookmark', bountyId] as const;
     const current = bookmarkQuery.data?.bookmarked ?? false;
     queryClient.setQueryData(key, { bookmarked: !current });
     toggle.mutate(

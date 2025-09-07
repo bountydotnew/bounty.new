@@ -1,4 +1,5 @@
 import { protectedProcedure, publicProcedure, router } from '../trpc';
+import { toORPCRouter } from '@orpc/trpc';
 import { betaApplicationsRouter } from './beta-applications';
 import { billingRouter } from './billing';
 import { bountiesRouter } from './bounties';
@@ -42,3 +43,5 @@ export const appRouter = router({
 });
 
 export type AppRouter = typeof appRouter;
+
+export const orpcRouter = toORPCRouter(appRouter);
