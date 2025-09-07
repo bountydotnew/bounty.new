@@ -4,6 +4,7 @@ import { BountyStatistics } from '@/components/sections/home/bounty-statistics';
 import { Footer } from '@/components/sections/home/footer';
 import { Header } from '@/components/sections/home/header';
 import { WaitlistForm } from '@/components/sections/home/waitlist-form';
+import { GCombinator } from '@/components/icons';
 
 export default function Home() {
   return (
@@ -51,6 +52,12 @@ export default function Home() {
         {/* Main content */}
         <main className="relative z-10 mx-auto max-w-7xl px-6 pt-20">
           <div className="max-w-4xl">
+            <div className="mb-6 inline-flex items-center gap-1 rounded-full rounded-radius border border-white/8 bg-gradient-to-br from-white/8 to-white/4 px-4 py-1.5 text-xs backdrop-blur-xs">
+              <span className="ml-0.5 flex items-center gap-0.75 text-xs">
+                <GCombinator />
+              </span>
+              haven’t applied to ycombinator yet
+            </div>
             <h1
               className="mb-8 font-display text-5xl leading-tight md:text-7xl"
               style={{ color: 'rgba(239, 239, 239, 1)' }}
