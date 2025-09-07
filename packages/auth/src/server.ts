@@ -1,20 +1,20 @@
-import * as schema from '@bounty/db';
-import { db } from '@bounty/db';
+import * as schema from "@bounty/db";
+import { db } from "@bounty/db";
 import {
   checkout,
   polar,
   portal,
   usage,
   webhooks,
-} from '@polar-sh/better-auth';
-import { Polar } from '@polar-sh/sdk';
-import { betterAuth } from 'better-auth';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { admin } from 'better-auth/plugins/admin';
-import { passkey } from 'better-auth/plugins/passkey';
+} from "@polar-sh/better-auth";
+import { Polar } from "@polar-sh/sdk";
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { admin } from "better-auth/plugins/admin";
+import { passkey } from "better-auth/plugins/passkey";
 
 const polarEnv =
-  process.env.NODE_ENV === 'production' ? 'production' : 'sandbox';
+  process.env.NODE_ENV === "production" ? "production" : "sandbox";
 const polarClient = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN as string,
   server: polarEnv,
@@ -22,17 +22,25 @@ const polarClient = new Polar({
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
-    provider: 'pg',
+    provider: "pg",
     schema,
     usePlural: false,
   }),
+  onAPIError: {
+    throw: true,
+    onError: (error, ctx) => {
+      // Custom error handling
+      console.error("Auth error:", error);
+    },
+    errorURL: "/auth/error",
+  },
   trustedOrigins: [
-    'https://bounty.new',
-    'https://www.bounty.new',
-    'https://*.vercel.app',
-    'http://localhost:3001',
-    'http://localhost:3000',
-    'https://preview.bounty.new',
+    "https://bounty.new",
+    "https://www.bounty.new",
+    "https://*.vercel.app",
+    "http://localhost:3001",
+    "http://localhost:3000",
+    "https://preview.bounty.new",
   ].filter(Boolean),
   socialProviders: {
     github: {
@@ -61,12 +69,12 @@ export const auth = betterAuth({
             body$?: string;
             detail?: string;
           };
-          const msg = String(e?.message || e?.body$ || e?.detail || '');
+          const msg = String(e?.message || e?.body$ || e?.detail || "");
           if (e?.status === 404) {
           } else if (
             e?.status === 409 ||
-            msg.includes('external ID cannot be updated') ||
-            msg.toLowerCase().includes('external_id cannot be updated')
+            msg.includes("external ID cannot be updated") ||
+            msg.toLowerCase().includes("external_id cannot be updated")
           ) {
             return null as any;
           } else {
@@ -86,11 +94,11 @@ export const auth = betterAuth({
           body$?: string;
           detail?: string;
         };
-        const msg = String(e?.message || e?.body$ || e?.detail || '');
+        const msg = String(e?.message || e?.body$ || e?.detail || "");
         if (
           e?.status === 409 ||
-          msg.includes('external ID cannot be updated') ||
-          msg.toLowerCase().includes('external_id cannot be updated') ||
+          msg.includes("external ID cannot be updated") ||
+          msg.toLowerCase().includes("external_id cannot be updated") ||
           msg.includes('"error":"PolarRequestValidationError"')
         ) {
           return;
@@ -102,11 +110,11 @@ export const auth = betterAuth({
           products: [
             {
               productId: process.env.BOUNTY_PRO_ANNUAL_ID!,
-              slug: 'pro-annual',
+              slug: "pro-annual",
             },
             {
               productId: process.env.BOUNTY_PRO_MONTHLY_ID!,
-              slug: 'pro-monthly',
+              slug: "pro-monthly",
             },
           ],
           successUrl: process.env.POLAR_SUCCESS_URL!,
@@ -138,12 +146,12 @@ export const auth = betterAuth({
       ],
     }),
     passkey({
-      rpID: process.env.NODE_ENV === 'production' ? 'bounty.new' : 'localhost',
-      rpName: 'Bounty.new',
+      rpID: process.env.NODE_ENV === "production" ? "bounty.new" : "localhost",
+      rpName: "Bounty.new",
       origin:
-        process.env.NODE_ENV === 'production'
-          ? 'https://bounty.new'
-          : 'http://localhost:3000',
+        process.env.NODE_ENV === "production"
+          ? "https://bounty.new"
+          : "http://localhost:3000",
     }),
     admin(),
   ],

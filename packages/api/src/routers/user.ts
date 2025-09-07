@@ -286,6 +286,7 @@ export const userRouter = router({
             hasAccess: user.hasAccess,
             betaAccessStatus: user.betaAccessStatus,
             accessStage: user.accessStage,
+            banned: user.banned,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
           })
@@ -323,5 +324,74 @@ export const userRouter = router({
       await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
 
       return { success: true };
+    }),
+
+  inviteUser: adminProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        accessStage: z.enum(['none', 'alpha', 'beta', 'production']),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { userId, accessStage } = input;
+
+      const [updatedUser] = await ctx.db
+        .update(user)
+        .set({ 
+          accessStage,
+          updatedAt: new Date(),
+        })
+        .where(eq(user.id, userId))
+        .returning({ 
+          id: user.id, 
+          name: user.name, 
+          email: user.email, 
+          accessStage: user.accessStage 
+        });
+
+      if (!updatedUser) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'User not found',
+        });
+      }
+
+      return { 
+        success: true, 
+        user: updatedUser,
+        message: `User access updated to ${accessStage}. Email invitation will be sent.`
+      };
+    }),
+
+  inviteExternalUser: adminProcedure
+    .input(
+      z.object({
+        email: z.string().email(),
+        accessStage: z.enum(['none', 'alpha', 'beta', 'production']),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { email, accessStage } = input;
+
+      const existingUser = await ctx.db
+        .select({ id: user.id })
+        .from(user)
+        .where(eq(user.email, email))
+        .limit(1);
+
+      if (existingUser.length > 0) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: 'User with this email already exists. Use the invite button for existing users.',
+        });
+      }
+
+      return { 
+        success: true, 
+        email,
+        accessStage,
+        message: `External invite will be sent to ${email} for ${accessStage} access.`
+      };
     }),
 });

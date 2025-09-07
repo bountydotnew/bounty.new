@@ -1,19 +1,27 @@
 'use client';
 
 import { authClient } from '@bounty/auth/client';
+import { trpc } from '@/utils/trpc';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  Ban,
   Calendar,
+  Check,
   Crown,
   Mail,
   MoreHorizontal,
   Search,
+  Shield,
   User,
+  UserCheck,
+  UserCog,
   Users,
+  X,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { AdminHeader } from '@/components/admin';
+import { ExternalInviteModal } from '@/components/admin/external-invite-modal';
 import { Badge } from '@bounty/ui/components/badge';
 import { Button } from '@bounty/ui/components/button';
 import {
@@ -28,6 +36,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
  
@@ -46,7 +59,8 @@ export default function UsersPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'listUsers', search, page, pageSize],
     queryFn: async () => {
-      const { data, error } = await authClient.admin.listUsers({
+      // Get users from auth client (has all the auth-specific fields like banned)
+      const { data: authData, error: authError } = await authClient.admin.listUsers({
         query: {
           searchValue: search || undefined,
           searchField: 'name',
@@ -57,10 +71,13 @@ export default function UsersPage() {
           sortDirection: 'desc',
         },
       });
-      if (error) {
-        throw new Error(error.message || 'Failed to load users');
+      
+      if (authError) {
+        throw new Error(authError.message || 'Failed to load users');
       }
-      return data;
+
+        // Just return auth data and handle accessStage in the component
+        return authData;
     },
   });
 
@@ -88,7 +105,27 @@ export default function UsersPage() {
     },
   });
 
-  const users = useMemo(() => data?.users || [], [data?.users]);
+  // Get access stages separately using tRPC
+  const { data: accessData } = useQuery({
+    ...trpc.user.getAllUsers.queryOptions({
+      search: search || undefined,
+      page,
+      limit: pageSize,
+    }),
+  });
+
+  // Merge auth client users with access stage data
+  const users = useMemo(() => {
+    if (!data?.users || !accessData?.users) return data?.users || [];
+    
+    return data.users.map((user: any) => {
+      const userWithStage = accessData.users.find((u: any) => u.id === user.id);
+      return {
+        ...user,
+        accessStage: userWithStage?.accessStage || 'none'
+      };
+    });
+  }, [data?.users, accessData?.users]);
   const total = data?.total || 0;
   const totalPages = useMemo(() => {
     const limit = (data as any)?.limit || pageSize;
@@ -191,6 +228,23 @@ export default function UsersPage() {
           return next;
         });
       });
+  };
+
+  // Handle invite user to access stage
+  const inviteUserMutation = useMutation({
+    ...trpc.user.inviteUser.mutationOptions(),
+    onSuccess: (data, variables) => {
+      const stageName = variables.accessStage === 'none' ? 'removed access' : `${variables.accessStage} access`;
+      toast.success(`Updated user to ${stageName}`);
+      queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
+    },
+    onError: (error) => {
+      toast.error(`Failed to update user: ${error.message}`);
+    },
+  });
+
+  const handleInviteUser = (userId: string, accessStage: 'none' | 'alpha' | 'beta' | 'production') => {
+    inviteUserMutation.mutate({ userId, accessStage });
   };
 
   const unbanUser = (userId: string) => {
@@ -305,7 +359,8 @@ export default function UsersPage() {
         title="User Management"
       />
 
-      <div className="flex justify-end">
+      <div className="flex justify-end space-x-2">
+        <ExternalInviteModal />
         <Button onClick={handleStopImpersonating} size="sm" variant="outline">
           Stop Impersonating
         </Button>
@@ -480,54 +535,138 @@ export default function UsersPage() {
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="z-10 w-44 rounded-md border border-neutral-800 bg-neutral-900 p-1 shadow">
-                          {user.role === 'admin' ? (
-                            <DropdownMenuItem
-                              className="text-neutral-200 hover:bg-neutral-800"
-                              onClick={() => handleRoleUpdate(user.id, 'user')}
-                            >
-                              Remove Admin
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem
-                              className="text-neutral-200 hover:bg-neutral-800"
-                              onClick={() => handleRoleUpdate(user.id, 'admin')}
-                            >
-                              Make Admin
-                            </DropdownMenuItem>
-                          )}
-                          {user.banned ? (
-                            <DropdownMenuItem
-                              className="text-neutral-200 hover:bg-neutral-800"
-                              onClick={() => unbanUser(user.id)}
-                            >
-                              Unban
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem
-                              className="text-neutral-200 hover:bg-neutral-800"
-                              onClick={() => banUser(user.id)}
-                            >
-                              Ban
-                            </DropdownMenuItem>
-                          )}
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuLabel>User Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          
+                          {/* Access Stage Management */}
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger>
+                              <UserCheck className="mr-2 h-4 w-4" />
+                              Access Stage
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent>
+                              <DropdownMenuItem
+                                onClick={() => handleInviteUser(user.id, 'alpha')}
+                                disabled={user.accessStage === 'alpha'}
+                              >
+                                <span className="mr-2">α</span>
+                                Alpha Access
+                                {user.accessStage === 'alpha' && (
+                                  <Check className="ml-auto h-4 w-4" />
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleInviteUser(user.id, 'beta')}
+                                disabled={user.accessStage === 'beta'}
+                              >
+                                <span className="mr-2">β</span>
+                                Beta Access
+                                {user.accessStage === 'beta' && (
+                                  <Check className="ml-auto h-4 w-4" />
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleInviteUser(user.id, 'production')}
+                                disabled={user.accessStage === 'production'}
+                              >
+                                <span className="mr-2">🚀</span>
+                                Production Access
+                                {user.accessStage === 'production' && (
+                                  <Check className="ml-auto h-4 w-4" />
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleInviteUser(user.id, 'none')}
+                                disabled={user.accessStage === 'none'}
+                                className="text-red-400"
+                              >
+                                <X className="mr-2 h-4 w-4" />
+                                Remove Access
+                                {user.accessStage === 'none' && (
+                                  <Check className="ml-auto h-4 w-4" />
+                                )}
+                              </DropdownMenuItem>
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+
+                          <DropdownMenuSeparator />
+                          
+                          {/* Role Management */}
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger>
+                              <Shield className="mr-2 h-4 w-4" />
+                              Role
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent>
+                              <DropdownMenuItem
+                                onClick={() => handleRoleUpdate(user.id, 'admin')}
+                                disabled={user.role === 'admin'}
+                              >
+                                <Crown className="mr-2 h-4 w-4" />
+                                Make Admin
+                                {user.role === 'admin' && (
+                                  <Check className="ml-auto h-4 w-4" />
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleRoleUpdate(user.id, 'user')}
+                                disabled={user.role === 'user'}
+                              >
+                                <User className="mr-2 h-4 w-4" />
+                                Regular User
+                                {user.role === 'user' && (
+                                  <Check className="ml-auto h-4 w-4" />
+                                )}
+                              </DropdownMenuItem>
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+
+                          <DropdownMenuSeparator />
+                          
+                          {/* Admin Actions */}
                           <DropdownMenuItem
-                            className="text-neutral-200 hover:bg-neutral-800"
-                            onClick={() => revokeUserSessions(user.id)}
-                          >
-                            Revoke Sessions
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-neutral-200 hover:bg-neutral-800"
                             onClick={() => impersonateUser(user.id)}
                           >
+                            <UserCog className="mr-2 h-4 w-4" />
                             Impersonate
                           </DropdownMenuItem>
+                          
                           <DropdownMenuItem
-                            className="text-red-400 hover:bg-red-950/40"
-                            onClick={() => deleteUser(user.id)}
+                            onClick={() => revokeUserSessions(user.id)}
                           >
-                            Delete
+                            <Shield className="mr-2 h-4 w-4" />
+                            Revoke Sessions
+                          </DropdownMenuItem>
+                          
+                          <DropdownMenuSeparator />
+                          
+                          {/* Destructive Actions */}
+                          {user.banned ? (
+                            <DropdownMenuItem
+                              onClick={() => unbanUser(user.id)}
+                              className="text-green-400 focus:text-green-400"
+                            >
+                              <Check className="mr-2 h-4 w-4" />
+                              Unban User
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem
+                              onClick={() => banUser(user.id)}
+                              className="text-red-400 focus:text-red-400"
+                            >
+                              <Ban className="mr-2 h-4 w-4" />
+                              Ban User
+                            </DropdownMenuItem>
+                          )}
+                          
+                          <DropdownMenuItem
+                            onClick={() => deleteUser(user.id)}
+                            className="text-red-400 focus:text-red-400"
+                          >
+                            <X className="mr-2 h-4 w-4" />
+                            Delete User
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
