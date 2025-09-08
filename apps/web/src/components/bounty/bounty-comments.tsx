@@ -32,7 +32,7 @@ export default function BountyComments({
   const key = trpc.bounties.getBountyComments.queryKey({ bountyId });
   const commentsQuery = useQuery({
     ...trpc.bounties.getBountyComments.queryOptions({ bountyId }),
-    initialData: (initialComments || []).map((c) => ({
+    initialData: initialComments?.map((c) => ({
       ...c,
       originalContent: c.originalContent ?? null,
     })),
