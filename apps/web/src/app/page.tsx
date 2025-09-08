@@ -11,7 +11,7 @@ export default function Home() {
   return (
     <>
       <div
-        className="text-white pb-10"
+        className="relative text-white pb-10"
         style={{
           background:
             'linear-gradient(180deg, rgba(22, 22, 22, 1) 0%, rgba(12, 12, 12, 1) 100%)',
