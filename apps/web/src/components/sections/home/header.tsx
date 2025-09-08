@@ -78,7 +78,7 @@ export function Header() {
   );
 
   const rightContent = (
-    <nav className="flex items-center gap-8">
+    <nav className="flex items-center gap-4">
       <Link
         className="text-gray-300 transition-colors hover:text-white"
         href={LINKS.BLOG}
@@ -108,7 +108,7 @@ export function Header() {
               variant="secondary"
             >
               Log in
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="size-4" />
             </Button>
           </Link>
         )
