@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { cn } from "@/lib/utils";
-import type { ReactNode } from "react";
-import { motion } from "framer-motion";
+import { motion } from 'framer-motion';
+import type { ReactNode } from 'react';
+import { cn } from '@bounty/ui/lib/utils';
 
 interface HeaderBaseProps {
   leftContent?: ReactNode;
@@ -22,7 +22,7 @@ export function HeaderBase({
   // If children is provided, render it directly without the grid layout
   if (children) {
     return (
-      <header className={cn("px-6 min-h-16 flex items-center", className)}>
+      <header className={cn('flex min-h-16 items-center px-6', className)}>
         {children}
       </header>
     );
@@ -30,19 +30,21 @@ export function HeaderBase({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: "easeInOut" }}
+      initial={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.5, ease: 'easeInOut' }}
     >
-    <header
-      className={cn("px-6 h-14 flex justify-between items-center", className)}
-    >
-      {leftContent && <div className="flex items-center">{leftContent}</div>}
-      {centerContent && (
-        <div className="flex items-center">{centerContent}</div>
-      )}
-      {rightContent && <div className="flex items-center">{rightContent}</div>}
-    </header>
+      <header
+        className={cn('flex h-14 items-center justify-between px-6', className)}
+      >
+        {leftContent && <div className="flex items-center">{leftContent}</div>}
+        {centerContent && (
+          <div className="flex items-center">{centerContent}</div>
+        )}
+        {rightContent && (
+          <div className="flex items-center">{rightContent}</div>
+        )}
+      </header>
     </motion.div>
   );
 }

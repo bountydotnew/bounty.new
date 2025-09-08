@@ -1,24 +1,28 @@
 import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/dual-sidebar/app-sidebar";
-import { Header } from "@/components/dual-sidebar/sidebar-header";
+  AdminAppSidebar,
+  AppSidebar,
+} from '@/components/dual-sidebar/app-sidebar';
+import { SidebarInset, SidebarProvider } from '@bounty/ui/components/sidebar';
+
+// import { Header } from "@/components/dual-sidebar/sidebar-header";
 // import { RightSidebar } from "@/components/dual-sidebar/right-sidebar";
 
-const Sidebar = ({ children }: { children: React.ReactNode }) => {
+const Sidebar = ({
+  children,
+  admin = false,
+}: {
+  children: React.ReactNode;
+  admin?: boolean;
+}) => {
   return (
     <SidebarProvider variant="icononly">
-      <AppSidebar side="left" />
-      <SidebarInset className="h-screen flex flex-col">
-        <Header />
-        <main className="flex-1">
-        {children}
-        </main>
+      {admin ? <AdminAppSidebar side="left" /> : <AppSidebar side="left" />}
+      <SidebarInset className="flex h-screen flex-col">
+        {/* <Header /> */}
+        <main className="flex-1">{children}</main>
       </SidebarInset>
-      {/* <RightSidebar side="right" /> */}
     </SidebarProvider>
   );
 };
 
-export default Sidebar;
+export { Sidebar, AppSidebar, AdminAppSidebar };

@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import { Suspense } from "react";
-import { WaitlistForm } from "./waitlist-form";
+import { Suspense } from 'react';
+import { WaitlistForm } from './waitlist-form';
+
 // import { BountyDraftForm } from "./bounty-draft-form";
 // import { useSearchParams } from "next/navigation";
 
@@ -18,9 +19,7 @@ function ConditionalFormContent({ className }: ConditionalFormProps) {
   // ) : (
   //   <WaitlistForm className={className} />
   // );
-  return (
-    <WaitlistForm className={className} />
-  );
+  return <WaitlistForm className={className} />;
 }
 
 export function ConditionalForm({ className }: ConditionalFormProps) {
@@ -29,4 +28,4 @@ export function ConditionalForm({ className }: ConditionalFormProps) {
       <ConditionalFormContent className={className} />
     </Suspense>
   );
-} 
+}

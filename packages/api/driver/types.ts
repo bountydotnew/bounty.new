@@ -1,4 +1,34 @@
-type RestEndpointMethodTypes = any;
+export interface RestEndpointMethodTypes {
+  repos: {
+    getCollaboratorPermissionLevel: {
+      response: {
+        data: {
+          permission: 'admin' | 'write' | 'read' | 'none';
+          role_name?: string;
+          user?: {
+            login?: string;
+            id?: number;
+          };
+        };
+      };
+    };
+  };
+  orgs: {
+    getMembershipForUser: {
+      response: {
+        data: {
+          state: 'active' | 'pending';
+          role: 'admin' | 'member' | 'billing_manager';
+          organization_url?: string;
+          user?: {
+            login?: string;
+            id?: number;
+          };
+        };
+      };
+    };
+  };
+}
 
 export interface ProjectData {
   id: string | number;
@@ -19,7 +49,12 @@ export interface ProjectData {
   };
   html_url?: string; // github URL
   web_url?: string; // gitlab URL
-  [key: string]: any;
+  stargazersCount?: number;
+  forksCount?: number;
+  language?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  pushedAt?: string;
 }
 export interface ProjectWithRelations {
   id: string;
@@ -75,7 +110,13 @@ export interface RepoData {
   description?: string;
   url: string;
   isPrivate?: boolean;
-  [key: string]: any;
+  stargazersCount?: number;
+  forksCount?: number;
+  language?: string;
+  owner?: {
+    login?: string;
+    avatar_url?: string;
+  };
 }
 
 export interface ContributorData {
@@ -88,17 +129,41 @@ export interface ContributorData {
 export interface IssueData {
   id: string | number;
   title: string;
-  state: string;
+  state: 'open' | 'closed';
   url: string;
-  [key: string]: any;
+  createdAt?: string;
+  updatedAt?: string;
+  body?: string;
+  labels?: Array<{
+    name: string;
+    color?: string;
+  }>;
+  assignees?: Array<{
+    login: string;
+    avatar_url?: string;
+  }>;
+  author?: {
+    login: string;
+    avatar_url?: string;
+  };
 }
 
 export interface PullRequestData {
   id: string | number;
   title: string;
-  state: string;
+  state: 'open' | 'closed' | 'merged';
   url: string;
-  [key: string]: any;
+  createdAt?: string;
+  updatedAt?: string;
+  mergedAt?: string;
+  body?: string;
+  draft?: boolean;
+  additions?: number;
+  deletions?: number;
+  author?: {
+    login: string;
+    avatar_url?: string;
+  };
 }
 
 export interface FileData {
@@ -205,7 +270,7 @@ export interface GitManager {
     options?: {
       state?: 'open' | 'closed' | 'merged' | 'all';
       limit?: number;
-    },
+    }
   ): Promise<UserPullRequestData[]>;
   getRepoData(identifier: string): Promise<{
     repo: RepoData;
@@ -215,16 +280,16 @@ export interface GitManager {
   }>;
   verifyOwnership(
     identifier: string,
-    ctx: any,
-    projectId: string,
+    ctx: unknown,
+    projectId: string
   ): Promise<{
     success: boolean;
-    project: any;
+    project: ProjectData;
     ownershipType: string;
     verifiedAs: string;
   }>;
   getRepoPermissions(
-    identifier: string,
+    identifier: string
   ): Promise<
     RestEndpointMethodTypes['repos']['getCollaboratorPermissionLevel']['response']['data']
   >;
@@ -234,8 +299,10 @@ export interface GitManager {
   }>;
   getOrgMembership(
     org: string,
-    username: string,
-  ): Promise<RestEndpointMethodTypes['orgs']['getMembershipForUser']['response']['data']>;
+    username: string
+  ): Promise<
+    RestEndpointMethodTypes['orgs']['getMembershipForUser']['response']['data']
+  >;
   getContributions(username: string): Promise<ContributionData>;
   getUserDetails(username: string): Promise<UserData>;
 }

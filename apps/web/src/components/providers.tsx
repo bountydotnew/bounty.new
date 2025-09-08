@@ -1,93 +1,73 @@
-"use client";
+'use client';
 
-import { QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { queryClient } from "@/utils/trpc";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "./ui/sonner";
-import { ConfettiProvider } from "@/lib/context/confetti-context";
-import { Databuddy } from "@databuddy/sdk";
-import { TOAST_ICONS, TOAST_OPTIONS } from "@/constants/toast";
-import { PostHogProvider } from "posthog-js/react";
-import { AuthUIProvider } from "@daveyplate/better-auth-ui"
-import { authClient } from "@bounty/auth/client";
-import { useRouter } from "next/navigation"
-import Link from "next/link";
+import { authClient } from '@bounty/auth/client';
+import { Databuddy } from '@databuddy/sdk';
+import { AuthUIProvider } from '@daveyplate/better-auth-ui';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { useRouter } from 'next/navigation';
+import { PostHogProvider } from 'posthog-js/react';
+import { ThemeProvider } from '@/components/theme-provider';
+import Link from '@bounty/ui/components/link';
+import { TOAST_ICONS, TOAST_OPTIONS } from '@/context/toast';
+import { AccessProvider } from '@/context/access-provider';
+import { ConfettiProvider } from '@/context/confetti-context';
+import { queryClient } from '@/utils/trpc';
+import { Toaster } from '@bounty/ui/components/sonner';
+import ImpersonationBanner from '@/components/impersonation-banner';
 
+export function Providers({ children }: { children: React.ReactNode }) {
 
-export function Providers({
-  children
-}: {
-  children: React.ReactNode
-}) {
-  const posthogApiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-  const router = useRouter()
+  const router = useRouter();
 
   return (
     <ThemeProvider
       attribute="class"
       defaultTheme="dark"
-      enableSystem
       disableTransitionOnChange
+      enableSystem
     >
       <QueryClientProvider client={queryClient}>
-        {posthogApiKey ? (
-          <PostHogProvider apiKey={posthogApiKey}>
+
             <ConfettiProvider>
-              <AuthUIProvider
-                authClient={authClient}
-                navigate={router.push}
-                replace={router.replace}
-                onSessionChange={() => {
-                  // Clear router cache (protected routes)
-                  router.refresh()
-                }}
-                Link={Link}
-              >
-                {children}
-              </AuthUIProvider>
+              <AccessProvider>
+                <AuthUIProvider
+                  authClient={authClient}
+                  Link={Link}
+                  navigate={router.push}
+                  onSessionChange={() => {
+                    // Clear router cache (protected routes)
+                    router.refresh();
+                  }}
+                  replace={router.replace}
+                >
+                  <ImpersonationBanner />
+                  {children}
+                </AuthUIProvider>
+              </AccessProvider>
               <Databuddy
                 clientId="bounty"
-                trackHashChanges={true}
-                trackAttributes={true}
-                trackOutgoingLinks={true}
-                trackInteractions={true}
-                trackEngagement={true}
-                trackScrollDepth={true}
-                trackExitIntent={true}
-                trackBounceRate={true}
-                trackWebVitals={true}
-                trackErrors={true}
                 enableBatching={true}
+                trackAttributes={true}
+                trackBounceRate={true}
+                trackEngagement={true}
+                trackErrors={true}
+                trackExitIntent={true}
+                trackHashChanges={true}
+                trackInteractions={true}
+                trackOutgoingLinks={true}
+                trackScrollDepth={true}
+                trackWebVitals={true}
               />
             </ConfettiProvider>
             <ReactQueryDevtools />
-          </PostHogProvider>
-        ) : (
-          <ConfettiProvider>
-            {children}
-            <Databuddy
-              clientId="bounty"
-              trackHashChanges={true}
-              trackAttributes={true}
-              trackOutgoingLinks={true}
-              trackInteractions={true}
-              trackEngagement={true}
-              trackScrollDepth={true}
-              trackExitIntent={true}
-              trackBounceRate={true}
-              trackWebVitals={true}
-              trackErrors={true}
-              enableBatching={true}
-            />
-          </ConfettiProvider>
-        )}
+
       </QueryClientProvider>
       <Toaster
-        richColors
-        position="bottom-right"
-        toastOptions={TOAST_OPTIONS}
         icons={TOAST_ICONS}
+        position="bottom-right"
+        richColors
+        toastOptions={TOAST_OPTIONS}
         visibleToasts={4}
       />
     </ThemeProvider>

@@ -4,16 +4,27 @@ export interface Bounty {
   title: string;
   description: string;
   amount: number;
+  currency: string;
   status: 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled';
+  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  deadline?: string | null;
+  tags?: string[] | null;
+  repositoryUrl?: string | null;
+  issueUrl?: string | null;
   createdAt: string;
-  creator?: {
-    name?: string;
+  updatedAt: string;
+  creator: {
+    id: string;
+    name: string | null;
+    image: string | null;
   };
+  votes?: number;
 }
 
 export interface UserData {
   name?: string;
   betaAccessStatus: 'none' | 'pending' | 'approved' | 'denied';
+  accessStage: 'none' | 'alpha' | 'beta' | 'production';
 }
 
 export interface BetaSubmission {

@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import {
-  BadgeCheck,
-  Bell,
-  CreditCard,
-  LogOut,
-  Sparkles,
-} from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { authClient } from '@bounty/auth/client';
+import { useQuery } from '@tanstack/react-query';
+import { CreditCard, LogOut, Shield, Sparkles } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import * as React from 'react';
+import { useCallback } from 'react';
+import { toast } from 'sonner';
+import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
+import { BellIcon } from '@bounty/ui/components/bell';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,79 +17,57 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@bounty/ui/components/dropdown-menu';
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar";
-import { Spinner } from "@/components/ui/spinner";
-import { authClient } from "@bounty/auth/client";
-import { useBilling } from "@/hooks/use-billing";
-import { toast } from "sonner";
-import { LINKS } from "@/constants/links";
-import { useRouter } from "next/navigation";
-import { useCallback } from "react";
+} from '@bounty/ui/components/sidebar';
+import { Spinner } from '@bounty/ui/components/spinner';
+import { UserIcon } from '@bounty/ui/components/user';
+import { LINKS } from '@/constants';
+import { useBilling } from '@bounty/ui/hooks/use-billing';
+import type {
+  AccountDropdownProps,
+  SessionUser,
+  User,
+  UserDisplayData,
+} from '@/types/billing-components';
+import { trpc } from '@/utils/trpc';
 
 // Constants for better maintainability
 const MESSAGES = {
-  SIGN_IN_REQUIRED: "Please sign in to access billing.",
-  BILLING_PORTAL_SUCCESS: "Opening billing portal...",
-  BILLING_PORTAL_ERROR: "Failed to open billing portal. Please try again.",
-  LOADING: "Loading...",
-  CHECKING_SUBSCRIPTION: "Checking...",
-  VERIFYING_SUBSCRIPTION: "Verifying subscription...",
-  PRO_BADGE: "Pro",
+  SIGN_IN_REQUIRED: 'Please sign in to access billing.',
+  BILLING_PORTAL_SUCCESS: 'Opening billing portal...',
+  BILLING_PORTAL_ERROR: 'Failed to open billing portal. Please try again.',
+  LOADING: 'Loading...',
+  CHECKING_SUBSCRIPTION: 'Checking...',
+  VERIFYING_SUBSCRIPTION: 'Verifying subscription...',
+  PRO_BADGE: 'Pro',
 } as const;
 
 const MENU_ITEMS = {
-  UPGRADE: "Upgrade to Pro",
-  ACCOUNT: "Account", 
-  BILLING: "Billing",
-  NOTIFICATIONS: "Notifications",
-  LOGOUT: "Log out",
+  UPGRADE: 'Upgrade to Pro',
+  ACCOUNT: 'Account',
+  BILLING: 'Billing',
+  NOTIFICATIONS: 'Notifications',
+  LOGOUT: 'Log out',
 } as const;
 
-const LOGIN_REDIRECT = "/login";
-
-// Enhanced TypeScript interfaces
-interface User {
-  name: string;
-  email: string;
-  image?: string | null;
-}
-
-interface SessionUser {
-  id: string;
-  email: string;
-  emailVerified: boolean;
-  name: string;
-  createdAt: Date;
-  updatedAt: Date;
-  image?: string | null;
-}
-
-interface AccountDropdownProps {
-  user: User;
-  onUpgradeClick: () => void;
-}
-
-interface UserDisplayData {
-  name: string;
-  email: string;
-  image: string | null;
-  initials: string;
-}
+const LOGIN_REDIRECT = '/login';
 
 // Custom hook for user display logic
-function useUserDisplay(sessionUser?: SessionUser | null, fallbackUser?: User): UserDisplayData {
+function useUserDisplay(
+  sessionUser?: SessionUser | null,
+  fallbackUser?: User
+): UserDisplayData {
   return React.useMemo(() => {
     const user = sessionUser || fallbackUser;
-    const name = user?.name || "";
-    const email = user?.email || "";
+    const name = user?.name || '';
+    const email = user?.email || '';
     const image = user?.image || null;
-    const initials = name ? name.charAt(0).toUpperCase() : "?";
+    const initials = name ? name.charAt(0).toUpperCase() : '?';
 
     return { name, email, image, initials };
   }, [sessionUser, fallbackUser]);
@@ -98,7 +76,7 @@ function useUserDisplay(sessionUser?: SessionUser | null, fallbackUser?: User): 
 // Custom hook for billing portal operations
 function useBillingPortal() {
   const { data: session } = authClient.useSession();
-  const { openBillingPortal } = useBilling();
+  const { openBillingPortal } = useBilling({ enabled: false });
 
   const handleBillingPortal = React.useCallback(async () => {
     if (!session?.user) {
@@ -109,8 +87,7 @@ function useBillingPortal() {
     try {
       await openBillingPortal();
       toast.success(MESSAGES.BILLING_PORTAL_SUCCESS);
-    } catch (error) {
-      console.error("Failed to open billing portal:", error);
+    } catch (_error) {
       toast.error(MESSAGES.BILLING_PORTAL_ERROR);
     }
   }, [session?.user, openBillingPortal]);
@@ -137,21 +114,21 @@ const UserAvatar = React.memo<{
   userDisplay: UserDisplayData;
   isLoading: boolean;
   className?: string;
-}>(({ userDisplay, isLoading, className = "h-8 w-8 rounded-lg" }) => (
+}>(({ userDisplay, isLoading, className = 'h-8 w-8 rounded-lg' }) => (
   <Avatar className={className}>
     {userDisplay.image && (
-      <AvatarImage 
-        src={userDisplay.image} 
+      <AvatarImage
         alt={userDisplay.name}
         onError={(e) => {
           // Fallback to initials if image fails to load
           e.currentTarget.style.display = 'none';
         }}
+        src={userDisplay.image}
       />
     )}
     <AvatarFallback className="rounded-lg">
       {isLoading ? (
-        <Spinner size="sm" aria-label="Loading user information" />
+        <Spinner aria-label="Loading user information" size="sm" />
       ) : (
         userDisplay.initials
       )}
@@ -159,7 +136,7 @@ const UserAvatar = React.memo<{
   </Avatar>
 ));
 
-UserAvatar.displayName = "UserAvatar";
+UserAvatar.displayName = 'UserAvatar';
 
 // Memoized dropdown header component
 const DropdownHeader = React.memo<{
@@ -169,19 +146,19 @@ const DropdownHeader = React.memo<{
 }>(({ userDisplay, isPro, isLoading }) => (
   <DropdownMenuLabel className="p-0 font-normal">
     <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-      <UserAvatar userDisplay={userDisplay} isLoading={isLoading} />
+      <UserAvatar isLoading={isLoading} userDisplay={userDisplay} />
       <div className="grid flex-1 text-left text-sm leading-tight">
         <div className="flex items-center gap-2">
           <span className="truncate font-medium">
             {isLoading ? MESSAGES.LOADING : userDisplay.name}
           </span>
           {!isLoading && isPro && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-muted-foreground text-xs">
               {MESSAGES.PRO_BADGE}
             </span>
           )}
           {isLoading && (
-            <span className="text-xs text-muted-foreground animate-pulse">
+            <span className="animate-pulse text-muted-foreground text-xs">
               {MESSAGES.CHECKING_SUBSCRIPTION}
             </span>
           )}
@@ -194,7 +171,7 @@ const DropdownHeader = React.memo<{
   </DropdownMenuLabel>
 ));
 
-DropdownHeader.displayName = "DropdownHeader";
+DropdownHeader.displayName = 'DropdownHeader';
 
 // Upgrade menu item component
 const UpgradeMenuItem = React.memo<{
@@ -204,8 +181,8 @@ const UpgradeMenuItem = React.memo<{
 }>(({ isPro, isLoading, onUpgradeClick }) => {
   if (isLoading) {
     return (
-      <DropdownMenuItem disabled aria-label="Loading subscription status">
-        <Spinner size="sm" className="mr-2" />
+      <DropdownMenuItem aria-label="Loading subscription status" disabled>
+        <Spinner className="mr-2" size="sm" />
         Checking subscription...
       </DropdownMenuItem>
     );
@@ -213,9 +190,9 @@ const UpgradeMenuItem = React.memo<{
 
   if (!isPro) {
     return (
-      <DropdownMenuItem 
-        onClick={onUpgradeClick}
+      <DropdownMenuItem
         aria-label="Upgrade to Pro plan"
+        onClick={onUpgradeClick}
       >
         <Sparkles />
         {MENU_ITEMS.UPGRADE}
@@ -226,98 +203,134 @@ const UpgradeMenuItem = React.memo<{
   return null;
 });
 
-UpgradeMenuItem.displayName = "UpgradeMenuItem";
+UpgradeMenuItem.displayName = 'UpgradeMenuItem';
 
 // Main component
-export function AccountDropdown({ user, onUpgradeClick }: AccountDropdownProps) {
+export function AccountDropdown({
+  user,
+  onUpgradeClick,
+}: AccountDropdownProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { isMobile } = useSidebar();
   const { data: session } = authClient.useSession();
-  const { isPro, isLoading: isBillingLoading } = useBilling();
-  
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const { isPro, isLoading: isBillingLoading } = useBilling({ enabled: menuOpen && !!session?.user });
+  const { data: me } = useQuery({
+    ...trpc.user.getMe.queryOptions(),
+    enabled: !!session?.user,
+  });
+  const isImpersonating = Boolean(
+    (session as any)?.session?.impersonatedBy ||
+      (session as any)?.impersonatedBy
+  );
+
   // Custom hooks for better separation of concerns
   const userDisplay = useUserDisplay(session?.user, user);
   const handleBillingPortal = useBillingPortal();
   const handleSignOut = useSignOut();
 
   // Memoize dropdown content positioning
-  const dropdownProps = React.useMemo(() => ({
-    className: "w-[var(--radix-dropdown-menu-trigger-width)] min-w-56 rounded-lg",
-    side: isMobile ? "bottom" as const : "right" as const,
-    align: "end" as const,
-    sideOffset: 4,
-  }), [isMobile]);
+  const dropdownProps = React.useMemo(
+    () => ({
+      className:
+        'w-[var(--radix-dropdown-menu-trigger-width)] min-w-56 rounded-lg',
+      side: isMobile ? ('bottom' as const) : ('right' as const),
+      align: 'end' as const,
+      sideOffset: 4,
+    }),
+    [isMobile]
+  );
 
   const handleAccountClick = useCallback(() => {
     router.push(LINKS.ACCOUNT);
   }, [router]);
 
+  const handleAdminClick = useCallback(() => {
+    if (pathname?.startsWith('/admin')) {
+      router.push('/');
+    } else {
+      router.push('/admin');
+    }
+  }, [router, pathname]);
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu>
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
-              aria-label={`Account menu for ${userDisplay.name}`}
               aria-expanded={false}
+              aria-label={`Account menu for ${userDisplay.name}`}
             >
               <div>
                 <UserAvatar
-                  userDisplay={userDisplay}
                   isLoading={isBillingLoading}
+                  userDisplay={userDisplay}
                 />
               </div>
             </SidebarMenuButton>
           </DropdownMenuTrigger>
-          
+
           <DropdownMenuContent {...dropdownProps}>
             <DropdownHeader
-              userDisplay={userDisplay}
-              isPro={isPro}
               isLoading={isBillingLoading}
+              isPro={isPro}
+              userDisplay={userDisplay}
             />
-            
+
             <DropdownMenuSeparator />
-            
+
             {/* Upgrade section */}
             <DropdownMenuGroup>
+              {(me?.role === 'admin' || isImpersonating) && (
+                <DropdownMenuItem
+                  aria-label="Open admin panel"
+                  onClick={handleAdminClick}
+                >
+                  <Shield />
+                  Admin
+                </DropdownMenuItem>
+              )}
+
               <UpgradeMenuItem
-                isPro={isPro}
                 isLoading={isBillingLoading}
+                isPro={isPro}
                 onUpgradeClick={onUpgradeClick}
               />
             </DropdownMenuGroup>
-            
+
             {/* Account actions */}
             <DropdownMenuGroup>
-              <DropdownMenuItem 
-              onClick={handleAccountClick}
-                aria-label="View account settings">
-                <BadgeCheck />
+              <DropdownMenuItem
+                aria-label="View account settings"
+                onClick={handleAccountClick}
+              >
+                <UserIcon />
                 {MENU_ITEMS.ACCOUNT}
               </DropdownMenuItem>
-              
-              <DropdownMenuItem 
-                onClick={handleBillingPortal}
-                disabled={isBillingLoading}
+
+              <DropdownMenuItem
                 aria-label="Open billing portal"
+                disabled={isBillingLoading}
+                onClick={handleBillingPortal}
               >
                 <CreditCard />
                 {isBillingLoading ? MESSAGES.LOADING : MENU_ITEMS.BILLING}
               </DropdownMenuItem>
-              
+
               <DropdownMenuItem aria-label="View notifications">
-                <Bell />
+                <BellIcon />
                 {MENU_ITEMS.NOTIFICATIONS}
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            
+
             <DropdownMenuSeparator />
-            
+
             {/* Sign out */}
-            <DropdownMenuItem 
-              onClick={handleSignOut}
+            <DropdownMenuItem
               aria-label="Sign out of account"
+              onClick={handleSignOut}
               variant="destructive"
             >
               <LogOut />

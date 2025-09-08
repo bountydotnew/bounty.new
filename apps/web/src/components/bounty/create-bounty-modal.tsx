@@ -1,84 +1,126 @@
-"use client";
+'use client';
 
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { trpc } from "@/utils/trpc";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { useDrafts } from "@/hooks/use-drafts";
+import type { AppRouter } from '@bounty/api';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { TRPCClientErrorLike } from '@trpc/client';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { MarkdownTextarea } from '@/components/bounty/markdown-editor';
+import { Button } from '@bounty/ui/components/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+} from '@bounty/ui/components/dialog';
 import {
-  createBountySchema,
-  CreateBountyForm,
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@bounty/ui/components/drawer';
+import { Input } from '@bounty/ui/components/input';
+import { Label } from '@bounty/ui/components/label';
+import { useDrafts } from '@bounty/ui/hooks/use-drafts';
+import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
+import {
+  type CreateBountyForm,
   createBountyDefaults,
-  bountyDraftTemplates,
+  createBountySchema,
   currencyOptions,
   difficultyOptions,
   formatFormData,
-  parseTagsInput,
-  formatTagsOutput
-} from "@/lib/forms";
+} from '@bounty/ui/lib/forms';
+import { trpc } from '@/utils/trpc';
 
 interface CreateBountyModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   draftId?: string;
+  initialValues?: Partial<CreateBountyForm>;
+  redirectOnClose?: string;
+  replaceOnSuccess?: boolean;
 }
 
-export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyModalProps) {
+export function CreateBountyModal({
+  open,
+  onOpenChange,
+  draftId,
+  initialValues,
+  redirectOnClose,
+  replaceOnSuccess,
+}: CreateBountyModalProps) {
   const queryClient = useQueryClient();
   const { getDraft, deleteActiveDraft } = useDrafts();
+  const router = useRouter();
 
   const form = useForm<CreateBountyForm>({
     resolver: zodResolver(createBountySchema),
-    defaultValues: createBountyDefaults,
+    defaultValues: {
+      ...createBountyDefaults,
+      ...(initialValues || {}),
+    },
   });
 
-  const { control, handleSubmit, formState: { errors, isSubmitting }, reset, watch, setValue } = form;
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    //watch,
+    setValue,
+  } = form;
 
   // Load draft data if draftId is provided
   useEffect(() => {
     if (draftId && open) {
       const draft = getDraft(draftId);
       if (draft) {
-        setValue("title", draft.title);
-        setValue("description", draft.description);
-        setValue("requirements", draft.requirements || bountyDraftTemplates.requirements);
-        setValue("deliverables", draft.deliverables || bountyDraftTemplates.deliverables);
-        toast.success("Draft loaded! Complete the remaining details.");
+        setValue('title', draft.title);
+        setValue('description', draft.description);
+        toast.success('Draft loaded! Complete the remaining details.');
       }
     }
   }, [draftId, open, getDraft, setValue]);
 
+  useEffect(() => {
+    if (open && initialValues) {
+      reset({ ...createBountyDefaults, ...initialValues });
+    }
+  }, [open, initialValues, reset]);
   const createBounty = useMutation({
     ...trpc.bounties.createBounty.mutationOptions(),
-    onSuccess: () => {
+    onSuccess: (result) => {
       if (draftId) {
         deleteActiveDraft();
       }
-      toast.success("Bounty created successfully!");
+      toast.success('Bounty created successfully!');
 
       // Invalidate all bounty-related queries to trigger refetch
       queryClient.invalidateQueries({
-        queryKey: ["bounties"],
-        type: "all"
+        queryKey: ['bounties'],
+        type: 'all',
       });
 
       reset();
       onOpenChange(false);
+      if (result?.data?.id) {
+        const href = `/bounty/${result.data.id}${replaceOnSuccess ? '?from=gh-issue' : ''}`;
+        if (replaceOnSuccess) {
+          router.replace(href);
+        } else {
+          router.push(href);
+        }
+      }
     },
-    onError: (error) => {
+    onError: (error: TRPCClientErrorLike<AppRouter>) => {
       toast.error(`Failed to create bounty: ${error.message}`);
+      if (error.message.toLowerCase().includes('duplicate')) {
+        toast.error('Bounty with this title already exists');
+      }
     },
   });
 
@@ -87,139 +129,322 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
     createBounty.mutate(formattedData);
   });
 
-  const tagsInput = watch("tags");
-  const handleTagsChange = (value: string) => {
-    const tags = parseTagsInput(value);
-    setValue("tags", tags);
-  };
+  // const tagsInput = watch("tags");
+  // const handleTagsChange = (value: string) => {
+  //   const tags = parseTagsInput(value);
+  //   setValue("tags", tags);
+  // };
 
   const handleClose = () => {
-    if (!isSubmitting && !createBounty.isPending) {
+    if (!(isSubmitting || createBounty.isPending)) {
       reset();
       onOpenChange(false);
+      if (redirectOnClose) {
+        router.push(redirectOnClose);
+      }
     }
   };
 
+  const isMobile = useMediaQuery('(max-width: 768px)');
+
+  if (isMobile) {
+    return (
+      <Drawer
+        onOpenChange={(o) => (o ? onOpenChange(o) : handleClose())}
+        open={open}
+      >
+        <DrawerContent className="border border-neutral-800 bg-neutral-900/90 backdrop-blur">
+          <DrawerHeader className="px-6 pt-4">
+            <DrawerTitle className="text-white text-xl">
+              Create New Bounty
+            </DrawerTitle>
+          </DrawerHeader>
+          <form className="space-y-4 px-6 pb-6" onSubmit={onSubmit}>
+            <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
+              <Label htmlFor="title">Title *</Label>
+              <Controller
+                control={control}
+                name="title"
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    autoComplete="off"
+                    className={errors.title ? 'border-red-500' : ''}
+                    id="title"
+                    placeholder="Enter bounty title"
+                  />
+                )}
+              />
+              {errors.title && (
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.title.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
+              <Label htmlFor="description">Description *</Label>
+              <div className="rounded-lg border border-neutral-800 bg-[#222222] p-3">
+                <Controller
+                  control={control}
+                  name="description"
+                  render={({ field }) => (
+                    <MarkdownTextarea
+                      className={
+                        errors.description ? 'border-red-500' : 'border-border'
+                      }
+                      id="description"
+                      name={field.name}
+                      onBlur={field.onBlur}
+                      onChange={(val) => field.onChange(val)}
+                      placeholder="Describe what needs to be done"
+                      value={field.value}
+                    />
+                  )}
+                />
+              </div>
+              {errors.description && (
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.description.message}
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
+                <Label htmlFor="amount">Amount *</Label>
+                <Controller
+                  control={control}
+                  name="amount"
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      autoComplete="off"
+                      className={errors.amount ? 'border-red-500' : ''}
+                      id="amount"
+                      placeholder="100.00"
+                    />
+                  )}
+                />
+                {errors.amount && (
+                  <p className="mt-1 text-red-500 text-sm">
+                    {errors.amount.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
+                <Label htmlFor="currency">Currency</Label>
+                <Controller
+                  control={control}
+                  name="currency"
+                  render={({ field }) => (
+                    <select
+                      {...field}
+                      className="w-full rounded-md border px-3 py-2"
+                      id="currency"
+                    >
+                      {currencyOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
+              <Label htmlFor="difficulty">Difficulty *</Label>
+              <Controller
+                control={control}
+                name="difficulty"
+                render={({ field }) => (
+                  <select
+                    {...field}
+                    className={`w-full rounded-md border px-3 py-2 ${errors.difficulty ? 'border-red-500' : 'border-border'}`}
+                    id="difficulty"
+                  >
+                    {difficultyOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              />
+              {errors.difficulty && (
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.difficulty.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
+              <Label htmlFor="repositoryUrl">Repository URL (Optional)</Label>
+              <Controller
+                control={control}
+                name="repositoryUrl"
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    autoComplete="off"
+                    className={errors.repositoryUrl ? 'border-red-500' : ''}
+                    id="repositoryUrl"
+                    placeholder="https://github.com/user/repo"
+                    type="url"
+                  />
+                )}
+              />
+              {errors.repositoryUrl && (
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.repositoryUrl.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
+              <Label htmlFor="issueUrl">Issue URL (Optional)</Label>
+              <Controller
+                control={control}
+                name="issueUrl"
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    autoComplete="off"
+                    className={errors.issueUrl ? 'border-red-500' : ''}
+                    id="issueUrl"
+                    placeholder="https://github.com/user/repo/issues/123"
+                    type="url"
+                  />
+                )}
+              />
+              {errors.issueUrl && (
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.issueUrl.message}
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                disabled={isSubmitting || createBounty.isPending}
+                onClick={handleClose}
+                type="button"
+                variant="outline"
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={isSubmitting || createBounty.isPending}
+                type="submit"
+              >
+                {createBounty.isPending ? 'Creating...' : 'Create Bounty'}
+              </Button>
+            </div>
+          </form>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" showOverlay>
-        <DialogHeader>
-          <DialogTitle>Create New Bounty</DialogTitle>
+    <Dialog
+      onOpenChange={(open) => (open ? onOpenChange(open) : handleClose())}
+      open={open}
+    >
+      <DialogContent
+        className="w-[92vw] max-w-lg border border-neutral-800 bg-neutral-900/90 p-0 backdrop-blur sm:rounded-lg"
+        showOverlay
+      >
+        <DialogHeader className="px-6 pt-6">
+          <DialogTitle className="text-xl">Create New Bounty</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div>
+        <form className="space-y-4 px-6 pb-6" onSubmit={onSubmit}>
+          <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
             <Label htmlFor="title">Title *</Label>
             <Controller
-              name="title"
               control={control}
+              name="title"
               render={({ field }) => (
                 <Input
                   {...field}
+                  autoComplete="off"
+                  className={errors.title ? 'border-red-500' : ''}
                   id="title"
                   placeholder="Enter bounty title"
-                  className={errors.title ? "border-red-500" : ""}
                 />
               )}
             />
             {errors.title && (
-              <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>
+              <p className="mt-1 text-red-500 text-sm">
+                {errors.title.message}
+              </p>
             )}
           </div>
 
-          <div>
+          <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
             <Label htmlFor="description">Description *</Label>
-            <Controller
-              name="description"
-              control={control}
-              render={({ field }) => (
-                <textarea
-                  {...field}
-                  id="description"
-                  rows={3}
-                  placeholder="Describe what needs to be done"
-                  className={`w-full px-3 py-2 border rounded-md ${errors.description ? "border-red-500" : "border-gray-300"
-                    }`}
-                />
-              )}
-            />
+            <div className="rounded-lg border border-neutral-800 bg-[#222222] p-3">
+              <Controller
+                control={control}
+                name="description"
+                render={({ field }) => (
+                  <MarkdownTextarea
+                    className={
+                      errors.description ? 'border-red-500' : 'border-border'
+                    }
+                    id="description"
+                    name={field.name}
+                    onBlur={field.onBlur}
+                    onChange={(val) => field.onChange(val)}
+                    placeholder="Describe what needs to be done"
+                    value={field.value}
+                  />
+                )}
+              />
+            </div>
             {errors.description && (
-              <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="requirements">Requirements *</Label>
-            <Controller
-              name="requirements"
-              control={control}
-              render={({ field }) => (
-                <textarea
-                  {...field}
-                  id="requirements"
-                  rows={2}
-                  placeholder="List the technical requirements"
-                  className={`w-full px-3 py-2 border rounded-md ${errors.requirements ? "border-red-500" : "border-gray-300"
-                    }`}
-                />
-              )}
-            />
-            {errors.requirements && (
-              <p className="text-red-500 text-sm mt-1">{errors.requirements.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="deliverables">Deliverables *</Label>
-            <Controller
-              name="deliverables"
-              control={control}
-              render={({ field }) => (
-                <textarea
-                  {...field}
-                  id="deliverables"
-                  rows={2}
-                  placeholder="What should be delivered?"
-                  className={`w-full px-3 py-2 border rounded-md ${errors.deliverables ? "border-red-500" : "border-gray-300"
-                    }`}
-                />
-              )}
-            />
-            {errors.deliverables && (
-              <p className="text-red-500 text-sm mt-1">{errors.deliverables.message}</p>
+              <p className="mt-1 text-red-500 text-sm">
+                {errors.description.message}
+              </p>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
               <Label htmlFor="amount">Amount *</Label>
               <Controller
-                name="amount"
                 control={control}
+                name="amount"
                 render={({ field }) => (
                   <Input
                     {...field}
+                    autoComplete="off"
+                    className={errors.amount ? 'border-red-500' : ''}
                     id="amount"
                     placeholder="100.00"
-                    className={errors.amount ? "border-red-500" : ""}
                   />
                 )}
               />
               {errors.amount && (
-                <p className="text-red-500 text-sm mt-1">{errors.amount.message}</p>
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.amount.message}
+                </p>
               )}
             </div>
 
-            <div>
+            <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
               <Label htmlFor="currency">Currency</Label>
               <Controller
-                name="currency"
                 control={control}
+                name="currency"
                 render={({ field }) => (
                   <select
                     {...field}
+                    className="w-full rounded-md border px-3 py-2"
                     id="currency"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   >
                     {currencyOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -232,17 +457,18 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
             </div>
           </div>
 
-          <div>
+          <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
             <Label htmlFor="difficulty">Difficulty *</Label>
             <Controller
-              name="difficulty"
               control={control}
+              name="difficulty"
               render={({ field }) => (
                 <select
                   {...field}
+                  className={`w-full rounded-md border px-3 py-2 ${
+                    errors.difficulty ? 'border-red-500' : 'border-border'
+                  }`}
                   id="difficulty"
-                  className={`w-full px-3 py-2 border rounded-md ${errors.difficulty ? "border-red-500" : "border-gray-300"
-                    }`}
                 >
                   {difficultyOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -253,11 +479,13 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
               )}
             />
             {errors.difficulty && (
-              <p className="text-red-500 text-sm mt-1">{errors.difficulty.message}</p>
+              <p className="mt-1 text-red-500 text-sm">
+                {errors.difficulty.message}
+              </p>
             )}
           </div>
 
-          <div>
+          {/* <div className="space-y-2">
             <Label htmlFor="deadline">Deadline (Optional)</Label>
             <Controller
               name="deadline"
@@ -274,9 +502,9 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
             {errors.deadline && (
               <p className="text-red-500 text-sm mt-1">{errors.deadline.message}</p>
             )}
-          </div>
+          </div> */}
 
-          <div>
+          {/* <div className="space-y-2">
             <Label htmlFor="tags">Tags (Optional)</Label>
             <Input
               id="tags"
@@ -287,64 +515,69 @@ export function CreateBountyModal({ open, onOpenChange, draftId }: CreateBountyM
             <p className="text-sm text-gray-500 mt-1">
               Enter tags separated by commas
             </p>
-          </div>
+          </div> */}
 
-          <div>
+          <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
             <Label htmlFor="repositoryUrl">Repository URL (Optional)</Label>
             <Controller
-              name="repositoryUrl"
               control={control}
+              name="repositoryUrl"
               render={({ field }) => (
                 <Input
                   {...field}
+                  autoComplete="off"
+                  className={errors.repositoryUrl ? 'border-red-500' : ''}
                   id="repositoryUrl"
-                  type="url"
                   placeholder="https://github.com/user/repo"
-                  className={errors.repositoryUrl ? "border-red-500" : ""}
+                  type="url"
                 />
               )}
             />
             {errors.repositoryUrl && (
-              <p className="text-red-500 text-sm mt-1">{errors.repositoryUrl.message}</p>
+              <p className="mt-1 text-red-500 text-sm">
+                {errors.repositoryUrl.message}
+              </p>
             )}
           </div>
 
-          <div>
+          <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
             <Label htmlFor="issueUrl">Issue URL (Optional)</Label>
             <Controller
-              name="issueUrl"
               control={control}
+              name="issueUrl"
               render={({ field }) => (
                 <Input
                   {...field}
+                  autoComplete="off"
+                  className={errors.issueUrl ? 'border-red-500' : ''}
                   id="issueUrl"
-                  type="url"
                   placeholder="https://github.com/user/repo/issues/123"
-                  className={errors.issueUrl ? "border-red-500" : ""}
+                  type="url"
                 />
               )}
             />
             {errors.issueUrl && (
-              <p className="text-red-500 text-sm mt-1">{errors.issueUrl.message}</p>
+              <p className="mt-1 text-red-500 text-sm">
+                {errors.issueUrl.message}
+              </p>
             )}
           </div>
-
-          <DialogFooter>
+          <div className="flex justify-end gap-2">
             <Button
+              disabled={isSubmitting || createBounty.isPending}
+              onClick={handleClose}
               type="button"
               variant="outline"
-              onClick={handleClose}
-              disabled={isSubmitting || createBounty.isPending}
             >
               Cancel
             </Button>
             <Button
-              type="submit"
               disabled={isSubmitting || createBounty.isPending}
+              type="submit"
             >
-              {createBounty.isPending ? "Creating..." : "Create Bounty"}
+              {createBounty.isPending ? 'Creating...' : 'Create Bounty'}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

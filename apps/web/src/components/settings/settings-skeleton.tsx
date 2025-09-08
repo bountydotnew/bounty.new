@@ -1,11 +1,11 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from '@bounty/ui/components/card';
+import { Skeleton } from '@bounty/ui/components/skeleton';
 
 export function SettingsLoadingSkeleton() {
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto max-w-4xl px-4 py-8">
       <div className="mb-8">
-        <Skeleton className="h-9 w-32 mb-2" />
+        <Skeleton className="mb-2 h-9 w-32" />
         <Skeleton className="h-5 w-64" />
       </div>
       <div className="space-y-6">

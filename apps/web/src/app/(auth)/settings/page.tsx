@@ -1,13 +1,19 @@
-"use client";
+'use client';
 
-import { useState, useCallback, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
-import { Tabs, TabsContent, TabsContents, TabsList, TabsTrigger } from "@/components/animate-ui/components/tabs";
-import { GeneralSettings } from "@/components/settings/general-settings";
-import { BillingSettings } from "@/components/settings/billing-settings";
-import { PaymentSettings } from "@/components/settings/payment-settings";
-import { SecuritySettings } from "@/components/settings/security-settings";
-import { User, CreditCard, DollarSign, Shield, Bell } from "lucide-react";
+import { Bell, CreditCard, DollarSign, Shield, User } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  Tabs,
+  TabsContent,
+  TabsContents,
+  TabsList,
+  TabsTrigger,
+} from '@/components/animate-ui/components/tabs';
+import { BillingSettings } from '@/components/settings/billing-settings';
+import { GeneralSettings } from '@/components/settings/general-settings';
+import { PaymentSettings } from '@/components/settings/payment-settings';
+import { SecuritySettings } from '@/components/settings/security-settings';
 
 // TypeScript interfaces for better type safety
 interface TabConfig {
@@ -22,42 +28,43 @@ interface TabConfig {
 // Tab configuration for maintainability
 const TAB_CONFIGS: TabConfig[] = [
   {
-    id: "general",
-    label: "General",
+    id: 'general',
+    label: 'General',
     icon: User,
     component: GeneralSettings,
   },
   {
-    id: "billing",
-    label: "Billing",
+    id: 'billing',
+    label: 'Billing',
     icon: CreditCard,
     component: BillingSettings,
   },
   {
-    id: "payments",
-    label: "Payments",
+    id: 'payments',
+    label: 'Payments',
     icon: DollarSign,
     component: PaymentSettings,
   },
   {
-    id: "security",
-    label: "Security",
+    id: 'security',
+    label: 'Security',
     icon: Shield,
     component: SecuritySettings,
   },
   {
-    id: "notifications",
-    label: "Notifications",
+    id: 'notifications',
+    label: 'Notifications',
     icon: Bell,
     component: () => (
-      <div className="bg-card border border-dashed border-border rounded-lg p-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Bell className="w-5 h-5 text-foreground" />
+      <div className="rounded-lg border border-border border-dashed bg-card p-6">
+        <div className="mb-2 flex items-center gap-2">
+          <Bell className="h-5 w-5 text-foreground" />
           <h3 className="font-medium text-foreground">Coming Soon</h3>
         </div>
-        <p className="text-sm text-foreground">
-          Notification settings will be implemented here. You&apos;ll be able to configure
-          email notifications, push notifications, and other communication preferences.
+        <p className="text-foreground text-sm">
+          Notification settings will be implemented here. You&apos;ll be able to
+          configure email notifications, push notifications, and other
+          communication preferences.
         </p>
       </div>
     ),
@@ -73,14 +80,12 @@ export default function SettingsPage() {
   // Initialize active tab from URL, but manage locally for speed
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined') {
-      const fromUrl = searchParams.get("tab");
+      const fromUrl = searchParams.get('tab');
       let fromStorage = null;
       try {
         fromStorage = window.localStorage.getItem('settings.activeTab');
-      } catch {
-        console.error('Error getting active tab from localStorage');
-      }
-      return (fromUrl || fromStorage || 'general');
+      } catch {}
+      return fromUrl || fromStorage || 'general';
     }
     return 'general';
   });
@@ -88,27 +93,34 @@ export default function SettingsPage() {
   // Update URL without navigation when tab changes (debounced)
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
-    const currentTab = params.get("tab");
+    const currentTab = params.get('tab');
     if (currentTab !== activeTab) {
-      params.set("tab", activeTab);
-      window.history.replaceState(null, "", `/settings?${params.toString()}`);
+      params.set('tab', activeTab);
+      window.history.replaceState(null, '', `/settings?${params.toString()}`);
     }
-    try { window.localStorage.setItem('settings.activeTab', activeTab); } catch {}
+    try {
+      window.localStorage.setItem('settings.activeTab', activeTab);
+    } catch {}
   }, [activeTab, searchParams]);
 
   // Lightning-fast tab change handler - no router calls
-  const handleTabChange = useCallback((value: string) => {
-    // Early return if same tab clicked - no work needed
-    if (value === activeTab) return;
+  const handleTabChange = useCallback(
+    (value: string) => {
+      // Early return if same tab clicked - no work needed
+      if (value === activeTab) {
+        return;
+      }
 
-    setActiveTab(value);
-  }, [activeTab]);
+      setActiveTab(value);
+    },
+    [activeTab]
+  );
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto max-w-4xl px-4 py-8">
       {/* Header section */}
       <header className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Settings</h1>
+        <h1 className="mb-2 font-bold text-3xl">Settings</h1>
         <p className="text-muted-foreground">
           Manage your account settings and preferences
         </p>
@@ -117,29 +129,39 @@ export default function SettingsPage() {
       {/* Main content */}
       <main>
         <Tabs
-          value={activeTab}
-          onValueChange={handleTabChange}
-          className="space-y-6"
           aria-label="Settings navigation"
+          className="space-y-6"
+          onValueChange={handleTabChange}
+          value={activeTab}
         >
           {/* Tab navigation with smooth animations */}
           {/* Desktop grid */}
-          <TabsList transition={{ type: 'spring', stiffness: 500, damping: 50 }} className="hidden sm:grid w-full grid-cols-5 gap-2" role="tablist">
+          <TabsList
+            className="hidden w-full grid-cols-5 gap-2 sm:grid"
+            role="tablist"
+            transition={{ type: 'spring', stiffness: 500, damping: 50 }}
+          >
             {TAB_CONFIGS.map((tab) => {
               const IconComponent = tab.icon;
               return (
                 <TabsTrigger
-                  key={tab.id}
-                  value={tab.id}
+                  aria-label={`${tab.label} settings`}
                   className="flex items-center justify-center gap-2"
                   disabled={tab.disabled}
-                  aria-label={`${tab.label} settings`}
-                  title={tab.comingSoon ? `${tab.label} - Coming Soon` : tab.label}
+                  key={tab.id}
+                  title={
+                    tab.comingSoon ? `${tab.label} - Coming Soon` : tab.label
+                  }
+                  value={tab.id}
                 >
-                  <IconComponent className="w-4 h-4" aria-hidden="true" />
-                  <span className="hidden md:inline whitespace-nowrap">{tab.label}</span>
+                  <IconComponent aria-hidden="true" className="h-4 w-4" />
+                  <span className="hidden whitespace-nowrap md:inline">
+                    {tab.label}
+                  </span>
                   {tab.comingSoon && (
-                    <span className="text-xs bg-background text-foreground px-1 rounded">Soon</span>
+                    <span className="rounded bg-background px-1 text-foreground text-xs">
+                      Soon
+                    </span>
                   )}
                 </TabsTrigger>
               );
@@ -147,34 +169,48 @@ export default function SettingsPage() {
           </TabsList>
 
           {/* Mobile horizontal scroll */}
-          <TabsList className="sm:hidden w-full overflow-x-auto no-scrollbar" role="tablist">
+          <TabsList
+            className="no-scrollbar w-full overflow-x-auto sm:hidden"
+            role="tablist"
+          >
             <div className="flex min-w-max gap-2 px-1">
               {TAB_CONFIGS.map((tab) => {
                 const IconComponent = tab.icon;
                 return (
                   <TabsTrigger
-                    key={`mobile-${tab.id}`}
-                    value={tab.id}
-                    className="flex items-center gap-2 px-4 py-2 whitespace-nowrap rounded-md border border-transparent bg-background/50 backdrop-blur supports-[backdrop-filter]:bg-background/40"
-                    disabled={tab.disabled}
                     aria-label={`${tab.label} settings`}
-                    title={tab.comingSoon ? `${tab.label} - Coming Soon` : tab.label}
+                    className="flex items-center gap-2 whitespace-nowrap rounded-md border border-transparent bg-background/50 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/40"
+                    disabled={tab.disabled}
+                    key={`mobile-${tab.id}`}
+                    title={
+                      tab.comingSoon ? `${tab.label} - Coming Soon` : tab.label
+                    }
+                    value={tab.id}
                   >
-                    <IconComponent className="w-4 h-4" aria-hidden="true" />
+                    <IconComponent aria-hidden="true" className="h-4 w-4" />
                     <span>{tab.label}</span>
                     {tab.comingSoon && (
-                      <span className="text-xs bg-yellow-100 text-yellow-800 px-1 rounded">Soon</span>
+                      <span className="rounded bg-yellow-100 px-1 text-xs text-yellow-800">
+                        Soon
+                      </span>
                     )}
                   </TabsTrigger>
                 );
               })}
             </div>
           </TabsList>
-          <TabsContents transition={{ type: false }} className="mx-1 mb-1 -mt-2 rounded-sm bg-background">
+          <TabsContents
+            className="-mt-2 mx-1 mb-1 rounded-sm bg-background"
+            transition={{ type: false }}
+          >
             {TAB_CONFIGS.map((tab) => {
               const Component = tab.component;
               return (
-                <TabsContent key={tab.id} value={tab.id} className="space-y-6 py-6">
+                <TabsContent
+                  className="space-y-6 py-6"
+                  key={tab.id}
+                  value={tab.id}
+                >
                   <Component />
                 </TabsContent>
               );

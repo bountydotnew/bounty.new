@@ -26,7 +26,7 @@ interface DiscordEmbedField {
 interface SendWebhookOptions {
   webhookUrl: string;
   content?: string;
-  embed?: Omit<DiscordEmbed, "timestamp">;
+  embed?: Omit<DiscordEmbed, 'timestamp'>;
   username?: string;
   avatarUrl?: string;
 }
@@ -39,7 +39,13 @@ interface SendErrorWebhookOptions {
   userId?: string;
 }
 
-export async function sendDiscordWebhook({ webhookUrl, content, embed, username = "bounty.new", avatarUrl }: SendWebhookOptions): Promise<boolean> {
+export async function sendDiscordWebhook({
+  webhookUrl,
+  content,
+  embed,
+  username = 'bounty.new',
+  avatarUrl,
+}: SendWebhookOptions): Promise<boolean> {
   try {
     const payload: DiscordWebhookPayload = {
       username,
@@ -60,37 +66,42 @@ export async function sendDiscordWebhook({ webhookUrl, content, embed, username 
     }
 
     const response = await fetch(webhookUrl, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
     });
 
     return response.ok;
-  } catch (error) {
-    console.error("Failed to send Discord webhook:", error);
+  } catch (_error) {
     return false;
   }
 }
 
-export async function sendErrorWebhook({ webhookUrl, error, context, location, userId }: SendErrorWebhookOptions): Promise<boolean> {
+export async function sendErrorWebhook({
+  webhookUrl,
+  error,
+  context,
+  location,
+  userId,
+}: SendErrorWebhookOptions): Promise<boolean> {
   const errorMessage = error instanceof Error ? error.message : String(error);
   const errorStack = error instanceof Error ? error.stack : undefined;
 
-  const embed: Omit<DiscordEmbed, "timestamp"> = {
-    title: "🚨 Production Error",
+  const embed: Omit<DiscordEmbed, 'timestamp'> = {
+    title: '🚨 Production Error',
     description: `**Error:** ${errorMessage}`,
-    color: 0xff0000, // Red color
+    color: 0xff_00_00, // Red color
     fields: [
       {
-        name: "Environment",
-        value: process.env.NODE_ENV || "unknown",
+        name: 'Environment',
+        value: process.env.NODE_ENV || 'unknown',
         inline: true,
       },
       {
-        name: "Location",
-        value: location || "Unknown",
+        name: 'Location',
+        value: location || 'Unknown',
         inline: true,
       },
     ],
@@ -98,7 +109,7 @@ export async function sendErrorWebhook({ webhookUrl, error, context, location, u
 
   if (userId) {
     embed.fields?.push({
-      name: "User ID",
+      name: 'User ID',
       value: userId,
       inline: true,
     });
@@ -106,22 +117,22 @@ export async function sendErrorWebhook({ webhookUrl, error, context, location, u
 
   if (context && Object.keys(context).length > 0) {
     embed.fields?.push({
-      name: "Context",
-      value: "```json\n" + JSON.stringify(context, null, 2).slice(0, 1000) + "\n```",
+      name: 'Context',
+      value: `\`\`\`json\n${JSON.stringify(context, null, 2).slice(0, 1000)}\n\`\`\``,
       inline: false,
     });
   }
 
   if (errorStack) {
     embed.fields?.push({
-      name: "Stack Trace",
-      value: "```\n" + errorStack.slice(0, 1000) + "\n```",
+      name: 'Stack Trace',
+      value: `\`\`\`\n${errorStack.slice(0, 1000)}\n\`\`\``,
       inline: false,
     });
   }
 
   embed.footer = {
-    text: "bounty.new Error Monitoring",
+    text: 'bounty.new Error Monitoring',
   };
 
   return sendDiscordWebhook({
@@ -135,7 +146,7 @@ export async function sendInfoWebhook({
   title,
   message,
   context,
-  color = 0x00ff00, // Green color
+  color = 0x00_ff_00, // Green color
 }: {
   webhookUrl: string;
   title: string;
@@ -143,7 +154,7 @@ export async function sendInfoWebhook({
   context?: Record<string, unknown>;
   color?: number;
 }): Promise<boolean> {
-  const embed: Omit<DiscordEmbed, "timestamp"> = {
+  const embed: Omit<DiscordEmbed, 'timestamp'> = {
     title,
     description: message,
     color,
@@ -152,14 +163,14 @@ export async function sendInfoWebhook({
 
   if (context && Object.keys(context).length > 0) {
     embed.fields?.push({
-      name: "Details",
-      value: "```json\n" + JSON.stringify(context, null, 2).slice(0, 1000) + "\n```",
+      name: 'Details',
+      value: `\`\`\`json\n${JSON.stringify(context, null, 2).slice(0, 1000)}\n\`\`\``,
       inline: false,
     });
   }
 
   embed.footer = {
-    text: "bounty.new Notifications",
+    text: 'bounty.new Notifications',
   };
 
   return sendDiscordWebhook({

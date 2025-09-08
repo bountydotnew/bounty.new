@@ -1,0 +1,1 @@
+ALTER TABLE "bounty_comment" ADD COLUMN "edit_count" integer DEFAULT 0 NOT NULL;

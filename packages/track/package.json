@@ -1,0 +1,12 @@
+{
+  "name": "@bounty/track",
+  "version": "0.1.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@databuddy/sdk": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}

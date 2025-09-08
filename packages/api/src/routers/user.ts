@@ -1,20 +1,28 @@
-import { z } from "zod";
-import { TRPCError } from "@trpc/server";
-import { eq, desc, sql } from "drizzle-orm";
-
-import { db, user, session, userProfile, userReputation } from "@bounty/db";
-import { protectedProcedure, publicProcedure, router, adminProcedure } from "../trpc";
+import { db, session, user, userProfile, userReputation } from '@bounty/db';
+import { TRPCError } from '@trpc/server';
+import { desc, eq, sql } from 'drizzle-orm';
+import { z } from 'zod';
+import {
+  adminProcedure,
+  protectedProcedure,
+  publicProcedure,
+  router,
+} from '../trpc';
 
 export const userRouter = router({
   hasAccess: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 
-    const userRecord = await db.select({ hasAccess: user.hasAccess }).from(user).where(eq(user.id, userId)).limit(1);
+    const userRecord = await db
+      .select({ hasAccess: user.hasAccess })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
 
     if (!userRecord[0]) {
       throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "User not found",
+        code: 'NOT_FOUND',
+        message: 'User not found',
       });
     }
 
@@ -58,8 +66,8 @@ export const userRouter = router({
 
       if (!userRecord) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "User not found",
+          code: 'NOT_FOUND',
+          message: 'User not found',
         });
       }
 
@@ -68,11 +76,13 @@ export const userRouter = router({
         data: userRecord,
       };
     } catch (error) {
-      if (error instanceof TRPCError) throw error;
+      if (error instanceof TRPCError) {
+        throw error;
+      }
 
       throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch current user",
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch current user',
         cause: error,
       });
     }
@@ -98,49 +108,56 @@ export const userRouter = router({
       };
     } catch (error) {
       throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch user sessions",
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch user sessions',
         cause: error,
       });
     }
   }),
 
-  revokeSession: protectedProcedure.input(z.object({ sessionId: z.string() })).mutation(async ({ ctx, input }) => {
-    try {
-      const [sessionToRevoke] = await db.select().from(session).where(eq(session.id, input.sessionId));
+  revokeSession: protectedProcedure
+    .input(z.object({ sessionId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const [sessionToRevoke] = await db
+          .select()
+          .from(session)
+          .where(eq(session.id, input.sessionId));
 
-      if (!sessionToRevoke) {
+        if (!sessionToRevoke) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Session not found',
+          });
+        }
+
+        if (sessionToRevoke.userId !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only revoke your own sessions',
+          });
+        }
+
+        await db.delete(session).where(eq(session.id, input.sessionId));
+
+        return {
+          success: true,
+          message: 'Session revoked successfully',
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Session not found",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to revoke session',
+          cause: error,
         });
       }
+    }),
 
-      if (sessionToRevoke.userId !== ctx.session.user.id) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You can only revoke your own sessions",
-        });
-      }
-
-      await db.delete(session).where(eq(session.id, input.sessionId));
-
-      return {
-        success: true,
-        message: "Session revoked successfully",
-      };
-    } catch (error) {
-      if (error instanceof TRPCError) throw error;
-
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to revoke session",
-        cause: error,
-      });
-    }
-  }),
-
-  getUserStats: protectedProcedure.query(async ({ ctx }) => {
+  getUserStats: adminProcedure.query(async ({ ctx }) => {
     try {
       const [stats] = await db
         .select({
@@ -148,7 +165,10 @@ export const userRouter = router({
         })
         .from(user);
 
-      const [userRep] = await db.select().from(userReputation).where(eq(userReputation.userId, ctx.session.user.id));
+      const [userRep] = await db
+        .select()
+        .from(userReputation)
+        .where(eq(userReputation.userId, ctx.session.user.id));
 
       return {
         success: true,
@@ -157,20 +177,20 @@ export const userRouter = router({
             totalUsers: stats.totalUsers,
           },
           userStats: userRep || {
-            totalEarned: "0.00",
+            totalEarned: '0.00',
             bountiesCompleted: 0,
             bountiesCreated: 0,
-            averageRating: "0.00",
+            averageRating: '0.00',
             totalRatings: 0,
-            successRate: "0.00",
-            completionRate: "0.00",
+            successRate: '0.00',
+            completionRate: '0.00',
           },
         },
       };
     } catch (error) {
       throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch user stats",
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch user stats',
         cause: error,
       });
     }
@@ -185,11 +205,15 @@ export const userRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const currentUser = await db.select().from(user).where(eq(user.id, ctx.session.user.id)).limit(1);
+        const currentUser = await db
+          .select()
+          .from(user)
+          .where(eq(user.id, ctx.session.user.id))
+          .limit(1);
 
         if (!currentUser[0]?.hasAccess) {
           throw new TRPCError({
-            code: "FORBIDDEN",
+            code: 'FORBIDDEN',
             message: "You don't have permission to update user access",
           });
         }
@@ -204,14 +228,16 @@ export const userRouter = router({
 
         return {
           success: true,
-          message: "User access updated successfully",
+          message: 'User access updated successfully',
         };
       } catch (error) {
-        if (error instanceof TRPCError) throw error;
+        if (error instanceof TRPCError) {
+          throw error;
+        }
 
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update user access",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to update user access',
           cause: error,
         });
       }
@@ -224,14 +250,13 @@ export const userRouter = router({
 
     if (!userData) {
       throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "User not found",
+        code: 'NOT_FOUND',
+        message: 'User not found',
       });
     }
 
     return userData;
   }),
-
 
   getAllUsers: adminProcedure
     .input(
@@ -245,7 +270,7 @@ export const userRouter = router({
       const { search, page, limit } = input;
       const offset = (page - 1) * limit;
 
-      let whereClause = undefined;
+      let whereClause;
       if (search) {
         whereClause = sql`(${user.name} ILIKE ${`%${search}%`} OR ${user.email} ILIKE ${`%${search}%`})`;
       }
@@ -260,6 +285,8 @@ export const userRouter = router({
             role: user.role,
             hasAccess: user.hasAccess,
             betaAccessStatus: user.betaAccessStatus,
+            accessStage: user.accessStage,
+            banned: user.banned,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
           })
@@ -285,18 +312,86 @@ export const userRouter = router({
     }),
 
   updateUserRole: adminProcedure
-    .input(z.object({
-      userId: z.string(),
-      role: z.enum(["user", "admin"]),
-    }))
+    .input(
+      z.object({
+        userId: z.string(),
+        role: z.enum(['user', 'admin']),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const { userId, role } = input;
 
-      await ctx.db
-        .update(user)
-        .set({ role })
-        .where(eq(user.id, userId));
+      await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
 
       return { success: true };
+    }),
+
+  inviteUser: adminProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        accessStage: z.enum(['none', 'alpha', 'beta', 'production']),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { userId, accessStage } = input;
+
+      const [updatedUser] = await ctx.db
+        .update(user)
+        .set({ 
+          accessStage,
+          updatedAt: new Date(),
+        })
+        .where(eq(user.id, userId))
+        .returning({ 
+          id: user.id, 
+          name: user.name, 
+          email: user.email, 
+          accessStage: user.accessStage 
+        });
+
+      if (!updatedUser) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'User not found',
+        });
+      }
+
+      return { 
+        success: true, 
+        user: updatedUser,
+        message: `User access updated to ${accessStage}. Email invitation will be sent.`
+      };
+    }),
+
+  inviteExternalUser: adminProcedure
+    .input(
+      z.object({
+        email: z.string().email(),
+        accessStage: z.enum(['none', 'alpha', 'beta', 'production']),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { email, accessStage } = input;
+
+      const existingUser = await ctx.db
+        .select({ id: user.id })
+        .from(user)
+        .where(eq(user.email, email))
+        .limit(1);
+
+      if (existingUser.length > 0) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: 'User with this email already exists. Use the invite button for existing users.',
+        });
+      }
+
+      return { 
+        success: true, 
+        email,
+        accessStage,
+        message: `External invite will be sent to ${email} for ${accessStage} access.`
+      };
     }),
 });

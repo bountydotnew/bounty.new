@@ -1,30 +1,33 @@
-"use client";
+'use client';
 
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { trpc } from "@/utils/trpc";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { MarkdownTextarea } from '@/components/bounty/markdown-editor';
+import { Button } from '@bounty/ui/components/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { 
-  createBountySchema, 
-  CreateBountyForm, 
+} from '@bounty/ui/components/dialog';
+import { Input } from '@bounty/ui/components/input';
+import { Label } from '@bounty/ui/components/label';
+import { Sheet, SheetContent } from '@bounty/ui/components/sheet';
+import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
+import {
+  type CreateBountyForm,
+  createBountyDefaults,
+  createBountySchema,
   currencyOptions,
   difficultyOptions,
   formatFormData,
-  parseTagsInput,
-  formatTagsOutput
-} from "@/lib/forms";
+} from '@bounty/ui/lib/forms';
+import { trpc } from '@/utils/trpc';
 
 interface EditBountyModalProps {
   open: boolean;
@@ -32,8 +35,13 @@ interface EditBountyModalProps {
   bountyId: string;
 }
 
-export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModalProps) {
+export function EditBountyModal({
+  open,
+  onOpenChange,
+  bountyId,
+}: EditBountyModalProps) {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const bountyQuery = useQuery({
     ...trpc.bounties.fetchBountyById.queryOptions({ id: bountyId }),
@@ -42,42 +50,58 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
 
   const form = useForm<CreateBountyForm>({
     resolver: zodResolver(createBountySchema),
+    defaultValues: createBountyDefaults,
   });
 
-  const { control, handleSubmit, formState: { errors, isSubmitting }, reset, watch, setValue } = form;
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    //watch,
+    //setValue,
+  } = form;
 
   // Load bounty data when modal opens
   useEffect(() => {
     if (bountyQuery.data?.data && open) {
       const bounty = bountyQuery.data.data;
-      
-      setValue("title", bounty.title);
-      setValue("description", bounty.description);
-      setValue("requirements", bounty.requirements || "");
-      setValue("deliverables", bounty.deliverables || "");
-      setValue("amount", bounty.amount.toString());
-      setValue("currency", bounty.currency);
-      setValue("difficulty", bounty.difficulty);
-      setValue("deadline", bounty.deadline ? new Date(bounty.deadline).toISOString().slice(0, 16) : "");
-      setValue("tags", bounty.tags || []);
-      setValue("repositoryUrl", bounty.repositoryUrl || "");
-      setValue("issueUrl", bounty.issueUrl || "");
+
+      reset({
+        title: bounty.title,
+        description: bounty.description,
+        amount: bounty.amount.toString(),
+        currency: bounty.currency,
+        difficulty: bounty.difficulty,
+        deadline: bounty.deadline
+          ? new Date(bounty.deadline).toISOString().slice(0, 16)
+          : '',
+        tags: bounty.tags || [],
+        repositoryUrl: bounty.repositoryUrl || '',
+        issueUrl: bounty.issueUrl || '',
+      });
     }
-  }, [bountyQuery.data, open, setValue]);
+  }, [bountyQuery.data, open, reset]);
 
   const updateBounty = useMutation({
     ...trpc.bounties.updateBounty.mutationOptions(),
     onSuccess: () => {
-      toast.success("Bounty updated successfully!");
-      
-      // Invalidate all bounty-related queries to trigger refetch
+      toast.success('Bounty updated successfully!');
+
       // Invalidate all bounty-related queries to trigger refetch
       queryClient.invalidateQueries({
-        queryKey: ["bounties"],
-        type: "all"
+        queryKey: ['bounties'],
+        type: 'all',
       });
-      
+      // Invalidate and refetch the specific bounty detail query
+      const detailKey = trpc.bounties.fetchBountyById.queryOptions({
+        id: bountyId,
+      }).queryKey;
+      queryClient.invalidateQueries({ queryKey: detailKey });
+      queryClient.refetchQueries({ queryKey: detailKey });
+
       onOpenChange(false);
+      router.refresh();
     },
     onError: (error) => {
       toast.error(`Failed to update bounty: ${error.message}`);
@@ -89,25 +113,38 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
     updateBounty.mutate({ id: bountyId, ...formattedData });
   });
 
-  const tagsInput = watch("tags");
-  const handleTagsChange = (value: string) => {
-    const tags = parseTagsInput(value);
-    setValue("tags", tags);
-  };
-
   const handleClose = () => {
-    if (!isSubmitting && !updateBounty.isPending) {
-      reset();
+    if (!(isSubmitting || updateBounty.isPending)) {
+      reset(createBountyDefaults);
       onOpenChange(false);
     }
   };
 
+  const isMobile = useMediaQuery('(max-width: 768px)');
+
   if (bountyQuery.isLoading) {
+    if (isMobile) {
+      return (
+        <Sheet onOpenChange={handleClose} open={open}>
+          <SheetContent
+            className="max-h-[80vh] w-full overflow-y-auto rounded-t-2xl p-0"
+            side="bottom"
+          >
+            <div className="flex h-40 items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-foreground border-b-2" />
+            </div>
+          </SheetContent>
+        </Sheet>
+      );
+    }
     return (
-      <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-2xl" showOverlay>
-          <div className="flex items-center justify-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      <Dialog onOpenChange={handleClose} open={open}>
+        <DialogContent
+          className="max-h-[75vh] w-[92vw] max-w-lg overflow-y-auto p-0 sm:rounded-lg md:max-w-lg lg:max-w-lg"
+          showOverlay
+        >
+          <div className="flex h-40 items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-foreground border-b-2" />
           </div>
         </DialogContent>
       </Dialog>
@@ -115,11 +152,36 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
   }
 
   if (bountyQuery.error || !bountyQuery.data?.data) {
+    if (isMobile) {
+      return (
+        <Sheet onOpenChange={handleClose} open={open}>
+          <SheetContent
+            className="max-h-[80vh] w-full overflow-y-auto rounded-t-2xl p-0"
+            side="bottom"
+          >
+            <div className="px-6 pt-6 pb-4">
+              <div className="font-medium text-xl">Error</div>
+            </div>
+            <p className="px-6 text-center text-muted-foreground">
+              Failed to load bounty data. Please try again.
+            </p>
+            <div className="flex justify-end gap-2 px-6 py-4">
+              <Button onClick={handleClose} variant="outline">
+                Close
+              </Button>
+            </div>
+          </SheetContent>
+        </Sheet>
+      );
+    }
     return (
-      <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-md" showOverlay>
-          <DialogHeader>
-            <DialogTitle>Error</DialogTitle>
+      <Dialog onOpenChange={handleClose} open={open}>
+        <DialogContent
+          className="w-[92vw] max-w-lg p-0 sm:rounded-lg md:max-w-lg lg:max-w-lg"
+          showOverlay
+        >
+          <DialogHeader className="px-6 pt-6">
+            <DialogTitle className="text-xl">Error</DialogTitle>
           </DialogHeader>
           <p className="text-center text-muted-foreground">
             Failed to load bounty data. Please try again.
@@ -134,129 +196,305 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
     );
   }
 
+  if (isMobile) {
+    return (
+      <Sheet onOpenChange={handleClose} open={open}>
+        <SheetContent
+          className="max-h-[85vh] w-full overflow-y-auto rounded-t-2xl p-0"
+          side="bottom"
+        >
+          <div className="px-6 pt-6 pb-2">
+            <div className="font-medium text-xl">Edit Bounty</div>
+          </div>
+          <form className="space-y-6 px-6 pb-6" onSubmit={onSubmit}>
+            <div className="space-y-2">
+              <Label htmlFor="title">Title *</Label>
+              <Controller
+                control={control}
+                name="title"
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    className={
+                      errors.title ? 'border-red-500' : 'border-border'
+                    }
+                    id="title"
+                    placeholder="Enter bounty title"
+                  />
+                )}
+              />
+              {errors.title && (
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.title.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description *</Label>
+              <Controller
+                control={control}
+                name="description"
+                render={({ field }) => (
+                  <MarkdownTextarea
+                    className={
+                      errors.description ? 'border-red-500' : 'border-border'
+                    }
+                    id="description"
+                    name={field.name}
+                    onBlur={field.onBlur}
+                    onChange={(val) => field.onChange(val)}
+                    placeholder="Describe what needs to be done"
+                    value={field.value}
+                  />
+                )}
+              />
+              {errors.description && (
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.description.message}
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="amount">Amount *</Label>
+                <Controller
+                  control={control}
+                  name="amount"
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      className={
+                        errors.amount ? 'border-red-500' : 'border-border'
+                      }
+                      id="amount"
+                      placeholder="100.00"
+                    />
+                  )}
+                />
+                {errors.amount && (
+                  <p className="mt-1 text-red-500 text-sm">
+                    {errors.amount.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="currency">Currency</Label>
+                <Controller
+                  control={control}
+                  name="currency"
+                  render={({ field }) => (
+                    <select
+                      {...field}
+                      className={`w-full rounded-md border px-3 py-2 ${errors.currency ? 'border-red-500' : 'border-border'}`}
+                      id="currency"
+                    >
+                      {currencyOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                />
+                {errors.currency && (
+                  <p className="mt-1 text-red-500 text-sm">
+                    {errors.currency.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="difficulty">Difficulty *</Label>
+              <Controller
+                control={control}
+                name="difficulty"
+                render={({ field }) => (
+                  <select
+                    {...field}
+                    className={`w-full rounded-md border px-3 py-2 ${errors.difficulty ? 'border-red-500' : 'border-border'}`}
+                    id="difficulty"
+                  >
+                    {difficultyOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              />
+              {errors.difficulty && (
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.difficulty.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="repositoryUrl">Repository URL (Optional)</Label>
+              <Controller
+                control={control}
+                name="repositoryUrl"
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    className={
+                      errors.repositoryUrl ? 'border-red-500' : 'border-border'
+                    }
+                    id="repositoryUrl"
+                    placeholder="https://github.com/user/repo"
+                    type="url"
+                  />
+                )}
+              />
+              {errors.repositoryUrl && (
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.repositoryUrl.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="issueUrl">Issue URL (Optional)</Label>
+              <Controller
+                control={control}
+                name="issueUrl"
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    className={
+                      errors.issueUrl ? 'border-red-500' : 'border-border'
+                    }
+                    id="issueUrl"
+                    placeholder="https://github.com/user/repo/issues/123"
+                    type="url"
+                  />
+                )}
+              />
+              {errors.issueUrl && (
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.issueUrl.message}
+                </p>
+              )}
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <Button
+                disabled={isSubmitting || updateBounty.isPending}
+                onClick={handleClose}
+                type="button"
+                variant="outline"
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={isSubmitting || updateBounty.isPending}
+                type="submit"
+              >
+                {updateBounty.isPending ? 'Updating...' : 'Update Bounty'}
+              </Button>
+            </div>
+          </form>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" showOverlay>
-        <DialogHeader>
-          <DialogTitle>Edit Bounty</DialogTitle>
+    <Dialog onOpenChange={handleClose} open={open}>
+      <DialogContent
+        className="max-h-[75vh] w-[92vw] max-w-lg overflow-y-auto p-0 sm:rounded-lg md:max-w-lg lg:max-w-lg"
+        showOverlay
+      >
+        <DialogHeader className="px-6 pt-6">
+          <DialogTitle className="text-xl">Edit Bounty</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div>
+        <form className="space-y-6 px-6 pb-6" onSubmit={onSubmit}>
+          <div className="space-y-2">
             <Label htmlFor="title">Title *</Label>
             <Controller
-              name="title"
               control={control}
+              name="title"
               render={({ field }) => (
                 <Input
                   {...field}
+                  className={errors.title ? 'border-red-500' : 'border-border'}
                   id="title"
                   placeholder="Enter bounty title"
-                  className={errors.title ? "border-red-500" : ""}
                 />
               )}
             />
             {errors.title && (
-              <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>
+              <p className="mt-1 text-red-500 text-sm">
+                {errors.title.message}
+              </p>
             )}
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="description">Description *</Label>
             <Controller
-              name="description"
               control={control}
+              name="description"
               render={({ field }) => (
-                <textarea
-                  {...field}
+                <MarkdownTextarea
+                  className={
+                    errors.description ? 'border-red-500' : 'border-border'
+                  }
                   id="description"
-                  rows={3}
+                  name={field.name}
+                  onBlur={field.onBlur}
+                  onChange={(val) => field.onChange(val)}
                   placeholder="Describe what needs to be done"
-                  className={`w-full px-3 py-2 border rounded-md ${
-                    errors.description ? "border-red-500" : "border-gray-300"
-                  }`}
+                  value={field.value}
                 />
               )}
             />
             {errors.description && (
-              <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="requirements">Requirements *</Label>
-            <Controller
-              name="requirements"
-              control={control}
-              render={({ field }) => (
-                <textarea
-                  {...field}
-                  id="requirements"
-                  rows={2}
-                  placeholder="List the technical requirements"
-                  className={`w-full px-3 py-2 border rounded-md ${
-                    errors.requirements ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-              )}
-            />
-            {errors.requirements && (
-              <p className="text-red-500 text-sm mt-1">{errors.requirements.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="deliverables">Deliverables *</Label>
-            <Controller
-              name="deliverables"
-              control={control}
-              render={({ field }) => (
-                <textarea
-                  {...field}
-                  id="deliverables"
-                  rows={2}
-                  placeholder="What should be delivered?"
-                  className={`w-full px-3 py-2 border rounded-md ${
-                    errors.deliverables ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-              )}
-            />
-            {errors.deliverables && (
-              <p className="text-red-500 text-sm mt-1">{errors.deliverables.message}</p>
+              <p className="mt-1 text-red-500 text-sm">
+                {errors.description.message}
+              </p>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="amount">Amount *</Label>
               <Controller
-                name="amount"
                 control={control}
+                name="amount"
                 render={({ field }) => (
                   <Input
                     {...field}
+                    className={
+                      errors.amount ? 'border-red-500' : 'border-border'
+                    }
                     id="amount"
                     placeholder="100.00"
-                    className={errors.amount ? "border-red-500" : ""}
                   />
                 )}
               />
               {errors.amount && (
-                <p className="text-red-500 text-sm mt-1">{errors.amount.message}</p>
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.amount.message}
+                </p>
               )}
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="currency">Currency</Label>
               <Controller
-                name="currency"
                 control={control}
+                name="currency"
                 render={({ field }) => (
                   <select
                     {...field}
+                    className={`w-full rounded-md border px-3 py-2 ${errors.currency ? 'border-red-500' : 'border-border'}`}
                     id="currency"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   >
                     {currencyOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -266,21 +504,24 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
                   </select>
                 )}
               />
+              {errors.currency && (
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.currency.message}
+                </p>
+              )}
             </div>
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="difficulty">Difficulty *</Label>
             <Controller
-              name="difficulty"
               control={control}
+              name="difficulty"
               render={({ field }) => (
                 <select
                   {...field}
+                  className={`w-full rounded-md border px-3 py-2 ${errors.difficulty ? 'border-red-500' : 'border-border'}`}
                   id="difficulty"
-                  className={`w-full px-3 py-2 border rounded-md ${
-                    errors.difficulty ? "border-red-500" : "border-gray-300"
-                  }`}
                 >
                   {difficultyOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -291,11 +532,13 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
               )}
             />
             {errors.difficulty && (
-              <p className="text-red-500 text-sm mt-1">{errors.difficulty.message}</p>
+              <p className="mt-1 text-red-500 text-sm">
+                {errors.difficulty.message}
+              </p>
             )}
           </div>
 
-          <div>
+          {/* <div className="space-y-2">
             <Label htmlFor="deadline">Deadline (Optional)</Label>
             <Controller
               name="deadline"
@@ -312,9 +555,9 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
             {errors.deadline && (
               <p className="text-red-500 text-sm mt-1">{errors.deadline.message}</p>
             )}
-          </div>
+          </div> */}
 
-          <div>
+          {/* <div className="space-y-2">
             <Label htmlFor="tags">Tags (Optional)</Label>
             <Input
               id="tags"
@@ -325,62 +568,70 @@ export function EditBountyModal({ open, onOpenChange, bountyId }: EditBountyModa
             <p className="text-sm text-gray-500 mt-1">
               Enter tags separated by commas
             </p>
-          </div>
+          </div> */}
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="repositoryUrl">Repository URL (Optional)</Label>
             <Controller
-              name="repositoryUrl"
               control={control}
+              name="repositoryUrl"
               render={({ field }) => (
                 <Input
                   {...field}
+                  className={
+                    errors.repositoryUrl ? 'border-red-500' : 'border-border'
+                  }
                   id="repositoryUrl"
-                  type="url"
                   placeholder="https://github.com/user/repo"
-                  className={errors.repositoryUrl ? "border-red-500" : ""}
+                  type="url"
                 />
               )}
             />
             {errors.repositoryUrl && (
-              <p className="text-red-500 text-sm mt-1">{errors.repositoryUrl.message}</p>
+              <p className="mt-1 text-red-500 text-sm">
+                {errors.repositoryUrl.message}
+              </p>
             )}
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="issueUrl">Issue URL (Optional)</Label>
             <Controller
-              name="issueUrl"
               control={control}
+              name="issueUrl"
               render={({ field }) => (
                 <Input
                   {...field}
+                  className={
+                    errors.issueUrl ? 'border-red-500' : 'border-border'
+                  }
                   id="issueUrl"
-                  type="url"
                   placeholder="https://github.com/user/repo/issues/123"
-                  className={errors.issueUrl ? "border-red-500" : ""}
+                  type="url"
                 />
               )}
             />
             {errors.issueUrl && (
-              <p className="text-red-500 text-sm mt-1">{errors.issueUrl.message}</p>
+              <p className="mt-1 text-red-500 text-sm">
+                {errors.issueUrl.message}
+              </p>
             )}
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="mt-6">
             <Button
+              disabled={isSubmitting || updateBounty.isPending}
+              onClick={handleClose}
               type="button"
               variant="outline"
-              onClick={handleClose}
-              disabled={isSubmitting || updateBounty.isPending}
             >
               Cancel
             </Button>
             <Button
-              type="submit"
               disabled={isSubmitting || updateBounty.isPending}
+              type="submit"
             >
-              {updateBounty.isPending ? "Updating..." : "Update Bounty"}
+              {updateBounty.isPending ? 'Updating...' : 'Update Bounty'}
             </Button>
           </DialogFooter>
         </form>

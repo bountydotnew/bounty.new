@@ -1,10 +1,10 @@
-"use client"
+'use client';
 
-import { Suspense } from "react";
-import Login from "@/components/bounty/login";
+import { Suspense } from 'react';
+import Login from '@/components/bounty/login';
+import { Spinner } from '@bounty/ui/components/spinner';
 
 function LoginContent() {
-  
   // const handleGitHubSignIn = async () => {
   //   try {
   //     const callbackURL = redirectUrl ? `${redirectUrl}` : `${baseUrl}/dashboard`;
@@ -28,16 +28,20 @@ function LoginContent() {
   //   }
   // };
 
-  return (
-    <Login/>
-  )
+  return <Login />;
 }
 
 export default function LoginPage() {
   return (
-    <div className="bg-landing-background mx-auto w-full">
+    <div className="mx-auto w-full bg-landing-background">
       {/* <Header /> */}
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense
+        fallback={
+          <div className="flex h-screen items-center justify-center">
+            <Spinner />
+          </div>
+        }
+      >
         <LoginContent />
       </Suspense>
     </div>

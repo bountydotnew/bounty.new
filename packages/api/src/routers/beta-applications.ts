@@ -1,9 +1,8 @@
-import { z } from "zod";
-import { eq, and, desc } from "drizzle-orm";
-import { TRPCError } from "@trpc/server";
-
-import { router, protectedProcedure, adminProcedure } from "../trpc";
-import { betaApplication, user } from "@bounty/db";
+import { betaApplication, createNotification, user } from '@bounty/db';
+import { TRPCError } from '@trpc/server';
+import { desc, eq } from 'drizzle-orm';
+import { z } from 'zod';
+import { adminProcedure, protectedProcedure, router } from '../trpc';
 
 const createBetaApplicationSchema = z.object({
   name: z.string().min(1).max(100),
@@ -15,26 +14,25 @@ const createBetaApplicationSchema = z.object({
 
 const updateStatusSchema = z.object({
   id: z.string(),
-  status: z.enum(["approved", "rejected"]),
+  status: z.enum(['approved', 'rejected']),
   reviewNotes: z.string().optional(),
 });
 
 export const betaApplicationsRouter = router({
-  checkExisting: protectedProcedure
-    .query(async ({ ctx }) => {
-      const userId = ctx.session.user.id;
+  checkExisting: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
 
-      const existingApplication = await ctx.db
-        .select()
-        .from(betaApplication)
-        .where(eq(betaApplication.userId, userId))
-        .limit(1);
+    const existingApplication = await ctx.db
+      .select()
+      .from(betaApplication)
+      .where(eq(betaApplication.userId, userId))
+      .limit(1);
 
-      return {
-        hasSubmitted: existingApplication.length > 0,
-        application: existingApplication[0] || null,
-      };
-    }),
+    return {
+      hasSubmitted: existingApplication.length > 0,
+      application: existingApplication[0] || null,
+    };
+  }),
 
   create: protectedProcedure
     .input(createBetaApplicationSchema)
@@ -49,8 +47,8 @@ export const betaApplicationsRouter = router({
 
       if (existingApplication.length > 0) {
         throw new TRPCError({
-          code: "CONFLICT",
-          message: "You have already submitted a beta application",
+          code: 'CONFLICT',
+          message: 'You have already submitted a beta application',
         });
       }
 
@@ -72,7 +70,7 @@ export const betaApplicationsRouter = router({
   getAll: adminProcedure
     .input(
       z.object({
-        status: z.enum(["pending", "approved", "rejected"]).optional(),
+        status: z.enum(['pending', 'approved', 'rejected']).optional(),
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(20),
       })
@@ -81,7 +79,9 @@ export const betaApplicationsRouter = router({
       const { status, page, limit } = input;
       const offset = (page - 1) * limit;
 
-      const whereClause = status ? eq(betaApplication.status, status) : undefined;
+      const whereClause = status
+        ? eq(betaApplication.status, status)
+        : undefined;
 
       const [applications, total] = await Promise.all([
         ctx.db
@@ -144,23 +144,53 @@ export const betaApplicationsRouter = router({
 
       if (!application) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Beta application not found",
+          code: 'NOT_FOUND',
+          message: 'Beta application not found',
         });
       }
 
-      if (status === "approved") {
+      if (status === 'approved') {
         await ctx.db
           .update(user)
-          .set({ betaAccessStatus: "approved" })
+          .set({ accessStage: 'beta' })
           .where(eq(user.id, application.userId));
-      } else if (status === "rejected") {
+        try {
+          await createNotification({
+            userId: application.userId,
+            type: 'beta_application_approved',
+            title: 'Beta access approved',
+            message:
+              'Your beta application was approved! ' +
+              `Reason: ${reviewNotes && reviewNotes.trim().length > 0 ? reviewNotes.trim() : 'No reason specified'}`,
+            data: {
+              applicationId: application.id,
+              reviewNotes: reviewNotes ?? null,
+              linkTo: '/dashboard',
+            },
+          });
+        } catch {}
+      } else if (status === 'rejected') {
         await ctx.db
           .update(user)
-          .set({ betaAccessStatus: "denied" })
+          .set({ accessStage: 'none' })
           .where(eq(user.id, application.userId));
+        try {
+          await createNotification({
+            userId: application.userId,
+            type: 'beta_application_rejected',
+            title: 'Beta application update',
+            message:
+              'Your beta application was not approved at this time. ' +
+              `Reason: ${reviewNotes && reviewNotes.trim().length > 0 ? reviewNotes.trim() : 'No reason specified'}`,
+            data: {
+              applicationId: application.id,
+              reviewNotes: reviewNotes ?? null,
+              linkTo: '/dashboard',
+            },
+          });
+        } catch {}
       }
 
       return application;
     }),
-}); 
+});

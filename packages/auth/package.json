@@ -9,16 +9,20 @@
   },
   "typesVersions": {
     "*": {
-      "client": ["./src/client.ts"],
-      "server": ["./src/server.ts"]
+      "client": [
+        "./src/client.ts"
+      ],
+      "server": [
+        "./src/server.ts"
+      ]
     }
   },
   "dependencies": {
-    "better-auth": "1.3.0",
+    "better-auth": "catalog:",
     "@bounty/db": "workspace:*",
     "@bounty/env": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5"
+    "typescript": "catalog:"
   }
 }

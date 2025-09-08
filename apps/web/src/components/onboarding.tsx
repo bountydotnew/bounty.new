@@ -1,22 +1,28 @@
-"use client";
+'use client';
 
-import { Dialog, DialogContent } from "./ui/dialog";
-import { Button } from "./ui/button";
-import { ArrowRightIcon } from "lucide-react";
-import { useState, useEffect } from "react";
-import ReactMarkdown from "react-markdown";
-import { useConfetti } from "@/lib/context/confetti-context";
+import { ArrowRightIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import { useConfetti } from '@/context/confetti-context';
+import { Button } from '@bounty/ui/components/button';
+import { Dialog, DialogContent } from '@bounty/ui/components/dialog';
 
 export function Onboarding() {
   const [step, setStep] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const { celebrate } = useConfetti();
-  const hasSeenOnboarding = localStorage.getItem("hasSeenOnboarding");
+  const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
   useEffect(() => {
     if (!hasSeenOnboarding) {
       setIsOpen(true);
     }
-  }, []);
+  }, [hasSeenOnboarding]);
+
+  useEffect(() => {
+    if (!hasSeenOnboarding && isOpen && step === 0) {
+      celebrate();
+    }
+  }, [hasSeenOnboarding, isOpen, step, celebrate]);
 
   const handleNext = () => {
     setStep(step + 1);
@@ -24,15 +30,12 @@ export function Onboarding() {
 
   const handleClose = () => {
     setIsOpen(false);
-    localStorage.setItem("hasSeenOnboarding", "true");
+    localStorage.setItem('hasSeenOnboarding', 'true');
   };
 
   const renderStepContent = () => {
     switch (step) {
       case 0:
-        if (!hasSeenOnboarding) {
-          celebrate();
-        }
         return (
           <div className="space-y-5">
             <div className="space-y-3">
@@ -69,8 +72,8 @@ export function Onboarding() {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px] !outline-none">
+    <Dialog onOpenChange={handleClose} open={isOpen}>
+      <DialogContent className="!outline-none sm:max-w-[425px]">
         {renderStepContent()}
       </DialogContent>
     </Dialog>
@@ -78,7 +81,7 @@ export function Onboarding() {
 }
 
 function Title({ title }: { title: string }) {
-  return <h2 className="text-lg md:text-xl font-bold">{title}</h2>;
+  return <h2 className="font-bold text-lg md:text-xl">{title}</h2>;
 }
 
 // function Subtitle({ subtitle }: { subtitle: string }) {
@@ -91,12 +94,13 @@ function Description({ description }: { description: string }) {
       <ReactMarkdown
         components={{
           p: ({ children }) => <p className="mb-0">{children}</p>,
-          a: ({ href, children }) => (
+          a: ({ href, children, ...props }) => (
             <a
+              className="text-foreground underline hover:text-foreground/80"
               href={href}
-              target="_blank"
               rel="noopener noreferrer"
-              className="text-foreground hover:text-foreground/80 underline"
+              target="_blank"
+              {...props}
             >
               {children}
             </a>
@@ -117,9 +121,9 @@ function NextButton({
   onClick: () => void;
 }) {
   return (
-    <Button onClick={onClick} variant="default" className="w-full">
+    <Button className="w-full" onClick={onClick} variant="default">
       {children}
-      <ArrowRightIcon className="w-4 h-4" />
+      <ArrowRightIcon className="h-4 w-4" />
     </Button>
   );
 }
