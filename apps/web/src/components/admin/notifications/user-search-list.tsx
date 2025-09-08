@@ -37,7 +37,7 @@ export function UserSearchList({
         />
         {selectedIds.size > 0 && (
           <Button
-            className="h-8 px-2 text-xs"
+            className="h-8 px-2 text-xs border-neutral-800 bg-[#222222] hover:bg-neutral-700/40"
             onClick={onClearSelection}
             variant="text"
           >
@@ -51,12 +51,12 @@ export function UserSearchList({
         ) : users.length ? (
           users.map((u) => (
             <button
-              className={`flex items-center justify-between rounded-lg border p-3 text-left transition ${selectedIds.has(u.id) ? 'border-neutral-700 bg-neutral-800' : 'border-neutral-800 bg-neutral-900/40 hover:bg-neutral-900/60'}`}
+              className={`flex items-center justify-between rounded-md border p-3 text-left transition ${selectedIds.has(u.id) ? 'border-neutral-700 bg-neutral-800/60' : 'border-neutral-800 bg-[#222222] hover:bg-neutral-700/40'}`}
               key={u.id}
               onClick={() => onToggle(u.id)}
             >
               <div>
-                <div className="font-medium text-sm">{u.name}</div>
+                <div className="font-medium text-neutral-200 text-sm">{u.name}</div>
                 <div className="text-neutral-400 text-xs">{u.email}</div>
               </div>
               <div

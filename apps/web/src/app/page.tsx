@@ -4,6 +4,8 @@ import { BountyStatistics } from '@/components/sections/home/bounty-statistics';
 import { Footer } from '@/components/sections/home/footer';
 import { Header } from '@/components/sections/home/header';
 import { WaitlistForm } from '@/components/sections/home/waitlist-form';
+import { YCombinator } from '@/components/icons/g-combinator';
+import { BackedByBadge } from '../../registry/new-york/gcombinator-badge/gcombinator-badge';
 
 export default function Home() {
   return (
@@ -51,6 +53,7 @@ export default function Home() {
         {/* Main content */}
         <main className="relative z-10 mx-auto max-w-7xl px-6 pt-20">
           <div className="max-w-4xl">
+            <BackedByBadge className="px-2.5 py-1" text="rejected by ycombinator" icon={<YCombinator />} />
             <h1
               className="mb-8 font-display text-5xl leading-tight md:text-7xl"
               style={{ color: 'rgba(239, 239, 239, 1)' }}

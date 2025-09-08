@@ -1,0 +1,1 @@
+ALTER TABLE "bounty_comment" ADD COLUMN "original_content" text;

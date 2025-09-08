@@ -169,6 +169,13 @@
       "when": 1757057954997,
       "tag": "0023_motionless_corsair",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1757320619576,
+      "tag": "0024_woozy_roulette",
+      "breakpoints": true
     }
   ]
 }

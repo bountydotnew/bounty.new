@@ -32,7 +32,10 @@ export default function BountyComments({
   const key = trpc.bounties.getBountyComments.queryKey({ bountyId });
   const commentsQuery = useQuery({
     ...trpc.bounties.getBountyComments.queryOptions({ bountyId }),
-    initialData: initialComments,
+    initialData: initialComments?.map((c) => ({
+      ...c,
+      originalContent: c.originalContent ?? null,
+    })),
     staleTime: Infinity,
   });
 
@@ -169,6 +172,7 @@ export default function BountyComments({
       {
         id: `temp-${Date.now()}`,
         content,
+        originalContent: null,
         parentId: parentId ?? null,
         createdAt: new Date().toISOString(),
         user: session?.user
@@ -226,15 +230,25 @@ export default function BountyComments({
   const onEditComment = (commentId: string, newContent: string) => {
     const previous: BountyCommentCacheItem[] =
       (commentsQuery.data as BountyCommentCacheItem[] | undefined) || [];
+    const current = previous.find((c) => c.id === commentId);
+    const trimmedNew = newContent.trim();
+    if (!current || current.content.trim() === trimmedNew) {
+      return;
+    }
     const next = previous.map((c) =>
       c.id === commentId
-        ? { ...c, content: newContent, editCount: Number(c.editCount || 0) + 1 }
+        ? {
+            ...c,
+            originalContent: c.originalContent ?? c.content,
+            content: trimmedNew,
+            editCount: Number(c.editCount || 0) + 1,
+          }
         : c
     );
     queryClient.setQueryData(key, next);
     setEditError(null);
     updateComment.mutate(
-      { commentId, content: newContent },
+      { commentId, content: trimmedNew },
       {
         onSuccess: () => {
           setEditState(null);

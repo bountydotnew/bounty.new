@@ -13,7 +13,7 @@ export default async function AdminLayout({
 }) {
   return (
     <Sidebar admin={true}>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-[#111110] text-white">
         <div className="container mx-auto px-4 py-8">{children}</div>
       </div>
     </Sidebar>

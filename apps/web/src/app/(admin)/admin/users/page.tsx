@@ -366,60 +366,60 @@ export default function UsersPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <Card className="border-neutral-800 bg-neutral-900/50">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+        <Card className="border border-neutral-800 bg-[#222222]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="font-medium text-sm">Total Users</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="font-bold text-2xl">{stats.total}</div>
-            <p className="text-muted-foreground text-xs">Across all pages</p>
+            <div className="font-semibold text-xl text-neutral-100">{stats.total}</div>
+            <p className="text-neutral-500 text-xs">Across all pages</p>
           </CardContent>
         </Card>
 
-        <Card className="border-neutral-800 bg-neutral-900/50">
+        <Card className="border border-neutral-800 bg-[#222222]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="font-medium text-sm">Current Page</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="font-bold text-2xl">{stats.currentPage}</div>
-            <p className="text-muted-foreground text-xs">Users on this page</p>
+            <div className="font-semibold text-xl text-neutral-100">{stats.currentPage}</div>
+            <p className="text-neutral-500 text-xs">Users on this page</p>
           </CardContent>
         </Card>
 
-        <Card className="border-neutral-800 bg-neutral-900/50">
+        <Card className="border border-neutral-800 bg-[#222222]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="font-medium text-sm">Admins</CardTitle>
             <Crown className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="font-bold text-2xl text-yellow-600">
+            <div className="font-semibold text-xl text-yellow-600">
               {stats.admins}
             </div>
-            <p className="text-muted-foreground text-xs">On this page</p>
+            <p className="text-neutral-500 text-xs">On this page</p>
           </CardContent>
         </Card>
 
-        <Card className="border-neutral-800 bg-neutral-900/50">
+        <Card className="border border-neutral-800 bg-[#222222]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="font-medium text-sm">Regular Users</CardTitle>
             <User className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="font-bold text-2xl text-blue-600">
+            <div className="font-semibold text-xl text-blue-600">
               {stats.regularUsers}
             </div>
-            <p className="text-muted-foreground text-xs">On this page</p>
+            <p className="text-neutral-500 text-xs">On this page</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="border-neutral-800 bg-neutral-900/50">
+      <Card className="border border-neutral-800 bg-[#222222]">
         <CardHeader>
-          <CardTitle>Users</CardTitle>
-          <CardDescription>Manage user roles and permissions</CardDescription>
+          <CardTitle className="text-sm text-neutral-300 font-medium">Users</CardTitle>
+          <CardDescription className="text-xs text-neutral-500">Manage user roles and permissions</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -483,26 +483,26 @@ export default function UsersPage() {
                 <p className="text-muted-foreground">Loading users...</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {users.map((user) => (
                   <div
-                    className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900/40 p-4"
+                    className="flex items-center justify-between rounded-md border border-neutral-800 bg-[#222222] p-3"
                     key={user.id}
                   >
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
                         <User className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{user.name}</span>
+                        <span className="font-medium text-neutral-200 text-sm">{user.name}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-muted-foreground text-sm">
+                        <span className="text-neutral-400 text-sm">
                           {user.email}
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-muted-foreground text-sm">
+                        <span className="text-neutral-400 text-sm">
                           {new Date(user.createdAt).toLocaleDateString()}
                         </span>
                       </div>

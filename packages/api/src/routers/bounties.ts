@@ -170,11 +170,11 @@ export const bountiesRouter = router({
           .values({
             title: input.title,
             description: input.description,
-            amount: normalizedAmount as unknown as any,
+            amount: normalizedAmount,
             currency: input.currency,
             difficulty: input.difficulty,
             deadline,
-            tags: cleanedTags as any,
+            tags: cleanedTags ?? null,
             repositoryUrl,
             issueUrl,
             createdById: ctx.session.user.id,
@@ -658,6 +658,7 @@ export const bountiesRouter = router({
           .select({
             id: bountyComment.id,
             content: bountyComment.content,
+            originalContent: bountyComment.originalContent,
             parentId: bountyComment.parentId,
             createdAt: bountyComment.createdAt,
             editCount: bountyComment.editCount,
@@ -699,7 +700,7 @@ export const bountiesRouter = router({
         const commentsWithLikes = comments.map((c) => {
           const lc = likeCounts.find((x) => x.commentId === c.id);
           const isLiked = (userLikes || []).some((x) => x.commentId === c.id);
-          return { ...c, likeCount: lc?.likeCount || 0, isLiked } as const;
+          return { ...c, originalContent: c.originalContent ?? null, likeCount: lc?.likeCount || 0, isLiked } as const;
         });
 
         return {
@@ -1055,6 +1056,7 @@ export const bountiesRouter = router({
           .select({
             id: bountyComment.id,
             content: bountyComment.content,
+            originalContent: bountyComment.originalContent,
             parentId: bountyComment.parentId,
             createdAt: bountyComment.createdAt,
             editCount: bountyComment.editCount,
@@ -1097,7 +1099,7 @@ export const bountiesRouter = router({
         const withLikes = comments.map((c) => {
           const lc = likeCounts.find((x) => x.commentId === c.id);
           const isLiked = (userLikes || []).some((x) => x.commentId === c.id);
-          return { ...c, likeCount: lc?.likeCount || 0, isLiked } as const;
+          return { ...c, originalContent: c.originalContent ?? null, likeCount: lc?.likeCount || 0, isLiked } as const;
         });
 
         return withLikes;
@@ -1130,23 +1132,29 @@ export const bountiesRouter = router({
             message: 'Comment not found',
           });
         }
-        if ((existing as any).userId !== ctx.session.user.id) {
+        if (existing.userId !== ctx.session.user.id) {
           throw new TRPCError({
             code: 'FORBIDDEN',
             message: 'Not your comment',
           });
         }
-        if ((existing as any).editCount >= 1) {
+        if (existing.editCount >= 1) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
             message: 'Edit limit reached',
           });
         }
 
+        const trimmed = input.content.trim();
+        if (existing.content.trim() === trimmed) {
+          return existing;
+        }
+
         const [updated] = await db
           .update(bountyComment)
           .set({
-            content: input.content,
+            content: trimmed,
+            originalContent: existing.originalContent ?? existing.content,
             editCount: sql`(${bountyComment.editCount} + 1)`,
             updatedAt: new Date(),
           })
@@ -1155,9 +1163,9 @@ export const bountiesRouter = router({
         try {
           await track('bounty_comment_updated', {
             comment_id: updated.id,
-            bounty_id: (updated as any).bountyId,
+            bounty_id: updated.bountyId,
             user_id: ctx.session.user.id,
-            edit_count: (updated as any).editCount,
+            edit_count: updated.editCount,
             source: 'api',
           });
         } catch {}
