@@ -7,6 +7,7 @@ export interface CommentUser {
 export interface BountyCommentItem {
   id: string;
   content: string;
+  originalContent?: string | null;
   parentId: string | null;
   createdAt: string;
   editCount: number;
@@ -31,6 +32,7 @@ export interface BountyCommentCacheItem {
   user: { id: string; name: string; image: string | null } | null;
   parentId: string | null;
   content: string;
+  originalContent: string | null;
   editCount: number;
   likeCount: number;
   isLiked: boolean;

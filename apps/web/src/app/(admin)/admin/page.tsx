@@ -33,7 +33,7 @@ export default function AdminPage() {
         title="Admin"
       />
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 border-b pb-8">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 border-b border-neutral-800 pb-6">
         <StatCard
           hint="Total"
           href="/admin/beta-applications"

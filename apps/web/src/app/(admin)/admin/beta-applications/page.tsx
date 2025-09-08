@@ -48,13 +48,13 @@ export default function BetaApplicationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="-mx-4 sticky top-0 z-10 border-neutral-800 border-b bg-background/80 px-4 py-3 backdrop-blur">
+      <div className="-mx-4 sticky top-0 z-10 border-b border-neutral-800 bg-[#111110]/80 px-4 py-3 backdrop-blur">
         <AdminHeader
           description="Review and manage beta access applications"
           title="Beta Applications"
         >
           <div className="flex items-center gap-2">
-            <Button className="border-neutral-800" size="sm" variant="outline">
+            <Button className="border-neutral-800 bg-[#222222] hover:bg-neutral-700/40" size="sm" variant="outline">
               <Filter className="mr-2 h-4 w-4" />
               Filters
             </Button>
@@ -66,7 +66,7 @@ export default function BetaApplicationsPage() {
               onValueChange={(value) => handlePageSizeChange(Number(value))}
               value={pageSize.toString()}
             >
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[140px] border-neutral-800 bg-[#222222] text-neutral-200">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -87,7 +87,7 @@ export default function BetaApplicationsPage() {
       />
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between border-neutral-800 border-t pt-2">
+        <div className="flex items-center justify-between border-t border-neutral-800 pt-2">
           <div className="text-muted-foreground text-sm">
             Showing {(page - 1) * pageSize + 1} to{' '}
             {Math.min(page * pageSize, total)} of {total}
@@ -107,7 +107,7 @@ export default function BetaApplicationsPage() {
                 const pageNum = i + 1;
                 return (
                   <Button
-                    className="h-8 w-8 p-0"
+                    className="h-8 w-8 p-0 border-neutral-800 bg-[#222222] hover:bg-neutral-700/40"
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
                     size="sm"

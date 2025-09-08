@@ -124,6 +124,7 @@ export const bountyComment = pgTable(
       { onDelete: 'cascade' }
     ),
     content: text('content').notNull(),
+    originalContent: text('original_content'),
     editCount: integer('edit_count').notNull().default(0),
     createdAt: timestamp('created_at').notNull().default(sql`now()`),
     updatedAt: timestamp('updated_at').notNull().default(sql`now()`),

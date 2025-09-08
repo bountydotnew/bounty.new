@@ -22,10 +22,10 @@ export function BetaApplicationsTable({
   isLoading,
 }: BetaApplicationsTableProps) {
   return (
-    <Card className="border-neutral-800 bg-neutral-900/50">
+    <Card className="border border-neutral-800 bg-[#222222]">
       <CardHeader>
-        <CardTitle>Applications ({total})</CardTitle>
-        <CardDescription>
+        <CardTitle className="text-sm text-neutral-300 font-medium">Applications ({total})</CardTitle>
+        <CardDescription className="text-xs text-neutral-500">
           Review applications and grant beta access
         </CardDescription>
       </CardHeader>
@@ -38,14 +38,14 @@ export function BetaApplicationsTable({
             <div className="h-24 w-full animate-pulse rounded bg-neutral-800" />
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2">
             {applications.map((app) => (
               <BetaApplicationCard application={app} key={app.id} />
             ))}
 
             {applications.length === 0 && (
               <div className="py-8 text-center">
-                <p className="text-muted-foreground">No applications found</p>
+                <p className="text-neutral-500 text-sm">No applications found</p>
               </div>
             )}
           </div>

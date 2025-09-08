@@ -84,18 +84,18 @@ export default function WaitlistPage() {
         title="Waitlist Management"
       />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="border-neutral-800 bg-neutral-900/50">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <Card className="border border-neutral-800 bg-[#222222]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="font-medium text-sm">Total Entries</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="font-bold text-2xl">{data?.stats.total || 0}</div>
+            <div className="font-semibold text-xl text-neutral-100">{data?.stats.total || 0}</div>
           </CardContent>
         </Card>
 
-        <Card className="border-neutral-800 bg-neutral-900/50">
+        <Card className="border border-neutral-800 bg-[#222222]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="font-medium text-sm">With Access</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
@@ -107,7 +107,7 @@ export default function WaitlistPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-neutral-800 bg-neutral-900/50">
+        <Card className="border border-neutral-800 bg-[#222222]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="font-medium text-sm">Pending</CardTitle>
             <XCircle className="h-4 w-4 text-orange-600" />
@@ -120,12 +120,10 @@ export default function WaitlistPage() {
         </Card>
       </div>
 
-      <Card className="border-neutral-800 bg-neutral-900/50">
+      <Card className="border border-neutral-800 bg-[#222222]">
         <CardHeader>
-          <CardTitle>Waitlist Entries</CardTitle>
-          <CardDescription>
-            Manage waitlist entries and grant/revoke access
-          </CardDescription>
+          <CardTitle className="text-sm text-neutral-300 font-medium">Waitlist Entries</CardTitle>
+          <CardDescription className="text-xs text-neutral-500">Manage waitlist entries and grant/revoke access</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -146,20 +144,20 @@ export default function WaitlistPage() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {data?.entries.map((entry) => (
                   <div
-                    className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900/40 p-4"
+                    className="flex items-center justify-between rounded-md border border-neutral-800 bg-[#222222] p-3"
                     key={entry.id}
                   >
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
                         <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{entry.email}</span>
+                        <span className="font-medium text-neutral-200 text-sm">{entry.email}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-muted-foreground text-sm">
+                        <span className="text-neutral-400 text-sm">
                           {new Date(entry.createdAt).toLocaleDateString()}
                         </span>
                       </div>

@@ -44,6 +44,7 @@ export default function BountyComment({
 }: BountyCommentProps) {
   const edits = Number(comment.editCount || 0);
   const [entered, setEntered] = useState(false);
+  const [showOriginal, setShowOriginal] = useState(false);
   useEffect(() => {
     const id = requestAnimationFrame(() => setEntered(true));
     return () => cancelAnimationFrame(id);
@@ -67,9 +68,19 @@ export default function BountyComment({
           })}
         </span>
         {edits > 0 && (
-          <span className="rounded-md bg-neutral-800 px-1 py-0.5 text-[10px] text-neutral-500">
-            edited
-          </span>
+          <>
+            <span className="text-neutral-500 text-xs">(edited)</span>
+            {comment.originalContent && (
+              <>
+                <button
+                  className="text-[11px] text-neutral-400 hover:text-neutral-200"
+                  onClick={() => setShowOriginal(!showOriginal)}
+                >
+                  {showOriginal ? 'show edited' : 'show original'}
+                </button>
+              </>
+            )}
+          </>
         )}
         <div className="ml-auto flex items-center gap-1">
           <button
@@ -149,7 +160,7 @@ export default function BountyComment({
         </div>
       )}
       <div className="whitespace-pre-wrap text-wrap break-normal text-neutral-200 text-sm">
-        {comment.content}
+        {showOriginal && comment.originalContent ? comment.originalContent : comment.content}
       </div>
     </div>
   );

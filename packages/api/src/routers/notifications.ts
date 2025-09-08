@@ -56,10 +56,10 @@ export const notificationsRouter = router({
     .mutation(async ({ input }) => {
       const n = await createNotification({
         userId: input.userId,
-        type: input.type as any,
+        type: input.type,
         title: input.title,
         message: input.message,
-        data: input.data as any,
+        data: input.data,
       });
       return { success: true, data: n };
     }),

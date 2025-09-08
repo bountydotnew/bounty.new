@@ -49,12 +49,10 @@ export default function AdminNotificationsPage() {
         title="Send Notifications"
       />
 
-      <Card className="border-neutral-800 bg-neutral-900/60 backdrop-blur">
+      <Card className="border border-neutral-800 bg-[#222222]">
         <CardHeader>
-          <CardTitle>Find users</CardTitle>
-          <CardDescription>
-            Search by name or email, then select recipients
-          </CardDescription>
+          <CardTitle className="text-sm text-neutral-300 font-medium">Find users</CardTitle>
+          <CardDescription className="text-xs text-neutral-500">Search by name or email, then select recipients</CardDescription>
         </CardHeader>
         <CardContent>
           <UserSearchList
@@ -79,10 +77,10 @@ export default function AdminNotificationsPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-neutral-800 bg-neutral-900/60 backdrop-blur">
+      <Card className="border border-neutral-800 bg-[#222222]">
         <CardHeader>
-          <CardTitle>Compose</CardTitle>
-          <CardDescription>Craft the message and optional link</CardDescription>
+          <CardTitle className="text-sm text-neutral-300 font-medium">Compose</CardTitle>
+          <CardDescription className="text-xs text-neutral-500">Craft the message and optional link</CardDescription>
         </CardHeader>
         <CardContent>
           <ComposeForm
