@@ -7,7 +7,7 @@ export function BountyStatistics({ className }: { className?: string }) {
   const { data: stats } = useQuery(trpc.bounties.getBountyStats.queryOptions());
 
   return (
-    <div className={cn('flex gap-8', className)}>
+    <div className={cn('flex flex-col md:flex-row gap-8', className)}>
       <BountyStatistic
         color="text-green-400"
         label="in bounties"
