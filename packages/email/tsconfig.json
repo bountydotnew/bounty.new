@@ -1,7 +1,6 @@
 {
   "extends": "@bounty/typescript-config/base.json",
   "compilerOptions": {
-    "outDir": "dist",
     "rootDir": "src",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",

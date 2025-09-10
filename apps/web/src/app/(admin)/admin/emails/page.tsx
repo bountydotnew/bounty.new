@@ -12,14 +12,18 @@ import { trpc } from '@/utils/trpc';
 import { sendTestEmailAction, subscribeAudienceAction, unsubscribeAudienceAction } from './actions';
 import { AlphaAccessGranted } from '@bounty/email';
 
+type Template = 'none' | 'alpha';
+type FromKey = 'notifications' | 'support' | 'marketing' | 'general';
+type AudienceKey = 'marketing';
+
 export default function AdminEmailsPage() {
   const constants = useQuery(trpc.emails.constants.queryOptions());
   const [to, setTo] = useState('');
   const [subject, setSubject] = useState('Test Subject');
   const [html, setHtml] = useState('<p>Hello from bounty.new</p>');
-  const [template, setTemplate] = useState<'none' | 'alpha'>('none');
-  const [fromKey, setFromKey] = useState('notifications');
-  const [audienceKey, setAudienceKey] = useState('waitlist');
+  const [template, setTemplate] = useState<Template>('none');
+  const [fromKey, setFromKey] = useState<FromKey>('notifications');
+  const [audienceKey, setAudienceKey] = useState<AudienceKey>('marketing');
   const [subEmail, setSubEmail] = useState('');
 
   const [sending, setSending] = useState(false);
@@ -41,7 +45,7 @@ export default function AdminEmailsPage() {
         <CardContent>
           <div className="grid gap-2 md:grid-cols-4">
             <Input className="border-neutral-800 bg-neutral-900" placeholder="to@example.com,comma,separated" value={to} onChange={(e) => setTo(e.target.value)} />
-            <Select value={fromKey} onValueChange={setFromKey}>
+            <Select value={fromKey} onValueChange={(value) => setFromKey(value as FromKey)}>
               <SelectTrigger className="border-neutral-800 bg-[#222222]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {fromKeys.map((k) => (
@@ -52,7 +56,7 @@ export default function AdminEmailsPage() {
             <Input className="border-neutral-800 bg-neutral-900" placeholder="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
           </div>
           <div className="mt-2 grid gap-2 md:grid-cols-4">
-            <Select value={template} onValueChange={(v) => setTemplate(v as any)}>
+            <Select value={template} onValueChange={(v) => setTemplate(v as Template)}>
               <SelectTrigger className="border-neutral-800 bg-[#222222]"><SelectValue placeholder="Template" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">No template</SelectItem>
@@ -67,8 +71,13 @@ export default function AdminEmailsPage() {
                 const recipients = to.split(',').map((v) => v.trim()).filter(Boolean);
                 if (recipients.length === 0) return;
                 setSending(true);
-                await sendTestEmailAction({ to: recipients, subject, fromKey: fromKey as any, html, text: undefined, template: template as any });
-                setSending(false);
+                try {
+                  await sendTestEmailAction({ to: recipients, subject, fromKey, html, text: undefined, template });
+                } catch (error) {
+                  console.error('Failed to send test email:', error);
+                } finally {
+                  setSending(false);
+                }
               }}
               disabled={sending}
             >
@@ -86,7 +95,7 @@ export default function AdminEmailsPage() {
         <CardContent>
           <div className="grid gap-2 md:grid-cols-4">
             <Input className="border-neutral-800 bg-neutral-900" placeholder="email@example.com" value={subEmail} onChange={(e) => setSubEmail(e.target.value)} />
-            <Select value={audienceKey} onValueChange={setAudienceKey}>
+            <Select value={audienceKey} onValueChange={(value) => setAudienceKey(value as AudienceKey)}>
               <SelectTrigger className="border-neutral-800 bg-[#222222]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {audienceKeys.map((k) => (
@@ -98,8 +107,13 @@ export default function AdminEmailsPage() {
               <Button
                 onClick={async () => {
                   setSubscribing(true);
-                  await subscribeAudienceAction({ email: subEmail, audienceKey: audienceKey as any });
-                  setSubscribing(false);
+                  try {
+                    await subscribeAudienceAction({ email: subEmail, audienceKey });
+                  } catch (error) {
+                    console.error('Failed to subscribe audience:', error);
+                  } finally {
+                    setSubscribing(false);
+                  }
                 }}
                 disabled={subscribing}
               >
@@ -109,8 +123,13 @@ export default function AdminEmailsPage() {
                 variant="outline"
                 onClick={async () => {
                   setUnsubscribing(true);
-                  await unsubscribeAudienceAction({ email: subEmail, audienceKey: audienceKey as any });
-                  setUnsubscribing(false);
+                  try {
+                    await unsubscribeAudienceAction({ email: subEmail, audienceKey });
+                  } catch (error) {
+                    console.error('Failed to unsubscribe audience:', error);
+                  } finally {
+                    setUnsubscribing(false);
+                  }
                 }}
                 disabled={unsubscribing}
               >

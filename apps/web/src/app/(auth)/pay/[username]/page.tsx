@@ -14,8 +14,8 @@ import {
   User,
   Users,
 } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { use, useEffect, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { PaymentModal } from '@/components/payment/payment-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
 import { Badge } from '@bounty/ui/components/badge';
@@ -24,18 +24,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/
 import Link from '@bounty/ui/components/link';
 import { Separator } from '@bounty/ui/components/separator';
 
-interface PaymentPageProps {
-  params: Promise<{ username: string }>;
-}
-
-export default function PaymentPage({ params }: PaymentPageProps) {
-  const resolvedParams = use(params);
+export default function PaymentPage() {
+  const { username } = useParams<{ username: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
   const apiKey = searchParams.get('key');
-  const username = resolvedParams.username;
 
   const userQuery = useQuery({
     queryKey: ['user', username],

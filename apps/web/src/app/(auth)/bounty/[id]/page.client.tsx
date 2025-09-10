@@ -3,8 +3,7 @@
 import { authClient } from '@bounty/auth/client';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { use } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import BountyDetailPage from '@/components/bounty/bounty-detail';
 import { BountyDetailSkeleton } from '@/components/dashboard/skeletons/bounty-detail-skeleton';
 import Bounty from '@/components/icons/bounty';
@@ -12,22 +11,18 @@ import { Button } from '@bounty/ui/components/button';
 import { canEditBounty } from '@bounty/ui/lib/bounty-utils';
 import { trpc } from '@/utils/trpc';
 
-export default function BountyPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const resolvedParams = use(params);
+export default function BountyPage() {
+  const { id } = useParams<{ id: string }>();
   const isValidUuid = (v: string | undefined | null) =>
     typeof v === 'string' &&
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
       v
     );
-  const validId = isValidUuid(resolvedParams?.id);
+  const validId = isValidUuid(id);
 
   const { data: session } = authClient.useSession();
   const bountyDetail = useQuery({
-    ...trpc.bounties.getBountyDetail.queryOptions({ id: resolvedParams.id }),
+    ...trpc.bounties.getBountyDetail.queryOptions({ id: id! }),
     enabled: validId,
     staleTime: Infinity,
   });
@@ -191,7 +186,7 @@ export default function BountyPage({
       canEditBounty={canEdit}
       description={detailDescription}
       hasBadge={false}
-      id={resolvedParams.id}
+      id={id!}
       initialBookmarked={Boolean(bountyDetail.data.bookmarked)}
       initialComments={bountyDetail.data.comments}
       initialVotes={bountyDetail.data.votes}

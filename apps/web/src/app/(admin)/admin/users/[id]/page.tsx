@@ -1,15 +1,15 @@
 'use client';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { use } from 'react';
+import { useParams } from 'next/navigation';
 import { AdminHeader } from '@/components/admin';
 import { Button } from '@bounty/ui/components/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@bounty/ui/components/card';
 import { Input } from '@bounty/ui/components/input';
 import { trpc } from '@/utils/trpc';
 
-export default function AdminUserProfilePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function AdminUserProfilePage() {
+  const { id } = useParams<{ id: string }>();
 
   const profile = useQuery({ ...trpc.user.adminGetProfile.queryOptions({ userId: id }), staleTime: Infinity });
   const updateName = useMutation(trpc.user.adminUpdateName.mutationOptions());
