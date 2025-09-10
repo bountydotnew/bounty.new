@@ -15,7 +15,7 @@ export interface SendEmailInput<TProps = unknown> {
   to: string | string[];
   subject: string;
   from: string;
-  react?: React.ReactElement<TProps>;
+  react?: ReactElement<TProps>;
   html?: string;
   text?: string;
   headers?: Record<string, string>;
