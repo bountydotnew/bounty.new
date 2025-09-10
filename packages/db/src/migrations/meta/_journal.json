@@ -176,6 +176,13 @@
       "when": 1757320619576,
       "tag": "0024_woozy_roulette",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1757481664427,
+      "tag": "0025_concerned_marten_broadcloak",
+      "breakpoints": true
     }
   ]
 }
