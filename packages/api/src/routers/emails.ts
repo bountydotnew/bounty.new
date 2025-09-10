@@ -31,11 +31,12 @@ export const emailsRouter = router({
         fromKey: fromKeySchema,
         text: z.string().optional(),
         html: z.string().optional(),
+        idempotencyKey: z.string().min(1).max(256).optional(),
       })
     )
     .mutation(async ({ input }) => {
       const { info } = grim();
-      console.log("email.send", {
+      info("email.send", {
         to: Array.isArray(input.to) ? input.to : [input.to],
         subject: input.subject,
         fromKey: input.fromKey,
@@ -43,16 +44,26 @@ export const emailsRouter = router({
         hasHtml: Boolean(input.html),
         hasText: Boolean(input.text),
       });
-      const res = await sendEmail({
-        to: input.to,
-        subject: input.subject,
-        from: FROM_ADDRESSES[input.fromKey],
-        text: input.text,
-        html: input.html,
-      });
-      const result = { id: res.data?.id ?? null, error: res.error?.message ?? null };
-      console.info("email.send.result", result);
-      return result;
+      const res = await sendEmail(
+        {
+          to: input.to,
+          subject: input.subject,
+          from: FROM_ADDRESSES[input.fromKey],
+          text: input.text,
+          html: input.html,
+        }/* , { idempotencyKey: input.idempotencyKey } */
+      );
+      if (res.error) {
+        const code =
+          res.error.statusCode === 429 ? "TOO_MANY_REQUESTS" :
+          res.error.statusCode === 403 ? "FORBIDDEN" :
+          res.error.statusCode && res.error.statusCode >= 400 && res.error.statusCode < 500 ? "BAD_REQUEST" :
+          "INTERNAL_SERVER_ERROR";
+        throw new TRPCError({ code, message: res.error.message });
+      }
+      const payload = { id: res.data?.id ?? null };
+      console.info("email.send.result", payload);
+      return { success: true, data: payload };
     }),
 
   subscribe: adminProcedure

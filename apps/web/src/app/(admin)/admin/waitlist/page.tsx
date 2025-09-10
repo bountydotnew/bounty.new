@@ -55,6 +55,9 @@ export default function WaitlistPage() {
 
   const inviteToBetaMutation = useMutation({
     ...trpc.earlyAccess.inviteToBeta.mutationOptions(),
+   onMutate: async (vars: { id: string }) => {
+     setUpdatingIds((prev) => new Set(prev).add(vars.id));
+   },
     onSuccess: () => {
       toast.success('Beta invite sent');
       queryClient.invalidateQueries({
@@ -64,6 +67,13 @@ export default function WaitlistPage() {
     onError: (error: TRPCClientErrorLike<AppRouter>) => {
       toast.error(error.message || 'Failed to invite to beta');
     },
+   onSettled: (_data, _err, vars) => {
+     setUpdatingIds((prev) => {
+       const next = new Set(prev);
+       next.delete(vars.id);
+       return next;
+     });
+   },
   });
 
   const handleUpdateAccess = (id: string, hasAccess: boolean) => {
