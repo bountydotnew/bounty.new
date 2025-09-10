@@ -3,7 +3,6 @@ export interface SubscribeInput {
   audience: string;
   firstName?: string;
   lastName?: string;
-  properties?: Record<string, string | number | boolean | null>;
 }
 
 export interface UnsubscribeInput {
