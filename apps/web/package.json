@@ -12,9 +12,10 @@
     "@bounty/api": "workspace:*",
     "@bounty/auth": "workspace:*",
     "@bounty/db": "workspace:*",
-    "@bounty/ui": "workspace:*",
     "@bounty/dev-logger": "workspace:*",
+    "@bounty/ui": "workspace:*",
     "@daveyplate/better-auth-ui": "catalog:",
+    "@number-flow/react": "catalog:",
     "@polar-sh/better-auth": "catalog:",
     "@polar-sh/sdk": "catalog:",
     "@radix-ui/react-avatar": "catalog:",
@@ -32,6 +33,7 @@
     "@radix-ui/react-tabs": "catalog:",
     "@radix-ui/react-toggle": "catalog:",
     "@radix-ui/react-tooltip": "catalog:",
+    "@stripe/stripe-js": "^7.9.0",
     "@tanstack/react-form": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@thumbmarkjs/thumbmarkjs": "catalog:",
@@ -69,8 +71,7 @@
     "tailwind-merge": "catalog:",
     "tailwindcss-animate": "catalog:",
     "tw-animate-css": "catalog:",
-    "zod": "catalog:",
-    "@number-flow/react": "catalog:"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "catalog:",

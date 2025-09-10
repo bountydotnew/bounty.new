@@ -16,6 +16,6 @@
     "strictNullChecks": true,
     "types": []
   },
-  "include": ["src/**/*", "../../apps/web/src/context"],
+  "include": ["src/**/*", "../../apps/web/src/context", "../../apps/web/src/components/stripe/payment-method-setup.tsx", "../../apps/web/src/components/stripe/stripe-onboarding-link.tsx"],
   "exclude": ["node_modules"]
 }
