@@ -9,6 +9,7 @@ import { Button } from '@bounty/ui/components/button';
 import { DevWarningDialog } from '@bounty/ui/components/dev-warning-dialog';
 import Link from '@bounty/ui/components/link';
 import { LINKS } from '@/constants';
+import Bounty from '@/components/icons/bounty';
 
 export function Header() {
   const { data: session } = authClient.useSession();
@@ -67,13 +68,7 @@ export function Header() {
 
   const leftContent = (
     <Link href="/">
-      <Image
-        alt="Bounty Logo"
-        className="h-10 w-10"
-        height={40}
-        src="/bdn-b-w-trans.png"
-        width={40}
-      />
+      <Bounty className="h-10 w-10" />
     </Link>
   );
 

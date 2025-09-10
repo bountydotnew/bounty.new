@@ -6,7 +6,9 @@ import { grim } from '../lib/use-dev-log';
 
 const { error, info, warn } = grim();
 
-import { db, waitlist } from '@bounty/db';
+import { db, user as userTable, waitlist } from '@bounty/db';
+import { FROM_ADDRESSES, sendEmail } from '@bounty/email';
+import { AlphaAccessGranted } from '@bounty/email';
 import { getRateLimiter } from '../lib/ratelimiter';
 import { adminProcedure, publicProcedure, router } from '../trpc';
 
@@ -243,12 +245,82 @@ export const earlyAccessRouter = router({
           'hasAccess:',
           hasAccess
         );
+
+        if (hasAccess) {
+          const [entry] = await db.select().from(waitlist).where(eq(waitlist.id, id));
+          if (entry?.email) {
+            const [u] = await db
+              .select({ id: userTable.id, name: userTable.name, email: userTable.email })
+              .from(userTable)
+              .where(eq(userTable.email, entry.email))
+              .limit(1);
+            const to = u?.email ?? entry.email;
+            await sendEmail({
+              to,
+              subject: 'Alpha access granted',
+              from: FROM_ADDRESSES.notifications,
+              react: AlphaAccessGranted({ name: u?.name ?? '' }),
+            });
+          }
+        }
         return { success: true };
       } catch (err) {
         error('[updateWaitlistAccess] Error:', err);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to update waitlist access',
+        });
+      }
+    }),
+
+  
+
+  inviteToBeta: adminProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        const [entry] = await db
+          .select()
+          .from(waitlist)
+          .where(eq(waitlist.id, input.id))
+          .limit(1);
+
+        if (!entry) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Waitlist entry not found' });
+        }
+
+        const [u] = await db
+          .select({ id: userTable.id, name: userTable.name, email: userTable.email })
+          .from(userTable)
+          .where(eq(userTable.email, entry.email))
+          .limit(1);
+
+        if (!u?.id) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found for this email' });
+        }
+
+        await db
+          .update(userTable)
+          .set({ betaAccessStatus: 'approved', accessStage: 'beta', updatedAt: new Date() })
+          .where(eq(userTable.id, u.id));
+
+        await sendEmail({
+          to: u.email,
+          subject: 'Alpha access granted',
+          from: FROM_ADDRESSES.notifications,
+          react: AlphaAccessGranted({ name: u.name ?? '' }),
+        });
+
+        return { success: true };
+      } catch (err) {
+        error('[inviteToBeta] Error:', err);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to invite to beta',
         });
       }
     }),

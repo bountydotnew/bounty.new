@@ -130,5 +130,8 @@
     "*.{js,jsx,ts,tsx,json,jsonc,css,scss,md,mdx}": [
       "npx ultracite format"
     ]
+  },
+  "dependencies": {
+    "resend": "^6.0.2"
   }
 }

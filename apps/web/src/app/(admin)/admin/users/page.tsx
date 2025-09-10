@@ -43,7 +43,15 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
- 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@bounty/ui/components/select';
+import { useRouter } from 'next/navigation';
+
 
 export default function UsersPage() {
   const [search, setSearch] = useState('');
@@ -55,6 +63,7 @@ export default function UsersPage() {
   const [newUserName, setNewUserName] = useState('');
   const [newUserRole, setNewUserRole] = useState<'user' | 'admin'>('user');
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'listUsers', search, page, pageSize],
@@ -71,13 +80,13 @@ export default function UsersPage() {
           sortDirection: 'desc',
         },
       });
-      
+
       if (authError) {
         throw new Error(authError.message || 'Failed to load users');
       }
 
-        // Just return auth data and handle accessStage in the component
-        return authData;
+      // Just return auth data and handle accessStage in the component
+      return authData;
     },
   });
 
@@ -117,7 +126,7 @@ export default function UsersPage() {
   // Merge auth client users with access stage data
   const users = useMemo(() => {
     if (!data?.users || !accessData?.users) return data?.users || [];
-    
+
     return data.users.map((user: any) => {
       const userWithStage = accessData.users.find((u: any) => u.id === user.id);
       return {
@@ -374,7 +383,6 @@ export default function UsersPage() {
           </CardHeader>
           <CardContent>
             <div className="font-semibold text-xl text-neutral-100">{stats.total}</div>
-            <p className="text-neutral-500 text-xs">Across all pages</p>
           </CardContent>
         </Card>
 
@@ -385,7 +393,6 @@ export default function UsersPage() {
           </CardHeader>
           <CardContent>
             <div className="font-semibold text-xl text-neutral-100">{stats.currentPage}</div>
-            <p className="text-neutral-500 text-xs">Users on this page</p>
           </CardContent>
         </Card>
 
@@ -395,10 +402,7 @@ export default function UsersPage() {
             <Crown className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="font-semibold text-xl text-yellow-600">
-              {stats.admins}
-            </div>
-            <p className="text-neutral-500 text-xs">On this page</p>
+            <div className="font-semibold text-xl text-yellow-600">{stats.admins}</div>
           </CardContent>
         </Card>
 
@@ -408,10 +412,7 @@ export default function UsersPage() {
             <User className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="font-semibold text-xl text-blue-600">
-              {stats.regularUsers}
-            </div>
-            <p className="text-neutral-500 text-xs">On this page</p>
+            <div className="font-semibold text-xl text-blue-600">{stats.regularUsers}</div>
           </CardContent>
         </Card>
       </div>
@@ -423,50 +424,20 @@ export default function UsersPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="grid gap-2 md:grid-cols-4">
-              <Input
-                className="border-neutral-800 bg-neutral-900"
-                onChange={(e) => setNewUserName(e.target.value)}
-                placeholder="Name"
-                value={newUserName}
-              />
-              <Input
-                className="border-neutral-800 bg-neutral-900"
-                onChange={(e) => setNewUserEmail(e.target.value)}
-                placeholder="Email"
-                type="email"
-                value={newUserEmail}
-              />
-              <Input
-                className="border-neutral-800 bg-neutral-900"
-                onChange={(e) => setNewUserPassword(e.target.value)}
-                placeholder="Password"
-                type="password"
-                value={newUserPassword}
-              />
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={() => setNewUserRole('user')}
-                  size="sm"
-                  variant={newUserRole === 'user' ? 'default' : 'outline'}
-                >
-                  User
-                </Button>
-                <Button
-                  onClick={() => setNewUserRole('admin')}
-                  size="sm"
-                  variant={newUserRole === 'admin' ? 'default' : 'outline'}
-                >
-                  Admin
-                </Button>
-                <Button
-                  disabled={!(newUserEmail && newUserPassword && newUserName)}
-                  onClick={() => createUserMutation.mutate()}
-                  size="sm"
-                >
-                  Create
-                </Button>
-              </div>
+            <div className="grid gap-2 md:grid-cols-5">
+              <Input className="border-neutral-800 bg-neutral-900" onChange={(e) => setNewUserName(e.target.value)} placeholder="Name" value={newUserName} />
+              <Input className="border-neutral-800 bg-neutral-900" onChange={(e) => setNewUserEmail(e.target.value)} placeholder="Email" type="email" value={newUserEmail} />
+              <Input className="border-neutral-800 bg-neutral-900" onChange={(e) => setNewUserPassword(e.target.value)} placeholder="Password" type="password" value={newUserPassword} />
+              <Select value={newUserRole} onValueChange={(v) => setNewUserRole(v as 'user' | 'admin')}>
+                <SelectTrigger className="border-neutral-800 bg-neutral-900">
+                  <SelectValue placeholder="Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button disabled={!(newUserEmail && newUserPassword && newUserName)} onClick={() => createUserMutation.mutate()} size="sm">Create</Button>
             </div>
             <div className="flex items-center space-x-2">
               <Search className="h-4 w-4 text-muted-foreground" />
@@ -538,9 +509,12 @@ export default function UsersPage() {
                         <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuLabel>User Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          
-                          {/* Access Stage Management */}
+
                           <DropdownMenuSub>
+                            <DropdownMenuItem onClick={() => router.push(`/admin/users/${user.id}`)}>
+                              <User className="mr-2 h-4 w-4" />
+                              View User's Profile
+                            </DropdownMenuItem>
                             <DropdownMenuSubTrigger>
                               <UserCheck className="mr-2 h-4 w-4" />
                               Access Stage
@@ -592,8 +566,7 @@ export default function UsersPage() {
                           </DropdownMenuSub>
 
                           <DropdownMenuSeparator />
-                          
-                          {/* Role Management */}
+
                           <DropdownMenuSub>
                             <DropdownMenuSubTrigger>
                               <Shield className="mr-2 h-4 w-4" />
@@ -624,7 +597,7 @@ export default function UsersPage() {
                           </DropdownMenuSub>
 
                           <DropdownMenuSeparator />
-                          
+
                           {/* Admin Actions */}
                           <DropdownMenuItem
                             onClick={() => impersonateUser(user.id)}
@@ -632,16 +605,16 @@ export default function UsersPage() {
                             <UserCog className="mr-2 h-4 w-4" />
                             Impersonate
                           </DropdownMenuItem>
-                          
+
                           <DropdownMenuItem
                             onClick={() => revokeUserSessions(user.id)}
                           >
                             <Shield className="mr-2 h-4 w-4" />
                             Revoke Sessions
                           </DropdownMenuItem>
-                          
+
                           <DropdownMenuSeparator />
-                          
+
                           {/* Destructive Actions */}
                           {user.banned ? (
                             <DropdownMenuItem
@@ -660,7 +633,7 @@ export default function UsersPage() {
                               Ban User
                             </DropdownMenuItem>
                           )}
-                          
+
                           <DropdownMenuItem
                             onClick={() => deleteUser(user.id)}
                             className="text-red-400 focus:text-red-400"
