@@ -9,7 +9,7 @@ export async function subscribeToAudience(input: SubscribeInput) {
     firstName: input.firstName,
     lastName: input.lastName,
     unsubscribed: false,
-
+    properties: input.properties,
     /**
      readonly apiKeys: ApiKeys;
     readonly audiences: Audiences;
