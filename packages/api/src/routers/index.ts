@@ -5,6 +5,7 @@ import { bountiesRouter } from './bounties';
 import { earlyAccessRouter } from './early-access';
 import { newsRouter } from './news';
 import { notificationsRouter } from './notifications';
+import { emailsRouter } from './emails';
 import { profilesRouter } from './profiles';
 import { repositoryRouter } from './repository';
 import { userRouter } from './user';
@@ -36,6 +37,7 @@ export const appRouter = router({
   profiles: profilesRouter,
   news: newsRouter,
   notifications: notificationsRouter,
+  emails: emailsRouter,
   betaApplications: betaApplicationsRouter,
   repository: repositoryRouter,
   billing: billingRouter,

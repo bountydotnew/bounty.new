@@ -53,6 +53,29 @@ export default function WaitlistPage() {
     },
   });
 
+  const inviteToBetaMutation = useMutation({
+    ...trpc.earlyAccess.inviteToBeta.mutationOptions(),
+   onMutate: async (vars: { id: string }) => {
+     setUpdatingIds((prev) => new Set(prev).add(vars.id));
+   },
+    onSuccess: () => {
+      toast.success('Beta invite sent');
+      queryClient.invalidateQueries({
+        queryKey: ['earlyAccess', 'getAdminWaitlist'],
+      });
+    },
+    onError: (error: TRPCClientErrorLike<AppRouter>) => {
+      toast.error(error.message || 'Failed to invite to beta');
+    },
+   onSettled: (_data, _err, vars) => {
+     setUpdatingIds((prev) => {
+       const next = new Set(prev);
+       next.delete(vars.id);
+       return next;
+     });
+   },
+  });
+
   const handleUpdateAccess = (id: string, hasAccess: boolean) => {
     setUpdatingIds((prev) => new Set(prev).add(id));
     updateAccessMutation.mutate(
@@ -101,9 +124,7 @@ export default function WaitlistPage() {
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="font-bold text-2xl text-green-600">
-              {data?.stats.withAccess || 0}
-            </div>
+            <div className="font-semibold text-xl text-green-600">{data?.stats.withAccess || 0}</div>
           </CardContent>
         </Card>
 
@@ -113,9 +134,7 @@ export default function WaitlistPage() {
             <XCircle className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="font-bold text-2xl text-orange-600">
-              {data?.stats.pending || 0}
-            </div>
+            <div className="font-semibold text-xl text-orange-600">{data?.stats.pending || 0}</div>
           </CardContent>
         </Card>
       </div>
@@ -189,6 +208,14 @@ export default function WaitlistPage() {
                           Grant Access
                         </Button>
                       )}
+                      <Button
+                        disabled={updatingIds.has(entry.id)}
+                        onClick={() => inviteToBetaMutation.mutate({ id: entry.id })}
+                        size="sm"
+                        variant="outline"
+                      >
+                        Beta Invite
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -204,7 +231,7 @@ export default function WaitlistPage() {
             )}
 
             {data && data.totalPages > 1 && (
-              <div className="flex items-center justify-center space-x-2 border-neutral-800 border-top pt-4">
+              <div className="flex items-center justify-center space-x-2 border-neutral-800 border-t pt-4">
                 <Button
                   disabled={page === 1}
                   onClick={() => setPage(page - 1)}

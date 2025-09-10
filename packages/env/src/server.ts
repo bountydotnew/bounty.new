@@ -32,6 +32,7 @@ export const env = createEnv({
     BOUNTY_PRO_MONTHLY_ID: z.string().min(1),
     POLAR_SUCCESS_URL: z.string().url(),
     POLAR_WEBHOOK_SECRET: z.string().min(1),
+    RESEND_API_KEY: z.string().min(1),
   },
   experimental__runtimeEnv: process.env,
   skipValidation:

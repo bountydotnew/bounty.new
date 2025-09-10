@@ -1,6 +1,9 @@
-import { db, session, user, userProfile, userReputation } from '@bounty/db';
+import { db, session, user, userProfile, userReputation, invite } from '@bounty/db';
+import { FROM_ADDRESSES, sendEmail } from '@bounty/email';
+import { ExternalInvite } from '@bounty/email';
+import { env } from '@bounty/env/server';
 import { TRPCError } from '@trpc/server';
-import { desc, eq, sql } from 'drizzle-orm';
+import { desc, eq, sql, count } from 'drizzle-orm';
 import { z } from 'zod';
 import {
   adminProcedure,
@@ -10,6 +13,68 @@ import {
 } from '../trpc';
 
 export const userRouter = router({
+  adminGetProfile: adminProcedure
+    .input(z.object({ userId: z.string().uuid() }))
+    .query(async ({ input }) => {
+      const [u] = await db
+        .select({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+          role: user.role,
+          hasAccess: user.hasAccess,
+          accessStage: user.accessStage,
+          betaAccessStatus: user.betaAccessStatus,
+          banned: user.banned,
+          createdAt: user.createdAt,
+        })
+        .from(user)
+        .where(eq(user.id, input.userId))
+        .limit(1);
+      if (!u) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
+      }
+
+      const bountyCount = await db
+        .select({ c: sql<number>`count(*)::int` })
+        .from(sql`bounty` as any)
+        .where(sql`bounty.created_by_id = ${input.userId}`)
+        .then((r) => r[0]?.c ?? 0);
+
+      const sessions = await db
+        .select({
+          id: session.id,
+          createdAt: session.createdAt,
+          expiresAt: session.expiresAt,
+          ipAddress: session.ipAddress,
+          userAgent: session.userAgent,
+        })
+        .from(session)
+        .where(eq(session.userId, input.userId))
+        .orderBy(desc(session.createdAt))
+        .limit(10);
+
+      return {
+        user: u,
+        metrics: { bountiesCreated: bountyCount },
+        sessions,
+      };
+    }),
+
+  adminUpdateName: adminProcedure
+    .input(z.object({ userId: z.string().uuid(), name: z.string().min(1).max(80) }))
+    .mutation(async ({ input }) => {
+      const [updated] = await db
+        .update(user)
+        .set({ name: input.name, updatedAt: new Date() })
+        .where(eq(user.id, input.userId))
+        .returning({ id: user.id, name: user.name });
+      if (!updated) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
+      }
+      return updated;
+    }),
   hasAccess: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 
@@ -387,11 +452,55 @@ export const userRouter = router({
         });
       }
 
-      return { 
-        success: true, 
-        email,
-        accessStage,
-        message: `External invite will be sent to ${email} for ${accessStage} access.`
-      };
+      const rawToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+      const tokenHash = await crypto.subtle
+        .digest('SHA-256', new TextEncoder().encode(rawToken))
+        .then((b) => Buffer.from(new Uint8Array(b)).toString('hex'));
+
+      const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
+
+      await ctx.db.insert(invite).values({ email, accessStage, tokenHash, expiresAt });
+
+      const baseUrl = env.BETTER_AUTH_URL?.replace(/\/$/, '') || 'https://bounty.new';
+      const inviteUrl = `${baseUrl}/login?invite=${rawToken}`;
+      await sendEmail({
+        to: email,
+        subject: 'You’re invited to bounty.new',
+        from: FROM_ADDRESSES.notifications,
+        react: ExternalInvite({ inviteUrl, accessStage: accessStage === 'none' ? undefined : (accessStage as 'alpha' | 'beta' | 'production') }),
+      });
+
+      return { success: true };
+    }),
+  
+  applyInvite: protectedProcedure
+    .input(z.object({ token: z.string().min(20) }))
+    .mutation(async ({ ctx, input }) => {
+      const { token } = input;
+      const tokenHash = await crypto.subtle
+        .digest('SHA-256', new TextEncoder().encode(token))
+        .then((b) => Buffer.from(new Uint8Array(b)).toString('hex'));
+
+      const rows = await ctx.db
+        .select()
+        .from(invite)
+        .where(eq(invite.tokenHash, tokenHash))
+        .limit(1);
+      const row = rows[0];
+      if (!row) throw new TRPCError({ code: 'NOT_FOUND', message: 'Invalid invite' });
+      if (row.usedAt) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invite already used' });
+      if (row.expiresAt && row.expiresAt < new Date()) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invite expired' });
+
+      await ctx.db
+        .update(user)
+        .set({ accessStage: row.accessStage, updatedAt: new Date() })
+        .where(eq(user.id, ctx.session.user.id));
+
+      await ctx.db
+        .update(invite)
+        .set({ usedAt: new Date(), usedByUserId: ctx.session.user.id })
+        .where(eq(invite.id, row.id));
+
+      return { success: true };
     }),
 });
