@@ -9,7 +9,7 @@ export interface GitHubRepository {
   clone_url: string;
   ssh_url: string;
   url: string;
-  homepage?: string;
+  homepage: string | null;
   language: string | null;
   stargazers_count: number;
   watchers_count: number;
@@ -42,7 +42,7 @@ export interface GitHubUser {
   id: number;
   avatar_url: string;
   html_url: string;
-  type: 'User' | 'Organization';
+  type: 'User' | 'Organization' | 'Bot';
 }
 
 export interface GitHubLabel {
