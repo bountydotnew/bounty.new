@@ -34,7 +34,7 @@ export interface BetterAuthSession {
 
 export interface ExtendedAuthSession extends BetterAuthSession {
   impersonatedBy?: string;
-  session?: BetterAuthSessionData & {
+  session: BetterAuthSessionData & {
     impersonatedBy?: string;
   };
 }

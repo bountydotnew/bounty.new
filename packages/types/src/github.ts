@@ -22,7 +22,7 @@ export interface GitHubRepository {
   has_wiki: boolean;
   has_pages: boolean;
   has_downloads: boolean;
-  visibility: 'public' | 'private';
+  visibility: 'public' | 'private' | 'internal';
   archived: boolean;
   disabled: boolean;
   default_branch: string;

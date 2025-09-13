@@ -167,14 +167,11 @@ export class GithubManager {
 
   async getOpenPRs(identifier: string): Promise<number> {
     const { owner, repo } = parseRepo(identifier);
-    const { data } = await this.octokit.rest.pulls.list({
-      owner,
-      repo,
-      state: 'open',
+    const { data: search } = await this.octokit.rest.search.issuesAndPullRequests({
+      q: `repo:${owner}/${repo} is:pr is:open`,
       per_page: 1,
     });
-    const total = Array.isArray(data) ? data.length : 0;
-    return total;
+    return search.total_count ?? 0;
   }
 
   async getRecentCommits(identifier: string, perPage = 100) {

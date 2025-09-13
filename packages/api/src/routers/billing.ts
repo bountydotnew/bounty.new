@@ -25,8 +25,9 @@ export const billingRouter = router({
     try {
       await polarClient.customers.getExternal({ externalId });
       return { ok: true } as const;
-    } catch (err: any) {
-      if (err?.status && err.status !== 404) {
+    } catch (err: unknown) {
+      const e = err as PolarError;
+      if (e?.status && e.status !== 404) {
         // proceed to create anyway
       }
       try {
