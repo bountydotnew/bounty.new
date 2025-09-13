@@ -1,5 +1,6 @@
 import { Polar } from '@polar-sh/sdk';
 import { TRPCError } from '@trpc/server';
+import type { PolarError } from '@bounty/types';
 import { protectedProcedure, router } from '../trpc';
 
 const polarEnv =
@@ -34,14 +35,15 @@ export const billingRouter = router({
           email: user.email ?? undefined,
           name: user.name ?? user.email ?? undefined,
           metadata: { userId: externalId },
-        } as any);
+        });
         return { ok: true } as const;
-      } catch (createErr: any) {
+      } catch (createErr: unknown) {
+        const error = createErr as PolarError;
         const msg = String(
-          createErr?.message || createErr?.body$ || createErr?.detail || ''
+          error?.message || error?.body$ || error?.detail || ''
         );
         if (
-          createErr?.status === 409 ||
+          error?.status === 409 ||
           msg.includes('external ID cannot be updated') ||
           msg.toLowerCase().includes('external_id cannot be updated') ||
           msg.includes('"error":"PolarRequestValidationError"')
