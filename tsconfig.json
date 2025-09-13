@@ -13,6 +13,11 @@
     "isolatedModules": true,
     "noEmit": true,
     "strictNullChecks": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
     "types": []
   }
 }

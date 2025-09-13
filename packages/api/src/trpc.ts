@@ -1,4 +1,5 @@
 import { initTRPC, TRPCError } from '@trpc/server';
+import type { ExtendedAuthSession } from '@bounty/types';
 import type { Context } from './context';
 
 export const t = initTRPC.context<Context>().create();
@@ -24,8 +25,8 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
 });
 
 export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-  const raw = ctx.session as any;
-  const impersonatedBy = raw?.impersonatedBy ?? raw?.session?.impersonatedBy;
+  const sessionData = ctx.session as ExtendedAuthSession;
+  const impersonatedBy = sessionData?.impersonatedBy ?? sessionData?.session?.impersonatedBy;
   if (impersonatedBy) {
     throw new TRPCError({
       code: 'FORBIDDEN',

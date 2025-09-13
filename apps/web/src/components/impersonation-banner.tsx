@@ -1,6 +1,7 @@
 'use client';
 
 import { authClient } from '@bounty/auth/client';
+import type { ExtendedAuthSession } from '@bounty/types';
 import { useQueryClient } from '@tanstack/react-query';
 import { ShieldAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -13,9 +14,10 @@ export default function ImpersonationBanner() {
   const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
   const [open, setOpen] = useState(false);
+  const sessionData = session as ExtendedAuthSession;
   const impersonatedBy =
-    (session as any)?.session?.impersonatedBy ||
-    (session as any)?.impersonatedBy;
+    sessionData?.session?.impersonatedBy ||
+    sessionData?.impersonatedBy;
   if (!impersonatedBy) {
     return null;
   }
