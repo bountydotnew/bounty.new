@@ -51,6 +51,6 @@ export async function generateMetadata({
   };
 }
 
-export default function Page({ params }: { params: Promise<{ id: string }> }) {
-  return <BountyPage params={params} />;
+export default function Page() {
+  return <BountyPage />;
 }
