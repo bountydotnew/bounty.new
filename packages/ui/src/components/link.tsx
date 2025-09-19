@@ -9,14 +9,12 @@ const trackLinkClick = (linkName: string) => {
   track('next/link_click', { link_name: linkName });
 };
 
-interface TrackingEventObject {
-  [key: string]: string | number | boolean | null | undefined;
-}
-
 type Props = ComponentPropsWithoutRef<'a'> &
   LinkProps & {
     event?: string;
-    eventObject?: TrackingEventObject;
+    // TODO: add type
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    eventObject?: Record<string, any>;
   };
 
 export default function Link({

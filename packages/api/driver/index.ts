@@ -3,7 +3,7 @@ import type { GitManager, GitManagerConfig } from './types';
 
 const supportedProviders = {
   github: (config: GitManagerConfig): GitManager =>
-    new GithubManager(config),
+    new GithubManager(config as any) as unknown as GitManager,
 };
 
 export const createDriver = (

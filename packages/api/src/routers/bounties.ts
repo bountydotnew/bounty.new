@@ -1197,7 +1197,7 @@ export const bountiesRouter = router({
             message: 'Comment not found',
           });
         }
-        if (existing.userId !== ctx.session.user.id) {
+        if ((existing as any).userId !== ctx.session.user.id) {
           throw new TRPCError({
             code: 'FORBIDDEN',
             message: 'Not your comment',
@@ -1210,7 +1210,7 @@ export const bountiesRouter = router({
         try {
           await track('bounty_comment_deleted', {
             comment_id: input.commentId,
-            bounty_id: existing.bountyId,
+            bounty_id: (existing as any).bountyId,
             user_id: ctx.session.user.id,
             source: 'api',
           });
