@@ -20,6 +20,7 @@ import type {
   WaitlistCookieData,
   WaitlistCount,
   WaitlistHookResult,
+  WaitlistPositionResponse,
   WaitlistSubmissionData,
 } from '@/types/waitlist';
 import { trpc } from '@/utils/trpc';
@@ -51,10 +52,11 @@ function getCookie(name: string): string | null {
   return null;
 }
 
-function useWaitlistSubmission(): WaitlistHookResult {
+function useWaitlistSubmission(): WaitlistHookResult & { position: number | null } {
   const queryClient = useQueryClient();
   const { celebrate } = useConfetti();
   const [success, setSuccess] = useState(false);
+  const [position, setPosition] = useState<number | null>(null);
   const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitInfo | null>(
     null
   );
@@ -79,6 +81,7 @@ function useWaitlistSubmission(): WaitlistHookResult {
     },
     onSuccess: (data, variables) => {
       setSuccess(true);
+      setPosition(data.position);
       setRateLimitInfo({
         remaining: data.remaining,
         limit: data.limit,
@@ -88,6 +91,7 @@ function useWaitlistSubmission(): WaitlistHookResult {
         submitted: true,
         timestamp: new Date().toISOString(),
         email: btoa(variables.email).substring(0, 16),
+        position: data.position,
       };
       setCookie('waitlist_data', JSON.stringify(cookieData), 365);
 
@@ -124,7 +128,7 @@ function useWaitlistSubmission(): WaitlistHookResult {
     },
   });
 
-  return { mutate, isPending, success, setSuccess, rateLimitInfo };
+  return { mutate, isPending, success, setSuccess, rateLimitInfo, position };
 }
 
 function useWaitlistCount() {
@@ -139,6 +143,35 @@ function useWaitlistCount() {
     isLoading: query.isLoading,
     error: query.error,
     isError: query.isError,
+  };
+}
+
+function useWaitlistPosition() {
+  const { mutate: checkPosition, isPending, data, error } = useMutation({
+    mutationFn: async (email: string): Promise<WaitlistPositionResponse> => {
+      const response = await fetch(`/api/waitlist?email=${encodeURIComponent(email)}`);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to check position');
+      }
+      
+      return data;
+    },
+    onError: (error: Error) => {
+      if (error.message.includes('not found')) {
+        toast.error('Email not found in waitlist');
+      } else {
+        toast.error('Failed to check position. Please try again.');
+      }
+    },
+  });
+
+  return {
+    checkPosition,
+    isPending,
+    position: data?.position ?? null,
+    error,
   };
 }
 
@@ -165,14 +198,17 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
 
   const waitlistSubmission = useWaitlistSubmission();
   const waitlistCount = useWaitlistCount();
+  const positionChecker = useWaitlistPosition();
+  const [savedPosition, setSavedPosition] = useState<number | null>(null);
 
   useEffect(() => {
     const waitlistData = getCookie('waitlist_data');
     if (waitlistData) {
       try {
-        const data = JSON.parse(waitlistData);
+        const data: WaitlistCookieData = JSON.parse(waitlistData);
         if (data.submitted) {
           waitlistSubmission.setSuccess(true);
+          setSavedPosition(data.position ?? null);
         }
       } catch (_error) {}
     }
@@ -223,7 +259,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
             className="font-display-book font-semibold text-xl"
             style={{ color: 'rgba(239, 239, 239, 1)' }}
           >
-            You&apos;re on the waitlist!
+            You&apos;re #{waitlistSubmission.position || savedPosition || '?'} in line!
           </p>
           <p
             className="mb-4 max-w-2xl font-display-book text-base leading-relaxed"
@@ -232,6 +268,18 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
             We&apos;ll let you know when we&apos;re ready to show you what
             we&apos;ve been working on.
           </p>
+          {/* {(waitlistSubmission.position || savedPosition) && (
+            <div className="mb-4">
+              <div 
+                className="bg-white/10 rounded-lg p-3 border border-white/20"
+                style={{ backdropFilter: 'blur(10px)' }}
+              >
+                <p className="font-display-book text-sm text-white/80">
+                  <span className="font-semibold text-white">Your position:</span> #{waitlistSubmission.position || savedPosition}
+                </p>
+              </div>
+            </div>
+          )} */}
         </div>
       ) : (
         <div className="w-full max-w-lg">
@@ -280,6 +328,50 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
               )}
             </Button>
           </form>
+          
+          {/* Position Checker */}
+          <div className="mb-6 max-w-md">
+            <p className="mb-2 font-display-book text-sm text-white/60">
+              Already on the waitlist? Check your position:
+            </p>
+            <form
+              className="flex gap-2"
+              onSubmit={handleSubmit((data) => positionChecker.checkPosition(data.email))}
+            >
+              <Input
+                className="flex-1 border-0 font-display-book text-white placeholder:text-gray-500"
+                placeholder="your@email.com"
+                style={{
+                  background: 'rgba(40, 40, 40, 0.5)',
+                  borderRadius: '10px',
+                  padding: '8px 12px',
+                  height: '36px',
+                }}
+                type="email"
+                {...register('email')}
+                disabled={positionChecker.isPending}
+              />
+              <Button
+                className="font-display-book text-black hover:bg-gray-100"
+                disabled={positionChecker.isPending}
+                size="sm"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.8)',
+                  borderRadius: '10px',
+                  padding: '8px 12px',
+                  height: '36px',
+                }}
+                type="submit"
+              >
+                {positionChecker.isPending ? 'Checking...' : 'Check'}
+              </Button>
+            </form>
+            {positionChecker.position && (
+              <p className="mt-2 font-display-book text-sm text-green-400">
+                You&apos;re #{positionChecker.position} in line! 🎉
+              </p>
+            )}
+          </div>
         </div>
       )}
 
