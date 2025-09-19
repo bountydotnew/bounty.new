@@ -44,7 +44,7 @@ export default function GithubIssueToBountyPage() {
       description,
       issueUrl: data.data.html_url,
       repositoryUrl: `https://github.com/${data.data.owner}/${data.data.repo}`,
-      tags: Array.isArray(data.data.labels) ? data.data.labels.slice(0, 5) : [],
+      tags: Array.isArray(data.data.labels) ? data.data.labels.filter((label): label is string => label !== null).slice(0, 5) : [],
       amount: data.data.detectedAmount || '',
       currency: data.data.detectedCurrency || 'USD',
     };
