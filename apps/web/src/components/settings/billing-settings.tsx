@@ -1,12 +1,17 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { Badge } from '@bounty/ui/components/badge';
 import { Button } from '@bounty/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@bounty/ui/components/card';
 import { Separator } from '@bounty/ui/components/separator';
 import { useBilling } from '@bounty/ui/hooks/use-billing';
+import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export function BillingSettings() {
   const [isClientMounted, setIsClientMounted] = useState(false);

@@ -1,12 +1,12 @@
 'use client';
 
-import { PanelRightIcon } from 'lucide-react';
-import { useState } from 'react';
-import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar';
 import { Button } from '@bounty/ui/components/button';
 import { Sheet, SheetContent, SheetTrigger } from '@bounty/ui/components/sheet';
 import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
 import { cn } from '@bounty/ui/lib/utils';
+import { PanelRightIcon } from 'lucide-react';
+import { useState } from 'react';
+import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar';
 import type { Bounty } from '@/types/dashboard';
 
 interface MobileSidebarProps {

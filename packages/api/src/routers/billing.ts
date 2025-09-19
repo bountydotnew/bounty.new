@@ -1,12 +1,12 @@
+import { env } from '@bounty/env/server';
+import type { PolarError } from '@bounty/types';
 import { Polar } from '@polar-sh/sdk';
 import { TRPCError } from '@trpc/server';
-import type { PolarError } from '@bounty/types';
 import { protectedProcedure, router } from '../trpc';
 
-const polarEnv =
-  process.env.NODE_ENV === 'production' ? 'production' : 'sandbox';
+const polarEnv = env.NODE_ENV === 'production' ? 'production' : 'sandbox';
 const polarClient = new Polar({
-  accessToken: process.env.POLAR_ACCESS_TOKEN as string,
+  accessToken: env.POLAR_ACCESS_TOKEN,
   server: polarEnv,
 });
 
@@ -32,7 +32,7 @@ export const billingRouter = router({
       }
       try {
         await polarClient.customers.create({
-          external_id: externalId,
+          externalId: externalId,
           email: user.email ?? undefined,
           name: user.name ?? user.email ?? undefined,
           metadata: { userId: externalId },

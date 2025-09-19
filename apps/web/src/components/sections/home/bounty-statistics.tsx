@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
 import { cn } from '@bounty/ui/lib/utils';
+import { useQuery } from '@tanstack/react-query';
 import { trpc } from '@/utils/trpc';
 import { BountyStatistic } from './bounty-statistic';
 
@@ -7,7 +7,7 @@ export function BountyStatistics({ className }: { className?: string }) {
   const { data: stats } = useQuery(trpc.bounties.getBountyStats.queryOptions());
 
   return (
-    <div className={cn('flex flex-col md:flex-row gap-8', className)}>
+    <div className={cn('flex flex-col gap-8 md:flex-row', className)}>
       <BountyStatistic
         color="text-green-400"
         label="in bounties"

@@ -7,8 +7,7 @@ import { grim } from '../lib/use-dev-log';
 const { error, info, warn } = grim();
 
 import { db, user as userTable, waitlist } from '@bounty/db';
-import { FROM_ADDRESSES, sendEmail } from '@bounty/email';
-import { AlphaAccessGranted } from '@bounty/email';
+import { AlphaAccessGranted, FROM_ADDRESSES, sendEmail } from '@bounty/email';
 import { getRateLimiter } from '../lib/ratelimiter';
 import { adminProcedure, publicProcedure, router } from '../trpc';
 
@@ -247,10 +246,17 @@ export const earlyAccessRouter = router({
         );
 
         if (hasAccess) {
-          const [entry] = await db.select().from(waitlist).where(eq(waitlist.id, id));
+          const [entry] = await db
+            .select()
+            .from(waitlist)
+            .where(eq(waitlist.id, id));
           if (entry?.email) {
             const [u] = await db
-              .select({ id: userTable.id, name: userTable.name, email: userTable.email })
+              .select({
+                id: userTable.id,
+                name: userTable.name,
+                email: userTable.email,
+              })
               .from(userTable)
               .where(eq(userTable.email, entry.email))
               .limit(1);
@@ -273,8 +279,6 @@ export const earlyAccessRouter = router({
       }
     }),
 
-  
-
   inviteToBeta: adminProcedure
     .input(
       z.object({
@@ -290,22 +294,36 @@ export const earlyAccessRouter = router({
           .limit(1);
 
         if (!entry) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Waitlist entry not found' });
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Waitlist entry not found',
+          });
         }
 
         const [u] = await db
-          .select({ id: userTable.id, name: userTable.name, email: userTable.email })
+          .select({
+            id: userTable.id,
+            name: userTable.name,
+            email: userTable.email,
+          })
           .from(userTable)
           .where(eq(userTable.email, entry.email))
           .limit(1);
 
         if (!u?.id) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found for this email' });
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'User not found for this email',
+          });
         }
 
         await db
           .update(userTable)
-          .set({ betaAccessStatus: 'approved', accessStage: 'beta', updatedAt: new Date() })
+          .set({
+            betaAccessStatus: 'approved',
+            accessStage: 'beta',
+            updatedAt: new Date(),
+          })
           .where(eq(userTable.id, u.id));
 
         await sendEmail({

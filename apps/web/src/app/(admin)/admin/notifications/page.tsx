@@ -1,13 +1,19 @@
 'use client';
 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@bounty/ui/components/card';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { AdminHeader } from '@/components/admin';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@bounty/ui/components/card';
-import { trpc } from '@/utils/trpc';
-import { UserSearchList } from '@/components/admin/notifications/user-search-list';
 import { ComposeForm } from '@/components/admin/notifications/compose-form';
+import { UserSearchList } from '@/components/admin/notifications/user-search-list';
+import { trpc } from '@/utils/trpc';
 
 export default function AdminNotificationsPage() {
   const [search, setSearch] = useState('');
@@ -51,8 +57,12 @@ export default function AdminNotificationsPage() {
 
       <Card className="border border-neutral-800 bg-[#222222]">
         <CardHeader>
-          <CardTitle className="text-sm text-neutral-300 font-medium">Find users</CardTitle>
-          <CardDescription className="text-xs text-neutral-500">Search by name or email, then select recipients</CardDescription>
+          <CardTitle className="font-medium text-neutral-300 text-sm">
+            Find users
+          </CardTitle>
+          <CardDescription className="text-neutral-500 text-xs">
+            Search by name or email, then select recipients
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <UserSearchList
@@ -79,8 +89,12 @@ export default function AdminNotificationsPage() {
 
       <Card className="border border-neutral-800 bg-[#222222]">
         <CardHeader>
-          <CardTitle className="text-sm text-neutral-300 font-medium">Compose</CardTitle>
-          <CardDescription className="text-xs text-neutral-500">Craft the message and optional link</CardDescription>
+          <CardTitle className="font-medium text-neutral-300 text-sm">
+            Compose
+          </CardTitle>
+          <CardDescription className="text-neutral-500 text-xs">
+            Craft the message and optional link
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <ComposeForm

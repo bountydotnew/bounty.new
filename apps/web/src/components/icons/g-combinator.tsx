@@ -16,13 +16,17 @@ export default function GCombinator() {
 
 export function YCombinator() {
   return (
-    <svg className="h-5 w-5 rounded-[2px]" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg"
-      >
+    <svg
+      className="h-5 w-5 rounded-[2px]"
+      fill="none"
+      viewBox="0 0 31 31"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path d="M0 0H30.12V30.5H0V0Z" fill="#F15C22" />
       <path
         d="M8.51136 8.45455H10.5284L14.5625 15.2443H14.733L18.767 8.45455H20.7841L15.5284 17.0057V23H13.767V17.0057L8.51136 8.45455Z"
-        fill="white" />
+        fill="white"
+      />
     </svg>
   );
 }
-

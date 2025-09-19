@@ -1,15 +1,20 @@
 'use client';
 
+import { Badge } from '@bounty/ui/components/badge';
+import { Button } from '@bounty/ui/components/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@bounty/ui/components/card';
+import { Input } from '@bounty/ui/components/input';
+import { Label } from '@bounty/ui/components/label';
+import { Switch } from '@bounty/ui/components/switch';
 import { Copy, ExternalLink, Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { PaymentButton } from '@/components/payment/payment-button';
-import { Badge } from '@bounty/ui/components/badge';
-import { Button } from '@bounty/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
-import { Input } from '@bounty/ui/components/input';
-import { Label } from '@bounty/ui/components/label';
-import { Switch } from '@bounty/ui/components/switch';
 
 export function PaymentSettings() {
   const [paymentEnabled, setPaymentEnabled] = useState(false);

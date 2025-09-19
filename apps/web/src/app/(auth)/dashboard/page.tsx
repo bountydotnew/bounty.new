@@ -1,28 +1,28 @@
 'use client';
 
 import { authClient } from '@bounty/auth/client';
+import { Button } from '@bounty/ui/components/button';
+import { TrackedButton } from '@bounty/ui/components/tracked-button';
+import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
+import { track } from '@databuddy/sdk';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import { AccessGate } from '@/components/access-gate';
-import { DashboardPageSkeleton } from '@/components/dashboard/skeletons/dashboard-page-skeleton';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
 import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
 import GithubImportModal from '@/components/bounty/github-import-modal';
 import { BetaAccessScreen } from '@/components/dashboard/beta-access-screen';
-import { Button } from '@bounty/ui/components/button';
 import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar';
 // Dashboard components
 import { ErrorBoundary } from '@/components/dashboard/error-boundary';
+import { DashboardPageSkeleton } from '@/components/dashboard/skeletons/dashboard-page-skeleton';
 import { useDevice } from '@/components/device-provider';
 import { Header } from '@/components/dual-sidebar/sidebar-header';
 import GitHub from '@/components/icons/github';
 import { Onboarding } from '@/components/onboarding';
-import { TrackedButton } from '@bounty/ui/components/tracked-button';
 // Constants and types
 import { PAGINATION_DEFAULTS, PAGINATION_LIMITS } from '@/constants';
-import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { trpc } from '@/utils/trpc';
-import { track } from "@databuddy/sdk"
 
 track('screen_view', { screen_name: 'dashboard' });
 

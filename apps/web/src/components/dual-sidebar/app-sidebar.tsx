@@ -1,5 +1,13 @@
 'use client';
 
+import { Divider } from '@bounty/ui/components/divider';
+import Link from '@bounty/ui/components/link';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+} from '@bounty/ui/components/sidebar';
 import {
   AudioWaveform,
   Award,
@@ -22,14 +30,6 @@ import { SidebarNavSkeleton } from '@/components/dashboard/skeletons/sidebar-nav
 import { NavMain } from '@/components/dual-sidebar/nav-main';
 // import { NavProjects } from "@/components/dual-sidebar/nav-projects";
 import { NavUser } from '@/components/dual-sidebar/nav-user';
-import { Divider } from '@bounty/ui/components/divider';
-import Link from '@bounty/ui/components/link';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-} from '@bounty/ui/components/sidebar';
 import { LINKS } from '@/constants';
 import Bookmark from '../icons/bookmark';
 import Bounty from '../icons/bounty';

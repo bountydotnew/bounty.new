@@ -1,8 +1,7 @@
+import { cn } from '@bounty/ui/lib/utils';
 import { CheckIcon } from 'lucide-react';
 import { Checkbox as CheckboxPrimitive } from 'radix-ui';
 import type * as React from 'react';
-
-import { cn } from '@bounty/ui/lib/utils';
 
 function Checkbox({
   className,

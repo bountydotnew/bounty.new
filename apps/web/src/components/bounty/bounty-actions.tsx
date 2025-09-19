@@ -1,5 +1,12 @@
 'use client';
 
+import { Button } from '@bounty/ui/components/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@bounty/ui/components/dropdown-menu';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowUpIcon,
@@ -9,13 +16,6 @@ import {
   Share2,
 } from 'lucide-react';
 import BookmarkButton from '@/components/bounty/bookmark-button';
-import { Button } from '@bounty/ui/components/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@bounty/ui/components/dropdown-menu';
 import type {
   ActionItem,
   ActionsDropdownProps,
@@ -165,14 +165,22 @@ export default function BountyActions({
         voteCount={voteCount}
       />
       <BookmarkButton
-        bookmarked={onToggleBookmark ? controlledBookmarked : bookmarkQuery.data?.bookmarked}
+        bookmarked={
+          onToggleBookmark
+            ? controlledBookmarked
+            : bookmarkQuery.data?.bookmarked
+        }
         bountyId={bountyId}
         onToggle={handleToggleBookmark}
       />
       <ActionsDropdown
         actions={mergedActions}
         ariaLabel="Open bounty actions"
-        bookmarked={onToggleBookmark ? controlledBookmarked : bookmarkQuery.data?.bookmarked}
+        bookmarked={
+          onToggleBookmark
+            ? controlledBookmarked
+            : bookmarkQuery.data?.bookmarked
+        }
         onBookmark={handleToggleBookmark}
         onShare={onShare}
       />

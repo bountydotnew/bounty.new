@@ -2,11 +2,11 @@
 
 import { authClient } from '@bounty/auth/client';
 import type { ExtendedAuthSession } from '@bounty/types';
+import { Button } from '@bounty/ui/components/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { ShieldAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Button } from '@bounty/ui/components/button';
 import { ImpersonationUserPicker } from '@/components/admin/impersonation-user-picker';
 
 export default function ImpersonationBanner() {
@@ -16,8 +16,7 @@ export default function ImpersonationBanner() {
   const [open, setOpen] = useState(false);
   const sessionData = session as ExtendedAuthSession;
   const impersonatedBy =
-    sessionData?.session?.impersonatedBy ||
-    sessionData?.impersonatedBy;
+    sessionData?.session?.impersonatedBy || sessionData?.impersonatedBy;
   if (!impersonatedBy) {
     return null;
   }

@@ -1,5 +1,20 @@
 'use client';
 
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@bounty/ui/components/avatar';
+import { Badge } from '@bounty/ui/components/badge';
+import { Button } from '@bounty/ui/components/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@bounty/ui/components/card';
+import Link from '@bounty/ui/components/link';
+import { Separator } from '@bounty/ui/components/separator';
 import { useQuery } from '@tanstack/react-query';
 import {
   Activity,
@@ -17,12 +32,6 @@ import {
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { PaymentModal } from '@/components/payment/payment-modal';
-import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
-import { Badge } from '@bounty/ui/components/badge';
-import { Button } from '@bounty/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
-import Link from '@bounty/ui/components/link';
-import { Separator } from '@bounty/ui/components/separator';
 
 export default function PaymentPage() {
   const { username } = useParams<{ username: string }>();

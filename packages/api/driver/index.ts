@@ -2,8 +2,7 @@ import { GithubManager } from './github';
 import type { GitManager, GitManagerConfig } from './types';
 
 const supportedProviders = {
-  github: (config: GitManagerConfig): GitManager =>
-    new GithubManager(config),
+  github: (config: GitManagerConfig): GitManager => new GithubManager(config),
 };
 
 export const createDriver = (

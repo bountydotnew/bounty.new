@@ -1,21 +1,21 @@
-import { z } from "zod";
-import { adminProcedure, router } from "../trpc";
-import { TRPCError } from "@trpc/server";
+import type { AudienceKey, FromKey } from '@bounty/email';
 import {
   AUDIENCES,
   FROM_ADDRESSES,
   sendEmail,
   subscribeToAudience,
   unsubscribeFromAudience,
-} from "@bounty/email";
-import type { AudienceKey, FromKey } from "@bounty/email";
-import { grim } from "../lib/use-dev-log";
+} from '@bounty/email';
+import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
+import { grim } from '../lib/use-dev-log';
+import { adminProcedure, router } from '../trpc';
 
 const fromKeySchema = z.custom<FromKey>(
-  (v) => typeof v === "string" && v in FROM_ADDRESSES
+  (v) => typeof v === 'string' && v in FROM_ADDRESSES
 );
 const audienceKeySchema = z.custom<AudienceKey>(
-  (v) => typeof v === "string" && v in AUDIENCES
+  (v) => typeof v === 'string' && v in AUDIENCES
 );
 
 export const emailsRouter = router({
@@ -37,7 +37,7 @@ export const emailsRouter = router({
     )
     .mutation(async ({ input }) => {
       const { info } = grim();
-      info("email.send", {
+      info('email.send', {
         to: Array.isArray(input.to) ? input.to : [input.to],
         subject: input.subject,
         fromKey: input.fromKey,
@@ -55,14 +55,17 @@ export const emailsRouter = router({
       if (res.error) {
         const errorCode = (res.error as any)?.statusCode;
         const code =
-          errorCode === 429 ? "TOO_MANY_REQUESTS" :
-          errorCode === 403 ? "FORBIDDEN" :
-          errorCode && errorCode >= 400 && errorCode < 500 ? "BAD_REQUEST" :
-          "INTERNAL_SERVER_ERROR";
+          errorCode === 429
+            ? 'TOO_MANY_REQUESTS'
+            : errorCode === 403
+              ? 'FORBIDDEN'
+              : errorCode && errorCode >= 400 && errorCode < 500
+                ? 'BAD_REQUEST'
+                : 'INTERNAL_SERVER_ERROR';
         throw new TRPCError({ code, message: res.error.message });
       }
       const payload = { id: res.data?.id ?? null };
-      console.info("email.send.result", payload);
+      console.info('email.send.result', payload);
       return { success: true, data: payload };
     }),
 
@@ -100,5 +103,3 @@ export const emailsRouter = router({
       return res;
     }),
 });
-
-

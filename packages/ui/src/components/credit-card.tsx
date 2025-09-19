@@ -1,4 +1,5 @@
 'use client';
+import { cn } from '@bounty/ui/lib/utils';
 import {
   type ComponentProps,
   createContext,
@@ -9,7 +10,6 @@ import {
   useState,
 } from 'react';
 import { PaymentIcon } from 'react-svg-credit-card-payment-icons';
-import { cn } from '@bounty/ui/lib/utils';
 
 const useSupportsHover = () => {
   const [supportsHover, setSupportsHover] = useState(false);

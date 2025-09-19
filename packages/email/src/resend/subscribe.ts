@@ -1,5 +1,5 @@
-import { createResendClient } from "./client";
-import type { SubscribeInput, UnsubscribeInput } from "./types";
+import { createResendClient } from './client';
+import type { SubscribeInput, UnsubscribeInput } from './types';
 
 export async function subscribeToAudience(input: SubscribeInput) {
   const resend = createResendClient();
@@ -9,16 +9,6 @@ export async function subscribeToAudience(input: SubscribeInput) {
     firstName: input.firstName,
     lastName: input.lastName,
     unsubscribed: false,
-    properties: input.properties,
-    /**
-     readonly apiKeys: ApiKeys;
-    readonly audiences: Audiences;
-    readonly batch: Batch;
-    readonly broadcasts: Broadcasts;
-    readonly contacts: Contacts;
-    readonly domains: Domains;
-    readonly emails: Emails; 
-     */
   });
   return res;
 }
@@ -31,5 +21,3 @@ export async function unsubscribeFromAudience(input: UnsubscribeInput) {
   });
   return res;
 }
-
-

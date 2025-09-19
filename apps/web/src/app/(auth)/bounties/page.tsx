@@ -1,6 +1,8 @@
 'use client';
 
 import { authClient } from '@bounty/auth/client';
+import { Button } from '@bounty/ui/components/button';
+import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import React from 'react';
@@ -9,8 +11,6 @@ import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
 import GithubImportModal from '@/components/bounty/github-import-modal';
 import { Header } from '@/components/dual-sidebar/sidebar-header';
 import GitHub from '@/components/icons/github';
-import { Button } from '@bounty/ui/components/button';
-import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { trpc } from '@/utils/trpc';
 
 export default function BountiesPage() {

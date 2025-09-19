@@ -1,8 +1,8 @@
 'use client';
 
+import { cn } from '@bounty/ui/lib/utils';
 import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
-import { cn } from '@bounty/ui/lib/utils';
 
 interface HeaderBaseProps {
   leftContent?: ReactNode;

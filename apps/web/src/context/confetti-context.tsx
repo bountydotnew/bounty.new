@@ -1,9 +1,9 @@
 'use client';
 
+import { useWindowSize } from '@bounty/ui/hooks/use-window-size';
 import { createContext, useContext, useEffect, useState } from 'react';
 import Confetti from 'react-confetti';
-import { useWindowSize } from '@bounty/ui/hooks/use-window-size';
-import { ConfettiProviderProps } from '@/types/confetti';
+import type { ConfettiProviderProps } from '@/types/confetti';
 
 interface ConfettiContextType {
   celebrate: () => void;

@@ -1,13 +1,13 @@
 'use client';
 
+import Link from '@bounty/ui/components/link';
+import { SidebarTrigger } from '@bounty/ui/components/sidebar';
+import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
+import { cn } from '@bounty/ui/lib/utils';
 import { AccessGate } from '@/components/access-gate';
 import { HeaderNavSkeleton } from '@/components/dashboard/skeletons/header-nav-skeleton';
 import { MobileSidebar } from '@/components/dual-sidebar/mobile-sidebar';
-import Link from '@bounty/ui/components/link';
-import { SidebarTrigger } from '@bounty/ui/components/sidebar';
 import { LINKS } from '@/constants';
-import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
-import { cn } from '@bounty/ui/lib/utils';
 import type { Bounty } from '@/types/dashboard';
 
 type NavItem = { href: string; label: string };

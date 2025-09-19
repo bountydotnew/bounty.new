@@ -1,9 +1,9 @@
 'use client';
 
+import { cn } from '@bounty/ui/lib/utils';
 import { track } from '@databuddy/sdk';
 import { type LinkProps, default as NextLink } from 'next/link';
 import type { ComponentPropsWithoutRef } from 'react';
-import { cn } from '@bounty/ui/lib/utils';
 
 const trackLinkClick = (linkName: string) => {
   track('next/link_click', { link_name: linkName });

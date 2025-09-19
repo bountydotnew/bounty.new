@@ -1,10 +1,9 @@
 'use client';
 
+import { Button } from '@bounty/ui/components/button';
+import { useNavigationContext } from '@bounty/ui/hooks/use-navigation-context';
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@bounty/ui/components/button';
-
-import { useNavigationContext } from '@bounty/ui/hooks/use-navigation-context';
 
 export function SmartNavigation() {
   const router = useRouter();

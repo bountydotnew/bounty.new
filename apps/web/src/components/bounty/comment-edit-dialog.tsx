@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
 import { Button, HotkeyButton } from '@bounty/ui/components/button';
 import {
   Dialog,
@@ -12,6 +11,7 @@ import {
 import { Sheet, SheetContent } from '@bounty/ui/components/sheet';
 import { Textarea } from '@bounty/ui/components/textarea';
 import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
+import { useEffect, useMemo, useState } from 'react';
 
 interface CommentEditDialogProps {
   open: boolean;

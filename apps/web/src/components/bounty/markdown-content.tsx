@@ -1,3 +1,4 @@
+import Link from '@bounty/ui/components/link';
 import { Base64 } from 'js-base64';
 import { Check, Copy } from 'lucide-react';
 import React, { useState } from 'react';
@@ -5,7 +6,6 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
-import Link from '@bounty/ui/components/link';
 
 interface MarkdownContentProps {
   content: string;

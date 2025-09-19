@@ -1,9 +1,9 @@
 'use client';
 
+import { cn } from '@bounty/ui/lib/utils';
 import { motion, useAnimation } from 'motion/react';
 import type { HTMLAttributes } from 'react';
 import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
-import { cn } from '@bounty/ui/lib/utils';
 
 export interface CogIconHandle {
   startAnimation: () => void;

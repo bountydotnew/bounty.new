@@ -1,9 +1,8 @@
 'use client';
 
+import { cn } from '@bounty/ui/lib/utils';
 import { AnimatePresence, motion, type Transition } from 'motion/react';
 import * as React from 'react';
-
-import { cn } from '@bounty/ui/lib/utils';
 
 type MotionHighlightMode = 'children' | 'parent';
 

@@ -1,9 +1,14 @@
-import { DollarSign, TrendingUp } from 'lucide-react';
-import { memo } from 'react';
 import { Badge } from '@bounty/ui/components/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@bounty/ui/components/card';
 import { Separator } from '@bounty/ui/components/separator';
 import { formatLargeNumber } from '@bounty/ui/lib/utils';
+import { DollarSign, TrendingUp } from 'lucide-react';
+import { memo } from 'react';
 import type {
   ActivityItem,
   Bounty,

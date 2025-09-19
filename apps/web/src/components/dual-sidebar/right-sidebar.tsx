@@ -1,5 +1,9 @@
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarRail,
+} from '@bounty/ui/components/sidebar';
 import type { ComponentProps } from 'react';
-import { Sidebar, SidebarContent, SidebarRail } from '@bounty/ui/components/sidebar';
 
 export function RightSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   return (

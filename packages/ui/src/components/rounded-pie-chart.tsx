@@ -1,20 +1,20 @@
 'use client';
 
-import { TrendingUp } from 'lucide-react';
-import { LabelList, Pie, PieChart } from 'recharts';
+import { Badge } from '@bounty/ui/components/badge';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@bounty/ui/components/card";
+} from '@bounty/ui/components/card';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@bounty/ui/components/chart";
-import { Badge } from "@bounty/ui/components/badge";
+} from '@bounty/ui/components/chart';
+import { TrendingUp } from 'lucide-react';
+import { LabelList, Pie, PieChart } from 'recharts';
 import type { ChartConfig } from '../types/charts';
 
 export const description = 'A pie chart with a label list';

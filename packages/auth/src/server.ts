@@ -1,29 +1,29 @@
-import * as schema from "@bounty/db";
-import { db } from "@bounty/db";
-import type { PolarCustomerCreateParams, PolarError } from "@bounty/types";
+import * as schema from '@bounty/db';
+import { db } from '@bounty/db';
+import { env } from '@bounty/env/server';
+import type { PolarCustomerCreateParams, PolarError } from '@bounty/types';
 import {
   checkout,
   polar,
   portal,
   usage,
   webhooks,
-} from "@polar-sh/better-auth";
-import { Polar } from "@polar-sh/sdk";
-import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { admin } from "better-auth/plugins/admin";
-import { passkey } from "better-auth/plugins/passkey";
+} from '@polar-sh/better-auth';
+import { Polar } from '@polar-sh/sdk';
+import { betterAuth } from 'better-auth';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { admin } from 'better-auth/plugins/admin';
+import { passkey } from 'better-auth/plugins/passkey';
 
-const polarEnv =
-  process.env.NODE_ENV === "production" ? "production" : "sandbox";
+const polarEnv = env.NODE_ENV === 'production' ? 'production' : 'sandbox';
 const polarClient = new Polar({
-  accessToken: process.env.POLAR_ACCESS_TOKEN as string,
+  accessToken: env.POLAR_ACCESS_TOKEN,
   server: polarEnv,
 });
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
-    provider: "pg",
+    provider: 'pg',
     schema,
     usePlural: false,
   }),
@@ -31,22 +31,22 @@ export const auth = betterAuth({
     throw: true,
     onError: (error, ctx) => {
       // Custom error handling
-      console.error("Auth error:", error);
+      console.error('Auth error:', error);
     },
-    errorURL: "/auth/error",
+    errorURL: '/auth/error',
   },
   trustedOrigins: [
-    "https://bounty.new",
-    "https://www.bounty.new",
-    "https://*.vercel.app",
-    "http://localhost:3001",
-    "http://localhost:3000",
-    "https://preview.bounty.new",
+    'https://bounty.new',
+    'https://www.bounty.new',
+    'https://*.vercel.app',
+    'http://localhost:3001',
+    'http://localhost:3000',
+    'https://preview.bounty.new',
   ].filter(Boolean),
   socialProviders: {
     github: {
-      clientId: process.env.GITHUB_CLIENT_ID as string,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+      clientId: env.GITHUB_CLIENT_ID,
+      clientSecret: env.GITHUB_CLIENT_SECRET,
     },
   },
   emailAndPassword: {
@@ -57,43 +57,17 @@ export const auth = betterAuth({
       client: polarClient,
       createCustomerOnSignUp: false,
       getCustomerCreateParams: async ({ user }) => {
-        const externalId = user.id;
-        try {
-          const _found = await polarClient.customers.getExternal({
-            externalId: externalId as string,
-          });
-          return null;
-        } catch (err) {
-          const e = err as PolarError;
-          const msg = String(e?.message || e?.body$ || e?.detail || "");
-          if (e?.status === 404) {
-            // Customer not found, continue with creation
-          } else if (
-            e?.status === 409 ||
-            msg.includes("external ID cannot be updated") ||
-            msg.toLowerCase().includes("external_id cannot be updated")
-          ) {
-            return null;
-          } else {
-            // Unexpected error, continue with creation attempt
-          }
-        }
-
-        const params: PolarCustomerCreateParams = {
-          external_id: externalId,
-          email: user.email,
-          name: user.name || user.email,
-          metadata: { userId: externalId },
+        return {
+          metadata: { userId: user.id || 'unknown' },
         };
-        return params;
       },
       onCustomerCreateError: async ({ error }: { error: unknown }) => {
         const e = error as PolarError;
-        const msg = String(e?.message || e?.body$ || e?.detail || "");
+        const msg = String(e?.message || e?.body$ || e?.detail || '');
         if (
           e?.status === 409 ||
-          msg.includes("external ID cannot be updated") ||
-          msg.toLowerCase().includes("external_id cannot be updated") ||
+          msg.includes('external ID cannot be updated') ||
+          msg.toLowerCase().includes('external_id cannot be updated') ||
           msg.includes('"error":"PolarRequestValidationError"')
         ) {
           return;
@@ -105,11 +79,11 @@ export const auth = betterAuth({
           products: [
             {
               productId: process.env.BOUNTY_PRO_ANNUAL_ID!,
-              slug: "pro-annual",
+              slug: 'pro-annual',
             },
             {
               productId: process.env.BOUNTY_PRO_MONTHLY_ID!,
-              slug: "pro-monthly",
+              slug: 'pro-monthly',
             },
           ],
           successUrl: process.env.POLAR_SUCCESS_URL!,
@@ -118,7 +92,7 @@ export const auth = betterAuth({
         portal(),
         usage(),
         webhooks({
-          secret: process.env.POLAR_WEBHOOK_SECRET!,
+          secret: env.POLAR_WEBHOOK_SECRET,
           onCustomerStateChanged: (_payload) => {
             return Promise.resolve();
           },
@@ -141,14 +115,14 @@ export const auth = betterAuth({
       ],
     }),
     passkey({
-      rpID: process.env.NODE_ENV === "production" ? "bounty.new" : "localhost",
-      rpName: "Bounty.new",
+      rpID: process.env.NODE_ENV === 'production' ? 'bounty.new' : 'localhost',
+      rpName: 'Bounty.new',
       origin:
-        process.env.NODE_ENV === "production"
-          ? "https://bounty.new"
-          : "http://localhost:3000",
+        process.env.NODE_ENV === 'production'
+          ? 'https://bounty.new'
+          : 'http://localhost:3000',
     }),
     admin(),
   ],
-  secret: process.env.BETTER_AUTH_SECRET,
+  secret: env.BETTER_AUTH_SECRET,
 });

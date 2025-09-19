@@ -1,9 +1,5 @@
 'use client';
 
-import { Slot } from '@radix-ui/react-slot';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { PanelLeftIcon } from 'lucide-react';
-import React, { useEffect, useMemo } from 'react';
 import { Button } from '@bounty/ui/components/button';
 import { Input } from '@bounty/ui/components/input';
 import { Separator } from '@bounty/ui/components/separator';
@@ -22,13 +18,17 @@ import {
   TooltipTrigger,
 } from '@bounty/ui/components/tooltip';
 import { useIsMobile } from '@bounty/ui/hooks/use-mobile';
+import { cn } from '@bounty/ui/lib/utils';
+import { Slot } from '@radix-ui/react-slot';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { PanelLeftIcon } from 'lucide-react';
+import React, { useEffect, useMemo } from 'react';
 import {
   SIDEBAR_KEYBOARD_SHORTCUT,
   SIDEBAR_WIDTH,
   SIDEBAR_WIDTH_ICON,
   SIDEBAR_WIDTH_ICON_HOVER,
 } from '../lib/constants';
-import { cn } from '@bounty/ui/lib/utils';
 
 type SidebarContextProps = {
   state: 'expanded' | 'collapsed';

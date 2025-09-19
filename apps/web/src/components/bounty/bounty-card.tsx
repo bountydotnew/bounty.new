@@ -1,3 +1,10 @@
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@bounty/ui/components/avatar';
+import { addNavigationContext } from '@bounty/ui/hooks/use-navigation-context';
+import { formatLargeNumber } from '@bounty/ui/lib/utils';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { Check, Clock, MessageCircle } from 'lucide-react';
@@ -5,16 +12,18 @@ import { usePathname, useRouter } from 'next/navigation';
 import { memo } from 'react';
 import BookmarkButton from '@/components/bounty/bookmark-button';
 import { UpvoteButton } from '@/components/bounty/bounty-actions';
-import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
-import { addNavigationContext } from '@bounty/ui/hooks/use-navigation-context';
-import { formatLargeNumber } from '@bounty/ui/lib/utils';
 import type { Bounty } from '@/types/dashboard';
 import { trpc } from '@/utils/trpc';
 import { MarkdownContent } from './markdown-content';
 
 interface BountyCardProps {
   bounty: Bounty;
-  stats?: { commentCount: number; voteCount: number; isVoted: boolean; bookmarked: boolean };
+  stats?: {
+    commentCount: number;
+    voteCount: number;
+    isVoted: boolean;
+    bookmarked: boolean;
+  };
 }
 
 export const BountyCard = memo(function BountyCard({
@@ -49,17 +58,49 @@ export const BountyCard = memo(function BountyCard({
   });
 
   const handleUpvote = () => {
-    const votesKey = trpc.bounties.getBountyVotes.queryKey({ bountyId: bounty.id });
-    const previousVotes = queryClient.getQueryData<{ count: number; isVoted: boolean }>(votesKey);
+    const votesKey = trpc.bounties.getBountyVotes.queryKey({
+      bountyId: bounty.id,
+    });
+    const previousVotes = queryClient.getQueryData<{
+      count: number;
+      isVoted: boolean;
+    }>(votesKey);
     const nextVotes = previousVotes
-      ? { count: previousVotes.isVoted ? Math.max(0, Number(previousVotes.count) - 1) : Number(previousVotes.count) + 1, isVoted: !previousVotes.isVoted }
+      ? {
+          count: previousVotes.isVoted
+            ? Math.max(0, Number(previousVotes.count) - 1)
+            : Number(previousVotes.count) + 1,
+          isVoted: !previousVotes.isVoted,
+        }
       : { count: isVotedInitial ? 0 : 1, isVoted: !isVotedInitial };
     queryClient.setQueryData(votesKey, nextVotes);
-    const previousMany = queryClient.getQueriesData<{ stats: { bountyId: string; voteCount: number; isVoted: boolean; commentCount: number; bookmarked: boolean; }[] }>({ queryKey: trpc.bounties.getBountyStatsMany.queryKey(undefined) as any });
+    const previousMany = queryClient.getQueriesData<{
+      stats: {
+        bountyId: string;
+        voteCount: number;
+        isVoted: boolean;
+        commentCount: number;
+        bookmarked: boolean;
+      }[];
+    }>({
+      queryKey: trpc.bounties.getBountyStatsMany.queryKey(undefined) as any,
+    });
     const updateList = previousMany.map(([key, previous]) => {
       const current = previous?.stats?.find?.((s) => s.bountyId === bounty.id);
-      if (!previous || !current) return [key, previous] as const;
-      const next = { stats: previous.stats.map((s) => s.bountyId === bounty.id ? { ...s, voteCount: current.isVoted ? Math.max(0, current.voteCount - 1) : current.voteCount + 1, isVoted: !current.isVoted } : s) };
+      if (!(previous && current)) return [key, previous] as const;
+      const next = {
+        stats: previous.stats.map((s) =>
+          s.bountyId === bounty.id
+            ? {
+                ...s,
+                voteCount: current.isVoted
+                  ? Math.max(0, current.voteCount - 1)
+                  : current.voteCount + 1,
+                isVoted: !current.isVoted,
+              }
+            : s
+        ),
+      };
       queryClient.setQueryData(key, next);
       return [key, previous] as const;
     });
@@ -68,14 +109,42 @@ export const BountyCard = memo(function BountyCard({
       {
         onError: () => {
           if (previousVotes) queryClient.setQueryData(votesKey, previousVotes);
-          updateList.forEach(([key, previous]) => previous && queryClient.setQueryData(key, previous));
+          updateList.forEach(
+            ([key, previous]) =>
+              previous && queryClient.setQueryData(key, previous)
+          );
         },
         onSuccess: (data) => {
-          queryClient.setQueryData(votesKey, { count: Number(data?.count || 0), isVoted: Boolean(data?.voted) });
-          const manyKeys = queryClient.getQueriesData<{ stats: { bountyId: string; voteCount: number; isVoted: boolean; commentCount: number; bookmarked: boolean }[] }>({ queryKey: trpc.bounties.getBountyStatsMany.queryKey(undefined) as any });
+          queryClient.setQueryData(votesKey, {
+            count: Number(data?.count || 0),
+            isVoted: Boolean(data?.voted),
+          });
+          const manyKeys = queryClient.getQueriesData<{
+            stats: {
+              bountyId: string;
+              voteCount: number;
+              isVoted: boolean;
+              commentCount: number;
+              bookmarked: boolean;
+            }[];
+          }>({
+            queryKey: trpc.bounties.getBountyStatsMany.queryKey(
+              undefined
+            ) as any,
+          });
           manyKeys.forEach(([key, current]) => {
             if (!current) return;
-            const next = { stats: current.stats.map((s) => s.bountyId === bounty.id ? { ...s, voteCount: Number(data?.count || 0), isVoted: Boolean(data?.voted) } : s) };
+            const next = {
+              stats: current.stats.map((s) =>
+                s.bountyId === bounty.id
+                  ? {
+                      ...s,
+                      voteCount: Number(data?.count || 0),
+                      isVoted: Boolean(data?.voted),
+                    }
+                  : s
+              ),
+            };
             queryClient.setQueryData(key, next);
           });
         },
@@ -84,11 +153,25 @@ export const BountyCard = memo(function BountyCard({
   };
 
   const handleToggleBookmark = () => {
-    const previousMany = queryClient.getQueriesData<{ stats: { bountyId: string; voteCount: number; isVoted: boolean; commentCount: number; bookmarked: boolean }[] }>({ queryKey: trpc.bounties.getBountyStatsMany.queryKey(undefined) as any });
+    const previousMany = queryClient.getQueriesData<{
+      stats: {
+        bountyId: string;
+        voteCount: number;
+        isVoted: boolean;
+        commentCount: number;
+        bookmarked: boolean;
+      }[];
+    }>({
+      queryKey: trpc.bounties.getBountyStatsMany.queryKey(undefined) as any,
+    });
     const updateList = previousMany.map(([key, previous]) => {
       const current = previous?.stats?.find?.((s) => s.bountyId === bounty.id);
-      if (!previous || !current) return [key, previous] as const;
-      const next = { stats: previous.stats.map((s) => s.bountyId === bounty.id ? { ...s, bookmarked: !s.bookmarked } : s) };
+      if (!(previous && current)) return [key, previous] as const;
+      const next = {
+        stats: previous.stats.map((s) =>
+          s.bountyId === bounty.id ? { ...s, bookmarked: !s.bookmarked } : s
+        ),
+      };
       queryClient.setQueryData(key, next);
       return [key, previous] as const;
     });
@@ -96,9 +179,17 @@ export const BountyCard = memo(function BountyCard({
       { bountyId: bounty.id },
       {
         onError: () => {
-          updateList.forEach(([key, previous]) => previous && queryClient.setQueryData(key, previous));
+          updateList.forEach(
+            ([key, previous]) =>
+              previous && queryClient.setQueryData(key, previous)
+          );
         },
-        onSettled: () => queryClient.invalidateQueries({ queryKey: trpc.bounties.getBountyStatsMany.queryKey(undefined) as any }),
+        onSettled: () =>
+          queryClient.invalidateQueries({
+            queryKey: trpc.bounties.getBountyStatsMany.queryKey(
+              undefined
+            ) as any,
+          }),
       }
     );
   };
@@ -136,7 +227,11 @@ export const BountyCard = memo(function BountyCard({
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <UpvoteButton isVoted={isVotedInitial} onUpvote={handleUpvote} voteCount={voteCount} />
+          <UpvoteButton
+            isVoted={isVotedInitial}
+            onUpvote={handleUpvote}
+            voteCount={voteCount}
+          />
           <BookmarkButton
             bookmarked={initialStats?.bookmarked}
             bountyId={bounty.id}
@@ -176,7 +271,7 @@ export const BountyCard = memo(function BountyCard({
           <MessageCircle aria-hidden="true" className="h-4 w-4" />
           <span>
             {initialStats?.commentCount ?? 0}{' '}
-            {((initialStats?.commentCount ?? 0) === 1) ? 'comment' : 'comments'}
+            {(initialStats?.commentCount ?? 0) === 1 ? 'comment' : 'comments'}
           </span>
         </div>
       </div>

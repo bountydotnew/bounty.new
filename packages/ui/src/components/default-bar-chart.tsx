@@ -1,21 +1,21 @@
 'use client';
 
-import { TrendingUp } from 'lucide-react';
-import { Bar, BarChart, XAxis } from 'recharts';
+import { Badge } from '@bounty/ui/components/badge';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@bounty/ui/components/card";
+} from '@bounty/ui/components/card';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@bounty/ui/components/chart";
-import { Badge } from "@bounty/ui/components/badge";
-import type { ChartConfig, ChartConfigValue } from "../types/charts";
+} from '@bounty/ui/components/chart';
+import { TrendingUp } from 'lucide-react';
+import { Bar, BarChart, XAxis } from 'recharts';
+import type { ChartConfig, ChartConfigValue } from '../types/charts';
 
 const chartData = [
   { month: 'January', desktop: 342 },

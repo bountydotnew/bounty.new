@@ -1,8 +1,7 @@
+import { cn } from '@bounty/ui/lib/utils';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 import { motion } from 'framer-motion';
 import type * as React from 'react';
-
-import { cn } from '@bounty/ui/lib/utils';
 
 function Tabs({
   className,

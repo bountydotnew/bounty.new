@@ -2,12 +2,12 @@ export interface PolarCustomer {
   id: string;
   email: string;
   name?: string;
-  external_id: string;
+  externalId: string;
   metadata?: Record<string, unknown>;
 }
 
 export interface PolarCustomerCreateParams {
-  external_id: string;
+  externalId: string;
   email: string;
   name?: string;
   metadata?: Record<string, unknown>;

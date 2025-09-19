@@ -1,14 +1,18 @@
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@bounty/ui/components/avatar';
+import { Badge } from '@bounty/ui/components/badge';
+import { Button } from '@bounty/ui/components/button';
+import Link from '@bounty/ui/components/link';
+import { getSinglePost, processHtmlContent } from '@bounty/ui/lib/blog-query';
 import { ArrowLeft, ArrowRight, Calendar } from 'lucide-react';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import Prose from '@/components/prose';
 import { Footer } from '@/components/sections/home/footer';
 import { Header } from '@/components/sections/home/header';
-import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
-import { Badge } from '@bounty/ui/components/badge';
-import { Button } from '@bounty/ui/components/button';
-import Link from '@bounty/ui/components/link';
-import { getSinglePost, processHtmlContent } from '@bounty/ui/lib/blog-query';
 
 interface BlogPostPageProps {
   params: Promise<{

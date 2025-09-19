@@ -1,6 +1,3 @@
-import { useState } from 'react';
-import Bounty from '@/components/icons/bounty';
-import { BetaApplicationForm } from '@/components/sections/home/beta-application-form';
 import { Button } from '@bounty/ui/components/button';
 import {
   Dialog,
@@ -18,6 +15,9 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@bounty/ui/components/drawer';
+import { useState } from 'react';
+import Bounty from '@/components/icons/bounty';
+import { BetaApplicationForm } from '@/components/sections/home/beta-application-form';
 import { BETA_APPLICATION_MESSAGES } from '@/constants';
 import type { BetaSubmission, UserData } from '@/types/dashboard';
 

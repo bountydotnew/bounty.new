@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import type { ReactElement } from 'react';
 
 export interface SubscribeInput {
   email: string;
@@ -22,5 +22,3 @@ export interface SendEmailInput<TProps = unknown> {
   headers?: Record<string, string>;
   tags?: { name: string; value: string }[];
 }
-
-

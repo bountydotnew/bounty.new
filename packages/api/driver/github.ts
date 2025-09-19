@@ -1,6 +1,6 @@
+import type { GitHubIssue, GitHubRepository } from '@bounty/types';
 import { Octokit } from '@octokit/core';
 import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods';
-import type { GitHubRepository, GitHubIssue } from '@bounty/types';
 
 const MyOctokit = Octokit.plugin(restEndpointMethods);
 
@@ -167,10 +167,11 @@ export class GithubManager {
 
   async getOpenPRs(identifier: string): Promise<number> {
     const { owner, repo } = parseRepo(identifier);
-    const { data: search } = await this.octokit.rest.search.issuesAndPullRequests({
-      q: `repo:${owner}/${repo} is:pr is:open`,
-      per_page: 1,
-    });
+    const { data: search } =
+      await this.octokit.rest.search.issuesAndPullRequests({
+        q: `repo:${owner}/${repo} is:pr is:open`,
+        per_page: 1,
+      });
     return search.total_count ?? 0;
   }
 

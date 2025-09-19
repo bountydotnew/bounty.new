@@ -1,12 +1,12 @@
 'use client';
 
+import { cn } from '@bounty/ui/lib/utils';
 import { type HTMLMotionProps, motion, type Transition } from 'motion/react';
 import * as React from 'react';
 import {
   MotionHighlight,
   MotionHighlightItem,
 } from '@/components/animate-ui/effects/motion-highlight';
-import { cn } from '@bounty/ui/lib/utils';
 
 type TabsContextType<T extends string> = {
   activeValue: T;

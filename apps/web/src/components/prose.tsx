@@ -1,10 +1,10 @@
+import { cn } from '@bounty/ui/lib/utils';
 import React from 'react';
 import rehypeSanitize from 'rehype-sanitize';
 import rehypeStringify from 'rehype-stringify';
 import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';
 import { unified } from 'unified';
-import { cn } from '@bounty/ui/lib/utils';
 
 type ProseProps = React.HTMLAttributes<HTMLElement> & {
   as?: 'article';

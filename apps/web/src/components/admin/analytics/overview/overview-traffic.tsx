@@ -1,8 +1,16 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@bounty/ui/components/card';
 import { DefaultBarChart } from '@bounty/ui/components/default-bar-chart';
-import { mapBatchByParameter, useDatabuddyParameters } from '@bounty/ui/hooks/use-databuddy';
+import {
+  mapBatchByParameter,
+  useDatabuddyParameters,
+} from '@bounty/ui/hooks/use-databuddy';
 
 type Props = { websiteId: string; timezone?: string };
 

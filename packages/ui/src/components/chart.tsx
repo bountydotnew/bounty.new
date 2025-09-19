@@ -1,16 +1,15 @@
 'use client';
 
+import { cn } from '@bounty/ui/lib/utils';
 import * as React from 'react';
 import * as RechartsPrimitive from 'recharts';
-
-import { cn } from "@bounty/ui/lib/utils"
 import type {
   ChartConfig,
+  ChartConfigValue,
   ChartContainerProps,
   ChartContextProps,
   ChartStyleProps,
 } from '../types/charts';
-import { ChartConfigValue } from '../types/charts';
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: '', dark: '.dark' } as const;
@@ -59,7 +58,7 @@ function ChartContainer({
 
 const ChartStyle = ({ id, config }: ChartStyleProps) => {
   const colorConfig = Object.entries(config).filter(
-    ([, config]) => config.theme || config.color as ChartConfigValue
+    ([, config]) => config.theme || (config.color as ChartConfigValue)
   );
 
   if (!colorConfig.length) {
@@ -74,13 +73,13 @@ const ChartStyle = ({ id, config }: ChartStyleProps) => {
             ([theme, prefix]) => `
 ${prefix} [data-chart=${id}] {
 ${colorConfig
-                .map(([key, itemConfig]) => {
-                  const color =
-                    itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
-                    itemConfig.color;
-                  return color ? `  --color-${key}: ${color};` : null;
-                })
-                .join('\n')}
+  .map(([key, itemConfig]) => {
+    const color =
+      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
+      itemConfig.color;
+    return color ? `  --color-${key}: ${color};` : null;
+  })
+  .join('\n')}
 }
 `
           )
@@ -116,7 +115,13 @@ function ChartTooltipContent({
   hideIndicator?: boolean;
   labelFormatter?: (value: any, payload: any[]) => React.ReactNode;
   labelClassName?: string;
-  formatter?: (value: any, name: any, item: any, index: number, payload: any) => React.ReactNode;
+  formatter?: (
+    value: any,
+    name: any,
+    item: any,
+    index: number,
+    payload: any
+  ) => React.ReactNode;
   color?: string;
   nameKey?: string;
   labelKey?: string;
@@ -312,8 +317,8 @@ function getPayloadConfigFromPayload(
 
   const payloadPayload =
     'payload' in payload &&
-      typeof payload.payload === 'object' &&
-      payload.payload !== null
+    typeof payload.payload === 'object' &&
+    payload.payload !== null
       ? payload.payload
       : undefined;
 

@@ -1,18 +1,24 @@
 'use client';
 
 import { authClient } from '@bounty/auth/client';
+import type { ExtendedAuthSession } from '@bounty/types';
+import { Button } from '@bounty/ui/components/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@bounty/ui/components/card';
 import { ShieldAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AdminHeader } from '@/components/admin';
-import { Button } from '@bounty/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
 
 export default function ImpersonatingGatePage() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
+  const sessionData = session as ExtendedAuthSession;
   const _impersonatedBy =
-    (session as any)?.session?.impersonatedBy ||
-    (session as any)?.impersonatedBy;
+    sessionData?.session?.impersonatedBy || sessionData?.impersonatedBy;
 
   return (
     <div className="space-y-6">

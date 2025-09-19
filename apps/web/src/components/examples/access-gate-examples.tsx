@@ -1,6 +1,5 @@
 'use client';
 
-import { AccessGate } from '@/components/access-gate';
 import { Button } from '@bounty/ui/components/button';
 import {
   Card,
@@ -9,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@bounty/ui/components/card';
+import { AccessGate } from '@/components/access-gate';
 
 /**
  * Example component demonstrating various AccessGate usage patterns

@@ -1,14 +1,14 @@
 'use client';
 
 import { authClient } from '@bounty/auth/client';
+import { Button } from '@bounty/ui/components/button';
+import { canEditBounty } from '@bounty/ui/lib/bounty-utils';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import BountyDetailPage from '@/components/bounty/bounty-detail';
 import { BountyDetailSkeleton } from '@/components/dashboard/skeletons/bounty-detail-skeleton';
 import Bounty from '@/components/icons/bounty';
-import { Button } from '@bounty/ui/components/button';
-import { canEditBounty } from '@bounty/ui/lib/bounty-utils';
 import { trpc } from '@/utils/trpc';
 
 export default function BountyPage() {
@@ -24,7 +24,7 @@ export default function BountyPage() {
   const bountyDetail = useQuery({
     ...trpc.bounties.getBountyDetail.queryOptions({ id: id! }),
     enabled: validId,
-    staleTime: Infinity,
+    staleTime: Number.POSITIVE_INFINITY,
   });
   const router = useRouter();
 

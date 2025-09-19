@@ -1,10 +1,11 @@
 'use client';
 
 import { authClient } from '@bounty/auth/client';
-import { Loader2, Settings } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@bounty/ui/components/avatar';
 import { Badge } from '@bounty/ui/components/badge';
 import { Button } from '@bounty/ui/components/button';
 import {
@@ -15,6 +16,9 @@ import {
   CardTitle,
 } from '@bounty/ui/components/card';
 import { useBilling } from '@bounty/ui/hooks/use-billing';
+import { Loader2, Settings } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function ProfilePage() {
   const params = useParams();

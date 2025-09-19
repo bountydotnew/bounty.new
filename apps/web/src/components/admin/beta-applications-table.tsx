@@ -24,8 +24,10 @@ export function BetaApplicationsTable({
   return (
     <Card className="border border-neutral-800 bg-[#222222]">
       <CardHeader>
-        <CardTitle className="text-sm text-neutral-300 font-medium">Applications ({total})</CardTitle>
-        <CardDescription className="text-xs text-neutral-500">
+        <CardTitle className="font-medium text-neutral-300 text-sm">
+          Applications ({total})
+        </CardTitle>
+        <CardDescription className="text-neutral-500 text-xs">
           Review applications and grant beta access
         </CardDescription>
       </CardHeader>
@@ -45,7 +47,9 @@ export function BetaApplicationsTable({
 
             {applications.length === 0 && (
               <div className="py-8 text-center">
-                <p className="text-neutral-500 text-sm">No applications found</p>
+                <p className="text-neutral-500 text-sm">
+                  No applications found
+                </p>
               </div>
             )}
           </div>

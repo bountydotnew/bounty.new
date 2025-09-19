@@ -1,9 +1,9 @@
 'use client';
 
+import { Button } from '@bounty/ui/components/button';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bookmark } from 'lucide-react';
 import { useCallback } from 'react';
-import { Button } from '@bounty/ui/components/button';
 import { trpc } from '@/utils/trpc';
 
 interface BookmarkButtonProps {

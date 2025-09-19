@@ -1,9 +1,16 @@
-import { db, session, user, userProfile, userReputation, invite, bounty } from '@bounty/db';
-import { FROM_ADDRESSES, sendEmail } from '@bounty/email';
-import { ExternalInvite } from '@bounty/email';
+import {
+  bounty,
+  db,
+  invite,
+  session,
+  user,
+  userProfile,
+  userReputation,
+} from '@bounty/db';
+import { ExternalInvite, FROM_ADDRESSES, sendEmail } from '@bounty/email';
 import { env } from '@bounty/env/server';
 import { TRPCError } from '@trpc/server';
-import { desc, eq, sql, count } from 'drizzle-orm';
+import { count, desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import {
   adminProcedure,
@@ -63,7 +70,9 @@ export const userRouter = router({
     }),
 
   adminUpdateName: adminProcedure
-    .input(z.object({ userId: z.string().uuid(), name: z.string().min(1).max(80) }))
+    .input(
+      z.object({ userId: z.string().uuid(), name: z.string().min(1).max(80) })
+    )
     .mutation(async ({ input }) => {
       const [updated] = await db
         .update(user)
@@ -403,16 +412,16 @@ export const userRouter = router({
 
       const [updatedUser] = await ctx.db
         .update(user)
-        .set({ 
+        .set({
           accessStage,
           updatedAt: new Date(),
         })
         .where(eq(user.id, userId))
-        .returning({ 
-          id: user.id, 
-          name: user.name, 
-          email: user.email, 
-          accessStage: user.accessStage 
+        .returning({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          accessStage: user.accessStage,
         });
 
       if (!updatedUser) {
@@ -422,10 +431,10 @@ export const userRouter = router({
         });
       }
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         user: updatedUser,
-        message: `User access updated to ${accessStage}. Email invitation will be sent.`
+        message: `User access updated to ${accessStage}. Email invitation will be sent.`,
       };
     }),
 
@@ -448,31 +457,43 @@ export const userRouter = router({
       if (existingUser.length > 0) {
         throw new TRPCError({
           code: 'CONFLICT',
-          message: 'User with this email already exists. Use the invite button for existing users.',
+          message:
+            'User with this email already exists. Use the invite button for existing users.',
         });
       }
 
-      const rawToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+      const rawToken =
+        crypto.randomUUID().replace(/-/g, '') +
+        crypto.randomUUID().replace(/-/g, '');
       const tokenHash = await crypto.subtle
         .digest('SHA-256', new TextEncoder().encode(rawToken))
         .then((b) => Buffer.from(new Uint8Array(b)).toString('hex'));
 
       const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
 
-      await ctx.db.insert(invite).values({ email, accessStage, tokenHash, expiresAt });
+      await ctx.db
+        .insert(invite)
+        .values({ email, accessStage, tokenHash, expiresAt });
 
-      const baseUrl = env.BETTER_AUTH_URL?.replace(/\/$/, '') || 'https://bounty.new';
+      const baseUrl =
+        env.BETTER_AUTH_URL?.replace(/\/$/, '') || 'https://bounty.new';
       const inviteUrl = `${baseUrl}/login?invite=${rawToken}`;
       await sendEmail({
         to: email,
         subject: 'You’re invited to bounty.new',
         from: FROM_ADDRESSES.notifications,
-        react: ExternalInvite({ inviteUrl, accessStage: accessStage === 'none' ? undefined : (accessStage as 'alpha' | 'beta' | 'production') }),
+        react: ExternalInvite({
+          inviteUrl,
+          accessStage:
+            accessStage === 'none'
+              ? undefined
+              : (accessStage as 'alpha' | 'beta' | 'production'),
+        }),
       });
 
       return { success: true };
     }),
-  
+
   applyInvite: protectedProcedure
     .input(z.object({ token: z.string().min(20) }))
     .mutation(async ({ ctx, input }) => {
@@ -487,9 +508,15 @@ export const userRouter = router({
         .where(eq(invite.tokenHash, tokenHash))
         .limit(1);
       const row = rows[0];
-      if (!row) throw new TRPCError({ code: 'NOT_FOUND', message: 'Invalid invite' });
-      if (row.usedAt) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invite already used' });
-      if (row.expiresAt && row.expiresAt < new Date()) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invite expired' });
+      if (!row)
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Invalid invite' });
+      if (row.usedAt)
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Invite already used',
+        });
+      if (row.expiresAt && row.expiresAt < new Date())
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invite expired' });
 
       await ctx.db
         .update(user)

@@ -620,7 +620,10 @@ export const bountiesRouter = router({
           .innerJoin(user, eq(bounty.createdById, user.id))
           .where(eq(bounty.id, input.id));
         if (!bountyRow) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Bounty not found' });
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
         }
 
         const [voteCountRow] = await db
@@ -685,22 +688,28 @@ export const bountiesRouter = router({
               .groupBy(bountyCommentLike.commentId)
           : [];
 
-        const userLikes = ctx.session?.user?.id && commentIds.length
-          ? await db
-              .select({ commentId: bountyCommentLike.commentId })
-              .from(bountyCommentLike)
-              .where(
-                and(
-                  eq(bountyCommentLike.userId, ctx.session.user.id),
-                  inArray(bountyCommentLike.commentId, commentIds)
+        const userLikes =
+          ctx.session?.user?.id && commentIds.length
+            ? await db
+                .select({ commentId: bountyCommentLike.commentId })
+                .from(bountyCommentLike)
+                .where(
+                  and(
+                    eq(bountyCommentLike.userId, ctx.session.user.id),
+                    inArray(bountyCommentLike.commentId, commentIds)
+                  )
                 )
-              )
-          : [];
+            : [];
 
         const commentsWithLikes = comments.map((c) => {
           const lc = likeCounts.find((x) => x.commentId === c.id);
           const isLiked = (userLikes || []).some((x) => x.commentId === c.id);
-          return { ...c, originalContent: c.originalContent ?? null, likeCount: lc?.likeCount || 0, isLiked } as const;
+          return {
+            ...c,
+            originalContent: c.originalContent ?? null,
+            likeCount: lc?.likeCount || 0,
+            isLiked,
+          } as const;
         });
 
         return {
@@ -794,9 +803,7 @@ export const bountiesRouter = router({
     }),
 
   getBountyStatsMany: publicProcedure
-    .input(
-      z.object({ bountyIds: z.array(z.string().uuid()).min(1).max(100) })
-    )
+    .input(z.object({ bountyIds: z.array(z.string().uuid()).min(1).max(100) }))
     .query(async ({ ctx, input }) => {
       try {
         const ids = input.bountyIds;
@@ -848,7 +855,13 @@ export const bountiesRouter = router({
           const v = voteRows.find((r) => r.bountyId === id)?.count ?? 0;
           const isVoted = userVotes.some((r) => r.bountyId === id);
           const bookmarked = userBookmarks.some((r) => r.bountyId === id);
-          return { bountyId: id, commentCount: c, voteCount: v, isVoted, bookmarked };
+          return {
+            bountyId: id,
+            commentCount: c,
+            voteCount: v,
+            isVoted,
+            bookmarked,
+          };
         });
 
         return { stats: out };
@@ -1099,7 +1112,12 @@ export const bountiesRouter = router({
         const withLikes = comments.map((c) => {
           const lc = likeCounts.find((x) => x.commentId === c.id);
           const isLiked = (userLikes || []).some((x) => x.commentId === c.id);
-          return { ...c, originalContent: c.originalContent ?? null, likeCount: lc?.likeCount || 0, isLiked } as const;
+          return {
+            ...c,
+            originalContent: c.originalContent ?? null,
+            likeCount: lc?.likeCount || 0,
+            isLiked,
+          } as const;
         });
 
         return withLikes;

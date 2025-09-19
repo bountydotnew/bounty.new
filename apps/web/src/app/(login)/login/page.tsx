@@ -1,12 +1,11 @@
 'use client';
 
-import { Suspense } from 'react';
-import { useEffect } from 'react';
-import { trpc } from '@/utils/trpc';
-import { useSearchParams } from 'next/navigation';
-import { useMutation } from '@tanstack/react-query';
-import Login from '@/components/bounty/login';
 import { Spinner } from '@bounty/ui/components/spinner';
+import { useMutation } from '@tanstack/react-query';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect } from 'react';
+import Login from '@/components/bounty/login';
+import { trpc } from '@/utils/trpc';
 
 function LoginContent() {
   const searchParams = useSearchParams();

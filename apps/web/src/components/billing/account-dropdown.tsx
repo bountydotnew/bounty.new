@@ -1,13 +1,11 @@
 'use client';
 
 import { authClient } from '@bounty/auth/client';
-import { useQuery } from '@tanstack/react-query';
-import { CreditCard, LogOut, Shield, Sparkles } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
-import * as React from 'react';
-import { useCallback } from 'react';
-import { toast } from 'sonner';
-import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@bounty/ui/components/avatar';
 import { BellIcon } from '@bounty/ui/components/bell';
 import {
   DropdownMenu,
@@ -26,8 +24,14 @@ import {
 } from '@bounty/ui/components/sidebar';
 import { Spinner } from '@bounty/ui/components/spinner';
 import { UserIcon } from '@bounty/ui/components/user';
-import { LINKS } from '@/constants';
 import { useBilling } from '@bounty/ui/hooks/use-billing';
+import { useQuery } from '@tanstack/react-query';
+import { CreditCard, LogOut, Shield, Sparkles } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import * as React from 'react';
+import { useCallback } from 'react';
+import { toast } from 'sonner';
+import { LINKS } from '@/constants';
 import type {
   AccountDropdownProps,
   SessionUser,
@@ -215,7 +219,9 @@ export function AccountDropdown({
   const { isMobile } = useSidebar();
   const { data: session } = authClient.useSession();
   const [menuOpen, setMenuOpen] = React.useState(false);
-  const { isPro, isLoading: isBillingLoading } = useBilling({ enabled: menuOpen && !!session?.user });
+  const { isPro, isLoading: isBillingLoading } = useBilling({
+    enabled: menuOpen && !!session?.user,
+  });
   const { data: me } = useQuery({
     ...trpc.user.getMe.queryOptions(),
     enabled: !!session?.user,
@@ -257,7 +263,7 @@ export function AccountDropdown({
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+        <DropdownMenu onOpenChange={setMenuOpen} open={menuOpen}>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               aria-expanded={false}

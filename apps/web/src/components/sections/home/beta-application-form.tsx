@@ -1,11 +1,6 @@
 'use client';
 
 import type { AppRouter } from '@bounty/api';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import type { TRPCClientErrorLike } from '@trpc/client';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { Button } from '@bounty/ui/components/button';
 import { Favicon } from '@bounty/ui/components/favicon';
 import { Input } from '@bounty/ui/components/input';
@@ -15,6 +10,11 @@ import {
   betaApplicationDefaults,
   betaApplicationSchema,
 } from '@bounty/ui/lib/forms';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import type { TRPCClientErrorLike } from '@trpc/client';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { trpc } from '@/utils/trpc';
 
 interface BetaApplicationFormProps {

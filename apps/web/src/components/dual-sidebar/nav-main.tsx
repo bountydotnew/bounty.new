@@ -1,7 +1,5 @@
 'use client';
 
-import { ChevronRight } from 'lucide-react';
-import type React from 'react';
 import {
   Collapsible,
   CollapsibleContent,
@@ -18,6 +16,8 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from '@bounty/ui/components/sidebar';
+import { ChevronRight } from 'lucide-react';
+import type React from 'react';
 
 export function NavMain({
   items,

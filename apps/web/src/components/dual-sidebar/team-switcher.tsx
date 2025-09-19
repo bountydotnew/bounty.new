@@ -1,8 +1,5 @@
 'use client';
 
-import { ChevronsUpDown, Plus } from 'lucide-react';
-import Image from 'next/image';
-import { type ElementType, useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +15,9 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@bounty/ui/components/sidebar';
+import { ChevronsUpDown, Plus } from 'lucide-react';
+import Image from 'next/image';
+import { type ElementType, useState } from 'react';
 
 export function TeamSwitcher({
   teams,

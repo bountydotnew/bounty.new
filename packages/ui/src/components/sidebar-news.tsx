@@ -1,13 +1,13 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import Image from 'next/image';
-import type * as React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { Card } from '@bounty/ui/components/card';
 import Link from '@bounty/ui/components/link';
 import { useIsMobile } from '@bounty/ui/hooks/use-mobile';
 import { cn, getCookie, setCookie } from '@bounty/ui/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import Image from 'next/image';
+import type * as React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { trpc } from '@/utils/trpc';
 
 export interface NewsArticle {
