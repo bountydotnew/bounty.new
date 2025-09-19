@@ -1,5 +1,6 @@
 import * as schema from "@bounty/db";
 import { db } from "@bounty/db";
+import type { PolarCustomerCreateParams, PolarError } from "@bounty/types";
 import {
   checkout,
   polar,
@@ -61,39 +62,33 @@ export const auth = betterAuth({
           const _found = await polarClient.customers.getExternal({
             externalId: externalId as string,
           });
-          return null as any;
+          return null;
         } catch (err) {
-          const e = err as {
-            status?: number;
-            message?: string;
-            body$?: string;
-            detail?: string;
-          };
+          const e = err as PolarError;
           const msg = String(e?.message || e?.body$ || e?.detail || "");
           if (e?.status === 404) {
+            // Customer not found, continue with creation
           } else if (
             e?.status === 409 ||
             msg.includes("external ID cannot be updated") ||
             msg.toLowerCase().includes("external_id cannot be updated")
           ) {
-            return null as any;
+            return null;
           } else {
+            // Unexpected error, continue with creation attempt
           }
         }
-        return {
+
+        const params: PolarCustomerCreateParams = {
           external_id: externalId,
           email: user.email,
           name: user.name || user.email,
           metadata: { userId: externalId },
-        } as any;
+        };
+        return params;
       },
       onCustomerCreateError: async ({ error }: { error: unknown }) => {
-        const e = error as {
-          status?: number;
-          message?: string;
-          body$?: string;
-          detail?: string;
-        };
+        const e = error as PolarError;
         const msg = String(e?.message || e?.body$ || e?.detail || "");
         if (
           e?.status === 409 ||
