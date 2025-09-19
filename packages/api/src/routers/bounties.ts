@@ -105,23 +105,23 @@ const submitBountyWorkSchema = z.object({
 export const bountiesRouter = router({
   getBountyStats: publicProcedure.query(async () => {
     try {
-      const [totalBounties] = await db
+      const totalBountiesResult = await db
         .select({ count: sql<number>`count(*)` })
         .from(bounty);
 
-      const [activeBounties] = await db
+      const activeBountiesResult = await db
         .select({ count: sql<number>`count(*)` })
         .from(bounty)
         .where(eq(bounty.status, 'open'));
 
-      const [totalBountiesValue] = await db
+      const totalBountiesValueResult = await db
         .select({
           total: sql<number>`coalesce(sum(cast(${bounty.amount} as decimal)), 0)`,
         })
         .from(bounty)
         .where(eq(bounty.status, 'open'));
 
-      const [totalPayout] = await db
+      const totalPayoutResult = await db
         .select({
           total: sql<number>`coalesce(sum(cast(${bounty.amount} as decimal)), 0)`,
         })
@@ -131,10 +131,10 @@ export const bountiesRouter = router({
       return {
         success: true,
         data: {
-          totalBounties: totalBounties.count,
-          activeBounties: activeBounties.count,
-          totalBountiesValue: Number(totalBountiesValue.total) || 0,
-          totalPayout: Number(totalPayout.total) || 0,
+          totalBounties: totalBountiesResult[0]?.count ?? 0,
+          activeBounties: activeBountiesResult[0]?.count ?? 0,
+          totalBountiesValue: Number(totalBountiesValueResult[0]?.total) || 0,
+          totalPayout: Number(totalPayoutResult[0]?.total) || 0,
         },
       };
     } catch (error) {
@@ -165,7 +165,7 @@ export const bountiesRouter = router({
             : undefined;
         const deadline = input.deadline ? new Date(input.deadline) : undefined;
 
-        const [newBounty] = await db
+        const newBountyResult = await db
           .insert(bounty)
           .values({
             title: input.title,
@@ -181,6 +181,14 @@ export const bountiesRouter = router({
             status: 'open',
           })
           .returning();
+
+        const newBounty = newBountyResult[0];
+        if (!newBounty) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to create bounty',
+          });
+        }
 
         try {
           await track('bounty_created', {
@@ -270,10 +278,12 @@ export const bountiesRouter = router({
           .limit(input.limit)
           .offset(offset);
 
-        const [{ count }] = await db
+        const countResult = await db
           .select({ count: sql<number>`count(*)` })
           .from(bounty)
           .where(conditions.length > 0 ? and(...conditions) : undefined);
+        
+        const count = countResult[0]?.count ?? 0;
 
         const processedResults = results.map((result) => ({
           ...result,
@@ -405,7 +415,7 @@ export const bountiesRouter = router({
           });
         }
 
-        const [updatedBounty] = await db
+        const updatedBountyResult = await db
           .update(bounty)
           .set({
             ...updateData,
@@ -416,6 +426,14 @@ export const bountiesRouter = router({
           })
           .where(eq(bounty.id, id))
           .returning();
+
+        const updatedBounty = updatedBountyResult[0];
+        if (!updatedBounty) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to update bounty',
+          });
+        }
 
         try {
           await track('bounty_updated', {
@@ -917,10 +935,12 @@ export const bountiesRouter = router({
           .limit(limit)
           .offset(offset);
 
-        const [{ count }] = await db
+        const countResult = await db
           .select({ count: sql<number>`count(*)` })
           .from(bountyBookmark)
           .where(eq(bountyBookmark.userId, ctx.session.user.id));
+        
+        const count = countResult[0]?.count ?? 0;
 
         return {
           success: true,
@@ -1168,7 +1188,7 @@ export const bountiesRouter = router({
           return existing;
         }
 
-        const [updated] = await db
+        const updatedResult = await db
           .update(bountyComment)
           .set({
             content: trimmed,
@@ -1178,6 +1198,15 @@ export const bountiesRouter = router({
           })
           .where(eq(bountyComment.id, input.commentId))
           .returning();
+
+        const updated = updatedResult[0];
+        if (!updated) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to update comment',
+          });
+        }
+
         try {
           await track('bounty_comment_updated', {
             comment_id: updated.id,
@@ -1466,10 +1495,12 @@ export const bountiesRouter = router({
           .limit(input.limit)
           .offset(offset);
 
-        const [{ count }] = await db
+        const countResult = await db
           .select({ count: sql<number>`count(*)` })
           .from(bounty)
           .where(eq(bounty.createdById, ctx.session.user.id));
+        
+        const count = countResult[0]?.count ?? 0;
 
         const processedResults = results.map((result) => ({
           ...result,

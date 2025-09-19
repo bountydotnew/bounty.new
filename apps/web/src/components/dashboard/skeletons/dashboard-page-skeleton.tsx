@@ -15,8 +15,7 @@ export const DashboardPageSkeleton = () => {
       <div className="container mx-auto rounded-lg px-4 py-4">
         <div className="mb-4 flex items-center justify-end">
           <div className="flex gap-2">
-            <Skeleton className="h-10 w-32 rounded-md" />
-            <Skeleton className="h-10 w-24 rounded-md" />
+            <Skeleton className="h-8 w-32 rounded-md" />
           </div>
         </div>
 

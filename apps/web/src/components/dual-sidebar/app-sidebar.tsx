@@ -17,7 +17,6 @@ import {
   FileUser,
   Frame,
   GalleryVerticalEnd,
-  Home,
   Map,
   PieChart,
   Settings,
@@ -33,6 +32,7 @@ import { NavUser } from '@/components/dual-sidebar/nav-user';
 import { LINKS } from '@/constants';
 import Bookmark from '../icons/bookmark';
 import Bounty from '../icons/bounty';
+import HomeIcon from '@bounty/ui/components/icons/home';
 
 export const AppSidebar = ({
   ...props
@@ -75,7 +75,7 @@ export const AppSidebar = ({
       {
         title: 'Dashboard',
         url: LINKS.DASHBOARD,
-        icon: Home,
+        icon: HomeIcon,
         isActive: isActive('/dashboard'),
       },
       {
@@ -225,7 +225,7 @@ export const AdminAppSidebar = ({
     {
       title: 'Overview',
       url: '/admin',
-      icon: Home,
+      icon: HomeIcon,
       isActive: isActive('/admin'),
     },
     {
