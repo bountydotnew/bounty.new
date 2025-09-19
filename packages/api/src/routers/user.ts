@@ -1,4 +1,4 @@
-import { db, session, user, userProfile, userReputation, invite, bounty } from '@bounty/db';
+import { db, session, user, userProfile, userReputation, invite } from '@bounty/db';
 import { FROM_ADDRESSES, sendEmail } from '@bounty/email';
 import { ExternalInvite } from '@bounty/email';
 import { env } from '@bounty/env/server';
@@ -38,8 +38,8 @@ export const userRouter = router({
 
       const bountyCount = await db
         .select({ c: sql<number>`count(*)::int` })
-        .from(bounty)
-        .where(eq(bounty.createdById, input.userId))
+        .from(sql`bounty` as any)
+        .where(sql`bounty.created_by_id = ${input.userId}`)
         .then((r) => r[0]?.c ?? 0);
 
       const sessions = await db

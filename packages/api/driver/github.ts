@@ -1,6 +1,5 @@
 import { Octokit } from '@octokit/core';
 import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods';
-import type { GitHubRepository, GitHubIssue } from '@bounty/types';
 
 const MyOctokit = Octokit.plugin(restEndpointMethods);
 
@@ -95,7 +94,7 @@ export class GithubManager {
         per_page: 50,
         sort: 'pushed',
       });
-      const repos = (data as GitHubRepository[]).map((r) => ({
+      const repos = (data as any[]).map((r: any) => ({
         id: r.id,
         name: r.name,
         description: r.description ?? undefined,
@@ -167,11 +166,14 @@ export class GithubManager {
 
   async getOpenPRs(identifier: string): Promise<number> {
     const { owner, repo } = parseRepo(identifier);
-    const { data: search } = await this.octokit.rest.search.issuesAndPullRequests({
-      q: `repo:${owner}/${repo} is:pr is:open`,
+    const { data } = await this.octokit.rest.pulls.list({
+      owner,
+      repo,
+      state: 'open',
       per_page: 1,
     });
-    return search.total_count ?? 0;
+    const total = Number(Array.isArray(data as any) ? (data as any).length : 0);
+    return total;
   }
 
   async getRecentCommits(identifier: string, perPage = 100) {
@@ -181,7 +183,7 @@ export class GithubManager {
       repo,
       per_page: perPage,
     });
-    return data;
+    return data as any[];
   }
 
   async getBiggestCommitByUser(
@@ -263,12 +265,12 @@ export class GithubManager {
       detectedAmount: amount,
       detectedCurrency: currency,
       labels: Array.isArray(issue.labels)
-        ? issue.labels
-            .map((l) => (typeof l === 'string' ? l : l?.name))
+        ? (issue.labels as any[])
+            .map((l: any) => (typeof l === 'string' ? l : l?.name))
             .filter(Boolean)
         : [],
       assignees: Array.isArray(issue.assignees)
-        ? issue.assignees.map((a) => a?.login).filter(Boolean)
+        ? (issue.assignees as any[]).map((a: any) => a?.login).filter(Boolean)
         : [],
     };
   }
@@ -283,7 +285,7 @@ export class GithubManager {
       state: 'all',
       per_page: 100,
     });
-    return (data as GitHubIssue[]).map((i) => ({
+    return (data as any[]).map((i: any) => ({
       id: i.id,
       title: i.title,
       state: i.state,
@@ -297,9 +299,9 @@ export class GithubManager {
     }
     const { data } = await this.octokit.request('POST /markdown', {
       text: markdown,
-      mode: 'gfm' as const,
+      mode: 'gfm',
       context,
-    });
+    } as any);
     return typeof data === 'string' ? data : '';
   }
 
