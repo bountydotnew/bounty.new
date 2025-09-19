@@ -59,7 +59,7 @@ export const auth = betterAuth({
         const externalId = user.id;
         try {
           const _found = await polarClient.customers.getExternal({
-            externalId,
+            externalId: externalId as string,
           });
           return null as any;
         } catch (err) {

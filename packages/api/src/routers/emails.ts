@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { adminProcedure, router } from "../trpc";
+import { TRPCError } from "@trpc/server";
 import {
   AUDIENCES,
   FROM_ADDRESSES,
@@ -44,20 +45,19 @@ export const emailsRouter = router({
         hasHtml: Boolean(input.html),
         hasText: Boolean(input.text),
       });
-      const res = await sendEmail(
-        {
-          to: input.to,
-          subject: input.subject,
-          from: FROM_ADDRESSES[input.fromKey],
-          text: input.text,
-          html: input.html,
-        }/* , { idempotencyKey: input.idempotencyKey } */
-      );
+      const res = await sendEmail({
+        to: input.to,
+        subject: input.subject,
+        from: FROM_ADDRESSES[input.fromKey],
+        ...(input.text && { text: input.text }),
+        ...(input.html && { html: input.html }),
+      });
       if (res.error) {
+        const errorCode = (res.error as any)?.statusCode;
         const code =
-          res.error.statusCode === 429 ? "TOO_MANY_REQUESTS" :
-          res.error.statusCode === 403 ? "FORBIDDEN" :
-          res.error.statusCode && res.error.statusCode >= 400 && res.error.statusCode < 500 ? "BAD_REQUEST" :
+          errorCode === 429 ? "TOO_MANY_REQUESTS" :
+          errorCode === 403 ? "FORBIDDEN" :
+          errorCode && errorCode >= 400 && errorCode < 500 ? "BAD_REQUEST" :
           "INTERNAL_SERVER_ERROR";
         throw new TRPCError({ code, message: res.error.message });
       }
@@ -73,16 +73,14 @@ export const emailsRouter = router({
         audienceKey: audienceKeySchema,
         firstName: z.string().optional(),
         lastName: z.string().optional(),
-        properties: z.record(z.union([z.string(), z.number(), z.boolean(), z.null()])).optional(),
       })
     )
     .mutation(async ({ input }) => {
       const res = await subscribeToAudience({
         email: input.email,
         audience: AUDIENCES[input.audienceKey],
-        firstName: input.firstName,
-        lastName: input.lastName,
-        properties: input.properties,
+        ...(input.firstName && { firstName: input.firstName }),
+        ...(input.lastName && { lastName: input.lastName }),
       });
       return res;
     }),

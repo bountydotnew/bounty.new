@@ -15,7 +15,7 @@ export const sendEmail = async (input: SendEmailInput) => {
     to,
     subject: input.subject,
     html,
-    text,
+    text: text as string,
     headers: input.headers,
     tags: input.tags,
   });
