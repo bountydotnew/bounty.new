@@ -15,7 +15,6 @@ export interface WaitlistCookieData {
   submitted: boolean;
   timestamp: string;
   email: string;
-  position?: number;
 }
 
 export interface WaitlistResponse {
@@ -23,14 +22,6 @@ export interface WaitlistResponse {
   warning?: string;
   remaining: number;
   limit: number;
-  position?: number;
-}
-
-export interface WaitlistPositionResponse {
-  success: boolean;
-  position?: number;
-  email?: string;
-  error?: string;
 }
 
 export interface WaitlistCount {
