@@ -513,7 +513,7 @@ export default function UsersPage() {
                           <DropdownMenuSub>
                             <DropdownMenuItem onClick={() => router.push(`/admin/users/${user.id}`)}>
                               <User className="mr-2 h-4 w-4" />
-                              View User's Profile
+                              View User&apos;s Profile
                             </DropdownMenuItem>
                             <DropdownMenuSubTrigger>
                               <UserCheck className="mr-2 h-4 w-4" />

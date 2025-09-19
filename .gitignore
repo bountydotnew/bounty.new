@@ -18,3 +18,4 @@ stagewise.json
 *.tsbuildinfo
 *.tsbuildinfo
 /agents
+packages/dev-logger/tsconfig.tsbuildinfo
