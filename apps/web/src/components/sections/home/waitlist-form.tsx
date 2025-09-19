@@ -330,7 +330,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
           </form>
           
           {/* Position Checker */}
-          <div className="mb-6 max-w-md">
+          {/* <div className="mb-6 max-w-md">
             <p className="mb-2 font-display-book text-sm text-white/60">
               Already on the waitlist? Check your position:
             </p>
@@ -371,7 +371,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
                 You&apos;re #{positionChecker.position} in line! 🎉
               </p>
             )}
-          </div>
+          </div> */}
         </div>
       )}
 
