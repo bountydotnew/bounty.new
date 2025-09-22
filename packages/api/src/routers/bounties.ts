@@ -170,7 +170,6 @@ export const bountiesRouter = router({
             ? input.issueUrl
             : undefined;
         const deadline = input.deadline ? new Date(input.deadline) : undefined;
-        const newBountyResult = await db
         const { user } = ctx.session;
         const savePaymentMethod = input.savePaymentMethod ?? true;
 
@@ -264,7 +263,7 @@ export const bountiesRouter = router({
           });
         }
 
-        const [newBounty] = await db
+        const newBountyResult = await db
           .insert(bounty)
           .values({
             title: input.title,
