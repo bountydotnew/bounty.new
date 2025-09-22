@@ -39,6 +39,7 @@ export const bounty = pgTable('bounty', {
   title: text('title').notNull(),
   description: text('description').notNull(),
   amount: decimal('amount', { precision: 15, scale: 2 }).notNull(),
+  stripePaymentIntentId: text('stripe_payment_intent_id'),
   currency: text('currency').notNull().default('USD'),
   status: bountyStatusEnum('status').notNull().default('draft'),
   difficulty: difficultyEnum('difficulty').notNull().default('intermediate'),

@@ -49,6 +49,7 @@
         "@radix-ui/react-tabs": "catalog:",
         "@radix-ui/react-toggle": "catalog:",
         "@radix-ui/react-tooltip": "catalog:",
+        "@stripe/stripe-js": "^7.9.0",
         "@tanstack/react-form": "catalog:",
         "@tanstack/react-query": "catalog:",
         "@thumbmarkjs/thumbmarkjs": "catalog:",
@@ -115,6 +116,7 @@
         "@octokit/plugin-rest-endpoint-methods": "catalog:",
         "@trpc/server": "catalog:",
         "@unkey/ratelimit": "catalog:",
+        "stripe": "^18.5.0",
         "zod": "catalog:",
       },
       "devDependencies": {
