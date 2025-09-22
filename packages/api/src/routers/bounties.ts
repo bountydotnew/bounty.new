@@ -1628,4 +1628,96 @@ export const bountiesRouter = router({
         });
       }
     }),
+
+  createPaymentLink: protectedProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const bountyResult = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId))
+          .limit(1);
+
+        const targetBounty = bountyResult[0];
+        if (!targetBounty) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        // Here you would integrate with Polar or Stripe to create a payment link
+        // For now, creating a mock payment URL
+        const paymentUrl = `https://checkout.polar.sh/pay?bounty_id=${input.bountyId}&amount=${targetBounty.amount}&currency=${targetBounty.currency}`;
+
+        return {
+          success: true,
+          paymentUrl,
+          bountyId: input.bountyId,
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to create payment link',
+          cause: error,
+        });
+      }
+    }),
+
+  processManualPayment: protectedProcedure
+    .input(z.object({
+      bountyId: z.string().uuid(),
+      cardDetails: z.object({
+        cardNumber: z.string().min(16),
+        expiryDate: z.string().min(5),
+        cvv: z.string().min(3),
+        cardholderName: z.string().min(2),
+      }),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const bountyResult = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId))
+          .limit(1);
+
+        const targetBounty = bountyResult[0];
+        if (!targetBounty) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        // Here you would integrate with Polar or Stripe to process the card payment
+        // For now, we'll simulate a successful payment
+
+        // In a real implementation, you would:
+        // 1. Create a payment intent with Polar/Stripe
+        // 2. Process the payment with the card details
+        // 3. Update the bounty status if needed
+        // 4. Create payment records in the database
+
+        // Mock payment processing delay
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        return {
+          success: true,
+          paymentId: `pay_${Date.now()}`,
+          bountyId: input.bountyId,
+          amount: parseAmount(targetBounty.amount),
+          currency: targetBounty.currency,
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to process payment',
+          cause: error,
+        });
+      }
+    }),
 });

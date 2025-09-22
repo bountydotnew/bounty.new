@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowUpIcon,
   Bookmark,
+  CreditCard,
   Edit,
   MoreHorizontal,
   Share2,
@@ -124,6 +125,7 @@ export default function BountyActions({
   bookmarked: controlledBookmarked,
   onToggleBookmark,
   actions,
+  onFundBounty,
 }: BountyActionsProps) {
   const queryClient = useQueryClient();
   const bookmarkQuery = useQuery({
@@ -173,6 +175,15 @@ export default function BountyActions({
         bountyId={bountyId}
         onToggle={handleToggleBookmark}
       />
+      {onFundBounty && (
+        <Button
+          onClick={onFundBounty}
+          className="flex items-center gap-2 rounded-md border border-green-500/50 bg-green-500/10 px-3 py-1 text-green-400 text-xs hover:bg-green-500/20"
+        >
+          <CreditCard className="h-3.5 w-3.5" />
+          Fund Bounty
+        </Button>
+      )}
       <ActionsDropdown
         actions={mergedActions}
         ariaLabel="Open bounty actions"
