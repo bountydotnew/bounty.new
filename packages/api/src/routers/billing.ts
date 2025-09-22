@@ -32,7 +32,7 @@ export const billingRouter = router({
       }
       try {
         await polarClient.customers.create({
-          externalId: externalId,
+          externalId,
           email: user.email ?? undefined,
           name: user.name ?? user.email ?? undefined,
           metadata: { userId: externalId },

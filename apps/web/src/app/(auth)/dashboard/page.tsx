@@ -2,10 +2,16 @@
 
 import { authClient } from '@bounty/auth/client';
 import { Button } from '@bounty/ui/components/button';
-import { TrackedButton } from '@bounty/ui/components/tracked-button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@bounty/ui/components/dropdown-menu';
 import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { track } from '@databuddy/sdk';
 import { useQuery } from '@tanstack/react-query';
+import { ChevronDown, Plus } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { AccessGate } from '@/components/access-gate';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
@@ -22,11 +28,8 @@ import GitHub from '@/components/icons/github';
 import { Onboarding } from '@/components/onboarding';
 // Constants and types
 import { PAGINATION_DEFAULTS, PAGINATION_LIMITS } from '@/constants';
+import type { Bounty } from '@/types/dashboard';
 import { trpc } from '@/utils/trpc';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@bounty/ui/components/dropdown-menu';
-import { ChevronDown } from 'lucide-react';
-import { Plus } from 'lucide-react';
-import { Divider } from '@bounty/ui/components/divider';
 
 track('screen_view', { screen_name: 'dashboard' });
 
@@ -111,7 +114,7 @@ export default function Dashboard() {
         <Onboarding />
         <Header
           isMyBountiesLoading={myBounties.isLoading}
-          myBounties={myBounties.data?.data ?? []}
+          myBounties={(myBounties.data?.data ?? []) as unknown as Bounty[]}
         />
         <div className="bg-background">
           <div className="container mx-auto rounded-lg px-4 py-4">
@@ -120,18 +123,18 @@ export default function Dashboard() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
+                      className="flex items-center justify-start rounded-md bg-white p-0 text-black hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={!session?.user}
-                      className="p-0 flex items-center justify-start rounded-md bg-white text-black hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <div className="flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-bl-md rounded-tl-md bg-white pl-3 pr-0">
-                        <div className="justify-start text-center text-sm leading-none text-black p-0 gap-0">
+                      <div className="flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-tl-md rounded-bl-md bg-white pr-0 pl-3">
+                        <div className="justify-start gap-0 p-0 text-center text-black text-sm leading-none">
                           Create Bounty
                         </div>
                       </div>
                       <div className="flex items-center justify-start gap-2.5 self-stretch px-0">
-                        <div className="relative h-3 w-px rounded-full bg-[#D0D0D0]"></div>
+                        <div className="relative h-3 w-px rounded-full bg-[#D0D0D0]" />
                       </div>
-                      <div className="flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-br-md rounded-tr-md pr-2">
+                      <div className="flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-tr-md rounded-br-md pr-2">
                         <ChevronDown className="ml-2 h-4 w-4" />
                       </div>
                     </Button>
@@ -154,7 +157,9 @@ export default function Dashboard() {
               <div className="flex flex-col rounded-lg lg:col-span-2">
                 <div className="rounded-lg lg:h-full lg:overflow-y-auto">
                   <BountiesFeed
-                    bounties={bounties.data?.data ?? []}
+                    bounties={
+                      (bounties.data?.data ?? []) as unknown as Bounty[]
+                    }
                     className="lg:pr-2"
                     error={
                       bounties.error instanceof Error
@@ -174,7 +179,9 @@ export default function Dashboard() {
                   <div className="space-y-6 lg:pr-2">
                     <DashboardSidebar
                       isLoadingMyBounties={myBounties.isLoading}
-                      myBounties={myBounties.data?.data ?? []}
+                      myBounties={
+                        (myBounties.data?.data ?? []) as unknown as Bounty[]
+                      }
                     />
                   </div>
                 </div>

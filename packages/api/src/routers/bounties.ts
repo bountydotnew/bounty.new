@@ -8,10 +8,8 @@ import {
   createNotification,
   db,
   submission,
-  user,
+  user
 } from '@bounty/db';
-import { stripe } from '../lib/stripe';
-import { getOrCreateCustomer } from '../lib/stripe-utils';
 import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
 import {
@@ -26,7 +24,13 @@ import {
   sql,
 } from 'drizzle-orm';
 import { z } from 'zod';
-import { createBountyPaymentIntent, confirmBountyPayment } from '../lib/stripe';
+import {
+  confirmBountyPayment,
+  createBountyPaymentIntent,
+  stripe,
+} from '../lib/stripe';
+import { getOrCreateCustomer } from '../lib/stripe-utils';
+import type Stripe from 'stripe';
 import { protectedProcedure, publicProcedure, router } from '../trpc';
 
 const parseAmount = (amount: string | number | null): number => {
@@ -35,6 +39,397 @@ const parseAmount = (amount: string | number | null): number => {
   }
   const parsed = Number(amount);
   return Number.isNaN(parsed) ? 0 : parsed;
+};
+
+const buildPaymentIntentParams = (
+  input: z.infer<typeof createBountySchema>,
+  sessionUser: { id: string; email?: string | null }
+): Stripe.PaymentIntentCreateParams => {
+  const normalizedAmount = Number.parseFloat(input.amount) * 100;
+  
+  return {
+    amount: Math.round(normalizedAmount),
+    currency: input.currency.toLowerCase(),
+    payment_method: input.paymentMethodId,
+    confirm: true,
+    automatic_payment_methods: {
+      enabled: true,
+      allow_redirects: 'never',
+    },
+    metadata: {
+      userId: sessionUser.id,
+      bountyTitle: input.title,
+    },
+  };
+};
+
+const handlePaymentMethodCustomer = async (
+  piCreate: Stripe.PaymentIntentCreateParams,
+  paymentMethodId: string
+): Promise<Stripe.PaymentIntent> => {
+  const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
+  const paymentMethodCustomer = paymentMethod.customer as string;
+
+  if (paymentMethodCustomer) {
+    console.log("Using payment method's customer:", paymentMethodCustomer);
+    piCreate.customer = paymentMethodCustomer;
+    piCreate.setup_future_usage = 'off_session';
+
+    return await stripe.paymentIntents.create(piCreate);
+  }
+  
+  console.log('Payment method has no customer, trying without customer...');
+  const retryParams: Stripe.PaymentIntentCreateParams = {
+    amount: piCreate.amount,
+    currency: piCreate.currency as string,
+    payment_method: piCreate.payment_method as string,
+    confirm: piCreate.confirm ?? false,
+    ...(piCreate.automatic_payment_methods
+      ? { automatic_payment_methods: piCreate.automatic_payment_methods }
+      : {}),
+    ...(piCreate.metadata ? { metadata: piCreate.metadata } : {}),
+  };
+  
+  return await stripe.paymentIntents.create(retryParams);
+};
+
+const createPaymentIntentWithRetry = async (
+  piCreate: Stripe.PaymentIntentCreateParams,
+  input: z.infer<typeof createBountySchema>,
+  savePaymentMethod: boolean
+): Promise<Stripe.PaymentIntent> => {
+  try {
+    const paymentIntent = await stripe.paymentIntents.create(piCreate);
+    console.log('PaymentIntent created:', paymentIntent.id, 'Status:', paymentIntent.status);
+    return paymentIntent;
+  } catch (stripeError: unknown) {
+    const err = stripeError as { code?: string; message?: string };
+    console.error('Stripe PaymentIntent creation failed:', err);
+
+    if (
+      (err.code === 'payment_method_unusable' ||
+        err.message?.includes('does not belong to the Customer')) &&
+      savePaymentMethod
+    ) {
+      console.log("Payment method not attachable to customer, trying with payment method's customer...");
+      return await handlePaymentMethodCustomer(piCreate, input.paymentMethodId);
+    }
+    
+    throw stripeError;
+  }
+};
+
+const createBountyInDatabase = async (
+  input: z.infer<typeof createBountySchema>,
+  userId: string
+) => {
+  const cleanedTags =
+    Array.isArray(input.tags) && input.tags.length > 0
+      ? input.tags
+      : undefined;
+  const repositoryUrl =
+    input.repositoryUrl && input.repositoryUrl.length > 0
+      ? input.repositoryUrl
+      : undefined;
+  const issueUrl =
+    input.issueUrl && input.issueUrl.length > 0
+      ? input.issueUrl
+      : undefined;
+  const deadline = input.deadline ? new Date(input.deadline) : undefined;
+
+  const newBountyResult = await db
+    .insert(bounty)
+    .values({
+      title: input.title,
+      description: input.description,
+      amount: input.amount,
+      currency: input.currency,
+      difficulty: input.difficulty,
+      deadline,
+      tags: cleanedTags ?? null,
+      repositoryUrl,
+      issueUrl,
+      createdById: userId,
+      status: 'draft',
+      fundingStatus: 'unfunded',
+    })
+    .returning();
+
+  const newBounty = newBountyResult[0];
+  if (!newBounty) {
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Failed to create bounty',
+    });
+  }
+
+  return newBounty;
+};
+
+const fetchBountyWithCreator = async (bountyId: string) => {
+  const [bountyRow] = await db
+    .select({
+      id: bounty.id,
+      title: bounty.title,
+      description: bounty.description,
+      amount: bounty.amount,
+      currency: bounty.currency,
+      status: bounty.status,
+      difficulty: bounty.difficulty,
+      deadline: bounty.deadline,
+      tags: bounty.tags,
+      repositoryUrl: bounty.repositoryUrl,
+      issueUrl: bounty.issueUrl,
+      createdById: bounty.createdById,
+      assignedToId: bounty.assignedToId,
+      createdAt: bounty.createdAt,
+      updatedAt: bounty.updatedAt,
+      creator: {
+        id: user.id,
+        name: user.name,
+        image: user.image,
+      },
+    })
+    .from(bounty)
+    .innerJoin(user, eq(bounty.createdById, user.id))
+    .where(eq(bounty.id, bountyId));
+
+  if (!bountyRow) {
+    throw new TRPCError({
+      code: 'NOT_FOUND',
+      message: 'Bounty not found',
+    });
+  }
+
+  return bountyRow;
+};
+
+const fetchBountyVoteCount = async (bountyId: string) => {
+  const [voteCountRow] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(bountyVote)
+    .where(eq(bountyVote.bountyId, bountyId));
+
+  return Number(voteCountRow?.count || 0);
+};
+
+const fetchUserVoteAndBookmark = async (bountyId: string, userId: string) => {
+  const [existingVote] = await db
+    .select({ id: bountyVote.id })
+    .from(bountyVote)
+    .where(
+      and(
+        eq(bountyVote.bountyId, bountyId),
+        eq(bountyVote.userId, userId)
+      )
+    );
+
+  const [existingBookmark] = await db
+    .select({ id: bountyBookmark.id })
+    .from(bountyBookmark)
+    .where(
+      and(
+        eq(bountyBookmark.bountyId, bountyId),
+        eq(bountyBookmark.userId, userId)
+      )
+    );
+
+  return {
+    isVoted: Boolean(existingVote),
+    bookmarked: Boolean(existingBookmark),
+  };
+};
+
+const fetchBountyComments = async (bountyId: string) => {
+  return await db
+    .select({
+      id: bountyComment.id,
+      content: bountyComment.content,
+      originalContent: bountyComment.originalContent,
+      parentId: bountyComment.parentId,
+      createdAt: bountyComment.createdAt,
+      editCount: bountyComment.editCount,
+      user: {
+        id: user.id,
+        name: user.name,
+        image: user.image,
+      },
+    })
+    .from(bountyComment)
+    .leftJoin(user, eq(bountyComment.userId, user.id))
+    .where(eq(bountyComment.bountyId, bountyId))
+    .orderBy(desc(bountyComment.createdAt));
+};
+
+const fetchCommentLikes = async (commentIds: string[], userId?: string) => {
+  const likeCounts = commentIds.length
+    ? await db
+        .select({
+          commentId: bountyCommentLike.commentId,
+          likeCount: sql<number>`count(*)::int`.as('likeCount'),
+        })
+        .from(bountyCommentLike)
+        .where(inArray(bountyCommentLike.commentId, commentIds))
+        .groupBy(bountyCommentLike.commentId)
+    : [];
+
+  const userLikes = userId && commentIds.length
+    ? await db
+        .select({ commentId: bountyCommentLike.commentId })
+        .from(bountyCommentLike)
+        .where(
+          and(
+            eq(bountyCommentLike.userId, userId),
+            inArray(bountyCommentLike.commentId, commentIds)
+          )
+        )
+    : [];
+
+  return { likeCounts, userLikes };
+};
+
+const processCommentsWithLikes = (
+  comments: Array<{
+    id: string;
+    content: string;
+    originalContent: string | null;
+    parentId: string | null;
+    createdAt: Date;
+    editCount: number;
+    user: {
+      id: string;
+      name: string | null;
+      image: string | null;
+    } | null;
+  }>,
+  likeCounts: Array<{ commentId: string; likeCount: number }>,
+  userLikes: Array<{ commentId: string }>
+) => {
+  return comments.map((c) => {
+    const lc = likeCounts.find((x) => x.commentId === c.id);
+    const isLiked = userLikes.some((x) => x.commentId === c.id);
+    return {
+      ...c,
+      originalContent: c.originalContent ?? null,
+      likeCount: lc?.likeCount || 0,
+      isLiked,
+    } as const;
+  });
+};
+
+const validateCommentDuplication = async (
+  bountyId: string,
+  userId: string,
+  content: string,
+  parentId?: string
+) => {
+  if (parentId) {
+    const [dupCount] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(bountyComment)
+      .where(
+        and(
+          eq(bountyComment.bountyId, bountyId),
+          eq(bountyComment.userId, userId),
+          isNotNull(bountyComment.parentId),
+          eq(bountyComment.content, content)
+        )
+      );
+    if ((dupCount?.count ?? 0) >= 2) {
+      throw new TRPCError({
+        code: 'CONFLICT',
+        message: 'Duplicate reply limit reached (2 per bounty)',
+      });
+    }
+  } else {
+    const [existing] = await db
+      .select({ id: bountyComment.id })
+      .from(bountyComment)
+      .where(
+        and(
+          eq(bountyComment.bountyId, bountyId),
+          eq(bountyComment.userId, userId),
+          isNull(bountyComment.parentId),
+          eq(bountyComment.content, content)
+        )
+      )
+      .limit(1);
+    if (existing) {
+      throw new TRPCError({
+        code: 'CONFLICT',
+        message: 'Duplicate comment on this bounty',
+      });
+    }
+  }
+};
+
+const createComment = async (
+  bountyId: string,
+  userId: string,
+  content: string,
+  parentId?: string
+) => {
+  const [inserted] = await db
+    .insert(bountyComment)
+    .values({
+      bountyId,
+      userId,
+      content,
+      parentId,
+    })
+    .returning();
+
+  if (!inserted) {
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Failed to create comment',
+    });
+  }
+
+  return inserted;
+};
+
+const trackCommentAdded = async (
+  bountyId: string,
+  commentId: string,
+  userId: string,
+  parentId?: string,
+  contentLength?: number
+) => {
+  try {
+    await track('bounty_comment_added', {
+      bounty_id: bountyId,
+      comment_id: commentId,
+      user_id: userId,
+      parent_id: parentId ?? undefined,
+      content_length: contentLength ?? 0,
+      source: 'api',
+    });
+  } catch { /* ignore */ }
+};
+
+const notifyBountyOwner = async (
+  bountyId: string,
+  commentId: string,
+  userId: string,
+  content: string
+) => {
+  try {
+    const [owner] = await db
+      .select({ createdById: bounty.createdById, title: bounty.title })
+      .from(bounty)
+      .where(eq(bounty.id, bountyId))
+      .limit(1);
+    if (owner?.createdById && owner.createdById !== userId) {
+      await createNotification({
+        userId: owner.createdById,
+        type: 'bounty_comment',
+        title: `New comment on "${owner.title}"`,
+        message: content.length > 100 ? `${content.slice(0, 100)}...` : content,
+        data: { bountyId, commentId },
+      });
+    }
+  } catch { /* ignore */ }
 };
 
 const createBountySchema = z.object({
@@ -53,17 +448,7 @@ const createBountySchema = z.object({
   savePaymentMethod: z.boolean().optional(),
 });
 
-const createBountyDraftSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
-  amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, 'Incorrect amount.'),
-  currency: z.string().default('USD'),
-  difficulty: z.enum(['beginner', 'intermediate', 'advanced', 'expert']),
-  deadline: z.string().datetime().optional(),
-  tags: z.array(z.string()).optional(),
-  repositoryUrl: z.string().url().optional(),
-  issueUrl: z.string().url().optional(),
-});
+const createBountyDraftSchema = createBountySchema;
 
 const updateBountySchema = z.object({
   id: z.string().uuid(),
@@ -168,6 +553,7 @@ export const bountiesRouter = router({
     .input(createBountyDraftSchema)
     .mutation(async ({ ctx, input }) => {
       try {
+        const normalizedAmount = String(input.amount);
         const cleanedTags =
           Array.isArray(input.tags) && input.tags.length > 0
             ? input.tags
@@ -182,12 +568,12 @@ export const bountiesRouter = router({
             : undefined;
         const deadline = input.deadline ? new Date(input.deadline) : undefined;
 
-        const [newBounty] = await db
+        const newBountyResult = await db
           .insert(bounty)
           .values({
             title: input.title,
             description: input.description,
-            amount: input.amount,
+            amount: normalizedAmount,
             currency: input.currency,
             difficulty: input.difficulty,
             deadline,
@@ -200,6 +586,7 @@ export const bountiesRouter = router({
           })
           .returning();
 
+        const newBounty = newBountyResult[0];
         if (!newBounty) {
           throw new TRPCError({
             code: 'INTERNAL_SERVER_ERROR',
@@ -211,7 +598,7 @@ export const bountiesRouter = router({
           await track('bounty_draft_created', {
             bounty_id: newBounty.id,
             user_id: ctx.session.user.id,
-            amount: parseAmount(input.amount),
+            amount: parseAmount(normalizedAmount),
             currency: input.currency,
             difficulty: input.difficulty,
             has_repo: Boolean(repositoryUrl),
@@ -219,8 +606,8 @@ export const bountiesRouter = router({
             tags_count: cleanedTags?.length ?? 0,
             source: 'api',
           });
-        } catch {
-          // Track error silently
+        } catch (error) {
+          console.error('Failed to track bounty draft created', error);
         }
 
         return {
@@ -304,10 +691,12 @@ export const bountiesRouter = router({
     }),
 
   confirmBountyFunding: protectedProcedure
-    .input(z.object({
-      bountyId: z.string().uuid(),
-      paymentIntentId: z.string(),
-    }))
+    .input(
+      z.object({
+        bountyId: z.string().uuid(),
+        paymentIntentId: z.string(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       try {
         const [existingBounty] = await db
@@ -350,9 +739,9 @@ export const bountiesRouter = router({
               payment_intent_id: input.paymentIntentId,
               source: 'api',
             });
-          } catch {
-          // Track error silently
-        }
+          } catch (error) {
+            console.error('Failed to track bounty funded', error);
+          }
 
           return {
             success: true,
@@ -360,7 +749,6 @@ export const bountiesRouter = router({
             message: 'Bounty funded and published successfully',
           };
         }
-        
         return {
           success: false,
           data: { status: paymentResult.status },
@@ -409,7 +797,8 @@ export const bountiesRouter = router({
         }
 
         // Determine the new status based on funding
-        const newStatus = existingBounty.fundingStatus === 'funded' ? 'open' : 'draft';
+        const newStatus =
+          existingBounty.fundingStatus === 'funded' ? 'open' : 'draft';
 
         const updatedBountyResult = await db
           .update(bounty)
@@ -435,8 +824,8 @@ export const bountiesRouter = router({
             funding_status: existingBounty.fundingStatus,
             source: 'api',
           });
-        } catch {
-          // Track error silently
+        } catch (error) {
+          console.error('Failed to track bounty published', error);
         }
 
         return {
@@ -460,68 +849,32 @@ export const bountiesRouter = router({
     .input(createBountySchema)
     .mutation(async ({ ctx, input }) => {
       try {
-        const normalizedAmount = Number.parseFloat(input.amount) * 100;
-        const cleanedTags =
-          Array.isArray(input.tags) && input.tags.length > 0
-            ? input.tags
-            : undefined;
-        const repositoryUrl =
-          input.repositoryUrl && input.repositoryUrl.length > 0
-            ? input.repositoryUrl
-            : undefined;
-        const issueUrl =
-          input.issueUrl && input.issueUrl.length > 0
-            ? input.issueUrl
-            : undefined;
-        const deadline = input.deadline ? new Date(input.deadline) : undefined;
-        const { user: currentUser } = ctx.session;
+        const sessionUser = ctx.session.user;
         const savePaymentMethod = input.savePaymentMethod ?? true;
 
-        const piCreate: any = {
-          amount: Math.round(normalizedAmount),
-          currency: input.currency.toLowerCase(),
-          payment_method: input.paymentMethodId,
-          confirm: true,
-          automatic_payment_methods: {
-            enabled: true,
-            allow_redirects: 'never',
-          },
-          metadata: {
-            userId: currentUser.id,
-            bountyTitle: input.title,
-          },
-        };
+        console.log('Creating bounty with params:', {
+          userId: sessionUser.id,
+          paymentMethodId: input.paymentMethodId,
+          savePaymentMethod,
+          amount: input.amount,
+          currency: input.currency,
+        });
+
+        const piCreate = buildPaymentIntentParams(input, sessionUser);
 
         if (savePaymentMethod) {
-          const customerId = await getOrCreateCustomer(currentUser.id, currentUser.email || '');
+          console.log('Getting or creating customer for user:', sessionUser.id);
+          const customerId = await getOrCreateCustomer(
+            sessionUser.id,
+            sessionUser.email || ''
+          );
           piCreate.customer = customerId;
           piCreate.setup_future_usage = 'off_session';
+          console.log('Customer ID:', customerId);
         }
 
-        let paymentIntent: any;
-        try {
-          paymentIntent = await stripe.paymentIntents.create(piCreate);
-        } catch (stripeError: unknown) {
-          const error = stripeError as { code?: string; message?: string };
-          
-          if ((error.code === 'payment_method_unusable' || 
-               error.message?.includes('does not belong to the Customer')) && 
-              savePaymentMethod) {
-            const paymentMethod = await stripe.paymentMethods.retrieve(input.paymentMethodId);
-            const paymentMethodCustomer = paymentMethod.customer as string;
-            
-            if (paymentMethodCustomer) {
-              piCreate.customer = paymentMethodCustomer;
-              piCreate.setup_future_usage = 'off_session';
-              paymentIntent = await stripe.paymentIntents.create(piCreate);
-            } else {
-              const { customer: _customer, setup_future_usage: _setup_future_usage, ...retryParams } = piCreate;
-              paymentIntent = await stripe.paymentIntents.create(retryParams);
-            }
-          } else {
-            throw stripeError;
-          }
-        }
+        console.log('Creating PaymentIntent with params:', piCreate);
+        const paymentIntent = await createPaymentIntentWithRetry(piCreate, input, savePaymentMethod);
 
         if (paymentIntent.status !== 'succeeded') {
           throw new TRPCError({
@@ -530,29 +883,7 @@ export const bountiesRouter = router({
           });
         }
 
-        const [newBounty] = await db
-          .insert(bounty)
-          .values({
-            title: input.title,
-            description: input.description,
-            amount: input.amount,
-            currency: input.currency,
-            difficulty: input.difficulty,
-            deadline,
-            tags: cleanedTags ?? null,
-            repositoryUrl,
-            issueUrl,
-            createdById: ctx.session.user.id,
-            status: 'draft',
-            fundingStatus: 'unfunded',
-          })
-          .returning();
-        if (!newBounty) {
-          throw new TRPCError({
-            code: 'INTERNAL_SERVER_ERROR',
-            message: 'Failed to create bounty',
-          });
-        }
+        const newBounty = await createBountyInDatabase(input, ctx.session.user.id);
 
         try {
           await track('bounty_created', {
@@ -561,14 +892,12 @@ export const bountiesRouter = router({
             amount: parseAmount(input.amount),
             currency: input.currency,
             difficulty: input.difficulty,
-            has_repo: Boolean(repositoryUrl),
-            has_issue: Boolean(issueUrl),
-            tags_count: cleanedTags?.length ?? 0,
+            has_repo: Boolean(input.repositoryUrl),
+            has_issue: Boolean(input.issueUrl),
+            tags_count: input.tags?.length ?? 0,
             source: 'api',
           });
-        } catch {
-          // Track error silently
-        }
+        } catch { /* ignore */ }
 
         return {
           success: true,
@@ -593,6 +922,7 @@ export const bountiesRouter = router({
       try {
         const offset = (input.page - 1) * input.limit;
 
+        /* biome-ignore lint/suspicious/noExplicitAny: Drizzle SQL expression typing is complex here */
         const conditions: any[] = [];
 
         // Only show funded bounties in public listing (exclude unfunded drafts)
@@ -657,7 +987,7 @@ export const bountiesRouter = router({
           .select({ count: sql<number>`count(*)` })
           .from(bounty)
           .where(conditions.length > 0 ? and(...conditions) : undefined);
-        
+
         const count = countResult[0]?.count ?? 0;
 
         const processedResults = results.map((result) => ({
@@ -822,9 +1152,7 @@ export const bountiesRouter = router({
             tags_count: updatedBounty.tags?.length ?? 0,
             source: 'api',
           });
-        } catch {
-          // Track error silently
-        }
+        } catch { /* ignore */ }
 
         return {
           success: true,
@@ -875,9 +1203,7 @@ export const bountiesRouter = router({
             user_id: ctx.session.user.id,
             source: 'api',
           });
-        } catch {
-          // Track error silently
-        }
+        } catch { /* ignore */ }
 
         return {
           success: true,
@@ -917,9 +1243,7 @@ export const bountiesRouter = router({
             voted: Boolean(existing),
             source: 'api',
           });
-        } catch {
-          // Track error silently
-        }
+        } catch { /* ignore */ }
 
         let voted = false;
         if (existing) {
@@ -992,129 +1316,29 @@ export const bountiesRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       try {
-        const [bountyRow] = await db
-          .select({
-            id: bounty.id,
-            title: bounty.title,
-            description: bounty.description,
-            amount: bounty.amount,
-            currency: bounty.currency,
-            status: bounty.status,
-            fundingStatus: bounty.fundingStatus,
-            difficulty: bounty.difficulty,
-            deadline: bounty.deadline,
-            tags: bounty.tags,
-            repositoryUrl: bounty.repositoryUrl,
-            issueUrl: bounty.issueUrl,
-            createdById: bounty.createdById,
-            assignedToId: bounty.assignedToId,
-            createdAt: bounty.createdAt,
-            updatedAt: bounty.updatedAt,
-            creator: {
-              id: user.id,
-              name: user.name,
-              image: user.image,
-            },
-          })
-          .from(bounty)
-          .innerJoin(user, eq(bounty.createdById, user.id))
-          .where(eq(bounty.id, input.id));
-        if (!bountyRow) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: 'Bounty not found',
-          });
-        }
-
-        const [voteCountRow] = await db
-          .select({ count: sql<number>`count(*)::int` })
-          .from(bountyVote)
-          .where(eq(bountyVote.bountyId, input.id));
+        const bountyRow = await fetchBountyWithCreator(input.id);
+        const voteCount = await fetchBountyVoteCount(input.id);
 
         let isVoted = false;
         let bookmarked = false;
         if (ctx.session?.user?.id) {
-          const [existingVote] = await db
-            .select({ id: bountyVote.id })
-            .from(bountyVote)
-            .where(
-              and(
-                eq(bountyVote.bountyId, input.id),
-                eq(bountyVote.userId, ctx.session.user.id)
-              )
-            );
-          isVoted = Boolean(existingVote);
-
-          const [existingBookmark] = await db
-            .select({ id: bountyBookmark.id })
-            .from(bountyBookmark)
-            .where(
-              and(
-                eq(bountyBookmark.bountyId, input.id),
-                eq(bountyBookmark.userId, ctx.session.user.id)
-              )
-            );
-          bookmarked = Boolean(existingBookmark);
+          const userData = await fetchUserVoteAndBookmark(input.id, ctx.session.user.id);
+          isVoted = userData.isVoted;
+          bookmarked = userData.bookmarked;
         }
 
-        const comments = await db
-          .select({
-            id: bountyComment.id,
-            content: bountyComment.content,
-            originalContent: bountyComment.originalContent,
-            parentId: bountyComment.parentId,
-            createdAt: bountyComment.createdAt,
-            editCount: bountyComment.editCount,
-            user: {
-              id: user.id,
-              name: user.name,
-              image: user.image,
-            },
-          })
-          .from(bountyComment)
-          .leftJoin(user, eq(bountyComment.userId, user.id))
-          .where(eq(bountyComment.bountyId, input.id))
-          .orderBy(desc(bountyComment.createdAt));
-
+        const comments = await fetchBountyComments(input.id);
         const commentIds = comments.map((c) => c.id);
-        const likeCounts = commentIds.length
-          ? await db
-              .select({
-                commentId: bountyCommentLike.commentId,
-                likeCount: sql<number>`count(*)::int`.as('likeCount'),
-              })
-              .from(bountyCommentLike)
-              .where(inArray(bountyCommentLike.commentId, commentIds))
-              .groupBy(bountyCommentLike.commentId)
-          : [];
+        const { likeCounts, userLikes } = await fetchCommentLikes(
+          commentIds,
+          ctx.session?.user?.id
+        );
 
-        const userLikes =
-          ctx.session?.user?.id && commentIds.length
-            ? await db
-                .select({ commentId: bountyCommentLike.commentId })
-                .from(bountyCommentLike)
-                .where(
-                  and(
-                    eq(bountyCommentLike.userId, ctx.session.user.id),
-                    inArray(bountyCommentLike.commentId, commentIds)
-                  )
-                )
-            : [];
-
-        const commentsWithLikes = comments.map((c) => {
-          const lc = likeCounts.find((x) => x.commentId === c.id);
-          const isLiked = (userLikes || []).some((x) => x.commentId === c.id);
-          return {
-            ...c,
-            originalContent: c.originalContent ?? null,
-            likeCount: lc?.likeCount || 0,
-            isLiked,
-          } as const;
-        });
+        const commentsWithLikes = processCommentsWithLikes(comments, likeCounts, userLikes);
 
         return {
           bounty: { ...bountyRow, amount: parseAmount(bountyRow.amount) },
-          votes: { count: Number(voteCountRow?.count || 0), isVoted },
+          votes: { count: voteCount, isVoted },
           bookmarked,
           comments: commentsWithLikes,
         };
@@ -1157,9 +1381,7 @@ export const bountiesRouter = router({
               bookmarked: false,
               source: 'api',
             });
-          } catch {
-          // Track error silently
-        }
+          } catch { /* ignore */ }
           return { bookmarked: false };
         }
         try {
@@ -1169,9 +1391,7 @@ export const bountiesRouter = router({
             bookmarked: true,
             source: 'api',
           });
-        } catch {
-          // Track error silently
-        }
+        } catch { /* ignore */ }
         return { bookmarked: true };
       } catch (error) {
         throw new TRPCError({
@@ -1327,7 +1547,7 @@ export const bountiesRouter = router({
           .select({ count: sql<number>`count(*)` })
           .from(bountyBookmark)
           .where(eq(bountyBookmark.userId, ctx.session.user.id));
-        
+
         const count = countResult[0]?.count ?? 0;
 
         return {
@@ -1360,95 +1580,11 @@ export const bountiesRouter = router({
     .mutation(async ({ ctx, input }) => {
       try {
         const trimmed = input.content.trim();
-
-        if (input.parentId) {
-          const [dupCount] = await db
-            .select({ count: sql<number>`count(*)` })
-            .from(bountyComment)
-            .where(
-              and(
-                eq(bountyComment.bountyId, input.bountyId),
-                eq(bountyComment.userId, ctx.session.user.id),
-                isNotNull(bountyComment.parentId),
-                eq(bountyComment.content, trimmed)
-              )
-            );
-          if ((dupCount?.count ?? 0) >= 2) {
-            throw new TRPCError({
-              code: 'CONFLICT',
-              message: 'Duplicate reply limit reached (2 per bounty)',
-            });
-          }
-        } else {
-          const [existing] = await db
-            .select({ id: bountyComment.id })
-            .from(bountyComment)
-            .where(
-              and(
-                eq(bountyComment.bountyId, input.bountyId),
-                eq(bountyComment.userId, ctx.session.user.id),
-                isNull(bountyComment.parentId),
-                eq(bountyComment.content, trimmed)
-              )
-            )
-            .limit(1);
-          if (existing) {
-            throw new TRPCError({
-              code: 'CONFLICT',
-              message: 'Duplicate comment on this bounty',
-            });
-          }
-        }
-
-        const [inserted] = await db
-          .insert(bountyComment)
-          .values({
-            bountyId: input.bountyId,
-            userId: ctx.session.user.id,
-            content: trimmed,
-            parentId: input.parentId,
-          })
-          .returning();
-
-        if (!inserted) {
-          throw new TRPCError({
-            code: 'INTERNAL_SERVER_ERROR',
-            message: 'Failed to create comment',
-          });
-        }
-
-        try {
-          await track('bounty_comment_added', {
-            bounty_id: input.bountyId,
-            comment_id: inserted.id,
-            user_id: ctx.session.user.id,
-            parent_id: input.parentId ?? undefined,
-            content_length: trimmed.length,
-            source: 'api',
-          });
-        } catch {
-          // Track error silently
-        }
-
-        try {
-          const [owner] = await db
-            .select({ createdById: bounty.createdById, title: bounty.title })
-            .from(bounty)
-            .where(eq(bounty.id, input.bountyId))
-            .limit(1);
-          if (owner?.createdById && owner.createdById !== ctx.session.user.id) {
-            await createNotification({
-              userId: owner.createdById,
-              type: 'bounty_comment',
-              title: `New comment on "${owner.title}"`,
-              message:
-                trimmed.length > 100 ? `${trimmed.slice(0, 100)}...` : trimmed,
-              data: { bountyId: input.bountyId, commentId: inserted.id },
-            });
-          }
-        } catch {
-          // Notification error silently
-        }
+        await validateCommentDuplication(input.bountyId, ctx.session.user.id, trimmed, input.parentId);
+        
+        const inserted = await createComment(input.bountyId, ctx.session.user.id, trimmed, input.parentId);
+        await trackCommentAdded(input.bountyId, inserted.id, ctx.session.user.id, input.parentId, trimmed.length);
+        await notifyBountyOwner(input.bountyId, inserted.id, ctx.session.user.id, trimmed);
 
         return inserted;
       } catch (error) {
@@ -1607,9 +1743,7 @@ export const bountiesRouter = router({
             edit_count: updated.editCount,
             source: 'api',
           });
-        } catch {
-          // Track error silently
-        }
+        } catch { /* ignore */ }
         return updated;
       } catch (error) {
         if (error instanceof TRPCError) {
@@ -1655,9 +1789,7 @@ export const bountiesRouter = router({
             user_id: ctx.session.user.id,
             source: 'api',
           });
-        } catch {
-          // Track error silently
-        }
+        } catch { /* ignore */ }
         return { success: true };
       } catch (error) {
         if (error instanceof TRPCError) {
@@ -1705,9 +1837,7 @@ export const bountiesRouter = router({
             liked: inserted.length > 0,
             source: 'api',
           });
-        } catch {
-          // Track error silently
-        }
+        } catch { /* ignore */ }
         return {
           likeCount: countRes?.likeCount || 0,
           isLiked: inserted.length > 0,
@@ -1897,7 +2027,7 @@ export const bountiesRouter = router({
           .select({ count: sql<number>`count(*)` })
           .from(bounty)
           .where(eq(bounty.createdById, ctx.session.user.id));
-        
+
         const count = countResult[0]?.count ?? 0;
 
         const processedResults = results.map((result) => ({
@@ -1964,15 +2094,17 @@ export const bountiesRouter = router({
     }),
 
   processManualPayment: protectedProcedure
-    .input(z.object({
-      bountyId: z.string().uuid(),
-      cardDetails: z.object({
-        cardNumber: z.string().min(16),
-        expiryDate: z.string().min(5),
-        cvv: z.string().min(3),
-        cardholderName: z.string().min(2),
-      }),
-    }))
+    .input(
+      z.object({
+        bountyId: z.string().uuid(),
+        cardDetails: z.object({
+          cardNumber: z.string().min(16),
+          expiryDate: z.string().min(5),
+          cvv: z.string().min(3),
+          cardholderName: z.string().min(2),
+        }),
+      })
+    )
     .mutation(async ({ input }) => {
       try {
         const bountyResult = await db
@@ -1999,7 +2131,7 @@ export const bountiesRouter = router({
         // 4. Create payment records in the database
 
         // Mock payment processing delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
 
         return {
           success: true,

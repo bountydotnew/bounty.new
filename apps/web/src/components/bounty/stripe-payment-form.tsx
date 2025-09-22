@@ -1,14 +1,14 @@
 'use client';
 
-import { Button } from '@bounty/ui/components/button';
 import { env } from '@bounty/env/client';
-import { loadStripe } from '@stripe/stripe-js';
+import { Button } from '@bounty/ui/components/button';
 import {
   Elements,
   PaymentElement,
-  useStripe,
   useElements,
+  useStripe,
 } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -29,7 +29,12 @@ interface PaymentFormInnerProps {
   currency: string;
 }
 
-function PaymentFormInner({ onSuccess, onCancel, amount, currency }: PaymentFormInnerProps) {
+function PaymentFormInner({
+  onSuccess,
+  onCancel,
+  amount,
+  currency,
+}: PaymentFormInnerProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -37,7 +42,7 @@ function PaymentFormInner({ onSuccess, onCancel, amount, currency }: PaymentForm
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!stripe || !elements) {
+    if (!(stripe && elements)) {
       return;
     }
 
@@ -67,8 +72,8 @@ function PaymentFormInner({ onSuccess, onCancel, amount, currency }: PaymentForm
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-4 mb-4">
+    <form className="space-y-4" onSubmit={handleSubmit}>
+      <div className="mb-4 rounded-lg border border-neutral-800 bg-neutral-900/60 p-4">
         <div className="flex items-center justify-between">
           <span className="text-neutral-300">Total Amount</span>
           <span className="font-semibold text-white text-xl">
@@ -87,17 +92,14 @@ function PaymentFormInner({ onSuccess, onCancel, amount, currency }: PaymentForm
 
       <div className="flex justify-end gap-2">
         <Button
+          disabled={isProcessing}
+          onClick={onCancel}
           type="button"
           variant="outline"
-          onClick={onCancel}
-          disabled={isProcessing}
         >
           Cancel
         </Button>
-        <Button
-          type="submit"
-          disabled={!stripe || isProcessing}
-        >
+        <Button disabled={!stripe || isProcessing} type="submit">
           {isProcessing ? 'Processing...' : `Pay $${amount.toFixed(2)}`}
         </Button>
       </div>
@@ -128,12 +130,12 @@ export function StripePaymentForm({
   };
 
   return (
-    <Elements stripe={stripePromise} options={options}>
+    <Elements options={options} stripe={stripePromise}>
       <PaymentFormInner
-        onSuccess={onSuccess}
-        onCancel={onCancel}
         amount={amount}
         currency={currency}
+        onCancel={onCancel}
+        onSuccess={onSuccess}
       />
     </Elements>
   );

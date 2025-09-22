@@ -1,9 +1,9 @@
 import { db, user, userProfile, userRating, userReputation } from '@bounty/db';
-import { stripe } from '../lib/stripe';
-import { getOrCreateCustomer, getOrCreateAccount } from '../lib/stripe-utils';
 import { TRPCError } from '@trpc/server';
 import { desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { stripe } from '../lib/stripe';
+import { getOrCreateAccount, getOrCreateCustomer } from '../lib/stripe-utils';
 import { protectedProcedure, publicProcedure, router } from '../trpc';
 
 const updateProfileSchema = z.object({
@@ -329,228 +329,233 @@ export const profilesRouter = router({
         });
       }
     }),
-searchProfiles: publicProcedure
-  .input(
-    z.object({
-      query: z.string().min(1),
-      skills: z.array(z.string()).optional(),
-      availableForWork: z.boolean().optional(),
-      page: z.number().int().positive().default(1),
-      limit: z.number().int().positive().max(50).default(20),
-    })
-  )
-  .query(async ({ input }) => {
+  searchProfiles: publicProcedure
+    .input(
+      z.object({
+        query: z.string().min(1),
+        skills: z.array(z.string()).optional(),
+        availableForWork: z.boolean().optional(),
+        page: z.number().int().positive().default(1),
+        limit: z.number().int().positive().max(50).default(20),
+      })
+    )
+    .query(async ({ input }) => {
+      try {
+        const offset = (input.page - 1) * input.limit;
+
+        const conditions = [
+          sql`${user.name} ILIKE ${`%${input.query}%`} OR ${userProfile.bio} ILIKE ${`%${input.query}%`}`,
+        ];
+
+        if (input.skills && input.skills.length > 0) {
+          conditions.push(sql`${userProfile.skills} && ${input.skills}`);
+        }
+
+        if (input.availableForWork !== undefined) {
+          conditions.push(
+            eq(userProfile.availableForWork, input.availableForWork)
+          );
+        }
+
+        const results = await db
+          .select({
+            user: {
+              id: user.id,
+              name: user.name,
+              image: user.image,
+            },
+            profile: userProfile,
+            reputation: userReputation,
+          })
+          .from(user)
+          .leftJoin(userProfile, eq(user.id, userProfile.userId))
+          .leftJoin(userReputation, eq(user.id, userReputation.userId))
+          .where(sql`${conditions.join(' AND ')}`)
+          .orderBy(desc(userReputation.averageRating))
+          .limit(input.limit)
+          .offset(offset);
+
+        return {
+          success: true,
+          data: results,
+        };
+      } catch (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to search profiles',
+          cause: error,
+        });
+      }
+    }),
+
+  createOrRetrieveCustomer: protectedProcedure.mutation(async ({ ctx }) => {
     try {
-      const offset = (input.page - 1) * input.limit;
+      const { user } = ctx.session;
+      const [profile] = await db
+        .select({ stripeCustomerId: userProfile.stripeCustomerId })
+        .from(userProfile)
+        .where(eq(userProfile.userId, user.id));
 
-      const conditions = [
-        sql`${user.name} ILIKE ${`%${input.query}%`} OR ${userProfile.bio} ILIKE ${`%${input.query}%`}`,
-      ];
+      let customerId: string;
 
-      if (input.skills && input.skills.length > 0) {
-        conditions.push(sql`${userProfile.skills} && ${input.skills}`);
-      }
-
-      if (input.availableForWork !== undefined) {
-        conditions.push(
-          eq(userProfile.availableForWork, input.availableForWork)
+      if (profile?.stripeCustomerId) {
+        const customer = await stripe.customers.retrieve(
+          profile.stripeCustomerId
         );
-      }
+        customerId = customer.id as string;
+      } else {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          metadata: { userId: user.id },
+        });
+        customerId = customer.id;
 
-      const results = await db
-        .select({
-          user: {
-            id: user.id,
-            name: user.name,
-            image: user.image,
-          },
-          profile: userProfile,
-          reputation: userReputation,
-        })
-        .from(user)
-        .leftJoin(userProfile, eq(user.id, userProfile.userId))
-        .leftJoin(userReputation, eq(user.id, userReputation.userId))
-        .where(sql`${conditions.join(' AND ')}`)
-        .orderBy(desc(userReputation.averageRating))
-        .limit(input.limit)
-        .offset(offset);
+        await db
+          .update(userProfile)
+          .set({ stripeCustomerId: customerId })
+          .where(eq(userProfile.userId, user.id));
+      }
 
       return {
         success: true,
-        data: results,
+        data: { customerId },
       };
     } catch (error) {
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to search profiles',
+        message: 'Failed to create or retrieve Stripe customer',
         cause: error,
       });
     }
   }),
 
-createOrRetrieveCustomer: protectedProcedure.mutation(async ({ ctx }) => {
-  try {
-    const { user } = ctx.session;
-    const [profile] = await db
-      .select({ stripeCustomerId: userProfile.stripeCustomerId })
-      .from(userProfile)
-      .where(eq(userProfile.userId, user.id));
+  createSetupIntent: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const { user } = ctx.session;
 
-    let customerId: string;
-
-    if (profile?.stripeCustomerId) {
-      const customer = await stripe.customers.retrieve(profile.stripeCustomerId);
-      customerId = customer.id as string;
-    } else {
-      const customer = await stripe.customers.create({
-        email: user.email,
-        metadata: { userId: user.id },
-      });
-      customerId = customer.id;
-
-      await db
-        .update(userProfile)
-        .set({ stripeCustomerId: customerId })
+      // Ensure customer exists
+      const [profile] = await db
+        .select({ stripeCustomerId: userProfile.stripeCustomerId })
+        .from(userProfile)
         .where(eq(userProfile.userId, user.id));
-    }
 
-    return {
-      success: true,
-      data: { customerId },
-    };
-  } catch (error) {
-    throw new TRPCError({
-      code: 'INTERNAL_SERVER_ERROR',
-      message: 'Failed to create or retrieve Stripe customer',
-      cause: error,
-    });
-  }
-}),
+      let customerId: string;
 
-createSetupIntent: protectedProcedure.query(async ({ ctx }) => {
-  try {
-    const { user } = ctx.session;
+      if (profile?.stripeCustomerId) {
+        customerId = profile.stripeCustomerId;
+      } else {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          metadata: { userId: user.id },
+        });
+        customerId = customer.id;
 
-    // Ensure customer exists
-    const [profile] = await db
-      .select({ stripeCustomerId: userProfile.stripeCustomerId })
-      .from(userProfile)
-      .where(eq(userProfile.userId, user.id));
+        await db
+          .update(userProfile)
+          .set({ stripeCustomerId: customerId })
+          .where(eq(userProfile.userId, user.id));
+      }
 
-    let customerId: string;
-
-    if (profile?.stripeCustomerId) {
-      customerId = profile.stripeCustomerId;
-    } else {
-      const customer = await stripe.customers.create({
-        email: user.email,
-        metadata: { userId: user.id },
+      const setupIntent = await stripe.setupIntents.create({
+        customer: customerId,
+        usage: 'off_session',
       });
-      customerId = customer.id;
 
-      await db
-        .update(userProfile)
-        .set({ stripeCustomerId: customerId })
-        .where(eq(userProfile.userId, user.id));
-    }
-
-    const setupIntent = await stripe.setupIntents.create({
-      customer: customerId,
-      usage: 'off_session',
-    });
-
-    return {
-      success: true,
-      data: { clientSecret: setupIntent.client_secret },
-    };
-  } catch (error) {
-    throw new TRPCError({
-      code: 'INTERNAL_SERVER_ERROR',
-      message: 'Failed to create SetupIntent',
-      cause: error,
-    });
-  }
-}),
-
-createOrRetrieveConnectedAccount: protectedProcedure.mutation(async ({ ctx }) => {
-  try {
-    const { user } = ctx.session;
-    const [profile] = await db
-      .select({ stripeAccountId: userProfile.stripeAccountId })
-      .from(userProfile)
-      .where(eq(userProfile.userId, user.id));
-
-    let accountId: string;
-
-    if (profile?.stripeAccountId) {
-      const account = await stripe.accounts.retrieve(profile.stripeAccountId);
-      accountId = account.id as string;
-    } else {
-      const account = await stripe.accounts.create({
-        type: 'express',
-        country: 'US',
-        email: user.email,
-        capabilities: {
-          card_payments: { requested: true },
-          transfers: { requested: true },
-        },
-        metadata: { userId: user.id },
-      });
-      accountId = account.id;
-
-      await db
-        .update(userProfile)
-        .set({ stripeAccountId: accountId })
-        .where(eq(userProfile.userId, user.id));
-    }
-
-    return {
-      success: true,
-      data: { accountId },
-    };
-  } catch (error) {
-    throw new TRPCError({
-      code: 'INTERNAL_SERVER_ERROR',
-      message: 'Failed to create or retrieve connected account',
-      cause: error,
-    });
-  }
-}),
-
-getAccountOnboardingLink: protectedProcedure.mutation(async ({ ctx }) => {
-  try {
-    const { user } = ctx.session;
-
-    const [profile] = await db
-      .select({ stripeAccountId: userProfile.stripeAccountId })
-      .from(userProfile)
-      .where(eq(userProfile.userId, user.id));
-
-    if (!profile?.stripeAccountId) {
+      return {
+        success: true,
+        data: { clientSecret: setupIntent.client_secret },
+      };
+    } catch (error) {
       throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Connected account not found. Please create one first.',
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to create SetupIntent',
+        cause: error,
       });
     }
+  }),
 
-    const accountLink = await stripe.accountLinks.create({
-      account: profile.stripeAccountId,
-      refresh_url: `${process.env.NEXT_PUBLIC_APP_URL}/profile?stripe=refresh`,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/profile?stripe=onboarded`,
-      type: 'account_onboarding',
-    });
+  createOrRetrieveConnectedAccount: protectedProcedure.mutation(
+    async ({ ctx }) => {
+      try {
+        const { user } = ctx.session;
+        const [profile] = await db
+          .select({ stripeAccountId: userProfile.stripeAccountId })
+          .from(userProfile)
+          .where(eq(userProfile.userId, user.id));
 
-    return {
-      success: true,
-      data: { url: accountLink.url },
-    };
-  } catch (error) {
-    throw new TRPCError({
-      code: 'INTERNAL_SERVER_ERROR',
-      message: 'Failed to generate onboarding link',
-      cause: error,
-    });
-  }
-}),
+        let accountId: string;
 
+        if (profile?.stripeAccountId) {
+          const account = await stripe.accounts.retrieve(
+            profile.stripeAccountId
+          );
+          accountId = account.id as string;
+        } else {
+          const account = await stripe.accounts.create({
+            type: 'express',
+            country: 'US',
+            email: user.email,
+            capabilities: {
+              card_payments: { requested: true },
+              transfers: { requested: true },
+            },
+            metadata: { userId: user.id },
+          });
+          accountId = account.id;
+
+          await db
+            .update(userProfile)
+            .set({ stripeAccountId: accountId })
+            .where(eq(userProfile.userId, user.id));
+        }
+
+        return {
+          success: true,
+          data: { accountId },
+        };
+      } catch (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to create or retrieve connected account',
+          cause: error,
+        });
+      }
+    }
+  ),
+
+  getAccountOnboardingLink: protectedProcedure.mutation(async ({ ctx }) => {
+    try {
+      const { user } = ctx.session;
+
+      const [profile] = await db
+        .select({ stripeAccountId: userProfile.stripeAccountId })
+        .from(userProfile)
+        .where(eq(userProfile.userId, user.id));
+
+      if (!profile?.stripeAccountId) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Connected account not found. Please create one first.',
+        });
+      }
+
+      const accountLink = await stripe.accountLinks.create({
+        account: profile.stripeAccountId,
+        refresh_url: `${process.env.NEXT_PUBLIC_APP_URL}/profile?stripe=refresh`,
+        return_url: `${process.env.NEXT_PUBLIC_APP_URL}/profile?stripe=onboarded`,
+        type: 'account_onboarding',
+      });
+
+      return {
+        success: true,
+        data: { url: accountLink.url },
+      };
+    } catch (error) {
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to generate onboarding link',
+        cause: error,
+      });
+    }
+  }),
 });

@@ -11,8 +11,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check } from 'lucide-react';
 import { useState } from 'react';
 import BountyActions from '@/components/bounty/bounty-actions';
-import { BountyPaymentStepper } from '@/components/bounty/bounty-payment-stepper';
 import BountyComments from '@/components/bounty/bounty-comments';
+import { BountyPaymentStepper } from '@/components/bounty/bounty-payment-stepper';
 import CollapsibleText from '@/components/bounty/collapsible-text';
 import CommentEditDialog from '@/components/bounty/comment-edit-dialog';
 import { EditBountyModal } from '@/components/bounty/edit-bounty-modal';
@@ -413,12 +413,12 @@ export default function BountyDetailPage({
       />
 
       <BountyPaymentStepper
-        open={paymentStepperOpen}
-        onOpenChange={setPaymentStepperOpen}
+        bountyAmount={amount}
         bountyId={id}
         bountyTitle={title}
-        bountyAmount={amount}
         currency={currency}
+        onOpenChange={setPaymentStepperOpen}
+        open={paymentStepperOpen}
       />
     </div>
   );

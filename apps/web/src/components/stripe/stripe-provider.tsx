@@ -3,7 +3,7 @@
 import { env } from '@bounty/env/client';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe, type StripeElementsOptions } from '@stripe/stripe-js';
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 const stripePromise = loadStripe(env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
@@ -16,7 +16,7 @@ interface StripeProviderProps {
 export function StripeProvider({
   children,
   clientSecret,
-  options = {}
+  options = {},
 }: StripeProviderProps) {
   const defaultOptions: StripeElementsOptions = {
     appearance: {
@@ -63,7 +63,7 @@ export function StripeProvider({
   }
 
   return (
-    <Elements stripe={stripePromise} options={defaultOptions}>
+    <Elements options={defaultOptions} stripe={stripePromise}>
       {children}
     </Elements>
   );

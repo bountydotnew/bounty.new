@@ -1,12 +1,18 @@
 'use client';
 
 import { Button } from '@bounty/ui/components/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@bounty/ui/components/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@bounty/ui/components/card';
+import { CreditCard, Shield, Sparkles, Zap } from 'lucide-react';
 import { useState } from 'react';
-import { CreditCard, Sparkles, Zap, Shield } from 'lucide-react';
 import { EnhancedCreateBountyModal } from '@/components/bounty/enhanced-create-bounty-modal';
-import { QuickPayButton } from '@/components/stripe/quick-pay-button';
 import { ImprovedPaymentModal } from '@/components/stripe/improved-payment-modal';
+import { QuickPayButton } from '@/components/stripe/quick-pay-button';
 
 export default function PaymentDemoPage() {
   const [showCreateBounty, setShowCreateBounty] = useState(false);
@@ -17,7 +23,7 @@ export default function PaymentDemoPage() {
       title: 'Fix Login Bug',
       amount: 150,
       currency: 'USD',
-      description: 'Users can\'t log in with GitHub OAuth',
+      description: "Users can't log in with GitHub OAuth",
       difficulty: 'intermediate',
     },
     {
@@ -45,7 +51,8 @@ export default function PaymentDemoPage() {
             Enhanced Payment Experience
           </h1>
           <p className="mx-auto max-w-2xl text-neutral-400 text-xl">
-            Experience lightning-fast payments with modern UX, no more manual card entry hassles
+            Experience lightning-fast payments with modern UX, no more manual
+            card entry hassles
           </p>
         </div>
 
@@ -62,7 +69,8 @@ export default function PaymentDemoPage() {
             </CardHeader>
             <CardContent>
               <CardDescription>
-                One-click payments with Apple Pay, Google Pay, and Link. No more typing card numbers.
+                One-click payments with Apple Pay, Google Pay, and Link. No more
+                typing card numbers.
               </CardDescription>
             </CardContent>
           </Card>
@@ -73,12 +81,15 @@ export default function PaymentDemoPage() {
                 <div className="rounded-full bg-green-500/20 p-2">
                   <Shield className="h-6 w-6 text-green-400" />
                 </div>
-                <CardTitle className="text-white">Bank-Level Security</CardTitle>
+                <CardTitle className="text-white">
+                  Bank-Level Security
+                </CardTitle>
               </div>
             </CardHeader>
             <CardContent>
               <CardDescription>
-                Powered by Stripe with end-to-end encryption and fraud protection.
+                Powered by Stripe with end-to-end encryption and fraud
+                protection.
               </CardDescription>
             </CardContent>
           </Card>
@@ -94,7 +105,8 @@ export default function PaymentDemoPage() {
             </CardHeader>
             <CardContent>
               <CardDescription>
-                Smooth animations, micro-interactions, and responsive design that feels magical.
+                Smooth animations, micro-interactions, and responsive design
+                that feels magical.
               </CardDescription>
             </CardContent>
           </Card>
@@ -130,8 +142,8 @@ export default function PaymentDemoPage() {
               </div>
 
               <Button
-                onClick={() => setShowCreateBounty(true)}
                 className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                onClick={() => setShowCreateBounty(true)}
               >
                 Try Enhanced Creation Flow
               </Button>
@@ -166,8 +178,8 @@ export default function PaymentDemoPage() {
               </div>
 
               <Button
-                onClick={() => setShowDirectPayment(true)}
                 className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700"
+                onClick={() => setShowDirectPayment(true)}
               >
                 Try Direct Payment
               </Button>
@@ -177,12 +189,17 @@ export default function PaymentDemoPage() {
 
         {/* Demo Bounties */}
         <div className="mt-12">
-          <h2 className="mb-6 font-bold text-white text-2xl">Demo Bounties</h2>
+          <h2 className="mb-6 font-bold text-2xl text-white">Demo Bounties</h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {demoExamples.map((bounty, index) => (
-              <Card key={index} className="border border-neutral-800 bg-neutral-900/50 backdrop-blur">
+              <Card
+                className="border border-neutral-800 bg-neutral-900/50 backdrop-blur"
+                key={index}
+              >
                 <CardHeader>
-                  <CardTitle className="text-white text-lg">{bounty.title}</CardTitle>
+                  <CardTitle className="text-lg text-white">
+                    {bounty.title}
+                  </CardTitle>
                   <CardDescription>{bounty.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -194,20 +211,20 @@ export default function PaymentDemoPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-neutral-400 text-sm">Difficulty</span>
-                    <span className="capitalize text-neutral-300 text-sm">
+                    <span className="text-neutral-300 text-sm capitalize">
                       {bounty.difficulty}
                     </span>
                   </div>
 
                   <QuickPayButton
-                    bountyId={`demo-${index}`}
-                    bountyTitle={bounty.title}
                     bountyAmount={bounty.amount}
                     bountyCurrency={bounty.currency}
+                    bountyId={`demo-${index}`}
+                    bountyTitle={bounty.title}
+                    className="w-full"
                     recipientName="Demo User"
                     recipientUsername="demouser"
                     size="sm"
-                    className="w-full"
                   />
                 </CardContent>
               </Card>
@@ -217,22 +234,24 @@ export default function PaymentDemoPage() {
 
         {/* Performance Stats */}
         <div className="mt-16 text-center">
-          <h3 className="mb-8 font-bold text-white text-xl">Performance Improvements</h3>
+          <h3 className="mb-8 font-bold text-white text-xl">
+            Performance Improvements
+          </h3>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
             <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-6">
-              <div className="font-bold text-green-400 text-3xl">85%</div>
+              <div className="font-bold text-3xl text-green-400">85%</div>
               <div className="text-neutral-400 text-sm">Faster Checkout</div>
             </div>
             <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-6">
-              <div className="font-bold text-blue-400 text-3xl">3x</div>
+              <div className="font-bold text-3xl text-blue-400">3x</div>
               <div className="text-neutral-400 text-sm">Higher Conversion</div>
             </div>
             <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-6">
-              <div className="font-bold text-purple-400 text-3xl">95%</div>
+              <div className="font-bold text-3xl text-purple-400">95%</div>
               <div className="text-neutral-400 text-sm">User Satisfaction</div>
             </div>
             <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-6">
-              <div className="font-bold text-yellow-400 text-3xl">0</div>
+              <div className="font-bold text-3xl text-yellow-400">0</div>
               <div className="text-neutral-400 text-sm">Manual Card Entry</div>
             </div>
           </div>
@@ -241,17 +260,17 @@ export default function PaymentDemoPage() {
 
       {/* Modals */}
       <EnhancedCreateBountyModal
-        open={showCreateBounty}
         onOpenChange={setShowCreateBounty}
+        open={showCreateBounty}
       />
 
       <ImprovedPaymentModal
-        open={showDirectPayment}
-        onOpenChange={setShowDirectPayment}
-        bountyId="demo-direct-payment"
-        bountyTitle="Demo Payment Test"
         bountyAmount={100}
         bountyCurrency="USD"
+        bountyId="demo-direct-payment"
+        bountyTitle="Demo Payment Test"
+        onOpenChange={setShowDirectPayment}
+        open={showDirectPayment}
         recipientName="Demo Recipient"
         recipientUsername="demouser"
       />

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: 'Admin dashboard for bounty.new',
 };
 
-export default async function AdminLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import { trpc } from '@/utils/trpc';
 
@@ -66,7 +66,8 @@ export function usePayment({ bountyId, onSuccess, onError }: PaymentHookProps) {
     // State
     clientSecret,
     paymentIntentId,
-    isProcessing: isProcessing || createPaymentIntent.isPending || confirmPayment.isPending,
+    isProcessing:
+      isProcessing || createPaymentIntent.isPending || confirmPayment.isPending,
 
     // Actions
     initiatePayment,

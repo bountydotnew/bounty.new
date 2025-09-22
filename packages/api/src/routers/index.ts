@@ -4,11 +4,11 @@ import { billingRouter } from './billing';
 import { bountiesRouter } from './bounties';
 import { earlyAccessRouter } from './early-access';
 import { emailsRouter } from './emails';
+import { fundTrackingRouter } from './fund-tracking';
 import { newsRouter } from './news';
 import { notificationsRouter } from './notifications';
 import { profilesRouter } from './profiles';
 import { repositoryRouter } from './repository';
-import { stripeRouter } from './stripe';
 import { userRouter } from './user';
 
 export const appRouter = router({
@@ -42,7 +42,7 @@ export const appRouter = router({
   betaApplications: betaApplicationsRouter,
   repository: repositoryRouter,
   billing: billingRouter,
-  stripe: stripeRouter,
+  fundTracking: fundTrackingRouter,
 });
 
 export type AppRouter = typeof appRouter;

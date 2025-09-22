@@ -81,10 +81,12 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined') {
       const fromUrl = searchParams.get('tab');
-      let fromStorage = null;
+      let fromStorage: string | null = null;
       try {
         fromStorage = window.localStorage.getItem('settings.activeTab');
-      } catch {}
+      } catch {
+        /* ignore localStorage access */
+      }
       return fromUrl || fromStorage || 'general';
     }
     return 'general';
@@ -100,7 +102,9 @@ export default function SettingsPage() {
     }
     try {
       window.localStorage.setItem('settings.activeTab', activeTab);
-    } catch {}
+    } catch {
+      /* ignore localStorage access */
+    }
   }, [activeTab, searchParams]);
 
   // Lightning-fast tab change handler - no router calls

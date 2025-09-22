@@ -1,10 +1,10 @@
 'use client';
 
-import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { Button } from '@bounty/ui/components/button';
-import { trpcClient } from '@/utils/trpc';
+import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import type { StripeCardElement } from '@stripe/stripe-js';
 import { useEffect, useMemo, useState } from 'react';
+import { trpcClient } from '@/utils/trpc';
 
 type PaymentMode = 'save' | 'one_time' | 'both';
 
@@ -26,7 +26,9 @@ export function PaymentMethodSetup({
   const [loading, setLoading] = useState(false);
 
   // default selection: save when both, otherwise fixed based on mode
-  const [saveCard, setSaveCard] = useState<boolean>(() => (mode === 'one_time' ? false : true));
+  const [saveCard, setSaveCard] = useState<boolean>(() =>
+    mode === 'one_time' ? false : true
+  );
 
   const effectiveMode = useMemo<PaymentMode>(() => mode, [mode]);
 
@@ -46,7 +48,7 @@ export function PaymentMethodSetup({
   const [cardError, setCardError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    if (!stripe || !elements) {
+    if (!(stripe && elements)) {
       onError?.('Stripe.js has not loaded yet.');
       return;
     }
@@ -59,7 +61,10 @@ export function PaymentMethodSetup({
 
     setLoading(true);
     try {
-      if (effectiveMode === 'one_time' || (effectiveMode === 'both' && !saveCard)) {
+      if (
+        effectiveMode === 'one_time' ||
+        (effectiveMode === 'both' && !saveCard)
+      ) {
         // One-time use: create a PaymentMethod from the card details but do not save to customer
         const pmRes = await stripe.createPaymentMethod({
           type: 'card',
@@ -86,14 +91,17 @@ export function PaymentMethodSetup({
         return;
       }
 
-      const { error, setupIntent } = await stripe.confirmCardSetup(clientSecret, {
-        payment_method: {
-          card,
-          billing_details: {
-            name: 'User Name', // TODO: pull from session/profile
+      const { error, setupIntent } = await stripe.confirmCardSetup(
+        clientSecret,
+        {
+          payment_method: {
+            card,
+            billing_details: {
+              name: 'User Name', // TODO: pull from session/profile
+            },
           },
-        },
-      });
+        }
+      );
 
       if (error) {
         onError?.(error.message || 'Failed to setup payment method');
@@ -129,7 +137,7 @@ export function PaymentMethodSetup({
 
   return (
     <div className="space-y-4">
-      <div className="border rounded-md p-3">
+      <div className="rounded-md border p-3">
         <CardElement
           onChange={(e) => {
             setCardComplete(Boolean(e.complete));
@@ -170,9 +178,9 @@ export function PaymentMethodSetup({
       )}
 
       <Button
-        type="button"
         disabled={!stripe || loading || !cardComplete}
         onClick={handleSubmit}
+        type="button"
       >
         {buttonLabel}
       </Button>
