@@ -1,3 +1,5 @@
+'use client';
+
 import { cn } from '@bounty/ui/lib/utils';
 import React from 'react';
 import rehypeSanitize from 'rehype-sanitize';

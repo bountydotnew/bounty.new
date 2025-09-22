@@ -1,7 +1,9 @@
+'use client';
+
 import {
   Avatar,
-  AvatarFallback,
   AvatarImage,
+  AvatarFallback,
 } from '@bounty/ui/components/avatar';
 import { Button } from '@bounty/ui/components/button';
 import Link from '@bounty/ui/components/link';
@@ -10,10 +12,12 @@ import { ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import { Footer } from '@/components/sections/home/footer';
 import { Header } from '@/components/sections/home/header';
+import { useRouter } from 'next/navigation';
 
 export default async function BlogPage() {
   const postsData = await getPosts();
   const { posts } = postsData;
+  const router = useRouter();
 
   if (!posts) {
     return <div>Error loading blog posts. Please try again later.</div>;
@@ -197,7 +201,9 @@ export default async function BlogPage() {
                 Join the waitlist and be among the first to experience the new
                 way to collaborate, create, and get paid for exceptional work.
               </p>
-              <Button className="h-12 rounded-lg bg-white px-8 font-display text-black transition-all duration-200 hover:bg-white/90">
+              <Button onClick={() => {
+                router.push('/?waitlist=true');
+              }} className="h-12 rounded-lg bg-white px-8 font-display text-black transition-all duration-200 hover:bg-white/90">
                 Join Waitlist
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
