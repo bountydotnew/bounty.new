@@ -21,6 +21,11 @@ export const bountyStatusEnum = pgEnum('bounty_status', [
   'completed',
   'cancelled',
 ]);
+
+export const bountyFundingStatusEnum = pgEnum('bounty_funding_status', [
+  'unfunded',
+  'funded',
+]);
 export const submissionStatusEnum = pgEnum('submission_status', [
   'pending',
   'approved',
@@ -41,6 +46,8 @@ export const bounty = pgTable('bounty', {
   amount: decimal('amount', { precision: 15, scale: 2 }).notNull(),
   currency: text('currency').notNull().default('USD'),
   status: bountyStatusEnum('status').notNull().default('draft'),
+  fundingStatus: bountyFundingStatusEnum('funding_status').notNull().default('unfunded'),
+  stripePaymentIntentId: text('stripe_payment_intent_id'),
   difficulty: difficultyEnum('difficulty').notNull().default('intermediate'),
   deadline: timestamp('deadline'),
   tags: text('tags').array(),
