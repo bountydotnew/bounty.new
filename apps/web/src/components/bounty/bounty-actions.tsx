@@ -33,6 +33,7 @@ export function UpvoteButton({
 }: UpvoteButtonProps) {
   return (
     <button
+      type="button"
       aria-label="Upvote bounty"
       aria-pressed={isVoted}
       className={`flex items-center gap-1 rounded-md border border-neutral-700 bg-neutral-800/40 px-2 py-1 text-neutral-300 text-xs hover:bg-neutral-700/40 ${isVoted ? 'border-neutral-700/40 bg-[#343333] text-white' : ''} ${className ?? ''}`}
@@ -65,7 +66,9 @@ export function ActionsDropdown({
       if (typeof window !== 'undefined' && navigator.share) {
         navigator.share({ url: window.location.href });
       }
-    } catch {}
+    } catch {
+      // Share failed silently
+    }
   };
   return (
     <DropdownMenu>
@@ -126,6 +129,8 @@ export default function BountyActions({
   onToggleBookmark,
   actions,
   onFundBounty,
+  fundingStatus,
+  canFund,
 }: BountyActionsProps) {
   const queryClient = useQueryClient();
   const bookmarkQuery = useQuery({
@@ -147,7 +152,9 @@ export default function BountyActions({
     : [];
   const mergedActions = [...baseActions, ...(actions ?? [])];
   const handleToggleBookmark = () => {
-    if (onToggleBookmark) return onToggleBookmark();
+    if (onToggleBookmark) {
+      return onToggleBookmark();
+    }
     const key = trpc.bounties.getBountyBookmark.queryKey({ bountyId });
     const current = bookmarkQuery.data?.bookmarked ?? false;
     queryClient.setQueryData(key, { bookmarked: !current });
@@ -175,7 +182,7 @@ export default function BountyActions({
         bountyId={bountyId}
         onToggle={handleToggleBookmark}
       />
-      {onFundBounty && (
+      {onFundBounty && fundingStatus === 'unfunded' && canFund && (
         <Button
           onClick={onFundBounty}
           className="flex items-center gap-2 rounded-md border border-green-500/50 bg-green-500/10 px-3 py-1 text-green-400 text-xs hover:bg-green-500/20"

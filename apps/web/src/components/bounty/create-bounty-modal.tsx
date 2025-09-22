@@ -1,54 +1,7 @@
 'use client';
 
-import type { AppRouter } from '@bounty/api';
-import { Button } from '@bounty/ui/components/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@bounty/ui/components/dialog';
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from '@bounty/ui/components/drawer';
-import { Input } from '@bounty/ui/components/input';
-import { Label } from '@bounty/ui/components/label';
-import { 
-  Stepper, 
-  StepperList, 
-  StepperItem, 
-  StepperTrigger, 
-  StepperContent, 
-  StepperTitle, 
-  StepperDescription, 
-  StepperIndicator, 
-  StepperSeparator,
-  StepperPrevTrigger,
-  StepperNextTrigger
-} from '@bounty/ui/components/stepper';
-import { useDrafts } from '@bounty/ui/hooks/use-drafts';
-import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
-import {
-  type CreateBountyForm,
-  createBountyDefaults,
-  createBountySchema,
-  currencyOptions,
-  difficultyOptions,
-  formatFormData,
-} from '@bounty/ui/lib/forms';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { TRPCClientErrorLike } from '@trpc/client';
-import { DollarSign, Github } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { MarkdownTextarea } from '@/components/bounty/markdown-editor';
-import { trpc } from '@/utils/trpc';
+import type { CreateBountyForm } from '@bounty/ui/lib/forms';
+import { CreateBountyWizard } from './create-bounty-wizard';
 
 interface CreateBountyModalProps {
   open: boolean;
