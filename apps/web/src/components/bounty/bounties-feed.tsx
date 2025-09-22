@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useCallback } from 'react';
 import { BountyCard } from '@/components/bounty/bounty-card';
 import { BountySkeleton } from '@/components/dashboard/skeletons/bounty-skeleton';
 import { LOADING_SKELETON_COUNTS } from '@/constants';
@@ -29,10 +29,14 @@ export const BountiesFeed = memo(function BountiesFeed({
   const isGrid = layout === 'grid';
 
   const ids = useMemo(() => (bounties || []).map((b) => b.id), [bounties]);
+
   const statsQuery = useQuery({
     ...trpc.bounties.getBountyStatsMany.queryOptions({ bountyIds: ids }),
     enabled: ids.length > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
+
   const statsMap = useMemo(() => {
     const m = new Map<
       string,
@@ -46,6 +50,14 @@ export const BountiesFeed = memo(function BountiesFeed({
     (statsQuery.data?.stats || []).forEach((s: any) => m.set(s.bountyId, s));
     return m;
   }, [statsQuery.data]);
+
+  const renderBountyCard = useCallback((bounty: Bounty) => (
+    <BountyCard
+      bounty={bounty}
+      key={bounty.id}
+      stats={statsMap.get(bounty.id)}
+    />
+  ), [statsMap]);
 
   if (isLoading) {
     return (
@@ -95,13 +107,7 @@ export const BountiesFeed = memo(function BountiesFeed({
             : 'space-y-4'
         }
       >
-        {bounties.map((bounty) => (
-          <BountyCard
-            bounty={bounty}
-            key={bounty.id}
-            stats={statsMap.get(bounty.id)}
-          />
-        ))}
+        {bounties.map(renderBountyCard)}
       </div>
     </div>
   );

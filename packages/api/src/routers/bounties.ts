@@ -105,36 +105,24 @@ const submitBountyWorkSchema = z.object({
 export const bountiesRouter = router({
   getBountyStats: publicProcedure.query(async () => {
     try {
-      const totalBountiesResult = await db
-        .select({ count: sql<number>`count(*)` })
+      const statsResult = await db
+        .select({
+          totalBounties: sql<number>`count(*)`,
+          activeBounties: sql<number>`count(*) filter (where ${bounty.status} = 'open')`,
+          totalBountiesValue: sql<number>`coalesce(sum(cast(${bounty.amount} as decimal)) filter (where ${bounty.status} = 'open'), 0)`,
+          totalPayout: sql<number>`coalesce(sum(cast(${bounty.amount} as decimal)) filter (where ${bounty.status} = 'completed'), 0)`,
+        })
         .from(bounty);
 
-      const activeBountiesResult = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(bounty)
-        .where(eq(bounty.status, 'open'));
-
-      const totalBountiesValueResult = await db
-        .select({
-          total: sql<number>`coalesce(sum(cast(${bounty.amount} as decimal)), 0)`,
-        })
-        .from(bounty)
-        .where(eq(bounty.status, 'open'));
-
-      const totalPayoutResult = await db
-        .select({
-          total: sql<number>`coalesce(sum(cast(${bounty.amount} as decimal)), 0)`,
-        })
-        .from(bounty)
-        .where(eq(bounty.status, 'completed'));
+      const stats = statsResult[0];
 
       return {
         success: true,
         data: {
-          totalBounties: totalBountiesResult[0]?.count ?? 0,
-          activeBounties: activeBountiesResult[0]?.count ?? 0,
-          totalBountiesValue: Number(totalBountiesValueResult[0]?.total) || 0,
-          totalPayout: Number(totalPayoutResult[0]?.total) || 0,
+          totalBounties: Number(stats?.totalBounties) || 0,
+          activeBounties: Number(stats?.activeBounties) || 0,
+          totalBountiesValue: Number(stats?.totalBountiesValue) || 0,
+          totalPayout: Number(stats?.totalPayout) || 0,
         },
       };
     } catch (error) {
@@ -266,6 +254,12 @@ export const bountiesRouter = router({
               name: user.name,
               image: user.image,
             },
+            voteCount: sql<number>`
+              (SELECT count(*)::int FROM ${bountyVote} WHERE ${bountyVote.bountyId} = ${bounty.id})
+            `,
+            commentCount: sql<number>`
+              (SELECT count(*)::int FROM ${bountyComment} WHERE ${bountyComment.bountyId} = ${bounty.id})
+            `,
           })
           .from(bounty)
           .innerJoin(user, eq(bounty.createdById, user.id))
@@ -645,24 +639,17 @@ export const bountiesRouter = router({
         }
 
         const [voteCountRow] = await db
-          .select({ count: sql<number>`count(*)::int` })
+          .select({
+            count: sql<number>`count(*)::int`,
+            isVoted: ctx.session?.user?.id
+              ? sql<boolean>`bool_or(${bountyVote.userId} = ${ctx.session.user.id})`
+              : sql<boolean>`false`,
+          })
           .from(bountyVote)
           .where(eq(bountyVote.bountyId, input.id));
 
-        let isVoted = false;
         let bookmarked = false;
         if (ctx.session?.user?.id) {
-          const [existingVote] = await db
-            .select({ id: bountyVote.id })
-            .from(bountyVote)
-            .where(
-              and(
-                eq(bountyVote.bountyId, input.id),
-                eq(bountyVote.userId, ctx.session.user.id)
-              )
-            );
-          isVoted = Boolean(existingVote);
-
           const [existingBookmark] = await db
             .select({ id: bountyBookmark.id })
             .from(bountyBookmark)
@@ -674,6 +661,8 @@ export const bountiesRouter = router({
             );
           bookmarked = Boolean(existingBookmark);
         }
+
+        const isVoted = Boolean(voteCountRow?.isVoted);
 
         const comments = await db
           .select({
