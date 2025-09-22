@@ -37,6 +37,7 @@ interface BountyDetailPageProps {
   initialComments?: BountyCommentCacheItem[];
   initialBookmarked?: boolean;
   currency?: string;
+  fundingStatus?: 'unfunded' | 'funded';
 }
 
 export default function BountyDetailPage({
@@ -52,6 +53,7 @@ export default function BountyDetailPage({
   initialComments,
   initialBookmarked,
   currency = 'USD',
+  fundingStatus,
 }: BountyDetailPageProps) {
   const { editModalOpen, openEditModal, closeEditModal, editingBountyId } =
     useBountyModals();
@@ -300,6 +302,7 @@ export default function BountyDetailPage({
                     bookmarked={initialBookmarked}
                     bountyId={id}
                     canEdit={canEditBounty}
+                    canFund={canEditBounty}
                     isVoted={Boolean(votes.data?.isVoted)}
                     onEdit={() => openEditModal(id)}
                     onFundBounty={() => setPaymentStepperOpen(true)}
@@ -312,6 +315,7 @@ export default function BountyDetailPage({
                     }}
                     onUpvote={handleUpvote}
                     voteCount={votes.data?.count ?? 0}
+                    fundingStatus={fundingStatus}
                   />
                 </div>
               </div>

@@ -3,14 +3,11 @@
 import { Button } from '@bounty/ui/components/button';
 import {
   Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+  DialogContent, DialogHeader,
+  DialogTitle
 } from '@bounty/ui/components/dialog';
 import { Input } from '@bounty/ui/components/input';
 import { Label } from '@bounty/ui/components/label';
-import { Separator } from '@bounty/ui/components/separator';
 import {
   CreditCard,
   ExternalLink,
@@ -21,7 +18,7 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { trpc } from '@/utils/trpc';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 
 interface BountyPaymentStepperProps {
   open: boolean;
