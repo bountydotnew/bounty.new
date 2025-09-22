@@ -136,7 +136,7 @@ export class GithubManager {
         q: parts.join(' '),
         per_page: 10,
       });
-      return data.items.map((i: any) => ({
+      return data.items.map((i) => ({
         number: i.number,
         title: i.title,
         state: i.state,
@@ -157,7 +157,7 @@ export class GithubManager {
       repo,
       per_page: perPage,
     });
-    return data.map((c: any) => ({
+    return data.map((c) => ({
       login: c.login,
       avatar_url: c.avatar_url,
       html_url: c.html_url,

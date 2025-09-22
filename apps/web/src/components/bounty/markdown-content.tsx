@@ -111,9 +111,7 @@ const markdownComponents: Components = {
     />
   ),
   pre: ({ children }) => {
-    // TODO: Fix this
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const extractTextFromChildren = (children: any): string => {
+    const extractTextFromChildren = (children: React.ReactNode): string => {
       if (!children) {
         return '';
       }
@@ -189,7 +187,7 @@ export function MarkdownContent({ content, encoding }: MarkdownContentProps) {
 
   return (
     <div className="prose prose-invert prose-neutral markdown-content max-w-none">
-      {/* TODO: Fix this */}
+      {/* Code block with syntax highlighting */}
       {/* eslint-disable-next-line */}
       <style global jsx>{`
         .markdown-content ul ul,
