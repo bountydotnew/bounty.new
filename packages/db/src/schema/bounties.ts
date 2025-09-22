@@ -59,9 +59,10 @@ export const bounty = pgTable('bounty', {
   index('bounty_created_by_id_idx').on(t.createdById),
   index('bounty_assigned_to_id_idx').on(t.assignedToId),
   index('bounty_created_at_idx').on(t.createdAt),
+  index('bounty_updated_at_idx').on(t.updatedAt),
   index('bounty_deadline_idx').on(t.deadline),
   index('bounty_amount_idx').on(t.amount),
-  index('bounty_tags_gin_idx').using('gin', t.tags),
+  index('bounty_currency_idx').on(t.currency),
 ]);
 
 export const submission = pgTable('submission', {
@@ -86,6 +87,8 @@ export const submission = pgTable('submission', {
   index('submission_contributor_id_idx').on(t.contributorId),
   index('submission_status_idx').on(t.status),
   index('submission_submitted_at_idx').on(t.submittedAt),
+  index('submission_reviewed_at_idx').on(t.reviewedAt),
+  index('submission_created_at_idx').on(t.createdAt),
 ]);
 
 export const bountyApplication = pgTable('bounty_application', {
@@ -105,8 +108,10 @@ export const bountyApplication = pgTable('bounty_application', {
 }, (t) => [
   index('bounty_application_bounty_id_idx').on(t.bountyId),
   index('bounty_application_applicant_id_idx').on(t.applicantId),
+  index('bounty_application_is_accepted_idx').on(t.isAccepted),
   index('bounty_application_applied_at_idx').on(t.appliedAt),
-  uniqueIndex('bounty_application_bounty_applicant_unique').on(t.bountyId, t.applicantId),
+  index('bounty_application_responded_at_idx').on(t.respondedAt),
+  uniqueIndex('bounty_application_unique_idx').on(t.bountyId, t.applicantId),
 ]);
 
 export const bountyVote = pgTable(

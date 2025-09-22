@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { boolean, index, pgEnum, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { boolean, pgEnum, pgTable, text, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
 
 export const betaAccessStatusEnum = pgEnum('beta_access_status', [
   'none',
@@ -34,10 +34,11 @@ export const user = pgTable('user', {
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
 }, (t) => [
+  index('user_email_idx').on(t.email),
+  index('user_has_access_idx').on(t.hasAccess),
   index('user_beta_access_status_idx').on(t.betaAccessStatus),
   index('user_access_stage_idx').on(t.accessStage),
   index('user_role_idx').on(t.role),
-  index('user_has_access_idx').on(t.hasAccess),
   index('user_banned_idx').on(t.banned),
   index('user_created_at_idx').on(t.createdAt),
 ]);
@@ -57,6 +58,8 @@ export const session = pgTable('session', {
 }, (t) => [
   index('session_user_id_idx').on(t.userId),
   index('session_expires_at_idx').on(t.expiresAt),
+  index('session_token_idx').on(t.token),
+  index('session_created_at_idx').on(t.createdAt),
 ]);
 
 export const account = pgTable('account', {
@@ -78,7 +81,7 @@ export const account = pgTable('account', {
 }, (t) => [
   index('account_user_id_idx').on(t.userId),
   index('account_provider_id_idx').on(t.providerId),
-  uniqueIndex('account_provider_account_unique').on(t.providerId, t.accountId),
+  uniqueIndex('account_provider_account_unique_idx').on(t.providerId, t.accountId),
 ]);
 
 export const verification = pgTable('verification', {
@@ -88,7 +91,11 @@ export const verification = pgTable('verification', {
   expiresAt: timestamp('expires_at').notNull(),
   createdAt: timestamp('created_at').default(sql`now()`),
   updatedAt: timestamp('updated_at').default(sql`now()`),
-});
+}, (t) => [
+  index('verification_identifier_idx').on(t.identifier),
+  index('verification_value_idx').on(t.value),
+  index('verification_expires_at_idx').on(t.expiresAt),
+]);
 
 export const waitlist = pgTable('waitlist', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
@@ -97,7 +104,7 @@ export const waitlist = pgTable('waitlist', {
   hasAccess: boolean('has_access').notNull().default(false),
   ipAddress: text('ip_address'),
 }, (t) => [
-  index('waitlist_email_idx').on(t.email),
+  uniqueIndex('waitlist_email_unique_idx').on(t.email),
   index('waitlist_has_access_idx').on(t.hasAccess),
   index('waitlist_created_at_idx').on(t.createdAt),
 ]);

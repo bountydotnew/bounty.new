@@ -6,6 +6,8 @@ import {
   pgTable,
   text,
   timestamp,
+  index,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { user } from './auth';
 import { bounty } from './bounties';
@@ -31,10 +33,12 @@ export const userProfile = pgTable('user_profile', {
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
 }, (t) => [
+  uniqueIndex('user_profile_user_id_unique_idx').on(t.userId),
   index('user_profile_github_username_idx').on(t.githubUsername),
+  index('user_profile_location_idx').on(t.location),
   index('user_profile_available_for_work_idx').on(t.availableForWork),
-  index('user_profile_skills_gin_idx').using('gin', t.skills),
-  index('user_profile_preferred_languages_gin_idx').using('gin', t.preferredLanguages),
+  index('user_profile_hourly_rate_idx').on(t.hourlyRate),
+  index('user_profile_timezone_idx').on(t.timezone),
 ]);
 
 export const userReputation = pgTable('user_reputation', {
@@ -62,7 +66,14 @@ export const userReputation = pgTable('user_reputation', {
   }).default(sql`0.00`),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
-});
+}, (t) => [
+  uniqueIndex('user_reputation_user_id_unique_idx').on(t.userId),
+  index('user_reputation_total_earned_idx').on(t.totalEarned),
+  index('user_reputation_bounties_completed_idx').on(t.bountiesCompleted),
+  index('user_reputation_average_rating_idx').on(t.averageRating),
+  index('user_reputation_success_rate_idx').on(t.successRate),
+  index('user_reputation_completion_rate_idx').on(t.completionRate),
+]);
 
 export const userRating = pgTable('user_rating', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
@@ -85,4 +96,5 @@ export const userRating = pgTable('user_rating', {
   index('user_rating_bounty_id_idx').on(t.bountyId),
   index('user_rating_rating_idx').on(t.rating),
   index('user_rating_created_at_idx').on(t.createdAt),
+  uniqueIndex('user_rating_unique_idx').on(t.ratedUserId, t.raterUserId, t.bountyId),
 ]);

@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { pgEnum, pgTable, text, timestamp, index } from 'drizzle-orm/pg-core';
 import { user } from './auth';
 
 export const betaApplicationStatusEnum = pgEnum('beta_application_status', [
@@ -26,4 +26,10 @@ export const betaApplication = pgTable('beta_application', {
   reviewNotes: text('review_notes'),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
-});
+}, (t) => [
+  index('beta_application_user_id_idx').on(t.userId),
+  index('beta_application_status_idx').on(t.status),
+  index('beta_application_reviewed_by_idx').on(t.reviewedBy),
+  index('beta_application_created_at_idx').on(t.createdAt),
+  index('beta_application_reviewed_at_idx').on(t.reviewedAt),
+]);
