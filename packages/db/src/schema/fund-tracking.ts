@@ -33,7 +33,10 @@ export const fundTracking = pgTable(
     currency: text('currency').notNull().default('USD'),
     status: fundStatusEnum('status').notNull().default('pending'),
     stripeTransferId: text('stripe_transfer_id'),
-    platformFeeAmount: decimal('platform_fee_amount', { precision: 15, scale: 2 }).notNull(),
+    platformFeeAmount: decimal('platform_fee_amount', {
+      precision: 15,
+      scale: 2,
+    }).notNull(),
     netAmount: decimal('net_amount', { precision: 15, scale: 2 }).notNull(),
     refundAmount: decimal('refund_amount', { precision: 15, scale: 2 }),
     refundReason: text('refund_reason'),

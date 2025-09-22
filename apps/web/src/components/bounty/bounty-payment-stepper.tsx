@@ -11,17 +11,17 @@ import {
 import { Input } from '@bounty/ui/components/input';
 import { Label } from '@bounty/ui/components/label';
 import { Separator } from '@bounty/ui/components/separator';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
   CreditCard,
   ExternalLink,
-  ArrowRight,
-  ArrowLeft,
-  Check
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { trpc } from '@/utils/trpc';
-import { useMutation, useQuery } from '@tanstack/react-query';
 
 interface BountyPaymentStepperProps {
   open: boolean;
@@ -48,15 +48,17 @@ export function BountyPaymentStepper({
   bountyId,
   bountyTitle,
   bountyAmount,
-  currency
+  currency,
 }: BountyPaymentStepperProps) {
   const [currentStep, setCurrentStep] = useState<Step>('method_selection');
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(
+    null
+  );
   const [cardDetails, setCardDetails] = useState<CardDetails>({
     cardNumber: '',
     expiryDate: '',
     cvv: '',
-    cardholderName: ''
+    cardholderName: '',
   });
 
   const createPaymentLink = useMutation({
@@ -69,7 +71,7 @@ export function BountyPaymentStepper({
     },
     onError: (error) => {
       toast.error(`Payment failed: ${error.message}`);
-    }
+    },
   });
 
   const processManualPayment = useMutation({
@@ -81,7 +83,7 @@ export function BountyPaymentStepper({
     onError: (error) => {
       toast.error(`Payment failed: ${error.message}`);
       setCurrentStep('card_details');
-    }
+    },
   });
 
   const handleMethodSelection = (method: PaymentMethod) => {
@@ -110,7 +112,7 @@ export function BountyPaymentStepper({
       setCurrentStep('processing');
       processManualPayment.mutate({
         bountyId,
-        cardDetails
+        cardDetails,
       });
     }
   };
@@ -128,31 +130,32 @@ export function BountyPaymentStepper({
       cardNumber: '',
       expiryDate: '',
       cvv: '',
-      cardholderName: ''
+      cardholderName: '',
     });
     onOpenChange(false);
   };
 
   const isCardDetailsValid = () => {
-    return cardDetails.cardNumber.length >= 16 &&
-           cardDetails.expiryDate.length >= 5 &&
-           cardDetails.cvv.length >= 3 &&
-           cardDetails.cardholderName.length >= 2;
+    return (
+      cardDetails.cardNumber.length >= 16 &&
+      cardDetails.expiryDate.length >= 5 &&
+      cardDetails.cvv.length >= 3 &&
+      cardDetails.cardholderName.length >= 2
+    );
   };
 
   const formatCardNumber = (value: string) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
     const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
+    const match = (matches && matches[0]) || '';
     const parts = [];
     for (let i = 0, len = match.length; i < len; i += 4) {
       parts.push(match.substring(i, i + 4));
     }
     if (parts.length) {
       return parts.join(' ');
-    } else {
-      return v;
     }
+    return v;
   };
 
   const formatExpiryDate = (value: string) => {
@@ -165,15 +168,17 @@ export function BountyPaymentStepper({
 
   const renderMethodSelection = () => (
     <div className="space-y-4">
-      <div className="text-center space-y-1">
+      <div className="space-y-1 text-center">
         <h3 className="font-medium">Fund Bounty</h3>
-        <p className="text-sm text-muted-foreground">{bountyTitle}</p>
-        <div className="text-lg font-semibold">${bountyAmount.toFixed(2)} {currency}</div>
+        <p className="text-muted-foreground text-sm">{bountyTitle}</p>
+        <div className="font-semibold text-lg">
+          ${bountyAmount.toFixed(2)} {currency}
+        </div>
       </div>
 
       <div className="space-y-2">
         <button
-          className={`w-full p-3 border rounded-lg text-left transition-colors ${
+          className={`w-full rounded-lg border p-3 text-left transition-colors ${
             selectedMethod === 'payment_link'
               ? 'border-primary bg-primary/5'
               : 'border-border hover:border-primary/50'
@@ -181,19 +186,25 @@ export function BountyPaymentStepper({
           onClick={() => handleMethodSelection('payment_link')}
         >
           <div className="flex items-center space-x-3">
-            <div className={`w-3 h-3 rounded-full border ${
-              selectedMethod === 'payment_link' ? 'bg-primary border-primary' : 'border-muted-foreground'
-            }`} />
-            <ExternalLink className="w-4 h-4" />
+            <div
+              className={`h-3 w-3 rounded-full border ${
+                selectedMethod === 'payment_link'
+                  ? 'border-primary bg-primary'
+                  : 'border-muted-foreground'
+              }`}
+            />
+            <ExternalLink className="h-4 w-4" />
             <div>
               <div className="font-medium text-sm">Payment Link</div>
-              <div className="text-xs text-muted-foreground">Secure payment page</div>
+              <div className="text-muted-foreground text-xs">
+                Secure payment page
+              </div>
             </div>
           </div>
         </button>
 
         <button
-          className={`w-full p-3 border rounded-lg text-left transition-colors ${
+          className={`w-full rounded-lg border p-3 text-left transition-colors ${
             selectedMethod === 'manual_card'
               ? 'border-primary bg-primary/5'
               : 'border-border hover:border-primary/50'
@@ -201,13 +212,19 @@ export function BountyPaymentStepper({
           onClick={() => handleMethodSelection('manual_card')}
         >
           <div className="flex items-center space-x-3">
-            <div className={`w-3 h-3 rounded-full border ${
-              selectedMethod === 'manual_card' ? 'bg-primary border-primary' : 'border-muted-foreground'
-            }`} />
-            <CreditCard className="w-4 h-4" />
+            <div
+              className={`h-3 w-3 rounded-full border ${
+                selectedMethod === 'manual_card'
+                  ? 'border-primary bg-primary'
+                  : 'border-muted-foreground'
+              }`}
+            />
+            <CreditCard className="h-4 w-4" />
             <div>
               <div className="font-medium text-sm">Card Entry</div>
-              <div className="text-xs text-muted-foreground">Enter card details</div>
+              <div className="text-muted-foreground text-xs">
+                Enter card details
+              </div>
             </div>
           </div>
         </button>
@@ -215,12 +232,12 @@ export function BountyPaymentStepper({
 
       <div className="flex justify-end pt-2">
         <Button
-          onClick={handleNext}
-          disabled={!selectedMethod}
-          size="sm"
           className="gap-1"
+          disabled={!selectedMethod}
+          onClick={handleNext}
+          size="sm"
         >
-          Next <ArrowRight className="w-3 h-3" />
+          Next <ArrowRight className="h-3 w-3" />
         </Button>
       </div>
     </div>
@@ -230,12 +247,12 @@ export function BountyPaymentStepper({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <Button
-          variant="text"
+          className="gap-1 p-0"
           onClick={handleBack}
           size="sm"
-          className="gap-1 p-0"
+          variant="text"
         >
-          <ArrowLeft className="w-3 h-3" />
+          <ArrowLeft className="h-3 w-3" />
           Back
         </Button>
         <h3 className="font-medium">Card Details</h3>
@@ -243,80 +260,98 @@ export function BountyPaymentStepper({
       </div>
 
       <div className="text-center">
-        <div className="text-lg font-semibold">${bountyAmount.toFixed(2)} {currency}</div>
+        <div className="font-semibold text-lg">
+          ${bountyAmount.toFixed(2)} {currency}
+        </div>
       </div>
 
       <div className="space-y-3">
         <div>
-          <Label htmlFor="cardNumber" className="text-sm">Card Number</Label>
+          <Label className="text-sm" htmlFor="cardNumber">
+            Card Number
+          </Label>
           <Input
+            className="mt-1"
             id="cardNumber"
+            maxLength={19}
+            onChange={(e) =>
+              setCardDetails((prev) => ({
+                ...prev,
+                cardNumber: formatCardNumber(e.target.value),
+              }))
+            }
             placeholder="1234 5678 9012 3456"
             value={cardDetails.cardNumber}
-            onChange={(e) => setCardDetails(prev => ({
-              ...prev,
-              cardNumber: formatCardNumber(e.target.value)
-            }))}
-            maxLength={19}
-            className="mt-1"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="expiryDate" className="text-sm">Expiry</Label>
+            <Label className="text-sm" htmlFor="expiryDate">
+              Expiry
+            </Label>
             <Input
+              className="mt-1"
               id="expiryDate"
+              maxLength={5}
+              onChange={(e) =>
+                setCardDetails((prev) => ({
+                  ...prev,
+                  expiryDate: formatExpiryDate(e.target.value),
+                }))
+              }
               placeholder="MM/YY"
               value={cardDetails.expiryDate}
-              onChange={(e) => setCardDetails(prev => ({
-                ...prev,
-                expiryDate: formatExpiryDate(e.target.value)
-              }))}
-              maxLength={5}
-              className="mt-1"
             />
           </div>
 
           <div>
-            <Label htmlFor="cvv" className="text-sm">CVV</Label>
+            <Label className="text-sm" htmlFor="cvv">
+              CVV
+            </Label>
             <Input
+              className="mt-1"
               id="cvv"
+              maxLength={4}
+              onChange={(e) =>
+                setCardDetails((prev) => ({
+                  ...prev,
+                  cvv: e.target.value.replace(/\D/g, ''),
+                }))
+              }
               placeholder="123"
               value={cardDetails.cvv}
-              onChange={(e) => setCardDetails(prev => ({
-                ...prev,
-                cvv: e.target.value.replace(/\D/g, '')
-              }))}
-              maxLength={4}
-              className="mt-1"
             />
           </div>
         </div>
 
         <div>
-          <Label htmlFor="cardholderName" className="text-sm">Name</Label>
+          <Label className="text-sm" htmlFor="cardholderName">
+            Name
+          </Label>
           <Input
+            className="mt-1"
             id="cardholderName"
+            onChange={(e) =>
+              setCardDetails((prev) => ({
+                ...prev,
+                cardholderName: e.target.value,
+              }))
+            }
             placeholder="John Doe"
             value={cardDetails.cardholderName}
-            onChange={(e) => setCardDetails(prev => ({
-              ...prev,
-              cardholderName: e.target.value
-            }))}
-            className="mt-1"
           />
         </div>
       </div>
 
       <div className="flex justify-end pt-2">
         <Button
-          onClick={handleNext}
-          disabled={!isCardDetailsValid()}
-          size="sm"
           className="gap-1"
+          disabled={!isCardDetailsValid()}
+          onClick={handleNext}
+          size="sm"
         >
-          Process Payment <ArrowRight className="w-3 h-3" />
+          Process Payment <ArrowRight className="h-3 w-3" />
         </Button>
       </div>
     </div>
@@ -326,10 +361,10 @@ export function BountyPaymentStepper({
     <div className="space-y-4 text-center">
       <div className="space-y-1">
         <h3 className="font-medium">Processing Payment</h3>
-        <p className="text-sm text-muted-foreground">Please wait...</p>
+        <p className="text-muted-foreground text-sm">Please wait...</p>
       </div>
       <div className="flex justify-center py-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <div className="h-8 w-8 animate-spin rounded-full border-primary border-b-2" />
       </div>
     </div>
   );
@@ -337,23 +372,27 @@ export function BountyPaymentStepper({
   const renderSuccess = () => (
     <div className="space-y-4 text-center">
       <div className="space-y-2">
-        <div className="mx-auto w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-          <Check className="w-5 h-5 text-white" />
+        <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-green-500">
+          <Check className="h-5 w-5 text-white" />
         </div>
         <h3 className="font-medium">Payment Successful!</h3>
-        <p className="text-sm text-muted-foreground">Bounty funded successfully</p>
+        <p className="text-muted-foreground text-sm">
+          Bounty funded successfully
+        </p>
       </div>
 
-      <div className="bg-muted/30 p-3 rounded-lg">
-        <div className="text-sm space-y-1">
+      <div className="rounded-lg bg-muted/30 p-3">
+        <div className="space-y-1 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Amount:</span>
-            <span className="font-medium">${bountyAmount.toFixed(2)} {currency}</span>
+            <span className="font-medium">
+              ${bountyAmount.toFixed(2)} {currency}
+            </span>
           </div>
         </div>
       </div>
 
-      <Button onClick={handleClose} size="sm" className="w-full">
+      <Button className="w-full" onClick={handleClose} size="sm">
         Close
       </Button>
     </div>
@@ -375,7 +414,7 @@ export function BountyPaymentStepper({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog onOpenChange={handleClose} open={open}>
       <DialogContent className="sm:max-w-sm">
         {currentStep !== 'success' && (
           <DialogHeader className="pb-2">

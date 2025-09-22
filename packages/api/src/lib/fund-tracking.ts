@@ -1,5 +1,4 @@
-import { db } from '@bounty/db';
-import { fundTracking, type fundStatusEnum } from '@bounty/db';
+import { db, type fundStatusEnum, fundTracking } from '@bounty/db';
 import { eq } from 'drizzle-orm';
 
 export interface CreateFundTrackingInput {
@@ -15,7 +14,7 @@ export interface CreateFundTrackingInput {
 
 export interface UpdateFundTrackingStatusInput {
   id: string;
-  status: typeof fundStatusEnum.enumValues[number];
+  status: (typeof fundStatusEnum.enumValues)[number];
   stripeTransferId?: string;
   refundAmount?: string;
   refundReason?: string;
@@ -108,7 +107,10 @@ export const fundTrackingService = {
     return `bounty_${bountyId}_${userId}`;
   },
 
-  calculatePlatformFee(amount: number, feePercent = 5): { platformFee: number; netAmount: number } {
+  calculatePlatformFee(
+    amount: number,
+    feePercent = 5
+  ): { platformFee: number; netAmount: number } {
     const platformFee = Math.round((amount * feePercent) / 100);
     const netAmount = amount - platformFee;
     return { platformFee, netAmount };

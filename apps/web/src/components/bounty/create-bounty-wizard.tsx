@@ -28,7 +28,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TRPCClientErrorLike } from '@trpc/client';
-import { CreditCard, FileText, CheckCircle } from 'lucide-react';
+import { CheckCircle, CreditCard, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -60,6 +60,46 @@ const WIZARD_STEPS: WizardStepConfig[] = [
   { id: 'review', title: 'Review', icon: CheckCircle },
 ];
 
+interface StepIndicatorProps {
+  currentStep: WizardStep;
+}
+
+function StepIndicator({ currentStep }: StepIndicatorProps) {
+  return (
+    <div className="mb-6 flex items-center justify-center">
+      {WIZARD_STEPS.map((step, index) => {
+        const Icon = step.icon;
+        const isActive = step.id === currentStep;
+        const isCompleted =
+          WIZARD_STEPS.findIndex((s) => s.id === currentStep) > index;
+
+        return (
+          <div className="flex items-center" key={step.id}>
+            <div
+              className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${
+                isActive
+                  ? 'border-white bg-white text-black'
+                  : isCompleted
+                    ? 'border-green-500 bg-green-500 text-white'
+                    : 'border-neutral-600 bg-transparent text-neutral-400'
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+            </div>
+            {index < WIZARD_STEPS.length - 1 && (
+              <div
+                className={`mx-2 h-px w-8 ${
+                  isCompleted ? 'bg-green-500' : 'bg-neutral-600'
+                }`}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function CreateBountyWizard({
   open,
   onOpenChange,
@@ -71,7 +111,9 @@ export function CreateBountyWizard({
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<WizardStep>('details');
   const [createdBountyId, setCreatedBountyId] = useState<string | null>(null);
-  const [paymentClientSecret, setPaymentClientSecret] = useState<string | null>(null);
+  const [paymentClientSecret, setPaymentClientSecret] = useState<string | null>(
+    null
+  );
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
 
   const form = useForm<CreateBountyForm>({
@@ -166,7 +208,12 @@ export function CreateBountyWizard({
   });
 
   const handleDetailsNext = async () => {
-    const isValid = await trigger(['title', 'description', 'amount', 'difficulty']);
+    const isValid = await trigger([
+      'title',
+      'description',
+      'amount',
+      'difficulty',
+    ]);
     if (isValid) {
       const formattedData = formatFormData.createBounty(watchedValues);
       createBountyDraft.mutate(formattedData);
@@ -183,7 +230,7 @@ export function CreateBountyWizard({
     if (createdBountyId && paymentIntentId) {
       confirmFunding.mutate({
         bountyId: createdBountyId,
-        paymentIntentId
+        paymentIntentId,
       });
     }
   };
@@ -205,7 +252,15 @@ export function CreateBountyWizard({
   };
 
   const handleClose = () => {
-    if (!(isSubmitting || createBountyDraft.isPending || fundBounty.isPending || publishBounty.isPending || confirmFunding.isPending)) {
+    if (
+      !(
+        isSubmitting ||
+        createBountyDraft.isPending ||
+        fundBounty.isPending ||
+        publishBounty.isPending ||
+        confirmFunding.isPending
+      )
+    ) {
       reset();
       setCurrentStep('details');
       setCreatedBountyId(null);
@@ -239,7 +294,9 @@ export function CreateBountyWizard({
                 )}
               />
               {errors.title && (
-                <p className="mt-1 text-red-500 text-sm">{errors.title.message}</p>
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.title.message}
+                </p>
               )}
             </div>
 
@@ -265,7 +322,9 @@ export function CreateBountyWizard({
                 />
               </div>
               {errors.description && (
-                <p className="mt-1 text-red-500 text-sm">{errors.description.message}</p>
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.description.message}
+                </p>
               )}
             </div>
 
@@ -286,7 +345,9 @@ export function CreateBountyWizard({
                   )}
                 />
                 {errors.amount && (
-                  <p className="mt-1 text-red-500 text-sm">{errors.amount.message}</p>
+                  <p className="mt-1 text-red-500 text-sm">
+                    {errors.amount.message}
+                  </p>
                 )}
               </div>
 
@@ -334,7 +395,9 @@ export function CreateBountyWizard({
                 )}
               />
               {errors.difficulty && (
-                <p className="mt-1 text-red-500 text-sm">{errors.difficulty.message}</p>
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.difficulty.message}
+                </p>
               )}
             </div>
 
@@ -355,7 +418,9 @@ export function CreateBountyWizard({
                 )}
               />
               {errors.repositoryUrl && (
-                <p className="mt-1 text-red-500 text-sm">{errors.repositoryUrl.message}</p>
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.repositoryUrl.message}
+                </p>
               )}
             </div>
 
@@ -376,7 +441,9 @@ export function CreateBountyWizard({
                 )}
               />
               {errors.issueUrl && (
-                <p className="mt-1 text-red-500 text-sm">{errors.issueUrl.message}</p>
+                <p className="mt-1 text-red-500 text-sm">
+                  {errors.issueUrl.message}
+                </p>
               )}
             </div>
           </div>
@@ -386,18 +453,18 @@ export function CreateBountyWizard({
         if (paymentClientSecret) {
           return (
             <div className="space-y-4">
-              <div className="text-center mb-4">
-                <h3 className="font-semibold text-lg mb-2">Complete Payment</h3>
+              <div className="mb-4 text-center">
+                <h3 className="mb-2 font-semibold text-lg">Complete Payment</h3>
                 <p className="text-neutral-400 text-sm">
                   Secure payment powered by Stripe
                 </p>
               </div>
               <StripePaymentForm
+                amount={Number.parseFloat(watchedValues.amount)}
                 clientSecret={paymentClientSecret}
-                onSuccess={handlePaymentSuccess}
-                onCancel={handlePaymentCancel}
-                amount={parseFloat(watchedValues.amount)}
                 currency={watchedValues.currency}
+                onCancel={handlePaymentCancel}
+                onSuccess={handlePaymentSuccess}
               />
             </div>
           );
@@ -462,22 +529,29 @@ export function CreateBountyWizard({
                 </div>
                 <div>
                   <span className="text-neutral-400">Difficulty: </span>
-                  <span className="text-white capitalize">{watchedValues.difficulty}</span>
+                  <span className="text-white capitalize">
+                    {watchedValues.difficulty}
+                  </span>
                 </div>
                 {watchedValues.repositoryUrl && (
                   <div>
                     <span className="text-neutral-400">Repository: </span>
-                    <span className="text-white">{watchedValues.repositoryUrl}</span>
+                    <span className="text-white">
+                      {watchedValues.repositoryUrl}
+                    </span>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="rounded-lg bg-yellow-900/20 border border-yellow-700/50 p-4">
-              <h4 className="font-medium text-yellow-400 mb-2">Important Notice</h4>
-              <p className="text-yellow-200 text-sm">
-                This bounty will be created as an unfunded draft. It will not appear in public
-                listings until payment is completed. You can fund it later from your dashboard.
+            <div className="rounded-lg border border-yellow-700/50 bg-yellow-900/20 p-4">
+              <h4 className="mb-2 font-medium text-yellow-400">
+                Important Notice
+              </h4>
+              <p className="text-sm text-yellow-200">
+                This bounty will be created as an unfunded draft. It will not
+                appear in public listings until payment is completed. You can
+                fund it later from your dashboard.
               </p>
             </div>
           </div>
@@ -513,10 +587,7 @@ export function CreateBountyWizard({
       case 'payment':
         return (
           <div className="flex justify-end gap-2">
-            <Button
-              onClick={() => setCurrentStep('details')}
-              variant="outline"
-            >
+            <Button onClick={() => setCurrentStep('details')} variant="outline">
               Back
             </Button>
           </div>
@@ -525,16 +596,10 @@ export function CreateBountyWizard({
       case 'review':
         return (
           <div className="flex justify-end gap-2">
-            <Button
-              onClick={() => setCurrentStep('payment')}
-              variant="outline"
-            >
+            <Button onClick={() => setCurrentStep('payment')} variant="outline">
               Back
             </Button>
-            <Button
-              disabled={publishBounty.isPending}
-              onClick={handlePublish}
-            >
+            <Button disabled={publishBounty.isPending} onClick={handlePublish}>
               {publishBounty.isPending ? 'Publishing...' : 'Create Bounty'}
             </Button>
           </div>
@@ -546,39 +611,6 @@ export function CreateBountyWizard({
   };
 
   const isMobile = useMediaQuery('(max-width: 768px)');
-
-  const StepIndicator = () => (
-    <div className="flex items-center justify-center mb-6">
-      {WIZARD_STEPS.map((step, index) => {
-        const Icon = step.icon;
-        const isActive = step.id === currentStep;
-        const isCompleted = WIZARD_STEPS.findIndex(s => s.id === currentStep) > index;
-
-        return (
-          <div key={step.id} className="flex items-center">
-            <div
-              className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
-                isActive
-                  ? 'border-white bg-white text-black'
-                  : isCompleted
-                  ? 'border-green-500 bg-green-500 text-white'
-                  : 'border-neutral-600 bg-transparent text-neutral-400'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-            </div>
-            {index < WIZARD_STEPS.length - 1 && (
-              <div
-                className={`w-8 h-px mx-2 ${
-                  isCompleted ? 'bg-green-500' : 'bg-neutral-600'
-                }`}
-              />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
 
   if (isMobile) {
     return (
@@ -593,7 +625,7 @@ export function CreateBountyWizard({
             </DrawerTitle>
           </DrawerHeader>
           <div className="px-6 pb-6">
-            <StepIndicator />
+            <StepIndicator currentStep={currentStep} />
             <div className="space-y-4">
               {getStepContent()}
               {getStepActions()}
@@ -606,7 +638,13 @@ export function CreateBountyWizard({
 
   return (
     <Dialog
-      onOpenChange={(open) => (open ? onOpenChange(open) : handleClose())}
+      onOpenChange={(o) => {
+        if (o) {
+          onOpenChange(o);
+        } else {
+          handleClose();
+        }
+      }}
       open={open}
     >
       <DialogContent
@@ -618,7 +656,7 @@ export function CreateBountyWizard({
         </DialogHeader>
 
         <div className="px-6 pb-6">
-          <StepIndicator />
+          <StepIndicator currentStep={currentStep} />
           <div className="space-y-4">
             {getStepContent()}
             {getStepActions()}

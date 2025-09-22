@@ -14,5 +14,3 @@ export const invite = pgTable('invite', {
     onDelete: 'set null',
   }),
 });
-
-

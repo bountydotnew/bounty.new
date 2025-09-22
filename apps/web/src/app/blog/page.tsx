@@ -2,23 +2,35 @@
 
 import {
   Avatar,
-  AvatarImage,
   AvatarFallback,
+  AvatarImage,
 } from '@bounty/ui/components/avatar';
 import { Button } from '@bounty/ui/components/button';
 import Link from '@bounty/ui/components/link';
-import { getPosts } from '@bounty/ui/lib/blog-query';
 import { ArrowRight } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Footer } from '@/components/sections/home/footer';
 import { Header } from '@/components/sections/home/header';
-import { useRouter } from 'next/navigation';
 
 export default function BlogPage() {
   const router = useRouter();
 
   // Mock posts data for now
-  const posts = [];
+  interface BlogPostAuthor {
+    id: string;
+    name: string;
+    image?: string;
+  }
+  interface BlogPost {
+    id: string;
+    slug: string;
+    title: string;
+    description: string;
+    coverImage?: string;
+    authors?: BlogPostAuthor[];
+  }
+  const posts: BlogPost[] = [];
 
   if (!posts) {
     return <div>Error loading blog posts. Please try again later.</div>;
@@ -45,6 +57,7 @@ export default function BlogPage() {
             width="153"
             xmlns="http://www.w3.org/2000/svg"
           >
+            <title>Decorative background</title>
             <path
               d="M91.1385 71.1097C107.031 77.947 125.457 70.6065 132.294 54.7141C139.132 38.8217 131.791 20.3956 115.899 13.5582C100.006 6.72079 81.5803 14.0613 74.7429 29.9537C67.9055 45.8461 75.2461 64.2723 91.1385 71.1097ZM91.1385 71.1097L29.921 44.7722M5 102.256L33.9985 114.732C49.8909 121.57 68.317 114.229 75.1544 98.3367C81.9918 82.4443 74.6513 64.0182 58.7589 57.1808L29.7603 44.7048M148.655 95.8569L119.657 83.3808C103.764 76.5434 85.338 83.8839 78.5006 99.7763L78.5182 179"
               stroke="url(#paint0_linear_34_3652)"
@@ -135,7 +148,7 @@ export default function BlogPage() {
                       <div className="p-8">
                         {post.authors && post.authors.length > 0 && (
                           <div className="mb-4 flex items-center gap-3">
-                            {post.authors.map((author, index) => (
+                            {(post.authors ?? []).map((author, index, arr) => (
                               <div
                                 className="flex items-center gap-2"
                                 key={author.id}
@@ -155,7 +168,7 @@ export default function BlogPage() {
                                 >
                                   {author.name}
                                 </span>
-                                {index < post.authors.length - 1 && (
+                                {index < arr.length - 1 && (
                                   <span
                                     style={{ color: 'rgba(146, 146, 146, 1)' }}
                                   >
@@ -202,9 +215,12 @@ export default function BlogPage() {
                 Join the waitlist and be among the first to experience the new
                 way to collaborate, create, and get paid for exceptional work.
               </p>
-              <Button onClick={() => {
-                router.push('/?waitlist=true');
-              }} className="h-12 rounded-lg bg-white px-8 font-display text-black transition-all duration-200 hover:bg-white/90">
+              <Button
+                className="h-12 rounded-lg bg-white px-8 font-display text-black transition-all duration-200 hover:bg-white/90"
+                onClick={() => {
+                  router.push('/?waitlist=true');
+                }}
+              >
                 Join Waitlist
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>

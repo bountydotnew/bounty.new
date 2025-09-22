@@ -1,7 +1,7 @@
-import { env } from '@bounty/env/server';
 import { bounty, db, user } from '@bounty/db';
+import { env } from '@bounty/env/server';
 import { TRPCError } from '@trpc/server';
-import { eq, and } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import Stripe from 'stripe';
 import { z } from 'zod';
 import { protectedProcedure, publicProcedure, router } from '../trpc';
@@ -61,7 +61,9 @@ export const stripeRouter = router({
         }
 
         // Convert amount to cents
-        const amountInCents = Math.round(parseFloat(bountyData.amount) * 100);
+        const amountInCents = Math.round(
+          Number.parseFloat(bountyData.amount) * 100
+        );
 
         // Get the bounty creator's Stripe account ID if they have one
         let applicationFeeAmount = 0;
@@ -97,7 +99,8 @@ export const stripeRouter = router({
           };
         }
 
-        const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
+        const paymentIntent =
+          await stripe.paymentIntents.create(paymentIntentParams);
 
         return {
           success: true,
@@ -127,7 +130,9 @@ export const stripeRouter = router({
     .mutation(async ({ ctx, input }) => {
       try {
         // Get payment intent from Stripe
-        const paymentIntent = await stripe.paymentIntents.retrieve(input.paymentIntentId);
+        const paymentIntent = await stripe.paymentIntents.retrieve(
+          input.paymentIntentId
+        );
 
         if (paymentIntent.status !== 'succeeded') {
           throw new TRPCError({
@@ -248,9 +253,11 @@ export const stripeRouter = router({
             chargesEnabled: account.charges_enabled,
             payoutsEnabled: account.payouts_enabled,
             detailsSubmitted: account.details_submitted,
-            requiresAction: !account.details_submitted ||
-                           !account.charges_enabled ||
-                           !account.payouts_enabled,
+            requiresAction: !(
+              account.details_submitted &&
+              account.charges_enabled &&
+              account.payouts_enabled
+            ),
           },
         };
       } catch (error) {
@@ -264,10 +271,12 @@ export const stripeRouter = router({
 
   // Webhook handler for Stripe events
   handleWebhook: publicProcedure
-    .input(z.object({
-      rawBody: z.string(),
-      signature: z.string()
-    }))
+    .input(
+      z.object({
+        rawBody: z.string(),
+        signature: z.string(),
+      })
+    )
     .mutation(async ({ input }) => {
       try {
         const event = stripe.webhooks.constructEvent(

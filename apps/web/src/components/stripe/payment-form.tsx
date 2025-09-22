@@ -33,7 +33,7 @@ export function PaymentForm({
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!stripe || !elements) {
+    if (!(stripe && elements)) {
       return;
     }
 
@@ -56,7 +56,8 @@ export function PaymentForm({
         throw new Error('Payment was not completed');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Payment failed';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Payment failed';
       toast.error(errorMessage);
       onError(errorMessage);
     } finally {
@@ -72,7 +73,7 @@ export function PaymentForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form className="space-y-6" onSubmit={handleSubmit}>
       {/* Payment Amount Display */}
       <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-4">
         <div className="flex items-center justify-between">
@@ -104,7 +105,7 @@ export function PaymentForm({
       <div className="space-y-3">
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-neutral-700" />
+            <span className="w-full border-neutral-700 border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-neutral-900 px-2 text-neutral-400">
@@ -115,10 +116,10 @@ export function PaymentForm({
 
         {/* Apple Pay Button */}
         <Button
-          type="button"
-          variant="outline"
           className="w-full border-neutral-800 bg-black text-white hover:bg-neutral-800"
           disabled={!isReady || isProcessing}
+          type="button"
+          variant="outline"
         >
           <AppleIcon className="mr-2 h-4 w-4" />
           Apple Pay
@@ -129,10 +130,10 @@ export function PaymentForm({
 
       {/* Submit Button */}
       <Button
-        type="submit"
-        disabled={!stripe || !elements || !isReady || isProcessing}
         className="w-full bg-white text-black hover:bg-gray-100"
+        disabled={!(stripe && elements && isReady) || isProcessing}
         size="lg"
+        type="submit"
       >
         {isProcessing ? (
           <div className="flex items-center gap-2">

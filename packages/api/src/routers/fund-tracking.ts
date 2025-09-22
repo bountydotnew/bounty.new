@@ -109,7 +109,9 @@ export const fundTrackingRouter = router({
     .input(z.object({ paymentIntentId: z.string() }))
     .query(async ({ input }) => {
       try {
-        const record = await fundTrackingService.getByPaymentIntentId(input.paymentIntentId);
+        const record = await fundTrackingService.getByPaymentIntentId(
+          input.paymentIntentId
+        );
         return {
           success: true,
           data: record,
@@ -127,7 +129,9 @@ export const fundTrackingRouter = router({
     .input(z.object({ transferGroup: z.string() }))
     .query(async ({ input }) => {
       try {
-        const records = await fundTrackingService.getByTransferGroup(input.transferGroup);
+        const records = await fundTrackingService.getByTransferGroup(
+          input.transferGroup
+        );
         return {
           success: true,
           data: records,
@@ -154,7 +158,10 @@ export const fundTrackingRouter = router({
   generateTransferGroup: protectedProcedure
     .input(z.object({ bountyId: z.string(), userId: z.string() }))
     .query(async ({ input }) => {
-      const transferGroup = fundTrackingService.generateTransferGroup(input.bountyId, input.userId);
+      const transferGroup = fundTrackingService.generateTransferGroup(
+        input.bountyId,
+        input.userId
+      );
       return {
         success: true,
         data: { transferGroup },

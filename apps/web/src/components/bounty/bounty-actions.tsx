@@ -33,7 +33,6 @@ export function UpvoteButton({
 }: UpvoteButtonProps) {
   return (
     <button
-      type="button"
       aria-label="Upvote bounty"
       aria-pressed={isVoted}
       className={`flex items-center gap-1 rounded-md border border-neutral-700 bg-neutral-800/40 px-2 py-1 text-neutral-300 text-xs hover:bg-neutral-700/40 ${isVoted ? 'border-neutral-700/40 bg-[#343333] text-white' : ''} ${className ?? ''}`}
@@ -44,6 +43,7 @@ export function UpvoteButton({
       }}
       onMouseDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
+      type="button"
     >
       <ArrowUpIcon className={`h-4 w-4 ${isVoted ? 'text-white' : ''}`} />
       <span>{voteCount}</span>
@@ -66,7 +66,9 @@ export function ActionsDropdown({
       if (typeof window !== 'undefined' && navigator.share) {
         navigator.share({ url: window.location.href });
       }
-    } catch { }
+    } catch (error) {
+      console.error('Failed to share', error);
+    }
   };
   return (
     <DropdownMenu>
@@ -138,17 +140,19 @@ export default function BountyActions({
   });
   const baseActions: ActionItem[] = canEdit
     ? [
-      {
-        key: 'edit',
-        label: 'Edit',
-        onSelect: onEdit,
-        icon: <Edit className="h-3.5 w-3.5" />,
-      },
-    ]
+        {
+          key: 'edit',
+          label: 'Edit',
+          onSelect: onEdit,
+          icon: <Edit className="h-3.5 w-3.5" />,
+        },
+      ]
     : [];
   const mergedActions = [...baseActions, ...(actions ?? [])];
   const handleToggleBookmark = () => {
-    if (onToggleBookmark) return onToggleBookmark();
+    if (onToggleBookmark) {
+      return onToggleBookmark();
+    }
     const key = trpc.bounties.getBountyBookmark.queryKey({ bountyId });
     const current = bookmarkQuery.data?.bookmarked ?? false;
     queryClient.setQueryData(key, { bookmarked: !current });
@@ -178,8 +182,8 @@ export default function BountyActions({
       />
       {onFundBounty && (
         <Button
-          onClick={onFundBounty}
           className="flex items-center gap-2 rounded-md border border-green-500/50 bg-green-500/10 px-3 py-1 text-green-400 text-xs hover:bg-green-500/20"
+          onClick={onFundBounty}
         >
           <CreditCard className="h-3.5 w-3.5" />
           Fund Bounty

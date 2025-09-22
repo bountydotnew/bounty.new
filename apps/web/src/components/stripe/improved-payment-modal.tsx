@@ -8,9 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@bounty/ui/components/dialog';
-import { motion, AnimatePresence } from 'motion/react';
 import { CreditCard, Heart, Shield, Zap } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { trpc } from '@/utils/trpc';
 import { PaymentForm } from './payment-form';
@@ -114,12 +114,12 @@ export function ImprovedPaymentModal({
           <AnimatePresence mode="wait">
             {currentStep === 'overview' && (
               <motion.div
-                key="overview"
-                initial="hidden"
                 animate="visible"
                 exit="exit"
-                variants={stepVariants}
+                initial="hidden"
+                key="overview"
                 transition={{ duration: 0.3, ease: 'easeOut' }}
+                variants={stepVariants}
               >
                 <DialogHeader className="px-6 pt-6 pb-4">
                   <div className="flex items-center gap-3">
@@ -143,7 +143,7 @@ export function ImprovedPaymentModal({
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-neutral-400 text-sm">Total Amount</p>
-                        <p className="font-bold text-white text-3xl">
+                        <p className="font-bold text-3xl text-white">
                           {formatAmount(bountyAmount, bountyCurrency)}
                         </p>
                       </div>
@@ -155,19 +155,19 @@ export function ImprovedPaymentModal({
                   <div className="grid grid-cols-3 gap-3">
                     <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-3 text-center">
                       <Zap className="mx-auto mb-2 h-6 w-6 text-yellow-500" />
-                      <p className="text-neutral-300 text-xs font-medium">
+                      <p className="font-medium text-neutral-300 text-xs">
                         Instant
                       </p>
                     </div>
                     <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-3 text-center">
                       <Shield className="mx-auto mb-2 h-6 w-6 text-green-500" />
-                      <p className="text-neutral-300 text-xs font-medium">
+                      <p className="font-medium text-neutral-300 text-xs">
                         Secure
                       </p>
                     </div>
                     <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-3 text-center">
                       <Heart className="mx-auto mb-2 h-6 w-6 text-pink-500" />
-                      <p className="text-neutral-300 text-xs font-medium">
+                      <p className="font-medium text-neutral-300 text-xs">
                         Easy
                       </p>
                     </div>
@@ -183,9 +183,9 @@ export function ImprovedPaymentModal({
 
                   {/* Action Button */}
                   <Button
-                    onClick={handleStartPayment}
-                    disabled={createPaymentIntent.isPending}
                     className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700"
+                    disabled={createPaymentIntent.isPending}
+                    onClick={handleStartPayment}
                     size="lg"
                   >
                     {createPaymentIntent.isPending ? (
@@ -203,12 +203,12 @@ export function ImprovedPaymentModal({
 
             {currentStep === 'payment' && clientSecret && (
               <motion.div
-                key="payment"
-                initial="hidden"
                 animate="visible"
                 exit="exit"
-                variants={stepVariants}
+                initial="hidden"
+                key="payment"
                 transition={{ duration: 0.3, ease: 'easeOut' }}
+                variants={stepVariants}
               >
                 <DialogHeader className="px-6 pt-6 pb-4">
                   <DialogTitle className="flex items-center gap-2 text-white">
@@ -223,11 +223,11 @@ export function ImprovedPaymentModal({
                 <div className="px-6 pb-6">
                   <StripeProvider clientSecret={clientSecret}>
                     <PaymentForm
-                      bountyId={bountyId}
-                      amount={bountyAmount * 100} // Convert to cents
+                      amount={bountyAmount * 100}
+                      bountyId={bountyId} // Convert to cents
                       currency={bountyCurrency}
-                      onSuccess={handlePaymentSuccess}
                       onError={handlePaymentError}
+                      onSuccess={handlePaymentSuccess}
                     />
                   </StripeProvider>
                 </div>
@@ -236,19 +236,19 @@ export function ImprovedPaymentModal({
 
             {currentStep === 'success' && (
               <motion.div
-                key="success"
-                initial="hidden"
                 animate="visible"
+                className="px-6 py-12 text-center"
                 exit="exit"
-                variants={stepVariants}
+                initial="hidden"
+                key="success"
                 transition={{ duration: 0.3, ease: 'easeOut' }}
-                className="py-12 px-6 text-center"
+                variants={stepVariants}
               >
                 <motion.div
-                  initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
                   className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-green-500 to-emerald-500"
+                  initial={{ scale: 0 }}
+                  transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
                 >
                   <Heart className="h-8 w-8 text-white" />
                 </motion.div>

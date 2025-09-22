@@ -1,6 +1,6 @@
-import { stripe } from './stripe';
 import { db, userProfile } from '@bounty/db';
 import { eq } from 'drizzle-orm';
+import { stripe } from './stripe';
 
 export async function getOrCreateCustomer(userId: string, email: string) {
   const [profile] = await db

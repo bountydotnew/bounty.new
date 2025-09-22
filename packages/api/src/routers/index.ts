@@ -9,7 +9,6 @@ import { newsRouter } from './news';
 import { notificationsRouter } from './notifications';
 import { profilesRouter } from './profiles';
 import { repositoryRouter } from './repository';
-import { stripeRouter } from './stripe';
 import { userRouter } from './user';
 
 export const appRouter = router({
