@@ -30,7 +30,12 @@ export const userProfile = pgTable('user_profile', {
   availableForWork: boolean('available_for_work').default(true),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
-});
+}, (t) => [
+  index('user_profile_github_username_idx').on(t.githubUsername),
+  index('user_profile_available_for_work_idx').on(t.availableForWork),
+  index('user_profile_skills_gin_idx').using('gin', t.skills),
+  index('user_profile_preferred_languages_gin_idx').using('gin', t.preferredLanguages),
+]);
 
 export const userReputation = pgTable('user_reputation', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
@@ -74,4 +79,10 @@ export const userRating = pgTable('user_rating', {
   comment: text('comment'),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
-});
+}, (t) => [
+  index('user_rating_rated_user_id_idx').on(t.ratedUserId),
+  index('user_rating_rater_user_id_idx').on(t.raterUserId),
+  index('user_rating_bounty_id_idx').on(t.bountyId),
+  index('user_rating_rating_idx').on(t.rating),
+  index('user_rating_created_at_idx').on(t.createdAt),
+]);

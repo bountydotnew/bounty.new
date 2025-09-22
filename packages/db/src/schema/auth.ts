@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { boolean, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, index, pgEnum, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 
 export const betaAccessStatusEnum = pgEnum('beta_access_status', [
   'none',
@@ -33,7 +33,14 @@ export const user = pgTable('user', {
   // Note: Consider using timestamptz for timezone-aware timestamps in production
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
-});
+}, (t) => [
+  index('user_beta_access_status_idx').on(t.betaAccessStatus),
+  index('user_access_stage_idx').on(t.accessStage),
+  index('user_role_idx').on(t.role),
+  index('user_has_access_idx').on(t.hasAccess),
+  index('user_banned_idx').on(t.banned),
+  index('user_created_at_idx').on(t.createdAt),
+]);
 
 export const session = pgTable('session', {
   id: text('id').primaryKey(),
@@ -47,7 +54,10 @@ export const session = pgTable('session', {
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
   impersonatedBy: text('impersonated_by'),
-});
+}, (t) => [
+  index('session_user_id_idx').on(t.userId),
+  index('session_expires_at_idx').on(t.expiresAt),
+]);
 
 export const account = pgTable('account', {
   id: text('id').primaryKey(),
@@ -65,7 +75,11 @@ export const account = pgTable('account', {
   password: text('password'),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
-});
+}, (t) => [
+  index('account_user_id_idx').on(t.userId),
+  index('account_provider_id_idx').on(t.providerId),
+  uniqueIndex('account_provider_account_unique').on(t.providerId, t.accountId),
+]);
 
 export const verification = pgTable('verification', {
   id: text('id').primaryKey(),
@@ -82,4 +96,8 @@ export const waitlist = pgTable('waitlist', {
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   hasAccess: boolean('has_access').notNull().default(false),
   ipAddress: text('ip_address'),
-});
+}, (t) => [
+  index('waitlist_email_idx').on(t.email),
+  index('waitlist_has_access_idx').on(t.hasAccess),
+  index('waitlist_created_at_idx').on(t.createdAt),
+]);
