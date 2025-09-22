@@ -21,6 +21,7 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { trpc } from '@/utils/trpc';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 interface BountyPaymentStepperProps {
   open: boolean;
@@ -58,7 +59,8 @@ export function BountyPaymentStepper({
     cardholderName: ''
   });
 
-  const createPaymentLink = trpc.bounties.createPaymentLink.useMutation({
+  const createPaymentLink = useMutation({
+    ...trpc.bounties.createPaymentLink.mutationOptions(),
     onSuccess: (data) => {
       if (data.paymentUrl) {
         window.open(data.paymentUrl, '_blank');
@@ -70,7 +72,8 @@ export function BountyPaymentStepper({
     }
   });
 
-  const processManualPayment = trpc.bounties.processManualPayment.useMutation({
+  const processManualPayment = useMutation({
+    ...trpc.bounties.processManualPayment.mutationOptions(),
     onSuccess: () => {
       setCurrentStep('success');
       toast.success('Payment processed successfully!');
@@ -227,7 +230,7 @@ export function BountyPaymentStepper({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <Button
-          variant="ghost"
+          variant="text"
           onClick={handleBack}
           size="sm"
           className="gap-1 p-0"
