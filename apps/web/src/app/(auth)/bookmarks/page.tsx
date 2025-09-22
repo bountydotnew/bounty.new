@@ -16,6 +16,7 @@ export default function BookmarksPage() {
 
   const items = useMemo(() => data?.data ?? [], [data]);
   const totalPages = data?.pagination?.totalPages ?? 1;
+  const skeletonKeys = useMemo(() => ['a', 'b', 'c'], []);
 
   return (
     <>
@@ -30,21 +31,23 @@ export default function BookmarksPage() {
           )}
         </div>
 
-        {isLoading ? (
+        {isLoading && (
           <div className="space-y-2">
-            {Array.from({ length: 3 }).map((_, i) => (
+            {skeletonKeys.map((k) => (
               <div
                 className="animate-pulse rounded-md border border-neutral-800 bg-neutral-900/30 p-3"
-                key={i}
+                key={k}
               >
                 <div className="mb-2 h-4 w-24 rounded bg-neutral-800" />
                 <div className="h-3 w-full rounded bg-neutral-800" />
               </div>
             ))}
           </div>
-        ) : items.length === 0 ? (
+        )}
+        {!isLoading && items.length === 0 && (
           <div className="text-neutral-400 text-sm">No bookmarks yet.</div>
-        ) : (
+        )}
+        {!isLoading && items.length > 0 && (
           <div className="space-y-3">
             {items.map((bounty) => (
               <BountyCard bounty={bounty as Bounty} key={bounty.id} />
@@ -58,6 +61,7 @@ export default function BookmarksPage() {
               className="rounded-md border border-neutral-700 bg-neutral-800/60 px-3 py-1 text-neutral-300 text-xs disabled:opacity-50"
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
+              type="button"
             >
               Previous
             </button>
@@ -65,6 +69,7 @@ export default function BookmarksPage() {
               className="rounded-md border border-neutral-700 bg-neutral-800/60 px-3 py-1 text-neutral-300 text-xs disabled:opacity-50"
               disabled={page >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              type="button"
             >
               Next
             </button>

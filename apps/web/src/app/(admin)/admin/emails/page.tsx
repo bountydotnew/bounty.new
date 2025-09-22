@@ -1,6 +1,5 @@
 'use client';
 
-import { AlphaAccessGranted } from '@bounty/email';
 import { Button } from '@bounty/ui/components/button';
 import {
   Card,
@@ -129,7 +128,9 @@ export default function AdminEmailsPage() {
                   .split(',')
                   .map((v) => v.trim())
                   .filter(Boolean);
-                if (recipients.length === 0) return;
+                if (recipients.length === 0) {
+                  return;
+                }
                 setSending(true);
                 try {
                   await sendTestEmailAction({

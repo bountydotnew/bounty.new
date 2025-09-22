@@ -105,6 +105,7 @@ export async function GET(
           display: 'flex',
         }}
       >
+        {/* biome-ignore lint/performance/noImgElement: raw img is required in OG generation */}
         <img // eslint-disable-line @next/next/no-img-element
           alt="og-bg"
           src={`${baseUrl}/og-bg.png`}
@@ -117,6 +118,7 @@ export async function GET(
             objectFit: 'cover',
           }}
         />
+        {/* biome-ignore lint/performance/noImgElement: raw img is required in OG generation */}
         <img // eslint-disable-line @next/next/no-img-element
           alt="bounty"
           src={`${baseUrl}/bounty.png`}
@@ -187,12 +189,10 @@ export async function GET(
             display: 'flex',
           }}
         >
+          {/* biome-ignore lint/performance/noImgElement: raw img is required in OG generation */}
           <img // eslint-disable-line @next/next/no-img-element
             alt={`${repoData.owner.login} avatar`}
             height="190"
-            onError={(e) => {
-              e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(repoData.owner.login)}&size=160`;
-            }}
             src={repoData.owner.avatar_url}
             style={{
               position: 'absolute',

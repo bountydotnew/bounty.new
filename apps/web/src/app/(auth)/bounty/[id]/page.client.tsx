@@ -11,18 +11,18 @@ import { BountyDetailSkeleton } from '@/components/dashboard/skeletons/bounty-de
 import Bounty from '@/components/icons/bounty';
 import { trpc } from '@/utils/trpc';
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export default function BountyPage() {
   const { id } = useParams<{ id: string }>();
   const isValidUuid = (v: string | undefined | null) =>
-    typeof v === 'string' &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      v
-    );
+    typeof v === 'string' && UUID_RE.test(v);
   const validId = isValidUuid(id);
 
   const { data: session } = authClient.useSession();
   const bountyDetail = useQuery({
-    ...trpc.bounties.getBountyDetail.queryOptions({ id: id! }),
+    ...trpc.bounties.getBountyDetail.queryOptions({ id: String(id) }),
     enabled: validId,
     staleTime: Number.POSITIVE_INFINITY,
   });
@@ -114,6 +114,15 @@ export default function BountyPage() {
   const detailUser: string = bountyDetail.data.bounty.creator.name ?? '';
   const detailAvatarSrc: string = bountyDetail.data.bounty.creator.image ?? '';
   const detailRank: string = bountyDetail.data.bounty.difficulty;
+  const detailStatus:
+    | 'draft'
+    | 'open'
+    | 'funded'
+    | 'in_progress'
+    | 'completed'
+    | 'cancelled' = bountyDetail.data.bounty.status;
+  const detailFundingStatus: 'unfunded' | 'funded' =
+    bountyDetail.data.bounty.fundingStatus;
 
   return (
     // <div className="p-8 max-w-4xl mx-auto">
@@ -185,12 +194,14 @@ export default function BountyPage() {
       avatarSrc={detailAvatarSrc}
       canEditBounty={canEdit}
       description={detailDescription}
+      fundingStatus={detailFundingStatus}
       hasBadge={false}
-      id={id!}
+      id={String(id)}
       initialBookmarked={Boolean(bountyDetail.data.bookmarked)}
       initialComments={bountyDetail.data.comments}
       initialVotes={bountyDetail.data.votes}
       rank={detailRank}
+      status={detailStatus}
       tags={detailTags}
       title={detailTitle}
       user={detailUser}

@@ -8,7 +8,6 @@ import { AuthUIProvider } from '@daveyplate/better-auth-ui';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useRouter } from 'next/navigation';
-import { PostHogProvider } from 'posthog-js/react';
 import ImpersonationBanner from '@/components/impersonation-banner';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AccessProvider } from '@/context/access-provider';

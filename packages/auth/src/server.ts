@@ -1,7 +1,7 @@
 import * as schema from '@bounty/db';
 import { db } from '@bounty/db';
 import { env } from '@bounty/env/server';
-import type { PolarCustomerCreateParams, PolarError } from '@bounty/types';
+import type { PolarError } from '@bounty/types';
 import {
   checkout,
   polar,
@@ -29,7 +29,7 @@ export const auth = betterAuth({
   }),
   onAPIError: {
     throw: true,
-    onError: (error, ctx) => {
+    onError: (error, _ctx) => {
       // Custom error handling
       console.error('Auth error:', error);
     },

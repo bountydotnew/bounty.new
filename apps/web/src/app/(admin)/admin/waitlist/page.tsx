@@ -48,14 +48,14 @@ export default function WaitlistPage() {
         queryKey: ['earlyAccess', 'getAdminWaitlist'],
       });
     },
-    onError: (error: TRPCClientErrorLike<AppRouter>) => {
-      toast.error(error.message || 'Failed to update access');
+    onError: (err: TRPCClientErrorLike<AppRouter>) => {
+      toast.error(err.message || 'Failed to update access');
     },
   });
 
   const inviteToBetaMutation = useMutation({
     ...trpc.earlyAccess.inviteToBeta.mutationOptions(),
-    onMutate: async (vars: { id: string }) => {
+    onMutate: (vars: { id: string }) => {
       setUpdatingIds((prev) => new Set(prev).add(vars.id));
     },
     onSuccess: () => {
@@ -64,8 +64,8 @@ export default function WaitlistPage() {
         queryKey: ['earlyAccess', 'getAdminWaitlist'],
       });
     },
-    onError: (error: TRPCClientErrorLike<AppRouter>) => {
-      toast.error(error.message || 'Failed to invite to beta');
+    onError: (err: TRPCClientErrorLike<AppRouter>) => {
+      toast.error(err.message || 'Failed to invite to beta');
     },
     onSettled: (_data, _err, vars) => {
       setUpdatingIds((prev) => {

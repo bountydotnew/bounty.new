@@ -125,7 +125,9 @@ export default function UsersPage() {
 
   // Merge auth client users with access stage data
   const users = useMemo(() => {
-    if (!(data?.users && accessData?.users)) return data?.users || [];
+    if (!(data?.users && accessData?.users)) {
+      return data?.users || [];
+    }
 
     return data.users.map((user: any) => {
       const userWithStage = accessData.users.find((u: any) => u.id === user.id);
@@ -242,7 +244,7 @@ export default function UsersPage() {
   // Handle invite user to access stage
   const inviteUserMutation = useMutation({
     ...trpc.user.inviteUser.mutationOptions(),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       const stageName =
         variables.accessStage === 'none'
           ? 'removed access'

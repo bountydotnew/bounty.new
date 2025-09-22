@@ -44,12 +44,17 @@ export async function POST(request: Request) {
     filters: body.filters,
   };
 
+  const headersInit: Record<string, string> = {
+    'content-type': 'application/json',
+  };
+  if (apiKey) {
+    headersInit['x-api-key'] = apiKey;
+  } else if (cookie) {
+    headersInit.cookie = cookie;
+  }
   const res = await fetch(upstreamUrl, {
     method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      ...(apiKey ? { 'x-api-key': apiKey } : cookie ? { cookie } : {}),
-    },
+    headers: headersInit,
     body: JSON.stringify(upstreamBody),
     cache: 'no-store',
   });
