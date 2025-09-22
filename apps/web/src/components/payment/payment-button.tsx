@@ -1,6 +1,13 @@
 import { cn } from '@bounty/ui/lib/utils';
-import type { PaymentButtonProps } from '@/types/billing-components';
 import Bounty from '../icons/bounty';
+
+export interface PaymentButtonProps {
+  username: string;
+  apiKey: string;
+  size?: 'sm' | 'md' | 'lg';
+  variant?: 'default' | 'outline';
+  className?: string;
+}
 
 export function PaymentButton({
   username,
@@ -36,14 +43,12 @@ export function PaymentButton({
       rel="noopener noreferrer"
       target="_blank"
     >
-      {/* Bounty Logo */}
       <Bounty className="h-4 w-4" />
       Sponsor this PR
     </a>
   );
 }
 
-// Standalone embeddable version for external use
 export function EmbeddablePaymentButton({
   username,
   apiKey,
