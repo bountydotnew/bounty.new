@@ -114,6 +114,7 @@ export default function BountyPage() {
   const detailUser: string = bountyDetail.data.bounty.creator.name ?? '';
   const detailAvatarSrc: string = bountyDetail.data.bounty.creator.image ?? '';
   const detailRank: string = bountyDetail.data.bounty.difficulty;
+  const detailFundingStatus: 'unfunded' | 'funded' = bountyDetail.data.bounty.fundingStatus;
 
   return (
     // <div className="p-8 max-w-4xl mx-auto">
@@ -194,6 +195,7 @@ export default function BountyPage() {
       tags={detailTags}
       title={detailTitle}
       user={detailUser}
+      fundingStatus={detailFundingStatus}
     />
   );
 }

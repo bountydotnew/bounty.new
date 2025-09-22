@@ -129,6 +129,8 @@ export default function BountyActions({
   onToggleBookmark,
   actions,
   onFundBounty,
+  fundingStatus,
+  canFund,
 }: BountyActionsProps) {
   const queryClient = useQueryClient();
   const bookmarkQuery = useQuery({
@@ -180,7 +182,7 @@ export default function BountyActions({
         bountyId={bountyId}
         onToggle={handleToggleBookmark}
       />
-      {onFundBounty && (
+      {onFundBounty && fundingStatus === 'unfunded' && canFund && (
         <Button
           className="flex items-center gap-2 rounded-md border border-green-500/50 bg-green-500/10 px-3 py-1 text-green-400 text-xs hover:bg-green-500/20"
           onClick={onFundBounty}
