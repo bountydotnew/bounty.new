@@ -53,7 +53,17 @@ export const bounty = pgTable('bounty', {
   }),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
-});
+}, (t) => [
+  index('bounty_status_idx').on(t.status),
+  index('bounty_difficulty_idx').on(t.difficulty),
+  index('bounty_created_by_id_idx').on(t.createdById),
+  index('bounty_assigned_to_id_idx').on(t.assignedToId),
+  index('bounty_created_at_idx').on(t.createdAt),
+  index('bounty_updated_at_idx').on(t.updatedAt),
+  index('bounty_deadline_idx').on(t.deadline),
+  index('bounty_amount_idx').on(t.amount),
+  index('bounty_currency_idx').on(t.currency),
+]);
 
 export const submission = pgTable('submission', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
@@ -72,7 +82,14 @@ export const submission = pgTable('submission', {
   reviewedAt: timestamp('reviewed_at'),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
-});
+}, (t) => [
+  index('submission_bounty_id_idx').on(t.bountyId),
+  index('submission_contributor_id_idx').on(t.contributorId),
+  index('submission_status_idx').on(t.status),
+  index('submission_submitted_at_idx').on(t.submittedAt),
+  index('submission_reviewed_at_idx').on(t.reviewedAt),
+  index('submission_created_at_idx').on(t.createdAt),
+]);
 
 export const bountyApplication = pgTable('bounty_application', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
@@ -88,7 +105,14 @@ export const bountyApplication = pgTable('bounty_application', {
   respondedAt: timestamp('responded_at'),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
-});
+}, (t) => [
+  index('bounty_application_bounty_id_idx').on(t.bountyId),
+  index('bounty_application_applicant_id_idx').on(t.applicantId),
+  index('bounty_application_is_accepted_idx').on(t.isAccepted),
+  index('bounty_application_applied_at_idx').on(t.appliedAt),
+  index('bounty_application_responded_at_idx').on(t.respondedAt),
+  uniqueIndex('bounty_application_unique_idx').on(t.bountyId, t.applicantId),
+]);
 
 export const bountyVote = pgTable(
   'bounty_vote',
