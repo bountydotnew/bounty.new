@@ -73,6 +73,7 @@ export function CreateBountyWizard({
   const [createdBountyId, setCreatedBountyId] = useState<string | null>(null);
   const [paymentClientSecret, setPaymentClientSecret] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+  const [isFunded, setIsFunded] = useState(false);
 
   const form = useForm<CreateBountyForm>({
     resolver: zodResolver(createBountySchema),
@@ -131,6 +132,7 @@ export function CreateBountyWizard({
     onSuccess: (result) => {
       if (result.success) {
         toast.success('Bounty funded successfully!');
+        setIsFunded(true);
         setCurrentStep('review');
       } else {
         toast.error('Payment not completed');
@@ -199,7 +201,25 @@ export function CreateBountyWizard({
   };
 
   const handlePublish = () => {
-    if (createdBountyId) {
+    if (isFunded) {
+      // Bounty is already funded and published, just redirect
+      toast.success('Bounty created successfully!');
+      queryClient.invalidateQueries({
+        queryKey: ['bounties'],
+        type: 'all',
+      });
+      reset();
+      onOpenChange(false);
+      if (createdBountyId) {
+        const href = `/bounty/${createdBountyId}${replaceOnSuccess ? '?from=gh-issue' : ''}`;
+        if (replaceOnSuccess) {
+          router.replace(href);
+        } else {
+          router.push(href);
+        }
+      }
+    } else if (createdBountyId) {
+      // Bounty is not funded, publish as draft       
       publishBounty.mutate({ bountyId: createdBountyId });
     }
   };
@@ -211,6 +231,7 @@ export function CreateBountyWizard({
       setCreatedBountyId(null);
       setPaymentClientSecret(null);
       setPaymentIntentId(null);
+      setIsFunded(false);
       onOpenChange(false);
       if (redirectOnClose) {
         router.push(redirectOnClose);
@@ -473,13 +494,23 @@ export function CreateBountyWizard({
               </div>
             </div>
 
-            <div className="rounded-lg bg-yellow-900/20 border border-yellow-700/50 p-4">
-              <h4 className="font-medium text-yellow-400 mb-2">Important Notice</h4>
-              <p className="text-yellow-200 text-sm">
-                This bounty will be created as an unfunded draft. It will not appear in public
-                listings until payment is completed. You can fund it later from your dashboard.
-              </p>
-            </div>
+            {isFunded ? (
+              <div className="rounded-lg bg-green-900/20 border border-green-700/50 p-4">
+                <h4 className="font-medium text-green-400 mb-2">Payment Successful!</h4>
+                <p className="text-green-200 text-sm">
+                  Your bounty has been funded and is now live! It will appear in public listings
+                  and developers can start applying.
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-lg bg-yellow-900/20 border border-yellow-700/50 p-4">
+                <h4 className="font-medium text-yellow-400 mb-2">Important Notice</h4>
+                <p className="text-yellow-200 text-sm">
+                  This bounty will be created as an unfunded draft. It will not appear in public
+                  listings until payment is completed. You can fund it later from your dashboard.
+                </p>
+              </div>
+            )}
           </div>
         );
 
@@ -525,17 +556,24 @@ export function CreateBountyWizard({
       case 'review':
         return (
           <div className="flex justify-end gap-2">
-            <Button
-              onClick={() => setCurrentStep('payment')}
-              variant="outline"
-            >
-              Back
-            </Button>
+            {!isFunded && (
+              <Button
+                onClick={() => setCurrentStep('payment')}
+                variant="outline"
+              >
+                Back
+              </Button>
+            )}
             <Button
               disabled={publishBounty.isPending}
               onClick={handlePublish}
             >
-              {publishBounty.isPending ? 'Publishing...' : 'Create Bounty'}
+              {isFunded 
+                ? 'View Bounty' 
+                : publishBounty.isPending 
+                  ? 'Publishing...' 
+                  : 'Create Bounty'
+              }
             </Button>
           </div>
         );
