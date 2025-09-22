@@ -37,6 +37,10 @@ import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { MarkdownTextarea } from '@/components/bounty/markdown-editor';
 import { trpc } from '@/utils/trpc';
+import { PaymentMethodSetup } from '@/components/stripe/payment-method-setup';
+import { stripe } from '@bounty/api/src/lib/stripe';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 
 interface CreateBountyModalProps {
   open: boolean;
@@ -88,9 +92,11 @@ export function CreateBountyModal({
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
-    //watch,
+    watch,
     setValue,
   } = form;
+
+  const paymentMethodId = watch("paymentMethodId");
 
   // Load draft data if draftId is provided
   useEffect(() => {
@@ -162,6 +168,8 @@ export function CreateBountyModal({
       }
     }
   };
+
+  const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
   const isMobile = useMediaQuery('(max-width: 768px)');
 

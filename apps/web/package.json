@@ -33,6 +33,7 @@
     "@radix-ui/react-tabs": "catalog:",
     "@radix-ui/react-toggle": "catalog:",
     "@radix-ui/react-tooltip": "catalog:",
+    "@stripe/stripe-js": "^7.9.0",
     "@tanstack/react-form": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@thumbmarkjs/thumbmarkjs": "catalog:",

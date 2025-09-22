@@ -9,7 +9,10 @@ import {
   db,
   submission,
   user,
+  userProfile,
 } from '@bounty/db';
+import { stripe } from '../lib/stripe';
+import { getOrCreateCustomer } from '../lib/stripe-utils';
 import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
 import {
@@ -45,6 +48,9 @@ const createBountySchema = z.object({
   tags: z.array(z.string()).optional(),
   repositoryUrl: z.string().url().optional(),
   issueUrl: z.string().url().optional(),
+  paymentMethodId: z.string().min(1, 'Payment method is required'),
+  // If false, we will not attach the PM to the customer (one-time use)
+  savePaymentMethod: z.boolean().optional(),
 });
 
 const updateBountySchema = z.object({
@@ -150,7 +156,7 @@ export const bountiesRouter = router({
     .input(createBountySchema)
     .mutation(async ({ ctx, input }) => {
       try {
-        const normalizedAmount = String(input.amount);
+        const normalizedAmount = parseFloat(input.amount) * 100; // Convert to cents
         const cleanedTags =
           Array.isArray(input.tags) && input.tags.length > 0
             ? input.tags
@@ -164,13 +170,106 @@ export const bountiesRouter = router({
             ? input.issueUrl
             : undefined;
         const deadline = input.deadline ? new Date(input.deadline) : undefined;
-
         const newBountyResult = await db
+        const { user } = ctx.session;
+        const savePaymentMethod = input.savePaymentMethod ?? true;
+
+        console.log('Creating bounty with params:', {
+          userId: user.id,
+          paymentMethodId: input.paymentMethodId,
+          savePaymentMethod,
+          amount: normalizedAmount,
+          currency: input.currency
+        });
+
+        // Build PaymentIntent params
+        const piCreate: any = {
+          amount: Math.round(normalizedAmount),
+          currency: input.currency.toLowerCase(),
+          payment_method: input.paymentMethodId,
+          confirm: true,
+          automatic_payment_methods: {
+            enabled: true,
+            allow_redirects: 'never',
+          },
+          metadata: {
+            userId: user.id,
+            bountyTitle: input.title,
+          },
+        };
+
+        if (savePaymentMethod) {
+          // Attach to customer and persist for future off-session charges
+          console.log('Getting or creating customer for user:', user.id);
+          const customerId = await getOrCreateCustomer(user.id, user.email || '');
+          piCreate.customer = customerId;
+          piCreate.setup_future_usage = 'off_session';
+          console.log('Customer ID:', customerId);
+        }
+
+        console.log('Creating PaymentIntent with params:', piCreate);
+        // Create and confirm PaymentIntent
+        let paymentIntent;
+        try {
+          paymentIntent = await stripe.paymentIntents.create(piCreate);
+          console.log('PaymentIntent created:', paymentIntent.id, 'Status:', paymentIntent.status);
+        } catch (stripeError: any) {
+          console.error('Stripe PaymentIntent creation failed:', stripeError);
+          
+          // If the payment method doesn't belong to the customer, try with the payment method's customer
+          if ((stripeError.code === 'payment_method_unusable' || 
+               stripeError.message?.includes('does not belong to the Customer')) && 
+              savePaymentMethod) {
+            console.log('Payment method not attachable to customer, trying with payment method\'s customer...');
+            
+            // Get the payment method to find its customer
+            const paymentMethod = await stripe.paymentMethods.retrieve(input.paymentMethodId);
+            const paymentMethodCustomer = paymentMethod.customer as string;
+            
+            if (paymentMethodCustomer) {
+              console.log('Using payment method\'s customer:', paymentMethodCustomer);
+              piCreate.customer = paymentMethodCustomer;
+              piCreate.setup_future_usage = 'off_session';
+              
+              try {
+                paymentIntent = await stripe.paymentIntents.create(piCreate);
+                console.log('PaymentIntent created with payment method\'s customer:', paymentIntent.id, 'Status:', paymentIntent.status);
+              } catch (retryError: any) {
+                console.error('Retry with payment method\'s customer also failed:', retryError);
+                throw retryError;
+              }
+            } else {
+              // No customer, try without customer
+              console.log('Payment method has no customer, trying without customer...');
+              delete piCreate.customer;
+              delete piCreate.setup_future_usage;
+              console.log('Retry PaymentIntent params:', piCreate);
+              try {
+                paymentIntent = await stripe.paymentIntents.create(piCreate);
+                console.log('PaymentIntent created without customer:', paymentIntent.id, 'Status:', paymentIntent.status);
+              } catch (retryError: any) {
+                console.error('Retry PaymentIntent creation also failed:', retryError);
+                throw retryError;
+              }
+            }
+          } else {
+            throw stripeError;
+          }
+        }
+
+        if (paymentIntent.status !== 'succeeded') {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Payment confirmation failed',
+          });
+        }
+
+        const [newBounty] = await db
           .insert(bounty)
           .values({
             title: input.title,
             description: input.description,
-            amount: normalizedAmount,
+            amount: input.amount,
             currency: input.currency,
             difficulty: input.difficulty,
             deadline,
@@ -179,6 +278,7 @@ export const bountiesRouter = router({
             issueUrl,
             createdById: ctx.session.user.id,
             status: 'open',
+            stripePaymentIntentId: paymentIntent.id,
           })
           .returning();
 
@@ -194,7 +294,7 @@ export const bountiesRouter = router({
           await track('bounty_created', {
             bounty_id: newBounty.id,
             user_id: ctx.session.user.id,
-            amount: parseAmount(normalizedAmount),
+            amount: parseAmount(input.amount),
             currency: input.currency,
             difficulty: input.difficulty,
             has_repo: Boolean(repositoryUrl),
@@ -210,6 +310,9 @@ export const bountiesRouter = router({
           message: 'Bounty created successfully',
         };
       } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to create bounty',
