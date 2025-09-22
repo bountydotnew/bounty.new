@@ -1,7 +1,7 @@
-import { bounty, db, user } from '@bounty/db';
+import { bounty, db } from '@bounty/db';
 import { env } from '@bounty/env/server';
 import { TRPCError } from '@trpc/server';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import Stripe from 'stripe';
 import { z } from 'zod';
 import { protectedProcedure, publicProcedure, router } from '../trpc';
@@ -67,7 +67,7 @@ export const stripeRouter = router({
 
         // Get the bounty creator's Stripe account ID if they have one
         let applicationFeeAmount = 0;
-        let onBehalfOf: string | undefined;
+        let _onBehalfOf: string | undefined;
 
         // Calculate platform fee (e.g., 5% of the bounty amount)
         applicationFeeAmount = Math.round(amountInCents * 0.05);
@@ -305,7 +305,7 @@ export const stripeRouter = router({
 
           case 'account.updated': {
             // Handle Connect account updates
-            const account = event.data.object as Stripe.Account;
+            const _account = event.data.object as Stripe.Account;
             // Update user account status in database if needed
             break;
           }

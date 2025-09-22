@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@bounty/ui/components/button';
-import { CreditCard, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { ImprovedPaymentModal } from './improved-payment-modal';

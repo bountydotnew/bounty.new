@@ -3,11 +3,13 @@
 import { Button } from '@bounty/ui/components/button';
 import {
   Dialog,
-  DialogContent, DialogHeader,
-  DialogTitle
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from '@bounty/ui/components/dialog';
 import { Input } from '@bounty/ui/components/input';
 import { Label } from '@bounty/ui/components/label';
+import { useMutation } from '@tanstack/react-query';
 import {
   ArrowLeft,
   ArrowRight,
@@ -18,7 +20,6 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { trpc } from '@/utils/trpc';
-import { useMutation } from '@tanstack/react-query';
 
 interface BountyPaymentStepperProps {
   open: boolean;
@@ -144,8 +145,8 @@ export function BountyPaymentStepper({
   const formatCardNumber = (value: string) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
     const matches = v.match(/\d{4,16}/g);
-    const match = (matches && matches[0]) || '';
-    const parts = [];
+    const match = (matches?.[0] ?? '') || '';
+    const parts: string[] = [];
     for (let i = 0, len = match.length; i < len; i += 4) {
       parts.push(match.substring(i, i + 4));
     }
@@ -181,6 +182,7 @@ export function BountyPaymentStepper({
               : 'border-border hover:border-primary/50'
           }`}
           onClick={() => handleMethodSelection('payment_link')}
+          type="button"
         >
           <div className="flex items-center space-x-3">
             <div
@@ -207,6 +209,7 @@ export function BountyPaymentStepper({
               : 'border-border hover:border-primary/50'
           }`}
           onClick={() => handleMethodSelection('manual_card')}
+          type="button"
         >
           <div className="flex items-center space-x-3">
             <div

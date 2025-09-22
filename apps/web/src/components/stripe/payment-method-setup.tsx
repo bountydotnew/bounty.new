@@ -26,9 +26,7 @@ export function PaymentMethodSetup({
   const [loading, setLoading] = useState(false);
 
   // default selection: save when both, otherwise fixed based on mode
-  const [saveCard, setSaveCard] = useState<boolean>(() =>
-    mode === 'one_time' ? false : true
-  );
+  const [saveCard, setSaveCard] = useState<boolean>(() => mode !== 'one_time');
 
   const effectiveMode = useMemo<PaymentMode>(() => mode, [mode]);
 

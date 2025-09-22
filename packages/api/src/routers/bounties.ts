@@ -8,7 +8,7 @@ import {
   createNotification,
   db,
   submission,
-  user
+  user,
 } from '@bounty/db';
 import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
@@ -23,6 +23,7 @@ import {
   or,
   sql,
 } from 'drizzle-orm';
+import type Stripe from 'stripe';
 import { z } from 'zod';
 import {
   confirmBountyPayment,
@@ -30,7 +31,6 @@ import {
   stripe,
 } from '../lib/stripe';
 import { getOrCreateCustomer } from '../lib/stripe-utils';
-import type Stripe from 'stripe';
 import { protectedProcedure, publicProcedure, router } from '../trpc';
 
 const parseAmount = (amount: string | number | null): number => {
@@ -46,7 +46,7 @@ const buildPaymentIntentParams = (
   sessionUser: { id: string; email?: string | null }
 ): Stripe.PaymentIntentCreateParams => {
   const normalizedAmount = Number.parseFloat(input.amount) * 100;
-  
+
   return {
     amount: Math.round(normalizedAmount),
     currency: input.currency.toLowerCase(),
@@ -77,7 +77,7 @@ const handlePaymentMethodCustomer = async (
 
     return await stripe.paymentIntents.create(piCreate);
   }
-  
+
   console.log('Payment method has no customer, trying without customer...');
   const retryParams: Stripe.PaymentIntentCreateParams = {
     amount: piCreate.amount,
@@ -89,7 +89,7 @@ const handlePaymentMethodCustomer = async (
       : {}),
     ...(piCreate.metadata ? { metadata: piCreate.metadata } : {}),
   };
-  
+
   return await stripe.paymentIntents.create(retryParams);
 };
 
@@ -100,7 +100,12 @@ const createPaymentIntentWithRetry = async (
 ): Promise<Stripe.PaymentIntent> => {
   try {
     const paymentIntent = await stripe.paymentIntents.create(piCreate);
-    console.log('PaymentIntent created:', paymentIntent.id, 'Status:', paymentIntent.status);
+    console.log(
+      'PaymentIntent created:',
+      paymentIntent.id,
+      'Status:',
+      paymentIntent.status
+    );
     return paymentIntent;
   } catch (stripeError: unknown) {
     const err = stripeError as { code?: string; message?: string };
@@ -111,10 +116,12 @@ const createPaymentIntentWithRetry = async (
         err.message?.includes('does not belong to the Customer')) &&
       savePaymentMethod
     ) {
-      console.log("Payment method not attachable to customer, trying with payment method's customer...");
+      console.log(
+        "Payment method not attachable to customer, trying with payment method's customer..."
+      );
       return await handlePaymentMethodCustomer(piCreate, input.paymentMethodId);
     }
-    
+
     throw stripeError;
   }
 };
@@ -124,17 +131,13 @@ const createBountyInDatabase = async (
   userId: string
 ) => {
   const cleanedTags =
-    Array.isArray(input.tags) && input.tags.length > 0
-      ? input.tags
-      : undefined;
+    Array.isArray(input.tags) && input.tags.length > 0 ? input.tags : undefined;
   const repositoryUrl =
     input.repositoryUrl && input.repositoryUrl.length > 0
       ? input.repositoryUrl
       : undefined;
   const issueUrl =
-    input.issueUrl && input.issueUrl.length > 0
-      ? input.issueUrl
-      : undefined;
+    input.issueUrl && input.issueUrl.length > 0 ? input.issueUrl : undefined;
   const deadline = input.deadline ? new Date(input.deadline) : undefined;
 
   const newBountyResult = await db
@@ -175,6 +178,7 @@ const fetchBountyWithCreator = async (bountyId: string) => {
       amount: bounty.amount,
       currency: bounty.currency,
       status: bounty.status,
+      fundingStatus: bounty.fundingStatus,
       difficulty: bounty.difficulty,
       deadline: bounty.deadline,
       tags: bounty.tags,
@@ -218,10 +222,7 @@ const fetchUserVoteAndBookmark = async (bountyId: string, userId: string) => {
     .select({ id: bountyVote.id })
     .from(bountyVote)
     .where(
-      and(
-        eq(bountyVote.bountyId, bountyId),
-        eq(bountyVote.userId, userId)
-      )
+      and(eq(bountyVote.bountyId, bountyId), eq(bountyVote.userId, userId))
     );
 
   const [existingBookmark] = await db
@@ -273,17 +274,18 @@ const fetchCommentLikes = async (commentIds: string[], userId?: string) => {
         .groupBy(bountyCommentLike.commentId)
     : [];
 
-  const userLikes = userId && commentIds.length
-    ? await db
-        .select({ commentId: bountyCommentLike.commentId })
-        .from(bountyCommentLike)
-        .where(
-          and(
-            eq(bountyCommentLike.userId, userId),
-            inArray(bountyCommentLike.commentId, commentIds)
+  const userLikes =
+    userId && commentIds.length
+      ? await db
+          .select({ commentId: bountyCommentLike.commentId })
+          .from(bountyCommentLike)
+          .where(
+            and(
+              eq(bountyCommentLike.userId, userId),
+              inArray(bountyCommentLike.commentId, commentIds)
+            )
           )
-        )
-    : [];
+      : [];
 
   return { likeCounts, userLikes };
 };
@@ -405,7 +407,9 @@ const trackCommentAdded = async (
       content_length: contentLength ?? 0,
       source: 'api',
     });
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 };
 
 const notifyBountyOwner = async (
@@ -429,7 +433,9 @@ const notifyBountyOwner = async (
         data: { bountyId, commentId },
       });
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 };
 
 const createBountySchema = z.object({
@@ -448,7 +454,17 @@ const createBountySchema = z.object({
   savePaymentMethod: z.boolean().optional(),
 });
 
-const createBountyDraftSchema = createBountySchema;
+const createBountyDraftSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
+  description: z.string().min(10, 'Description must be at least 10 characters'),
+  amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, 'Incorrect amount.'),
+  currency: z.string().default('USD'),
+  difficulty: z.enum(['beginner', 'intermediate', 'advanced', 'expert']),
+  deadline: z.string().datetime().optional(),
+  tags: z.array(z.string()).optional(),
+  repositoryUrl: z.string().url().optional(),
+  issueUrl: z.string().url().optional(),
+});
 
 const updateBountySchema = z.object({
   id: z.string().uuid(),
@@ -874,7 +890,11 @@ export const bountiesRouter = router({
         }
 
         console.log('Creating PaymentIntent with params:', piCreate);
-        const paymentIntent = await createPaymentIntentWithRetry(piCreate, input, savePaymentMethod);
+        const paymentIntent = await createPaymentIntentWithRetry(
+          piCreate,
+          input,
+          savePaymentMethod
+        );
 
         if (paymentIntent.status !== 'succeeded') {
           throw new TRPCError({
@@ -883,7 +903,10 @@ export const bountiesRouter = router({
           });
         }
 
-        const newBounty = await createBountyInDatabase(input, ctx.session.user.id);
+        const newBounty = await createBountyInDatabase(
+          input,
+          ctx.session.user.id
+        );
 
         try {
           await track('bounty_created', {
@@ -897,7 +920,9 @@ export const bountiesRouter = router({
             tags_count: input.tags?.length ?? 0,
             source: 'api',
           });
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
 
         return {
           success: true,
@@ -1152,7 +1177,9 @@ export const bountiesRouter = router({
             tags_count: updatedBounty.tags?.length ?? 0,
             source: 'api',
           });
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
 
         return {
           success: true,
@@ -1203,7 +1230,9 @@ export const bountiesRouter = router({
             user_id: ctx.session.user.id,
             source: 'api',
           });
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
 
         return {
           success: true,
@@ -1243,7 +1272,9 @@ export const bountiesRouter = router({
             voted: Boolean(existing),
             source: 'api',
           });
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
 
         let voted = false;
         if (existing) {
@@ -1322,7 +1353,10 @@ export const bountiesRouter = router({
         let isVoted = false;
         let bookmarked = false;
         if (ctx.session?.user?.id) {
-          const userData = await fetchUserVoteAndBookmark(input.id, ctx.session.user.id);
+          const userData = await fetchUserVoteAndBookmark(
+            input.id,
+            ctx.session.user.id
+          );
           isVoted = userData.isVoted;
           bookmarked = userData.bookmarked;
         }
@@ -1334,7 +1368,11 @@ export const bountiesRouter = router({
           ctx.session?.user?.id
         );
 
-        const commentsWithLikes = processCommentsWithLikes(comments, likeCounts, userLikes);
+        const commentsWithLikes = processCommentsWithLikes(
+          comments,
+          likeCounts,
+          userLikes
+        );
 
         return {
           bounty: { ...bountyRow, amount: parseAmount(bountyRow.amount) },
@@ -1381,7 +1419,9 @@ export const bountiesRouter = router({
               bookmarked: false,
               source: 'api',
             });
-          } catch { /* ignore */ }
+          } catch {
+            /* ignore */
+          }
           return { bookmarked: false };
         }
         try {
@@ -1391,7 +1431,9 @@ export const bountiesRouter = router({
             bookmarked: true,
             source: 'api',
           });
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
         return { bookmarked: true };
       } catch (error) {
         throw new TRPCError({
@@ -1580,11 +1622,32 @@ export const bountiesRouter = router({
     .mutation(async ({ ctx, input }) => {
       try {
         const trimmed = input.content.trim();
-        await validateCommentDuplication(input.bountyId, ctx.session.user.id, trimmed, input.parentId);
-        
-        const inserted = await createComment(input.bountyId, ctx.session.user.id, trimmed, input.parentId);
-        await trackCommentAdded(input.bountyId, inserted.id, ctx.session.user.id, input.parentId, trimmed.length);
-        await notifyBountyOwner(input.bountyId, inserted.id, ctx.session.user.id, trimmed);
+        await validateCommentDuplication(
+          input.bountyId,
+          ctx.session.user.id,
+          trimmed,
+          input.parentId
+        );
+
+        const inserted = await createComment(
+          input.bountyId,
+          ctx.session.user.id,
+          trimmed,
+          input.parentId
+        );
+        await trackCommentAdded(
+          input.bountyId,
+          inserted.id,
+          ctx.session.user.id,
+          input.parentId,
+          trimmed.length
+        );
+        await notifyBountyOwner(
+          input.bountyId,
+          inserted.id,
+          ctx.session.user.id,
+          trimmed
+        );
 
         return inserted;
       } catch (error) {
@@ -1743,7 +1806,9 @@ export const bountiesRouter = router({
             edit_count: updated.editCount,
             source: 'api',
           });
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
         return updated;
       } catch (error) {
         if (error instanceof TRPCError) {
@@ -1789,7 +1854,9 @@ export const bountiesRouter = router({
             user_id: ctx.session.user.id,
             source: 'api',
           });
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
         return { success: true };
       } catch (error) {
         if (error instanceof TRPCError) {
@@ -1837,7 +1904,9 @@ export const bountiesRouter = router({
             liked: inserted.length > 0,
             source: 'api',
           });
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
         return {
           likeCount: countRes?.likeCount || 0,
           isLiked: inserted.length > 0,

@@ -35,8 +35,12 @@ export function AnimatedButton({
   };
 
   const buttonContent = (() => {
-    if (isLoading) return loadingText;
-    if (isSuccess && showSuccess) return successText;
+    if (isLoading) {
+      return loadingText;
+    }
+    if (isSuccess && showSuccess) {
+      return successText;
+    }
     return children;
   })();
 

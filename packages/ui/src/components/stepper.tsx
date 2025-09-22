@@ -64,8 +64,7 @@ function getFocusIntent(
   orientation?: Orientation
 ) {
   const key = getDirectionAwareKey(event.key, dir);
-  if
-    (orientation === 'horizontal' && ['ArrowUp', 'ArrowDown'].includes(key)) {
+  if (orientation === 'horizontal' && ['ArrowUp', 'ArrowDown'].includes(key)) {
     return;
   }
   if (orientation === 'vertical' && ['ArrowLeft', 'ArrowRight'].includes(key)) {
@@ -924,8 +923,7 @@ function StepperTrigger(props: ButtonProps) {
       const focusIntent = getFocusIntent(event, context.dir, orientation);
 
       if (focusIntent !== undefined) {
-        if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey)
-        {
+        if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) {
           return;
         }
         event.preventDefault();

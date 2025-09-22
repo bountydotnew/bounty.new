@@ -87,7 +87,9 @@ export const BountyCard = memo(function BountyCard({
     });
     const updateList = previousMany.map(([key, previous]) => {
       const current = previous?.stats?.find?.((s) => s.bountyId === bounty.id);
-      if (!(previous && current)) return [key, previous] as const;
+      if (!(previous && current)) {
+        return [key, previous] as const;
+      }
       const next = {
         stats: previous.stats.map((s) =>
           s.bountyId === bounty.id
@@ -108,7 +110,9 @@ export const BountyCard = memo(function BountyCard({
       { bountyId: bounty.id },
       {
         onError: () => {
-          if (previousVotes) queryClient.setQueryData(votesKey, previousVotes);
+          if (previousVotes) {
+            queryClient.setQueryData(votesKey, previousVotes);
+          }
           updateList.forEach(
             ([key, previous]) =>
               previous && queryClient.setQueryData(key, previous)
@@ -133,7 +137,9 @@ export const BountyCard = memo(function BountyCard({
             ) as any,
           });
           manyKeys.forEach(([key, current]) => {
-            if (!current) return;
+            if (!current) {
+              return;
+            }
             const next = {
               stats: current.stats.map((s) =>
                 s.bountyId === bounty.id
@@ -166,7 +172,9 @@ export const BountyCard = memo(function BountyCard({
     });
     const updateList = previousMany.map(([key, previous]) => {
       const current = previous?.stats?.find?.((s) => s.bountyId === bounty.id);
-      if (!(previous && current)) return [key, previous] as const;
+      if (!(previous && current)) {
+        return [key, previous] as const;
+      }
       const next = {
         stats: previous.stats.map((s) =>
           s.bountyId === bounty.id ? { ...s, bookmarked: !s.bookmarked } : s

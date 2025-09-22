@@ -6,18 +6,18 @@ import {
   user,
   userProfile,
   userReputation,
-} from "@bounty/db";
-import { ExternalInvite, FROM_ADDRESSES, sendEmail } from "@bounty/email";
-import { env } from "@bounty/env/server";
-import { TRPCError } from "@trpc/server";
-import { desc, eq, sql } from "drizzle-orm";
-import { z } from "zod";
+} from '@bounty/db';
+import { ExternalInvite, FROM_ADDRESSES, sendEmail } from '@bounty/email';
+import { env } from '@bounty/env/server';
+import { TRPCError } from '@trpc/server';
+import { desc, eq, sql } from 'drizzle-orm';
+import { z } from 'zod';
 import {
   adminProcedure,
   protectedProcedure,
   publicProcedure,
   router,
-} from "../trpc";
+} from '../trpc';
 
 export const userRouter = router({
   adminGetProfile: adminProcedure
@@ -40,7 +40,7 @@ export const userRouter = router({
         .where(eq(user.id, input.userId))
         .limit(1);
       if (!u) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
       }
 
       const bountyCount = await db
@@ -71,7 +71,7 @@ export const userRouter = router({
 
   adminUpdateName: adminProcedure
     .input(
-      z.object({ userId: z.string().uuid(), name: z.string().min(1).max(80) }),
+      z.object({ userId: z.string().uuid(), name: z.string().min(1).max(80) })
     )
     .mutation(async ({ input }) => {
       const [updated] = await db
@@ -80,7 +80,7 @@ export const userRouter = router({
         .where(eq(user.id, input.userId))
         .returning({ id: user.id, name: user.name });
       if (!updated) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
       }
       return updated;
     }),
@@ -95,8 +95,8 @@ export const userRouter = router({
 
     if (!userRecord[0]) {
       throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "User not found",
+        code: 'NOT_FOUND',
+        message: 'User not found',
       });
     }
 
@@ -140,8 +140,8 @@ export const userRouter = router({
 
       if (!userRecord) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "User not found",
+          code: 'NOT_FOUND',
+          message: 'User not found',
         });
       }
 
@@ -155,8 +155,8 @@ export const userRouter = router({
       }
 
       throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch current user",
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch current user',
         cause: error,
       });
     }
@@ -182,8 +182,8 @@ export const userRouter = router({
       };
     } catch (error) {
       throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch user sessions",
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch user sessions',
         cause: error,
       });
     }
@@ -200,15 +200,15 @@ export const userRouter = router({
 
         if (!sessionToRevoke) {
           throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Session not found",
+            code: 'NOT_FOUND',
+            message: 'Session not found',
           });
         }
 
         if (sessionToRevoke.userId !== ctx.session.user.id) {
           throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "You can only revoke your own sessions",
+            code: 'FORBIDDEN',
+            message: 'You can only revoke your own sessions',
           });
         }
 
@@ -216,7 +216,7 @@ export const userRouter = router({
 
         return {
           success: true,
-          message: "Session revoked successfully",
+          message: 'Session revoked successfully',
         };
       } catch (error) {
         if (error instanceof TRPCError) {
@@ -224,8 +224,8 @@ export const userRouter = router({
         }
 
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to revoke session",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to revoke session',
           cause: error,
         });
       }
@@ -251,20 +251,20 @@ export const userRouter = router({
             totalUsers: stats?.totalUsers ?? 0,
           },
           userStats: userRep || {
-            totalEarned: "0.00",
+            totalEarned: '0.00',
             bountiesCompleted: 0,
             bountiesCreated: 0,
-            averageRating: "0.00",
+            averageRating: '0.00',
             totalRatings: 0,
-            successRate: "0.00",
-            completionRate: "0.00",
+            successRate: '0.00',
+            completionRate: '0.00',
           },
         },
       };
     } catch (error) {
       throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch user stats",
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch user stats',
         cause: error,
       });
     }
@@ -275,7 +275,7 @@ export const userRouter = router({
       z.object({
         userId: z.string().uuid(),
         hasAccess: z.boolean(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       try {
@@ -287,7 +287,7 @@ export const userRouter = router({
 
         if (!currentUser[0]?.hasAccess) {
           throw new TRPCError({
-            code: "FORBIDDEN",
+            code: 'FORBIDDEN',
             message: "You don't have permission to update user access",
           });
         }
@@ -302,7 +302,7 @@ export const userRouter = router({
 
         return {
           success: true,
-          message: "User access updated successfully",
+          message: 'User access updated successfully',
         };
       } catch (error) {
         if (error instanceof TRPCError) {
@@ -310,8 +310,8 @@ export const userRouter = router({
         }
 
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update user access",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to update user access',
           cause: error,
         });
       }
@@ -324,8 +324,8 @@ export const userRouter = router({
 
     if (!userData) {
       throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "User not found",
+        code: 'NOT_FOUND',
+        message: 'User not found',
       });
     }
 
@@ -338,7 +338,7 @@ export const userRouter = router({
         search: z.string().optional(),
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(20),
-      }),
+      })
     )
     .query(async ({ ctx, input }) => {
       const { search, page, limit } = input;
@@ -389,8 +389,8 @@ export const userRouter = router({
     .input(
       z.object({
         userId: z.string(),
-        role: z.enum(["user", "admin"]),
-      }),
+        role: z.enum(['user', 'admin']),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const { userId, role } = input;
@@ -404,8 +404,8 @@ export const userRouter = router({
     .input(
       z.object({
         userId: z.string(),
-        accessStage: z.enum(["none", "alpha", "beta", "production"]),
-      }),
+        accessStage: z.enum(['none', 'alpha', 'beta', 'production']),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const { userId, accessStage } = input;
@@ -426,8 +426,8 @@ export const userRouter = router({
 
       if (!updatedUser) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "User not found",
+          code: 'NOT_FOUND',
+          message: 'User not found',
         });
       }
 
@@ -442,8 +442,8 @@ export const userRouter = router({
     .input(
       z.object({
         email: z.string().email(),
-        accessStage: z.enum(["none", "alpha", "beta", "production"]),
-      }),
+        accessStage: z.enum(['none', 'alpha', 'beta', 'production']),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const { email, accessStage } = input;
@@ -456,39 +456,39 @@ export const userRouter = router({
 
       if (existingUser.length > 0) {
         throw new TRPCError({
-          code: "CONFLICT",
+          code: 'CONFLICT',
           message:
-            "User with this email already exists. Use the invite button for existing users.",
+            'User with this email already exists. Use the invite button for existing users.',
         });
       }
 
       const rawToken =
-        crypto.randomUUID().replace(/-/g, "") +
-        crypto.randomUUID().replace(/-/g, "");
+        crypto.randomUUID().replace(/-/g, '') +
+        crypto.randomUUID().replace(/-/g, '');
       const tokenHash = await crypto.subtle
-        .digest("SHA-256", new TextEncoder().encode(rawToken))
-        .then((b) => Buffer.from(new Uint8Array(b)).toString("hex"));
+        .digest('SHA-256', new TextEncoder().encode(rawToken))
+        .then((b) => Buffer.from(new Uint8Array(b)).toString('hex'));
 
       const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
 
       await ctx.db
         .insert(invite)
-        .values({ email, accessStage, tokenHash, expiresAt })
+        .values({ email, accessStage, tokenHash, expiresAt });
 
-      const baseUrl = env.BETTER_AUTH_URL?.endsWith("/")
+      const baseUrl = env.BETTER_AUTH_URL?.endsWith('/')
         ? env.BETTER_AUTH_URL.slice(0, -1)
-        : env.BETTER_AUTH_URL || "https://bounty.new"
-      const inviteUrl = `${baseUrl}/login?invite=${rawToken}`
+        : env.BETTER_AUTH_URL || 'https://bounty.new';
+      const inviteUrl = `${baseUrl}/login?invite=${rawToken}`;
       await sendEmail({
         to: email,
-        subject: "You’re invited to bounty.new",
+        subject: 'You’re invited to bounty.new',
         from: FROM_ADDRESSES.notifications,
         react: ExternalInvite({
           inviteUrl,
           accessStage:
-            accessStage === "none"
-              ? "none"
-              : (accessStage as "alpha" | "beta" | "production"),
+            accessStage === 'none'
+              ? 'none'
+              : (accessStage as 'alpha' | 'beta' | 'production'),
         }),
       });
 
@@ -500,8 +500,8 @@ export const userRouter = router({
     .mutation(async ({ ctx, input }) => {
       const { token } = input;
       const tokenHash = await crypto.subtle
-        .digest("SHA-256", new TextEncoder().encode(token))
-        .then((b) => Buffer.from(new Uint8Array(b)).toString("hex"));
+        .digest('SHA-256', new TextEncoder().encode(token))
+        .then((b) => Buffer.from(new Uint8Array(b)).toString('hex'));
 
       const rows = await ctx.db
         .select()
@@ -511,20 +511,20 @@ export const userRouter = router({
       const row = rows[0];
       if (!row) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Invalid invite",
+          code: 'NOT_FOUND',
+          message: 'Invalid invite',
         });
       }
       if (row.usedAt) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invite already used",
+          code: 'BAD_REQUEST',
+          message: 'Invite already used',
         });
       }
       if (row.expiresAt && row.expiresAt < new Date()) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invite expired",
+          code: 'BAD_REQUEST',
+          message: 'Invite expired',
         });
       }
       await ctx.db

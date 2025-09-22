@@ -23,7 +23,7 @@ export function StripeOnboardingLink({
       const { data } = await getAccountOnboardingLink.mutateAsync();
       onSuccess?.(data.url);
       window.location.href = data.url;
-    } catch (err) {
+    } catch (_err) {
       onError?.('Failed to generate onboarding link');
     } finally {
       setLoading(false);

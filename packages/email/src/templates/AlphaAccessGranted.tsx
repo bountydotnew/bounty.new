@@ -5,14 +5,12 @@ import {
   Head,
   Html,
   Img,
-  Link,
   Preview,
   Tailwind,
   Text,
 } from '@react-email/components';
-import * as React from 'react';
 
-const AlphaAccessGranted = (props: { name?: string }) => {
+const AlphaAccessGranted = (_props: { name?: string }) => {
   return (
     <Html dir="ltr" lang="en">
       <Tailwind>

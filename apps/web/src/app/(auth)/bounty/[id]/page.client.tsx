@@ -114,7 +114,15 @@ export default function BountyPage() {
   const detailUser: string = bountyDetail.data.bounty.creator.name ?? '';
   const detailAvatarSrc: string = bountyDetail.data.bounty.creator.image ?? '';
   const detailRank: string = bountyDetail.data.bounty.difficulty;
-  const detailFundingStatus: 'unfunded' | 'funded' = bountyDetail.data.bounty.fundingStatus;
+  const detailStatus:
+    | 'draft'
+    | 'open'
+    | 'funded'
+    | 'in_progress'
+    | 'completed'
+    | 'cancelled' = bountyDetail.data.bounty.status;
+  const detailFundingStatus: 'unfunded' | 'funded' =
+    bountyDetail.data.bounty.fundingStatus;
 
   return (
     // <div className="p-8 max-w-4xl mx-auto">
@@ -186,16 +194,17 @@ export default function BountyPage() {
       avatarSrc={detailAvatarSrc}
       canEditBounty={canEdit}
       description={detailDescription}
+      fundingStatus={detailFundingStatus}
       hasBadge={false}
       id={String(id)}
       initialBookmarked={Boolean(bountyDetail.data.bookmarked)}
       initialComments={bountyDetail.data.comments}
       initialVotes={bountyDetail.data.votes}
       rank={detailRank}
+      status={detailStatus}
       tags={detailTags}
       title={detailTitle}
       user={detailUser}
-      fundingStatus={detailFundingStatus}
     />
   );
 }

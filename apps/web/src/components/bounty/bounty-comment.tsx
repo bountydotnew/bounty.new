@@ -75,14 +75,12 @@ export default function BountyComment({
           <>
             <span className="text-neutral-500 text-xs">(edited)</span>
             {comment.originalContent && (
-              <>
-                <button
-                  className="text-[11px] text-neutral-400 hover:text-neutral-200"
-                  onClick={() => setShowOriginal(!showOriginal)}
-                >
-                  {showOriginal ? 'show edited' : 'show original'}
-                </button>
-              </>
+              <button
+                className="text-[11px] text-neutral-400 hover:text-neutral-200"
+                onClick={() => setShowOriginal(!showOriginal)}
+              >
+                {showOriginal ? 'show edited' : 'show original'}
+              </button>
             )}
           </>
         )}
