@@ -47,7 +47,7 @@ export function PaymentModal({
             <p className="text-neutral-300 text-sm">
               Payment processing is not yet implemented.
             </p>
-            <p className="text-neutral-500 text-xs mt-1">
+            <p className="mt-1 text-neutral-500 text-xs">
               This is a placeholder component.
             </p>
           </div>

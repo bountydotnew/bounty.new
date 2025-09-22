@@ -23,11 +23,6 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TRPCClientErrorLike } from '@trpc/client';
-import { motion, AnimatePresence } from 'motion/react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import {
   ArrowLeft,
   ArrowRight,
@@ -35,11 +30,16 @@ import {
   CreditCard,
   DollarSign,
   FileText,
-  Sparkles
+  Sparkles,
 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { MarkdownTextarea } from '@/components/bounty/markdown-editor';
-import { ImprovedPaymentModal } from '../stripe/improved-payment-modal';
 import { trpc } from '@/utils/trpc';
+import { ImprovedPaymentModal } from '../stripe/improved-payment-modal';
 
 interface EnhancedCreateBountyModalProps {
   open: boolean;
@@ -121,7 +121,7 @@ export function EnhancedCreateBountyModal({
         type: 'all',
       });
 
-      toast.success('Bounty created! Now let\'s fund it.');
+      toast.success("Bounty created! Now let's fund it.");
     },
     onError: (error: TRPCClientErrorLike<AppRouter>) => {
       toast.error(`Failed to create bounty: ${error.message}`);
@@ -169,7 +169,7 @@ export function EnhancedCreateBountyModal({
   };
 
   const formatAmount = (amount: string, currency: string) => {
-    const num = parseFloat(amount) || 0;
+    const num = Number.parseFloat(amount) || 0;
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency,
@@ -179,7 +179,9 @@ export function EnhancedCreateBountyModal({
   return (
     <>
       <Dialog
-        onOpenChange={(newOpen) => newOpen ? onOpenChange(newOpen) : handleClose()}
+        onOpenChange={(newOpen) =>
+          newOpen ? onOpenChange(newOpen) : handleClose()
+        }
         open={open}
       >
         <DialogContent className="w-[95vw] max-w-2xl border border-neutral-800 bg-neutral-900/95 p-0 backdrop-blur-xl">
@@ -195,8 +197,10 @@ export function EnhancedCreateBountyModal({
                   </DialogTitle>
                   <DialogDescription className="text-neutral-400">
                     {currentStep === 'details' && 'Fill in the bounty details'}
-                    {currentStep === 'review' && 'Review your bounty before creating'}
-                    {currentStep === 'payment' && 'Fund your bounty to make it active'}
+                    {currentStep === 'review' &&
+                      'Review your bounty before creating'}
+                    {currentStep === 'payment' &&
+                      'Fund your bounty to make it active'}
                   </DialogDescription>
                 </div>
               </div>
@@ -205,14 +209,17 @@ export function EnhancedCreateBountyModal({
               <div className="flex gap-2">
                 {['details', 'review', 'payment'].map((step, index) => (
                   <div
-                    key={step}
                     className={`h-2 w-8 rounded-full transition-colors ${
                       currentStep === step
                         ? 'bg-blue-500'
-                        : index < ['details', 'review', 'payment'].indexOf(currentStep)
-                        ? 'bg-green-500'
-                        : 'bg-neutral-700'
+                        : index <
+                            ['details', 'review', 'payment'].indexOf(
+                              currentStep
+                            )
+                          ? 'bg-green-500'
+                          : 'bg-neutral-700'
                     }`}
+                    key={step}
                   />
                 ))}
               </div>
@@ -223,16 +230,19 @@ export function EnhancedCreateBountyModal({
             <AnimatePresence mode="wait">
               {currentStep === 'details' && (
                 <motion.div
-                  key="details"
-                  initial="hidden"
                   animate="visible"
                   exit="exit"
-                  variants={stepVariants}
+                  initial="hidden"
+                  key="details"
                   transition={{ duration: 0.3, ease: 'easeOut' }}
+                  variants={stepVariants}
                 >
                   <form className="space-y-4 px-6 pb-6">
                     <div className="space-y-2 rounded-lg bg-neutral-900/50 p-4">
-                      <Label htmlFor="title" className="flex items-center gap-2">
+                      <Label
+                        className="flex items-center gap-2"
+                        htmlFor="title"
+                      >
                         <FileText className="h-4 w-4" />
                         Title *
                       </Label>
@@ -243,7 +253,7 @@ export function EnhancedCreateBountyModal({
                           <Input
                             {...field}
                             autoComplete="off"
-                            className={`bg-neutral-800 border-neutral-700 ${errors.title ? 'border-red-500' : ''}`}
+                            className={`border-neutral-700 bg-neutral-800 ${errors.title ? 'border-red-500' : ''}`}
                             id="title"
                             placeholder="Enter a clear, descriptive title"
                           />
@@ -265,7 +275,9 @@ export function EnhancedCreateBountyModal({
                           render={({ field }) => (
                             <MarkdownTextarea
                               className={
-                                errors.description ? 'border-red-500' : 'border-transparent'
+                                errors.description
+                                  ? 'border-red-500'
+                                  : 'border-transparent'
                               }
                               id="description"
                               name={field.name}
@@ -286,7 +298,10 @@ export function EnhancedCreateBountyModal({
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2 rounded-lg bg-neutral-900/50 p-4">
-                        <Label htmlFor="amount" className="flex items-center gap-2">
+                        <Label
+                          className="flex items-center gap-2"
+                          htmlFor="amount"
+                        >
                           <DollarSign className="h-4 w-4" />
                           Amount *
                         </Label>
@@ -297,7 +312,7 @@ export function EnhancedCreateBountyModal({
                             <Input
                               {...field}
                               autoComplete="off"
-                              className={`bg-neutral-800 border-neutral-700 ${errors.amount ? 'border-red-500' : ''}`}
+                              className={`border-neutral-700 bg-neutral-800 ${errors.amount ? 'border-red-500' : ''}`}
                               id="amount"
                               placeholder="100.00"
                             />
@@ -360,7 +375,9 @@ export function EnhancedCreateBountyModal({
                     </div>
 
                     <div className="space-y-2 rounded-lg bg-neutral-900/50 p-4">
-                      <Label htmlFor="repositoryUrl">Repository URL (Optional)</Label>
+                      <Label htmlFor="repositoryUrl">
+                        Repository URL (Optional)
+                      </Label>
                       <Controller
                         control={control}
                         name="repositoryUrl"
@@ -368,7 +385,7 @@ export function EnhancedCreateBountyModal({
                           <Input
                             {...field}
                             autoComplete="off"
-                            className={`bg-neutral-800 border-neutral-700 ${errors.repositoryUrl ? 'border-red-500' : ''}`}
+                            className={`border-neutral-700 bg-neutral-800 ${errors.repositoryUrl ? 'border-red-500' : ''}`}
                             id="repositoryUrl"
                             placeholder="https://github.com/user/repo"
                             type="url"
@@ -391,7 +408,7 @@ export function EnhancedCreateBountyModal({
                           <Input
                             {...field}
                             autoComplete="off"
-                            className={`bg-neutral-800 border-neutral-700 ${errors.issueUrl ? 'border-red-500' : ''}`}
+                            className={`border-neutral-700 bg-neutral-800 ${errors.issueUrl ? 'border-red-500' : ''}`}
                             id="issueUrl"
                             placeholder="https://github.com/user/repo/issues/123"
                             type="url"
@@ -407,17 +424,17 @@ export function EnhancedCreateBountyModal({
 
                     <div className="flex justify-end gap-3 pt-4">
                       <Button
+                        className="border-neutral-700 text-neutral-300 hover:bg-neutral-800"
                         onClick={handleClose}
                         type="button"
                         variant="outline"
-                        className="border-neutral-700 text-neutral-300 hover:bg-neutral-800"
                       >
                         Cancel
                       </Button>
                       <Button
+                        className="bg-blue-600 text-white hover:bg-blue-700"
                         onClick={() => setCurrentStep('review')}
                         type="button"
-                        className="bg-blue-600 text-white hover:bg-blue-700"
                       >
                         Review
                         <ArrowRight className="ml-2 h-4 w-4" />
@@ -429,21 +446,26 @@ export function EnhancedCreateBountyModal({
 
               {currentStep === 'review' && (
                 <motion.div
-                  key="review"
-                  initial="hidden"
                   animate="visible"
                   exit="exit"
-                  variants={stepVariants}
+                  initial="hidden"
+                  key="review"
                   transition={{ duration: 0.3, ease: 'easeOut' }}
+                  variants={stepVariants}
                 >
                   <div className="space-y-4 px-6 pb-6">
                     {/* Amount Display */}
                     <div className="rounded-xl border border-neutral-700 bg-gradient-to-r from-neutral-800 to-neutral-700 p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-neutral-400 text-sm">Bounty Amount</p>
-                          <p className="font-bold text-white text-3xl">
-                            {formatAmount(watchedValues.amount, watchedValues.currency)}
+                          <p className="text-neutral-400 text-sm">
+                            Bounty Amount
+                          </p>
+                          <p className="font-bold text-3xl text-white">
+                            {formatAmount(
+                              watchedValues.amount,
+                              watchedValues.currency
+                            )}
                           </p>
                         </div>
                         <div className="rounded-full bg-green-500/20 p-3">
@@ -456,11 +478,15 @@ export function EnhancedCreateBountyModal({
                     <div className="space-y-3">
                       <div className="rounded-lg border border-neutral-700 bg-neutral-800/50 p-4">
                         <h4 className="mb-2 font-semibold text-white">Title</h4>
-                        <p className="text-neutral-300">{watchedValues.title}</p>
+                        <p className="text-neutral-300">
+                          {watchedValues.title}
+                        </p>
                       </div>
 
                       <div className="rounded-lg border border-neutral-700 bg-neutral-800/50 p-4">
-                        <h4 className="mb-2 font-semibold text-white">Description</h4>
+                        <h4 className="mb-2 font-semibold text-white">
+                          Description
+                        </h4>
                         <p className="text-neutral-300 text-sm leading-relaxed">
                           {watchedValues.description.slice(0, 200)}
                           {watchedValues.description.length > 200 && '...'}
@@ -469,30 +495,38 @@ export function EnhancedCreateBountyModal({
 
                       <div className="grid grid-cols-2 gap-3">
                         <div className="rounded-lg border border-neutral-700 bg-neutral-800/50 p-4">
-                          <h4 className="mb-1 font-semibold text-white text-sm">Difficulty</h4>
-                          <p className="text-neutral-300 capitalize">{watchedValues.difficulty}</p>
+                          <h4 className="mb-1 font-semibold text-sm text-white">
+                            Difficulty
+                          </h4>
+                          <p className="text-neutral-300 capitalize">
+                            {watchedValues.difficulty}
+                          </p>
                         </div>
                         <div className="rounded-lg border border-neutral-700 bg-neutral-800/50 p-4">
-                          <h4 className="mb-1 font-semibold text-white text-sm">Currency</h4>
-                          <p className="text-neutral-300">{watchedValues.currency}</p>
+                          <h4 className="mb-1 font-semibold text-sm text-white">
+                            Currency
+                          </h4>
+                          <p className="text-neutral-300">
+                            {watchedValues.currency}
+                          </p>
                         </div>
                       </div>
                     </div>
 
                     <div className="flex justify-between gap-3 pt-4">
                       <Button
+                        className="border-neutral-700 text-neutral-300 hover:bg-neutral-800"
                         onClick={() => setCurrentStep('details')}
                         type="button"
                         variant="outline"
-                        className="border-neutral-700 text-neutral-300 hover:bg-neutral-800"
                       >
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back
                       </Button>
                       <Button
-                        onClick={onSubmit}
-                        disabled={createBounty.isPending}
                         className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                        disabled={createBounty.isPending}
+                        onClick={onSubmit}
                       >
                         {createBounty.isPending ? (
                           <div className="flex items-center gap-2">
@@ -513,12 +547,12 @@ export function EnhancedCreateBountyModal({
 
               {currentStep === 'payment' && createdBounty && (
                 <motion.div
-                  key="payment"
-                  initial="hidden"
                   animate="visible"
                   exit="exit"
-                  variants={stepVariants}
+                  initial="hidden"
+                  key="payment"
                   transition={{ duration: 0.3, ease: 'easeOut' }}
+                  variants={stepVariants}
                 >
                   <div className="px-6 pb-6 text-center">
                     <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-green-500 to-emerald-500">
@@ -529,26 +563,28 @@ export function EnhancedCreateBountyModal({
                       Bounty Created Successfully!
                     </h3>
                     <p className="mb-6 text-neutral-400">
-                      Now let's fund your bounty to make it active and visible to developers.
+                      Now let's fund your bounty to make it active and visible
+                      to developers.
                     </p>
 
-                    <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 p-4 mb-6">
+                    <div className="mb-6 rounded-lg border border-blue-500/20 bg-blue-500/10 p-4">
                       <p className="text-blue-300 text-sm">
-                        💡 Funding your bounty makes it active and attractive to contributors
+                        💡 Funding your bounty makes it active and attractive to
+                        contributors
                       </p>
                     </div>
 
                     <div className="flex gap-3">
                       <Button
+                        className="flex-1 border-neutral-700 text-neutral-300 hover:bg-neutral-800"
                         onClick={handleClose}
                         variant="outline"
-                        className="flex-1 border-neutral-700 text-neutral-300 hover:bg-neutral-800"
                       >
                         Skip for Now
                       </Button>
                       <Button
-                        onClick={() => setShowPaymentModal(true)}
                         className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700"
+                        onClick={() => setShowPaymentModal(true)}
                       >
                         <CreditCard className="mr-2 h-4 w-4" />
                         Fund Bounty
@@ -565,17 +601,17 @@ export function EnhancedCreateBountyModal({
       {/* Payment Modal */}
       {showPaymentModal && createdBounty && (
         <ImprovedPaymentModal
-          open={showPaymentModal}
+          bountyAmount={Number.parseFloat(createdBounty.amount)}
+          bountyCurrency={createdBounty.currency}
+          bountyId={createdBounty.id}
+          bountyTitle={createdBounty.title}
           onOpenChange={(open) => {
             setShowPaymentModal(open);
             if (!open) {
               handlePaymentComplete();
             }
           }}
-          bountyId={createdBounty.id}
-          bountyTitle={createdBounty.title}
-          bountyAmount={parseFloat(createdBounty.amount)}
-          bountyCurrency={createdBounty.currency}
+          open={showPaymentModal}
           recipientName={createdBounty.creator?.name || 'Unknown'}
           recipientUsername={createdBounty.creator?.name || 'unknown'}
         />

@@ -1,6 +1,7 @@
 'use client';
 
 import { Divider } from '@bounty/ui/components/divider';
+import HomeIcon from '@bounty/ui/components/icons/home';
 import Link from '@bounty/ui/components/link';
 import {
   Sidebar,
@@ -32,7 +33,6 @@ import { NavUser } from '@/components/dual-sidebar/nav-user';
 import { LINKS } from '@/constants';
 import Bookmark from '../icons/bookmark';
 import Bounty from '../icons/bounty';
-import HomeIcon from '@bounty/ui/components/icons/home';
 
 export const AppSidebar = ({
   ...props
