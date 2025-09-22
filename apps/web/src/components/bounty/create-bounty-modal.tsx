@@ -1,5 +1,6 @@
 'use client';
 
+import type { CreateBountyForm } from '@bounty/ui/lib/forms';
 import { CreateBountyWizard } from './create-bounty-wizard';
 
 interface CreateBountyModalProps {

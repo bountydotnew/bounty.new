@@ -1,5 +1,5 @@
 import { db } from '@bounty/db';
-import { fundTracking, type fundStatusEnum } from '@bounty/db/schema';
+import { fundTracking, type fundStatusEnum } from '@bounty/db';
 import { eq } from 'drizzle-orm';
 
 export interface CreateFundTrackingInput {
@@ -42,7 +42,13 @@ export const fundTrackingService = {
   },
 
   async updateStatus(input: UpdateFundTrackingStatusInput) {
-    const updateData: any = {
+    const updateData: {
+      status: 'pending' | 'held' | 'released' | 'refunded';
+      updatedAt: Date;
+      stripeTransferId?: string;
+      refundAmount?: string;
+      refundReason?: string;
+    } = {
       status: input.status,
       updatedAt: new Date(),
     };

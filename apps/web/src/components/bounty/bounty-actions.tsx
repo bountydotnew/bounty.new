@@ -33,6 +33,7 @@ export function UpvoteButton({
 }: UpvoteButtonProps) {
   return (
     <button
+      type="button"
       aria-label="Upvote bounty"
       aria-pressed={isVoted}
       className={`flex items-center gap-1 rounded-md border border-neutral-700 bg-neutral-800/40 px-2 py-1 text-neutral-300 text-xs hover:bg-neutral-700/40 ${isVoted ? 'border-neutral-700/40 bg-[#343333] text-white' : ''} ${className ?? ''}`}
@@ -65,7 +66,7 @@ export function ActionsDropdown({
       if (typeof window !== 'undefined' && navigator.share) {
         navigator.share({ url: window.location.href });
       }
-    } catch {}
+    } catch { }
   };
   return (
     <DropdownMenu>
@@ -137,13 +138,13 @@ export default function BountyActions({
   });
   const baseActions: ActionItem[] = canEdit
     ? [
-        {
-          key: 'edit',
-          label: 'Edit',
-          onSelect: onEdit,
-          icon: <Edit className="h-3.5 w-3.5" />,
-        },
-      ]
+      {
+        key: 'edit',
+        label: 'Edit',
+        onSelect: onEdit,
+        icon: <Edit className="h-3.5 w-3.5" />,
+      },
+    ]
     : [];
   const mergedActions = [...baseActions, ...(actions ?? [])];
   const handleToggleBookmark = () => {
