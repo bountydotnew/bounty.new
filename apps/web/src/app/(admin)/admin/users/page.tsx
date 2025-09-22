@@ -52,6 +52,18 @@ import { AdminHeader } from '@/components/admin';
 import { ExternalInviteModal } from '@/components/admin/external-invite-modal';
 import { trpc } from '@/utils/trpc';
 
+interface AdminUser {
+  id: string;
+  name?: string;
+  email?: string;
+  accessStage?: 'none' | 'alpha' | 'beta' | 'production';
+}
+
+interface AdminUserData {
+  id: string;
+  accessStage: 'none' | 'alpha' | 'beta' | 'production';
+}
+
 export default function UsersPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -127,8 +139,8 @@ export default function UsersPage() {
   const users = useMemo(() => {
     if (!(data?.users && accessData?.users)) return data?.users || [];
 
-    return data.users.map((user: any) => {
-      const userWithStage = accessData.users.find((u: any) => u.id === user.id);
+    return data.users.map((user: AdminUser) => {
+      const userWithStage = accessData.users.find((u: AdminUserData) => u.id === user.id);
       return {
         ...user,
         accessStage: userWithStage?.accessStage || 'none',

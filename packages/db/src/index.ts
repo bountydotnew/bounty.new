@@ -18,6 +18,12 @@ const pool = new Pool({
     process.env.NODE_ENV === 'production'
       ? { rejectUnauthorized: false }
       : false,
+  max: 20, // Maximum number of clients in the pool
+  min: 2, // Minimum number of clients in the pool
+  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+  connectionTimeoutMillis: 5000, // Return error after 5 seconds if connection could not be established
+  maxUses: 7500, // Close (and replace) a connection after it has been used this many times
+  keepAlive: true,
 });
 
 export const db = drizzle(pool, {

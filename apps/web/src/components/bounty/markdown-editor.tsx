@@ -35,18 +35,12 @@ export function MarkdownTextarea({
   className,
   ...props
 }: MarkdownTextareaProps) {
-  const [content, setContent] = useState(value);
   const [mode, setMode] = useState<'write' | 'preview' | 'split'>('write');
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
-    setContent(newValue);
     onChange?.(newValue);
   };
-
-  React.useEffect(() => {
-    setContent(value);
-  }, [value]);
 
   return (
     <div className={cn('overflow-hidden rounded-md border', className)}>
@@ -91,7 +85,7 @@ export function MarkdownTextarea({
             className="h-full resize-none overflow-y-auto rounded-none border-0 p-2"
             onChange={handleChange}
             placeholder={placeholder}
-            value={content}
+            value={value}
             {...props}
           />
         )}
@@ -102,7 +96,7 @@ export function MarkdownTextarea({
             className="h-full overflow-y-auto border-0 p-2"
             role="region"
           >
-            <MarkdownContent content={content} />
+            <MarkdownContent content={value} />
           </div>
         )}
 
@@ -113,12 +107,12 @@ export function MarkdownTextarea({
                 className="h-full resize-none overflow-y-auto rounded-none border-0 p-2"
                 onChange={handleChange}
                 placeholder={placeholder}
-                value={content}
+                value={value}
                 {...props}
               />
             </div>
             <div className="h-full min-w-0 overflow-y-auto break-words p-2">
-              <MarkdownContent content={content} />
+              <MarkdownContent content={value} />
             </div>
           </div>
         )}

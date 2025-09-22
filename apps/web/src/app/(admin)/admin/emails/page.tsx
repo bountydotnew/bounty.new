@@ -141,7 +141,10 @@ export default function AdminEmailsPage() {
                     template,
                   });
                 } catch (error) {
-                  console.error('Failed to send test email:', error);
+                  // TODO: Show user-friendly error notification instead of console log
+                  if (process.env.NODE_ENV === 'development') {
+                    console.error('Failed to send test email:', error);
+                  }
                 } finally {
                   setSending(false);
                 }
@@ -196,7 +199,10 @@ export default function AdminEmailsPage() {
                       audienceKey,
                     });
                   } catch (error) {
-                    console.error('Failed to subscribe audience:', error);
+                    // TODO: Show user-friendly error notification instead of console log
+                    if (process.env.NODE_ENV === 'development') {
+                      console.error('Failed to subscribe audience:', error);
+                    }
                   } finally {
                     setSubscribing(false);
                   }
@@ -214,7 +220,10 @@ export default function AdminEmailsPage() {
                       audienceKey,
                     });
                   } catch (error) {
-                    console.error('Failed to unsubscribe audience:', error);
+                    // TODO: Show user-friendly error notification instead of console log
+                    if (process.env.NODE_ENV === 'development') {
+                      console.error('Failed to unsubscribe audience:', error);
+                    }
                   } finally {
                     setUnsubscribing(false);
                   }

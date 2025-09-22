@@ -67,18 +67,32 @@ export function PaymentModal({
 
     setIsProcessing(true);
 
-    // TODO: Implement actual payment processing
-    // For now, just simulate processing
-    setTimeout(() => {
+    try {
+      // Simulate API call for payment processing
+      // In production, this would integrate with a payment processor like Stripe
+      await new Promise((resolve, reject) => {
+        setTimeout(() => {
+          // Simulate success/failure
+          if (Math.random() > 0.1) { // 90% success rate
+            resolve(true);
+          } else {
+            reject(new Error('Payment processing failed'));
+          }
+        }, 2000);
+      });
+
       toast.success(`Payment of $${amount} sent to ${recipientName}!`);
-      setIsProcessing(false);
       onOpenChange(false);
 
       // Reset form
       setSelectedAmount(null);
       setCustomAmount('');
       setMessage('');
-    }, 2000);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Payment failed');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const isValidAmount = () => {

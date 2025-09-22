@@ -117,7 +117,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.1.2",
     "@shelve/cli": "^4.1.6",
-    "dotenv-cli": "^8.0.0",
+    "dotenv-cli": "^10.0.0",
     "husky": "^9.1.7",
     "lefthook": "^1.12.2",
     "lint-staged": "^16.1.4",
