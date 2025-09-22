@@ -9,6 +9,13 @@ interface CreateBountyModalProps {
   initialValues?: Partial<CreateBountyForm>;
   redirectOnClose?: string;
   replaceOnSuccess?: boolean;
+  mode?: 'create' | 'github-import';
+  githubData?: {
+    title?: string;
+    description?: string;
+    repositoryUrl?: string;
+    issueUrl?: string;
+  };
 }
 
 export function CreateBountyModal(props: CreateBountyModalProps) {

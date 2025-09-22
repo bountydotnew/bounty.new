@@ -3,6 +3,11 @@
   "workspaces": {
     "": {
       "name": "bounty.new",
+      "dependencies": {
+        "@stripe/react-stripe-js": "^4.0.2",
+        "@stripe/stripe-js": "^7.9.0",
+        "stripe": "^18.5.0",
+      },
       "devDependencies": {
         "@biomejs/biome": "2.1.2",
         "@bounty/eslint-config": "workspace:*",
