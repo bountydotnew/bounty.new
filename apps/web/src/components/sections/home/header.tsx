@@ -37,13 +37,6 @@ export function Header() {
     return null;
   }, []);
 
-  // Check cookie on mount
-  useEffect(() => {
-    const hiddenPref = getCookie('hide-dev-warning');
-    if (hiddenPref === 'true') {
-      // User has chosen to hide the warning
-    }
-  }, [getCookie]);
 
   const onButtonPress = () => {
     const hiddenPref = getCookie('hide-dev-warning');

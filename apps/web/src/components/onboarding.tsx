@@ -11,18 +11,14 @@ export function Onboarding() {
   const [step, setStep] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const { celebrate } = useConfetti();
-  const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
-  useEffect(() => {
-    if (!hasSeenOnboarding) {
-      setIsOpen(true);
-    }
-  }, [hasSeenOnboarding]);
 
   useEffect(() => {
-    if (!hasSeenOnboarding && isOpen && step === 0) {
+    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+    if (!hasSeenOnboarding) {
+      setIsOpen(true);
       celebrate();
     }
-  }, [hasSeenOnboarding, isOpen, step, celebrate]);
+  }, [celebrate]);
 
   const handleNext = () => {
     setStep(step + 1);
