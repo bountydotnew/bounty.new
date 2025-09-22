@@ -1,10 +1,23 @@
 'use client';
 
-import { Suspense } from 'react';
-import Login from '@/components/bounty/login';
 import { Spinner } from '@bounty/ui/components/spinner';
+import { useMutation } from '@tanstack/react-query';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect } from 'react';
+import Login from '@/components/bounty/login';
+import { trpc } from '@/utils/trpc';
 
 function LoginContent() {
+  const searchParams = useSearchParams();
+  const token = searchParams.get('invite');
+  const applyInvite = useMutation({
+    ...trpc.user.applyInvite.mutationOptions(),
+  });
+  useEffect(() => {
+    if (token) {
+      applyInvite.mutate({ token });
+    }
+  }, [token, applyInvite]);
   // const handleGitHubSignIn = async () => {
   //   try {
   //     const callbackURL = redirectUrl ? `${redirectUrl}` : `${baseUrl}/dashboard`;

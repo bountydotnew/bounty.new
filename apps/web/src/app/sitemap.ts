@@ -1,5 +1,5 @@
-import type { MetadataRoute } from 'next';
 import { getPosts } from '@bounty/ui/lib/blog-query';
+import type { MetadataRoute } from 'next';
 import { baseUrl } from '../../../../packages/ui/src/lib/constants';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

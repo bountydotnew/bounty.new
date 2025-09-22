@@ -1,7 +1,16 @@
 'use client';
 
 import { authClient } from '@bounty/auth/client';
+import { Button } from '@bounty/ui/components/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@bounty/ui/components/dropdown-menu';
+import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { useQuery } from '@tanstack/react-query';
+import { ChevronDown, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
@@ -9,8 +18,6 @@ import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
 import GithubImportModal from '@/components/bounty/github-import-modal';
 import { Header } from '@/components/dual-sidebar/sidebar-header';
 import GitHub from '@/components/icons/github';
-import { Button } from '@bounty/ui/components/button';
-import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { trpc } from '@/utils/trpc';
 
 export default function BountiesPage() {
@@ -54,19 +61,25 @@ export default function BountiesPage() {
       <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6 flex items-center justify-end">
-          <div className="flex gap-2">
-            <Button
-              disabled={!session?.user}
-              onClick={() => setImportOpen(true)}
-              variant="outline"
-            >
-              <GitHub className="h-4 w-4 fill-white" />
-              Import from GitHub
-            </Button>
-            <Button disabled={!session?.user} onClick={() => openCreateModal()}>
-              Create Bounty
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button disabled={!session?.user}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Bounty
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => openCreateModal()}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Bounty
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setImportOpen(true)}>
+                <GitHub className="mr-2 h-4 w-4 fill-current" />
+                Import from GitHub
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <BountiesFeed

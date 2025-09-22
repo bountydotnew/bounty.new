@@ -1,9 +1,26 @@
 'use client';
 
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@bounty/ui/components/card';
+import {
+  CartesianGrid,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+} from '@bounty/ui/components/chart';
+import {
+  mapBatchByParameter,
+  useDatabuddyParameters,
+} from '@bounty/ui/hooks/use-databuddy';
 import { useMemo, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
-import { CartesianGrid, ChartContainer, ChartTooltip, ChartTooltipContent, Line, LineChart, XAxis, YAxis } from '@bounty/ui/components/chart';
-import { mapBatchByParameter, useDatabuddyParameters } from '@bounty/ui/hooks/use-databuddy';
 
 type Props = { websiteId: string };
 

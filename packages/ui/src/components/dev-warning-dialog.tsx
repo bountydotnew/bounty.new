@@ -1,7 +1,5 @@
 'use client';
 
-import Image from 'next/image';
-import { useState } from 'react';
 import { Button } from '@bounty/ui/components/button';
 import { Checkbox } from '@bounty/ui/components/checkbox';
 import {
@@ -11,6 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@bounty/ui/components/dialog';
+import Image from 'next/image';
+import { useState } from 'react';
 
 type DevWarningDialogProps = {
   open: boolean;

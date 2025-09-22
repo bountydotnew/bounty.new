@@ -1,12 +1,16 @@
 'use client';
 
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@bounty/ui/components/avatar';
+import Link from '@bounty/ui/components/link';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowUpRight, GitFork, GitGraph, Github, Star } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataBuddyIcon, MarbleIcon } from '@/components/icons';
 import { Header } from '@/components/sections/home/header';
-import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
-import Link from '@bounty/ui/components/link';
 import { LINKS } from '@/constants';
 import { trpc } from '@/utils/trpc';
 

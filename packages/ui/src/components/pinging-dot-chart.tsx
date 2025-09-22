@@ -1,20 +1,19 @@
 'use client';
 
-import { CartesianGrid, Line, LineChart, XAxis } from 'recharts';
-
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@bounty/ui/components/card";
+} from '@bounty/ui/components/card';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@bounty/ui/components/chart";
-import { ChartConfig } from '../types/charts';
+} from '@bounty/ui/components/chart';
+import { CartesianGrid, Line, LineChart, XAxis } from 'recharts';
+import type { ChartConfig } from '../types/charts';
 
 type PingingDotChartProps = {
   title?: string;

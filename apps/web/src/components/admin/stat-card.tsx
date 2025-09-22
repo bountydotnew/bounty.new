@@ -1,9 +1,12 @@
-import { ArrowRight } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@bounty/ui/components/card';
 import Link from '@bounty/ui/components/link';
-import { StatCardProps } from '@/types/admin';
-
-
+import { ArrowRight } from 'lucide-react';
+import type { StatCardProps } from '@/types/admin';
 
 export function StatCard({ title, value, hint, icon, href }: StatCardProps) {
   return (
@@ -20,7 +23,9 @@ export function StatCard({ title, value, hint, icon, href }: StatCardProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="font-semibold text-xl tracking-tight text-neutral-100">{value}</div>
+        <div className="font-semibold text-neutral-100 text-xl tracking-tight">
+          {value}
+        </div>
         {hint && <p className="mt-1 text-neutral-500 text-xs">{hint}</p>}
       </CardContent>
     </Card>

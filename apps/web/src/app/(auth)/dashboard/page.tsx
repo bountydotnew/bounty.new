@@ -1,28 +1,32 @@
 'use client';
 
 import { authClient } from '@bounty/auth/client';
+import { Button } from '@bounty/ui/components/button';
+import { TrackedButton } from '@bounty/ui/components/tracked-button';
+import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
+import { track } from '@databuddy/sdk';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import { AccessGate } from '@/components/access-gate';
-import { DashboardPageSkeleton } from '@/components/dashboard/skeletons/dashboard-page-skeleton';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
 import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
 import GithubImportModal from '@/components/bounty/github-import-modal';
 import { BetaAccessScreen } from '@/components/dashboard/beta-access-screen';
-import { Button } from '@bounty/ui/components/button';
 import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar';
 // Dashboard components
 import { ErrorBoundary } from '@/components/dashboard/error-boundary';
+import { DashboardPageSkeleton } from '@/components/dashboard/skeletons/dashboard-page-skeleton';
 import { useDevice } from '@/components/device-provider';
 import { Header } from '@/components/dual-sidebar/sidebar-header';
 import GitHub from '@/components/icons/github';
 import { Onboarding } from '@/components/onboarding';
-import { TrackedButton } from '@bounty/ui/components/tracked-button';
 // Constants and types
 import { PAGINATION_DEFAULTS, PAGINATION_LIMITS } from '@/constants';
-import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { trpc } from '@/utils/trpc';
-import { track } from "@databuddy/sdk"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@bounty/ui/components/dropdown-menu';
+import { ChevronDown } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { Divider } from '@bounty/ui/components/divider';
 
 track('screen_view', { screen_name: 'dashboard' });
 
@@ -113,24 +117,36 @@ export default function Dashboard() {
           <div className="container mx-auto rounded-lg px-4 py-4">
             <div className="mb-4 flex items-center justify-end">
               <div className="flex gap-2">
-                <TrackedButton
-                  disabled={!session?.user}
-                  onClick={() => setImportOpen(true)}
-                  trackEventName="import_from_github"
-                  trackProperties={{ type: 'import_from_github' }}
-                  variant="outline"
-                >
-                  <GitHub className="h-4 w-4 fill-white" />
-                  Import from GitHub
-                </TrackedButton>
-                <TrackedButton
-                  disabled={!session?.user}
-                  onClick={() => openCreateModal()}
-                  trackEventName="create_bounty"
-                  trackProperties={{ type: 'create_bounty' }}
-                >
-                  Create Bounty
-                </TrackedButton>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      disabled={!session?.user}
+                      className="p-0 flex items-center justify-start rounded-md bg-white text-black hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div className="flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-bl-md rounded-tl-md bg-white pl-3 pr-0">
+                        <div className="justify-start text-center text-sm leading-none text-black p-0 gap-0">
+                          Create Bounty
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-start gap-2.5 self-stretch px-0">
+                        <div className="relative h-3 w-px rounded-full bg-[#D0D0D0]"></div>
+                      </div>
+                      <div className="flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-br-md rounded-tr-md pr-2">
+                        <ChevronDown className="ml-2 h-4 w-4" />
+                      </div>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => openCreateModal()}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Bounty
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setImportOpen(true)}>
+                      <GitHub className="mr-2 h-4 w-4 fill-current" />
+                      Import from GitHub
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
             <div className="grid grid-cols-1 gap-6 rounded-lg py-4 lg:h-[calc(100vh-8rem)] lg:grid-cols-3">

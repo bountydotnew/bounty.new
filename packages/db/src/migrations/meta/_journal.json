@@ -180,8 +180,15 @@
     {
       "idx": 25,
       "version": "7",
-      "when": 1757481664427,
-      "tag": "0025_concerned_marten_broadcloak",
+      "when": 1757330068730,
+      "tag": "0025_empty_stellaris",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1758561814748,
+      "tag": "0026_daily_triathlon",
       "breakpoints": true
     }
   ]

@@ -1,12 +1,5 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { MarkdownTextarea } from '@/components/bounty/markdown-editor';
 import { Button } from '@bounty/ui/components/button';
 import {
   Dialog,
@@ -27,6 +20,13 @@ import {
   difficultyOptions,
   formatFormData,
 } from '@bounty/ui/lib/forms';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { MarkdownTextarea } from '@/components/bounty/markdown-editor';
 import { trpc } from '@/utils/trpc';
 
 interface EditBountyModalProps {

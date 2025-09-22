@@ -1,11 +1,11 @@
 'use client';
 
+import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
 import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
 import { BountyDetailSkeleton } from '@/components/dashboard/skeletons/bounty-detail-skeleton';
-import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { trpc } from '@/utils/trpc';
 
 export default function GithubIssueToBountyPage() {
@@ -44,7 +44,11 @@ export default function GithubIssueToBountyPage() {
       description,
       issueUrl: data.data.html_url,
       repositoryUrl: `https://github.com/${data.data.owner}/${data.data.repo}`,
-      tags: Array.isArray(data.data.labels) ? data.data.labels.slice(0, 5) : [],
+      tags: Array.isArray(data.data.labels)
+        ? data.data.labels
+            .filter((label): label is string => label !== null)
+            .slice(0, 5)
+        : [],
       amount: data.data.detectedAmount || '',
       currency: data.data.detectedCurrency || 'USD',
     };

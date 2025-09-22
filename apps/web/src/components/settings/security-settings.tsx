@@ -1,13 +1,13 @@
 'use client';
 
-import { Laptop, Loader2, Smartphone } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { toast } from 'sonner';
-import { UAParser } from 'ua-parser-js';
 import { Badge } from '@bounty/ui/components/badge';
 import { Button } from '@bounty/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@bounty/ui/components/card';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,11 @@ import { Label } from '@bounty/ui/components/label';
 import { Separator } from '@bounty/ui/components/separator';
 import { usePasskey } from '@bounty/ui/hooks/use-passkey';
 import { formatDate } from '@bounty/ui/lib/utils';
+import { Laptop, Loader2, Smartphone } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { UAParser } from 'ua-parser-js';
 
 export function SecuritySettings() {
   const router = useRouter();

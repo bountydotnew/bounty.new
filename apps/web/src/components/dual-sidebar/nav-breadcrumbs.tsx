@@ -1,9 +1,9 @@
 'use client';
 
-import { ChevronRight, Home } from 'lucide-react';
-import { usePathname } from 'next/navigation';
 import Link from '@bounty/ui/components/link';
 import { cn } from '@bounty/ui/lib/utils';
+import { ChevronRight, Home } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 interface NavBreadcrumbsProps {
   items?: {

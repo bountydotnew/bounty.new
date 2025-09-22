@@ -1,12 +1,16 @@
 'use client';
 
-import { GradientAreaChart } from '@bounty/ui/components/gradient-chart';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@bounty/ui/components/card';
 import { DefaultBarChart } from '@bounty/ui/components/default-bar-chart';
+import { GradientAreaChart } from '@bounty/ui/components/gradient-chart';
+import { DefaultRadialChart } from '@bounty/ui/components/radial-chart';
 import { RainbowGlowGradientLineChart } from '@bounty/ui/components/rainbow-glow-gradient-line';
 import { RoundedPieChart } from '@bounty/ui/components/rounded-pie-chart';
-import { DefaultRadialChart } from '@bounty/ui/components/radial-chart';
-
-import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
 
 type Props = { websiteId: string; timezone?: string };
 

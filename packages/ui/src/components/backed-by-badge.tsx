@@ -1,5 +1,5 @@
-import GCombinator from '@/components/icons/g-combinator';
 import { cn } from '@bounty/ui/lib/utils';
+import GCombinator from '@/components/icons/g-combinator';
 
 /**
  * Usage:

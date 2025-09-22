@@ -1,11 +1,17 @@
 'use client';
 
-import { authClient } from "@bounty/auth/client";
-import { ShieldAlert } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { AdminHeader } from "@/components/admin";
-import { Button } from "@bounty/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@bounty/ui/components/card";
+import { authClient } from '@bounty/auth/client';
+import type { ExtendedAuthSession } from '@bounty/types';
+import { Button } from '@bounty/ui/components/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@bounty/ui/components/card';
+import { ShieldAlert } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { AdminHeader } from '@/components/admin';
 
 export default function AdminSectionLayout({
   children,
@@ -14,9 +20,9 @@ export default function AdminSectionLayout({
 }) {
   const { data: session } = authClient.useSession();
   const router = useRouter();
+  const sessionData = session as ExtendedAuthSession;
   const impersonatedBy =
-    (session as any)?.session?.impersonatedBy ||
-    (session as any)?.impersonatedBy;
+    sessionData?.session?.impersonatedBy || sessionData?.impersonatedBy;
   if (impersonatedBy) {
     return (
       <div className="space-y-6">

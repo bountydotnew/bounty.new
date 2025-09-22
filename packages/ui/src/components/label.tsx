@@ -1,7 +1,6 @@
+import { cn } from '@bounty/ui/lib/utils';
 import { Label as LabelPrimitive } from 'radix-ui';
 import type * as React from 'react';
-
-import { cn } from '@bounty/ui/lib/utils';
 
 function Label({
   className,

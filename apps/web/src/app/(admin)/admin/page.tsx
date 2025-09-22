@@ -33,7 +33,7 @@ export default function AdminPage() {
         title="Admin"
       />
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 border-b border-neutral-800 pb-6">
+      <div className="grid grid-cols-2 gap-3 border-neutral-800 border-b pb-6 md:grid-cols-4">
         <StatCard
           hint="Total"
           href="/admin/beta-applications"
@@ -69,8 +69,6 @@ export default function AdminPage() {
       {/* <OverviewTraffic websiteId="bounty" /> */}
       {/* <SummaryCards websiteId="bounty" /> */}
       {/* <AudienceDevices websiteId="bounty" /> */}
-
-
 
       {/* <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <Card className="border-neutral-800 bg-neutral-900/60 backdrop-blur">

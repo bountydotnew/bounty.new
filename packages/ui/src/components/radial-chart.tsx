@@ -1,19 +1,18 @@
 'use client';
 
-import { RadialBar, RadialBarChart } from 'recharts';
-
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@bounty/ui/components/card";
+} from '@bounty/ui/components/card';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@bounty/ui/components/chart";
+} from '@bounty/ui/components/chart';
+import { RadialBar, RadialBarChart } from 'recharts';
 import type { ChartConfig, ChartConfigValue } from '../types/charts';
 
 const chartData = [

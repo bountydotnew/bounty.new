@@ -1,11 +1,15 @@
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@bounty/ui/components/avatar';
+import { Button } from '@bounty/ui/components/button';
+import Link from '@bounty/ui/components/link';
+import { getPosts } from '@bounty/ui/lib/blog-query';
 import { ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import { Footer } from '@/components/sections/home/footer';
 import { Header } from '@/components/sections/home/header';
-import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
-import { Button } from '@bounty/ui/components/button';
-import Link from '@bounty/ui/components/link';
-import { getPosts } from '@bounty/ui/lib/blog-query';
 
 export default async function BlogPage() {
   const postsData = await getPosts();

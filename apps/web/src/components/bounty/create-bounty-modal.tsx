@@ -1,14 +1,6 @@
 'use client';
 
 import type { AppRouter } from '@bounty/api';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { TRPCClientErrorLike } from '@trpc/client';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { MarkdownTextarea } from '@/components/bounty/markdown-editor';
 import { Button } from '@bounty/ui/components/button';
 import {
   Dialog,
@@ -34,6 +26,14 @@ import {
   difficultyOptions,
   formatFormData,
 } from '@bounty/ui/lib/forms';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { TRPCClientErrorLike } from '@trpc/client';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { MarkdownTextarea } from '@/components/bounty/markdown-editor';
 import { trpc } from '@/utils/trpc';
 import { PaymentMethodSetup } from '@/components/stripe/payment-method-setup';
 import { stripe } from '@bounty/api/src/lib/stripe';

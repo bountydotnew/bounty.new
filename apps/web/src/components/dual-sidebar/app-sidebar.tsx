@@ -1,5 +1,13 @@
 'use client';
 
+import { Divider } from '@bounty/ui/components/divider';
+import Link from '@bounty/ui/components/link';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+} from '@bounty/ui/components/sidebar';
 import {
   AudioWaveform,
   Award,
@@ -9,7 +17,6 @@ import {
   FileUser,
   Frame,
   GalleryVerticalEnd,
-  Home,
   Map,
   PieChart,
   Settings,
@@ -22,17 +29,10 @@ import { SidebarNavSkeleton } from '@/components/dashboard/skeletons/sidebar-nav
 import { NavMain } from '@/components/dual-sidebar/nav-main';
 // import { NavProjects } from "@/components/dual-sidebar/nav-projects";
 import { NavUser } from '@/components/dual-sidebar/nav-user';
-import { Divider } from '@bounty/ui/components/divider';
-import Link from '@bounty/ui/components/link';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-} from '@bounty/ui/components/sidebar';
 import { LINKS } from '@/constants';
 import Bookmark from '../icons/bookmark';
 import Bounty from '../icons/bounty';
+import HomeIcon from '@bounty/ui/components/icons/home';
 
 export const AppSidebar = ({
   ...props
@@ -75,7 +75,7 @@ export const AppSidebar = ({
       {
         title: 'Dashboard',
         url: LINKS.DASHBOARD,
-        icon: Home,
+        icon: HomeIcon,
         isActive: isActive('/dashboard'),
       },
       {
@@ -225,7 +225,7 @@ export const AdminAppSidebar = ({
     {
       title: 'Overview',
       url: '/admin',
-      icon: Home,
+      icon: HomeIcon,
       isActive: isActive('/admin'),
     },
     {

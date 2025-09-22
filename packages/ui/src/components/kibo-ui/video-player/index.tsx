@@ -1,5 +1,6 @@
 'use client';
 
+import { cn } from '@bounty/ui/lib/utils';
 import {
   MediaControlBar,
   MediaController,
@@ -12,7 +13,6 @@ import {
   MediaVolumeRange,
 } from 'media-chrome/react';
 import type { ComponentProps, CSSProperties } from 'react';
-import { cn } from '@bounty/ui/lib/utils';
 
 export type VideoPlayerProps = ComponentProps<typeof MediaController>;
 

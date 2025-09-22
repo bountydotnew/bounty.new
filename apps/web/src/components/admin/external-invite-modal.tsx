@@ -1,9 +1,5 @@
 'use client';
 
-import { useMutation } from '@tanstack/react-query';
-import { Mail, Send } from 'lucide-react';
-import { useState } from 'react';
-import { toast } from 'sonner';
 import { Button } from '@bounty/ui/components/button';
 import {
   Dialog,
@@ -21,6 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@bounty/ui/components/select';
+import { useMutation } from '@tanstack/react-query';
+import { Mail, Send } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import type { AccessStage } from '@/types/access';
 import { trpc } from '@/utils/trpc';
 
@@ -80,10 +80,13 @@ export function ExternalInviteModal() {
               value={email}
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="access-stage">Access Level</Label>
-            <Select onValueChange={(value: AccessStage) => setAccessStage(value)} value={accessStage}>
+            <Select
+              onValueChange={(value: AccessStage) => setAccessStage(value)}
+              value={accessStage}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select access level" />
               </SelectTrigger>
@@ -98,7 +101,11 @@ export function ExternalInviteModal() {
           </div>
 
           <div className="flex justify-end space-x-2">
-            <Button onClick={() => setOpen(false)} type="button" variant="outline">
+            <Button
+              onClick={() => setOpen(false)}
+              type="button"
+              variant="outline"
+            >
               Cancel
             </Button>
             <Button disabled={inviteExternalMutation.isPending} type="submit">

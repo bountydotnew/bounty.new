@@ -1,8 +1,5 @@
 'use client';
 
-import { DollarSign, Heart } from 'lucide-react';
-import { useState } from 'react';
-import { toast } from 'sonner';
 import { Button } from '@bounty/ui/components/button';
 import {
   Dialog,
@@ -14,6 +11,9 @@ import {
 } from '@bounty/ui/components/dialog';
 import { Input } from '@bounty/ui/components/input';
 import { Label } from '@bounty/ui/components/label';
+import { DollarSign, Heart } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface PaymentModalProps {
   open: boolean;

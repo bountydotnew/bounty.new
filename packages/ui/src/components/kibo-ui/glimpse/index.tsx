@@ -1,12 +1,12 @@
 'use client';
 
-import type { ComponentProps } from 'react';
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from '@bounty/ui/components/hover-card';
 import { cn } from '@bounty/ui/lib/utils';
+import type { ComponentProps } from 'react';
 
 export type GlimpseProps = ComponentProps<typeof HoverCard>;
 

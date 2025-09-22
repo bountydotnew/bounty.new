@@ -1,6 +1,16 @@
 'use client';
 
 import type { AppRouter } from '@bounty/api';
+import { Badge } from '@bounty/ui/components/badge';
+import { Button } from '@bounty/ui/components/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@bounty/ui/components/card';
+import { Input } from '@bounty/ui/components/input';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { TRPCClientErrorLike } from '@trpc/client';
 import {
@@ -14,16 +24,6 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { AdminHeader } from '@/components/admin';
-import { Badge } from '@bounty/ui/components/badge';
-import { Button } from '@bounty/ui/components/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@bounty/ui/components/card';
-import { Input } from '@bounty/ui/components/input';
 import { trpc } from '@/utils/trpc';
 
 export default function WaitlistPage() {
@@ -50,6 +50,29 @@ export default function WaitlistPage() {
     },
     onError: (error: TRPCClientErrorLike<AppRouter>) => {
       toast.error(error.message || 'Failed to update access');
+    },
+  });
+
+  const inviteToBetaMutation = useMutation({
+    ...trpc.earlyAccess.inviteToBeta.mutationOptions(),
+    onMutate: async (vars: { id: string }) => {
+      setUpdatingIds((prev) => new Set(prev).add(vars.id));
+    },
+    onSuccess: () => {
+      toast.success('Beta invite sent');
+      queryClient.invalidateQueries({
+        queryKey: ['earlyAccess', 'getAdminWaitlist'],
+      });
+    },
+    onError: (error: TRPCClientErrorLike<AppRouter>) => {
+      toast.error(error.message || 'Failed to invite to beta');
+    },
+    onSettled: (_data, _err, vars) => {
+      setUpdatingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(vars.id);
+        return next;
+      });
     },
   });
 
@@ -91,7 +114,9 @@ export default function WaitlistPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="font-semibold text-xl text-neutral-100">{data?.stats.total || 0}</div>
+            <div className="font-semibold text-neutral-100 text-xl">
+              {data?.stats.total || 0}
+            </div>
           </CardContent>
         </Card>
 
@@ -101,7 +126,7 @@ export default function WaitlistPage() {
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="font-bold text-2xl text-green-600">
+            <div className="font-semibold text-green-600 text-xl">
               {data?.stats.withAccess || 0}
             </div>
           </CardContent>
@@ -113,7 +138,7 @@ export default function WaitlistPage() {
             <XCircle className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="font-bold text-2xl text-orange-600">
+            <div className="font-semibold text-orange-600 text-xl">
               {data?.stats.pending || 0}
             </div>
           </CardContent>
@@ -122,8 +147,12 @@ export default function WaitlistPage() {
 
       <Card className="border border-neutral-800 bg-[#222222]">
         <CardHeader>
-          <CardTitle className="text-sm text-neutral-300 font-medium">Waitlist Entries</CardTitle>
-          <CardDescription className="text-xs text-neutral-500">Manage waitlist entries and grant/revoke access</CardDescription>
+          <CardTitle className="font-medium text-neutral-300 text-sm">
+            Waitlist Entries
+          </CardTitle>
+          <CardDescription className="text-neutral-500 text-xs">
+            Manage waitlist entries and grant/revoke access
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -153,7 +182,9 @@ export default function WaitlistPage() {
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
                         <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium text-neutral-200 text-sm">{entry.email}</span>
+                        <span className="font-medium text-neutral-200 text-sm">
+                          {entry.email}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -189,6 +220,16 @@ export default function WaitlistPage() {
                           Grant Access
                         </Button>
                       )}
+                      <Button
+                        disabled={updatingIds.has(entry.id)}
+                        onClick={() =>
+                          inviteToBetaMutation.mutate({ id: entry.id })
+                        }
+                        size="sm"
+                        variant="outline"
+                      >
+                        Beta Invite
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -204,7 +245,7 @@ export default function WaitlistPage() {
             )}
 
             {data && data.totalPages > 1 && (
-              <div className="flex items-center justify-center space-x-2 border-neutral-800 border-top pt-4">
+              <div className="flex items-center justify-center space-x-2 border-neutral-800 border-t pt-4">
                 <Button
                   disabled={page === 1}
                   onClick={() => setPage(page - 1)}

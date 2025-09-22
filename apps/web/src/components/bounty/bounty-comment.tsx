@@ -1,5 +1,17 @@
 'use client';
 
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@bounty/ui/components/avatar';
+import { Button } from '@bounty/ui/components/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@bounty/ui/components/dropdown-menu';
 import { formatDistanceToNow } from 'date-fns';
 import {
   Heart,
@@ -9,14 +21,6 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
-import { Button } from '@bounty/ui/components/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@bounty/ui/components/dropdown-menu';
 import type { BountyCommentCacheItem } from '@/types/comments';
 
 interface BountyCommentProps {
@@ -160,7 +164,9 @@ export default function BountyComment({
         </div>
       )}
       <div className="whitespace-pre-wrap text-wrap break-normal text-neutral-200 text-sm">
-        {showOriginal && comment.originalContent ? comment.originalContent : comment.content}
+        {showOriginal && comment.originalContent
+          ? comment.originalContent
+          : comment.content}
       </div>
     </div>
   );

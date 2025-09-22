@@ -1,17 +1,22 @@
 'use client';
 
 import { authClient } from '@bounty/auth/client';
+import { Badge } from '@bounty/ui/components/badge';
+import { Button } from '@bounty/ui/components/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@bounty/ui/components/card';
+import { Separator } from '@bounty/ui/components/separator';
+import { Spinner } from '@bounty/ui/components/spinner';
+import { useBilling } from '@bounty/ui/hooks/use-billing';
 import { ArrowRight } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect } from 'react';
 import { Sidebar } from '@/components/dual-sidebar';
 import Bounty from '@/components/icons/bounty';
-import { Badge } from '@bounty/ui/components/badge';
-import { Button } from '@bounty/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@bounty/ui/components/card';
-import { Separator } from '@bounty/ui/components/separator';
-import { Spinner } from '@bounty/ui/components/spinner';
-import { useBilling } from '@bounty/ui/hooks/use-billing';
 import { useConfetti } from '@/context/confetti-context';
 
 function SuccessContent() {

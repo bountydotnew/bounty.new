@@ -1,7 +1,34 @@
 'use client';
 
 import { authClient } from '@bounty/auth/client';
-import { trpc } from '@/utils/trpc';
+import { Badge } from '@bounty/ui/components/badge';
+import { Button } from '@bounty/ui/components/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@bounty/ui/components/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@bounty/ui/components/dropdown-menu';
+import { Input } from '@bounty/ui/components/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@bounty/ui/components/select';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Ban,
@@ -18,32 +45,12 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { AdminHeader } from '@/components/admin';
 import { ExternalInviteModal } from '@/components/admin/external-invite-modal';
-import { Badge } from '@bounty/ui/components/badge';
-import { Button } from '@bounty/ui/components/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@bounty/ui/components/card';
-import { Input } from '@bounty/ui/components/input';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from '@bounty/ui/components/dropdown-menu';
- 
+import { trpc } from '@/utils/trpc';
 
 export default function UsersPage() {
   const [search, setSearch] = useState('');
@@ -55,29 +62,31 @@ export default function UsersPage() {
   const [newUserName, setNewUserName] = useState('');
   const [newUserRole, setNewUserRole] = useState<'user' | 'admin'>('user');
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'listUsers', search, page, pageSize],
     queryFn: async () => {
       // Get users from auth client (has all the auth-specific fields like banned)
-      const { data: authData, error: authError } = await authClient.admin.listUsers({
-        query: {
-          searchValue: search || undefined,
-          searchField: 'name',
-          searchOperator: 'contains',
-          limit: pageSize,
-          offset: (page - 1) * pageSize,
-          sortBy: 'name',
-          sortDirection: 'desc',
-        },
-      });
-      
+      const { data: authData, error: authError } =
+        await authClient.admin.listUsers({
+          query: {
+            searchValue: search || undefined,
+            searchField: 'name',
+            searchOperator: 'contains',
+            limit: pageSize,
+            offset: (page - 1) * pageSize,
+            sortBy: 'name',
+            sortDirection: 'desc',
+          },
+        });
+
       if (authError) {
         throw new Error(authError.message || 'Failed to load users');
       }
 
-        // Just return auth data and handle accessStage in the component
-        return authData;
+      // Just return auth data and handle accessStage in the component
+      return authData;
     },
   });
 
@@ -116,19 +125,19 @@ export default function UsersPage() {
 
   // Merge auth client users with access stage data
   const users = useMemo(() => {
-    if (!data?.users || !accessData?.users) return data?.users || [];
-    
+    if (!(data?.users && accessData?.users)) return data?.users || [];
+
     return data.users.map((user: any) => {
       const userWithStage = accessData.users.find((u: any) => u.id === user.id);
       return {
         ...user,
-        accessStage: userWithStage?.accessStage || 'none'
+        accessStage: userWithStage?.accessStage || 'none',
       };
     });
   }, [data?.users, accessData?.users]);
   const total = data?.total || 0;
   const totalPages = useMemo(() => {
-    const limit = (data as any)?.limit || pageSize;
+    const limit = data && 'limit' in data ? data.limit : pageSize;
     return Math.max(1, Math.ceil((total || 0) / (limit || pageSize)));
   }, [data, pageSize, total]);
 
@@ -234,7 +243,10 @@ export default function UsersPage() {
   const inviteUserMutation = useMutation({
     ...trpc.user.inviteUser.mutationOptions(),
     onSuccess: (data, variables) => {
-      const stageName = variables.accessStage === 'none' ? 'removed access' : `${variables.accessStage} access`;
+      const stageName =
+        variables.accessStage === 'none'
+          ? 'removed access'
+          : `${variables.accessStage} access`;
       toast.success(`Updated user to ${stageName}`);
       queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
     },
@@ -243,7 +255,10 @@ export default function UsersPage() {
     },
   });
 
-  const handleInviteUser = (userId: string, accessStage: 'none' | 'alpha' | 'beta' | 'production') => {
+  const handleInviteUser = (
+    userId: string,
+    accessStage: 'none' | 'alpha' | 'beta' | 'production'
+  ) => {
     inviteUserMutation.mutate({ userId, accessStage });
   };
 
@@ -373,8 +388,9 @@ export default function UsersPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="font-semibold text-xl text-neutral-100">{stats.total}</div>
-            <p className="text-neutral-500 text-xs">Across all pages</p>
+            <div className="font-semibold text-neutral-100 text-xl">
+              {stats.total}
+            </div>
           </CardContent>
         </Card>
 
@@ -384,8 +400,9 @@ export default function UsersPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="font-semibold text-xl text-neutral-100">{stats.currentPage}</div>
-            <p className="text-neutral-500 text-xs">Users on this page</p>
+            <div className="font-semibold text-neutral-100 text-xl">
+              {stats.currentPage}
+            </div>
           </CardContent>
         </Card>
 
@@ -398,7 +415,6 @@ export default function UsersPage() {
             <div className="font-semibold text-xl text-yellow-600">
               {stats.admins}
             </div>
-            <p className="text-neutral-500 text-xs">On this page</p>
           </CardContent>
         </Card>
 
@@ -408,22 +424,25 @@ export default function UsersPage() {
             <User className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="font-semibold text-xl text-blue-600">
+            <div className="font-semibold text-blue-600 text-xl">
               {stats.regularUsers}
             </div>
-            <p className="text-neutral-500 text-xs">On this page</p>
           </CardContent>
         </Card>
       </div>
 
       <Card className="border border-neutral-800 bg-[#222222]">
         <CardHeader>
-          <CardTitle className="text-sm text-neutral-300 font-medium">Users</CardTitle>
-          <CardDescription className="text-xs text-neutral-500">Manage user roles and permissions</CardDescription>
+          <CardTitle className="font-medium text-neutral-300 text-sm">
+            Users
+          </CardTitle>
+          <CardDescription className="text-neutral-500 text-xs">
+            Manage user roles and permissions
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="grid gap-2 md:grid-cols-4">
+            <div className="grid gap-2 md:grid-cols-5">
               <Input
                 className="border-neutral-800 bg-neutral-900"
                 onChange={(e) => setNewUserName(e.target.value)}
@@ -444,29 +463,25 @@ export default function UsersPage() {
                 type="password"
                 value={newUserPassword}
               />
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={() => setNewUserRole('user')}
-                  size="sm"
-                  variant={newUserRole === 'user' ? 'default' : 'outline'}
-                >
-                  User
-                </Button>
-                <Button
-                  onClick={() => setNewUserRole('admin')}
-                  size="sm"
-                  variant={newUserRole === 'admin' ? 'default' : 'outline'}
-                >
-                  Admin
-                </Button>
-                <Button
-                  disabled={!(newUserEmail && newUserPassword && newUserName)}
-                  onClick={() => createUserMutation.mutate()}
-                  size="sm"
-                >
-                  Create
-                </Button>
-              </div>
+              <Select
+                onValueChange={(v) => setNewUserRole(v as 'user' | 'admin')}
+                value={newUserRole}
+              >
+                <SelectTrigger className="border-neutral-800 bg-neutral-900">
+                  <SelectValue placeholder="Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                disabled={!(newUserEmail && newUserPassword && newUserName)}
+                onClick={() => createUserMutation.mutate()}
+                size="sm"
+              >
+                Create
+              </Button>
             </div>
             <div className="flex items-center space-x-2">
               <Search className="h-4 w-4 text-muted-foreground" />
@@ -492,7 +507,9 @@ export default function UsersPage() {
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
                         <User className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium text-neutral-200 text-sm">{user.name}</span>
+                        <span className="font-medium text-neutral-200 text-sm">
+                          {user.name}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Mail className="h-4 w-4 text-muted-foreground" />
@@ -538,17 +555,26 @@ export default function UsersPage() {
                         <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuLabel>User Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          
-                          {/* Access Stage Management */}
+
                           <DropdownMenuSub>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                router.push(`/admin/users/${user.id}`)
+                              }
+                            >
+                              <User className="mr-2 h-4 w-4" />
+                              View User&apos;s Profile
+                            </DropdownMenuItem>
                             <DropdownMenuSubTrigger>
                               <UserCheck className="mr-2 h-4 w-4" />
                               Access Stage
                             </DropdownMenuSubTrigger>
                             <DropdownMenuSubContent>
                               <DropdownMenuItem
-                                onClick={() => handleInviteUser(user.id, 'alpha')}
                                 disabled={user.accessStage === 'alpha'}
+                                onClick={() =>
+                                  handleInviteUser(user.id, 'alpha')
+                                }
                               >
                                 <span className="mr-2">α</span>
                                 Alpha Access
@@ -557,8 +583,10 @@ export default function UsersPage() {
                                 )}
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => handleInviteUser(user.id, 'beta')}
                                 disabled={user.accessStage === 'beta'}
+                                onClick={() =>
+                                  handleInviteUser(user.id, 'beta')
+                                }
                               >
                                 <span className="mr-2">β</span>
                                 Beta Access
@@ -567,8 +595,10 @@ export default function UsersPage() {
                                 )}
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => handleInviteUser(user.id, 'production')}
                                 disabled={user.accessStage === 'production'}
+                                onClick={() =>
+                                  handleInviteUser(user.id, 'production')
+                                }
                               >
                                 <span className="mr-2">🚀</span>
                                 Production Access
@@ -578,9 +608,11 @@ export default function UsersPage() {
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
-                                onClick={() => handleInviteUser(user.id, 'none')}
-                                disabled={user.accessStage === 'none'}
                                 className="text-red-400"
+                                disabled={user.accessStage === 'none'}
+                                onClick={() =>
+                                  handleInviteUser(user.id, 'none')
+                                }
                               >
                                 <X className="mr-2 h-4 w-4" />
                                 Remove Access
@@ -592,8 +624,7 @@ export default function UsersPage() {
                           </DropdownMenuSub>
 
                           <DropdownMenuSeparator />
-                          
-                          {/* Role Management */}
+
                           <DropdownMenuSub>
                             <DropdownMenuSubTrigger>
                               <Shield className="mr-2 h-4 w-4" />
@@ -601,8 +632,10 @@ export default function UsersPage() {
                             </DropdownMenuSubTrigger>
                             <DropdownMenuSubContent>
                               <DropdownMenuItem
-                                onClick={() => handleRoleUpdate(user.id, 'admin')}
                                 disabled={user.role === 'admin'}
+                                onClick={() =>
+                                  handleRoleUpdate(user.id, 'admin')
+                                }
                               >
                                 <Crown className="mr-2 h-4 w-4" />
                                 Make Admin
@@ -611,8 +644,10 @@ export default function UsersPage() {
                                 )}
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => handleRoleUpdate(user.id, 'user')}
                                 disabled={user.role === 'user'}
+                                onClick={() =>
+                                  handleRoleUpdate(user.id, 'user')
+                                }
                               >
                                 <User className="mr-2 h-4 w-4" />
                                 Regular User
@@ -624,7 +659,7 @@ export default function UsersPage() {
                           </DropdownMenuSub>
 
                           <DropdownMenuSeparator />
-                          
+
                           {/* Admin Actions */}
                           <DropdownMenuItem
                             onClick={() => impersonateUser(user.id)}
@@ -632,38 +667,38 @@ export default function UsersPage() {
                             <UserCog className="mr-2 h-4 w-4" />
                             Impersonate
                           </DropdownMenuItem>
-                          
+
                           <DropdownMenuItem
                             onClick={() => revokeUserSessions(user.id)}
                           >
                             <Shield className="mr-2 h-4 w-4" />
                             Revoke Sessions
                           </DropdownMenuItem>
-                          
+
                           <DropdownMenuSeparator />
-                          
+
                           {/* Destructive Actions */}
                           {user.banned ? (
                             <DropdownMenuItem
-                              onClick={() => unbanUser(user.id)}
                               className="text-green-400 focus:text-green-400"
+                              onClick={() => unbanUser(user.id)}
                             >
                               <Check className="mr-2 h-4 w-4" />
                               Unban User
                             </DropdownMenuItem>
                           ) : (
                             <DropdownMenuItem
-                              onClick={() => banUser(user.id)}
                               className="text-red-400 focus:text-red-400"
+                              onClick={() => banUser(user.id)}
                             >
                               <Ban className="mr-2 h-4 w-4" />
                               Ban User
                             </DropdownMenuItem>
                           )}
-                          
+
                           <DropdownMenuItem
-                            onClick={() => deleteUser(user.id)}
                             className="text-red-400 focus:text-red-400"
+                            onClick={() => deleteUser(user.id)}
                           >
                             <X className="mr-2 h-4 w-4" />
                             Delete User

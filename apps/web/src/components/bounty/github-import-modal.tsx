@@ -1,13 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  IssueResultCard,
-  RepoResultCard,
-} from '@/components/bounty/github-result-cards';
-import { MarkdownTextarea } from '@/components/bounty/markdown-editor';
 import { AutocompleteDropdown } from '@bounty/ui/components/autocomplete';
 import { Button } from '@bounty/ui/components/button';
 import {
@@ -26,11 +18,21 @@ import { Input } from '@bounty/ui/components/input';
 import { Label } from '@bounty/ui/components/label';
 import { useCurrentUser } from '@bounty/ui/hooks/use-access';
 import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
+import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  IssueResultCard,
+  RepoResultCard,
+} from '@/components/bounty/github-result-cards';
+import { MarkdownTextarea } from '@/components/bounty/markdown-editor';
+import type {
+  CurrentUser,
+  GithubImportModalProps,
+  GithubParseResult,
+  RepoOption,
+} from '@/types/github';
 import { trpcClient } from '@/utils/trpc';
-import { GithubImportModalProps } from '@/types/github';
-import { CurrentUser } from '@/types/github';
-import { GithubParseResult } from '@/types/github';
-import { RepoOption } from '@/types/github';
 
 export default function GithubImportModal({
   open,
@@ -193,7 +195,7 @@ export default function GithubImportModal({
                             setBody(res.data.body);
                           }
                         })
-                        .catch(() => { });
+                        .catch(() => {});
                       issueInputRef.current?.focus();
                     } else {
                       repoInputRef.current?.focus();
@@ -241,15 +243,15 @@ export default function GithubImportModal({
                       private={r.private}
                       stars={
                         userRepos.data &&
-                          !Array.isArray(userRepos.data) &&
-                          'success' in userRepos.data &&
-                          userRepos.data.success
+                        !Array.isArray(userRepos.data) &&
+                        'success' in userRepos.data &&
+                        userRepos.data.success
                           ? (
-                            userRepos.data.data as {
-                              name: string;
-                              stargazersCount?: number;
-                            }[]
-                          )?.find?.((x) => x.name === r.name)?.stargazersCount
+                              userRepos.data.data as {
+                                name: string;
+                                stargazersCount?: number;
+                              }[]
+                            )?.find?.((x) => x.name === r.name)?.stargazersCount
                           : undefined
                       }
                     />
@@ -294,7 +296,7 @@ export default function GithubImportModal({
                           setBody(res.data.body);
                         }
                       })
-                      .catch(() => { });
+                      .catch(() => {});
                   }}
                   open={issueOpen}
                   renderItem={(i) => (
@@ -336,7 +338,7 @@ export default function GithubImportModal({
                         body.slice(0, 1000)
                       );
                     }
-                  } catch { }
+                  } catch {}
                   router.push(
                     `/${immediateOwner}/${immediateRepo}/issues/${issueQuery}`
                   );
@@ -406,7 +408,7 @@ export default function GithubImportModal({
                           setBody(res.data.body);
                         }
                       })
-                      .catch(() => { });
+                      .catch(() => {});
                     issueInputRef.current?.focus();
                   } else {
                     repoInputRef.current?.focus();
@@ -454,15 +456,15 @@ export default function GithubImportModal({
                     private={r.private}
                     stars={
                       userRepos.data &&
-                        !Array.isArray(userRepos.data) &&
-                        'success' in userRepos.data &&
-                        userRepos.data.success
+                      !Array.isArray(userRepos.data) &&
+                      'success' in userRepos.data &&
+                      userRepos.data.success
                         ? (
-                          userRepos.data.data as {
-                            name: string;
-                            stargazersCount?: number;
-                          }[]
-                        )?.find?.((x) => x.name === r.name)?.stargazersCount
+                            userRepos.data.data as {
+                              name: string;
+                              stargazersCount?: number;
+                            }[]
+                          )?.find?.((x) => x.name === r.name)?.stargazersCount
                         : undefined
                     }
                   />
@@ -507,7 +509,7 @@ export default function GithubImportModal({
                         setBody(res.data.body);
                       }
                     })
-                    .catch(() => { });
+                    .catch(() => {});
                 }}
                 open={issueOpen}
                 renderItem={(i) => (
@@ -549,7 +551,7 @@ export default function GithubImportModal({
                       body.slice(0, 1000)
                     );
                   }
-                } catch { }
+                } catch {}
                 router.push(
                   `/${immediateOwner}/${immediateRepo}/issues/${issueQuery}`
                 );

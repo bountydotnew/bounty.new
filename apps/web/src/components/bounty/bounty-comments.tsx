@@ -36,7 +36,7 @@ export default function BountyComments({
       ...c,
       originalContent: c.originalContent ?? null,
     })),
-    staleTime: Infinity,
+    staleTime: Number.POSITIVE_INFINITY,
   });
 
   const addComment = useMutation({
@@ -141,8 +141,7 @@ export default function BountyComments({
   const [formErrorKey, setFormErrorKey] = useState(0);
 
   const postComment = (content: string, parentId?: string) => {
-    const previous: BountyCommentCacheItem[] =
-      (commentsQuery.data as BountyCommentCacheItem[] | undefined) || [];
+    const previous: BountyCommentCacheItem[] = commentsQuery.data || [];
     const trimmed = content.trim();
     const userId = session?.user?.id;
     if (userId) {
@@ -206,8 +205,7 @@ export default function BountyComments({
   };
 
   const likeComment = (commentId: string) => {
-    const previous: BountyCommentCacheItem[] =
-      (commentsQuery.data as BountyCommentCacheItem[] | undefined) || [];
+    const previous: BountyCommentCacheItem[] = commentsQuery.data || [];
     const next = previous.map((c) =>
       c.id === commentId
         ? {
@@ -228,8 +226,7 @@ export default function BountyComments({
   };
 
   const onEditComment = (commentId: string, newContent: string) => {
-    const previous: BountyCommentCacheItem[] =
-      (commentsQuery.data as BountyCommentCacheItem[] | undefined) || [];
+    const previous: BountyCommentCacheItem[] = commentsQuery.data || [];
     const current = previous.find((c) => c.id === commentId);
     const trimmedNew = newContent.trim();
     if (!current || current.content.trim() === trimmedNew) {
@@ -267,8 +264,7 @@ export default function BountyComments({
   };
 
   const onDeleteComment = (commentId: string) => {
-    const previous: BountyCommentCacheItem[] =
-      (commentsQuery.data as BountyCommentCacheItem[] | undefined) || [];
+    const previous: BountyCommentCacheItem[] = commentsQuery.data || [];
     const next = previous.filter((c) => c.id !== commentId);
     queryClient.setQueryData(key, next);
     deleteComment.mutate(
@@ -382,7 +378,7 @@ export default function BountyComments({
                     onEdit={(id) =>
                       setEditState({
                         id,
-                        initial: (root as BountyCommentCacheItem).content || '',
+                        initial: root.content || '',
                       })
                     }
                     onLike={likeComment}
@@ -443,13 +439,7 @@ export default function BountyComments({
                                 session?.user?.id &&
                                 child.user?.id === session.user.id
                             )}
-                            isRemoving={
-                              (
-                                child as unknown as BountyCommentCacheItem & {
-                                  _removing: boolean;
-                                }
-                              )._removing
-                            }
+                            isRemoving={Boolean(child._removing)}
                             key={child.id}
                             onDelete={(id) => {
                               const key =
@@ -462,10 +452,10 @@ export default function BountyComments({
                                 >(key) || [];
                               const next = previous.map((c) =>
                                 c.id === id
-                                  ? ({
+                                  ? {
                                       ...c,
                                       _removing: true,
-                                    } as BountyCommentCacheItem)
+                                    }
                                   : c
                               );
                               queryClient.setQueryData(key, next);
@@ -474,9 +464,7 @@ export default function BountyComments({
                             onEdit={(id) =>
                               setEditState({
                                 id,
-                                initial:
-                                  (child as BountyCommentCacheItem).content ||
-                                  '',
+                                initial: child.content || '',
                               })
                             }
                             onLike={likeComment}

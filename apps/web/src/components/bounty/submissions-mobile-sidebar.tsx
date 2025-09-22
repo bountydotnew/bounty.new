@@ -1,12 +1,12 @@
 'use client';
 
-import { PanelRightIcon } from 'lucide-react';
-import { useState } from 'react';
-import SubmissionCard from '@/components/bounty/submission-card';
 import { Button } from '@bounty/ui/components/button';
 import { Sheet, SheetContent, SheetTrigger } from '@bounty/ui/components/sheet';
 import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
 import { cn } from '@bounty/ui/lib/utils';
+import { PanelRightIcon } from 'lucide-react';
+import { useState } from 'react';
+import SubmissionCard from '@/components/bounty/submission-card';
 
 interface SubmissionsMobileSidebarProps {
   className?: string;

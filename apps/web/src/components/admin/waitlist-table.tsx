@@ -1,6 +1,16 @@
 'use client';
 
 import type { AppRouter } from '@bounty/api';
+import { Badge } from '@bounty/ui/components/badge';
+import { Button } from '@bounty/ui/components/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@bounty/ui/components/card';
+import { Input } from '@bounty/ui/components/input';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TRPCClientErrorLike } from '@trpc/client';
 import {
@@ -12,16 +22,6 @@ import {
   XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Badge } from '@bounty/ui/components/badge';
-import { Button } from '@bounty/ui/components/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@bounty/ui/components/card';
-import { Input } from '@bounty/ui/components/input';
 import { trpc } from '@/utils/trpc';
 
 type WaitlistEntry = {

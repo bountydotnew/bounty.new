@@ -1,5 +1,14 @@
 'use client';
 
+import { BellIcon } from '@bounty/ui/components/bell';
+import { Button } from '@bounty/ui/components/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@bounty/ui/components/dropdown-menu';
+import { useNotifications } from '@bounty/ui/hooks/use-notifications';
+import { cn } from '@bounty/ui/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import {
   ArrowUpRight,
@@ -12,16 +21,11 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
-import { BellIcon } from '@bounty/ui/components/bell';
-import { Button } from '@bounty/ui/components/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@bounty/ui/components/dropdown-menu';
-import { useNotifications } from '@bounty/ui/hooks/use-notifications';
-import { cn } from '@bounty/ui/lib/utils';
-import { NotificationRowProps, NotificationData, NotificationItem } from '@/types/notifications';
+import type {
+  NotificationData,
+  NotificationItem,
+  NotificationRowProps,
+} from '@/types/notifications';
 
 function Row({ item, onRead }: NotificationRowProps) {
   const router = useRouter();

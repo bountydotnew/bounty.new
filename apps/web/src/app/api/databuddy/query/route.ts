@@ -1,8 +1,5 @@
 import { headers } from 'next/headers';
-import type {
-  DataBuddyQueryBody,
-  DataBuddyUpstreamBody,
-} from '@/types/api';
+import type { DataBuddyQueryBody, DataBuddyUpstreamBody } from '@/types/api';
 
 export async function POST(request: Request) {
   let body: DataBuddyQueryBody;

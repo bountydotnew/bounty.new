@@ -1,7 +1,7 @@
+import { cn } from '@bounty/ui/lib/utils';
 import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
-import { cn } from '@bounty/ui/lib/utils';
 
 interface FaviconProps {
   url: string;

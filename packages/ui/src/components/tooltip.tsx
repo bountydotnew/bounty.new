@@ -1,7 +1,6 @@
+import { cn } from '@bounty/ui/lib/utils';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import type * as React from 'react';
-
-import { cn } from '@bounty/ui/lib/utils';
 
 function TooltipProvider({
   delayDuration = 0,

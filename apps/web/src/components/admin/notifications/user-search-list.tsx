@@ -1,8 +1,8 @@
 'use client';
 
-import { Search } from 'lucide-react';
 import { Button } from '@bounty/ui/components/button';
 import { Input } from '@bounty/ui/components/input';
+import { Search } from 'lucide-react';
 
 type UserItem = { id: string; name: string; email: string };
 
@@ -37,7 +37,7 @@ export function UserSearchList({
         />
         {selectedIds.size > 0 && (
           <Button
-            className="h-8 px-2 text-xs border-neutral-800 bg-[#222222] hover:bg-neutral-700/40"
+            className="h-8 border-neutral-800 bg-[#222222] px-2 text-xs hover:bg-neutral-700/40"
             onClick={onClearSelection}
             variant="text"
           >
@@ -56,7 +56,9 @@ export function UserSearchList({
               onClick={() => onToggle(u.id)}
             >
               <div>
-                <div className="font-medium text-neutral-200 text-sm">{u.name}</div>
+                <div className="font-medium text-neutral-200 text-sm">
+                  {u.name}
+                </div>
                 <div className="text-neutral-400 text-xs">{u.email}</div>
               </div>
               <div

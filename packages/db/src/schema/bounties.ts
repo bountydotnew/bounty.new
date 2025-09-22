@@ -16,6 +16,7 @@ import { user } from './auth';
 export const bountyStatusEnum = pgEnum('bounty_status', [
   'draft',
   'open',
+  'funded',
   'in_progress',
   'completed',
   'cancelled',
@@ -172,5 +173,27 @@ export const bountyBookmark = pgTable(
     uniqueIndex('bounty_bookmark_unique_idx').on(t.bountyId, t.userId),
     index('bounty_bookmark_bounty_id_idx').on(t.bountyId),
     index('bounty_bookmark_user_id_idx').on(t.userId),
+  ]
+);
+
+export const stripeAccount = pgTable(
+  'stripe_account',
+  {
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    stripeAccountId: text('stripe_account_id').notNull().unique(),
+    accountType: text('account_type').notNull().default('express'),
+    chargesEnabled: boolean('charges_enabled').notNull().default(false),
+    payoutsEnabled: boolean('payouts_enabled').notNull().default(false),
+    detailsSubmitted: boolean('details_submitted').notNull().default(false),
+    country: text('country').notNull().default('US'),
+    createdAt: timestamp('created_at').notNull().default(sql`now()`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
+  },
+  (t) => [
+    uniqueIndex('stripe_account_user_idx').on(t.userId),
+    index('stripe_account_stripe_id_idx').on(t.stripeAccountId),
   ]
 );

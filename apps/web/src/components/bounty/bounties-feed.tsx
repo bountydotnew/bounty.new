@@ -1,9 +1,9 @@
+import { useQuery } from '@tanstack/react-query';
 import { memo, useMemo } from 'react';
 import { BountyCard } from '@/components/bounty/bounty-card';
 import { BountySkeleton } from '@/components/dashboard/skeletons/bounty-skeleton';
 import { LOADING_SKELETON_COUNTS } from '@/constants';
 import type { Bounty } from '@/types/dashboard';
-import { useQuery } from '@tanstack/react-query';
 import { trpc } from '@/utils/trpc';
 
 interface BountiesFeedProps {
@@ -34,7 +34,15 @@ export const BountiesFeed = memo(function BountiesFeed({
     enabled: ids.length > 0,
   });
   const statsMap = useMemo(() => {
-    const m = new Map<string, { commentCount: number; voteCount: number; isVoted: boolean; bookmarked: boolean }>();
+    const m = new Map<
+      string,
+      {
+        commentCount: number;
+        voteCount: number;
+        isVoted: boolean;
+        bookmarked: boolean;
+      }
+    >();
     (statsQuery.data?.stats || []).forEach((s: any) => m.set(s.bountyId, s));
     return m;
   }, [statsQuery.data]);
@@ -88,7 +96,11 @@ export const BountiesFeed = memo(function BountiesFeed({
         }
       >
         {bounties.map((bounty) => (
-          <BountyCard bounty={bounty} key={bounty.id} stats={statsMap.get(bounty.id)} />
+          <BountyCard
+            bounty={bounty}
+            key={bounty.id}
+            stats={statsMap.get(bounty.id)}
+          />
         ))}
       </div>
     </div>

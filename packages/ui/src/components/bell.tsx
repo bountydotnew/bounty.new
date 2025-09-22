@@ -1,10 +1,10 @@
 'use client';
 
+import { cn } from '@bounty/ui/lib/utils';
 import type { Variants } from 'motion/react';
 import { motion, useAnimation } from 'motion/react';
 import type { HTMLAttributes } from 'react';
 import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
-import { cn } from '@bounty/ui/lib/utils';
 
 export interface BellIconHandle {
   startAnimation: () => void;

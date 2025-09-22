@@ -11,7 +11,7 @@ export const BetaAccessSkeleton = () => {
           <Skeleton className="mx-auto mt-4 h-8 w-48" />
           <Skeleton className="mx-auto mt-2 h-4 w-64" />
         </div>
-        
+
         <div className="space-y-4">
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-32 w-full" />

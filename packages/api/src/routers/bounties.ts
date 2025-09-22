@@ -111,23 +111,23 @@ const submitBountyWorkSchema = z.object({
 export const bountiesRouter = router({
   getBountyStats: publicProcedure.query(async () => {
     try {
-      const [totalBounties] = await db
+      const totalBountiesResult = await db
         .select({ count: sql<number>`count(*)` })
         .from(bounty);
 
-      const [activeBounties] = await db
+      const activeBountiesResult = await db
         .select({ count: sql<number>`count(*)` })
         .from(bounty)
         .where(eq(bounty.status, 'open'));
 
-      const [totalBountiesValue] = await db
+      const totalBountiesValueResult = await db
         .select({
           total: sql<number>`coalesce(sum(cast(${bounty.amount} as decimal)), 0)`,
         })
         .from(bounty)
         .where(eq(bounty.status, 'open'));
 
-      const [totalPayout] = await db
+      const totalPayoutResult = await db
         .select({
           total: sql<number>`coalesce(sum(cast(${bounty.amount} as decimal)), 0)`,
         })
@@ -137,10 +137,10 @@ export const bountiesRouter = router({
       return {
         success: true,
         data: {
-          totalBounties: totalBounties.count,
-          activeBounties: activeBounties.count,
-          totalBountiesValue: Number(totalBountiesValue.total) || 0,
-          totalPayout: Number(totalPayout.total) || 0,
+          totalBounties: totalBountiesResult[0]?.count ?? 0,
+          activeBounties: activeBountiesResult[0]?.count ?? 0,
+          totalBountiesValue: Number(totalBountiesValueResult[0]?.total) || 0,
+          totalPayout: Number(totalPayoutResult[0]?.total) || 0,
         },
       };
     } catch (error) {
@@ -170,7 +170,7 @@ export const bountiesRouter = router({
             ? input.issueUrl
             : undefined;
         const deadline = input.deadline ? new Date(input.deadline) : undefined;
-
+        const newBountyResult = await db
         const { user } = ctx.session;
         const savePaymentMethod = input.savePaymentMethod ?? true;
 
@@ -282,6 +282,14 @@ export const bountiesRouter = router({
           })
           .returning();
 
+        const newBounty = newBountyResult[0];
+        if (!newBounty) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to create bounty',
+          });
+        }
+
         try {
           await track('bounty_created', {
             bounty_id: newBounty.id,
@@ -373,10 +381,12 @@ export const bountiesRouter = router({
           .limit(input.limit)
           .offset(offset);
 
-        const [{ count }] = await db
+        const countResult = await db
           .select({ count: sql<number>`count(*)` })
           .from(bounty)
           .where(conditions.length > 0 ? and(...conditions) : undefined);
+        
+        const count = countResult[0]?.count ?? 0;
 
         const processedResults = results.map((result) => ({
           ...result,
@@ -508,7 +518,7 @@ export const bountiesRouter = router({
           });
         }
 
-        const [updatedBounty] = await db
+        const updatedBountyResult = await db
           .update(bounty)
           .set({
             ...updateData,
@@ -519,6 +529,14 @@ export const bountiesRouter = router({
           })
           .where(eq(bounty.id, id))
           .returning();
+
+        const updatedBounty = updatedBountyResult[0];
+        if (!updatedBounty) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to update bounty',
+          });
+        }
 
         try {
           await track('bounty_updated', {
@@ -723,7 +741,10 @@ export const bountiesRouter = router({
           .innerJoin(user, eq(bounty.createdById, user.id))
           .where(eq(bounty.id, input.id));
         if (!bountyRow) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Bounty not found' });
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
         }
 
         const [voteCountRow] = await db
@@ -788,22 +809,28 @@ export const bountiesRouter = router({
               .groupBy(bountyCommentLike.commentId)
           : [];
 
-        const userLikes = ctx.session?.user?.id && commentIds.length
-          ? await db
-              .select({ commentId: bountyCommentLike.commentId })
-              .from(bountyCommentLike)
-              .where(
-                and(
-                  eq(bountyCommentLike.userId, ctx.session.user.id),
-                  inArray(bountyCommentLike.commentId, commentIds)
+        const userLikes =
+          ctx.session?.user?.id && commentIds.length
+            ? await db
+                .select({ commentId: bountyCommentLike.commentId })
+                .from(bountyCommentLike)
+                .where(
+                  and(
+                    eq(bountyCommentLike.userId, ctx.session.user.id),
+                    inArray(bountyCommentLike.commentId, commentIds)
+                  )
                 )
-              )
-          : [];
+            : [];
 
         const commentsWithLikes = comments.map((c) => {
           const lc = likeCounts.find((x) => x.commentId === c.id);
           const isLiked = (userLikes || []).some((x) => x.commentId === c.id);
-          return { ...c, originalContent: c.originalContent ?? null, likeCount: lc?.likeCount || 0, isLiked } as const;
+          return {
+            ...c,
+            originalContent: c.originalContent ?? null,
+            likeCount: lc?.likeCount || 0,
+            isLiked,
+          } as const;
         });
 
         return {
@@ -897,9 +924,7 @@ export const bountiesRouter = router({
     }),
 
   getBountyStatsMany: publicProcedure
-    .input(
-      z.object({ bountyIds: z.array(z.string().uuid()).min(1).max(100) })
-    )
+    .input(z.object({ bountyIds: z.array(z.string().uuid()).min(1).max(100) }))
     .query(async ({ ctx, input }) => {
       try {
         const ids = input.bountyIds;
@@ -951,7 +976,13 @@ export const bountiesRouter = router({
           const v = voteRows.find((r) => r.bountyId === id)?.count ?? 0;
           const isVoted = userVotes.some((r) => r.bountyId === id);
           const bookmarked = userBookmarks.some((r) => r.bountyId === id);
-          return { bountyId: id, commentCount: c, voteCount: v, isVoted, bookmarked };
+          return {
+            bountyId: id,
+            commentCount: c,
+            voteCount: v,
+            isVoted,
+            bookmarked,
+          };
         });
 
         return { stats: out };
@@ -1007,10 +1038,12 @@ export const bountiesRouter = router({
           .limit(limit)
           .offset(offset);
 
-        const [{ count }] = await db
+        const countResult = await db
           .select({ count: sql<number>`count(*)` })
           .from(bountyBookmark)
           .where(eq(bountyBookmark.userId, ctx.session.user.id));
+        
+        const count = countResult[0]?.count ?? 0;
 
         return {
           success: true,
@@ -1202,7 +1235,12 @@ export const bountiesRouter = router({
         const withLikes = comments.map((c) => {
           const lc = likeCounts.find((x) => x.commentId === c.id);
           const isLiked = (userLikes || []).some((x) => x.commentId === c.id);
-          return { ...c, originalContent: c.originalContent ?? null, likeCount: lc?.likeCount || 0, isLiked } as const;
+          return {
+            ...c,
+            originalContent: c.originalContent ?? null,
+            likeCount: lc?.likeCount || 0,
+            isLiked,
+          } as const;
         });
 
         return withLikes;
@@ -1253,7 +1291,7 @@ export const bountiesRouter = router({
           return existing;
         }
 
-        const [updated] = await db
+        const updatedResult = await db
           .update(bountyComment)
           .set({
             content: trimmed,
@@ -1263,6 +1301,15 @@ export const bountiesRouter = router({
           })
           .where(eq(bountyComment.id, input.commentId))
           .returning();
+
+        const updated = updatedResult[0];
+        if (!updated) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to update comment',
+          });
+        }
+
         try {
           await track('bounty_comment_updated', {
             comment_id: updated.id,
@@ -1300,7 +1347,7 @@ export const bountiesRouter = router({
             message: 'Comment not found',
           });
         }
-        if ((existing as any).userId !== ctx.session.user.id) {
+        if (existing.userId !== ctx.session.user.id) {
           throw new TRPCError({
             code: 'FORBIDDEN',
             message: 'Not your comment',
@@ -1313,7 +1360,7 @@ export const bountiesRouter = router({
         try {
           await track('bounty_comment_deleted', {
             comment_id: input.commentId,
-            bounty_id: (existing as any).bountyId,
+            bounty_id: existing.bountyId,
             user_id: ctx.session.user.id,
             source: 'api',
           });
@@ -1551,10 +1598,12 @@ export const bountiesRouter = router({
           .limit(input.limit)
           .offset(offset);
 
-        const [{ count }] = await db
+        const countResult = await db
           .select({ count: sql<number>`count(*)` })
           .from(bounty)
           .where(eq(bounty.createdById, ctx.session.user.id));
+        
+        const count = countResult[0]?.count ?? 0;
 
         const processedResults = results.map((result) => ({
           ...result,

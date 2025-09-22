@@ -1,13 +1,14 @@
 'use client';
 
 import { authClient } from '@bounty/auth/client';
+import { Button } from '@bounty/ui/components/button';
+import { DevWarningDialog } from '@bounty/ui/components/dev-warning-dialog';
+import Link from '@bounty/ui/components/link';
 import { ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { Button } from '@bounty/ui/components/button';
-import { DevWarningDialog } from '@bounty/ui/components/dev-warning-dialog';
-import Link from '@bounty/ui/components/link';
+import Bounty from '@/components/icons/bounty';
 import { LINKS } from '@/constants';
 
 export function Header() {
@@ -67,13 +68,7 @@ export function Header() {
 
   const leftContent = (
     <Link href="/">
-      <Image
-        alt="Bounty Logo"
-        className="h-10 w-10"
-        height={40}
-        src="/bdn-b-w-trans.png"
-        width={40}
-      />
+      <Bounty className="h-10 w-10" />
     </Link>
   );
 

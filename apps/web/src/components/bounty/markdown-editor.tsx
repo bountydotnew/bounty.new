@@ -1,11 +1,11 @@
 'use client';
 
+import { Button } from '@bounty/ui/components/button';
+import { cn } from '@bounty/ui/lib/utils';
 import { Edit, Eye, Split } from 'lucide-react';
 import * as React from 'react';
 import { useState } from 'react';
 import { MarkdownContent } from '@/components/bounty/markdown-content';
-import { Button } from '@bounty/ui/components/button';
-import { cn } from '@bounty/ui/lib/utils';
 
 interface MarkdownTextareaProps
   extends Omit<React.ComponentProps<'textarea'>, 'onChange'> {

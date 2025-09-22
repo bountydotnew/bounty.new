@@ -47,6 +47,7 @@
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "drizzle-zod": "catalog:",
+    "js-base64": "^3.7.8",
     "lucide-react": "catalog:",
     "media-chrome": "catalog:",
     "motion": "catalog:",

@@ -36,6 +36,7 @@ export interface BountyCommentCacheItem {
   editCount: number;
   likeCount: number;
   isLiked: boolean;
+  _removing?: boolean;
 }
 
 export interface DuplicateCommentError {

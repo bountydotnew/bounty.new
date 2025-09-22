@@ -1,11 +1,11 @@
 // app/error.jsx
 'use client';
 
+import { Button } from '@bounty/ui/components/button';
+import Link from '@bounty/ui/components/link';
 import { AlertTriangle, Copy, Home, RefreshCw } from 'lucide-react';
 import posthog from 'posthog-js';
 import { useEffect } from 'react';
-import { Button } from '@bounty/ui/components/button';
-import Link from '@bounty/ui/components/link';
 
 export default function Error({
   error,

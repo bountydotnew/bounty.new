@@ -1,3 +1,12 @@
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@bounty/ui/components/avatar';
+import { Button } from '@bounty/ui/components/button';
+import { SmartNavigation } from '@bounty/ui/components/smart-breadcrumb';
+import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
+import { formatLargeNumber } from '@bounty/ui/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check } from 'lucide-react';
 import { useState } from 'react';
@@ -6,15 +15,9 @@ import BountyComments from '@/components/bounty/bounty-comments';
 import CollapsibleText from '@/components/bounty/collapsible-text';
 import CommentEditDialog from '@/components/bounty/comment-edit-dialog';
 import { EditBountyModal } from '@/components/bounty/edit-bounty-modal';
-
 import { MarkdownContent } from '@/components/bounty/markdown-content';
 import SubmissionCard from '@/components/bounty/submission-card';
 import { SubmissionsMobileSidebar } from '@/components/bounty/submissions-mobile-sidebar';
-import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
-import { Button } from '@bounty/ui/components/button';
-import { SmartNavigation } from '@bounty/ui/components/smart-breadcrumb';
-import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
-import { formatLargeNumber } from '@bounty/ui/lib/utils';
 import type { BountyCommentCacheItem } from '@/types/comments';
 import { trpc } from '@/utils/trpc';
 
@@ -53,7 +56,7 @@ export default function BountyDetailPage({
   const votes = useQuery({
     ...trpc.bounties.getBountyVotes.queryOptions({ bountyId: id }),
     initialData: initialVotes,
-    staleTime: Infinity,
+    staleTime: Number.POSITIVE_INFINITY,
   });
   const voteMutation = useMutation({
     ...trpc.bounties.voteBounty.mutationOptions(),
@@ -88,7 +91,7 @@ export default function BountyDetailPage({
   const commentsQuery = useQuery({
     ...trpc.bounties.getBountyComments.queryOptions({ bountyId: id }),
     initialData: initialComments,
-    staleTime: Infinity,
+    staleTime: Number.POSITIVE_INFINITY,
   });
   // const [commentText] = useState('');
   // const maxChars = 245;
@@ -290,10 +293,10 @@ export default function BountyDetailPage({
 
                 <div className="flex w-full items-center justify-end gap-2">
                   <BountyActions
+                    bookmarked={initialBookmarked}
                     bountyId={id}
                     canEdit={canEditBounty}
                     isVoted={Boolean(votes.data?.isVoted)}
-                    bookmarked={initialBookmarked}
                     onEdit={() => openEditModal(id)}
                     onShare={() => {
                       navigator.share({
@@ -334,7 +337,13 @@ export default function BountyDetailPage({
                 </CollapsibleText>
               </div>
             )}
-            <BountyComments bountyId={id} initialComments={commentsQuery.data as BountyCommentCacheItem[] | undefined} pageSize={5} />
+            <BountyComments
+              bountyId={id}
+              initialComments={
+                commentsQuery.data as BountyCommentCacheItem[] | undefined
+              }
+              pageSize={5}
+            />
           </div>
 
           <div className="hidden xl:block xl:w-[480px] xl:flex-shrink-0">

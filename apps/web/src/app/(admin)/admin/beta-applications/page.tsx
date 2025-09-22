@@ -1,13 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Filter } from 'lucide-react';
-import { useState } from 'react';
-import {
-  AdminHeader,
-  BetaApplicationsTable,
-  StatusFilter,
-} from '@/components/admin';
 import { Button } from '@bounty/ui/components/button';
 import {
   Select,
@@ -16,6 +8,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@bounty/ui/components/select';
+import { useQuery } from '@tanstack/react-query';
+import { ChevronLeft, ChevronRight, Filter } from 'lucide-react';
+import { useState } from 'react';
+import {
+  AdminHeader,
+  BetaApplicationsTable,
+  StatusFilter,
+} from '@/components/admin';
 import { trpc } from '@/utils/trpc';
 
 export default function BetaApplicationsPage() {
@@ -48,13 +48,17 @@ export default function BetaApplicationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="-mx-4 sticky top-0 z-10 border-b border-neutral-800 bg-[#111110]/80 px-4 py-3 backdrop-blur">
+      <div className="-mx-4 sticky top-0 z-10 border-neutral-800 border-b bg-[#111110]/80 px-4 py-3 backdrop-blur">
         <AdminHeader
           description="Review and manage beta access applications"
           title="Beta Applications"
         >
           <div className="flex items-center gap-2">
-            <Button className="border-neutral-800 bg-[#222222] hover:bg-neutral-700/40" size="sm" variant="outline">
+            <Button
+              className="border-neutral-800 bg-[#222222] hover:bg-neutral-700/40"
+              size="sm"
+              variant="outline"
+            >
               <Filter className="mr-2 h-4 w-4" />
               Filters
             </Button>
@@ -87,7 +91,7 @@ export default function BetaApplicationsPage() {
       />
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-neutral-800 pt-2">
+        <div className="flex items-center justify-between border-neutral-800 border-t pt-2">
           <div className="text-muted-foreground text-sm">
             Showing {(page - 1) * pageSize + 1} to{' '}
             {Math.min(page * pageSize, total)} of {total}
@@ -107,7 +111,7 @@ export default function BetaApplicationsPage() {
                 const pageNum = i + 1;
                 return (
                   <Button
-                    className="h-8 w-8 p-0 border-neutral-800 bg-[#222222] hover:bg-neutral-700/40"
+                    className="h-8 w-8 border-neutral-800 bg-[#222222] p-0 hover:bg-neutral-700/40"
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
                     size="sm"
