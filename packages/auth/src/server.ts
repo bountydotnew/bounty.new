@@ -30,8 +30,10 @@ export const auth = betterAuth({
   onAPIError: {
     throw: true,
     onError: (error, ctx) => {
-      // Custom error handling
-      console.error('Auth error:', error);
+      // Log authentication errors for debugging in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Auth error:', error);
+      }
     },
     errorURL: '/auth/error',
   },

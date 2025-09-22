@@ -43,7 +43,13 @@ export const BountiesFeed = memo(function BountiesFeed({
         bookmarked: boolean;
       }
     >();
-    (statsQuery.data?.stats || []).forEach((s: any) => m.set(s.bountyId, s));
+    (statsQuery.data?.stats || []).forEach((s: {
+      bountyId: string;
+      commentCount: number;
+      voteCount: number;
+      isVoted: boolean;
+      bookmarked: boolean;
+    }) => m.set(s.bountyId, s));
     return m;
   }, [statsQuery.data]);
 
