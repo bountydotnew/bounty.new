@@ -24,6 +24,7 @@ import {
   sql,
 } from 'drizzle-orm';
 import { z } from 'zod';
+import { createBountyPaymentIntent, confirmBountyPayment } from '../lib/stripe';
 import { protectedProcedure, publicProcedure, router } from '../trpc';
 
 const parseAmount = (amount: string | number | null): number => {
@@ -46,6 +47,8 @@ const createBountySchema = z.object({
   repositoryUrl: z.string().url().optional(),
   issueUrl: z.string().url().optional(),
 });
+
+const createBountyDraftSchema = createBountySchema;
 
 const updateBountySchema = z.object({
   id: z.string().uuid(),
@@ -146,6 +149,294 @@ export const bountiesRouter = router({
     }
   }),
 
+  createBountyDraft: protectedProcedure
+    .input(createBountyDraftSchema)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const normalizedAmount = String(input.amount);
+        const cleanedTags =
+          Array.isArray(input.tags) && input.tags.length > 0
+            ? input.tags
+            : undefined;
+        const repositoryUrl =
+          input.repositoryUrl && input.repositoryUrl.length > 0
+            ? input.repositoryUrl
+            : undefined;
+        const issueUrl =
+          input.issueUrl && input.issueUrl.length > 0
+            ? input.issueUrl
+            : undefined;
+        const deadline = input.deadline ? new Date(input.deadline) : undefined;
+
+        const newBountyResult = await db
+          .insert(bounty)
+          .values({
+            title: input.title,
+            description: input.description,
+            amount: normalizedAmount,
+            currency: input.currency,
+            difficulty: input.difficulty,
+            deadline,
+            tags: cleanedTags ?? null,
+            repositoryUrl,
+            issueUrl,
+            createdById: ctx.session.user.id,
+            status: 'draft',
+            fundingStatus: 'unfunded',
+          })
+          .returning();
+
+        const newBounty = newBountyResult[0];
+        if (!newBounty) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to create bounty draft',
+          });
+        }
+
+        try {
+          await track('bounty_draft_created', {
+            bounty_id: newBounty.id,
+            user_id: ctx.session.user.id,
+            amount: parseAmount(normalizedAmount),
+            currency: input.currency,
+            difficulty: input.difficulty,
+            has_repo: Boolean(repositoryUrl),
+            has_issue: Boolean(issueUrl),
+            tags_count: cleanedTags?.length ?? 0,
+            source: 'api',
+          });
+        } catch {}
+
+        return {
+          success: true,
+          data: newBounty,
+          message: 'Bounty draft created successfully',
+        };
+      } catch (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to create bounty draft',
+          cause: error,
+        });
+      }
+    }),
+
+  fundBounty: protectedProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const [existingBounty] = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId));
+
+        if (!existingBounty) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        if (existingBounty.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only fund your own bounties',
+          });
+        }
+
+        if (existingBounty.fundingStatus === 'funded') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Bounty is already funded',
+          });
+        }
+
+        const amount = parseAmount(existingBounty.amount);
+        const paymentIntent = await createBountyPaymentIntent({
+          amount,
+          currency: existingBounty.currency,
+          bountyId: input.bountyId,
+          userId: ctx.session.user.id,
+        });
+
+        await db
+          .update(bounty)
+          .set({
+            stripePaymentIntentId: paymentIntent.paymentIntentId,
+            updatedAt: new Date(),
+          })
+          .where(eq(bounty.id, input.bountyId));
+
+        return {
+          success: true,
+          data: {
+            clientSecret: paymentIntent.clientSecret,
+            paymentIntentId: paymentIntent.paymentIntentId,
+          },
+          message: 'Payment intent created',
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to setup bounty funding',
+          cause: error,
+        });
+      }
+    }),
+
+  confirmBountyFunding: protectedProcedure
+    .input(z.object({
+      bountyId: z.string().uuid(),
+      paymentIntentId: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const [existingBounty] = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId));
+
+        if (!existingBounty) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        if (existingBounty.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only confirm funding for your own bounties',
+          });
+        }
+
+        const paymentResult = await confirmBountyPayment(input.paymentIntentId);
+
+        if (paymentResult.success) {
+          await db
+            .update(bounty)
+            .set({
+              fundingStatus: 'funded',
+              status: 'open',
+              updatedAt: new Date(),
+            })
+            .where(eq(bounty.id, input.bountyId));
+
+          try {
+            await track('bounty_funded', {
+              bounty_id: input.bountyId,
+              user_id: ctx.session.user.id,
+              amount: paymentResult.amount,
+              currency: paymentResult.currency,
+              payment_intent_id: input.paymentIntentId,
+              source: 'api',
+            });
+          } catch {}
+
+          return {
+            success: true,
+            data: { status: 'funded' },
+            message: 'Bounty funded and published successfully',
+          };
+        } else {
+          return {
+            success: false,
+            data: { status: paymentResult.status },
+            message: 'Payment not yet completed',
+          };
+        }
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to confirm bounty funding',
+          cause: error,
+        });
+      }
+    }),
+
+  publishBounty: protectedProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const [existingBounty] = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId));
+
+        if (!existingBounty) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        if (existingBounty.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only publish your own bounties',
+          });
+        }
+
+        if (existingBounty.status !== 'draft') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Only draft bounties can be published',
+          });
+        }
+
+        // Determine the new status based on funding
+        const newStatus = existingBounty.fundingStatus === 'funded' ? 'open' : 'draft';
+
+        const updatedBountyResult = await db
+          .update(bounty)
+          .set({
+            status: newStatus,
+            updatedAt: new Date(),
+          })
+          .where(eq(bounty.id, input.bountyId))
+          .returning();
+
+        const updatedBounty = updatedBountyResult[0];
+        if (!updatedBounty) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to publish bounty',
+          });
+        }
+
+        try {
+          await track('bounty_published', {
+            bounty_id: input.bountyId,
+            user_id: ctx.session.user.id,
+            funding_status: existingBounty.fundingStatus,
+            source: 'api',
+          });
+        } catch {}
+
+        return {
+          success: true,
+          data: updatedBounty,
+          message: 'Bounty published successfully',
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to publish bounty',
+          cause: error,
+        });
+      }
+    }),
+
   createBounty: protectedProcedure
     .input(createBountySchema)
     .mutation(async ({ ctx, input }) => {
@@ -178,7 +469,8 @@ export const bountiesRouter = router({
             repositoryUrl,
             issueUrl,
             createdById: ctx.session.user.id,
-            status: 'open',
+            status: 'draft',
+            fundingStatus: 'unfunded',
           })
           .returning();
 
@@ -226,7 +518,13 @@ export const bountiesRouter = router({
 
         const conditions = [];
 
-        if (input.status) {
+        // Only show funded bounties in public listing (exclude unfunded drafts)
+        conditions.push(eq(bounty.fundingStatus, 'funded'));
+
+        // Only show open bounties in public listing unless user explicitly searches for other statuses
+        if (!input.status) {
+          conditions.push(eq(bounty.status, 'open'));
+        } else {
           conditions.push(eq(bounty.status, input.status));
         }
 

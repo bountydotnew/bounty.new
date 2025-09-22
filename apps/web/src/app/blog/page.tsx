@@ -14,10 +14,11 @@ import { Footer } from '@/components/sections/home/footer';
 import { Header } from '@/components/sections/home/header';
 import { useRouter } from 'next/navigation';
 
-export default async function BlogPage() {
-  const postsData = await getPosts();
-  const { posts } = postsData;
+export default function BlogPage() {
   const router = useRouter();
+
+  // Mock posts data for now
+  const posts = [];
 
   if (!posts) {
     return <div>Error loading blog posts. Please try again later.</div>;
