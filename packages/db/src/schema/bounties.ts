@@ -16,9 +16,15 @@ import { user } from './auth';
 export const bountyStatusEnum = pgEnum('bounty_status', [
   'draft',
   'open',
+  'funded',
   'in_progress',
   'completed',
   'cancelled',
+]);
+
+export const bountyFundingStatusEnum = pgEnum('bounty_funding_status', [
+  'unfunded',
+  'funded',
 ]);
 export const submissionStatusEnum = pgEnum('submission_status', [
   'pending',
@@ -38,8 +44,11 @@ export const bounty = pgTable('bounty', {
   title: text('title').notNull(),
   description: text('description').notNull(),
   amount: decimal('amount', { precision: 15, scale: 2 }).notNull(),
+  stripePaymentIntentId: text('stripe_payment_intent_id'),
   currency: text('currency').notNull().default('USD'),
   status: bountyStatusEnum('status').notNull().default('draft'),
+  fundingStatus: bountyFundingStatusEnum('funding_status').notNull().default('unfunded'),
+  stripePaymentIntentId: text('stripe_payment_intent_id'),
   difficulty: difficultyEnum('difficulty').notNull().default('intermediate'),
   deadline: timestamp('deadline'),
   tags: text('tags').array(),
@@ -171,5 +180,27 @@ export const bountyBookmark = pgTable(
     uniqueIndex('bounty_bookmark_unique_idx').on(t.bountyId, t.userId),
     index('bounty_bookmark_bounty_id_idx').on(t.bountyId),
     index('bounty_bookmark_user_id_idx').on(t.userId),
+  ]
+);
+
+export const stripeAccount = pgTable(
+  'stripe_account',
+  {
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    stripeAccountId: text('stripe_account_id').notNull().unique(),
+    accountType: text('account_type').notNull().default('express'),
+    chargesEnabled: boolean('charges_enabled').notNull().default(false),
+    payoutsEnabled: boolean('payouts_enabled').notNull().default(false),
+    detailsSubmitted: boolean('details_submitted').notNull().default(false),
+    country: text('country').notNull().default('US'),
+    createdAt: timestamp('created_at').notNull().default(sql`now()`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
+  },
+  (t) => [
+    uniqueIndex('stripe_account_user_idx').on(t.userId),
+    index('stripe_account_stripe_id_idx').on(t.stripeAccountId),
   ]
 );

@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check } from 'lucide-react';
 import { useState } from 'react';
 import BountyActions from '@/components/bounty/bounty-actions';
+import { BountyPaymentStepper } from '@/components/bounty/bounty-payment-stepper';
 import BountyComments from '@/components/bounty/bounty-comments';
 import CollapsibleText from '@/components/bounty/collapsible-text';
 import CommentEditDialog from '@/components/bounty/comment-edit-dialog';
@@ -35,6 +36,7 @@ interface BountyDetailPageProps {
   initialVotes?: { count: number; isVoted: boolean };
   initialComments?: BountyCommentCacheItem[];
   initialBookmarked?: boolean;
+  currency?: string;
 }
 
 export default function BountyDetailPage({
@@ -49,6 +51,7 @@ export default function BountyDetailPage({
   initialVotes,
   initialComments,
   initialBookmarked,
+  currency = 'USD',
 }: BountyDetailPageProps) {
   const { editModalOpen, openEditModal, closeEditModal, editingBountyId } =
     useBountyModals();
@@ -103,6 +106,7 @@ export default function BountyDetailPage({
     id: string;
     initial: string;
   } | null>(null);
+  const [paymentStepperOpen, setPaymentStepperOpen] = useState(false);
 
   // const postComment = (content: string, parentId?: string) => {
   //   const key = trpc.bounties.getBountyComments.queryKey({ bountyId: id });
@@ -298,6 +302,7 @@ export default function BountyDetailPage({
                     canEdit={canEditBounty}
                     isVoted={Boolean(votes.data?.isVoted)}
                     onEdit={() => openEditModal(id)}
+                    onFundBounty={() => setPaymentStepperOpen(true)}
                     onShare={() => {
                       navigator.share({
                         title,
@@ -401,6 +406,15 @@ export default function BountyDetailPage({
         bountyId={editingBountyId}
         onOpenChange={closeEditModal}
         open={editModalOpen}
+      />
+
+      <BountyPaymentStepper
+        open={paymentStepperOpen}
+        onOpenChange={setPaymentStepperOpen}
+        bountyId={id}
+        bountyTitle={title}
+        bountyAmount={amount}
+        currency={currency}
       />
     </div>
   );

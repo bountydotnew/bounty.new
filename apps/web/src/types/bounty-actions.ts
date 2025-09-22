@@ -20,6 +20,7 @@ export interface BountyActionsProps {
   bookmarked?: boolean;
   onToggleBookmark?: () => void;
   actions?: ActionItem[];
+  onFundBounty?: () => void;
 }
 
 export interface UpvoteButtonProps {

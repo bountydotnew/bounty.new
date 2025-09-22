@@ -9,7 +9,10 @@ import {
   db,
   submission,
   user,
+  userProfile,
 } from '@bounty/db';
+import { stripe } from '../lib/stripe';
+import { getOrCreateCustomer } from '../lib/stripe-utils';
 import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
 import {
@@ -24,6 +27,7 @@ import {
   sql,
 } from 'drizzle-orm';
 import { z } from 'zod';
+import { createBountyPaymentIntent, confirmBountyPayment } from '../lib/stripe';
 import { protectedProcedure, publicProcedure, router } from '../trpc';
 
 const parseAmount = (amount: string | number | null): number => {
@@ -45,7 +49,12 @@ const createBountySchema = z.object({
   tags: z.array(z.string()).optional(),
   repositoryUrl: z.string().url().optional(),
   issueUrl: z.string().url().optional(),
+  paymentMethodId: z.string().min(1, 'Payment method is required'),
+  // If false, we will not attach the PM to the customer (one-time use)
+  savePaymentMethod: z.boolean().optional(),
 });
+
+const createBountyDraftSchema = createBountySchema;
 
 const updateBountySchema = z.object({
   id: z.string().uuid(),
@@ -146,8 +155,8 @@ export const bountiesRouter = router({
     }
   }),
 
-  createBounty: protectedProcedure
-    .input(createBountySchema)
+  createBountyDraft: protectedProcedure
+    .input(createBountyDraftSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const normalizedAmount = String(input.amount);
@@ -178,7 +187,8 @@ export const bountiesRouter = router({
             repositoryUrl,
             issueUrl,
             createdById: ctx.session.user.id,
-            status: 'open',
+            status: 'draft',
+            fundingStatus: 'unfunded',
           })
           .returning();
 
@@ -186,12 +196,12 @@ export const bountiesRouter = router({
         if (!newBounty) {
           throw new TRPCError({
             code: 'INTERNAL_SERVER_ERROR',
-            message: 'Failed to create bounty',
+            message: 'Failed to create bounty draft',
           });
         }
 
         try {
-          await track('bounty_created', {
+          await track('bounty_draft_created', {
             bounty_id: newBounty.id,
             user_id: ctx.session.user.id,
             amount: parseAmount(normalizedAmount),
@@ -207,9 +217,392 @@ export const bountiesRouter = router({
         return {
           success: true,
           data: newBounty,
+          message: 'Bounty draft created successfully',
+        };
+      } catch (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to create bounty draft',
+          cause: error,
+        });
+      }
+    }),
+
+  fundBounty: protectedProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const [existingBounty] = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId));
+
+        if (!existingBounty) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        if (existingBounty.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only fund your own bounties',
+          });
+        }
+
+        if (existingBounty.fundingStatus === 'funded') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Bounty is already funded',
+          });
+        }
+
+        const amount = parseAmount(existingBounty.amount);
+        const paymentIntent = await createBountyPaymentIntent({
+          amount,
+          currency: existingBounty.currency,
+          bountyId: input.bountyId,
+          userId: ctx.session.user.id,
+        });
+
+        await db
+          .update(bounty)
+          .set({
+            stripePaymentIntentId: paymentIntent.paymentIntentId,
+            updatedAt: new Date(),
+          })
+          .where(eq(bounty.id, input.bountyId));
+
+        return {
+          success: true,
+          data: {
+            clientSecret: paymentIntent.clientSecret,
+            paymentIntentId: paymentIntent.paymentIntentId,
+          },
+          message: 'Payment intent created',
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to setup bounty funding',
+          cause: error,
+        });
+      }
+    }),
+
+  confirmBountyFunding: protectedProcedure
+    .input(z.object({
+      bountyId: z.string().uuid(),
+      paymentIntentId: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const [existingBounty] = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId));
+
+        if (!existingBounty) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        if (existingBounty.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only confirm funding for your own bounties',
+          });
+        }
+
+        const paymentResult = await confirmBountyPayment(input.paymentIntentId);
+
+        if (paymentResult.success) {
+          await db
+            .update(bounty)
+            .set({
+              fundingStatus: 'funded',
+              status: 'open',
+              updatedAt: new Date(),
+            })
+            .where(eq(bounty.id, input.bountyId));
+
+          try {
+            await track('bounty_funded', {
+              bounty_id: input.bountyId,
+              user_id: ctx.session.user.id,
+              amount: paymentResult.amount,
+              currency: paymentResult.currency,
+              payment_intent_id: input.paymentIntentId,
+              source: 'api',
+            });
+          } catch {}
+
+          return {
+            success: true,
+            data: { status: 'funded' },
+            message: 'Bounty funded and published successfully',
+          };
+        } else {
+          return {
+            success: false,
+            data: { status: paymentResult.status },
+            message: 'Payment not yet completed',
+          };
+        }
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to confirm bounty funding',
+          cause: error,
+        });
+      }
+    }),
+
+  publishBounty: protectedProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const [existingBounty] = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId));
+
+        if (!existingBounty) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        if (existingBounty.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only publish your own bounties',
+          });
+        }
+
+        if (existingBounty.status !== 'draft') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Only draft bounties can be published',
+          });
+        }
+
+        // Determine the new status based on funding
+        const newStatus = existingBounty.fundingStatus === 'funded' ? 'open' : 'draft';
+
+        const updatedBountyResult = await db
+          .update(bounty)
+          .set({
+            status: newStatus,
+            updatedAt: new Date(),
+          })
+          .where(eq(bounty.id, input.bountyId))
+          .returning();
+
+        const updatedBounty = updatedBountyResult[0];
+        if (!updatedBounty) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to publish bounty',
+          });
+        }
+
+        try {
+          await track('bounty_published', {
+            bounty_id: input.bountyId,
+            user_id: ctx.session.user.id,
+            funding_status: existingBounty.fundingStatus,
+            source: 'api',
+          });
+        } catch {}
+
+        return {
+          success: true,
+          data: updatedBounty,
+          message: 'Bounty published successfully',
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to publish bounty',
+          cause: error,
+        });
+      }
+    }),
+
+  createBounty: protectedProcedure
+    .input(createBountySchema)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const normalizedAmount = parseFloat(input.amount) * 100; // Convert to cents
+        const cleanedTags =
+          Array.isArray(input.tags) && input.tags.length > 0
+            ? input.tags
+            : undefined;
+        const repositoryUrl =
+          input.repositoryUrl && input.repositoryUrl.length > 0
+            ? input.repositoryUrl
+            : undefined;
+        const issueUrl =
+          input.issueUrl && input.issueUrl.length > 0
+            ? input.issueUrl
+            : undefined;
+        const deadline = input.deadline ? new Date(input.deadline) : undefined;
+        const { user } = ctx.session;
+        const savePaymentMethod = input.savePaymentMethod ?? true;
+
+        console.log('Creating bounty with params:', {
+          userId: user.id,
+          paymentMethodId: input.paymentMethodId,
+          savePaymentMethod,
+          amount: normalizedAmount,
+          currency: input.currency
+        });
+
+        // Build PaymentIntent params
+        const piCreate: any = {
+          amount: Math.round(normalizedAmount),
+          currency: input.currency.toLowerCase(),
+          payment_method: input.paymentMethodId,
+          confirm: true,
+          automatic_payment_methods: {
+            enabled: true,
+            allow_redirects: 'never',
+          },
+          metadata: {
+            userId: user.id,
+            bountyTitle: input.title,
+          },
+        };
+
+        if (savePaymentMethod) {
+          // Attach to customer and persist for future off-session charges
+          console.log('Getting or creating customer for user:', user.id);
+          const customerId = await getOrCreateCustomer(user.id, user.email || '');
+          piCreate.customer = customerId;
+          piCreate.setup_future_usage = 'off_session';
+          console.log('Customer ID:', customerId);
+        }
+
+        console.log('Creating PaymentIntent with params:', piCreate);
+        // Create and confirm PaymentIntent
+        let paymentIntent;
+        try {
+          paymentIntent = await stripe.paymentIntents.create(piCreate);
+          console.log('PaymentIntent created:', paymentIntent.id, 'Status:', paymentIntent.status);
+        } catch (stripeError: any) {
+          console.error('Stripe PaymentIntent creation failed:', stripeError);
+          
+          // If the payment method doesn't belong to the customer, try with the payment method's customer
+          if ((stripeError.code === 'payment_method_unusable' || 
+               stripeError.message?.includes('does not belong to the Customer')) && 
+              savePaymentMethod) {
+            console.log('Payment method not attachable to customer, trying with payment method\'s customer...');
+            
+            // Get the payment method to find its customer
+            const paymentMethod = await stripe.paymentMethods.retrieve(input.paymentMethodId);
+            const paymentMethodCustomer = paymentMethod.customer as string;
+            
+            if (paymentMethodCustomer) {
+              console.log('Using payment method\'s customer:', paymentMethodCustomer);
+              piCreate.customer = paymentMethodCustomer;
+              piCreate.setup_future_usage = 'off_session';
+              
+              try {
+                paymentIntent = await stripe.paymentIntents.create(piCreate);
+                console.log('PaymentIntent created with payment method\'s customer:', paymentIntent.id, 'Status:', paymentIntent.status);
+              } catch (retryError: any) {
+                console.error('Retry with payment method\'s customer also failed:', retryError);
+                throw retryError;
+              }
+            } else {
+              // No customer, try without customer
+              console.log('Payment method has no customer, trying without customer...');
+              delete piCreate.customer;
+              delete piCreate.setup_future_usage;
+              console.log('Retry PaymentIntent params:', piCreate);
+              try {
+                paymentIntent = await stripe.paymentIntents.create(piCreate);
+                console.log('PaymentIntent created without customer:', paymentIntent.id, 'Status:', paymentIntent.status);
+              } catch (retryError: any) {
+                console.error('Retry PaymentIntent creation also failed:', retryError);
+                throw retryError;
+              }
+            }
+          } else {
+            throw stripeError;
+          }
+        }
+
+        if (paymentIntent.status !== 'succeeded') {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Payment confirmation failed',
+          });
+        }
+
+        const newBountyResult = await db
+          .insert(bounty)
+          .values({
+            title: input.title,
+            description: input.description,
+            amount: input.amount,
+            currency: input.currency,
+            difficulty: input.difficulty,
+            deadline,
+            tags: cleanedTags ?? null,
+            repositoryUrl,
+            issueUrl,
+            createdById: ctx.session.user.id,
+            status: 'draft',
+            fundingStatus: 'unfunded',
+          })
+          .returning();
+
+        const newBounty = newBountyResult[0];
+        if (!newBounty) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to create bounty',
+          });
+        }
+
+        try {
+          await track('bounty_created', {
+            bounty_id: newBounty.id,
+            user_id: ctx.session.user.id,
+            amount: parseAmount(input.amount),
+            currency: input.currency,
+            difficulty: input.difficulty,
+            has_repo: Boolean(repositoryUrl),
+            has_issue: Boolean(issueUrl),
+            tags_count: cleanedTags?.length ?? 0,
+            source: 'api',
+          });
+        } catch {}
+
+        return {
+          success: true,
+          data: newBounty,
           message: 'Bounty created successfully',
         };
       } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to create bounty',
@@ -226,7 +619,13 @@ export const bountiesRouter = router({
 
         const conditions = [];
 
-        if (input.status) {
+        // Only show funded bounties in public listing (exclude unfunded drafts)
+        conditions.push(eq(bounty.fundingStatus, 'funded'));
+
+        // Only show open bounties in public listing unless user explicitly searches for other statuses
+        if (!input.status) {
+          conditions.push(eq(bounty.status, 'open'));
+        } else {
           conditions.push(eq(bounty.status, input.status));
         }
 
@@ -1521,6 +1920,98 @@ export const bountiesRouter = router({
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to fetch your bounties',
+          cause: error,
+        });
+      }
+    }),
+
+  createPaymentLink: protectedProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const bountyResult = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId))
+          .limit(1);
+
+        const targetBounty = bountyResult[0];
+        if (!targetBounty) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        // Here you would integrate with Polar or Stripe to create a payment link
+        // For now, creating a mock payment URL
+        const paymentUrl = `https://checkout.polar.sh/pay?bounty_id=${input.bountyId}&amount=${targetBounty.amount}&currency=${targetBounty.currency}`;
+
+        return {
+          success: true,
+          paymentUrl,
+          bountyId: input.bountyId,
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to create payment link',
+          cause: error,
+        });
+      }
+    }),
+
+  processManualPayment: protectedProcedure
+    .input(z.object({
+      bountyId: z.string().uuid(),
+      cardDetails: z.object({
+        cardNumber: z.string().min(16),
+        expiryDate: z.string().min(5),
+        cvv: z.string().min(3),
+        cardholderName: z.string().min(2),
+      }),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const bountyResult = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId))
+          .limit(1);
+
+        const targetBounty = bountyResult[0];
+        if (!targetBounty) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        // Here you would integrate with Polar or Stripe to process the card payment
+        // For now, we'll simulate a successful payment
+
+        // In a real implementation, you would:
+        // 1. Create a payment intent with Polar/Stripe
+        // 2. Process the payment with the card details
+        // 3. Update the bounty status if needed
+        // 4. Create payment records in the database
+
+        // Mock payment processing delay
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        return {
+          success: true,
+          paymentId: `pay_${Date.now()}`,
+          bountyId: input.bountyId,
+          amount: parseAmount(targetBounty.amount),
+          currency: targetBounty.currency,
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to process payment',
           cause: error,
         });
       }
