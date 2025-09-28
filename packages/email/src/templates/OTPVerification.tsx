@@ -6,6 +6,7 @@ import {
   Heading,
   Hr,
   Html,
+  Img,
   Preview,
   Section,
   Text,
@@ -14,16 +15,15 @@ import {
 interface OTPVerificationProps {
   code: string;
   email: string;
-  /**
-   * email-verification | sign-in | forget-password
-   */
   type?: 'email-verification' | 'sign-in' | 'forget-password';
+  continueUrl?: string;
 }
 
 export default function OTPVerification({
   code,
   email,
   type = 'email-verification',
+  continueUrl,
 }: OTPVerificationProps) {
   const purpose =
     type === 'email-verification'
@@ -41,40 +41,37 @@ export default function OTPVerification({
       <Preview>{purpose} code for Bounty.new</Preview>
       <Body style={main}>
         <Container style={container}>
-          <Section style={header}>
-            <Heading style={logo}>Bounty.new</Heading>
+          <Section>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '32px 0' }}>
+              <Img
+                src="https://di867tnz6fwga.cloudfront.net/brand-kits/d27e3c53-bdbd-4c35-919f-2b27a9974bb5/primary/8aa9d0cb-9288-4e1b-8c31-4e738bb9255d.png"
+                alt="Bounty.new"
+                width={100}
+                height={100}
+                style={{ display: 'block' }}
+              />
+            </div>
           </Section>
 
           <Section style={body}>
-            <Heading style={h1}>{purpose}</Heading>
-
-            <Text style={muted}>
-              We sent this one-time code to <strong>{email}</strong>.
-            </Text>
+            <Heading style={h1}>Your one time password is</Heading>
 
             <Section style={codeWrap}>
               <div style={codeBox}>{pretty(code)}</div>
             </Section>
 
-            <Text style={text}>
-              Enter this 6‑digit code in the app to continue. This code expires
-              shortly for security reasons. If you didn't request this, you
-              can safely ignore this email.
-            </Text>
-
             <Hr style={hr} />
 
             <Text style={footer}>
-              Having trouble? You can request a new code from the verification
-              screen.
+              Under no circumstances should you give this code to anyone.
             </Text>
 
             <Section style={{ textAlign: 'center', marginTop: 16 }}>
               <Button
-                href="https://bounty.new"
+                href={continueUrl || 'https://bounty.new'}
                 style={button}
               >
-                Go to Bounty.new
+                Continue
               </Button>
             </Section>
           </Section>
@@ -85,7 +82,7 @@ export default function OTPVerification({
 }
 
 const main = {
-  backgroundColor: '#ffffff',
+  backgroundColor: '#000000',
   fontFamily:
     '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
 };
@@ -96,44 +93,17 @@ const container = {
   maxWidth: '580px',
 };
 
-const header = {
-  padding: '32px 0',
-  textAlign: 'center' as const,
-};
-
-const logo = {
-  fontSize: '24px',
-  fontWeight: 'bold',
-  color: '#000000',
-  margin: '0',
-};
-
 const body = {
   padding: '0 20px',
 };
 
 const h1 = {
-  color: '#000',
+  color: '#ffffff',
   fontSize: '24px',
   fontWeight: 'normal',
   textAlign: 'center' as const,
   margin: '30px 0 8px 0',
   padding: '0',
-};
-
-const text = {
-  color: '#333',
-  fontSize: '16px',
-  lineHeight: '26px',
-  margin: '16px 0',
-};
-
-const muted = {
-  color: '#666',
-  fontSize: '14px',
-  lineHeight: '22px',
-  margin: '6px 0 18px 0',
-  textAlign: 'center' as const,
 };
 
 const codeWrap = {
@@ -144,21 +114,17 @@ const codeWrap = {
 const codeBox = {
   display: 'inline-block',
   letterSpacing: '10px',
-  padding: '14px 18px',
-  borderRadius: '12px',
-  border: '1px solid #eaeaea',
-  background: '#f7f7f7',
   fontSize: '28px',
   fontWeight: 700,
-  color: '#111111',
+  color: '#ffffff',
 };
 
 const button = {
-  backgroundColor: '#000000',
-  borderRadius: '8px',
-  color: '#ffffff',
+  backgroundColor: '#ffffff',
+  borderRadius: '15px',
+  color: '#000000',
   fontSize: '14px',
-  fontWeight: 'bold',
+  fontWeight: 'normal',
   textDecoration: 'none',
   textAlign: 'center' as const,
   display: 'inline-block',
@@ -171,8 +137,9 @@ const hr = {
 };
 
 const footer = {
-  color: '#666',
+  color: '#ffffff',
   fontSize: '12px',
   lineHeight: '20px',
+  textAlign: 'center' as const,
   margin: '16px 0 0',
 };

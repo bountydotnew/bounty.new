@@ -1,7 +1,7 @@
 import * as schema from '@bounty/db';
 import { db } from '@bounty/db';
 import { env } from '@bounty/env/server';
-import type { PolarCustomerCreateParams, PolarError } from '@bounty/types';
+import type { PolarError } from '@bounty/types';
 import {
   checkout,
   polar,
@@ -22,6 +22,8 @@ const polarClient = new Polar({
   server: polarEnv,
 });
 
+const TRAILING_SLASH_RE = /\/$/;
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'pg',
@@ -30,7 +32,7 @@ export const auth = betterAuth({
   }),
   onAPIError: {
     throw: true,
-    onError: (error, ctx) => {
+    onError: (error) => {
       // Custom error handling
       console.error('Auth error:', error);
     },
@@ -56,29 +58,24 @@ export const auth = betterAuth({
   },
   // Keep core email verification config present but do NOT auto-send link emails,
   // since we are switching to OTP-based verification.
+  // Disable link-based verification emails; OTP replaces link verification.
   emailVerification: {
     sendOnSignUp: false,
     autoSignInAfterVerification: true,
-    sendVerificationEmail: async ({ user, url }) => {
-      const { sendVerificationEmail } = await import('@bounty/email');
-      await sendVerificationEmail({
-        to: user.email,
-        url,
-      });
-    },
+    // Intentionally no-op to avoid sending magic link emails.
+    sendVerificationEmail: () => Promise.resolve(),
   },
   plugins: [
     polar({
       client: polarClient,
       createCustomerOnSignUp: false,
-      getCustomerCreateParams: async ({ user }) => {
-        return {
+      getCustomerCreateParams: ({ user }) =>
+        Promise.resolve({
           metadata: { userId: user.id || 'unknown' },
-        };
-      },
-      onCustomerCreateError: async ({ error }: { error: unknown }) => {
+        }),
+      onCustomerCreateError: ({ error }: { error: unknown }) => {
         const e = error as PolarError;
-        const msg = String(e?.message || e?.body$ || e?.detail || '');
+        const msg = String(error);
         if (
           e?.status === 409 ||
           msg.includes('external ID cannot be updated') ||
@@ -93,15 +90,15 @@ export const auth = betterAuth({
         checkout({
           products: [
             {
-              productId: process.env.BOUNTY_PRO_ANNUAL_ID!,
+              productId: env.BOUNTY_PRO_ANNUAL_ID,
               slug: 'pro-annual',
             },
             {
-              productId: process.env.BOUNTY_PRO_MONTHLY_ID!,
+              productId: env.BOUNTY_PRO_MONTHLY_ID,
               slug: 'pro-monthly',
             },
           ],
-          successUrl: process.env.POLAR_SUCCESS_URL!,
+          successUrl: env.POLAR_SUCCESS_URL,
           authenticatedUsersOnly: true,
         }),
         portal(),
@@ -111,18 +108,8 @@ export const auth = betterAuth({
           onCustomerStateChanged: (_payload) => {
             return Promise.resolve();
           },
-          onOrderPaid: async (_payload) => {
-            try {
-            } catch (_error) {}
-
-            return Promise.resolve();
-          },
-          onSubscriptionActive: async (_payload) => {
-            try {
-            } catch (_error) {}
-
-            return Promise.resolve();
-          },
+          onOrderPaid: (_payload) => Promise.resolve(),
+          onSubscriptionActive: (_payload) => Promise.resolve(),
           onPayload: (_payload) => {
             return Promise.resolve();
           },
@@ -149,10 +136,17 @@ export const auth = betterAuth({
         const { sendEmail, EmailTemplates } = await import('@bounty/email');
         const subject =
           type === 'email-verification'
-            ? 'Your Bounty.new verification code'
+            ? `${otp} is your verification code.`
             : type === 'sign-in'
-              ? 'Your Bounty.new sign-in code'
-              : 'Your Bounty.new password reset code';
+              ? `${otp} is your sign-in code.`
+              : `${otp} is your password reset code.`;
+
+        // Build a direct "Continue" link that pre-fills the code on the verify page
+        const baseUrl = env.BETTER_AUTH_URL.replace(TRAILING_SLASH_RE, '');
+        const verifyUrl = `${baseUrl}/sign-up/verify-email-address?email=${encodeURIComponent(
+          email,
+        )}&redirect_url=${encodeURIComponent('/login')}&code=${encodeURIComponent(otp)}`;
+
         await sendEmail({
           to: email,
           from: 'notifications@mail.bounty.new',
@@ -161,8 +155,9 @@ export const auth = betterAuth({
             code: otp,
             email,
             type,
+            continueUrl: verifyUrl,
           }),
-          text: `Your Bounty.new ${type.replace('-', ' ')} code is ${otp}. It expires shortly.`,
+          text: `Your Bounty.new ${type.replace('-', ' ')} code is ${otp}. It expires shortly. Continue: ${verifyUrl}`,
         });
       },
     }),

@@ -1,7 +1,6 @@
 import { authClient } from '@bounty/auth/client';
 import { Badge } from '@bounty/ui/components/badge';
 import { Button } from '@bounty/ui/components/button';
-import Link from '@bounty/ui/components/link';
 import { LogOut } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -54,7 +53,7 @@ const cards = {
 export default function Login() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(false);
-  const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(null);
+  const lastMethod = authClient.getLastUsedLoginMethod();
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin'); // kept to minimize diff, but we will force signin below
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -89,15 +88,13 @@ export default function Login() {
     });
   };
   useEffect(() => {
-    // Load last used login method from localStorage
-    const lastMethod = localStorage.getItem('bounty-last-login-method');
-    setLastUsedMethod(lastMethod);
-
     if (!PublicKeyCredential.isConditionalMediationAvailable?.()) {
       return;
     }
 
-    void authClient.signIn.passkey({ autoFill: true });
+    authClient.signIn.passkey({ autoFill: true }).catch(() => {
+      toast.error('Passkey sign-in failed');
+    });
   }, []);
 
   const handleMouseLeave = () => {
@@ -107,8 +104,6 @@ export default function Login() {
   const handleGitHubSignIn = async () => {
     try {
       setLoading(true);
-      // Save login method to localStorage
-      localStorage.setItem('bounty-last-login-method', 'github');
 
       await authClient.signIn.social(
         {
@@ -158,7 +153,7 @@ export default function Login() {
     <div className="flex min-h-screen flex-col bg-[#111110] text-[#f3f3f3] md:flex-row">
       {/* Left Column: Login Section */}
       <div className="flex flex-1 items-center justify-center p-8 md:p-12">
-        <div className="w-full max-w-md space-y-8">
+        <div className="w-full max-w-md justify-center flex space-y-8">
           {/* Mobile Bounty Icon 
           <div className="lg:hidden flex justify-center mb-8">
             <Bounty className="w-24 h-28 text-primary" />
@@ -287,7 +282,7 @@ export default function Login() {
                     )}
                     {loading ? 'Signing in…' : 'Continue with GitHub'}
                   </Button>
-                  {lastUsedMethod === 'github' && (
+                  {lastMethod === 'github' && (
                     <Badge className="-top-2 -right-2 absolute bg-primary px-1 py-0.5 text-primary-foreground text-xs">
                       Last used
                     </Badge>
@@ -306,6 +301,9 @@ export default function Login() {
           onMouseLeave={handleMouseLeave}
           onMouseMove={handleMouseMove}
           ref={containerRef}
+          role="application"
+          tabIndex={0}
+          aria-label="Interactive showcase canvas"
           style={{
             backgroundImage:
               'radial-gradient(circle at 1px 1px, #383838 1px, transparent 0)',
@@ -328,6 +326,7 @@ export default function Login() {
             width="153"
             xmlns="http://www.w3.org/2000/svg"
           >
+            <title>Decorative bounty graphic</title>
             <path
               d="M91.1385 71.1097C107.031 77.947 125.457 70.6065 132.294 54.7141C139.132 38.8217 131.791 20.3956 115.899 13.5582C100.006 6.72079 81.5803 14.0613 74.7429 29.9537C67.9055 45.8461 75.2461 64.2723 91.1385 71.1097ZM91.1385 71.1097L29.921 44.7722M5 102.256L33.9985 114.732C49.8909 121.57 68.317 114.229 75.1544 98.3367C81.9918 82.4443 74.6513 64.0182 58.7589 57.1808L29.7603 44.7048M148.655 95.8569L119.657 83.3808C103.764 76.5434 85.338 83.8839 78.5006 99.7763L78.5182 179"
               stroke="url(#paint0_linear_34_3652)"

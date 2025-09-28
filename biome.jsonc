@@ -20,5 +20,13 @@
         "useSortedClasses": "off"
       }
     }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "useSortedAttributes": "off",
+        "organizeImports": "off"
+      }
+    }
   }
 }

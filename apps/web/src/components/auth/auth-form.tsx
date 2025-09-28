@@ -166,6 +166,15 @@ export function AuthForm({ mode, onModeChange, onSignUpSuccess }: AuthFormProps)
     );
 
     if (!hadError) {
+      // Persist credentials so we can auto sign-in after email verification
+      try {
+        localStorage.setItem(
+          'bounty.pendingSignIn',
+          JSON.stringify({ email: data.email, password: data.password }),
+        );
+      } catch (e) {
+        console.debug('persist pendingSignIn failed', e);
+      }
       if (onSignUpSuccess) {
         // Route-based flow: push to dedicated verify page
         onSignUpSuccess(data.email);
@@ -216,7 +225,10 @@ export function AuthForm({ mode, onModeChange, onSignUpSuccess }: AuthFormProps)
     }
   };
 
-  const getFieldError = (field: string, form: any) => {
+  const getFieldError = (
+    field: string,
+    form: { formState: { errors: Record<string, { message?: string }> } },
+  ) => {
     const error = form.formState.errors[field];
     return error?.message || '';
   };
@@ -249,7 +261,7 @@ export function AuthForm({ mode, onModeChange, onSignUpSuccess }: AuthFormProps)
                 onFocus={() => setFocusedField('email')}
                 onBlur={() => setFocusedField(null)}
                 className={cn(
-                  'h-12 text-base transition-all duration-200',
+                  'h-10 text-base transition-all duration-200',
                   signUpForm.formState.errors.email
                     ? 'border-destructive focus-visible:border-destructive'
                     : 'focus-visible:border-primary'
@@ -300,7 +312,7 @@ export function AuthForm({ mode, onModeChange, onSignUpSuccess }: AuthFormProps)
                 onFocus={() => setFocusedField('password')}
                 onBlur={() => setFocusedField(null)}
                 className={cn(
-                  'h-12 text-base pr-12 transition-all duration-200',
+                  'h-10 text-base pr-12 transition-all duration-200',
                   signUpForm.formState.errors.password
                     ? 'border-destructive focus-visible:border-destructive'
                     : 'focus-visible:border-primary'
@@ -343,7 +355,7 @@ export function AuthForm({ mode, onModeChange, onSignUpSuccess }: AuthFormProps)
         <Button
           type="submit"
           disabled={isLoading}
-          className="w-full h-12 text-base font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          className="w-full h-10 text-base font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
         >
           {isLoading ? (
             'Creating account...'
@@ -385,7 +397,7 @@ export function AuthForm({ mode, onModeChange, onSignUpSuccess }: AuthFormProps)
               onFocus={() => setFocusedField('email')}
               onBlur={() => setFocusedField(null)}
               className={cn(
-                'h-12 text-base transition-all duration-200',
+                'h-10 text-base transition-all duration-200',
                 emailForm.formState.errors.email
                   ? 'border-destructive focus-visible:border-destructive'
                   : 'focus-visible:border-primary'
@@ -425,7 +437,7 @@ export function AuthForm({ mode, onModeChange, onSignUpSuccess }: AuthFormProps)
         <Button
           type="submit"
           disabled={isLoading}
-          className="w-full h-12 text-base font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          className="w-full h-10 text-base font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
         >
           {isLoading ? (
             'Checking...'
@@ -486,7 +498,7 @@ export function AuthForm({ mode, onModeChange, onSignUpSuccess }: AuthFormProps)
               onFocus={() => setFocusedField('password')}
               onBlur={() => setFocusedField(null)}
               className={cn(
-                'h-12 text-base pr-12 transition-all duration-200',
+                'h-10 text-base pr-12 transition-all duration-200',
                 passwordForm.formState.errors.password
                   ? 'border-destructive focus-visible:border-destructive'
                   : 'focus-visible:border-primary'
@@ -529,7 +541,7 @@ export function AuthForm({ mode, onModeChange, onSignUpSuccess }: AuthFormProps)
       <Button
         type="submit"
         disabled={isLoading}
-        className="w-full h-12 text-base font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+        className="w-full h-10 text-base font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
       >
         {isLoading ? (
           'Signing in...'

@@ -6,10 +6,11 @@ import { Input } from '@bounty/ui/components/input';
 import { cn } from '@bounty/ui/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowRight, Mail } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { ArrowRight } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import Bounty from '../icons/bounty';
 
 const verificationSchema = z.object({
   code: z.string().min(6, 'Verification code must be 6 digits').max(6, 'Verification code must be 6 digits'),
@@ -17,14 +18,17 @@ const verificationSchema = z.object({
 
 type VerificationFormData = z.infer<typeof verificationSchema>;
 
+const SLOT_IDS = ['a', 'b', 'c', 'd', 'e', 'f'] as const;
+
 interface EmailVerificationProps {
   email: string;
   onBack: () => void;
   onSuccess: () => void;
   onEditInfo?: () => void;
+  initialCode?: string;
 }
 
-export function EmailVerification({ email, onBack, onSuccess, onEditInfo }: EmailVerificationProps) {
+export function EmailVerification({ email, onBack, onSuccess, onEditInfo, initialCode }: EmailVerificationProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -35,6 +39,7 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo }: Emai
     resolver: zodResolver(verificationSchema),
     defaultValues: { code: '' },
   });
+  const { setValue, setError } = form;
 
   // Start cooldown timer
   useEffect(() => {
@@ -93,6 +98,33 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo }: Emai
     inputRefs.current[nextIndex]?.focus();
   };
 
+  const attemptAutoSignIn = useCallback(async () => {
+    try {
+      const raw = localStorage.getItem('bounty.pendingSignIn');
+      if (raw) {
+        const creds = JSON.parse(raw) as { email?: string; password?: string };
+        if (
+          creds?.email &&
+          creds?.password &&
+          creds.email.toLowerCase() === email.toLowerCase()
+        ) {
+          await authClient.signIn.email({
+            email: creds.email,
+            password: creds.password,
+          });
+        }
+      }
+    } catch (e) {
+      console.debug('auto sign-in skipped', e);
+    } finally {
+      try {
+        localStorage.removeItem('bounty.pendingSignIn');
+      } catch (e) {
+        console.debug('clear pendingSignIn failed', e);
+      }
+    }
+  }, [email]);
+
   const handleSubmit = async (data: VerificationFormData) => {
     setIsLoading(true);
     try {
@@ -101,12 +133,14 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo }: Emai
         otp: data.code,
       });
       if (result?.data) {
+        await attemptAutoSignIn();
         onSuccess();
       }
     } catch (error) {
       form.setError('code', {
         type: 'manual',
-        message: error instanceof Error ? error.message : 'Invalid verification code',
+        message:
+          error instanceof Error ? error.message : 'Invalid verification code',
       });
     } finally {
       setIsLoading(false);
@@ -132,14 +166,50 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo }: Emai
     }
   };
 
+  // If an initial code is provided via URL, auto-verify once.
+  const autoSubmitRef = useRef(false);
+
+  const handleAutoVerify = useCallback(
+    async (cleanCode: string) => {
+      try {
+        const result = await authClient.emailOtp.verifyEmail({
+          email,
+          otp: cleanCode,
+        });
+        if (result?.data) {
+          await attemptAutoSignIn();
+          onSuccess();
+        }
+      } catch (error) {
+        setError('code', {
+          type: 'manual',
+          message:
+            error instanceof Error ? error.message : 'Invalid verification code',
+        });
+      }
+    },
+    [email, attemptAutoSignIn, onSuccess, setError],
+  );
+
+  useEffect(() => {
+    const clean = (initialCode || '').replace(/\D/g, '').slice(0, 6);
+    if (!autoSubmitRef.current && clean.length === 6) {
+      autoSubmitRef.current = true;
+      setValue('code', clean);
+      handleAutoVerify(clean).catch(() => {
+        /* ignore auto-verify failure; user can enter code manually */
+      });
+    }
+  }, [initialCode, handleAutoVerify, setValue]);
+
   const code = form.watch('code');
 
 
   return (
     <div className="space-y-6">
       <div className="text-center space-y-3">
-        <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-          <Mail className="w-8 h-8 text-primary" />
+        <div className="mx-auto w-16 h-16 flex items-center justify-center">
+          <Bounty className="w-8 h-8 text-primary" />
         </div>
         <div className="space-y-2">
           <h2 className="text-2xl font-semibold text-white">Check your email</h2>
@@ -153,9 +223,9 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo }: Emai
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <div className="space-y-3">
           <div className="flex justify-center gap-2">
-            {Array.from({ length: 6 }, (_, index) => (
+            {SLOT_IDS.map((slotId, index) => (
               <Input
-                key={`otp-${index}`}
+                key={`otp-${slotId}`}
                 ref={(el) => {
                   inputRefs.current[index] = el;
                 }}
@@ -170,7 +240,7 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo }: Emai
                 onBlur={() => setFocusedField(null)}
                 disabled={isLoading}
                 className={cn(
-                  'w-12 h-12 text-center text-lg font-medium transition-all duration-200',
+                  'w-12 h-10 text-center text-lg font-medium transition-all duration-200',
                   form.formState.errors.code
                     ? 'border-destructive focus-visible:border-destructive'
                     : 'focus-visible:border-primary'
@@ -207,7 +277,7 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo }: Emai
         <Button
           type="submit"
           disabled={isLoading || code.length !== 6}
-          className="w-full h-12 text-base font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+          className="w-full h-10 text-base font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
         >
           {isLoading ? (
             'Verifying...'
@@ -236,24 +306,15 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo }: Emai
             {isResending
               ? 'Sending...'
               : resendCooldown > 0
-              ? `Resend code in ${resendCooldown}s`
-              : 'Resend code'}
+                ? `Resend code in ${resendCooldown}s`
+                : 'Resend code'}
           </button>
         </div>
 
         <div className="text-center space-y-2">
-          {onEditInfo && (
-            <button
-              type="button"
-              onClick={onEditInfo}
-              className="text-sm text-gray-400 hover:text-gray-200 underline block w-full"
-            >
-              ← Edit email or password
-            </button>
-          )}
           <button
             type="button"
-            onClick={onBack}
+            onClick={() => (onEditInfo ? onEditInfo() : onBack())}
             className="text-sm text-gray-400 hover:text-gray-200 underline block w-full"
           >
             ← Back to sign up

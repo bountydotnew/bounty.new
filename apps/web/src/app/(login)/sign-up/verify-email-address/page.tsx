@@ -9,6 +9,7 @@ function VerifyContent() {
   const router = useRouter();
 
   const email = useMemo(() => searchParams.get('email') ?? '', [searchParams]);
+  const code = useMemo(() => searchParams.get('code') ?? '', [searchParams]);
   const redirectUrl = useMemo(
     () => searchParams.get('redirect_url') ?? '/login',
     [searchParams],
@@ -41,6 +42,7 @@ function VerifyContent() {
             onBack={onBack}
             onSuccess={onSuccess}
             onEditInfo={onEditInfo}
+            initialCode={code}
           />
         </div>
       </div>
