@@ -1,8 +1,9 @@
 import { authClient } from '@bounty/auth/client';
 import { Badge } from '@bounty/ui/components/badge';
 import { Button } from '@bounty/ui/components/button';
+import { Input } from '@bounty/ui/components/input';
 import Link from '@bounty/ui/components/link';
-import { LogOut } from 'lucide-react';
+import { AtSignIcon, Eye, EyeOff, LogOut } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -11,6 +12,7 @@ import SubmissionCard from '@/components/bounty/submission-card';
 import Bounty from '@/components/icons/bounty';
 import { LINKS } from '@/constants';
 import { GithubIcon } from '../icons';
+import GoogleIcon from '../icons/google';
 
 const cards = {
   ahmet: {
@@ -54,6 +56,11 @@ export default function Login() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(false);
   const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [emailAlias, setEmailAlias] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();
@@ -105,7 +112,6 @@ export default function Login() {
   const handleGitHubSignIn = async () => {
     try {
       setLoading(true);
-      // Save login method to localStorage
       localStorage.setItem('bounty-last-login-method', 'github');
 
       await authClient.signIn.social(
@@ -127,6 +133,100 @@ export default function Login() {
       toast.error(error instanceof Error ? error.message : 'Sign in failed');
       setLoading(false);
     }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setLoading(true);
+      localStorage.setItem('bounty-last-login-method', 'google');
+
+      await authClient.signIn.social(
+        {
+          provider: 'google',
+          callbackURL: callbackUrl,
+        },
+        {
+          onSuccess: () => {
+            toast.success('Sign in successful');
+          },
+          onError: (error) => {
+            toast.error(error.error.message || 'Sign in failed');
+            setLoading(false);
+          },
+        }
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Sign in failed');
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      localStorage.setItem('bounty-last-login-method', 'password');
+
+      if (isSignUp) {
+        await authClient.signUp.email(
+          {
+            email,
+            password,
+            callbackURL: callbackUrl,
+          },
+          {
+            onSuccess: () => {
+              toast.success('Account created successfully!');
+            },
+            onError: (error) => {
+              toast.error(error.error.message || 'Sign up failed');
+              setLoading(false);
+            },
+          }
+        );
+      } else {
+        await authClient.signIn.email(
+          {
+            email,
+            password,
+            callbackURL: callbackUrl,
+          },
+          {
+            onSuccess: () => {
+              toast.success('Sign in successful');
+            },
+            onError: (error) => {
+              toast.error(error.error.message || 'Sign in failed');
+              setLoading(false);
+            },
+          }
+        );
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Authentication failed');
+      setLoading(false);
+    }
+  };
+
+  const detectEmailAlias = (email: string) => {
+    const match = email.match(/^([^+]+)\+([^@]+)@(.+)$/);
+    if (match) {
+      const [, baseEmail, alias] = match;
+      return alias;
+    }
+    return null;
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    const alias = detectEmailAlias(newEmail);
+    setEmailAlias(alias);
   };
 
   const handleGoToDashboard = () => {
@@ -248,24 +348,30 @@ export default function Login() {
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-lg">
                   <Bounty className="h-12 w-12 text-primary" />
                 </div>
-                <h1 className="flex h-7 items-center justify-center font-medium text-sand-12 text-xl tracking-tight">
-                  Sign in to bounty
-                </h1>
+                <div className="space-y-2">
+                  <h1 className="flex h-7 items-center justify-center font-medium text-sand-12 text-xl tracking-tight">
+                    Sign in to Bounty
+                  </h1>
+                  <p className="text-gray-400 text-sm">
+                    Welcome back! Please sign in to continue
+                  </p>
+                </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="relative">
+              {/* OAuth Buttons */}
+              <div className="flex gap-3">
+                <div className="relative flex-1">
                   <Button
                     className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#2A2A28] py-3 font-medium text-gray-200 transition-colors hover:bg-[#383838]"
                     disabled={loading}
                     onClick={handleGitHubSignIn}
                   >
-                    {loading ? (
+                    {loading && lastUsedMethod === 'github' ? (
                       <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                     ) : (
                       <GithubIcon className="h-5 w-5 fill-white" />
                     )}
-                    {loading ? 'Signing in…' : 'Continue with GitHub'}
+                    GitHub
                   </Button>
                   {lastUsedMethod === 'github' && (
                     <Badge className="-top-2 -right-2 absolute bg-primary px-1 py-0.5 text-primary-foreground text-xs">
@@ -273,34 +379,118 @@ export default function Login() {
                     </Badge>
                   )}
                 </div>
-                {/* <div className="relative flex justify-center pt-2">
+                <div className="relative flex-1">
                   <Button
-                    onClick={handlePasskeySignIn}
+                    className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#2A2A28] py-3 font-medium text-gray-200 transition-colors hover:bg-[#383838]"
                     disabled={loading}
-                    variant="text"
-                    className="text-gray-400 hover:text-gray-200 flex items-center justify-center gap-2"
+                    onClick={handleGoogleSignIn}
                   >
-                    <Key className="w-4 h-4" />
-                    {loading ? "Signing in…" : "Have a passkey?"}
+                    {loading && lastUsedMethod === 'google' ? (
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    ) : (
+                      <GoogleIcon className="h-5 w-5" />
+                    )}
+                    Google
                   </Button>
-                  {lastUsedMethod === 'passkey' && (
-                    <Badge className="absolute -top-2 -right-2 bg-green-600 text-white text-xs px-2 py-1">
+                  {lastUsedMethod === 'google' && (
+                    <Badge className="-top-2 -right-2 absolute bg-primary px-1 py-0.5 text-primary-foreground text-xs">
                       Last used
                     </Badge>
                   )}
-                </div> */}
+                </div>
               </div>
+
+              {/* OR Divider */}
+              <div className="flex items-center gap-4">
+                <div className="h-px flex-1 bg-gray-700" />
+                <span className="text-gray-400 text-sm">or</span>
+                <div className="h-px flex-1 bg-gray-700" />
+              </div>
+
+              {/* Email/Password Form */}
+              <form onSubmit={handlePasswordAuth} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="font-medium text-gray-200 text-sm">
+                    Email address
+                  </label>
+                  <div className="relative">
+                    <Input
+                      type="email"
+                      placeholder="Enter your email address"
+                      value={email}
+                      onChange={handleEmailChange}
+                      className="w-full rounded-lg bg-[#1D1D1D] border-[#383838] px-3 py-3 text-gray-200 placeholder-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      disabled={loading}
+                      required
+                    />
+                    {emailAlias && (
+                      <Badge className="-top-2 -right-2 absolute bg-[#40403F] px-2 py-1 text-white text-xs">
+                        <AtSignIcon />{emailAlias}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="font-medium text-gray-200 text-sm">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full rounded-lg bg-[#1D1D1D] border-[#383838] px-3 py-3 pr-12 text-gray-200 placeholder-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      disabled={loading}
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="text"
+                      size="sm"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 h-auto p-0 text-gray-400 hover:text-gray-200"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full rounded-lg bg-black py-3 font-medium text-white transition-colors hover:bg-gray-800"
+                  disabled={loading}
+                >
+                  {loading && lastUsedMethod === 'password' ? (
+                    <>
+                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      {isSignUp ? 'Creating account...' : 'Signing in...'}
+                    </>
+                  ) : (
+                    <>
+                      Continue
+                      <span className="ml-2">▶</span>
+                    </>
+                  )}
+                </Button>
+              </form>
 
               <div className="flex h-8 items-center justify-center text-center text-sm">
                 <span className="text-gray-400">
-                  Don&apos;t have an account?{' '}
+                  {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
                 </span>
-                <Link
+                <Button
+                  variant="text"
                   className="rounded px-1 py-1 font-medium text-white outline-none transition-colors hover:bg-neutral-800 focus-visible:bg-neutral-800"
-                  href="/waitlist"
+                  onClick={() => setIsSignUp(!isSignUp)}
                 >
-                  Join the waitlist
-                </Link>
+                  {isSignUp ? 'Sign in' : 'Sign up'}
+                </Button>
               </div>
             </div>
           )}
