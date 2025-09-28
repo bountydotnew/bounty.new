@@ -11,6 +11,7 @@ import { ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { EmailVerification } from './email-verification';
 
 const emailSchema = z.object({
   email: z
@@ -44,13 +45,13 @@ interface AuthFormProps {
 }
 
 export function AuthForm({ mode, onModeChange }: AuthFormProps) {
-  const [step, setStep] = useState<'email' | 'password'>('email');
+  const [step, setStep] = useState<'email' | 'password' | 'verification'>('email');
   const [email, setEmail] = useState('');
   const [isEmailAlias, setIsEmailAlias] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const [signUpSuccess, setSignUpSuccess] = useState(false);
+  const [signUpEmail, setSignUpEmail] = useState('');
 
   const emailForm = useForm<EmailFormData>({
     resolver: zodResolver(emailSchema),
@@ -117,8 +118,9 @@ export function AuthForm({ mode, onModeChange }: AuthFormProps) {
       });
 
       if (result.data) {
-        // Show success message for email verification
-        setSignUpSuccess(true);
+        // Store email and show verification screen
+        setSignUpEmail(data.email);
+        setStep('verification');
       }
     } catch (error: any) {
       console.error('Sign up error:', error);
@@ -145,6 +147,17 @@ export function AuthForm({ mode, onModeChange }: AuthFormProps) {
     setIsEmailAlias(false);
   };
 
+  const handleBackToSignUp = () => {
+    setStep('email');
+    setSignUpEmail('');
+    signUpForm.reset();
+  };
+
+  const handleVerificationSuccess = () => {
+    // Redirect to dashboard or login
+    window.location.href = '/login';
+  };
+
   const getFieldRequirement = (field: string) => {
     switch (field) {
       case 'email':
@@ -162,37 +175,13 @@ export function AuthForm({ mode, onModeChange }: AuthFormProps) {
   };
 
   if (mode === 'signup') {
-    if (signUpSuccess) {
+    if (step === 'verification') {
       return (
-        <div className="space-y-4 text-center">
-          <div className="space-y-2">
-            <h3 className="text-lg font-medium text-white">Check your email</h3>
-            <p className="text-sm text-gray-400">
-              We've sent a verification link to your email address. Please click the link to activate your account.
-            </p>
-          </div>
-          <Button
-            type="button"
-            onClick={() => {
-              setSignUpSuccess(false);
-              signUpForm.reset();
-            }}
-            variant="outline"
-            className="w-full"
-          >
-            Sign up with different email
-          </Button>
-          <div className="text-center text-sm text-gray-400">
-            Already verified?{' '}
-            <button
-              type="button"
-              onClick={() => onModeChange('signin')}
-              className="text-white hover:text-gray-200 underline"
-            >
-              Sign in
-            </button>
-          </div>
-        </div>
+        <EmailVerification
+          email={signUpEmail}
+          onBack={handleBackToSignUp}
+          onSuccess={handleVerificationSuccess}
+        />
       );
     }
 
