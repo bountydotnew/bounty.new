@@ -2,7 +2,6 @@
 
 import { authClient } from '@bounty/auth/client';
 import { Button } from '@bounty/ui/components/button';
-import { TrackedButton } from '@bounty/ui/components/tracked-button';
 import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { track } from '@databuddy/sdk';
 import { useQuery } from '@tanstack/react-query';
@@ -26,7 +25,6 @@ import { trpc } from '@/utils/trpc';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@bounty/ui/components/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 import { Plus } from 'lucide-react';
-import { Divider } from '@bounty/ui/components/divider';
 
 track('screen_view', { screen_name: 'dashboard' });
 
@@ -129,7 +127,7 @@ export default function Dashboard() {
                         </div>
                       </div>
                       <div className="flex items-center justify-start gap-2.5 self-stretch px-0">
-                        <div className="relative h-3 w-px rounded-full bg-[#D0D0D0]"></div>
+                        <div className="relative h-3 w-px rounded-full bg-[#D0D0D0]"/>
                       </div>
                       <div className="flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-br-md rounded-tr-md pr-2">
                         <ChevronDown className="ml-2 h-4 w-4" />
