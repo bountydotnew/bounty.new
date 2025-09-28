@@ -21,9 +21,10 @@ interface EmailVerificationProps {
   email: string;
   onBack: () => void;
   onSuccess: () => void;
+  onEditInfo?: () => void;
 }
 
-export function EmailVerification({ email, onBack, onSuccess }: EmailVerificationProps) {
+export function EmailVerification({ email, onBack, onSuccess, onEditInfo }: EmailVerificationProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -237,11 +238,20 @@ export function EmailVerification({ email, onBack, onSuccess }: EmailVerificatio
           </button>
         </div>
 
-        <div className="text-center">
+        <div className="text-center space-y-2">
+          {onEditInfo && (
+            <button
+              type="button"
+              onClick={onEditInfo}
+              className="text-sm text-gray-400 hover:text-gray-200 underline block w-full"
+            >
+              ← Edit email or password
+            </button>
+          )}
           <button
             type="button"
             onClick={onBack}
-            className="text-sm text-gray-400 hover:text-gray-200 underline"
+            className="text-sm text-gray-400 hover:text-gray-200 underline block w-full"
           >
             ← Back to sign up
           </button>

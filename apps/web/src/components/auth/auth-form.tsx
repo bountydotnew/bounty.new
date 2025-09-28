@@ -52,6 +52,7 @@ export function AuthForm({ mode, onModeChange }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [signUpEmail, setSignUpEmail] = useState('');
+  const [signUpData, setSignUpData] = useState<SignUpFormData | null>(null);
 
   const emailForm = useForm<EmailFormData>({
     resolver: zodResolver(emailSchema),
@@ -69,8 +70,15 @@ export function AuthForm({ mode, onModeChange }: AuthFormProps) {
   });
 
   const checkEmailAlias = (email: string) => {
-    const aliasPatterns = ['+', '.', 'alias'];
-    setIsEmailAlias(aliasPatterns.some(pattern => email.includes(pattern)));
+    // Check for email aliases - look for '+' or multiple dots before @
+    const [localPart, domain] = email.split('@');
+    if (!localPart || !domain) return;
+
+    const hasPlus = localPart.includes('+');
+    const hasMultipleDots = (localPart.match(/\./g) || []).length > 1;
+    const hasAliasKeyword = localPart.toLowerCase().includes('alias');
+
+    setIsEmailAlias(hasPlus || hasMultipleDots || hasAliasKeyword);
   };
 
   const handleEmailSubmit = async (data: EmailFormData) => {
@@ -111,6 +119,11 @@ export function AuthForm({ mode, onModeChange }: AuthFormProps) {
   const handleSignUpSubmit = async (data: SignUpFormData) => {
     setIsLoading(true);
     try {
+      // Store signup data before attempting signup
+      setSignUpData(data);
+      setSignUpEmail(data.email);
+      checkEmailAlias(data.email);
+
       const result = await authClient.signUp.email({
         email: data.email,
         password: data.password,
@@ -118,8 +131,7 @@ export function AuthForm({ mode, onModeChange }: AuthFormProps) {
       });
 
       if (result.data) {
-        // Store email and show verification screen
-        setSignUpEmail(data.email);
+        // Only show verification screen after successful signup
         setStep('verification');
       }
     } catch (error: any) {
@@ -150,7 +162,17 @@ export function AuthForm({ mode, onModeChange }: AuthFormProps) {
   const handleBackToSignUp = () => {
     setStep('email');
     setSignUpEmail('');
+    setSignUpData(null);
     signUpForm.reset();
+  };
+
+  const handleEditSignUpInfo = () => {
+    // Go back to signup form but preserve the data
+    if (signUpData) {
+      signUpForm.setValue('email', signUpData.email);
+      signUpForm.setValue('password', signUpData.password);
+    }
+    setStep('email');
   };
 
   const handleVerificationSuccess = () => {
@@ -181,6 +203,7 @@ export function AuthForm({ mode, onModeChange }: AuthFormProps) {
           email={signUpEmail}
           onBack={handleBackToSignUp}
           onSuccess={handleVerificationSuccess}
+          onEditInfo={handleEditSignUpInfo}
         />
       );
     }
