@@ -14,6 +14,7 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin } from 'better-auth/plugins/admin';
 import { passkey } from 'better-auth/plugins/passkey';
+import { emailOTP } from 'better-auth/plugins/email-otp';
 
 const polarEnv = env.NODE_ENV === 'production' ? 'production' : 'sandbox';
 const polarClient = new Polar({
@@ -53,15 +54,16 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: true,
   },
+  // Keep core email verification config present but do NOT auto-send link emails,
+  // since we are switching to OTP-based verification.
   emailVerification: {
-    //afterEmailVerification
-    sendOnSignUp: true,
+    sendOnSignUp: false,
     autoSignInAfterVerification: true,
-    sendVerificationEmail: async ({ user, token }) => {
+    sendVerificationEmail: async ({ user, url }) => {
       const { sendVerificationEmail } = await import('@bounty/email');
       await sendVerificationEmail({
         to: user.email,
-        token,
+        url,
       });
     },
   },
@@ -136,6 +138,34 @@ export const auth = betterAuth({
           : 'http://localhost:3000',
     }),
     admin(),
+    // Enable 6-digit code (OTP) email verification endpoints
+    emailOTP({
+      // Use OTP instead of link for default email verification flow
+      overrideDefaultEmailVerification: true,
+      // Automatically send OTP on sign up (server-driven)
+      sendVerificationOnSignUp: true,
+      // Send the 6-digit OTP via email
+      sendVerificationOTP: async ({ email, otp, type }) => {
+        const { sendEmail, EmailTemplates } = await import('@bounty/email');
+        const subject =
+          type === 'email-verification'
+            ? 'Your Bounty.new verification code'
+            : type === 'sign-in'
+              ? 'Your Bounty.new sign-in code'
+              : 'Your Bounty.new password reset code';
+        await sendEmail({
+          to: email,
+          from: 'notifications@mail.bounty.new',
+          subject,
+          react: EmailTemplates.OTPVerification({
+            code: otp,
+            email,
+            type,
+          }),
+          text: `Your Bounty.new ${type.replace('-', ' ')} code is ${otp}. It expires shortly.`,
+        });
+      },
+    }),
   ],
   secret: env.BETTER_AUTH_SECRET,
 });
