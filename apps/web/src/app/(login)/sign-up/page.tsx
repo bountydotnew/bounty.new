@@ -1,16 +1,17 @@
+'use client';
+
 import { authClient } from '@bounty/auth/client';
 import { Badge } from '@bounty/ui/components/badge';
 import { Button } from '@bounty/ui/components/button';
-import { LogOut } from 'lucide-react';
-import Image from 'next/image';
+import { Spinner } from '@bounty/ui/components/spinner';
+import { Suspense, useCallback, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { AuthForm } from '@/components/auth/auth-form';
 import SubmissionCard from '@/components/bounty/submission-card';
 import Bounty from '@/components/icons/bounty';
+import { GithubIcon } from '@/components/icons';
 import { LINKS } from '@/constants';
-import { GithubIcon } from '../icons';
 
 const cards = {
   ahmet: {
@@ -21,8 +22,7 @@ const cards = {
     rank: 'Rank 500',
     image: 'https://avatars.githubusercontent.com/u/37756565?v=4',
     id: 'ahmet',
-    screenshot:
-      'https://pbs.twimg.com/media/Gwi-mbBWUBc90r_?format=jpg&name=large',
+    screenshot: 'https://pbs.twimg.com/media/Gwi-mbBWUBc90r_?format=jpg&name=large',
   },
   sergio: {
     name: 'Sergio',
@@ -33,8 +33,7 @@ const cards = {
     image:
       'https://pbs.twimg.com/profile_images/1939906364119109632/vu8pOSiH_400x400.jpg',
     id: 'ahmet',
-    screenshot:
-      'https://pbs.twimg.com/media/GwjyS7FX0AMIz4H?format=png&name=small',
+    screenshot: 'https://pbs.twimg.com/media/GwjyS7FX0AMIz4H?format=png&name=small',
   },
   nizzy: {
     name: 'nizzy',
@@ -45,24 +44,32 @@ const cards = {
     image:
       'https://pbs.twimg.com/profile_images/1884987569961570304/TP3OWz64_400x400.jpg',
     id: 'ahmet',
-    screenshot:
-      'https://pbs.twimg.com/media/Gwl0qdhWgAAoJdK?format=jpg&name=large',
+    screenshot: 'https://pbs.twimg.com/media/Gwl0qdhWgAAoJdK?format=jpg&name=large',
   },
 };
 
-export default function Login() {
+function SignUpContent() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [loading, setLoading] = useState(false);
-  const lastMethod = authClient.getLastUsedLoginMethod();
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin'); // kept to minimize diff, but we will force signin below
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session, isPending } = authClient.useSession();
 
-  // Get callback URL from search params, default to dashboard
+  const redirect = searchParams.get('redirect_url') ?? '/login';
   const callbackUrl = searchParams.get('callback') || LINKS.DASHBOARD;
+
+  const handleSignUpSuccess = useCallback(
+    (email: string) => {
+      const usp = new URLSearchParams();
+      usp.set('email', email);
+      if (redirect) {
+        usp.set('redirect_url', redirect);
+      }
+      router.push(`/sign-up/verify-email-address?${usp.toString()}`);
+    },
+    [router, redirect],
+  );
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!(containerRef.current && svgRef.current)) {
@@ -87,15 +94,6 @@ export default function Login() {
       y: Math.max(-1, Math.min(1, y)),
     });
   };
-  useEffect(() => {
-    if (!PublicKeyCredential.isConditionalMediationAvailable?.()) {
-      return;
-    }
-
-    authClient.signIn.passkey({ autoFill: true }).catch(() => {
-      toast.error('Passkey sign-in failed');
-    });
-  }, []);
 
   const handleMouseLeave = () => {
     setMousePosition({ x: 0, y: 0 });
@@ -103,8 +101,6 @@ export default function Login() {
 
   const handleGitHubSignIn = async () => {
     try {
-      setLoading(true);
-
       await authClient.signIn.social(
         {
           provider: 'github',
@@ -116,194 +112,73 @@ export default function Login() {
           },
           onError: (error) => {
             toast.error(error.error.message || 'Sign in failed');
-            setLoading(false);
           },
-        }
+        },
       );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Sign in failed');
-      setLoading(false);
     }
   };
 
-  const handleGoToDashboard = () => {
-    router.push(callbackUrl);
-  };
-
-  // const handlePasskeySignIn = async () => {
-  //   try {
-  //     // Save login method to localStorage
-  //     localStorage.setItem('bounty-last-login-method', 'passkey');
-
-  //     await authClient.signIn.passkey({
-  //       autoFill: false,
-  //       fetchOptions: {
-  //         onSuccess: () => {
-  //           toast.success("Signed in successfully");
-  //           router.push(callbackUrl);
-  //         },
-  //       },
-  //     });
-  //   } catch (error) {
-  //     toast.error(error instanceof Error ? error.message : "Sign in failed");
-  //   }
-  // };
+  const lastMethod = authClient.getLastUsedLoginMethod();
 
   return (
     <div className="flex min-h-screen flex-col bg-[#111110] text-[#f3f3f3] md:flex-row">
-      {/* Left Column: Login Section */}
+      {/* Left Column: Sign-Up Section */}
       <div className="flex flex-1 items-center justify-center p-8 md:p-12">
-        <div className="w-full max-w-md justify-center flex space-y-8">
-          {/* Mobile Bounty Icon 
-          <div className="lg:hidden flex justify-center mb-8">
-            <Bounty className="w-24 h-28 text-primary" />
+        <div className="w-full max-w-96 space-y-8">
+          <div className="space-y-4 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-lg">
+              <Bounty className="h-12 w-12 text-primary" />
+            </div>
+            <h1 className="flex h-7 items-center justify-center font-medium text-sand-12 text-xl tracking-tight">
+              Create your bounty account
+            </h1>
           </div>
-          */}
 
-          {isPending ? (
-            <div className="w-full max-w-96 space-y-8">
-              <div className="animate-pulse space-y-4 text-center">
-                <div className="mx-auto h-16 w-16 rounded-lg bg-[#383838]" />
-                <div className="mx-auto h-7 w-48 rounded bg-[#383838]" />
+          <div className="space-y-6">
+            <AuthForm
+              mode="signup"
+              onModeChange={() => null}
+              onSignUpSuccess={handleSignUpSuccess}
+            />
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-600" />
               </div>
-
-              <div className="animate-pulse space-y-3">
-                <div className="h-12 w-full rounded-lg bg-[#383838]" />
-              </div>
-
-              <div className="animate-pulse text-center">
-                <div className="mx-auto h-4 w-64 rounded bg-[#383838]" />
-              </div>
-            </div>
-          ) : session ? (
-            <div className="w-full max-w-96 space-y-8">
-              <div className="space-y-4 text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-lg">
-                  <Bounty className="h-12 w-12 text-primary" />
-                </div>
-                <div className="space-y-2">
-                  <h1 className="flex h-7 items-center justify-center font-medium text-sand-12 text-xl tracking-tight">
-                    Welcome back!
-                  </h1>
-                  <p className="text-gray-400 text-sm">
-                    You&apos;re already signed in
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3 rounded-lg bg-[#1D1D1D] p-3">
-                  {session.user.image && (
-                    <Image
-                      alt={session.user.name || 'User'}
-                      className="h-10 w-10 rounded-full"
-                      height={40}
-                      src={session.user.image}
-                      width={40}
-                    />
-                  )}
-                  <div className="text-left">
-                    <p className="font-medium text-sm text-white">
-                      {session.user.name}
-                    </p>
-                    <p className="text-gray-400 text-xs">
-                      {session.user.email}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Button
-                    className="w-full rounded-lg bg-[#2A2A28] py-3 font-medium text-gray-200 transition-colors hover:bg-[#383838]"
-                    onClick={handleGoToDashboard}
-                  >
-                    Continue
-                  </Button>
-                  <Button
-                    className="flex w-full items-center justify-center gap-2 rounded-lg py-3 font-medium text-gray-400 transition-colors hover:text-gray-200"
-                    onClick={() =>
-                      authClient.signOut({
-                        fetchOptions: {
-                          onSuccess: () => {
-                            toast.success('Signed out successfully');
-                            window.location.href = '/login';
-                          },
-                        },
-                      })
-                    }
-                    variant="text"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Nevermind, log me out.
-                  </Button>
-                </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-[#111110] px-2 text-gray-400">Or continue with</span>
               </div>
             </div>
-          ) : (
-            <div className="w-full max-w-96 space-y-8">
-              <div className="space-y-4 text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-lg">
-                  <Bounty className="h-12 w-12 text-primary" />
-                </div>
-                <h1 className="flex h-7 items-center justify-center font-medium text-sand-12 text-xl tracking-tight">
-                  Sign in to bounty
-                </h1>
-              </div>
 
-              <div className="space-y-6">
-                <AuthForm
-                  mode="signin"
-                  onModeChange={(mode) => {
-                    if (mode === 'signup') {
-                      router.push('/sign-up');
-                    }
-                  }}
-                />
-
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-gray-600" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-[#111110] px-2 text-gray-400">Or</span>
-                  </div>
-                </div>
-
-                <div className="relative">
-                  <Button
-                    className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#2A2A28] py-3 font-medium text-gray-200 transition-colors hover:bg-[#383838]"
-                    disabled={loading}
-                    onClick={handleGitHubSignIn}
-                  >
-                    {loading ? (
-                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                    ) : (
-                      <GithubIcon className="h-5 w-5 fill-white" />
-                    )}
-                    {loading ? 'Signing in…' : 'Continue with GitHub'}
-                  </Button>
-                  {lastMethod === 'github' && (
-                    <Badge className="-top-2 -right-2 absolute bg-primary px-1 py-0.5 text-primary-foreground text-xs">
-                      Last used
-                    </Badge>
-                  )}
-                </div>
-              </div>
+            <div className="relative">
+              <Button
+                className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#2A2A28] py-3 font-medium text-gray-200 transition-colors hover:bg-[#383838]"
+                onClick={handleGitHubSignIn}
+              >
+                <GithubIcon className="h-5 w-5 fill-white" />
+                Continue with GitHub
+              </Button>
+              {lastMethod === 'github' && (
+                <Badge className="-top-2 -right-2 absolute bg-primary px-1 py-0.5 text-primary-foreground text-xs">
+                  Last used
+                </Badge>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
-      {/* Right Column: Showcase Section */}
+      {/* Right Column: Showcase Section (cloned from login) */}
       <div className="hidden flex-1 items-center justify-center lg:flex">
+        {/* decorative canvas */}
         <div
           className="relative flex min-h-[95%] flex-1 cursor-pointer items-center justify-center overflow-hidden border-1 border-[#383838] p-8 md:p-12"
           onMouseLeave={handleMouseLeave}
           onMouseMove={handleMouseMove}
           ref={containerRef}
-          role="application"
-          tabIndex={0}
-          aria-label="Interactive showcase canvas"
+          aria-hidden="true"
           style={{
             backgroundImage:
               'radial-gradient(circle at 1px 1px, #383838 1px, transparent 0)',
@@ -416,5 +291,19 @@ export default function Login() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center">
+          <Spinner />
+        </div>
+      }
+    >
+      <SignUpContent />
+    </Suspense>
   );
 }
