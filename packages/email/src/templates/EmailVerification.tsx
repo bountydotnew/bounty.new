@@ -16,10 +16,10 @@ interface EmailVerificationProps {
   email: string;
 }
 
-export default function EmailVerification({
+export const EmailVerification = ({
   verificationUrl,
   email,
-}: EmailVerificationProps) {
+}: EmailVerificationProps) => {
   return (
     <Html>
       <Head />
@@ -55,6 +55,7 @@ export default function EmailVerification({
       </Body>
     </Html>
   );
+};
 }
 
 const main = {
