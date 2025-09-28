@@ -55,9 +55,8 @@ export const EmailVerification = ({
       </Body>
     </Html>
   );
+  );
 };
-}
-
 const main = {
   backgroundColor: '#ffffff',
   fontFamily:
