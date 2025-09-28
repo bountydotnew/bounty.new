@@ -17,7 +17,7 @@ export const accessStageEnum = pgEnum('access_stage', [
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
-  name: text('name').notNull(),
+  name: text('name'),
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').notNull().default(false),
   image: text('image'),

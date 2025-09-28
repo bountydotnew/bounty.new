@@ -17,18 +17,14 @@ import {
 import { useBilling } from '@bounty/ui/hooks/use-billing';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 export function GeneralSettings() {
-  const [isClientMounted, setIsClientMounted] = useState(false);
+  const [isClientMounted, setIsClientMounted] = useState(() => typeof window !== 'undefined');
   const { data: session } = authClient.useSession();
   const { isPro, isLoading: billingLoading } = useBilling({ enabled: true });
   const router = useRouter();
-  // Prevent hydration mismatch by ensuring client-side rendering
-  useEffect(() => {
-    setIsClientMounted(true);
-  }, []);
 
   const handleSignOut = async () => {
     try {

@@ -1,4 +1,32 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.1.2/schema.json",
-  "extends": ["ultracite"]
+  "extends": ["ultracite"],
+  "linter": {
+    "rules": {
+      "suspicious": {
+        "noConsole": "off"
+      },
+      "performance": {
+        "noNamespaceImport": "off"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "off"
+      },
+      "style": {
+        "noNestedTernary": "off"
+      },
+      "nursery": {
+        "noShadow": "off",
+        "useSortedClasses": "off"
+      }
+    }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "useSortedAttributes": "off",
+        "organizeImports": "off"
+      }
+    }
+  }
 }
