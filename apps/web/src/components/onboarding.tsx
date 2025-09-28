@@ -9,14 +9,9 @@ import { useConfetti } from '@/context/confetti-context';
 
 export function Onboarding() {
   const [step, setStep] = useState(0);
-  const [isOpen, setIsOpen] = useState(false);
   const { celebrate } = useConfetti();
-  const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
-  useEffect(() => {
-    if (!hasSeenOnboarding) {
-      setIsOpen(true);
-    }
-  }, [hasSeenOnboarding]);
+  const hasSeenOnboarding = typeof window !== 'undefined' ? localStorage.getItem('hasSeenOnboarding') : null;
+  const [isOpen, setIsOpen] = useState(() => !hasSeenOnboarding);
 
   useEffect(() => {
     if (!hasSeenOnboarding && isOpen && step === 0) {

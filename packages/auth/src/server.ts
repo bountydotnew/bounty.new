@@ -51,6 +51,8 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+    autoSignInAfterEmailVerification: true,
+    requireEmailVerification: true,
   },
   plugins: [
     polar({

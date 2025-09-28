@@ -53,7 +53,10 @@ const cards = {
 export default function Login() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(false);
-  const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(null);
+  const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('bounty-last-login-method');
+  });
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();
@@ -87,10 +90,6 @@ export default function Login() {
     });
   };
   useEffect(() => {
-    // Load last used login method from localStorage
-    const lastMethod = localStorage.getItem('bounty-last-login-method');
-    setLastUsedMethod(lastMethod);
-
     if (!PublicKeyCredential.isConditionalMediationAvailable?.()) {
       return;
     }
