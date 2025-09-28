@@ -3,7 +3,7 @@ import { Badge } from '@bounty/ui/components/badge';
 import { Button } from '@bounty/ui/components/button';
 import { Input } from '@bounty/ui/components/input';
 import Link from '@bounty/ui/components/link';
-import { Eye, EyeOff, LogOut } from 'lucide-react';
+import { AtSignIcon, Eye, EyeOff, LogOut } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -350,7 +350,7 @@ export default function Login() {
                 </div>
                 <div className="space-y-2">
                   <h1 className="flex h-7 items-center justify-center font-medium text-sand-12 text-xl tracking-tight">
-                    Sign in to Tembo
+                    Sign in to Bounty
                   </h1>
                   <p className="text-gray-400 text-sm">
                     Welcome back! Please sign in to continue
@@ -424,8 +424,8 @@ export default function Login() {
                       required
                     />
                     {emailAlias && (
-                      <Badge className="-top-2 -right-2 absolute bg-blue-600 px-2 py-1 text-white text-xs">
-                        +{emailAlias}
+                      <Badge className="-top-2 -right-2 absolute bg-[#40403F] px-2 py-1 text-white text-xs">
+                        <AtSignIcon />{emailAlias}
                       </Badge>
                     )}
                   </div>
