@@ -38,15 +38,16 @@ export function MarkdownTextarea({
   const [content, setContent] = useState(value);
   const [mode, setMode] = useState<'write' | 'preview' | 'split'>('write');
 
+  // Sync content when value prop changes (no useEffect needed)
+  if (value !== content && value !== undefined) {
+    setContent(value);
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     setContent(newValue);
     onChange?.(newValue);
   };
-
-  React.useEffect(() => {
-    setContent(value);
-  }, [value]);
 
   return (
     <div className={cn('overflow-hidden rounded-md border', className)}>

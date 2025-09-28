@@ -58,16 +58,8 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+    autoSignInAfterEmailVerification: true,
     requireEmailVerification: true,
-  },
-  // Keep core email verification config present but do NOT auto-send link emails,
-  // since we are switching to OTP-based verification.
-  // Disable link-based verification emails; OTP replaces link verification.
-  emailVerification: {
-    sendOnSignUp: false,
-    autoSignInAfterVerification: true,
-    // Intentionally no-op to avoid sending magic link emails.
-    sendVerificationEmail: () => Promise.resolve(),
   },
   plugins: [
     polar({

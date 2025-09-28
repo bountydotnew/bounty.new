@@ -11,21 +11,16 @@ import {
 import { Separator } from '@bounty/ui/components/separator';
 import { useBilling } from '@bounty/ui/hooks/use-billing';
 import { Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export function BillingSettings() {
-  const [isClientMounted, setIsClientMounted] = useState(false);
+  const [isClientMounted, setIsClientMounted] = useState(() => typeof window !== 'undefined');
   const {
     isPro,
     customer,
     isLoading: billingLoading,
     openBillingPortal,
   } = useBilling({ enabled: true });
-
-  // Prevent hydration mismatch by ensuring client-side rendering
-  useEffect(() => {
-    setIsClientMounted(true);
-  }, []);
 
   // Don't render until client is mounted to prevent hydration issues
   if (!isClientMounted) {

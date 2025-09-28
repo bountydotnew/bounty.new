@@ -53,8 +53,10 @@ const cards = {
 export default function Login() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(false);
-  const lastMethod = authClient.getLastUsedLoginMethod();
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin'); // kept to minimize diff, but we will force signin below
+  const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('bounty-last-login-method');
+  });
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();

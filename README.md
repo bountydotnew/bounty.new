@@ -71,8 +71,8 @@ git clone https://github.com/ripgrim/bounty.new.git
 cd bounty.new
 bun install
 
-#
-Grab a DB string from https://neon.new :3
+# Grab a DB string from https://neon.new :3
+# URL-encode the username or password portion of your DATABASE_URL if they contain any special characters.
 
 # Configure environment (edit .env)
 DATABASE_URL="postgresql://username:password@localhost:5432/bounty_new"
