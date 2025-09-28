@@ -79,7 +79,7 @@ export const auth = betterAuth({
         }),
       onCustomerCreateError: ({ error }: { error: unknown }) => {
         const e = error as PolarError;
-        const msg = String(error);
+        const msg = String(e?.message || e?.body$ || '');
         if (
           e?.status === 409 ||
           msg.includes('external ID cannot be updated') ||
