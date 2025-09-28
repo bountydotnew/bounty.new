@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import SubmissionCard from '@/components/bounty/submission-card';
 import Bounty from '@/components/icons/bounty';
 import { LINKS } from '@/constants';
+import { validateCallbackUrl } from '@/utils/security';
 import { GithubIcon } from '../icons';
 
 const cards = {
@@ -61,7 +62,8 @@ export default function Login() {
   const { data: session, isPending } = authClient.useSession();
 
   // Get callback URL from search params, default to dashboard
-  const callbackUrl = searchParams.get('callback') || LINKS.DASHBOARD;
+  // Validate and sanitize callback URL to prevent open redirects
+  const callbackUrl = validateCallbackUrl(searchParams.get('callback'), LINKS.DASHBOARD);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!(containerRef.current && svgRef.current)) {
@@ -91,11 +93,26 @@ export default function Login() {
     const lastMethod = localStorage.getItem('bounty-last-login-method');
     setLastUsedMethod(lastMethod);
 
-    if (!PublicKeyCredential.isConditionalMediationAvailable?.()) {
-      return;
-    }
+    // Check passkey conditional mediation availability asynchronously
+    const checkPasskeySupport = async () => {
+      try {
+        if (!PublicKeyCredential?.isConditionalMediationAvailable) {
+          return;
+        }
 
-    void authClient.signIn.passkey({ autoFill: true });
+        const isAvailable = await PublicKeyCredential.isConditionalMediationAvailable();
+        if (!isAvailable) {
+          return;
+        }
+
+        await authClient.signIn.passkey({ autoFill: true });
+      } catch (error) {
+        // Log error or handle gracefully - don't block authentication flow
+        console.debug('Passkey conditional mediation failed:', error);
+      }
+    };
+
+    checkPasskeySupport();
   }, []);
 
   const handleMouseLeave = () => {
