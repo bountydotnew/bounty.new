@@ -52,6 +52,11 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
+  },
+  emailVerification: {
+    //afterEmailVerification
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, token }) => {
       const { sendVerificationEmail } = await import('@bounty/email');
       await sendVerificationEmail({
