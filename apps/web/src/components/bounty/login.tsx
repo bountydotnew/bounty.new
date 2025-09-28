@@ -55,7 +55,7 @@ export default function Login() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(false);
   const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(null);
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin'); // kept to minimize diff, but we will force signin below
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();
@@ -251,12 +251,19 @@ export default function Login() {
                   <Bounty className="h-12 w-12 text-primary" />
                 </div>
                 <h1 className="flex h-7 items-center justify-center font-medium text-sand-12 text-xl tracking-tight">
-                  {authMode === 'signin' ? 'Sign in to bounty' : 'Create your account'}
+                  Sign in to bounty
                 </h1>
               </div>
 
               <div className="space-y-6">
-                <AuthForm mode={authMode} onModeChange={setAuthMode} />
+                <AuthForm
+                  mode="signin"
+                  onModeChange={(mode) => {
+                    if (mode === 'signup') {
+                      router.push('/sign-up');
+                    }
+                  }}
+                />
 
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">

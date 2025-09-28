@@ -3,23 +3,19 @@ import { EmailVerification } from './templates';
 
 interface SendVerificationEmailParams {
   to: string;
-  token: string;
-  baseUrl?: string;
+  url: string;
 }
 
 export async function sendVerificationEmail({
   to,
-  token,
-  baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001',
+  url,
 }: SendVerificationEmailParams) {
-  const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${token}`;
-
-  return sendEmail({
+  return await sendEmail({
     to,
-    from: 'noreply@bounty.new',
-    subject: 'Verify your email address - Bounty.new',
+    from: 'notifications@mail.bounty.new',
+    subject: 'Verify your email address',
     react: EmailVerification({
-      verificationUrl,
+      verificationUrl: url,
       email: to,
     }),
   });
