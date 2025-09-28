@@ -265,7 +265,7 @@ export default function Login() {
                     <span className="w-full border-t border-gray-600" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-[#111110] px-2 text-gray-400">Or continue with</span>
+                    <span className="bg-[#111110] px-2 text-gray-400">Or</span>
                   </div>
                 </div>
 
