@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { AuthForm } from '@/components/auth/auth-form';
 import SubmissionCard from '@/components/bounty/submission-card';
 import Bounty from '@/components/icons/bounty';
 import { LINKS } from '@/constants';
@@ -54,6 +55,7 @@ export default function Login() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(false);
   const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(null);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();
@@ -249,11 +251,22 @@ export default function Login() {
                   <Bounty className="h-12 w-12 text-primary" />
                 </div>
                 <h1 className="flex h-7 items-center justify-center font-medium text-sand-12 text-xl tracking-tight">
-                  Sign in to bounty
+                  {authMode === 'signin' ? 'Sign in to bounty' : 'Create your account'}
                 </h1>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-6">
+                <AuthForm mode={authMode} onModeChange={setAuthMode} />
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-gray-600" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-[#111110] px-2 text-gray-400">Or continue with</span>
+                  </div>
+                </div>
+
                 <div className="relative">
                   <Button
                     className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#2A2A28] py-3 font-medium text-gray-200 transition-colors hover:bg-[#383838]"
@@ -273,34 +286,6 @@ export default function Login() {
                     </Badge>
                   )}
                 </div>
-                {/* <div className="relative flex justify-center pt-2">
-                  <Button
-                    onClick={handlePasskeySignIn}
-                    disabled={loading}
-                    variant="text"
-                    className="text-gray-400 hover:text-gray-200 flex items-center justify-center gap-2"
-                  >
-                    <Key className="w-4 h-4" />
-                    {loading ? "Signing in…" : "Have a passkey?"}
-                  </Button>
-                  {lastUsedMethod === 'passkey' && (
-                    <Badge className="absolute -top-2 -right-2 bg-green-600 text-white text-xs px-2 py-1">
-                      Last used
-                    </Badge>
-                  )}
-                </div> */}
-              </div>
-
-              <div className="flex h-8 items-center justify-center text-center text-sm">
-                <span className="text-gray-400">
-                  Don&apos;t have an account?{' '}
-                </span>
-                <Link
-                  className="rounded px-1 py-1 font-medium text-white outline-none transition-colors hover:bg-neutral-800 focus-visible:bg-neutral-800"
-                  href="/waitlist"
-                >
-                  Join the waitlist
-                </Link>
               </div>
             </div>
           )}

@@ -51,6 +51,31 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
+    sendVerificationEmail: async ({ user, token }) => {
+      const { sendEmail } = await import('@bounty/email');
+      await sendEmail({
+        to: user.email,
+        from: 'noreply@bounty.new',
+        subject: 'Verify your email address',
+        text: `Please verify your email by clicking this link: ${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/verify-email?token=${token}`,
+        html: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #333;">
+            <h2>Verify your email address</h2>
+            <p>Thanks for signing up! Please click the button below to verify your email address:</p>
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/verify-email?token=${token}"
+                 style="background: #000; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-block;">
+                Verify Email
+              </a>
+            </div>
+            <p style="color: #666; font-size: 14px;">
+              If you didn't create an account, you can safely ignore this email.
+            </p>
+          </div>
+        `,
+      });
+    },
   },
   plugins: [
     polar({
