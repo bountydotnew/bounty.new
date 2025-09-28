@@ -4,6 +4,7 @@ import { authClient } from '@bounty/auth/client';
 import { Badge } from '@bounty/ui/components/badge';
 import { Button } from '@bounty/ui/components/button';
 import { Input } from '@bounty/ui/components/input';
+import Link from '@bounty/ui/components/link';
 import { cn } from '@bounty/ui/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion } from 'motion/react';
@@ -12,6 +13,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { EmailVerification } from './email-verification';
+
+const EXISTS_RE = /already exists|conflict|duplicate/i;
 
 const emailSchema = z.object({
   email: z
@@ -42,9 +45,14 @@ type SignUpFormData = z.infer<typeof signUpSchema>;
 interface AuthFormProps {
   mode: 'signin' | 'signup';
   onModeChange: (mode: 'signin' | 'signup') => void;
+  /**
+   * When provided (use on sign-up route), route-based flows are used instead
+   * of internal step switching. Call with the email that needs verification.
+   */
+  onSignUpSuccess?: (email: string) => void;
 }
 
-export function AuthForm({ mode, onModeChange }: AuthFormProps) {
+export function AuthForm({ mode, onModeChange, onSignUpSuccess }: AuthFormProps) {
   const [step, setStep] = useState<'email' | 'password' | 'verification'>('email');
   const [email, setEmail] = useState('');
   const [isEmailAlias, setIsEmailAlias] = useState(false);
@@ -70,15 +78,18 @@ export function AuthForm({ mode, onModeChange }: AuthFormProps) {
   });
 
   const checkEmailAlias = (email: string) => {
-    // Check for email aliases - look for '+' or multiple dots before @
     const [localPart, domain] = email.split('@');
-    if (!localPart || !domain) return;
+    if (!localPart || !domain) {
+      setIsEmailAlias(false);
+      return;
+    }
+    const domainLower = domain.toLowerCase();
+    const isGmail = domainLower === 'gmail.com' || domainLower === 'googlemail.com';
 
     const hasPlus = localPart.includes('+');
-    const hasMultipleDots = (localPart.match(/\./g) || []).length > 1;
-    const hasAliasKeyword = localPart.toLowerCase().includes('alias');
+    const hasDotAlias = isGmail && localPart.includes('.');
 
-    setIsEmailAlias(hasPlus || hasMultipleDots || hasAliasKeyword);
+    setIsEmailAlias(hasPlus || hasDotAlias);
   };
 
   const handleEmailSubmit = async (data: EmailFormData) => {
@@ -118,39 +129,53 @@ export function AuthForm({ mode, onModeChange }: AuthFormProps) {
 
   const handleSignUpSubmit = async (data: SignUpFormData) => {
     setIsLoading(true);
-    try {
-      // Store signup data before attempting signup
-      setSignUpData(data);
-      setSignUpEmail(data.email);
-      checkEmailAlias(data.email);
 
-      const result = await authClient.signUp.email({
+    // Preserve form state so the user can edit on the verify screen
+    setSignUpData(data);
+    setSignUpEmail(data.email);
+    checkEmailAlias(data.email);
+
+    let hadError = false;
+
+    await authClient.signUp.email(
+      {
         email: data.email,
         password: data.password,
         name: data.email.split('@')[0], // Use email prefix as default name
-      });
+        callbackURL: '/login',
+      },
+      {
+        onError: (ctx) => {
+          hadError = true;
+          const status = ctx.error?.status;
+          const message = ctx.error?.message ?? '';
 
-      if (result.data) {
-        // Only show verification screen after successful signup
+          if (status === 422 || EXISTS_RE.test(message)) {
+            signUpForm.setError('email', {
+              type: 'manual',
+              message: 'An account with this email already exists. Try signing in instead.',
+            });
+          } else {
+            signUpForm.setError('root', {
+              type: 'manual',
+              message: message || 'Something went wrong. Please try again.',
+            });
+          }
+        },
+      },
+    );
+
+    if (!hadError) {
+      if (onSignUpSuccess) {
+        // Route-based flow: push to dedicated verify page
+        onSignUpSuccess(data.email);
+      } else {
+        // Legacy internal-step flow
         setStep('verification');
       }
-    } catch (error: any) {
-      console.error('Sign up error:', error);
-
-      if (error?.message?.includes('already exists')) {
-        signUpForm.setError('email', {
-          type: 'manual',
-          message: 'An account with this email already exists',
-        });
-      } else {
-        signUpForm.setError('root', {
-          type: 'manual',
-          message: error?.message || 'Something went wrong. Please try again.',
-        });
-      }
-    } finally {
-      setIsLoading(false);
     }
+
+    setIsLoading(false);
   };
 
   const handleBackToEmail = () => {
@@ -332,13 +357,12 @@ export function AuthForm({ mode, onModeChange }: AuthFormProps) {
 
         <div className="text-center text-sm text-gray-400">
           Already have an account?{' '}
-          <button
-            type="button"
-            onClick={() => onModeChange('signin')}
+          <Link
+            href="/login"
             className="text-white hover:text-gray-200 underline"
           >
             Sign in
-          </button>
+          </Link>
         </div>
       </form>
     );
@@ -415,13 +439,12 @@ export function AuthForm({ mode, onModeChange }: AuthFormProps) {
 
         <div className="text-center text-sm text-gray-400">
           Don't have an account?{' '}
-          <button
-            type="button"
-            onClick={() => onModeChange('signup')}
+          <Link
+            href="/sign-up"
             className="text-white hover:text-gray-200 underline"
           >
             Sign up
-          </button>
+          </Link>
         </div>
       </form>
     );

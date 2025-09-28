@@ -96,19 +96,17 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo }: Emai
   const handleSubmit = async (data: VerificationFormData) => {
     setIsLoading(true);
     try {
-      const result = await authClient.emailVerification.verify({
+      const result = await authClient.emailOtp.verifyEmail({
         email,
-        code: data.code,
+        otp: data.code,
       });
-
-      if (result.data) {
+      if (result?.data) {
         onSuccess();
       }
-    } catch (error: any) {
-      console.error('Verification error:', error);
+    } catch (error) {
       form.setError('code', {
         type: 'manual',
-        message: error?.message || 'Invalid verification code',
+        message: error instanceof Error ? error.message : 'Invalid verification code',
       });
     } finally {
       setIsLoading(false);
@@ -116,23 +114,26 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo }: Emai
   };
 
   const handleResendCode = async () => {
-    if (resendCooldown > 0) return;
+    if (resendCooldown > 0) {
+      return;
+    }
 
     setIsResending(true);
     try {
-      await authClient.emailVerification.sendVerificationEmail({
+      await authClient.emailOtp.sendVerificationOtp({
         email,
+        type: 'email-verification',
       });
-
       setResendCooldown(60); // 60 second cooldown
-    } catch (error: any) {
-      console.error('Resend error:', error);
+    } catch {
+      // no-op; user can try again
     } finally {
       setIsResending(false);
     }
   };
 
   const code = form.watch('code');
+
 
   return (
     <div className="space-y-6">
@@ -154,8 +155,10 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo }: Emai
           <div className="flex justify-center gap-2">
             {Array.from({ length: 6 }, (_, index) => (
               <Input
-                key={index}
-                ref={(el) => (inputRefs.current[index] = el)}
+                key={`otp-${index}`}
+                ref={(el) => {
+                  inputRefs.current[index] = el;
+                }}
                 type="text"
                 inputMode="numeric"
                 maxLength={1}
