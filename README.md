@@ -72,7 +72,7 @@ cd bounty.new
 bun install
 
 # Grab a DB string from https://neon.new :3
-# URL-encode your DATABASE_URL if the username or password contains any special characters.
+# URL-encode the username or password portion of your DATABASE_URL if they contain any special characters.
 
 # Configure environment (edit .env)
 DATABASE_URL="postgresql://username:password@localhost:5432/bounty_new"
