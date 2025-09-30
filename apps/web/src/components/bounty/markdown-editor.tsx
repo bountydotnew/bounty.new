@@ -38,10 +38,11 @@ export function MarkdownTextarea({
   const [content, setContent] = useState(value);
   const [mode, setMode] = useState<'write' | 'preview' | 'split'>('write');
 
-  // Sync content when value prop changes (no useEffect needed)
-  if (value !== content && value !== undefined) {
-    setContent(value);
-  }
+  React.useEffect(() => {
+    if (value !== undefined) {
+      setContent(value);
+    }
+  }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;

@@ -284,7 +284,7 @@ export default function Login() {
                     )}
                     {loading ? 'Signing in…' : 'Continue with GitHub'}
                   </Button>
-                  {lastMethod === 'github' && (
+                  {lastUsedMethod === "github" && (
                     <Badge className="-top-2 -right-2 absolute bg-primary px-1 py-0.5 text-primary-foreground text-xs">
                       Last used
                     </Badge>
