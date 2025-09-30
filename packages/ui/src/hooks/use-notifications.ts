@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect } from 'react';
-import { toast } from 'sonner';
+import { toastError, toastSuccess } from '@bounty/ui/lib/toast';
 import { trpc } from '@/utils/trpc';
 
 const POLL_MS = 30_000;
@@ -26,7 +26,7 @@ export function useNotifications() {
         notificationsQuery.refetch();
         unreadCountQuery.refetch();
       },
-      onError: () => toast.error('Failed to mark as read'),
+      onError: () => toastError('Failed to mark as read'),
     })
   );
 
@@ -35,9 +35,9 @@ export function useNotifications() {
       onSuccess: () => {
         notificationsQuery.refetch();
         unreadCountQuery.refetch();
-        toast.success('All notifications marked as read');
+        toastSuccess('All notifications marked as read');
       },
-      onError: () => toast.error('Failed to mark all as read'),
+      onError: () => toastError('Failed to mark all as read'),
     })
   );
 

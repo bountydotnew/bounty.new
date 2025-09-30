@@ -11,9 +11,9 @@ import {
 import { Input } from '@bounty/ui/components/input';
 import { Label } from '@bounty/ui/components/label';
 import { Switch } from '@bounty/ui/components/switch';
+import { toastError, toastSuccess } from '@bounty/ui/lib/toast';
 import { Copy, ExternalLink, Plus, X } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 import { PaymentButton } from '@/components/payment/payment-button';
 
 export function PaymentSettings() {
@@ -31,28 +31,28 @@ export function PaymentSettings() {
   const handleAddPresetAmount = () => {
     const amount = Number.parseFloat(newAmount);
     if (Number.isNaN(amount) || amount <= 0) {
-      toast.error('Please enter a valid amount');
+      toastError('Please enter a valid amount');
       return;
     }
 
     if (presetAmounts.includes(amount)) {
-      toast.error('This amount already exists');
+      toastError('This amount already exists');
       return;
     }
 
     if (presetAmounts.length >= 6) {
-      toast.error('Maximum 6 preset amounts allowed');
+      toastError('Maximum 6 preset amounts allowed');
       return;
     }
 
     setPresetAmounts([...presetAmounts, amount].sort((a, b) => a - b));
     setNewAmount('');
-    toast.success('Preset amount added');
+    toastSuccess('Preset amount added');
   };
 
   const handleRemovePresetAmount = (amount: number) => {
     setPresetAmounts(presetAmounts.filter((a) => a !== amount));
-    toast.success('Preset amount removed');
+    toastSuccess('Preset amount removed');
   };
 
   const generateHTMLSnippet = () => {
@@ -69,13 +69,13 @@ export function PaymentSettings() {
 
   const copyHTMLSnippet = () => {
     navigator.clipboard.writeText(generateHTMLSnippet());
-    toast.success('HTML snippet copied to clipboard!');
+    toastSuccess('HTML snippet copied to clipboard!');
   };
 
   const copyDirectLink = () => {
     const link = `https://bounty.new/pay/${username}`;
     navigator.clipboard.writeText(link);
-    toast.success('Direct link copied to clipboard!');
+    toastSuccess('Direct link copied to clipboard!');
   };
 
   return (

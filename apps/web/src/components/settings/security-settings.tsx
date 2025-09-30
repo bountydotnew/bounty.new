@@ -20,11 +20,11 @@ import { Input } from '@bounty/ui/components/input';
 import { Label } from '@bounty/ui/components/label';
 import { Separator } from '@bounty/ui/components/separator';
 import { usePasskey } from '@bounty/ui/hooks/use-passkey';
+import { toastError, toastSuccess } from '@bounty/ui/lib/toast';
 import { formatDate } from '@bounty/ui/lib/utils';
 import { Laptop, Loader2, Smartphone } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { toast } from 'sonner';
 import { UAParser } from 'ua-parser-js';
 
 export function SecuritySettings() {
@@ -91,7 +91,7 @@ export function SecuritySettings() {
       // Mock successful termination
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      toast.success('Session terminated successfully');
+      toastSuccess('Session terminated successfully');
       removeActiveSession(session.id);
 
       // If terminating current session, refresh the page
@@ -99,7 +99,7 @@ export function SecuritySettings() {
         router.refresh();
       }
     } catch (error) {
-      toast.error(`Failed to terminate session: ${error}`);
+      toastError(`Failed to terminate session: ${error}`);
     } finally {
       setTerminatingSession(null);
     }
@@ -110,21 +110,21 @@ export function SecuritySettings() {
   ) => {
     try {
       await addPasskey({ authenticatorAttachment });
-      toast.success('Passkey added successfully');
+      toastSuccess('Passkey added successfully');
       listPasskeys();
       setIsAddDialogOpen(false);
       setNewPasskeyName('');
     } catch (_error) {
-      toast.error('Failed to add passkey');
+      toastError('Failed to add passkey');
     }
   };
 
   const handleDeletePasskey = async (id: string) => {
     try {
       await deletePasskey(id);
-      toast.success('Passkey deleted successfully');
+      toastSuccess('Passkey deleted successfully');
     } catch (_error) {
-      toast.error('Failed to delete passkey');
+      toastError('Failed to delete passkey');
     }
   };
 
@@ -135,12 +135,12 @@ export function SecuritySettings() {
 
     try {
       await updatePasskey(editingPasskey.id, editName);
-      toast.success('Passkey updated successfully');
+      toastSuccess('Passkey updated successfully');
       setEditingPasskey(null);
       setEditName('');
       setIsEditDialogOpen(false);
     } catch (_error) {
-      toast.error('Failed to update passkey');
+      toastError('Failed to update passkey');
     }
   };
 

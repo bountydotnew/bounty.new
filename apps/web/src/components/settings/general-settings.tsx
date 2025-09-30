@@ -15,10 +15,10 @@ import {
   CardTitle,
 } from '@bounty/ui/components/card';
 import { useBilling } from '@bounty/ui/hooks/use-billing';
+import { toastError } from '@bounty/ui/lib/toast';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 
 export function GeneralSettings() {
   const [isClientMounted, setIsClientMounted] = useState(false);
@@ -35,7 +35,7 @@ export function GeneralSettings() {
       await authClient.signOut();
       router.push('/');
     } catch (_error) {
-      toast.error('Failed to sign out');
+      toastError('Failed to sign out');
     }
   };
 
