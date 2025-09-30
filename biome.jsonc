@@ -10,7 +10,7 @@
         "noNamespaceImport": "off"
       },
       "security": {
-        "noDangerouslySetInnerHtml": "off"
+        "noDangerouslySetInnerHtml": "warn"
       },
       "style": {
         "noNestedTernary": "off"
