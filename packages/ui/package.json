@@ -66,7 +66,14 @@
     },
     "./styles/index.css": "./src/styles/index.css",
     "./postcss.config": "./postcss.config.mjs",
-    "./lib/*": "./src/lib/*.ts",
+    "./lib/*": {
+      "types": "./src/lib/*.ts",
+      "import": "./src/lib/*.ts"
+    },
+    "./lib/*.tsx": {
+      "types": "./src/lib/*.tsx",
+      "import": "./src/lib/*.tsx"
+    },
     "./components/*": "./src/components/*.tsx",
     "./hooks/*": "./src/hooks/*.ts"
   },
