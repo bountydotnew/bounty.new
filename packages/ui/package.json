@@ -66,14 +66,11 @@
     },
     "./styles/index.css": "./src/styles/index.css",
     "./postcss.config": "./postcss.config.mjs",
-    "./lib/*": {
-      "types": "./src/lib/*.ts",
-      "import": "./src/lib/*.ts"
+    "./lib/toast": {
+      "types": "./src/lib/toast.tsx",
+      "import": "./src/lib/toast.tsx"
     },
-    "./lib/*.tsx": {
-      "types": "./src/lib/*.tsx",
-      "import": "./src/lib/*.tsx"
-    },
+    "./lib/*": "./src/lib/*",
     "./components/*": "./src/components/*.tsx",
     "./hooks/*": "./src/hooks/*.ts"
   },
