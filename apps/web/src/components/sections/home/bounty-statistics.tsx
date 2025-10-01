@@ -1,3 +1,5 @@
+"use client";
+
 import { cn } from '@bounty/ui/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { trpc } from '@/utils/trpc';

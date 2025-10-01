@@ -8,7 +8,7 @@ export default async function BlogPage() {
   try {
     const postsData = await getPosts();
     posts = postsData?.posts ?? [];
-  } catch (_error) {
+  } catch {
     return (
       <div className="mx-auto max-w-3xl px-6 py-24 text-center text-white">
         Error loading blog posts. Please try again later.

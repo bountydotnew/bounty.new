@@ -1,10 +1,8 @@
-'use client';
-
 import { YCombinator } from '@/components/icons/g-combinator';
 import { BountyStatistics } from '@/components/sections/home/bounty-statistics';
 import { Footer } from '@/components/sections/home/footer';
 import { Header } from '@/components/sections/home/header';
-import { WaitlistForm } from '@/components/sections/home/waitlist-form';
+import { ConditionalForm } from '@/components/sections/home/conditional-form';
 import { BackedByBadge } from '../../registry/new-york/gcombinator-badge/gcombinator-badge';
 
 export default function Home() {
@@ -75,7 +73,7 @@ export default function Home() {
               deliver solutions. Instant payouts, integration, zero friction.
             </p>
 
-            <WaitlistForm />
+            <ConditionalForm />
             <BountyStatistics />
           </div>
         </main>
