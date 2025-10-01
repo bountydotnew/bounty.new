@@ -24,7 +24,7 @@ import {
 } from '@bounty/ui/components/sidebar';
 import { Spinner } from '@bounty/ui/components/spinner';
 import { UserIcon } from '@bounty/ui/components/user';
-import { useBilling } from '@bounty/ui/hooks/use-billing';
+import { useBilling } from '@/hooks/use-billing';
 import { useQuery } from '@tanstack/react-query';
 import { CreditCard, LogOut, Shield, Sparkles } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';

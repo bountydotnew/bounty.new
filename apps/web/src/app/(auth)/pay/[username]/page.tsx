@@ -5,7 +5,6 @@ import {
   AvatarFallback,
   AvatarImage,
 } from '@bounty/ui/components/avatar';
-import { Badge } from '@bounty/ui/components/badge';
 import { Button } from '@bounty/ui/components/button';
 import {
   Card,
@@ -43,32 +42,30 @@ export default function PaymentPage() {
 
   const userQuery = useQuery({
     queryKey: ['user', username],
-    queryFn: async () => {
+    queryFn: () => ({
       // Mock user data for now
-      return {
-        id: '1',
-        username,
-        name: username.charAt(0).toUpperCase() + username.slice(1),
-        image: `https://github.com/${username}.png`,
-        bio: 'Software developer passionate about open source contributions. Building tools that make developers more productive.',
-        githubUrl: `https://github.com/${username}`,
-        twitterUrl:
-          username !== 'example' ? `https://twitter.com/${username}` : null,
-        websiteUrl: username === 'example' ? 'https://example.dev' : null,
-        stats: {
-          repositories: 42,
-          followers: 1234,
-          contributions: 567,
-        },
-        paymentSettings: {
-          enabled: true,
-          presetAmounts: [5, 10, 25, 50],
-          allowCustomAmount: true,
-          minAmount: 1,
-          maxAmount: 1000,
-        },
-      };
-    },
+      id: '1',
+      username,
+      name: username.charAt(0).toUpperCase() + username.slice(1),
+      image: `https://github.com/${username}.png`,
+      bio: 'Software developer passionate about open source contributions. Building tools that make developers more productive.',
+      githubUrl: `https://github.com/${username}`,
+      twitterUrl:
+        username !== 'example' ? `https://twitter.com/${username}` : null,
+      websiteUrl: username === 'example' ? 'https://example.dev' : null,
+      stats: {
+        repositories: 42,
+        followers: 1234,
+        contributions: 567,
+      },
+      paymentSettings: {
+        enabled: true,
+        presetAmounts: [5, 10, 25, 50],
+        allowCustomAmount: true,
+        minAmount: 1,
+        maxAmount: 1000,
+      },
+    }),
   });
 
   useEffect(() => {
