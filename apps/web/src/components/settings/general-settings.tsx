@@ -14,7 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@bounty/ui/components/card';
-import { useBilling } from '@bounty/ui/hooks/use-billing';
+import { useBilling } from '@bounty/ui/hooks/use-billing-client';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
