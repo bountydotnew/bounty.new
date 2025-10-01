@@ -3,10 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Clock, FileText, Users } from 'lucide-react';
 import { AdminHeader } from '@/components/admin';
-import {
-  OverviewKPIs,
-  OverviewTimeseries,
-} from '@/components/admin/analytics/overview';
+import { OverviewKPIs } from '@/components/admin/analytics/overview';
 import { StatCard } from '@/components/admin/stat-card';
 import { trpc } from '@/utils/trpc';
 

@@ -9,5 +9,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const { username } = await params;
   const { data: customerState } = await getServerCustomerState();
 
-  return <ProfileClient initialCustomerState={customerState} username={username} />;
+  return (
+    <ProfileClient initialCustomerState={customerState} username={username} />
+  );
 }

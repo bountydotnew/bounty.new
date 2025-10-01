@@ -26,7 +26,10 @@ interface ProfileClientProps {
   initialCustomerState?: CustomerState | null;
 }
 
-export function ProfileClient({ username, initialCustomerState }: ProfileClientProps) {
+export function ProfileClient({
+  username,
+  initialCustomerState,
+}: ProfileClientProps) {
   const router = useRouter();
   const [isClientMounted, setIsClientMounted] = useState(false);
 

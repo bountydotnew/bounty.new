@@ -64,7 +64,11 @@ export default function UsersPage() {
   const queryClient = useQueryClient();
   const router = useRouter();
 
-  const { data, isLoading, error } = useQuery({
+  const {
+    data,
+    isLoading,
+    error: usersError,
+  } = useQuery({
     queryKey: ['admin', 'listUsers', search, page, pageSize],
     queryFn: async () => {
       // Get users from auth client (has all the auth-specific fields like banned)
@@ -98,18 +102,23 @@ export default function UsersPage() {
       userId: string;
       role: 'user' | 'admin';
     }) => {
-      const { error } = await authClient.admin.setRole({ userId, role });
-      if (error) {
-        throw new Error(error.message || 'Failed to update user role');
+      const { error: setRoleError } = await authClient.admin.setRole({
+        userId,
+        role,
+      });
+      if (setRoleError) {
+        throw new Error(setRoleError.message || 'Failed to update user role');
       }
     },
     onSuccess: () => {
       toast.success('User role updated successfully');
       queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
     },
-    onError: (error: unknown) => {
+    onError: (updateError: unknown) => {
       toast.error(
-        error instanceof Error ? error.message : 'Failed to update user role'
+        updateError instanceof Error
+          ? updateError.message
+          : 'Failed to update user role'
       );
     },
   });
@@ -124,14 +133,38 @@ export default function UsersPage() {
   });
 
   // Merge auth client users with access stage data
-  const users = useMemo(() => {
-    if (!(data?.users && accessData?.users)) return data?.users || [];
+  type AccessStage = 'none' | 'alpha' | 'beta' | 'production';
+  type AuthUser = {
+    id: string;
+    name: string | null;
+    email: string | null;
+    createdAt: string | Date;
+    role: 'user' | 'admin';
+    banned?: boolean;
+  } & Record<string, unknown>;
 
-    return data.users.map((user: any) => {
-      const userWithStage = accessData.users.find((u: any) => u.id === user.id);
+  type AccessUser = {
+    id: string;
+    accessStage?: AccessStage | null;
+  };
+
+  const users = useMemo<
+    (AuthUser & { accessStage?: AccessStage | null })[]
+  >(() => {
+    const authUsers = (data?.users ?? []) as AuthUser[];
+    const accessUsers = (accessData?.users ?? []) as AccessUser[];
+
+    if (accessUsers.length === 0) {
+      return authUsers;
+    }
+
+    return authUsers.map((user) => {
+      const userWithStage = accessUsers.find(
+        (candidate) => candidate.id === user.id
+      );
       return {
         ...user,
-        accessStage: userWithStage?.accessStage || 'none',
+        accessStage: userWithStage?.accessStage ?? 'none',
       };
     });
   }, [data?.users, accessData?.users]);
@@ -173,9 +206,9 @@ export default function UsersPage() {
   const handleStopImpersonating = () => {
     authClient.admin
       .stopImpersonating({})
-      .then(({ error }) => {
-        if (error) {
-          throw new Error(error.message || 'Failed to stop impersonating');
+      .then(({ error: stopError }) => {
+        if (stopError) {
+          throw new Error(stopError.message || 'Failed to stop impersonating');
         }
         toast.success('Stopped impersonating');
       })
@@ -188,15 +221,15 @@ export default function UsersPage() {
 
   const createUserMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await authClient.admin.createUser({
+      const { error: createUserError } = await authClient.admin.createUser({
         email: newUserEmail,
         password: newUserPassword,
         name: newUserName,
         role: newUserRole,
         data: {},
       });
-      if (error) {
-        throw new Error(error.message || 'Failed to create user');
+      if (createUserError) {
+        throw new Error(createUserError.message || 'Failed to create user');
       }
     },
     onSuccess: () => {
@@ -207,9 +240,11 @@ export default function UsersPage() {
       toast.success('User created');
       queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
     },
-    onError: (error: unknown) => {
+    onError: (createError: unknown) => {
       toast.error(
-        error instanceof Error ? error.message : 'Failed to create user'
+        createError instanceof Error
+          ? createError.message
+          : 'Failed to create user'
       );
     },
   });
@@ -220,9 +255,9 @@ export default function UsersPage() {
     const duration = 60 * 60 * 24 * 7;
     authClient.admin
       .banUser({ userId, banReason: reason, banExpiresIn: duration })
-      .then(({ error }) => {
-        if (error) {
-          throw new Error(error.message || 'Failed to ban user');
+      .then(({ error: banError }) => {
+        if (banError) {
+          throw new Error(banError.message || 'Failed to ban user');
         }
         toast.success('User banned');
         queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
@@ -242,7 +277,7 @@ export default function UsersPage() {
   // Handle invite user to access stage
   const inviteUserMutation = useMutation({
     ...trpc.user.inviteUser.mutationOptions(),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       const stageName =
         variables.accessStage === 'none'
           ? 'removed access'
@@ -250,15 +285,16 @@ export default function UsersPage() {
       toast.success(`Updated user to ${stageName}`);
       queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
     },
-    onError: (error) => {
-      toast.error(`Failed to update user: ${error.message}`);
+    onError: (inviteError: unknown) => {
+      toast.error(
+        inviteError instanceof Error
+          ? inviteError.message
+          : 'Failed to update user'
+      );
     },
   });
 
-  const handleInviteUser = (
-    userId: string,
-    accessStage: 'none' | 'alpha' | 'beta' | 'production'
-  ) => {
+  const handleInviteUser = (userId: string, accessStage: AccessStage) => {
     inviteUserMutation.mutate({ userId, accessStage });
   };
 
@@ -266,9 +302,9 @@ export default function UsersPage() {
     setUpdatingIds((prev) => new Set(prev).add(userId));
     authClient.admin
       .unbanUser({ userId })
-      .then(({ error }) => {
-        if (error) {
-          throw new Error(error.message || 'Failed to unban user');
+      .then(({ error: unbanError }) => {
+        if (unbanError) {
+          throw new Error(unbanError.message || 'Failed to unban user');
         }
         toast.success('User unbanned');
         queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
@@ -289,9 +325,11 @@ export default function UsersPage() {
     setUpdatingIds((prev) => new Set(prev).add(userId));
     authClient.admin
       .impersonateUser({ userId })
-      .then(({ error }) => {
-        if (error) {
-          throw new Error(error.message || 'Failed to impersonate user');
+      .then(({ error: impersonateError }) => {
+        if (impersonateError) {
+          throw new Error(
+            impersonateError.message || 'Failed to impersonate user'
+          );
         }
         toast.success('Impersonation started');
       })
@@ -313,9 +351,9 @@ export default function UsersPage() {
     setUpdatingIds((prev) => new Set(prev).add(userId));
     authClient.admin
       .revokeUserSessions({ userId })
-      .then(({ error }) => {
-        if (error) {
-          throw new Error(error.message || 'Failed to revoke sessions');
+      .then(({ error: revokeError }) => {
+        if (revokeError) {
+          throw new Error(revokeError.message || 'Failed to revoke sessions');
         }
         toast.success('Sessions revoked');
       })
@@ -340,9 +378,9 @@ export default function UsersPage() {
     setUpdatingIds((prev) => new Set(prev).add(userId));
     authClient.admin
       .removeUser({ userId })
-      .then(({ error }) => {
-        if (error) {
-          throw new Error(error.message || 'Failed to delete user');
+      .then(({ error: deleteError }) => {
+        if (deleteError) {
+          throw new Error(deleteError.message || 'Failed to delete user');
         }
         toast.success('User deleted');
         queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
@@ -359,7 +397,7 @@ export default function UsersPage() {
       });
   };
 
-  if (error) {
+  if (usersError) {
     return (
       <div className="py-8 text-center">
         <p className="text-destructive">Failed to load users data</p>

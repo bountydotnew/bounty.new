@@ -57,7 +57,7 @@ export function PaymentModal({
     return 0;
   };
 
-  const handlePayment = async () => {
+  const handlePayment = () => {
     const amount = getSelectedAmount();
 
     if (!amount || amount <= 0) {

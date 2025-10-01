@@ -1,6 +1,5 @@
 'use client';
 
-import type { CustomerState } from '@bounty/ui/types/billing';
 import { Bell, CreditCard, DollarSign, Shield, User } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -15,12 +14,15 @@ import { BillingSettings } from '@/components/settings/billing-settings';
 import { GeneralSettings } from '@/components/settings/general-settings';
 import { PaymentSettings } from '@/components/settings/payment-settings';
 import { SecuritySettings } from '@/components/settings/security-settings';
+import type { CustomerState } from '@/types/billing';
 
 interface TabConfig {
   id: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  component: React.ComponentType<{ initialCustomerState?: CustomerState | null }>;
+  component: React.ComponentType<{
+    initialCustomerState?: CustomerState | null;
+  }>;
   disabled?: boolean;
   comingSoon?: boolean;
 }
@@ -82,10 +84,12 @@ export function SettingsClient({ initialCustomerState }: SettingsClientProps) {
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined') {
       const fromUrl = searchParams.get('tab');
-      let fromStorage = null;
+      let fromStorage: string | null = null;
       try {
         fromStorage = window.localStorage.getItem('settings.activeTab');
-      } catch {}
+      } catch (_error) {
+        fromStorage = null;
+      }
       return fromUrl || fromStorage || 'general';
     }
     return 'general';
@@ -100,7 +104,9 @@ export function SettingsClient({ initialCustomerState }: SettingsClientProps) {
     }
     try {
       window.localStorage.setItem('settings.activeTab', activeTab);
-    } catch {}
+    } catch (_error) {
+      // Non-blocking if localStorage is unavailable
+    }
   }, [activeTab, searchParams]);
 
   const handleTabChange = useCallback(
