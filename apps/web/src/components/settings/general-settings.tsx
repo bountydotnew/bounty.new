@@ -15,15 +15,23 @@ import {
   CardTitle,
 } from '@bounty/ui/components/card';
 import { useBilling } from '@bounty/ui/hooks/use-billing-client';
+import type { CustomerState } from '@bounty/ui/types/billing';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-export function GeneralSettings() {
+interface GeneralSettingsProps {
+  initialCustomerState?: CustomerState | null;
+}
+
+export function GeneralSettings({ initialCustomerState }: GeneralSettingsProps) {
   const [isClientMounted, setIsClientMounted] = useState(false);
   const { data: session } = authClient.useSession();
-  const { isPro, isLoading: billingLoading } = useBilling({ enabled: true });
+  const { isPro, isLoading: billingLoading } = useBilling({
+    enabled: true,
+    initialCustomerState,
+  });
   const router = useRouter();
   // Prevent hydration mismatch by ensuring client-side rendering
   useEffect(() => {
