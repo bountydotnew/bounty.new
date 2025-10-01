@@ -10,6 +10,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getThumbmark } from '@thumbmarkjs/thumbmarkjs';
 import { ChevronRight } from 'lucide-react';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -158,11 +159,21 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
     },
   });
 
+  const searchParams = useSearchParams();
   const [fingerprintData, setFingerprintData] =
     useState<thumbmarkResponse | null>(null);
   const [fingerprintLoading, setFingerprintLoading] = useState(true);
+  const [isAttentionActive, setIsAttentionActive] = useState(false);
   const [, setFingerprintError] = useState<string | null>(null);
 
+  const waitlistParam = searchParams.get('waitlist');
+  const normalizedWaitlistParam = waitlistParam?.toLowerCase() ?? '';
+  const highlightWaitlist =
+    searchParams.has('waitlist') &&
+    (normalizedWaitlistParam === '' ||
+      normalizedWaitlistParam === 'true' ||
+      normalizedWaitlistParam === '1' ||
+      normalizedWaitlistParam === 'yes');
   const waitlistSubmission = useWaitlistSubmission();
   const waitlistCount = useWaitlistCount();
 
@@ -174,7 +185,9 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
         if (data.submitted) {
           waitlistSubmission.setSuccess(true);
         }
-      } catch (_error) {}
+      } catch {
+        // Do nothing
+      }
     }
   }, [waitlistSubmission]);
 
@@ -186,7 +199,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
         setFingerprintError(null);
         const result = await getThumbmark();
         setFingerprintData(result);
-      } catch (_error) {
+      } catch {
         setFingerprintError(
           'Unable to generate device fingerprint. Please refresh and try again.'
         );
@@ -200,6 +213,10 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
 
     generateFingerprint();
   }, []);
+
+  useEffect(() => {
+    setIsAttentionActive(highlightWaitlist && !waitlistSubmission.success);
+  }, [highlightWaitlist, waitlistSubmission.success]);
 
   async function joinWaitlist({ email }: FormSchema) {
     if (!fingerprintData) {
@@ -234,9 +251,17 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
           </p>
         </div>
       ) : (
-        <div className="w-full max-w-lg">
+        <div
+          className={cn(
+            'relative w-full max-w-lg transition-transform duration-700',
+            isAttentionActive && 'waitlist-attention'
+          )}
+        >
           <form
-            className="mb-8 flex max-w-md gap-3"
+            className={cn(
+              'mb-8 flex max-w-md gap-3',
+              isAttentionActive && 'waitlist-wiggle waitlist-pulse'
+            )}
             onSubmit={handleSubmit(joinWaitlist)}
           >
             <div className="flex-1">
