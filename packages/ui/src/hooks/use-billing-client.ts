@@ -1,16 +1,14 @@
 import { authClient } from '@bounty/auth/client';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import type {
-  BillingHookResult,
   CustomerState,
   FeatureState,
   Features,
   PendingAction,
   PolarError,
   UsageMetadata,
-} from '@/types/billing';
-import { trpc } from '@/utils/trpc';
+} from '@bounty/types/billing';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 const DEFAULT_FEATURES: Features = {
   lowerFees: {
@@ -42,6 +40,51 @@ const FEATURE_IDS = {
 
 const PRO_PLANS = ['pro-monthly', 'pro-annual'] as const;
 
+// Helper function to check if error indicates customer not found
+const isCustomerNotFoundError = (error: unknown): boolean => {
+  const polarError = error as PolarError;
+  const errorMessage = String(polarError?.message || polarError?.body$ || '');
+  const errorDetail = String(polarError?.detail || '');
+  return (
+    errorMessage.includes('ResourceNotFound') ||
+    errorDetail.includes('Customer does not exist') ||
+    polarError?.status === 404
+  );
+};
+
+// Helper function to check if error is permission denied
+const isPermissionDeniedError = (error: unknown): boolean => {
+  const polarError = error as PolarError;
+  const errorMessage = String(polarError?.message || polarError?.body$ || '');
+  return errorMessage.includes('NotPermitted') || polarError?.status === 403;
+};
+
+// Helper to check if product/subscription has pro plan
+const hasProPlan = (item: {
+  id?: string;
+  name?: string;
+  slug?: string;
+}): boolean => {
+  return PRO_PLANS.some(
+    (plan) =>
+      item.id?.includes(plan) ||
+      item.name?.includes(plan) ||
+      item.slug?.includes(plan)
+  );
+};
+
+export interface BillingHookResult {
+  isLoading: boolean;
+  customer: CustomerState | null | undefined;
+  refetch: () => Promise<unknown>;
+  openBillingPortal: () => Promise<void>;
+  trackUsage: (event: string, metadata?: UsageMetadata) => Promise<void>;
+  checkout: (slug: 'pro-monthly' | 'pro-annual') => Promise<void>;
+  isPro: boolean;
+  lowerFees: FeatureState;
+  concurrentBounties: FeatureState;
+}
+
 /**
  * Client-side billing hook that can accept server-provided initial data
  * This allows for better server/client separation and reduces hydration mismatches
@@ -49,6 +92,7 @@ const PRO_PLANS = ['pro-monthly', 'pro-annual'] as const;
 export const useBilling = (options?: {
   enabled?: boolean;
   initialCustomerState?: CustomerState | null;
+  ensurePolarCustomer?: () => Promise<void>;
 }): BillingHookResult => {
   const [needsCustomerCreation, setNeedsCustomerCreation] = useState(false);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(
@@ -56,7 +100,11 @@ export const useBilling = (options?: {
   );
 
   const ensurePolarCustomerMutation = useMutation({
-    ...trpc.billing.ensurePolarCustomer.mutationOptions(),
+    mutationFn: async () => {
+      if (options?.ensurePolarCustomer) {
+        await options.ensurePolarCustomer();
+      }
+    },
   });
 
   const {
@@ -65,221 +113,206 @@ export const useBilling = (options?: {
     refetch,
   } = useQuery({
     queryKey: ['billing'],
-    queryFn: async () => {
+    queryFn: async (): Promise<CustomerState | null> => {
       try {
         const { data: customerState } = await authClient.customer.state();
-        return customerState;
+        return customerState as CustomerState | null;
       } catch (error: unknown) {
-        const polarError = error as PolarError;
-        const errorMessage = String(
-          polarError?.message || polarError?.body$ || ''
-        );
-        const errorDetail = String(polarError?.detail || '');
-        const notFound =
-          errorMessage.includes('ResourceNotFound') ||
-          errorDetail.includes('Customer does not exist') ||
-          polarError?.status === 404;
-        if (notFound) {
+        if (isCustomerNotFoundError(error)) {
           setNeedsCustomerCreation(true);
           return null;
         }
-        if (
-          errorMessage.includes('NotPermitted') ||
-          polarError?.status === 403
-        ) {
+        if (isPermissionDeniedError(error)) {
           return null;
         }
-        if (polarError?.status === 422) {
-          return null;
-        }
-        if (polarError?.status === 409) {
+        const polarError = error as PolarError;
+        if (polarError?.status === 422 || polarError?.status === 409) {
           return null;
         }
         return null;
       }
     },
     // Use initial data from server if provided
-    initialData: options?.initialCustomerState,
+    ...(options?.initialCustomerState !== undefined && {
+      initialData: options.initialCustomerState as CustomerState | null,
+    }),
     enabled: Boolean(options?.enabled),
     staleTime: 300_000,
     refetchOnWindowFocus: false,
     retry: false,
   });
 
+  // Handle pending action after customer creation
+  const executePendingAction = useCallback(async (action: PendingAction) => {
+    if (action.type === 'portal') {
+      await authClient.customer.portal();
+    } else if (action.type === 'usage' && action.params) {
+      await authClient.usage.ingest(action.params);
+    } else if (action.type === 'checkout' && action.params) {
+      await authClient.checkout(action.params);
+    }
+  }, []);
+
   // Handle customer creation when needed
   useEffect(() => {
-    if (needsCustomerCreation && !ensurePolarCustomerMutation.isPending) {
-      const createCustomer = async () => {
-        try {
-          await ensurePolarCustomerMutation.mutateAsync();
-          setNeedsCustomerCreation(false);
-          await refetch();
-
-          if (pendingAction) {
-            const action = pendingAction;
-            setPendingAction(null);
-
-            if (action.type === 'portal') {
-              await authClient.customer.portal();
-            } else if (action.type === 'usage' && action.params) {
-              await authClient.usage.ingest(action.params);
-            } else if (action.type === 'checkout' && action.params) {
-              await authClient.checkout(action.params);
-            }
-          }
-        } catch (_e) {
-          setNeedsCustomerCreation(false);
-          setPendingAction(null);
-        }
-      };
-
-      createCustomer();
+    if (!needsCustomerCreation || ensurePolarCustomerMutation.isPending) {
+      return;
     }
+
+    const createCustomer = async () => {
+      try {
+        await ensurePolarCustomerMutation.mutateAsync();
+        setNeedsCustomerCreation(false);
+        await refetch();
+
+        if (pendingAction) {
+          const action = pendingAction;
+          setPendingAction(null);
+          await executePendingAction(action);
+        }
+      } catch (_e) {
+        setNeedsCustomerCreation(false);
+        setPendingAction(null);
+      }
+    };
+
+    createCustomer();
   }, [
     needsCustomerCreation,
     ensurePolarCustomerMutation,
     refetch,
     pendingAction,
+    executePendingAction,
   ]);
 
-  const { isPro, ...customerFeatures } = useMemo(() => {
+  // Helper to check if customer has pro status
+  const checkProStatus = useCallback(
+    (customerState: CustomerState | null | undefined): boolean => {
+      if (!customerState) {
+        return false;
+      }
+
+      const hasProProducts =
+        customerState?.products && Array.isArray(customerState.products)
+          ? customerState.products.some(hasProPlan)
+          : false;
+
+      const hasProSubscriptions =
+        customerState?.activeSubscriptions &&
+        Array.isArray(customerState.activeSubscriptions)
+          ? customerState.activeSubscriptions.some(
+              // biome-ignore lint/suspicious/noExplicitAny: SDK type mismatch with custom type
+              (sub: any) => sub.product && hasProPlan(sub.product)
+            )
+          : false;
+
+      const hasProBenefits = Boolean(
+        customerState?.grantedBenefits &&
+          Array.isArray(customerState.grantedBenefits) &&
+          customerState.grantedBenefits.length > 0
+      );
+
+      return hasProProducts || hasProSubscriptions || hasProBenefits;
+    },
+    []
+  );
+
+  // Helper to map feature from customer state
+  const mapFeature = useCallback(
+    (
+      feature:
+        | {
+            included_usage?: number;
+            balance?: number;
+            unlimited?: boolean;
+            usage?: number;
+            next_reset_at?: number;
+            interval?: string;
+          }
+        | undefined
+    ): FeatureState => {
+      if (!feature) {
+        return {
+          total: 0,
+          remaining: 0,
+          unlimited: false,
+          enabled: false,
+          usage: 0,
+          nextResetAt: null,
+          interval: '',
+          included_usage: 0,
+        };
+      }
+
+      return {
+        total: feature.included_usage || 0,
+        remaining: feature.balance || 0,
+        unlimited: feature.unlimited ?? false,
+        enabled: (feature.unlimited ?? false) || Number(feature.balance) > 0,
+        usage: feature.usage || 0,
+        nextResetAt: feature.next_reset_at ?? null,
+        interval: feature.interval || '',
+        included_usage: feature.included_usage || 0,
+      };
+    },
+    []
+  );
+
+  const { isPro, ...customerFeatures } = useMemo((): {
+    isPro: boolean;
+    lowerFees: FeatureState;
+    concurrentBounties: FeatureState;
+  } => {
     const customerState = customer as CustomerState;
 
-    if (isLoading) {
+    if (isLoading || !customerState) {
       return { isPro: false, ...DEFAULT_FEATURES };
     }
 
-    if (!customerState) {
-      return { isPro: false, ...DEFAULT_FEATURES };
-    }
-
-    const hasProProducts =
-      customerState?.products && Array.isArray(customerState.products)
-        ? customerState.products.some((product) =>
-            PRO_PLANS.some(
-              (plan) =>
-                product.id?.includes(plan) ||
-                product.name?.includes(plan) ||
-                product.slug?.includes(plan)
-            )
-          )
-        : false;
-
-    const hasProSubscriptions =
-      customerState?.activeSubscriptions &&
-      Array.isArray(customerState.activeSubscriptions)
-        ? customerState.activeSubscriptions.some((subscription) =>
-            PRO_PLANS.some(
-              (plan) =>
-                subscription.product?.id?.includes(plan) ||
-                subscription.product?.name?.includes(plan) ||
-                subscription.product?.slug?.includes(plan)
-            )
-          )
-        : false;
-
-    const hasProBenefits =
-      customerState?.grantedBenefits &&
-      Array.isArray(customerState.grantedBenefits)
-        ? customerState.grantedBenefits.some(() => {
-            return true;
-          })
-        : false;
-
-    const isPro = hasProProducts || hasProSubscriptions || hasProBenefits;
+    const hasProStatus = checkProStatus(customerState);
 
     if (!customerState?.features) {
-      return { isPro, ...DEFAULT_FEATURES };
+      return { isPro: hasProStatus, ...DEFAULT_FEATURES };
     }
 
-    const features = { ...DEFAULT_FEATURES };
+    const lowerFees = mapFeature(
+      customerState.features[FEATURE_IDS.LOWER_FEES]
+    );
+    const concurrentBounties = mapFeature(
+      customerState.features[FEATURE_IDS.CONCURRENT_BOUNTIES]
+    );
 
-    if (customerState.features[FEATURE_IDS.LOWER_FEES]) {
-      const feature = customerState.features[FEATURE_IDS.LOWER_FEES];
-      features.lowerFees = {
-        total: feature.included_usage || 0,
-        remaining: feature.balance || 0,
-        unlimited: feature.unlimited ?? false,
-        enabled: (feature.unlimited ?? false) || Number(feature.balance) > 0,
-        usage: feature.usage || 0,
-        nextResetAt: feature.next_reset_at ?? null,
-        interval: feature.interval || '',
-        included_usage: feature.included_usage || 0,
-      };
-    }
-
-    if (customerState.features[FEATURE_IDS.CONCURRENT_BOUNTIES]) {
-      const feature = customerState.features[FEATURE_IDS.CONCURRENT_BOUNTIES];
-      features.concurrentBounties = {
-        total: feature.included_usage || 0,
-        remaining: feature.balance || 0,
-        unlimited: feature.unlimited ?? false,
-        enabled: (feature.unlimited ?? false) || Number(feature.balance) > 0,
-        usage: feature.usage || 0,
-        nextResetAt: feature.next_reset_at ?? null,
-        interval: feature.interval || '',
-        included_usage: feature.included_usage || 0,
-      };
-    }
-
-    return { isPro, ...features };
-  }, [customer, isLoading]);
+    return { isPro: hasProStatus, lowerFees, concurrentBounties };
+  }, [customer, isLoading, checkProStatus, mapFeature]);
 
   const openBillingPortal = useCallback(async () => {
     try {
-      try {
-        await authClient.customer.portal();
-      } catch (error: unknown) {
-        const polarError = error as PolarError;
-        const errorMessage = String(
-          polarError?.message || polarError?.body$ || ''
-        );
-        const errorDetail = String(polarError.detail || '');
-        const notFound =
-          errorMessage.includes('ResourceNotFound') ||
-          errorDetail.includes('Customer does not exist') ||
-          polarError?.status === 404;
-        if (notFound) {
-          setPendingAction({ type: 'portal' });
-          setNeedsCustomerCreation(true);
-          return;
-        }
-        throw error;
-      }
+      await authClient.customer.portal();
     } catch (error: unknown) {
-      const polarError = error as PolarError;
-      const errorMessage = String(
-        polarError?.message || polarError?.body$ || ''
-      );
-      if (errorMessage.includes('NotPermitted') || polarError?.status === 403) {
+      if (isCustomerNotFoundError(error)) {
+        setPendingAction({ type: 'portal' });
+        setNeedsCustomerCreation(true);
         return;
       }
+      if (isPermissionDeniedError(error)) {
+        return;
+      }
+      // Silently ignore other errors
     }
   }, []);
 
   const trackUsage = useCallback(
     async (event: string, metadata: UsageMetadata = {}) => {
       try {
-        try {
-          await authClient.usage.ingest({ event, metadata });
-        } catch (error: unknown) {
-          const polarError = error as PolarError;
-          const errorMessage = String(
-            polarError?.message || polarError?.body$ || ''
-          );
-          const errorDetail = String(polarError.detail || '');
-          const notFound =
-            errorMessage.includes('ResourceNotFound') ||
-            errorDetail.includes('Customer does not exist') ||
-            polarError?.status === 404;
-          if (notFound) {
-            setPendingAction({ type: 'usage', params: { event, metadata } });
-            setNeedsCustomerCreation(true);
-            return;
-          }
-          throw error;
+        await authClient.usage.ingest({ event, metadata });
+      } catch (error: unknown) {
+        if (isCustomerNotFoundError(error)) {
+          setPendingAction({ type: 'usage', params: { event, metadata } });
+          setNeedsCustomerCreation(true);
+          return;
         }
-      } catch (_error) {}
+        // Silently ignore other errors
+      }
     },
     []
   );
@@ -288,16 +321,7 @@ export const useBilling = (options?: {
     try {
       await authClient.checkout({ slug });
     } catch (error: unknown) {
-      const polarError = error as PolarError;
-      const errorMessage = String(
-        polarError?.message || polarError?.body$ || ''
-      );
-      const errorDetail = String(polarError.detail || '');
-      const notFound =
-        errorMessage.includes('ResourceNotFound') ||
-        errorDetail.includes('Customer does not exist') ||
-        polarError?.status === 404;
-      if (notFound) {
+      if (isCustomerNotFoundError(error)) {
         setPendingAction({ type: 'checkout', params: { slug } });
         setNeedsCustomerCreation(true);
         return;
@@ -317,6 +341,3 @@ export const useBilling = (options?: {
     ...customerFeatures,
   };
 };
-
-export { DEFAULT_FEATURES, FEATURE_IDS, PRO_PLANS };
-export type { Features, FeatureState };

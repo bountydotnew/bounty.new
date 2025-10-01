@@ -10,8 +10,8 @@ import {
   CardTitle,
 } from '@bounty/ui/components/card';
 import { Separator } from '@bounty/ui/components/separator';
-import { useBilling } from '@bounty/ui/hooks/use-billing-client';
-import type { CustomerState } from '@bounty/ui/types/billing';
+import { useBilling } from '@/hooks/use-billing';
+import type { BillingSubscription, CustomerState } from '@/types/billing';
 import { ArrowRight } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
@@ -51,59 +51,40 @@ export function SuccessClient({ initialCustomerState }: SuccessClientProps) {
     return null;
   }
 
-  const getPlanName = () => {
-    const subscription = customer?.activeSubscriptions?.find((sub) =>
-      ['pro-monthly', 'pro-annual'].some(
-        (plan) =>
-          sub.product?.slug?.includes(plan) ||
-          sub.product?.id?.includes(plan) ||
-          sub.product?.name?.includes(plan)
-      )
-    );
+  type PlanId = 'pro-annual' | 'pro-monthly';
 
-    if (
-      subscription?.product?.slug?.includes('pro-annual') ||
-      subscription?.product?.id?.includes('pro-annual') ||
-      subscription?.product?.name?.includes('pro-annual')
-    ) {
-      return 'Pro Annual';
-    }
-    if (
-      subscription?.product?.slug?.includes('pro-monthly') ||
-      subscription?.product?.id?.includes('pro-monthly') ||
-      subscription?.product?.name?.includes('pro-monthly')
-    ) {
-      return 'Pro Monthly';
-    }
-    return 'Pro Plan';
+  const PLAN_DETAILS: Record<PlanId, { name: string; price: string }> = {
+    'pro-annual': { name: 'Pro Annual', price: '$15/month' },
+    'pro-monthly': { name: 'Pro Monthly', price: '$20/month' },
   };
 
-  const getPlanPrice = () => {
-    const subscription = customer?.activeSubscriptions?.find((sub) =>
-      ['pro-monthly', 'pro-annual'].some(
-        (plan) =>
-          sub.product?.slug?.includes(plan) ||
-          sub.product?.id?.includes(plan) ||
-          sub.product?.name?.includes(plan)
-      )
-    );
+  const PLAN_IDS: PlanId[] = ['pro-annual', 'pro-monthly'];
 
-    if (
-      subscription?.product?.slug?.includes('pro-annual') ||
-      subscription?.product?.id?.includes('pro-annual') ||
-      subscription?.product?.name?.includes('pro-annual')
-    ) {
-      return '$15/month';
+  const identifyPlan = (subscription?: BillingSubscription): PlanId | undefined => {
+    if (!subscription) {
+      return;
     }
-    if (
-      subscription?.product?.slug?.includes('pro-monthly') ||
-      subscription?.product?.id?.includes('pro-monthly') ||
-      subscription?.product?.name?.includes('pro-monthly')
-    ) {
-      return '$20/month';
-    }
-    return 'Pro Pricing';
+
+    const identifiers = [
+      subscription.product?.slug,
+      subscription.product?.id,
+      subscription.product?.name,
+      subscription.productId,
+    ];
+
+    return PLAN_IDS.find((planId) =>
+      identifiers.some((identifier) => identifier?.includes(planId))
+    );
   };
+
+  const activePlanId = customer?.activeSubscriptions?.reduce<PlanId | undefined>(
+    (current, subscription) => current ?? identifyPlan(subscription),
+    undefined
+  );
+
+  const planDetails = activePlanId ? PLAN_DETAILS[activePlanId] : undefined;
+  const planName = planDetails?.name ?? 'Pro Plan';
+  const planPrice = planDetails?.price ?? 'Pro Pricing';
 
   return (
     <Sidebar>
@@ -134,7 +115,7 @@ export function SuccessClient({ initialCustomerState }: SuccessClientProps) {
                     <div className="flex items-center gap-3">
                       <div>
                         <p className="font-medium text-foreground">
-                          {getPlanName()}
+                          {planName}
                         </p>
                         <p className="text-muted-foreground text-sm">
                           Bounty Pro Subscription
@@ -143,7 +124,7 @@ export function SuccessClient({ initialCustomerState }: SuccessClientProps) {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-foreground">
-                        {getPlanPrice()}
+                        {planPrice}
                       </p>
                       <Badge className="mt-1" variant="secondary">
                         Active

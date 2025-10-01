@@ -69,7 +69,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  rewrites() {
+  async rewrites() {
     return [
       // PostHog rewrites
       {

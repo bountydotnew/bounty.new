@@ -1,4 +1,4 @@
-import type { CustomerState } from '@bounty/ui/types/billing';
+import type { CustomerState } from '@/types/billing';
 import { BillingSettingsClient } from './billing-settings-client';
 
 interface BillingSettingsProps {

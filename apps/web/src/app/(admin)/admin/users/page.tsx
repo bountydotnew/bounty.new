@@ -51,12 +51,17 @@ import { toast } from 'sonner';
 import { AdminHeader } from '@/components/admin';
 import { ExternalInviteModal } from '@/components/admin/external-invite-modal';
 import { trpc } from '@/utils/trpc';
+import type {
+  AccessStage,
+  AdminListUsersResponse,
+  AdminUser,
+} from '@/types';
 
 export default function UsersPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
-  const [_updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
+  const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
   const [newUserName, setNewUserName] = useState('');
@@ -68,7 +73,7 @@ export default function UsersPage() {
     data,
     isLoading,
     error: usersError,
-  } = useQuery({
+  } = useQuery<AdminListUsersResponse | null>({
     queryKey: ['admin', 'listUsers', search, page, pageSize],
     queryFn: async () => {
       // Get users from auth client (has all the auth-specific fields like banned)
@@ -90,7 +95,7 @@ export default function UsersPage() {
       }
 
       // Just return auth data and handle accessStage in the component
-      return authData;
+      return authData ?? null;
     },
   });
 
@@ -133,59 +138,40 @@ export default function UsersPage() {
   });
 
   // Merge auth client users with access stage data
-  type AccessStage = 'none' | 'alpha' | 'beta' | 'production';
-  type AuthUser = {
-    id: string;
-    name: string | null;
-    email: string | null;
-    createdAt: string | Date;
-    role: 'user' | 'admin';
-    banned?: boolean;
-  } & Record<string, unknown>;
-
-  type AccessUser = {
-    id: string;
-    accessStage?: AccessStage | null;
-  };
-
   const users = useMemo<
-    (AuthUser & { accessStage?: AccessStage | null })[]
+    (AdminUser & { role?: 'user' | 'admin'; accessStage: AccessStage })[]
   >(() => {
-    const authUsers = (data?.users ?? []) as AuthUser[];
-    const accessUsers = (accessData?.users ?? []) as AccessUser[];
+    const authUsers = data?.users ?? [];
+    const accessStageMap = new Map<string, AccessStage>(
+      (accessData?.users ?? []).map((entry) => {
+        const stage = (entry.accessStage ?? 'none') as AccessStage;
+        return [entry.id, stage];
+      })
+    );
 
-    if (accessUsers.length === 0) {
-      return authUsers;
-    }
-
-    return authUsers.map((user) => {
-      const userWithStage = accessUsers.find(
-        (candidate) => candidate.id === user.id
-      );
-      return {
-        ...user,
-        accessStage: userWithStage?.accessStage ?? 'none',
-      };
-    });
+    return authUsers.map((user) => ({
+      ...user,
+      role: user.role === 'admin' ? 'admin' : 'user',
+      accessStage: accessStageMap.get(user.id) ?? 'none',
+    }));
   }, [data?.users, accessData?.users]);
-  const total = data?.total || 0;
+  const currentPageUsers = users.length;
+  const adminCount = users.filter((user) => user.role === 'admin').length;
+  const regularUserCount = currentPageUsers - adminCount;
   const totalPages = useMemo(() => {
-    const limit = data && 'limit' in data ? data.limit : pageSize;
-    return Math.max(1, Math.ceil((total || 0) / (limit || pageSize)));
-  }, [data, pageSize, total]);
+    const total = data?.total ?? 0;
+    return Math.max(1, Math.ceil(total / pageSize));
+  }, [data?.total, pageSize]);
 
-  const stats = useMemo(() => {
-    const currentPageUsers = users.length;
-    const adminCount = users.filter((user) => user.role === 'admin').length;
-    const regularUserCount = currentPageUsers - adminCount;
-
-    return {
-      total,
+  const stats = useMemo(
+    () => ({
+      total: data?.total ?? 0,
       currentPage: currentPageUsers,
       admins: adminCount,
       regularUsers: regularUserCount,
-    };
-  }, [users, total]);
+    }),
+    [data?.total, currentPageUsers, adminCount, regularUserCount]
+  );
 
   const handleRoleUpdate = (userId: string, newRole: 'user' | 'admin') => {
     setUpdatingIds((prev) => new Set(prev).add(userId));
@@ -275,9 +261,17 @@ export default function UsersPage() {
   };
 
   // Handle invite user to access stage
+  const inviteUserMutationOptions = trpc.user.inviteUser.mutationOptions();
+
   const inviteUserMutation = useMutation({
-    ...trpc.user.inviteUser.mutationOptions(),
-    onSuccess: (_data, variables) => {
+    ...inviteUserMutationOptions,
+    onSuccess(result, variables, context, mutation) {
+      inviteUserMutationOptions.onSuccess?.(
+        result,
+        variables,
+        context,
+        mutation
+      );
       const stageName =
         variables.accessStage === 'none'
           ? 'removed access'
@@ -285,11 +279,15 @@ export default function UsersPage() {
       toast.success(`Updated user to ${stageName}`);
       queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
     },
-    onError: (inviteError: unknown) => {
+    onError(error, variables, context, mutation) {
+      inviteUserMutationOptions.onError?.(
+        error,
+        variables,
+        context,
+        mutation
+      );
       toast.error(
-        inviteError instanceof Error
-          ? inviteError.message
-          : 'Failed to update user'
+        error instanceof Error ? error.message : 'Failed to update user'
       );
     },
   });
@@ -584,6 +582,7 @@ export default function UsersPage() {
                         <DropdownMenuTrigger asChild>
                           <Button
                             className="h-7 rounded-lg border border-neutral-700 bg-[#222222] p-1 text-neutral-300 hover:bg-neutral-700/40"
+                            disabled={updatingIds.has(user.id)}
                             size="icon"
                             variant="outline"
                           >

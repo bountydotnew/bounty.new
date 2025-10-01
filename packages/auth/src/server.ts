@@ -31,7 +31,7 @@ export const auth = betterAuth({
     throw: true,
     onError: (error, ctx) => {
       // Custom error handling
-      console.error('Auth error:', error);
+      console.error(`Auth error: ${error} ${ctx}`);
     },
     errorURL: '/auth/error',
   },

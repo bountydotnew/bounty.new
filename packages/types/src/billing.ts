@@ -1,11 +1,8 @@
 import type { CustomerState as PolarCustomerState } from '@polar-sh/sdk/models/components/customerstate';
 import type { CustomerStateSubscription as PolarCustomerStateSubscription } from '@polar-sh/sdk/models/components/customerstatesubscription';
+import type { PolarError as BasePolarError } from './polar';
 
-export interface PolarError extends Error {
-  body$?: string;
-  detail?: string;
-  status?: number;
-}
+export type PolarError = BasePolarError & Error;
 
 export interface FeatureState {
   total: number;
@@ -43,7 +40,6 @@ export interface BillingFeature {
   next_reset_at?: number;
   interval?: string;
 }
-
 
 export type CustomerState = Partial<PolarCustomerState> & {
   products?: BillingProduct[];

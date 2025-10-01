@@ -7,6 +7,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./auth": "./src/auth.ts",
+    "./billing": "./src/billing.ts",
     "./api": "./src/api.ts",
     "./github": "./src/github.ts",
     "./polar": "./src/polar.ts"
