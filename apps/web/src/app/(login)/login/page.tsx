@@ -18,28 +18,9 @@ function LoginContent() {
       applyInvite.mutate({ token });
     }
   }, [token, applyInvite]);
-  // const handleGitHubSignIn = async () => {
-  //   try {
-  //     const callbackURL = redirectUrl ? `${redirectUrl}` : `${baseUrl}/dashboard`;
 
-  //     await authClient.signIn.social(
-  //       {
-  //         provider: "github",
-  //         callbackURL
-  //       },
-  //       {
-  //         onSuccess: () => {
-  //           toast.success("Sign in successful");
-  //         },
-  //         onError: (error) => {
-  //           toast.error(error.error.message || "Sign in failed");
-  //         },
-  //       }
-  //     );
-  //   } catch (error) {
-  //     toast.error(error instanceof Error ? error.message : "Sign in failed");
-  //   }
-  // };
+  // Note: Authentication logic has been moved to the Login component
+  // with proper security measures to prevent open redirect vulnerabilities
 
   return <Login />;
 }
