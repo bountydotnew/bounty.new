@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { YCombinator } from '@/components/icons/g-combinator';
 import { BountyStatistics } from '@/components/sections/home/bounty-statistics';
 import { Footer } from '@/components/sections/home/footer';
@@ -73,7 +74,13 @@ export default function Home() {
               deliver solutions. Instant payouts, integration, zero friction.
             </p>
 
-            <ConditionalForm />
+            <Suspense
+              fallback={
+                <div className="mb-8 h-[68px] w-full max-w-md rounded-2xl border border-white/10 bg-white/5" />
+              }
+            >
+              <ConditionalForm />
+            </Suspense>
             <BountyStatistics />
           </div>
         </main>
