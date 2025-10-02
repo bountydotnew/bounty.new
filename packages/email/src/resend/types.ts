@@ -21,4 +21,5 @@ export interface SendEmailInput<TProps = unknown> {
   text?: string;
   headers?: Record<string, string>;
   tags?: { name: string; value: string }[];
+  continueUrl?: string;
 }

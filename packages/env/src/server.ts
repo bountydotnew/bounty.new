@@ -18,6 +18,9 @@ export const env = createEnv({
     // GitHub OAuth
     GITHUB_CLIENT_ID: z.string().min(1),
     GITHUB_CLIENT_SECRET: z.string().min(1),
+    // Google OAuth
+    GOOGLE_CLIENT_ID: z.string().min(1),
+    GOOGLE_CLIENT_SECRET: z.string().min(1),
     // Rate limiting
     UNKEY_ROOT_KEY: z.string().min(1),
     // Discord webhook
