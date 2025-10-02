@@ -10,7 +10,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getThumbmark } from '@thumbmarkjs/thumbmarkjs';
 import { ChevronRight } from 'lucide-react';
 import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
+import { useQueryState, parseAsBoolean } from 'nuqs';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
@@ -164,21 +164,14 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
     },
   });
 
-  const searchParams = useSearchParams();
+  const [waitlistParam] = useQueryState('waitlist', parseAsBoolean);
   const [fingerprintData, setFingerprintData] =
     useState<thumbmarkResponse | null>(null);
   const [fingerprintLoading, setFingerprintLoading] = useState(true);
   const [isAttentionActive, setIsAttentionActive] = useState(false);
   const [, setFingerprintError] = useState<string | null>(null);
 
-  const waitlistParam = searchParams.get('waitlist');
-  const normalizedWaitlistParam = waitlistParam?.toLowerCase() ?? '';
-  const highlightWaitlist =
-    searchParams.has('waitlist') &&
-    (normalizedWaitlistParam === '' ||
-      normalizedWaitlistParam === 'true' ||
-      normalizedWaitlistParam === '1' ||
-      normalizedWaitlistParam === 'yes');
+  const highlightWaitlist = waitlistParam === true;
   const waitlistSubmission = useWaitlistSubmission();
   const waitlistCount = useWaitlistCount();
 

@@ -2,14 +2,13 @@
 
 import { Spinner } from '@bounty/ui/components/spinner';
 import { useMutation } from '@tanstack/react-query';
-import { useSearchParams } from 'next/navigation';
+import { useQueryState, parseAsString } from 'nuqs';
 import { Suspense, useEffect } from 'react';
 import Login from '@/components/bounty/login';
 import { trpc } from '@/utils/trpc';
 
 function LoginContent() {
-  const searchParams = useSearchParams();
-  const token = searchParams.get('invite');
+  const [token] = useQueryState('invite', parseAsString);
   const applyInvite = useMutation({
     ...trpc.user.applyInvite.mutationOptions(),
   });

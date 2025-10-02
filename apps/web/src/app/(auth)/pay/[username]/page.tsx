@@ -28,17 +28,16 @@ import {
   User,
   Users,
 } from 'lucide-react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { useQueryState, parseAsString } from 'nuqs';
 import { useEffect, useState } from 'react';
 import { PaymentModal } from '@/components/payment/payment-modal';
 
 export default function PaymentPage() {
   const { username } = useParams<{ username: string }>();
-  const searchParams = useSearchParams();
   const router = useRouter();
+  const [apiKey] = useQueryState('key', parseAsString);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-
-  const apiKey = searchParams.get('key');
 
   const userQuery = useQuery({
     queryKey: ['user', username],

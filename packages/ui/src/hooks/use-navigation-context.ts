@@ -1,6 +1,7 @@
 'use client';
 
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useQueryStates, parseAsString } from 'nuqs';
 import { useMemo } from 'react';
 
 export type NavigationContext = {
@@ -20,11 +21,12 @@ export type NavigationContext = {
 
 export function useNavigationContext(): NavigationContext {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const [{ from, ref }] = useQueryStates({
+    from: parseAsString,
+    ref: parseAsString,
+  });
 
   return useMemo(() => {
-    const from = searchParams.get('from');
-    const ref = searchParams.get('ref');
 
     // Dashboard context
     if (from === 'dashboard' || pathname === '/dashboard') {
@@ -106,7 +108,7 @@ export function useNavigationContext(): NavigationContext {
       backLabel: 'Bounties',
       breadcrumbs: [{ label: 'Bounties', href: '/bounties' }],
     };
-  }, [pathname, searchParams]);
+  }, [pathname, from, ref]);
 }
 
 // Helper function for components to add navigation context when navigating
