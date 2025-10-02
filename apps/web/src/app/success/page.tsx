@@ -13,16 +13,16 @@ import { Separator } from '@bounty/ui/components/separator';
 import { Spinner } from '@bounty/ui/components/spinner';
 import { useBilling } from '@bounty/ui/hooks/use-billing';
 import { ArrowRight } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { useQueryState, parseAsString } from 'nuqs';
 import { Suspense, useEffect } from 'react';
 import { Sidebar } from '@/components/dual-sidebar';
 import Bounty from '@/components/icons/bounty';
 import { useConfetti } from '@/context/confetti-context';
 
 function SuccessContent() {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const checkoutId = searchParams.get('checkout_id');
+  const [checkoutId] = useQueryState('checkout_id', parseAsString);
   const { refetch, customer } = useBilling({ enabled: true });
   const { data: session } = authClient.useSession();
   const { celebrate } = useConfetti();

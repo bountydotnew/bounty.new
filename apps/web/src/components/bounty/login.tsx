@@ -4,7 +4,8 @@ import { Button } from '@bounty/ui/components/button';
 import Link from '@bounty/ui/components/link';
 import { LogOut } from 'lucide-react';
 import Image from 'next/image';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { useQueryState, parseAsString } from 'nuqs';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import SubmissionCard from '@/components/bounty/submission-card';
@@ -57,11 +58,11 @@ export default function Login() {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const [callbackParam] = useQueryState('callback', parseAsString);
   const { data: session, isPending } = authClient.useSession();
 
   // Get callback URL from search params, default to dashboard
-  const callbackUrl = searchParams.get('callback') || LINKS.DASHBOARD;
+  const callbackUrl = callbackParam || LINKS.DASHBOARD;
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!(containerRef.current && svgRef.current)) {
