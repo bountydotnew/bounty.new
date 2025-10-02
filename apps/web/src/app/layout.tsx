@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Inter } from 'next/font/google';
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import './index.css';
 import { Providers } from '@/components/providers';
 
@@ -69,15 +70,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${interDisplay.variable} bg-background antialiased`}
       >
-        <Providers>
-          <script
-            async
-            data-toolbar-api-key="4570028d-502a-49d8-9435-ce0fc1569093"
-            id="toolbar-script"
-            src="https://get.usetool.bar/embedded-app.js"
-          />
-          <div className="grid h-svh grid-rows-[auto_1fr]">{children}</div>
-        </Providers>
+        <NuqsAdapter>
+          <Providers>
+            <script
+              async
+              data-toolbar-api-key="4570028d-502a-49d8-9435-ce0fc1569093"
+              id="toolbar-script"
+              src="https://get.usetool.bar/embedded-app.js"
+            />
+            <div className="grid h-svh grid-rows-[auto_1fr]">{children}</div>
+          </Providers>
+        </NuqsAdapter>
       </body>
     </html>
   );

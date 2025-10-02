@@ -75,8 +75,9 @@ export default function AdminUserProfilePage() {
                   defaultValue={user?.name ?? ''}
                   onBlur={(e) => {
                     const v = e.target.value.trim();
-                    if (v && v !== user?.name)
+                    if (v && v !== user?.name) {
                       updateName.mutate({ userId: id, name: v });
+                    }
                   }}
                   placeholder="Change name"
                 />

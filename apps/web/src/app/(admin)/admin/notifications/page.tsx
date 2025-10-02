@@ -105,8 +105,7 @@ export default function AdminNotificationsPage() {
             onLinkTo={setLinkTo}
             onMessage={setMessage}
             onSend={() => {
-              const ids = Array.from(selectedIds);
-              ids.forEach((id) => {
+              for (const id of selectedIds) {
                 sendMutation.mutate({
                   userId: id,
                   title: title.trim(),
@@ -114,7 +113,7 @@ export default function AdminNotificationsPage() {
                   type: 'custom',
                   data: linkTo ? { linkTo } : undefined,
                 });
-              });
+              }
             }}
             onTitle={setTitle}
             title={title}

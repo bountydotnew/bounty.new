@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useQueryState, parseAsString } from 'nuqs';
 import { Suspense } from 'react';
 import Bounty from '@/components/icons/bounty';
 
@@ -42,8 +42,7 @@ const ERROR_MESSAGES: Record<string, { title: string; description: string }> = {
 };
 
 function AuthErrorContent() {
-  const searchParams = useSearchParams();
-  const error = searchParams.get('error') || 'default';
+  const [error] = useQueryState('error', parseAsString.withDefault('default'));
   const message = ERROR_MESSAGES[error] || ERROR_MESSAGES.default;
 
   return (

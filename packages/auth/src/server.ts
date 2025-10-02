@@ -34,7 +34,7 @@ export const auth = betterAuth({
     throw: true,
     onError: (error) => {
       // Custom error handling
-      console.error('Auth error:', error);
+      console.error(`Auth error: ${error} ${ctx}`);
     },
     errorURL: '/auth/error',
   },
@@ -104,8 +104,8 @@ export const auth = betterAuth({
           onCustomerStateChanged: (_payload) => {
             return Promise.resolve();
           },
-          onOrderPaid: (_payload) => Promise.resolve(),
-          onSubscriptionActive: (_payload) => Promise.resolve(),
+          onOrderPaid: () => Promise.resolve(),
+          onSubscriptionActive: () => Promise.resolve(),
           onPayload: (_payload) => {
             return Promise.resolve();
           },
@@ -113,10 +113,10 @@ export const auth = betterAuth({
       ],
     }),
     passkey({
-      rpID: process.env.NODE_ENV === 'production' ? 'bounty.new' : 'localhost',
+      rpID: env.NODE_ENV === 'production' ? 'bounty.new' : 'localhost',
       rpName: 'Bounty.new',
       origin:
-        process.env.NODE_ENV === 'production'
+        env.NODE_ENV === 'production'
           ? 'https://bounty.new'
           : 'http://localhost:3000',
     }),
