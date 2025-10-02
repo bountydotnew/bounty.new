@@ -7,6 +7,12 @@ import { Header } from '@/components/dual-sidebar/sidebar-header';
 import type { Bounty } from '@/types/dashboard';
 import { trpc } from '@/utils/trpc';
 
+const SKELETON_KEYS = [
+  'bookmark-skeleton-1',
+  'bookmark-skeleton-2',
+  'bookmark-skeleton-3',
+] as const;
+
 export default function BookmarksPage() {
   const [page, setPage] = useState(1);
   const limit = 20;
@@ -30,27 +36,37 @@ export default function BookmarksPage() {
           )}
         </div>
 
-        {isLoading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div
-                className="animate-pulse rounded-md border border-neutral-800 bg-neutral-900/30 p-3"
-                key={i}
-              >
-                <div className="mb-2 h-4 w-24 rounded bg-neutral-800" />
-                <div className="h-3 w-full rounded bg-neutral-800" />
+        {(() => {
+          if (isLoading) {
+            return (
+              <div className="space-y-2">
+                {SKELETON_KEYS.map((key) => (
+                  <div
+                    className="animate-pulse rounded-md border border-neutral-800 bg-neutral-900/30 p-3"
+                    key={key}
+                  >
+                    <div className="mb-2 h-4 w-24 rounded bg-neutral-800" />
+                    <div className="h-3 w-full rounded bg-neutral-800" />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        ) : items.length === 0 ? (
-          <div className="text-neutral-400 text-sm">No bookmarks yet.</div>
-        ) : (
-          <div className="space-y-3">
-            {items.map((bounty) => (
-              <BountyCard bounty={bounty as Bounty} key={bounty.id} />
-            ))}
-          </div>
-        )}
+            );
+          }
+
+          if (items.length === 0) {
+            return (
+              <div className="text-neutral-400 text-sm">No bookmarks yet.</div>
+            );
+          }
+
+          return (
+            <div className="space-y-3">
+              {items.map((bounty) => (
+                <BountyCard bounty={bounty as Bounty} key={bounty.id} />
+              ))}
+            </div>
+          );
+        })()}
 
         {totalPages > 1 && (
           <div className="mt-4 flex items-center justify-end gap-2">
@@ -58,6 +74,7 @@ export default function BookmarksPage() {
               className="rounded-md border border-neutral-700 bg-neutral-800/60 px-3 py-1 text-neutral-300 text-xs disabled:opacity-50"
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
+              type="button"
             >
               Previous
             </button>
@@ -65,6 +82,7 @@ export default function BookmarksPage() {
               className="rounded-md border border-neutral-700 bg-neutral-800/60 px-3 py-1 text-neutral-300 text-xs disabled:opacity-50"
               disabled={page >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              type="button"
             >
               Next
             </button>

@@ -1,11 +1,17 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+/* biome-ignore lint/nursery/noUnknownAtRule: Tailwind CSS directive */
 @plugin "@tailwindcss/typography";
+/* biome-ignore lint/nursery/noUnknownAtRule: Tailwind CSS directive */
 @plugin "tailwindcss-animate";
+/* biome-ignore lint/nursery/noUnknownAtRule: Tailwind CSS directive */
 @source "../../../../apps/**/*.{ts,tsx}";
+/* biome-ignore lint/nursery/noUnknownAtRule: Tailwind CSS directive */
 @source "../**/*.{ts,tsx}";
+/* biome-ignore lint/nursery/noUnknownAtRule: Tailwind CSS directive */
 @source "../node_modules/@daveyplate/better-auth-ui";
 
+/* biome-ignore lint/nursery/noUnknownAtRule: Tailwind CSS directive */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Custom Font Definitions */
@@ -29,6 +35,7 @@
   font-display: swap;
 }
 
+/* biome-ignore lint/nursery/noUnknownAtRule: Tailwind CSS directive */
 @theme {
   --font-sans:
     "Inter", "Geist", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
@@ -39,6 +46,7 @@
 
 html,
 body {
+  /* biome-ignore lint/nursery/noUnknownAtRule: Tailwind CSS directive */
   @apply bg-white dark:bg-background;
 
   @media (prefers-color-scheme: dark) {
@@ -125,6 +133,7 @@ body {
   --sf-color-tertiary: var(--background);
 }
 
+/* biome-ignore lint/nursery/noUnknownAtRule: Tailwind CSS directive */
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -168,9 +177,11 @@ body {
 
 @layer base {
   * {
+    /* biome-ignore lint/nursery/noUnknownAtRule: Tailwind CSS directive */
     @apply border-border outline-ring/50;
   }
   body {
+    /* biome-ignore lint/nursery/noUnknownAtRule: Tailwind CSS directive */
     @apply bg-background text-foreground;
   }
 }

@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from '@bounty/ui/components/dialog';
 import { Switch } from '@bounty/ui/components/switch';
-import { useBilling } from '@bounty/ui/hooks/use-billing';
+import { useBilling } from '@/hooks/use-billing';
 import { Check } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
