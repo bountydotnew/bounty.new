@@ -1,8 +1,8 @@
 'use client';
 
 import { Bell, CreditCard, DollarSign, Shield, User } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useQueryState, parseAsString } from 'nuqs';
+import { useCallback, useEffect } from 'react';
 import {
   Tabs,
   TabsContent,
@@ -75,35 +75,20 @@ const TAB_CONFIGS: TabConfig[] = [
 
 // Main settings page component
 export default function SettingsPage() {
-  const searchParams = useSearchParams();
+  // Use nuqs to manage tab state in URL
+  const [activeTab, setActiveTab] = useQueryState(
+    'tab',
+    parseAsString.withDefault('general')
+  );
 
-  // Initialize active tab from URL, but manage locally for speed
-  const [activeTab, setActiveTab] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const fromUrl = searchParams.get('tab');
-      let fromStorage = null;
-      try {
-        fromStorage = window.localStorage.getItem('settings.activeTab');
-      } catch {}
-      return fromUrl || fromStorage || 'general';
-    }
-    return 'general';
-  });
-
-  // Update URL without navigation when tab changes (debounced)
+  // Sync with localStorage
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    const currentTab = params.get('tab');
-    if (currentTab !== activeTab) {
-      params.set('tab', activeTab);
-      window.history.replaceState(null, '', `/settings?${params.toString()}`);
-    }
     try {
       window.localStorage.setItem('settings.activeTab', activeTab);
     } catch {}
-  }, [activeTab, searchParams]);
+  }, [activeTab]);
 
-  // Lightning-fast tab change handler - no router calls
+  // Lightning-fast tab change handler
   const handleTabChange = useCallback(
     (value: string) => {
       // Early return if same tab clicked - no work needed
@@ -113,7 +98,7 @@ export default function SettingsPage() {
 
       setActiveTab(value);
     },
-    [activeTab]
+    [activeTab, setActiveTab]
   );
 
   return (

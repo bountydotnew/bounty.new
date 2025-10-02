@@ -131,5 +131,8 @@
     "*.{js,jsx,ts,tsx,json,jsonc,css,scss,md,mdx}": [
       "npx ultracite format"
     ]
+  },
+  "dependencies": {
+    "nuqs": "^2.7.0"
   }
 }
