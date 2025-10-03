@@ -12,6 +12,7 @@ import {
 import { Polar } from '@polar-sh/sdk';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { deviceAuthorization, openAPI } from 'better-auth/plugins';
 import { admin } from 'better-auth/plugins/admin';
 import { passkey } from 'better-auth/plugins/passkey';
 
@@ -19,6 +20,25 @@ const polarEnv = env.NODE_ENV === 'production' ? 'production' : 'sandbox';
 const polarClient = new Polar({
   accessToken: env.POLAR_ACCESS_TOKEN,
   server: polarEnv,
+});
+
+const allowedDeviceClientIds = env.DEVICE_AUTH_ALLOWED_CLIENT_IDS
+  ?.split(',')
+  .map((clientId) => clientId.trim())
+  .filter(Boolean);
+
+const deviceAuthorizationPlugin = deviceAuthorization({
+  expiresIn: '30m',
+  interval: '5s',
+  validateClient: allowedDeviceClientIds?.length
+    ? (clientId) => allowedDeviceClientIds.includes(clientId)
+    : undefined,
+  onDeviceAuthRequest: async (clientId, scope) => {
+    console.info('Device authorization requested', {
+      clientId,
+      scope,
+    });
+  },
 });
 
 export const auth = betterAuth({
@@ -29,7 +49,7 @@ export const auth = betterAuth({
   }),
   onAPIError: {
     throw: true,
-    onError: (error, ctx) => {
+    onError: (error) => {
       // Custom error handling
       console.error('Auth error:', error);
     },
@@ -123,6 +143,8 @@ export const auth = betterAuth({
           : 'http://localhost:3000',
     }),
     admin(),
+    openAPI(),
+    deviceAuthorizationPlugin,
   ],
   secret: env.BETTER_AUTH_SECRET,
 });
