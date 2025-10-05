@@ -1,0 +1,61 @@
+import { useAuth } from '../hooks/useAuth';
+import { Button } from './ui';
+
+export function LoginView() {
+  const { login, isLoggingIn, loginError } = useAuth();
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-background">
+      <div className="flex flex-col items-center max-w-md space-y-6 text-center">
+        {/* Logo */}
+        <div className="w-24 h-24 opacity-80 text-white">
+          <svg
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="21.3696"
+            viewBox="0 0 153 179"
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-full h-full"
+          >
+            <path d="M91.1385 71.1097C107.031 77.947 125.457 70.6065 132.294 54.7141C139.132 38.8217 131.791 20.3956 115.899 13.5582C100.006 6.72079 81.5803 14.0613 74.7429 29.9537C67.9055 45.8461 75.2461 64.2723 91.1385 71.1097ZM91.1385 71.1097L29.921 44.7722M5 102.256L33.9985 114.732C49.8909 121.57 68.317 114.229 75.1544 98.3367C81.9918 82.4443 74.6513 64.0182 58.7589 57.1808L29.7603 44.7048M148.655 95.8569L119.657 83.3808C103.764 76.5434 85.338 83.8839 78.5006 99.7763L78.5182 179" />
+          </svg>
+        </div>
+
+        {/* Title */}
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold text-white">
+            Welcome to Bounty
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Connect your bounty.new account to browse and manage bounties
+            directly from VS Code
+          </p>
+        </div>
+
+        {/* Login Button */}
+        <div className="w-full space-y-3">
+          <Button
+            onClick={login}
+            disabled={isLoggingIn}
+            className="w-full"
+          >
+            {isLoggingIn ? 'Connecting...' : 'Connect to bounty.new'}
+          </Button>
+
+          {loginError && (
+            <div className="p-3 text-sm bg-red-500/10 border border-red-500/30 rounded">
+              <p className="text-red-400">{loginError}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Info */}
+        {isLoggingIn && (
+          <p className="text-xs text-muted-foreground animate-pulse">
+            Opening browser for authorization...
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
