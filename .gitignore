@@ -20,3 +20,14 @@ stagewise.json
 /agents
 packages/dev-logger/tsconfig.tsbuildinfo
 *.tsbuildinfo
+*.tsbuildinfo
+packages/vscode-extension/.DS_Store
+packages/vscode-extension/CHANGELOG_API.md
+packages/vscode-extension/CHANGELOG.md
+packages/vscode-extension/CODE_STRUCTURE.md
+packages/vscode-extension/DEPLOYMENT_NOTE.md
+packages/vscode-extension/DEVICE_AUTH_SETUP.md
+packages/vscode-extension/INTEGRATION.md
+packages/vscode-extension/STYLE_GUIDE.md
+packages/vscode-extension/vsc-extension-quickstart.md
+packages/dev-logger/tsconfig.tsbuildinfo
