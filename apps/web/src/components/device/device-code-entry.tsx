@@ -142,7 +142,7 @@ export function DeviceCodeEntry({ initialCode = '' }: DeviceCodeEntryProps) {
                 )}
               </Button>
               <p className="text-muted-foreground text-xs">
-                You&apos;ll be asked to approve the request after we confirm the
+                You'll be asked to approve the request after we confirm the
                 code.
               </p>
             </div>

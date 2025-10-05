@@ -21,8 +21,8 @@ export function activate(context: vscode.ExtensionContext): void {
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand(EXTENSION_CONFIG.logoutCommandId, async () => {
-			await sidebarProvider.logout();
+		vscode.commands.registerCommand(EXTENSION_CONFIG.logoutCommandId, () => {
+			sidebarProvider.refresh();
 		})
 	);
 
