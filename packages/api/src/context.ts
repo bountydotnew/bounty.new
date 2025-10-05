@@ -17,9 +17,32 @@ function getClientIP(req: NextRequest): string {
 }
 
 export async function createContext(req: NextRequest) {
-  const session = await auth.api.getSession({
-    headers: req.headers,
-  });
+  // Check for bearer token first (for device authorization / VS Code extension)
+  const authHeader = req.headers.get('authorization');
+  let session = null;
+
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+
+    try {
+      // Validate the access token from device authorization
+      session = await auth.api.getSession({
+        headers: new Headers({
+          authorization: `Bearer ${token}`,
+        }),
+      });
+    } catch (error) {
+      // Token validation failed, continue without session
+      console.error('Bearer token validation failed:', error);
+    }
+  }
+
+  // Fall back to cookie-based session if no bearer token
+  if (!session) {
+    session = await auth.api.getSession({
+      headers: req.headers,
+    });
+  }
 
   const clientIP = getClientIP(req);
 
