@@ -74,6 +74,10 @@ const TAB_CONFIGS: TabConfig[] = [
   },
 ];
 
+const isValidTabId = (tabId: string): boolean => {
+  return TAB_CONFIGS.some((config) => config.id === tabId);
+};
+
 interface SettingsClientProps {
   initialCustomerState?: CustomerState | null;
 }
@@ -90,7 +94,19 @@ export function SettingsClient({ initialCustomerState }: SettingsClientProps) {
       } catch (_error) {
         fromStorage = null;
       }
-      return fromUrl || fromStorage || 'general';
+      
+      // Validate URL parameter first
+      if (fromUrl && isValidTabId(fromUrl)) {
+        return fromUrl;
+      }
+      
+      // Then validate localStorage value
+      if (fromStorage && isValidTabId(fromStorage)) {
+        return fromStorage;
+      }
+      
+      // Default to 'general' if no valid tab found
+      return 'general';
     }
     return 'general';
   });
