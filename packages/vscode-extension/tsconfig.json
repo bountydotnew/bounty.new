@@ -1,0 +1,30 @@
+{
+	"compilerOptions": {
+		"module": "ESNext",
+		"target": "ES2022",
+		"lib": [
+			"ES2022"
+		],
+		"moduleResolution": "bundler",
+		"sourceMap": true,
+		"rootDir": "src",
+		"strict": true,
+		"skipLibCheck": true,
+		"esModuleInterop": true,
+		"types": ["vscode", "node", "mocha"]
+	},
+	"include": [
+		"src/**/*"
+	],
+	"exclude": [
+		"node_modules",
+		"out",
+		"dist",
+		"**/*.test.ts",
+		"../api/**/*",
+		"../dev-logger/**/*",
+		"../email/**/*",
+		"../env/**/*",
+		"../**/*.tsx"
+	]
+}
