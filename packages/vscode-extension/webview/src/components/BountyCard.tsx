@@ -61,9 +61,9 @@ export function BountyCard({ bounty, onClick }: BountyCardProps) {
                 <Check className="-rotate-45 h-2.5 w-2.5 transform text-white" />
               </div>
             </div>
-            <span className="text-gray-400 text-xs capitalize">
-              {bounty.status.replace('_', ' ')}
-            </span>
+             <span className="text-gray-400 text-xs capitalize">
+              {bounty.status.replaceAll('_', ' ')}
+             </span>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
