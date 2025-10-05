@@ -13,6 +13,7 @@ import { Polar } from '@polar-sh/sdk';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin } from 'better-auth/plugins/admin';
+import { deviceAuthorization } from 'better-auth/plugins/device-authorization';
 import { passkey } from 'better-auth/plugins/passkey';
 
 const polarEnv = env.NODE_ENV === 'production' ? 'production' : 'sandbox';
@@ -121,6 +122,10 @@ export const auth = betterAuth({
         process.env.NODE_ENV === 'production'
           ? 'https://bounty.new'
           : 'http://localhost:3000',
+    }),
+    deviceAuthorization({
+      expiresIn: '30m', // Device code expiration time
+      interval: '5s',    // Minimum polling interval
     }),
     admin(),
   ],
