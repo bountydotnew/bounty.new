@@ -74,6 +74,8 @@ export function BountyCard({ bounty, onClick }: BountyCardProps) {
               e.stopPropagation();
             }}
             type="button"
+            aria-label={bounty.isVoted ? 'Remove upvote' : 'Upvote bounty'}
+            aria-pressed={bounty.isVoted}
           >
             <ChevronUp className="h-4 w-4" />
             <span className="text-sm">{bounty.voteCount ?? 0}</span>
@@ -85,6 +87,8 @@ export function BountyCard({ bounty, onClick }: BountyCardProps) {
               e.stopPropagation();
             }}
             type="button"
+            aria-label={bounty.bookmarked ? 'Remove bookmark' : 'Bookmark bounty'}
+            aria-pressed={bounty.bookmarked}
           >
             <Bookmark className={`h-4 w-4 ${bounty.bookmarked ? 'fill-white text-white' : ''}`} />
           </button>
