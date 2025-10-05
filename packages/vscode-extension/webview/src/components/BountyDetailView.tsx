@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { ArrowLeft, ChevronUp, Bookmark, Share2, MessageCircle, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ChevronUp, Bookmark, MessageCircle, ExternalLink } from 'lucide-react';
 import Markdown from 'markdown-to-jsx';
 import type { BountyDetail } from '../types';
 import { Avatar, AvatarFallback, AvatarImage } from './ui';
@@ -19,11 +19,23 @@ export function BountyDetailView({ bountyId, onBack }: BountyDetailViewProps) {
   const [bountyDetail, setBountyDetail] = useState<BountyDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [localVotes, setLocalVotes] = useState<{ count: number; isVoted: boolean } | null>(null);
+  const [localBookmarked, setLocalBookmarked] = useState<boolean | null>(null);
+  const [commentLikes, setCommentLikes] = useState<Record<string, { count: number; isLiked: boolean }>>({});
 
   useMessageListener((message) => {
     if (message.type === 'bountyDetailLoaded' && message.bountyDetail) {
       setBountyDetail(message.bountyDetail);
       setLoading(false);
+    } else if (message.type === 'voteToggled' && message.bountyId === bountyId) {
+      setLocalVotes({ count: message.count ?? 0, isVoted: message.voted ?? false });
+    } else if (message.type === 'bookmarkToggled' && message.bountyId === bountyId) {
+      setLocalBookmarked(message.bookmarked ?? false);
+    } else if (message.type === 'commentLikeToggled' && message.commentId) {
+      setCommentLikes(prev => ({
+        ...prev,
+        [message.commentId!]: { count: message.count ?? 0, isLiked: message.liked ?? false }
+      }));
     } else if (message.type === 'error') {
       setError(message.message || 'Failed to load bounty details');
       setLoading(false);
@@ -53,12 +65,27 @@ export function BountyDetailView({ bountyId, onBack }: BountyDetailViewProps) {
     );
   }
 
-  const { bounty, votes, comments } = bountyDetail;
+  const { bounty, votes, comments, bookmarked } = bountyDetail;
   
   const creatorName = bounty.creator?.name || 'Anonymous';
   const creatorInitial = creatorName.charAt(0).toUpperCase();
   const creatorImage = bounty.creator?.image;
   const amount = (bounty.amount || 0) as number;
+
+  const displayVotes = localVotes ?? votes;
+  const displayBookmarked = localBookmarked ?? bookmarked;
+
+  const handleToggleVote = () => {
+    sendMessage('toggleVote', { bountyId: bounty.id });
+  };
+
+  const handleToggleBookmark = () => {
+    sendMessage('toggleBookmark', { bountyId: bounty.id });
+  };
+
+  const handleToggleCommentLike = (commentId: string) => {
+    sendMessage('toggleCommentLike', { commentId });
+  };
 
   const handleOpenInBrowser = () => {
     sendMessage('openBounty', { bountyId: bounty.id });
@@ -136,33 +163,27 @@ export function BountyDetailView({ bountyId, onBack }: BountyDetailViewProps) {
             {/* Action Buttons */}
             <div className="flex items-center gap-2 flex-wrap">
               <button
-                className="flex items-center gap-2 px-3 py-2 rounded-md bg-card border border-border/20 text-white hover:bg-muted/50 transition-colors text-sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
+                aria-label="Upvote bounty"
+                aria-pressed={displayVotes.isVoted}
+                className={`flex items-center gap-1 rounded-md border px-2 py-1 text-xs transition-colors ${
+                  displayVotes.isVoted
+                    ? 'border-neutral-700/40 bg-[#343333] text-white'
+                    : 'border-neutral-700 bg-neutral-800/40 text-neutral-300 hover:bg-neutral-700/40'
+                }`}
+                onClick={handleToggleVote}
                 type="button"
               >
-                <ChevronUp className="h-4 w-4" />
-                <span>{votes.count}</span>
+                <ChevronUp className={`h-4 w-4 ${displayVotes.isVoted ? 'text-white' : ''}`} />
+                <span>{displayVotes.count}</span>
               </button>
               <button
-                className="flex items-center gap-2 px-3 py-2 rounded-md bg-card border border-border/20 text-white hover:bg-muted/50 transition-colors text-sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
+                aria-label={displayBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+                aria-pressed={displayBookmarked}
+                className="rounded-md border border-neutral-700 bg-neutral-800/40 p-1 text-neutral-300 hover:bg-neutral-700/40 transition-colors"
+                onClick={handleToggleBookmark}
                 type="button"
               >
-                <Bookmark className="h-4 w-4" />
-              </button>
-              <button
-                className="flex items-center gap-2 px-3 py-2 rounded-md bg-card border border-border/20 text-white hover:bg-muted/50 transition-colors text-sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-                type="button"
-              >
-                <Share2 className="h-4 w-4" />
-                <span>Share</span>
+                <Bookmark className={`h-4 w-4 ${displayBookmarked ? 'fill-white text-white' : ''}`} />
               </button>
             </div>
           </div>
@@ -208,17 +229,6 @@ export function BountyDetailView({ bountyId, onBack }: BountyDetailViewProps) {
               </div>
             </div>
 
-            {/* Disabled comment input */}
-            <div className="relative">
-              <textarea
-                className="w-full rounded-md border border-border/20 bg-[#0D0D0D] px-4 py-3 text-sm text-gray-500 cursor-not-allowed resize-none"
-                placeholder="View this bounty on bounty.new to leave a comment..."
-                rows={3}
-                disabled
-              />
-              <div className="absolute inset-0 rounded-md bg-gradient-to-r from-transparent via-transparent to-[#1D1D1D]/20 pointer-events-none" />
-            </div>
-
             {comments.length === 0 ? (
               <div className="text-center py-8 text-gray-400 text-sm">
                 No comments yet. View on bounty.new to be the first to comment!
@@ -248,11 +258,18 @@ export function BountyDetailView({ bountyId, onBack }: BountyDetailViewProps) {
                         </div>
                         <div className="flex items-center gap-4 mt-2">
                           <button
-                            className="flex items-center gap-1 text-xs text-gray-400 hover:text-white transition-colors"
+                            aria-label="Like comment"
+                            aria-pressed={(commentLikes[comment.id]?.isLiked ?? comment.isLiked)}
+                            className={`flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs transition-colors ${
+                              (commentLikes[comment.id]?.isLiked ?? comment.isLiked)
+                                ? 'border-neutral-700/40 bg-[#343333] text-white'
+                                : 'border-neutral-700 bg-neutral-800/40 text-neutral-300 hover:bg-neutral-700/40'
+                            }`}
+                            onClick={() => handleToggleCommentLike(comment.id)}
                             type="button"
                           >
-                            <ChevronUp className="h-3 w-3" />
-                            <span>{comment.likeCount}</span>
+                            <ChevronUp className={`h-3 w-3 ${(commentLikes[comment.id]?.isLiked ?? comment.isLiked) ? 'text-white' : ''}`} />
+                            <span>{commentLikes[comment.id]?.count ?? comment.likeCount}</span>
                           </button>
                         </div>
                       </div>
@@ -267,9 +284,9 @@ export function BountyDetailView({ bountyId, onBack }: BountyDetailViewProps) {
           <div className="rounded-lg border border-border/20 bg-[#1D1D1D] p-5 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-white text-lg">Submissions</h3>
-              <Button className="text-sm">
+              <button className="text-sm text-gray-400 hover:text-white transition-colors">
                 View all
-              </Button>
+              </button>
             </div>
             <div className="text-center py-8 text-gray-400 text-sm">
               No submissions yet

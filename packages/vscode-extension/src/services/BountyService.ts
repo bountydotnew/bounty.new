@@ -4,24 +4,45 @@ import { DEFAULT_FETCH_PARAMS, API_CONFIG } from '../constants';
 export class BountyService {
 	constructor(private getAuthHeaders: () => Promise<Record<string, string>>) {}
 
-	private async fetchTRPC(endpoint: string, input: unknown): Promise<any> {
-		const url = `${API_CONFIG.baseUrl}/${endpoint}?input=${encodeURIComponent(JSON.stringify(input))}`;
+	private async fetchTRPC(endpoint: string, input: unknown, mutation = false): Promise<any> {
 		const authHeaders = await this.getAuthHeaders();
+		
+		let url: string;
+		let fetchOptions: RequestInit;
+
+		if (mutation) {
+			// For mutations, use POST with body
+			url = `${API_CONFIG.baseUrl}/${endpoint}`;
+			fetchOptions = {
+				method: 'POST',
+				headers: {
+					...API_CONFIG.headers,
+					...authHeaders,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(input),
+			};
+		} else {
+			// For queries, use GET with URL params
+			url = `${API_CONFIG.baseUrl}/${endpoint}?input=${encodeURIComponent(JSON.stringify(input))}`;
+			fetchOptions = {
+				headers: {
+					...API_CONFIG.headers,
+					...authHeaders,
+				},
+			};
+		}
 		
 		console.log('[BountyService] Fetching TRPC:', JSON.stringify({
 			url,
 			endpoint,
 			input,
-			authHeaders,
+			mutation,
+			method: mutation ? 'POST' : 'GET',
 			hasAuthToken: Boolean(authHeaders.Authorization),
 		}));
 		
-		const response = await fetch(url, {
-			headers: {
-				...API_CONFIG.headers,
-				...authHeaders,
-			},
-		});
+		const response = await fetch(url, fetchOptions);
 
 		if (!response.ok) {
 			const errorText = await response.text();
@@ -30,7 +51,7 @@ export class BountyService {
 				statusText: response.statusText,
 				url,
 				errorBody: errorText,
-				requestHeaders: { ...API_CONFIG.headers, ...authHeaders },
+				requestHeaders: fetchOptions.headers,
 			}));
 			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 		}
@@ -118,6 +139,42 @@ export class BountyService {
 			console.error('[BountyService] Error fetching bounty stats:', error);
 			throw new Error(
 				error instanceof Error ? error.message : 'Failed to fetch bounty stats'
+			);
+		}
+	}
+
+	async toggleBountyVote(bountyId: string): Promise<{ voted: boolean; count: number }> {
+		try {
+			const response = await this.fetchTRPC('bounties.voteBounty', { bountyId }, true);
+			return response;
+		} catch (error) {
+			console.error('[BountyService] Error toggling vote:', error);
+			throw new Error(
+				error instanceof Error ? error.message : 'Failed to toggle vote'
+			);
+		}
+	}
+
+	async toggleBountyBookmark(bountyId: string): Promise<{ bookmarked: boolean }> {
+		try {
+			const response = await this.fetchTRPC('bounties.toggleBountyBookmark', { bountyId }, true);
+			return response;
+		} catch (error) {
+			console.error('[BountyService] Error toggling bookmark:', error);
+			throw new Error(
+				error instanceof Error ? error.message : 'Failed to toggle bookmark'
+			);
+		}
+	}
+
+	async toggleCommentLike(commentId: string): Promise<{ liked: boolean; count: number }> {
+		try {
+			const response = await this.fetchTRPC('bounties.toggleCommentLike', { commentId }, true);
+			return response;
+		} catch (error) {
+			console.error('[BountyService] Error toggling comment like:', error);
+			throw new Error(
+				error instanceof Error ? error.message : 'Failed to toggle comment like'
 			);
 		}
 	}

@@ -46,5 +46,10 @@ export interface WebviewMessage {
 	bounties?: Bounty[];
 	bountyDetail?: BountyDetail;
 	bountyId?: string;
+	commentId?: string;
 	message?: string;
+	voted?: boolean;
+	bookmarked?: boolean;
+	liked?: boolean;
+	count?: number;
 }

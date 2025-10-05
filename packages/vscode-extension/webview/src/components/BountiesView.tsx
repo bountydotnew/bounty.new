@@ -2,6 +2,7 @@ import { useBounties } from '../hooks/useBounties';
 import { useSendMessage } from '../hooks/useVSCodeMessage';
 import { BountyCard } from './BountyCard';
 import { Button, Spinner } from './ui';
+import { BountyLogo } from './icons/BountyLogo';
 import type { Bounty } from '../types';
 
 interface BountiesViewProps {
@@ -20,7 +21,9 @@ export function BountiesView({ onOpenBounty }: BountiesViewProps) {
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border/20">
-        <h1 className="text-lg font-bold text-white">Bounties</h1>
+        <div className="flex items-center gap-2">
+          <BountyLogo className="h-7 w-7 text-white" />
+        </div>
         <div className="flex items-center gap-2">
           <Button
             variant="icon"

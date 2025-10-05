@@ -86,7 +86,7 @@ export function BountyCard({ bounty, onClick }: BountyCardProps) {
             }}
             type="button"
           >
-            <Bookmark className="h-4 w-4" />
+            <Bookmark className={`h-4 w-4 ${bounty.bookmarked ? 'fill-white text-white' : ''}`} />
           </button>
           {/* Reward */}
           <span className="font-semibold text-green-400 text-sm whitespace-nowrap">

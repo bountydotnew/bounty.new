@@ -41,6 +41,11 @@ export interface WebviewMessage {
   bountyDetail?: BountyDetail;
   message?: string;
   bountyId?: string;
+  commentId?: string;
+  voted?: boolean;
+  bookmarked?: boolean;
+  liked?: boolean;
+  count?: number;
 }
 
 export interface BountyDetail {
@@ -72,12 +77,18 @@ export type MessageType =
   | 'logout'
   | 'fetchBounties'
   | 'fetchBountyDetail'
+  | 'toggleVote'
+  | 'toggleBookmark'
+  | 'toggleCommentLike'
   | 'openBounty'
   | 'refresh'
   | 'loginStarted'
   | 'loginError'
   | 'bountiesLoaded'
   | 'bountyDetailLoaded'
+  | 'voteToggled'
+  | 'bookmarkToggled'
+  | 'commentLikeToggled'
   | 'error';
 
 export interface VSCode {

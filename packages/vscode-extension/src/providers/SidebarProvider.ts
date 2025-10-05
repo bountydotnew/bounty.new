@@ -80,6 +80,18 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 					await this.handleFetchBountyDetail(webview, message.bountyId as string);
 					break;
 
+				case 'toggleVote':
+					await this.handleToggleVote(webview, message.bountyId as string);
+					break;
+
+				case 'toggleBookmark':
+					await this.handleToggleBookmark(webview, message.bountyId as string);
+					break;
+
+				case 'toggleCommentLike':
+					await this.handleToggleCommentLike(webview, message.commentId as string);
+					break;
+
 				case 'openBounty':
 					await this.handleOpenBounty(message.bountyId as string);
 					break;
@@ -155,6 +167,65 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 			webview.postMessage({
 				type: 'error',
 				message: error instanceof Error ? error.message : 'Failed to fetch bounty details',
+			});
+		}
+	}
+
+	private async handleToggleVote(
+		webview: vscode.Webview,
+		bountyId: string
+	): Promise<void> {
+		try {
+			const result = await this.bountyService.toggleBountyVote(bountyId);
+			webview.postMessage({
+				type: 'voteToggled',
+				bountyId,
+				voted: result.voted,
+				count: result.count,
+			});
+		} catch (error) {
+			webview.postMessage({
+				type: 'error',
+				message: error instanceof Error ? error.message : 'Failed to toggle vote',
+			});
+		}
+	}
+
+	private async handleToggleBookmark(
+		webview: vscode.Webview,
+		bountyId: string
+	): Promise<void> {
+		try {
+			const result = await this.bountyService.toggleBountyBookmark(bountyId);
+			webview.postMessage({
+				type: 'bookmarkToggled',
+				bountyId,
+				bookmarked: result.bookmarked,
+			});
+		} catch (error) {
+			webview.postMessage({
+				type: 'error',
+				message: error instanceof Error ? error.message : 'Failed to toggle bookmark',
+			});
+		}
+	}
+
+	private async handleToggleCommentLike(
+		webview: vscode.Webview,
+		commentId: string
+	): Promise<void> {
+		try {
+			const result = await this.bountyService.toggleCommentLike(commentId);
+			webview.postMessage({
+				type: 'commentLikeToggled',
+				commentId,
+				liked: result.liked,
+				count: result.count,
+			});
+		} catch (error) {
+			webview.postMessage({
+				type: 'error',
+				message: error instanceof Error ? error.message : 'Failed to toggle like',
 			});
 		}
 	}
