@@ -31,3 +31,10 @@ packages/vscode-extension/INTEGRATION.md
 packages/vscode-extension/STYLE_GUIDE.md
 packages/vscode-extension/vsc-extension-quickstart.md
 packages/dev-logger/tsconfig.tsbuildinfo
+packages/vscode-extension/BOUNTY_DETAIL_VIEW.md
+packages/vscode-extension/FINAL_SUMMARY.md
+packages/vscode-extension/MIGRATION_SUMMARY.md
+packages/vscode-extension/REACT_SETUP.md
+packages/vscode-extension/README.md
+packages/vscode-extension/WEB_APP_STYLING.md
+packages/vscode-extension/webview/README.md

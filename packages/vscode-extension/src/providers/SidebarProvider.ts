@@ -76,6 +76,22 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 					await this.handleFetchBounties(webview, message.params as FetchBountiesParams);
 					break;
 
+				case 'fetchBountyDetail':
+					await this.handleFetchBountyDetail(webview, message.bountyId as string);
+					break;
+
+				case 'toggleVote':
+					await this.handleToggleVote(webview, message.bountyId as string);
+					break;
+
+				case 'toggleBookmark':
+					await this.handleToggleBookmark(webview, message.bountyId as string);
+					break;
+
+				case 'toggleCommentLike':
+					await this.handleToggleCommentLike(webview, message.commentId as string);
+					break;
+
 				case 'openBounty':
 					await this.handleOpenBounty(message.bountyId as string);
 					break;
@@ -136,58 +152,103 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 		}
 	}
 
+	private async handleFetchBountyDetail(
+		webview: vscode.Webview,
+		bountyId: string
+	): Promise<void> {
+		try {
+			const bountyDetail = await this.bountyService.fetchBountyById(bountyId);
+			
+			webview.postMessage({
+				type: 'bountyDetailLoaded',
+				bountyDetail,
+			});
+		} catch (error) {
+			webview.postMessage({
+				type: 'error',
+				message: error instanceof Error ? error.message : 'Failed to fetch bounty details',
+			});
+		}
+	}
+
+	private async handleToggleVote(
+		webview: vscode.Webview,
+		bountyId: string
+	): Promise<void> {
+		try {
+			const result = await this.bountyService.toggleBountyVote(bountyId);
+			webview.postMessage({
+				type: 'voteToggled',
+				bountyId,
+				voted: result.voted,
+				count: result.count,
+			});
+		} catch (error) {
+			webview.postMessage({
+				type: 'error',
+				message: error instanceof Error ? error.message : 'Failed to toggle vote',
+			});
+		}
+	}
+
+	private async handleToggleBookmark(
+		webview: vscode.Webview,
+		bountyId: string
+	): Promise<void> {
+		try {
+			const result = await this.bountyService.toggleBountyBookmark(bountyId);
+			webview.postMessage({
+				type: 'bookmarkToggled',
+				bountyId,
+				bookmarked: result.bookmarked,
+			});
+		} catch (error) {
+			webview.postMessage({
+				type: 'error',
+				message: error instanceof Error ? error.message : 'Failed to toggle bookmark',
+			});
+		}
+	}
+
+	private async handleToggleCommentLike(
+		webview: vscode.Webview,
+		commentId: string
+	): Promise<void> {
+		try {
+			const result = await this.bountyService.toggleCommentLike(commentId);
+			webview.postMessage({
+				type: 'commentLikeToggled',
+				commentId,
+				liked: result.liked,
+				count: result.count,
+			});
+		} catch (error) {
+			webview.postMessage({
+				type: 'error',
+				message: error instanceof Error ? error.message : 'Failed to toggle like',
+			});
+		}
+	}
+
 	private async handleOpenBounty(bountyId: string): Promise<void> {
 		const url = `${API_CONFIG.deviceAuthUrl.replace('/device', '')}/bounty/${bountyId}`;
 		await vscode.env.openExternal(vscode.Uri.parse(url));
 	}
 
 	private _getLoginHtml(webview: vscode.Webview): string {
-		const styleUri = webview.asWebviewUri(
-			vscode.Uri.joinPath(this._extensionUri, 'media', 'bounty.css')
-		);
-		const scriptUri = webview.asWebviewUri(
-			vscode.Uri.joinPath(this._extensionUri, 'media', 'main.js')
-		);
-
-		const nonce = getNonce();
-
-		return `<!DOCTYPE html>
-			<html lang="en">
-			<head>
-				<meta charset="UTF-8">
-				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
-				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<link href="${styleUri}" rel="stylesheet">
-				<title>Bounty - Login</title>
-			</head>
-			<body>
-				<div class="login-container fade-in">
-					<div class="logo-container">
-						<svg fill="none" stroke="currentColor" stroke-width="21.3696" viewBox="0 0 153 179" xmlns="http://www.w3.org/2000/svg">
-							<path d="M91.1385 71.1097C107.031 77.947 125.457 70.6065 132.294 54.7141C139.132 38.8217 131.791 20.3956 115.899 13.5582C100.006 6.72079 81.5803 14.0613 74.7429 29.9537C67.9055 45.8461 75.2461 64.2723 91.1385 71.1097ZM91.1385 71.1097L29.921 44.7722M5 102.256L33.9985 114.732C49.8909 121.57 68.317 114.229 75.1544 98.3367C81.9918 82.4443 74.6513 64.0182 58.7589 57.1808L29.7603 44.7048M148.655 95.8569L119.657 83.3808C103.764 76.5434 85.338 83.8839 78.5006 99.7763L78.5182 179" />
-						</svg>
-					</div>
-					
-					<h1 class="login-title">Welcome to Bounty</h1>
-					<p class="login-subtitle">Connect your bounty.new account to browse and manage bounties directly from VS Code</p>
-					
-					<button class="button button-primary" id="login-btn">
-						Connect to bounty.new
-					</button>
-					
-					<div id="login-status" class="hidden"></div>
-				</div>
-				<script nonce="${nonce}" src="${scriptUri}"></script>
-			</body>
-			</html>`;
+		return this._getReactHtml(webview, false);
 	}
 
 	private _getAuthenticatedHtml(webview: vscode.Webview): string {
-		const styleUri = webview.asWebviewUri(
-			vscode.Uri.joinPath(this._extensionUri, 'media', 'bounty.css')
-		);
+		return this._getReactHtml(webview, true);
+	}
+
+	private _getReactHtml(webview: vscode.Webview, isAuthenticated: boolean): string {
 		const scriptUri = webview.asWebviewUri(
-			vscode.Uri.joinPath(this._extensionUri, 'media', 'main.js')
+			vscode.Uri.joinPath(this._extensionUri, 'media', 'dist', 'index.js')
+		);
+		const styleUri = webview.asWebviewUri(
+			vscode.Uri.joinPath(this._extensionUri, 'media', 'dist', 'index.css')
 		);
 
 		const nonce = getNonce();
@@ -196,34 +257,13 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 			<html lang="en">
 			<head>
 				<meta charset="UTF-8">
-				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; font-src ${webview.cspSource}; img-src ${webview.cspSource} https: data:; script-src 'nonce-${nonce}';">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				<link href="${styleUri}" rel="stylesheet">
 				<title>Bounty</title>
 			</head>
 			<body>
-				<div class="container">
-					<div class="header">
-						<h1 class="header-title">Bounties</h1>
-						<div class="header-actions">
-							<button class="button button-ghost" id="refresh-btn" title="Refresh bounties">
-								↻
-							</button>
-							<button class="button button-ghost" id="logout-btn" title="Logout">
-								←
-							</button>
-						</div>
-					</div>
-					
-					<div id="loading" class="loading-container">
-						<div class="loading-spinner"></div>
-						<p>Loading bounties...</p>
-					</div>
-					
-					<div id="error" class="error-container hidden"></div>
-					
-					<div id="bounties-container"></div>
-				</div>
+				<div id="root" data-authenticated="${isAuthenticated}"></div>
 				<script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
 			</html>`;

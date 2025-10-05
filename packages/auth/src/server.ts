@@ -12,7 +12,7 @@ import {
 import { Polar } from '@polar-sh/sdk';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { deviceAuthorization, openAPI } from 'better-auth/plugins';
+import { bearer, deviceAuthorization, openAPI } from 'better-auth/plugins';
 import { admin } from 'better-auth/plugins/admin';
 import { passkey } from 'better-auth/plugins/passkey';
 
@@ -143,6 +143,7 @@ export const auth = betterAuth({
           : 'http://localhost:3000',
     }),
     admin(),
+    bearer(),
     openAPI(),
     deviceAuthorizationPlugin,
   ],
