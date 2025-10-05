@@ -11,4 +11,4 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 **/.vscode-test.*
-!dist/extension.js  // Allow the compiled extension.js file
+!dist/extension.js
