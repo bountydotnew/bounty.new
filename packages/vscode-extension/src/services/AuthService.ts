@@ -43,7 +43,7 @@ export class AuthService {
 			try {
 				this.session = JSON.parse(sessionData);
 				console.log('[AuthService] Session parsed:', JSON.stringify({
-					accessToken: this.session?.accessToken ? `${this.session.accessToken.substring(0, 20)}...` : 'none',
+hasAccessToken: Boolean(this.session?.accessToken),
 					expiresAt: this.session?.expiresAt,
 					isExpired: this.session ? this.session.expiresAt < Date.now() : null,
 				}));
