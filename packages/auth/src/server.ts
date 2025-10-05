@@ -1,7 +1,7 @@
 import * as schema from '@bounty/db';
 import { db } from '@bounty/db';
 import { env } from '@bounty/env/server';
-import type { PolarCustomerCreateParams, PolarError } from '@bounty/types';
+import type { PolarError } from '@bounty/types';
 import {
   checkout,
   polar,
@@ -51,7 +51,7 @@ export const auth = betterAuth({
     throw: true,
     onError: (error) => {
       // Custom error handling
-      console.error('Auth error:', error);
+      console.error(`Auth error: ${error} ${ctx}`);
     },
     errorURL: '/auth/error',
   },
@@ -98,15 +98,15 @@ export const auth = betterAuth({
         checkout({
           products: [
             {
-              productId: process.env.BOUNTY_PRO_ANNUAL_ID!,
+              productId: env.BOUNTY_PRO_ANNUAL_ID,
               slug: 'pro-annual',
             },
             {
-              productId: process.env.BOUNTY_PRO_MONTHLY_ID!,
+              productId: env.BOUNTY_PRO_MONTHLY_ID,
               slug: 'pro-monthly',
             },
           ],
-          successUrl: process.env.POLAR_SUCCESS_URL!,
+          successUrl: env.POLAR_SUCCESS_URL,
           authenticatedUsersOnly: true,
         }),
         portal(),
@@ -116,18 +116,8 @@ export const auth = betterAuth({
           onCustomerStateChanged: (_payload) => {
             return Promise.resolve();
           },
-          onOrderPaid: async (_payload) => {
-            try {
-            } catch (_error) {}
-
-            return Promise.resolve();
-          },
-          onSubscriptionActive: async (_payload) => {
-            try {
-            } catch (_error) {}
-
-            return Promise.resolve();
-          },
+          onOrderPaid: () => Promise.resolve(),
+          onSubscriptionActive: () => Promise.resolve(),
           onPayload: (_payload) => {
             return Promise.resolve();
           },
@@ -135,10 +125,10 @@ export const auth = betterAuth({
       ],
     }),
     passkey({
-      rpID: process.env.NODE_ENV === 'production' ? 'bounty.new' : 'localhost',
+      rpID: env.NODE_ENV === 'production' ? 'bounty.new' : 'localhost',
       rpName: 'Bounty.new',
       origin:
-        process.env.NODE_ENV === 'production'
+        env.NODE_ENV === 'production'
           ? 'https://bounty.new'
           : 'http://localhost:3000',
     }),

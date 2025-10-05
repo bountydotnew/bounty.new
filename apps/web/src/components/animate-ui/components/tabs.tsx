@@ -9,7 +9,7 @@ import {
 } from '@/components/animate-ui/effects/motion-highlight';
 
 type TabsContextType<T extends string> = {
-  activeValue: T;
+  activeValue: T | undefined;
   handleValueChange: (value: T) => void;
   registerTrigger: (value: T, node: HTMLElement | null) => void;
 };
@@ -56,11 +56,13 @@ function Tabs<T extends string = string>({
   ...props
 }: TabsProps<T>) {
   const [activeValue, setActiveValue] = React.useState<T | undefined>(
-    defaultValue ?? undefined
+    defaultValue
   );
   const triggersRef = React.useRef(new Map<string, HTMLElement>());
   const initialSet = React.useRef(false);
   const isControlled = value !== undefined;
+
+  const resolvedValue = isControlled ? value : activeValue;
 
   React.useEffect(() => {
     if (
@@ -98,7 +100,7 @@ function Tabs<T extends string = string>({
   return (
     <TabsContext.Provider
       value={{
-        activeValue: (value ?? activeValue)! as T,
+        activeValue: resolvedValue,
         handleValueChange,
         registerTrigger,
       }}
