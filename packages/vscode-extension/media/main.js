@@ -182,7 +182,7 @@
                 </svg>
                 <span>${timeAgo}</span>
               </div>
-              <div class="status-badge status-${status}">${escapeHtml(formatStatus(status))}</div>
+              <div class="status-badge status-${escapeHtml(status)}">${escapeHtml(formatStatus(status))}</div>
             </div>
           </div>
         `;
