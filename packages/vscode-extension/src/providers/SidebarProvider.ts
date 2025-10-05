@@ -47,6 +47,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 		}
 	}
 
+	public async logout(): Promise<void> {
+		await this.authService.clearSession();
+		this.refresh();
+	}
+
 	private async renderView(webview: vscode.Webview): Promise<void> {
 		const isAuthenticated = await this.authService.isAuthenticated();
 		

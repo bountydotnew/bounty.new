@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import { window, env, Uri, type ExtensionContext } from 'vscode';
 import { API_CONFIG } from '../constants';
 
 interface DeviceCodeResponse {
@@ -28,28 +28,21 @@ export class AuthService {
 	private static readonly CLIENT_ID = 'vscode-extension';
 	private session: Session | null = null;
 	private sessionLoaded: Promise<void>;
+	private context: ExtensionContext;
 
-	constructor(private context: vscode.ExtensionContext) {
+	constructor(context: ExtensionContext) {
+		this.context = context;
 		this.sessionLoaded = this.loadSession();
 	}
 
 	private async loadSession(): Promise<void> {
 		const sessionData = await this.context.secrets.get(AuthService.STORAGE_KEY);
-		console.log('[AuthService] Loading session from storage:', JSON.stringify({
-			hasSessionData: Boolean(sessionData),
-		}));
 		
 		if (sessionData) {
 			try {
 				this.session = JSON.parse(sessionData);
-				console.log('[AuthService] Session parsed:', JSON.stringify({
-					accessToken: this.session?.accessToken ? `${this.session.accessToken.substring(0, 20)}...` : 'none',
-					expiresAt: this.session?.expiresAt,
-					isExpired: this.session ? this.session.expiresAt < Date.now() : null,
-				}));
 				
 				if (this.session && this.session.expiresAt < Date.now()) {
-					console.warn('[AuthService] Session expired, deleting');
 					this.session = null;
 					await this.context.secrets.delete(AuthService.STORAGE_KEY);
 				}
@@ -70,7 +63,7 @@ export class AuthService {
 		console.log('[AuthService] Session saved:', JSON.stringify({
 			accessToken: `${session.accessToken.substring(0, 20)}...`,
 			expiresAt: session.expiresAt,
-			expiresIn: Math.floor((session.expiresAt - Date.now()) / 1000) + 's',
+			expiresIn: `${Math.floor((session.expiresAt - Date.now()) / 1000)}s`,
 		}));
 	}
 
@@ -95,7 +88,6 @@ export class AuthService {
 	async requestDeviceCode(): Promise<DeviceCodeResponse> {
 		try {
 			const url = `${API_CONFIG.authBaseUrl}/device/code`;
-			console.log('[AuthService] Requesting device code from:', url);
 			
 			const response = await fetch(url, {
 				method: 'POST',
@@ -132,7 +124,7 @@ export class AuthService {
 				);
 			}
 
-			const data = await response.json();
+			const data = (await response.json()) as DeviceCodeResponse;
 			console.log('[AuthService] Device code received:', {
 				user_code: data.user_code,
 				expires_in: data.expires_in,
@@ -149,7 +141,7 @@ export class AuthService {
 
 	async pollForToken(
 		deviceCode: string,
-		interval: number = 5
+		// interval = 5
 	): Promise<TokenResponse> {
 		try {
 			const url = `${API_CONFIG.authBaseUrl}/device/token`;
@@ -171,14 +163,14 @@ export class AuthService {
 			try {
 				data = responseText ? JSON.parse(responseText) : {};
 			} catch {
-				console.error('[AuthService] Failed to parse token response:', responseText);
+				window.showWarningMessage('[AuthService] Failed to parse token response:', responseText);
 				data = {
 					error: 'invalid_response',
 					error_description: 'Server returned invalid JSON',
 				};
 			}
 			
-			if (!response.ok && !data.error) {
+			if (!response.ok) {
 				console.error('[AuthService] Token poll failed:', {
 					status: response.status,
 					statusText: response.statusText,
@@ -202,18 +194,14 @@ export class AuthService {
 			const { device_code, user_code, verification_uri_complete, interval } =
 				deviceCodeData;
 
-			await vscode.env.openExternal(
-				vscode.Uri.parse(
-					verification_uri_complete ||
-						`${API_CONFIG.deviceAuthUrl}?user_code=${user_code}`
-				)
-			);
+			const authUrl = verification_uri_complete || `${API_CONFIG.deviceAuthUrl}?user_code=${user_code}`;
+			await env.openExternal(Uri.parse(authUrl));
 
-			vscode.window.showInformationMessage(
+			window.showInformationMessage(
 				`Device code: ${user_code}. Opening browser for authorization...`
 			);
 
-			return await this.pollUntilAuthorized(device_code, interval);
+			return this.pollUntilAuthorized(device_code, interval);
 		} catch (error) {
 			console.error('[AuthService] Device flow error:', error);
 			return {
@@ -247,7 +235,7 @@ export class AuthService {
 							expiresAt: Date.now() + (tokenResponse.expires_in || 3600) * 1000,
 						});
 
-						vscode.window.showInformationMessage(
+						window.showInformationMessage(
 							'Successfully authenticated with bounty.new!'
 						);
 						resolve({ success: true });
@@ -258,10 +246,11 @@ export class AuthService {
 						switch (tokenResponse.error) {
 							case 'authorization_pending':
 								break;
-							case 'slow_down':
+							case 'slow_down': {
 								pollingInterval += 5;
 								console.log('[AuthService] Slowing down polling');
 								break;
+							}
 							case 'access_denied':
 								resolve({ success: false, error: 'Access denied by user' });
 								return;
@@ -290,14 +279,6 @@ export class AuthService {
 	async getAuthHeader(): Promise<Record<string, string>> {
 		await this.sessionLoaded;
 		const session = this.getSession();
-		
-		console.log('[AuthService] getAuthHeader called:', JSON.stringify({
-			hasSession: Boolean(session),
-			accessToken: session?.accessToken ? `${session.accessToken.substring(0, 20)}...` : 'none',
-			expiresAt: session?.expiresAt,
-			isExpired: session ? session.expiresAt < Date.now() : null,
-			currentTime: Date.now(),
-		}));
 		
 		if (!session) {
 			console.warn('[AuthService] No session found, returning empty auth headers');
