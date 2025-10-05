@@ -1,4 +1,4 @@
-import type { Bounty, FetchBountiesParams } from '../types';
+import type { Bounty, BountyDetail, FetchBountiesParams } from '../types';
 import { DEFAULT_FETCH_PARAMS, API_CONFIG } from '../constants';
 
 export class BountyService {
@@ -48,7 +48,49 @@ export class BountyService {
 				...(params.difficulty && { difficulty: params.difficulty }),
 			});
 
-			return response?.data || [];
+			const bounties = response?.data || [];
+
+			// Fetch engagement stats for all bounties
+			if (bounties.length > 0) {
+				try {
+					const bountyIds = bounties.map((b: Bounty) => b.id);
+					console.log('[BountyService] Fetching stats for bounties:', bountyIds);
+					
+					const statsResponse = await this.fetchTRPC('bounties.getBountyStatsMany', {
+						bountyIds,
+					});
+
+					console.log('[BountyService] Stats response:', JSON.stringify(statsResponse));
+					const stats = statsResponse?.stats || [];
+					
+					// Merge stats into bounties
+					const bountiesWithStats = bounties.map((bounty: Bounty) => {
+						const stat = stats.find((s: any) => s.bountyId === bounty.id);
+						return {
+							...bounty,
+							commentCount: stat?.commentCount ?? 0,
+							voteCount: stat?.voteCount ?? 0,
+							isVoted: stat?.isVoted ?? false,
+							bookmarked: stat?.bookmarked ?? false,
+						};
+					});
+					
+					console.log('[BountyService] Bounties with stats:', JSON.stringify(bountiesWithStats.map(b => ({
+						id: b.id,
+						title: b.title,
+						commentCount: b.commentCount,
+						voteCount: b.voteCount
+					}))));
+					
+					return bountiesWithStats;
+				} catch (statsError) {
+					console.error('[BountyService] Error fetching stats:', statsError);
+					// Return bounties without stats if stats fetch fails
+					return bounties;
+				}
+			}
+
+			return bounties;
 		} catch (error) {
 			console.error('[BountyService] Error fetching bounties:', error);
 			throw new Error(
@@ -57,10 +99,10 @@ export class BountyService {
 		}
 	}
 
-	async fetchBountyById(id: string): Promise<Bounty | null> {
+	async fetchBountyById(id: string): Promise<BountyDetail | null> {
 		try {
 			const response = await this.fetchTRPC('bounties.getBountyDetail', { id });
-			return response?.data || null;
+			return response || null;
 		} catch (error) {
 			console.error('[BountyService] Error fetching bounty by ID:', error);
 			throw new Error(
