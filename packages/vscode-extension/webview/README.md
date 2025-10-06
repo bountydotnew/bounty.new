@@ -46,7 +46,7 @@ npm run clean
 
 ## Technologies
 
-- **React 18** - UI framework
+- **React 19** - UI framework
 - **TypeScript** - Type safety
 - **Tailwind CSS v4** - Styling (alpha)
 - **Custom VSCode Components** - Native VSCode-styled components using CSS variables

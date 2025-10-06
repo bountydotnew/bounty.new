@@ -1,6 +1,36 @@
 {
   "name": "bounty.new",
+  "devDependencies": {
+    "@biomejs/biome": "2.1.2",
+    "@shelve/cli": "^4.1.6",
+    "dotenv-cli": "^8.0.0",
+    "husky": "^9.1.7",
+    "lefthook": "^1.12.2",
+    "lint-staged": "^16.1.4",
+    "turbo": "^2.5.4",
+    "ultracite": "5.1.2",
+    "@bounty/eslint-config": "workspace:*",
+    "@bounty/typescript-config": "workspace:*"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,jsonc,css,scss,md,mdx}": [
+      "npx ultracite format"
+    ]
+  },
+  "packageManager": "bun@1.2.17",
   "private": true,
+  "scripts": {
+    "dev": "dotenv -- turbo dev",
+    "start": "dotenv -- turbo start",
+    "build": "dotenv -- turbo build",
+    "check-types": "dotenv -- turbo check-types",
+    "dev:web": "dotenv -- turbo -F web dev",
+    "db:push": "dotenv -- turbo -F @bounty/db db:push",
+    "db:studio": "dotenv -- turbo -F @bounty/db db:studio",
+    "db:generate": "dotenv -- turbo -F @bounty/db db:generate",
+    "db:migrate": "dotenv -- turbo -F @bounty/db db:migrate",
+    "prettier": "npx ultracite format"
+  },
   "workspaces": {
     "packages": [
       "apps/*",
@@ -101,38 +131,5 @@
       "zod": "^4.0.5",
       "@tailwindcss/typography": "^0.5.16"
     }
-  },
-  "scripts": {
-    "dev": "dotenv -- turbo dev",
-    "start": "dotenv -- turbo start",
-    "build": "dotenv -- turbo build",
-    "check-types": "dotenv -- turbo check-types",
-    "dev:web": "dotenv -- turbo -F web dev",
-    "db:push": "dotenv -- turbo -F @bounty/db db:push",
-    "db:studio": "dotenv -- turbo -F @bounty/db db:studio",
-    "db:generate": "dotenv -- turbo -F @bounty/db db:generate",
-    "db:migrate": "dotenv -- turbo -F @bounty/db db:migrate",
-    "prettier": "npx ultracite format"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "2.1.2",
-    "@shelve/cli": "^4.1.6",
-    "dotenv-cli": "^8.0.0",
-    "husky": "^9.1.7",
-    "lefthook": "^1.12.2",
-    "lint-staged": "^16.1.4",
-    "turbo": "^2.5.4",
-    "ultracite": "5.1.2",
-    "@bounty/eslint-config": "workspace:*",
-    "@bounty/typescript-config": "workspace:*"
-  },
-  "packageManager": "bun@1.2.17",
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,jsonc,css,scss,md,mdx}": [
-      "npx ultracite format"
-    ]
-  },
-  "dependencies": {
-    "nuqs": "^2.7.0"
   }
 }

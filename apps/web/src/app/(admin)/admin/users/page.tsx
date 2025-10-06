@@ -51,12 +51,17 @@ import { toast } from 'sonner';
 import { AdminHeader } from '@/components/admin';
 import { ExternalInviteModal } from '@/components/admin/external-invite-modal';
 import { trpc } from '@/utils/trpc';
+import type {
+  AccessStage,
+  AdminListUsersResponse,
+  AdminUser,
+} from '@/types';
 
 export default function UsersPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
-  const [_updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
+  const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
   const [newUserName, setNewUserName] = useState('');
@@ -64,7 +69,11 @@ export default function UsersPage() {
   const queryClient = useQueryClient();
   const router = useRouter();
 
-  const { data, isLoading, error } = useQuery({
+  const {
+    data,
+    isLoading,
+    error: usersError,
+  } = useQuery<AdminListUsersResponse | null>({
     queryKey: ['admin', 'listUsers', search, page, pageSize],
     queryFn: async () => {
       // Get users from auth client (has all the auth-specific fields like banned)
@@ -86,7 +95,7 @@ export default function UsersPage() {
       }
 
       // Just return auth data and handle accessStage in the component
-      return authData;
+      return authData ?? null;
     },
   });
 
@@ -98,18 +107,23 @@ export default function UsersPage() {
       userId: string;
       role: 'user' | 'admin';
     }) => {
-      const { error } = await authClient.admin.setRole({ userId, role });
-      if (error) {
-        throw new Error(error.message || 'Failed to update user role');
+      const { error: setRoleError } = await authClient.admin.setRole({
+        userId,
+        role,
+      });
+      if (setRoleError) {
+        throw new Error(setRoleError.message || 'Failed to update user role');
       }
     },
     onSuccess: () => {
       toast.success('User role updated successfully');
       queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
     },
-    onError: (error: unknown) => {
+    onError: (updateError: unknown) => {
       toast.error(
-        error instanceof Error ? error.message : 'Failed to update user role'
+        updateError instanceof Error
+          ? updateError.message
+          : 'Failed to update user role'
       );
     },
   });
@@ -124,35 +138,40 @@ export default function UsersPage() {
   });
 
   // Merge auth client users with access stage data
-  const users = useMemo(() => {
-    if (!(data?.users && accessData?.users)) return data?.users || [];
+  const users = useMemo<
+    (AdminUser & { role?: 'user' | 'admin'; accessStage: AccessStage })[]
+  >(() => {
+    const authUsers = data?.users ?? [];
+    const accessStageMap = new Map<string, AccessStage>(
+      (accessData?.users ?? []).map((entry) => {
+        const stage = (entry.accessStage ?? 'none') as AccessStage;
+        return [entry.id, stage];
+      })
+    );
 
-    return data.users.map((user: any) => {
-      const userWithStage = accessData.users.find((u: any) => u.id === user.id);
-      return {
-        ...user,
-        accessStage: userWithStage?.accessStage || 'none',
-      };
-    });
+    return authUsers.map((user) => ({
+      ...user,
+      role: user.role === 'admin' ? 'admin' : 'user',
+      accessStage: accessStageMap.get(user.id) ?? 'none',
+    }));
   }, [data?.users, accessData?.users]);
-  const total = data?.total || 0;
+  const currentPageUsers = users.length;
+  const adminCount = users.filter((user) => user.role === 'admin').length;
+  const regularUserCount = currentPageUsers - adminCount;
   const totalPages = useMemo(() => {
-    const limit = data && 'limit' in data ? data.limit : pageSize;
-    return Math.max(1, Math.ceil((total || 0) / (limit || pageSize)));
-  }, [data, pageSize, total]);
+    const total = data?.total ?? 0;
+    return Math.max(1, Math.ceil(total / pageSize));
+  }, [data?.total, pageSize]);
 
-  const stats = useMemo(() => {
-    const currentPageUsers = users.length;
-    const adminCount = users.filter((user) => user.role === 'admin').length;
-    const regularUserCount = currentPageUsers - adminCount;
-
-    return {
-      total,
+  const stats = useMemo(
+    () => ({
+      total: data?.total ?? 0,
       currentPage: currentPageUsers,
       admins: adminCount,
       regularUsers: regularUserCount,
-    };
-  }, [users, total]);
+    }),
+    [data?.total, currentPageUsers, adminCount, regularUserCount]
+  );
 
   const handleRoleUpdate = (userId: string, newRole: 'user' | 'admin') => {
     setUpdatingIds((prev) => new Set(prev).add(userId));
@@ -173,9 +192,9 @@ export default function UsersPage() {
   const handleStopImpersonating = () => {
     authClient.admin
       .stopImpersonating({})
-      .then(({ error }) => {
-        if (error) {
-          throw new Error(error.message || 'Failed to stop impersonating');
+      .then(({ error: stopError }) => {
+        if (stopError) {
+          throw new Error(stopError.message || 'Failed to stop impersonating');
         }
         toast.success('Stopped impersonating');
       })
@@ -188,15 +207,15 @@ export default function UsersPage() {
 
   const createUserMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await authClient.admin.createUser({
+      const { error: createUserError } = await authClient.admin.createUser({
         email: newUserEmail,
         password: newUserPassword,
         name: newUserName,
         role: newUserRole,
         data: {},
       });
-      if (error) {
-        throw new Error(error.message || 'Failed to create user');
+      if (createUserError) {
+        throw new Error(createUserError.message || 'Failed to create user');
       }
     },
     onSuccess: () => {
@@ -207,9 +226,11 @@ export default function UsersPage() {
       toast.success('User created');
       queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
     },
-    onError: (error: unknown) => {
+    onError: (createError: unknown) => {
       toast.error(
-        error instanceof Error ? error.message : 'Failed to create user'
+        createError instanceof Error
+          ? createError.message
+          : 'Failed to create user'
       );
     },
   });
@@ -220,9 +241,9 @@ export default function UsersPage() {
     const duration = 60 * 60 * 24 * 7;
     authClient.admin
       .banUser({ userId, banReason: reason, banExpiresIn: duration })
-      .then(({ error }) => {
-        if (error) {
-          throw new Error(error.message || 'Failed to ban user');
+      .then(({ error: banError }) => {
+        if (banError) {
+          throw new Error(banError.message || 'Failed to ban user');
         }
         toast.success('User banned');
         queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
@@ -240,9 +261,17 @@ export default function UsersPage() {
   };
 
   // Handle invite user to access stage
+  const inviteUserMutationOptions = trpc.user.inviteUser.mutationOptions();
+
   const inviteUserMutation = useMutation({
-    ...trpc.user.inviteUser.mutationOptions(),
-    onSuccess: (data, variables) => {
+    ...inviteUserMutationOptions,
+    onSuccess(result, variables, context, mutation) {
+      inviteUserMutationOptions.onSuccess?.(
+        result,
+        variables,
+        context,
+        mutation
+      );
       const stageName =
         variables.accessStage === 'none'
           ? 'removed access'
@@ -250,15 +279,20 @@ export default function UsersPage() {
       toast.success(`Updated user to ${stageName}`);
       queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
     },
-    onError: (error) => {
-      toast.error(`Failed to update user: ${error.message}`);
+    onError(error, variables, context, mutation) {
+      inviteUserMutationOptions.onError?.(
+        error,
+        variables,
+        context,
+        mutation
+      );
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to update user'
+      );
     },
   });
 
-  const handleInviteUser = (
-    userId: string,
-    accessStage: 'none' | 'alpha' | 'beta' | 'production'
-  ) => {
+  const handleInviteUser = (userId: string, accessStage: AccessStage) => {
     inviteUserMutation.mutate({ userId, accessStage });
   };
 
@@ -266,9 +300,9 @@ export default function UsersPage() {
     setUpdatingIds((prev) => new Set(prev).add(userId));
     authClient.admin
       .unbanUser({ userId })
-      .then(({ error }) => {
-        if (error) {
-          throw new Error(error.message || 'Failed to unban user');
+      .then(({ error: unbanError }) => {
+        if (unbanError) {
+          throw new Error(unbanError.message || 'Failed to unban user');
         }
         toast.success('User unbanned');
         queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
@@ -289,9 +323,11 @@ export default function UsersPage() {
     setUpdatingIds((prev) => new Set(prev).add(userId));
     authClient.admin
       .impersonateUser({ userId })
-      .then(({ error }) => {
-        if (error) {
-          throw new Error(error.message || 'Failed to impersonate user');
+      .then(({ error: impersonateError }) => {
+        if (impersonateError) {
+          throw new Error(
+            impersonateError.message || 'Failed to impersonate user'
+          );
         }
         toast.success('Impersonation started');
       })
@@ -313,9 +349,9 @@ export default function UsersPage() {
     setUpdatingIds((prev) => new Set(prev).add(userId));
     authClient.admin
       .revokeUserSessions({ userId })
-      .then(({ error }) => {
-        if (error) {
-          throw new Error(error.message || 'Failed to revoke sessions');
+      .then(({ error: revokeError }) => {
+        if (revokeError) {
+          throw new Error(revokeError.message || 'Failed to revoke sessions');
         }
         toast.success('Sessions revoked');
       })
@@ -340,9 +376,9 @@ export default function UsersPage() {
     setUpdatingIds((prev) => new Set(prev).add(userId));
     authClient.admin
       .removeUser({ userId })
-      .then(({ error }) => {
-        if (error) {
-          throw new Error(error.message || 'Failed to delete user');
+      .then(({ error: deleteError }) => {
+        if (deleteError) {
+          throw new Error(deleteError.message || 'Failed to delete user');
         }
         toast.success('User deleted');
         queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
@@ -359,7 +395,7 @@ export default function UsersPage() {
       });
   };
 
-  if (error) {
+  if (usersError) {
     return (
       <div className="py-8 text-center">
         <p className="text-destructive">Failed to load users data</p>
@@ -546,6 +582,7 @@ export default function UsersPage() {
                         <DropdownMenuTrigger asChild>
                           <Button
                             className="h-7 rounded-lg border border-neutral-700 bg-[#222222] p-1 text-neutral-300 hover:bg-neutral-700/40"
+                            disabled={updatingIds.has(user.id)}
                             size="icon"
                             variant="outline"
                           >

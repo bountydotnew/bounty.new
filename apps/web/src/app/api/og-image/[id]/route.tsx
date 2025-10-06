@@ -105,6 +105,7 @@ export async function GET(
           display: 'flex',
         }}
       >
+        {/* biome-ignore lint/performance/noImgElement: Required for OG image rendering */}
         <img // eslint-disable-line @next/next/no-img-element
           alt="og-bg"
           src={`${baseUrl}/og-bg.png`}
@@ -117,6 +118,7 @@ export async function GET(
             objectFit: 'cover',
           }}
         />
+        {/* biome-ignore lint/performance/noImgElement: Required for OG image rendering */}
         <img // eslint-disable-line @next/next/no-img-element
           alt="bounty"
           src={`${baseUrl}/bounty.png`}
@@ -187,6 +189,8 @@ export async function GET(
             display: 'flex',
           }}
         >
+          {/* biome-ignore lint/performance/noImgElement: Required for OG image rendering */}
+          {/* biome-ignore lint/nursery/noNoninteractiveElementInteractions: onError fallback for avatar */}
           <img // eslint-disable-line @next/next/no-img-element
             alt={`${repoData.owner.login} avatar`}
             height="190"
