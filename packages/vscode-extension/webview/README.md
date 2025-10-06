@@ -14,7 +14,7 @@ webview/
 │   ├── hooks/           # Custom React hooks
 │   │   ├── useAuth.ts
 │   │   ├── useBounties.ts
-│   │   └── useVSCodeMessage.ts
+│   │   └── use-vscode-message.ts
 │   ├── styles/          # Tailwind CSS
 │   │   └── index.css
 │   ├── types/           # TypeScript types

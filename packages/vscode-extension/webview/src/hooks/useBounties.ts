@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useVSCodeMessage, useSendMessage } from './useVSCodeMessage';
+import { useVSCodeMessage, useSendMessage } from './use-vscode-message';
 import type { Bounty, FetchBountiesParams, WebviewMessage } from '../types';
 
 export function useBounties() {
@@ -34,12 +34,17 @@ export function useBounties() {
   );
 
   const refresh = useCallback(() => {
-    fetchBounties();
-  }, [fetchBounties]);
+    setIsLoading(true);
+    setError(null);
+    sendMessage('fetchBounties', { params: undefined });
+  }, [sendMessage]);
 
+  // Fetch bounties on mount only
   useEffect(() => {
-    fetchBounties();
-  }, [fetchBounties]);
+    setIsLoading(true);
+    setError(null);
+    sendMessage('fetchBounties', { params: undefined });
+  }, [sendMessage]);
 
   return {
     bounties,

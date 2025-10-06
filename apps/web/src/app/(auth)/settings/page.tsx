@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { Bell, CreditCard, DollarSign, Shield, User } from 'lucide-react';
-import { useQueryState, parseAsString } from 'nuqs';
-import { useCallback, useEffect } from 'react';
+import { Bell, CreditCard, DollarSign, Shield, User } from "lucide-react";
+import { useQueryState, parseAsString } from "nuqs";
+import { useCallback, useEffect } from "react";
 import {
   Tabs,
   TabsContent,
   TabsContents,
   TabsList,
   TabsTrigger,
-} from '@/components/animate-ui/components/tabs';
-import { BillingSettings } from '@/components/settings/billing-settings';
-import { GeneralSettings } from '@/components/settings/general-settings';
-import { PaymentSettings } from '@/components/settings/payment-settings';
-import { SecuritySettings } from '@/components/settings/security-settings';
+} from "@/components/animate-ui/components/tabs";
+import { BillingSettings } from "@/components/settings/billing-settings";
+import { GeneralSettings } from "@/components/settings/general-settings";
+import { PaymentSettings } from "@/components/settings/payment-settings";
+import { SecuritySettings } from "@/components/settings/security-settings";
 
 // TypeScript interfaces for better type safety
 interface TabConfig {
@@ -28,32 +28,32 @@ interface TabConfig {
 // Tab configuration for maintainability
 const TAB_CONFIGS: TabConfig[] = [
   {
-    id: 'general',
-    label: 'General',
+    id: "general",
+    label: "General",
     icon: User,
     component: GeneralSettings,
   },
   {
-    id: 'billing',
-    label: 'Billing',
+    id: "billing",
+    label: "Billing",
     icon: CreditCard,
     component: BillingSettings,
   },
   {
-    id: 'payments',
-    label: 'Payments',
+    id: "payments",
+    label: "Payments",
     icon: DollarSign,
     component: PaymentSettings,
   },
   {
-    id: 'security',
-    label: 'Security',
+    id: "security",
+    label: "Security",
     icon: Shield,
     component: SecuritySettings,
   },
   {
-    id: 'notifications',
-    label: 'Notifications',
+    id: "notifications",
+    label: "Notifications",
     icon: Bell,
     component: () => (
       <div className="rounded-lg border border-border border-dashed bg-card p-6">
@@ -74,17 +74,17 @@ const TAB_CONFIGS: TabConfig[] = [
 ];
 
 // Main settings page component
-export default function SettingsPage() {
+export const SettingsPage = () => {
   // Use nuqs to manage tab state in URL
   const [activeTab, setActiveTab] = useQueryState(
-    'tab',
-    parseAsString.withDefault('general')
+    "tab",
+    parseAsString.withDefault("general")
   );
 
   // Sync with localStorage
   useEffect(() => {
     try {
-      window.localStorage.setItem('settings.activeTab', activeTab);
+      window.localStorage.setItem("settings.activeTab", activeTab);
     } catch {}
   }, [activeTab]);
 
@@ -124,7 +124,7 @@ export default function SettingsPage() {
           <TabsList
             className="hidden w-full grid-cols-5 gap-2 sm:grid"
             role="tablist"
-            transition={{ type: 'spring', stiffness: 500, damping: 50 }}
+            transition={{ type: "spring", stiffness: 500, damping: 50 }}
           >
             {TAB_CONFIGS.map((tab) => {
               const IconComponent = tab.icon;
@@ -205,4 +205,6 @@ export default function SettingsPage() {
       </main>
     </div>
   );
-}
+};
+
+export default SettingsPage;
