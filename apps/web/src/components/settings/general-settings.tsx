@@ -14,155 +14,197 @@ import {
   CardHeader,
   CardTitle,
 } from '@bounty/ui/components/card';
-import { useBilling } from '@bounty/ui/hooks/use-billing';
+import { useBilling } from '@/hooks/use-billing';
+import type { CustomerState } from '@/types/billing';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { toast } from 'sonner';
 
-export function GeneralSettings() {
-  const [isClientMounted, setIsClientMounted] = useState(false);
-  const { data: session } = authClient.useSession();
-  const { isPro, isLoading: billingLoading } = useBilling({ enabled: true });
-  const router = useRouter();
-  // Prevent hydration mismatch by ensuring client-side rendering
-  useEffect(() => {
-    setIsClientMounted(true);
-  }, []);
+interface GeneralSettingsProps {
+  initialCustomerState?: CustomerState | null;
+}
 
-  const handleSignOut = async () => {
-    try {
-      await authClient.signOut();
-      router.push('/');
-    } catch (_error) {
-      toast.error('Failed to sign out');
-    }
-  };
+type FeatureItem = {
+  title: string;
+  description: string;
+  badgeLabel: string;
+  badgeVariant: 'default' | 'secondary';
+};
 
-  // Don't render until client is mounted to prevent hydration issues
-  if (!(isClientMounted && session)) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <Loader2 className="animate-spin" size={24} />
-        </CardContent>
-      </Card>
-    );
+async function signOutAndRedirect(router: ReturnType<typeof useRouter>) {
+  try {
+    await authClient.signOut();
+    router.push('/');
+  } catch (_error) {
+    toast.error('Failed to sign out');
   }
+}
+
+const LoadingCard = () => (
+  <Card>
+    <CardContent className="p-6">
+      <Loader2 className="animate-spin" size={24} />
+    </CardContent>
+  </Card>
+);
+
+interface ProfileInformationCardProps {
+  email?: string | null;
+  id?: string | null;
+  image?: string | null;
+  isPro: boolean;
+  name?: string | null;
+}
+
+const ProfileInformationCard = ({
+  email,
+  id,
+  image,
+  isPro,
+  name,
+}: ProfileInformationCardProps) => {
+  const avatarFallback = name?.[0] ?? email?.[0] ?? 'U';
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Profile Information</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center space-x-4">
+          <Avatar className="h-16 w-16">
+            <AvatarImage alt={name || email || undefined} src={image || undefined} />
+            <AvatarFallback>{avatarFallback}</AvatarFallback>
+          </Avatar>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-lg">{name || 'No name set'}</h3>
+              {isPro && <Badge variant="default">Pro</Badge>}
+            </div>
+            <p className="text-muted-foreground text-sm">{email}</p>
+            <Badge variant="secondary">User ID: {id || 'Unknown'}</Badge>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+interface FeaturesCardProps {
+  billingLoading: boolean;
+  isPro: boolean;
+}
+
+const FeaturesCard = ({ billingLoading, isPro }: FeaturesCardProps) => {
+  const features: FeatureItem[] = [
+    {
+      title: 'Lower Fees',
+      description: 'Reduced platform fees on bounties',
+      badgeLabel: isPro ? 'Enabled' : 'Disabled',
+      badgeVariant: isPro ? 'default' : 'secondary',
+    },
+    {
+      title: 'Concurrent Bounties',
+      description: 'Create multiple active bounties',
+      badgeLabel: isPro ? 'Unlimited' : 'Limited',
+      badgeVariant: isPro ? 'default' : 'secondary',
+    },
+    {
+      title: 'Payment Button',
+      description: 'Embeddable payment buttons for GitHub',
+      badgeLabel: 'Available',
+      badgeVariant: 'default',
+    },
+    {
+      title: 'Passkey Security',
+      description: 'Passwordless authentication',
+      badgeLabel: 'Available',
+      badgeVariant: 'default',
+    },
+  ];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Current Features</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {billingLoading ? (
+          <div className="flex items-center space-x-2">
+            <Loader2 className="animate-spin" size={16} />
+            <span className="text-muted-foreground text-sm">Loading features...</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {features.map((feature) => (
+              <div key={feature.title} className="rounded-lg border p-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">{feature.title}</span>
+                  <Badge variant={feature.badgeVariant}>{feature.badgeLabel}</Badge>
+                </div>
+                <p className="mt-1 text-muted-foreground text-sm">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+interface AccountActionsCardProps {
+  onSignOut: () => void;
+}
+
+const AccountActionsCard = ({ onSignOut }: AccountActionsCardProps) => (
+  <Card>
+    <CardHeader>
+      <CardTitle>Account Actions</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="flex items-center justify-between">
+        <div>
+          <h4 className="font-medium">Sign Out</h4>
+          <p className="text-muted-foreground text-sm">Sign out of your account</p>
+        </div>
+        <Button onClick={onSignOut} variant="outline">
+          Sign Out
+        </Button>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+export function GeneralSettings({ initialCustomerState }: GeneralSettingsProps) {
+  const { data: session } = authClient.useSession();
+  const { isPro, isLoading: billingLoading } = useBilling({
+    enabled: true,
+    initialCustomerState,
+  });
+  const router = useRouter();
+
+  const handleSignOut = useCallback(() => {
+    signOutAndRedirect(router);
+  }, [router]);
+
+  if (!session) {
+    return <LoadingCard />;
+  }
+
+  const { user } = session;
 
   return (
     <div className="space-y-6">
-      {/* Profile Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center space-x-4">
-            <Avatar className="h-16 w-16">
-              <AvatarImage
-                alt={session?.user?.name || session?.user?.email}
-                src={session?.user?.image || ''}
-              />
-              <AvatarFallback>
-                {session?.user?.name?.[0] || session?.user?.email?.[0] || 'U'}
-              </AvatarFallback>
-            </Avatar>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-lg">
-                  {session?.user?.name || 'No name set'}
-                </h3>
-                {isPro && <Badge variant="default">Pro</Badge>}
-              </div>
-              <p className="text-muted-foreground text-sm">
-                {session?.user?.email}
-              </p>
-              <Badge variant="secondary">User ID: {session?.user?.id}</Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Current Features */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Current Features</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {billingLoading ? (
-            <div className="flex items-center space-x-2">
-              <Loader2 className="animate-spin" size={16} />
-              <span className="text-muted-foreground text-sm">
-                Loading features...
-              </span>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <div className="rounded-lg border p-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Lower Fees</span>
-                  <Badge variant={isPro ? 'default' : 'secondary'}>
-                    {isPro ? 'Enabled' : 'Disabled'}
-                  </Badge>
-                </div>
-                <p className="mt-1 text-muted-foreground text-sm">
-                  Reduced platform fees on bounties
-                </p>
-              </div>
-              <div className="rounded-lg border p-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Concurrent Bounties</span>
-                  <Badge variant={isPro ? 'default' : 'secondary'}>
-                    {isPro ? 'Unlimited' : 'Limited'}
-                  </Badge>
-                </div>
-                <p className="mt-1 text-muted-foreground text-sm">
-                  Create multiple active bounties
-                </p>
-              </div>
-              <div className="rounded-lg border p-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Payment Button</span>
-                  <Badge variant="default">Available</Badge>
-                </div>
-                <p className="mt-1 text-muted-foreground text-sm">
-                  Embeddable payment buttons for GitHub
-                </p>
-              </div>
-              <div className="rounded-lg border p-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Passkey Security</span>
-                  <Badge variant="default">Available</Badge>
-                </div>
-                <p className="mt-1 text-muted-foreground text-sm">
-                  Passwordless authentication
-                </p>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Account Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Account Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium">Sign Out</h4>
-              <p className="text-muted-foreground text-sm">
-                Sign out of your account
-              </p>
-            </div>
-            <Button onClick={handleSignOut} variant="outline">
-              Sign Out
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <ProfileInformationCard
+        email={user?.email}
+        id={user?.id}
+        image={user?.image}
+        isPro={isPro}
+        name={user?.name}
+      />
+      <FeaturesCard billingLoading={billingLoading} isPro={isPro} />
+      <AccountActionsCard onSignOut={handleSignOut} />
     </div>
   );
 }

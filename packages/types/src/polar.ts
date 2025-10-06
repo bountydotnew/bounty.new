@@ -13,9 +13,8 @@ export interface PolarCustomerCreateParams {
   metadata?: Record<string, unknown>;
 }
 
-export interface PolarError {
+export interface PolarError extends Error {
   status?: number;
-  message?: string;
   body$?: string;
   detail?: string;
 }

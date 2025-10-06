@@ -39,7 +39,7 @@ export default function GithubIssueToBountyPage() {
         description = cached.slice(0, 1000);
       }
     } catch {
-      /* ignore sessionStorage access */
+      description = (data.data.body || '').slice(0, 1000);
     }
     return {
       title: data.data.title || '',
@@ -61,7 +61,7 @@ export default function GithubIssueToBountyPage() {
       try {
         window.sessionStorage.removeItem('bounty.importIssueBody');
       } catch {
-        /* ignore sessionStorage access */
+        return;
       }
     };
   }, []);

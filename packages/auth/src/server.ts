@@ -12,6 +12,7 @@ import {
 import { Polar } from '@polar-sh/sdk';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { bearer, deviceAuthorization, openAPI } from 'better-auth/plugins';
 import { admin } from 'better-auth/plugins/admin';
 import { passkey } from 'better-auth/plugins/passkey';
 
@@ -19,6 +20,25 @@ const polarEnv = env.NODE_ENV === 'production' ? 'production' : 'sandbox';
 const polarClient = new Polar({
   accessToken: env.POLAR_ACCESS_TOKEN,
   server: polarEnv,
+});
+
+const allowedDeviceClientIds = env.DEVICE_AUTH_ALLOWED_CLIENT_IDS
+  ?.split(',')
+  .map((clientId) => clientId.trim())
+  .filter(Boolean);
+
+const deviceAuthorizationPlugin = deviceAuthorization({
+  expiresIn: '30m',
+  interval: '5s',
+  validateClient: allowedDeviceClientIds?.length
+    ? (clientId) => allowedDeviceClientIds.includes(clientId)
+    : undefined,
+  onDeviceAuthRequest: async (clientId, scope) => {
+    console.info('Device authorization requested', {
+      clientId,
+      scope,
+    });
+  },
 });
 
 export const auth = betterAuth({
@@ -29,9 +49,9 @@ export const auth = betterAuth({
   }),
   onAPIError: {
     throw: true,
-    onError: (error, _ctx) => {
+    onError: (error) => {
       // Custom error handling
-      console.error('Auth error:', error);
+      console.error(`Auth error: ${error}`);
     },
     errorURL: '/auth/error',
   },
@@ -78,15 +98,15 @@ export const auth = betterAuth({
         checkout({
           products: [
             {
-              productId: process.env.BOUNTY_PRO_ANNUAL_ID!,
+              productId: env.BOUNTY_PRO_ANNUAL_ID,
               slug: 'pro-annual',
             },
             {
-              productId: process.env.BOUNTY_PRO_MONTHLY_ID!,
+              productId: env.BOUNTY_PRO_MONTHLY_ID,
               slug: 'pro-monthly',
             },
           ],
-          successUrl: process.env.POLAR_SUCCESS_URL!,
+          successUrl: env.POLAR_SUCCESS_URL,
           authenticatedUsersOnly: true,
         }),
         portal(),
@@ -96,18 +116,8 @@ export const auth = betterAuth({
           onCustomerStateChanged: (_payload) => {
             return Promise.resolve();
           },
-          onOrderPaid: async (_payload) => {
-            try {
-            } catch (_error) {}
-
-            return Promise.resolve();
-          },
-          onSubscriptionActive: async (_payload) => {
-            try {
-            } catch (_error) {}
-
-            return Promise.resolve();
-          },
+          onOrderPaid: () => Promise.resolve(),
+          onSubscriptionActive: () => Promise.resolve(),
           onPayload: (_payload) => {
             return Promise.resolve();
           },
@@ -115,14 +125,17 @@ export const auth = betterAuth({
       ],
     }),
     passkey({
-      rpID: process.env.NODE_ENV === 'production' ? 'bounty.new' : 'localhost',
+      rpID: env.NODE_ENV === 'production' ? 'bounty.new' : 'localhost',
       rpName: 'Bounty.new',
       origin:
-        process.env.NODE_ENV === 'production'
+        env.NODE_ENV === 'production'
           ? 'https://bounty.new'
           : 'http://localhost:3000',
     }),
     admin(),
+    bearer(),
+    openAPI(),
+    deviceAuthorizationPlugin,
   ],
   secret: env.BETTER_AUTH_SECRET,
 });

@@ -32,7 +32,11 @@ export default function WaitlistPage() {
   const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
 
-  const { data, isLoading, error } = useQuery({
+  const {
+    data,
+    isLoading,
+    error: queryError,
+  } = useQuery({
     ...trpc.earlyAccess.getAdminWaitlist.queryOptions({
       page,
       limit: 20,
@@ -48,8 +52,8 @@ export default function WaitlistPage() {
         queryKey: ['earlyAccess', 'getAdminWaitlist'],
       });
     },
-    onError: (err: TRPCClientErrorLike<AppRouter>) => {
-      toast.error(err.message || 'Failed to update access');
+    onError: (mutationError: TRPCClientErrorLike<AppRouter>) => {
+      toast.error(mutationError.message || 'Failed to update access');
     },
   });
 
@@ -64,8 +68,8 @@ export default function WaitlistPage() {
         queryKey: ['earlyAccess', 'getAdminWaitlist'],
       });
     },
-    onError: (err: TRPCClientErrorLike<AppRouter>) => {
-      toast.error(err.message || 'Failed to invite to beta');
+    onError: (mutationError: TRPCClientErrorLike<AppRouter>) => {
+      toast.error(mutationError.message || 'Failed to invite to beta');
     },
     onSettled: (_data, _err, vars) => {
       setUpdatingIds((prev) => {
@@ -92,7 +96,7 @@ export default function WaitlistPage() {
     );
   };
 
-  if (error) {
+  if (queryError) {
     return (
       <div className="py-8 text-center">
         <p className="text-destructive">Failed to load waitlist data</p>

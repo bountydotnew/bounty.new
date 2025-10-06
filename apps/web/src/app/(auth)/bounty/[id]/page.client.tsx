@@ -11,18 +11,18 @@ import { BountyDetailSkeleton } from '@/components/dashboard/skeletons/bounty-de
 import Bounty from '@/components/icons/bounty';
 import { trpc } from '@/utils/trpc';
 
-const UUID_RE =
+const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export default function BountyPage() {
   const { id } = useParams<{ id: string }>();
   const isValidUuid = (v: string | undefined | null) =>
-    typeof v === 'string' && UUID_RE.test(v);
+    typeof v === 'string' && UUID_REGEX.test(v);
   const validId = isValidUuid(id);
 
   const { data: session } = authClient.useSession();
   const bountyDetail = useQuery({
-    ...trpc.bounties.getBountyDetail.queryOptions({ id: String(id) }),
+    ...trpc.bounties.getBountyDetail.queryOptions({ id: id ?? '' }),
     enabled: validId,
     staleTime: Number.POSITIVE_INFINITY,
   });
@@ -196,7 +196,7 @@ export default function BountyPage() {
       description={detailDescription}
       fundingStatus={detailFundingStatus}
       hasBadge={false}
-      id={String(id)}
+      id={id ?? ''}
       initialBookmarked={Boolean(bountyDetail.data.bookmarked)}
       initialComments={bountyDetail.data.comments}
       initialVotes={bountyDetail.data.votes}

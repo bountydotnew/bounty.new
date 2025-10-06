@@ -10,7 +10,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getThumbmark } from '@thumbmarkjs/thumbmarkjs';
 import { ChevronRight } from 'lucide-react';
 import Image from 'next/image';
+import { useQueryState, parseAsBoolean } from 'nuqs';
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -30,25 +32,29 @@ const formSchema = z.object({
 
 type FormSchema = z.infer<typeof formSchema>;
 
-function setCookie(name: string, value: string, days = 365) {
-  const expires = new Date();
-  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Strict`;
+const WAITLIST_STORAGE_KEY = 'waitlist_data';
+
+function readStoredWaitlist(): WaitlistCookieData | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  try {
+    const raw = window.localStorage.getItem(WAITLIST_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as WaitlistCookieData) : null;
+  } catch {
+    return null;
+  }
 }
 
-function getCookie(name: string): string | null {
-  const nameEQ = `${name}=`;
-  const ca = document.cookie.split(';');
-  for (let i = 0; i < ca.length; i++) {
-    let c = ca[i];
-    while (c.charAt(0) === ' ') {
-      c = c.substring(1, c.length);
-    }
-    if (c.indexOf(nameEQ) === 0) {
-      return c.substring(nameEQ.length, c.length);
-    }
+function writeStoredWaitlist(data: WaitlistCookieData) {
+  if (typeof window === 'undefined') {
+    return;
   }
-  return null;
+  try {
+    window.localStorage.setItem(WAITLIST_STORAGE_KEY, JSON.stringify(data));
+  } catch {
+    // Ignore storage failures
+  }
 }
 
 function useWaitlistSubmission(): WaitlistHookResult {
@@ -89,7 +95,7 @@ function useWaitlistSubmission(): WaitlistHookResult {
         timestamp: new Date().toISOString(),
         email: btoa(variables.email).substring(0, 16),
       };
-      setCookie('waitlist_data', JSON.stringify(cookieData), 365);
+      writeStoredWaitlist(cookieData);
 
       celebrate();
 
@@ -158,25 +164,25 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
     },
   });
 
+  const [waitlistParam] = useQueryState('waitlist', parseAsBoolean);
   const [fingerprintData, setFingerprintData] =
     useState<thumbmarkResponse | null>(null);
   const [fingerprintLoading, setFingerprintLoading] = useState(true);
+  const [isAttentionActive, setIsAttentionActive] = useState(false);
   const [, setFingerprintError] = useState<string | null>(null);
 
+  const highlightWaitlist = waitlistParam === true;
   const waitlistSubmission = useWaitlistSubmission();
   const waitlistCount = useWaitlistCount();
 
+  // Destructure stable setter to avoid unnecessary re-runs
+  const { setSuccess } = waitlistSubmission;
   useEffect(() => {
-    const waitlistData = getCookie('waitlist_data');
-    if (waitlistData) {
-      try {
-        const data = JSON.parse(waitlistData);
-        if (data.submitted) {
-          waitlistSubmission.setSuccess(true);
-        }
-      } catch (_error) {}
+    const stored = readStoredWaitlist();
+    if (stored?.submitted) {
+      waitlistSubmission.setSuccess(true);
     }
-  }, [waitlistSubmission]);
+  }, [setSuccess]);
 
   useEffect(() => {
     // Generate device fingerprint when component mounts
@@ -186,7 +192,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
         setFingerprintError(null);
         const result = await getThumbmark();
         setFingerprintData(result);
-      } catch (_error) {
+      } catch {
         setFingerprintError(
           'Unable to generate device fingerprint. Please refresh and try again.'
         );
@@ -201,7 +207,11 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
     generateFingerprint();
   }, []);
 
-  async function joinWaitlist({ email }: FormSchema) {
+  useEffect(() => {
+    setIsAttentionActive(highlightWaitlist && !waitlistSubmission.success);
+  }, [highlightWaitlist, waitlistSubmission.success]);
+
+  function joinWaitlist({ email }: FormSchema) {
     if (!fingerprintData) {
       toast.error(
         'Device fingerprint not ready. Please wait a moment and try again.'
@@ -214,6 +224,27 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
 
   const isFormDisabled =
     waitlistSubmission.isPending || fingerprintLoading || !fingerprintData;
+
+  let waitlistStatus: ReactNode;
+  if (waitlistCount.isError) {
+    waitlistStatus = (
+      <span className="font-display-book font-medium text-orange-400">
+        Unable to load waitlist count
+      </span>
+    );
+  } else if (waitlistCount.isLoading) {
+    waitlistStatus = (
+      <span className="font-display-book font-medium text-gray-400">
+        Loading waitlist count...
+      </span>
+    );
+  } else {
+    waitlistStatus = (
+      <span className="font-display-book font-medium text-green-400">
+        <NumberFlow value={waitlistCount.count} />+ people already joined
+      </span>
+    );
+  }
 
   return (
     <div className={cn('max-w-4xl', className)}>
@@ -234,9 +265,17 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
           </p>
         </div>
       ) : (
-        <div className="w-full max-w-lg">
+        <div
+          className={cn(
+            'relative w-full max-w-lg transition-transform duration-700',
+            isAttentionActive && 'waitlist-attention'
+          )}
+        >
           <form
-            className="mb-8 flex max-w-md gap-3"
+            className={cn(
+              'mb-8 flex max-w-md gap-3',
+              isAttentionActive && 'waitlist-wiggle waitlist-pulse'
+            )}
             onSubmit={handleSubmit(joinWaitlist)}
           >
             <div className="flex-1">
@@ -298,19 +337,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
             <Image alt="waitlist" height={32} src="/ryan.jpg" width={32} />
           </div>
         </div>
-        {waitlistCount.isError ? (
-          <span className="font-display-book font-medium text-orange-400">
-            Unable to load waitlist count
-          </span>
-        ) : waitlistCount.isLoading ? (
-          <span className="font-display-book font-medium text-gray-400">
-            Loading waitlist count...
-          </span>
-        ) : (
-          <span className="font-display-book font-medium text-green-400">
-            <NumberFlow value={waitlistCount.count} />+ people already joined
-          </span>
-        )}
+        {waitlistStatus}
       </div>
     </div>
   );

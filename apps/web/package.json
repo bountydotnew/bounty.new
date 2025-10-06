@@ -54,7 +54,7 @@
     "motion": "catalog:",
     "next": "catalog:",
     "next-themes": "catalog:",
-    "posthog-js": "^1.268.0",
+    "posthog-js": "catalog:",
     "radix-ui": "catalog:",
     "react": "catalog:",
     "react-confetti": "catalog:",
@@ -74,7 +74,8 @@
     "tailwind-merge": "catalog:",
     "tailwindcss-animate": "catalog:",
     "tw-animate-css": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "catalog:",

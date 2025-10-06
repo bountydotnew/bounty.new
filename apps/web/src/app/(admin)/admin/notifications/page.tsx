@@ -105,8 +105,7 @@ export default function AdminNotificationsPage() {
             onLinkTo={setLinkTo}
             onMessage={setMessage}
             onSend={() => {
-              const ids = Array.from(selectedIds);
-              for (const id of ids) {
+              for (const id of selectedIds) {
                 sendMutation.mutate({
                   userId: id,
                   title: title.trim(),

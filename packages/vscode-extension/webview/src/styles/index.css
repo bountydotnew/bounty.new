@@ -1,0 +1,64 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  /* Dark theme colors matching the web app */
+  --color-background: #0a0a0a;
+  --color-card: #191919;
+  --color-border: #383838;
+  --color-primary: #3b82f6;
+  --color-foreground: #ffffff;
+  --color-muted: #262626;
+  --color-muted-foreground: #a3a3a3;
+}
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    border-color: theme(colors.border / 20%);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: theme(colors.foreground);
+    background-color: theme(colors.background);
+    padding: 0;
+    margin: 0;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  button {
+    font-family: inherit;
+  }
+}
+
+@layer utilities {
+  .text-vscode {
+    color: var(--vscode-foreground);
+  }
+  
+  .bg-vscode {
+    background-color: var(--vscode-editor-background);
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: var(--vscode-scrollbarSlider-background);
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--vscode-scrollbarSlider-hoverBackground);
+    border-radius: 5px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--vscode-scrollbarSlider-activeBackground);
+  }
+}

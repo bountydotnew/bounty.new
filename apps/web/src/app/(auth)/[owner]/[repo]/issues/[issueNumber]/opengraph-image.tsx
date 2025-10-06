@@ -39,7 +39,7 @@ export default async function Image(
     amount = issue?.detectedAmount;
     currency = issue?.detectedCurrency;
   } catch {
-    // if fetching issue fails, keep defaults but include a statement to satisfy lint rules
+    title = `#${issueNumber}`;
     amount = undefined;
     currency = undefined;
   }
@@ -51,7 +51,7 @@ export default async function Image(
       width="64"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <title>Bounty.new logo</title>
+      <title>bounty.new logo</title>
       <rect fill="#fff" height="45" rx="9" width="188" />
     </svg>
   );

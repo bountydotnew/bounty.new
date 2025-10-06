@@ -26,6 +26,60 @@ export function PaymentModal({
   recipientName,
   recipientUsername,
 }: PaymentModalProps) {
+  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
+  const [customAmount, setCustomAmount] = useState('');
+  const [message, setMessage] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handlePresetSelect = (amount: number) => {
+    setSelectedAmount(amount);
+    setCustomAmount('');
+  };
+
+  const handleCustomAmountChange = (value: string) => {
+    setCustomAmount(value);
+    setSelectedAmount(null);
+  };
+
+  const getSelectedAmount = () => {
+    if (selectedAmount) {
+      return selectedAmount;
+    }
+    if (customAmount) {
+      return Number.parseFloat(customAmount);
+    }
+    return 0;
+  };
+
+  const handlePayment = () => {
+    const amount = getSelectedAmount();
+
+    if (!amount || amount <= 0) {
+      toast.error('Please select or enter a valid amount');
+      return;
+    }
+
+    setIsProcessing(true);
+
+    // TODO: Implement actual payment processing
+    // For now, just simulate processing
+    setTimeout(() => {
+      toast.success(`Payment of $${amount} sent to ${recipientName}!`);
+      setIsProcessing(false);
+      onOpenChange(false);
+
+      // Reset form
+      setSelectedAmount(null);
+      setCustomAmount('');
+      setMessage('');
+    }, 2000);
+  };
+
+  const isValidAmount = () => {
+    const amount = getSelectedAmount();
+    return amount > 0 && amount <= 10_000; // Max $10,000
+  };
+
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent

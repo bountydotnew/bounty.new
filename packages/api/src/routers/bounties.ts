@@ -941,7 +941,7 @@ export const bountiesRouter = router({
       }
     }),
 
-  fetchAllBounties: publicProcedure
+  fetchAllBounties: protectedProcedure
     .input(getBountiesSchema)
     .query(async ({ input }) => {
       try {
@@ -1039,7 +1039,7 @@ export const bountiesRouter = router({
       }
     }),
 
-  fetchBountyById: publicProcedure
+  fetchBountyById: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ input }) => {
       try {
