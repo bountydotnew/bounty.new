@@ -5,7 +5,8 @@
   "types": "./src/index.ts",
   "exports": {
     "./client": "./src/client.ts",
-    "./server": "./src/server.ts"
+    "./server": "./src/server.ts",
+    "./server-utils": "./src/server-utils.ts"
   },
   "typesVersions": {
     "*": {
@@ -14,6 +15,9 @@
       ],
       "server": [
         "./src/server.ts"
+      ],
+      "server-utils": [
+        "./src/server-utils.ts"
       ]
     }
   },

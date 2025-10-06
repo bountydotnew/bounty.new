@@ -1,3 +1,6 @@
+import type { CustomerState as PolarCustomerState } from '@polar-sh/sdk/models/components/customerstate';
+import type { CustomerStateSubscription as PolarCustomerStateSubscription } from '@polar-sh/sdk/models/components/customerstatesubscription';
+
 export interface PolarError extends Error {
   body$?: string;
   detail?: string;
@@ -26,9 +29,11 @@ export interface BillingProduct {
   slug?: string;
 }
 
-export interface BillingSubscription {
+export type BillingSubscription = PolarCustomerStateSubscription & {
   product?: BillingProduct;
-}
+  productId?: string;
+  customerId?: string;
+};
 
 export interface BillingFeature {
   included_usage?: number;
@@ -39,12 +44,13 @@ export interface BillingFeature {
   interval?: string;
 }
 
-export interface CustomerState {
+
+export type CustomerState = Partial<PolarCustomerState> & {
   products?: BillingProduct[];
   activeSubscriptions?: BillingSubscription[];
   grantedBenefits?: unknown[];
   features?: Record<string, BillingFeature>;
-}
+};
 
 export interface BasePendingAction {
   type: 'portal' | 'usage' | 'checkout';

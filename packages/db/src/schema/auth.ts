@@ -1,5 +1,12 @@
 import { sql } from 'drizzle-orm';
-import { boolean, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+} from 'drizzle-orm/pg-core';
 
 export const betaAccessStatusEnum = pgEnum('beta_access_status', [
   'none',
@@ -13,6 +20,12 @@ export const accessStageEnum = pgEnum('access_stage', [
   'alpha',
   'beta',
   'production',
+]);
+
+export const deviceCodeStatusEnum = pgEnum('device_code_status', [
+  'pending',
+  'approved',
+  'denied',
 ]);
 
 export const user = pgTable('user', {
@@ -82,4 +95,21 @@ export const waitlist = pgTable('waitlist', {
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   hasAccess: boolean('has_access').notNull().default(false),
   ipAddress: text('ip_address'),
+});
+
+export const deviceCode = pgTable('device_code', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  deviceCode: text('device_code').notNull().unique(),
+  userCode: text('user_code').notNull().unique(),
+  userId: text('user_id').references(() => user.id, {
+    onDelete: 'set null',
+  }),
+  clientId: text('client_id'),
+  scope: text('scope'),
+  status: deviceCodeStatusEnum('status').notNull().default('pending'),
+  expiresAt: timestamp('expires_at').notNull(),
+  lastPolledAt: timestamp('last_polled_at'),
+  pollingInterval: integer('polling_interval'),
+  createdAt: timestamp('created_at').notNull().default(sql`now()`),
+  updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
 });

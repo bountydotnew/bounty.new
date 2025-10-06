@@ -20,3 +20,4 @@ stagewise.json
 /agents
 packages/dev-logger/tsconfig.tsbuildinfo
 *.tsbuildinfo
+/.guides

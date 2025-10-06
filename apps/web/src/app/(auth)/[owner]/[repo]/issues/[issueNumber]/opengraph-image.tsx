@@ -38,7 +38,11 @@ export default async function Image(
     title = issue?.title || title;
     amount = issue?.detectedAmount;
     currency = issue?.detectedCurrency;
-  } catch {}
+  } catch {
+    title = `#${issueNumber}`;
+    amount = undefined;
+    currency = undefined;
+  }
 
   const svgLogo = (
     <svg
@@ -47,6 +51,7 @@ export default async function Image(
       width="64"
       xmlns="http://www.w3.org/2000/svg"
     >
+      <title>bounty.new logo</title>
       <rect fill="#fff" height="45" rx="9" width="188" />
     </svg>
   );

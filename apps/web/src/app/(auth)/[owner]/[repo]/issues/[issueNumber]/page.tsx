@@ -38,7 +38,9 @@ export default function GithubIssueToBountyPage() {
       if (cached) {
         description = cached.slice(0, 1000);
       }
-    } catch {}
+    } catch {
+      description = (data.data.body || '').slice(0, 1000);
+    }
     return {
       title: data.data.title || '',
       description,
@@ -58,7 +60,9 @@ export default function GithubIssueToBountyPage() {
     return () => {
       try {
         window.sessionStorage.removeItem('bounty.importIssueBody');
-      } catch {}
+      } catch {
+        return;
+      }
     };
   }, []);
 

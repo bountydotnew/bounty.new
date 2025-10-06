@@ -1,6 +1,5 @@
 'use client';
 
-import { AlphaAccessGranted } from '@bounty/email';
 import { Button } from '@bounty/ui/components/button';
 import {
   Card,
@@ -20,6 +19,7 @@ import {
 import { Textarea } from '@bounty/ui/components/textarea';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { AdminHeader } from '@/components/admin';
 import { trpc } from '@/utils/trpc';
 import {
@@ -129,7 +129,9 @@ export default function AdminEmailsPage() {
                   .split(',')
                   .map((v) => v.trim())
                   .filter(Boolean);
-                if (recipients.length === 0) return;
+                if (recipients.length === 0) {
+                  return;
+                }
                 setSending(true);
                 try {
                   await sendTestEmailAction({
@@ -141,7 +143,11 @@ export default function AdminEmailsPage() {
                     template,
                   });
                 } catch (error) {
-                  console.error('Failed to send test email:', error);
+                  toast.error(
+                    error instanceof Error
+                      ? error.message
+                      : 'Failed to send test email'
+                  );
                 } finally {
                   setSending(false);
                 }
@@ -196,7 +202,11 @@ export default function AdminEmailsPage() {
                       audienceKey,
                     });
                   } catch (error) {
-                    console.error('Failed to subscribe audience:', error);
+                    toast.error(
+                      error instanceof Error
+                        ? error.message
+                        : 'Failed to subscribe audience'
+                    );
                   } finally {
                     setSubscribing(false);
                   }
@@ -214,7 +224,11 @@ export default function AdminEmailsPage() {
                       audienceKey,
                     });
                   } catch (error) {
-                    console.error('Failed to unsubscribe audience:', error);
+                    toast.error(
+                      error instanceof Error
+                        ? error.message
+                        : 'Failed to unsubscribe audience'
+                    );
                   } finally {
                     setUnsubscribing(false);
                   }

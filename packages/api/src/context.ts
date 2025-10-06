@@ -17,6 +17,8 @@ function getClientIP(req: NextRequest): string {
 }
 
 export async function createContext(req: NextRequest) {
+  // Better Auth's getSession supports both cookies AND Bearer tokens
+  // Just pass the headers and it will check both!
   const session = await auth.api.getSession({
     headers: req.headers,
   });

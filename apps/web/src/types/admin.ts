@@ -54,3 +54,21 @@ export interface NotificationComposeData {
   recipients: string[];
   linkTo?: string;
 }
+
+export type AdminUser = {
+  id: string;
+  name: string | null;
+  email: string | null;
+  createdAt: string | Date;
+  role?: string | null;
+  banned?: boolean | null;
+  banReason?: string | null;
+  banExpires?: Date | null;
+};
+
+export type AdminListUsersResponse = {
+  users: AdminUser[];
+  total: number;
+  limit?: number;
+  offset?: number;
+};
