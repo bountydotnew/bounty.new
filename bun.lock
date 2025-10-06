@@ -3,9 +3,6 @@
   "workspaces": {
     "": {
       "name": "bounty.new",
-      "dependencies": {
-        "nuqs": "^2.7.0",
-      },
       "devDependencies": {
         "@biomejs/biome": "2.1.2",
         "@bounty/eslint-config": "workspace:*",
@@ -15,6 +12,7 @@
         "husky": "^9.1.7",
         "lefthook": "^1.12.2",
         "lint-staged": "^16.1.4",
+        "nuqs": "2.7.0",
         "turbo": "^2.5.4",
         "ultracite": "5.1.2",
       },
@@ -3541,6 +3539,8 @@
     "ultracite/@clack/prompts/picocolors": ["picocolors@1.1.1", "", {}, "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA=="],
 
     "vite/postcss/picocolors": ["picocolors@1.1.1", "", {}, "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA=="],
+
+    "wrap-ansi-cjs/ansi-styles/color-convert": ["color-convert@2.0.1", "", { "dependencies": { "color-name": "~1.1.4" } }, "sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ=="],
 
     "wrap-ansi/string-width/emoji-regex": ["emoji-regex@10.5.0", "", {}, "sha512-lb49vf1Xzfx080OKA0o6l8DQQpV+6Vg95zyCJX9VB/BqKYlhG7N4wgROUUHRA+ZPUefLnteQOad7z1kT2bV7bg=="],
 

@@ -21,3 +21,4 @@ stagewise.json
 packages/dev-logger/tsconfig.tsbuildinfo
 *.tsbuildinfo
 /.guides
+packages/vscode-extension/.DS_Store
