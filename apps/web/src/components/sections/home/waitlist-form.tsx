@@ -175,12 +175,14 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
   const waitlistSubmission = useWaitlistSubmission();
   const waitlistCount = useWaitlistCount();
 
+  // Destructure stable setter to avoid unnecessary re-runs
+  const { setSuccess } = waitlistSubmission;
   useEffect(() => {
     const stored = readStoredWaitlist();
     if (stored?.submitted) {
       waitlistSubmission.setSuccess(true);
     }
-  }, [waitlistSubmission]);
+  }, [setSuccess]);
 
   useEffect(() => {
     // Generate device fingerprint when component mounts

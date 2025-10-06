@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useVSCodeMessage, useSendMessage } from './useVSCodeMessage';
+import { useVSCodeMessage, useSendMessage } from './use-vscode-message';
 import type { WebviewMessage } from '../types';
 
 export function useAuth() {

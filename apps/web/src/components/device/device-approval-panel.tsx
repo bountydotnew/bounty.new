@@ -1,62 +1,62 @@
-'use client';
+"use client";
 
-import { authClient } from '@bounty/auth/client';
-import { Badge } from '@bounty/ui/components/badge';
-import { Button } from '@bounty/ui/components/button';
+import { authClient } from "@bounty/auth/client";
+import { Badge } from "@bounty/ui/components/badge";
+import { Button } from "@bounty/ui/components/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@bounty/ui/components/card';
-import { Spinner } from '@bounty/ui/components/spinner';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+} from "@bounty/ui/components/card";
+import { Spinner } from "@bounty/ui/components/spinner";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
-type DeviceStatus = 'pending' | 'approved' | 'denied';
+type DeviceStatus = "pending" | "approved" | "denied";
 
 interface DeviceApprovalPanelProps {
   userCode: string;
 }
 
 const normalizeCode = (value: string) =>
-  value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
 
 const formatForDisplay = (value: string) => {
   const normalized = normalizeCode(value);
   if (!normalized) {
-    return '';
+    return "";
   }
-  return normalized.match(/.{1,4}/g)?.join('-') ?? normalized;
+  return normalized.match(/.{1,4}/g)?.join("-") ?? normalized;
 };
 
 const STATUS_TEXT: Record<DeviceStatus, { label: string; tone: string }> = {
   pending: {
-    label: 'Awaiting approval',
-    tone: 'bg-amber-500/10 text-amber-400',
+    label: "Awaiting approval",
+    tone: "bg-amber-500/10 text-amber-400",
   },
-  approved: { label: 'Approved', tone: 'bg-emerald-500/10 text-emerald-400' },
-  denied: { label: 'Denied', tone: 'bg-red-500/10 text-red-400' },
+  approved: { label: "Approved", tone: "bg-emerald-500/10 text-emerald-400" },
+  denied: { label: "Denied", tone: "bg-red-500/10 text-red-400" },
 };
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
   return error instanceof Error ? error.message : fallback;
 };
 
-const getActionSuccessMessage = (type: 'approve' | 'deny'): string => {
-  return type === 'approve'
-    ? 'Device approved. You can return to the requesting device.'
-    : 'Device denied. The requesting device has been notified.';
+const getActionSuccessMessage = (type: "approve" | "deny"): string => {
+  return type === "approve"
+    ? "Device approved. You can return to the requesting device."
+    : "Device denied. The requesting device has been notified.";
 };
 
-export function DeviceApprovalPanel({ userCode }: DeviceApprovalPanelProps) {
+export const DeviceApprovalPanel = ({ userCode }: DeviceApprovalPanelProps) => {
   const router = useRouter();
   const sanitizedCode = useMemo(() => normalizeCode(userCode), [userCode]);
   const [status, setStatus] = useState<DeviceStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<'approve' | 'deny' | null>(
+  const [actionLoading, setActionLoading] = useState<"approve" | "deny" | null>(
     null
   );
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +72,7 @@ export function DeviceApprovalPanel({ userCode }: DeviceApprovalPanelProps) {
 
   useEffect(() => {
     if (!sanitizedCode) {
-      setError('Missing device code.');
+      setError("Missing device code.");
       setIsLoading(false);
       return;
     }
@@ -86,7 +86,7 @@ export function DeviceApprovalPanel({ userCode }: DeviceApprovalPanelProps) {
     const handleFetchError = (fetchError: unknown) => {
       const message = getErrorMessage(
         fetchError,
-        'Unable to load device request.'
+        "Unable to load device request."
       );
       setError(message);
       setStatus(null);
@@ -106,7 +106,7 @@ export function DeviceApprovalPanel({ userCode }: DeviceApprovalPanelProps) {
 
       if (!response.data) {
         throw new Error(
-          response.error?.error_description || 'Unable to load device request.'
+          response.error?.error_description || "Unable to load device request."
         );
       }
 
@@ -134,9 +134,9 @@ export function DeviceApprovalPanel({ userCode }: DeviceApprovalPanelProps) {
     };
   }, [sanitizedCode]);
 
-  const executeDeviceAction = async (type: 'approve' | 'deny') => {
+  const executeDeviceAction = async (type: "approve" | "deny") => {
     const action =
-      type === 'approve'
+      type === "approve"
         ? authClient.device.approve({ userCode: sanitizedCode })
         : authClient.device.deny({ userCode: sanitizedCode });
 
@@ -144,16 +144,16 @@ export function DeviceApprovalPanel({ userCode }: DeviceApprovalPanelProps) {
 
     if (response.error) {
       const errorMessage =
-        'error_description' in response.error
+        "error_description" in response.error
           ? response.error.error_description
-          : response.error.message || 'An error occurred';
+          : response.error.message || "An error occurred";
       throw new Error(errorMessage);
     }
 
-    return type === 'approve' ? 'approved' : 'denied';
+    return type === "approve" ? "approved" : "denied";
   };
 
-  const handleAction = async (type: 'approve' | 'deny') => {
+  const handleAction = async (type: "approve" | "deny") => {
     if (!sanitizedCode) {
       return;
     }
@@ -168,7 +168,7 @@ export function DeviceApprovalPanel({ userCode }: DeviceApprovalPanelProps) {
     } catch (actionError) {
       const message = getErrorMessage(
         actionError,
-        'Unable to update device request.'
+        "Unable to update device request."
       );
       setError(message);
       toast.error(message);
@@ -198,7 +198,7 @@ export function DeviceApprovalPanel({ userCode }: DeviceApprovalPanelProps) {
             </span>
             <div className="flex items-center gap-3">
               <span className="rounded-lg bg-neutral-900 px-3 py-2 font-mono text-lg tracking-[0.4rem]">
-                {formattedCode || '—'}
+                {formattedCode || "—"}
               </span>
               {currentStatus && (
                 <Badge
@@ -233,18 +233,18 @@ export function DeviceApprovalPanel({ userCode }: DeviceApprovalPanelProps) {
               disabled={
                 isLoading ||
                 !!actionLoading ||
-                status === 'approved' ||
+                status === "approved" ||
                 !sanitizedCode
               }
-              onClick={() => handleAction('approve')}
+              onClick={() => handleAction("approve")}
             >
-              {actionLoading === 'approve' ? (
+              {actionLoading === "approve" ? (
                 <span className="flex items-center justify-center gap-2">
                   <Spinner size="sm" />
                   Approving…
                 </span>
               ) : (
-                'Approve'
+                "Approve"
               )}
             </Button>
             <Button
@@ -252,19 +252,19 @@ export function DeviceApprovalPanel({ userCode }: DeviceApprovalPanelProps) {
               disabled={
                 isLoading ||
                 !!actionLoading ||
-                status === 'denied' ||
+                status === "denied" ||
                 !sanitizedCode
               }
-              onClick={() => handleAction('deny')}
+              onClick={() => handleAction("deny")}
               variant="secondary"
             >
-              {actionLoading === 'deny' ? (
+              {actionLoading === "deny" ? (
                 <span className="flex items-center justify-center gap-2">
                   <Spinner size="sm" />
                   Denying…
                 </span>
               ) : (
-                'Deny'
+                "Deny"
               )}
             </Button>
           </div>
@@ -279,4 +279,4 @@ export function DeviceApprovalPanel({ userCode }: DeviceApprovalPanelProps) {
       </Card>
     </div>
   );
-}
+};
