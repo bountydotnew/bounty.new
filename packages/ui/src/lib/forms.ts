@@ -24,6 +24,9 @@ export const createBountySchema = z.object({
   tags: z.array(z.string()).optional(),
   repositoryUrl: z.string().url().optional().or(z.literal('')),
   issueUrl: z.string().url().optional().or(z.literal('')),
+  paymentMethodId: z.string().min(1, 'Payment method is required'),
+  // Allows user to choose not to save PM to customer for one-time use
+  savePaymentMethod: z.boolean().optional(),
 });
 
 export type CreateBountyForm = z.infer<typeof createBountySchema>;
@@ -38,6 +41,8 @@ export const createBountyDefaults: CreateBountyForm = {
   tags: [],
   repositoryUrl: '',
   issueUrl: '',
+  paymentMethodId: '',
+  savePaymentMethod: true,
 };
 
 // Draft templates for bounty creation

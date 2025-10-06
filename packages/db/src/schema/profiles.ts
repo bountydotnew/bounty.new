@@ -25,9 +25,12 @@ export const userProfile = pgTable('user_profile', {
   skills: text('skills').array(),
   preferredLanguages: text('preferred_languages').array(),
   hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }),
+  stripeCustomerId: text('stripe_customer_id'),
   currency: text('currency').default('USD'),
+  stripeAccountId: text('stripe_account_id'),
   timezone: text('timezone'),
   availableForWork: boolean('available_for_work').default(true),
+  onboardingCompleted: boolean('onboarding_completed').default(false),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
 });

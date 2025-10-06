@@ -5,7 +5,6 @@ import { Button } from '@bounty/ui/components/button';
 import { DevWarningDialog } from '@bounty/ui/components/dev-warning-dialog';
 import Link from '@bounty/ui/components/link';
 import { ArrowRight } from 'lucide-react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import Bounty from '@/components/icons/bounty';

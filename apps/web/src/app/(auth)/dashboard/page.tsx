@@ -28,6 +28,7 @@ import GitHub from '@/components/icons/github';
 import { Onboarding } from '@/components/onboarding';
 // Constants and types
 import { PAGINATION_DEFAULTS, PAGINATION_LIMITS } from '@/constants';
+import type { Bounty } from '@/types/dashboard';
 import { trpc } from '@/utils/trpc';
 
 track('screen_view', { screen_name: 'dashboard' });
@@ -113,7 +114,7 @@ export default function Dashboard() {
         <Onboarding />
         <Header
           isMyBountiesLoading={myBounties.isLoading}
-          myBounties={myBounties.data?.data ?? []}
+          myBounties={(myBounties.data?.data ?? []) as unknown as Bounty[]}
         />
         <div className="bg-background">
           <div className="container mx-auto rounded-lg px-4 py-4">
@@ -156,7 +157,9 @@ export default function Dashboard() {
               <div className="flex flex-col rounded-lg lg:col-span-2">
                 <div className="rounded-lg lg:h-full lg:overflow-y-auto">
                   <BountiesFeed
-                    bounties={bounties.data?.data ?? []}
+                    bounties={
+                      (bounties.data?.data ?? []) as unknown as Bounty[]
+                    }
                     className="lg:pr-2"
                     error={
                       bounties.error instanceof Error
@@ -176,7 +179,9 @@ export default function Dashboard() {
                   <div className="space-y-6 lg:pr-2">
                     <DashboardSidebar
                       isLoadingMyBounties={myBounties.isLoading}
-                      myBounties={myBounties.data?.data ?? []}
+                      myBounties={
+                        (myBounties.data?.data ?? []) as unknown as Bounty[]
+                      }
                     />
                   </div>
                 </div>

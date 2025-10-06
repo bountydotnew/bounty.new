@@ -20,6 +20,9 @@ export interface BountyActionsProps {
   bookmarked?: boolean;
   onToggleBookmark?: () => void;
   actions?: ActionItem[];
+  onFundBounty?: () => void;
+  fundingStatus?: 'unfunded' | 'funded';
+  canFund?: boolean;
 }
 
 export interface UpvoteButtonProps {

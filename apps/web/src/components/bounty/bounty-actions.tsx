@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowUpIcon,
   Bookmark,
+  CreditCard,
   Edit,
   MoreHorizontal,
   Share2,
@@ -42,6 +43,7 @@ export function UpvoteButton({
       }}
       onMouseDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
+      type="button"
     >
       <ArrowUpIcon className={`h-4 w-4 ${isVoted ? 'text-white' : ''}`} />
       <span>{voteCount}</span>
@@ -64,7 +66,9 @@ export function ActionsDropdown({
       if (typeof window !== 'undefined' && navigator.share) {
         navigator.share({ url: window.location.href });
       }
-    } catch {}
+    } catch (error) {
+      console.error('Failed to share', error);
+    }
   };
   return (
     <DropdownMenu>
@@ -124,6 +128,9 @@ export default function BountyActions({
   bookmarked: controlledBookmarked,
   onToggleBookmark,
   actions,
+  onFundBounty,
+  fundingStatus,
+  canFund,
 }: BountyActionsProps) {
   const queryClient = useQueryClient();
   const bookmarkQuery = useQuery({
@@ -145,7 +152,9 @@ export default function BountyActions({
     : [];
   const mergedActions = [...baseActions, ...(actions ?? [])];
   const handleToggleBookmark = () => {
-    if (onToggleBookmark) return onToggleBookmark();
+    if (onToggleBookmark) {
+      return onToggleBookmark();
+    }
     const key = trpc.bounties.getBountyBookmark.queryKey({ bountyId });
     const current = bookmarkQuery.data?.bookmarked ?? false;
     queryClient.setQueryData(key, { bookmarked: !current });
@@ -173,6 +182,15 @@ export default function BountyActions({
         bountyId={bountyId}
         onToggle={handleToggleBookmark}
       />
+      {onFundBounty && fundingStatus === 'unfunded' && canFund && (
+        <Button
+          className="flex items-center gap-2 rounded-md border border-green-500/50 bg-green-500/10 px-3 py-1 text-green-400 text-xs hover:bg-green-500/20"
+          onClick={onFundBounty}
+        >
+          <CreditCard className="h-3.5 w-3.5" />
+          Fund Bounty
+        </Button>
+      )}
       <ActionsDropdown
         actions={mergedActions}
         ariaLabel="Open bounty actions"
