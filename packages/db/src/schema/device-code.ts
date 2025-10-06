@@ -9,16 +9,6 @@ export const deviceCode = pgTable('device_code', {
   userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
   clientId: text('client_id'),
   scope: text('scope'),
-// packages/db/src/schema/device-code.ts
-
-import { integer, pgTable, timestamp } from 'drizzle-orm/pg-core';
-import { deviceCodeStatusEnum } from './auth';
-
-export const deviceCode = pgTable('device_code', {
-  // … other column definitions …
-  status: deviceCodeStatusEnum('status').notNull().default('pending'),
-  // … other column definitions …
-});
   expiresAt: timestamp('expires_at').notNull(),
   lastPolledAt: timestamp('last_polled_at'),
   pollingInterval: integer('polling_interval'),
