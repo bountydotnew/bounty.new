@@ -9,10 +9,11 @@ import {
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
 import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
-import { useQuery } from '@tanstack/react-query';
-import { ChevronDown, Plus } from 'lucide-react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { ChevronDown, Plus, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React from 'react';
+import { toast } from 'sonner';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
 import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
 import GithubImportModal from '@/components/bounty/github-import-modal';
@@ -40,6 +41,19 @@ export default function BountiesPage() {
     useBountyModals();
   const [importOpen, setImportOpen] = React.useState(false);
 
+  const { mutate: getRandomBounty, isPending: isLoadingRandom } = useMutation(
+    trpc.bounties.randomBounty.mutationOptions({
+      onSuccess: (response) => {
+        if (response.success && response.data) {
+          router.push(`/bounty/${response.data.id}`);
+        }
+      },
+      onError: (error) => {
+        toast.error(error.message || 'No open bounties available');
+      },
+    })
+  );
+
   if (error) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -60,7 +74,15 @@ export default function BountiesPage() {
     <>
       <Header />
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex items-center justify-end">
+        <div className="mb-6 flex items-center justify-end gap-3">
+          <Button
+            variant="outline"
+            onClick={() => getRandomBounty()}
+            disabled={isLoadingRandom}
+          >
+            <Sparkles className="mr-2 h-4 w-4" />
+            {isLoadingRandom ? 'Finding...' : "I'm Feeling Lucky"}
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button disabled={!session?.user}>
