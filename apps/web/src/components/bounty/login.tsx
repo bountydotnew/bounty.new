@@ -3,13 +3,13 @@
 import { authClient } from '@bounty/auth/client';
 import { Badge } from '@bounty/ui/components/badge';
 import { Button } from '@bounty/ui/components/button';
-import Link from '@bounty/ui/components/link';
 import { LogOut } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { AuthForm } from '@/components/auth/auth-form';
 import SubmissionCard from '@/components/bounty/submission-card';
 import Bounty from '@/components/icons/bounty';
 import { LINKS } from '@/constants';
@@ -56,7 +56,10 @@ const cards = {
 export default function Login() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(false);
-  const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(null);
+  const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('bounty-last-login-method');
+  });
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();
@@ -90,10 +93,6 @@ export default function Login() {
     });
   };
   useEffect(() => {
-    // Load last used login method from localStorage
-    const lastMethod = localStorage.getItem('bounty-last-login-method');
-    setLastUsedMethod(lastMethod);
-
     if (!PublicKeyCredential.isConditionalMediationAvailable?.()) {
       return;
     }
@@ -108,8 +107,6 @@ export default function Login() {
   const handleGitHubSignIn = async () => {
     try {
       setLoading(true);
-      // Save login method to localStorage
-      localStorage.setItem('bounty-last-login-method', 'github');
 
       await authClient.signIn.social(
         {
@@ -159,7 +156,7 @@ export default function Login() {
     <div className="flex min-h-screen flex-col bg-[#111110] text-[#f3f3f3] md:flex-row">
       {/* Left Column: Login Section */}
       <div className="flex flex-1 items-center justify-center p-8 md:p-12">
-        <div className="w-full max-w-md space-y-8">
+        <div className="w-full max-w-md justify-center flex space-y-8">
           {/* Mobile Bounty Icon 
           <div className="lg:hidden flex justify-center mb-8">
             <Bounty className="w-24 h-28 text-primary" />
@@ -260,7 +257,25 @@ export default function Login() {
                 </h1>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-6">
+                <AuthForm
+                  mode="signin"
+                  onModeChange={(mode) => {
+                    if (mode === 'signup') {
+                      router.push('/sign-up');
+                    }
+                  }}
+                />
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-gray-600" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-[#111110] px-2 text-gray-400">Or</span>
+                  </div>
+                </div>
+
                 <div className="relative">
                   <Button
                     className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#2A2A28] py-3 font-medium text-gray-200 transition-colors hover:bg-[#383838]"
@@ -274,40 +289,12 @@ export default function Login() {
                     )}
                     {loading ? 'Signing in…' : 'Continue with GitHub'}
                   </Button>
-                  {lastUsedMethod === 'github' && (
+                  {lastUsedMethod === "github" && (
                     <Badge className="-top-2 -right-2 absolute bg-primary px-1 py-0.5 text-primary-foreground text-xs">
                       Last used
                     </Badge>
                   )}
                 </div>
-                {/* <div className="relative flex justify-center pt-2">
-                  <Button
-                    onClick={handlePasskeySignIn}
-                    disabled={loading}
-                    variant="text"
-                    className="text-gray-400 hover:text-gray-200 flex items-center justify-center gap-2"
-                  >
-                    <Key className="w-4 h-4" />
-                    {loading ? "Signing in…" : "Have a passkey?"}
-                  </Button>
-                  {lastUsedMethod === 'passkey' && (
-                    <Badge className="absolute -top-2 -right-2 bg-green-600 text-white text-xs px-2 py-1">
-                      Last used
-                    </Badge>
-                  )}
-                </div> */}
-              </div>
-
-              <div className="flex h-8 items-center justify-center text-center text-sm">
-                <span className="text-gray-400">
-                  Don&apos;t have an account?{' '}
-                </span>
-                <Link
-                  className="rounded px-1 py-1 font-medium text-white outline-none transition-colors hover:bg-neutral-800 focus-visible:bg-neutral-800"
-                  href="/waitlist"
-                >
-                  Join the waitlist
-                </Link>
               </div>
             </div>
           )}
@@ -321,6 +308,9 @@ export default function Login() {
           onMouseLeave={handleMouseLeave}
           onMouseMove={handleMouseMove}
           ref={containerRef}
+          role="application"
+          tabIndex={0}
+          aria-label="Interactive showcase canvas"
           style={{
             backgroundImage:
               'radial-gradient(circle at 1px 1px, #383838 1px, transparent 0)',
