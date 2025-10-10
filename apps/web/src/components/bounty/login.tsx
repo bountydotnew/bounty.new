@@ -1,10 +1,12 @@
+/** biome-ignore-all lint/a11y/noStaticElementInteractions: <> */
+/** biome-ignore-all lint/nursery/noNoninteractiveElementInteractions: <> */
 import { authClient } from '@bounty/auth/client';
 import { Badge } from '@bounty/ui/components/badge';
 import { Button } from '@bounty/ui/components/button';
 import { LogOut } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useQueryState, parseAsString } from 'nuqs';
+import { parseAsString, useQueryState } from 'nuqs';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { AuthForm } from '@/components/auth/auth-form';
@@ -95,9 +97,7 @@ export default function Login() {
       return;
     }
 
-    authClient.signIn.passkey({ autoFill: true }).catch(() => {
-      toast.error('Passkey sign-in failed');
-    });
+    authClient.signIn.passkey({ autoFill: true });
   }, []);
 
   const handleMouseLeave = () => {
@@ -163,7 +163,7 @@ export default function Login() {
           </div>
           */}
 
-          {isPending ? (
+          {isPending && (
             <div className="w-full max-w-96 space-y-8">
               <div className="animate-pulse space-y-4 text-center">
                 <div className="mx-auto h-16 w-16 rounded-lg bg-[#383838]" />
@@ -178,7 +178,9 @@ export default function Login() {
                 <div className="mx-auto h-4 w-64 rounded bg-[#383838]" />
               </div>
             </div>
-          ) : session ? (
+          )}
+
+          {!isPending && session && (
             <div className="w-full max-w-96 space-y-8">
               <div className="space-y-4 text-center">
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-lg">
@@ -242,7 +244,9 @@ export default function Login() {
                 </div>
               </div>
             </div>
-          ) : (
+          )}
+
+          {!(isPending || session) && (
             <div className="w-full max-w-96 space-y-8">
               <div className="space-y-4 text-center">
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-lg">
@@ -329,7 +333,7 @@ export default function Login() {
             width="153"
             xmlns="http://www.w3.org/2000/svg"
           >
-            <title>Decorative bounty graphic</title>
+            <title>bounty figure</title>
             <path
               d="M91.1385 71.1097C107.031 77.947 125.457 70.6065 132.294 54.7141C139.132 38.8217 131.791 20.3956 115.899 13.5582C100.006 6.72079 81.5803 14.0613 74.7429 29.9537C67.9055 45.8461 75.2461 64.2723 91.1385 71.1097ZM91.1385 71.1097L29.921 44.7722M5 102.256L33.9985 114.732C49.8909 121.57 68.317 114.229 75.1544 98.3367C81.9918 82.4443 74.6513 64.0182 58.7589 57.1808L29.7603 44.7048M148.655 95.8569L119.657 83.3808C103.764 76.5434 85.338 83.8839 78.5006 99.7763L78.5182 179"
               stroke="url(#paint0_linear_34_3652)"

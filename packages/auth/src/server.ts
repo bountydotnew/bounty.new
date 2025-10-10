@@ -12,6 +12,7 @@ import {
 import { Polar } from '@polar-sh/sdk';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { bearer, deviceAuthorization, openAPI } from 'better-auth/plugins';
 import { admin } from 'better-auth/plugins/admin';
 import { passkey } from 'better-auth/plugins/passkey';
 import { emailOTP } from 'better-auth/plugins/email-otp';
@@ -22,7 +23,24 @@ const polarClient = new Polar({
   server: polarEnv,
 });
 
-const TRAILING_SLASH_RE = /\/$/;
+const allowedDeviceClientIds = env.DEVICE_AUTH_ALLOWED_CLIENT_IDS
+  ?.split(',')
+  .map((clientId) => clientId.trim())
+  .filter(Boolean);
+
+const deviceAuthorizationPlugin = deviceAuthorization({
+  expiresIn: '30m',
+  interval: '5s',
+  validateClient: allowedDeviceClientIds?.length
+    ? (clientId) => allowedDeviceClientIds.includes(clientId)
+    : undefined,
+  onDeviceAuthRequest: async (clientId, scope) => {
+    console.info('Device authorization requested', {
+      clientId,
+      scope,
+    });
+  },
+});
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -121,42 +139,9 @@ export const auth = betterAuth({
           : 'http://localhost:3000',
     }),
     admin(),
-    // Enable 6-digit code (OTP) email verification endpoints
-    emailOTP({
-      // Use OTP instead of link for default email verification flow
-      overrideDefaultEmailVerification: true,
-      // Automatically send OTP on sign up (server-driven)
-      sendVerificationOnSignUp: true,
-      // Send the 6-digit OTP via email
-      sendVerificationOTP: async ({ email, otp, type }) => {
-        const { sendEmail, EmailTemplates } = await import('@bounty/email');
-        const subject =
-          type === 'email-verification'
-            ? `${otp} is your verification code.`
-            : type === 'sign-in'
-              ? `${otp} is your sign-in code.`
-              : `${otp} is your password reset code.`;
-
-        // Build a direct "Continue" link that pre-fills the code on the verify page
-        const baseUrl = env.BETTER_AUTH_URL.replace(TRAILING_SLASH_RE, '');
-        const verifyUrl = `${baseUrl}/sign-up/verify-email-address?email=${encodeURIComponent(
-          email,
-        )}&redirect_url=${encodeURIComponent('/login')}&code=${encodeURIComponent(otp)}`;
-
-        await sendEmail({
-          to: email,
-          from: 'notifications@mail.bounty.new',
-          subject,
-          react: EmailTemplates.OTPVerification({
-            code: otp,
-            email,
-            type,
-            continueUrl: verifyUrl,
-          }),
-          text: `Your Bounty.new ${type.replace('-', ' ')} code is ${otp}. It expires shortly. Continue: ${verifyUrl}`,
-        });
-      },
-    }),
+    bearer(),
+    openAPI(),
+    deviceAuthorizationPlugin,
   ],
   emailVerification: {
     sendOnSignUp: true,
