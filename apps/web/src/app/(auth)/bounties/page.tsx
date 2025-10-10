@@ -1,5 +1,10 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
+import { ChevronDown, Plus, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import React from 'react';
+import { toast } from 'sonner';
 import { authClient } from '@bounty/auth/client';
 import { Button } from '@bounty/ui/components/button';
 import {
@@ -9,11 +14,6 @@ import {
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
 import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
-import { useQuery } from '@tanstack/react-query';
-import { ChevronDown, Plus, Sparkles } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import React from 'react';
-import { toast } from 'sonner';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
 import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
 import GithubImportModal from '@/components/bounty/github-import-modal';
@@ -45,7 +45,6 @@ export default function BountiesPage() {
     data: randomBountyData,
     refetch: getRandomBounty,
     isFetching: isLoadingRandom,
-    error: randomBountyError,
   } = useQuery({
     ...trpc.bounties.randomBounty.queryOptions(),
     enabled: false,
@@ -56,12 +55,6 @@ export default function BountiesPage() {
       router.push(`/bounty/${randomBountyData.data.id}`);
     }
   }, [randomBountyData, router]);
-
-  React.useEffect(() => {
-    if (randomBountyError) {
-      toast.error(randomBountyError.message || 'No open bounties available');
-    }
-  }, [randomBountyError]);
 
   if (error) {
     return (
