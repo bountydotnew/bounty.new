@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { db, bounty, user } from '@bounty/db';
+import { db, bounty } from '@bounty/db';
 import { eq, sql } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
@@ -9,7 +9,6 @@ export async function GET(request: NextRequest) {
         id: bounty.id,
       })
       .from(bounty)
-      .innerJoin(user, eq(bounty.createdById, user.id))
       .where(eq(bounty.status, 'open'))
       .orderBy(sql`RANDOM()`)
       .limit(1);
