@@ -369,6 +369,62 @@ export const bountiesRouter = router({
       }
     }),
 
+  randomBounty: publicProcedure.query(async ({ ctx }) => {
+    try {
+      const [result] = await ctx.db
+        .select({
+          id: bounty.id,
+          title: bounty.title,
+          description: bounty.description,
+          amount: bounty.amount,
+          currency: bounty.currency,
+          status: bounty.status,
+          difficulty: bounty.difficulty,
+          deadline: bounty.deadline,
+          tags: bounty.tags,
+          repositoryUrl: bounty.repositoryUrl,
+          issueUrl: bounty.issueUrl,
+          createdById: bounty.createdById,
+          createdAt: bounty.createdAt,
+          creator: {
+            id: user.id,
+            name: user.name,
+            image: user.image,
+          },
+        })
+        .from(bounty)
+        .innerJoin(user, eq(bounty.createdById, user.id))
+        .where(eq(bounty.status, 'open'))
+        .orderBy(sql`RANDOM()`)
+        .limit(1);
+
+      if (!result) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'No open bounties available',
+        });
+      }
+
+      return {
+        success: true,
+        data: {
+          ...result,
+          amount: parseAmount(result.amount),
+        },
+      };
+    } catch (error) {
+      if (error instanceof TRPCError) {
+        throw error;
+      }
+
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch random bounty',
+        cause: error,
+      });
+    }
+  }),
+
   getBountiesByUserId: publicProcedure
     .input(z.object({ userId: z.string().uuid() }))
     .query(async ({ input }) => {
