@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { AuthForm } from '@/components/auth/auth-form';
+import AuthForm from '@/components/auth/auth-form';
 import SubmissionCard from '@/components/bounty/submission-card';
 import Bounty from '@/components/icons/bounty';
 import { LINKS } from '@/constants';
@@ -56,10 +56,7 @@ const cards = {
 export default function Login() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(false);
-  const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(() => {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('bounty-last-login-method');
-  });
+  const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();
@@ -98,6 +95,18 @@ export default function Login() {
     }
 
     authClient.signIn.passkey({ autoFill: true });
+  }, []);
+
+  useEffect(() => {
+    try {
+      const method =
+        typeof localStorage !== 'undefined'
+          ? localStorage.getItem('bounty-last-login-method')
+          : null;
+      setLastUsedMethod(method);
+    } catch {
+      // ignore storage access errors
+    }
   }, []);
 
   const handleMouseLeave = () => {
@@ -259,12 +268,6 @@ export default function Login() {
 
               <div className="space-y-6">
                 <AuthForm
-                  mode="signin"
-                  onModeChange={(mode) => {
-                    if (mode === 'signup') {
-                      router.push('/sign-up');
-                    }
-                  }}
                 />
 
                 <div className="relative">
@@ -289,7 +292,7 @@ export default function Login() {
                     )}
                     {loading ? 'Signing in…' : 'Continue with GitHub'}
                   </Button>
-                  {lastUsedMethod === "github" && (
+                  {lastUsedMethod === 'github' && (
                     <Badge className="-top-2 -right-2 absolute bg-primary px-1 py-0.5 text-primary-foreground text-xs">
                       Last used
                     </Badge>
@@ -309,7 +312,6 @@ export default function Login() {
           onMouseMove={handleMouseMove}
           ref={containerRef}
           role="application"
-          tabIndex={0}
           aria-label="Interactive showcase canvas"
           style={{
             backgroundImage:
