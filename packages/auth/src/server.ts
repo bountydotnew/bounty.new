@@ -15,6 +15,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { bearer, deviceAuthorization, openAPI } from 'better-auth/plugins';
 import { admin } from 'better-auth/plugins/admin';
 import { passkey } from 'better-auth/plugins/passkey';
+import { emailOTP } from 'better-auth/plugins/email-otp';
 
 const polarEnv = env.NODE_ENV === 'production' ? 'production' : 'sandbox';
 const polarClient = new Polar({
@@ -68,22 +69,27 @@ export const auth = betterAuth({
       clientId: env.GITHUB_CLIENT_ID,
       clientSecret: env.GITHUB_CLIENT_SECRET,
     },
+    google: {
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+    },
   },
   emailAndPassword: {
     enabled: true,
+    autoSignInAfterEmailVerification: true,
+    requireEmailVerification: true,
   },
   plugins: [
     polar({
       client: polarClient,
       createCustomerOnSignUp: false,
-      getCustomerCreateParams: async ({ user }) => {
-        return {
+      getCustomerCreateParams: ({ user }) =>
+        Promise.resolve({
           metadata: { userId: user.id || 'unknown' },
-        };
-      },
-      onCustomerCreateError: async ({ error }: { error: unknown }) => {
+        }),
+      onCustomerCreateError: ({ error }: { error: unknown }) => {
         const e = error as PolarError;
-        const msg = String(e?.message || e?.body$ || e?.detail || '');
+        const msg = e?.message || e?.body$ || String(error);
         if (
           e?.status === 409 ||
           msg.includes('external ID cannot be updated') ||
@@ -137,5 +143,57 @@ export const auth = betterAuth({
     openAPI(),
     deviceAuthorizationPlugin,
   ],
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    sendVerificationEmail: async ({ user, url, token, type }) => {
+      const baseUrl = env.NODE_ENV === 'production'
+        ? 'https://bounty.new'
+        : 'http://localhost:3001';
+
+      // Branch the verify path and redirect target based on OTP type
+      let verifierPath: string;
+      let redirectUrl: string;
+
+      switch (type) {
+        case 'sign-up':
+          verifierPath = '/sign-up/verify-email-address';
+          redirectUrl = '/dashboard';
+          break;
+        // TODO: Implement other OTP types
+        // case 'sign-in':
+        //   verifierPath = '/sign-in/verify-email';
+        //   redirectUrl = '/dashboard';
+        //   break;
+        // case 'password-reset':
+        //   verifierPath = '/reset-password/verify';
+        //   redirectUrl = '/login';
+        //   break;
+        default:
+          verifierPath = '/sign-up/verify-email-address';
+          redirectUrl = '/dashboard';
+      }
+
+      // Build the final verify URL with proper encoding
+      const verifyUrl = `${baseUrl}${verifierPath}?${new URLSearchParams({
+        email: encodeURIComponent(user.email),
+        code: encodeURIComponent(token),
+        redirect_url: encodeURIComponent(redirectUrl)
+      }).toString()}`;
+
+      // TODO: Implement actual email sending
+      // For now, just log the email content
+      console.log(`
+        Email Verification for ${user.email}
+        Type: ${type}
+        Verify URL: ${verifyUrl}
+
+        React template continueUrl: ${verifyUrl}
+        Plain text link: ${verifyUrl}
+      `);
+
+      return Promise.resolve();
+    },
+  },
   secret: env.BETTER_AUTH_SECRET,
 });
