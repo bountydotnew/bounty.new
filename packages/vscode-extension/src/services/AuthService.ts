@@ -247,18 +247,20 @@ hasAccessToken: Boolean(this.session?.accessToken),
 			return { outcome: 'continue' };
 		}
 
-			switch (error) {
-				case 'authorization_pending':
-					return { outcome: 'continue' };
-				case 'slow_down':
-					return { outcome: 'slow_down' };
-				case 'access_denied':
-					return { outcome: 'error', message: 'Access denied by user' };
-				case 'expired_token':
-					return { outcome: 'error', message: 'Device code expired' };
-				default:
-					return { outcome: 'error', message: tokenResponse.error_description || 'Unknown error' };
-			}
+		switch (error) {
+			case 'authorization_pending':
+				return { outcome: 'continue' };
+			case 'slow_down':
+				return { outcome: 'slow_down' };
+			case 'network_error':
+				return { outcome: 'continue' };
+			case 'access_denied':
+				return { outcome: 'error', message: 'Access denied by user' };
+			case 'expired_token':
+				return { outcome: 'error', message: 'Device code expired' };
+			default:
+				return { outcome: 'error', message: tokenResponse.error_description || 'Unknown error' };
+		}
 	}
 
 	/**
