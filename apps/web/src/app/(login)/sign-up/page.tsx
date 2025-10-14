@@ -62,12 +62,22 @@ function SignUpContent() {
   const router = useRouter();
 
   const handleSignUp = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
     if (!email) {
       toast.error('Please fill in all fields');
       return;
     }
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
     if (!password) {
       toast.error('Please fill in all fields');
+      return;
+    }
+    if (password.length < 8) {
+      toast.error('Password must be at least 8 characters long');
       return;
     }
     
