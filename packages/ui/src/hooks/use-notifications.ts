@@ -3,51 +3,75 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
-import { trpc } from '@/utils/trpc';
 
 const POLL_MS = 30_000;
 
-export function useNotifications() {
-  const notificationsQuery = useQuery({
-    ...trpc.notifications.getAll.queryOptions({ limit: 50 }),
-    refetchInterval: POLL_MS,
+export interface BasicNotification {
+  id: string;
+  read?: boolean;
+  createdAt: string | Date;
+  title: string;
+  message: string;
+  type?: string;
+  data?: unknown;
+}
+
+export interface NotificationsDeps<T extends BasicNotification = BasicNotification> {
+  enabled: boolean;
+  pollMs?: number;
+  list: () => Promise<T[]>;
+  unreadCount: () => Promise<number>;
+  markAsRead: (id: string) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
+}
+
+export function useNotifications<T extends BasicNotification = BasicNotification>(
+  deps: NotificationsDeps<T>
+) {
+  const pollMs = deps.pollMs ?? POLL_MS;
+  const notificationsQuery = useQuery<T[]>({
+    queryKey: ['notifications', 'getAll'],
+    queryFn: deps.list,
+    enabled: deps.enabled,
+    refetchInterval: deps.enabled ? pollMs : false,
     refetchIntervalInBackground: false,
+    retry: (failureCount) => failureCount < 2,
   });
 
-  const unreadCountQuery = useQuery({
-    ...trpc.notifications.getUnreadCount.queryOptions(),
-    refetchInterval: POLL_MS,
+  const unreadCountQuery = useQuery<number>({
+    queryKey: ['notifications', 'getUnreadCount'],
+    queryFn: deps.unreadCount,
+    enabled: deps.enabled,
+    refetchInterval: deps.enabled ? pollMs : false,
     refetchIntervalInBackground: false,
+    retry: (failureCount) => failureCount < 2,
   });
 
-  const markAsReadMutation = useMutation(
-    trpc.notifications.markAsRead.mutationOptions({
-      onSuccess: () => {
-        notificationsQuery.refetch();
-        unreadCountQuery.refetch();
-      },
-      onError: () => toast.error('Failed to mark as read'),
-    })
-  );
+  const markAsReadMutation = useMutation({
+    mutationFn: deps.markAsRead,
+    onSuccess: () => {
+      notificationsQuery.refetch();
+      unreadCountQuery.refetch();
+    },
+    onError: () => toast.error('Failed to mark as read'),
+  });
 
-  const markAllAsReadMutation = useMutation(
-    trpc.notifications.markAllAsRead.mutationOptions({
-      onSuccess: () => {
-        notificationsQuery.refetch();
-        unreadCountQuery.refetch();
-        toast.success('All notifications marked as read');
-      },
-      onError: () => toast.error('Failed to mark all as read'),
-    })
-  );
+  const markAllAsReadMutation = useMutation({
+    mutationFn: deps.markAllAsRead,
+    onSuccess: () => {
+      notificationsQuery.refetch();
+      unreadCountQuery.refetch();
+      toast.success('All notifications marked as read');
+    },
+    onError: () => toast.error('Failed to mark all as read'),
+  });
 
-  const markAsRead = useCallback(
-    (id: string) => markAsReadMutation.mutate({ id }),
-    [markAsReadMutation]
-  );
+  const markAsRead = useCallback((id: string) => {
+    markAsReadMutation.mutate(id);
+  }, [markAsReadMutation]);
 
   const markAllAsRead = useCallback(() => {
-    const count = unreadCountQuery.data ?? 0;
+    const count = (unreadCountQuery.data as number | undefined) ?? 0;
     if (count > 0) {
       markAllAsReadMutation.mutate();
     }
@@ -69,8 +93,8 @@ export function useNotifications() {
   }, [refetch]);
 
   return {
-    notifications: notificationsQuery.data ?? [],
-    unreadCount: unreadCountQuery.data ?? 0,
+    notifications: (notificationsQuery.data as T[]) ?? [],
+    unreadCount: (unreadCountQuery.data as number | undefined) ?? 0,
     isLoading: notificationsQuery.isLoading,
     hasError: notificationsQuery.isError || unreadCountQuery.isError,
     error: notificationsQuery.error || unreadCountQuery.error,

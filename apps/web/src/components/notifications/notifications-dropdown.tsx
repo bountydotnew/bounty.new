@@ -21,11 +21,11 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
-import type {
-  NotificationData,
-  NotificationItem,
-  NotificationRowProps,
-} from '@/types/notifications';
+import type { NotificationData, NotificationItem, NotificationRowProps } from '@/types/notifications';
+import { authClient } from '@bounty/auth/client';
+import { useAccess } from '@/context/access-provider';
+import { trpc, queryClient } from '@/utils/trpc';
+import { useMutation } from '@tanstack/react-query';
 
 function Row({ item, onRead }: NotificationRowProps) {
   const router = useRouter();
@@ -81,6 +81,7 @@ function Row({ item, onRead }: NotificationRowProps) {
 
   return (
     <button
+      type="button"
       className={cn(
         'w-full text-left',
         'rounded-md border border-neutral-800 bg-[#222222] p-3',
@@ -120,6 +121,13 @@ function Row({ item, onRead }: NotificationRowProps) {
 }
 
 export function NotificationsDropdown() {
+  const { data: session } = authClient.useSession();
+  const { hasStageAccess } = useAccess();
+  const enabled = Boolean(session) && hasStageAccess(['beta', 'production']);
+
+  const markAsReadRQ = useMutation(trpc.notifications.markAsRead.mutationOptions());
+  const markAllAsReadRQ = useMutation(trpc.notifications.markAllAsRead.mutationOptions());
+
   const {
     notifications,
     unreadCount,
@@ -128,7 +136,24 @@ export function NotificationsDropdown() {
     markAsRead,
     markAllAsRead,
     refetch,
-  } = useNotifications();
+  } = useNotifications<NotificationItem>({
+    enabled,
+    pollMs: 30_000,
+    list: async () =>
+      queryClient.ensureQueryData(
+        trpc.notifications.getAll.queryOptions({ limit: 50 })
+      ),
+    unreadCount: async () =>
+      queryClient.ensureQueryData(
+        trpc.notifications.getUnreadCount.queryOptions()
+      ),
+    markAsRead: async (id: string) => {
+      await markAsReadRQ.mutateAsync({ id });
+    },
+    markAllAsRead: async () => {
+      await markAllAsReadRQ.mutateAsync();
+    },
+  });
   const [showAll, setShowAll] = useState(false);
 
   const filtered = useMemo(

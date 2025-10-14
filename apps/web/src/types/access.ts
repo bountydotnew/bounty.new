@@ -5,6 +5,9 @@ export type AccessStage = 'none' | 'alpha' | 'beta' | 'production';
 export interface AccessContextType {
   userStage: AccessStage;
   hasStageAccess: (stage: AccessStage | AccessStage[]) => boolean;
+  hasFlag: (flag: string) => boolean;
+  isEmailVerified: boolean;
+  isBanned: boolean;
   isLoading: boolean;
   error: Error | null;
 }

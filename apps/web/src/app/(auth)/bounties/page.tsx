@@ -18,6 +18,9 @@ import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
 import GithubImportModal from '@/components/bounty/github-import-modal';
 import { Header } from '@/components/dual-sidebar/sidebar-header';
 import GitHub from '@/components/icons/github';
+import { AccessGate } from '@/components/access-gate';
+import { BetaAccessScreen } from '@/components/dashboard/beta-access-screen';
+import type { AccessStage } from '@/types/access';
 import { trpc } from '@/utils/trpc';
 
 export default function BountiesPage() {
@@ -86,14 +89,31 @@ export default function BountiesPage() {
           </DropdownMenu>
         </div>
 
-        <BountiesFeed
-          bounties={bounties?.data}
-          error={error}
-          isError={error !== null}
-          isLoading={isLoading}
-          layout="grid"
-          title=""
-        />
+
+export default function BountiesPage() {
+  const router = useRouter();
+  const { data: session } = authClient.useSession();
+  // …the rest of your component…
+  
+        <AccessGate
+          fallback={
+            <BetaAccessScreen
+              isMobile={false}
+              onSubmissionRefetch={() => router.refresh()}
+            />
+          }
+          stage={"beta" as AccessStage}
+        >
+          <BountiesFeed
+            bounties={bounties?.data}
+            error={error}
+            isError={error !== null}
+            isLoading={isLoading}
+            layout="grid"
+            title=""
+          />
+        </AccessGate>
+  
       </div>
 
       <CreateBountyModal
