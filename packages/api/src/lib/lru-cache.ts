@@ -1,9 +1,10 @@
 /**
- * LRU (Least Recently Used) Cache implementation
+ * LRU (Least Recently Used) Cache wrapper around lru-cache npm package
  *
- * This cache automatically evicts the least recently used items when the cache is full.
- * Thread-safe for concurrent access patterns in Node.js.
+ * This wrapper provides a consistent API while using the battle-tested lru-cache library.
  */
+
+import { LRUCache as LRU } from "lru-cache";
 
 export interface LRUCacheOptions<V> {
   /**
@@ -23,138 +24,57 @@ export interface LRUCacheOptions<V> {
   onEvict?: (key: string, value: V) => void;
 }
 
-interface CacheNode<V> {
-  key: string;
-  value: V;
-  timestamp: number;
-  prev: CacheNode<V> | null;
-  next: CacheNode<V> | null;
-}
-
-export class LRUCache<V = unknown> {
-  private maxSize: number;
-  private ttl: number | null;
+export class LRUCache<V extends {} = Record<string, unknown>> {
+  private cache: LRU<string, V>;
   private onEvict: ((key: string, value: V) => void) | undefined;
-  private cache: Map<string, CacheNode<V>>;
-  private head: CacheNode<V> | null;
-  private tail: CacheNode<V> | null;
 
   constructor(options: LRUCacheOptions<V>) {
-    this.maxSize = options.maxSize;
-    this.ttl = options.ttl ?? null;
-    this.onEvict = options.onEvict ?? undefined;
-    this.cache = new Map();
-    this.head = null;
-    this.tail = null;
+    this.onEvict = options.onEvict;
+
+    this.cache = new LRU<string, V>({
+      max: options.maxSize,
+      ttl: options.ttl,
+      dispose: options.onEvict
+        ? (value, key) => {
+            this.onEvict?.(key, value);
+          }
+        : undefined,
+    });
   }
 
   /**
    * Get a value from the cache
    */
   get(key: string): V | undefined {
-    const node = this.cache.get(key);
-
-    if (!node) {
-      return undefined;
-    }
-
-    // Check if expired
-    if (this.ttl && Date.now() - node.timestamp > this.ttl) {
-      this.delete(key);
-      return undefined;
-    }
-
-    // Move to front (most recently used)
-    this.moveToFront(node);
-
-    return node.value;
+    return this.cache.get(key);
   }
 
   /**
    * Set a value in the cache
    */
   set(key: string, value: V): void {
-    const existingNode = this.cache.get(key);
-
-    if (existingNode) {
-      // Update existing node
-      existingNode.value = value;
-      existingNode.timestamp = Date.now();
-      this.moveToFront(existingNode);
-      return;
-    }
-
-    // Create new node
-    const newNode: CacheNode<V> = {
-      key,
-      value,
-      timestamp: Date.now(),
-      prev: null,
-      next: null,
-    };
-
-    // Add to cache
-    this.cache.set(key, newNode);
-    this.addToFront(newNode);
-
-    // Evict if over capacity
-    if (this.cache.size > this.maxSize) {
-      this.evictLRU();
-    }
+    this.cache.set(key, value);
   }
 
   /**
    * Check if a key exists in the cache (without updating access time)
    */
   has(key: string): boolean {
-    const node = this.cache.get(key);
-
-    if (!node) {
-      return false;
-    }
-
-    // Check if expired
-    if (this.ttl && Date.now() - node.timestamp > this.ttl) {
-      this.delete(key);
-      return false;
-    }
-
-    return true;
+    return this.cache.has(key);
   }
 
   /**
    * Delete a key from the cache
    */
   delete(key: string): boolean {
-    const node = this.cache.get(key);
-
-    if (!node) {
-      return false;
-    }
-
-    this.removeNode(node);
-    this.cache.delete(key);
-
-    if (this.onEvict) {
-      this.onEvict(key, node.value);
-    }
-
-    return true;
+    return this.cache.delete(key);
   }
 
   /**
    * Clear all items from the cache
    */
   clear(): void {
-    if (this.onEvict) {
-      for (const [key, node] of this.cache.entries()) {
-        this.onEvict(key, node.value);
-      }
-    }
-
     this.cache.clear();
-    this.head = null;
-    this.tail = null;
   }
 
   /**
@@ -168,15 +88,7 @@ export class LRUCache<V = unknown> {
    * Get all keys in the cache (from most to least recently used)
    */
   keys(): string[] {
-    const keys: string[] = [];
-    let current = this.head;
-
-    while (current) {
-      keys.push(current.key);
-      current = current.next;
-    }
-
-    return keys;
+    return [...this.cache.keys()];
   }
 
   /**
@@ -188,66 +100,13 @@ export class LRUCache<V = unknown> {
     oldestTimestamp: number | null;
     newestTimestamp: number | null;
   } {
+    // Note: lru-cache doesn't expose timestamps directly, but we can provide size info
     return {
       size: this.cache.size,
-      maxSize: this.maxSize,
-      oldestTimestamp: this.tail?.timestamp ?? null,
-      newestTimestamp: this.head?.timestamp ?? null,
+      maxSize: this.cache.max,
+      oldestTimestamp: null,
+      newestTimestamp: null,
     };
-  }
-
-  private moveToFront(node: CacheNode<V>): void {
-    if (node === this.head) {
-      return;
-    }
-
-    this.removeNode(node);
-    this.addToFront(node);
-  }
-
-  private addToFront(node: CacheNode<V>): void {
-    node.next = this.head;
-    node.prev = null;
-
-    if (this.head) {
-      this.head.prev = node;
-    }
-
-    this.head = node;
-
-    if (!this.tail) {
-      this.tail = node;
-    }
-  }
-
-  private removeNode(node: CacheNode<V>): void {
-    if (node.prev) {
-      node.prev.next = node.next;
-    } else {
-      this.head = node.next;
-    }
-
-    if (node.next) {
-      node.next.prev = node.prev;
-    } else {
-      this.tail = node.prev;
-    }
-  }
-
-  private evictLRU(): void {
-    if (!this.tail) {
-      return;
-    }
-
-    const key = this.tail.key;
-    const value = this.tail.value;
-
-    this.removeNode(this.tail);
-    this.cache.delete(key);
-
-    if (this.onEvict) {
-      this.onEvict(key, value);
-    }
   }
 }
 
