@@ -54,7 +54,7 @@ export const trpcClient = createTRPCClient<AppRouter>({
         }).then(async (res) => {
           if (!res.ok) {
             // Capture body for better error messages
-            const text = await res.text();
+            const text = await res.clone().text();
             try { JSON.parse(text); } catch { /* noop */ }
           }
           return res;
