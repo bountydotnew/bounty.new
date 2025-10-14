@@ -104,10 +104,8 @@ function SignUpContent() {
               toast.success('Account created! Please check your email to sign in.');
               router.push(`/sign-up/verify-email-address?email=${encodeURIComponent(email)}`);
             } catch (error) {
-              toast.error('Failed to send verification code. Please try again.');
-           } catch (error) {
-             toast.error('Failed to send verification code. Please try again.');
-           }
+              toast.error("Failed to send verification code. Please try again.");
+            }
          },
        },
             }
