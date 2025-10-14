@@ -9,6 +9,7 @@
     "lint-staged": "^16.1.4",
     "turbo": "^2.5.4",
     "ultracite": "5.1.2",
+    "nuqs": "2.7.0",
     "@bounty/eslint-config": "workspace:*",
     "@bounty/typescript-config": "workspace:*"
   },

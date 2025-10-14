@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui';
 import { Button } from './ui';
 import { Check } from 'lucide-react';
 import { Spinner } from './ui';
-import { useSendMessage, useMessageListener } from '../hooks/useVSCodeMessage';
+import { useSendMessage, useMessageListener } from '../hooks/use-vscode-message';
 
 interface BountyDetailViewProps {
   bountyId: string;

@@ -3,9 +3,6 @@
   "workspaces": {
     "": {
       "name": "bounty.new",
-      "dependencies": {
-        "nuqs": "^2.7.0",
-      },
       "devDependencies": {
         "@biomejs/biome": "2.1.2",
         "@bounty/eslint-config": "workspace:*",
@@ -15,6 +12,7 @@
         "husky": "^9.1.7",
         "lefthook": "^1.12.2",
         "lint-staged": "^16.1.4",
+        "nuqs": "2.7.0",
         "turbo": "^2.5.4",
         "ultracite": "5.1.2",
       },

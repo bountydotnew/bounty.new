@@ -1,5 +1,5 @@
 import { useBounties } from '../hooks/useBounties';
-import { useSendMessage } from '../hooks/useVSCodeMessage';
+import { useSendMessage } from '../hooks/use-vscode-message';
 import { BountyCard } from './BountyCard';
 import { Button, Spinner } from './ui';
 import { BountyLogo } from './icons/BountyLogo';
