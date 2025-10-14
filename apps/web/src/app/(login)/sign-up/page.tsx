@@ -108,6 +108,8 @@ function SignUpContent() {
            } catch (error) {
              toast.error('Failed to send verification code. Please try again.');
            }
+         },
+       },
             }
           },
         },
