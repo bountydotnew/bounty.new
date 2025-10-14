@@ -2,6 +2,7 @@ import { db, user, userProfile, userRating, userReputation } from '@bounty/db';
 import { TRPCError } from '@trpc/server';
 import { desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { LRUCache } from '../lib/lru-cache';
 import { protectedProcedure, publicProcedure, router } from '../trpc';
 
 const updateProfileSchema = z.object({
@@ -29,11 +30,46 @@ const rateUserSchema = z.object({
   comment: z.string().max(500).optional(),
 });
 
+// LRU Cache for user profiles (cache for 5 minutes, max 200 profiles)
+const userProfileCache = new LRUCache<{
+  success: boolean;
+  data: {
+    user: {
+      id: string;
+      name: string | null;
+      email: string;
+      image: string | null;
+      createdAt: Date;
+    };
+    profile: unknown;
+    reputation: unknown;
+  };
+}>({
+  maxSize: 200,
+  ttl: 5 * 60 * 1000, // 5 minutes
+});
+
+// LRU Cache for top contributors (cache for 10 minutes, max 10 different queries)
+const topContributorsCache = new LRUCache<{
+  success: boolean;
+  data: unknown[];
+}>({
+  maxSize: 10,
+  ttl: 10 * 60 * 1000, // 10 minutes
+});
+
 export const profilesRouter = router({
   getProfile: publicProcedure
     .input(z.object({ userId: z.string().uuid() }))
     .query(async ({ input }) => {
       try {
+        // Check cache first
+        const cached = userProfileCache.get(input.userId);
+
+        if (cached) {
+          return cached;
+        }
+
         const [profile] = await db
           .select({
             user: {
@@ -58,10 +94,15 @@ export const profilesRouter = router({
           });
         }
 
-        return {
+        const result = {
           success: true,
           data: profile,
         };
+
+        // Cache the result
+        userProfileCache.set(input.userId, result);
+
+        return result;
       } catch (error) {
         if (error instanceof TRPCError) {
           throw error;
@@ -148,6 +189,9 @@ export const profilesRouter = router({
           });
         }
 
+        // Invalidate profile cache for this user
+        userProfileCache.delete(ctx.session.user.id);
+
         return {
           success: true,
           data: updatedProfile,
@@ -173,6 +217,14 @@ export const profilesRouter = router({
     )
     .query(async ({ input }) => {
       try {
+        // Check cache first
+        const cacheKey = `${input.limit}-${input.sortBy}`;
+        const cached = topContributorsCache.get(cacheKey);
+
+        if (cached) {
+          return cached;
+        }
+
         const results = await db
           .select({
             user: {
@@ -190,10 +242,15 @@ export const profilesRouter = router({
           .orderBy(desc(userReputation[input.sortBy]))
           .limit(input.limit);
 
-        return {
+        const result = {
           success: true,
           data: results,
         };
+
+        // Cache the result
+        topContributorsCache.set(cacheKey, result);
+
+        return result;
       } catch (error) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
@@ -252,6 +309,10 @@ export const profilesRouter = router({
             updatedAt: new Date(),
           })
           .where(eq(userReputation.userId, input.ratedUserId));
+
+        // Invalidate caches
+        userProfileCache.delete(input.ratedUserId);
+        topContributorsCache.clear();
 
         return {
           success: true,

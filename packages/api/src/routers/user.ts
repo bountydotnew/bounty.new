@@ -4,6 +4,7 @@ import { env } from '@bounty/env/server';
 import { TRPCError } from '@trpc/server';
 import { desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { LRUCache } from '../lib/lru-cache';
 import {
   adminProcedure,
   protectedProcedure,
@@ -15,6 +16,27 @@ import type { AccessProfile } from '@bounty/types';
 // Reused regex for token generation
 const DASH_REGEX = /-/g;
 const TRAILING_SLASH_REGEX = /\/$/;
+
+// LRU Cache for current user data (cache for 3 minutes, max 500 users)
+const currentUserCache = new LRUCache<{
+  success: boolean;
+  data: {
+    user: {
+      id: string;
+      name: string | null;
+      email: string;
+      image: string | null;
+      hasAccess: boolean;
+      createdAt: Date;
+      updatedAt: Date;
+    };
+    profile: unknown;
+    reputation: unknown;
+  } | null;
+}>({
+  maxSize: 500,
+  ttl: 3 * 60 * 1000, // 3 minutes
+});
 
 export const userRouter = router({
   adminGetProfile: adminProcedure
@@ -115,6 +137,13 @@ export const userRouter = router({
 
       const userId = ctx.session.user.id;
 
+      // Check cache first
+      const cached = currentUserCache.get(userId);
+
+      if (cached) {
+        return cached;
+      }
+
       const [userRecord] = await db
         .select({
           user: {
@@ -142,10 +171,15 @@ export const userRouter = router({
         });
       }
 
-      return {
+      const result = {
         success: true,
         data: userRecord,
       };
+
+      // Cache the result
+      currentUserCache.set(userId, result);
+
+      return result;
     } catch (error) {
       if (error instanceof TRPCError) {
         throw error;
@@ -426,6 +460,9 @@ export const userRouter = router({
 
       await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
 
+      // Invalidate user cache
+      currentUserCache.delete(userId);
+
       return { success: true };
     }),
 
@@ -459,6 +496,9 @@ export const userRouter = router({
           message: 'User not found',
         });
       }
+
+      // Invalidate user cache
+      currentUserCache.delete(userId);
 
       return {
         success: true,
@@ -552,6 +592,9 @@ export const userRouter = router({
         .update(invite)
         .set({ usedAt: new Date(), usedByUserId: ctx.session.user.id })
         .where(eq(invite.id, row.id));
+
+      // Invalidate user cache
+      currentUserCache.delete(ctx.session.user.id);
 
       return { success: true };
     }),
