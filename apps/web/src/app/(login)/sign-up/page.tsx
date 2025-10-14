@@ -105,7 +105,9 @@ function SignUpContent() {
               router.push(`/sign-up/verify-email-address?email=${encodeURIComponent(email)}`);
             } catch (error) {
               toast.error('Failed to send verification code. Please try again.');
-              console.error('OTP send error:', error);
+           } catch (error) {
+             toast.error('Failed to send verification code. Please try again.');
+           }
             }
           },
         },
