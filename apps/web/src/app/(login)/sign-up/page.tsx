@@ -144,24 +144,20 @@ function SignUpContent() {
   };
 
   const handleGitHubSignIn = async () => {
-    try {
-      await authClient.signIn.social(
-        {
-          provider: 'github',
-          callbackURL: LINKS.DASHBOARD,
+    await authClient.signIn.social(
+      {
+        provider: "github",
+        callbackURL: LINKS.DASHBOARD,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Sign in successful");
         },
-        {
-          onSuccess: () => {
-            toast.success('Sign in successful');
-          },
-          onError: (error) => {
-            toast.error(error.error.message || 'Sign in failed');
-          },
+        onError: (error) => {
+          toast.error(error.error.message || "Sign in failed");
         },
-      );
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Sign in failed');
-    }
+      },
+    );
   };
 
   const lastMethod = authClient.getLastUsedLoginMethod();
