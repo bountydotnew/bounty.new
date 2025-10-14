@@ -89,9 +89,28 @@ export default function BountiesPage() {
           </DropdownMenu>
         </div>
 
+// at the top of apps/web/src/app/(auth)/bounties/page.tsx
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import React from "react";
+import AccessGate from "...";
+import BetaAccessScreen from "...";
+import { AccessStage } from "...";
+// …other imports…
+
+export default function BountiesPage() {
+  const router = useRouter();
+  const { data: session } = authClient.useSession();
+  // …the rest of your component…
+  
         <AccessGate
-          fallback={<BetaAccessScreen isMobile={false} onSubmissionRefetch={() => router.refresh()} />}
-          stage={'beta' as AccessStage}
+          fallback={
+            <BetaAccessScreen
+              isMobile={false}
+              onSubmissionRefetch={() => router.refresh()}
+            />
+          }
+          stage={"beta" as AccessStage}
         >
           <BountiesFeed
             bounties={bounties?.data}
@@ -102,6 +121,9 @@ export default function BountiesPage() {
             title=""
           />
         </AccessGate>
+  
+  // …more JSX…
+}
       </div>
 
       <CreateBountyModal
