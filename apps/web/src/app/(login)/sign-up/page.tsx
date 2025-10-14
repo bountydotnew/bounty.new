@@ -33,7 +33,7 @@ const cards = {
     rank: 'Rank 0',
     image:
       'https://pbs.twimg.com/profile_images/1939906364119109632/vu8pOSiH_400x400.jpg',
-    id: 'ahmet',
+    id: 'sergio',
     screenshot: 'https://pbs.twimg.com/media/GwjyS7FX0AMIz4H?format=png&name=small',
   },
   nizzy: {
@@ -44,7 +44,7 @@ const cards = {
     rank: 'Rank 186',
     image:
       'https://pbs.twimg.com/profile_images/1884987569961570304/TP3OWz64_400x400.jpg',
-    id: 'ahmet',
+    id: 'nizzy',
     screenshot: 'https://pbs.twimg.com/media/Gwl0qdhWgAAoJdK?format=jpg&name=large',
   },
 };
