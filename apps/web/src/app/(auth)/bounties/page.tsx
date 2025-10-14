@@ -114,8 +114,6 @@ export default function BountiesPage() {
           />
         </AccessGate>
   
-  // …more JSX…
-}
       </div>
 
       <CreateBountyModal
