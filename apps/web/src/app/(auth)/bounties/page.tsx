@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ChevronDown, Dices, Plus } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import React from 'react';
 import { authClient } from '@bounty/auth/client';
 import { Button } from '@bounty/ui/components/button';
@@ -24,6 +25,7 @@ import type { AccessStage } from '@/types/access';
 import { trpc } from '@/utils/trpc';
 
 export default function BountiesPage() {
+  const router = useRouter();
   const { data: session } = authClient.useSession();
 
   const {
@@ -89,12 +91,6 @@ export default function BountiesPage() {
           </DropdownMenu>
         </div>
 
-
-export default function BountiesPage() {
-  const router = useRouter();
-  const { data: session } = authClient.useSession();
-  // …the rest of your component…
-  
         <AccessGate
           fallback={
             <BetaAccessScreen

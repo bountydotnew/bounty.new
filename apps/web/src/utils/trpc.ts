@@ -43,6 +43,8 @@ export const trpcClient = createTRPCClient<AppRouter>({
     }}),
     httpLink({
       url: `${process.env.NEXT_PUBLIC_API_URL || ''}/api/trpc`,
+      // Enable batching - combines multiple requests into a single HTTP call
+      maxURLLength: 2083,
       fetch(input: RequestInfo | URL, init?: RequestInit) {
         return fetch(input, {
           ...init,

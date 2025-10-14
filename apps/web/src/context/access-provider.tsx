@@ -6,17 +6,22 @@ import { createContext, useContext, useMemo } from 'react';
 import type { AccessContextType, AccessProviderProps, AccessStage } from '@/types/access';
 import type { AccessProfile } from '@bounty/types';
 import { trpc } from '@/utils/trpc';
+import { usePrefetchInitialData } from '@/hooks/use-initial-data';
 
 const AccessContext = createContext<AccessContextType | undefined>(undefined);
 
 export const AccessProvider = ({ children }: AccessProviderProps) => {
   const { data: session, isPending: sessionLoading } = authClient.useSession();
 
+  // Prefetch initial data (batched request)
+  usePrefetchInitialData();
+
   const accessProfile = useQuery({
     ...trpc.user.getAccessProfile.queryOptions(),
     enabled: !!session,
     retry: false,
     throwOnError: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes - reuse cached data
   });
 
   const profile = (accessProfile.data as AccessProfile | undefined) || undefined;

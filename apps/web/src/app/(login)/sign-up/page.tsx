@@ -49,6 +49,8 @@ const cards = {
   },
 };
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function SignUpContent() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
@@ -62,13 +64,11 @@ function SignUpContent() {
   const router = useRouter();
 
   const handleSignUp = () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
     if (!email) {
       toast.error('Please fill in all fields');
       return;
     }
-    if (!emailRegex.test(email)) {
+    if (!EMAIL_REGEX.test(email)) {
       toast.error('Please enter a valid email address');
       return;
     }
@@ -103,11 +103,8 @@ function SignUpContent() {
               
               toast.success('Account created! Please check your email to sign in.');
               router.push(`/sign-up/verify-email-address?email=${encodeURIComponent(email)}`);
-            } catch (error) {
-              toast.error("Failed to send verification code. Please try again.");
-            }
-         },
-       },
+            } catch {
+              toast.error('Failed to send verification code. Please try again.');
             }
           },
         },
