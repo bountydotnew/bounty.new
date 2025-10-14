@@ -319,18 +319,14 @@ function SignUpContent() {
               transform: `translate(${-mousePosition.x * 25}px, ${-mousePosition.y * 25}px) rotate(-22deg)`,
             }}
           >
-            <SubmissionCard
-           <SubmissionCard
+          <SubmissionCard
             avatarSrc="/images/grim-avatar.jpg"
-             description="look sir coderabbit shows the code is good"
-             hasBadge={true}
-             previewSrc="https://i.redd.it/slm52i26jbtb1.jpg"
-              description="look sir coderabbit shows the code is good"
-              hasBadge={true}
-              previewSrc="https://i.redd.it/slm52i26jbtb1.jpg"
-              rank="Rank 1000"
-              user="Adam"
-            />
+            description="look sir coderabbit shows the code is good"
+            hasBadge={true}
+            previewSrc="https://i.redd.it/slm52i26jbtb1.jpg"
+            rank="Rank 1000"
+            user="Adam"
+          />
           </div>
 
           {/* bottom right */}
