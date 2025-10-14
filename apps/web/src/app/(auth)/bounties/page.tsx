@@ -89,14 +89,6 @@ export default function BountiesPage() {
           </DropdownMenu>
         </div>
 
-// at the top of apps/web/src/app/(auth)/bounties/page.tsx
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import React from "react";
-import AccessGate from "...";
-import BetaAccessScreen from "...";
-import { AccessStage } from "...";
-// …other imports…
 
 export default function BountiesPage() {
   const router = useRouter();
