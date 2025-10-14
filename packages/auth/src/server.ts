@@ -139,9 +139,6 @@ export const auth = betterAuth({
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {
         try {
-          console.log(`📧 Sending OTP to ${email}`);
-          console.log(`🔢 OTP Code: ${otp} (type: ${type})`);
-          
           const result = await sendEmail({
             from: 'Bounty.new <noreply@mail.bounty.new>',
             to: email,
