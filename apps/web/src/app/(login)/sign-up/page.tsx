@@ -320,7 +320,11 @@ function SignUpContent() {
             }}
           >
             <SubmissionCard
-              avatarSrc="/public/images/grim-avatar.jpg"
+           <SubmissionCard
+            avatarSrc="/images/grim-avatar.jpg"
+             description="look sir coderabbit shows the code is good"
+             hasBadge={true}
+             previewSrc="https://i.redd.it/slm52i26jbtb1.jpg"
               description="look sir coderabbit shows the code is good"
               hasBadge={true}
               previewSrc="https://i.redd.it/slm52i26jbtb1.jpg"
