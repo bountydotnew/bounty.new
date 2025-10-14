@@ -1,16 +1,8 @@
-import {
-  bounty,
-  db,
-  invite,
-  session,
-  user,
-  userProfile,
-  userReputation,
-} from '@bounty/db';
+import { bounty, db, invite, session, user, userProfile, userReputation } from '@bounty/db';
 import { ExternalInvite, FROM_ADDRESSES, sendEmail } from '@bounty/email';
 import { env } from '@bounty/env/server';
 import { TRPCError } from '@trpc/server';
-import { count, desc, eq, sql } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import {
   adminProcedure,
@@ -18,6 +10,11 @@ import {
   publicProcedure,
   router,
 } from '../trpc';
+import type { AccessProfile } from '@bounty/types';
+
+// Reused regex for token generation
+const DASH_REGEX = /-/g;
+const TRAILING_SLASH_REGEX = /\/$/;
 
 export const userRouter = router({
   adminGetProfile: adminProcedure
@@ -162,6 +159,35 @@ export const userRouter = router({
     }
   }),
 
+  // Compact access profile for client-side gating
+  getAccessProfile: protectedProcedure.query(async ({ ctx }) => {
+    const [u] = await db
+      .select({
+        hasAccess: user.hasAccess,
+        accessStage: user.accessStage,
+        betaAccessStatus: user.betaAccessStatus,
+        emailVerified: user.emailVerified,
+        banned: user.banned,
+      })
+      .from(user)
+      .where(eq(user.id, ctx.session.user.id))
+      .limit(1);
+
+    if (!u) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
+    }
+
+    const profile: AccessProfile = {
+      stage: u.accessStage,
+      hasAccess: u.hasAccess,
+      betaAccessStatus: u.betaAccessStatus,
+      emailVerified: u.emailVerified,
+      banned: u.banned,
+      featureFlags: [], // reserved for future per-user flags
+    };
+    return profile;
+  }),
+
   getUserSessions: protectedProcedure.query(async ({ ctx }) => {
     try {
       const sessions = await db
@@ -248,7 +274,7 @@ export const userRouter = router({
         success: true,
         data: {
           platformStats: {
-            totalUsers: stats.totalUsers,
+            totalUsers: stats?.totalUsers ?? 0,
           },
           userStats: userRep || {
             totalEarned: '0.00',
@@ -344,11 +370,6 @@ export const userRouter = router({
       const { search, page, limit } = input;
       const offset = (page - 1) * limit;
 
-      let whereClause;
-      if (search) {
-        whereClause = sql`(${user.name} ILIKE ${`%${search}%`} OR ${user.email} ILIKE ${`%${search}%`})`;
-      }
-
       const [users, total] = await Promise.all([
         ctx.db
           .select({
@@ -365,14 +386,22 @@ export const userRouter = router({
             updatedAt: user.updatedAt,
           })
           .from(user)
-          .where(whereClause)
+          .where(
+            search
+              ? sql`(${user.name} ILIKE ${`%${search}%`} OR ${user.email} ILIKE ${`%${search}%`})`
+              : undefined
+          )
           .orderBy(desc(user.createdAt))
           .limit(limit)
           .offset(offset),
         ctx.db
           .select({ count: sql<number>`count(*)` })
           .from(user)
-          .where(whereClause)
+          .where(
+            search
+              ? sql`(${user.name} ILIKE ${`%${search}%`} OR ${user.email} ILIKE ${`%${search}%`})`
+              : undefined
+          )
           .then((result) => result[0]?.count || 0),
       ]);
 
@@ -463,8 +492,8 @@ export const userRouter = router({
       }
 
       const rawToken =
-        crypto.randomUUID().replace(/-/g, '') +
-        crypto.randomUUID().replace(/-/g, '');
+        crypto.randomUUID().replace(DASH_REGEX, '') +
+        crypto.randomUUID().replace(DASH_REGEX, '');
       const tokenHash = await crypto.subtle
         .digest('SHA-256', new TextEncoder().encode(rawToken))
         .then((b) => Buffer.from(new Uint8Array(b)).toString('hex'));
@@ -475,8 +504,7 @@ export const userRouter = router({
         .insert(invite)
         .values({ email, accessStage, tokenHash, expiresAt });
 
-      const baseUrl =
-        env.BETTER_AUTH_URL?.replace(/\/$/, '') || 'https://bounty.new';
+      const baseUrl = env.BETTER_AUTH_URL?.replace(TRAILING_SLASH_REGEX, '') || 'https://bounty.new';
       const inviteUrl = `${baseUrl}/login?invite=${rawToken}`;
       await sendEmail({
         to: email,
@@ -484,10 +512,7 @@ export const userRouter = router({
         from: FROM_ADDRESSES.notifications,
         react: ExternalInvite({
           inviteUrl,
-          accessStage:
-            accessStage === 'none'
-              ? undefined
-              : (accessStage as 'alpha' | 'beta' | 'production'),
+          accessStage: accessStage as 'none' | 'alpha' | 'beta' | 'production',
         }),
       });
 
@@ -508,15 +533,15 @@ export const userRouter = router({
         .where(eq(invite.tokenHash, tokenHash))
         .limit(1);
       const row = rows[0];
-      if (!row)
+      if (!row) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Invalid invite' });
-      if (row.usedAt)
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Invite already used',
-        });
-      if (row.expiresAt && row.expiresAt < new Date())
+      }
+      if (row.usedAt) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invite already used' });
+      }
+      if (row.expiresAt && row.expiresAt < new Date()) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invite expired' });
+      }
 
       await ctx.db
         .update(user)

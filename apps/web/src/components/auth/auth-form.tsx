@@ -4,7 +4,8 @@ import { authClient } from '@bounty/auth/client';
 import { Button } from '@bounty/ui/components/button';
 import { Input } from '@bounty/ui/components/input';
 import { Label } from '@bounty/ui/components/label';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 interface AuthFormProps {
@@ -14,45 +15,74 @@ interface AuthFormProps {
 export default function AuthForm({ callbackUrl }: AuthFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const router = useRouter();
 
-  const handleEmailPasswordAuth = async (e: React.FormEvent) => {
+  const handleEmailPasswordAuth = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email || !password) {
-      toast.error('Please fill in all fields');
+    if (!email) {
+      toast.error('Please enter your email');
       return;
     }
-
-    try {
-      setIsLoading(true);
-
+    if (!password) {
+      toast.error('Please enter your password');
+      return;
+    }
+    startTransition(async () => {
       if (mode === 'signup') {
+        // Sign-up flow: redirect to verify page
         await authClient.signUp.email({
           email,
           password,
-          name: email.split('@')[0], // Use email prefix as default name
+          name: email.split('@')[0],
+          fetchOptions: {
+            onError: (ctx: { error: { message?: string; status?: number } }) => {
+              toast.error(ctx.error.message || 'Sign up failed');
+            },
+            onSuccess: async () => {
+              // Trigger OTP send after successful sign-up
+              // Use 'sign-in' type to auto-sign-in after verification
+              try {
+                await authClient.emailOtp.sendVerificationOtp({
+                  email,
+                  type: 'sign-in',
+                });
+                
+                toast.success('Account created! Please check your email to sign in.');
+                router.push(`/sign-up/verify-email-address?email=${encodeURIComponent(email)}`);
+              } catch (error) {
+                toast.error('Failed to send verification code. Please try again.');
+                console.error('OTP send error:', error);
+              }
+            },
+          },
         });
-
-        toast.success('Account created successfully!');
       } else {
+        // Sign-in flow: redirect to dashboard
         await authClient.signIn.email({
           email,
           password,
+          rememberMe: true,
+          callbackURL: callbackUrl || '/dashboard',
+          fetchOptions: {
+            onError: (ctx: { error: { message?: string; status?: number } }) => {
+              if (ctx.error.status === 403) {
+                toast.error('Please verify your email address before signing in');
+                router.push(`/sign-up/verify-email-address?email=${encodeURIComponent(email)}`);
+              } else {
+                toast.error(ctx.error.message || 'Sign in failed');
+              }
+            },
+            onSuccess: () => {
+              toast.success('Sign in successful');
+              window.location.href = callbackUrl || '/dashboard';
+            },
+          },
         });
-
-        toast.success('Sign in successful!');
       }
-
-      // Use callbackUrl prop for redirect, falling back to '/dashboard'
-      window.location.href = callbackUrl || '/dashboard';
-
-    } catch (error: any) {
-      toast.error(error?.message || `${mode === 'signup' ? 'Sign up' : 'Sign in'} failed`);
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   return (
@@ -77,7 +107,7 @@ export default function AuthForm({ callbackUrl }: AuthFormProps) {
             placeholder="name@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            disabled={isLoading}
+            disabled={isPending}
             required
           />
         </div>
@@ -90,7 +120,7 @@ export default function AuthForm({ callbackUrl }: AuthFormProps) {
             placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            disabled={isLoading}
+            disabled={isPending}
             required
           />
         </div>
@@ -98,9 +128,9 @@ export default function AuthForm({ callbackUrl }: AuthFormProps) {
         <Button
           type="submit"
           className="w-full"
-          disabled={isLoading}
+          disabled={isPending}
         >
-          {isLoading
+          {isPending
             ? `${mode === 'signup' ? 'Creating account...' : 'Signing in...'}`
             : mode === 'signup'
             ? 'Create account'
@@ -112,7 +142,7 @@ export default function AuthForm({ callbackUrl }: AuthFormProps) {
         <Button
           variant="text"
           onClick={() => setMode(mode === 'signup' ? 'signin' : 'signup')}
-          disabled={isLoading}
+          disabled={isPending}
           className="text-sm text-gray-400 hover:text-white"
         >
           {mode === 'signup'

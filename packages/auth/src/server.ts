@@ -2,6 +2,7 @@ import * as schema from '@bounty/db';
 import { db } from '@bounty/db';
 import { env } from '@bounty/env/server';
 import type { PolarError } from '@bounty/types';
+import { sendEmail, OTPVerification } from '@bounty/email';
 import {
   checkout,
   polar,
@@ -12,7 +13,7 @@ import {
 import { Polar } from '@polar-sh/sdk';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { bearer, deviceAuthorization, openAPI } from 'better-auth/plugins';
+import { bearer, deviceAuthorization, openAPI, lastLoginMethod } from 'better-auth/plugins';
 import { admin } from 'better-auth/plugins/admin';
 import { passkey } from 'better-auth/plugins/passkey';
 import { emailOTP } from 'better-auth/plugins/email-otp';
@@ -31,14 +32,10 @@ const allowedDeviceClientIds = env.DEVICE_AUTH_ALLOWED_CLIENT_IDS
 const deviceAuthorizationPlugin = deviceAuthorization({
   expiresIn: '30m',
   interval: '5s',
-  validateClient: allowedDeviceClientIds?.length
-    ? (clientId) => allowedDeviceClientIds.includes(clientId)
-    : undefined,
-  onDeviceAuthRequest: async (clientId, scope) => {
-    console.info('Device authorization requested', {
-      clientId,
-      scope,
-    });
+  validateClient: (clientId) =>
+    allowedDeviceClientIds?.length ? allowedDeviceClientIds.includes(clientId) : true,
+  onDeviceAuthRequest: (clientId, scope) => {
+    console.info('Device authorization requested', { clientId, scope });
   },
 });
 
@@ -51,8 +48,7 @@ export const auth = betterAuth({
   onAPIError: {
     throw: true,
     onError: (error) => {
-      // Custom error handling
-      console.error(`Auth error: ${error} ${ctx}`);
+      console.error('Auth error:', error);
     },
     errorURL: '/auth/error',
   },
@@ -76,8 +72,6 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
-    autoSignInAfterEmailVerification: true,
-    requireEmailVerification: true,
   },
   plugins: [
     polar({
@@ -141,59 +135,42 @@ export const auth = betterAuth({
     admin(),
     bearer(),
     openAPI(),
+    lastLoginMethod(),
+    emailOTP({
+      async sendVerificationOTP({ email, otp, type }) {
+        try {
+          console.log(`📧 Sending OTP to ${email}`);
+          console.log(`🔢 OTP Code: ${otp} (type: ${type})`);
+          
+          const result = await sendEmail({
+            from: 'Bounty.new <noreply@mail.bounty.new>',
+            to: email,
+            subject: type === 'email-verification' 
+              ? 'Verify your email address'
+              : type === 'sign-in'
+              ? 'Sign in to Bounty.new'
+              : 'Reset your password',
+            react: OTPVerification({
+              code: otp,
+              email,
+              type,
+              continueUrl: `${env.NODE_ENV === 'production' ? 'https://bounty.new' : 'http://localhost:3000'}/sign-up/verify-email-address?email=${encodeURIComponent(email)}`,
+            }),
+          });
+
+          if (result.error) {
+            console.error('❌ Failed to send OTP email:', result.error);
+            throw new Error(`Email send failed: ${result.error.message}`);
+          }
+
+          console.log('✅ OTP email sent successfully:', result.data?.id);
+        } catch (error) {
+          console.error('❌ Error in sendVerificationOTP:', error);
+          throw error;
+        }
+      },
+    }),
     deviceAuthorizationPlugin,
   ],
-  emailVerification: {
-    sendOnSignUp: true,
-    autoSignInAfterVerification: true,
-    sendVerificationEmail: async ({ user, url, token, type }) => {
-      const baseUrl = env.NODE_ENV === 'production'
-        ? 'https://bounty.new'
-        : 'http://localhost:3001';
-
-      // Branch the verify path and redirect target based on OTP type
-      let verifierPath: string;
-      let redirectUrl: string;
-
-      switch (type) {
-        case 'sign-up':
-          verifierPath = '/sign-up/verify-email-address';
-          redirectUrl = '/dashboard';
-          break;
-        // TODO: Implement other OTP types
-        // case 'sign-in':
-        //   verifierPath = '/sign-in/verify-email';
-        //   redirectUrl = '/dashboard';
-        //   break;
-        // case 'password-reset':
-        //   verifierPath = '/reset-password/verify';
-        //   redirectUrl = '/login';
-        //   break;
-        default:
-          verifierPath = '/sign-up/verify-email-address';
-          redirectUrl = '/dashboard';
-      }
-
-      // Build the final verify URL with proper encoding
-      const verifyUrl = `${baseUrl}${verifierPath}?${new URLSearchParams({
-        email: encodeURIComponent(user.email),
-        code: encodeURIComponent(token),
-        redirect_url: encodeURIComponent(redirectUrl)
-      }).toString()}`;
-
-      // TODO: Implement actual email sending
-      // For now, just log the email content
-      console.log(`
-        Email Verification for ${user.email}
-        Type: ${type}
-        Verify URL: ${verifyUrl}
-
-        React template continueUrl: ${verifyUrl}
-        Plain text link: ${verifyUrl}
-      `);
-
-      return Promise.resolve();
-    },
-  },
   secret: env.BETTER_AUTH_SECRET,
 });

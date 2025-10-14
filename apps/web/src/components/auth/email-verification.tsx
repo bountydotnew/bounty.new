@@ -28,11 +28,45 @@ interface EmailVerificationProps {
   initialCode?: string;
 }
 
+interface ParsedError {
+  message: string;
+  shouldSuggestResend: boolean;
+}
+
+function parseOtpError(error: unknown): ParsedError {
+  const errorMessage = error instanceof Error ? error.message : 'Invalid verification code';
+  
+  const isExpired = errorMessage.toLowerCase().includes('expired');
+  const isUsed = errorMessage.toLowerCase().includes('used');
+  
+  if (isExpired) {
+    return {
+      message: 'This code has expired. Please request a new one.',
+      shouldSuggestResend: true,
+    };
+  }
+  
+  if (isUsed) {
+    return {
+      message: 'This code has already been used. Please request a new one.',
+      shouldSuggestResend: true,
+    };
+  }
+  
+  return {
+    message: errorMessage.includes('verification') 
+      ? errorMessage 
+      : 'Invalid verification code. Please try again.',
+    shouldSuggestResend: false,
+  };
+}
+
 export function EmailVerification({ email, onBack, onSuccess, onEditInfo, initialCode }: EmailVerificationProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [showResendSuggestion, setShowResendSuggestion] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const form = useForm<VerificationFormData>({
@@ -98,49 +132,29 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo, initia
     inputRefs.current[nextIndex]?.focus();
   };
 
-  const attemptAutoSignIn = useCallback(async () => {
-    try {
-      const raw = localStorage.getItem('bounty.pendingSignIn');
-      if (raw) {
-        const creds = JSON.parse(raw) as { email?: string; password?: string };
-        if (
-          creds?.email &&
-          creds?.password &&
-          creds.email.toLowerCase() === email.toLowerCase()
-        ) {
-          await authClient.signIn.email({
-            email: creds.email,
-            password: creds.password,
-          });
-        }
-      }
-    } catch (e) {
-      console.debug('auto sign-in skipped', e);
-    } finally {
-      try {
-        localStorage.removeItem('bounty.pendingSignIn');
-      } catch (e) {
-        console.debug('clear pendingSignIn failed', e);
-      }
-    }
-  }, [email]);
 
   const handleSubmit = async (data: VerificationFormData) => {
     setIsLoading(true);
     try {
-      const result = await authClient.emailOtp.verifyEmail({
+      const result = await authClient.signIn.emailOtp({
         email,
         otp: data.code,
       });
+      
       if (result?.data) {
-        await attemptAutoSignIn();
+        // signIn.emailOtp creates a session and marks email as verified
         onSuccess();
+      } else if (result?.error) {
+        // Handle error from result
+        throw new Error(result.error.message || 'Verification failed');
       }
     } catch (error) {
+      const parsed = parseOtpError(error);
+      setShowResendSuggestion(parsed.shouldSuggestResend);
+      
       form.setError('code', {
         type: 'manual',
-        message:
-          error instanceof Error ? error.message : 'Invalid verification code',
+        message: parsed.message,
       });
     } finally {
       setIsLoading(false);
@@ -153,10 +167,14 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo, initia
     }
 
     setIsResending(true);
+    setShowResendSuggestion(false); // Clear suggestion after resend
+    form.clearErrors('code'); // Clear the error
+    setValue('code', ''); // Clear the code input
+    
     try {
       await authClient.emailOtp.sendVerificationOtp({
         email,
-        type: 'email-verification',
+        type: 'sign-in',
       });
       setResendCooldown(60); // 60 second cooldown
     } catch {
@@ -172,23 +190,29 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo, initia
   const handleAutoVerify = useCallback(
     async (cleanCode: string) => {
       try {
-        const result = await authClient.emailOtp.verifyEmail({
+        const result = await authClient.signIn.emailOtp({
           email,
           otp: cleanCode,
         });
+        
         if (result?.data) {
-          await attemptAutoSignIn();
+          // signIn.emailOtp creates a session and marks email as verified
           onSuccess();
+        } else if (result?.error) {
+          // Handle error from result
+          throw new Error(result.error.message || 'Verification failed');
         }
       } catch (error) {
+        const parsed = parseOtpError(error);
+        setShowResendSuggestion(parsed.shouldSuggestResend);
+        
         setError('code', {
           type: 'manual',
-          message:
-            error instanceof Error ? error.message : 'Invalid verification code',
+          message: parsed.message,
         });
       }
     },
-    [email, attemptAutoSignIn, onSuccess, setError],
+    [email, onSuccess, setError],
   );
 
   useEffect(() => {
@@ -204,6 +228,28 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo, initia
 
   const code = form.watch('code');
 
+  const getResendButtonText = () => {
+    if (isResending) {
+      return 'Sending...';
+    }
+    if (resendCooldown > 0) {
+      return `Resend code in ${resendCooldown}s`;
+    }
+    if (showResendSuggestion) {
+      return '👉 Click here to get a new code';
+    }
+    return 'Resend code';
+  };
+
+  const getResendButtonClass = () => {
+    if (resendCooldown > 0 || isResending) {
+      return 'text-gray-500 cursor-not-allowed';
+    }
+    if (showResendSuggestion) {
+      return 'text-primary hover:text-primary/80 underline font-semibold animate-pulse';
+    }
+    return 'text-white hover:text-gray-200 underline';
+  };
 
   return (
     <div className="space-y-6">
@@ -250,7 +296,17 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo, initia
           </div>
 
           <AnimatePresence mode="wait">
-            {focusedField === 'code' && !form.formState.errors.code ? (
+            {form.formState.errors.code ? (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="text-center text-sm text-destructive font-medium"
+              >
+                {form.formState.errors.code?.message}
+              </motion.div>
+            ) : focusedField === 'code' ? (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
@@ -259,16 +315,6 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo, initia
                 className="text-center text-sm text-gray-400"
               >
                 Enter the 6-digit code from your email
-              </motion.div>
-            ) : form.formState.errors.code ? (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2 }}
-                className="text-center text-sm text-destructive"
-              >
-                {form.formState.errors.code?.message}
               </motion.div>
             ) : null}
           </AnimatePresence>
@@ -297,17 +343,11 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo, initia
             onClick={handleResendCode}
             disabled={resendCooldown > 0 || isResending}
             className={cn(
-              'text-sm font-medium transition-colors',
-              resendCooldown > 0 || isResending
-                ? 'text-gray-500 cursor-not-allowed'
-                : 'text-white hover:text-gray-200 underline'
+              'text-sm font-medium transition-all duration-200',
+              getResendButtonClass()
             )}
           >
-            {isResending
-              ? 'Sending...'
-              : resendCooldown > 0
-                ? `Resend code in ${resendCooldown}s`
-                : 'Resend code'}
+            {getResendButtonText()}
           </button>
         </div>
 

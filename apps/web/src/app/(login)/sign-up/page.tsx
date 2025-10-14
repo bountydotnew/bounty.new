@@ -4,10 +4,11 @@ import { authClient } from '@bounty/auth/client';
 import { Badge } from '@bounty/ui/components/badge';
 import { Button } from '@bounty/ui/components/button';
 import { Spinner } from '@bounty/ui/components/spinner';
-import { Suspense, useCallback, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { Input } from '@bounty/ui/components/input';
+import { Label } from '@bounty/ui/components/label';
+import { Suspense, useRef, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { AuthForm } from '@/components/auth/auth-form';
 import SubmissionCard from '@/components/bounty/submission-card';
 import Bounty from '@/components/icons/bounty';
 import { GithubIcon } from '@/components/icons';
@@ -52,24 +53,55 @@ function SignUpContent() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isPending, startTransition] = useTransition();
 
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  const redirect = searchParams.get('redirect_url') ?? '/login';
-  const callbackUrl = searchParams.get('callback') || LINKS.DASHBOARD;
-
-  const handleSignUpSuccess = useCallback(
-    (email: string) => {
-      const usp = new URLSearchParams();
-      usp.set('email', email);
-      if (redirect) {
-        usp.set('redirect_url', redirect);
-      }
-      router.push(`/sign-up/verify-email-address?${usp.toString()}`);
-    },
-    [router, redirect],
-  );
+  const handleSignUp = () => {
+    if (!email) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    if (!password) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    
+    startTransition(async () => {
+      const name = `${firstName} ${lastName}`.trim();
+      
+      await authClient.signUp.email({
+        email,
+        password,
+        name: name || email.split('@')[0],
+        fetchOptions: {
+          onError: (ctx) => {
+            toast.error(ctx.error.message);
+          },
+          onSuccess: async () => {
+            // Trigger OTP send after successful sign-up
+            // Use 'sign-in' type to auto-sign-in after verification
+            try {
+              await authClient.emailOtp.sendVerificationOtp({
+                email,
+                type: 'sign-in',
+              });
+              
+              toast.success('Account created! Please check your email to sign in.');
+              router.push(`/sign-up/verify-email-address?email=${encodeURIComponent(email)}`);
+            } catch (error) {
+              toast.error('Failed to send verification code. Please try again.');
+              console.error('OTP send error:', error);
+            }
+          },
+        },
+      });
+    });
+  };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!(containerRef.current && svgRef.current)) {
@@ -104,7 +136,7 @@ function SignUpContent() {
       await authClient.signIn.social(
         {
           provider: 'github',
-          callbackURL: callbackUrl,
+          callbackURL: LINKS.DASHBOARD,
         },
         {
           onSuccess: () => {
@@ -137,11 +169,61 @@ function SignUpContent() {
           </div>
 
           <div className="space-y-6">
-            <AuthForm
-              mode="signup"
-              onModeChange={() => null}
-              onSignUpSuccess={handleSignUpSuccess}
-            />
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="first-name">First name</Label>
+                  <Input
+                    id="first-name"
+                    placeholder="Ada"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    disabled={isPending}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="last-name">Last name</Label>
+                  <Input
+                    id="last-name"
+                    placeholder="Lovelace"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    disabled={isPending}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isPending}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isPending}
+                  required
+                />
+              </div>
+              <Button
+                className="w-full"
+                disabled={isPending}
+                onClick={handleSignUp}
+              >
+                {isPending ? 'Creating account…' : 'Create an account'}
+              </Button>
+            </div>
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
