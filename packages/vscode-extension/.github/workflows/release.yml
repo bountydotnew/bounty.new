@@ -27,7 +27,7 @@ jobs:
         run: npm --prefix packages/vscode-extension run compile
 
       - name: Package VSIX
-        run: npx @vscode/vsce package --no-dependencies
+        run: cd packages/vscode-extension && npx @vscode/vsce package --no-dependencies
 
       - name: Publish GitHub release asset
         uses: marvinpinto/action-automatic-releases@latest
@@ -36,4 +36,4 @@ jobs:
           automatic_release_tag: latest
           title: "Latest VS Code Extension"
           prerelease: false
-          files: "*.vsix"
+          files: "packages/vscode-extension/*.vsix"
