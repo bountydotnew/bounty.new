@@ -110,7 +110,7 @@ export default function BountiesPage() {
           <Button variant="outline" asChild>
             <Link href="/api/bounty/random">
               <Dices className="mr-2 h-4 w-4" />
-              I'm Feeling Lucky
+              I&apos;m Feeling Lucky
             </Link>
           </Button>
           <DropdownMenu>
