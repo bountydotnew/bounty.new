@@ -83,6 +83,11 @@ export function useNotifications<T extends BasicNotification = BasicNotification
   }, [notificationsQuery, unreadCountQuery]);
 
   useEffect(() => {
+    // Only register visibility listener if notifications are enabled
+    if (!deps.enabled) {
+      return;
+    }
+
     const onVis = () => {
       if (document.visibilityState === 'visible') {
         refetch();
@@ -90,7 +95,7 @@ export function useNotifications<T extends BasicNotification = BasicNotification
     };
     document.addEventListener('visibilitychange', onVis);
     return () => document.removeEventListener('visibilitychange', onVis);
-  }, [refetch]);
+  }, [refetch, deps.enabled]);
 
   return {
     notifications: (notificationsQuery.data as T[]) ?? [],

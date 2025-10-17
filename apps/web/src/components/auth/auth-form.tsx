@@ -12,7 +12,31 @@ interface AuthFormProps {
   callbackUrl?: string;
 }
 
+/**
+ * Validates that a URL is a safe relative path to prevent open redirect attacks.
+ * Only allows paths that start with '/' and don't contain protocol or domain.
+ */
+function isSafeRedirectUrl(url: string | undefined): boolean {
+  if (!url) {
+    return false;
+  }
+  
+  // Must start with / and not //
+  if (!url.startsWith('/') || url.startsWith('//')) {
+    return false;
+  }
+  
+  // Must not contain protocol (http:, https:, javascript:, etc.)
+  if (url.includes(':')) {
+    return false;
+  }
+  
+  return true;
+}
+
 export default function AuthForm({ callbackUrl }: AuthFormProps) {
+  // Validate and sanitize the callback URL to prevent open redirects
+  const safeCallbackUrl: string = isSafeRedirectUrl(callbackUrl) && callbackUrl ? callbackUrl : '/dashboard';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isPending, startTransition] = useTransition();
@@ -65,7 +89,7 @@ export default function AuthForm({ callbackUrl }: AuthFormProps) {
           email,
           password,
           rememberMe: true,
-          callbackURL: callbackUrl || '/dashboard',
+          callbackURL: safeCallbackUrl,
           fetchOptions: {
             onError: (ctx: { error: { message?: string; status?: number } }) => {
               if (ctx.error.status === 403) {
@@ -77,7 +101,7 @@ export default function AuthForm({ callbackUrl }: AuthFormProps) {
             },
             onSuccess: () => {
               toast.success('Sign in successful');
-              window.location.href = callbackUrl || '/dashboard';
+              window.location.href = safeCallbackUrl;
             },
           },
         });

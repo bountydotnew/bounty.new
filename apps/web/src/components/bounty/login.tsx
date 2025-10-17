@@ -267,8 +267,7 @@ export default function Login() {
               </div>
 
               <div className="space-y-6">
-                <AuthForm
-                />
+                <AuthForm callbackUrl={callbackUrl} />
 
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">

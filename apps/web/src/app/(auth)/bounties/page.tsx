@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
+import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
 import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
 import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
@@ -21,12 +22,12 @@ import { Header } from '@/components/dual-sidebar/sidebar-header';
 import GitHub from '@/components/icons/github';
 import { AccessGate } from '@/components/access-gate';
 import { BetaAccessScreen } from '@/components/dashboard/beta-access-screen';
-import type { AccessStage } from '@/types/access';
 import { trpc } from '@/utils/trpc';
 
 export default function BountiesPage() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const {
     data: bounties,
@@ -39,9 +40,51 @@ export default function BountiesPage() {
     })
   );
 
+  // Fetch current user data for BetaAccessScreen
+  const {
+    data: currentUserData,
+    isLoading: isUserLoading,
+  } = useQuery({
+    ...trpc.user.getCurrentUser.queryOptions(),
+    enabled: !!session?.user,
+  });
+
+  // Fetch beta application submission status
+  const {
+    data: betaSubmissionData,
+    refetch: refetchSubmission,
+  } = useQuery({
+    ...trpc.betaApplications.checkExisting.queryOptions(),
+    enabled: !!session?.user,
+  });
+
   const { createModalOpen, openCreateModal, closeCreateModal } =
     useBountyModals();
   const [importOpen, setImportOpen] = React.useState(false);
+
+  // Prepare userData for BetaAccessScreen
+  const userData = currentUserData?.data?.user
+    ? {
+        name: currentUserData.data.user.name ?? undefined,
+        betaAccessStatus: 'none' as const, // Default, could be enhanced
+        accessStage: 'none' as const, // Default, could be enhanced
+      }
+    : undefined;
+
+  const existingSubmission = betaSubmissionData
+    ? { hasSubmitted: betaSubmissionData.hasSubmitted }
+    : undefined;
+
+  // Show loading state while user data is being fetched
+  if (isUserLoading && session?.user) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -94,11 +137,17 @@ export default function BountiesPage() {
         <AccessGate
           fallback={
             <BetaAccessScreen
-              isMobile={false}
-              onSubmissionRefetch={() => router.refresh()}
+              existingSubmission={existingSubmission}
+              isMobile={isMobile}
+              onSubmissionRefetch={async () => {
+                await refetchSubmission();
+                router.refresh();
+              }}
+              sessionUserName={session?.user?.name ?? undefined}
+              userData={userData}
             />
           }
-          stage={"beta" as AccessStage}
+          stage="beta"
         >
           <BountiesFeed
             bounties={bounties?.data}
