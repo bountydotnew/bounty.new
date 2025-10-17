@@ -152,7 +152,7 @@ export default function BountiesPage() {
           <BountiesFeed
             bounties={bounties?.data}
             error={error}
-            isError={error !== null}
+            isError={Boolean(error)}
             isLoading={isLoading}
             layout="grid"
             title=""
