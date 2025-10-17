@@ -1,8 +1,9 @@
 {
-  "name": "vscode-extension",
+  "name": "bounty-extension",
   "displayName": "Bounty",
   "description": "Bounty VSCode Extension",
   "version": "0.0.1",
+  "publisher": "bountydotnew",
   "private": true,
   "engines": {
     "vscode": "^1.90.0"
@@ -13,7 +14,7 @@
   "main": "./dist/extension.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bountydotnew/bounty.new.git"
+    "url": "https://github.com/bountydotnew/vscode-extension.git"
   },
   "contributes": {
     "viewsContainers": {
@@ -56,28 +57,27 @@
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vscode-test",
-    "webview:install": "cd webview && npm install",
+    "webview:install": "node ./scripts/install-webview.js",
     "webview:build": "cd webview && npm run build",
     "webview:dev": "cd webview && npm start",
     "webview:clean": "cd webview && npm run clean",
-    "vscode:build": "vsce package --no-dependencies"
+    "vscode:build": "npx @vscode/vsce package --no-dependencies",
+    "postinstall": "node ./scripts/install-webview.js"
   },
   "dependencies": {
-    "@bounty/api": "workspace:*",
-    "@bounty/types": "workspace:*",
-    "@trpc/client": "catalog:",
-    "superjson": "catalog:"
+    "@trpc/client": "^11.4.3",
+    "superjson": "^2.2.2"
   },
   "devDependencies": {
     "@types/vscode": "^1.90.0",
     "@types/mocha": "^10.0.10",
-    "@types/node": "catalog:",
+    "@types/node": "^24.1.0",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
-    "eslint": "catalog:",
+    "eslint": "^9.29.0",
     "esbuild": "^0.25.10",
     "npm-run-all": "^4.1.5",
-    "typescript": "catalog:",
+    "typescript": "^5.6.3",
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2"
   }
