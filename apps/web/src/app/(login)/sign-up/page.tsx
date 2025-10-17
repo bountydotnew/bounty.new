@@ -66,6 +66,9 @@ function SignUpContent() {
   const handleSignUp = () => {
     if (!email) {
       toast.error('Please fill in all fields');
+  const handleSignUp = () => {
+    if (!email) {
+      toast.error('Please fill in all fields');
       return;
     }
     if (!EMAIL_REGEX.test(email)) {
@@ -80,7 +83,6 @@ function SignUpContent() {
       toast.error('Password must be at least 8 characters long');
       return;
     }
-    
     startTransition(async () => {
       const name = `${firstName} ${lastName}`.trim();
       
@@ -105,7 +107,7 @@ function SignUpContent() {
               router.push(
                 `/sign-up/verify-email-address?email=${encodeURIComponent(email)}`
               );
-            } catch {
+            } catch (error) {
               toast.error("Failed to send verification code. Please try again.");
             }
           },
