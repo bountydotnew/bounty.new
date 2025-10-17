@@ -1,5 +1,5 @@
 import { createEnv } from '@t3-oss/env-nextjs';
-import { z } from 'zod/v4';
+import { z } from 'zod';
 
 export const env = createEnv({
   server: {
@@ -36,9 +36,8 @@ export const env = createEnv({
     POLAR_SUCCESS_URL: z.string().url(),
     POLAR_WEBHOOK_SECRET: z.string().min(1),
     RESEND_API_KEY: z.string().min(1),
-    DEVICE_AUTH_ALLOWED_CLIENT_IDS: z.string().optional(),
+    DEVICE_AUTH_ALLOWED_CLIENT_IDS: z.string().optional().default(''),
   },
-  experimental__runtimeEnv: process.env,
-  skipValidation:
-    !!process.env.SKIP_ENV_VALIDATION || process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development',
+  runtimeEnv: process.env,
+  skipValidation: process.env.NODE_ENV !== 'production',
 });
