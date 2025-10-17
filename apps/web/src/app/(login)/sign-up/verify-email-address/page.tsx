@@ -1,12 +1,13 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { toast } from 'sonner';
 import { queryClient } from '@/utils/trpc';
 import { EmailVerification } from '@/components/auth/email-verification';
 import { authClient } from '@bounty/auth/client';
 
-export default function VerifyEmailAddressPage() {
+function VerifyEmailAddressContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -57,5 +58,20 @@ export default function VerifyEmailAddressPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailAddressPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-[#111110]">
+        <div className="w-full max-w-md space-y-6 p-8 text-center">
+          <h1 className="text-2xl font-bold text-white">Loading...</h1>
+          <p className="text-gray-400">Please wait while we load the verification page.</p>
+        </div>
+      </div>
+    }>
+      <VerifyEmailAddressContent />
+    </Suspense>
   );
 }
