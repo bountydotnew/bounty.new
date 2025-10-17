@@ -24,5 +24,5 @@ export const env = createEnv({
     NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
     NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
   },
-  skipValidation: process.env.NEXT_PUBLIC_VERCEL_ENV !== "production",
+  skipValidation: process.env.NODE_ENV !== "production",
 });
