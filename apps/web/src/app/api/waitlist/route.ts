@@ -11,8 +11,8 @@ const requestSchema = z.object({
   email: z.string().email('Invalid email format'),
   fingerprintData: z.object({
     thumbmark: z.string(),
-    components: z.record(z.any()),
-    info: z.record(z.any()).optional(),
+    components: z.record(z.string(), z.any()),
+    info: z.record(z.string(), z.any()).optional(),
     version: z.string().optional(),
   }),
 });

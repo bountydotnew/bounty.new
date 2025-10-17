@@ -40,5 +40,5 @@ export const env = createEnv({
   },
   experimental__runtimeEnv: process.env,
   skipValidation:
-    !!process.env.SKIP_ENV_VALIDATION || process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'preview',
+    !!process.env.SKIP_ENV_VALIDATION || process.env.NODE_ENV === 'test' || (process.env.NODE_ENV as string) === 'preview',
 });
