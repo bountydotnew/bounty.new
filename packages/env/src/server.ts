@@ -40,5 +40,5 @@ export const env = createEnv({
   },
   experimental__runtimeEnv: process.env,
   skipValidation:
-    !!process.env.SKIP_ENV_VALIDATION || process.env.NODE_ENV === 'test' || process.env.NEXT_PUBLIC_VERCEL_ENV !== 'production',
+    !!process.env.SKIP_ENV_VALIDATION || process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development',
 });
