@@ -27,7 +27,7 @@ export const env = createEnv({
     DISCORD_WEBHOOK_URL: z.string().url().optional(),
     // Node environment
     NODE_ENV: z
-      .enum(['development', 'production', 'test'])
+      .enum(['development', 'production', 'test', 'preview'])
       .default('development'),
     // Polar
     POLAR_ACCESS_TOKEN: z.string().min(1),
@@ -40,5 +40,5 @@ export const env = createEnv({
   },
   experimental__runtimeEnv: process.env,
   skipValidation:
-    !!process.env.SKIP_ENV_VALIDATION || process.env.NODE_ENV === 'test',
+    !!process.env.SKIP_ENV_VALIDATION || process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'preview',
 });
