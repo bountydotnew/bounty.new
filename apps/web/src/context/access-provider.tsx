@@ -55,6 +55,7 @@ export const AccessProvider = ({ children }: AccessProviderProps) => {
     hasFlag: (flag: string) => Boolean(profile?.featureFlags?.includes(flag)),
     isEmailVerified: Boolean(profile?.emailVerified),
     isBanned: Boolean(profile?.banned),
+    isAuthenticated: userStage !== "none",
     isLoading: sessionLoading || accessProfile.isLoading,
     error: accessProfile.error as Error | null,
   }), [userStage, hasStageAccess, profile?.featureFlags, profile?.emailVerified, profile?.banned, sessionLoading, accessProfile.isLoading, accessProfile.error]);

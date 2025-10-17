@@ -8,6 +8,7 @@ export interface AccessContextType {
   hasFlag: (flag: string) => boolean;
   isEmailVerified: boolean;
   isBanned: boolean;
+  isAuthenticated: boolean;
   isLoading: boolean;
   error: Error | null;
 }

@@ -11,29 +11,29 @@ function VerifyEmailAddressContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const email = searchParams.get('email');
-  const code = searchParams.get('code');
+  const email = searchParams.get("email");
+  const code = searchParams.get("code");
 
   const handleSuccess = async () => {
-    toast.success('Email verified successfully!');
+    toast.success("Email verified successfully!");
     
     // Force Better Auth to refetch the session
-    await authClient.$fetch('/session');
+    await authClient.$fetch("/session");
     
     // Invalidate all related queries
-    queryClient.invalidateQueries({ queryKey: ['session'] });
-    queryClient.invalidateQueries({ queryKey: ['user', 'getMe'] });
-    queryClient.invalidateQueries({ queryKey: ['user', 'getAccessProfile'] });
+    queryClient.invalidateQueries({ queryKey: ["session"] });
+    queryClient.invalidateQueries({ queryKey: ["user", "getMe"] });
+    queryClient.invalidateQueries({ queryKey: ["user", "getAccessProfile"] });
     
     // Small delay to ensure session is fully refreshed before redirect
     await new Promise(resolve => setTimeout(resolve, 100));
     
     // Redirect to dashboard
-    router.push('/dashboard');
+    router.push("/dashboard");
   };
 
   const handleBack = () => {
-    router.push('/login');
+    router.push("/login");
   };
 
   if (!email) {

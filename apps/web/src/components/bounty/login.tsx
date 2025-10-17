@@ -306,7 +306,7 @@ export default function Login() {
       {/* Right Column: Showcase Section */}
       <div className="hidden flex-1 items-center justify-center lg:flex">
         <div
-          className="relative flex min-h-[95%] flex-1 cursor-pointer items-center justify-center overflow-hidden border-1 border-[#383838] p-8 md:p-12"
+          className="relative flex min-h-[95%] flex-1 cursor-pointer items-center justify-center overflow-hidden border border-[#383838] p-8 md:p-12"
           onMouseLeave={handleMouseLeave}
           onMouseMove={handleMouseMove}
           ref={containerRef}

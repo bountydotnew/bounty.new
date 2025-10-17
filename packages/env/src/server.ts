@@ -27,7 +27,7 @@ export const env = createEnv({
     DISCORD_WEBHOOK_URL: z.string().url().optional(),
     // Node environment
     NODE_ENV: z
-      .enum(['development', 'production', 'test', 'preview'])
+      .enum(['development', 'production', 'test'])
       .default('development'),
     // Polar
     POLAR_ACCESS_TOKEN: z.string().min(1),
@@ -37,8 +37,12 @@ export const env = createEnv({
     POLAR_WEBHOOK_SECRET: z.string().min(1),
     RESEND_API_KEY: z.string().min(1),
     DEVICE_AUTH_ALLOWED_CLIENT_IDS: z.string().optional(),
+    // Vercel environment
+    NEXT_PUBLIC_VERCEL_ENV: z
+      .enum(['development', 'preview', 'production'])
+      .optional(),
   },
   experimental__runtimeEnv: process.env,
   skipValidation:
-    !!process.env.SKIP_ENV_VALIDATION || process.env.NODE_ENV === 'test' || (process.env.NODE_ENV as string) === 'preview',
+    !!process.env.SKIP_ENV_VALIDATION || process.env.NODE_ENV === 'test' || process.env.NEXT_PUBLIC_VERCEL_ENV !== 'production',
 });
