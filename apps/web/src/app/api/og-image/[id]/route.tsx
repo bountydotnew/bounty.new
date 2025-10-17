@@ -194,9 +194,6 @@ export async function GET(
           <img // eslint-disable-line @next/next/no-img-element
             alt={`${repoData.owner.login} avatar`}
             height="190"
-            onError={(e) => {
-              e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(repoData.owner.login)}&size=160`;
-            }}
             src={repoData.owner.avatar_url}
             style={{
               position: 'absolute',

@@ -12,6 +12,7 @@ import { Check } from 'lucide-react';
 import { useState } from 'react';
 import BountyActions from '@/components/bounty/bounty-actions';
 import BountyComments from '@/components/bounty/bounty-comments';
+import { BountyPaymentStepper } from '@/components/bounty/bounty-payment-stepper';
 import CollapsibleText from '@/components/bounty/collapsible-text';
 import CommentEditDialog from '@/components/bounty/comment-edit-dialog';
 import { EditBountyModal } from '@/components/bounty/edit-bounty-modal';
@@ -35,6 +36,15 @@ interface BountyDetailPageProps {
   initialVotes?: { count: number; isVoted: boolean };
   initialComments?: BountyCommentCacheItem[];
   initialBookmarked?: boolean;
+  currency?: string;
+  status?:
+    | 'draft'
+    | 'open'
+    | 'funded'
+    | 'in_progress'
+    | 'completed'
+    | 'cancelled';
+  fundingStatus?: 'unfunded' | 'funded';
 }
 
 export default function BountyDetailPage({
@@ -49,6 +59,9 @@ export default function BountyDetailPage({
   initialVotes,
   initialComments,
   initialBookmarked,
+  currency = 'USD',
+  status,
+  fundingStatus,
 }: BountyDetailPageProps) {
   const { editModalOpen, openEditModal, closeEditModal, editingBountyId } =
     useBountyModals();
@@ -103,6 +116,7 @@ export default function BountyDetailPage({
     id: string;
     initial: string;
   } | null>(null);
+  const [paymentStepperOpen, setPaymentStepperOpen] = useState(false);
 
   // const postComment = (content: string, parentId?: string) => {
   //   const key = trpc.bounties.getBountyComments.queryKey({ bountyId: id });
@@ -296,8 +310,15 @@ export default function BountyDetailPage({
                     bookmarked={initialBookmarked}
                     bountyId={id}
                     canEdit={canEditBounty}
+                    canFund={
+                      canEditBounty &&
+                      status === 'draft' &&
+                      fundingStatus === 'unfunded'
+                    }
+                    fundingStatus={fundingStatus}
                     isVoted={Boolean(votes.data?.isVoted)}
                     onEdit={() => openEditModal(id)}
+                    onFundBounty={() => setPaymentStepperOpen(true)}
                     onShare={() => {
                       navigator.share({
                         title,
@@ -401,6 +422,15 @@ export default function BountyDetailPage({
         bountyId={editingBountyId}
         onOpenChange={closeEditModal}
         open={editModalOpen}
+      />
+
+      <BountyPaymentStepper
+        bountyAmount={amount}
+        bountyId={id}
+        bountyTitle={title}
+        currency={currency}
+        onOpenChange={setPaymentStepperOpen}
+        open={paymentStepperOpen}
       />
     </div>
   );

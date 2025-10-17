@@ -19,7 +19,7 @@ export const sendEmail = async (input: SendEmailInput) => {
           .trim()
       : undefined);
   let result;
-  
+
   if (input.react && !html) {
     result = await resend.emails.send({
       from: input.from,

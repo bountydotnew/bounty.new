@@ -22,6 +22,7 @@ export default function BookmarksPage() {
 
   const items = useMemo(() => data?.data ?? [], [data]);
   const totalPages = data?.pagination?.totalPages ?? 1;
+  const skeletonKeys = useMemo(() => ['a', 'b', 'c'], []);
 
   return (
     <>
