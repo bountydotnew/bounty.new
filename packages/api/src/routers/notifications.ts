@@ -136,9 +136,8 @@ export const notificationsRouter = router({
   cleanup: protectedProcedure
     .input(
       z
-        .object({ daysToKeep: z.number().min(1).max(365).default(30) })
-        .optional()
-        .default({})
+        .object({ daysToKeep: z.number().min(1).max(365) })
+        .default({ daysToKeep: 30 })
     )
     .mutation(async ({ ctx, input }) => {
       const cutoff = new Date();
