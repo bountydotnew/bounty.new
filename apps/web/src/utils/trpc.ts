@@ -8,6 +8,15 @@ import type { ReasonCode } from '@bounty/types';
 export const queryClient = new QueryClient();
 
 const toastDeduper = new Map<string, number>();
+const CLEANUP_INTERVAL = 60_000; // 1 minute
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, timestamp] of toastDeduper.entries()) {
+    if (now - timestamp > 10_000) { // Remove entries older than 10s
+      toastDeduper.delete(key);
+    }
+  }
+}, CLEANUP_INTERVAL);
 const maybeToastError = (err: unknown): void => {
   if (!(err instanceof TRPCClientError)) {
     return;
