@@ -37,10 +37,6 @@ export const env = createEnv({
     POLAR_WEBHOOK_SECRET: z.string().min(1),
     RESEND_API_KEY: z.string().min(1),
     DEVICE_AUTH_ALLOWED_CLIENT_IDS: z.string().optional(),
-    // Vercel environment
-    NEXT_PUBLIC_VERCEL_ENV: z
-      .enum(['development', 'preview', 'production'])
-      .optional(),
   },
   experimental__runtimeEnv: process.env,
   skipValidation:
