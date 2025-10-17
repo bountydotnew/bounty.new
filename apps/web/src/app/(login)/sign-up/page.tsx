@@ -66,9 +66,6 @@ function SignUpContent() {
   const handleSignUp = () => {
     if (!email) {
       toast.error('Please fill in all fields');
-  const handleSignUp = () => {
-    if (!email) {
-      toast.error('Please fill in all fields');
       return;
     }
     if (!EMAIL_REGEX.test(email)) {
