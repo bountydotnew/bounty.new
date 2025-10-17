@@ -59,7 +59,7 @@ export const notificationsRouter = router({
         type: input.type,
         title: input.title,
         message: input.message,
-        data: input.data,
+        ...(input.data && { data: input.data }),
       });
       return { success: true, data: n };
     }),
@@ -72,7 +72,11 @@ export const notificationsRouter = router({
           unreadOnly: z.boolean().default(false),
         })
         .optional()
-        .default({})
+        .default({
+          limit: 50,
+          offset: 0,
+          unreadOnly: false,
+        })
     )
     .query(async ({ ctx, input }) => {
       const where = input.unreadOnly
