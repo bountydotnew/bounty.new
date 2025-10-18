@@ -24,6 +24,7 @@ import {
   sql,
 } from 'drizzle-orm';
 import { z } from 'zod';
+import { LRUCache } from '../lib/lru-cache';
 import { protectedProcedure, publicProcedure, router } from '../trpc';
 
 const parseAmount = (amount: string | number | null): number => {
@@ -102,9 +103,57 @@ const submitBountyWorkSchema = z.object({
   pullRequestUrl: z.string().url().optional(),
 });
 
+// LRU Cache for bounty statistics (cache for 5 minutes)
+const bountyStatsCache = new LRUCache<{
+  totalBounties: number;
+  activeBounties: number;
+  totalBountiesValue: number;
+  totalPayout: number;
+}>({
+  maxSize: 1,
+  ttl: 5 * 60 * 1000, // 5 minutes
+});
+
+// LRU Cache for individual bounty details (cache for 2 minutes, max 100 items)
+const bountyDetailCache = new LRUCache<{
+  bounty: unknown;
+  votes: { count: number; isVoted: boolean };
+  bookmarked: boolean;
+  comments: unknown[];
+}>({
+  maxSize: 100,
+  ttl: 2 * 60 * 1000, // 2 minutes
+});
+
+// LRU Cache for bounty lists (cache for 1 minute, max 50 different queries)
+const bountyListCache = new LRUCache<{
+  success: boolean;
+  data: unknown[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}>({
+  maxSize: 50,
+  ttl: 60 * 1000, // 1 minute
+});
+
 export const bountiesRouter = router({
   getBountyStats: publicProcedure.query(async () => {
     try {
+      // Check cache first
+      const cacheKey = 'bounty_stats';
+      const cached = bountyStatsCache.get(cacheKey);
+
+      if (cached) {
+        return {
+          success: true,
+          data: cached,
+        };
+      }
+
       const totalBountiesResult = await db
         .select({ count: sql<number>`count(*)` })
         .from(bounty);
@@ -128,14 +177,19 @@ export const bountiesRouter = router({
         .from(bounty)
         .where(eq(bounty.status, 'completed'));
 
+      const stats = {
+        totalBounties: totalBountiesResult[0]?.count ?? 0,
+        activeBounties: activeBountiesResult[0]?.count ?? 0,
+        totalBountiesValue: Number(totalBountiesValueResult[0]?.total) || 0,
+        totalPayout: Number(totalPayoutResult[0]?.total) || 0,
+      };
+
+      // Cache the result
+      bountyStatsCache.set(cacheKey, stats);
+
       return {
         success: true,
-        data: {
-          totalBounties: totalBountiesResult[0]?.count ?? 0,
-          activeBounties: activeBountiesResult[0]?.count ?? 0,
-          totalBountiesValue: Number(totalBountiesValueResult[0]?.total) || 0,
-          totalPayout: Number(totalPayoutResult[0]?.total) || 0,
-        },
+        data: stats,
       };
     } catch (error) {
       throw new TRPCError({
@@ -203,6 +257,10 @@ export const bountiesRouter = router({
             source: 'api',
           });
         } catch {}
+
+        // Invalidate caches
+        bountyStatsCache.clear();
+        bountyListCache.clear();
 
         return {
           success: true,
@@ -505,6 +563,11 @@ export const bountiesRouter = router({
           });
         } catch {}
 
+        // Invalidate caches
+        bountyStatsCache.clear();
+        bountyListCache.clear();
+        bountyDetailCache.delete(id);
+
         return {
           success: true,
           data: updatedBounty,
@@ -555,6 +618,11 @@ export const bountiesRouter = router({
             source: 'api',
           });
         } catch {}
+
+        // Invalidate caches
+        bountyStatsCache.clear();
+        bountyListCache.clear();
+        bountyDetailCache.delete(input.id);
 
         return {
           success: true,

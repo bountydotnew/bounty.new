@@ -183,6 +183,13 @@
       "when": 1757330068730,
       "tag": "0025_empty_stellaris",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1760740621187,
+      "tag": "0026_sour_lady_deathstrike",
+      "breakpoints": true
     }
   ]
 }

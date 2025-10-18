@@ -22,7 +22,7 @@ export interface Bounty {
 }
 
 export interface UserData {
-  name?: string;
+  name?: string | null;
   betaAccessStatus: 'none' | 'pending' | 'approved' | 'denied';
   accessStage: 'none' | 'alpha' | 'beta' | 'production';
 }

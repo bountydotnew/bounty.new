@@ -1,6 +1,6 @@
 export interface CommentUser {
   id: string;
-  name: string;
+  name: string | null;
   image: string | null;
 }
 
@@ -29,7 +29,7 @@ export interface VoteInfo {
 export interface BountyCommentCacheItem {
   id: string;
   createdAt: string;
-  user: { id: string; name: string; image: string | null } | null;
+  user: { id: string; name: string | null; image: string | null } | null;
   parentId: string | null;
   content: string;
   originalContent: string | null;

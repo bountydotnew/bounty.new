@@ -36,6 +36,9 @@ async function main() {
 		platform: 'node',
 		outfile: 'dist/extension.js',
 		external: ['vscode'],
+		define: {
+			'process.env.NODE_ENV': JSON.stringify(production ? 'production' : 'development'),
+		},
 		logLevel: 'silent',
 		plugins: [
 			/* add to the end of plugins array */

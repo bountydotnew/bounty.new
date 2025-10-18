@@ -9,20 +9,22 @@ import { useConfetti } from '@/context/confetti-context';
 
 export function Onboarding() {
   const [step, setStep] = useState(0);
-  const [isOpen, setIsOpen] = useState(false);
   const { celebrate } = useConfetti();
-  const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Check localStorage only on the client side to avoid SSR/hydration mismatch
   useEffect(() => {
+    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
     if (!hasSeenOnboarding) {
       setIsOpen(true);
     }
-  }, [hasSeenOnboarding]);
+  }, []);
 
   useEffect(() => {
-    if (!hasSeenOnboarding && isOpen && step === 0) {
+    if (isOpen && step === 0) {
       celebrate();
     }
-  }, [hasSeenOnboarding, isOpen, step, celebrate]);
+  }, [isOpen, step, celebrate]);
 
   const handleNext = () => {
     setStep(step + 1);

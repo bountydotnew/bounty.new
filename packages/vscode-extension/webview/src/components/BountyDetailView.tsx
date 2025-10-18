@@ -24,30 +24,38 @@ export function BountyDetailView({ bountyId, onBack }: BountyDetailViewProps) {
   const [commentLikes, setCommentLikes] = useState<Record<string, { count: number; isLiked: boolean }>>({});
 
   useMessageListener((message) => {
-    if (message.type === "bountyDetailLoaded" && message.bountyDetail) {
-      // Guard against out-of-order responses
+    if (message.type === 'bountyDetailLoaded' && message.bountyDetail) {
       if (message.bountyDetail.bounty.id !== bountyId) {
         return;
       }
       setBountyDetail(message.bountyDetail);
-      // Reset any local overrides when a new detail arrives
       setLocalVotes(null);
       setLocalBookmarked(null);
       setCommentLikes({});
       setError(null);
       setLoading(false);
-    } else if (message.type === "voteToggled" && message.bountyId === bountyId) {
-      setLocalVotes({ count: message.count ?? 0, isVoted: message.voted ?? false });
-    } else if (message.type === "bookmarkToggled" && message.bountyId === bountyId) {
-      setLocalBookmarked(message.bookmarked ?? false);
-    } else if (message.type === "commentLikeToggled" && message.commentId) {
-      setCommentLikes(prev => ({
-        ...prev,
-        [message.commentId!]: { count: message.count ?? 0, isLiked: message.liked ?? false }
-      }));
+      return;
     }
-  });
-    } else if (message.type === 'error') {
+
+    if (message.type === 'voteToggled' && message.bountyId === bountyId) {
+      setLocalVotes({ count: message.count ?? 0, isVoted: message.voted ?? false });
+      return;
+    }
+
+    if (message.type === 'bookmarkToggled' && message.bountyId === bountyId) {
+      setLocalBookmarked(message.bookmarked ?? false);
+      return;
+    }
+
+    if (message.type === 'commentLikeToggled' && message.commentId) {
+      setCommentLikes((prev) => ({
+        ...prev,
+        [message.commentId!]: { count: message.count ?? 0, isLiked: message.liked ?? false },
+      }));
+      return;
+    }
+
+    if (message.type === 'error') {
       setError(message.message || 'Failed to load bounty details');
       setLoading(false);
     }
