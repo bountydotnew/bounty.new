@@ -104,7 +104,7 @@ function SignUpContent() {
               router.push(
                 `/sign-up/verify-email-address?email=${encodeURIComponent(email)}`
               );
-            } catch (error) {
+            } catch {
               toast.error("Failed to send verification code. Please try again.");
             }
           },
