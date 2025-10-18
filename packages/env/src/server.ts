@@ -58,5 +58,5 @@ export const env = createEnv({
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     DEVICE_AUTH_ALLOWED_CLIENT_IDS: process.env.DEVICE_AUTH_ALLOWED_CLIENT_IDS,
   },
-  skipValidation: process.env.NODE_ENV !== 'production',
+  // skipValidation: process.env.NODE_ENV !== 'production',
 });
