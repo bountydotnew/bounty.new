@@ -6,6 +6,9 @@ import { eq } from 'drizzle-orm';
 import type { NextRequest } from 'next/server';
 import { baseUrl } from '../../../../../../../packages/ui/src/lib/constants';
 
+// Force dynamic rendering to avoid build-time static generation issues
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
