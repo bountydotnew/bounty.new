@@ -30,7 +30,7 @@ export const deviceCodeStatusEnum = pgEnum('device_code_status', [
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
-  name: text('name').notNull(),
+  name: text('name'),
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').notNull().default(false),
   image: text('image'),
@@ -110,6 +110,31 @@ export const deviceCode = pgTable('device_code', {
   expiresAt: timestamp('expires_at').notNull(),
   lastPolledAt: timestamp('last_polled_at'),
   pollingInterval: integer('polling_interval'),
+  createdAt: timestamp('created_at').notNull().default(sql`now()`),
+  updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
+});
+
+export const lastLoginMethod = pgTable('last_login_method', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  method: text('method').notNull(),
+  timestamp: timestamp('timestamp').notNull().default(sql`now()`),
+  lastUsed: timestamp('last_used').notNull().default(sql`now()`),
+  createdAt: timestamp('created_at').notNull().default(sql`now()`),
+  updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
+});
+
+export const emailOTP = pgTable('email_otp', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  otpCode: text('otp_code').notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  used: boolean('used').notNull().default(false),
+  verified: boolean('verified').notNull().default(false),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
 });

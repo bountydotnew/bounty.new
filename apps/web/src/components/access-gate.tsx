@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { useAccess } from '@/context/access-provider';
 import type { AccessStage } from '@/types/access';
+import type { AccessRequirement } from '@bounty/types';
 
 interface AccessGateProps {
   /** Required access stage(s). User must have at least one of these stages */
@@ -15,6 +16,10 @@ interface AccessGateProps {
   condition?: boolean;
   /** Skeleton component to render while loading */
   skeleton?: ReactNode;
+  /** Higher-level access requirements (non-breaking addition) */
+  requires?: AccessRequirement[];
+  /** Feature flags required */
+  flags?: string[];
 }
 
 export const AccessGate = ({
@@ -23,8 +28,10 @@ export const AccessGate = ({
   children,
   condition = true,
   skeleton,
+  requires,
+  flags,
 }: AccessGateProps) => {
-  const { hasStageAccess, isLoading } = useAccess();
+  const { hasStageAccess, isLoading, hasFlag, isEmailVerified, isBanned, isAuthenticated } = useAccess();
 
   // Show skeleton while loading user data
   if (isLoading) {
@@ -32,7 +39,23 @@ export const AccessGate = ({
   }
 
   // Check if user has required stage access and additional condition
-  const hasAccess = hasStageAccess(stage) && condition;
+  // Evaluate higher-level requirements if provided
+  const requirementsOk = (requires || []).every((req) => {
+    switch (req) {
+      case "any_authenticated":
+        return isAuthenticated;
+      case "beta_access":
+        return hasStageAccess(["beta", "production"]);
+      case "email_verified":
+        return isEmailVerified;
+      case "not_banned":
+        return !isBanned;
+      default:
+        return true;
+    }
+  });
+  const flagsOk = (flags || []).every((f) => hasFlag(f));
+  const hasAccess = hasStageAccess(stage) && requirementsOk && flagsOk && condition;
 
   if (!hasAccess) {
     return <>{fallback}</>;

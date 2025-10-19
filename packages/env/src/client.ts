@@ -1,5 +1,5 @@
-import { createEnv } from '@t3-oss/env-nextjs';
-import { z } from 'zod';
+import { createEnv } from "@t3-oss/env-nextjs";
+import { z } from "zod";
 
 export const env = createEnv({
   client: {
@@ -12,7 +12,7 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_HOST: z.string().url(),
     // Vercel environment
     NEXT_PUBLIC_VERCEL_ENV: z
-      .enum(['development', 'preview', 'production'])
+      .enum(["development", "preview", "production"])
       .optional(),
     NEXT_PUBLIC_VERCEL_URL: z.string().optional(),
     // Rivet endpoint
@@ -27,5 +27,5 @@ export const env = createEnv({
     NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
     NEXT_PUBLIC_RIVET_ENDPOINT: process.env.NEXT_PUBLIC_RIVET_ENDPOINT,
   },
-  skipValidation: process.env.NODE_ENV !== 'production',
+  //skipValidation: process.env.NODE_ENV !== "production",
 });

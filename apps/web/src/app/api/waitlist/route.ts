@@ -11,8 +11,8 @@ const requestSchema = z.object({
   email: z.string().email('Invalid email format'),
   fingerprintData: z.object({
     thumbmark: z.string(),
-    components: z.record(z.any()),
-    info: z.record(z.any()).optional(),
+    components: z.record(z.string(), z.any()),
+    info: z.record(z.string(), z.any()).optional(),
     version: z.string().optional(),
   }),
 });
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     if (!validation.success) {
       return NextResponse.json(
         {
-          error: validation.error.errors[0]?.message || 'Invalid request data',
+          error: validation.error.issues[0]?.message || 'Invalid request data',
           success: false,
         },
         { status: 400 }

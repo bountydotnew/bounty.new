@@ -90,6 +90,7 @@
       "drizzle-zod": "^0.8.2",
       "eslint": "^9.29.0",
       "js-base64": "^3.7.8",
+      "lru-cache": "^11.0.2",
       "lucide-react": "^0.542.0",
       "media-chrome": "^4.12.0",
       "motion": "^12.23.12",
@@ -129,6 +130,7 @@
       "use-debounce": "^10.0.5",
       "usehooks-ts": "^3.1.1",
       "vaul": "^1.1.2",
+      "nuqs": "^2.7.0",
       "zod": "^4.0.5",
       "@tailwindcss/typography": "^0.5.16"
     }
