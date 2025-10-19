@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { DeviceProvider } from '@/components/device-provider';
 import { Sidebar } from '@/components/dual-sidebar';
-import { AccessProvider } from '@/context/access-provider';
 // import { SignedOut } from "@daveyplate/better-auth-ui";
 // import RedirectToSignIn from "@/components/auth/redirect-to-signin";
 
@@ -37,13 +36,11 @@ export default async function RootLayout({
   const userAgent = headersList.get('user-agent') || '';
 
   return (
-    <AccessProvider>
-      <DeviceProvider userAgent={userAgent}>
-        <Sidebar admin={false}>
-          {/* <RedirectToSignIn /> */}
-          {children}
-        </Sidebar>
-      </DeviceProvider>
-    </AccessProvider>
+    <DeviceProvider userAgent={userAgent}>
+      <Sidebar admin={false}>
+        {/* <RedirectToSignIn /> */}
+        {children}
+      </Sidebar>
+    </DeviceProvider>
   );
 }
