@@ -7,8 +7,8 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
-import { useNotifications } from '@bounty/ui/hooks/use-notifications';
 import { cn } from '@bounty/ui/lib/utils';
+import { useNotificationsRealtime } from '@/hooks/use-notifications-realtime';
 import { formatDistanceToNow } from 'date-fns';
 import {
   ArrowUpRight,
@@ -128,7 +128,7 @@ export function NotificationsDropdown() {
     markAsRead,
     markAllAsRead,
     refetch,
-  } = useNotifications();
+  } = useNotificationsRealtime();
   const [showAll, setShowAll] = useState(false);
 
   const filtered = useMemo(

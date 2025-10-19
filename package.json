@@ -132,5 +132,8 @@
       "zod": "^4.0.5",
       "@tailwindcss/typography": "^0.5.16"
     }
+  },
+  "dependencies": {
+    "rivetkit": "^2.0.18"
   }
 }
