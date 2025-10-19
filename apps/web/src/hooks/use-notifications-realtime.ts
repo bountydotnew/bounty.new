@@ -3,7 +3,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useSession } from '@bounty/auth/client';
+import { authClient } from '@bounty/auth/client';
 import { rivet } from '@/lib/rivet-client';
 import { trpc } from '@/utils/trpc';
 
@@ -18,7 +18,7 @@ interface NotificationItem {
 }
 
 export function useNotificationsRealtime() {
-  const { data: session } = useSession();
+  const { data: session } = authClient.useSession();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
