@@ -1,5 +1,4 @@
-// Change this to your local dev URL when testing device auth locally
-const USE_LOCAL_DEV = true;
+const USE_LOCAL_DEV = process.env.NODE_ENV === 'development';
 const PROD_BASE = 'https://www.bounty.new';
 const LOCAL_BASE = 'http://localhost:3000';
 

@@ -1,8 +1,26 @@
-import type { trpcClient } from '../trpc';
-
-export type Bounty = Awaited<
-	ReturnType<typeof trpcClient.bounties.fetchAllBounties.query>
->['data'][number];
+export interface Bounty {
+	id: string;
+	title: string;
+	description: string | null;
+	status: BountyStatus;
+	difficulty: BountyDifficulty;
+	amount: number | null;
+	currency: string | null;
+	deadline: Date | string | null;
+	tags: string[] | null;
+	repositoryUrl: string | null;
+	createdAt: Date | string;
+	updatedAt: Date | string;
+	creator: {
+		id: string;
+		name: string | null;
+		image: string | null;
+	};
+	commentCount?: number;
+	voteCount?: number;
+	isVoted?: boolean;
+	bookmarked?: boolean;
+}
 
 export type BountyStatus = 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled';
 
@@ -42,7 +60,7 @@ export interface BountyDetail {
 export interface WebviewMessage {
 	type: string;
 	value?: string;
-	params?: unknown;
+	params?: FetchBountiesParams;
 	bounties?: Bounty[];
 	bountyDetail?: BountyDetail;
 	bountyId?: string;

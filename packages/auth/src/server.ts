@@ -2,6 +2,7 @@ import * as schema from '@bounty/db';
 import { db } from '@bounty/db';
 import { env } from '@bounty/env/server';
 import type { PolarError } from '@bounty/types';
+import { sendEmail, OTPVerification } from '@bounty/email';
 import {
   checkout,
   polar,
@@ -12,9 +13,10 @@ import {
 import { Polar } from '@polar-sh/sdk';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { bearer, deviceAuthorization, openAPI } from 'better-auth/plugins';
+import { bearer, deviceAuthorization, openAPI, lastLoginMethod } from 'better-auth/plugins';
 import { admin } from 'better-auth/plugins/admin';
 import { passkey } from 'better-auth/plugins/passkey';
+import { emailOTP } from 'better-auth/plugins/email-otp';
 
 const polarEnv = env.NODE_ENV === 'production' ? 'production' : 'sandbox';
 const polarClient = new Polar({
@@ -30,14 +32,10 @@ const allowedDeviceClientIds = env.DEVICE_AUTH_ALLOWED_CLIENT_IDS
 const deviceAuthorizationPlugin = deviceAuthorization({
   expiresIn: '30m',
   interval: '5s',
-  validateClient: allowedDeviceClientIds?.length
-    ? (clientId) => allowedDeviceClientIds.includes(clientId)
-    : undefined,
-  onDeviceAuthRequest: async (clientId, scope) => {
-    console.info('Device authorization requested', {
-      clientId,
-      scope,
-    });
+  validateClient: (clientId) =>
+    allowedDeviceClientIds?.length ? allowedDeviceClientIds.includes(clientId) : true,
+  onDeviceAuthRequest: (clientId, scope) => {
+    console.info('Device authorization requested', { clientId, scope });
   },
 });
 
@@ -50,8 +48,7 @@ export const auth = betterAuth({
   onAPIError: {
     throw: true,
     onError: (error) => {
-      // Custom error handling
-      console.error(`Auth error: ${error}`);
+      console.error('Auth error:', error);
     },
     errorURL: '/auth/error',
   },
@@ -76,14 +73,13 @@ export const auth = betterAuth({
     polar({
       client: polarClient,
       createCustomerOnSignUp: false,
-      getCustomerCreateParams: async ({ user }) => {
-        return {
+      getCustomerCreateParams: ({ user }) =>
+        Promise.resolve({
           metadata: { userId: user.id || 'unknown' },
-        };
-      },
-      onCustomerCreateError: async ({ error }: { error: unknown }) => {
+        }),
+      onCustomerCreateError: ({ error }: { error: unknown }) => {
         const e = error as PolarError;
-        const msg = String(e?.message || e?.body$ || e?.detail || '');
+        const msg = e?.message || e?.body$ || String(error);
         if (
           e?.status === 409 ||
           msg.includes('external ID cannot be updated') ||
@@ -135,6 +131,40 @@ export const auth = betterAuth({
     admin(),
     bearer(),
     openAPI(),
+    lastLoginMethod({
+      storeInDatabase: true,
+    }),
+    emailOTP({
+      async sendVerificationOTP({ email, otp, type }) {
+        try {
+          const result = await sendEmail({
+            from: 'Bounty.new <noreply@mail.bounty.new>',
+            to: email,
+            subject: type === 'email-verification' 
+              ? 'Verify your email address'
+              : type === 'sign-in'
+              ? 'Sign in to Bounty.new'
+              : 'Reset your password',
+            react: OTPVerification({
+              code: otp,
+              email,
+              type,
+              continueUrl: `${env.NODE_ENV === 'production' ? 'https://bounty.new' : 'http://localhost:3000'}/sign-up/verify-email-address?email=${encodeURIComponent(email)}`,
+            }),
+          });
+
+          if (result.error) {
+            console.error('❌ Failed to send OTP email:', result.error);
+            throw new Error(`Email send failed: ${result.error.message}`);
+          }
+
+          console.log('✅ OTP email sent successfully:', result.data?.id);
+        } catch (error) {
+          console.error('❌ Error in sendVerificationOTP:', error);
+          throw error;
+        }
+      },
+    }),
     deviceAuthorizationPlugin,
   ],
   secret: env.BETTER_AUTH_SECRET,
