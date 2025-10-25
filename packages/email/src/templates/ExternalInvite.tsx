@@ -9,7 +9,6 @@ import {
   Tailwind,
   Text,
 } from '@react-email/components';
-import * as React from 'react';
 
 interface ExternalInviteProps {
   inviteUrl: string;
