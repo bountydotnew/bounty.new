@@ -98,9 +98,21 @@ const nextConfig: NextConfig = {
         net: false,
         tls: false,
         dns: false,
-        stream: false,
+        stream: require.resolve('stream-browserify'),
         'stream/promises': false,
+        buffer: require.resolve('buffer/'),
+        util: require.resolve('util/'),
+        process: require.resolve('process/browser'),
       };
+      
+      // Add necessary plugins for polyfills
+      const webpack = require('webpack');
+      config.plugins.push(
+        new webpack.ProvidePlugin({
+          Buffer: ['buffer', 'Buffer'],
+          process: 'process/browser',
+        })
+      );
     }
     return config;
   },
