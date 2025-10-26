@@ -98,6 +98,8 @@ const nextConfig: NextConfig = {
         net: false,
         tls: false,
         dns: false,
+        stream: false,
+        'stream/promises': false,
       };
     }
     return config;
