@@ -50,13 +50,13 @@
     "lucide-react": "catalog:",
     "media-chrome": "catalog:",
     "motion": "catalog:",
-    "next": "catalog:",
+    "next": "16.0.0",
     "next-themes": "catalog:",
     "posthog-js": "catalog:",
     "radix-ui": "catalog:",
-    "react": "catalog:",
+    "react": "19.2.0",
     "react-confetti": "catalog:",
-    "react-dom": "catalog:",
+    "react-dom": "19.2.0",
     "react-markdown": "catalog:",
     "recharts": "catalog:",
     "rehype-autolink-headings": "catalog:",
@@ -80,12 +80,16 @@
     "@tailwindcss/typography": "^0.5.16",
     "@tanstack/react-query-devtools": "catalog:",
     "@types/node": "catalog:",
-    "@types/react": "catalog:",
-    "@types/react-dom": "catalog:",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
     "eslint": "catalog:",
-    "eslint-config-next": "15.3.4",
+    "eslint-config-next": "16.0.0",
     "prettier": "^3.6.2",
     "tailwindcss": "catalog:",
     "typescript": "catalog:"
+  },
+  "overrides": {
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2"
   }
 }

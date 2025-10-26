@@ -7,7 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
-import { useNotifications } from '@bounty/ui/hooks/use-notifications';
+import { useNotifications } from '@/hooks/use-notifications';
 import { cn } from '@bounty/ui/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import {

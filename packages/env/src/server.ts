@@ -36,6 +36,5 @@ export const env = createEnv({
     DEVICE_AUTH_ALLOWED_CLIENT_IDS: z.string().optional(),
   },
   experimental__runtimeEnv: process.env,
-  skipValidation:
-    !!process.env.SKIP_ENV_VALIDATION || process.env.NODE_ENV === 'test',
+
 });

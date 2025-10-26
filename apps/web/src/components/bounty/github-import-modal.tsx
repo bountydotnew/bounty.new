@@ -16,7 +16,6 @@ import {
 } from '@bounty/ui/components/drawer';
 import { Input } from '@bounty/ui/components/input';
 import { Label } from '@bounty/ui/components/label';
-import { useCurrentUser } from '@bounty/ui/hooks/use-access';
 import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
@@ -32,14 +31,20 @@ import type {
   GithubParseResult,
   RepoOption,
 } from '@/types/github';
-import { trpcClient } from '@/utils/trpc';
+import { trpc, trpcClient } from '@/utils/trpc';
 
 export default function GithubImportModal({
   open,
   onOpenChange,
 }: GithubImportModalProps) {
   const router = useRouter();
-  const { user: currentUser } = useCurrentUser();
+  
+  // Fetch current user data using tRPC
+  const { data: currentUser } = useQuery({
+    ...trpc.user.getMe.queryOptions(),
+    enabled: open,
+  });
+  
   const defaultUsername =
     (currentUser as CurrentUser)?.data?.profile?.githubUsername || '';
   const [username, setUsername] = useState<string>(defaultUsername);
