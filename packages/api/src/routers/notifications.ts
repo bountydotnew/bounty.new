@@ -72,7 +72,7 @@ export const notificationsRouter = router({
           unreadOnly: z.boolean().default(false),
         })
         .optional()
-        .default({})
+        .default({ limit: 50, offset: 0, unreadOnly: false })
     )
     .query(async ({ ctx, input }) => {
       const where = input.unreadOnly
@@ -134,7 +134,7 @@ export const notificationsRouter = router({
       z
         .object({ daysToKeep: z.number().min(1).max(365).default(30) })
         .optional()
-        .default({})
+        .default({ daysToKeep: 30 })
     )
     .mutation(async ({ ctx, input }) => {
       const cutoff = new Date();
