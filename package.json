@@ -135,5 +135,7 @@
       "@tailwindcss/typography": "^0.5.16"
     }
   },
-  "dependencies": {}
+  "dependencies": {
+    "rivetkit": "^2.0.18"
+  }
 }

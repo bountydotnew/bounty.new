@@ -15,6 +15,8 @@ export const env = createEnv({
       .enum(["development", "preview", "production"])
       .optional(),
     NEXT_PUBLIC_VERCEL_URL: z.string().optional(),
+    // Rivet endpoint
+    NEXT_PUBLIC_RIVET_ENDPOINT: z.string().optional(),
   },
   experimental__runtimeEnv: {
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
@@ -23,6 +25,7 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
     NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
+    NEXT_PUBLIC_RIVET_ENDPOINT: process.env.NEXT_PUBLIC_RIVET_ENDPOINT,
   },
   //skipValidation: process.env.NODE_ENV !== "production",
 });
