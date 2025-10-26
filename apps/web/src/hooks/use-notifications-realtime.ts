@@ -46,7 +46,7 @@ export function useNotificationsRealtime() {
       return;
     }
 
-    const actor = rivet.actor('notifications', { id: session.user.id });
+    const actor = rivet.notifications.get(session.user.id);
 
     // Subscribe to notification events
     actor.useEvent('notifications', (data: NotificationItem[]) => {
@@ -82,7 +82,7 @@ export function useNotificationsRealtime() {
       setUnreadCount((prev) => Math.max(0, prev - 1));
 
       // Update via Rivet
-      const actor = rivet.actor('notifications', { id: session.user.id });
+      const actor = rivet.notifications.get(session.user.id);
       await actor.action('notificationRead', { id });
 
       // Also update via tRPC for database persistence
@@ -102,7 +102,7 @@ export function useNotificationsRealtime() {
     setUnreadCount(0);
 
     // Update via Rivet
-    const actor = rivet.actor('notifications', { id: session.user.id });
+    const actor = rivet.notifications.get(session.user.id);
     await actor.action('checkForUpdates', {});
 
     // Also update via tRPC for database persistence
@@ -112,7 +112,7 @@ export function useNotificationsRealtime() {
   const refetch = useCallback(async () => {
     if (!session?.user?.id) return;
 
-    const actor = rivet.actor('notifications', { id: session.user.id });
+    const actor = rivet.notifications.get(session.user.id);
     await actor.action('checkForUpdates', {});
   }, [session?.user?.id]);
 

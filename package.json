@@ -136,6 +136,7 @@
     }
   },
   "dependencies": {
-    "rivetkit": "^2.0.18"
+    "@rivetkit/next-js": "^2.0.21",
+    "rivetkit": "^2.0.21"
   }
 }
