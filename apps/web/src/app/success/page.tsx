@@ -5,6 +5,8 @@ import { Suspense } from 'react';
 import { Sidebar } from '@/components/dual-sidebar';
 import { SuccessClient } from './success-client';
 
+export const dynamic = 'force-dynamic';
+
 export default async function SuccessPage() {
   const { data: customerState } = await getServerCustomerState();
 
