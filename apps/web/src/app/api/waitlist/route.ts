@@ -78,8 +78,8 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-  } catch (error) {
-    warn('[Waitlist] Unexpected error:', error);
+  } catch (apiError) {
+    warn('[Waitlist] Unexpected error:', apiError);
     return NextResponse.json(
       {
         error: 'Internal server error',

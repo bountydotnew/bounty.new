@@ -8,7 +8,6 @@ import { AuthUIProvider } from '@daveyplate/better-auth-ui';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useRouter } from 'next/navigation';
-import { PostHogProvider } from 'posthog-js/react';
 import ImpersonationBanner from '@/components/impersonation-banner';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AccessProvider } from '@/context/access-provider';
@@ -59,14 +58,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
           />
         </ConfettiProvider>
         <ReactQueryDevtools />
+        <Toaster
+          icons={TOAST_ICONS}
+          position="bottom-right"
+          richColors
+          toastOptions={TOAST_OPTIONS}
+          visibleToasts={4}
+        />
       </QueryClientProvider>
-      <Toaster
-        icons={TOAST_ICONS}
-        position="bottom-right"
-        richColors
-        toastOptions={TOAST_OPTIONS}
-        visibleToasts={4}
-      />
     </ThemeProvider>
   );
 }

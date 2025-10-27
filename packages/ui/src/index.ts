@@ -38,7 +38,6 @@ export * from './components/separator';
 export * from './components/settings';
 export * from './components/sheet';
 export * from './components/sidebar';
-export * from './components/sidebar-news';
 export * from './components/skeleton';
 export * from './components/smart-breadcrumb';
 export * from './components/sonner';
@@ -52,15 +51,13 @@ export * from './components/tracked-button';
 export * from './components/user';
 
 // Hooks
-export * from './hooks/use-access';
-export * from './hooks/use-billing';
+export * from './hooks/use-billing-client';
 export * from './hooks/use-databuddy';
 export * from './hooks/use-dev-log';
 export * from './hooks/use-drafts';
 export * from './hooks/use-media-query';
 export * from './hooks/use-mobile';
 export * from './hooks/use-navigation-context';
-export * from './hooks/use-notifications';
 export * from './hooks/use-passkey';
 export * from './hooks/use-window-size';
 export * from './lib/blog-query';

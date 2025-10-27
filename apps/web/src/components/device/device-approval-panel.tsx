@@ -146,7 +146,7 @@ export const DeviceApprovalPanel = ({ userCode }: DeviceApprovalPanelProps) => {
       const errorMessage =
         "error_description" in response.error
           ? response.error.error_description
-          : response.error.message || "An error occurred";
+          : response.error || "An error occurred";
       throw new Error(errorMessage);
     }
 

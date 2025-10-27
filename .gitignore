@@ -16,10 +16,7 @@ AGENT.md
 CODEBASE_RULES.md
 stagewise.json
 *.tsbuildinfo
-*.tsbuildinfo
 /agents
-packages/dev-logger/tsconfig.tsbuildinfo
-*.tsbuildinfo
 /.guides
 packages/vscode-extension/.DS_Store
 packages/db/migrations/meta/_journal.json
