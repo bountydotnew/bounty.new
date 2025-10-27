@@ -7,7 +7,7 @@ function handler(req: NextRequest) {
     endpoint: '/api/trpc',
     req,
     router: appRouter,
-    createContext: () => createContext(req),
+    createContext: () => createContext(req as any),
   });
 }
 export { handler as GET, handler as POST };
