@@ -118,7 +118,7 @@ function Row({ item, onRead }: NotificationRowProps) {
   );
 }
 
-// biome-ignore lint/complexity/excessiveComplexity: UI component with conditional rendering
+// biome-ignore lint: UI component with conditional rendering
 export function NotificationsDropdown() {
   const { data: session } = authClient.useSession();
   const { hasStageAccess } = useAccess();
