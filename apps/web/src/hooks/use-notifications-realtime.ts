@@ -106,7 +106,7 @@ export function useNotificationsRealtime() {
     setUnreadCount(0);
 
     // Update via RivetKit actor
-    await actor.connection.checkForUpdates();
+    await actor.connection.markAllAsRead();
   }, [actor.connection, unreadCount]);
 
   const refetch = useCallback(async () => {

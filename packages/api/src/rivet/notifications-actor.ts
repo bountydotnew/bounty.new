@@ -1,6 +1,11 @@
 import { actor } from 'rivetkit';
 import { z } from 'zod';
-import { getNotificationsForUser, getUnreadNotificationCount } from '@bounty/db';
+import { 
+  getNotificationsForUser, 
+  getUnreadNotificationCount,
+  markNotificationAsRead,
+  markAllNotificationsAsRead
+} from '@bounty/db';
 
 // Define state schema and type
 const stateSchema = z.object({
@@ -90,11 +95,39 @@ export const notificationsActor = actor({
         return { success: false };
       }
 
-      // Fetch updated unread count after marking as read
-      const unreadCount = await getUnreadNotificationCount(userId);
+      // Mark the notification as read in the database
+      await markNotificationAsRead(input.id, userId);
 
+      // Fetch updated notifications and unread count
+      const [notifications, unreadCount] = await Promise.all([
+        getNotificationsForUser(userId, { limit: 50 }),
+        getUnreadNotificationCount(userId),
+      ]);
+
+      c.broadcast('notifications', notifications);
       c.broadcast('unreadCount', unreadCount);
       c.broadcast('notificationMarkedRead', input);
+
+      return { success: true };
+    },
+
+    markAllAsRead: async (c) => {
+      const userId = c.key[0];
+      if (!userId) {
+        return { success: false };
+      }
+
+      // Mark all notifications as read in the database
+      await markAllNotificationsAsRead(userId);
+
+      // Fetch updated notifications and unread count
+      const [notifications, unreadCount] = await Promise.all([
+        getNotificationsForUser(userId, { limit: 50 }),
+        getUnreadNotificationCount(userId),
+      ]);
+
+      c.broadcast('notifications', notifications);
+      c.broadcast('unreadCount', unreadCount);
 
       return { success: true };
     },

@@ -124,6 +124,11 @@ export function NotificationsDropdown() {
   const { hasStageAccess } = useAccess();
   const enabled = Boolean(session) && hasStageAccess(['beta', 'production']);
 
+  // Don't show notifications dropdown if user doesn't have access
+  if (!enabled) {
+    return null;
+  }
+
   const {
     notifications,
     unreadCount,
@@ -141,11 +146,6 @@ export function NotificationsDropdown() {
   );
   const showCaughtUp =
     unreadCount === 0 && notifications.length > 0 && !showAll;
-
-  // Don't show notifications dropdown if user doesn't have access
-  if (!enabled) {
-    return null;
-  }
 
   return (
     <DropdownMenu onOpenChange={(open) => !open && setShowAll(false)}>
