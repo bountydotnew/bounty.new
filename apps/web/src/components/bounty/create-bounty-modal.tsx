@@ -28,7 +28,6 @@ import {
 } from '@bounty/ui/lib/forms';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { TRPCClientErrorLike } from '@trpc/client';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -118,7 +117,7 @@ export function CreateBountyModal({
         }
       }
     },
-    onError: (error: TRPCClientErrorLike<AppRouter>) => {
+    onError: (error: Error) => {
       toast.error(`Failed to create bounty: ${error.message}`);
       if (error.message.toLowerCase().includes('duplicate')) {
         toast.error('Bounty with this title already exists');

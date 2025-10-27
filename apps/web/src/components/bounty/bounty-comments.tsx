@@ -3,7 +3,6 @@
 import type { AppRouter } from '@bounty/api';
 import { authClient } from '@bounty/auth/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { TRPCClientErrorLike } from '@trpc/client';
 import { ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import BountyComment from '@/components/bounty/bounty-comment';
@@ -200,7 +199,7 @@ export default function BountyComments({
     addComment.mutate(
       { bountyId, content, parentId },
       {
-        onError: (err: TRPCClientErrorLike<AppRouter>) => {
+        onError: (err: Error) => {
           if (err?.message?.toLowerCase().includes('duplicate')) {
             setFormError('Duplicate comment on this bounty');
             setFormErrorKey((k) => k + 1);
@@ -258,7 +257,7 @@ export default function BountyComments({
         onSuccess: () => {
           setEditState(null);
         },
-        onError: (err: TRPCClientErrorLike<AppRouter>) => {
+        onError: (err: Error) => {
           queryClient.setQueryData(key, previous);
           if (err?.message?.toLowerCase?.().includes('inappropriate')) {
             setEditError(
