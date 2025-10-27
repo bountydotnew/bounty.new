@@ -27,7 +27,7 @@ import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { MarkdownTextarea } from '@/components/bounty/markdown-editor';
-import { trpc } from '@/utils/trpc';
+import { trpc, trpcClient } from '@/utils/trpc';
 
 interface EditBountyModalProps {
   open: boolean;
@@ -84,7 +84,9 @@ export function EditBountyModal({
   }, [bountyQuery.data, open, reset]);
 
   const updateBounty = useMutation({
-    ...trpc.bounties.updateBounty.mutationOptions(),
+    mutationFn: async (input: UpdateBountyInput) => {
+      return await trpcClient.bounties.updateBounty.mutate(input);
+    },
     onSuccess: () => {
       toast.success('Bounty updated successfully!');
 

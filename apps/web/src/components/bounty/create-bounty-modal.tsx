@@ -34,7 +34,7 @@ import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { MarkdownTextarea } from '@/components/bounty/markdown-editor';
-import { trpc } from '@/utils/trpc';
+import { trpc, trpcClient } from '@/utils/trpc';
 
 interface CreateBountyModalProps {
   open: boolean;
@@ -92,7 +92,9 @@ export function CreateBountyModal({
     }
   }, [open, initialValues, reset]);
   const createBounty = useMutation({
-    ...trpc.bounties.createBounty.mutationOptions(),
+    mutationFn: async (input: CreateBountyInput) => {
+      return await trpcClient.bounties.createBounty.mutate(input);
+    },
     onSuccess: (result) => {
       if (draftId) {
         deleteActiveDraft();

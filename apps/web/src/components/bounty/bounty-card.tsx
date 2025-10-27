@@ -13,7 +13,7 @@ import { memo } from 'react';
 import BookmarkButton from '@/components/bounty/bookmark-button';
 import { UpvoteButton } from '@/components/bounty/bounty-actions';
 import type { Bounty } from '@/types/dashboard';
-import { trpc } from '@/utils/trpc';
+import { trpc, trpcClient } from '@/utils/trpc';
 import { MarkdownContent } from './markdown-content';
 
 interface BountyCardProps {
@@ -51,10 +51,14 @@ export const BountyCard = memo(function BountyCard({
   const voteCount = initialStats?.voteCount ?? 0;
   const isVotedInitial = initialStats?.isVoted ?? false;
   const voteMutation = useMutation({
-    ...trpc.bounties.voteBounty.mutationOptions(),
+    mutationFn: async (input: { bountyId: string; vote: boolean }) => {
+      return await trpcClient.bounties.voteBounty.mutate(input);
+    },
   });
   const bookmarkMutation = useMutation({
-    ...trpc.bounties.toggleBountyBookmark.mutationOptions(),
+    mutationFn: async (input: { bountyId: string }) => {
+      return await trpcClient.bounties.toggleBountyBookmark.mutate(input);
+    },
   });
 
   const handleUpvote = () => {

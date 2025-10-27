@@ -4,7 +4,7 @@ import { Button } from '@bounty/ui/components/button';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bookmark } from 'lucide-react';
 import { useCallback } from 'react';
-import { trpc } from '@/utils/trpc';
+import { trpc, trpcClient } from '@/utils/trpc';
 
 interface BookmarkButtonProps {
   bountyId: string;
@@ -25,7 +25,9 @@ export default function BookmarkButton({
     enabled: !onToggle,
   });
   const toggle = useMutation({
-    ...trpc.bounties.toggleBountyBookmark.mutationOptions(),
+    mutationFn: async (input: { bountyId: string }) => {
+      return await trpcClient.bounties.toggleBountyBookmark.mutate(input);
+    },
   });
 
   const handleClick = useCallback(() => {

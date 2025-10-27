@@ -22,7 +22,7 @@ import type {
   BountyActionsProps,
   UpvoteButtonProps,
 } from '@/types/bounty-actions';
-import { trpc } from '@/utils/trpc';
+import { trpc, trpcClient } from '@/utils/trpc';
 
 export function UpvoteButton({
   isVoted,
@@ -131,7 +131,9 @@ export default function BountyActions({
     enabled: !onToggleBookmark,
   });
   const toggleBookmark = useMutation({
-    ...trpc.bounties.toggleBountyBookmark.mutationOptions(),
+    mutationFn: async (input: { bountyId: string }) => {
+      return await trpcClient.bounties.toggleBountyBookmark.mutate(input);
+    },
   });
   const baseActions: ActionItem[] = canEdit
     ? [

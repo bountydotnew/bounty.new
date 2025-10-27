@@ -19,7 +19,7 @@ import { MarkdownContent } from '@/components/bounty/markdown-content';
 import SubmissionCard from '@/components/bounty/submission-card';
 import { SubmissionsMobileSidebar } from '@/components/bounty/submissions-mobile-sidebar';
 import type { BountyCommentCacheItem } from '@/types/comments';
-import { trpc } from '@/utils/trpc';
+import { trpc, trpcClient } from '@/utils/trpc';
 
 interface BountyDetailPageProps {
   id: string;
@@ -59,7 +59,9 @@ export default function BountyDetailPage({
     staleTime: Number.POSITIVE_INFINITY,
   });
   const voteMutation = useMutation({
-    ...trpc.bounties.voteBounty.mutationOptions(),
+    mutationFn: async (input: { bountyId: string; vote: boolean }) => {
+      return await trpcClient.bounties.voteBounty.mutate(input);
+    },
   });
 
   const handleUpvote = () => {
@@ -172,7 +174,9 @@ export default function BountyDetailPage({
   // };
 
   const updateComment = useMutation({
-    ...trpc.bounties.updateBountyComment.mutationOptions(),
+    mutationFn: async (input: { commentId: string; content: string }) => {
+      return await trpcClient.bounties.updateBountyComment.mutate(input);
+    },
   });
   // const deleteComment = useMutation({
   //   ...trpc.bounties.deleteBountyComment.mutationOptions(),

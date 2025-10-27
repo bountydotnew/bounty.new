@@ -10,7 +10,7 @@ import BountyComment from '@/components/bounty/bounty-comment';
 import BountyCommentForm from '@/components/bounty/bounty-comment-form';
 import CommentEditDialog from '@/components/bounty/comment-edit-dialog';
 import type { BountyCommentCacheItem } from '@/types/comments';
-import { trpc } from '@/utils/trpc';
+import { trpc, trpcClient } from '@/utils/trpc';
 
 export interface BountyCommentsProps {
   bountyId: string;
@@ -40,17 +40,25 @@ export default function BountyComments({
   });
 
   const addComment = useMutation({
-    ...trpc.bounties.addBountyComment.mutationOptions(),
+    mutationFn: async (input: { bountyId: string; content: string }) => {
+      return await trpcClient.bounties.addBountyComment.mutate(input);
+    },
   });
   const toggleLike = useMutation({
-    ...trpc.bounties.toggleCommentLike.mutationOptions(),
+    mutationFn: async (input: { commentId: string }) => {
+      return await trpcClient.bounties.toggleCommentLike.mutate(input);
+    },
   });
   const updateComment = useMutation({
-    ...trpc.bounties.updateBountyComment.mutationOptions(),
+    mutationFn: async (input: { commentId: string; content: string }) => {
+      return await trpcClient.bounties.updateBountyComment.mutate(input);
+    },
   });
   const [editError, setEditError] = useState<string | null>(null);
   const deleteComment = useMutation({
-    ...trpc.bounties.deleteBountyComment.mutationOptions(),
+    mutationFn: async (input: { commentId: string }) => {
+      return await trpcClient.bounties.deleteBountyComment.mutate(input);
+    },
   });
   const [editState, setEditState] = useState<{
     id: string;
