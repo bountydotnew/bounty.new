@@ -77,7 +77,7 @@ export default function BountyDetailPage({
       : { count: 1, isVoted: true };
     queryClient.setQueryData(key, next);
     voteMutation.mutate(
-      { bountyId: id },
+      { bountyId: id, vote: next.isVoted },
       {
         onError: () => {
           if (previous) {

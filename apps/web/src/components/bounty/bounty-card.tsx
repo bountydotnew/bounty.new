@@ -109,7 +109,7 @@ export const BountyCard = memo(function BountyCard({
       return [key, previous] as const;
     });
     voteMutation.mutate(
-      { bountyId: bounty.id },
+      { bountyId: bounty.id, vote: nextVotes.isVoted },
       {
         onError: () => {
           if (previousVotes) queryClient.setQueryData(votesKey, previousVotes);
