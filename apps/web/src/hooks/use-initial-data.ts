@@ -25,12 +25,32 @@ export function useInitialData(enabled = true) {
   const queries = useQueries({
     queries: [
       {
-        ...trpc.user.getMe.queryOptions(),
+        ...(() => {
+          try {
+            console.log('[useInitialData] Getting getMe queryOptions...');
+            const options = trpc.user.getMe.queryOptions();
+            console.log('[useInitialData] getMe queryOptions result:', options);
+            return options;
+          } catch (error) {
+            console.error('[useInitialData] Error getting getMe queryOptions:', error);
+            throw error;
+          }
+        })(),
         enabled: shouldFetch,
         staleTime: 5 * 60 * 1000, // 5 minutes
       },
       {
-        ...trpc.user.getAccessProfile.queryOptions(),
+        ...(() => {
+          try {
+            console.log('[useInitialData] Getting getAccessProfile queryOptions...');
+            const options = trpc.user.getAccessProfile.queryOptions();
+            console.log('[useInitialData] getAccessProfile queryOptions result:', options);
+            return options;
+          } catch (error) {
+            console.error('[useInitialData] Error getting getAccessProfile queryOptions:', error);
+            throw error;
+          }
+        })(),
         enabled: shouldFetch,
         staleTime: 5 * 60 * 1000, // 5 minutes
         retry: false,
@@ -65,9 +85,15 @@ export function usePrefetchInitialData() {
   
   useEffect(() => {
     if (session?.user) {
-      // Prefetch tRPC queries - these will be batched into one HTTP request
-      queryClient.prefetchQuery(trpc.user.getMe.queryOptions());
-      queryClient.prefetchQuery(trpc.user.getAccessProfile.queryOptions());
+      try {
+        console.log('[usePrefetchInitialData] Prefetching queries...');
+        // Prefetch tRPC queries - these will be batched into one HTTP request
+        queryClient.prefetchQuery(trpc.user.getMe.queryOptions());
+        queryClient.prefetchQuery(trpc.user.getAccessProfile.queryOptions());
+        console.log('[usePrefetchInitialData] Prefetch successful');
+      } catch (error) {
+        console.error('[usePrefetchInitialData] Error prefetching:', error);
+      }
       
       // Prefetch billing data (Better Auth) - runs in parallel with tRPC batch
       queryClient.prefetchQuery({

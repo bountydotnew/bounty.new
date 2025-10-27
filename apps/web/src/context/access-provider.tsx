@@ -16,8 +16,27 @@ export const AccessProvider = ({ children }: AccessProviderProps) => {
   // Prefetch initial data (batched request)
   usePrefetchInitialData();
 
+  // Add debugging for AccessProvider tRPC usage
+  console.log('[AccessProvider] Session state:', {
+    hasSession: !!session,
+    sessionLoading,
+    hasTrpc: !!trpc,
+    hasUserRouter: !!trpc?.user,
+    hasGetAccessProfile: !!trpc?.user?.getAccessProfile,
+  });
+
   const accessProfile = useQuery({
-    ...trpc.user.getAccessProfile.queryOptions(),
+    ...(() => {
+      try {
+        console.log('[AccessProvider] Getting queryOptions...');
+        const options = trpc.user.getAccessProfile.queryOptions();
+        console.log('[AccessProvider] queryOptions result:', options);
+        return options;
+      } catch (error) {
+        console.error('[AccessProvider] Error getting queryOptions:', error);
+        throw error;
+      }
+    })(),
     enabled: !!session,
     retry: false,
     throwOnError: false,

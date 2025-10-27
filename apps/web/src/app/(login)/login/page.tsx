@@ -9,8 +9,29 @@ import { trpc } from '@/utils/trpc';
 
 function LoginContent() {
   const [token] = useQueryState('invite', parseAsString);
+  
+  // Add debugging for tRPC client
+  useEffect(() => {
+    console.log('[Login] tRPC client state:', {
+      hasClient: !!trpc,
+      hasUserRouter: !!trpc.user,
+      hasApplyInvite: !!trpc.user?.applyInvite,
+      hasMutationOptions: !!trpc.user?.applyInvite?.mutationOptions,
+    });
+  }, []);
+  
   const applyInvite = useMutation({
-    ...trpc.user.applyInvite.mutationOptions(),
+    ...(() => {
+      try {
+        console.log('[Login] Getting mutationOptions...');
+        const options = trpc.user.applyInvite.mutationOptions();
+        console.log('[Login] mutationOptions result:', options);
+        return options;
+      } catch (error) {
+        console.error('[Login] Error getting mutationOptions:', error);
+        throw error;
+      }
+    })(),
   });
   useEffect(() => {
     if (token) {
