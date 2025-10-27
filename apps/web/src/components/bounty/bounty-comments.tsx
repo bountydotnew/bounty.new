@@ -40,7 +40,7 @@ export default function BountyComments({
   });
 
   const addComment = useMutation({
-    mutationFn: async (input: { bountyId: string; content: string }) => {
+    mutationFn: async (input: { bountyId: string; content: string; parentId?: string }) => {
       return await trpcClient.bounties.addBountyComment.mutate(input);
     },
   });
