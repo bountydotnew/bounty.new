@@ -7,8 +7,8 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
-import { useNotifications } from '@/hooks/use-notifications';
 import { cn } from '@bounty/ui/lib/utils';
+import { useNotificationsRealtime } from '@/hooks/use-notifications-realtime';
 import { formatDistanceToNow } from 'date-fns';
 import {
   ArrowUpRight,
@@ -21,11 +21,9 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
-import type {
-  NotificationData,
-  NotificationItem,
-  NotificationRowProps,
-} from '@/types/notifications';
+import type { NotificationData, NotificationItem, NotificationRowProps } from '@/types/notifications';
+import { authClient } from '@bounty/auth/client';
+import { useAccess } from '@/context/access-provider';
 
 function Row({ item, onRead }: NotificationRowProps) {
   const router = useRouter();
@@ -81,6 +79,7 @@ function Row({ item, onRead }: NotificationRowProps) {
 
   return (
     <button
+      type="button"
       className={cn(
         'w-full text-left',
         'rounded-md border border-neutral-800 bg-[#222222] p-3',
@@ -119,7 +118,12 @@ function Row({ item, onRead }: NotificationRowProps) {
   );
 }
 
+// biome-ignore lint: UI component with conditional rendering
 export function NotificationsDropdown() {
+  const { data: session } = authClient.useSession();
+  const { hasStageAccess } = useAccess();
+  const enabled = Boolean(session) && hasStageAccess(['beta', 'production']);
+
   const {
     notifications,
     unreadCount,
@@ -128,7 +132,7 @@ export function NotificationsDropdown() {
     markAsRead,
     markAllAsRead,
     refetch,
-  } = useNotifications();
+  } = useNotificationsRealtime();
   const [showAll, setShowAll] = useState(false);
 
   const filtered = useMemo(
@@ -138,7 +142,8 @@ export function NotificationsDropdown() {
   const showCaughtUp =
     unreadCount === 0 && notifications.length > 0 && !showAll;
 
-  if (isLoading) {
+  // Don't show notifications dropdown if user doesn't have access
+  if (!enabled) {
     return null;
   }
 
@@ -220,7 +225,11 @@ export function NotificationsDropdown() {
           )}
         </div>
         <div className="scrollbar-hide max-h-80 space-y-2 overflow-y-auto px-2 py-2">
-          {hasError ? (
+          {isLoading ? (
+            <div className="px-3 py-6 text-center">
+              <p className="text-neutral-400 text-sm">Loading notifications...</p>
+            </div>
+          ) : hasError ? (
             <div className="px-3 py-6 text-center">
               <p className="mb-2 text-red-400 text-sm">
                 Failed to load notifications

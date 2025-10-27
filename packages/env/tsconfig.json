@@ -14,7 +14,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "strictNullChecks": true,
-    "types": []
+    "types": ["node"]
   },
   "include": ["src/**/*", "../../apps/web/src/context"],
   "exclude": ["node_modules"]

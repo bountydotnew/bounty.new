@@ -29,6 +29,8 @@
     "@radix-ui/react-tabs": "catalog:",
     "@radix-ui/react-toggle": "catalog:",
     "@radix-ui/react-tooltip": "catalog:",
+    "@tanstack/react-query": "^5.90.5",
+    "@trpc/client": "^11.6.0",
     "chrono-node": "catalog:",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
