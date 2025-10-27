@@ -4,7 +4,7 @@
  * This wrapper provides a consistent API while using the battle-tested lru-cache library.
  */
 
-import { LRUCache as LRU } from "lru-cache";
+import LRU from "lru-cache";
 
 export interface LRUCacheOptions<V> {
   /**
@@ -35,7 +35,7 @@ export class LRUCache<V extends {} = Record<string, unknown>> {
       max: options.maxSize,
       ...(options.ttl !== undefined && { ttl: options.ttl }),
       ...(options.onEvict && {
-        dispose: (value, key) => {
+        dispose: (value: V, key: string) => {
           this.onEvict?.(key, value);
         },
       }),
