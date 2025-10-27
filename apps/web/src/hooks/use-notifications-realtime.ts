@@ -98,7 +98,7 @@ export function useNotificationsRealtime() {
     setUnreadCount(0);
 
     // Update via Rivet
-    await actor.connection.checkForUpdates({});
+    await actor.connection.checkForUpdates();
 
     // Also update via tRPC for database persistence
     markAllAsReadMutation.mutate();
@@ -107,7 +107,7 @@ export function useNotificationsRealtime() {
   const refetch = useCallback(async () => {
     if (!actor.connection) return;
 
-    await actor.connection.checkForUpdates({});
+    await actor.connection.checkForUpdates();
   }, [actor.connection]);
 
   // Handle visibility change
