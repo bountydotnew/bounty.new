@@ -1,11 +1,8 @@
 'use client';
 
-import { useMutation } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
-import { toast } from 'sonner';
 import { authClient } from '@bounty/auth/client';
 import { useActor } from '@/lib/rivet-client';
-import { trpc } from '@/utils/trpc';
 
 interface NotificationItem {
   id: string;
@@ -42,20 +39,8 @@ export function useNotificationsRealtime() {
     });
   }, [userId, actor.isConnected, actor.connection, notifications.length, unreadCount]);
 
-  const markAsReadMutation = useMutation(
-    trpc.notifications.markAsRead.mutationOptions({
-      onError: () => toast.error('Failed to mark as read'),
-    })
-  );
-
-  const markAllAsReadMutation = useMutation(
-    trpc.notifications.markAllAsRead.mutationOptions({
-      onSuccess: () => {
-        toast.success('All notifications marked as read');
-      },
-      onError: () => toast.error('Failed to mark all as read'),
-    })
-  );
+  // Note: Using RivetKit actor for all notification operations
+  // No tRPC mutations needed since we're using hosted service
 
   // Subscribe to notification events
   actor.useEvent('notifications', (data: NotificationItem[]) => {
@@ -100,13 +85,10 @@ export function useNotificationsRealtime() {
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
 
-      // Update via Rivet
+      // Update via RivetKit actor
       await actor.connection.notificationRead({ id });
-
-      // Also update via tRPC for database persistence
-      markAsReadMutation.mutate({ id });
     },
-    [actor.connection, markAsReadMutation]
+    [actor.connection]
   );
 
   const markAllAsRead = useCallback(async () => {
@@ -123,12 +105,9 @@ export function useNotificationsRealtime() {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
 
-    // Update via Rivet
+    // Update via RivetKit actor
     await actor.connection.checkForUpdates();
-
-    // Also update via tRPC for database persistence
-    markAllAsReadMutation.mutate();
-  }, [actor.connection, unreadCount, markAllAsReadMutation]);
+  }, [actor.connection, unreadCount]);
 
   const refetch = useCallback(async () => {
     if (!actor.connection) {
@@ -158,7 +137,7 @@ export function useNotificationsRealtime() {
     markAsRead,
     markAllAsRead,
     refetch,
-    isMarkingAsRead: markAsReadMutation.isPending,
-    isMarkingAllAsRead: markAllAsReadMutation.isPending,
+    isMarkingAsRead: false,
+    isMarkingAllAsRead: false,
   } as const;
 }
