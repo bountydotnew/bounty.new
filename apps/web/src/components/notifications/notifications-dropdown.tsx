@@ -24,8 +24,6 @@ import { useCallback, useMemo, useState } from 'react';
 import type { NotificationData, NotificationItem, NotificationRowProps } from '@/types/notifications';
 import { authClient } from '@bounty/auth/client';
 import { useAccess } from '@/context/access-provider';
-import { trpc, queryClient } from '@/utils/trpc';
-import { useMutation } from '@tanstack/react-query';
 
 function Row({ item, onRead }: NotificationRowProps) {
   const router = useRouter();
@@ -120,13 +118,11 @@ function Row({ item, onRead }: NotificationRowProps) {
   );
 }
 
+// biome-ignore lint/complexity/excessiveComplexity: UI component with conditional rendering
 export function NotificationsDropdown() {
   const { data: session } = authClient.useSession();
   const { hasStageAccess } = useAccess();
   const enabled = Boolean(session) && hasStageAccess(['beta', 'production']);
-
-  const markAsReadRQ = useMutation(trpc.notifications.markAsRead.mutationOptions());
-  const markAllAsReadRQ = useMutation(trpc.notifications.markAllAsRead.mutationOptions());
 
   const {
     notifications,
@@ -146,7 +142,8 @@ export function NotificationsDropdown() {
   const showCaughtUp =
     unreadCount === 0 && notifications.length > 0 && !showAll;
 
-  if (isLoading) {
+  // Don't show notifications dropdown if user doesn't have access
+  if (!enabled) {
     return null;
   }
 
@@ -228,7 +225,11 @@ export function NotificationsDropdown() {
           )}
         </div>
         <div className="scrollbar-hide max-h-80 space-y-2 overflow-y-auto px-2 py-2">
-          {hasError ? (
+          {isLoading ? (
+            <div className="px-3 py-6 text-center">
+              <p className="text-neutral-400 text-sm">Loading notifications...</p>
+            </div>
+          ) : hasError ? (
             <div className="px-3 py-6 text-center">
               <p className="mb-2 text-red-400 text-sm">
                 Failed to load notifications

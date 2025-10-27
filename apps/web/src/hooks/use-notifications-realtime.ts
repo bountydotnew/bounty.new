@@ -23,11 +23,24 @@ export function useNotificationsRealtime() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [hasError, setHasError] = useState(false);
 
+  const userId = session?.user?.id;
+  
   const actor = useActor({
     name: 'notifications',
-    key: [session?.user?.id || ''],
-    enabled: !!session?.user?.id,
+    key: [userId || ''],
+    enabled: !!userId,
   });
+
+  // Debug logging
+  useEffect(() => {
+    console.log('[Notifications] Hook state:', {
+      userId,
+      isConnected: actor.isConnected,
+      hasConnection: !!actor.connection,
+      notificationsCount: notifications.length,
+      unreadCount,
+    });
+  }, [userId, actor.isConnected, actor.connection, notifications.length, unreadCount]);
 
   const markAsReadMutation = useMutation(
     trpc.notifications.markAsRead.mutationOptions({
@@ -60,17 +73,26 @@ export function useNotificationsRealtime() {
 
   // Initial subscription when actor connects
   useEffect(() => {
-    if (actor.connection && session?.user?.id) {
-      actor.connection.subscribe().catch((err: Error) => {
-        console.error('Failed to subscribe to notifications:', err);
-        setHasError(true);
-      });
+    if (actor.connection && userId) {
+      console.log('[Notifications] Subscribing with userId:', userId);
+      actor.connection.subscribe()
+        .then(() => {
+          console.log('[Notifications] Subscribe successful');
+        })
+        .catch((err: Error) => {
+          console.error('[Notifications] Failed to subscribe:', err);
+          setHasError(true);
+        });
+    } else {
+      console.log('[Notifications] Not subscribing - connection:', !!actor.connection, 'userId:', userId);
     }
-  }, [actor.connection, session?.user?.id]);
+  }, [actor.connection, userId]);
 
   const markAsRead = useCallback(
     async (id: string) => {
-      if (!actor.connection) return;
+      if (!actor.connection) {
+        return;
+      }
 
       // Optimistically update local state
       setNotifications((prev) =>
@@ -88,10 +110,14 @@ export function useNotificationsRealtime() {
   );
 
   const markAllAsRead = useCallback(async () => {
-    if (!actor.connection) return;
+    if (!actor.connection) {
+      return;
+    }
 
     const count = unreadCount;
-    if (count === 0) return;
+    if (count === 0) {
+      return;
+    }
 
     // Optimistically update local state
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
@@ -105,7 +131,9 @@ export function useNotificationsRealtime() {
   }, [actor.connection, unreadCount, markAllAsReadMutation]);
 
   const refetch = useCallback(async () => {
-    if (!actor.connection) return;
+    if (!actor.connection) {
+      return;
+    }
 
     await actor.connection.checkForUpdates();
   }, [actor.connection]);
