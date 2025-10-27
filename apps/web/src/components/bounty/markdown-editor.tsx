@@ -29,24 +29,27 @@ function Textarea({ className, ...props }: React.ComponentProps<'textarea'>) {
 }
 
 export function MarkdownTextarea({
-  value = '',
+  value,
   onChange,
   placeholder = 'Write your markdown here...',
   className,
   ...props
 }: MarkdownTextareaProps) {
-  const [content, setContent] = useState(value);
+  const [content, setContent] = useState(value ?? '');
   const [mode, setMode] = useState<'write' | 'preview' | 'split'>('write');
+
+  // Only sync external value changes if this is a controlled component
+  React.useEffect(() => {
+    if (value !== undefined && value !== content) {
+      setContent(value);
+    }
+  }, [value, content]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     setContent(newValue);
     onChange?.(newValue);
   };
-
-  React.useEffect(() => {
-    setContent(value);
-  }, [value]);
 
   return (
     <div className={cn('overflow-hidden rounded-md border', className)}>

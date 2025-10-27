@@ -33,9 +33,12 @@ import {
 import { Polar } from "@polar-sh/sdk";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { bearer, deviceAuthorization, openAPI } from "better-auth/plugins";
+import { bearer, deviceAuthorization, lastLoginMethod, openAPI } from "better-auth/plugins";
 import { admin } from "better-auth/plugins/admin";
 import { passkey as passkeyPlugin } from "better-auth/plugins/passkey";
+import { emailOTP } from "better-auth/plugins/email-otp";
+import { sendEmail } from "@bounty/email";
+import { OTPVerification } from "@bounty/email";
 
 const schema = {
   account,
@@ -71,15 +74,12 @@ const allowedDeviceClientIds = env.DEVICE_AUTH_ALLOWED_CLIENT_IDS?.split(",")
   .filter(Boolean);
 
 const deviceAuthorizationPlugin = deviceAuthorization({
-  expiresIn: "30m",
-  interval: "5s",
-  ...(allowedDeviceClientIds?.length && {
-    validateClient: (clientId) => allowedDeviceClientIds.includes(clientId),
-  }),
-  onDeviceAuthRequest: async (_clientId, _scope) => {
-    // Device authorization requested - logging removed per linter requirements
-    // You can add proper logging/monitoring here if needed
-    await Promise.resolve();
+  expiresIn: '30m',
+  interval: '5s',
+  validateClient: (clientId) =>
+    allowedDeviceClientIds?.length ? allowedDeviceClientIds.includes(clientId) : true,
+  onDeviceAuthRequest: (clientId, scope) => {
+    console.info('Device authorization requested', { clientId, scope });
   },
 });
 
@@ -180,6 +180,40 @@ export const auth = betterAuth({
     admin(),
     bearer(),
     openAPI(),
+    lastLoginMethod({
+      storeInDatabase: true,
+    }),
+    emailOTP({
+      async sendVerificationOTP({ email, otp, type }) {
+        try {
+          const result = await sendEmail({
+            from: 'Bounty.new <noreply@mail.bounty.new>',
+            to: email,
+            subject: type === 'email-verification' 
+              ? 'Verify your email address'
+              : type === 'sign-in'
+              ? 'Sign in to Bounty.new'
+              : 'Reset your password',
+            react: OTPVerification({
+              code: otp,
+              email,
+              type,
+              continueUrl: `${env.NODE_ENV === 'production' ? 'https://bounty.new' : 'http://localhost:3000'}/sign-up/verify-email-address?email=${encodeURIComponent(email)}`,
+            }),
+          });
+
+          if (result.error) {
+            console.error('❌ Failed to send OTP email:', result.error);
+            throw new Error(`Email send failed: ${result.error.message}`);
+          }
+
+          console.log('✅ OTP email sent successfully:', result.data?.id);
+        } catch (error) {
+          console.error('❌ Error in sendVerificationOTP:', error);
+          throw error;
+        }
+      },
+    }),
     deviceAuthorizationPlugin,
   ],
   secret: env.BETTER_AUTH_SECRET,
