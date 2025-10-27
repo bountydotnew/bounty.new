@@ -11,7 +11,7 @@ type State = z.infer<typeof stateSchema>;
 
 // Define input types for actions
 const notificationInputSchema = z.object({
-  notificationId: z.string(),
+  id: z.string(),
 });
 
 type NotificationInput = z.infer<typeof notificationInputSchema>;
