@@ -27,7 +27,7 @@ export function useNotificationsRealtime() {
   
   const actor = useActor({
     name: 'notifications',
-    key: [userId || ''],
+    key: [userId || 'cheerful-leopardon'],
     enabled: !!userId,
   });
 
