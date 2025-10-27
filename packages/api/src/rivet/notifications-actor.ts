@@ -8,12 +8,13 @@ export const notificationsActor = actor({
     lastCheck: z.date().optional(),
   }),
   actions: {
-    subscribe: async ({ state, emit, input }: any) => {
-      const userId = input.userId as string;
+    subscribe: async (c) => {
+      // Get userId from the actor key (first element)
+      const userId = c.key[0] || c.state.userId;
 
       // Update state with user ID
-      state.userId = userId;
-      state.lastCheck = new Date();
+      c.state.userId = userId;
+      c.state.lastCheck = new Date();
 
       // Fetch initial notifications and unread count
       const [notifications, unreadCount] = await Promise.all([
@@ -22,60 +23,60 @@ export const notificationsActor = actor({
       ]);
 
       // Emit initial data
-      emit('notifications', notifications);
-      emit('unreadCount', unreadCount);
+      c.broadcast('notifications', notifications);
+      c.broadcast('unreadCount', unreadCount);
 
       return { success: true };
     },
 
-    checkForUpdates: async ({ state, emit }: any) => {
-      if (!state.userId) {
+    checkForUpdates: async (c) => {
+      if (!c.state.userId) {
         return { success: false, error: 'Not subscribed' };
       }
 
       // Fetch latest notifications and unread count
       const [notifications, unreadCount] = await Promise.all([
-        getNotificationsForUser(state.userId, { limit: 50 }),
-        getUnreadNotificationCount(state.userId),
+        getNotificationsForUser(c.state.userId, { limit: 50 }),
+        getUnreadNotificationCount(c.state.userId),
       ]);
 
       // Emit updated data
-      emit('notifications', notifications);
-      emit('unreadCount', unreadCount);
+      c.broadcast('notifications', notifications);
+      c.broadcast('unreadCount', unreadCount);
 
-      state.lastCheck = new Date();
+      c.state.lastCheck = new Date();
 
       return { success: true };
     },
 
-    notificationCreated: async ({ state, emit, input }: any) => {
-      if (!state.userId) {
+    notificationCreated: async (c, input: any) => {
+      if (!c.state.userId) {
         return { success: false };
       }
 
       // When a new notification is created, fetch fresh data
       const [notifications, unreadCount] = await Promise.all([
-        getNotificationsForUser(state.userId, { limit: 50 }),
-        getUnreadNotificationCount(state.userId),
+        getNotificationsForUser(c.state.userId, { limit: 50 }),
+        getUnreadNotificationCount(c.state.userId),
       ]);
 
-      emit('notifications', notifications);
-      emit('unreadCount', unreadCount);
-      emit('newNotification', input);
+      c.broadcast('notifications', notifications);
+      c.broadcast('unreadCount', unreadCount);
+      c.broadcast('newNotification', input);
 
       return { success: true };
     },
 
-    notificationRead: async ({ state, emit, input }: any) => {
-      if (!state.userId) {
+    notificationRead: async (c, input: any) => {
+      if (!c.state.userId) {
         return { success: false };
       }
 
       // Fetch updated unread count after marking as read
-      const unreadCount = await getUnreadNotificationCount(state.userId);
+      const unreadCount = await getUnreadNotificationCount(c.state.userId);
 
-      emit('unreadCount', unreadCount);
-      emit('notificationMarkedRead', input);
+      c.broadcast('unreadCount', unreadCount);
+      c.broadcast('notificationMarkedRead', input);
 
       return { success: true };
     },

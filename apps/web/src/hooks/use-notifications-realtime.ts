@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { authClient } from '@bounty/auth/client';
-import { rivet } from '@/lib/rivet-client';
+import { useActor } from '@/lib/rivet-client';
 import { trpc } from '@/utils/trpc';
 
 interface NotificationItem {
@@ -21,8 +21,13 @@ export function useNotificationsRealtime() {
   const { data: session } = authClient.useSession();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+
+  const actor = useActor({
+    name: 'notifications',
+    key: [session?.user?.id || ''],
+    enabled: !!session?.user?.id,
+  });
 
   const markAsReadMutation = useMutation(
     trpc.notifications.markAsRead.mutationOptions({
@@ -39,41 +44,33 @@ export function useNotificationsRealtime() {
     })
   );
 
-  // Rivet event listeners
+  // Subscribe to notification events
+  actor.useEvent('notifications', (data: NotificationItem[]) => {
+    setNotifications(data);
+  });
+
+  actor.useEvent('unreadCount', (count: number) => {
+    setUnreadCount(count);
+  });
+
+  actor.useEvent('newNotification', () => {
+    // Optionally show a toast when new notification arrives
+    // toast.info('New notification received');
+  });
+
+  // Initial subscription when actor connects
   useEffect(() => {
-    if (!session?.user?.id) {
-      setIsLoading(false);
-      return;
+    if (actor.connection && session?.user?.id) {
+      actor.connection.subscribe().catch((err: Error) => {
+        console.error('Failed to subscribe to notifications:', err);
+        setHasError(true);
+      });
     }
-
-    const actor = rivet.notifications.get(session.user.id);
-
-    // Subscribe to notification events
-    actor.useEvent('notifications', (data: NotificationItem[]) => {
-      setNotifications(data);
-      setIsLoading(false);
-    });
-
-    actor.useEvent('unreadCount', (count: number) => {
-      setUnreadCount(count);
-    });
-
-    actor.useEvent('newNotification', () => {
-      // Optionally show a toast when new notification arrives
-      // toast.info('New notification received');
-    });
-
-    // Initial subscription
-    actor.action('subscribe', { userId: session.user.id }).catch((err) => {
-      console.error('Failed to subscribe to notifications:', err);
-      setHasError(true);
-      setIsLoading(false);
-    });
-  }, [session?.user?.id]);
+  }, [actor.connection, session?.user?.id]);
 
   const markAsRead = useCallback(
     async (id: string) => {
-      if (!session?.user?.id) return;
+      if (!actor.connection) return;
 
       // Optimistically update local state
       setNotifications((prev) =>
@@ -82,17 +79,16 @@ export function useNotificationsRealtime() {
       setUnreadCount((prev) => Math.max(0, prev - 1));
 
       // Update via Rivet
-      const actor = rivet.notifications.get(session.user.id);
-      await actor.action('notificationRead', { id });
+      await actor.connection.notificationRead({ id });
 
       // Also update via tRPC for database persistence
       markAsReadMutation.mutate({ id });
     },
-    [session?.user?.id, markAsReadMutation]
+    [actor.connection, markAsReadMutation]
   );
 
   const markAllAsRead = useCallback(async () => {
-    if (!session?.user?.id) return;
+    if (!actor.connection) return;
 
     const count = unreadCount;
     if (count === 0) return;
@@ -102,19 +98,17 @@ export function useNotificationsRealtime() {
     setUnreadCount(0);
 
     // Update via Rivet
-    const actor = rivet.notifications.get(session.user.id);
-    await actor.action('checkForUpdates', {});
+    await actor.connection.checkForUpdates({});
 
     // Also update via tRPC for database persistence
     markAllAsReadMutation.mutate();
-  }, [session?.user?.id, unreadCount, markAllAsReadMutation]);
+  }, [actor.connection, unreadCount, markAllAsReadMutation]);
 
   const refetch = useCallback(async () => {
-    if (!session?.user?.id) return;
+    if (!actor.connection) return;
 
-    const actor = rivet.notifications.get(session.user.id);
-    await actor.action('checkForUpdates', {});
-  }, [session?.user?.id]);
+    await actor.connection.checkForUpdates({});
+  }, [actor.connection]);
 
   // Handle visibility change
   useEffect(() => {
@@ -130,7 +124,7 @@ export function useNotificationsRealtime() {
   return {
     notifications,
     unreadCount,
-    isLoading,
+    isLoading: !actor.isConnected,
     hasError,
     error: null,
     markAsRead,

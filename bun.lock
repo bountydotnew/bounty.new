@@ -49,6 +49,7 @@
         "@radix-ui/react-tabs": "catalog:",
         "@radix-ui/react-toggle": "catalog:",
         "@radix-ui/react-tooltip": "catalog:",
+        "@rivetkit/next-js": "^2.0.21",
         "@tanstack/react-form": "catalog:",
         "@tanstack/react-query": "catalog:",
         "@thumbmarkjs/thumbmarkjs": "catalog:",
@@ -3378,8 +3379,6 @@
 
     "vitest/tinyglobby": ["tinyglobby@0.2.15", "", { "dependencies": { "fdir": "^6.5.0", "picomatch": "^4.0.3" } }, "sha512-j2Zq4NyQYG5XMST4cbs02Ak8iJUdxRM0XI5QyxXuZOzKOINmWurp3smXu3y5wDcJrptwpSjgXHzIQxR0omXljQ=="],
 
-    "web/rivetkit": ["rivetkit@2.0.18", "", { "dependencies": { "@bare-ts/lib": "~0.3.0", "@hono/standard-validator": "^0.1.3", "@hono/zod-openapi": "^0.19.10", "@rivetkit/engine-runner": "https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@6659217", "@rivetkit/fast-json-patch": "^3.1.2", "cbor-x": "^1.6.0", "hono": "^4.7.0", "invariant": "^2.2.4", "nanoevents": "^9.1.0", "on-change": "^5.0.1", "p-retry": "^6.2.1", "pino": "^9.5.0", "zod": "^3.25.76" }, "peerDependencies": { "@hono/node-server": "^1.14.0", "@hono/node-ws": "^1.1.1", "eventsource": "^4.0.0", "ws": "^8.0.0" }, "optionalPeers": ["@hono/node-server", "@hono/node-ws", "eventsource", "ws"] }, "sha512-iEYRGiTQYNqxlAE9BXhfYSo/+pW4EaMEnKzm9cAF4zEE9mddOO73eUmUF+qplO8JUhi0Ya0yGXlnt6ZiAlOQVQ=="],
-
     "wrap-ansi/ansi-styles": ["ansi-styles@6.2.3", "", {}, "sha512-4Dj6M28JB+oAH8kFkTLUo+a2jwOFkuqb3yucU0CANcRRUbxS0cP0nZYCGjcc3BNXwRIsUVmDGgzawme7zvJHvg=="],
 
     "wrap-ansi/string-width": ["string-width@7.2.0", "", { "dependencies": { "emoji-regex": "^10.3.0", "get-east-asian-width": "^1.0.0", "strip-ansi": "^7.1.0" } }, "sha512-tsaTIkKW9b4N+AEj+SVA+WhJzV7/zMhcSu78mLKWSk7cXMOSHsBKFWUs0fWwq8QyK3MgJBQRX6Gbi4kYbdvGkQ=="],
@@ -3658,10 +3657,6 @@
 
     "vite/postcss/picocolors": ["picocolors@1.1.1", "", {}, "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA=="],
 
-    "web/rivetkit/@rivetkit/engine-runner": ["@rivetkit/engine-runner@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@6659217", { "dependencies": { "@rivetkit/engine-runner-protocol": "https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@6659217e0ccdad8597449d0a01f4696e42a6a5eb", "pino": "^9.9.5", "uuid": "^12.0.0", "ws": "^8.18.3" } }],
-
-    "web/rivetkit/zod": ["zod@3.25.76", "", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
-
     "wrap-ansi-cjs/ansi-styles/color-convert": ["color-convert@2.0.1", "", { "dependencies": { "color-name": "~1.1.4" } }, "sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ=="],
 
     "wrap-ansi/string-width/emoji-regex": ["emoji-regex@10.5.0", "", {}, "sha512-lb49vf1Xzfx080OKA0o6l8DQQpV+6Vg95zyCJX9VB/BqKYlhG7N4wgROUUHRA+ZPUefLnteQOad7z1kT2bV7bg=="],
@@ -3742,8 +3737,6 @@
 
     "typescript-eslint/@typescript-eslint/eslint-plugin/@typescript-eslint/visitor-keys/@typescript-eslint/types": ["@typescript-eslint/types@8.44.0", "", {}, "sha512-ZSl2efn44VsYM0MfDQe68RKzBz75NPgLQXuGypmym6QVOWL5kegTZuZ02xRAT9T+onqvM6T8CdQk0OwYMB6ZvA=="],
 
-    "web/rivetkit/@rivetkit/engine-runner/@rivetkit/engine-runner-protocol": ["@rivetkit/engine-runner-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@6659217e0ccdad8597449d0a01f4696e42a6a5eb", { "dependencies": { "@bare-ts/lib": "^0.4.0" } }],
-
     "wrap-ansi-cjs/ansi-styles/color-convert/color-name": ["color-name@1.1.4", "", {}, "sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA=="],
 
     "@turbo/workspaces/ora/chalk/ansi-styles/color-convert": ["color-convert@2.0.1", "", { "dependencies": { "color-name": "~1.1.4" } }, "sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ=="],
@@ -3769,8 +3762,6 @@
     "log-symbols/chalk/ansi-styles/color-convert/color-name": ["color-name@1.1.4", "", {}, "sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA=="],
 
     "node-plop/inquirer/chalk/ansi-styles/color-convert": ["color-convert@2.0.1", "", { "dependencies": { "color-name": "~1.1.4" } }, "sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ=="],
-
-    "web/rivetkit/@rivetkit/engine-runner/@rivetkit/engine-runner-protocol/@bare-ts/lib": ["@bare-ts/lib@0.4.0", "", {}, "sha512-uTb12lcDkvwwwGb/4atNy/+2Xuksx88tlxKuwnDuxmsOFVo4R/WsE+fmAf2nWtzHDi7m6NDw8Ke9j+XlNBLoJg=="],
 
     "@turbo/workspaces/ora/chalk/ansi-styles/color-convert/color-name": ["color-name@1.1.4", "", {}, "sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA=="],
 

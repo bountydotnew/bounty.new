@@ -33,6 +33,7 @@
     "@radix-ui/react-tabs": "catalog:",
     "@radix-ui/react-toggle": "catalog:",
     "@radix-ui/react-tooltip": "catalog:",
+    "@rivetkit/next-js": "^2.0.21",
     "@tanstack/react-form": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@thumbmarkjs/thumbmarkjs": "catalog:",
