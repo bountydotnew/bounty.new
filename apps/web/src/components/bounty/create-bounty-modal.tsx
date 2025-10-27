@@ -91,7 +91,7 @@ export function CreateBountyModal({
     }
   }, [open, initialValues, reset]);
   const createBounty = useMutation({
-    mutationFn: async (input: CreateBountyInput) => {
+    mutationFn: async (input: CreateBountyForm) => {
       return await trpcClient.bounties.createBounty.mutate(input);
     },
     onSuccess: (result) => {
