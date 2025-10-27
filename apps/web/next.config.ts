@@ -88,6 +88,9 @@ const nextConfig: NextConfig = {
   },
   // This is required to support PostHog trailing slash API requests
   skipTrailingSlashRedirect: true,
+  turbopack: {
+    resolveExtensions: ['.ts', '.tsx', '.js', '.jsx', '.json', '.mjs', '.cjs'],
+  },
   webpack: (config, { isServer }) => {
     // Fix for rivetkit importing Node.js built-in modules in client-side code
     if (!isServer) {
