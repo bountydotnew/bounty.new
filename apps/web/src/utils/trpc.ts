@@ -82,11 +82,3 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
   queryClient,
 });
 
-// Add debugging for tRPC client creation
-console.log('[tRPC] Client created:', {
-  hasClient: !!trpcClient,
-  hasQueryClient: !!queryClient,
-  hasTrpc: !!trpc,
-  hasUserRouter: !!trpc?.user,
-  hasApplyInvite: !!trpc?.user?.applyInvite,
-});

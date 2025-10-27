@@ -5,33 +5,18 @@ import { useMutation } from '@tanstack/react-query';
 import { useQueryState, parseAsString } from 'nuqs';
 import { Suspense, useEffect } from 'react';
 import Login from '@/components/bounty/login';
-import { trpc } from '@/utils/trpc';
+import { trpc, trpcClient } from '@/utils/trpc';
 
 function LoginContent() {
   const [token] = useQueryState('invite', parseAsString);
   
-  // Add debugging for tRPC client
-  useEffect(() => {
-    console.log('[Login] tRPC client state:', {
-      hasClient: !!trpc,
-      hasUserRouter: !!trpc.user,
-      hasApplyInvite: !!trpc.user?.applyInvite,
-      hasMutationOptions: !!trpc.user?.applyInvite?.mutationOptions,
-    });
-  }, []);
+  // Note: Using direct trpcClient.mutate() instead of mutationOptions() 
+  // to avoid keyPrefix error in the proxy layer
   
   const applyInvite = useMutation({
-    ...(() => {
-      try {
-        console.log('[Login] Getting mutationOptions...');
-        const options = trpc.user.applyInvite.mutationOptions();
-        console.log('[Login] mutationOptions result:', options);
-        return options;
-      } catch (error) {
-        console.error('[Login] Error getting mutationOptions:', error);
-        throw error;
-      }
-    })(),
+    mutationFn: async (input: { token: string }) => {
+      return await trpcClient.user.applyInvite.mutate(input);
+    },
   });
   useEffect(() => {
     if (token) {
