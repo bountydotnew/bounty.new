@@ -62,16 +62,54 @@ function Row({ item, onRead }: NotificationRowProps) {
   }, [item.id, item.read, item.type, item.data, onRead, router]);
 
   
-  const ICONS_MAP: Record<
-    string,
-    { component: typeof Bell; color: string }
-  > = {
-    bounty_comment: { component: MessageSquare, color: 'text-green-400' },
-    submission_received: { component: FilePlus2, color: 'text-blue-400' },
-    submission_approved: { component: CheckCircle2, color: 'text-emerald-400' },
-    submission_rejected: { component: XCircle, color: 'text-red-400' },
-    bounty_awarded: { component: Award, color: 'text-yellow-400' },
-  };
+const ICONS_MAP: Record<
+  string,
+  { component: typeof Bell; color: string }
+> = {
+  bounty_comment: { component: MessageSquare, color: 'text-green-400' },
+  submission_received: { component: FilePlus2, color: 'text-blue-400' },
+  submission_approved: { component: CheckCircle2, color: 'text-emerald-400' },
+  submission_rejected: { component: XCircle, color: 'text-red-400' },
+  bounty_awarded: { component: Award, color: 'text-yellow-400' },
+};
+
+function Row({ item, onRead }: NotificationRowProps) {
+  const router = useRouter();
+  const ts =
+    typeof item.createdAt === 'string'
+      ? new Date(item.createdAt)
+      : item.createdAt;
+  const timeAgo = formatDistanceToNow(ts, { addSuffix: false });
+  const displayTime = timeAgo.includes('less than') ? 'now' : timeAgo;
+
+  const handleClick = useCallback(() => {
+    if (!item.read) {
+      onRead(item.id);
+    }
+    const data = (item.data || {}) as NotificationData;
+    if (typeof data.linkTo === 'string' && data.linkTo.length > 0) {
+      router.push(String(data.linkTo));
+      return;
+    }
+    if (item.type === 'bounty_comment' && typeof data.bountyId === 'string') {
+      router.push(`/bounty/${data.bountyId}`);
+      return;
+    }
+    if (
+      item.type === 'submission_received' &&
+      typeof data.bountyId === 'string'
+    ) {
+      router.push(`/bounty/${data.bountyId}`);
+      return;
+    }
+    if (item.type === 'bounty_awarded' && typeof data.bountyId === 'string') {
+      router.push(`/bounty/${data.bountyId}`);
+      return;
+    }
+  }, [item.id, item.read, item.type, item.data, onRead, router]);
+
+  const Icon = ICONS_MAP[item.type]?.component || Bell;
+  const iconColor = ICONS_MAP[item.type]?.color || 'text-neutral-400';
 
   const Icon = ICONS_MAP[item.type]?.component || Bell;
   const iconColor = ICONS_MAP[item.type]?.color || 'text-neutral-400';
