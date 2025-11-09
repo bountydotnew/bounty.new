@@ -24,7 +24,7 @@ import { useCallback, useMemo, useState } from 'react';
 import type { NotificationData, NotificationItem, NotificationRowProps } from '@/types/notifications';
 import { authClient } from '@bounty/auth/client';
 import { useAccess } from '@/context/access-provider';
-import styles from './notifications-dropdown.styles.ts';
+import styles from './notifications-dropdown.styles';
 
 const ICONS_MAP: Record<
   string,
@@ -78,11 +78,11 @@ function Row({ item, onRead }: NotificationRowProps) {
   return (
     <button
       type="button"
-      className={cn(styles.ROW_BASE)}
+      className={styles.ROW_BASE}
       onClick={handleClick}
     >
       <div className={styles.ICON_CONTAINER}>
-        <Icon className={`h-4 w-4 ${iconColor}`} />
+        <Icon className={cn('h-4 w-4', iconColor)} />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
