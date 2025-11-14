@@ -33,7 +33,7 @@ export default function AdminNotificationsPage() {
   const users = useMemo(() => data?.users || [], [data?.users]);
 
   const sendMutation = useMutation({
-    ...trpc.notifications.sendToUser.mutationOptions(),
+    ...trpc.notifications.sendToUser.mutationOptions({}),
     onSuccess: () => {
       toast.success('Notification sent');
       setTitle('');

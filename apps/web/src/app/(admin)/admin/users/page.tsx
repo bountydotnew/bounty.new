@@ -261,7 +261,7 @@ export default function UsersPage() {
   };
 
   // Handle invite user to access stage
-  const inviteUserMutationOptions = trpc.user.inviteUser.mutationOptions();
+  const inviteUserMutationOptions = trpc.user.inviteUser.mutationOptions({});
 
   const inviteUserMutation = useMutation({
     ...inviteUserMutationOptions,

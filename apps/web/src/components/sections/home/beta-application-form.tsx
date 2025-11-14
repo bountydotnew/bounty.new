@@ -48,7 +48,7 @@ export function BetaApplicationForm({
   });
 
   const submitMutation = useMutation({
-    ...trpc.betaApplications.create.mutationOptions(),
+    ...trpc.betaApplications.create.mutationOptions({}),
     onSuccess: () => {
       toast.success('Application submitted successfully!');
       reset();

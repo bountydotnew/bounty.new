@@ -21,9 +21,13 @@ export default function AdminUserProfilePage() {
     ...trpc.user.adminGetProfile.queryOptions({ userId: id }),
     staleTime: Number.POSITIVE_INFINITY,
   });
-  const updateName = useMutation(trpc.user.adminUpdateName.mutationOptions());
-  const invite = useMutation(trpc.user.inviteUser.mutationOptions());
-  const sendNoti = useMutation(trpc.notifications.sendToUser.mutationOptions());
+  const updateName = useMutation(
+    trpc.user.adminUpdateName.mutationOptions({})
+  );
+  const invite = useMutation(trpc.user.inviteUser.mutationOptions({}));
+  const sendNoti = useMutation(
+    trpc.notifications.sendToUser.mutationOptions({})
+  );
 
   const user = profile.data?.user;
 

@@ -31,7 +31,7 @@ export function BetaApplicationCard({ application }: BetaApplicationCardProps) {
   const queryClient = useQueryClient();
 
   const updateStatusMutation = useMutation({
-    ...trpc.betaApplications.updateStatus.mutationOptions(),
+    ...trpc.betaApplications.updateStatus.mutationOptions({}),
     onSuccess: () => {
       toast.success('Application status updated successfully');
       queryClient.invalidateQueries({

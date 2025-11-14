@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
 import { cn } from '@bounty/ui/lib/utils';
-import { useNotificationsRealtime } from '@/hooks/use-notifications-realtime';
+import { useNotifications } from '@/hooks/use-notifications';
 import { formatDistanceToNow } from 'date-fns';
 import {
   ArrowUpRight,
@@ -124,11 +124,7 @@ export function NotificationsDropdown() {
   const { hasStageAccess } = useAccess();
   const enabled = Boolean(session) && hasStageAccess(['beta', 'production']);
 
-  // Don't show notifications dropdown if user doesn't have access
-  if (!enabled) {
-    return null;
-  }
-
+  // Always call hooks before any conditional returns
   const {
     notifications,
     unreadCount,
@@ -137,7 +133,7 @@ export function NotificationsDropdown() {
     markAsRead,
     markAllAsRead,
     refetch,
-  } = useNotificationsRealtime();
+  } = useNotifications();
   const [showAll, setShowAll] = useState(false);
 
   const filtered = useMemo(
@@ -146,6 +142,11 @@ export function NotificationsDropdown() {
   );
   const showCaughtUp =
     unreadCount === 0 && notifications.length > 0 && !showAll;
+
+  // Don't show notifications dropdown if user doesn't have access
+  if (!enabled) {
+    return null;
+  }
 
   return (
     <DropdownMenu onOpenChange={(open) => !open && setShowAll(false)}>

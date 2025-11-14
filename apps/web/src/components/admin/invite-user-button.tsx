@@ -38,15 +38,15 @@ interface InviteUserButtonProps {
 
 export function InviteUserButton({
   userId,
-  userEmail,
+  userEmail: _userEmail,
   userName,
-  currentAccessStage = 'none',
+  currentAccessStage: _currentAccessStage = 'none',
 }: InviteUserButtonProps) {
   const [selectedStage, setSelectedStage] = useState<AccessStage>('beta');
   const queryClient = useQueryClient();
 
   const inviteUserMutation = useMutation({
-    ...trpc.user.inviteUser.mutationOptions(),
+    ...trpc.user.inviteUser.mutationOptions({}),
     onSuccess: () => {
       toast.success(`Invited ${userName} to ${selectedStage} access`);
       queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });

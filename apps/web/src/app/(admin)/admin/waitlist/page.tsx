@@ -45,7 +45,7 @@ export default function WaitlistPage() {
   });
 
   const updateAccessMutation = useMutation({
-    ...trpc.earlyAccess.updateWaitlistAccess.mutationOptions(),
+    ...trpc.earlyAccess.updateWaitlistAccess.mutationOptions({}),
     onSuccess: () => {
       toast.success('Access updated successfully');
       queryClient.invalidateQueries({
@@ -58,7 +58,7 @@ export default function WaitlistPage() {
   });
 
   const inviteToBetaMutation = useMutation({
-    ...trpc.earlyAccess.inviteToBeta.mutationOptions(),
+    ...trpc.earlyAccess.inviteToBeta.mutationOptions({}),
     onMutate: (vars: { id: string }) => {
       setUpdatingIds((prev) => new Set(prev).add(vars.id));
     },

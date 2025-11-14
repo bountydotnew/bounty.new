@@ -36,7 +36,7 @@ export function ExternalInviteModal() {
   const [accessStage, setAccessStage] = useState<AccessStage>('beta');
 
   const inviteExternalMutation = useMutation({
-    ...trpc.user.inviteExternalUser.mutationOptions(),
+    ...trpc.user.inviteExternalUser.mutationOptions({}),
     onSuccess: () => {
       toast.success(`Invite sent to ${email}`);
       setEmail('');

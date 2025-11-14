@@ -135,10 +135,7 @@
       "@tailwindcss/typography": "^0.5.16"
     }
   },
-  "dependencies": {
-    "@rivetkit/next-js": "^2.0.21",
-    "rivetkit": "^2.0.21"
-  },
+  "dependencies": {},
   "resolutions": {
     "@trpc/client": "^11.4.3"
   }

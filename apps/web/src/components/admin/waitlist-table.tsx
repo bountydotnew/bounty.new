@@ -59,7 +59,7 @@ export function WaitlistTable({
   const queryClient = useQueryClient();
 
   const updateAccessMutation = useMutation({
-    ...trpc.earlyAccess.updateWaitlistAccess.mutationOptions(),
+    ...trpc.earlyAccess.updateWaitlistAccess.mutationOptions({}),
     onSuccess: () => {
       toast.success('Access updated successfully');
       queryClient.invalidateQueries({
