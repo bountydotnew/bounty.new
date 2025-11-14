@@ -4,7 +4,7 @@
  * This wrapper provides a consistent API while using the battle-tested lru-cache library.
  */
 
-import * as LRU from "lru-cache";
+import { LRUCache as LruCacheImpl } from "lru-cache";
 
 export interface LRUCacheOptions<V> {
   /**
@@ -25,13 +25,13 @@ export interface LRUCacheOptions<V> {
 }
 
 export class LRUCache<V extends {} = Record<string, unknown>> {
-  private cache: LRU<string, V>;
+  private cache: LruCacheImpl<string, V>;
   private onEvict: ((key: string, value: V) => void) | undefined;
 
   constructor(options: LRUCacheOptions<V>) {
     this.onEvict = options.onEvict;
 
-    this.cache = new LRU.LRUCache<string, V>({
+    this.cache = new LruCacheImpl<string, V>({
       max: options.maxSize,
       ...(options.ttl !== undefined && { ttl: options.ttl }),
       ...(options.onEvict && {
