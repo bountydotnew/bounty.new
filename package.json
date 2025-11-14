@@ -1,16 +1,17 @@
 {
   "name": "bounty.new",
   "devDependencies": {
-    "@bounty/eslint-config": "workspace:*",
-    "@bounty/typescript-config": "workspace:*",
-    "@types/node": "^24.10.1",
+    "@biomejs/biome": "2.1.2",
+    "@shelve/cli": "^4.1.6",
     "dotenv-cli": "^8.0.0",
-    "knip": "^5.69.1",
+    "husky": "^9.1.7",
     "lefthook": "^2.0.1",
-    "nuqs": "2.7.0",
+    "lint-staged": "^16.2.6",
     "turbo": "^2.5.8",
-    "typescript": "^5.9.3",
-    "ultracite": "5.1.2"
+    "ultracite": "5.1.2",
+    "nuqs": "2.7.0",
+    "@bounty/eslint-config": "workspace:*",
+    "@bounty/typescript-config": "workspace:*"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,jsonc,css,scss,md,mdx}": [
@@ -72,6 +73,7 @@
       "@trpc/server": "^11.4.3",
       "@trpc/tanstack-react-query": "^11.4.3",
       "@types/node": "^24",
+      "@types/pg": "^8.11.11",
       "@types/react": "^19.1.8",
       "@types/react-dom": "^19.1.6",
       "@uidotdev/usehooks": "^2.4.1",
@@ -83,15 +85,20 @@
       "clsx": "^2.1.1",
       "cmdk": "^1.1.1",
       "date-fns": "^4.1.0",
+      "drizzle-kit": "^0.31.2",
+      "drizzle-orm": "^0.44.2",
       "drizzle-zod": "^0.8.2",
       "eslint": "^9.29.0",
+      "js-base64": "^3.7.8",
       "lru-cache": "^11.0.2",
       "lucide-react": "^0.542.0",
       "media-chrome": "^4.12.0",
       "motion": "^12.23.12",
       "next": "^16",
       "next-themes": "^0.4.6",
+      "pg": "^8.14.1",
       "posthog-js": "^1.257.0",
+      "posthog-node": "^5.5.1",
       "radix-ui": "^1.4.2",
       "react": "^19.1.0",
       "react-confetti": "^6.4.0",
@@ -99,6 +106,7 @@
       "react-dom": "^19.1.0",
       "react-hook-form": "^7.58.1",
       "react-markdown": "^10.1.0",
+      "react-svg-credit-card-payment-icons": "^4.0.0",
       "recharts": "^3.1.2",
       "rehype-autolink-headings": "^7.1.0",
       "rehype-parse": "^9.0.1",
@@ -110,18 +118,27 @@
       "resend": "^6.1.0",
       "remark-parse": "^11.0.0",
       "remark-rehype": "^11.1.0",
+      "server-only": "0.0.1",
       "sonner": "^2.0.5",
+      "superjson": "2.2.2",
       "tailwind-merge": "^3.3.1",
       "tailwindcss": "^4.1.11",
       "tailwindcss-animate": "^1.0.7",
       "tw-animate-css": "^1.3.6",
       "@tailwindcss/postcss": "^4.1.11",
       "typescript": "^5.8.3",
+      "use-debounce": "^10.0.5",
+      "usehooks-ts": "^3.1.1",
+      "vaul": "^1.1.2",
+      "nuqs": "^2.7.0",
       "zod": "^4.0.5",
       "@tailwindcss/typography": "^0.5.16"
     }
   },
-  "dependencies": {},
+  "dependencies": {
+    "@rivetkit/next-js": "^2.0.21",
+    "rivetkit": "^2.0.21"
+  },
   "resolutions": {
     "@trpc/client": "^11.4.3"
   }
