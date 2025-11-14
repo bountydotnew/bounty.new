@@ -119,7 +119,13 @@ function Row({ item, onRead }: NotificationRowProps) {
 }
 
 // biome-ignore lint: UI component with conditional rendering
-export function NotificationsDropdown() {
+export function NotificationsDropdown({
+  triggerClassName,
+  children,
+}: {
+  triggerClassName?: string;
+  children?: React.ReactNode;
+}) {
   const { data: session } = authClient.useSession();
   const { hasStageAccess } = useAccess();
   const enabled = Boolean(session) && hasStageAccess(['beta', 'production']);
@@ -151,16 +157,28 @@ export function NotificationsDropdown() {
   return (
     <DropdownMenu onOpenChange={(open) => !open && setShowAll(false)}>
       <DropdownMenuTrigger asChild>
-        <Button
-          className="relative rounded-none border-0 p-2 text-neutral-400 text-sm hover:bg-neutral-900 hover:text-white"
-          size="sm"
-          variant="text"
-        >
-          <BellIcon />
-          {unreadCount > 0 && (
-            <div className="absolute top-1 right-1 h-1 w-1 rounded-full bg-green-500" />
-          )}
-        </Button>
+        {children ? (
+          <div className={cn('relative', triggerClassName)}>
+            {children}
+            {unreadCount > 0 && (
+              <div className="absolute top-1 right-1 h-1 w-1 rounded-full bg-green-500" />
+            )}
+          </div>
+        ) : (
+          <Button
+            className={cn(
+              'relative rounded-none border-0 p-2 text-neutral-400 text-sm hover:bg-neutral-900 hover:text-white',
+              triggerClassName
+            )}
+            size="sm"
+            variant="text"
+          >
+            <BellIcon />
+            {unreadCount > 0 && (
+              <div className="absolute top-1 right-1 h-1 w-1 rounded-full bg-green-500" />
+            )}
+          </Button>
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"

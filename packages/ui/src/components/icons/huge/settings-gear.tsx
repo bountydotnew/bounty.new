@@ -1,6 +1,6 @@
 import React from "react";
 
-export const SettingsIcon = (props: React.SVGProps<SVGSVGElement>) => (
+export const SettingsGearIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"

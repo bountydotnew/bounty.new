@@ -2,43 +2,27 @@
 
 import { authClient } from '@bounty/auth/client';
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@bounty/ui/components/avatar';
-import { BellIcon } from '@bounty/ui/components/bell';
-import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from '@bounty/ui/components/sidebar';
-import { Spinner } from '@bounty/ui/components/spinner';
-import { UserIcon } from '@bounty/ui/components/user';
 import { useBilling } from '@/hooks/use-billing';
-import { useQuery } from '@tanstack/react-query';
-import { CreditCard, LogOut, Shield, Sparkles } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
+import { LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import * as React from 'react';
-import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { LINKS } from '@/constants';
 import type {
   AccountDropdownProps,
-  SessionUser,
-  User,
   UserDisplayData,
 } from '@/types/billing-components';
-import { trpc } from '@/utils/trpc';
+import {
+  HugeSettingsIcon,
+  SwitchWorkspaceIcon,
+  ManageUsersWorkspaceIcon,
+  BillingSettingsIcon,
+  DropdownIcon,
+} from '@bounty/ui';
 
 // Constants for better maintainability
 const MESSAGES = {
@@ -51,20 +35,12 @@ const MESSAGES = {
   PRO_BADGE: 'Pro',
 } as const;
 
-const MENU_ITEMS = {
-  UPGRADE: 'Upgrade to Pro',
-  ACCOUNT: 'Account',
-  BILLING: 'Billing',
-  NOTIFICATIONS: 'Notifications',
-  LOGOUT: 'Log out',
-} as const;
-
 const LOGIN_REDIRECT = '/login';
 
 // Custom hook for user display logic
 function useUserDisplay(
-  sessionUser?: SessionUser | null,
-  fallbackUser?: User
+  sessionUser?: { name?: string; email?: string; image?: string | null } | null,
+  fallbackUser?: { name?: string; email?: string; image?: string | null }
 ): UserDisplayData {
   return React.useMemo(() => {
     const user = sessionUser || fallbackUser;
@@ -102,7 +78,7 @@ function useBillingPortal() {
 // Custom hook for sign out functionality
 function useSignOut() {
   const router = useRouter();
-  return useCallback(() => {
+  return React.useCallback(() => {
     authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
@@ -113,122 +89,26 @@ function useSignOut() {
   }, [router]);
 }
 
-// Memoized Avatar component to prevent unnecessary re-renders
-const UserAvatar = React.memo<{
-  userDisplay: UserDisplayData;
-  isLoading: boolean;
-  className?: string;
-}>(({ userDisplay, isLoading, className = 'h-8 w-8 rounded-lg' }) => (
-  <Avatar className={className}>
-    {userDisplay.image && (
-      <AvatarImage
-        alt={userDisplay.name}
-        onError={(e) => {
-          // Fallback to initials if image fails to load
-          e.currentTarget.style.display = 'none';
-        }}
-        src={userDisplay.image}
-      />
-    )}
-    <AvatarFallback className="rounded-lg">
-      {isLoading ? (
-        <Spinner aria-label="Loading user information" size="sm" />
-      ) : (
-        userDisplay.initials
-      )}
-    </AvatarFallback>
-  </Avatar>
-));
-
-UserAvatar.displayName = 'UserAvatar';
-
-// Memoized dropdown header component
-const DropdownHeader = React.memo<{
-  userDisplay: UserDisplayData;
-  isPro: boolean;
-  isLoading: boolean;
-}>(({ userDisplay, isPro, isLoading }) => (
-  <DropdownMenuLabel className="p-0 font-normal">
-    <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-      <UserAvatar isLoading={isLoading} userDisplay={userDisplay} />
-      <div className="grid flex-1 text-left text-sm leading-tight">
-        <div className="flex items-center gap-2">
-          <span className="truncate font-medium">
-            {isLoading ? MESSAGES.LOADING : userDisplay.name}
-          </span>
-          {!isLoading && isPro && (
-            <span className="text-muted-foreground text-xs">
-              {MESSAGES.PRO_BADGE}
-            </span>
-          )}
-          {isLoading && (
-            <span className="animate-pulse text-muted-foreground text-xs">
-              {MESSAGES.CHECKING_SUBSCRIPTION}
-            </span>
-          )}
-        </div>
-        <span className="truncate text-xs">
-          {isLoading ? MESSAGES.VERIFYING_SUBSCRIPTION : userDisplay.email}
-        </span>
-      </div>
-    </div>
-  </DropdownMenuLabel>
-));
-
-DropdownHeader.displayName = 'DropdownHeader';
-
-// Upgrade menu item component
-const UpgradeMenuItem = React.memo<{
-  isPro: boolean;
-  isLoading: boolean;
-  onUpgradeClick: () => void;
-}>(({ isPro, isLoading, onUpgradeClick }) => {
-  if (isLoading) {
-    return (
-      <DropdownMenuItem aria-label="Loading subscription status" disabled>
-        <Spinner className="mr-2" size="sm" />
-        Checking subscription...
-      </DropdownMenuItem>
-    );
-  }
-
-  if (!isPro) {
-    return (
-      <DropdownMenuItem
-        aria-label="Upgrade to Pro plan"
-        onClick={onUpgradeClick}
-      >
-        <Sparkles />
-        {MENU_ITEMS.UPGRADE}
-      </DropdownMenuItem>
-    );
-  }
-
-  return null;
-});
-
-UpgradeMenuItem.displayName = 'UpgradeMenuItem';
 
 // Main component
 export function AccountDropdown({
   user,
-  onUpgradeClick,
-}: AccountDropdownProps) {
+  children,
+  onOpenChange: externalOnOpenChange,
+}: AccountDropdownProps & {
+  children?: React.ReactNode;
+  onOpenChange?: (open: boolean) => void;
+}) {
   const router = useRouter();
-  const pathname = usePathname();
-  const { isMobile } = useSidebar();
   const { data: session } = authClient.useSession();
   const [menuOpen, setMenuOpen] = React.useState(false);
-  const { isPro, isLoading: isBillingLoading } = useBilling({
-    enabled: menuOpen && !!session?.user,
-  });
-  const { data: me } = useQuery({
-    ...trpc.user.getMe.queryOptions(),
-    enabled: !!session?.user,
-  });
-  const isImpersonating = Boolean(
-    (session as any)?.session?.impersonatedBy ||
-      (session as any)?.impersonatedBy
+
+  const handleOpenChange = React.useCallback(
+    (open: boolean) => {
+      setMenuOpen(open);
+      externalOnOpenChange?.(open);
+    },
+    [externalOnOpenChange]
   );
 
   // Custom hooks for better separation of concerns
@@ -236,115 +116,96 @@ export function AccountDropdown({
   const handleBillingPortal = useBillingPortal();
   const handleSignOut = useSignOut();
 
-  // Memoize dropdown content positioning
-  const dropdownProps = React.useMemo(
-    () => ({
-      className:
-        'w-[var(--radix-dropdown-menu-trigger-width)] min-w-56 rounded-lg',
-      side: isMobile ? ('bottom' as const) : ('right' as const),
-      align: 'end' as const,
-      sideOffset: 4,
-    }),
-    [isMobile]
-  );
-
-  const handleAccountClick = useCallback(() => {
-    router.push(LINKS.ACCOUNT);
-  }, [router]);
-
-  const handleAdminClick = useCallback(() => {
-    if (pathname?.startsWith('/admin')) {
-      router.push('/');
-    } else {
-      router.push('/admin');
-    }
-  }, [router, pathname]);
-
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu onOpenChange={setMenuOpen} open={menuOpen}>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              aria-expanded={false}
-              aria-label={`Account menu for ${userDisplay.name}`}
-            >
-              <div>
-                <UserAvatar
-                  isLoading={isBillingLoading}
-                  userDisplay={userDisplay}
-                />
+    <DropdownMenu onOpenChange={handleOpenChange} open={menuOpen}>
+      <DropdownMenuTrigger asChild>
+        {children || (
+          <button
+            aria-label={`Account menu for ${userDisplay.name}`}
+            type="button"
+          >
+            {userDisplay.name}
+          </button>
+        )}
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent
+        className="rounded-[15px] w-74 bg-[var(--nav-active-bg)] border border-[var(--card-border-color)]"
+      >
+        {/* User header section */}
+        <div className="flex flex-col gap-1.5 border-b border-[#292828] px-4 py-1.5">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-0">
+              <div className="text-lg font-medium leading-[150%] text-[var(--text-workspace)]">
+                {userDisplay.name}
               </div>
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
+              <div className="text-base font-medium leading-[150%] tracking-[0.03em] text-[#999999]">
+                {userDisplay.email}
+              </div>
+            </div>
+            <ManageUsersWorkspaceIcon className="h-[19px] w-[19px] text-[var(--text-secondary)]" />
+          </div>
+          <button
+            className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-[var(--text-tertiary)] transition-colors hover:text-white"
+            onClick={() => router.push(LINKS.SETTINGS)}
+            type="button"
+          >
+            <HugeSettingsIcon className="h-[19px] w-[19px]" />
+            <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
+              Settings
+            </span>
+          </button>
+        </div>
 
-          <DropdownMenuContent {...dropdownProps}>
-            <DropdownHeader
-              isLoading={isBillingLoading}
-              isPro={isPro}
-              userDisplay={userDisplay}
-            />
+        {/* Actions section */}
+        <div className="flex flex-col gap-2 border-b border-[#292828] px-0 py-2">
+          <button
+            className="flex items-center justify-between rounded-[10px] px-4 py-0.75 text-[var(--text-secondary)] transition-colors hover:text-white"
+            type="button"
+          >
+            <div className="flex items-center gap-2.25">
+              <SwitchWorkspaceIcon className="h-[19px] w-[19px]" />
+              <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
+                Switch workspace
+              </span>
+            </div>
+            <DropdownIcon className="h-[19px] w-[19px] -rotate-90" />
+          </button>
+          <button
+            className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-[var(--text-secondary)] transition-colors hover:text-white"
+            type="button"
+          >
+            <ManageUsersWorkspaceIcon className="h-[19px] w-[19px]" />
+            <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
+              Manage members
+            </span>
+          </button>
+          <button
+            className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-[var(--text-secondary)] transition-colors hover:text-white"
+            onClick={handleBillingPortal}
+            type="button"
+          >
+            <BillingSettingsIcon className="h-[19px] w-[19px]" />
+            <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
+              Billing
+            </span>
+          </button>
+        </div>
 
-            <DropdownMenuSeparator />
-
-            {/* Upgrade section */}
-            <DropdownMenuGroup>
-              {(me?.role === 'admin' || isImpersonating) && (
-                <DropdownMenuItem
-                  aria-label="Open admin panel"
-                  onClick={handleAdminClick}
-                >
-                  <Shield />
-                  Admin
-                </DropdownMenuItem>
-              )}
-
-              <UpgradeMenuItem
-                isLoading={isBillingLoading}
-                isPro={isPro}
-                onUpgradeClick={onUpgradeClick}
-              />
-            </DropdownMenuGroup>
-
-            {/* Account actions */}
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                aria-label="View account settings"
-                onClick={handleAccountClick}
-              >
-                <UserIcon />
-                {MENU_ITEMS.ACCOUNT}
-              </DropdownMenuItem>
-
-              <DropdownMenuItem
-                aria-label="Open billing portal"
-                disabled={isBillingLoading}
-                onClick={handleBillingPortal}
-              >
-                <CreditCard />
-                {isBillingLoading ? MESSAGES.LOADING : MENU_ITEMS.BILLING}
-              </DropdownMenuItem>
-
-              <DropdownMenuItem aria-label="View notifications">
-                <BellIcon />
-                {MENU_ITEMS.NOTIFICATIONS}
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-
-            <DropdownMenuSeparator />
-
-            {/* Sign out */}
-            <DropdownMenuItem
-              aria-label="Sign out of account"
-              onClick={handleSignOut}
-              variant="destructive"
-            >
-              <LogOut />
-              {MENU_ITEMS.LOGOUT}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
+        {/* Log out section */}
+        <div className="px-4 py-0">
+          <button
+            className="flex items-center gap-2 rounded-[10px] px-0 py-3 text-[var(--text-secondary)] transition-colors hover:text-white"
+            onClick={handleSignOut}
+            type="button"
+          >
+            <LogOut className="h-[19px] w-[19px]" />
+            <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
+              Log Out
+            </span>
+          </button>
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

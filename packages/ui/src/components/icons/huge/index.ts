@@ -9,7 +9,7 @@ export * from "./github";
 export * from "./home";
 export * from "./manage-users-workspace";
 export * from "./notifications";
-export * from "./settings";
+export * from "./settings-gear";
 export * from "./sidebar-toggle";
 export * from "./submissions-people";
 export * from "./switch-users";

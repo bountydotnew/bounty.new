@@ -8,7 +8,6 @@ import {
 import Link from '@bounty/ui/components/link';
 import {
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -35,8 +34,7 @@ export function NavMain({
 }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
-      <SidebarMenu>
+      <SidebarMenu className="flex flex-col gap-[8px] w-full">
         {items.map((item) =>
           item.items && item.items.length > 0 ? (
             <Collapsible
