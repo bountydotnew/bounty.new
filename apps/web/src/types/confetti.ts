@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 
-export interface ConfettiContextType {
+interface ConfettiContextType {
   celebrate: () => void;
 }
 
-export interface ConfettiProviderProps {
+interface ConfettiProviderProps {
   children: ReactNode;
 }

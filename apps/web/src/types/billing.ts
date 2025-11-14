@@ -1,7 +1,7 @@
 import type { CustomerState as PolarCustomerState } from '@polar-sh/sdk/models/components/customerstate';
 import type { CustomerStateSubscription as PolarCustomerStateSubscription } from '@polar-sh/sdk/models/components/customerstatesubscription';
 
-export interface PolarError extends Error {
+interface PolarError extends Error {
   body$?: string;
   detail?: string;
   status?: number;
@@ -18,7 +18,7 @@ export interface FeatureState {
   included_usage: number;
 }
 
-export interface Features {
+interface Features {
   lowerFees: FeatureState;
   concurrentBounties: FeatureState;
 }
@@ -76,7 +76,7 @@ export interface CheckoutPendingAction extends BasePendingAction {
   };
 }
 
-export type PendingAction =
+type PendingAction =
   | PortalPendingAction
   | UsagePendingAction
   | CheckoutPendingAction;
@@ -85,16 +85,16 @@ export interface UsageMetadata {
   [key: string]: string | number | boolean;
 }
 
-export interface CheckoutParams {
+interface CheckoutParams {
   slug: 'pro-monthly' | 'pro-annual';
 }
 
-export interface UsageParams {
+interface UsageParams {
   event: string;
   metadata: UsageMetadata;
 }
 
-export interface BillingHookResult {
+interface BillingHookResult {
   isLoading: boolean;
   customer: CustomerState | null | undefined;
   refetch: () => Promise<unknown>;

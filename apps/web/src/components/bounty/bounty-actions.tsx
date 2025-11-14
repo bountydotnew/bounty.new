@@ -49,7 +49,7 @@ export function UpvoteButton({
   );
 }
 
-export function ActionsDropdown({
+function ActionsDropdown({
   onShare,
   onBookmark,
   actions,

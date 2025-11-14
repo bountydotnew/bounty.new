@@ -4,7 +4,7 @@ export interface CommentUser {
   image: string | null;
 }
 
-export interface BountyCommentItem {
+interface BountyCommentItem {
   id: string;
   content: string;
   originalContent?: string | null;
@@ -16,12 +16,12 @@ export interface BountyCommentItem {
   isLiked: boolean;
 }
 
-export interface EditState {
+interface EditState {
   id: string;
   initial: string;
 }
 
-export interface VoteInfo {
+interface VoteInfo {
   count: number;
   isVoted: boolean;
 }
@@ -39,7 +39,7 @@ export interface BountyCommentCacheItem {
   _removing?: boolean;
 }
 
-export interface DuplicateCommentError {
+interface DuplicateCommentError {
   code: 'DUPLICATE_COMMENT';
   message: string;
 }

@@ -52,7 +52,7 @@ export type Tag = {
   slug: string;
 };
 
-export type MarbleTag = {
+type MarbleTag = {
   tag: Tag;
 };
 
@@ -67,7 +67,7 @@ export type Category = {
   slug: string;
 };
 
-export type MarbleCategory = {
+type MarbleCategory = {
   category: Category;
 };
 
@@ -82,7 +82,7 @@ export type Author = {
   image: string;
 };
 
-export type MarbleAuthor = {
+type MarbleAuthor = {
   author: Author;
 };
 

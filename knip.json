@@ -1,0 +1,56 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignoreExportsUsedInFile": {
+    "interface": true,
+    "type": true
+  },
+  "tags": [
+    "-lintignore"
+  ],
+  "ignoreWorkspaces": [
+    "packages/db",
+    "packages/vscode-extension"
+  ],
+  "workspaces": {
+    ".": {
+      "entry": [
+        "apps/*/src/app/**/*.{ts,tsx}",
+        "apps/*/src/pages/**/*.{ts,tsx}",
+        "apps/*/src/**/*.{ts,tsx}",
+        "packages/*/src/index.{ts,tsx}",
+        "scripts/**/*.{ts,js}"
+      ],
+      "project": [
+        "apps/*/src/**/*.{ts,tsx}",
+        "apps/*/src/**/*.mts",
+        "packages/*/src/**/*.{ts,tsx}",
+        "packages/*/src/**/*.mts",
+        "packages/*/cli/**/*.{ts,js}"
+      ]
+    },
+    "apps/*": {
+      "entry": [
+        "src/app/**/*.{ts,tsx}",
+        "src/pages/**/*.{ts,tsx}",
+        "src/index.{ts,tsx}",
+        "src/server/**/*.{ts,tsx}"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}",
+        "scripts/**/*.{ts,js}"
+      ]
+    },
+    "packages/*": {
+      "entry": [
+        "src/index.{ts,tsx}",
+        "src/cli.{ts,tsx}",
+        "index.ts",
+        "cli.ts"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}",
+        "cli/**/*.{ts,js}"
+      ]
+    }
+  }
+}

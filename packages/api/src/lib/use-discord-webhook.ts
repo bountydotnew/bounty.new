@@ -39,7 +39,7 @@ interface SendErrorWebhookOptions {
   userId?: string;
 }
 
-export async function sendDiscordWebhook({
+async function sendDiscordWebhook({
   webhookUrl,
   content,
   embed,

@@ -25,4 +25,4 @@ const Sidebar = ({
   );
 };
 
-export { Sidebar, AppSidebar, AdminAppSidebar };
+export { Sidebar,   };

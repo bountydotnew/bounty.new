@@ -47,7 +47,7 @@ export interface RecommendedBounty {
   amount: number;
 }
 
-export interface DashboardQueries {
+interface DashboardQueries {
   bounties: {
     data?: { data: Bounty[] };
     isLoading: boolean;

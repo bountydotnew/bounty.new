@@ -118,7 +118,7 @@ export class LRUCache<V extends {} = Record<string, unknown>> {
  * @param keyGenerator - Optional function to generate cache keys from arguments
  * @returns Memoized function with cache methods
  */
-export const createMemoizedFunction = <Args extends unknown[], Result extends {}>(
+const createMemoizedFunction = <Args extends unknown[], Result extends {}>(
   fn: (...args: Args) => Promise<Result>,
   options: LRUCacheOptions<Result>,
   keyGenerator?: (...args: Args) => string

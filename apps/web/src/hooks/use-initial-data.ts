@@ -16,7 +16,7 @@ import { trpc, queryClient } from '@/utils/trpc';
  * 
  * @param enabled - Whether to fetch data (should be true when user is authenticated)
  */
-export function useInitialData(enabled = true) {
+function useInitialData(enabled = true) {
   const { data: session } = authClient.useSession();
   const isAuthenticated = !!session?.user;
   const shouldFetch = enabled && isAuthenticated;

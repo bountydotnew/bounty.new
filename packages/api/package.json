@@ -11,8 +11,6 @@
     "zod": "catalog:",
     "@trpc/server": "catalog:",
     "@unkey/ratelimit": "catalog:",
-    "@octokit/core": "catalog:",
-    "@octokit/plugin-rest-endpoint-methods": "catalog:",
     "lru-cache": "catalog:"
   },
   "devDependencies": {

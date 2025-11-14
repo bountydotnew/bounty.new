@@ -1,7 +1,7 @@
 import type * as React from 'react';
 import type * as RechartsPrimitive from 'recharts';
 
-export interface ChartTheme {
+interface ChartTheme {
   light: string;
   dark: string;
 }
