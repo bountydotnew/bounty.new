@@ -136,8 +136,6 @@
     }
   },
   "dependencies": {
-    "@rivetkit/next-js": "^2.0.21",
-    "rivetkit": "^2.0.21"
   },
   "resolutions": {
     "@trpc/client": "^11.4.3"

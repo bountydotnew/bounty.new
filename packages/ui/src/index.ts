@@ -21,6 +21,7 @@ export * from './components/divider';
 export * from './components/dotted-line';
 export * from './components/drawer';
 export * from './components/dropdown-menu';
+export * from './components/icons/huge';
 export * from './components/gradient-chart';
 export * from './components/hover-card';
 export * from './components/input';
