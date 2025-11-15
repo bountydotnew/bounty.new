@@ -9,18 +9,52 @@ import { LINKS } from '@/constants';
 import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { trpc } from '@/utils/trpc';
 import styles from './command-menu.module.css';
-import { Avatar, AvatarFallback, AvatarImage, BookmarksIcon, BountiesIcon, CommentsIcon, HomeIcon, SettingsGearIcon, Spinner } from '@bounty/ui';
-
-interface CommandMenuProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
+import { Avatar, AvatarImage, BookmarksIcon, BountiesIcon, CommentsIcon, HomeIcon, SettingsGearIcon, Spinner } from '@bounty/ui';
+import type { BountyCommandItemProps, CommandMenuProps } from '@bounty/types';
 
 const NAV_ITEMS = [
   { value: 'home', label: 'Home', icon: HomeIcon, description: 'Go to dashboard', action: LINKS.DASHBOARD },
   { value: 'bounties', label: 'Bounties', icon: BountiesIcon, description: 'Browse bounties', action: LINKS.BOUNTIES },
   { value: 'bookmarks', label: 'Bookmarks', icon: BookmarksIcon, description: 'View saved items', action: LINKS.BOOKMARKS },
 ];
+
+function BountyCommandItem({ bounty, commentCount, isLoading, onSelect }: BountyCommandItemProps) {
+  const bountyValue = `bounty-${bounty.id}`;
+  const amount = typeof bounty.amount === 'string' ? Number.parseFloat(bounty.amount) : bounty.amount;
+  const formattedAmount = amount ? `$${amount.toLocaleString()}` : '';
+
+  return (
+    <Command.Item
+      key={bounty.id}
+      value={bountyValue}
+      onSelect={onSelect}
+    >
+      {isLoading ? (
+        <Spinner size="sm" className="mr-3 h-5 w-5 text-[#F2F2F2]" />
+      ) : bounty.creator?.image ? (
+        <Avatar>
+          <AvatarImage src={bounty.creator.image} />
+        </Avatar>
+      ) : (
+        <div className="flex items-center justify-center mr-3 h-5 w-5 rounded-full bg-[#232323]">
+          <BountiesIcon className="h-4 w-4 text-[#F2F2F2]" />
+        </div>
+      )}
+      <div className="flex flex-col flex-1 min-w-0">
+        <span className="text-[15px] text-[#F2F2F2] truncate">{bounty.title}</span>
+        <div className="flex items-center gap-1.5 text-xs text-[#5A5A5A]">
+          <CommentsIcon className="h-3.5 w-3.5" />
+          <span>{commentCount} {commentCount === 1 ? 'comment' : 'comments'}</span>
+        </div>
+      </div>
+      {formattedAmount && (
+        <span className="ml-auto text-xs font-medium text-green-400 whitespace-nowrap">
+          {formattedAmount}
+        </span>
+      )}
+    </Command.Item>
+  );
+}
 
 export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
   const router = useRouter();
@@ -212,39 +246,15 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
                 {bountySearchQuery.data.data.map((bounty) => {
                   const bountyValue = `bounty-${bounty.id}`;
                   const isLoading = loadingValue === bountyValue;
-                  const amount = typeof bounty.amount === 'string' ? Number.parseFloat(bounty.amount) : bounty.amount;
-                  const formattedAmount = amount ? `$${amount.toLocaleString()}` : '';
                   const commentCount = statsMap.get(bounty.id)?.commentCount ?? 0;
                   return (
-                    <Command.Item
+                    <BountyCommandItem
                       key={bounty.id}
-                      value={bountyValue}
+                      bounty={bounty}
+                      commentCount={commentCount}
+                      isLoading={isLoading}
                       onSelect={handleSelect}
-                    >
-                      {isLoading ? (
-                        <Spinner size="sm" className="mr-3 h-5 w-5 text-[#F2F2F2]" />
-                      ) : bounty.creator?.image ? (
-                        <Avatar>
-                          <AvatarImage src={bounty.creator.image} />
-                        </Avatar>
-                      ) : (
-                        <div className="flex items-center justify-center mr-3 h-5 w-5 rounded-full bg-[#232323]">
-                          <BountiesIcon className="h-4 w-4 text-[#F2F2F2]" />
-                        </div>
-                      )}
-                      <div className="flex flex-col flex-1 min-w-0">
-                        <span className="text-[15px] text-[#F2F2F2] truncate">{bounty.title}</span>
-                        <div className="flex items-center gap-1.5 text-xs text-[#5A5A5A]">
-                          <CommentsIcon className="h-3.5 w-3.5" />
-                          <span>{commentCount} {commentCount === 1 ? 'comment' : 'comments'}</span>
-                        </div>
-                      </div>
-                      {formattedAmount && (
-                        <span className="ml-auto text-xs font-medium text-green-400 whitespace-nowrap">
-                          {formattedAmount}
-                        </span>
-                      )}
-                    </Command.Item>
+                    />
                   );
                 })}
               </Command.Group>
@@ -315,7 +325,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 
         <div className="flex h-[44px] items-center gap-3 border-t border-[#232323] bg-[#141414] px-4 text-xs text-[#929292]">
           <div className="flex items-center gap-2">
-            <kbd className="rounded bg-[#1E1E1E] px-1.5 py-0.5 text-[#929292]">↵</kbd>
+            <kbd className="rounded bg-[#1E1E1E] px-2 py-0.5 text-[#929292] text-[15px]">↵</kbd>
             <span>{selectedLabel}</span>
           </div>
 
