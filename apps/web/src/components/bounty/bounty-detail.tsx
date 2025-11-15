@@ -20,6 +20,7 @@ import SubmissionCard from '@/components/bounty/submission-card';
 import { SubmissionsMobileSidebar } from '@/components/bounty/submissions-mobile-sidebar';
 import type { BountyCommentCacheItem } from '@/types/comments';
 import { trpc, trpcClient } from '@/utils/trpc';
+import { Header } from '../dual-sidebar/sidebar-header';
 
 interface BountyDetailPageProps {
   id: string;
@@ -69,11 +70,11 @@ export default function BountyDetailPage({
     const previous = votes.data;
     const next = previous
       ? {
-          count: previous.isVoted
-            ? Math.max(0, Number(previous.count) - 1)
-            : Number(previous.count) + 1,
-          isVoted: !previous.isVoted,
-        }
+        count: previous.isVoted
+          ? Math.max(0, Number(previous.count) - 1)
+          : Number(previous.count) + 1,
+        isVoted: !previous.isVoted,
+      }
       : { count: 1, isVoted: true };
     queryClient.setQueryData(key, next);
     voteMutation.mutate(
@@ -218,6 +219,7 @@ export default function BountyDetailPage({
 
   return (
     <div className="min-h-screen bg-[#111110] text-white">
+      <Header />
       <div className="mx-auto max-w-[90%]">
         {/* Header */}
         <div className="mb-4 flex w-full items-center justify-between">

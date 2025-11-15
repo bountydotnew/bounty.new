@@ -106,7 +106,7 @@ export default function BountiesPage() {
     <>
       <Header />
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex items-center justify-end gap-3">
+        {/* <div className="mb-6 flex items-center justify-end gap-3">
           <Button variant="outline" asChild>
             <Link href="/api/bounty/random">
               <Dices className="mr-2 h-4 w-4" />
@@ -132,7 +132,7 @@ export default function BountiesPage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+        </div> */}
 
         <AccessGate
           fallback={
