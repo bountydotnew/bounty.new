@@ -16,6 +16,7 @@
     "@radix-ui/react-dropdown-menu": "catalog:",
     "@radix-ui/react-hover-card": "catalog:",
     "@radix-ui/react-navigation-menu": "catalog:",
+    "@radix-ui/react-popover": "catalog:",
     "@radix-ui/react-select": "catalog:",
     "@radix-ui/react-separator": "catalog:",
     "@radix-ui/react-slot": "catalog:",

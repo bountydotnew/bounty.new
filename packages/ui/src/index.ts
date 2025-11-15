@@ -30,6 +30,7 @@ export * from './components/layout-panel-top';
 export * from './components/link';
 export * from './components/navigation-menu';
 export * from './components/number-flow';
+export * from './components/popover';
 export * from './components/pinging-dot-chart';
 export * from './components/radial-chart';
 export * from './components/rainbow-glow-gradient-line';

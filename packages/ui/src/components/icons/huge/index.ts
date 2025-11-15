@@ -1,4 +1,5 @@
 export * from "./arrow-down";
+export * from "./arrow-down-2";
 export * from "./billing-settings";
 export * from "./bookmarks";
 export * from "./bounties";

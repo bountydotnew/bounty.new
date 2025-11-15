@@ -226,7 +226,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
         className={`${styles.dialog} fixed left-1/2 top-[20%] z-[10000] w-[660px] max-w-[90vw] -translate-x-1/2 overflow-hidden rounded-[15px] border border-[#232323] bg-[#191919] shadow-lg`}
       >
       <Command
-        className="flex flex-col"
+        className="flex flex-col h-full"
         value={selectedValue}
         onValueChange={handleValueChange}
       >
@@ -237,7 +237,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
         className={`${styles.input} h-[54px] border-b border-[#232323] bg-transparent px-4 text-[15px] font-medium text-[#F2F2F2] placeholder:text-[#5A5A5A] outline-none`}
       />
 
-      <Command.List className={`${styles.list} max-h-[420px] overflow-y-auto px-2 py-3`}>
+      <Command.List className={`${styles.list} h-full overflow-y-auto items-center px-2 py-3`}>
         {bountySearchMode ? (
           <>
             <Command.Empty>No bounties found.</Command.Empty>

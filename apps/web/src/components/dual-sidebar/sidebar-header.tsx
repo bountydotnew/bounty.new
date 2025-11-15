@@ -54,7 +54,7 @@ export const Header = ({
             onClick={() => setCommandMenuOpen(true)}
             type="button"
           >
-            <span className="h-[29px] flex-1 bg-transparent text-[16px] font-medium leading-[150%] tracking-[-0.03em] text-[#5A5A5A]">
+            <span className="flex-1 bg-transparent text-[16px] font-medium leading-[150%] tracking-[-0.03em] text-[#5A5A5A] flex items-center">
               Search for anything...
             </span>
             {/* Keyboard Shortcut Badge */}
@@ -80,10 +80,6 @@ export const Header = ({
               Create Bounty
             </span>
           </button>
-          <MobileSidebar
-            isMyBountiesLoading={isMyBountiesLoading}
-            myBounties={myBounties}
-          />
         </div>
       </header>
       <CreateBountyModal
