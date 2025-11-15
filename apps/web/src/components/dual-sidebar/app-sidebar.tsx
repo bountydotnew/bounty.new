@@ -95,7 +95,7 @@ const SidebarFooterActions = () => {
   const router = useRouter();
 
   return (
-    <div className="flex items-end justify-between gap-2 px-0 py-0">
+    <div className="flex items-end justify-between gap-2 px-[15px] py-0">
       <button
         className="inline-flex items-center gap-2 rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
         onClick={() => router.push(LINKS.SETTINGS)}
@@ -127,7 +127,7 @@ export const AppSidebar = ({
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <div className="flex h-screen flex-col gap-[7px] px-0 py-[0px] group-data-[collapsible=icon]:px-[5px]">
+      <div className="flex h-screen flex-col gap-[15px] px-0 py-[0px] group-data-[collapsible=icon]:px-[9px]">
         <div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:px-[5px] group-data-[collapsible=icon]:py-[15px]">
           <SidebarTrigger
             aria-label="Toggle sidebar layout"

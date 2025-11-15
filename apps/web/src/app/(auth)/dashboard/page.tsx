@@ -117,7 +117,7 @@ export default function Dashboard() {
         />
         <div className="bg-background">
           <div className="container mx-auto rounded-lg px-4 py-4">
-            <div className="mb-4 flex items-center justify-end">
+            {/* <div className="mb-4 flex items-center justify-end">
               <div className="flex gap-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -150,7 +150,7 @@ export default function Dashboard() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-            </div>
+            </div> */}
             <div className="grid grid-cols-1 gap-6 rounded-lg py-4 lg:h-[calc(100vh-8rem)] lg:grid-cols-3">
               {/* Center - Bounties Feed */}
               <div className="flex flex-col rounded-lg lg:col-span-2">

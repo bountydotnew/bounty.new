@@ -22,6 +22,7 @@ import {
   ManageUsersWorkspaceIcon,
   BillingSettingsIcon,
   DropdownIcon,
+  SwitchUsersIcon,
 } from '@bounty/ui';
 
 // Constants for better maintainability
@@ -143,7 +144,7 @@ export function AccountDropdown({
                 {userDisplay.email}
               </div>
             </div>
-            <ManageUsersWorkspaceIcon className="h-[19px] w-[19px] text-[var(--text-secondary)]" />
+            <SwitchUsersIcon className="h-[19px] w-[19px] text-[var(--text-secondary)]" />
           </div>
           <button
             className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-[var(--text-tertiary)] transition-colors hover:text-white"

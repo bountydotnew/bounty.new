@@ -21,14 +21,15 @@ import { useIsMobile } from '@bounty/ui/hooks/use-mobile';
 import { cn } from '@bounty/ui/lib/utils';
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { PanelLeftIcon } from 'lucide-react';
 import React, { useEffect, useMemo } from 'react';
 import {
+  SIDEBAR_COOKIE_MAX_AGE,
+  SIDEBAR_COOKIE_NAME,
   SIDEBAR_KEYBOARD_SHORTCUT,
   SIDEBAR_WIDTH,
   SIDEBAR_WIDTH_ICON,
-  SIDEBAR_WIDTH_ICON_HOVER,
 } from '../lib/constants';
+import { getCookie, setCookie } from '../lib/utils';
 import { SidebarToggleIcon } from './icons/huge';
 
 type SidebarContextProps = {
@@ -70,12 +71,45 @@ function SidebarProvider({
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
 
-  const [_open, _setOpen] = React.useState(defaultOpen);
+  // Initialize state from cookie if available
+  const getInitialState = React.useCallback(() => {
+    if (typeof window === 'undefined') {
+      return defaultOpen;
+    }
+    const cookieValue = getCookie(SIDEBAR_COOKIE_NAME);
+    if (cookieValue === 'expanded') {
+      return true;
+    }
+    if (cookieValue === 'collapsed') {
+      return false;
+    }
+    return defaultOpen;
+  }, [defaultOpen]);
+
+  const [_open, _setOpen] = React.useState(getInitialState);
+
+  // Sync state from cookie on mount
+  useEffect(() => {
+    const cookieValue = getCookie(SIDEBAR_COOKIE_NAME);
+    if (cookieValue === 'expanded') {
+      _setOpen(true);
+    } else if (cookieValue === 'collapsed') {
+      _setOpen(false);
+    }
+  }, []);
 
   const open = openProp ?? _open;
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === 'function' ? value(open) : value;
+      
+      // Persist to cookie
+      if (typeof window !== 'undefined') {
+        const stateValue = openState ? 'expanded' : 'collapsed';
+        const days = SIDEBAR_COOKIE_MAX_AGE / (60 * 60 * 24); // Convert seconds to days
+        setCookie(SIDEBAR_COOKIE_NAME, stateValue, days);
+      }
+      
       if (setOpenProp) {
         setOpenProp(openState);
       } else {
