@@ -72,24 +72,10 @@ function SidebarProvider({
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
 
-  // Initialize state from cookie if available
-  const getInitialState = React.useCallback(() => {
-    if (typeof window === 'undefined') {
-      return defaultOpen;
-    }
-    const cookieValue = getCookie(SIDEBAR_COOKIE_NAME);
-    if (cookieValue === 'expanded') {
-      return true;
-    }
-    if (cookieValue === 'collapsed') {
-      return false;
-    }
-    return defaultOpen;
-  }, [defaultOpen]);
+  // Always start with defaultOpen to match SSR, then sync from cookie after mount
+  const [_open, _setOpen] = React.useState(defaultOpen);
 
-  const [_open, _setOpen] = React.useState(getInitialState);
-
-  // Sync state from cookie on mount
+  // Sync state from cookie on mount to ensure it's up to date
   useEffect(() => {
     const cookieValue = getCookie(SIDEBAR_COOKIE_NAME);
     if (cookieValue === 'expanded') {
@@ -244,6 +230,7 @@ function Sidebar({
       data-slot="sidebar"
       data-state={state}
       data-variant={variant}
+      suppressHydrationWarning
     >
       <div
         className={cn(
