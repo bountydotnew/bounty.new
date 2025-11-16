@@ -131,23 +131,23 @@ export function AccountDropdown({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
-        className="rounded-[15px] w-74 bg-[var(--nav-active-bg)] border border-[var(--card-border-color)]"
+        className="rounded-[15px] w-74 bg-nav-active-bg border border-card-border-color"
       >
         {/* User header section */}
         <div className="flex flex-col gap-1.5 border-b border-[#292828] px-4 py-1.5">
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-0">
-              <div className="text-lg font-medium leading-[150%] text-[var(--text-workspace)]">
+              <div className="text-lg font-medium leading-[150%] text-text-workspace">
                 {userDisplay.name}
               </div>
               <div className="text-base font-medium leading-[150%] tracking-[0.03em] text-[#999999]">
                 {userDisplay.email}
               </div>
             </div>
-            <SwitchUsersIcon className="h-[19px] w-[19px] text-[var(--text-secondary)]" />
+            <SwitchUsersIcon className="h-[19px] w-[19px] text-text-secondary" />
           </div>
           <button
-            className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-[var(--text-tertiary)] transition-colors hover:text-white"
+            className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-white"
             onClick={() => router.push(LINKS.SETTINGS)}
             type="button"
           >
@@ -161,7 +161,7 @@ export function AccountDropdown({
         {/* Actions section */}
         <div className="flex flex-col gap-2 border-b border-[#292828] px-0 py-2">
           <button
-            className="flex items-center justify-between rounded-[10px] px-4 py-0.75 text-[var(--text-secondary)] transition-colors hover:text-white"
+            className="flex items-center justify-between rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white"
             type="button"
           >
             <div className="flex items-center gap-2.25">
@@ -173,7 +173,7 @@ export function AccountDropdown({
             <DropdownIcon className="h-[19px] w-[19px] -rotate-90" />
           </button>
           <button
-            className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-[var(--text-secondary)] transition-colors hover:text-white"
+            className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white"
             type="button"
           >
             <ManageUsersWorkspaceIcon className="h-[19px] w-[19px]" />
@@ -182,7 +182,7 @@ export function AccountDropdown({
             </span>
           </button>
           <button
-            className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-[var(--text-secondary)] transition-colors hover:text-white"
+            className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white"
             onClick={handleBillingPortal}
             type="button"
           >
@@ -196,7 +196,7 @@ export function AccountDropdown({
         {/* Log out section */}
         <div className="px-4 py-0">
           <button
-            className="flex items-center gap-2 rounded-[10px] px-0 py-3 text-[var(--text-secondary)] transition-colors hover:text-white"
+            className="flex items-center gap-2 rounded-[10px] px-0 py-3 text-text-secondary transition-colors hover:text-white"
             onClick={handleSignOut}
             type="button"
           >

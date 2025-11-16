@@ -19,7 +19,7 @@ export default function Home() {
         {/* Background geometric shapes */}
         <div className="absolute inset-0 overflow-hidden">
           <svg
-            className="-right-[35rem] desktop-svg absolute top-0 z-0 h-[75rem] w-[75rem] opacity-0 transition-transform duration-300 ease-out md:opacity-20 lg:opacity-10"
+            className="-right-140 desktop-svg absolute top-0 z-0 h-300 w-300 opacity-0 transition-transform duration-300 ease-out md:opacity-20 lg:opacity-10"
             fill="none"
             height="179"
             viewBox="0 0 153 179"

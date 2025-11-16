@@ -28,6 +28,7 @@ import {
   SIDEBAR_KEYBOARD_SHORTCUT,
   SIDEBAR_WIDTH,
   SIDEBAR_WIDTH_ICON,
+  SIDEBAR_WIDTH_MOBILE,
 } from '../lib/constants';
 import { getCookie, setCookie } from '../lib/utils';
 import { SidebarToggleIcon } from './icons/huge';
@@ -212,39 +213,27 @@ function Sidebar({
 
   if (isMobile) {
     return (
-      <Sheet onOpenChange={setOpenMobile} open={openMobile} {...props}>
+      <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
         <SheetContent
-          className="w-(--sidebar-width-icon) border-0 bg-[var(--sidebar-bg)] border-r border-[var(--sidebar-border-color)] p-0 text-sidebar-foreground [&>button]:hidden"
-          data-mobile="true"
           data-sidebar="sidebar"
           data-slot="sidebar"
-          side={side}
+          data-mobile="true"
+          className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) [&>button]:hidden"
           style={
             {
-              '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,
-            } as React.CSSProperties
+              "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+            } as React.CSSProperties  
           }
+          side={side}
         >
           <SheetHeader className="sr-only">
             <SheetTitle>Sidebar</SheetTitle>
             <SheetDescription>Displays the mobile sidebar.</SheetDescription>
           </SheetHeader>
-          <div
-            className={cn(
-              'group flex h-full w-full flex-col bg-[var(--sidebar-bg)]',
-              variant === 'icononly' ? 'px-4 py-5' : 'px-3 py-4',
-              variant === 'icononly' ? 'border-r border-[var(--sidebar-border-color)]' : '',
-              'rounded-r-2xl shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)]'
-            )}
-            data-collapsible="icon"
-            data-state="collapsed"
-            data-variant={variant}
-          >
-            {children}
-          </div>
+          <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>
       </Sheet>
-    );
+    )
   }
 
   return (

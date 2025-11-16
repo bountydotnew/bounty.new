@@ -214,7 +214,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
     <>
       {open && (
         <div
-          className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-9999 bg-black/50 backdrop-blur-sm"
           onClick={() => onOpenChange(false)}
           aria-hidden="true"
         />
@@ -223,7 +223,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
         open={open}
         onOpenChange={onOpenChange}
         label="Global Command Menu"
-        className={`${styles.dialog} fixed left-1/2 top-[20%] z-[10000] w-[660px] max-w-[90vw] -translate-x-1/2 overflow-hidden rounded-[15px] border border-[#232323] bg-[#191919] shadow-lg`}
+        className={`${styles.dialog} fixed left-1/2 top-[20%] z-10000 w-[660px] max-w-[90vw] -translate-x-1/2 overflow-hidden rounded-[15px] border border-[#232323] bg-[#191919] shadow-lg`}
       >
       <Command
         className="flex flex-col h-full"
