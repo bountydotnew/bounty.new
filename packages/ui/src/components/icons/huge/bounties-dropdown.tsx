@@ -1,8 +1,6 @@
-import React from "react";
+import type React from 'react';
 
-export const BountiesDropdownIcon = (
-  props: React.SVGProps<SVGSVGElement>,
-) => (
+export const BountiesDropdownIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     width="16"
     height="16"
@@ -21,4 +19,3 @@ export const BountiesDropdownIcon = (
     />
   </svg>
 );
-

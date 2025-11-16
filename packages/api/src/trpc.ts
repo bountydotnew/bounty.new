@@ -6,9 +6,12 @@ import type { Context } from './context';
 export const t = initTRPC.context<Context>().create({
   errorFormatter({ shape, error }) {
     const cause = error.cause as unknown;
-    const reason = (typeof cause === 'object' && cause && 'reason' in (cause as Record<string, unknown>)
-      ? (cause as { reason?: ReasonCode }).reason
-      : undefined);
+    const reason =
+      typeof cause === 'object' &&
+      cause &&
+      'reason' in (cause as Record<string, unknown>)
+        ? (cause as { reason?: ReasonCode }).reason
+        : undefined;
     return {
       ...shape,
       data: {

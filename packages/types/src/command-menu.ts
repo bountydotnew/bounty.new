@@ -18,4 +18,3 @@ export interface BountyCommandItemProps {
   isLoading: boolean;
   onSelect: (value: string) => void;
 }
-

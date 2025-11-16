@@ -10,8 +10,8 @@ interface BountyCardProps {
 }
 
 function formatLargeNumber(num: number): string {
-  if (num >= 1000000) {
-    return `${(num / 1000000).toFixed(1)}M`;
+  if (num >= 1_000_000) {
+    return `${(num / 1_000_000).toFixed(1)}M`;
   }
   if (num >= 1000) {
     return `${(num / 1000).toFixed(1)}K`;
@@ -61,9 +61,9 @@ export function BountyCard({ bounty, onClick }: BountyCardProps) {
                 <Check className="-rotate-45 h-2.5 w-2.5 transform text-white" />
               </div>
             </div>
-             <span className="text-gray-400 text-xs capitalize">
+            <span className="text-gray-400 text-xs capitalize">
               {bounty.status.replaceAll('_', ' ')}
-             </span>
+            </span>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -87,10 +87,14 @@ export function BountyCard({ bounty, onClick }: BountyCardProps) {
               e.stopPropagation();
             }}
             type="button"
-            aria-label={bounty.bookmarked ? 'Remove bookmark' : 'Bookmark bounty'}
+            aria-label={
+              bounty.bookmarked ? 'Remove bookmark' : 'Bookmark bounty'
+            }
             aria-pressed={bounty.bookmarked}
           >
-            <Bookmark className={`h-4 w-4 ${bounty.bookmarked ? 'fill-white text-white' : ''}`} />
+            <Bookmark
+              className={`h-4 w-4 ${bounty.bookmarked ? 'fill-white text-white' : ''}`}
+            />
           </button>
           {/* Reward */}
           <span className="font-semibold text-green-400 text-sm whitespace-nowrap">
@@ -138,7 +142,10 @@ export function BountyCard({ bounty, onClick }: BountyCardProps) {
         </div>
         <div className="flex items-center gap-1">
           <MessageCircle aria-hidden="true" className="h-4 w-4 flex-shrink-0" />
-          <span>{bounty.commentCount ?? 0} {(bounty.commentCount ?? 0) === 1 ? 'comment' : 'comments'}</span>
+          <span>
+            {bounty.commentCount ?? 0}{' '}
+            {(bounty.commentCount ?? 0) === 1 ? 'comment' : 'comments'}
+          </span>
         </div>
       </div>
     </div>

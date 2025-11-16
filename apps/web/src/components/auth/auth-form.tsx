@@ -20,23 +20,24 @@ function isSafeRedirectUrl(url: string | undefined): boolean {
   if (!url) {
     return false;
   }
-  
+
   // Must start with / and not //
   if (!url.startsWith('/') || url.startsWith('//')) {
     return false;
   }
-  
+
   // Must not contain protocol (http:, https:, javascript:, etc.)
   if (url.includes(':')) {
     return false;
   }
-  
+
   return true;
 }
 
 export default function AuthForm({ callbackUrl }: AuthFormProps) {
   // Validate and sanitize the callback URL to prevent open redirects
-  const safeCallbackUrl: string = isSafeRedirectUrl(callbackUrl) && callbackUrl ? callbackUrl : '/dashboard';
+  const safeCallbackUrl: string =
+    isSafeRedirectUrl(callbackUrl) && callbackUrl ? callbackUrl : '/dashboard';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isPending, startTransition] = useTransition();
@@ -62,7 +63,9 @@ export default function AuthForm({ callbackUrl }: AuthFormProps) {
           password,
           name: email.split('@')[0],
           fetchOptions: {
-            onError: (ctx: { error: { message?: string; status?: number } }) => {
+            onError: (ctx: {
+              error: { message?: string; status?: number };
+            }) => {
               toast.error(ctx.error.message || 'Sign up failed');
             },
             onSuccess: async () => {
@@ -73,11 +76,17 @@ export default function AuthForm({ callbackUrl }: AuthFormProps) {
                   email,
                   type: 'sign-in',
                 });
-                
-                toast.success('Account created! Please check your email to sign in.');
-                router.push(`/sign-up/verify-email-address?email=${encodeURIComponent(email)}`);
+
+                toast.success(
+                  'Account created! Please check your email to sign in.'
+                );
+                router.push(
+                  `/sign-up/verify-email-address?email=${encodeURIComponent(email)}`
+                );
               } catch (error) {
-                toast.error('Failed to send verification code. Please try again.');
+                toast.error(
+                  'Failed to send verification code. Please try again.'
+                );
                 console.error('OTP send error:', error);
               }
             },
@@ -91,10 +100,16 @@ export default function AuthForm({ callbackUrl }: AuthFormProps) {
           rememberMe: true,
           callbackURL: safeCallbackUrl,
           fetchOptions: {
-            onError: (ctx: { error: { message?: string; status?: number } }) => {
+            onError: (ctx: {
+              error: { message?: string; status?: number };
+            }) => {
               if (ctx.error.status === 403) {
-                toast.error('Please verify your email address before signing in');
-                router.push(`/sign-up/verify-email-address?email=${encodeURIComponent(email)}`);
+                toast.error(
+                  'Please verify your email address before signing in'
+                );
+                router.push(
+                  `/sign-up/verify-email-address?email=${encodeURIComponent(email)}`
+                );
               } else {
                 toast.error(ctx.error.message || 'Sign in failed');
               }
@@ -149,16 +164,12 @@ export default function AuthForm({ callbackUrl }: AuthFormProps) {
           />
         </div>
 
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={isPending}
-        >
+        <Button type="submit" className="w-full" disabled={isPending}>
           {isPending
             ? `${mode === 'signup' ? 'Creating account...' : 'Signing in...'}`
             : mode === 'signup'
-            ? 'Create account'
-            : 'Sign in'}
+              ? 'Create account'
+              : 'Sign in'}
         </Button>
       </form>
 

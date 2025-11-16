@@ -1,4 +1,4 @@
-import React from "react";
+import type React from 'react';
 
 export const SwitchUsersIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -31,4 +31,3 @@ export const SwitchUsersIcon = (props: React.SVGProps<SVGSVGElement>) => (
     />
   </svg>
 );
-

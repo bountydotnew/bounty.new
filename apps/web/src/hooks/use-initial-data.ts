@@ -6,14 +6,14 @@ import { trpc, queryClient } from '@/utils/trpc';
 
 /**
  * Hook to batch-fetch essential data on initial app load
- * 
+ *
  * This prefetches common queries in parallel, which tRPC will batch
  * into a single HTTP request (if they happen in the same tick).
- * 
+ *
  * Data fetched:
  * - User profile (getMe)
  * - Access profile (beta status, feature flags)
- * 
+ *
  * @param enabled - Whether to fetch data (should be true when user is authenticated)
  */
 function useInitialData(enabled = true) {
@@ -51,10 +51,10 @@ function useInitialData(enabled = true) {
 
 /**
  * Hook to prefetch initial data on mount
- * 
+ *
  * This triggers the initial data fetch and caches it for the entire session.
  * Use this at the root of your app to warm up the cache.
- * 
+ *
  * Prefetches:
  * - User profile (tRPC - batched)
  * - Access profile (tRPC - batched)
@@ -62,13 +62,13 @@ function useInitialData(enabled = true) {
  */
 export function usePrefetchInitialData() {
   const { data: session } = authClient.useSession();
-  
+
   useEffect(() => {
     if (session?.user) {
       // Prefetch tRPC queries - these will be batched into one HTTP request
       queryClient.prefetchQuery(trpc.user.getMe.queryOptions());
       queryClient.prefetchQuery(trpc.user.getAccessProfile.queryOptions());
-      
+
       // Prefetch billing data (Better Auth) - runs in parallel with tRPC batch
       queryClient.prefetchQuery({
         queryKey: ['billing'],
@@ -87,4 +87,3 @@ export function usePrefetchInitialData() {
     }
   }, [session?.user]);
 }
-

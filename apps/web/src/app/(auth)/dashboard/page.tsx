@@ -17,7 +17,15 @@ import { useDevice } from '@/components/device-provider';
 import { Header } from '@/components/dual-sidebar/sidebar-header';
 import { Onboarding } from '@/components/onboarding';
 import { ChevronDown } from 'lucide-react';
-import { GithubIcon, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, ArrowDownIcon2 } from '@bounty/ui';
+import {
+  GithubIcon,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  ArrowDownIcon2,
+} from '@bounty/ui';
 // Constants and types
 import { PAGINATION_DEFAULTS, PAGINATION_LIMITS } from '@/constants';
 import { trpc } from '@/utils/trpc';
@@ -158,7 +166,11 @@ export default function Dashboard() {
                               <ChevronDown className="w-3.5 h-3.5 ml-auto shrink-0 text-[#5A5A5A]" />
                             </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent className="w-60 p-0 border-[#232323] bg-[#191919] text-[#CFCFCF] rounded-xl shadow-[rgba(0,0,0,0.08)_0px_16px_40px_0px]" align="start" side="bottom">
+                          <DropdownMenuContent
+                            className="w-60 p-0 border-[#232323] bg-[#191919] text-[#CFCFCF] rounded-xl shadow-[rgba(0,0,0,0.08)_0px_16px_40px_0px]"
+                            align="start"
+                            side="bottom"
+                          >
                             <div className="p-1">
                               <div className="flex items-center border-b border-[#232323] px-2 font-medium">
                                 <input
@@ -173,7 +185,9 @@ export default function Dashboard() {
                               <div className="overflow-x-hidden flex flex-col max-h-[180px] overflow-y-auto no-scrollbar">
                                 <DropdownMenuItem className="relative cursor-default select-none py-1.5 outline-none data-[disabled=true]:pointer-events-none data-[selected=true]:text-[#CFCFCF] data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 flex items-center gap-2 w-full h-8 px-2 rounded-lg data-[selected=true]:bg-[#141414] text-sm font-medium hover:bg-[#141414] focus:bg-[#141414] bg-transparent">
                                   <GithubIcon className="size-4 text-[#5A5A5A]" />
-                                  <span className="text-[#CFCFCF] truncate block overflow-hidden">bounty.new</span>
+                                  <span className="text-[#CFCFCF] truncate block overflow-hidden">
+                                    bounty.new
+                                  </span>
                                 </DropdownMenuItem>
                               </div>
                             </div>
@@ -188,13 +202,19 @@ export default function Dashboard() {
                               type="button"
                             >
                               <div className="hidden sm:flex gap-0.5 items-center overflow-hidden">
-                                <span className="truncate text-[#CFCFCF]">main</span>
+                                <span className="truncate text-[#CFCFCF]">
+                                  main
+                                </span>
                                 <ChevronDown className="w-3.5 h-3.5 shrink-0 text-[#5A5A5A]" />
                               </div>
                               <ChevronDown className="sm:hidden w-3.5 h-3.5 shrink-0 text-[#5A5A5A]" />
                             </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent className="w-60 p-0 border-[#232323] bg-[#191919] text-[#CFCFCF] rounded-xl shadow-[rgba(0,0,0,0.08)_0px_16px_40px_0px]" align="start" side="bottom">
+                          <DropdownMenuContent
+                            className="w-60 p-0 border-[#232323] bg-[#191919] text-[#CFCFCF] rounded-xl shadow-[rgba(0,0,0,0.08)_0px_16px_40px_0px]"
+                            align="start"
+                            side="bottom"
+                          >
                             <div className="p-1">
                               <div className="flex items-center border-b border-[#232323] px-2 font-medium">
                                 <input
@@ -207,13 +227,20 @@ export default function Dashboard() {
                               </div>
                               <DropdownMenuSeparator className="h-px bg-[#232323] my-1 -mx-1" />
                               <div className="overflow-x-hidden flex flex-col max-h-[180px] overflow-y-auto no-scrollbar">
-                                {['main', 'develop', 'feature/new-ui', 'hotfix/auth-fix'].map((branch) => (
+                                {[
+                                  'main',
+                                  'develop',
+                                  'feature/new-ui',
+                                  'hotfix/auth-fix',
+                                ].map((branch) => (
                                   <DropdownMenuItem
                                     key={branch}
                                     className="relative cursor-default select-none py-1.5 outline-none data-[disabled=true]:pointer-events-none data-[selected=true]:text-[#CFCFCF] data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 flex items-center gap-2 w-full h-8 px-2 rounded-lg data-[selected=true]:bg-[#141414] text-sm font-medium hover:bg-[#141414] focus:bg-[#141414] bg-transparent"
                                   >
                                     <GithubIcon className="size-4 text-[#5A5A5A]" />
-                                    <span className="text-[#CFCFCF] truncate block overflow-hidden">{branch}</span>
+                                    <span className="text-[#CFCFCF] truncate block overflow-hidden">
+                                      {branch}
+                                    </span>
                                   </DropdownMenuItem>
                                 ))}
                               </div>
@@ -249,9 +276,7 @@ export default function Dashboard() {
                   bounties={bounties.data?.data ?? []}
                   className="lg:pr-2"
                   error={
-                    bounties.error instanceof Error
-                      ? bounties.error
-                      : undefined
+                    bounties.error instanceof Error ? bounties.error : undefined
                   }
                   isError={bounties.isError}
                   isLoading={bounties.isLoading}

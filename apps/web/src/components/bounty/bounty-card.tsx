@@ -41,7 +41,7 @@ export const BountyCard = memo(function BountyCard({
 
   const creatorName = bounty.creator.name || 'Anonymous';
   const creatorInitial = creatorName.charAt(0).toLowerCase();
-  
+
   // Generate color from creator name (simple hash-based approach)
   const colors = [
     { bg: '#E66700', border: '#C95900' },
@@ -52,13 +52,15 @@ export const BountyCard = memo(function BountyCard({
   ];
   const colorIndex = creatorName.charCodeAt(0) % colors.length;
   const avatarColor = colors[colorIndex];
-  
+
   const commentCount = initialStats?.commentCount ?? 0;
   const formattedAmount = `$${bounty.amount.toLocaleString()}`;
-  
+
   // Extract repo name from repositoryUrl if available, otherwise use hardcoded
-  const repoDisplay = bounty.repositoryUrl 
-    ? bounty.repositoryUrl.replace('https://github.com/', '').replace('http://github.com/', '')
+  const repoDisplay = bounty.repositoryUrl
+    ? bounty.repositoryUrl
+        .replace('https://github.com/', '')
+        .replace('http://github.com/', '')
     : 'ripgrim/bountydotnew';
 
   return (
@@ -75,11 +77,10 @@ export const BountyCard = memo(function BountyCard({
         <div className="flex items-center gap-[5px]">
           {bounty.creator.image ? (
             <Avatar className="h-4 w-4">
-              <AvatarImage
-                alt={creatorName}
-                src={bounty.creator.image}
-              />
-              <AvatarFallback className="h-4 w-4 text-[8px]">{creatorInitial}</AvatarFallback>
+              <AvatarImage alt={creatorName} src={bounty.creator.image} />
+              <AvatarFallback className="h-4 w-4 text-[8px]">
+                {creatorInitial}
+              </AvatarFallback>
             </Avatar>
           ) : (
             <div

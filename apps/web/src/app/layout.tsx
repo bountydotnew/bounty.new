@@ -78,7 +78,9 @@ export default function RootLayout({
               id="toolbar-script"
               src="https://get.usetool.bar/embedded-app.js"
             />
-            <div className="grid min-h-svh grid-rows-[auto_1fr]">{children}</div>
+            <div className="grid min-h-svh grid-rows-[auto_1fr]">
+              {children}
+            </div>
           </Providers>
         </NuqsAdapter>
       </body>

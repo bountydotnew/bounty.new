@@ -283,7 +283,6 @@ export {
   TabsTrigger,
   TabsContents,
   TabsContent,
-  
   type TabsContextType,
   type TabsProps,
   type TabsListProps,

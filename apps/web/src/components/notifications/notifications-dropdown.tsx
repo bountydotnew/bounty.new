@@ -21,7 +21,11 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
-import type { NotificationData, NotificationItem, NotificationRowProps } from '@/types/notifications';
+import type {
+  NotificationData,
+  NotificationItem,
+  NotificationRowProps,
+} from '@/types/notifications';
 import { authClient } from '@bounty/auth/client';
 import { useAccess } from '@/context/access-provider';
 
@@ -246,7 +250,9 @@ export function NotificationsDropdown({
         <div className="scrollbar-hide max-h-80 space-y-2 overflow-y-auto px-2 py-2">
           {isLoading ? (
             <div className="px-3 py-6 text-center">
-              <p className="text-neutral-400 text-sm">Loading notifications...</p>
+              <p className="text-neutral-400 text-sm">
+                Loading notifications...
+              </p>
             </div>
           ) : hasError ? (
             <div className="px-3 py-6 text-center">

@@ -9,10 +9,10 @@ import { trpc, trpcClient } from '@/utils/trpc';
 
 function LoginContent() {
   const [token] = useQueryState('invite', parseAsString);
-  
-  // Note: Using direct trpcClient.mutate() instead of mutationOptions() 
+
+  // Note: Using direct trpcClient.mutate() instead of mutationOptions()
   // to avoid keyPrefix error in the proxy layer
-  
+
   const applyInvite = useMutation({
     mutationFn: async (input: { token: string }) => {
       return await trpcClient.user.applyInvite.mutate(input);

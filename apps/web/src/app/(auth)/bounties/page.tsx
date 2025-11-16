@@ -41,19 +41,13 @@ export default function BountiesPage() {
   );
 
   // Fetch current user data for BetaAccessScreen
-  const {
-    data: currentUserData,
-    isLoading: isUserLoading,
-  } = useQuery({
+  const { data: currentUserData, isLoading: isUserLoading } = useQuery({
     ...trpc.user.getCurrentUser.queryOptions(),
     enabled: !!session?.user,
   });
 
   // Fetch beta application submission status
-  const {
-    data: betaSubmissionData,
-    refetch: refetchSubmission,
-  } = useQuery({
+  const { data: betaSubmissionData, refetch: refetchSubmission } = useQuery({
     ...trpc.betaApplications.checkExisting.queryOptions(),
     enabled: !!session?.user,
   });
@@ -158,7 +152,6 @@ export default function BountiesPage() {
             title=""
           />
         </AccessGate>
-  
       </div>
 
       <CreateBountyModal

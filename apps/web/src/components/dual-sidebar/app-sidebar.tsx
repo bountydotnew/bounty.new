@@ -106,9 +106,7 @@ const SidebarFooterActions = () => {
           Settings
         </span>
       </button>
-      <NotificationsDropdown
-        triggerClassName="flex h-auto w-auto items-center justify-center rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
-      >
+      <NotificationsDropdown triggerClassName="flex h-auto w-auto items-center justify-center rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]">
         <NotificationsIcon className="h-[19px] w-[19px]" />
       </NotificationsDropdown>
     </div>
@@ -127,7 +125,7 @@ export const AppSidebar = ({
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <div className="flex h-screen flex-col gap-[15px] px-0 py-[0px] group-data-[collapsible=icon]:px-[9px]">
+      <div className="flex h-full flex-col gap-[15px] px-0 py-[0px] group-data-[collapsible=icon]:px-[9px]">
         <div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:px-[5px] group-data-[collapsible=icon]:py-[15px]">
           <SidebarTrigger
             aria-label="Toggle sidebar layout"
@@ -141,7 +139,17 @@ export const AppSidebar = ({
         </SidebarHeader>
         <SidebarContent className="flex-1 overflow-y-auto px-[15px] py-0 group-data-[collapsible=icon]:px-0">
           <AccessGate
-            fallback={<NavMain items={[{ title: 'Apply for Beta Testing', url: LINKS.DASHBOARD, icon: FileUser }]} />}
+            fallback={
+              <NavMain
+                items={[
+                  {
+                    title: 'Apply for Beta Testing',
+                    url: LINKS.DASHBOARD,
+                    icon: FileUser,
+                  },
+                ]}
+              />
+            }
             skeleton={<SidebarNavSkeleton />}
             stage="beta"
           >

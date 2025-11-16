@@ -38,13 +38,13 @@ export default function GithubImportModal({
   onOpenChange,
 }: GithubImportModalProps) {
   const router = useRouter();
-  
+
   // Fetch current user data using tRPC
   const { data: currentUser } = useQuery({
     ...trpc.user.getMe.queryOptions(),
     enabled: open,
   });
-  
+
   const defaultUsername =
     (currentUser as CurrentUser)?.data?.profile?.githubUsername || '';
   const [username, setUsername] = useState<string>(defaultUsername);

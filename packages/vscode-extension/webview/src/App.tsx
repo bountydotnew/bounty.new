@@ -8,9 +8,7 @@ interface AppProps {
   isAuthenticated: boolean;
 }
 
-type ViewState = 
-  | { type: 'list' }
-  | { type: 'detail'; bountyId: string };
+type ViewState = { type: 'list' } | { type: 'detail'; bountyId: string };
 
 export function App({ isAuthenticated }: AppProps) {
   const [viewState, setViewState] = useState<ViewState>({ type: 'list' });
@@ -30,7 +28,9 @@ export function App({ isAuthenticated }: AppProps) {
 
   return (
     <BountiesView
-      onOpenBounty={(bounty) => setViewState({ type: 'detail', bountyId: bounty.id })}
+      onOpenBounty={(bounty) =>
+        setViewState({ type: 'detail', bountyId: bounty.id })
+      }
     />
   );
 }

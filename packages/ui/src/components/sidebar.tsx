@@ -89,14 +89,14 @@ function SidebarProvider({
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === 'function' ? value(open) : value;
-      
+
       // Persist to cookie
       if (typeof window !== 'undefined') {
         const stateValue = openState ? 'expanded' : 'collapsed';
         const days = SIDEBAR_COOKIE_MAX_AGE / (60 * 60 * 24); // Convert seconds to days
         setCookie(SIDEBAR_COOKIE_NAME, stateValue, days);
       }
-      
+
       if (setOpenProp) {
         setOpenProp(openState);
       } else {
@@ -207,8 +207,8 @@ function Sidebar({
           className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) [&>button]:hidden"
           style={
             {
-              "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-            } as React.CSSProperties  
+              '--sidebar-width': SIDEBAR_WIDTH_MOBILE,
+            } as React.CSSProperties
           }
           side={side}
         >
@@ -219,7 +219,7 @@ function Sidebar({
           <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>
       </Sheet>
-    )
+    );
   }
 
   return (
@@ -480,10 +480,7 @@ function SidebarGroupContent({
 function SidebarMenu({ className, ...props }: React.ComponentProps<'ul'>) {
   return (
     <ul
-      className={cn(
-        'flex w-full min-w-0 flex-col',
-        className
-      )}
+      className={cn('flex w-full min-w-0 flex-col', className)}
       data-sidebar="menu"
       data-slot="sidebar-menu"
       {...props}

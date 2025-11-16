@@ -340,7 +340,7 @@ export const bountiesRouter = router({
           .select({ count: sql<number>`count(*)` })
           .from(bounty)
           .where(conditions.length > 0 ? and(...conditions) : undefined);
-        
+
         const count = countResult[0]?.count ?? 0;
 
         const processedResults = results.map((result) => ({
@@ -1063,7 +1063,7 @@ export const bountiesRouter = router({
           .select({ count: sql<number>`count(*)` })
           .from(bountyBookmark)
           .where(eq(bountyBookmark.userId, ctx.session.user.id));
-        
+
         const count = countResult[0]?.count ?? 0;
 
         return {
@@ -1623,7 +1623,7 @@ export const bountiesRouter = router({
           .select({ count: sql<number>`count(*)` })
           .from(bounty)
           .where(eq(bounty.createdById, ctx.session.user.id));
-        
+
         const count = countResult[0]?.count ?? 0;
 
         const processedResults = results.map((result) => ({

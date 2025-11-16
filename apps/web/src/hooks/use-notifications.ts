@@ -82,4 +82,3 @@ export function useNotifications() {
     isMarkingAllAsRead: markAllAsReadMutation.isPending,
   } as const;
 }
-

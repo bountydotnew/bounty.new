@@ -1,5 +1,4 @@
-const baseUrl =
-  process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001';
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001';
 
 // sidebar
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';

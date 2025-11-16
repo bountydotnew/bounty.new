@@ -1,8 +1,6 @@
-import React from "react";
+import type React from 'react';
 
-export const SubmissionsPeopleIcon = (
-  props: React.SVGProps<SVGSVGElement>,
-) => (
+export const SubmissionsPeopleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"
@@ -25,4 +23,3 @@ export const SubmissionsPeopleIcon = (
     />
   </svg>
 );
-

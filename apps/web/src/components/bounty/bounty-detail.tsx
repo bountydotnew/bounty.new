@@ -70,11 +70,11 @@ export default function BountyDetailPage({
     const previous = votes.data;
     const next = previous
       ? {
-        count: previous.isVoted
-          ? Math.max(0, Number(previous.count) - 1)
-          : Number(previous.count) + 1,
-        isVoted: !previous.isVoted,
-      }
+          count: previous.isVoted
+            ? Math.max(0, Number(previous.count) - 1)
+            : Number(previous.count) + 1,
+          isVoted: !previous.isVoted,
+        }
       : { count: 1, isVoted: true };
     queryClient.setQueryData(key, next);
     voteMutation.mutate(

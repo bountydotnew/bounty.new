@@ -8,7 +8,6 @@ import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { cn } from '@bounty/ui/lib/utils';
 import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
 import { CommandMenu } from '@/components/command-menu';
-import { MobileSidebar } from '@/components/dual-sidebar/mobile-sidebar';
 import type { Bounty } from '@/types/dashboard';
 
 interface HeaderProps {
@@ -16,10 +15,7 @@ interface HeaderProps {
   isMyBountiesLoading?: boolean;
 }
 
-export const Header = ({
-  myBounties,
-  isMyBountiesLoading,
-}: HeaderProps = {}) => {
+export const Header = ({}: HeaderProps = {}) => {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const { createModalOpen, openCreateModal, closeCreateModal } =
     useBountyModals();
@@ -71,7 +67,7 @@ export const Header = ({
         <div className="flex items-center gap-2">
           {/* Create Bounty Button */}
           <button
-            className="flex items-center gap-[7px] rounded-[12px] border border-[#232323] bg-[#191919] py-[5px] px-[10px] transition-colors hover:bg-[#141414]"
+            className="hidden md:flex lg:flex items-center gap-[7px] rounded-[12px] border border-[#232323] bg-[#191919] py-[5px] px-[10px] transition-colors hover:bg-[#141414]"
             onClick={() => openCreateModal()}
             type="button"
           >
@@ -86,10 +82,7 @@ export const Header = ({
         onOpenChange={closeCreateModal}
         open={createModalOpen}
       />
-      <CommandMenu
-        onOpenChange={setCommandMenuOpen}
-        open={commandMenuOpen}
-      />
+      <CommandMenu onOpenChange={setCommandMenuOpen} open={commandMenuOpen} />
     </>
   );
 };

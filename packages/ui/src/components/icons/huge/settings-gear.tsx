@@ -1,4 +1,4 @@
-import React from "react";
+import type React from 'react';
 
 export const SettingsGearIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -17,4 +17,3 @@ export const SettingsGearIcon = (props: React.SVGProps<SVGSVGElement>) => (
     />
   </svg>
 );
-

@@ -31,7 +31,14 @@ export const AccessGate = ({
   requires,
   flags,
 }: AccessGateProps) => {
-  const { hasStageAccess, isLoading, hasFlag, isEmailVerified, isBanned, isAuthenticated } = useAccess();
+  const {
+    hasStageAccess,
+    isLoading,
+    hasFlag,
+    isEmailVerified,
+    isBanned,
+    isAuthenticated,
+  } = useAccess();
 
   // Show skeleton while loading user data
   if (isLoading) {
@@ -42,20 +49,21 @@ export const AccessGate = ({
   // Evaluate higher-level requirements if provided
   const requirementsOk = (requires || []).every((req) => {
     switch (req) {
-      case "any_authenticated":
+      case 'any_authenticated':
         return isAuthenticated;
-      case "beta_access":
-        return hasStageAccess(["beta", "production"]);
-      case "email_verified":
+      case 'beta_access':
+        return hasStageAccess(['beta', 'production']);
+      case 'email_verified':
         return isEmailVerified;
-      case "not_banned":
+      case 'not_banned':
         return !isBanned;
       default:
         return true;
     }
   });
   const flagsOk = (flags || []).every((f) => hasFlag(f));
-  const hasAccess = hasStageAccess(stage) && requirementsOk && flagsOk && condition;
+  const hasAccess =
+    hasStageAccess(stage) && requirementsOk && flagsOk && condition;
 
   if (!hasAccess) {
     return <>{fallback}</>;

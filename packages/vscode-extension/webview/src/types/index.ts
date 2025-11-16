@@ -23,8 +23,17 @@ export interface Bounty {
   bookmarked?: boolean;
 }
 
-export type BountyStatus = 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled';
-export type BountyDifficulty = 'beginner' | 'intermediate' | 'advanced' | 'expert';
+export type BountyStatus =
+  | 'draft'
+  | 'open'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled';
+export type BountyDifficulty =
+  | 'beginner'
+  | 'intermediate'
+  | 'advanced'
+  | 'expert';
 
 export interface FetchBountiesParams {
   page?: number;

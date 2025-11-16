@@ -1,4 +1,4 @@
-import React from "react";
+import type React from 'react';
 
 export const BountiesIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -16,4 +16,3 @@ export const BountiesIcon = (props: React.SVGProps<SVGSVGElement>) => (
     />
   </svg>
 );
-

@@ -43,7 +43,9 @@ function DropdownMenuContent({
           className
         )}
         style={{
-          boxShadow: className?.includes('shadow-[') ? undefined : 'rgba(0, 0, 0, 0.08) 0px 16px 40px 0px',
+          boxShadow: className?.includes('shadow-[')
+            ? undefined
+            : 'rgba(0, 0, 0, 0.08) 0px 16px 40px 0px',
         }}
         data-slot="dropdown-menu-content"
         sideOffset={sideOffset}

@@ -90,7 +90,6 @@ function useSignOut() {
   }, [router]);
 }
 
-
 // Main component
 export function AccountDropdown({
   user,
@@ -130,9 +129,7 @@ export function AccountDropdown({
         )}
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent
-        className="rounded-[15px] w-74 bg-nav-active-bg border border-card-border-color"
-      >
+      <DropdownMenuContent className="rounded-[15px] w-74 bg-nav-active-bg border border-card-border-color">
         {/* User header section */}
         <div className="flex flex-col gap-1.5 border-b border-[#292828] px-4 py-1.5">
           <div className="flex items-center justify-between">

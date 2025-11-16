@@ -52,6 +52,7 @@ export function showAppErrorToast(
   }
   dedupe.set(key, now);
 
-  const message = opts?.messageOverride || (reason ? MESSAGE_BY_REASON[reason] : undefined);
+  const message =
+    opts?.messageOverride || (reason ? MESSAGE_BY_REASON[reason] : undefined);
   toast.error(message || 'Something went wrong. Please try again.');
 }

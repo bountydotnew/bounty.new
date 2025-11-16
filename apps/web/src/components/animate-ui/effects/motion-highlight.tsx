@@ -610,7 +610,6 @@ function MotionHighlightItem({
 export {
   MotionHighlight,
   MotionHighlightItem,
-  
   type MotionHighlightProps,
   type MotionHighlightItemProps,
 };

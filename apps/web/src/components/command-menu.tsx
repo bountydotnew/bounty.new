@@ -9,26 +9,57 @@ import { LINKS } from '@/constants';
 import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { trpc } from '@/utils/trpc';
 import styles from './command-menu.module.css';
-import { Avatar, AvatarImage, BookmarksIcon, BountiesIcon, CommentsIcon, HomeIcon, SettingsGearIcon, Spinner } from '@bounty/ui';
+import {
+  Avatar,
+  AvatarImage,
+  BookmarksIcon,
+  BountiesIcon,
+  CommentsIcon,
+  HomeIcon,
+  SettingsGearIcon,
+  Spinner,
+} from '@bounty/ui';
 import type { BountyCommandItemProps, CommandMenuProps } from '@bounty/types';
 
 const NAV_ITEMS = [
-  { value: 'home', label: 'Home', icon: HomeIcon, description: 'Go to dashboard', action: LINKS.DASHBOARD },
-  { value: 'bounties', label: 'Bounties', icon: BountiesIcon, description: 'Browse bounties', action: LINKS.BOUNTIES },
-  { value: 'bookmarks', label: 'Bookmarks', icon: BookmarksIcon, description: 'View saved items', action: LINKS.BOOKMARKS },
+  {
+    value: 'home',
+    label: 'Home',
+    icon: HomeIcon,
+    description: 'Go to dashboard',
+    action: LINKS.DASHBOARD,
+  },
+  {
+    value: 'bounties',
+    label: 'Bounties',
+    icon: BountiesIcon,
+    description: 'Browse bounties',
+    action: LINKS.BOUNTIES,
+  },
+  {
+    value: 'bookmarks',
+    label: 'Bookmarks',
+    icon: BookmarksIcon,
+    description: 'View saved items',
+    action: LINKS.BOOKMARKS,
+  },
 ];
 
-function BountyCommandItem({ bounty, commentCount, isLoading, onSelect }: BountyCommandItemProps) {
+function BountyCommandItem({
+  bounty,
+  commentCount,
+  isLoading,
+  onSelect,
+}: BountyCommandItemProps) {
   const bountyValue = `bounty-${bounty.id}`;
-  const amount = typeof bounty.amount === 'string' ? Number.parseFloat(bounty.amount) : bounty.amount;
+  const amount =
+    typeof bounty.amount === 'string'
+      ? Number.parseFloat(bounty.amount)
+      : bounty.amount;
   const formattedAmount = amount ? `$${amount.toLocaleString()}` : '';
 
   return (
-    <Command.Item
-      key={bounty.id}
-      value={bountyValue}
-      onSelect={onSelect}
-    >
+    <Command.Item key={bounty.id} value={bountyValue} onSelect={onSelect}>
       {isLoading ? (
         <Spinner size="sm" className="mr-3 h-5 w-5 text-[#F2F2F2]" />
       ) : bounty.creator?.image ? (
@@ -41,10 +72,14 @@ function BountyCommandItem({ bounty, commentCount, isLoading, onSelect }: Bounty
         </div>
       )}
       <div className="flex flex-col flex-1 min-w-0">
-        <span className="text-[15px] text-[#F2F2F2] truncate">{bounty.title}</span>
+        <span className="text-[15px] text-[#F2F2F2] truncate">
+          {bounty.title}
+        </span>
         <div className="flex items-center gap-1.5 text-xs text-[#5A5A5A]">
           <CommentsIcon className="h-3.5 w-3.5" />
-          <span>{commentCount} {commentCount === 1 ? 'comment' : 'comments'}</span>
+          <span>
+            {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
+          </span>
         </div>
       </div>
       {formattedAmount && (
@@ -91,7 +126,11 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       // Handle Cmd+Enter (Mac) or Ctrl+Enter (Windows/Linux) to enter bounty search mode
-      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && hasActions) {
+      if (
+        (event.metaKey || event.ctrlKey) &&
+        event.key === 'Enter' &&
+        hasActions
+      ) {
         event.preventDefault();
         event.stopPropagation();
         setBountySearchMode(true);
@@ -176,7 +215,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
     }
 
     setLoadingValue(value);
-    
+
     switch (value) {
       case 'home':
         router.push(LINKS.DASHBOARD);
@@ -201,7 +240,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
         }
         break;
     }
-    
+
     // Close menu after a brief delay to show loading state
     setTimeout(() => {
       onOpenChange(false);
@@ -225,131 +264,170 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
         label="Global Command Menu"
         className={`${styles.dialog} fixed left-1/2 top-[20%] z-10000 w-[660px] max-w-[90vw] -translate-x-1/2 overflow-hidden rounded-[15px] border border-[#232323] bg-[#191919] shadow-lg`}
       >
-      <Command
-        className="flex flex-col h-full"
-        value={selectedValue}
-        onValueChange={handleValueChange}
-      >
-      <Command.Input
-        value={search}
-        onValueChange={setSearch}
-        placeholder={bountySearchMode ? "Search all bounties..." : "Search for apps and commands..."}
-        className={`${styles.input} h-[54px] border-b border-[#232323] bg-transparent px-4 text-[15px] font-medium text-[#F2F2F2] placeholder:text-[#5A5A5A] outline-none`}
-      />
+        <Command
+          className="flex flex-col h-full"
+          value={selectedValue}
+          onValueChange={handleValueChange}
+        >
+          <Command.Input
+            value={search}
+            onValueChange={setSearch}
+            placeholder={
+              bountySearchMode
+                ? 'Search all bounties...'
+                : 'Search for apps and commands...'
+            }
+            className={`${styles.input} h-[54px] border-b border-[#232323] bg-transparent px-4 text-[15px] font-medium text-[#F2F2F2] placeholder:text-[#5A5A5A] outline-none`}
+          />
 
-      <Command.List className={`${styles.list} h-full overflow-y-auto items-center px-2 py-3`}>
-        {bountySearchMode ? (
-          <>
-            <Command.Empty>No bounties found.</Command.Empty>
-            {bountySearchQuery.data?.data && bountySearchQuery.data.data.length > 0 && (
-              <Command.Group heading="Bounties" className={styles.group}>
-                {bountySearchQuery.data.data.map((bounty) => {
-                  const bountyValue = `bounty-${bounty.id}`;
-                  const isLoading = loadingValue === bountyValue;
-                  const commentCount = statsMap.get(bounty.id)?.commentCount ?? 0;
-                  return (
-                    <BountyCommandItem
-                      key={bounty.id}
-                      bounty={bounty}
-                      commentCount={commentCount}
-                      isLoading={isLoading}
-                      onSelect={handleSelect}
-                    />
-                  );
-                })}
-              </Command.Group>
-            )}
-          </>
-        ) : (
-          <>
-            <Command.Empty>No results found.</Command.Empty>
+          <Command.List
+            className={`${styles.list} h-full overflow-y-auto items-center px-2 py-3`}
+          >
+            {bountySearchMode ? (
+              <>
+                <Command.Empty>No bounties found.</Command.Empty>
+                {bountySearchQuery.data?.data &&
+                  bountySearchQuery.data.data.length > 0 && (
+                    <Command.Group heading="Bounties" className={styles.group}>
+                      {bountySearchQuery.data.data.map((bounty) => {
+                        const bountyValue = `bounty-${bounty.id}`;
+                        const isLoading = loadingValue === bountyValue;
+                        const commentCount =
+                          statsMap.get(bounty.id)?.commentCount ?? 0;
+                        return (
+                          <BountyCommandItem
+                            key={bounty.id}
+                            bounty={bounty}
+                            commentCount={commentCount}
+                            isLoading={isLoading}
+                            onSelect={handleSelect}
+                          />
+                        );
+                      })}
+                    </Command.Group>
+                  )}
+              </>
+            ) : (
+              <>
+                <Command.Empty>No results found.</Command.Empty>
 
-            <Command.Group heading="Navigation" className={styles.group}>
-              {NAV_ITEMS.map((item) => {
-                const isLoading = loadingValue === item.value;
-                const IconComponent = item.icon;
-                return (
-                  <Command.Item 
-                    key={item.value} 
-                    value={item.value} 
-                    keywords={[item.label.toLowerCase()]}
-                    onSelect={handleSelect}
-                  >
-                    {isLoading ? (
-                      <Spinner size="sm" className="mr-3 h-5 w-5 text-[#F2F2F2]" />
+                <Command.Group heading="Navigation" className={styles.group}>
+                  {NAV_ITEMS.map((item) => {
+                    const isLoading = loadingValue === item.value;
+                    const IconComponent = item.icon;
+                    return (
+                      <Command.Item
+                        key={item.value}
+                        value={item.value}
+                        keywords={[item.label.toLowerCase()]}
+                        onSelect={handleSelect}
+                      >
+                        {isLoading ? (
+                          <Spinner
+                            size="sm"
+                            className="mr-3 h-5 w-5 text-[#F2F2F2]"
+                          />
+                        ) : (
+                          <IconComponent className="mr-3 h-5 w-5 text-[#F2F2F2]" />
+                        )}
+                        <div className="flex flex-col">
+                          <span className="text-[15px] text-[#F2F2F2]">
+                            {item.label}
+                          </span>
+                          <span className="text-xs text-[#5A5A5A]">
+                            {item.description}
+                          </span>
+                        </div>
+                        <span className="ml-auto text-xs text-[#5A5A5A]">
+                          Application
+                        </span>
+                      </Command.Item>
+                    );
+                  })}
+                </Command.Group>
+
+                <Command.Group heading="Actions" className={styles.group}>
+                  <Command.Item value="create-bounty" onSelect={handleSelect}>
+                    {loadingValue === 'create-bounty' ? (
+                      <Spinner
+                        size="sm"
+                        className="mr-3 h-5 w-5 text-[#F2F2F2]"
+                      />
                     ) : (
-                      <IconComponent className="mr-3 h-5 w-5 text-[#F2F2F2]" />
+                      <Plus className="mr-3 h-5 w-5 text-[#F2F2F2]" />
                     )}
                     <div className="flex flex-col">
-                      <span className="text-[15px] text-[#F2F2F2]">{item.label}</span>
-                      <span className="text-xs text-[#5A5A5A]">{item.description}</span>
+                      <span className="text-[15px] text-[#F2F2F2]">
+                        Create Bounty
+                      </span>
+                      <span className="text-xs text-[#5A5A5A]">
+                        Start a new bounty
+                      </span>
                     </div>
-                    <span className="ml-auto text-xs text-[#5A5A5A]">Application</span>
+                    <span className="ml-auto text-xs text-[#5A5A5A]">
+                      Command
+                    </span>
                   </Command.Item>
-                );
-              })}
-            </Command.Group>
+                </Command.Group>
 
-            <Command.Group heading="Actions" className={styles.group}>
-              <Command.Item value="create-bounty" onSelect={handleSelect}>
-                {loadingValue === 'create-bounty' ? (
-                  <Spinner size="sm" className="mr-3 h-5 w-5 text-[#F2F2F2]" />
-                ) : (
-                  <Plus className="mr-3 h-5 w-5 text-[#F2F2F2]" />
-                )}
-                <div className="flex flex-col">
-                  <span className="text-[15px] text-[#F2F2F2]">Create Bounty</span>
-                  <span className="text-xs text-[#5A5A5A]">Start a new bounty</span>
-                </div>
-                <span className="ml-auto text-xs text-[#5A5A5A]">Command</span>
-              </Command.Item>
-            </Command.Group>
+                <Command.Group heading="Settings" className={styles.group}>
+                  <Command.Item value="settings" onSelect={handleSelect}>
+                    {loadingValue === 'settings' ? (
+                      <Spinner
+                        size="sm"
+                        className="mr-3 h-5 w-5 text-[#F2F2F2]"
+                      />
+                    ) : (
+                      <SettingsGearIcon className="mr-3 h-5 w-5 text-[#F2F2F2]" />
+                    )}
+                    <div className="flex flex-col">
+                      <span className="text-[15px] text-[#F2F2F2]">
+                        Settings
+                      </span>
+                      <span className="text-xs text-[#5A5A5A]">
+                        Manage your workspace
+                      </span>
+                    </div>
+                    <span className="ml-auto text-xs text-[#5A5A5A]">
+                      Command
+                    </span>
+                  </Command.Item>
+                </Command.Group>
+              </>
+            )}
+          </Command.List>
 
-            <Command.Group heading="Settings" className={styles.group}>
-              <Command.Item value="settings" onSelect={handleSelect}>
-                {loadingValue === 'settings' ? (
-                  <Spinner size="sm" className="mr-3 h-5 w-5 text-[#F2F2F2]" />
-                ) : (
-                  <SettingsGearIcon className="mr-3 h-5 w-5 text-[#F2F2F2]" />
-                )}
-                <div className="flex flex-col">
-                  <span className="text-[15px] text-[#F2F2F2]">Settings</span>
-                  <span className="text-xs text-[#5A5A5A]">Manage your workspace</span>
-                </div>
-                <span className="ml-auto text-xs text-[#5A5A5A]">Command</span>
-              </Command.Item>
-            </Command.Group>
-          </>
-        )}
-      </Command.List>
-
-        <div className="flex h-[44px] items-center gap-3 border-t border-[#232323] bg-[#141414] px-4 text-xs text-[#929292]">
-          <div className="flex items-center gap-2">
-            <kbd className="rounded bg-[#1E1E1E] px-2 py-0.5 text-[#929292] text-[15px]">↵</kbd>
-            <span>{selectedLabel}</span>
-          </div>
-
-          {!bountySearchMode && (
-            <div className="ml-auto flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleActionsClick}
-                className={`flex items-center gap-2 px-3 py-1 text-xs transition ${
-                  hasActions ? 'cursor-pointer text-[#F2F2F2] hover:text-white' : 'cursor-not-allowed text-[#4A4A4A]'
-                }`}
-                disabled={!hasActions}
-              >
-                Actions
-                <span className="flex items-center gap-1 text-[#5A5A5A]">
-                  <kbd className="rounded bg-[#1E1E1E] px-1 py-0.5">⌘</kbd>
-                  <kbd className="rounded bg-[#1E1E1E] px-1 py-0.5">↵</kbd>
-                </span>
-              </button>
+          <div className="flex h-[44px] items-center gap-3 border-t border-[#232323] bg-[#141414] px-4 text-xs text-[#929292]">
+            <div className="flex items-center gap-2">
+              <kbd className="rounded bg-[#1E1E1E] px-2 py-0.5 text-[#929292] text-[15px]">
+                ↵
+              </kbd>
+              <span>{selectedLabel}</span>
             </div>
-          )}
-        </div>
-      </Command>
-    </Command.Dialog>
+
+            {!bountySearchMode && (
+              <div className="ml-auto flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleActionsClick}
+                  className={`flex items-center gap-2 px-3 py-1 text-xs transition ${
+                    hasActions
+                      ? 'cursor-pointer text-[#F2F2F2] hover:text-white'
+                      : 'cursor-not-allowed text-[#4A4A4A]'
+                  }`}
+                  disabled={!hasActions}
+                >
+                  Actions
+                  <span className="flex items-center gap-1 text-[#5A5A5A]">
+                    <kbd className="rounded bg-[#1E1E1E] px-1 py-0.5">⌘</kbd>
+                    <kbd className="rounded bg-[#1E1E1E] px-1 py-0.5">↵</kbd>
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
+        </Command>
+      </Command.Dialog>
     </>
   );
 }

@@ -4,7 +4,7 @@
  * This wrapper provides a consistent API while using the battle-tested lru-cache library.
  */
 
-import { LRUCache as LruCacheImpl } from "lru-cache";
+import { LRUCache as LruCacheImpl } from 'lru-cache';
 
 export interface LRUCacheOptions<V> {
   /**
