@@ -4,6 +4,8 @@ export * from './billing-settings';
 export * from './bookmarks';
 export * from './bounties';
 export * from './bounties-dropdown';
+export * from './branch';
+export * from './chevron-double';
 export * from './comments';
 export * from './dropdown';
 export * from './github';

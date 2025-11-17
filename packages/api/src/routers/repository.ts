@@ -1,7 +1,9 @@
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { GithubManager } from '../../driver/github';
-import { publicProcedure, router } from '../trpc';
+import { protectedProcedure, publicProcedure, router } from '../trpc';
+import { account } from '@bounty/db';
+import { eq, and } from 'drizzle-orm';
 
 const github = new GithubManager({
   token: process.env.GITHUB_TOKEN || process.env.NEXT_PUBLIC_GITHUB_TOKEN,
@@ -66,6 +68,37 @@ export const repositoryRouter = router({
         return [];
       }
     }),
+  myRepos: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      // Get GitHub account for the authenticated user
+      const githubAccount = await ctx.db.query.account.findFirst({
+        where: and(
+          eq(account.userId, ctx.session.user.id),
+          eq(account.providerId, 'github')
+        ),
+      });
+
+      if (!githubAccount?.accessToken) {
+        console.log('[myRepos] No GitHub account or access token found for user:', ctx.session.user.id);
+        return { success: false, error: 'GitHub account not connected' };
+      }
+
+      // Create GithubManager with user's token
+      const userGithub = new GithubManager({ token: githubAccount.accessToken });
+
+      // Get authenticated user's repos
+      const repos = await userGithub.getAuthenticatedUserRepos();
+      console.log('[myRepos] Fetched repos:', repos);
+      return repos;
+    } catch (error) {
+      console.error('[myRepos] Error fetching repos:', error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Unknown error occurred while fetching repositories';
+      return { success: false, error: errorMessage };
+    }
+  }),
   searchIssues: publicProcedure
     .input(
       z.object({
@@ -85,6 +118,25 @@ export const repositoryRouter = router({
         return await github.searchIssues(owner, repo, q);
       } catch {
         return [];
+      }
+    }),
+  branches: publicProcedure
+    .input(z.object({ repo: z.string() }))
+    .query(async ({ input }) => {
+      try {
+        return await github.getBranches(input.repo);
+      } catch {
+        return [];
+      }
+    }),
+  defaultBranch: publicProcedure
+    .input(z.object({ repo: z.string() }))
+    .query(async ({ input }) => {
+      try {
+        return await github.getDefaultBranch(input.repo);
+      } catch (error) {
+        console.error('Failed to fetch default branch:', error);
+        return 'main';
       }
     }),
 });

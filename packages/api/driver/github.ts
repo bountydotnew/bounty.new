@@ -114,6 +114,45 @@ export class GithubManager {
     }
   }
 
+async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
+  try {
+    const { data } = await this.octokit.rest.repos.listForAuthenticatedUser({
+      per_page: 100,
+      sort: 'pushed',
+      affiliation: 'owner,collaborator,organization_member',
+    });
+    
+    // Filter to ONLY public repos - private repos don't align with open source mission
+    const publicRepos = data.filter((r) => !r.private);
+    
+    const repos = (publicRepos as GitHubRepository[]).map((r) => ({
+      id: r.id,
+      name: r.name,
+      description: r.description ?? undefined,
+      url: r.html_url,
+      stargazersCount: r.stargazers_count,
+      private: r.private,
+    }));
+    
+    return { success: true, data: repos };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : 'Unknown error occurred while fetching repositories';
+    return { success: false, error: errorMessage };
+  }
+}
+
+  async getAuthenticatedUser(): Promise<{ login: string } | null> {
+    try {
+      const { data } = await this.octokit.rest.users.getAuthenticated();
+      return { login: data.login };
+    } catch {
+      return null;
+    }
+  }
+
   async searchIssues(
     owner: string,
     repo: string,
@@ -173,6 +212,22 @@ export class GithubManager {
         per_page: 1,
       });
     return search.total_count ?? 0;
+  }
+
+  async getBranches(identifier: string): Promise<string[]> {
+    const { owner, repo } = parseRepo(identifier);
+    const { data } = await this.octokit.rest.repos.listBranches({
+      owner,
+      repo,
+      per_page: 100,
+    });
+    return data.map((branch) => branch.name);
+  }
+
+  async getDefaultBranch(identifier: string): Promise<string> {
+    const { owner, repo } = parseRepo(identifier);
+    const { data } = await this.octokit.rest.repos.get({ owner, repo });
+    return data.default_branch;
   }
 
   async getRecentCommits(identifier: string, perPage = 100) {
