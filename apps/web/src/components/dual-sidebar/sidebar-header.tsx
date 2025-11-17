@@ -2,6 +2,7 @@
 
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { SidebarTrigger } from '@bounty/ui/components/sidebar';
 import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
 import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
@@ -17,9 +18,30 @@ interface HeaderProps {
 
 export const Header = ({}: HeaderProps = {}) => {
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const router = useRouter();
+  const pathname = usePathname();
   const { createModalOpen, openCreateModal, closeCreateModal } =
     useBountyModals();
   const [commandMenuOpen, setCommandMenuOpen] = useState(false);
+
+  const handleCreateBounty = () => {
+    const isOnDashboard = pathname === '/dashboard';
+    
+    if (isOnDashboard) {
+      // Already on dashboard - scroll to top and focus textarea
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Use hash to trigger focus in dashboard component
+      window.location.hash = '#focus-textarea';
+      // Small delay to ensure scroll completes before focusing
+      setTimeout(() => {
+        const event = new CustomEvent('focus-textarea');
+        window.dispatchEvent(event);
+      }, 300);
+    } else {
+      // Navigate to dashboard with hash
+      router.push('/dashboard#focus-textarea');
+    }
+  };
 
   // Toggle the menu when ⌘K is pressed
   useEffect(() => {
@@ -68,7 +90,7 @@ export const Header = ({}: HeaderProps = {}) => {
           {/* Create Bounty Button */}
           <button
             className="hidden md:flex lg:flex items-center gap-[7px] rounded-[12px] border border-[#232323] bg-[#191919] py-[5px] px-[10px] transition-colors hover:bg-[#141414]"
-            onClick={() => openCreateModal()}
+            onClick={handleCreateBounty}
             type="button"
           >
             <Plus className="h-4 w-4 text-[#CFCFCF]" />

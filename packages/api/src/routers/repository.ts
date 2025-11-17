@@ -5,9 +5,8 @@ import { protectedProcedure, publicProcedure, router } from '../trpc';
 import { account } from '@bounty/db';
 import { eq, and } from 'drizzle-orm';
 
-const github = new GithubManager({
-  token: process.env.GITHUB_TOKEN || process.env.NEXT_PUBLIC_GITHUB_TOKEN,
-});
+const githubToken = process.env.GITHUB_TOKEN || process.env.NEXT_PUBLIC_GITHUB_TOKEN || undefined;
+const github = new GithubManager(githubToken ? { token: githubToken } : {});
 
 export const repositoryRouter = router({
   stats: publicProcedure
@@ -116,6 +115,34 @@ export const repositoryRouter = router({
           return [];
         }
         return await github.searchIssues(owner, repo, q);
+      } catch {
+        return [];
+      }
+    }),
+  listIssues: publicProcedure
+    .input(
+      z.object({
+        owner: z.string(),
+        repo: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      try {
+        const owner = input.owner?.trim();
+        const repo = input.repo?.trim();
+        if (!(owner && repo)) {
+          return [];
+        }
+        const issues = await github.listIssues(owner, repo);
+        // Sort by activity (comments + recency) - most active first
+        return issues.sort((a, b) => {
+          // Primary sort: by comments (activity)
+          if (b.comments !== a.comments) {
+            return b.comments - a.comments;
+          }
+          // Secondary sort: by updated_at (most recent)
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+        });
       } catch {
         return [];
       }

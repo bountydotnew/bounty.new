@@ -4,7 +4,7 @@ import { authClient } from '@bounty/auth/client';
 import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { track } from '@databuddy/sdk';
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import { AccessGate } from '@/components/access-gate';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
 import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
@@ -16,7 +16,7 @@ import { DashboardPageSkeleton } from '@/components/dashboard/skeletons/dashboar
 import { useDevice } from '@/components/device-provider';
 import { Header } from '@/components/dual-sidebar/sidebar-header';
 import { Onboarding } from '@/components/onboarding';
-import { TaskInputForm } from '@/components/dashboard/task-input-form';
+import { TaskInputForm, type TaskInputFormRef } from '@/components/dashboard/task-input-form';
 // Constants and types
 import { PAGINATION_DEFAULTS, PAGINATION_LIMITS } from '@/constants';
 import { trpc } from '@/utils/trpc';
@@ -24,6 +24,32 @@ import { trpc } from '@/utils/trpc';
 track('screen_view', { screen_name: 'dashboard' });
 
 export default function Dashboard() {
+  const taskInputRef = useRef<TaskInputFormRef>(null);
+
+  // Focus textarea if hash is present (for navigation from other pages)
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash === '#focus-textarea' || hash === '#new-bounty') {
+      // Small delay to ensure component is mounted
+      setTimeout(() => {
+        taskInputRef.current?.focus();
+        window.history.replaceState(null, '', window.location.pathname);
+      }, 100);
+    }
+
+    // Listen for custom event to focus textarea (when already on dashboard)
+    const handleFocusTextarea = () => {
+      setTimeout(() => {
+        taskInputRef.current?.focus();
+      }, 100);
+    };
+
+    window.addEventListener('focus-textarea', handleFocusTextarea);
+    return () => {
+      window.removeEventListener('focus-textarea', handleFocusTextarea);
+    };
+  }, []);
+
   // Memoized query options for better performance
   const bountiesQuery = useMemo(
     () =>
@@ -110,7 +136,7 @@ export default function Dashboard() {
           {/* Horizontal border line above textarea */}
           <div className="h-px w-full shrink-0 bg-[#232323]" />
 
-          <TaskInputForm />
+          <TaskInputForm ref={taskInputRef} />
 
           {/* Horizontal border line below textarea */}
           <div className="h-px w-full shrink-0 bg-[#232323]" />

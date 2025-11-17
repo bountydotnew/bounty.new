@@ -4,6 +4,19 @@ import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods';
 
 const MyOctokit = Octokit.plugin(restEndpointMethods);
 
+// Top-level regex patterns for performance
+const CO_AUTHOR_REGEX = /Co-authored-by:\s*(.+?)\s*<[^>]+>/g;
+const NUMERIC_TERM_REGEX = /^\d+$/;
+const GITHUB_ISSUE_URL_REGEX = /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/i;
+const CURRENCY_SYMBOL_REGEX = /[$€£]/;
+const DOLLAR_PATTERN = /\$\s*(\d{1,13}(?:[.,]\d{1,2})?)/i;
+const EURO_PATTERN = /€\s*(\d{1,13}(?:[.,]\d{1,2})?)/i;
+const POUND_PATTERN = /£\s*(\d{1,13}(?:[.,]\d{1,2})?)/i;
+const AMOUNT_CURRENCY_PATTERN = /\b(\d{1,13}(?:[.,]\d{1,2})?)\s*(usd|eur|gbp|dollars|pounds|euros)\b/i;
+const CURRENCY_AMOUNT_PATTERN = /\b(usd|eur|gbp)\s*(\d{1,13}(?:[.,]\d{1,2})?)\b/i;
+const DIGIT_PATTERN = /\d/;
+const TRAILING_DOT_PATTERN = /\.$/;
+
 export type RepoBasics = {
   id: number;
   name: string;
@@ -54,11 +67,16 @@ function parseRepo(identifier: string) {
 }
 
 function parseCoAuthors(message: string): string[] {
-  const coAuthorRegex = /Co-authored-by:\s*(.+?)\s*<[^>]+>/g;
   const out: string[] = [];
-  let m;
-  while ((m = coAuthorRegex.exec(message)) !== null) {
-    out.push(m[1].trim());
+  // Reset regex lastIndex to ensure fresh search
+  CO_AUTHOR_REGEX.lastIndex = 0;
+  let m: RegExpExecArray | null = CO_AUTHOR_REGEX.exec(message);
+  while (m !== null) {
+    const author = m[1];
+    if (author) {
+      out.push(author.trim());
+    }
+    m = CO_AUTHOR_REGEX.exec(message);
   }
   return out;
 }
@@ -75,10 +93,9 @@ export class GithubManager {
   async getRepoBasics(identifier: string): Promise<RepoBasics> {
     const { owner, repo } = parseRepo(identifier);
     const { data } = await this.octokit.rest.repos.get({ owner, repo });
-    return {
+    const result: RepoBasics = {
       id: data.id,
       name: data.name,
-      description: data.description ?? undefined,
       url: data.html_url,
       isPrivate: data.private,
       stargazersCount: data.stargazers_count,
@@ -86,6 +103,10 @@ export class GithubManager {
       subscribersCount: data.subscribers_count,
       openIssuesCount: data.open_issues_count,
     };
+    if (data.description !== null && data.description !== undefined) {
+      result.description = data.description;
+    }
+    return result;
   }
 
   async getUserRepos(username: string): Promise<GetUserReposResult> {
@@ -95,14 +116,19 @@ export class GithubManager {
         per_page: 50,
         sort: 'pushed',
       });
-      const repos = (data as GitHubRepository[]).map((r) => ({
+      const repos: UserRepo[] = (data as GitHubRepository[]).map((r) => {
+        const repo: UserRepo = {
         id: r.id,
         name: r.name,
-        description: r.description ?? undefined,
         url: r.html_url,
         stargazersCount: r.stargazers_count,
         private: r.private,
-      }));
+        };
+        if (r.description !== null && r.description !== undefined) {
+          repo.description = r.description;
+        }
+        return repo;
+      });
       return { success: true, data: repos };
     } catch (error) {
       // Fix: Return discriminated union with error information instead of empty array
@@ -125,14 +151,19 @@ async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
     // Filter to ONLY public repos - private repos don't align with open source mission
     const publicRepos = data.filter((r) => !r.private);
     
-    const repos = (publicRepos as GitHubRepository[]).map((r) => ({
+      const repos: UserRepo[] = (publicRepos as GitHubRepository[]).map((r) => {
+        const repo: UserRepo = {
       id: r.id,
       name: r.name,
-      description: r.description ?? undefined,
       url: r.html_url,
       stargazersCount: r.stargazers_count,
       private: r.private,
-    }));
+        };
+        if (r.description !== null && r.description !== undefined) {
+          repo.description = r.description;
+        }
+        return repo;
+      });
     
     return { success: true, data: repos };
   } catch (error) {
@@ -164,7 +195,7 @@ async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
       const term = q.trim();
       const parts = [`repo:${owner}/${repo}`, 'is:issue'];
       if (term) {
-        if (/^\d+$/.test(term)) {
+        if (NUMERIC_TERM_REGEX.test(term)) {
           // Fix: Remove invalid 'in:number' qualifier and push bare number term
           parts.push(term);
         } else {
@@ -175,7 +206,7 @@ async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
         q: parts.join(' '),
         per_page: 10,
       });
-      return data.items.map((i: any) => ({
+      return data.items.map((i) => ({
         number: i.number,
         title: i.title,
         state: i.state,
@@ -196,12 +227,25 @@ async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
       repo,
       per_page: perPage,
     });
-    return data.map((c: any) => ({
+    const contributors: Contributor[] = [];
+    for (const c of data) {
+      if (
+        c !== null &&
+        c !== undefined &&
+        typeof c.login === 'string' &&
+        typeof c.avatar_url === 'string' &&
+        typeof c.html_url === 'string' &&
+        typeof c.contributions === 'number'
+      ) {
+        contributors.push({
       login: c.login,
       avatar_url: c.avatar_url,
       html_url: c.html_url,
       contributions: c.contributions,
-    }));
+        });
+      }
+    }
+    return contributors;
   }
 
   async getOpenPRs(identifier: string): Promise<number> {
@@ -253,7 +297,13 @@ async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
     });
     let best: CommitLite | undefined;
     let max = 0;
-    for (const c of commits.slice(0, 10)) {
+
+    // Use Promise.all to avoid await in loop
+    const commitDetails = await Promise.all(
+      commits.slice(0, 10).map(async (c) => {
+        if (!c.sha) {
+          throw new Error('Commit SHA is missing');
+        }
       const { data: detail } = await this.octokit.request(
         'GET /repos/{owner}/{repo}/commits/{ref}',
         {
@@ -265,17 +315,38 @@ async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
       const additions = detail.stats?.additions || 0;
       const deletions = detail.stats?.deletions || 0;
       const total = additions + deletions;
-      if (total > max) {
-        max = total;
-        best = {
+        const commitMessage = c.commit?.message || '';
+        const htmlUrl = c.html_url;
+        if (!htmlUrl) {
+          throw new Error('Commit URL is missing');
+        }
+        const messageLines = String(commitMessage).split('\n');
+        const firstLine = messageLines[0];
+        if (!firstLine) {
+          throw new Error('Commit message is empty');
+        }
+        return {
           sha: String(c.sha).slice(0, 7),
-          message: String(c.commit?.message || '')
-            .split('\n')[0]
-            .slice(0, 50),
+          message: firstLine.slice(0, 50),
           additions,
           deletions,
-          coAuthors: parseCoAuthors(String(c.commit?.message || '')),
-          url: c.html_url,
+          coAuthors: parseCoAuthors(String(commitMessage)),
+          url: htmlUrl,
+          total,
+        };
+      })
+    );
+
+    for (const detail of commitDetails) {
+      if (detail.total > max && detail.url) {
+        max = detail.total;
+        best = {
+          sha: detail.sha,
+          message: detail.message,
+          additions: detail.additions,
+          deletions: detail.deletions,
+          coAuthors: detail.coAuthors,
+          url: detail.url,
         };
       }
     }
@@ -292,14 +363,17 @@ async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
   }
 
   async getIssueFromUrl(url: string) {
-    const match = url.match(
-      /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/i
-    );
-    if (!match) {
+    const match = url.match(GITHUB_ISSUE_URL_REGEX);
+    if (!match || match.length < 4) {
       throw new Error('Invalid GitHub issue URL');
     }
-    const [, owner, repo, num] = match;
-    const issue = await this.getIssue(owner, repo, Number(num));
+    const owner = match[1];
+    const repo = match[2];
+    const numStr = match[3];
+    if (owner === undefined || repo === undefined || numStr === undefined) {
+      throw new Error('Invalid GitHub issue URL');
+    }
+    const issue = await this.getIssue(owner, repo, Number(numStr));
     const bodyHtml = await this.renderMarkdown(
       issue.body || '',
       `${owner}/${repo}`
@@ -310,7 +384,7 @@ async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
     return {
       owner,
       repo,
-      number: Number(num),
+      number: Number(numStr),
       title: issue.title,
       body: issue.body || '',
       body_html: bodyHtml,
@@ -347,16 +421,119 @@ async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
     }));
   }
 
+  async listIssues(
+    owner: string,
+    repo: string
+  ): Promise<{ number: number; title: string; state: string; updated_at: string; comments: number }[]> {
+    try {
+      const { data } = await this.octokit.rest.issues.listForRepo({
+        owner,
+        repo,
+        state: 'open',
+        sort: 'updated',
+        direction: 'desc',
+        per_page: 50,
+      });
+      return (data as GitHubIssue[]).map((i) => ({
+        number: i.number,
+        title: i.title,
+        state: i.state,
+        updated_at: i.updated_at,
+        comments: i.comments || 0,
+      }));
+    } catch {
+      return [];
+    }
+  }
+
   async renderMarkdown(markdown: string, context?: string): Promise<string> {
     if (!markdown) {
       return '';
     }
-    const { data } = await this.octokit.request('POST /markdown', {
+    const requestBody: {
+      text: string;
+      mode: 'gfm';
+      context?: string;
+    } = {
       text: markdown,
-      mode: 'gfm' as const,
-      context,
-    });
+      mode: 'gfm',
+    };
+    if (context !== undefined) {
+      requestBody.context = context;
+    }
+    const { data } = await this.octokit.request('POST /markdown', requestBody);
     return typeof data === 'string' ? data : '';
+  }
+
+  private detectCurrencyFromSymbols(text: string): string | undefined {
+    if (!CURRENCY_SYMBOL_REGEX.test(text)) {
+      return;
+    }
+    if (text.includes('$')) {
+      return 'USD';
+    }
+    if (text.includes('€')) {
+      return 'EUR';
+    }
+    if (text.includes('£')) {
+      return 'GBP';
+    }
+    return;
+  }
+
+  private detectCurrencyFromText(lower: string): string | undefined {
+    if (lower.includes('usd')) {
+      return 'USD';
+    }
+    if (lower.includes('eur')) {
+      return 'EUR';
+    }
+    if (lower.includes('gbp') || lower.includes('pound')) {
+      return 'GBP';
+    }
+    return;
+  }
+
+  private normalizeAmount(value: string): string {
+    let normalized = value.replace(/,/g, '.');
+    if (normalized.includes('.')) {
+      const [a, b = ''] = normalized.split('.');
+      normalized = `${a}.${b.slice(0, 2)}`.replace(TRAILING_DOT_PATTERN, '');
+    }
+    return normalized;
+  }
+
+  private extractAmountFromMatch(m: RegExpMatchArray): string | undefined {
+    if (m[1] && DIGIT_PATTERN.test(m[1])) {
+      return m[1];
+    }
+    if (m[2] && DIGIT_PATTERN.test(m[2])) {
+      return m[2];
+    }
+    return;
+  }
+
+  private extractCurrencyFromMatch(m: RegExpMatchArray): string | undefined {
+    const cur = m[1] && !DIGIT_PATTERN.test(m[1]) ? m[1] : m[2];
+    if (!cur) {
+      return;
+    }
+    return cur.toString().toUpperCase();
+  }
+
+  private normalizeCurrency(cur: string | undefined): string | undefined {
+    if (!cur) {
+      return;
+    }
+    const curMap: Record<string, string> = {
+      USD: 'USD',
+      EUR: 'EUR',
+      GBP: 'GBP',
+      DOLLARS: 'USD',
+      POUNDS: 'GBP',
+      EUROS: 'EUR',
+    };
+    return curMap[cur] || cur;
   }
 
   private extractAmountAndCurrency(text: string): {
@@ -367,61 +544,41 @@ async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
       return {};
     }
     const lower = text.toLowerCase();
-    let currency: string | undefined;
-    if (/[$€£]/.test(text)) {
-      if (text.includes('$')) {
-        currency = 'USD';
-      } else if (text.includes('€')) {
-        currency = 'EUR';
-      } else if (text.includes('£')) {
-        currency = 'GBP';
-      }
-    }
+    let currency = this.detectCurrencyFromSymbols(text);
     if (!currency) {
-      if (lower.includes('usd')) {
-        currency = 'USD';
-      } else if (lower.includes('eur')) {
-        currency = 'EUR';
-      } else if (lower.includes('gbp') || lower.includes('pound')) {
-        currency = 'GBP';
+      currency = this.detectCurrencyFromText(lower);
       }
-    }
+
     const patterns: RegExp[] = [
-      /\$\s*(\d{1,13}(?:[.,]\d{1,2})?)/i,
-      /€\s*(\d{1,13}(?:[.,]\d{1,2})?)/i,
-      /£\s*(\d{1,13}(?:[.,]\d{1,2})?)/i,
-      /\b(\d{1,13}(?:[.,]\d{1,2})?)\s*(usd|eur|gbp|dollars|pounds|euros)\b/i,
-      /\b(usd|eur|gbp)\s*(\d{1,13}(?:[.,]\d{1,2})?)\b/i,
+      DOLLAR_PATTERN,
+      EURO_PATTERN,
+      POUND_PATTERN,
+      AMOUNT_CURRENCY_PATTERN,
+      CURRENCY_AMOUNT_PATTERN,
     ];
+
     for (const re of patterns) {
       const m = text.match(re);
       if (m) {
-        let value: string | undefined;
-        if (m[1] && /\d/.test(m[1])) {
-          value = m[1];
-        } else if (m[2] && /\d/.test(m[2])) {
-          value = m[2];
-        }
+        const value = this.extractAmountFromMatch(m);
         if (value) {
-          value = value.replace(/,/g, '.');
-          if (value.includes('.')) {
-            const [a, b = ''] = value.split('.');
-            value = `${a}.${b.slice(0, 2)}`.replace(/\.$/, '');
-          }
-          const cur = (m[1] && !/\d/.test(m[1]) ? m[1] : m[2]) || undefined;
-          const normCur = cur ? cur.toString().toUpperCase() : undefined;
-          const curMap: Record<string, string> = {
-            USD: 'USD',
-            EUR: 'EUR',
-            GBP: 'GBP',
-            DOLLARS: 'USD',
-            POUNDS: 'GBP',
-            EUROS: 'EUR',
+          const normalizedValue = this.normalizeAmount(value);
+          const extractedCur = this.extractCurrencyFromMatch(m);
+          const normalizedCur = this.normalizeCurrency(extractedCur);
+          const finalCurrency = normalizedCur || currency;
+          const result: { amount?: string; currency?: string } = {
+            amount: normalizedValue,
           };
-          return { amount: value, currency: curMap[normCur || ''] || currency };
+          if (finalCurrency !== undefined) {
+            result.currency = finalCurrency;
+    }
+          return result;
         }
       }
     }
-    return currency ? { currency } : {};
+    if (currency !== undefined) {
+      return { currency };
+    }
+    return {};
   }
 }

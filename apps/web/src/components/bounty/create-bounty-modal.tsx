@@ -1,6 +1,5 @@
 'use client';
 
-import type { AppRouter } from '@bounty/api';
 import { Button } from '@bounty/ui/components/button';
 import {
   Dialog,
@@ -33,7 +32,7 @@ import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { MarkdownTextarea } from '@/components/bounty/markdown-editor';
-import { trpc, trpcClient } from '@/utils/trpc';
+import { trpcClient } from '@/utils/trpc';
 
 interface CreateBountyModalProps {
   open: boolean;
