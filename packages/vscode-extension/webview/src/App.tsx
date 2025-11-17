@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { LoginView } from './components/LoginView';
 import { BountiesView } from './components/BountiesView';
 import { BountyDetailView } from './components/BountyDetailView';
-import type { Bounty } from './types';
 
 interface AppProps {
   isAuthenticated: boolean;

@@ -70,7 +70,7 @@ const WorkspaceSwitcher = () => {
           )}
           type="button"
         >
-          <div className="relative flex h-[27px] w-[27px] items-center justify-center rounded-[6px] bg-[#E66700] text-base font-normal text-white shadow-[inset_0_2px_3px_rgba(0,0,0,0.2)] outline outline-1 outline-[#C95900] outline-offset-[-1px] group-data-[collapsible=icon]:size-5 group-data-[collapsible=icon]:h-5 group-data-[collapsible=icon]:w-5">
+          <div className="relative flex h-[27px] w-[27px] items-center justify-center rounded-[6px] bg-[#E66700] text-base font-normal text-white shadow-[inset_0_2px_3px_rgba(0,0,0,0.2)] outline outline-[#C95900] -outline-offset-1 group-data-[collapsible=icon]:size-5 group-data-[collapsible=icon]:h-5 group-data-[collapsible=icon]:w-5">
             <span className="pb-1.5">{initials}</span>
           </div>
           <div className="flex items-center gap-[7px] group-data-[collapsible=icon]:hidden">
@@ -125,7 +125,7 @@ export const AppSidebar = ({
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <div className="flex h-full flex-col gap-[15px] px-0 py-[0px] group-data-[collapsible=icon]:px-[9px]">
+      <div className="flex h-full flex-col gap-[15px] px-0 group-data-[collapsible=icon]:px-[9px]">
         <div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:px-[5px] group-data-[collapsible=icon]:py-[15px]">
           <SidebarTrigger
             aria-label="Toggle sidebar layout"
