@@ -10,6 +10,7 @@ import {
   publicProcedure,
   router,
 } from '../trpc';
+import { realtime } from '@bounty/realtime';
 
 const { info, error, warn } = grim();
 
@@ -60,6 +61,10 @@ export const notificationsRouter = router({
         title: input.title,
         message: input.message,
         ...(input.data && { data: input.data }),
+      });
+      await realtime.emit('notifications.refresh', {
+        userId: input.userId,
+        ts: Date.now(),
       });
       return { success: true, data: n };
     }),
@@ -117,6 +122,10 @@ export const notificationsRouter = router({
           )
         )
         .returning();
+      await realtime.emit('notifications.refresh', {
+        userId: ctx.session.user.id,
+        ts: Date.now(),
+      });
       return updated;
     }),
 
@@ -126,6 +135,10 @@ export const notificationsRouter = router({
       .set({ read: true, updatedAt: new Date() })
       .where(eq(notification.userId, ctx.session.user.id))
       .returning();
+    await realtime.emit('notifications.refresh', {
+      userId: ctx.session.user.id,
+      ts: Date.now(),
+    });
     return updated;
   }),
 

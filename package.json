@@ -132,7 +132,9 @@
       "vaul": "^1.1.2",
       "nuqs": "^2.7.0",
       "zod": "^4.0.5",
-      "@tailwindcss/typography": "^0.5.16"
+      "@tailwindcss/typography": "^0.5.16",
+      "@upstash/realtime": "latest",
+      "@upstash/redis": "latest"
     }
   },
   "dependencies": {

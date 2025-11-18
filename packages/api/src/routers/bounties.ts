@@ -26,6 +26,7 @@ import {
 import { z } from 'zod';
 import { LRUCache } from '../lib/lru-cache';
 import { protectedProcedure, publicProcedure, router } from '../trpc';
+import { realtime } from '@bounty/realtime';
 
 const parseAmount = (amount: string | number | null): number => {
   if (amount === null || amount === undefined) {
@@ -1180,6 +1181,10 @@ export const bountiesRouter = router({
               message:
                 trimmed.length > 100 ? `${trimmed.slice(0, 100)}...` : trimmed,
               data: { bountyId: input.bountyId, commentId: inserted.id },
+            });
+            await realtime.emit('notifications.refresh', {
+              userId: owner.createdById,
+              ts: Date.now(),
             });
           }
         } catch (_e) {}

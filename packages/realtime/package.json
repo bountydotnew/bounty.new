@@ -1,0 +1,16 @@
+{
+  "name": "@bounty/realtime",
+  "version": "0.1.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@upstash/realtime": "catalog:",
+    "@upstash/redis": "catalog:",
+    "zod": "catalog:",
+    "@bounty/env": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}
+
