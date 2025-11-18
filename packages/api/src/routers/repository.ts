@@ -24,7 +24,7 @@ export const repositoryRouter = router({
   contributors: publicProcedure
     .input(z.object({ repo: z.string() }))
     .query(async ({ input }) => {
-      return github.getContributors(input.repo);
+      return await github.getContributors(input.repo);
     }),
   recentCommits: publicProcedure
     .input(
@@ -34,12 +34,12 @@ export const repositoryRouter = router({
       })
     )
     .query(async ({ input }) => {
-      return github.getRecentCommits(input.repo, input.limit);
+      return await github.getRecentCommits(input.repo, input.limit);
     }),
   biggestCommitByUser: publicProcedure
     .input(z.object({ repo: z.string(), username: z.string() }))
     .query(async ({ input }) => {
-      return github.getBiggestCommitByUser(input.repo, input.username);
+      return await github.getBiggestCommitByUser(input.repo, input.username);
     }),
   issueFromUrl: publicProcedure
     .input(z.object({ url: z.string().url() }))
@@ -78,7 +78,6 @@ export const repositoryRouter = router({
       });
 
       if (!githubAccount?.accessToken) {
-        console.log('[myRepos] No GitHub account or access token found for user:', ctx.session.user.id);
         return { success: false, error: 'GitHub account not connected' };
       }
 
@@ -87,14 +86,30 @@ export const repositoryRouter = router({
 
       // Get authenticated user's repos
       const repos = await userGithub.getAuthenticatedUserRepos();
-      console.log('[myRepos] Fetched repos:', repos);
+      
+      // Check if the result indicates a bad credentials error
+      if (!repos.success && repos.error?.includes('Bad credentials')) {
+        return { 
+          success: false, 
+          error: 'GitHub token expired or invalid. Please reconnect your GitHub account.' 
+        };
+      }
+      
       return repos;
     } catch (error) {
-      console.error('[myRepos] Error fetching repos:', error);
       const errorMessage =
         error instanceof Error
           ? error.message
           : 'Unknown error occurred while fetching repositories';
+      
+      // Check for bad credentials in the error message
+      if (errorMessage.includes('Bad credentials') || errorMessage.includes('401')) {
+        return { 
+          success: false, 
+          error: 'GitHub token expired or invalid. Please reconnect your GitHub account.' 
+        };
+      }
+      
       return { success: false, error: errorMessage };
     }
   }),

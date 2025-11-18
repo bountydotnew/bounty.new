@@ -9,7 +9,7 @@ export const createBountySchema = z.object({
   description: z
     .string()
     .min(10, 'Description must be at least 10 characters')
-    .max(1000, 'Description too long'),
+    .max(50_000, 'Description too long'),
 
   amount: z
     .string()

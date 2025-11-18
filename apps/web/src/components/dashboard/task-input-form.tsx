@@ -63,6 +63,7 @@ interface Step1DescriptionFormProps {
     selectedIssue: { number: number; title: string; url: string } | null;
     githubUsername: string | undefined;
     reposLoading: boolean;
+    reposData?: { success: boolean; error?: string; data?: Array<{ name: string; url: string }> } | undefined;
     filteredRepositories: string[];
     branchesLoading: boolean;
     filteredBranches: string[];
@@ -92,6 +93,7 @@ function Step1DescriptionForm({
     selectedIssue,
     githubUsername,
     reposLoading,
+    reposData,
     filteredRepositories,
     branchesLoading,
     filteredBranches,
@@ -103,9 +105,9 @@ function Step1DescriptionForm({
     repoInfo,
 }: Step1DescriptionFormProps) {
     return (
-        <div className="flex flex-col">
-                <div className="flex flex-col h-full">
-                    <div className="flex flex-col overflow-x-hidden min-w-0 relative">
+        <div className="flex flex-col min-w-0">
+                <div className="flex flex-col h-full min-w-0">
+                    <div className="flex flex-col overflow-x-hidden min-w-0 relative w-full">
                         {showRawMarkdown ? (
                             <Controller
                                 control={control}
@@ -141,45 +143,20 @@ function Step1DescriptionForm({
                                 )}
                             </div>
                         )}
-                        
-                        <div className="absolute top-2 right-2 z-10">
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button
-                                        className={`p-1.5 rounded-md transition-colors ${
-                                            showRawMarkdown
-                                                ? 'text-[#5A5A5A] hover:text-[#CFCFCF]'
-                                                : 'text-white'
-                                        }`}
-                                        onClick={() => setShowRawMarkdown(!showRawMarkdown)}
-                                        type="button"
-                                    >
-                                        {showRawMarkdown ? (
-                                            <EyeOff className="w-4 h-4" />
-                                        ) : (
-                                            <Eye className="w-4 h-4" />
-                                        )}
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    {showRawMarkdown ? 'Show rendered markdown' : 'Show raw markdown'}
-                                </TooltipContent>
-                            </Tooltip>
-                        </div>
                     </div>
                 </div>
 
-                <div className="px-3 pb-3 flex items-center gap-2 flex-row min-w-0 bg-transparent">
+                <div className="px-3 pb-3 flex items-center gap-2 flex-row flex-wrap min-w-0 bg-transparent">
                     <div className="flex items-center gap-1 min-w-0 flex-1">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button
-                                    className="w-fit text-sm font-medium [&_span:last-child]:pr-[3px] [&_span:first-child]:pl-[3px] inline-flex items-center justify-center gap-0.5 whitespace-nowrap [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:align-middle [&_svg]:box-border [&_svg]:w-[var(--icon-frame)] [&_svg]:h-[var(--icon-frame)] [&_svg]:p-[var(--icon-pad)] relative focus:outline-none focus-visible:shadow-focus-ring-blue disabled:shadow-none disabled:text-foreground-muted [&_svg]:disabled:text-foreground-muted text-foreground [&_svg]:text-icon bg-interactive-state hover:bg-[#323232] active:bg-interactive-state-pressed data-[state=open]:bg-interactive-state-active disabled:bg-interactive-state-disabled h-[28px] px-[6px] py-[4px] [--icon-frame:20px] [--icon-pad:2px] rounded-full overflow-hidden max-w-[200px] sm:max-w-none"
+                                    className="w-fit text-sm font-medium [&_span:last-child]:pr-[3px] [&_span:first-child]:pl-[3px] inline-flex items-center justify-center gap-0.5 whitespace-nowrap [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:align-middle [&_svg]:box-border [&_svg]:w-[var(--icon-frame)] [&_svg]:h-[var(--icon-frame)] [&_svg]:p-[var(--icon-pad)] relative focus:outline-none focus-visible:shadow-focus-ring-blue disabled:shadow-none disabled:text-foreground-muted [&_svg]:disabled:text-foreground-muted text-foreground [&_svg]:text-icon bg-interactive-state hover:bg-[#323232] active:bg-interactive-state-pressed data-[state=open]:bg-interactive-state-active disabled:bg-interactive-state-disabled h-[28px] px-[6px] py-[4px] [--icon-frame:20px] [--icon-pad:2px] rounded-full overflow-hidden max-w-[calc(100vw-120px)] sm:max-w-none min-w-0"
                                     type="button"
                                 >
                                     <GithubIcon className="text-[#5A5A5A]" />
-                                    <div className="hidden sm:flex gap-0.5 text-sm font-medium items-center text-foreground-strong [&_svg]:size-2 overflow-hidden">
-                                        <span className="truncate">
+                                    <div className="hidden sm:flex gap-0.5 text-sm font-medium items-center text-foreground-strong [&_svg]:size-2 overflow-hidden min-w-0">
+                                        <span className="truncate min-w-0">
                                             {selectedRepository || 'Select repository'}
                                         </span>
                                     </div>
@@ -208,6 +185,22 @@ function Step1DescriptionForm({
                                         {reposLoading ? (
                                             <div className="px-2 py-1.5 text-sm text-[#5A5A5A]">
                                                 Loading repositories...
+                                            </div>
+                                        ) : reposData && !reposData.success && reposData.error ? (
+                                            <div className="px-2 py-1.5 text-sm text-[#FF6B6B]">
+                                                {reposData.error?.includes('reconnect') ? (
+                                                    <span>
+                                                        {reposData.error}{' '}
+                                                        <a
+                                                            href="/api/auth/sign-in/github"
+                                                            className="underline hover:text-[#FF8E8E]"
+                                                        >
+                                                            Reconnect
+                                                        </a>
+                                                    </span>
+                                                ) : (
+                                                    reposData.error || 'Failed to load repositories'
+                                                )}
                                             </div>
                                         ) : filteredRepositories.length > 0 ? (
                                             filteredRepositories.map((repo: string) => (
@@ -248,12 +241,12 @@ function Step1DescriptionForm({
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <button
-                                        className="w-fit text-sm font-medium [&_span:last-child]:pr-[3px] [&_span:first-child]:pl-[3px] inline-flex items-center justify-center gap-0.5 whitespace-nowrap [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:align-middle [&_svg]:box-border [&_svg]:w-[var(--icon-frame)] [&_svg]:h-[var(--icon-frame)] [&_svg]:p-[var(--icon-pad)] relative focus:outline-none focus-visible:shadow-focus-ring-blue disabled:shadow-none disabled:text-foreground-muted [&_svg]:disabled:text-foreground-muted text-foreground [&_svg]:text-icon bg-interactive-state hover:bg-[#323232] active:bg-interactive-state-pressed data-[state=open]:bg-interactive-state-active disabled:bg-interactive-state-disabled h-[28px] px-[6px] py-[4px] [--icon-frame:20px] [--icon-pad:2px] rounded-full shadow-hidden max-w-[150px] sm:max-w-none"
+                                        className="w-fit text-sm font-medium [&_span:last-child]:pr-[3px] [&_span:first-child]:pl-[3px] inline-flex items-center justify-center gap-0.5 whitespace-nowrap [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:align-middle [&_svg]:box-border [&_svg]:w-[var(--icon-frame)] [&_svg]:h-[var(--icon-frame)] [&_svg]:p-[var(--icon-pad)] relative focus:outline-none focus-visible:shadow-focus-ring-blue disabled:shadow-none disabled:text-foreground-muted [&_svg]:disabled:text-foreground-muted text-foreground [&_svg]:text-icon bg-interactive-state hover:bg-[#323232] active:bg-interactive-state-pressed data-[state=open]:bg-interactive-state-active disabled:bg-interactive-state-disabled h-[28px] px-[6px] py-[4px] [--icon-frame:20px] [--icon-pad:2px] rounded-full shadow-hidden max-w-[calc(100vw-120px)] sm:max-w-none min-w-0"
                                         type="button"
                                     >
                                         <BranchIcon className="shrink-0 text-[#5A5A5A]" />
-                                        <div className="hidden sm:flex gap-0.5 items-center [&_svg]:size-2 overflow-hidden">
-                                            <span className="truncate text-foreground-strong">
+                                        <div className="hidden sm:flex gap-0.5 items-center [&_svg]:size-2 overflow-hidden min-w-0">
+                                            <span className="truncate text-foreground-strong min-w-0">
                                                 {selectedBranch}
                                             </span>
                                             <ChevronDoubleIcon className="!size-3.5 !text-[#5A5A5A] shrink-0" />
@@ -315,12 +308,12 @@ function Step1DescriptionForm({
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <button
-                                        className="w-fit text-sm font-medium [&_span:last-child]:pr-[3px] [&_span:first-child]:pl-[3px] inline-flex items-center justify-center gap-0.5 whitespace-nowrap [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:align-middle [&_svg]:box-border [&_svg]:w-[var(--icon-frame)] [&_svg]:h-[var(--icon-frame)] [&_svg]:p-[var(--icon-pad)] relative focus:outline-none focus-visible:shadow-focus-ring-blue disabled:shadow-none disabled:text-foreground-muted [&_svg]:disabled:text-foreground-muted text-foreground [&_svg]:text-icon bg-interactive-state hover:bg-[#323232] active:bg-interactive-state-pressed data-[state=open]:bg-interactive-state-active disabled:bg-interactive-state-disabled h-[28px] px-[6px] py-[4px] [--icon-frame:20px] [--icon-pad:2px] rounded-full shadow-hidden max-w-[150px] sm:max-w-none"
+                                        className="w-fit text-sm font-medium [&_span:last-child]:pr-[3px] [&_span:first-child]:pl-[3px] inline-flex items-center justify-center gap-0.5 whitespace-nowrap [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:align-middle [&_svg]:box-border [&_svg]:w-[var(--icon-frame)] [&_svg]:h-[var(--icon-frame)] [&_svg]:p-[var(--icon-pad)] relative focus:outline-none focus-visible:shadow-focus-ring-blue disabled:shadow-none disabled:text-foreground-muted [&_svg]:disabled:text-foreground-muted text-foreground [&_svg]:text-icon bg-interactive-state hover:bg-[#323232] active:bg-interactive-state-pressed data-[state=open]:bg-interactive-state-active disabled:bg-interactive-state-disabled h-[28px] px-[6px] py-[4px] [--icon-frame:20px] [--icon-pad:2px] rounded-full shadow-hidden max-w-[calc(100vw-120px)] sm:max-w-none min-w-0"
                                         type="button"
                                     >
                                         <GithubIcon className="shrink-0 text-[#5A5A5A]" />
-                                        <div className="hidden sm:flex gap-0.5 items-center [&_svg]:size-2 overflow-hidden">
-                                            <span className="truncate text-foreground-strong">
+                                        <div className="hidden sm:flex gap-0.5 items-center [&_svg]:size-2 overflow-hidden min-w-0">
+                                            <span className="truncate text-foreground-strong min-w-0">
                                                 {selectedIssue ? `#${selectedIssue.number}` : 'Issue'}
                                             </span>
                                             <ChevronDoubleIcon className="!size-3.5 !text-[#5A5A5A] shrink-0" />
@@ -381,8 +374,31 @@ function Step1DescriptionForm({
                         )}
                     </div>
 
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button
+                                className={`p-1.5 rounded-md transition-colors shrink-0 ${
+                                    showRawMarkdown
+                                        ? 'text-[#5A5A5A] hover:text-[#CFCFCF]'
+                                        : 'text-white hover:text-[#CFCFCF]'
+                                }`}
+                                onClick={() => setShowRawMarkdown(!showRawMarkdown)}
+                                type="button"
+                            >
+                                {showRawMarkdown ? (
+                                    <EyeOff className="w-4 h-4" />
+                                ) : (
+                                    <Eye className="w-4 h-4" />
+                                )}
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            {showRawMarkdown ? 'Show rendered markdown' : 'Show raw markdown'}
+                        </TooltipContent>
+                    </Tooltip>
+
                     <button
-                        className="text-sm font-medium inline-flex items-center justify-center gap-0.5 whitespace-nowrap relative focus:outline-none focus-visible:shadow-[0_0_0_2px_rgba(59,130,246,0.5)] disabled:text-[#5A5A5A] disabled:shadow-none text-white bg-[#656565] hover:bg-[#757575] active:bg-[#6D6D6D] px-[6px] py-[4px] w-[40px] h-[28px] rounded-full shadow-[0_0_0_1px_rgba(0,0,0,0.22),0_-1px_2px_0_rgba(255,255,255,0.12)_inset,0_1px_2px_0_rgba(255,255,255,0.16)_inset] shrink-0"
+                        className="text-sm font-medium inline-flex items-center justify-center gap-0.5 whitespace-nowrap relative focus:outline-none focus-visible:shadow-[0_0_0_2px_rgba(59,130,246,0.5)] disabled:text-[#5A5A5A] disabled:shadow-none text-white bg-[#656565] hover:bg-[#757575] active:bg-[#6D6D6D] px-[6px] py-[4px] w-[40px] h-[28px] rounded-full shadow-[0_0_0_1px_rgba(0,0,0,0.22),0_-1px_2px_0_rgba(255,255,255,0.12)_inset,0_1px_2px_0_rgba(255,255,255,0.16)_inset] shrink-0 ml-auto"
                         type="submit"
                     >
                         <ArrowDownIcon2 className="w-5 h-5 text-white/80" />
@@ -431,7 +447,7 @@ function Step2DetailsForm({
                     )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <Controller
                             control={control}
@@ -507,7 +523,11 @@ function Step2DetailsForm({
                     disabled={createBounty.isPending}
                     type="submit"
                 >
-                    <ArrowDownIcon2 className="w-5 h-5 text-white/80 rotate-90" />
+                    {createBounty.isPending ? (
+                        <Spinner size="sm" className="w-5 h-5 text-white/80" />
+                    ) : (
+                        <ArrowDownIcon2 className="w-5 h-5 text-white/80 rotate-90" />
+                    )}
                 </button>
             </div>
         </div>
@@ -535,6 +555,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
     // Form state
     const form = useForm<CreateBountyForm>({
         resolver: zodResolver(createBountySchema),
+        mode: 'onChange',
         defaultValues: {
             ...createBountyDefaults,
             description: '',
@@ -561,6 +582,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
     const [issueQuery, setIssueQuery] = useState('');
     const [selectedIssue, setSelectedIssue] = useState<{ number: number; title: string; url: string } | null>(null);
     const [showImportPrompt, setShowImportPrompt] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
 
     // Auto-grow textarea height when switching to raw mode
     useEffect(() => {
@@ -606,14 +628,18 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
             return [];
         }
         // TypeScript now knows reposData.success is true, so data exists
-        const successData = reposData as { success: true; data: Array<{ name: string; url: string }> };
+        const successData = reposData as { success: true; data: Array<{ name: string; url: string; full_name?: string }> };
         const repos = successData.data.map((repo) => {
-            // Extract owner from html_url: https://github.com/owner/repo
+            // Prefer full_name if available (more reliable for org repos)
+            if (repo.full_name) {
+                return repo.full_name;
+            }
+            // Fallback: Extract owner from html_url: https://github.com/owner/repo
             const urlMatch = repo.url.match(GITHUB_URL_REGEX);
             if (urlMatch) {
                 return `${urlMatch[1]}/${urlMatch[2]}`;
             }
-            // Fallback: just use the name (less ideal)
+            // Last fallback: just use the name (less ideal)
             return repo.name;
         });
         console.log('[TaskInputForm] Extracted repositories:', repos);
@@ -754,14 +780,27 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
         }
     };
 
-    const handleStep2Submit = handleSubmit((data: CreateBountyForm) => {
-        const formattedData = formatFormData.createBounty({
-            ...data,
-            repositoryUrl: selectedRepository ? `https://github.com/${selectedRepository}` : undefined,
-            issueUrl: selectedIssue?.url,
-        });
-        createBounty.mutate(formattedData);
-    });
+    const handleStep2Submit = handleSubmit(
+        (data: CreateBountyForm) => {
+            console.log('[TaskInputForm] Step 2 submit - form data:', data);
+            console.log('[TaskInputForm] Step 2 submit - selectedRepository:', selectedRepository);
+            console.log('[TaskInputForm] Step 2 submit - selectedIssue:', selectedIssue);
+            
+            const formattedData = formatFormData.createBounty({
+                ...data,
+                repositoryUrl: selectedRepository ? `https://github.com/${selectedRepository}` : undefined,
+                issueUrl: selectedIssue?.url,
+            });
+            
+            console.log('[TaskInputForm] Step 2 submit - formattedData:', formattedData);
+            console.log('[TaskInputForm] Step 2 submit - createBounty.isPending:', createBounty.isPending);
+            
+            createBounty.mutate(formattedData);
+        },
+        (errors) => {
+            console.log('[TaskInputForm] Step 2 submit - validation errors:', errors);
+        }
+    );
 
     const handleRepositorySelect = (repo: string) => {
         setSelectedRepository(repo);
@@ -789,6 +828,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
         if (!selectedIssue) {
             return;
         }
+        setIsImporting(true);
         try {
             const result = await trpcClient.repository.issueFromUrl.query({ url: selectedIssue.url });
             if (result?.data) {
@@ -802,8 +842,10 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
             }
         } catch {
             toast.error('Failed to import issue details');
+        } finally {
+            setIsImporting(false);
+            setShowImportPrompt(false);
         }
-        setShowImportPrompt(false);
     };
 
     const handleSkipImport = () => {
@@ -811,12 +853,12 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
     };
 
     return (
-        <div className="flex w-full shrink-0 flex-col px-4 lg:max-w-[805px] xl:px-0 mx-auto">
-            <form className="w-full flex flex-col mt-10 mb-6" onSubmit={step === 'description' ? handleStep1Submit : handleStep2Submit}>
-                <fieldset className="w-full [all:unset]">
+        <div className="flex w-full shrink-0 flex-col px-4 lg:max-w-[805px] xl:px-0 mx-auto min-w-0">
+            <form className="w-full flex flex-col mt-10 mb-6 min-w-0" onSubmit={step === 'description' ? handleStep1Submit : handleStep2Submit}>
+                <fieldset className="w-full [all:unset] min-w-0">
                     <div
                         role="presentation"
-                        className={`bg-[#191919] text-[#5A5A5A] border-[1.5px] border-[#232323] rounded-2xl relative transition-colors cursor-text overflow-hidden ${
+                        className={`bg-[#191919] text-[#5A5A5A] border-[1.5px] border-[#232323] rounded-2xl relative transition-colors cursor-text overflow-hidden w-full min-w-0 ${
                             step === 'description' 
                                 ? 'focus-within:shadow-[0_0_0_2px_rgba(59,130,246,0.5)] focus-within:outline-none' 
                                 : ''
@@ -850,7 +892,8 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                                 selectedIssue={selectedIssue}
                                 githubUsername={githubUsername}
                                 reposLoading={reposLoading}
-                                filteredRepositories={filteredRepositories}
+                                reposData={reposData}
+                                filteredRepositories={filteredRepositories} 
                                 branchesLoading={branchesLoading}
                                 filteredBranches={filteredBranches}
                                 issuesList={issuesList}
@@ -882,13 +925,22 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                                     <Button
                                         variant="outline"
                                         onClick={handleSkipImport}
+                                        disabled={isImporting}
                                     >
                                         Skip
                                     </Button>
                                     <Button
                                         onClick={handleImportIssue}
+                                        disabled={isImporting}
                                     >
-                                        Import
+                                        {isImporting ? (
+                                            <>
+                                                <Spinner size="sm" className="mr-2" />
+                                                Importing...
+                                            </>
+                                        ) : (
+                                            'Import'
+                                        )}
                                     </Button>
                                 </div>
                             </DialogContent>

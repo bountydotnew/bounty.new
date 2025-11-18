@@ -48,6 +48,7 @@ export type CommitLite = {
 export type UserRepo = {
   id: number;
   name: string;
+  full_name?: string; // owner/repo format - more reliable than parsing URL
   description?: string;
   url: string;
   stargazersCount?: number;
@@ -115,6 +116,8 @@ export class GithubManager {
         username,
         per_page: 50,
         sort: 'pushed',
+        type: 'all',
+        affiliation: 'owner,collaborator,organization_member',
       });
       const repos: UserRepo[] = (data as GitHubRepository[]).map((r) => {
         const repo: UserRepo = {
@@ -140,21 +143,52 @@ export class GithubManager {
     }
   }
 
+// Pagination requires sequential awaits - cannot use Promise.all
+// eslint-disable-next-line @typescript-eslint/no-await-in-loop
 async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
   try {
-    const { data } = await this.octokit.rest.repos.listForAuthenticatedUser({
-      per_page: 100,
-      sort: 'pushed',
-      affiliation: 'owner,collaborator,organization_member',
-    });
+    // Fetch all repos with pagination to ensure we get organization repos
+    const allRepos: GitHubRepository[] = [];
+    const perPage = 100;
+    const maxPages = 10; // Safety limit: max 1000 repos
+    
+    // Helper function to fetch a single page
+    const fetchPage = async (pageNum: number): Promise<GitHubRepository[]> => {
+      const { data } = await this.octokit.rest.repos.listForAuthenticatedUser({
+        per_page: perPage,
+        page: pageNum,
+        sort: 'pushed',
+        type: 'all', // Include all repo types (sources, forks, etc.)
+        affiliation: 'owner,collaborator,organization_member',
+      });
+      return data as GitHubRepository[];
+    };
+
+    // Fetch pages sequentially (required for pagination - each page depends on knowing if previous had more)
+    for (let page = 1; page <= maxPages; page++) {
+      // eslint-disable-next-line no-await-in-loop
+      const pageData = await fetchPage(page);
+
+      if (pageData.length === 0) {
+        break; // No more repos
+      }
+      
+      allRepos.push(...pageData);
+      
+      // If we got fewer than perPage results, we've reached the end
+      if (pageData.length < perPage) {
+        break;
+      }
+    }
     
     // Filter to ONLY public repos - private repos don't align with open source mission
-    const publicRepos = data.filter((r) => !r.private);
+    const publicRepos = allRepos.filter((r) => !r.private);
     
-      const repos: UserRepo[] = (publicRepos as GitHubRepository[]).map((r) => {
+      const repos: UserRepo[] = publicRepos.map((r) => {
         const repo: UserRepo = {
       id: r.id,
       name: r.name,
+      full_name: r.full_name, // Include full_name (owner/repo) for reliable org repo handling
       url: r.html_url,
       stargazersCount: r.stargazers_count,
       private: r.private,

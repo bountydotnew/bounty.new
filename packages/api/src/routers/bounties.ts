@@ -256,7 +256,9 @@ export const bountiesRouter = router({
             tags_count: cleanedTags?.length ?? 0,
             source: 'api',
           });
-        } catch {}
+        } catch {
+          // ignore
+        }
 
         // Invalidate caches
         bountyStatsCache.clear();

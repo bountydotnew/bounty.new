@@ -125,7 +125,7 @@ export const AppSidebar = ({
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <div className="flex h-full flex-col gap-[15px] px-0 group-data-[collapsible=icon]:px-[9px]">
+      <div className="flex h-full flex-col gap-[15px] px-0 group-data-[collapsible=icon]:px-[9px] py-4 md:py-0 lg:py-0">
         <div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:px-[5px] group-data-[collapsible=icon]:py-[15px]">
           <SidebarTrigger
             aria-label="Toggle sidebar layout"
