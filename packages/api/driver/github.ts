@@ -112,12 +112,12 @@ export class GithubManager {
 
   async getUserRepos(username: string): Promise<GetUserReposResult> {
     try {
+      // listForUser only supports public repos and doesn't support affiliation/type params
       const { data } = await this.octokit.rest.repos.listForUser({
         username,
         per_page: 50,
         sort: 'pushed',
         type: 'all',
-        affiliation: 'owner,collaborator,organization_member',
       });
       const repos: UserRepo[] = (data as GitHubRepository[]).map((r) => {
         const repo: UserRepo = {
@@ -165,7 +165,7 @@ async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
 
     // Fetch pages sequentially (required for pagination - each page depends on knowing if previous had more)
     for (let page = 1; page <= maxPages; page++) {
-      // eslint-disable-next-line no-await-in-loop
+      // biome-ignore lint/nursery/noAwaitInLoop: Pagination requires sequential awaits - cannot use Promise.all
       const pageData = await fetchPage(page);
 
       if (pageData.length === 0) {
