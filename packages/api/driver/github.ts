@@ -158,7 +158,6 @@ async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
         per_page: perPage,
         page: pageNum,
         sort: 'pushed',
-        type: 'all', // Include all repo types (sources, forks, etc.)
         affiliation: 'owner,collaborator,organization_member',
       });
       return data as GitHubRepository[];
