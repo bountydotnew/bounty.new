@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import type { NotificationItem } from '@/types/notifications';
 import { trpc } from '@/utils/trpc';
 import { useRealtime } from '@upstash/realtime/client';
-import type { RealtimeEvents } from '@bounty/realtime/types';
+import type { RealtimeEvents } from '@bounty/types/realtime';
 import { authClient } from '@bounty/auth/client';
 
 export function useNotifications() {
@@ -21,9 +21,9 @@ export function useNotifications() {
   });
 
   useRealtime<RealtimeEvents>({
-    event: 'notifications.refresh',
+    event: 'notifications.refresh.userId',
     history: false,
-    onData: (data) => {
+    onData: (data: RealtimeEvents['notifications']['refresh']) => {
       if (data.userId && data.userId === session?.user?.id) {
         notificationsQuery.refetch();
         unreadCountQuery.refetch();

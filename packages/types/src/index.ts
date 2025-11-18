@@ -3,3 +3,4 @@ export * from './command-menu';
 export * from './github';
 export * from './polar';
 export * from './post';
+export * from './realtime';
