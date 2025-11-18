@@ -1,5 +1,5 @@
 import { cn } from '@bounty/ui/lib/utils';
-import { Dialog as DialogPrimitive } from 'radix-ui';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
 import * as React from 'react';
 
 // import Bounty from '../icons/bounty';

@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import type { NotificationItem } from '@/types/notifications';
 import { trpc } from '@/utils/trpc';
 import { useRealtime } from '@upstash/realtime/client';
-import type { RealtimeEvents } from '@bounty/realtime';
+import type { RealtimeEvents } from '@bounty/realtime/types';
 import { authClient } from '@bounty/auth/client';
 
 export function useNotifications() {
