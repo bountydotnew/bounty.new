@@ -33,7 +33,7 @@ import {
 import { Polar } from "@polar-sh/sdk";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { bearer, deviceAuthorization, lastLoginMethod, openAPI } from "better-auth/plugins";
+import { bearer, deviceAuthorization, lastLoginMethod, openAPI, multiSession } from "better-auth/plugins";
 import { admin } from "better-auth/plugins/admin";
 import { passkey as passkeyPlugin } from "better-auth/plugins/passkey";
 import { emailOTP } from "better-auth/plugins/email-otp";
@@ -212,7 +212,7 @@ export const auth = betterAuth({
           const result = await sendEmail({
             from: 'Bounty.new <noreply@mail.bounty.new>',
             to: email,
-            subject: type === 'email-verification' 
+            subject: type === 'email-verification'
               ? 'Verify your email address'
               : type === 'sign-in'
               ? 'Sign in to Bounty.new'
@@ -238,6 +238,9 @@ export const auth = betterAuth({
       },
     }),
     deviceAuthorizationPlugin,
+    multiSession({
+      maximumSessions: 5,
+    }),
   ],
   secret: env.BETTER_AUTH_SECRET,
 });

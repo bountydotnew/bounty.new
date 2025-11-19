@@ -39,6 +39,7 @@ import type {
   UserDisplayData,
 } from '@/types/billing-components';
 import { trpc } from '@/utils/trpc';
+import { AccountSwitcher } from '@/components/auth/account-switcher';
 
 // Constants for better maintainability
 const MESSAGES = {
@@ -330,6 +331,11 @@ export function AccountDropdown({
                 {MENU_ITEMS.NOTIFICATIONS}
               </DropdownMenuItem>
             </DropdownMenuGroup>
+
+            <DropdownMenuSeparator />
+
+            {/* Account Switcher */}
+            <AccountSwitcher currentUserId={session?.user?.id} />
 
             <DropdownMenuSeparator />
 
