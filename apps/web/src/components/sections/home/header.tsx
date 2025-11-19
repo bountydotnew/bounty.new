@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import Bounty from '@/components/icons/bounty';
 import { LINKS } from '@/constants';
+import * as Sentry from '@sentry/nextjs';
 
 export function Header() {
   const { data: session } = authClient.useSession();
@@ -118,6 +119,16 @@ export function Header() {
           </Button>
         </Link>
       )}
+      <Button onClick={() => {
+        Sentry.captureException(new Error('test'), {
+          tags: {
+            component: 'test-error',
+          },
+        });
+
+      }}>
+        Test Error
+      </Button>
     </nav>
   );
 

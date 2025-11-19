@@ -2,7 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
-
+import { Button } from "@bounty/ui/components/button";
 export default function GlobalError({
   error,
   reset,
@@ -19,7 +19,7 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <html>
+    <html lang="en">
       <body>
         <div
           style={{
@@ -47,7 +47,7 @@ export default function GlobalError({
             <p style={{ color: "#6b7280", marginBottom: "24px" }}>
               We apologize for the inconvenience. Our team has been notified.
             </p>
-            <button
+            <Button
               onClick={reset}
               style={{
                 padding: "10px 20px",
@@ -60,7 +60,7 @@ export default function GlobalError({
               }}
             >
               Try again
-            </button>
+            </Button>
           </div>
         </div>
       </body>
