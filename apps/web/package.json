@@ -26,6 +26,7 @@
     "@radix-ui/react-separator": "catalog:",
     "@radix-ui/react-slot": "catalog:",
     "@radix-ui/react-tabs": "catalog:",
+    "@sentry/nextjs": "^10.25.0",
     "@tanstack/react-query": "catalog:",
     "@thumbmarkjs/thumbmarkjs": "catalog:",
     "@trpc/client": "catalog:",

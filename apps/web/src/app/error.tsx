@@ -1,6 +1,7 @@
 // app/error.jsx
 'use client';
 
+import * as Sentry from '@sentry/nextjs';
 import { Button } from '@bounty/ui/components/button';
 import Link from '@bounty/ui/components/link';
 import { AlertTriangle, Copy, Home, RefreshCw } from 'lucide-react';
@@ -15,6 +16,12 @@ export default function ErrorPage({
   reset: () => void;
 }) {
   useEffect(() => {
+    // Log to both Sentry and PostHog
+    Sentry.captureException(error, {
+      tags: {
+        errorBoundary: 'app-root',
+      },
+    });
     posthog.captureException(error);
   }, [error]);
 

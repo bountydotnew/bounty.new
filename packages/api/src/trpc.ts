@@ -9,6 +9,17 @@ export const t = initTRPC.context<Context>().create({
     const reason = (typeof cause === 'object' && cause && 'reason' in (cause as Record<string, unknown>)
       ? (cause as { reason?: ReasonCode }).reason
       : undefined);
+
+    // Log errors to console in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('tRPC Error:', {
+        code: error.code,
+        message: error.message,
+        path: shape.path,
+        reason,
+      });
+    }
+
     return {
       ...shape,
       data: {
