@@ -105,10 +105,10 @@ type MotionHighlightProps<T extends string> = React.ComponentProps<'div'> &
     | UncontrolledChildrenModeMotionHighlightProps<T>
   );
 
-function MotionHighlight<T extends string>({
-  ref,
-  ...props
-}: MotionHighlightProps<T>) {
+function MotionHighlightInner<T extends string>(
+  props: MotionHighlightProps<T>,
+  ref: React.ForwardedRef<HTMLDivElement>
+) {
   const {
     children,
     value,
@@ -125,7 +125,7 @@ function MotionHighlight<T extends string>({
   } = props;
 
   const localRef = React.useRef<HTMLDivElement>(null);
-  React.useImperativeHandle(ref, () => localRef.current as HTMLDivElement);
+  React.useImperativeHandle(ref, () => localRef.current!);
 
   const [activeValue, setActiveValue] = React.useState<T | null>(
     value ?? defaultValue ?? null
@@ -324,6 +324,14 @@ function MotionHighlight<T extends string>({
   );
 }
 
+const MotionHighlight = React.forwardRef(
+  MotionHighlightInner
+) as <T extends string>(
+  props: MotionHighlightProps<T> & { ref?: React.ForwardedRef<HTMLDivElement> }
+) => React.ReactElement;
+
+(MotionHighlight as unknown as { displayName: string }).displayName = 'MotionHighlight';
+
 function getNonOverridingDataAttributes(
   element: React.ReactElement,
   dataAttributes: Record<string, unknown>
@@ -362,8 +370,10 @@ type MotionHighlightItemProps = React.ComponentProps<'div'> & {
   forceUpdateBounds?: boolean;
 };
 
-function MotionHighlightItem({
-  ref,
+const MotionHighlightItem = React.forwardRef<
+  HTMLDivElement,
+  MotionHighlightItemProps
+>(({
   children,
   id,
   value,
@@ -375,7 +385,7 @@ function MotionHighlightItem({
   asChild = false,
   forceUpdateBounds,
   ...props
-}: MotionHighlightItemProps) {
+}, ref) => {
   const itemId = React.useId();
   const {
     activeValue,
@@ -402,7 +412,7 @@ function MotionHighlightItem({
   const itemTransition = transition ?? contextTransition;
 
   const localRef = React.useRef<HTMLDivElement>(null);
-  React.useImperativeHandle(ref, () => localRef.current as HTMLDivElement);
+  React.useImperativeHandle(ref, () => localRef.current!);
 
   React.useEffect(() => {
     if (mode !== 'parent') {
@@ -605,12 +615,13 @@ function MotionHighlightItem({
   ) : (
     children
   );
-}
+});
+
+MotionHighlightItem.displayName = 'MotionHighlightItem';
 
 export {
   MotionHighlight,
   MotionHighlightItem,
-  
   type MotionHighlightProps,
   type MotionHighlightItemProps,
 };

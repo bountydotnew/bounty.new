@@ -1,0 +1,72 @@
+/* Command Menu Styles */
+/* Styles applied via className props on Command components */
+/* Additional global styles for cmdk elements */
+
+.dialog {
+  height: 500px;
+  max-height: 80vh;
+}
+
+:global([cmdk-root]) {
+  width: 600px;
+  max-width: 90vw;
+  background: #191919;
+  border: 1px solid #232323;
+  border-radius: 15px;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+:global([cmdk-item]) {
+  cursor: pointer;
+  height: auto;
+  min-height: 40px;
+  border-radius: 10px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  color: #969696;
+  user-select: none;
+  transition: all 150ms ease;
+}
+
+:global([cmdk-item][data-selected='true']) {
+  background: #141414;
+  color: #929292;
+}
+
+:global([cmdk-item]:active) {
+  background: #141414;
+}
+
+:global([cmdk-group-heading]) {
+  padding: 0.5rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #5a5a5a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 8px;
+}
+
+:global([cmdk-empty]) {
+  padding: 24px 0;
+  text-align: center;
+  font-size: 16px;
+  color: #5a5a5a;
+}
+
+:global([cmdk-group]) {
+  padding: 0 8px;
+}
+
+:global([cmdk-group] + [cmdk-group]) {
+  margin-top: 8px;
+}

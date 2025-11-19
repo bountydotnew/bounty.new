@@ -51,11 +51,7 @@ import { toast } from 'sonner';
 import { AdminHeader } from '@/components/admin';
 import { ExternalInviteModal } from '@/components/admin/external-invite-modal';
 import { trpc } from '@/utils/trpc';
-import type {
-  AccessStage,
-  AdminListUsersResponse,
-  AdminUser,
-} from '@/types';
+import type { AccessStage, AdminListUsersResponse, AdminUser } from '@/types';
 
 export default function UsersPage() {
   const [search, setSearch] = useState('');
@@ -280,12 +276,7 @@ export default function UsersPage() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
     },
     onError(error, variables, context, mutation) {
-      inviteUserMutationOptions.onError?.(
-        error,
-        variables,
-        context,
-        mutation
-      );
+      inviteUserMutationOptions.onError?.(error, variables, context, mutation);
       toast.error(
         error instanceof Error ? error.message : 'Failed to update user'
       );

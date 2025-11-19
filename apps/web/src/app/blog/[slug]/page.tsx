@@ -34,7 +34,12 @@ async function BlogPost({ slug }: { slug: string }) {
 
     const processedContent = await processHtmlContent(post.content);
 
-    return <BlogPostContent post={post as Post} processedContent={processedContent} />;
+    return (
+      <BlogPostContent
+        post={post as Post}
+        processedContent={processedContent}
+      />
+    );
   } catch (_error) {
     notFound();
   }

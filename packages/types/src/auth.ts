@@ -48,7 +48,7 @@ export const ReasonCode = {
   PlanRequired: 'plan_required',
   Forbidden: 'forbidden',
 } as const;
-export type ReasonCode = typeof ReasonCode[keyof typeof ReasonCode];
+export type ReasonCode = (typeof ReasonCode)[keyof typeof ReasonCode];
 
 // Higher-level access requirements for gating UI/routes
 export const AccessRequirement = {
@@ -57,7 +57,8 @@ export const AccessRequirement = {
   EmailVerified: 'email_verified',
   NotBanned: 'not_banned',
 } as const;
-export type AccessRequirement = typeof AccessRequirement[keyof typeof AccessRequirement];
+export type AccessRequirement =
+  (typeof AccessRequirement)[keyof typeof AccessRequirement];
 
 export interface AccessProfile {
   stage: BetterAuthUser['accessStage'];

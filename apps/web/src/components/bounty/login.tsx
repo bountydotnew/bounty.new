@@ -357,7 +357,7 @@ export default function Login() {
 
           {/* top left */}
           <div
-            className="-rotate-[22deg] -translate-x-1/2 -translate-y-1/2 absolute top-[30%] left-[0%] z-10 transform transition-transform duration-300 ease-out"
+            className="-rotate-22 -translate-x-1/2 -translate-y-1/2 absolute top-[30%] left-[0%] z-10 transform transition-transform duration-300 ease-out"
             style={{
               transform: `translate(${-mousePosition.x * 25}px, ${-mousePosition.y * 25}px) rotate(-22deg)`,
             }}
@@ -374,7 +374,7 @@ export default function Login() {
 
           {/* bottom right */}
           <div
-            className="-rotate-[22deg] absolute right-[5%] bottom-[25%] z-10 translate-x-1/2 translate-y-1/2 transform transition-transform duration-300 ease-out"
+            className="-rotate-22 absolute right-[5%] bottom-[25%] z-10 translate-x-1/2 translate-y-1/2 transform transition-transform duration-300 ease-out"
             style={{
               transform: `translate(${-mousePosition.x * 30}px, ${-mousePosition.y * 30}px) rotate(-22deg)`,
             }}
@@ -391,7 +391,7 @@ export default function Login() {
 
           {/* bottom left */}
           <div
-            className="-translate-x-1/2 absolute bottom-[25%] left-[0%] z-10 translate-y-1/2 rotate-[22deg] transform transition-transform duration-300 ease-out"
+            className="-translate-x-1/2 absolute bottom-[25%] left-[0%] z-10 translate-y-1/2 rotate-22 transform transition-transform duration-300 ease-out"
             style={{
               transform: `translate(${-mousePosition.x * 20}px, ${-mousePosition.y * 20}px) rotate(22deg)`,
             }}
@@ -407,7 +407,7 @@ export default function Login() {
 
           {/* top right */}
           <div
-            className="-translate-y-1/2 absolute top-[30%] right-[0%] z-10 translate-x-1/2 rotate-[22deg] transform transition-transform duration-300 ease-out"
+            className="-translate-y-1/2 absolute top-[30%] right-[0%] z-10 translate-x-1/2 rotate-22 transform transition-transform duration-300 ease-out"
             style={{
               transform: `translate(${-mousePosition.x * 28}px, ${-mousePosition.y * 28}px) rotate(22deg)`,
             }}

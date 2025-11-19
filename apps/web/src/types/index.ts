@@ -11,6 +11,6 @@ export * from './confetti';
 export * from './dashboard';
 export * from './github';
 export * from './notifications';
-export * from './post';
 export * from './svg';
 export * from './waitlist';
+export * from './post';

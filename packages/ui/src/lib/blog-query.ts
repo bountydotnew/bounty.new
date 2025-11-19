@@ -10,7 +10,7 @@ import type {
   MarblePost,
   MarblePostList,
   MarbleTagList,
-} from '@/types/post';
+} from '@bounty/types';
 
 const url = process.env.NEXT_PUBLIC_MARBLE_API_URL!;
 const key = process.env.MARBLE_WORKSPACE_KEY!;

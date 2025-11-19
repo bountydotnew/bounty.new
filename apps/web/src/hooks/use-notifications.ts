@@ -5,20 +5,30 @@ import { useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import type { NotificationItem } from '@/types/notifications';
 import { trpc } from '@/utils/trpc';
-
-const POLL_MS = 30_000;
+import { useRealtime } from '@upstash/realtime/client';
+import type { RealtimeEvents } from '@bounty/types/realtime';
+import { authClient } from '@bounty/auth/client';
 
 export function useNotifications() {
+  const { data: session } = authClient.useSession();
+
   const notificationsQuery = useQuery({
     ...trpc.notifications.getAll.queryOptions({ limit: 50 }),
-    refetchInterval: POLL_MS,
-    refetchIntervalInBackground: false,
   });
 
   const unreadCountQuery = useQuery({
     ...trpc.notifications.getUnreadCount.queryOptions(),
-    refetchInterval: POLL_MS,
-    refetchIntervalInBackground: false,
+  });
+
+  useRealtime<RealtimeEvents>({
+    event: 'notifications.refresh.userId',
+    history: false,
+    onData: (data: RealtimeEvents['notifications']['refresh']) => {
+      if (data.userId && data.userId === session?.user?.id) {
+        notificationsQuery.refetch();
+        unreadCountQuery.refetch();
+      }
+    },
   });
 
   const markAsReadMutation = useMutation(
@@ -82,4 +92,3 @@ export function useNotifications() {
     isMarkingAllAsRead: markAllAsReadMutation.isPending,
   } as const;
 }
-

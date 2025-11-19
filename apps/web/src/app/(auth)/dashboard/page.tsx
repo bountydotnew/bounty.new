@@ -1,31 +1,22 @@
 'use client';
 
 import { authClient } from '@bounty/auth/client';
-import { Button } from '@bounty/ui/components/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@bounty/ui/components/dropdown-menu';
 import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { track } from '@databuddy/sdk';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronDown, Plus } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import { AccessGate } from '@/components/access-gate';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
 import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
 import GithubImportModal from '@/components/bounty/github-import-modal';
 import { BetaAccessScreen } from '@/components/dashboard/beta-access-screen';
-import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar';
 // Dashboard components
 import { ErrorBoundary } from '@/components/dashboard/error-boundary';
 import { DashboardPageSkeleton } from '@/components/dashboard/skeletons/dashboard-page-skeleton';
 import { useDevice } from '@/components/device-provider';
 import { Header } from '@/components/dual-sidebar/sidebar-header';
-import GitHub from '@/components/icons/github';
 import { Onboarding } from '@/components/onboarding';
+import { TaskInputForm, type TaskInputFormRef } from '@/components/dashboard/task-input-form';
 // Constants and types
 import { PAGINATION_DEFAULTS, PAGINATION_LIMITS } from '@/constants';
 import { trpc } from '@/utils/trpc';
@@ -33,6 +24,32 @@ import { trpc } from '@/utils/trpc';
 track('screen_view', { screen_name: 'dashboard' });
 
 export default function Dashboard() {
+  const taskInputRef = useRef<TaskInputFormRef>(null);
+
+  // Focus textarea if hash is present (for navigation from other pages)
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash === '#focus-textarea' || hash === '#new-bounty') {
+      // Small delay to ensure component is mounted
+      setTimeout(() => {
+        taskInputRef.current?.focus();
+        window.history.replaceState(null, '', window.location.pathname);
+      }, 100);
+    }
+
+    // Listen for custom event to focus textarea (when already on dashboard)
+    const handleFocusTextarea = () => {
+      setTimeout(() => {
+        taskInputRef.current?.focus();
+      }, 100);
+    };
+
+    window.addEventListener('focus-textarea', handleFocusTextarea);
+    return () => {
+      window.removeEventListener('focus-textarea', handleFocusTextarea);
+    };
+  }, []);
+
   // Memoized query options for better performance
   const bountiesQuery = useMemo(
     () =>
@@ -67,8 +84,7 @@ export default function Dashboard() {
 
   const { data: session } = authClient.useSession();
   const { isMobile } = useDevice();
-  const { createModalOpen, openCreateModal, closeCreateModal } =
-    useBountyModals();
+  const { createModalOpen, closeCreateModal } = useBountyModals();
   const [importOpen, setImportOpen] = useState(false);
 
   // Memoized handlers
@@ -115,71 +131,30 @@ export default function Dashboard() {
           isMyBountiesLoading={myBounties.isLoading}
           myBounties={myBounties.data?.data ?? []}
         />
-        <div className="bg-background">
-          <div className="container mx-auto rounded-lg px-4 py-4">
-            <div className="mb-4 flex items-center justify-end">
-              <div className="flex gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      className="flex items-center justify-start rounded-md bg-white p-0 text-black hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={!session?.user}
-                    >
-                      <div className="flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-tl-md rounded-bl-md bg-white pr-0 pl-3">
-                        <div className="justify-start gap-0 p-0 text-center text-black text-sm leading-none">
-                          Create Bounty
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-start gap-2.5 self-stretch px-0">
-                        <div className="relative h-3 w-px rounded-full bg-[#D0D0D0]" />
-                      </div>
-                      <div className="flex h-7 items-center justify-center gap-1.5 overflow-hidden rounded-tr-md rounded-br-md pr-2">
-                        <ChevronDown className="ml-2 h-4 w-4" />
-                      </div>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => openCreateModal()}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Create Bounty
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setImportOpen(true)}>
-                      <GitHub className="mr-2 h-4 w-4 fill-current" />
-                      Import from GitHub
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-6 rounded-lg py-4 lg:h-[calc(100vh-8rem)] lg:grid-cols-3">
-              {/* Center - Bounties Feed */}
-              <div className="flex flex-col rounded-lg lg:col-span-2">
-                <div className="rounded-lg lg:h-full lg:overflow-y-auto">
-                  <BountiesFeed
-                    bounties={bounties.data?.data ?? []}
-                    className="lg:pr-2"
-                    error={
-                      bounties.error instanceof Error
-                        ? bounties.error
-                        : undefined
-                    }
-                    isError={bounties.isError}
-                    isLoading={bounties.isLoading}
-                    layout="list"
-                  />
-                </div>
-              </div>
 
-              {/* Right Sidebar - Activity & My Bounties (Desktop Only) */}
-              <div className="hidden rounded-lg lg:col-span-1 lg:block">
-                <div className="sticky top-0 lg:h-[calc(100vh-8rem)] lg:overflow-y-auto">
-                  <div className="space-y-6 lg:pr-2">
-                    <DashboardSidebar
-                      isLoadingMyBounties={myBounties.isLoading}
-                      myBounties={myBounties.data?.data ?? []}
-                    />
-                  </div>
-                </div>
+        <div className="flex min-h-[calc(100vh-72px)] flex-col bg-background min-w-0 overflow-x-hidden">
+          {/* Horizontal border line above textarea */}
+          <div className="h-px w-full shrink-0 bg-[#232323]" />
+
+          <TaskInputForm ref={taskInputRef} />
+
+          {/* Horizontal border line below textarea */}
+          <div className="h-px w-full shrink-0 bg-[#232323]" />
+
+          {/* Bounty list section with vertical borders */}
+          <div className="flex flex-1 shrink-0 flex-col w-full overflow-hidden lg:max-w-[805px] xl:px-0 xl:border-x border-[#232323] mx-auto py-4 min-w-0">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
+              <div className="relative flex flex-col pb-10 px-4 w-full min-w-0">
+                <BountiesFeed
+                  bounties={bounties.data?.data ?? []}
+                  className="lg:pr-2"
+                  error={
+                    bounties.error instanceof Error ? bounties.error : undefined
+                  }
+                  isError={bounties.isError}
+                  isLoading={bounties.isLoading}
+                  layout="list"
+                />
               </div>
             </div>
           </div>

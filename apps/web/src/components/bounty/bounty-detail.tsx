@@ -20,6 +20,7 @@ import SubmissionCard from '@/components/bounty/submission-card';
 import { SubmissionsMobileSidebar } from '@/components/bounty/submissions-mobile-sidebar';
 import type { BountyCommentCacheItem } from '@/types/comments';
 import { trpc, trpcClient } from '@/utils/trpc';
+import { Header } from '../dual-sidebar/sidebar-header';
 
 interface BountyDetailPageProps {
   id: string;
@@ -218,6 +219,7 @@ export default function BountyDetailPage({
 
   return (
     <div className="min-h-screen bg-[#111110] text-white">
+      <Header />
       <div className="mx-auto max-w-[90%]">
         {/* Header */}
         <div className="mb-4 flex w-full items-center justify-between">
@@ -229,7 +231,7 @@ export default function BountyDetailPage({
 
         <div className="flex flex-col gap-8 xl:flex-row">
           {/* Main Content */}
-          <div className="flex-1 p-8 xl:flex-[2]">
+          <div className="flex-1 p-8 xl:flex-2">
             {/* Header */}
             <div className="mb-6">
               <div className="mb-4 flex items-center justify-between">
@@ -350,7 +352,7 @@ export default function BountyDetailPage({
             />
           </div>
 
-          <div className="hidden xl:block xl:w-[480px] xl:flex-shrink-0">
+          <div className="hidden xl:block xl:w-[480px] xl:shrink-0">
             <div className="sticky top-0 xl:h-[calc(100vh-8rem)] xl:overflow-y-auto xl:pr-2">
               <div className="mb-6 flex items-center justify-between">
                 <h3 className="font-medium text-lg text-white">Submissions</h3>

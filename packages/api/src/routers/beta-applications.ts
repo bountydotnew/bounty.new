@@ -3,6 +3,7 @@ import { TRPCError } from '@trpc/server';
 import { desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { adminProcedure, protectedProcedure, router } from '../trpc';
+import { realtime } from '@bounty/realtime';
 
 const createBetaApplicationSchema = z.object({
   name: z.string().min(1).max(100),
@@ -168,6 +169,10 @@ export const betaApplicationsRouter = router({
               linkTo: '/dashboard',
             },
           });
+          await realtime.emit('notifications.refresh', {
+            userId: application.userId,
+            ts: Date.now(),
+          });
         } catch {}
       } else if (status === 'rejected') {
         await ctx.db
@@ -187,6 +192,10 @@ export const betaApplicationsRouter = router({
               reviewNotes: reviewNotes ?? null,
               linkTo: '/dashboard',
             },
+          });
+          await realtime.emit('notifications.refresh', {
+            userId: application.userId,
+            ts: Date.now(),
           });
         } catch {}
       }

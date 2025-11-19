@@ -74,7 +74,10 @@ const ProfileInformationCard = ({
       <CardContent className="space-y-4">
         <div className="flex items-center space-x-4">
           <Avatar className="h-16 w-16">
-            <AvatarImage alt={name || email || undefined} src={image || undefined} />
+            <AvatarImage
+              alt={name || email || undefined}
+              src={image || undefined}
+            />
             <AvatarFallback>{avatarFallback}</AvatarFallback>
           </Avatar>
           <div className="space-y-1">
@@ -133,7 +136,9 @@ const FeaturesCard = ({ billingLoading, isPro }: FeaturesCardProps) => {
         {billingLoading ? (
           <div className="flex items-center space-x-2">
             <Loader2 className="animate-spin" size={16} />
-            <span className="text-muted-foreground text-sm">Loading features...</span>
+            <span className="text-muted-foreground text-sm">
+              Loading features...
+            </span>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -141,9 +146,13 @@ const FeaturesCard = ({ billingLoading, isPro }: FeaturesCardProps) => {
               <div key={feature.title} className="rounded-lg border p-3">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{feature.title}</span>
-                  <Badge variant={feature.badgeVariant}>{feature.badgeLabel}</Badge>
+                  <Badge variant={feature.badgeVariant}>
+                    {feature.badgeLabel}
+                  </Badge>
                 </div>
-                <p className="mt-1 text-muted-foreground text-sm">{feature.description}</p>
+                <p className="mt-1 text-muted-foreground text-sm">
+                  {feature.description}
+                </p>
               </div>
             ))}
           </div>
@@ -166,7 +175,9 @@ const AccountActionsCard = ({ onSignOut }: AccountActionsCardProps) => (
       <div className="flex items-center justify-between">
         <div>
           <h4 className="font-medium">Sign Out</h4>
-          <p className="text-muted-foreground text-sm">Sign out of your account</p>
+          <p className="text-muted-foreground text-sm">
+            Sign out of your account
+          </p>
         </div>
         <Button onClick={onSignOut} variant="outline">
           Sign Out
@@ -176,7 +187,9 @@ const AccountActionsCard = ({ onSignOut }: AccountActionsCardProps) => (
   </Card>
 );
 
-export function GeneralSettings({ initialCustomerState }: GeneralSettingsProps) {
+export function GeneralSettings({
+  initialCustomerState,
+}: GeneralSettingsProps) {
   const { data: session } = authClient.useSession();
   const { isPro, isLoading: billingLoading } = useBilling({
     enabled: true,

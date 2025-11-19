@@ -23,7 +23,8 @@ const cards = {
     rank: 'Rank 500',
     image: 'https://avatars.githubusercontent.com/u/37756565?v=4',
     id: 'ahmet',
-    screenshot: 'https://pbs.twimg.com/media/Gwi-mbBWUBc90r_?format=jpg&name=large',
+    screenshot:
+      'https://pbs.twimg.com/media/Gwi-mbBWUBc90r_?format=jpg&name=large',
   },
   sergio: {
     name: 'Sergio',
@@ -34,7 +35,8 @@ const cards = {
     image:
       'https://pbs.twimg.com/profile_images/1939906364119109632/vu8pOSiH_400x400.jpg',
     id: 'sergio',
-    screenshot: 'https://pbs.twimg.com/media/GwjyS7FX0AMIz4H?format=png&name=small',
+    screenshot:
+      'https://pbs.twimg.com/media/GwjyS7FX0AMIz4H?format=png&name=small',
   },
   nizzy: {
     name: 'nizzy',
@@ -45,7 +47,8 @@ const cards = {
     image:
       'https://pbs.twimg.com/profile_images/1884987569961570304/TP3OWz64_400x400.jpg',
     id: 'nizzy',
-    screenshot: 'https://pbs.twimg.com/media/Gwl0qdhWgAAoJdK?format=jpg&name=large',
+    screenshot:
+      'https://pbs.twimg.com/media/Gwl0qdhWgAAoJdK?format=jpg&name=large',
   },
 };
 
@@ -82,7 +85,7 @@ function SignUpContent() {
     }
     startTransition(async () => {
       const name = `${firstName} ${lastName}`.trim();
-      
+
       await authClient.signUp.email({
         email,
         password,
@@ -99,13 +102,17 @@ function SignUpContent() {
                 email,
                 type: 'sign-in',
               });
-              
-              toast.success('Account created! Please check your email to sign in.');
+
+              toast.success(
+                'Account created! Please check your email to sign in.'
+              );
               router.push(
                 `/sign-up/verify-email-address?email=${encodeURIComponent(email)}`
               );
             } catch {
-              toast.error("Failed to send verification code. Please try again.");
+              toast.error(
+                'Failed to send verification code. Please try again.'
+              );
             }
           },
         },
@@ -144,17 +151,17 @@ function SignUpContent() {
   const handleGitHubSignIn = async () => {
     await authClient.signIn.social(
       {
-        provider: "github",
+        provider: 'github',
         callbackURL: LINKS.DASHBOARD,
       },
       {
         onSuccess: () => {
-          toast.success("Sign in successful");
+          toast.success('Sign in successful');
         },
         onError: (error) => {
-          toast.error(error.error.message || "Sign in failed");
+          toast.error(error.error.message || 'Sign in failed');
         },
-      },
+      }
     );
   };
 
@@ -236,7 +243,9 @@ function SignUpContent() {
                 <span className="w-full border-t border-gray-600" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-[#111110] px-2 text-gray-400">Or continue with</span>
+                <span className="bg-[#111110] px-2 text-gray-400">
+                  Or continue with
+                </span>
               </div>
             </div>
 
@@ -317,14 +326,14 @@ function SignUpContent() {
               transform: `translate(${-mousePosition.x * 25}px, ${-mousePosition.y * 25}px) rotate(-22deg)`,
             }}
           >
-          <SubmissionCard
-            avatarSrc="/images/grim-avatar.jpg"
-            description="look sir coderabbit shows the code is good"
-            hasBadge={true}
-            previewSrc="https://i.redd.it/slm52i26jbtb1.jpg"
-            rank="Rank 1000"
-            user="Adam"
-          />
+            <SubmissionCard
+              avatarSrc="/images/grim-avatar.jpg"
+              description="look sir coderabbit shows the code is good"
+              hasBadge={true}
+              previewSrc="https://i.redd.it/slm52i26jbtb1.jpg"
+              rank="Rank 1000"
+              user="Adam"
+            />
           </div>
 
           {/* bottom right */}

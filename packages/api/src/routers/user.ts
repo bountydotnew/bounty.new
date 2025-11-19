@@ -1,4 +1,12 @@
-import { bounty, db, invite, session, user, userProfile, userReputation } from '@bounty/db';
+import {
+  bounty,
+  db,
+  invite,
+  session,
+  user,
+  userProfile,
+  userReputation,
+} from '@bounty/db';
 import { ExternalInvite, FROM_ADDRESSES, sendEmail } from '@bounty/email';
 import { env } from '@bounty/env/server';
 import { TRPCError } from '@trpc/server';
@@ -544,7 +552,9 @@ export const userRouter = router({
         .insert(invite)
         .values({ email, accessStage, tokenHash, expiresAt });
 
-      const baseUrl = env.BETTER_AUTH_URL?.replace(TRAILING_SLASH_REGEX, '') || 'https://bounty.new';
+      const baseUrl =
+        env.BETTER_AUTH_URL?.replace(TRAILING_SLASH_REGEX, '') ||
+        'https://bounty.new';
       const inviteUrl = `${baseUrl}/login?invite=${rawToken}`;
       await sendEmail({
         to: email,
@@ -577,7 +587,10 @@ export const userRouter = router({
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Invalid invite' });
       }
       if (row.usedAt) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invite already used' });
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Invite already used',
+        });
       }
       if (row.expiresAt && row.expiresAt < new Date()) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invite expired' });

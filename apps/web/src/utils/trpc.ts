@@ -1,6 +1,11 @@
 import type { AppRouter } from '@bounty/api';
 import { QueryClient } from '@tanstack/react-query';
-import { TRPCClientError, createTRPCClient, httpLink, loggerLink } from '@trpc/client';
+import {
+  TRPCClientError,
+  createTRPCClient,
+  httpLink,
+  loggerLink,
+} from '@trpc/client';
 import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query';
 import { showAppErrorToast } from '@/context/toast';
 import type { ReasonCode } from '@bounty/types';
@@ -12,7 +17,8 @@ const CLEANUP_INTERVAL = 60_000; // 1 minute
 setInterval(() => {
   const now = Date.now();
   for (const [key, timestamp] of toastDeduper.entries()) {
-    if (now - timestamp > 10_000) { // Remove entries older than 10s
+    if (now - timestamp > 10_000) {
+      // Remove entries older than 10s
       toastDeduper.delete(key);
     }
   }
@@ -23,15 +29,22 @@ const maybeToastError = (err: unknown): void => {
   }
   const data = (err as TRPCClientError<AppRouter>).data as unknown;
   const reason =
-    typeof data === 'object' && data && 'reason' in (data as Record<string, unknown>)
+    typeof data === 'object' &&
+    data &&
+    'reason' in (data as Record<string, unknown>)
       ? (data as { reason?: ReasonCode }).reason
       : undefined;
   const meta = (err as TRPCClientError<AppRouter>).meta as unknown;
   const isBackground =
-    typeof meta === 'object' && meta && 'reactQuery' in (meta as Record<string, unknown>)
+    typeof meta === 'object' &&
+    meta &&
+    'reactQuery' in (meta as Record<string, unknown>)
       ? Boolean((meta as Record<string, unknown>).reactQuery === 'down')
       : false;
-  if (isBackground && (reason === 'unauthenticated' || reason === 'beta_required')) {
+  if (
+    isBackground &&
+    (reason === 'unauthenticated' || reason === 'beta_required')
+  ) {
     return;
   }
   const key = `${reason || 'unknown'}:${err.message}`;
@@ -46,10 +59,14 @@ const maybeToastError = (err: unknown): void => {
 
 export const trpcClient = createTRPCClient<AppRouter>({
   links: [
-    loggerLink({ enabled: (opts) => {
-      const isDev = process.env.NODE_ENV === 'development';
-      return isDev || (opts.direction === 'down' && opts.result instanceof Error);
-    }}),
+    loggerLink({
+      enabled: (opts) => {
+        const isDev = process.env.NODE_ENV === 'development';
+        return (
+          isDev || (opts.direction === 'down' && opts.result instanceof Error)
+        );
+      },
+    }),
     httpLink({
       url: `${process.env.NEXT_PUBLIC_API_URL || ''}/api/trpc`,
       // Enable batching - combines multiple requests into a single HTTP call
@@ -61,17 +78,23 @@ export const trpcClient = createTRPCClient<AppRouter>({
             ...init?.headers,
             'Content-Type': 'application/json',
           },
-        }).then(async (res) => {
-          if (!res.ok) {
-            // Capture body for better error messages
-            const text = await res.clone().text();
-            try { JSON.parse(text); } catch { /* noop */ }
-          }
-          return res;
-        }).catch((e) => {
-          maybeToastError(e);
-          throw e;
-        });
+        })
+          .then(async (res) => {
+            if (!res.ok) {
+              // Capture body for better error messages
+              const text = await res.clone().text();
+              try {
+                JSON.parse(text);
+              } catch {
+                /* noop */
+              }
+            }
+            return res;
+          })
+          .catch((e) => {
+            maybeToastError(e);
+            throw e;
+          });
       },
     }),
   ],
@@ -81,4 +104,3 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
   client: trpcClient,
   queryClient,
 });
-
