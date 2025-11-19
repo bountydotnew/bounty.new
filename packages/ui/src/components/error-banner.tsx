@@ -57,7 +57,7 @@ export function ErrorBanner({
         {dismissible && (
           <Button
             size="sm"
-            variant="ghost"
+            variant="link"
             onClick={handleDismiss}
             className="h-6 w-6 p-0 hover:bg-red-500/20"
           >
