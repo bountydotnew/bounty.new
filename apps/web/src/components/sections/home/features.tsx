@@ -10,7 +10,9 @@ const MOCK_BOUNTY = {
   id: '1',
   title: 'Implement virtual scrolling for large lists',
   amount: 500,
+  currency: 'USD',
   status: 'open' as const,
+  difficulty: 'intermediate' as const,
   creator: {
     id: '1',
     name: 'Sarah Chen',

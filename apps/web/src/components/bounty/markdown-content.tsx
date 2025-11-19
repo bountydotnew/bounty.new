@@ -110,16 +110,13 @@ const markdownComponents: Components = {
     const srcString =
       typeof src === 'string' ? src : src instanceof Blob ? URL.createObjectURL(src) : undefined;
     
-    // Exclude ref from props to avoid React 19 type issues
-    const { ref: _ref, ...imgProps } = props;
-    
     return (
       // eslint-disable-next-line @next/next/no-img-element
       // biome-ignore lint/performance/noImgElement: Markdown content may contain external images that can't use Next.js Image
       <img
         alt={alt || ''}
         src={srcString}
-        {...imgProps}
+        {...props}
         className="my-3 inline-block h-auto max-w-full border-neutral-800"
       />
     );

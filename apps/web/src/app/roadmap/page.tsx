@@ -181,7 +181,7 @@ export default function RoadmapPage() {
                                 )}
                                 rel="noopener noreferrer"
                                 target="_blank"
-                                {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
+                                {...props}
                               >
                                 {children}
                               </a>
