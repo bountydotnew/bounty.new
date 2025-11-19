@@ -20,7 +20,9 @@ export function ErrorBanner({
 }: ErrorBannerProps) {
   const [isDismissed, setIsDismissed] = useState(false);
 
-  if (isDismissed) return null;
+  if (isDismissed) {
+    return null;
+  }
 
   const handleDismiss = () => {
     setIsDismissed(true);

@@ -74,8 +74,8 @@
       "@trpc/tanstack-react-query": "^11.4.3",
       "@types/node": "^24",
       "@types/pg": "^8.11.11",
-      "@types/react": "^19.2.2",
-      "@types/react-dom": "^19.2.2",
+      "@types/react": "19.2.2",
+      "@types/react-dom": "19.2.2",
       "@uidotdev/usehooks": "^2.4.1",
       "@unkey/ratelimit": "^2.1.0",
       "@vercel/og": "^0.8.5",
@@ -142,5 +142,9 @@
   },
   "resolutions": {
     "@trpc/client": "^11.4.3"
+  },
+  "overrides": {
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2"
   }
 }

@@ -49,8 +49,8 @@ export function ImpersonationUserPicker({ open, onOpenChange, onPick }: Props) {
     betaAccessStatus: 'none' | 'pending' | 'approved' | 'denied';
     accessStage: 'none' | 'alpha' | 'beta' | 'production';
     banned: boolean;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt: string;
+    updatedAt: string;
   };
 
   const users = useMemo(() => (data?.users || []) as UserListItem[], [data?.users]);

@@ -124,7 +124,7 @@ function ChartTooltipContent({
   indicator?: 'line' | 'dot' | 'dashed';
   hideLabel?: boolean;
   hideIndicator?: boolean;
-  labelFormatter?: (value: string | number | undefined, payload: ChartPayloadItem[]) => React.ReactNode;
+  labelFormatter?: (value: React.ReactNode, payload: ChartPayloadItem[]) => React.ReactNode;
   labelClassName?: string;
   formatter?: (
     value: number | string | undefined,
@@ -193,7 +193,7 @@ function ChartTooltipContent({
         {payload.map((item, index) => {
           const key = `${nameKey || item.name || item.dataKey || 'value'}`;
           const itemConfig = getPayloadConfigFromPayload(config, item, key);
-          const indicatorColor = color || item.payload.fill || item.color;
+          const indicatorColor = color || item.payload?.fill || item.color;
 
           return (
             <div
