@@ -29,21 +29,16 @@ import {
   portal,
   usage,
   webhooks,
-} from '@polar-sh/better-auth';
-import { Polar } from '@polar-sh/sdk';
-import { betterAuth } from 'better-auth';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import {
-  bearer,
-  deviceAuthorization,
-  lastLoginMethod,
-  openAPI,
-} from 'better-auth/plugins';
-import { admin } from 'better-auth/plugins/admin';
-import { passkey as passkeyPlugin } from 'better-auth/plugins/passkey';
-import { emailOTP } from 'better-auth/plugins/email-otp';
-import { sendEmail } from '@bounty/email';
-import { OTPVerification } from '@bounty/email';
+} from "@polar-sh/better-auth";
+import { Polar } from "@polar-sh/sdk";
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { bearer, deviceAuthorization, lastLoginMethod, openAPI, multiSession } from "better-auth/plugins";
+import { admin } from "better-auth/plugins/admin";
+import { passkey as passkeyPlugin } from "better-auth/plugins/passkey";
+import { emailOTP } from "better-auth/plugins/email-otp";
+import { sendEmail } from "@bounty/email";
+import { OTPVerification, ForgotPassword } from "@bounty/email";
 
 const schema = {
   account,
@@ -122,6 +117,29 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+    sendResetPassword: async ({ user, url, token }, request) => {
+      try {
+        const result = await sendEmail({
+          from: 'Bounty.new <noreply@mail.bounty.new>',
+          to: user.email,
+          subject: 'Reset your password',
+          react: ForgotPassword({
+            userName: user.name,
+            resetUrl: url,
+          }),
+        });
+
+        if (result.error) {
+          console.error('❌ Failed to send password reset email:', result.error);
+          throw new Error(`Email send failed: ${result.error.message}`);
+        }
+
+        console.log('✅ Password reset email sent successfully:', result.data?.id);
+      } catch (error) {
+        console.error('❌ Error in sendResetPassword:', error);
+        throw error;
+      }
+    },
   },
   plugins: [
     polar({
@@ -197,12 +215,11 @@ export const auth = betterAuth({
           const result = await sendEmail({
             from: 'Bounty.new <noreply@mail.bounty.new>',
             to: email,
-            subject:
-              type === 'email-verification'
-                ? 'Verify your email address'
-                : type === 'sign-in'
-                  ? 'Sign in to Bounty.new'
-                  : 'Reset your password',
+            subject: type === 'email-verification'
+              ? 'Verify your email address'
+              : type === 'sign-in'
+              ? 'Sign in to Bounty.new'
+              : 'Reset your password',
             react: OTPVerification({
               code: otp,
               email,
@@ -224,6 +241,9 @@ export const auth = betterAuth({
       },
     }),
     deviceAuthorizationPlugin,
+    multiSession({
+      maximumSessions: 5,
+    }),
   ],
   secret: env.BETTER_AUTH_SECRET,
 });

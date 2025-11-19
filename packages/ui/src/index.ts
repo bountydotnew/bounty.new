@@ -45,6 +45,7 @@ export * from './components/smart-breadcrumb';
 export * from './components/sonner';
 export * from './components/spinner';
 export * from './components/switch';
+export * from './components/switch-users';
 export * from './components/tabs';
 export * from './components/textarea';
 export * from './components/toggle';

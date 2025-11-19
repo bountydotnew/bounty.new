@@ -152,7 +152,20 @@ export default function AuthForm({ callbackUrl }: AuthFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">Password</Label>
+            {mode === 'signin' && (
+              <Button
+                variant="text"
+                onClick={() => router.push('/reset-password')}
+                disabled={isPending}
+                className="text-xs text-gray-400 hover:text-white p-0 h-auto"
+                type="button"
+              >
+                Forgot password?
+              </Button>
+            )}
+          </div>
           <Input
             id="password"
             type="password"

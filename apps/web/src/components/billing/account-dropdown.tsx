@@ -16,14 +16,8 @@ import type {
   AccountDropdownProps,
   UserDisplayData,
 } from '@/types/billing-components';
-import {
-  SettingsGearIcon,
-  SwitchWorkspaceIcon,
-  ManageUsersWorkspaceIcon,
-  BillingSettingsIcon,
-  DropdownIcon,
-  SwitchUsersIcon,
-} from '@bounty/ui';
+import { trpc } from '@/utils/trpc';
+import { AccountSwitcher } from '@/components/auth/account-switcher';
 
 // Constants for better maintainability
 const MESSAGES = {
@@ -190,20 +184,23 @@ export function AccountDropdown({
           </button>
         </div>
 
-        {/* Log out section */}
-        <div className="px-4 py-0">
-          <button
-            className="flex items-center gap-2 rounded-[10px] px-0 py-3 text-text-secondary transition-colors hover:text-white"
-            onClick={handleSignOut}
-            type="button"
-          >
-            <LogOut className="h-[19px] w-[19px]" />
-            <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
-              Log Out
-            </span>
-          </button>
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+            {/* Account Switcher */}
+            <AccountSwitcher currentUserId={session?.user?.id} />
+
+            <DropdownMenuSeparator />
+
+            {/* Sign out */}
+            <DropdownMenuItem
+              aria-label="Sign out of account"
+              onClick={handleSignOut}
+              variant="destructive"
+            >
+              <LogOut />
+              {MENU_ITEMS.LOGOUT}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarMenuItem>
+    </SidebarMenu>
   );
 }

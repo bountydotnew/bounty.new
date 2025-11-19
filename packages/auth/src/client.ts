@@ -16,5 +16,6 @@ export const authClient = createAuthClient({
     deviceAuthorizationClient(),
     lastLoginMethodClient(),
     emailOTPClient(),
+    multiSessionClient(),
   ],
 });
