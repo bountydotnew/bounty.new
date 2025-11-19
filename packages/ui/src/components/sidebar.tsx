@@ -304,6 +304,8 @@ function SidebarTrigger({
 
 function SidebarRail({ className, ...props }: React.ComponentProps<'button'>) {
   const { toggleSidebar } = useSidebar();
+  // Exclude ref from props to avoid React 19 type issues
+  const { ref: _ref, ...restProps } = props;
 
   return (
     <button
@@ -322,12 +324,14 @@ function SidebarRail({ className, ...props }: React.ComponentProps<'button'>) {
       onClick={toggleSidebar}
       tabIndex={-1}
       title="Toggle Sidebar"
-      {...props}
+      {...restProps}
     />
   );
 }
 
 function SidebarInset({ className, ...props }: React.ComponentProps<'main'>) {
+  // Exclude ref from props to avoid React 19 type issues
+  const { ref: _ref, ...restProps } = props;
   return (
     <main
       className={cn(
@@ -339,7 +343,7 @@ function SidebarInset({ className, ...props }: React.ComponentProps<'main'>) {
         className
       )}
       data-slot="sidebar-inset"
-      {...props}
+      {...restProps}
     />
   );
 }
@@ -359,23 +363,27 @@ function SidebarInput({
 }
 
 function SidebarHeader({ className, ...props }: React.ComponentProps<'div'>) {
+  // Exclude ref from props to avoid React 19 type issues
+  const { ref: _ref, ...restProps } = props;
   return (
     <div
       className={cn('flex flex-col gap-2', className)}
       data-sidebar="header"
       data-slot="sidebar-header"
-      {...props}
+      {...restProps}
     />
   );
 }
 
 function SidebarFooter({ className, ...props }: React.ComponentProps<'div'>) {
+  // Exclude ref from props to avoid React 19 type issues
+  const { ref: _ref, ...restProps } = props;
   return (
     <div
       className={cn('flex flex-col', className)}
       data-sidebar="footer"
       data-slot="sidebar-footer"
-      {...props}
+      {...restProps}
     />
   );
 }
@@ -395,6 +403,8 @@ function SidebarSeparator({
 }
 
 function SidebarContent({ className, ...props }: React.ComponentProps<'div'>) {
+  // Exclude ref from props to avoid React 19 type issues
+  const { ref: _ref, ...restProps } = props;
   return (
     <div
       className={cn(
@@ -403,18 +413,20 @@ function SidebarContent({ className, ...props }: React.ComponentProps<'div'>) {
       )}
       data-sidebar="content"
       data-slot="sidebar-content"
-      {...props}
+      {...restProps}
     />
   );
 }
 
 function SidebarGroup({ className, ...props }: React.ComponentProps<'div'>) {
+  // Exclude ref from props to avoid React 19 type issues
+  const { ref: _ref, ...restProps } = props;
   return (
     <div
       className={cn('relative flex w-full min-w-0 flex-col', className)}
       data-sidebar="group"
       data-slot="sidebar-group"
-      {...props}
+      {...restProps}
     />
   );
 }
@@ -467,34 +479,40 @@ function SidebarGroupContent({
   className,
   ...props
 }: React.ComponentProps<'div'>) {
+  // Exclude ref from props to avoid React 19 type issues
+  const { ref: _ref, ...restProps } = props;
   return (
     <div
       className={cn('w-full text-sm', className)}
       data-sidebar="group-content"
       data-slot="sidebar-group-content"
-      {...props}
+      {...restProps}
     />
   );
 }
 
 function SidebarMenu({ className, ...props }: React.ComponentProps<'ul'>) {
+  // Exclude ref from props to avoid React 19 type issues
+  const { ref: _ref, ...restProps } = props;
   return (
     <ul
       className={cn('flex w-full min-w-0 flex-col', className)}
       data-sidebar="menu"
       data-slot="sidebar-menu"
-      {...props}
+      {...restProps}
     />
   );
 }
 
 function SidebarMenuItem({ className, ...props }: React.ComponentProps<'li'>) {
+  // Exclude ref from props to avoid React 19 type issues
+  const { ref: _ref, ...restProps } = props;
   return (
     <li
       className={cn('group/menu-item relative', className)}
       data-sidebar="menu-item"
       data-slot="sidebar-menu-item"
-      {...props}
+      {...restProps}
     />
   );
 }
@@ -607,6 +625,8 @@ function SidebarMenuBadge({
   className,
   ...props
 }: React.ComponentProps<'div'>) {
+  // Exclude ref from props to avoid React 19 type issues
+  const { ref: _ref, ...restProps } = props;
   return (
     <div
       className={cn(
@@ -620,7 +640,7 @@ function SidebarMenuBadge({
       )}
       data-sidebar="menu-badge"
       data-slot="sidebar-menu-badge"
-      {...props}
+      {...restProps}
     />
   );
 }
@@ -664,6 +684,8 @@ function SidebarMenuSkeleton({
 }
 
 function SidebarMenuSub({ className, ...props }: React.ComponentProps<'ul'>) {
+  // Exclude ref from props to avoid React 19 type issues
+  const { ref: _ref, ...restProps } = props;
   return (
     <ul
       className={cn(
@@ -673,7 +695,7 @@ function SidebarMenuSub({ className, ...props }: React.ComponentProps<'ul'>) {
       )}
       data-sidebar="menu-sub"
       data-slot="sidebar-menu-sub"
-      {...props}
+      {...restProps}
     />
   );
 }
@@ -682,12 +704,14 @@ function SidebarMenuSubItem({
   className,
   ...props
 }: React.ComponentProps<'li'>) {
+  // Exclude ref from props to avoid React 19 type issues
+  const { ref: _ref, ...restProps } = props;
   return (
     <li
       className={cn('group/menu-sub-item relative', className)}
       data-sidebar="menu-sub-item"
       data-slot="sidebar-menu-sub-item"
-      {...props}
+      {...restProps}
     />
   );
 }

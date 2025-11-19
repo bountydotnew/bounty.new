@@ -44,9 +44,9 @@
     "next": "catalog:",
     "next-themes": "catalog:",
     "posthog-js": "catalog:",
-    "react": "19.2.0",
+    "react": "catalog:",
     "react-confetti": "catalog:",
-    "react-dom": "19.2.0",
+    "react-dom": "catalog:",
     "react-markdown": "catalog:",
     "recharts": "catalog:",
     "rehype-raw": "catalog:",
@@ -64,15 +64,15 @@
     "@tailwindcss/postcss": "catalog:",
     "@tanstack/react-query-devtools": "catalog:",
     "@types/node": "catalog:",
-    "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.2",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "eslint": "catalog:",
     "eslint-config-next": "16.0.0",
     "tailwindcss": "catalog:",
     "typescript": "catalog:"
   },
   "overrides": {
-    "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.2"
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2"
   }
 }
