@@ -4,14 +4,22 @@ import type { ReasonCode } from '@bounty/types';
 import type { Context } from './context';
 
 export const t = initTRPC.context<Context>().create({
-  errorFormatter({ shape, error }) {
+  errorFormatter({ shape, error, path }) {
     const cause = error.cause as unknown;
-    const reason =
-      typeof cause === 'object' &&
-      cause &&
-      'reason' in (cause as Record<string, unknown>)
-        ? (cause as { reason?: ReasonCode }).reason
-        : undefined;
+    const reason = (typeof cause === 'object' && cause && 'reason' in (cause as Record<string, unknown>)
+      ? (cause as { reason?: ReasonCode }).reason
+      : undefined);
+
+    // Log errors to console in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('tRPC Error:', {
+        code: error.code,
+        message: error.message,
+        path,
+        reason,
+      });
+    }
+
     return {
       ...shape,
       data: {

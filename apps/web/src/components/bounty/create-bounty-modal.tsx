@@ -13,6 +13,8 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@bounty/ui/components/drawer';
+import { ErrorBanner } from '@bounty/ui/components/error-banner';
+import { ErrorMessage } from '@bounty/ui/components/error-message';
 import { Input } from '@bounty/ui/components/input';
 import { Label } from '@bounty/ui/components/label';
 import { useDrafts } from '@bounty/ui/hooks/use-drafts';
@@ -28,11 +30,12 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { MarkdownTextarea } from '@/components/bounty/markdown-editor';
 import { trpcClient } from '@/utils/trpc';
+import { handleTRPCError } from '@/utils/trpc-error-handler';
 
 interface CreateBountyModalProps {
   open: boolean;
@@ -54,6 +57,7 @@ export function CreateBountyModal({
   const queryClient = useQueryClient();
   const { getDraft, deleteActiveDraft } = useDrafts();
   const router = useRouter();
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const form = useForm<CreateBountyForm>({
     resolver: zodResolver(createBountySchema),
@@ -91,6 +95,7 @@ export function CreateBountyModal({
   }, [open, initialValues, reset]);
   const createBounty = useMutation({
     mutationFn: async (input: CreateBountyForm) => {
+      setSubmitError(null); // Clear previous errors
       return await trpcClient.bounties.createBounty.mutate(input);
     },
     onSuccess: (result) => {
@@ -106,6 +111,7 @@ export function CreateBountyModal({
       });
 
       reset();
+      setSubmitError(null);
       onOpenChange(false);
       if (result?.data?.id) {
         const href = `/bounty/${result.data.id}${replaceOnSuccess ? '?from=gh-issue' : ''}`;
@@ -117,10 +123,9 @@ export function CreateBountyModal({
       }
     },
     onError: (error: Error) => {
-      toast.error(`Failed to create bounty: ${error.message}`);
-      if (error.message.toLowerCase().includes('duplicate')) {
-        toast.error('Bounty with this title already exists');
-      }
+      const errorMessage = handleTRPCError(error, 'Failed to create bounty');
+      setSubmitError(errorMessage);
+      toast.error(errorMessage);
     },
   });
 
@@ -160,6 +165,13 @@ export function CreateBountyModal({
             </DrawerTitle>
           </DrawerHeader>
           <form className="space-y-4 px-6 pb-6" onSubmit={onSubmit}>
+            {submitError && (
+              <ErrorBanner
+                message={submitError}
+                onRetry={() => createBounty.mutate(form.getValues())}
+                onDismiss={() => setSubmitError(null)}
+              />
+            )}
             <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
               <Label htmlFor="title">Title *</Label>
               <Controller
@@ -175,11 +187,7 @@ export function CreateBountyModal({
                   />
                 )}
               />
-              {errors.title && (
-                <p className="mt-1 text-red-500 text-sm">
-                  {errors.title.message}
-                </p>
-              )}
+              <ErrorMessage message={errors.title?.message} />
             </div>
 
             <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
@@ -203,11 +211,7 @@ export function CreateBountyModal({
                   )}
                 />
               </div>
-              {errors.description && (
-                <p className="mt-1 text-red-500 text-sm">
-                  {errors.description.message}
-                </p>
-              )}
+              <ErrorMessage message={errors.description?.message} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -226,11 +230,7 @@ export function CreateBountyModal({
                     />
                   )}
                 />
-                {errors.amount && (
-                  <p className="mt-1 text-red-500 text-sm">
-                    {errors.amount.message}
-                  </p>
-                )}
+                <ErrorMessage message={errors.amount?.message} />
               </div>
               <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
                 <Label htmlFor="currency">Currency</Label>
@@ -273,11 +273,7 @@ export function CreateBountyModal({
                   </select>
                 )}
               />
-              {errors.difficulty && (
-                <p className="mt-1 text-red-500 text-sm">
-                  {errors.difficulty.message}
-                </p>
-              )}
+              <ErrorMessage message={errors.difficulty?.message} />
             </div>
 
             <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
@@ -362,6 +358,13 @@ export function CreateBountyModal({
         </DialogHeader>
 
         <form className="space-y-4 px-6 pb-6" onSubmit={onSubmit}>
+          {submitError && (
+            <ErrorBanner
+              message={submitError}
+              onRetry={() => createBounty.mutate(form.getValues())}
+              onDismiss={() => setSubmitError(null)}
+            />
+          )}
           <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
             <Label htmlFor="title">Title *</Label>
             <Controller
@@ -377,11 +380,7 @@ export function CreateBountyModal({
                 />
               )}
             />
-            {errors.title && (
-              <p className="mt-1 text-red-500 text-sm">
-                {errors.title.message}
-              </p>
-            )}
+            <ErrorMessage message={errors.title?.message} />
           </div>
 
           <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
@@ -405,11 +404,7 @@ export function CreateBountyModal({
                 )}
               />
             </div>
-            {errors.description && (
-              <p className="mt-1 text-red-500 text-sm">
-                {errors.description.message}
-              </p>
-            )}
+            <ErrorMessage message={errors.description?.message} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -428,11 +423,7 @@ export function CreateBountyModal({
                   />
                 )}
               />
-              {errors.amount && (
-                <p className="mt-1 text-red-500 text-sm">
-                  {errors.amount.message}
-                </p>
-              )}
+              <ErrorMessage message={errors.amount?.message} />
             </div>
 
             <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
@@ -478,11 +469,7 @@ export function CreateBountyModal({
                 </select>
               )}
             />
-            {errors.difficulty && (
-              <p className="mt-1 text-red-500 text-sm">
-                {errors.difficulty.message}
-              </p>
-            )}
+            <ErrorMessage message={errors.difficulty?.message} />
           </div>
 
           {/* <div className="space-y-2">
@@ -533,11 +520,7 @@ export function CreateBountyModal({
                 />
               )}
             />
-            {errors.repositoryUrl && (
-              <p className="mt-1 text-red-500 text-sm">
-                {errors.repositoryUrl.message}
-              </p>
-            )}
+            <ErrorMessage message={errors.repositoryUrl?.message} />
           </div>
 
           <div className="space-y-2 rounded-lg bg-neutral-900/50 p-3">
@@ -556,11 +539,7 @@ export function CreateBountyModal({
                 />
               )}
             />
-            {errors.issueUrl && (
-              <p className="mt-1 text-red-500 text-sm">
-                {errors.issueUrl.message}
-              </p>
-            )}
+            <ErrorMessage message={errors.issueUrl?.message} />
           </div>
           <div className="flex justify-end gap-2">
             <Button
