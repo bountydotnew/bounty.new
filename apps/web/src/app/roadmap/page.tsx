@@ -147,7 +147,7 @@ export default function RoadmapPage() {
             </div>
             <div className="space-y-6">
               {roadmapItems.map((item, index) => (
-                <div className="relative" key={index}>
+                <div className="relative" key={item.title}>
                   <div className="flex items-start gap-2">
                     <span className="select-none font-medium text-lg text-muted-foreground leading-normal">
                       {index + 1}.
@@ -181,7 +181,7 @@ export default function RoadmapPage() {
                                 )}
                                 rel="noopener noreferrer"
                                 target="_blank"
-                                {...props}
+                                {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
                               >
                                 {children}
                               </a>
