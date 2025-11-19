@@ -52,6 +52,9 @@ export * from './components/tooltip';
 export * from './components/tracked-button';
 export * from './components/user';
 
+export * from './components/icons/huge';
+export * from './components/icons/huge/settings-gear';
+
 // Hooks
 export * from './hooks/use-billing-client';
 export * from './hooks/use-databuddy';

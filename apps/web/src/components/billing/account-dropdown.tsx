@@ -17,7 +17,7 @@ import type {
   UserDisplayData,
 } from '@/types/billing-components';
 import {
-  HugeSettingsIcon,
+  SettingsGearIcon,
   SwitchWorkspaceIcon,
   ManageUsersWorkspaceIcon,
   BillingSettingsIcon,
@@ -148,7 +148,7 @@ export function AccountDropdown({
             onClick={() => router.push(LINKS.SETTINGS)}
             type="button"
           >
-            <HugeSettingsIcon className="h-[19px] w-[19px]" />
+            <SettingsGearIcon className="h-[19px] w-[19px]" />
             <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
               Settings
             </span>

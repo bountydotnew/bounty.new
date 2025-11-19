@@ -32,13 +32,6 @@ export const BountyCard = memo(function BountyCard({
     router.push(url);
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      handleClick();
-    }
-  };
-
   const creatorName = bounty.creator.name || 'Anonymous';
   const creatorInitial = creatorName.charAt(0).toLowerCase();
 
@@ -64,13 +57,11 @@ export const BountyCard = memo(function BountyCard({
     : 'ripgrim/bountydotnew';
 
   return (
-    <div
+    <button
       aria-label={`View bounty: ${bounty.title}`}
-      className="flex w-full cursor-pointer flex-col gap-2.5 rounded-xl border border-[#232323] bg-[#191919] p-4 sm:p-5 shadow-[0px_2px_3px_#00000033] transition duration-100 ease-out active:scale-[.98] min-w-0"
+      className="flex w-full cursor-pointer flex-col gap-2.5 rounded-xl border border-[#232323] bg-[#191919] p-4 sm:p-5 shadow-[0px_2px_3px_#00000033] transition duration-100 ease-out active:scale-[.98] min-w-0 text-left"
       onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      role="button"
-      tabIndex={0}
+      type="button"
     >
       {/* Top row: Creator + Amount */}
       <div className="flex items-center justify-between">
@@ -157,6 +148,6 @@ export const BountyCard = memo(function BountyCard({
           </span>
         </div>
       </div>
-    </div>
+    </button>
   );
 });

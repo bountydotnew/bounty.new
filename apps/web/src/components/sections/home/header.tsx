@@ -5,38 +5,17 @@ import { Button } from '@bounty/ui/components/button';
 import { DevWarningDialog } from '@bounty/ui/components/dev-warning-dialog';
 import Link from '@bounty/ui/components/link';
 import { ArrowRight } from 'lucide-react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Bounty from '@/components/icons/bounty';
 import { LINKS } from '@/constants';
-import * as Sentry from '@sentry/nextjs';
+import { setCookie, getCookie } from '@bounty/ui/lib/utils';
 
 export function Header() {
   const { data: session } = authClient.useSession();
   const [showDialog, setShowDialog] = useState(false);
   const router = useRouter();
   // Cookie helpers
-  const setCookie = useCallback((name: string, value: string, days: number) => {
-    const expires = new Date();
-    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
-  }, []);
-
-  const getCookie = useCallback((name: string): string | null => {
-    const nameEQ = `${name}=`;
-    const ca = document.cookie.split(';');
-    for (let i = 0; i < ca.length; i++) {
-      let c = ca[i];
-      while (c.charAt(0) === ' ') {
-        c = c.substring(1, c.length);
-      }
-      if (c.indexOf(nameEQ) === 0) {
-        return c.substring(nameEQ.length, c.length);
-      }
-    }
-    return null;
-  }, []);
 
   // Check cookie on mount
   useEffect(() => {
@@ -44,7 +23,7 @@ export function Header() {
     if (hiddenPref === 'true') {
       // User has chosen to hide the warning
     }
-  }, [getCookie]);
+  }, []);
 
   const onButtonPress = () => {
     const hiddenPref = getCookie('hide-dev-warning');
@@ -119,16 +98,6 @@ export function Header() {
           </Button>
         </Link>
       )}
-      <Button onClick={() => {
-        Sentry.captureException(new Error('test'), {
-          tags: {
-            component: 'test-error',
-          },
-        });
-
-      }}>
-        Test Error
-      </Button>
     </nav>
   );
 

@@ -63,5 +63,5 @@ export const env = createEnv({
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
   },
-  // skipValidation: process.env.NODE_ENV !== 'production',
+  skipValidation: process.env.NODE_ENV !== 'production',
 });

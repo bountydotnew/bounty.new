@@ -7,7 +7,7 @@ import {
   BookmarksIcon,
   HomeIcon as HugeHomeIcon,
   NotificationsIcon,
-  HugeSettingsIcon,
+  SettingsGearIcon,
   SidebarToggleIcon,
 } from '@bounty/ui';
 import { cn } from '@bounty/ui/lib/utils';
@@ -101,7 +101,7 @@ const SidebarFooterActions = () => {
         onClick={() => router.push(LINKS.SETTINGS)}
         type="button"
       >
-        <HugeSettingsIcon className="h-[19px] w-[19px]" />
+        <SettingsGearIcon className="h-[19px] w-[19px]" />
         <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em] group-data-[collapsible=icon]:hidden">
           Settings
         </span>

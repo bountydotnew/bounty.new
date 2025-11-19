@@ -24,7 +24,7 @@ export function NavMain({
   items: {
     title: string;
     url: string;
-    icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+    icon?: React.ElementType;
     isActive?: boolean;
     items?: {
       title: string;
