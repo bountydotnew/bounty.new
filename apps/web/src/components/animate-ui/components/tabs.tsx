@@ -162,43 +162,40 @@ type TabsTriggerProps = HTMLMotionProps<'button'> & {
   children: React.ReactNode;
 };
 
-function TabsTrigger({
-  ref,
-  value,
-  children,
-  className,
-  ...props
-}: TabsTriggerProps) {
-  const { activeValue, handleValueChange, registerTrigger } = useTabs();
+const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>(
+  ({ value, children, className, ...props }, ref) => {
+    const { activeValue, handleValueChange, registerTrigger } = useTabs();
 
-  const localRef = React.useRef<HTMLButtonElement | null>(null);
-  React.useImperativeHandle(ref, () => localRef.current as HTMLButtonElement);
+    const localRef = React.useRef<HTMLButtonElement | null>(null);
+    React.useImperativeHandle(ref, () => localRef.current!);
 
-  React.useEffect(() => {
-    registerTrigger(value, localRef.current);
-    return () => registerTrigger(value, null);
-  }, [value, registerTrigger]);
+    React.useEffect(() => {
+      registerTrigger(value, localRef.current);
+      return () => registerTrigger(value, null);
+    }, [value, registerTrigger]);
 
-  return (
-    <MotionHighlightItem className="size-full" value={value}>
-      <motion.button
-        className={cn(
-          'z-[1] inline-flex size-full cursor-pointer items-center justify-center whitespace-nowrap rounded-sm px-2 py-1 font-medium text-sm ring-offset-background transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-foreground',
-          className
-        )}
-        data-slot="tabs-trigger"
-        data-state={activeValue === value ? 'active' : 'inactive'}
-        onClick={() => handleValueChange(value)}
-        ref={localRef}
-        role="tab"
-        whileTap={{ scale: 0.95 }}
-        {...props}
-      >
-        {children}
-      </motion.button>
-    </MotionHighlightItem>
-  );
-}
+    return (
+      <MotionHighlightItem className="size-full" value={value}>
+        <motion.button
+          className={cn(
+            'z-[1] inline-flex size-full cursor-pointer items-center justify-center whitespace-nowrap rounded-sm px-2 py-1 font-medium text-sm ring-offset-background transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-foreground',
+            className
+          )}
+          data-slot="tabs-trigger"
+          data-state={activeValue === value ? 'active' : 'inactive'}
+          onClick={() => handleValueChange(value)}
+          ref={localRef}
+          role="tab"
+          whileTap={{ scale: 0.95 }}
+          {...props}
+        >
+          {children}
+        </motion.button>
+      </MotionHighlightItem>
+    );
+  }
+);
+TabsTrigger.displayName = 'TabsTrigger';
 
 type TabsContentsProps = React.ComponentProps<'div'> & {
   children: React.ReactNode;
@@ -239,11 +236,20 @@ function TabsContents({
         className="-mx-2 flex"
         transition={transition}
       >
-        {childrenArray.map((child, index) => (
-          <div className="w-full shrink-0 px-2" key={index}>
-            {child}
-          </div>
-        ))}
+        {childrenArray.map((child) => {
+          const childValue =
+            React.isValidElement(child) &&
+            typeof child.props === 'object' &&
+            child.props !== null &&
+            'value' in child.props
+              ? String(child.props.value)
+              : `tab-${React.Children.toArray(children).indexOf(child)}`;
+          return (
+            <div className="w-full shrink-0 px-2" key={childValue}>
+              {child}
+            </div>
+          );
+        })}
       </motion.div>
     </div>
   );
