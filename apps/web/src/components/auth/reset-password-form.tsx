@@ -14,6 +14,7 @@ export default function ResetPasswordForm() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isPending, startTransition] = useTransition();
   const [step, setStep] = useState<'request' | 'reset'>('request');
+  const [emailSent, setEmailSent] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -40,6 +41,7 @@ export default function ResetPasswordForm() {
           redirectTo: `${window.location.origin}/reset-password`,
         });
         toast.success('Password reset link sent! Check your email.');
+        setEmailSent(true);
       } catch (error) {
         toast.error('Failed to send reset link. Please try again.');
         console.error('Reset password error:', error);
@@ -180,6 +182,25 @@ export default function ResetPasswordForm() {
           {isPending ? 'Sending reset link...' : 'Send reset link'}
         </Button>
       </form>
+
+      {emailSent && (
+        <div className="space-y-3">
+          <div className="rounded-lg bg-[#1a1a1a] p-4 border border-[#383838]">
+            <p className="text-sm text-gray-400 text-center">
+              Haven&apos;t received the email? Check your spam folder or resend it below.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={handleRequestReset}
+            disabled={isPending}
+          >
+            {isPending ? 'Resending...' : 'Resend email'}
+          </Button>
+        </div>
+      )}
 
       <div className="text-center">
         <Button
