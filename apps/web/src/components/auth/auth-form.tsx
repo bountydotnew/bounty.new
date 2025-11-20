@@ -134,16 +134,18 @@ export default function AuthForm({ callbackUrl, isAddingAccount }: AuthFormProps
 
   return (
     <div className="w-full max-w-md space-y-6">
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-white">
-          {mode === 'signup' ? 'Create account' : 'Welcome back'}
-        </h1>
-        <p className="text-gray-400 text-sm">
-          {mode === 'signup'
-            ? 'Enter your email below to create your account'
-            : 'Enter your email below to sign in to your account'}
-        </p>
-      </div>
+      {!isAddingAccount && (
+        <div className="space-y-2 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight text-white">
+            {mode === 'signup' ? 'Create account' : 'Welcome back'}
+          </h1>
+          <p className="text-gray-400 text-sm">
+            {mode === 'signup'
+              ? 'Enter your email below to create your account'
+              : 'Enter your email below to sign in to your account'}
+          </p>
+        </div>
+      )}
 
       <form onSubmit={handleEmailPasswordAuth} className="space-y-4">
         <div className="space-y-2">
