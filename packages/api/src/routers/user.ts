@@ -2,6 +2,7 @@ import {
   bounty,
   db,
   invite,
+  linkedAccount,
   session,
   user,
   userProfile,
@@ -10,7 +11,7 @@ import {
 import { ExternalInvite, FROM_ADDRESSES, sendEmail } from '@bounty/email';
 import { env } from '@bounty/env/server';
 import { TRPCError } from '@trpc/server';
-import { desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { LRUCache } from '../lib/lru-cache';
 import {
@@ -611,4 +612,143 @@ export const userRouter = router({
 
       return { success: true };
     }),
+
+  /**
+   * Link two accounts bidirectionally
+   * When Account 1 links Account 2, both accounts are linked to each other
+   */
+  linkAccount: protectedProcedure
+    .input(z.object({ linkedUserId: z.string().uuid() }))
+    .mutation(async ({ input, ctx }) => {
+      const currentUserId = ctx.session.user.id;
+      const { linkedUserId } = input;
+
+      if (currentUserId === linkedUserId) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Cannot link account to itself',
+        });
+      }
+
+      // Check if linked user exists
+      const linkedUser = await db
+        .select()
+        .from(user)
+        .where(eq(user.id, linkedUserId))
+        .limit(1);
+
+      if (linkedUser.length === 0) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Linked user not found',
+        });
+      }
+
+      // Check if link already exists (bidirectional check)
+      const existingLink = await db
+        .select()
+        .from(linkedAccount)
+        .where(
+          or(
+            and(
+              eq(linkedAccount.userId, currentUserId),
+              eq(linkedAccount.linkedUserId, linkedUserId)
+            ),
+            and(
+              eq(linkedAccount.userId, linkedUserId),
+              eq(linkedAccount.linkedUserId, currentUserId)
+            )
+          )
+        )
+        .limit(1);
+
+      if (existingLink.length > 0) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: 'Accounts are already linked',
+        });
+      }
+
+      // Create bidirectional links
+      await db.insert(linkedAccount).values([
+        {
+          userId: currentUserId,
+          linkedUserId: linkedUserId,
+        },
+        {
+          userId: linkedUserId,
+          linkedUserId: currentUserId,
+        },
+      ]);
+
+      return { success: true };
+    }),
+
+  /**
+   * Unlink two accounts bidirectionally
+   */
+  unlinkAccount: protectedProcedure
+    .input(z.object({ linkedUserId: z.string().uuid() }))
+    .mutation(async ({ input, ctx }) => {
+      const currentUserId = ctx.session.user.id;
+      const { linkedUserId } = input;
+
+      // Delete bidirectional links
+      await db
+        .delete(linkedAccount)
+        .where(
+          or(
+            and(
+              eq(linkedAccount.userId, currentUserId),
+              eq(linkedAccount.linkedUserId, linkedUserId)
+            ),
+            and(
+              eq(linkedAccount.userId, linkedUserId),
+              eq(linkedAccount.linkedUserId, currentUserId)
+            )
+          )
+        );
+
+      return { success: true };
+    }),
+
+  /**
+   * Get all linked accounts for the current user
+   * Returns user info for all linked accounts
+   */
+  getLinkedAccounts: protectedProcedure.query(async ({ ctx }) => {
+    const currentUserId = ctx.session.user.id;
+
+    // Get all linked accounts (both directions)
+    const links = await db
+      .select({
+        linkedUserId: linkedAccount.linkedUserId,
+        userId: linkedAccount.userId,
+      })
+      .from(linkedAccount)
+      .where(eq(linkedAccount.userId, currentUserId));
+
+    const linkedUserIds = links.map((link) => link.linkedUserId);
+
+    if (linkedUserIds.length === 0) {
+      return [];
+    }
+
+    // Fetch user details for linked accounts
+    if (linkedUserIds.length === 0) {
+      return [];
+    }
+
+    const linkedUsers = await db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+      })
+      .from(user)
+      .where(inArray(user.id, linkedUserIds));
+
+    return linkedUsers;
+  }),
 });

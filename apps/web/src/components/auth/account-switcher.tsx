@@ -17,6 +17,7 @@ import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { toast } from 'sonner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { trpc } from '@/utils/trpc';
 
 interface AccountSwitcherProps {
   currentUserId?: string;
@@ -44,7 +45,7 @@ export function AccountSwitcher({ currentUserId, trigger }: AccountSwitcherProps
   const [popoverOpen, setPopoverOpen] = React.useState(false);
 
   // Use React Query to fetch device sessions (prefetched in usePrefetchInitialData)
-  const { data: sessions = [], isLoading } = useQuery({
+  const { data: sessions = [], isLoading: isLoadingSessions } = useQuery({
     queryKey: ['auth', 'multiSession', 'listDeviceSessions'],
     queryFn: async () => {
       const { data, error } = await authClient.multiSession.listDeviceSessions();
@@ -57,6 +58,26 @@ export function AccountSwitcher({ currentUserId, trigger }: AccountSwitcherProps
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: false,
   });
+
+  // Fetch linked accounts from database
+  const { data: linkedAccounts = [], isLoading: isLoadingLinked } = trpc.user.getLinkedAccounts.useQuery(
+    undefined,
+    {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: false,
+    }
+  );
+
+  // Merge device sessions and linked accounts
+  // Create a map of user IDs from device sessions to avoid duplicates
+  const deviceSessionUserIds = new Set(sessions.map(s => s.user.id));
+  
+  // Filter linked accounts to only include those not already in device sessions
+  const linkedAccountsNotInSessions = linkedAccounts.filter(
+    linked => !deviceSessionUserIds.has(linked.id)
+  );
+
+  const isLoading = isLoadingSessions || isLoadingLinked;
 
   const handleSwitchAccount = React.useCallback(
     async (sessionToken: string) => {
@@ -107,6 +128,7 @@ export function AccountSwitcher({ currentUserId, trigger }: AccountSwitcherProps
         </div>
       ) : (
         <div className="flex flex-col gap-1">
+          {/* Device sessions (accounts logged in on this device) */}
           {sessions.map((deviceSession) => {
             const isActive = deviceSession.user.id === currentUserId;
             const initials = deviceSession.user.name
@@ -141,6 +163,53 @@ export function AccountSwitcher({ currentUserId, trigger }: AccountSwitcherProps
                   </span>
                   <span className="text-xs leading-[150%] text-[#999999] truncate">
                     {deviceSession.user.email}
+                  </span>
+                </div>
+                {isActive && (
+                  <Check className="h-4 w-4 shrink-0 text-primary" />
+                )}
+              </button>
+            );
+          })}
+
+          {/* Linked accounts (accounts linked in DB but not logged in on this device) */}
+          {linkedAccountsNotInSessions.map((linkedAccount) => {
+            const isActive = linkedAccount.id === currentUserId;
+            const initials = linkedAccount.name
+              ? linkedAccount.name.charAt(0).toUpperCase()
+              : '?';
+            
+            return (
+              <button
+                key={`linked-${linkedAccount.id}`}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-[#232323] disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isSwitching || isActive}
+                onClick={() => {
+                  if (!isActive) {
+                    // Redirect to login page to sign in with this account
+                    router.push(`/login?switchTo=${linkedAccount.id}`);
+                  }
+                }}
+                type="button"
+                aria-label={`Switch to ${linkedAccount.name}`}
+              >
+                <Avatar className="h-8 w-8 shrink-0">
+                  {linkedAccount.image && (
+                    <AvatarImage
+                      alt={linkedAccount.name || 'User'}
+                      src={linkedAccount.image}
+                    />
+                  )}
+                  <AvatarFallback className="text-xs font-medium">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-1 flex-col min-w-0">
+                  <span className="text-sm font-medium leading-[150%] text-white truncate">
+                    {linkedAccount.name}
+                  </span>
+                  <span className="text-xs leading-[150%] text-[#999999] truncate">
+                    {linkedAccount.email}
                   </span>
                 </div>
                 {isActive && (

@@ -190,6 +190,13 @@
       "when": 1760740621187,
       "tag": "0026_sour_lady_deathstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1763610990737,
+      "tag": "0027_familiar_zuras",
+      "breakpoints": true
     }
   ]
 }

@@ -4,9 +4,10 @@ import { authClient } from '@bounty/auth/client';
 import { Button } from '@bounty/ui/components/button';
 import { Input } from '@bounty/ui/components/input';
 import { Label } from '@bounty/ui/components/label';
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { useLinkAccount } from '@/hooks/use-link-account';
 
 interface AuthFormProps {
   callbackUrl?: string;
@@ -44,6 +45,26 @@ export default function AuthForm({ callbackUrl, isAddingAccount }: AuthFormProps
   const [isPending, startTransition] = useTransition();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const router = useRouter();
+  const { linkAccount } = useLinkAccount();
+  const [previousUserId, setPreviousUserId] = useState<string | null>(null);
+
+  // Get previous user ID from sessionStorage when adding account
+  useEffect(() => {
+    if (isAddingAccount) {
+      const stored = sessionStorage.getItem('bounty-previous-user-id');
+      if (stored) {
+        setPreviousUserId(stored);
+      } else {
+        // Try to get from current session
+        authClient.getSession().then(({ data }) => {
+          if (data?.user?.id) {
+            setPreviousUserId(data.user.id);
+            sessionStorage.setItem('bounty-previous-user-id', data.user.id);
+          }
+        });
+      }
+    }
+  }, [isAddingAccount]);
 
   const handleEmailPasswordAuth = (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,8 +136,25 @@ export default function AuthForm({ callbackUrl, isAddingAccount }: AuthFormProps
                 toast.error(ctx.error.message || 'Sign in failed');
               }
             },
-            onSuccess: () => {
+            onSuccess: async () => {
               toast.success('Sign in successful');
+              
+              // Link accounts if we're adding an account and have a previous user ID
+              if (isAddingAccount && previousUserId) {
+                try {
+                  // Get the new user's session
+                  const { data: newSession } = await authClient.getSession();
+                  if (newSession?.user?.id && newSession.user.id !== previousUserId) {
+                    await linkAccount(previousUserId);
+                  }
+                } catch (error) {
+                  console.error('Failed to link accounts:', error);
+                  // Don't show error to user, linking can happen later
+                }
+                // Clear the stored previous user ID
+                sessionStorage.removeItem('bounty-previous-user-id');
+              }
+              
               if (isAddingAccount) {
                 // When adding account, redirect to dashboard to refresh sessions
                 setTimeout(() => {

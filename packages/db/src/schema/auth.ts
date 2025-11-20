@@ -6,6 +6,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
 } from 'drizzle-orm/pg-core';
 
 export const betaAccessStatusEnum = pgEnum('beta_access_status', [
@@ -138,3 +139,18 @@ export const emailOTP = pgTable('email_otp', {
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
 });
+
+export const linkedAccount = pgTable('linked_account', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  linkedUserId: text('linked_user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at').notNull().default(sql`now()`),
+  updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
+}, (table) => ({
+  // Ensure bidirectional uniqueness - prevent duplicate links
+  uniqueUserLink: unique().on(table.userId, table.linkedUserId),
+}));

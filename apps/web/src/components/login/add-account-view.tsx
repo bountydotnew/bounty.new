@@ -4,17 +4,19 @@ import { authClient } from '@bounty/auth/client';
 import { Button } from '@bounty/ui/components/button';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import AuthForm from '@/components/auth/auth-form';
 import Bounty from '@/components/icons/bounty';
 import { LINKS } from '@/constants';
 import { GithubIcon } from '../icons';
+import { useLinkAccount } from '@/hooks/use-link-account';
 
 interface AddAccountViewProps {
   callbackUrl: string;
   session: {
     user: {
+      id?: string;
       name?: string | null;
       email?: string | null;
       image?: string | null;
@@ -25,6 +27,15 @@ interface AddAccountViewProps {
 export function AddAccountView({ callbackUrl, session }: AddAccountViewProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const { linkAccount } = useLinkAccount();
+  const previousUserId = session.user.id;
+
+  // Store previous user ID in sessionStorage for linking after login
+  useEffect(() => {
+    if (previousUserId) {
+      sessionStorage.setItem('bounty-previous-user-id', previousUserId);
+    }
+  }, [previousUserId]);
 
   const handleGitHubSignIn = async () => {
     try {
@@ -36,8 +47,26 @@ export function AddAccountView({ callbackUrl, session }: AddAccountViewProps) {
           callbackURL: '/dashboard',
         },
         {
-          onSuccess: () => {
+          onSuccess: async () => {
             toast.success('Sign in successful');
+            
+            // Link accounts if we have a previous user ID
+            if (previousUserId) {
+              try {
+                // Get the new user's session
+                const { data: newSession } = await authClient.getSession();
+                if (newSession?.user?.id && newSession.user.id !== previousUserId) {
+                  await linkAccount(previousUserId);
+                }
+              } catch (error) {
+                console.error('Failed to link accounts:', error);
+                // Don't show error to user, linking can happen later
+              }
+            }
+
+            // Clear the stored previous user ID
+            sessionStorage.removeItem('bounty-previous-user-id');
+            
             // Refresh the page to show updated sessions list
             setTimeout(() => {
               window.location.href = '/dashboard';
