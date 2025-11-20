@@ -17,13 +17,13 @@ import type {
   UserDisplayData,
 } from '@/types/billing-components';
 import { AccountSwitcher } from '@/components/auth/account-switcher';
-import { SwitchUsersIcon } from '@bounty/ui/components/switch-users';
+import { SwitchUsersIcon } from '@bounty/ui/components/icons/huge/switch-users';
 import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear';
 import { SwitchWorkspaceIcon } from '@bounty/ui/components/icons/huge/switch-workspace';
 import { ManageUsersWorkspaceIcon } from '@bounty/ui/components/icons/huge/manage-users-workspace';
 import { BillingSettingsIcon } from '@bounty/ui/components/icons/huge/billing-settings';
 import { DropdownMenuSeparator, DropdownMenuItem } from '@bounty/ui/components/dropdown-menu';
-import { DropdownIcon, Tooltip, TooltipContent, TooltipTrigger } from '@bounty/ui';
+import { DropdownIcon } from '@bounty/ui';
 
 // Constants for better maintainability
 const MESSAGES = {
