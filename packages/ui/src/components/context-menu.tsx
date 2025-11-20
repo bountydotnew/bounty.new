@@ -24,7 +24,6 @@ function ContextMenuTrigger({
 
 function ContextMenuContent({
   className,
-  sideOffset = 4,
   ...props
 }: React.ComponentProps<typeof ContextMenuPrimitive.Content>) {
   return (
@@ -40,7 +39,6 @@ function ContextMenuContent({
             : 'rgba(0, 0, 0, 0.08) 0px 16px 40px 0px',
         }}
         data-slot="context-menu-content"
-        sideOffset={sideOffset}
         {...props}
       />
     </ContextMenuPrimitive.Portal>
@@ -78,7 +76,7 @@ function ContextMenuCheckboxItem({
         'focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors',
         className
       )}
-      checked={checked}
+      {...(checked !== undefined && { checked })}
       data-slot="context-menu-checkbox-item"
       {...props}
     >
