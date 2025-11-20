@@ -106,152 +106,61 @@ function Step1DescriptionForm({
 }: Step1DescriptionFormProps) {
     return (
         <div className="flex flex-col min-w-0">
-            <div className="flex flex-col h-full min-w-0">
-                <div className="flex flex-col overflow-x-hidden min-w-0 relative w-full">
-                    {showRawMarkdown ? (
-                        <Controller
-                            control={control}
-                            name="description"
-                            render={({ field }) => (
-                                <textarea
-                                    ref={(e) => {
-                                        if (e) {
-                                            textareaRef.current = e;
-                                            field.ref(e);
-                                        }
-                                    }}
-                                    className="flex flex-col text-base border-none p-3.5 min-h-[120px] max-h-[400px] resize-y shadow-none focus:ring-0 focus:outline-none w-full overflow-x-hidden overflow-y-auto bg-transparent text-[#5A5A5A] placeholder:text-[#5A5A5A]"
-                                    onChange={(e) => {
-                                        field.onChange(e.target.value);
-                                        const target = e.target;
-                                        target.style.height = 'auto';
-                                        const newHeight = Math.min(Math.max(target.scrollHeight, 120), 400);
-                                        target.style.height = `${newHeight}px`;
-                                    }}
-                                    placeholder={placeholder}
-                                    rows={4}
-                                    value={field.value}
-                                />
-                            )}
-                        />
-                    ) : (
-                        <div className="p-3.5 min-h-[120px] max-h-[400px] overflow-y-auto">
-                            {description ? (
-                                <MarkdownContent content={description} />
-                            ) : (
-                                <div className="text-[#5A5A5A]">{placeholder}</div>
-                            )}
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <div className="px-3 pb-3 flex items-center gap-2 flex-row flex-wrap min-w-0 bg-transparent">
-                <div className="flex items-center gap-1 min-w-0 flex-1">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button
-                                className="w-fit text-sm font-medium [&_span:last-child]:pr-[3px] [&_span:first-child]:pl-[3px] inline-flex items-center justify-center gap-0.5 whitespace-nowrap [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:align-middle [&_svg]:box-border [&_svg]:w-[var(--icon-frame)] [&_svg]:h-[var(--icon-frame)] [&_svg]:p-[var(--icon-pad)] relative focus:outline-none focus-visible:shadow-focus-ring-blue disabled:shadow-none disabled:text-foreground-muted [&_svg]:disabled:text-foreground-muted text-foreground [&_svg]:text-icon bg-interactive-state hover:bg-[#323232] active:bg-interactive-state-pressed data-[state=open]:bg-interactive-state-active disabled:bg-interactive-state-disabled h-[28px] px-[6px] py-[4px] [--icon-frame:20px] [--icon-pad:2px] rounded-full overflow-hidden max-w-[calc(100vw-120px)] sm:max-w-none min-w-0"
-                                type="button"
-                            >
-                                <GithubIcon className="text-[#5A5A5A]" />
-                                <div className="hidden sm:flex gap-0.5 text-sm font-medium items-center text-foreground-strong [&_svg]:size-2 overflow-hidden min-w-0">
-                                    <span className="truncate min-w-0">
-                                        {selectedRepository || 'Select repository'}
-                                    </span>
-                                </div>
-                                <ChevronDoubleIcon className="!size-3.5 !text-[#5A5A5A] ml-auto shrink-0" />
-                            </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                            className="w-60 p-0 border-[#232323] bg-[#191919] text-[#CFCFCF] rounded-xl shadow-[rgba(0,0,0,0.08)_0px_16px_40px_0px]"
-                            align="start"
-                            side="bottom"
-                        >
-                            <div className="p-1">
-                                <div className="flex items-center border-b border-[#232323] px-2 font-medium">
-                                    <input
-                                        className="flex h-7 w-full rounded-md bg-transparent py-3 text-sm outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 placeholder:text-[#5A5A5A] disabled:cursor-not-allowed disabled:opacity-50"
-                                        placeholder="Search repositories"
-                                        value={repoSearchQuery}
-                                        onChange={(e) => setRepoSearchQuery(e.target.value)}
-                                        autoComplete="off"
-                                        autoCorrect="off"
-                                        spellCheck={false}
+                <div className="flex flex-col h-full min-w-0">
+                    <div className="flex flex-col overflow-x-hidden min-w-0 relative w-full">
+                        {showRawMarkdown ? (
+                            <Controller
+                                control={control}
+                                name="description"
+                                        render={({ field }) => (
+                                    <textarea
+                                        ref={(e) => {
+                                            if (e) {
+                                                textareaRef.current = e;
+                                                field.ref(e);
+                                            }
+                                        }}
+                                        className="flex flex-col text-base border-none p-3.5 min-h-[120px] max-h-[400px] resize-y shadow-none focus:ring-0 focus:outline-none w-full overflow-x-hidden overflow-y-auto bg-transparent text-[#5A5A5A] placeholder:text-[#5A5A5A]"
+                                        onChange={(e) => {
+                                            field.onChange(e.target.value);
+                                            const target = e.target;
+                                            target.style.height = 'auto';
+                                            const newHeight = Math.min(Math.max(target.scrollHeight, 120), 400);
+                                            target.style.height = `${newHeight}px`;
+                                        }}
+                                        placeholder={placeholder}
+                                        rows={4}
+                                        value={field.value}
                                     />
-                                </div>
-                                <DropdownMenuSeparator className="h-px bg-[#232323] my-1 -mx-1" />
-                                <div className="overflow-x-hidden flex flex-col max-h-[180px] overflow-y-auto no-scrollbar">
-                                    {reposLoading ? (
-                                        <div className="px-2 py-1.5 text-sm text-[#5A5A5A]">
-                                            Loading repositories...
-                                        </div>
-                                    ) : reposData && !reposData.success && reposData.error ? (
-                                        <div className="px-2 py-1.5 text-sm text-[#FF6B6B]">
-                                            {reposData.error?.includes('reconnect') ? (
-                                                <span>
-                                                    {reposData.error}{' '}
-                                                    <a
-                                                        href="/api/auth/sign-in/github"
-                                                        className="underline hover:text-[#FF8E8E]"
-                                                    >
-                                                        Reconnect
-                                                    </a>
-                                                </span>
-                                            ) : (
-                                                reposData.error || 'Failed to load repositories'
-                                            )}
-                                        </div>
-                                    ) : filteredRepositories.length > 0 ? (
-                                        filteredRepositories.map((repo: string) => (
-                                            <DropdownMenuItem
-                                                key={repo}
-                                                className="relative cursor-default select-none py-1.5 outline-none data-[disabled=true]:pointer-events-none data-[selected=true]:text-[#CFCFCF] data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 flex items-center gap-2 w-full h-8 px-2 rounded-lg data-[selected=true]:bg-[#141414] text-sm font-medium hover:bg-[#141414] focus:bg-[#141414] bg-transparent"
-                                                onClick={() => handleRepositorySelect(repo)}
-                                                data-selected={selectedRepository === repo}
-                                            >
-                                                <GithubIcon className="size-4 text-[#5A5A5A]" />
-                                                <span className="text-[#CFCFCF] truncate block overflow-hidden">
-                                                    {repo}
-                                                </span>
-                                            </DropdownMenuItem>
-                                        ))
-                                    ) : (
-                                        <div className="px-2 py-1.5 text-sm text-[#5A5A5A]">
-                                            {githubUsername
-                                                ? 'No repositories found'
-                                                : 'Connect GitHub to see repositories'}
-                                        </div>
-                                    )}
-                                </div>
+                                )}
+                            />
+                        ) : (
+                            <div className="p-3.5 min-h-[120px] max-h-[400px] overflow-y-auto">
+                                {description ? (
+                                    <MarkdownContent content={description} />
+                                ) : (
+                                    <div className="text-[#5A5A5A]">{placeholder}</div>
+                                )}
                             </div>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                        )}
+                    </div>
+                </div>
 
-                    {branchesLoading ? (
-                        <button
-                            className="w-fit text-sm font-medium [&_span:last-child]:pr-[3px] [&_span:first-child]:pl-[3px] inline-flex items-center justify-center gap-0.5 whitespace-nowrap [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:align-middle [&_svg]:box-border [&_svg]:w-[var(--icon-frame)] [&_svg]:h-[var(--icon-frame)] [&_svg]:p-(--icon-pad) relative focus:outline-none focus-visible:shadow-focus-ring-blue disabled:shadow-none disabled:text-foreground-muted [&_svg]:disabled:text-foreground-muted text-foreground [&_svg]:text-icon bg-interactive-state hover:bg-interactive-state-hover active:bg-interactive-state-pressed data-[state=open]:bg-interactive-state-active disabled:bg-interactive-state-disabled h-[28px] px-[6px] py-[4px] [--icon-frame:20px] [--icon-pad:2px] rounded-full opacity-50 cursor-not-allowed"
-                            disabled
-                            type="button"
-                        >
-                            <Spinner size="sm" className="ml-1 mr-2" />
-                            <span>Finding branches...</span>
-                        </button>
-                    ) : (
+                <div className="px-3 pb-3 flex items-center gap-2 flex-row flex-wrap min-w-0 bg-transparent">
+                    <div className="flex items-center gap-1 min-w-0 flex-1">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button
-                                    className="w-fit text-sm font-medium [&_span:last-child]:pr-[3px] [&_span:first-child]:pl-[3px] inline-flex items-center justify-center gap-0.5 whitespace-nowrap [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:align-middle [&_svg]:box-border [&_svg]:w-[var(--icon-frame)] [&_svg]:h-[var(--icon-frame)] [&_svg]:p-[var(--icon-pad)] relative focus:outline-none focus-visible:shadow-focus-ring-blue disabled:shadow-none disabled:text-foreground-muted [&_svg]:disabled:text-foreground-muted text-foreground [&_svg]:text-icon bg-interactive-state hover:bg-[#323232] active:bg-interactive-state-pressed data-[state=open]:bg-interactive-state-active disabled:bg-interactive-state-disabled h-[28px] px-[6px] py-[4px] [--icon-frame:20px] [--icon-pad:2px] rounded-full shadow-hidden max-w-[calc(100vw-120px)] sm:max-w-none min-w-0"
+                                    className="w-fit text-sm font-medium [&_span:last-child]:pr-[3px] [&_span:first-child]:pl-[3px] inline-flex items-center justify-center gap-0.5 whitespace-nowrap [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:align-middle [&_svg]:box-border [&_svg]:w-[var(--icon-frame)] [&_svg]:h-[var(--icon-frame)] [&_svg]:p-[var(--icon-pad)] relative focus:outline-none focus-visible:shadow-focus-ring-blue disabled:shadow-none disabled:text-foreground-muted [&_svg]:disabled:text-foreground-muted text-foreground [&_svg]:text-icon bg-interactive-state hover:bg-[#323232] active:bg-interactive-state-pressed data-[state=open]:bg-interactive-state-active disabled:bg-interactive-state-disabled h-[28px] px-[6px] py-[4px] [--icon-frame:20px] [--icon-pad:2px] rounded-full overflow-hidden max-w-[calc(100vw-120px)] sm:max-w-none min-w-0"
                                     type="button"
                                 >
-                                    <BranchIcon className="shrink-0 text-[#5A5A5A]" />
-                                    <div className="hidden sm:flex gap-0.5 items-center [&_svg]:size-2 overflow-hidden min-w-0">
-                                        <span className="truncate text-foreground-strong min-w-0">
-                                            {selectedBranch}
+                                    <GithubIcon className="text-[#5A5A5A]" />
+                                    <div className="hidden sm:flex gap-0.5 text-sm font-medium items-center text-foreground-strong [&_svg]:size-2 overflow-hidden min-w-0">
+                                        <span className="truncate min-w-0">
+                                            {selectedRepository || 'Select repository'}
                                         </span>
-                                        <ChevronDoubleIcon className="!size-3.5 !text-[#5A5A5A] shrink-0" />
                                     </div>
-                                    <ChevronDoubleIcon className="sm:hidden !size-3.5 shrink-0" />
+                                    <ChevronDoubleIcon className="!size-3.5 !text-[#5A5A5A] ml-auto shrink-0" />
                                 </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
@@ -263,9 +172,9 @@ function Step1DescriptionForm({
                                     <div className="flex items-center border-b border-[#232323] px-2 font-medium">
                                         <input
                                             className="flex h-7 w-full rounded-md bg-transparent py-3 text-sm outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 placeholder:text-[#5A5A5A] disabled:cursor-not-allowed disabled:opacity-50"
-                                            placeholder="Search branches"
-                                            value={branchSearchQuery}
-                                            onChange={(e) => setBranchSearchQuery(e.target.value)}
+                                            placeholder="Search repositories"
+                                            value={repoSearchQuery}
+                                            onChange={(e) => setRepoSearchQuery(e.target.value)}
                                             autoComplete="off"
                                             autoCorrect="off"
                                             spellCheck={false}
@@ -273,137 +182,228 @@ function Step1DescriptionForm({
                                     </div>
                                     <DropdownMenuSeparator className="h-px bg-[#232323] my-1 -mx-1" />
                                     <div className="overflow-x-hidden flex flex-col max-h-[180px] overflow-y-auto no-scrollbar">
-                                        {selectedRepository ? (
-                                            filteredBranches.length > 0 ? (
-                                                filteredBranches.map((branch: string) => (
-                                                    <DropdownMenuItem
-                                                        key={branch}
-                                                        className="relative cursor-default select-none py-1.5 outline-none data-[disabled=true]:pointer-events-none data-[selected=true]:text-[#CFCFCF] data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 flex items-center gap-2 w-full h-8 px-2 rounded-lg data-[selected=true]:bg-[#141414] text-sm font-medium hover:bg-[#141414] focus:bg-[#141414] bg-transparent"
-                                                        onClick={() => handleBranchSelect(branch)}
-                                                        data-selected={selectedBranch === branch}
-                                                    >
-                                                        <GithubIcon className="size-4 text-[#5A5A5A]" />
-                                                        <span className="text-[#CFCFCF] truncate block overflow-hidden">
-                                                            {branch}
-                                                        </span>
-                                                    </DropdownMenuItem>
-                                                ))
-                                            ) : (
-                                                <div className="px-2 py-1.5 text-sm text-[#5A5A5A]">
-                                                    No branches found
-                                                </div>
-                                            )
-                                        ) : (
+                                        {reposLoading ? (
                                             <div className="px-2 py-1.5 text-sm text-[#5A5A5A]">
-                                                Select a repository first
+                                                Loading repositories...
                                             </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    )}
-
-                    {selectedRepository && repoInfo && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <button
-                                    className="w-fit text-sm font-medium [&_span:last-child]:pr-[3px] [&_span:first-child]:pl-[3px] inline-flex items-center justify-center gap-0.5 whitespace-nowrap [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:align-middle [&_svg]:box-border [&_svg]:w-[var(--icon-frame)] [&_svg]:h-[var(--icon-frame)] [&_svg]:p-[var(--icon-pad)] relative focus:outline-none focus-visible:shadow-focus-ring-blue disabled:shadow-none disabled:text-foreground-muted [&_svg]:disabled:text-foreground-muted text-foreground [&_svg]:text-icon bg-interactive-state hover:bg-[#323232] active:bg-interactive-state-pressed data-[state=open]:bg-interactive-state-active disabled:bg-interactive-state-disabled h-[28px] px-[6px] py-[4px] [--icon-frame:20px] [--icon-pad:2px] rounded-full shadow-hidden max-w-[calc(100vw-120px)] sm:max-w-none min-w-0"
-                                    type="button"
-                                >
-                                    <GithubIcon className="shrink-0 text-[#5A5A5A]" />
-                                    <div className="hidden sm:flex gap-0.5 items-center [&_svg]:size-2 overflow-hidden min-w-0">
-                                        <span className="truncate text-foreground-strong min-w-0">
-                                            {selectedIssue ? `#${selectedIssue.number}` : 'Issue'}
-                                        </span>
-                                        <ChevronDoubleIcon className="!size-3.5 !text-[#5A5A5A] shrink-0" />
-                                    </div>
-                                    <ChevronDoubleIcon className="sm:hidden !size-3.5 shrink-0" />
-                                </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                                className="w-60 p-0 border-[#232323] bg-[#191919] text-[#CFCFCF] rounded-xl shadow-[rgba(0,0,0,0.08)_0px_16px_40px_0px]"
-                                align="start"
-                                side="bottom"
-                            >
-                                <div className="p-1">
-                                    <div className="flex items-center border-b border-[#232323] px-2 font-medium">
-                                        <input
-                                            className="flex h-7 w-full rounded-md bg-transparent py-3 text-sm outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 placeholder:text-[#5A5A5A] disabled:cursor-not-allowed disabled:opacity-50"
-                                            placeholder="Search issues"
-                                            value={issueQuery}
-                                            onChange={(e) => setIssueQuery(e.target.value)}
-                                            autoComplete="off"
-                                            autoCorrect="off"
-                                            spellCheck={false}
-                                        />
-                                    </div>
-                                    <DropdownMenuSeparator className="h-px bg-[#232323] my-1 -mx-1" />
-                                    <div className="overflow-x-hidden flex flex-col max-h-[180px] overflow-y-auto no-scrollbar">
-                                        {issuesList.isLoading || issuesList.isFetching ? (
-                                            <div className="px-2 py-1.5 text-sm text-[#5A5A5A]">
-                                                Loading issues...
+                                        ) : reposData && !reposData.success && reposData.error ? (
+                                            <div className="px-2 py-1.5 text-sm text-[#FF6B6B]">
+                                                {reposData.error?.includes('reconnect') ? (
+                                                    <span>
+                                                        {reposData.error}{' '}
+                                                        <a
+                                                            href="/api/auth/sign-in/github"
+                                                            className="underline hover:text-[#FF8E8E]"
+                                                        >
+                                                            Reconnect
+                                                        </a>
+                                                    </span>
+                                                ) : (
+                                                    reposData.error || 'Failed to load repositories'
+                                                )}
                                             </div>
-                                        ) : filteredIssues.length > 0 ? (
-                                            filteredIssues.map((issue: { number: number; title: string }) => (
+                                        ) : filteredRepositories.length > 0 ? (
+                                            filteredRepositories.map((repo: string) => (
                                                 <DropdownMenuItem
-                                                    key={issue.number}
+                                                    key={repo}
                                                     className="relative cursor-default select-none py-1.5 outline-none data-[disabled=true]:pointer-events-none data-[selected=true]:text-[#CFCFCF] data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 flex items-center gap-2 w-full h-8 px-2 rounded-lg data-[selected=true]:bg-[#141414] text-sm font-medium hover:bg-[#141414] focus:bg-[#141414] bg-transparent"
-                                                    onClick={() => handleIssueSelect(issue)}
-                                                    data-selected={selectedIssue?.number === issue.number}
+                                                    onClick={() => handleRepositorySelect(repo)}
+                                                    data-selected={selectedRepository === repo}
                                                 >
                                                     <GithubIcon className="size-4 text-[#5A5A5A]" />
                                                     <span className="text-[#CFCFCF] truncate block overflow-hidden">
-                                                        #{issue.number}: {issue.title}
+                                                        {repo}
                                                     </span>
                                                 </DropdownMenuItem>
                                             ))
-                                        ) : issueQuery.length > 0 ? (
-                                            <div className="px-2 py-1.5 text-sm text-[#5A5A5A]">
-                                                No issues found
-                                            </div>
                                         ) : (
                                             <div className="px-2 py-1.5 text-sm text-[#5A5A5A]">
-                                                No open issues
+                                                {githubUsername
+                                                    ? 'No repositories found'
+                                                    : 'Connect GitHub to see repositories'}
                                             </div>
                                         )}
                                     </div>
                                 </div>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                    )}
-                </div>
 
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <button
+                        {branchesLoading ? (
+                            <button
+                                className="w-fit text-sm font-medium [&_span:last-child]:pr-[3px] [&_span:first-child]:pl-[3px] inline-flex items-center justify-center gap-0.5 whitespace-nowrap [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:align-middle [&_svg]:box-border [&_svg]:w-[var(--icon-frame)] [&_svg]:h-[var(--icon-frame)] [&_svg]:p-(--icon-pad) relative focus:outline-none focus-visible:shadow-focus-ring-blue disabled:shadow-none disabled:text-foreground-muted [&_svg]:disabled:text-foreground-muted text-foreground [&_svg]:text-icon bg-interactive-state hover:bg-interactive-state-hover active:bg-interactive-state-pressed data-[state=open]:bg-interactive-state-active disabled:bg-interactive-state-disabled h-[28px] px-[6px] py-[4px] [--icon-frame:20px] [--icon-pad:2px] rounded-full opacity-50 cursor-not-allowed"
+                                disabled
+                                type="button"
+                            >
+                                <Spinner size="sm" className="ml-1 mr-2" />
+                                <span>Finding branches...</span>
+                            </button>
+                        ) : (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        className="w-fit text-sm font-medium [&_span:last-child]:pr-[3px] [&_span:first-child]:pl-[3px] inline-flex items-center justify-center gap-0.5 whitespace-nowrap [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:align-middle [&_svg]:box-border [&_svg]:w-[var(--icon-frame)] [&_svg]:h-[var(--icon-frame)] [&_svg]:p-[var(--icon-pad)] relative focus:outline-none focus-visible:shadow-focus-ring-blue disabled:shadow-none disabled:text-foreground-muted [&_svg]:disabled:text-foreground-muted text-foreground [&_svg]:text-icon bg-interactive-state hover:bg-[#323232] active:bg-interactive-state-pressed data-[state=open]:bg-interactive-state-active disabled:bg-interactive-state-disabled h-[28px] px-[6px] py-[4px] [--icon-frame:20px] [--icon-pad:2px] rounded-full shadow-hidden max-w-[calc(100vw-120px)] sm:max-w-none min-w-0"
+                                        type="button"
+                                    >
+                                        <BranchIcon className="shrink-0 text-[#5A5A5A]" />
+                                        <div className="hidden sm:flex gap-0.5 items-center [&_svg]:size-2 overflow-hidden min-w-0">
+                                            <span className="truncate text-foreground-strong min-w-0">
+                                                {selectedBranch}
+                                            </span>
+                                            <ChevronDoubleIcon className="!size-3.5 !text-[#5A5A5A] shrink-0" />
+                                        </div>
+                                        <ChevronDoubleIcon className="sm:hidden !size-3.5 shrink-0" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    className="w-60 p-0 border-[#232323] bg-[#191919] text-[#CFCFCF] rounded-xl shadow-[rgba(0,0,0,0.08)_0px_16px_40px_0px]"
+                                    align="start"
+                                    side="bottom"
+                                >
+                                    <div className="p-1">
+                                        <div className="flex items-center border-b border-[#232323] px-2 font-medium">
+                                            <input
+                                                className="flex h-7 w-full rounded-md bg-transparent py-3 text-sm outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 placeholder:text-[#5A5A5A] disabled:cursor-not-allowed disabled:opacity-50"
+                                                placeholder="Search branches"
+                                                value={branchSearchQuery}
+                                                onChange={(e) => setBranchSearchQuery(e.target.value)}
+                                                autoComplete="off"
+                                                autoCorrect="off"
+                                                spellCheck={false}
+                                            />
+                                        </div>
+                                        <DropdownMenuSeparator className="h-px bg-[#232323] my-1 -mx-1" />
+                                        <div className="overflow-x-hidden flex flex-col max-h-[180px] overflow-y-auto no-scrollbar">
+                                            {selectedRepository ? (
+                                                filteredBranches.length > 0 ? (
+                                                    filteredBranches.map((branch: string) => (
+                                                        <DropdownMenuItem
+                                                            key={branch}
+                                                            className="relative cursor-default select-none py-1.5 outline-none data-[disabled=true]:pointer-events-none data-[selected=true]:text-[#CFCFCF] data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 flex items-center gap-2 w-full h-8 px-2 rounded-lg data-[selected=true]:bg-[#141414] text-sm font-medium hover:bg-[#141414] focus:bg-[#141414] bg-transparent"
+                                                            onClick={() => handleBranchSelect(branch)}
+                                                            data-selected={selectedBranch === branch}
+                                                        >
+                                                            <GithubIcon className="size-4 text-[#5A5A5A]" />
+                                                            <span className="text-[#CFCFCF] truncate block overflow-hidden">
+                                                                {branch}
+                                                            </span>
+                                                        </DropdownMenuItem>
+                                                    ))
+                                                ) : (
+                                                    <div className="px-2 py-1.5 text-sm text-[#5A5A5A]">
+                                                        No branches found
+                                                    </div>
+                                                )
+                                            ) : (
+                                                <div className="px-2 py-1.5 text-sm text-[#5A5A5A]">
+                                                    Select a repository first
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+
+                        {selectedRepository && repoInfo && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        className="w-fit text-sm font-medium [&_span:last-child]:pr-[3px] [&_span:first-child]:pl-[3px] inline-flex items-center justify-center gap-0.5 whitespace-nowrap [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:align-middle [&_svg]:box-border [&_svg]:w-[var(--icon-frame)] [&_svg]:h-[var(--icon-frame)] [&_svg]:p-[var(--icon-pad)] relative focus:outline-none focus-visible:shadow-focus-ring-blue disabled:shadow-none disabled:text-foreground-muted [&_svg]:disabled:text-foreground-muted text-foreground [&_svg]:text-icon bg-interactive-state hover:bg-[#323232] active:bg-interactive-state-pressed data-[state=open]:bg-interactive-state-active disabled:bg-interactive-state-disabled h-[28px] px-[6px] py-[4px] [--icon-frame:20px] [--icon-pad:2px] rounded-full shadow-hidden max-w-[calc(100vw-120px)] sm:max-w-none min-w-0"
+                                        type="button"
+                                    >
+                                        <GithubIcon className="shrink-0 text-[#5A5A5A]" />
+                                        <div className="hidden sm:flex gap-0.5 items-center [&_svg]:size-2 overflow-hidden min-w-0">
+                                            <span className="truncate text-foreground-strong min-w-0">
+                                                {selectedIssue ? `#${selectedIssue.number}` : 'Issue'}
+                                            </span>
+                                            <ChevronDoubleIcon className="!size-3.5 !text-[#5A5A5A] shrink-0" />
+                                        </div>
+                                        <ChevronDoubleIcon className="sm:hidden !size-3.5 shrink-0" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    className="w-60 p-0 border-[#232323] bg-[#191919] text-[#CFCFCF] rounded-xl shadow-[rgba(0,0,0,0.08)_0px_16px_40px_0px]"
+                                    align="start"
+                                    side="bottom"
+                                >
+                                    <div className="p-1">
+                                        <div className="flex items-center border-b border-[#232323] px-2 font-medium">
+                                            <input
+                                                className="flex h-7 w-full rounded-md bg-transparent py-3 text-sm outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 placeholder:text-[#5A5A5A] disabled:cursor-not-allowed disabled:opacity-50"
+                                                placeholder="Search issues"
+                                                value={issueQuery}
+                                                onChange={(e) => setIssueQuery(e.target.value)}
+                                                autoComplete="off"
+                                                autoCorrect="off"
+                                                spellCheck={false}
+                                            />
+                                        </div>
+                                        <DropdownMenuSeparator className="h-px bg-[#232323] my-1 -mx-1" />
+                                        <div className="overflow-x-hidden flex flex-col max-h-[180px] overflow-y-auto no-scrollbar">
+                                            {issuesList.isLoading || issuesList.isFetching ? (
+                                                <div className="px-2 py-1.5 text-sm text-[#5A5A5A]">
+                                                    Loading issues...
+                                                </div>
+                                            ) : filteredIssues.length > 0 ? (
+                                                filteredIssues.map((issue: { number: number; title: string }) => (
+                                                    <DropdownMenuItem
+                                                        key={issue.number}
+                                                        className="relative cursor-default select-none py-1.5 outline-none data-[disabled=true]:pointer-events-none data-[selected=true]:text-[#CFCFCF] data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 flex items-center gap-2 w-full h-8 px-2 rounded-lg data-[selected=true]:bg-[#141414] text-sm font-medium hover:bg-[#141414] focus:bg-[#141414] bg-transparent"
+                                                        onClick={() => handleIssueSelect(issue)}
+                                                        data-selected={selectedIssue?.number === issue.number}
+                                                    >
+                                                        <GithubIcon className="size-4 text-[#5A5A5A]" />
+                                                        <span className="text-[#CFCFCF] truncate block overflow-hidden">
+                                                            #{issue.number}: {issue.title}
+                                                        </span>
+                                                    </DropdownMenuItem>
+                                                ))
+                                            ) : issueQuery.length > 0 ? (
+                                                <div className="px-2 py-1.5 text-sm text-[#5A5A5A]">
+                                                    No issues found
+                                                </div>
+                                            ) : (
+                                                <div className="px-2 py-1.5 text-sm text-[#5A5A5A]">
+                                                    No open issues
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+                    </div>
+
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button
                             className={`p-1.5 rounded-md transition-colors shrink-0 ${showRawMarkdown
-                                    ? 'text-[#5A5A5A] hover:text-[#CFCFCF]'
-                                    : 'text-white hover:text-[#CFCFCF]'
+                                        ? 'text-[#5A5A5A] hover:text-[#CFCFCF]'
+                                        : 'text-white hover:text-[#CFCFCF]'
                                 }`}
-                            onClick={() => setShowRawMarkdown(!showRawMarkdown)}
-                            type="button"
-                        >
-                            {showRawMarkdown ? (
-                                <EyeOff className="w-4 h-4" />
-                            ) : (
-                                <Eye className="w-4 h-4" />
-                            )}
-                        </button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        {showRawMarkdown ? 'Show rendered markdown' : 'Show raw markdown'}
-                    </TooltipContent>
-                </Tooltip>
+                                onClick={() => setShowRawMarkdown(!showRawMarkdown)}
+                                type="button"
+                            >
+                                {showRawMarkdown ? (
+                                    <EyeOff className="w-4 h-4" />
+                                ) : (
+                                    <Eye className="w-4 h-4" />
+                                )}
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            {showRawMarkdown ? 'Show rendered markdown' : 'Show raw markdown'}
+                        </TooltipContent>
+                    </Tooltip>
 
-                <button
-                    className="text-sm font-medium inline-flex items-center justify-center gap-0.5 whitespace-nowrap relative focus:outline-none focus-visible:shadow-[0_0_0_2px_rgba(59,130,246,0.5)] disabled:text-[#5A5A5A] disabled:shadow-none text-white bg-[#656565] hover:bg-[#757575] active:bg-[#6D6D6D] px-[6px] py-[4px] w-[40px] h-[28px] rounded-full shadow-[0_0_0_1px_rgba(0,0,0,0.22),0_-1px_2px_0_rgba(255,255,255,0.12)_inset,0_1px_2px_0_rgba(255,255,255,0.16)_inset] shrink-0 ml-auto"
-                    type="submit"
-                >
-                    <ArrowDownIcon2 className="w-5 h-5 text-white/80" />
-                </button>
+                    <button
+                        className="text-sm font-medium inline-flex items-center justify-center gap-0.5 whitespace-nowrap relative focus:outline-none focus-visible:shadow-[0_0_0_2px_rgba(59,130,246,0.5)] disabled:text-[#5A5A5A] disabled:shadow-none text-white bg-[#656565] hover:bg-[#757575] active:bg-[#6D6D6D] px-[6px] py-[4px] w-[40px] h-[28px] rounded-full shadow-[0_0_0_1px_rgba(0,0,0,0.22),0_-1px_2px_0_rgba(255,255,255,0.12)_inset,0_1px_2px_0_rgba(255,255,255,0.16)_inset] shrink-0 ml-auto"
+                        type="submit"
+                    >
+                        <ArrowDownIcon2 className="w-5 h-5 text-white/80" />
+                    </button>
+                </div>
             </div>
-        </div>
     );
 }
 
@@ -550,7 +550,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
 
     // Step state
     const [step, setStep] = useState<'description' | 'details'>('description');
-
+    
     // Form state
     const form = useForm<CreateBountyForm>({
         resolver: zodResolver(createBountySchema),
@@ -576,7 +576,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
     const [repoSearchQuery, setRepoSearchQuery] = useState('');
     const [branchSearchQuery, setBranchSearchQuery] = useState('');
     const [showRawMarkdown, setShowRawMarkdown] = useState<boolean>(true);
-
+    
     // Issue selector state
     const [issueQuery, setIssueQuery] = useState('');
     const [selectedIssue, setSelectedIssue] = useState<{ number: number; title: string; url: string } | null>(null);
@@ -805,16 +805,16 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
             console.log('[TaskInputForm] Step 2 submit - form data:', data);
             console.log('[TaskInputForm] Step 2 submit - selectedRepository:', selectedRepository);
             console.log('[TaskInputForm] Step 2 submit - selectedIssue:', selectedIssue);
-
+            
             const formattedData = formatFormData.createBounty({
                 ...data,
                 repositoryUrl: selectedRepository ? `https://github.com/${selectedRepository}` : undefined,
                 issueUrl: selectedIssue?.url,
             });
-
+            
             console.log('[TaskInputForm] Step 2 submit - formattedData:', formattedData);
             console.log('[TaskInputForm] Step 2 submit - createBounty.isPending:', createBounty.isPending);
-
+            
             createBounty.mutate(formattedData);
         },
         (errors) => {
@@ -879,9 +879,9 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                     <div
                         role="presentation"
                         className={`bg-[#191919] text-[#5A5A5A] border-[1.5px] border-[#232323] rounded-2xl relative transition-colors cursor-text overflow-hidden w-full min-w-0 ${step === 'description'
-                                ? 'focus-within:shadow-[0_0_0_2px_rgba(59,130,246,0.5)] focus-within:outline-none'
+                                ? 'focus-within:shadow-[0_0_0_2px_rgba(59,130,246,0.5)] focus-within:outline-none' 
                                 : ''
-                            }`}
+                        }`}
                     >
                         {/* Hidden file input */}
                         <input
@@ -912,7 +912,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                                 githubUsername={githubUsername}
                                 reposLoading={reposLoading}
                                 reposData={reposData}
-                                filteredRepositories={filteredRepositories}
+                                filteredRepositories={filteredRepositories} 
                                 branchesLoading={branchesLoading}
                                 filteredBranches={filteredBranches}
                                 issuesList={issuesList}

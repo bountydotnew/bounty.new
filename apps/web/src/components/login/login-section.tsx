@@ -96,17 +96,7 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
 
         {!isPending && session && (
           isAddingAccount ? (
-            <AddAccountView 
-              callbackUrl={callbackUrl} 
-              session={{
-                user: {
-                  id: session.user.id,
-                  name: session.user.name,
-                  email: session.user.email,
-                  image: session.user.image,
-                },
-              }} 
-            />
+            <AddAccountView callbackUrl={callbackUrl} session={session} />
           ) : (
             <SignedInView callbackUrl={callbackUrl} session={session} />
           )
