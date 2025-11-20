@@ -60,13 +60,11 @@ export function AccountSwitcher({ currentUserId, trigger }: AccountSwitcherProps
   });
 
   // Fetch linked accounts from database
-  const { data: linkedAccounts = [], isLoading: isLoadingLinked } = trpc.user.getLinkedAccounts.useQuery(
-    undefined,
-    {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: false,
-    }
-  );
+  const { data: linkedAccounts = [], isLoading: isLoadingLinked } = useQuery({
+    ...trpc.user.getLinkedAccounts.queryOptions(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false,
+  });
 
   // Merge device sessions and linked accounts
   // Create a map of user IDs from device sessions to avoid duplicates
