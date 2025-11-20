@@ -16,8 +16,14 @@ import type {
   AccountDropdownProps,
   UserDisplayData,
 } from '@/types/billing-components';
-import { trpc } from '@/utils/trpc';
 import { AccountSwitcher } from '@/components/auth/account-switcher';
+import { SwitchUsersIcon } from '@bounty/ui/components/switch-users';
+import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear';
+import { SwitchWorkspaceIcon } from '@bounty/ui/components/icons/huge/switch-workspace';
+import { ManageUsersWorkspaceIcon } from '@bounty/ui/components/icons/huge/manage-users-workspace';
+import { BillingSettingsIcon } from '@bounty/ui/components/icons/huge/billing-settings';
+import { DropdownMenuSeparator, DropdownMenuItem } from '@bounty/ui/components/dropdown-menu';
+import { DropdownIcon, Tooltip, TooltipContent, TooltipTrigger } from '@bounty/ui';
 
 // Constants for better maintainability
 const MESSAGES = {
@@ -135,7 +141,19 @@ export function AccountDropdown({
                 {userDisplay.email}
               </div>
             </div>
-            <SwitchUsersIcon className="h-[19px] w-[19px] text-text-secondary" />
+
+            <AccountSwitcher 
+              currentUserId={session?.user?.id}
+              trigger={
+                <button
+                  className="cursor-pointer transition-opacity hover:opacity-70"
+                  type="button"
+                  aria-label="Switch account"
+                >
+                  <SwitchUsersIcon className="h-[19px] w-[19px] text-text-secondary" />
+                </button>
+              }
+            />
           </div>
           <button
             className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-white"
@@ -184,23 +202,18 @@ export function AccountDropdown({
           </button>
         </div>
 
-            {/* Account Switcher */}
-            <AccountSwitcher currentUserId={session?.user?.id} />
+        <DropdownMenuSeparator />
 
-            <DropdownMenuSeparator />
-
-            {/* Sign out */}
-            <DropdownMenuItem
-              aria-label="Sign out of account"
-              onClick={handleSignOut}
-              variant="destructive"
-            >
-              <LogOut />
-              {MENU_ITEMS.LOGOUT}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
+        {/* Sign out */}
+        <DropdownMenuItem
+          aria-label="Sign out of account"
+          onClick={handleSignOut}
+          variant="destructive"
+        >
+          <LogOut />
+          Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

@@ -6,21 +6,21 @@ import {
   AvatarFallback,
   AvatarImage,
 } from '@bounty/ui/components/avatar';
-import { Button } from '@bounty/ui/components/button';
 import {
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from '@bounty/ui/components/dropdown-menu';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@bounty/ui/components/popover';
 import { Spinner } from '@bounty/ui/components/spinner';
-import { SwitchUsersIcon } from '@bounty/ui/components/switch-users';
 import { Check, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { toast } from 'sonner';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface AccountSwitcherProps {
   currentUserId?: string;
+  trigger?: React.ReactNode;
 }
 
 interface DeviceSession {
@@ -37,34 +37,26 @@ interface DeviceSession {
   };
 }
 
-export function AccountSwitcher({ currentUserId }: AccountSwitcherProps) {
+export function AccountSwitcher({ currentUserId, trigger }: AccountSwitcherProps) {
   const router = useRouter();
-  const [sessions, setSessions] = React.useState<DeviceSession[]>([]);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const queryClient = useQueryClient();
   const [isSwitching, setIsSwitching] = React.useState(false);
+  const [popoverOpen, setPopoverOpen] = React.useState(false);
 
-  // Load device sessions when component mounts
-  React.useEffect(() => {
-    const loadSessions = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await authClient.multiSession.listDeviceSessions();
-        if (error) {
-          console.error('Failed to load sessions:', error);
-          return;
-        }
-        if (data) {
-          setSessions(data as DeviceSession[]);
-        }
-      } catch (error) {
+  // Use React Query to fetch device sessions (prefetched in usePrefetchInitialData)
+  const { data: sessions = [], isLoading } = useQuery({
+    queryKey: ['auth', 'multiSession', 'listDeviceSessions'],
+    queryFn: async () => {
+      const { data, error } = await authClient.multiSession.listDeviceSessions();
+      if (error) {
         console.error('Failed to load sessions:', error);
-      } finally {
-        setIsLoading(false);
+        return [];
       }
-    };
-
-    loadSessions();
-  }, []);
+      return (data as DeviceSession[]) || [];
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false,
+  });
 
   const handleSwitchAccount = React.useCallback(
     async (sessionToken: string) => {
@@ -81,6 +73,11 @@ export function AccountSwitcher({ currentUserId }: AccountSwitcherProps) {
         }
 
         toast.success('Switched account successfully');
+        // Invalidate all queries to refresh auth-dependent data
+        queryClient.invalidateQueries();
+        // Close popover
+        setPopoverOpen(false);
+        // Refresh the page to update all components
         router.refresh();
       } catch (error) {
         toast.error('Failed to switch account. Please try again.');
@@ -89,33 +86,7 @@ export function AccountSwitcher({ currentUserId }: AccountSwitcherProps) {
         setIsSwitching(false);
       }
     },
-    [router]
-  );
-
-  const handleRemoveAccount = React.useCallback(
-    async (sessionToken: string, e: React.MouseEvent) => {
-      e.stopPropagation();
-      try {
-        const { error } = await authClient.multiSession.revoke({
-          sessionToken,
-        });
-
-        if (error) {
-          toast.error('Failed to remove account. Please try again.');
-          console.error('Failed to remove account:', error);
-          return;
-        }
-
-        toast.success('Account removed successfully');
-        setSessions((prev) =>
-          prev.filter((s) => s.session.token !== sessionToken)
-        );
-      } catch (error) {
-        toast.error('Failed to remove account. Please try again.');
-        console.error('Failed to remove account:', error);
-      }
-    },
-    []
+    [router, queryClient]
   );
 
   const handleAddAccount = React.useCallback(() => {
@@ -123,93 +94,91 @@ export function AccountSwitcher({ currentUserId }: AccountSwitcherProps) {
     router.push('/login?addAccount=true');
   }, [router]);
 
-  if (isLoading) {
-    return (
-      <DropdownMenuGroup>
-        <DropdownMenuItem disabled>
-          <Spinner className="mr-2" size="sm" />
-          Loading accounts...
-        </DropdownMenuItem>
-      </DropdownMenuGroup>
-    );
-  }
-
-  // Only show if there are multiple sessions or potential for more
-  const hasSessions = sessions.length > 1;
-
-  if (!hasSessions) {
-    return null;
-  }
-
-  return (
-    <>
-      <DropdownMenuSeparator />
-      <DropdownMenuGroup>
-        <div className="px-2 py-1.5 text-muted-foreground text-xs font-medium">
-          Switch Account
+  const content = (
+    <PopoverContent 
+      className="w-56 rounded-lg border border-[#232323] bg-[#141414] p-2 shadow-[rgba(0,0,0,0.08)_0px_16px_40px_0px]"
+      align="start"
+      sideOffset={8}
+    >
+      {isLoading ? (
+        <div className="flex items-center gap-2 px-2 py-2">
+          <Spinner className="h-4 w-4" size="sm" />
+          <span className="text-sm text-text-secondary">Loading accounts...</span>
         </div>
-        {sessions.map((deviceSession) => {
-          const isActive = deviceSession.user.id === currentUserId;
-          const initials = deviceSession.user.name
-            ? deviceSession.user.name.charAt(0).toUpperCase()
-            : '?';
-
-          return (
-            <DropdownMenuItem
-              key={deviceSession.session.token}
-              className="cursor-pointer"
-              disabled={isSwitching || isActive}
-              onClick={() =>
-                !isActive && handleSwitchAccount(deviceSession.session.token)
-              }
-            >
-              <div className="flex w-full items-center gap-2">
-                <Avatar className="h-6 w-6">
+      ) : (
+        <div className="flex flex-col gap-1">
+          {sessions.map((deviceSession) => {
+            const isActive = deviceSession.user.id === currentUserId;
+            const initials = deviceSession.user.name
+              ? deviceSession.user.name.charAt(0).toUpperCase()
+              : '?';
+            
+            return (
+              <button
+                key={deviceSession.session.token}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-[#232323] disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isSwitching || isActive}
+                onClick={() =>
+                  !isActive && handleSwitchAccount(deviceSession.session.token)
+                }
+                type="button"
+                aria-label={`Switch to ${deviceSession.user.name}`}
+              >
+                <Avatar className="h-8 w-8 shrink-0">
                   {deviceSession.user.image && (
                     <AvatarImage
                       alt={deviceSession.user.name}
                       src={deviceSession.user.image}
                     />
                   )}
-                  <AvatarFallback className="text-xs">
+                  <AvatarFallback className="text-xs font-medium">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex flex-1 flex-col">
-                  <span className="truncate text-sm">
+                <div className="flex flex-1 flex-col min-w-0">
+                  <span className="text-sm font-medium leading-[150%] text-white truncate">
                     {deviceSession.user.name}
                   </span>
-                  <span className="truncate text-muted-foreground text-xs">
+                  <span className="text-xs leading-[150%] text-[#999999] truncate">
                     {deviceSession.user.email}
                   </span>
                 </div>
-                {isActive && <Check className="h-4 w-4" />}
-                {!isActive && (
-                  <Button
-                    className="h-6 w-6"
-                    onClick={(e) =>
-                      handleRemoveAccount(deviceSession.session.token, e)
-                    }
-                    size="icon"
-                    variant="ghost"
-                  >
-                    <span className="sr-only">Remove account</span>
-                    ×
-                  </Button>
+                {isActive && (
+                  <Check className="h-4 w-4 shrink-0 text-primary" />
                 )}
-              </div>
-            </DropdownMenuItem>
-          );
-        })}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="cursor-pointer"
-          onClick={handleAddAccount}
-        >
-          <Plus className="h-4 w-4" />
-          Add another account
-        </DropdownMenuItem>
-      </DropdownMenuGroup>
-    </>
+              </button>
+            );
+          })}
+          
+          {/* Add new account button */}
+          <button
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-[#232323]"
+            onClick={handleAddAccount}
+            type="button"
+          >
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-[#383838]">
+              <Plus className="h-4 w-4 text-text-secondary" />
+            </div>
+            <span className="text-sm font-medium leading-[150%] text-text-secondary">
+              Add new account
+            </span>
+          </button>
+        </div>
+      )}
+    </PopoverContent>
   );
+
+  if (trigger) {
+    return (
+      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+        <PopoverTrigger asChild>
+          {trigger}
+        </PopoverTrigger>
+        {content}
+      </Popover>
+    );
+  }
+
+  // Fallback: render content directly if no trigger provided (for backwards compatibility)
+  return <>{content}</>;
 }

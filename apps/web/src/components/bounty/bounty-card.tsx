@@ -1,10 +1,20 @@
+'use client';
+
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from '@bounty/ui/components/avatar';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@bounty/ui/components/context-menu';
 import { addNavigationContext } from '@bounty/ui/hooks/use-navigation-context';
+import { authClient } from '@bounty/auth/client';
 import { formatDistanceToNow } from 'date-fns';
+import { Trash2 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { memo } from 'react';
 import type { Bounty } from '@/types/dashboard';
@@ -18,18 +28,33 @@ interface BountyCardProps {
     isVoted: boolean;
     bookmarked: boolean;
   };
+  onDelete?: () => void;
 }
 
 export const BountyCard = memo(function BountyCard({
   bounty,
   stats: initialStats,
+  onDelete,
 }: BountyCardProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { data: session } = authClient.useSession();
+  
+  const canDelete = session?.user?.id
+    ? bounty.creator.id === session.user.id
+    : false;
 
   const handleClick = () => {
     const url = addNavigationContext(`/bounty/${bounty.id}`, pathname);
     router.push(url);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (onDelete && canDelete) {
+      onDelete();
+    }
   };
 
   const creatorName = bounty.creator.name || 'Anonymous';
@@ -57,12 +82,14 @@ export const BountyCard = memo(function BountyCard({
     : 'ripgrim/bountydotnew';
 
   return (
-    <button
-      aria-label={`View bounty: ${bounty.title}`}
-      className="flex w-full cursor-pointer flex-col gap-2.5 rounded-xl border border-[#232323] bg-[#191919] p-4 sm:p-5 shadow-[0px_2px_3px_#00000033] transition duration-100 ease-out active:scale-[.98] min-w-0 text-left"
-      onClick={handleClick}
-      type="button"
-    >
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <button
+          aria-label={`View bounty: ${bounty.title}`}
+          className="flex w-full cursor-pointer flex-col gap-2.5 rounded-xl border border-[#232323] bg-[#191919] p-4 sm:p-5 shadow-[0px_2px_3px_#00000033] transition duration-100 ease-out active:scale-[.98] min-w-0 text-left"
+          onClick={handleClick}
+          type="button"
+        >
       {/* Top row: Creator + Amount */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-[5px]">
@@ -149,5 +176,18 @@ export const BountyCard = memo(function BountyCard({
         </div>
       </div>
     </button>
+      </ContextMenuTrigger>
+      {canDelete && (
+        <ContextMenuContent className="w-48 rounded-md border border-[#232323] bg-[#191919] text-[#CFCFCF] shadow-[rgba(0,0,0,0.08)_0px_16px_40px_0px]">
+          <ContextMenuItem
+            className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+            onClick={handleDelete}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete bounty
+          </ContextMenuItem>
+        </ContextMenuContent>
+      )}
+    </ContextMenu>
   );
 });

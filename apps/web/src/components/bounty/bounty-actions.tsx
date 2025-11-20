@@ -5,6 +5,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -14,6 +15,7 @@ import {
   Edit,
   MoreHorizontal,
   Share2,
+  Trash2,
 } from 'lucide-react';
 import BookmarkButton from '@/components/bounty/bookmark-button';
 import type {
@@ -55,7 +57,9 @@ function ActionsDropdown({
   actions,
   ariaLabel,
   bookmarked,
-}: ActionsDropdownProps) {
+  onDelete,
+  canDelete,
+}: ActionsDropdownProps & { onDelete?: () => void; canDelete?: boolean }) {
   const handleShare = () => {
     if (onShare) {
       return onShare();
@@ -108,6 +112,18 @@ function ActionsDropdown({
           />
           {bookmarked ? 'Remove bookmark' : 'Bookmark'}
         </DropdownMenuItem>
+        {canDelete && onDelete && (
+          <>
+            <DropdownMenuSeparator className="bg-neutral-800" />
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+              onClick={onDelete}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete bounty
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -116,10 +132,12 @@ function ActionsDropdown({
 export default function BountyActions({
   bountyId,
   canEdit,
+  canDelete = false,
   isVoted,
   voteCount,
   onUpvote,
   onEdit,
+  onDelete,
   onShare,
   bookmarked: controlledBookmarked,
   onToggleBookmark,
@@ -135,16 +153,28 @@ export default function BountyActions({
       return await trpcClient.bounties.toggleBountyBookmark.mutate(input);
     },
   });
-  const baseActions: ActionItem[] = canEdit
-    ? [
-        {
-          key: 'edit',
-          label: 'Edit',
-          onSelect: onEdit,
-          icon: <Edit className="h-3.5 w-3.5" />,
-        },
-      ]
-    : [];
+  const baseActions: ActionItem[] = [
+    ...(canEdit
+      ? [
+          {
+            key: 'edit',
+            label: 'Edit',
+            onSelect: onEdit,
+            icon: <Edit className="h-3.5 w-3.5" />,
+          },
+        ]
+      : []),
+    ...(canDelete && onDelete
+      ? [
+          {
+            key: 'delete',
+            label: 'Delete',
+            onSelect: onDelete,
+            icon: <Trash2 className="h-3.5 w-3.5" />,
+          },
+        ]
+      : []),
+  ];
   const mergedActions = [...baseActions, ...(actions ?? [])];
   const handleToggleBookmark = () => {
     if (onToggleBookmark) return onToggleBookmark();
@@ -183,7 +213,9 @@ export default function BountyActions({
             ? controlledBookmarked
             : bookmarkQuery.data?.bookmarked
         }
+        canDelete={canDelete}
         onBookmark={handleToggleBookmark}
+        onDelete={onDelete}
         onShare={onShare}
       />
     </div>

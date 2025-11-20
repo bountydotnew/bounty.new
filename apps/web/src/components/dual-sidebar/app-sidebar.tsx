@@ -19,6 +19,11 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from '@bounty/ui/components/sidebar';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@bounty/ui/components/avatar';
 import { authClient } from '@bounty/auth/client';
 import { usePathname, useRouter } from 'next/navigation';
 import { AccessGate } from '@/components/access-gate';
@@ -44,6 +49,7 @@ const FALLBACK_USER = {
 const WorkspaceSwitcher = () => {
   const { data: session } = authClient.useSession();
   const userName = session?.user?.name ?? 'grim';
+  const userImage = session?.user?.image ?? null;
   const initials = userName.charAt(0).toLowerCase();
   const workspaceLabel = userName.split(' ')[0] || 'grim';
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
@@ -70,9 +76,18 @@ const WorkspaceSwitcher = () => {
           )}
           type="button"
         >
-          <div className="relative flex h-[27px] w-[27px] items-center justify-center rounded-[6px] bg-[#E66700] text-base font-normal text-white shadow-[inset_0_2px_3px_rgba(0,0,0,0.2)] outline outline-[#C95900] -outline-offset-1 group-data-[collapsible=icon]:size-5 group-data-[collapsible=icon]:h-5 group-data-[collapsible=icon]:w-5">
-            <span className="pb-1.5">{initials}</span>
-          </div>
+          <Avatar className="h-[27px] w-[27px] rounded-[6px] border-2 border-[#C95900] shadow-[inset_0_2px_3px_rgba(0,0,0,0.2)] group-data-[collapsible=icon]:size-5 group-data-[collapsible=icon]:h-5 group-data-[collapsible=icon]:w-5">
+            {userImage && (
+              <AvatarImage
+                alt={userName}
+                src={userImage}
+                className="rounded-[6px]"
+              />
+            )}
+            <AvatarFallback className="rounded-[6px] bg-[#E66700] text-base font-normal text-white">
+              <span className="pb-1.5">{initials}</span>
+            </AvatarFallback>
+          </Avatar>
           <div className="flex items-center gap-[7px] group-data-[collapsible=icon]:hidden">
             <span className="text-[18px] font-semibold leading-[150%] text-[#F2F2F2]">
               {workspaceLabel}

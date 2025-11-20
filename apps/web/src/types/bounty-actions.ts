@@ -11,10 +11,12 @@ export interface ActionItem {
 export interface BountyActionsProps {
   bountyId: string;
   canEdit: boolean;
+  canDelete?: boolean;
   isVoted: boolean;
   voteCount: number;
   onUpvote: () => void;
   onEdit: () => void;
+  onDelete?: () => void;
   onShare?: () => void;
   onBookmark?: () => void;
   bookmarked?: boolean;

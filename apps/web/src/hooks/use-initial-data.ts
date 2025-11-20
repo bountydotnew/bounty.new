@@ -59,6 +59,7 @@ function useInitialData(enabled = true) {
  * - User profile (tRPC - batched)
  * - Access profile (tRPC - batched)
  * - Billing/subscription data (Better Auth - separate request)
+ * - Device sessions (Better Auth - for account switcher)
  */
 export function usePrefetchInitialData() {
   const { data: session } = authClient.useSession();
@@ -79,6 +80,26 @@ export function usePrefetchInitialData() {
           } catch {
             // Fail silently - billing might not be set up yet
             return null;
+          }
+        },
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        retry: false,
+      });
+
+      // Prefetch device sessions (Better Auth) - for account switcher
+      queryClient.prefetchQuery({
+        queryKey: ['auth', 'multiSession', 'listDeviceSessions'],
+        queryFn: async () => {
+          try {
+            const { data, error } = await authClient.multiSession.listDeviceSessions();
+            if (error) {
+              console.error('Failed to prefetch device sessions:', error);
+              return [];
+            }
+            return data || [];
+          } catch (error) {
+            console.error('Failed to prefetch device sessions:', error);
+            return [];
           }
         },
         staleTime: 5 * 60 * 1000, // 5 minutes

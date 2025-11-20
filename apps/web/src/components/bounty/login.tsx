@@ -61,7 +61,9 @@ export default function Login() {
   const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();
   const [callbackParam] = useQueryState('callback', parseAsString);
+  const [addAccountParam] = useQueryState('addAccount', parseAsString);
   const { data: session, isPending } = authClient.useSession();
+  const isAddingAccount = addAccountParam === 'true';
 
   // Get callback URL from search params, default to dashboard
   const callbackUrl = callbackParam || LINKS.DASHBOARD;
@@ -120,11 +122,17 @@ export default function Login() {
       await authClient.signIn.social(
         {
           provider: 'github',
-          callbackURL: callbackUrl,
+          callbackURL: isAddingAccount ? '/dashboard' : callbackUrl,
         },
         {
           onSuccess: () => {
             toast.success('Sign in successful');
+            if (isAddingAccount) {
+              // Refresh the page to show updated sessions list
+              setTimeout(() => {
+                window.location.href = '/dashboard';
+              }, 1000);
+            }
           },
           onError: (error) => {
             toast.error(error.error.message || 'Sign in failed');
@@ -197,10 +205,12 @@ export default function Login() {
                 </div>
                 <div className="space-y-2">
                   <h1 className="flex h-7 items-center justify-center font-medium text-sand-12 text-xl tracking-tight">
-                    Welcome back!
+                    {isAddingAccount ? 'Add another account' : 'Welcome back!'}
                   </h1>
                   <p className="text-gray-400 text-sm">
-                    You&apos;re already signed in
+                    {isAddingAccount
+                      ? 'You can add another account to switch between them'
+                      : "You're already signed in"}
                   </p>
                 </div>
               </div>
@@ -226,31 +236,89 @@ export default function Login() {
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <Button
-                    className="w-full rounded-lg bg-[#2A2A28] py-3 font-medium text-gray-200 transition-colors hover:bg-[#383838]"
-                    onClick={handleGoToDashboard}
-                  >
-                    Continue
-                  </Button>
-                  <Button
-                    className="flex w-full items-center justify-center gap-2 rounded-lg py-3 font-medium text-gray-400 transition-colors hover:text-gray-200"
-                    onClick={() =>
-                      authClient.signOut({
-                        fetchOptions: {
-                          onSuccess: () => {
-                            toast.success('Signed out successfully');
-                            window.location.href = '/login';
+                {isAddingAccount ? (
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t border-gray-600" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-[#111110] px-2 text-gray-400">
+                          Sign in with another account
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-6">
+                      <AuthForm callbackUrl={callbackUrl} isAddingAccount={isAddingAccount} />
+
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t border-gray-600" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-[#111110] px-2 text-gray-400">
+                            Or
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="relative">
+                        <Button
+                          className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#2A2A28] py-3 font-medium text-gray-200 transition-colors hover:bg-[#383838]"
+                          disabled={loading}
+                          onClick={handleGitHubSignIn}
+                        >
+                          {loading ? (
+                            <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                          ) : (
+                            <GithubIcon className="h-5 w-5 fill-white" />
+                          )}
+                          {loading ? 'Signing in…' : 'Continue with GitHub'}
+                        </Button>
+                        {lastUsedMethod === 'github' && (
+                          <Badge className="-top-2 -right-2 absolute bg-primary px-1 py-0.5 text-primary-foreground text-xs">
+                            Last used
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    <Button
+                      className="flex w-full items-center justify-center gap-2 rounded-lg py-3 font-medium text-gray-400 transition-colors hover:text-gray-200"
+                      onClick={() => router.push(LINKS.DASHBOARD)}
+                      variant="text"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <Button
+                      className="w-full rounded-lg bg-[#2A2A28] py-3 font-medium text-gray-200 transition-colors hover:bg-[#383838]"
+                      onClick={handleGoToDashboard}
+                    >
+                      Continue
+                    </Button>
+                    <Button
+                      className="flex w-full items-center justify-center gap-2 rounded-lg py-3 font-medium text-gray-400 transition-colors hover:text-gray-200"
+                      onClick={() =>
+                        authClient.signOut({
+                          fetchOptions: {
+                            onSuccess: () => {
+                              toast.success('Signed out successfully');
+                              window.location.href = '/login';
+                            },
                           },
-                        },
-                      })
-                    }
-                    variant="text"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Nevermind, log me out.
-                  </Button>
-                </div>
+                        })
+                      }
+                      variant="text"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Nevermind, log me out.
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           )}

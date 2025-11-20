@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 
 interface AuthFormProps {
   callbackUrl?: string;
+  isAddingAccount?: boolean;
 }
 
 /**
@@ -34,7 +35,7 @@ function isSafeRedirectUrl(url: string | undefined): boolean {
   return true;
 }
 
-export default function AuthForm({ callbackUrl }: AuthFormProps) {
+export default function AuthForm({ callbackUrl, isAddingAccount }: AuthFormProps) {
   // Validate and sanitize the callback URL to prevent open redirects
   const safeCallbackUrl: string =
     isSafeRedirectUrl(callbackUrl) && callbackUrl ? callbackUrl : '/dashboard';
@@ -116,7 +117,14 @@ export default function AuthForm({ callbackUrl }: AuthFormProps) {
             },
             onSuccess: () => {
               toast.success('Sign in successful');
-              window.location.href = safeCallbackUrl;
+              if (isAddingAccount) {
+                // When adding account, redirect to dashboard to refresh sessions
+                setTimeout(() => {
+                  window.location.href = '/dashboard';
+                }, 500);
+              } else {
+                window.location.href = safeCallbackUrl;
+              }
             },
           },
         });

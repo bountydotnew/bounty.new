@@ -12,6 +12,7 @@
   "dependencies": {
     "@radix-ui/react-avatar": "catalog:",
     "@radix-ui/react-collapsible": "catalog:",
+    "@radix-ui/react-context-menu": "catalog:",
     "@radix-ui/react-dialog": "catalog:",
     "@radix-ui/react-dropdown-menu": "catalog:",
     "@radix-ui/react-hover-card": "catalog:",

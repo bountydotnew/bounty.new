@@ -9,7 +9,9 @@ import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { formatLargeNumber } from '@bounty/ui/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import BountyActions from '@/components/bounty/bounty-actions';
 import BountyComments from '@/components/bounty/bounty-comments';
 import CollapsibleText from '@/components/bounty/collapsible-text';
@@ -33,6 +35,7 @@ interface BountyDetailPageProps {
   avatarSrc: string;
   hasBadge: boolean;
   canEditBounty: boolean;
+  canDeleteBounty?: boolean;
   initialVotes?: { count: number; isVoted: boolean };
   initialComments?: BountyCommentCacheItem[];
   initialBookmarked?: boolean;
@@ -47,6 +50,7 @@ export default function BountyDetailPage({
   rank,
   avatarSrc,
   canEditBounty,
+  canDeleteBounty = false,
   initialVotes,
   initialComments,
   initialBookmarked,
@@ -54,6 +58,7 @@ export default function BountyDetailPage({
   const { editModalOpen, openEditModal, closeEditModal, editingBountyId } =
     useBountyModals();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const votes = useQuery({
     ...trpc.bounties.getBountyVotes.queryOptions({ bountyId: id }),
     initialData: initialVotes,
@@ -106,6 +111,29 @@ export default function BountyDetailPage({
     id: string;
     initial: string;
   } | null>(null);
+
+  const deleteBounty = useMutation({
+    mutationFn: async (input: { id: string }) => {
+      return await trpcClient.bounties.deleteBounty.mutate(input);
+    },
+    onSuccess: () => {
+      toast.success('Bounty deleted successfully');
+      queryClient.invalidateQueries({
+        queryKey: ['bounties'],
+        type: 'all',
+      });
+      router.push('/dashboard');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to delete bounty: ${error.message}`);
+    },
+  });
+
+  const handleDelete = () => {
+    if (confirm('Are you sure you want to delete this bounty? This action cannot be undone.')) {
+      deleteBounty.mutate({ id });
+    }
+  };
 
   // const postComment = (content: string, parentId?: string) => {
   //   const key = trpc.bounties.getBountyComments.queryKey({ bountyId: id });
@@ -301,8 +329,10 @@ export default function BountyDetailPage({
                   <BountyActions
                     bookmarked={initialBookmarked}
                     bountyId={id}
+                    canDelete={canDeleteBounty}
                     canEdit={canEditBounty}
                     isVoted={Boolean(votes.data?.isVoted)}
+                    onDelete={handleDelete}
                     onEdit={() => openEditModal(id)}
                     onShare={() => {
                       navigator.share({
