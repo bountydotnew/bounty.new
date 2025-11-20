@@ -238,50 +238,21 @@ export default function Login() {
 
                 {isAddingAccount ? (
                   <div className="space-y-4">
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t border-gray-600" />
-                      </div>
-                      <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-[#111110] px-2 text-gray-400">
-                          Sign in with another account
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-6">
+                    <div className="space-y-3">
                       <AuthForm callbackUrl={callbackUrl} isAddingAccount={isAddingAccount} />
-
-                      <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                          <span className="w-full border-t border-gray-600" />
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                          <span className="bg-[#111110] px-2 text-gray-400">
-                            Or
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="relative">
-                        <Button
-                          className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#2A2A28] py-3 font-medium text-gray-200 transition-colors hover:bg-[#383838]"
-                          disabled={loading}
-                          onClick={handleGitHubSignIn}
-                        >
-                          {loading ? (
-                            <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                          ) : (
-                            <GithubIcon className="h-5 w-5 fill-white" />
-                          )}
-                          {loading ? 'Signing in…' : 'Continue with GitHub'}
-                        </Button>
-                        {lastUsedMethod === 'github' && (
-                          <Badge className="-top-2 -right-2 absolute bg-primary px-1 py-0.5 text-primary-foreground text-xs">
-                            Last used
-                          </Badge>
+                      
+                      <Button
+                        className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#2A2A28] py-3 font-medium text-gray-200 transition-colors hover:bg-[#383838]"
+                        disabled={loading}
+                        onClick={handleGitHubSignIn}
+                      >
+                        {loading ? (
+                          <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        ) : (
+                          <GithubIcon className="h-5 w-5 fill-white" />
                         )}
-                      </div>
+                        {loading ? 'Signing in…' : 'Continue with GitHub'}
+                      </Button>
                     </div>
 
                     <Button
