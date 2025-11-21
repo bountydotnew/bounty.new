@@ -22,7 +22,6 @@ export default function AdminUserProfilePage() {
     staleTime: Number.POSITIVE_INFINITY,
   });
   const updateName = useMutation(trpc.user.adminUpdateName.mutationOptions({}));
-  const invite = useMutation(trpc.user.inviteUser.mutationOptions({}));
   const sendNoti = useMutation(
     trpc.notifications.sendToUser.mutationOptions({})
   );
@@ -83,25 +82,6 @@ export default function AdminUserProfilePage() {
                   }}
                   placeholder="Change name"
                 />
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={() =>
-                      invite.mutate({ userId: id, accessStage: 'beta' })
-                    }
-                    size="sm"
-                  >
-                    Set Beta
-                  </Button>
-                  <Button
-                    onClick={() =>
-                      invite.mutate({ userId: id, accessStage: 'production' })
-                    }
-                    size="sm"
-                    variant="outline"
-                  >
-                    Set Prod
-                  </Button>
-                </div>
                 <div className="flex items-center gap-2">
                   <Button
                     onClick={() =>

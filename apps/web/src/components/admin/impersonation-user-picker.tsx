@@ -47,7 +47,6 @@ export function ImpersonationUserPicker({ open, onOpenChange, onPick }: Props) {
     role: string;
     hasAccess: boolean;
     betaAccessStatus: 'none' | 'pending' | 'approved' | 'denied';
-    accessStage: 'none' | 'alpha' | 'beta' | 'production';
     banned: boolean;
     createdAt: string;
     updatedAt: string;
