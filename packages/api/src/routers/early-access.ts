@@ -321,7 +321,6 @@ export const earlyAccessRouter = router({
           .update(userTable)
           .set({
             betaAccessStatus: 'approved',
-            accessStage: 'beta',
             updatedAt: new Date(),
           })
           .where(eq(userTable.id, u.id));

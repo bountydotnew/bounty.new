@@ -1,5 +1,4 @@
 import { protectedProcedure, publicProcedure, router } from '../trpc';
-import { betaApplicationsRouter } from './beta-applications';
 import { billingRouter } from './billing';
 import { bountiesRouter } from './bounties';
 import { earlyAccessRouter } from './early-access';
@@ -38,7 +37,6 @@ export const appRouter = router({
   news: newsRouter,
   notifications: notificationsRouter,
   emails: emailsRouter,
-  betaApplications: betaApplicationsRouter,
   repository: repositoryRouter,
   billing: billingRouter,
 });

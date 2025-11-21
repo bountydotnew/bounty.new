@@ -20,7 +20,6 @@ import {
   publicProcedure,
   router,
 } from '../trpc';
-import type { AccessProfile } from '@bounty/types';
 
 // Reused regex for token generation
 const DASH_REGEX = /-/g;
@@ -59,7 +58,6 @@ export const userRouter = router({
           image: user.image,
           role: user.role,
           hasAccess: user.hasAccess,
-          accessStage: user.accessStage,
           betaAccessStatus: user.betaAccessStatus,
           banned: user.banned,
           createdAt: user.createdAt,
@@ -200,35 +198,6 @@ export const userRouter = router({
         cause: error,
       });
     }
-  }),
-
-  // Compact access profile for client-side gating
-  getAccessProfile: protectedProcedure.query(async ({ ctx }) => {
-    const [u] = await db
-      .select({
-        hasAccess: user.hasAccess,
-        accessStage: user.accessStage,
-        betaAccessStatus: user.betaAccessStatus,
-        emailVerified: user.emailVerified,
-        banned: user.banned,
-      })
-      .from(user)
-      .where(eq(user.id, ctx.session.user.id))
-      .limit(1);
-
-    if (!u) {
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
-    }
-
-    const profile: AccessProfile = {
-      stage: u.accessStage,
-      hasAccess: u.hasAccess,
-      betaAccessStatus: u.betaAccessStatus,
-      emailVerified: u.emailVerified,
-      banned: u.banned,
-      featureFlags: [], // reserved for future per-user flags
-    };
-    return profile;
   }),
 
   getUserSessions: protectedProcedure.query(async ({ ctx }) => {
@@ -423,7 +392,6 @@ export const userRouter = router({
             role: user.role,
             hasAccess: user.hasAccess,
             betaAccessStatus: user.betaAccessStatus,
-            accessStage: user.accessStage,
             banned: user.banned,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
@@ -475,56 +443,14 @@ export const userRouter = router({
       return { success: true };
     }),
 
-  inviteUser: adminProcedure
-    .input(
-      z.object({
-        userId: z.string(),
-        accessStage: z.enum(['none', 'alpha', 'beta', 'production']),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const { userId, accessStage } = input;
-
-      const [updatedUser] = await ctx.db
-        .update(user)
-        .set({
-          accessStage,
-          updatedAt: new Date(),
-        })
-        .where(eq(user.id, userId))
-        .returning({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          accessStage: user.accessStage,
-        });
-
-      if (!updatedUser) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'User not found',
-        });
-      }
-
-      // Invalidate user cache
-      currentUserCache.delete(userId);
-
-      return {
-        success: true,
-        user: updatedUser,
-        message: `User access updated to ${accessStage}. Email invitation will be sent.`,
-      };
-    }),
-
   inviteExternalUser: adminProcedure
     .input(
       z.object({
         email: z.string().email(),
-        accessStage: z.enum(['none', 'alpha', 'beta', 'production']),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { email, accessStage } = input;
+      const { email } = input;
 
       const existingUser = await ctx.db
         .select({ id: user.id })
@@ -551,19 +477,18 @@ export const userRouter = router({
 
       await ctx.db
         .insert(invite)
-        .values({ email, accessStage, tokenHash, expiresAt });
+        .values({ email, accessStage: 'none', tokenHash, expiresAt });
 
       const baseUrl =
         env.BETTER_AUTH_URL?.replace(TRAILING_SLASH_REGEX, '') ||
         'https://bounty.new';
       const inviteUrl = `${baseUrl}/login?invite=${rawToken}`;
-      await sendEmail({
+      await sendEmail({ 
         to: email,
-        subject: 'You’re invited to bounty.new',
+        subject: "You're invited to bounty.new",
         from: FROM_ADDRESSES.notifications,
         react: ExternalInvite({
           inviteUrl,
-          accessStage: accessStage as 'none' | 'alpha' | 'beta' | 'production',
         }),
       });
 
@@ -599,7 +524,7 @@ export const userRouter = router({
 
       await ctx.db
         .update(user)
-        .set({ accessStage: row.accessStage, updatedAt: new Date() })
+        .set({ updatedAt: new Date() })
         .where(eq(user.id, ctx.session.user.id));
 
       await ctx.db
