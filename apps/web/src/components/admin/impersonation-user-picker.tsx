@@ -80,6 +80,7 @@ export function ImpersonationUserPicker({ open, onOpenChange, onPick }: Props) {
                   className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900/40 p-3 text-left transition hover:bg-neutral-900/60"
                   key={u.id}
                   onClick={() => onPick(u.id)}
+                  type="button"
                 >
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-neutral-500" />

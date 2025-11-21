@@ -60,7 +60,7 @@ const topContributorsCache = new LRUCache<{
 
 export const profilesRouter = router({
   getProfile: publicProcedure
-    .input(z.object({ userId: z.string().uuid() }))
+    .input(z.object({ userId: z.string() }))
     .query(async ({ input }) => {
       try {
         // Check cache first

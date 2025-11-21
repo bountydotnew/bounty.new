@@ -320,6 +320,7 @@ export const bountiesRouter = router({
             deadline: bounty.deadline,
             tags: bounty.tags,
             repositoryUrl: bounty.repositoryUrl,
+            isFeatured: bounty.isFeatured,
             createdAt: bounty.createdAt,
             updatedAt: bounty.updatedAt,
             creator: {
@@ -389,6 +390,7 @@ export const bountiesRouter = router({
             tags: bounty.tags,
             repositoryUrl: bounty.repositoryUrl,
             issueUrl: bounty.issueUrl,
+            isFeatured: bounty.isFeatured,
             createdById: bounty.createdById,
             assignedToId: bounty.assignedToId,
             createdAt: bounty.createdAt,
@@ -487,21 +489,143 @@ export const bountiesRouter = router({
   }),
 
   getBountiesByUserId: publicProcedure
-    .input(z.object({ userId: z.string().uuid() }))
+    .input(z.object({ userId: z.string() }))
     .query(async ({ input }) => {
       try {
         const results = await db
-          .select()
+          .select({
+            id: bounty.id,
+            title: bounty.title,
+            description: bounty.description,
+            amount: bounty.amount,
+            currency: bounty.currency,
+            status: bounty.status,
+            difficulty: bounty.difficulty,
+            deadline: bounty.deadline,
+            tags: bounty.tags,
+            repositoryUrl: bounty.repositoryUrl,
+            issueUrl: bounty.issueUrl,
+            isFeatured: bounty.isFeatured,
+            createdAt: bounty.createdAt,
+            updatedAt: bounty.updatedAt,
+            creator: {
+              id: user.id,
+              name: user.name,
+              image: user.image,
+            },
+          })
           .from(bounty)
-          .where(eq(bounty.createdById, input.userId));
+          .innerJoin(user, eq(bounty.createdById, user.id))
+          .where(eq(bounty.createdById, input.userId))
+          .orderBy(desc(bounty.createdAt));
         return {
           success: true,
-          data: results,
+          data: results.map((r) => ({ ...r, amount: parseAmount(r.amount) })),
         };
       } catch (error) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to fetch bounties',
+          cause: error,
+        });
+      }
+    }),
+
+  getHighlights: publicProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(async ({ input }) => {
+      try {
+        const results = await db
+          .select({
+            id: bounty.id,
+            title: bounty.title,
+            description: bounty.description,
+            amount: bounty.amount,
+            currency: bounty.currency,
+            status: bounty.status,
+            difficulty: bounty.difficulty,
+            deadline: bounty.deadline,
+            tags: bounty.tags,
+            repositoryUrl: bounty.repositoryUrl,
+            issueUrl: bounty.issueUrl,
+            isFeatured: bounty.isFeatured,
+            createdAt: bounty.createdAt,
+            updatedAt: bounty.updatedAt,
+            creator: {
+              id: user.id,
+              name: user.name,
+              image: user.image,
+            },
+          })
+          .from(bounty)
+          .innerJoin(user, eq(bounty.createdById, user.id))
+          .where(
+            and(
+              eq(bounty.createdById, input.userId),
+              eq(bounty.isFeatured, true)
+            )
+          )
+          .orderBy(desc(bounty.createdAt));
+
+        return {
+          success: true,
+          data: results.map((r) => ({ ...r, amount: parseAmount(r.amount) })),
+        };
+      } catch (error) {
+        // If isFeatured column doesn't exist, return empty array
+        console.error('Error fetching highlights:', error);
+        return {
+          success: true,
+          data: [],
+        };
+      }
+    }),
+
+  toggleBountyPin: protectedProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const [existingBounty] = await db
+          .select({ createdById: bounty.createdById, isFeatured: bounty.isFeatured })
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId))
+          .limit(1);
+
+        if (!existingBounty) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        if (existingBounty.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only pin your own bounties',
+          });
+        }
+
+        const newFeaturedValue = !existingBounty.isFeatured;
+
+        await db
+          .update(bounty)
+          .set({ 
+            isFeatured: newFeaturedValue,
+            updatedAt: new Date(),
+          })
+          .where(eq(bounty.id, input.bountyId));
+
+        return {
+          success: true,
+          isFeatured: newFeaturedValue,
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to toggle pin',
           cause: error,
         });
       }

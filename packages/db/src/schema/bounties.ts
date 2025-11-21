@@ -51,6 +51,7 @@ export const bounty = pgTable('bounty', {
   assignedToId: text('assigned_to_id').references(() => user.id, {
     onDelete: 'set null',
   }),
+  isFeatured: boolean('is_featured').default(false).notNull(),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
 });

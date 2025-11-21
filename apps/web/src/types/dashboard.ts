@@ -19,6 +19,7 @@ export interface Bounty {
     image: string | null;
   };
   votes?: number;
+  isFeatured?: boolean;
 }
 
 export interface UserData {

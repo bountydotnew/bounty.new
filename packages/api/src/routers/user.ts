@@ -1,5 +1,6 @@
 import {
   bounty,
+  bountyComment,
   db,
   invite,
   session,
@@ -610,5 +611,54 @@ export const userRouter = router({
       currentUserCache.delete(ctx.session.user.id);
 
       return { success: true };
+    }),
+
+  getUserActivity: publicProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        limit: z.number().min(1).max(20).default(10),
+      })
+    )
+    .query(async ({ input }) => {
+      const recentBounties = await db
+        .select({
+          type: sql<string>`'bounty_created'`,
+          id: bounty.id,
+          title: bounty.title,
+          createdAt: bounty.createdAt,
+          data: {
+            amount: bounty.amount,
+            currency: bounty.currency,
+          },
+        })
+        .from(bounty)
+        .where(eq(bounty.createdById, input.userId))
+        .orderBy(desc(bounty.createdAt))
+        .limit(input.limit);
+
+      const recentComments = await db
+        .select({
+          type: sql<string>`'comment_created'`,
+          id: bountyComment.id,
+          title: bounty.title,
+          createdAt: bountyComment.createdAt,
+          data: {
+            bountyId: bounty.id,
+            content: bountyComment.content,
+          },
+        })
+        .from(bountyComment)
+        .innerJoin(bounty, eq(bountyComment.bountyId, bounty.id))
+        .where(eq(bountyComment.userId, input.userId))
+        .orderBy(desc(bountyComment.createdAt))
+        .limit(input.limit);
+
+      // Combine and sort
+      const activity = [...recentBounties, ...recentComments]
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .slice(0, input.limit);
+
+      return activity;
     }),
 });

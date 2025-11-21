@@ -14,11 +14,13 @@ import {
 import { addNavigationContext } from '@bounty/ui/hooks/use-navigation-context';
 import { authClient } from '@bounty/auth/client';
 import { formatDistanceToNow } from 'date-fns';
-import { Trash2 } from 'lucide-react';
+import { Pin, PinOff, Trash2 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { memo } from 'react';
 import type { Bounty } from '@/types/dashboard';
 import { CommentsIcon, GithubIcon, SubmissionsPeopleIcon } from '@bounty/ui';
+import { trpcClient } from '@/utils/trpc';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface BountyCardProps {
   bounty: Bounty;
@@ -39,10 +41,35 @@ export const BountyCard = memo(function BountyCard({
   const router = useRouter();
   const pathname = usePathname();
   const { data: session } = authClient.useSession();
+  const queryClient = useQueryClient();
   
   const canDelete = session?.user?.id
     ? bounty.creator.id === session.user.id
     : false;
+
+  const canPin = session?.user?.id
+    ? bounty.creator.id === session.user.id
+    : false;
+
+  const togglePinMutation = useMutation({
+    mutationFn: async (input: { bountyId: string }) => {
+      return await trpcClient.bounties.toggleBountyPin.mutate(input);
+    },
+    onSuccess: () => {
+      // Invalidate relevant queries to refetch data
+      queryClient.invalidateQueries({ queryKey: [['bounties', 'getHighlights']] });
+      queryClient.invalidateQueries({ queryKey: [['bounties', 'getBountiesByUserId']] });
+      queryClient.invalidateQueries({ queryKey: [['bounties', 'getBounties']] });
+    },
+  });
+
+  const handleTogglePin = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (canPin && !togglePinMutation.isPending) {
+      togglePinMutation.mutate({ bountyId: bounty.id });
+    }
+  };
 
   const handleClick = () => {
     const url = addNavigationContext(`/bounty/${bounty.id}`, pathname);
@@ -126,7 +153,7 @@ export const BountyCard = memo(function BountyCard({
       {/* Title row */}
       <div className="flex items-center justify-between min-w-0">
         <div className="flex h-[19.5px] items-center gap-[5px] min-w-0 flex-1">
-          <span className="text-[13px] font-medium leading-[150%] text-white whitespace-normal break-words min-w-0">
+          <span className="text-[13px] font-medium leading-[150%] text-white whitespace-normal wrap-break-word min-w-0">
             {bounty.title}
           </span>
         </div>
@@ -177,15 +204,36 @@ export const BountyCard = memo(function BountyCard({
       </div>
     </button>
       </ContextMenuTrigger>
-      {canDelete && (
+      {(canDelete || canPin) && (
         <ContextMenuContent className="w-48 rounded-md border border-[#232323] bg-[#191919] text-[#CFCFCF] shadow-[rgba(0,0,0,0.08)_0px_16px_40px_0px]">
-          <ContextMenuItem
-            className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
-            onClick={handleDelete}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete bounty
-          </ContextMenuItem>
+          {canPin && (
+            <ContextMenuItem
+              className="cursor-pointer focus:bg-accent focus:text-accent-foreground"
+              onClick={handleTogglePin}
+              disabled={togglePinMutation.isPending}
+            >
+              {bounty.isFeatured ? (
+                <>
+                  <PinOff className="mr-2 h-4 w-4" />
+                  Unpin bounty
+                </>
+              ) : (
+                <>
+                  <Pin className="mr-2 h-4 w-4" />
+                  Pin bounty
+                </>
+              )}
+            </ContextMenuItem>
+          )}
+          {canDelete && (
+            <ContextMenuItem
+              className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+              onClick={handleDelete}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete bounty
+            </ContextMenuItem>
+          )}
         </ContextMenuContent>
       )}
     </ContextMenu>

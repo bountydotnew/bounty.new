@@ -15,6 +15,13 @@
       "when": 1763676178848,
       "tag": "0001_lowly_omega_red",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1763695530363,
+      "tag": "0002_previous_forge",
+      "breakpoints": true
     }
   ]
 }

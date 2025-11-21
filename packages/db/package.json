@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "drizzle-orm": "catalog:",
-    "pg": "catalog:"
+    "pg": "catalog:",
+    "react-activity-calendar": "^3.0.1",
+    "react-tooltip": "^5.30.0"
   },
   "devDependencies": {
     "drizzle-kit": "catalog:",
