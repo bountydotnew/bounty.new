@@ -34,7 +34,7 @@ export function ProfileActivity({ userId }: ProfileActivityProps) {
     type: item.type as 'bounty_created' | 'comment_created',
     id: item.id,
     title: item.title,
-    createdAt: item.createdAt instanceof Date ? item.createdAt : new Date(item.createdAt),
+    createdAt: new Date(item.createdAt),
     data: item.data,
   }));
 
