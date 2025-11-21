@@ -12,6 +12,53 @@ interface ProfileHeaderProps {
   reputation: Pick<ProfileReputation, 'totalEarned' | 'bountiesCompleted' | 'bountiesCreated'> | null;
 }
 
+/**
+ * Sanitizes a URL to ensure it's safe for use in href attributes.
+ * Only allows http:// and https:// schemes to prevent XSS attacks.
+ * @param url - The URL to sanitize
+ * @returns A safe URL string or null if the URL is unsafe
+ */
+function sanitizeUrl(url: string | null | undefined): string | null {
+  if (!url) {
+    return null;
+  }
+
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  // Check if URL starts with http:// or https://
+  const lowercased = trimmed.toLowerCase();
+  if (lowercased.startsWith('https://') || lowercased.startsWith('http://')) {
+    try {
+      // Validate it's a proper URL
+      const urlObj = new URL(trimmed);
+      // Only allow http and https schemes
+      if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
+        return trimmed;
+      }
+    } catch {
+      // Invalid URL format
+      return null;
+    }
+  }
+
+  // If no scheme, prepend https:// for convenience
+  if (!trimmed.includes('://')) {
+    try {
+      const urlWithScheme = `https://${trimmed}`;
+      new URL(urlWithScheme); // Validate it's a proper URL
+      return urlWithScheme;
+    } catch {
+      return null;
+    }
+  }
+
+  // Unsafe scheme (javascript:, data:, etc.) or invalid format
+  return null;
+}
+
 export function ProfileHeader({ user, profile }: ProfileHeaderProps) {
   const initials = user.name ? user.name.charAt(0).toUpperCase() : 'U';
   
@@ -64,17 +111,20 @@ export function ProfileHeader({ user, profile }: ProfileHeaderProps) {
                 </div>
               )}
 
-              {profile?.website && (
-                <a 
-                  href={profile.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 hover:text-[#CFCFCF] transition-colors"
-                >
-                  <LinkIcon className="h-3.5 w-3.5" />
-                  <span>Website</span>
-                </a>
-              )}
+              {(() => {
+                const safeUrl = sanitizeUrl(profile?.website);
+                return safeUrl ? (
+                  <a 
+                    href={safeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 hover:text-[#CFCFCF] transition-colors"
+                  >
+                    <LinkIcon className="h-3.5 w-3.5" />
+                    <span>Website</span>
+                  </a>
+                ) : null;
+              })()}
             </div>
           </div>
         </div>

@@ -9,7 +9,7 @@ import { useRealtime } from '@upstash/realtime/client';
 import type { RealtimeEvents } from '@bounty/types/realtime';
 import { authClient } from '@bounty/auth/client';
 
-export function useNotifications() {
+export const useNotifications = () => {
   const { data: session, isPending } = authClient.useSession();
   const isAuthenticated = !!session?.user;
 
@@ -24,7 +24,9 @@ export function useNotifications() {
   });
 
   useRealtime<RealtimeEvents>({
-    event: 'notifications.refresh.userId',
+    // @ts-expect-error - Event name type inference doesn't match runtime event name
+    // The API emits 'notifications.refresh' but TypeScript expects a different format
+    event: 'notifications.refresh',
     history: false,
     enabled: isAuthenticated && !isPending,
     onData: (data: RealtimeEvents['notifications']['refresh']) => {
@@ -95,4 +97,4 @@ export function useNotifications() {
     isMarkingAsRead: markAsReadMutation.isPending,
     isMarkingAllAsRead: markAllAsReadMutation.isPending,
   } as const;
-}
+};

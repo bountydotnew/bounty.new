@@ -24,7 +24,10 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
   const isAddingAccount = addAccountParam === 'true';
 
   useEffect(() => {
-    if (!PublicKeyCredential.isConditionalMediationAvailable?.()) {
+    if (
+      typeof PublicKeyCredential === 'undefined' ||
+      !PublicKeyCredential.isConditionalMediationAvailable?.()
+    ) {
       return;
     }
 

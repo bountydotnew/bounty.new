@@ -1,5 +1,6 @@
 'use client';
 
+import { cloneElement } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ActivityCalendar } from 'react-activity-calendar';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
@@ -53,13 +54,12 @@ export function GitHubActivityChart({ username }: GitHubActivityChartProps) {
           labels={{
             totalCount: '{{count}} contributions in the last year',
           }}
-          renderBlock={(block, activity) => (
-            <div
-              {...block}
-              data-tooltip-id="github-tooltip"
-              data-tooltip-content={`${activity.count} contributions on ${activity.date}`}
-            />
-          )}
+          renderBlock={(block, activity) =>
+            cloneElement(block, {
+              'data-tooltip-id': 'github-tooltip',
+              'data-tooltip-content': `${activity.count} contributions on ${activity.date}`,
+            })
+          }
         />
         <ReactTooltip id="github-tooltip" className="z-50" />
       </div>

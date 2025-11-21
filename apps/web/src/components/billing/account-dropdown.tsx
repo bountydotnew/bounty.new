@@ -156,8 +156,13 @@ export function AccountDropdown({
             />
           </div>
           <button
-            className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-white"
-            onClick={() => router.push(`/profile/${session?.user?.id}`)}
+            className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => {
+              if (session?.user?.id) {
+                router.push(`/profile/${session.user.id}`);
+              }
+            }}
+            disabled={!session?.user?.id}
             type="button"
           >
             <UserIcon className="h-[19px] w-[19px]" />

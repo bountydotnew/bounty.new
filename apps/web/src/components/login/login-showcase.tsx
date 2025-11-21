@@ -135,7 +135,7 @@ export function LoginShowcase() {
           }}
         >
           <SubmissionCard
-            avatarSrc="/public/images/grim-avatar.jpg"
+            avatarSrc="/images/grim-avatar.jpg"
             description="look sir coderabbit shows the code is good"
             hasBadge={true}
             previewSrc="https://i.redd.it/slm52i26jbtb1.jpg"
