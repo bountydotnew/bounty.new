@@ -16,11 +16,21 @@ import { authClient } from '@bounty/auth/client';
 import { formatDistanceToNow } from 'date-fns';
 import { Pin, PinOff, Trash2 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import type { Bounty } from '@/types/dashboard';
 import { CommentsIcon, GithubIcon, SubmissionsPeopleIcon } from '@bounty/ui';
 import { trpcClient } from '@/utils/trpc';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@bounty/ui/components/dialog';
+import { Button } from '@bounty/ui/components/button';
+import { toast } from 'sonner';
 
 interface BountyCardProps {
   bounty: Bounty;
@@ -63,9 +73,22 @@ export const BountyCard = memo(function BountyCard({
     },
   });
 
-  const handleTogglePin = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const deleteBountyMutation = useMutation({
+    mutationFn: async () => {
+      return await trpcClient.bounties.deleteBounty.mutate({ id: bounty.id });
+    },
+    onSuccess: () => {
+      toast.success('Bounty deleted');
+      queryClient.invalidateQueries({ queryKey: [['bounties', 'getHighlights']] });
+      queryClient.invalidateQueries({ queryKey: [['bounties', 'getBountiesByUserId']] });
+      queryClient.invalidateQueries({ queryKey: [['bounties', 'getBounties']] });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to delete bounty: ${error.message}`);
+    },
+  });
+
+  const handleTogglePin = () => {
     if (canPin && !togglePinMutation.isPending) {
       togglePinMutation.mutate({ bountyId: bounty.id });
     }
@@ -76,12 +99,32 @@ export const BountyCard = memo(function BountyCard({
     router.push(url);
   };
 
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (onDelete && canDelete) {
-      onDelete();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const openDeleteDialog = () => {
+    if (canDelete) {
+      setShowDeleteDialog(true);
     }
+  };
+
+  const handleConfirmDelete = () => {
+    if (!canDelete || deleteBountyMutation.isPending) {
+      return;
+    }
+
+    if (onDelete) {
+      onDelete();
+      setShowDeleteDialog(false);
+      return;
+    }
+
+    deleteBountyMutation.mutate(undefined, {
+      onSettled: () => setShowDeleteDialog(false),
+    });
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteDialog(false);
   };
 
   const creatorName = bounty.creator.name || 'Anonymous';
@@ -228,7 +271,7 @@ export const BountyCard = memo(function BountyCard({
           {canDelete && (
             <ContextMenuItem
               className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
-              onClick={handleDelete}
+              onClick={openDeleteDialog}
             >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete bounty
@@ -236,6 +279,28 @@ export const BountyCard = memo(function BountyCard({
           )}
         </ContextMenuContent>
       )}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="border border-[#232323] bg-[#191919] text-[#CFCFCF]">
+          <DialogHeader>
+            <DialogTitle className="text-white mb-6">Delete bounty?</DialogTitle>
+            <DialogDescription className="text-[#A0A0A0]">
+              This action cannot be undone. Are you sure you want to delete this bounty?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <Button variant="outline" onClick={handleCancelDelete}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={!canDelete || deleteBountyMutation.isPending}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </ContextMenu>
   );
 });

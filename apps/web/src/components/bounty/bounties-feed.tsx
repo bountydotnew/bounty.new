@@ -66,9 +66,7 @@ export const BountiesFeed = memo(function BountiesFeed({
   });
 
   const handleDelete = (bountyId: string) => {
-    if (confirm('Are you sure you want to delete this bounty? This action cannot be undone.')) {
-      deleteBounty.mutate({ id: bountyId });
-    }
+    deleteBounty.mutate({ id: bountyId });
   };
 
   const ids = useMemo(() => (bounties || []).map((b) => b.id), [bounties]);
@@ -86,7 +84,10 @@ export const BountiesFeed = memo(function BountiesFeed({
         bookmarked: boolean;
       }
     >();
-    (statsQuery.data?.stats || []).forEach((s: any) => m.set(s.bountyId, s));
+    const stats = statsQuery.data?.stats ?? [];
+    for (const stat of stats) {
+      m.set(stat.bountyId, stat);
+    }
     return m;
   }, [statsQuery.data]);
 
