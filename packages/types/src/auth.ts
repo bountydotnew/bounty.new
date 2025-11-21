@@ -50,21 +50,3 @@ export const ReasonCode = {
 } as const;
 export type ReasonCode = (typeof ReasonCode)[keyof typeof ReasonCode];
 
-// Higher-level access requirements for gating UI/routes
-export const AccessRequirement = {
-  AnyAuthenticated: 'any_authenticated',
-  BetaAccess: 'beta_access',
-  EmailVerified: 'email_verified',
-  NotBanned: 'not_banned',
-} as const;
-export type AccessRequirement =
-  (typeof AccessRequirement)[keyof typeof AccessRequirement];
-
-export interface AccessProfile {
-  stage: BetterAuthUser['accessStage'];
-  hasAccess: boolean;
-  betaAccessStatus: BetterAuthUser['betaAccessStatus'];
-  emailVerified: boolean;
-  banned: boolean;
-  featureFlags: string[];
-}

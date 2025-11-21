@@ -12,7 +12,6 @@ import { trpc, queryClient } from '@/utils/trpc';
  *
  * Data fetched:
  * - User profile (getMe)
- * - Access profile (beta status, feature flags)
  *
  * @param enabled - Whether to fetch data (should be true when user is authenticated)
  */
@@ -21,31 +20,22 @@ export function useInitialData(enabled = true) {
   const isAuthenticated = !!session?.user;
   const shouldFetch = enabled && isAuthenticated;
 
-  // Batch fetch essential user data in parallel
-  const queries = useQueries({
+  // Fetch essential user data
+  const meQuery = useQueries({
     queries: [
       {
         ...trpc.user.getMe.queryOptions(),
         enabled: shouldFetch,
         staleTime: 5 * 60 * 1000, // 5 minutes
       },
-      {
-        ...trpc.user.getAccessProfile.queryOptions(),
-        enabled: shouldFetch,
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        retry: false,
-      },
     ],
-  });
-
-  const [meQuery, accessProfileQuery] = queries;
+  })[0];
 
   return {
     me: meQuery.data,
-    accessProfile: accessProfileQuery.data,
-    isLoading: meQuery.isLoading || accessProfileQuery.isLoading,
-    isError: meQuery.isError || accessProfileQuery.isError,
-    error: meQuery.error || accessProfileQuery.error,
+    isLoading: meQuery.isLoading,
+    isError: meQuery.isError,
+    error: meQuery.error,
   };
 }
 
@@ -56,8 +46,7 @@ export function useInitialData(enabled = true) {
  * Use this at the root of your app to warm up the cache.
  *
  * Prefetches:
- * - User profile (tRPC - batched)
- * - Access profile (tRPC - batched)
+ * - User profile (tRPC)
  * - Billing/subscription data (Better Auth - separate request)
  * - Device sessions (Better Auth - for account switcher)
  */
@@ -66,9 +55,8 @@ export function usePrefetchInitialData() {
 
   useEffect(() => {
     if (session?.user) {
-      // Prefetch tRPC queries - these will be batched into one HTTP request
+      // Prefetch tRPC queries
       queryClient.prefetchQuery(trpc.user.getMe.queryOptions());
-      queryClient.prefetchQuery(trpc.user.getAccessProfile.queryOptions());
 
       // Prefetch billing data (Better Auth) - runs in parallel with tRPC batch
       queryClient.prefetchQuery({
