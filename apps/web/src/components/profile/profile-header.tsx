@@ -12,7 +12,7 @@ interface ProfileHeaderProps {
   reputation: Pick<ProfileReputation, 'totalEarned' | 'bountiesCompleted' | 'bountiesCreated'> | null;
 }
 
-export function ProfileHeader({ user, profile, reputation }: ProfileHeaderProps) {
+export function ProfileHeader({ user, profile }: ProfileHeaderProps) {
   const initials = user.name ? user.name.charAt(0).toUpperCase() : 'U';
   
   return (

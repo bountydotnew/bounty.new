@@ -1,7 +1,7 @@
 'use client';
 
 import { formatDistanceToNow } from 'date-fns';
-import { MessageSquareIcon, PlusCircleIcon } from 'lucide-react';
+import { PlusCircleIcon } from 'lucide-react';
 import Link from 'next/link';
 import type { ActivityItem } from '@bounty/types';
 import { CommentsIcon } from '@bounty/ui';

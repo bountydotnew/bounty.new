@@ -76,6 +76,7 @@ export function LoginShowcase() {
 
   return (
     <div className="hidden flex-1 items-center justify-center lg:flex">
+      {/* biome-ignore lint/nursery/noNoninteractiveElementInteractions: Interactive canvas showcase */}
       <div
         className="relative flex min-h-[95%] flex-1 cursor-pointer items-center justify-center overflow-hidden border border-[#383838] p-8 md:p-12"
         onMouseLeave={handleMouseLeave}

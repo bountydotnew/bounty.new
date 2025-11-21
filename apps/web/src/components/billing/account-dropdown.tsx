@@ -22,7 +22,7 @@ import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear
 import { SwitchWorkspaceIcon } from '@bounty/ui/components/icons/huge/switch-workspace';
 import { ManageUsersWorkspaceIcon } from '@bounty/ui/components/icons/huge/manage-users-workspace';
 import { BillingSettingsIcon } from '@bounty/ui/components/icons/huge/billing-settings';
-import { DropdownMenuSeparator, DropdownMenuItem } from '@bounty/ui/components/dropdown-menu';
+import { DropdownMenuItem } from '@bounty/ui/components/dropdown-menu';
 import { DropdownIcon } from '@bounty/ui';
 
 // Constants for better maintainability
@@ -212,7 +212,7 @@ export function AccountDropdown({
           </button>
         </div>
 
-        <DropdownMenuSeparator />
+        
 
         {/* Sign out */}
         <DropdownMenuItem
