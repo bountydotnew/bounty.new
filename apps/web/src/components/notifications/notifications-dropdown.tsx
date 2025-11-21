@@ -28,6 +28,7 @@ import type {
 } from '@/types/notifications';
 import { authClient } from '@bounty/auth/client';
 import { useAccess } from '@/context/access-provider';
+import { CommentsIcon } from '@bounty/ui';
 
 function Row({ item, onRead }: NotificationRowProps) {
   const router = useRouter();
@@ -83,7 +84,7 @@ function Row({ item, onRead }: NotificationRowProps) {
   const Icon = (() => {
     switch (item.type) {
       case 'bounty_comment':
-        return MessageSquare;
+        return CommentsIcon;
       case 'submission_received':
         return FilePlus2;
       case 'submission_approved':
@@ -102,7 +103,7 @@ function Row({ item, onRead }: NotificationRowProps) {
       type="button"
       className={cn(
         'w-full text-left',
-        'rounded-xl border border-[#232323] bg-[#191919] p-3',
+        'rounded-xl p-3',
         'flex items-start gap-[5px]',
         'transition duration-100 ease-out active:scale-[.98]',
         'focus:outline-none shadow-[0px_2px_3px_#00000033]',
@@ -112,13 +113,8 @@ function Row({ item, onRead }: NotificationRowProps) {
     >
       <div
         className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-[6px] text-[8px] leading-[150%] text-white shadow-[inset_0px_2px_3px_#00000033]"
-        style={{
-          backgroundColor: iconColor,
-          outline: `1px solid ${iconColor}`,
-          outlineOffset: '-1px',
-        }}
       >
-        <Icon className="h-2.5 w-2.5" />
+        <Icon className="size-4" />
       </div>
       <div className="min-w-0 flex-1 flex flex-col gap-[5px]">
         <div className="flex items-center justify-between min-w-0">
@@ -190,7 +186,9 @@ export function NotificationsDropdown({
           <div className={cn('relative', triggerClassName)}>
             {children}
             {unreadCount > 0 && (
-              <div className="absolute top-0 right-0 h-1.5 w-1.5 rounded-full bg-[#6CFF0099]" />
+              <p className="absolute -top-1 right-1.5 text-[13px] font-semibold leading-[150%] text-white">
+                {unreadCount}
+              </p>
             )}
           </div>
         ) : (
@@ -222,11 +220,6 @@ export function NotificationsDropdown({
               <h3 className="text-[13px] font-medium leading-[150%] text-white">
                 Notifications
               </h3>
-              {unreadCount > 0 && (
-                <span className="text-[13px] font-semibold leading-[150%] text-[#6CFF0099]">
-                  {unreadCount}
-                </span>
-              )}
             </div>
             {unreadCount > 0 && (
               <button

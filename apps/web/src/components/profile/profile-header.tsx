@@ -79,7 +79,7 @@ export function ProfileHeader({ user, profile, reputation }: ProfileHeaderProps)
           </div>
         </div>
 
-        <div className="flex gap-8 rounded-xl border border-[#232323] bg-[#191919] px-6 py-4">
+        {/* <div className="flex gap-8 rounded-xl border border-[#232323] bg-[#191919] px-6 py-4">
           <div className="flex flex-col gap-1">
             <span className="text-sm text-[#5A5A5A]">Earned</span>
             <span className="text-xl font-semibold text-white">
@@ -100,7 +100,7 @@ export function ProfileHeader({ user, profile, reputation }: ProfileHeaderProps)
               {reputation?.bountiesCompleted || 0}
             </span>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {profile?.githubUsername && (
