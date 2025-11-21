@@ -23,7 +23,6 @@ function VerifyEmailAddressContent() {
     // Invalidate all related queries
     queryClient.invalidateQueries({ queryKey: ['session'] });
     queryClient.invalidateQueries({ queryKey: ['user', 'getMe'] });
-    queryClient.invalidateQueries({ queryKey: ['user', 'getAccessProfile'] });
 
     // Small delay to ensure session is fully refreshed before redirect
     await new Promise((resolve) => setTimeout(resolve, 100));

@@ -4,16 +4,13 @@ import { authClient } from '@bounty/auth/client';
 import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { track } from '@databuddy/sdk';
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
-import { AccessGate } from '@/components/access-gate';
+import { useMemo, useState, useRef, useEffect } from 'react';
+import { AuthGuard } from '@/components/auth/auth-guard';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
 import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
 import GithubImportModal from '@/components/bounty/github-import-modal';
-import { BetaAccessScreen } from '@/components/dashboard/beta-access-screen';
 // Dashboard components
 import { ErrorBoundary } from '@/components/dashboard/error-boundary';
-import { DashboardPageSkeleton } from '@/components/dashboard/skeletons/dashboard-page-skeleton';
-import { useDevice } from '@/components/device-provider';
 import { Header } from '@/components/dual-sidebar/sidebar-header';
 import { Onboarding } from '@/components/onboarding';
 import { TaskInputForm, type TaskInputFormRef } from '@/components/dashboard/task-input-form';
@@ -69,63 +66,24 @@ export default function Dashboard() {
     []
   );
 
-  const existingSubmissionQuery = useMemo(
-    () => trpc.betaApplications.checkExisting.queryOptions(),
-    []
-  );
+  const { data: session, isPending: isSessionPending } = authClient.useSession();
+  const isAuthenticated = !!session?.user;
 
-  const userDataQuery = useMemo(() => trpc.user.getMe.queryOptions(), []);
-
-  // Queries
-  const bounties = useQuery(bountiesQuery);
-  const myBounties = useQuery(myBountiesQuery);
-  const existingSubmission = useQuery(existingSubmissionQuery);
-  const userData = useQuery(userDataQuery);
-
-  const { data: session } = authClient.useSession();
-  const { isMobile } = useDevice();
+  // Queries - only run when authenticated
+  const bounties = useQuery({
+    ...bountiesQuery,
+    enabled: isAuthenticated && !isSessionPending,
+  });
+  const myBounties = useQuery({
+    ...myBountiesQuery,
+    enabled: isAuthenticated && !isSessionPending,
+  });
   const { createModalOpen, closeCreateModal } = useBountyModals();
   const [importOpen, setImportOpen] = useState(false);
 
-  // Memoized handlers
-  // const handleBountyClick = useCallback(
-  //   (bounty: Bounty) => {
-  //     router.push(`/bounty/${bounty.id}?from=dashboard`);
-  //   },
-  //   [router],
-  // );
-
-  const handleSubmissionRefetch = useCallback(() => {
-    existingSubmission.refetch();
-  }, [existingSubmission]);
-
-  // Loading state for critical data
-  // const isInitialLoading =
-  //   bounties.isLoading || myBounties.isLoading || userData.isLoading;
-
-  // if (isInitialLoading) {
-  //   return (
-  //     <div className="flex justify-center items-center h-screen">
-  //       <Spinner />
-  //     </div>
-  //   );
-  // }
-
   return (
     <ErrorBoundary>
-      <AccessGate
-        fallback={
-          <BetaAccessScreen
-            existingSubmission={existingSubmission.data}
-            isMobile={isMobile}
-            onSubmissionRefetch={handleSubmissionRefetch}
-            sessionUserName={session?.user.name}
-            userData={userData.data}
-          />
-        }
-        skeleton={<DashboardPageSkeleton />}
-        stage="beta"
-      >
+      <AuthGuard>
         <Onboarding />
         <Header
           isMyBountiesLoading={myBounties.isLoading}
@@ -159,17 +117,12 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        {/* <FloatingCreateMenu
-          disabled={!session?.user}
-          onCreate={() => openCreateModal()}
-          onImport={() => setImportOpen(true)}
-        /> */}
         <CreateBountyModal
           onOpenChange={closeCreateModal}
           open={createModalOpen}
         />
         <GithubImportModal onOpenChange={setImportOpen} open={importOpen} />
-      </AccessGate>
+      </AuthGuard>
     </ErrorBoundary>
   );
 }
