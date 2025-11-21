@@ -10,19 +10,23 @@ import type { RealtimeEvents } from '@bounty/types/realtime';
 import { authClient } from '@bounty/auth/client';
 
 export function useNotifications() {
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
+  const isAuthenticated = !!session?.user;
 
   const notificationsQuery = useQuery({
     ...trpc.notifications.getAll.queryOptions({ limit: 50 }),
+    enabled: isAuthenticated && !isPending,
   });
 
   const unreadCountQuery = useQuery({
     ...trpc.notifications.getUnreadCount.queryOptions(),
+    enabled: isAuthenticated && !isPending,
   });
 
   useRealtime<RealtimeEvents>({
     event: 'notifications.refresh.userId',
     history: false,
+    enabled: isAuthenticated && !isPending,
     onData: (data: RealtimeEvents['notifications']['refresh']) => {
       if (data.userId && data.userId === session?.user?.id) {
         notificationsQuery.refetch();

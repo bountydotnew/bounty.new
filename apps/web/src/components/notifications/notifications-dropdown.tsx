@@ -11,13 +11,10 @@ import { cn } from '@bounty/ui/lib/utils';
 import { useNotifications } from '@/hooks/use-notifications';
 import { formatDistanceToNow } from 'date-fns';
 import {
-  ArrowUpRight,
   Award,
   Bell,
   CheckCircle2,
-  FilePlus2,
-  MessageSquare,
-  XCircle,
+  FilePlus2, XCircle
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
@@ -27,7 +24,6 @@ import type {
   NotificationRowProps,
 } from '@/types/notifications';
 import { authClient } from '@bounty/auth/client';
-import { useAccess } from '@/context/access-provider';
 import { CommentsIcon } from '@bounty/ui';
 
 function Row({ item, onRead }: NotificationRowProps) {
@@ -63,23 +59,6 @@ function Row({ item, onRead }: NotificationRowProps) {
       return;
     }
   }, [item.id, item.read, item.type, item.data, onRead, router]);
-
-  const iconColor = (() => {
-    switch (item.type) {
-      case 'bounty_comment':
-        return '#0066FF';
-      case 'submission_received':
-        return '#00B894';
-      case 'submission_approved':
-        return '#6CFF0099';
-      case 'submission_rejected':
-        return '#E84393';
-      case 'bounty_awarded':
-        return '#E66700';
-      default:
-        return '#6C5CE7';
-    }
-  })();
 
   const Icon = (() => {
     switch (item.type) {
@@ -120,7 +99,7 @@ function Row({ item, onRead }: NotificationRowProps) {
         <div className="flex items-center justify-between min-w-0">
           <span
             className={cn(
-              'text-[13px] leading-[150%] whitespace-normal break-words min-w-0',
+              'text-[13px] leading-[150%] whitespace-normal wrap-break-word min-w-0',
               item.read ? 'font-normal text-[#FFFFFF99]' : 'font-medium text-white'
             )}
           >
@@ -152,8 +131,7 @@ export function NotificationsDropdown({
   children?: React.ReactNode;
 }) {
   const { data: session } = authClient.useSession();
-  const { hasStageAccess } = useAccess();
-  const enabled = Boolean(session) && hasStageAccess(['beta', 'production']);
+  const enabled = Boolean(session?.user);
 
   // Always call hooks before any conditional returns
   const {
@@ -163,7 +141,6 @@ export function NotificationsDropdown({
     hasError,
     markAsRead,
     markAllAsRead,
-    refetch,
   } = useNotifications();
   const [showAll, setShowAll] = useState(false);
 
@@ -236,7 +213,7 @@ export function NotificationsDropdown({
               <button
                 className={cn(
                   'px-[3px] text-[11px] font-normal leading-[150%] transition-colors',
-                  !showAll ? 'text-white' : 'text-[#FFFFFF99] hover:text-white'
+                  showAll ? 'text-[#FFFFFF99] hover:text-white' : 'text-white'
                 )}
                 onClick={() => setShowAll(false)}
                 type="button"
