@@ -13,17 +13,24 @@ export const onRequestError = async (
   request: {
     path: string;
     method: string;
-    headers: { get: (key: string) => string | null };
+    headers: { get?: (key: string) => string | null } | Headers;
   },
 ) => {
   await import("@sentry/nextjs").then((Sentry) => {
+    const userAgent =
+      request.headers instanceof Headers
+        ? request.headers.get("user-agent")
+        : typeof request.headers.get === "function"
+          ? request.headers.get("user-agent")
+          : null;
+
     Sentry.captureException(err, {
       contexts: {
         request: {
           url: request.path,
           method: request.method,
           headers: {
-            "user-agent": request.headers.get("user-agent"),
+            "user-agent": userAgent,
           },
         },
       },

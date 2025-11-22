@@ -68,27 +68,19 @@ export const profilesRouter = router({
     )
     .query(async ({ input, ctx }) => {
       try {
-        if (!input.userId && !input.handle) {
+        if (!(input.userId || input.handle)) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
             message: 'Either userId or handle must be provided',
           });
         }
 
-        // Determine cache key
-        const cacheKey = input.handle || input.userId || '';
-
-        // Check cache first
-        const cached = userProfileCache.get(cacheKey);
-
-        if (cached) {
-          return cached;
-        }
-
         // Build query condition
         const condition = input.handle
           ? eq(user.handle, input.handle.toLowerCase())
-          : eq(user.id, input.userId!);
+          : input.userId
+            ? eq(user.id, input.userId)
+            : eq(user.id, ''); // This should never happen due to validation above
 
         const [profile] = await db
           .select({
@@ -118,8 +110,23 @@ export const profilesRouter = router({
 
         // Check if profile is private and user is not the owner
         const isOwner = ctx.session?.user?.id === profile.user.id;
+        
+        // Determine cache key - include viewer identity for private profiles
+        // This ensures owner vs non-owner views are cached separately
+        const profileIdentifier = input.handle || input.userId || '';
+        const viewerId = ctx.session?.user?.id || 'anonymous';
+        const cacheKey = profile.user.isProfilePrivate
+          ? `${profileIdentifier}:${viewerId}`
+          : profileIdentifier;
+
+        // Check cache first (only after we know if it's private and who's viewing)
+        const cached = userProfileCache.get(cacheKey);
+
+        if (cached) {
+          return cached;
+        }
         if (profile.user.isProfilePrivate && !isOwner) {
-          // Return limited profile info
+          // Return limited profile info (hide isProfilePrivate from non-owners)
           const result = {
             success: true,
             data: {
@@ -128,7 +135,7 @@ export const profilesRouter = router({
                 name: profile.user.name,
                 image: profile.user.image,
                 handle: profile.user.handle,
-                isProfilePrivate: true,
+                isProfilePrivate: false, // Hide the actual setting from non-owners
                 createdAt: profile.user.createdAt,
                 email: '',
               },
@@ -208,7 +215,7 @@ export const profilesRouter = router({
           .from(userProfile)
           .where(eq(userProfile.userId, ctx.session.user.id));
 
-        let updatedProfile;
+        let updatedProfile: typeof existingProfile;
 
         if (existingProfile) {
           [updatedProfile] = await db
