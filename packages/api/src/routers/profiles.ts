@@ -60,15 +60,35 @@ const topContributorsCache = new LRUCache<{
 
 export const profilesRouter = router({
   getProfile: publicProcedure
-    .input(z.object({ userId: z.string().uuid() }))
-    .query(async ({ input }) => {
+    .input(
+      z.object({
+        userId: z.string().uuid().optional(),
+        handle: z.string().min(3).max(20).optional(),
+      })
+    )
+    .query(async ({ input, ctx }) => {
       try {
+        if (!input.userId && !input.handle) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Either userId or handle must be provided',
+          });
+        }
+
+        // Determine cache key
+        const cacheKey = input.handle || input.userId || '';
+
         // Check cache first
-        const cached = userProfileCache.get(input.userId);
+        const cached = userProfileCache.get(cacheKey);
 
         if (cached) {
           return cached;
         }
+
+        // Build query condition
+        const condition = input.handle
+          ? eq(user.handle, input.handle.toLowerCase())
+          : eq(user.id, input.userId!);
 
         const [profile] = await db
           .select({
@@ -77,6 +97,8 @@ export const profilesRouter = router({
               name: user.name,
               email: user.email,
               image: user.image,
+              handle: user.handle,
+              isProfilePrivate: user.isProfilePrivate,
               createdAt: user.createdAt,
             },
             profile: userProfile,
@@ -85,7 +107,7 @@ export const profilesRouter = router({
           .from(user)
           .leftJoin(userProfile, eq(user.id, userProfile.userId))
           .leftJoin(userReputation, eq(user.id, userReputation.userId))
-          .where(eq(user.id, input.userId));
+          .where(condition);
 
         if (!profile) {
           throw new TRPCError({
@@ -94,13 +116,42 @@ export const profilesRouter = router({
           });
         }
 
+        // Check if profile is private and user is not the owner
+        const isOwner = ctx.session?.user?.id === profile.user.id;
+        if (profile.user.isProfilePrivate && !isOwner) {
+          // Return limited profile info
+          const result = {
+            success: true,
+            data: {
+              user: {
+                id: profile.user.id,
+                name: profile.user.name,
+                image: profile.user.image,
+                handle: profile.user.handle,
+                isProfilePrivate: true,
+                createdAt: profile.user.createdAt,
+                email: '',
+              },
+              profile: null,
+              reputation: null,
+            },
+            isPrivate: true,
+          };
+
+          // Cache the result
+          userProfileCache.set(cacheKey, result);
+
+          return result;
+        }
+
         const result = {
           success: true,
           data: profile,
+          isPrivate: false,
         };
 
         // Cache the result
-        userProfileCache.set(input.userId, result);
+        userProfileCache.set(cacheKey, result);
 
         return result;
       } catch (error) {

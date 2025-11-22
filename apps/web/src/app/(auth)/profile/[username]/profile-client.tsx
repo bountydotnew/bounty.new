@@ -17,7 +17,8 @@ import {
 } from '@bounty/ui/components/card';
 import { useBilling } from '@/hooks/use-billing';
 import type { CustomerState } from '@/types/billing';
-import { Loader2, Settings } from 'lucide-react';
+import { trpc } from '@/utils/trpc';
+import { Lock, Loader2, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -39,6 +40,15 @@ export function ProfileClient({
     enabled: true,
     initialCustomerState,
   });
+
+  // Fetch profile by handle
+  const { data: profileData, isLoading: isLoadingProfile } =
+    trpc.profiles.getProfile.useQuery(
+      { handle: username },
+      {
+        enabled: !isOwnProfile && isClientMounted,
+      }
+    );
 
   useEffect(() => {
     setIsClientMounted(true);
@@ -132,27 +142,98 @@ export function ProfileClient({
     );
   }
 
+  // Show loading state while fetching profile
+  if (!isOwnProfile && isLoadingProfile) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card>
+          <CardContent className="p-6">
+            <Loader2 className="animate-spin" size={24} />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show private profile message if profile is private
+  if (!isOwnProfile && profileData?.isPrivate) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile: @{username}</CardTitle>
+            <CardDescription>Private user profile</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="py-8 text-center">
+              <div className="mb-4 flex justify-center">
+                <div className="bg-muted flex h-16 w-16 items-center justify-center rounded-full">
+                  <Lock className="h-8 w-8 text-muted-foreground" />
+                </div>
+              </div>
+              <h3 className="mb-2 font-semibold text-lg">
+                This profile is private
+              </h3>
+              <p className="text-muted-foreground">
+                @{username} has set their profile to private.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show public profile
+  if (!isOwnProfile && profileData?.data) {
+    const profile = profileData.data;
+    return (
+      <div className="container mx-auto py-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile: @{username}</CardTitle>
+            <CardDescription>Public user profile</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="py-8 text-center">
+              <Avatar className="mx-auto mb-4 h-16 w-16">
+                <AvatarImage alt={username} src={profile.user.image || ''} />
+                <AvatarFallback>
+                  {profile.user.name?.[0]?.toUpperCase() ||
+                    username[0]?.toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <h3 className="mb-2 font-semibold text-lg">
+                {profile.user.name || `@${username}`}
+              </h3>
+              {profile.profile?.bio && (
+                <p className="mb-4 text-muted-foreground">
+                  {profile.profile.bio}
+                </p>
+              )}
+              {!profile.profile && (
+                <p className="mb-4 text-muted-foreground">
+                  Public profiles are not yet fully implemented.
+                </p>
+              )}
+              <Badge variant="secondary">Coming Soon</Badge>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto py-8">
       <Card>
         <CardHeader>
           <CardTitle>Profile: @{username}</CardTitle>
-          <CardDescription>Public user profile</CardDescription>
+          <CardDescription>User profile</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="py-8 text-center">
-            <Avatar className="mx-auto mb-4 h-16 w-16">
-              <AvatarImage
-                alt={username}
-                src={`https://github.com/${username}.png`}
-              />
-              <AvatarFallback>{username[0]?.toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <h3 className="mb-2 font-semibold text-lg">@{username}</h3>
-            <p className="mb-4 text-muted-foreground">
-              Public profiles are not yet fully implemented.
-            </p>
-            <Badge variant="secondary">Coming Soon</Badge>
+            <p className="text-muted-foreground">Profile not found</p>
           </div>
         </CardContent>
       </Card>
