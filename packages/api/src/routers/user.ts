@@ -14,6 +14,7 @@ import { TRPCError } from '@trpc/server';
 import { desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { LRUCache } from '../lib/lru-cache';
+import { userProfileCache } from './profiles';
 import {
   adminProcedure,
   protectedProcedure,
@@ -612,6 +613,13 @@ export const userRouter = router({
     .input(z.object({ isProfilePrivate: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
       try {
+        // Get user's handle before updating (to invalidate cache)
+        const [userRecord] = await ctx.db
+          .select({ handle: user.handle, id: user.id })
+          .from(user)
+          .where(eq(user.id, ctx.session.user.id))
+          .limit(1);
+
         await ctx.db
           .update(user)
           .set({ isProfilePrivate: input.isProfilePrivate, updatedAt: new Date() })
@@ -619,6 +627,12 @@ export const userRouter = router({
 
         // Invalidate user cache
         currentUserCache.delete(ctx.session.user.id);
+
+        // Invalidate profile cache by both handle and userId
+        if (userRecord?.handle) {
+          userProfileCache.delete(userRecord.handle.toLowerCase());
+        }
+        userProfileCache.delete(ctx.session.user.id);
 
         return {
           success: true,

@@ -6,10 +6,12 @@ import { Input } from '@bounty/ui/components/input';
 import { Label } from '@bounty/ui/components/label';
 import { handleSchema } from '@bounty/ui/lib/forms';
 import { ArrowRightIcon, CheckCircle2, Loader2, XCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useConfetti } from '@/context/confetti-context';
-import { trpc } from '@/utils/trpc';
+import { useUser } from '@/context/user-context';
+import { trpc, trpcClient } from '@/utils/trpc';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export function Onboarding() {
   const [step, setStep] = useState(0);
@@ -20,27 +22,26 @@ export function Onboarding() {
   const [isCheckingHandle, setIsCheckingHandle] = useState(false);
   const [isHandleAvailable, setIsHandleAvailable] = useState<boolean | null>(null);
 
-  const { data: userData } = trpc.user.getMe.useQuery(undefined, {
-    enabled: isOpen,
-  });
-  const setHandleMutation = trpc.user.setHandle.useMutation();
-  const utils = trpc.useUtils();
+  const queryClient = useQueryClient();
+  const { user: userData } = useUser();
 
-  // Check localStorage only on the client side to avoid SSR/hydration mismatch
+  const setHandleMutation = useMutation(
+    trpc.user.setHandle.mutationOptions({
+      onSuccess: () => {
+        const queryKey = trpc.user.getMe.queryOptions().queryKey;
+        queryClient.invalidateQueries({ queryKey });
+      },
+    })
+  );
+
+  // Force show onboarding if user doesn't have a handle (disrespect cookie)
   useEffect(() => {
-    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
-    if (!hasSeenOnboarding) {
+    if (userData && !userData.handle) {
+      // User needs to set handle - force show onboarding and skip to handle step
       setIsOpen(true);
-    }
-  }, []);
-
-  // Check if user needs to set handle
-  useEffect(() => {
-    if (isOpen && userData && !userData.handle) {
-      // User needs to set handle - skip to handle step
       setStep(3);
     }
-  }, [isOpen, userData]);
+  }, [userData]);
 
   useEffect(() => {
     if (isOpen && step === 0) {
@@ -53,11 +54,15 @@ export function Onboarding() {
   };
 
   const handleClose = () => {
-    setIsOpen(false);
-    localStorage.setItem('hasSeenOnboarding', 'true');
+    // Only allow closing if user has a handle
+    if (userData?.handle) {
+      setIsOpen(false);
+      localStorage.setItem('hasSeenOnboarding', 'true');
+    }
+    // If user doesn't have a handle, don't allow closing (onboarding will stay open)
   };
 
-  const checkHandleAvailability = async (handleValue: string) => {
+  const checkHandleAvailability = useCallback(async (handleValue: string) => {
     if (!handleValue) {
       setIsHandleAvailable(null);
       return;
@@ -66,7 +71,8 @@ export function Onboarding() {
     // Validate format first
     const validation = handleSchema.safeParse(handleValue);
     if (!validation.success) {
-      setHandleError(validation.error.errors[0]?.message || 'Invalid handle');
+      const firstError = validation.error.issues[0];
+      setHandleError(firstError?.message || 'Invalid handle');
       setIsHandleAvailable(false);
       return;
     }
@@ -75,31 +81,32 @@ export function Onboarding() {
     setIsCheckingHandle(true);
 
     try {
-      const result = await utils.client.user.checkHandleAvailability.query({
+      const result = await trpcClient.user.checkHandleAvailability.query({
         handle: handleValue,
       });
       setIsHandleAvailable(result.available);
       if (!result.available) {
         setHandleError('This handle is already taken');
       }
-    } catch (error) {
+    } catch {
       setHandleError('Failed to check availability');
       setIsHandleAvailable(false);
     } finally {
       setIsCheckingHandle(false);
     }
-  };
+  }, []);
 
   const handleSetHandle = async () => {
-    if (!handle || !isHandleAvailable) {
+    if (!handle || isHandleAvailable !== true) {
       return;
     }
 
     try {
       await setHandleMutation.mutateAsync({ handle });
-      await utils.user.getMe.invalidate();
-      handleNext();
-    } catch (error) {
+      // After setting handle, close the onboarding
+      setIsOpen(false);
+      localStorage.setItem('hasSeenOnboarding', 'true');
+    } catch {
       setHandleError('Failed to set handle. Please try again.');
     }
   };
@@ -110,11 +117,10 @@ export function Onboarding() {
         checkHandleAvailability(handle);
       }, 500);
       return () => clearTimeout(timer);
-    } else {
-      setIsHandleAvailable(null);
-      setHandleError('');
     }
-  }, [handle]);
+    setIsHandleAvailable(null);
+    setHandleError('');
+  }, [handle, checkHandleAvailability]);
 
   const renderStepContent = () => {
     switch (step) {
@@ -146,7 +152,14 @@ export function Onboarding() {
               <Title title="have fun!" />
               <Description description="join our [discord](https://bounty.new/discord), chat with the rest of the nerds and tell me what else is broken lmao." />
             </div>
-            <NextButton onClick={handleClose}>close this FOREVER!!</NextButton>
+            <NextButton onClick={() => {
+              // Only allow closing if user has a handle, otherwise go to handle step
+              if (userData?.handle) {
+                handleClose();
+              } else {
+                setStep(3);
+              }
+            }}>close this FOREVER!!</NextButton>
           </div>
         );
       case 3:
@@ -198,7 +211,7 @@ export function Onboarding() {
               className="w-full"
               disabled={
                 !handle ||
-                !isHandleAvailable ||
+                isHandleAvailable !== true ||
                 isCheckingHandle ||
                 setHandleMutation.isPending
               }
@@ -225,7 +238,16 @@ export function Onboarding() {
   };
 
   return (
-    <Dialog onOpenChange={handleClose} open={isOpen}>
+    <Dialog 
+      onOpenChange={(open) => {
+        // Prevent closing if user doesn't have a handle
+        if (!open && userData && !userData.handle) {
+          return; // Don't allow closing
+        }
+        handleClose();
+      }} 
+      open={isOpen}
+    >
       <DialogContent className="!outline-none sm:max-w-[425px]">
         {renderStepContent()}
       </DialogContent>

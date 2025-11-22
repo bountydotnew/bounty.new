@@ -31,7 +31,7 @@ const rateUserSchema = z.object({
 });
 
 // LRU Cache for user profiles (cache for 5 minutes, max 200 profiles)
-const userProfileCache = new LRUCache<{
+export const userProfileCache = new LRUCache<{
   success: boolean;
   data: {
     user: {
@@ -344,7 +344,7 @@ export const profilesRouter = router({
           })
           .returning();
 
-        const [{ averageRating, totalRatings }] = await db
+        const [ratingStats] = await db
           .select({
             averageRating: sql<number>`AVG(${userRating.rating})`,
             totalRatings: sql<number>`COUNT(*)`,
@@ -352,11 +352,18 @@ export const profilesRouter = router({
           .from(userRating)
           .where(eq(userRating.ratedUserId, input.ratedUserId));
 
+        if (!ratingStats) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to calculate rating statistics',
+          });
+        }
+
         await db
           .update(userReputation)
           .set({
-            averageRating: averageRating.toString(),
-            totalRatings,
+            averageRating: ratingStats.averageRating.toString(),
+            totalRatings: ratingStats.totalRatings,
             updatedAt: new Date(),
           })
           .where(eq(userReputation.userId, input.ratedUserId));
@@ -411,10 +418,12 @@ export const profilesRouter = router({
           .limit(input.limit)
           .offset(offset);
 
-        const [{ count }] = await db
+        const [countResult] = await db
           .select({ count: sql<number>`count(*)` })
           .from(userRating)
           .where(eq(userRating.ratedUserId, input.userId));
+
+        const count = countResult?.count ?? 0;
 
         return {
           success: true,

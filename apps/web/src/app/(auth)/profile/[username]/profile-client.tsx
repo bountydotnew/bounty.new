@@ -17,7 +17,9 @@ import {
 } from '@bounty/ui/components/card';
 import { useBilling } from '@/hooks/use-billing';
 import type { CustomerState } from '@/types/billing';
+import type { GetProfileResponse } from '@bounty/types';
 import { trpc } from '@/utils/trpc';
+import { useQuery } from '@tanstack/react-query';
 import { Lock, Loader2, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -42,13 +44,10 @@ export function ProfileClient({
   });
 
   // Fetch profile by handle
-  const { data: profileData, isLoading: isLoadingProfile } =
-    trpc.profiles.getProfile.useQuery(
-      { handle: username },
-      {
-        enabled: !isOwnProfile && isClientMounted,
-      }
-    );
+  const { data: profileData, isLoading: isLoadingProfile } = useQuery({
+    ...trpc.profiles.getProfile.queryOptions({ handle: username }),
+    enabled: !isOwnProfile && isClientMounted,
+  });
 
   useEffect(() => {
     setIsClientMounted(true);
@@ -155,8 +154,11 @@ export function ProfileClient({
     );
   }
 
+  // Cast profile data to GetProfileResponse type
+  const profileResponse = profileData as unknown as GetProfileResponse | undefined;
+
   // Show private profile message if profile is private
-  if (!isOwnProfile && profileData?.isPrivate) {
+  if (!isOwnProfile && profileResponse?.isPrivate) {
     return (
       <div className="container mx-auto py-8">
         <Card>
@@ -185,8 +187,8 @@ export function ProfileClient({
   }
 
   // Show public profile
-  if (!isOwnProfile && profileData?.data) {
-    const profile = profileData.data;
+  if (!isOwnProfile && profileResponse?.data) {
+    const profile = profileResponse.data;
     return (
       <div className="container mx-auto py-8">
         <Card>

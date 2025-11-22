@@ -133,10 +133,10 @@ export const handleSchema = z
   .min(3, 'Handle must be at least 3 characters')
   .max(20, 'Handle must be at most 20 characters')
   .regex(/^[a-z0-9_-]+$/, 'Handle can only contain lowercase letters, numbers, hyphens, and underscores')
-  .refine((val) => !val.startsWith('-') && !val.endsWith('-'), {
+  .refine((val) => !(val.startsWith('-') || val.endsWith('-')), {
     message: 'Handle cannot start or end with a hyphen',
   })
-  .refine((val) => !val.startsWith('_') && !val.endsWith('_'), {
+  .refine((val) => !(val.startsWith('_') || val.endsWith('_')), {
     message: 'Handle cannot start or end with an underscore',
   });
 
