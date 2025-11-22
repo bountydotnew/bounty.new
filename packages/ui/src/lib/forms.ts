@@ -125,6 +125,33 @@ export const betaApplicationDefaults: BetaApplicationForm = {
 };
 
 // =====================
+// USERNAME/HANDLE FORMS
+// =====================
+
+export const handleSchema = z
+  .string()
+  .min(3, 'Handle must be at least 3 characters')
+  .max(20, 'Handle must be at most 20 characters')
+  .regex(/^[a-z0-9_-]+$/, 'Handle can only contain lowercase letters, numbers, hyphens, and underscores')
+  .refine((val) => !(val.startsWith('-') || val.endsWith('-')), {
+    message: 'Handle cannot start or end with a hyphen',
+  })
+  .refine((val) => !(val.startsWith('_') || val.endsWith('_')), {
+    message: 'Handle cannot start or end with an underscore',
+  });
+
+export const checkHandleSchema = z.object({
+  handle: handleSchema,
+});
+
+export const setHandleSchema = z.object({
+  handle: handleSchema,
+});
+
+export type CheckHandleForm = z.infer<typeof checkHandleSchema>;
+export type SetHandleForm = z.infer<typeof setHandleSchema>;
+
+// =====================
 // FUTURE FORMS
 // =====================
 
@@ -139,6 +166,7 @@ export const profileSchema = z.object({
   website: z.string().url('Invalid URL').optional().or(z.literal('')),
   github: z.string().optional(),
   twitter: z.string().optional(),
+  isProfilePrivate: z.boolean().optional(),
 });
 
 export type ProfileForm = z.infer<typeof profileSchema>;

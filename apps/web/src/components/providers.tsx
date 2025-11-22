@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import ImpersonationBanner from '@/components/impersonation-banner';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ConfettiProvider } from '@/context/confetti-context';
+import { UserProvider } from '@/context/user-context';
 import { TOAST_ICONS, TOAST_OPTIONS } from '@/context/toast';
 import { queryClient } from '@/utils/trpc';
 
@@ -26,19 +27,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
     >
       <QueryClientProvider client={queryClient}>
         <ConfettiProvider>
-          <AuthUIProvider
-            authClient={authClient}
-            Link={Link}
-            navigate={router.push}
-            onSessionChange={() => {
-              // Clear router cache (protected routes)
-              router.refresh();
-            }}
-            replace={router.replace}
-          >
-            <ImpersonationBanner />
-            {children}
-          </AuthUIProvider>
+          <UserProvider>
+            <AuthUIProvider
+              authClient={authClient}
+              Link={Link}
+              navigate={router.push}
+              onSessionChange={() => {
+                // Clear router cache (protected routes)
+                router.refresh();
+              }}
+              replace={router.replace}
+            >
+              <ImpersonationBanner />
+              {children}
+            </AuthUIProvider>
+          </UserProvider>
           <Databuddy
             clientId="bounty"
             enableBatching={true}

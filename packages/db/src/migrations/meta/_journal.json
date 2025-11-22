@@ -22,6 +22,13 @@
       "when": 1763695530363,
       "tag": "0002_previous_forge",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1763787184444,
+      "tag": "0003_clumsy_iron_lad",
+      "breakpoints": true
     }
   ]
 }

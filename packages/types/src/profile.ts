@@ -3,6 +3,8 @@ export interface ProfileUser {
   name: string | null;
   email: string;
   image: string | null;
+  handle: string | null;
+  isProfilePrivate: boolean;
   createdAt: Date;
 }
 
@@ -35,6 +37,12 @@ export interface ProfileResponse {
   user: ProfileUser;
   profile: ProfileData | null;
   reputation: ProfileReputation | null;
+}
+
+export interface GetProfileResponse {
+  success: boolean;
+  data: ProfileResponse;
+  isPrivate: boolean;
 }
 
 export interface ActivityItem {

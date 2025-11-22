@@ -14,6 +14,7 @@ import { TRPCError } from '@trpc/server';
 import { desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { LRUCache } from '../lib/lru-cache';
+import { userProfileCache } from './profiles';
 import {
   adminProcedure,
   protectedProcedure,
@@ -536,6 +537,114 @@ export const userRouter = router({
       currentUserCache.delete(ctx.session.user.id);
 
       return { success: true };
+    }),
+
+  checkHandleAvailability: publicProcedure
+    .input(z.object({ handle: z.string().min(3).max(20) }))
+    .query(async ({ ctx, input }) => {
+      try {
+        const [existingUser] = await ctx.db
+          .select({ id: user.id })
+          .from(user)
+          .where(eq(user.handle, input.handle.toLowerCase()))
+          .limit(1);
+
+        return {
+          success: true,
+          available: !existingUser,
+        };
+      } catch (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to check handle availability',
+          cause: error,
+        });
+      }
+    }),
+
+  setHandle: protectedProcedure
+    .input(z.object({ handle: z.string().min(3).max(20) }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const handleLower = input.handle.toLowerCase();
+
+        // Check if handle is already taken
+        const [existingUser] = await ctx.db
+          .select({ id: user.id })
+          .from(user)
+          .where(eq(user.handle, handleLower))
+          .limit(1);
+
+        if (existingUser && existingUser.id !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: 'Handle is already taken',
+          });
+        }
+
+        // Update user's handle
+        await ctx.db
+          .update(user)
+          .set({ handle: handleLower, updatedAt: new Date() })
+          .where(eq(user.id, ctx.session.user.id));
+
+        // Invalidate user cache
+        currentUserCache.delete(ctx.session.user.id);
+
+        return {
+          success: true,
+          handle: handleLower,
+          message: 'Handle set successfully',
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to set handle',
+          cause: error,
+        });
+      }
+    }),
+
+  updateProfilePrivacy: protectedProcedure
+    .input(z.object({ isProfilePrivate: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Get user's handle before updating (to invalidate cache)
+        const [userRecord] = await ctx.db
+          .select({ handle: user.handle, id: user.id })
+          .from(user)
+          .where(eq(user.id, ctx.session.user.id))
+          .limit(1);
+
+        await ctx.db
+          .update(user)
+          .set({ isProfilePrivate: input.isProfilePrivate, updatedAt: new Date() })
+          .where(eq(user.id, ctx.session.user.id));
+
+        // Invalidate user cache
+        currentUserCache.delete(ctx.session.user.id);
+
+        // Invalidate profile cache by both handle and userId
+        if (userRecord?.handle) {
+          userProfileCache.delete(userRecord.handle.toLowerCase());
+        }
+        userProfileCache.delete(ctx.session.user.id);
+
+        return {
+          success: true,
+          message: `Profile is now ${input.isProfilePrivate ? 'private' : 'public'}`,
+        };
+      } catch (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to update profile privacy',
+          cause: error,
+        });
+      }
     }),
 
   getUserActivity: publicProcedure
