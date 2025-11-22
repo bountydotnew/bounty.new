@@ -40,6 +40,8 @@ export const env = createEnv({
     // Upstash Redis
     UPSTASH_REDIS_REST_URL: z.string().url(),
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
+    // Cron jobs
+    CRON_SECRET: z.string().min(16).optional(),
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
@@ -62,6 +64,7 @@ export const env = createEnv({
     DEVICE_AUTH_ALLOWED_CLIENT_IDS: process.env.DEVICE_AUTH_ALLOWED_CLIENT_IDS,
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+    CRON_SECRET: process.env.CRON_SECRET,
   },
   skipValidation: process.env.NODE_ENV !== 'production',
 });

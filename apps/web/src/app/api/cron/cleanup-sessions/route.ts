@@ -1,4 +1,5 @@
 import { cleanupExpiredSessions, getExpiredSessionCount } from '@bounty/db';
+import { env } from '@bounty/env/server';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
@@ -10,7 +11,7 @@ import { NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   // Verify cron secret for security
   const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
+  const cronSecret = env.CRON_SECRET;
 
   if (!cronSecret) {
     console.error('[Cron] CRON_SECRET environment variable is not set');
