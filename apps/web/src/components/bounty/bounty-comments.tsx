@@ -480,7 +480,7 @@ export default function BountyComments({
                             }
                             onLike={likeComment}
                             parentRef={{
-                              userName: root.user?.name || 'Anonymous',
+                              userName: root.user?.name || 'User',
                               snippet:
                                 String(root.content).slice(0, 40) +
                                 (String(root.content).length > 40 ? '…' : ''),

@@ -12,6 +12,7 @@ import { useConfetti } from '@/context/confetti-context';
 import { useUser } from '@/context/user-context';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { TRPCClientError } from '@trpc/client';
 
 export function Onboarding() {
   const [step, setStep] = useState(0);
@@ -88,8 +89,16 @@ export function Onboarding() {
       if (!result.available) {
         setHandleError('This handle is already taken');
       }
-    } catch {
-      setHandleError('Failed to check availability');
+    } catch (error) {
+      // Extract error message from TRPC error
+      if (error instanceof TRPCClientError) {
+        // Use the error message from TRPC (includes Zod validation messages)
+        setHandleError(error.message);
+      } else if (error instanceof Error) {
+        setHandleError(error.message);
+      } else {
+        setHandleError('Failed to check availability');
+      }
       setIsHandleAvailable(false);
     } finally {
       setIsCheckingHandle(false);

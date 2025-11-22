@@ -542,24 +542,18 @@ export const userRouter = router({
   checkHandleAvailability: publicProcedure
     .input(z.object({ handle: z.string().min(3).max(20) }))
     .query(async ({ ctx, input }) => {
-      try {
-        const [existingUser] = await ctx.db
-          .select({ id: user.id })
-          .from(user)
-          .where(eq(user.handle, input.handle.toLowerCase()))
-          .limit(1);
+      // No try-catch needed - let TRPC handle errors naturally
+      // Database errors will be caught by TRPC's error handler
+      const [existingUser] = await ctx.db
+        .select({ id: user.id })
+        .from(user)
+        .where(eq(user.handle, input.handle.toLowerCase()))
+        .limit(1);
 
-        return {
-          success: true,
-          available: !existingUser,
-        };
-      } catch (error) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to check handle availability',
-          cause: error,
-        });
-      }
+      return {
+        success: true,
+        available: !existingUser,
+      };
     }),
 
   setHandle: protectedProcedure

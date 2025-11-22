@@ -127,7 +127,9 @@ export const BountyCard = memo(function BountyCard({
     setShowDeleteDialog(false);
   };
 
-  const creatorName = bounty.creator.name || 'Anonymous';
+  // Show name or fallback - never "Anonymous" for private profiles
+  // Private profiles still show name, only profile details are hidden
+  const creatorName = bounty.creator.name || 'User';
   const creatorInitial = creatorName.charAt(0).toLowerCase();
 
   // Generate color from creator name (simple hash-based approach)
