@@ -26,6 +26,28 @@ import {
 const DASH_REGEX = /-/g;
 const TRAILING_SLASH_REGEX = /\/$/;
 
+// Regex for checking zero-width and invisible characters
+// Matches: zero-width space, zero-width non-joiner, zero-width joiner, 
+// word joiner, soft hyphen, zero-width no-break space, etc.
+const INVISIBLE_CHARS_REGEX = /[\u200B-\u200D\uFEFF\u00AD\u2060\u200C\u200D]/;
+
+// Handle validation schema - matches client-side validation
+// Rejects: spaces, zero-width characters, uppercase, special chars (except _ and -)
+const handleSchema = z
+  .string()
+  .min(3, 'Handle must be at least 3 characters')
+  .max(20, 'Handle must be at most 20 characters')
+  .regex(/^[a-z0-9_-]+$/, 'Handle can only contain lowercase letters, numbers, hyphens, and underscores')
+  .refine((val) => !(val.startsWith('-') || val.endsWith('-')), {
+    message: 'Handle cannot start or end with a hyphen',
+  })
+  .refine((val) => !(val.startsWith('_') || val.endsWith('_')), {
+    message: 'Handle cannot start or end with an underscore',
+  })
+  .refine((val) => !INVISIBLE_CHARS_REGEX.test(val), {
+    message: 'Handle cannot contain invisible or zero-width characters',
+  });
+
 // LRU Cache for current user data (cache for 3 minutes, max 500 users)
 const currentUserCache = new LRUCache<{
   success: boolean;
@@ -540,7 +562,7 @@ export const userRouter = router({
     }),
 
   checkHandleAvailability: publicProcedure
-    .input(z.object({ handle: z.string().min(3).max(20) }))
+    .input(z.object({ handle: handleSchema }))
     .query(async ({ ctx, input }) => {
       try {
         const [existingUser] = await ctx.db
@@ -563,7 +585,7 @@ export const userRouter = router({
     }),
 
   setHandle: protectedProcedure
-    .input(z.object({ handle: z.string().min(3).max(20) }))
+    .input(z.object({ handle: handleSchema }))
     .mutation(async ({ ctx, input }) => {
       try {
         const handleLower = input.handle.toLowerCase();
