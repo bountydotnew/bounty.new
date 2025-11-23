@@ -17,3 +17,4 @@ export * from './sidebar-toggle';
 export * from './submissions-people';
 export * from './switch-users';
 export * from './switch-workspace';
+export * from './feedback';

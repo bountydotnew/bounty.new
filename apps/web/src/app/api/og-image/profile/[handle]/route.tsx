@@ -9,6 +9,22 @@ export const dynamic = 'force-dynamic';
 // Regex pattern for extracting font URL from Google Fonts CSS (defined at top level for performance)
 const FONT_URL_REGEX = /src: url\((.+)\) format\('(opentype|truetype)'\)/;
 
+// Helper function to fetch and convert image to data URL
+async function fetchImageAsDataUrl(imageUrl: string): Promise<string | null> {
+    try {
+        const imageResponse = await fetch(imageUrl);
+        if (imageResponse.ok) {
+            const imageBuffer = await imageResponse.arrayBuffer();
+            const imageBase64 = Buffer.from(imageBuffer).toString('base64');
+            const imageType = imageResponse.headers.get('content-type') || 'image/png';
+            return `data:${imageType};base64,${imageBase64}`;
+        }
+    } catch {
+        // If image fetch fails, return null to fall back to first letter
+    }
+    return null;
+}
+
 export async function GET(
     _request: NextRequest,
     { params }: { params: Promise<{ handle: string }> }
@@ -53,6 +69,11 @@ export async function GET(
         // Get first letter of handle or name for avatar
         const displayName = userData.handle || userData.name || 'U';
         const firstLetter = displayName.charAt(0).toUpperCase();
+
+        // Fetch and convert avatar image to data URL if available
+        const avatarDataUrl = userData.image
+            ? await fetchImageAsDataUrl(userData.image)
+            : null;
 
         // Load Inter Semibold font from Google Fonts using the proper method
         async function loadGoogleFont(font: string, text: string) {
@@ -174,10 +195,10 @@ export async function GET(
                                             overflow: 'hidden',
                                         }}
                                     >
-                                        {userData.image ? (
+                                        {avatarDataUrl ? (
                                             // biome-ignore lint/performance/noImgElement: Required for OG image rendering
                                             <img
-                                                src={userData.image}
+                                                src={avatarDataUrl}
                                                 alt=""
                                                 width={52}
                                                 height={52}

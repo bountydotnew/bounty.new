@@ -24,6 +24,8 @@ import { ManageUsersWorkspaceIcon } from '@bounty/ui/components/icons/huge/manag
 import { BillingSettingsIcon } from '@bounty/ui/components/icons/huge/billing-settings';
 import { DropdownMenuItem } from '@bounty/ui/components/dropdown-menu';
 import { DropdownIcon } from '@bounty/ui';
+import { Feedback } from '@bounty/ui';
+import { useFeedback } from '@/components/feedback-context';
 
 // Constants for better maintainability
 const MESSAGES = {
@@ -34,6 +36,7 @@ const MESSAGES = {
   CHECKING_SUBSCRIPTION: 'Checking...',
   VERIFYING_SUBSCRIPTION: 'Verifying subscription...',
   PRO_BADGE: 'Pro',
+  SEND_FEEDBACK: 'Send Feedback',
 } as const;
 
 const LOGIN_REDIRECT = '/login';
@@ -115,6 +118,7 @@ export function AccountDropdown({
   const userDisplay = useUserDisplay(session?.user, user);
   const handleBillingPortal = useBillingPortal();
   const handleSignOut = useSignOut();
+  const { startSelection } = useFeedback();
 
   return (
     <DropdownMenu onOpenChange={handleOpenChange} open={menuOpen}>
@@ -158,6 +162,7 @@ export function AccountDropdown({
           <button
             className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => {
+              setMenuOpen(false);
               if (session?.user?.id) {
                 router.push(`/profile/${session.user.id}`);
               }
@@ -172,12 +177,29 @@ export function AccountDropdown({
           </button>
           <button
             className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-white"
-            onClick={() => router.push(LINKS.SETTINGS)}
+            onClick={() => {
+              setMenuOpen(false);
+              router.push(LINKS.SETTINGS);
+            }}
             type="button"
           >
             <SettingsGearIcon className="h-[19px] w-[19px]" />
             <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
               Settings
+            </span>
+          </button>
+          <button
+            className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-white"
+            onClick={() => {
+              setMenuOpen(false);
+              // Use setTimeout to ensure dropdown closes before starting selection
+              setTimeout(() => startSelection(), 100);
+            }}
+            type="button"
+          >
+            <Feedback className="h-[19px] w-[19px]" />
+            <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
+              Send Feedback
             </span>
           </button>
         </div>
@@ -186,6 +208,7 @@ export function AccountDropdown({
         <div className="flex flex-col gap-2 border-b border-[#292828] px-0 py-2">
           <button
             className="flex items-center justify-between rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white"
+            onClick={() => setMenuOpen(false)}
             type="button"
           >
             <div className="flex items-center gap-2.25">
@@ -198,6 +221,7 @@ export function AccountDropdown({
           </button>
           <button
             className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white"
+            onClick={() => setMenuOpen(false)}
             type="button"
           >
             <ManageUsersWorkspaceIcon className="h-[19px] w-[19px]" />
@@ -207,7 +231,10 @@ export function AccountDropdown({
           </button>
           <button
             className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white"
-            onClick={handleBillingPortal}
+            onClick={() => {
+              setMenuOpen(false);
+              handleBillingPortal();
+            }}
             type="button"
           >
             <BillingSettingsIcon className="h-[19px] w-[19px]" />
@@ -222,7 +249,10 @@ export function AccountDropdown({
         {/* Sign out */}
         <DropdownMenuItem
           aria-label="Sign out of account"
-          onClick={handleSignOut}
+          onClick={() => {
+            setMenuOpen(false);
+            handleSignOut();
+          }}
           variant="destructive"
         >
           <LogOut />
