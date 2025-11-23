@@ -55,7 +55,8 @@
     "sonner": "catalog:",
     "tailwind-merge": "catalog:",
     "zod": "catalog:",
-    "zustand": "^5.0.8"
+    "zustand": "^5.0.8",
+    "html2canvas-pro": "catalog:"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "catalog:",

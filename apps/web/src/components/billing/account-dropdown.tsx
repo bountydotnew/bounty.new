@@ -26,7 +26,7 @@ import { Spinner } from '@bounty/ui/components/spinner';
 import { UserIcon } from '@bounty/ui/components/user';
 import { useBilling } from '@/hooks/use-billing';
 import { useQuery } from '@tanstack/react-query';
-import { CreditCard, LogOut, Shield, Sparkles } from 'lucide-react';
+import { CreditCard, LogOut, Shield, Sparkles, MessageSquare } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import * as React from 'react';
 import { useCallback } from 'react';
@@ -39,6 +39,7 @@ import type {
   UserDisplayData,
 } from '@/types/billing-components';
 import { trpc } from '@/utils/trpc';
+import { useFeedback } from '@/components/feedback-context';
 
 // Constants for better maintainability
 const MESSAGES = {
@@ -56,6 +57,7 @@ const MENU_ITEMS = {
   ACCOUNT: 'Account',
   BILLING: 'Billing',
   NOTIFICATIONS: 'Notifications',
+  SEND_FEEDBACK: 'Send Feedback',
   LOGOUT: 'Log out',
 } as const;
 
@@ -235,6 +237,7 @@ export function AccountDropdown({
   const userDisplay = useUserDisplay(session?.user, user);
   const handleBillingPortal = useBillingPortal();
   const handleSignOut = useSignOut();
+  const { startSelection } = useFeedback();
 
   // Memoize dropdown content positioning
   const dropdownProps = React.useMemo(
@@ -328,6 +331,14 @@ export function AccountDropdown({
               <DropdownMenuItem aria-label="View notifications">
                 <BellIcon />
                 {MENU_ITEMS.NOTIFICATIONS}
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                aria-label="Send feedback"
+                onClick={startSelection}
+              >
+                <MessageSquare />
+                {MENU_ITEMS.SEND_FEEDBACK}
               </DropdownMenuItem>
             </DropdownMenuGroup>
 

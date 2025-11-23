@@ -10,6 +10,9 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useRouter } from 'next/navigation';
 import ImpersonationBanner from '@/components/impersonation-banner';
 import { ThemeProvider } from '@/components/theme-provider';
+import { FeedbackProvider } from '@/components/feedback-context';
+import { FeedbackModal } from '@/components/feedback-modal';
+import { FeedbackOverlay } from '@/components/feedback-overlay';
 import { AccessProvider } from '@/context/access-provider';
 import { ConfettiProvider } from '@/context/confetti-context';
 import { TOAST_ICONS, TOAST_OPTIONS } from '@/context/toast';
@@ -38,8 +41,27 @@ export function Providers({ children }: { children: React.ReactNode }) {
               }}
               replace={router.replace}
             >
-              <ImpersonationBanner />
-              {children}
+              <FeedbackProvider
+                config={{
+                  metadata: {
+                    appVersion: "1.0.0",
+                    environment: process.env.NODE_ENV,
+                  },
+                  ui: {
+                    title: "Report an Issue",
+                    placeholder: "Found a bug? Let us know what happened...",
+                    colors: {
+                      primary: "#E66700", // Standard Orange
+                    },
+                    zIndex: 99999,
+                  },
+                }}
+              >
+                <ImpersonationBanner />
+                {children}
+                <FeedbackModal />
+                <FeedbackOverlay />
+              </FeedbackProvider>
             </AuthUIProvider>
           </AccessProvider>
           <Databuddy
