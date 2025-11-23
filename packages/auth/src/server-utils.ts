@@ -20,7 +20,8 @@ export const getServerSession = cache(async (): Promise<GetSessionResult> => {
   } catch (error) {
     return {
       data: null,
-      error: error instanceof Error ? error : new Error('Failed to get session'),
+      error:
+        error instanceof Error ? error : new Error('Failed to get session'),
     } as GetSessionResult;
   }
 });
@@ -35,15 +36,15 @@ type GetCustomerStateResult = Awaited<
 
 export const getServerCustomerState = cache(
   async (): Promise<GetCustomerStateResult> => {
-  try {
-    const headersList = await headers();
-    const result = await authClient.customer.state({
-      fetchOptions: {
-        headers: headersList,
-      },
-    });
-    return result;
-  } catch (error) {
+    try {
+      const headersList = await headers();
+      const result = await authClient.customer.state({
+        fetchOptions: {
+          headers: headersList,
+        },
+      });
+      return result;
+    } catch (error) {
       return {
         data: null,
         error:
@@ -51,6 +52,6 @@ export const getServerCustomerState = cache(
             ? error
             : new Error('Failed to get customer state'),
       } as GetCustomerStateResult;
-  }
+    }
   }
 );

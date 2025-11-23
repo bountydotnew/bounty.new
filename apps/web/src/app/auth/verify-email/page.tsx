@@ -16,7 +16,8 @@ export default function VerifyEmailPage() {
           <div className="space-y-4">
             <h1 className="font-medium text-xl">Check your email</h1>
             <p className="text-gray-400">
-              We sent a verification link to your inbox. Open it to verify your email.
+              We sent a verification link to your inbox. Open it to verify your
+              email.
             </p>
             <div className="space-y-3 pt-4">
               <Button

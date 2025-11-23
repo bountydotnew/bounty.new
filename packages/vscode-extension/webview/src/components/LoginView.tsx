@@ -23,9 +23,7 @@ export function LoginView() {
 
         {/* Title */}
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-white">
-            Welcome to Bounty
-          </h1>
+          <h1 className="text-2xl font-bold text-white">Welcome to Bounty</h1>
           <p className="text-sm text-muted-foreground">
             Connect your bounty.new account to browse and manage bounties
             directly from VS Code
@@ -34,11 +32,7 @@ export function LoginView() {
 
         {/* Login Button */}
         <div className="w-full space-y-3">
-          <Button
-            onClick={login}
-            disabled={isLoggingIn}
-            className="w-full"
-          >
+          <Button onClick={login} disabled={isLoggingIn} className="w-full">
             {isLoggingIn ? 'Connecting...' : 'Connect to bounty.new'}
           </Button>
 

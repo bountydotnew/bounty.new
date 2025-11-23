@@ -17,7 +17,8 @@ export function NavUser({
   };
 }) {
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
+  const isAuthenticated = !!session?.user;
 
   const handleUpgrade = async () => {
     if (!session?.user) {
@@ -30,7 +31,7 @@ export function NavUser({
 
   return (
     <>
-      <NotificationsDropdown />
+      {isAuthenticated && !isPending && <NotificationsDropdown />}
       <AccountDropdown onUpgradeClick={handleUpgrade} user={user} />
 
       <PricingDialog

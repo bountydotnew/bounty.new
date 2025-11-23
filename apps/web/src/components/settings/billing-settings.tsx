@@ -5,6 +5,8 @@ interface BillingSettingsProps {
   initialCustomerState?: CustomerState | null;
 }
 
-export function BillingSettings({ initialCustomerState }: BillingSettingsProps) {
+export function BillingSettings({
+  initialCustomerState,
+}: BillingSettingsProps) {
   return <BillingSettingsClient initialCustomerState={initialCustomerState} />;
 }

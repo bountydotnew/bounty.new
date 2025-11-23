@@ -14,7 +14,9 @@ export async function GET(request: NextRequest) {
       .limit(1);
 
     if (result?.id) {
-      return NextResponse.redirect(new URL(`/bounty/${result.id}`, request.url));
+      return NextResponse.redirect(
+        new URL(`/bounty/${result.id}`, request.url)
+      );
     }
 
     return NextResponse.redirect(new URL('/bounties', request.url));

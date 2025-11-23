@@ -60,7 +60,9 @@ export function SuccessClient({ initialCustomerState }: SuccessClientProps) {
 
   const PLAN_IDS: PlanId[] = ['pro-annual', 'pro-monthly'];
 
-  const identifyPlan = (subscription?: BillingSubscription): PlanId | undefined => {
+  const identifyPlan = (
+    subscription?: BillingSubscription
+  ): PlanId | undefined => {
     if (!subscription) {
       return;
     }
@@ -77,7 +79,9 @@ export function SuccessClient({ initialCustomerState }: SuccessClientProps) {
     );
   };
 
-  const activePlanId = customer?.activeSubscriptions?.reduce<PlanId | undefined>(
+  const activePlanId = customer?.activeSubscriptions?.reduce<
+    PlanId | undefined
+  >(
     (current, subscription) => current ?? identifyPlan(subscription),
     undefined
   );

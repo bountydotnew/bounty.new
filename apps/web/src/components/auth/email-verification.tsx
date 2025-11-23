@@ -13,7 +13,10 @@ import { z } from 'zod';
 import Bounty from '../icons/bounty';
 
 const verificationSchema = z.object({
-  code: z.string().min(6, 'Verification code must be 6 digits').max(6, 'Verification code must be 6 digits'),
+  code: z
+    .string()
+    .min(6, 'Verification code must be 6 digits')
+    .max(6, 'Verification code must be 6 digits'),
 });
 
 type VerificationFormData = z.infer<typeof verificationSchema>;
@@ -34,34 +37,41 @@ interface ParsedError {
 }
 
 function parseOtpError(error: unknown): ParsedError {
-  const errorMessage = error instanceof Error ? error.message : 'Invalid verification code';
-  
+  const errorMessage =
+    error instanceof Error ? error.message : 'Invalid verification code';
+
   const isExpired = errorMessage.toLowerCase().includes('expired');
   const isUsed = errorMessage.toLowerCase().includes('used');
-  
+
   if (isExpired) {
     return {
       message: 'This code has expired. Please request a new one.',
       shouldSuggestResend: true,
     };
   }
-  
+
   if (isUsed) {
     return {
       message: 'This code has already been used. Please request a new one.',
       shouldSuggestResend: true,
     };
   }
-  
+
   return {
-    message: errorMessage.includes('verification') 
-      ? errorMessage 
+    message: errorMessage.includes('verification')
+      ? errorMessage
       : 'Invalid verification code. Please try again.',
     shouldSuggestResend: false,
   };
 }
 
-export function EmailVerification({ email, onBack, onSuccess, onEditInfo, initialCode }: EmailVerificationProps) {
+export function EmailVerification({
+  email,
+  onBack,
+  onSuccess,
+  onEditInfo,
+  initialCode,
+}: EmailVerificationProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -78,7 +88,10 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo, initia
   // Start cooldown timer
   useEffect(() => {
     if (resendCooldown > 0) {
-      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      const timer = setTimeout(
+        () => setResendCooldown(resendCooldown - 1),
+        1000
+      );
       return () => clearTimeout(timer);
     }
   }, [resendCooldown]);
@@ -124,14 +137,16 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo, initia
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    const pastedData = e.clipboardData
+      .getData('text')
+      .replace(/\D/g, '')
+      .slice(0, 6);
     form.setValue('code', pastedData);
 
     // Focus the next empty input or the last one
     const nextIndex = Math.min(pastedData.length, 5);
     inputRefs.current[nextIndex]?.focus();
   };
-
 
   const handleSubmit = async (data: VerificationFormData) => {
     setIsLoading(true);
@@ -140,7 +155,7 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo, initia
         email,
         otp: data.code,
       });
-      
+
       if (result?.data) {
         // signIn.emailOtp creates a session and marks email as verified
         onSuccess();
@@ -151,7 +166,7 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo, initia
     } catch (error) {
       const parsed = parseOtpError(error);
       setShowResendSuggestion(parsed.shouldSuggestResend);
-      
+
       form.setError('code', {
         type: 'manual',
         message: parsed.message,
@@ -170,7 +185,7 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo, initia
     setShowResendSuggestion(false); // Clear suggestion after resend
     form.clearErrors('code'); // Clear the error
     setValue('code', ''); // Clear the code input
-    
+
     try {
       await authClient.emailOtp.sendVerificationOtp({
         email,
@@ -194,7 +209,7 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo, initia
           email,
           otp: cleanCode,
         });
-        
+
         if (result?.data) {
           // signIn.emailOtp creates a session and marks email as verified
           onSuccess();
@@ -205,14 +220,14 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo, initia
       } catch (error) {
         const parsed = parseOtpError(error);
         setShowResendSuggestion(parsed.shouldSuggestResend);
-        
+
         setError('code', {
           type: 'manual',
           message: parsed.message,
         });
       }
     },
-    [email, onSuccess, setError],
+    [email, onSuccess, setError]
   );
 
   useEffect(() => {
@@ -258,9 +273,12 @@ export function EmailVerification({ email, onBack, onSuccess, onEditInfo, initia
           <Bounty className="w-8 h-8 text-primary" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-2xl font-semibold text-white">Check your email</h2>
+          <h2 className="text-2xl font-semibold text-white">
+            Check your email
+          </h2>
           <p className="text-gray-400 text-sm leading-relaxed">
-            We sent a verification code to<br />
+            We sent a verification code to
+            <br />
             <span className="font-medium text-white">{email}</span>
           </p>
         </div>

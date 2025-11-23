@@ -97,7 +97,7 @@ body {
 .dark {
   --background: #0e0e0e;
   --foreground: rgb(251, 251, 251);
-  --card: rgb(52, 52, 52);
+  --card: #191919;
   --card-foreground: rgb(251, 251, 251);
   --popover: rgb(52, 52, 52);
   --popover-foreground: rgb(251, 251, 251);
@@ -118,19 +118,51 @@ body {
   --chart-3: rgb(255, 200, 100);
   --chart-4: rgb(100, 120, 200);
   --chart-5: rgb(200, 180, 100);
-  --sidebar: rgb(52, 52, 52);
+  --sidebar: #191919;
   --sidebar-foreground: rgb(251, 251, 251);
   --sidebar-primary: rgb(80, 120, 200);
   --sidebar-primary-foreground: rgb(251, 251, 251);
-  --sidebar-accent: rgb(69, 69, 69);
+  --sidebar-accent: #141414;
   --sidebar-accent-foreground: rgb(251, 251, 251);
-  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-border: #232323;
   --sidebar-ring: rgb(128, 128, 128);
   --offset: 10px;
   --slide-up-fade: slide-up-fade 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --fade-in: fade-in 0.2s ease-in-out forwards;
   --sf-color-primary: var(--primary);
   --sf-color-tertiary: var(--background);
+
+  /* Dashboard design system colors from mockup */
+  /* Backgrounds */
+  --dashboard-bg: #0e0e0e;
+  --sidebar-bg: #191919;
+  --card-bg: #191919;
+  --nav-active-bg: #141414;
+
+  /* Borders & Outlines */
+  --sidebar-border-color: #232323;
+  --card-border-color: #232323;
+  --card-outline-color: #232323;
+
+  /* Shadows */
+  --card-shadow: rgba(0, 0, 0, 0.2);
+  --card-shadow-inset: rgba(0, 0, 0, 0.2) 0px 2px 3px;
+
+  /* Text Colors */
+  --text-primary: #ffffff;
+  --text-secondary: #969696;
+  --text-tertiary: #929292;
+  --text-muted: rgba(255, 255, 255, 0.6);
+  --text-workspace: #f2f2f2;
+
+  /* Accent Colors */
+  --accent-bounty-value: rgba(108, 255, 0, 0.6);
+  --accent-orange: #e66700;
+  --accent-orange-outline: #c95900;
+
+  /* Icon Opacity */
+  --icon-opacity-muted: 0.3;
+  --icon-opacity-default: 1;
 }
 
 /* biome-ignore lint/nursery/noUnknownAtRule: Tailwind CSS directive */
@@ -173,6 +205,22 @@ body {
   --fade-in: var(--fade-in);
   --slide-up-fade: var(--slide-up-fade);
   --offset: var(--offset);
+  /* Dashboard design system colors */
+  --color-dashboard-bg: var(--dashboard-bg);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-card-bg: var(--card-bg);
+  --color-nav-active-bg: var(--nav-active-bg);
+  --color-sidebar-border-color: var(--sidebar-border-color);
+  --color-card-border-color: var(--card-border-color);
+  --color-card-outline-color: var(--card-outline-color);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-muted: var(--text-muted);
+  --color-text-workspace: var(--text-workspace);
+  --color-accent-bounty-value: var(--accent-bounty-value);
+  --color-accent-orange: var(--accent-orange);
+  --color-accent-orange-outline: var(--accent-orange-outline);
 }
 
 @layer base {

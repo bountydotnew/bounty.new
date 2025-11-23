@@ -2,7 +2,7 @@ interface BountyLogoProps {
   className?: string;
 }
 
-export function BountyLogo({ className = "h-6 w-6" }: BountyLogoProps) {
+export function BountyLogo({ className = 'h-6 w-6' }: BountyLogoProps) {
   return (
     <svg
       className={className}

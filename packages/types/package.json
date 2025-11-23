@@ -10,7 +10,11 @@
     "./billing": "./src/billing.ts",
     "./api": "./src/api.ts",
     "./github": "./src/github.ts",
-    "./polar": "./src/polar.ts"
+    "./polar": "./src/polar.ts",
+    "./realtime": "./src/realtime.ts"
+  },
+  "dependencies": {
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@types/node": "catalog:",

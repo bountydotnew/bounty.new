@@ -27,7 +27,6 @@ export function useNavigationContext(): NavigationContext {
   });
 
   return useMemo(() => {
-
     // Dashboard context
     if (from === 'dashboard' || pathname === '/dashboard') {
       return {

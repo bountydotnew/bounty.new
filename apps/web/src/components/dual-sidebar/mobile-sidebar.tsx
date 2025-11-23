@@ -47,7 +47,7 @@ export function MobileSidebar({
         )}
       </SheetTrigger>
       <SheetContent
-        className="w-[320px] rounded-l-2xl border-none bg-[#151515] p-0 shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)]"
+        className="w-[320px] rounded-l-2xl border-none bg-[#151515] p-0 shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)] pt-4"
         side="right"
       >
         <div className="flex h-full flex-col">

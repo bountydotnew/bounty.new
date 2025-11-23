@@ -63,7 +63,7 @@ export default function BountyComment({
           <AvatarFallback>{comment.user?.name?.[0] || 'U'}</AvatarFallback>
         </Avatar>
         <span className="text-neutral-300 text-xs">
-          {comment.user?.name || 'Anonymous'}
+          {comment.user?.name || 'User'}
         </span>
         <span className="text-neutral-600 text-xs">•</span>
         <span className="text-neutral-500 text-xs">

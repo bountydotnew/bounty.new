@@ -6,69 +6,58 @@ import { trpc, queryClient } from '@/utils/trpc';
 
 /**
  * Hook to batch-fetch essential data on initial app load
- * 
+ *
  * This prefetches common queries in parallel, which tRPC will batch
  * into a single HTTP request (if they happen in the same tick).
- * 
+ *
  * Data fetched:
  * - User profile (getMe)
- * - Access profile (beta status, feature flags)
- * 
+ *
  * @param enabled - Whether to fetch data (should be true when user is authenticated)
  */
-function useInitialData(enabled = true) {
+export function useInitialData(enabled = true) {
   const { data: session } = authClient.useSession();
   const isAuthenticated = !!session?.user;
   const shouldFetch = enabled && isAuthenticated;
 
-  // Batch fetch essential user data in parallel
-  const queries = useQueries({
+  // Fetch essential user data
+  const meQuery = useQueries({
     queries: [
       {
         ...trpc.user.getMe.queryOptions(),
         enabled: shouldFetch,
         staleTime: 5 * 60 * 1000, // 5 minutes
       },
-      {
-        ...trpc.user.getAccessProfile.queryOptions(),
-        enabled: shouldFetch,
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        retry: false,
-      },
     ],
-  });
-
-  const [meQuery, accessProfileQuery] = queries;
+  })[0];
 
   return {
     me: meQuery.data,
-    accessProfile: accessProfileQuery.data,
-    isLoading: meQuery.isLoading || accessProfileQuery.isLoading,
-    isError: meQuery.isError || accessProfileQuery.isError,
-    error: meQuery.error || accessProfileQuery.error,
+    isLoading: meQuery.isLoading,
+    isError: meQuery.isError,
+    error: meQuery.error,
   };
 }
 
 /**
  * Hook to prefetch initial data on mount
- * 
+ *
  * This triggers the initial data fetch and caches it for the entire session.
  * Use this at the root of your app to warm up the cache.
- * 
+ *
  * Prefetches:
- * - User profile (tRPC - batched)
- * - Access profile (tRPC - batched)
+ * - User profile (tRPC)
  * - Billing/subscription data (Better Auth - separate request)
+ * - Device sessions (Better Auth - for account switcher)
  */
 export function usePrefetchInitialData() {
   const { data: session } = authClient.useSession();
-  
+
   useEffect(() => {
     if (session?.user) {
-      // Prefetch tRPC queries - these will be batched into one HTTP request
+      // Prefetch tRPC queries
       queryClient.prefetchQuery(trpc.user.getMe.queryOptions());
-      queryClient.prefetchQuery(trpc.user.getAccessProfile.queryOptions());
-      
+
       // Prefetch billing data (Better Auth) - runs in parallel with tRPC batch
       queryClient.prefetchQuery({
         queryKey: ['billing'],
@@ -84,7 +73,26 @@ export function usePrefetchInitialData() {
         staleTime: 5 * 60 * 1000, // 5 minutes
         retry: false,
       });
+
+      // Prefetch device sessions (Better Auth) - for account switcher
+      queryClient.prefetchQuery({
+        queryKey: ['auth', 'multiSession', 'listDeviceSessions'],
+        queryFn: async () => {
+          try {
+            const { data, error } = await authClient.multiSession.listDeviceSessions();
+            if (error) {
+              console.error('Failed to prefetch device sessions:', error);
+              return [];
+            }
+            return data || [];
+          } catch (error) {
+            console.error('Failed to prefetch device sessions:', error);
+            return [];
+          }
+        },
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        retry: false,
+      });
     }
   }, [session?.user]);
 }
-

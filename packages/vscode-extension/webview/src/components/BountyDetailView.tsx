@@ -1,13 +1,22 @@
 import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { ArrowLeft, ChevronUp, Bookmark, MessageCircle, ExternalLink } from 'lucide-react';
+import {
+  ArrowLeft,
+  ChevronUp,
+  Bookmark,
+  MessageCircle,
+  ExternalLink,
+} from 'lucide-react';
 import Markdown from 'markdown-to-jsx';
 import type { BountyDetail } from '../types';
 import { Avatar, AvatarFallback, AvatarImage } from './ui';
 import { Button } from './ui';
 import { Check } from 'lucide-react';
 import { Spinner } from './ui';
-import { useSendMessage, useMessageListener } from '../hooks/use-vscode-message';
+import {
+  useSendMessage,
+  useMessageListener,
+} from '../hooks/use-vscode-message';
 
 interface BountyDetailViewProps {
   bountyId: string;
@@ -19,9 +28,14 @@ export function BountyDetailView({ bountyId, onBack }: BountyDetailViewProps) {
   const [bountyDetail, setBountyDetail] = useState<BountyDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [localVotes, setLocalVotes] = useState<{ count: number; isVoted: boolean } | null>(null);
+  const [localVotes, setLocalVotes] = useState<{
+    count: number;
+    isVoted: boolean;
+  } | null>(null);
   const [localBookmarked, setLocalBookmarked] = useState<boolean | null>(null);
-  const [commentLikes, setCommentLikes] = useState<Record<string, { count: number; isLiked: boolean }>>({});
+  const [commentLikes, setCommentLikes] = useState<
+    Record<string, { count: number; isLiked: boolean }>
+  >({});
 
   useMessageListener((message) => {
     if (message.type === 'bountyDetailLoaded' && message.bountyDetail) {
@@ -38,7 +52,10 @@ export function BountyDetailView({ bountyId, onBack }: BountyDetailViewProps) {
     }
 
     if (message.type === 'voteToggled' && message.bountyId === bountyId) {
-      setLocalVotes({ count: message.count ?? 0, isVoted: message.voted ?? false });
+      setLocalVotes({
+        count: message.count ?? 0,
+        isVoted: message.voted ?? false,
+      });
       return;
     }
 
@@ -50,7 +67,10 @@ export function BountyDetailView({ bountyId, onBack }: BountyDetailViewProps) {
     if (message.type === 'commentLikeToggled' && message.commentId) {
       setCommentLikes((prev) => ({
         ...prev,
-        [message.commentId!]: { count: message.count ?? 0, isLiked: message.liked ?? false },
+        [message.commentId!]: {
+          count: message.count ?? 0,
+          isLiked: message.liked ?? false,
+        },
       }));
       return;
     }
@@ -85,7 +105,7 @@ export function BountyDetailView({ bountyId, onBack }: BountyDetailViewProps) {
   }
 
   const { bounty, votes, comments, bookmarked } = bountyDetail;
-  
+
   const creatorName = bounty.creator?.name || 'Anonymous';
   const creatorInitial = creatorName.charAt(0).toUpperCase();
   const creatorImage = bounty.creator?.image;
@@ -111,8 +131,8 @@ export function BountyDetailView({ bountyId, onBack }: BountyDetailViewProps) {
   };
 
   const formatLargeNumber = (num: number): string => {
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1_000_000) {
+      return `${(num / 1_000_000).toFixed(1)}M`;
     }
     if (num >= 1000) {
       return `${(num / 1000).toFixed(1)}K`;
@@ -132,7 +152,9 @@ export function BountyDetailView({ bountyId, onBack }: BountyDetailViewProps) {
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-lg font-bold text-white truncate flex-1">Bounty Details</h1>
+        <h1 className="text-lg font-bold text-white truncate flex-1">
+          Bounty Details
+        </h1>
         <Button
           variant="icon"
           onClick={handleOpenInBrowser}
@@ -192,17 +214,23 @@ export function BountyDetailView({ bountyId, onBack }: BountyDetailViewProps) {
                 onClick={handleToggleVote}
                 type="button"
               >
-                <ChevronUp className={`h-4 w-4 ${displayVotes.isVoted ? 'text-white' : ''}`} />
+                <ChevronUp
+                  className={`h-4 w-4 ${displayVotes.isVoted ? 'text-white' : ''}`}
+                />
                 <span>{displayVotes.count}</span>
               </button>
               <button
-                aria-label={displayBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+                aria-label={
+                  displayBookmarked ? 'Remove bookmark' : 'Add bookmark'
+                }
                 aria-pressed={displayBookmarked}
                 className="rounded-md border border-neutral-700 bg-neutral-800/40 p-1 text-neutral-300 hover:bg-neutral-700/40 transition-colors"
                 onClick={handleToggleBookmark}
                 type="button"
               >
-                <Bookmark className={`h-4 w-4 ${displayBookmarked ? 'fill-white text-white' : ''}`} />
+                <Bookmark
+                  className={`h-4 w-4 ${displayBookmarked ? 'fill-white text-white' : ''}`}
+                />
               </button>
             </div>
           </div>
@@ -255,10 +283,16 @@ export function BountyDetailView({ bountyId, onBack }: BountyDetailViewProps) {
             ) : (
               <div className="space-y-4">
                 {comments.map((comment) => (
-                  <div key={comment.id} className="border-t border-border/20 pt-4 first:border-t-0 first:pt-0">
+                  <div
+                    key={comment.id}
+                    className="border-t border-border/20 pt-4 first:border-t-0 first:pt-0"
+                  >
                     <div className="flex items-start gap-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage alt={comment.user.name || 'User'} src={comment.user.image || ''} />
+                        <AvatarImage
+                          alt={comment.user.name || 'User'}
+                          src={comment.user.image || ''}
+                        />
                         <AvatarFallback className="bg-muted text-muted-foreground text-xs">
                           {(comment.user.name || 'U').charAt(0).toUpperCase()}
                         </AvatarFallback>
@@ -269,7 +303,9 @@ export function BountyDetailView({ bountyId, onBack }: BountyDetailViewProps) {
                             {comment.user.name || 'Anonymous'}
                           </span>
                           <time className="text-xs text-gray-400">
-                            {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                            {formatDistanceToNow(new Date(comment.createdAt), {
+                              addSuffix: true,
+                            })}
                           </time>
                         </div>
                         <div className="text-sm text-gray-300 prose prose-invert prose-sm max-w-none prose-p:my-1">
@@ -278,17 +314,26 @@ export function BountyDetailView({ bountyId, onBack }: BountyDetailViewProps) {
                         <div className="flex items-center gap-4 mt-2">
                           <button
                             aria-label="Like comment"
-                            aria-pressed={(commentLikes[comment.id]?.isLiked ?? comment.isLiked)}
+                            aria-pressed={
+                              commentLikes[comment.id]?.isLiked ??
+                              comment.isLiked
+                            }
                             className={`flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs transition-colors ${
-                              (commentLikes[comment.id]?.isLiked ?? comment.isLiked)
+                              (commentLikes[comment.id]?.isLiked ??
+                              comment.isLiked)
                                 ? 'border-neutral-700/40 bg-[#343333] text-white'
                                 : 'border-neutral-700 bg-neutral-800/40 text-neutral-300 hover:bg-neutral-700/40'
                             }`}
                             onClick={() => handleToggleCommentLike(comment.id)}
                             type="button"
                           >
-                            <ChevronUp className={`h-3 w-3 ${(commentLikes[comment.id]?.isLiked ?? comment.isLiked) ? 'text-white' : ''}`} />
-                            <span>{commentLikes[comment.id]?.count ?? comment.likeCount}</span>
+                            <ChevronUp
+                              className={`h-3 w-3 ${(commentLikes[comment.id]?.isLiked ?? comment.isLiked) ? 'text-white' : ''}`}
+                            />
+                            <span>
+                              {commentLikes[comment.id]?.count ??
+                                comment.likeCount}
+                            </span>
                           </button>
                         </div>
                       </div>

@@ -5,7 +5,8 @@
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
     "declaration": true,
-    "emitDeclarationOnly": false
+    "emitDeclarationOnly": false,
+    "types": []
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

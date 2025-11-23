@@ -1,5 +1,5 @@
 import { cn } from '@bounty/ui/lib/utils';
-import { Label as LabelPrimitive } from 'radix-ui';
+import * as LabelPrimitive from '@radix-ui/react-label';
 import type * as React from 'react';
 
 function Label({

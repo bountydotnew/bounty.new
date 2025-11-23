@@ -5,20 +5,36 @@ import { useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import type { NotificationItem } from '@/types/notifications';
 import { trpc } from '@/utils/trpc';
+import { useRealtime } from '@upstash/realtime/client';
+import type { RealtimeEvents } from '@bounty/types/realtime';
+import { authClient } from '@bounty/auth/client';
 
-const POLL_MS = 30_000;
+export const useNotifications = () => {
+  const { data: session, isPending } = authClient.useSession();
+  const isAuthenticated = !!session?.user;
 
-export function useNotifications() {
   const notificationsQuery = useQuery({
     ...trpc.notifications.getAll.queryOptions({ limit: 50 }),
-    refetchInterval: POLL_MS,
-    refetchIntervalInBackground: false,
+    enabled: isAuthenticated && !isPending,
   });
 
   const unreadCountQuery = useQuery({
     ...trpc.notifications.getUnreadCount.queryOptions(),
-    refetchInterval: POLL_MS,
-    refetchIntervalInBackground: false,
+    enabled: isAuthenticated && !isPending,
+  });
+
+  useRealtime<RealtimeEvents>({
+    // @ts-expect-error - Event name type inference doesn't match runtime event name
+    // The API emits 'notifications.refresh' but TypeScript expects a different format
+    event: 'notifications.refresh',
+    history: false,
+    enabled: isAuthenticated && !isPending,
+    onData: (data: RealtimeEvents['notifications']['refresh']) => {
+      if (data.userId && data.userId === session?.user?.id) {
+        notificationsQuery.refetch();
+        unreadCountQuery.refetch();
+      }
+    },
   });
 
   const markAsReadMutation = useMutation(
@@ -81,5 +97,4 @@ export function useNotifications() {
     isMarkingAsRead: markAsReadMutation.isPending,
     isMarkingAllAsRead: markAllAsReadMutation.isPending,
   } as const;
-}
-
+};

@@ -2,9 +2,7 @@ import { useEffect, useCallback } from 'react';
 import type { WebviewMessage, MessageType } from '../types';
 import { vscode } from '../utils/vscode';
 
-export function useVSCodeMessage(
-  handler: (message: WebviewMessage) => void
-) {
+export function useVSCodeMessage(handler: (message: WebviewMessage) => void) {
   useEffect(() => {
     const messageHandler = (event: MessageEvent<WebviewMessage>) => {
       handler(event.data);

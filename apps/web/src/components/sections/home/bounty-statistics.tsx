@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { cn } from '@bounty/ui/lib/utils';
 import { useQuery } from '@tanstack/react-query';

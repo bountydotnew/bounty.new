@@ -14,12 +14,17 @@ import {
   CardHeader,
   CardTitle,
 } from '@bounty/ui/components/card';
+import { Label } from '@bounty/ui/components/label';
+import { Switch } from '@bounty/ui/components/switch';
 import { useBilling } from '@/hooks/use-billing';
 import type { CustomerState } from '@/types/billing';
+import { trpc } from '@/utils/trpc';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useUser } from '@/context/user-context';
 
 interface GeneralSettingsProps {
   initialCustomerState?: CustomerState | null;
@@ -74,7 +79,10 @@ const ProfileInformationCard = ({
       <CardContent className="space-y-4">
         <div className="flex items-center space-x-4">
           <Avatar className="h-16 w-16">
-            <AvatarImage alt={name || email || undefined} src={image || undefined} />
+            <AvatarImage
+              alt={name || email || undefined}
+              src={image || undefined}
+            />
             <AvatarFallback>{avatarFallback}</AvatarFallback>
           </Avatar>
           <div className="space-y-1">
@@ -133,7 +141,9 @@ const FeaturesCard = ({ billingLoading, isPro }: FeaturesCardProps) => {
         {billingLoading ? (
           <div className="flex items-center space-x-2">
             <Loader2 className="animate-spin" size={16} />
-            <span className="text-muted-foreground text-sm">Loading features...</span>
+            <span className="text-muted-foreground text-sm">
+              Loading features...
+            </span>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -141,9 +151,13 @@ const FeaturesCard = ({ billingLoading, isPro }: FeaturesCardProps) => {
               <div key={feature.title} className="rounded-lg border p-3">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{feature.title}</span>
-                  <Badge variant={feature.badgeVariant}>{feature.badgeLabel}</Badge>
+                  <Badge variant={feature.badgeVariant}>
+                    {feature.badgeLabel}
+                  </Badge>
                 </div>
-                <p className="mt-1 text-muted-foreground text-sm">{feature.description}</p>
+                <p className="mt-1 text-muted-foreground text-sm">
+                  {feature.description}
+                </p>
               </div>
             ))}
           </div>
@@ -166,7 +180,9 @@ const AccountActionsCard = ({ onSignOut }: AccountActionsCardProps) => (
       <div className="flex items-center justify-between">
         <div>
           <h4 className="font-medium">Sign Out</h4>
-          <p className="text-muted-foreground text-sm">Sign out of your account</p>
+          <p className="text-muted-foreground text-sm">
+            Sign out of your account
+          </p>
         </div>
         <Button onClick={onSignOut} variant="outline">
           Sign Out
@@ -176,17 +192,102 @@ const AccountActionsCard = ({ onSignOut }: AccountActionsCardProps) => (
   </Card>
 );
 
-export function GeneralSettings({ initialCustomerState }: GeneralSettingsProps) {
+interface PrivacySettingsCardProps {
+  isProfilePrivate: boolean;
+  onToggle: (value: boolean) => void;
+  isLoading: boolean;
+}
+
+const PrivacySettingsCard = ({
+  isProfilePrivate,
+  onToggle,
+  isLoading,
+}: PrivacySettingsCardProps) => (
+  <Card>
+    <CardHeader>
+      <CardTitle>Privacy Settings</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <Label htmlFor="profile-privacy">Private Profile</Label>
+          <p className="text-muted-foreground text-sm">
+            When enabled, only you can view your profile information. Others will
+            see a private profile message.
+          </p>
+        </div>
+        <Switch
+          checked={isProfilePrivate}
+          disabled={isLoading}
+          id="profile-privacy"
+          onCheckedChange={onToggle}
+        />
+      </div>
+    </CardContent>
+  </Card>
+);
+
+export function GeneralSettings({
+  initialCustomerState,
+}: GeneralSettingsProps) {
   const { data: session } = authClient.useSession();
   const { isPro, isLoading: billingLoading } = useBilling({
     enabled: true,
     initialCustomerState,
   });
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { user: userData } = useUser();
+  const [isProfilePrivate, setIsProfilePrivate] = useState(false);
+
+  const updateProfilePrivacyMutation = useMutation(
+    trpc.user.updateProfilePrivacy.mutationOptions({
+      onSuccess: () => {
+        // Invalidate user data
+        const userQueryKey = trpc.user.getMe.queryOptions().queryKey;
+        queryClient.invalidateQueries({ queryKey: userQueryKey });
+        
+        // Invalidate profile cache by handle and userId
+        if (userData?.handle) {
+          const profileQueryKey = trpc.profiles.getProfile.queryOptions({ handle: userData.handle }).queryKey;
+          queryClient.invalidateQueries({ queryKey: profileQueryKey });
+        }
+        if (userData?.id) {
+          const profileQueryKeyById = trpc.profiles.getProfile.queryOptions({ userId: userData.id }).queryKey;
+          queryClient.invalidateQueries({ queryKey: profileQueryKeyById });
+        }
+      },
+    })
+  );
+
+  // Set initial privacy state
+  useEffect(() => {
+    if (userData?.isProfilePrivate !== undefined) {
+      setIsProfilePrivate(userData.isProfilePrivate);
+    }
+  }, [userData?.isProfilePrivate]);
 
   const handleSignOut = useCallback(() => {
     signOutAndRedirect(router);
   }, [router]);
+
+  const handlePrivacyToggle = useCallback(
+    async (value: boolean) => {
+      setIsProfilePrivate(value);
+      try {
+        await updateProfilePrivacyMutation.mutateAsync({
+          isProfilePrivate: value,
+        });
+        toast.success(
+          `Profile is now ${value ? 'private' : 'public'}`
+        );
+      } catch {
+        setIsProfilePrivate(!value);
+        toast.error('Failed to update privacy settings');
+      }
+    },
+    [updateProfilePrivacyMutation]
+  );
 
   if (!session) {
     return <LoadingCard />;
@@ -202,6 +303,11 @@ export function GeneralSettings({ initialCustomerState }: GeneralSettingsProps) 
         image={user?.image}
         isPro={isPro}
         name={user?.name}
+      />
+      <PrivacySettingsCard
+        isLoading={updateProfilePrivacyMutation.isPending}
+        isProfilePrivate={isProfilePrivate}
+        onToggle={handlePrivacyToggle}
       />
       <FeaturesCard billingLoading={billingLoading} isPro={isPro} />
       <AccountActionsCard onSignOut={handleSignOut} />

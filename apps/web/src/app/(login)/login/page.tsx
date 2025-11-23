@@ -4,15 +4,15 @@ import { Spinner } from '@bounty/ui/components/spinner';
 import { useMutation } from '@tanstack/react-query';
 import { useQueryState, parseAsString } from 'nuqs';
 import { Suspense, useEffect } from 'react';
-import Login from '@/components/bounty/login';
-import { trpc, trpcClient } from '@/utils/trpc';
+import LoginPageClient from '@/components/login/login.page.client';
+import { trpcClient } from '@/utils/trpc';
 
 function LoginContent() {
   const [token] = useQueryState('invite', parseAsString);
-  
-  // Note: Using direct trpcClient.mutate() instead of mutationOptions() 
+
+  // Note: Using direct trpcClient.mutate() instead of mutationOptions()
   // to avoid keyPrefix error in the proxy layer
-  
+
   const applyInvite = useMutation({
     mutationFn: async (input: { token: string }) => {
       return await trpcClient.user.applyInvite.mutate(input);
@@ -46,7 +46,7 @@ function LoginContent() {
   //   }
   // };
 
-  return <Login />;
+  return <LoginPageClient />;
 }
 
 export default function LoginPage() {

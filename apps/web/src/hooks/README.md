@@ -6,13 +6,13 @@ These hooks optimize initial page load by batching multiple API requests into a 
 
 ### `useInitialData()`
 
-Fetches essential user data on mount. Used automatically in `AccessProvider`.
+Fetches essential user data on mount.
 
 ```tsx
 import { useInitialData } from '@/hooks/use-initial-data';
 
 function MyComponent() {
-  const { me, accessProfile, isLoading } = useInitialData();
+  const { me, isLoading } = useInitialData();
   
   if (isLoading) return <Spinner />;
   
@@ -59,7 +59,7 @@ function Dashboard() {
 
 2. **React Query Caching**: 
    - `staleTime` prevents redundant fetches
-   - Data fetched in `AccessProvider` is reused in components
+   - Data is cached and reused across components
 
 3. **Prefetching**:
    - `usePrefetchInitialData()` warms the cache on app mount
@@ -67,17 +67,16 @@ function Dashboard() {
 
 ## Performance Benefits
 
-### Before (4 separate requests):
+### Before (3 separate requests):
 ```
 GET /api/trpc/user.getMe
-GET /api/trpc/user.getAccessProfile  
 GET /api/trpc/bounties.fetchAllBounties
 GET /api/trpc/bounties.fetchMyBounties
 ```
 
 ### After (1 batched request):
 ```
-POST /api/trpc/user.getMe,user.getAccessProfile,bounties.fetchAllBounties,bounties.fetchMyBounties
+POST /api/trpc/user.getMe,bounties.fetchAllBounties,bounties.fetchMyBounties
 ```
 
 **Result**: Faster initial load, reduced server overhead, better UX!

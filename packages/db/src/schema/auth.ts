@@ -34,6 +34,8 @@ export const user = pgTable('user', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').notNull().default(false),
   image: text('image'),
+  handle: text('handle').unique(),
+  isProfilePrivate: boolean('is_profile_private').notNull().default(false),
   hasAccess: boolean('has_access').notNull().default(false),
   betaAccessStatus: betaAccessStatusEnum('beta_access_status')
     .notNull()

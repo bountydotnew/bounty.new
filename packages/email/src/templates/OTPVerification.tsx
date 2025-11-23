@@ -42,7 +42,14 @@ export default function OTPVerification({
       <Body style={main}>
         <Container style={container}>
           <Section>
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '32px 0' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                padding: '32px 0',
+              }}
+            >
               <Img
                 src="https://di867tnz6fwga.cloudfront.net/brand-kits/d27e3c53-bdbd-4c35-919f-2b27a9974bb5/primary/8aa9d0cb-9288-4e1b-8c31-4e738bb9255d.png"
                 alt="Bounty.new"
@@ -67,10 +74,7 @@ export default function OTPVerification({
             </Text>
 
             <Section style={{ textAlign: 'center', marginTop: 16 }}>
-              <Button
-                href={continueUrl || 'https://bounty.new'}
-                style={button}
-              >
+              <Button href={continueUrl || 'https://bounty.new'} style={button}>
                 Continue
               </Button>
             </Section>

@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { AdminHeader } from '@/components/admin';
 import { ComposeForm } from '@/components/admin/notifications/compose-form';
 import { UserSearchList } from '@/components/admin/notifications/user-search-list';
-import { trpc } from '@/utils/trpc';
+import { trpc, trpcClient } from '@/utils/trpc';
 
 export default function AdminNotificationsPage() {
   const [search, setSearch] = useState('');
@@ -33,20 +33,32 @@ export default function AdminNotificationsPage() {
   const users = useMemo(() => data?.users || [], [data?.users]);
 
   const sendMutation = useMutation({
-    ...trpc.notifications.sendToUser.mutationOptions({}),
+    mutationFn: async () => {
+      const promises = Array.from(selectedIds).map((userId) =>
+        trpcClient.notifications.sendToUser.mutate({
+          userId,
+          title: title.trim(),
+          message: message.trim(),
+          type: 'custom',
+          data: linkTo ? { linkTo } : undefined,
+        })
+      );
+      await Promise.all(promises);
+    },
     onSuccess: () => {
-      toast.success('Notification sent');
+      const count = selectedIds.size;
+      toast.success(
+        `Notification${count > 1 ? 's' : ''} sent to ${count} user${count > 1 ? 's' : ''}`
+      );
       setTitle('');
       setMessage('');
       setLinkTo('');
+      setSelectedIds(new Set());
     },
-    onError: () => toast.error('Failed to send notification'),
+    onError: (error) => {
+      toast.error(`Failed to send notification: ${error.message}`);
+    },
   });
-
-  const _canSend =
-    selectedIds.size > 0 &&
-    title.trim().length > 0 &&
-    message.trim().length > 0;
 
   return (
     <div className="space-y-6">
@@ -105,15 +117,7 @@ export default function AdminNotificationsPage() {
             onLinkTo={setLinkTo}
             onMessage={setMessage}
             onSend={() => {
-              for (const id of selectedIds) {
-                sendMutation.mutate({
-                  userId: id,
-                  title: title.trim(),
-                  message: message.trim(),
-                  type: 'custom',
-                  data: linkTo ? { linkTo } : undefined,
-                });
-              }
+              sendMutation.mutate();
             }}
             onTitle={setTitle}
             title={title}

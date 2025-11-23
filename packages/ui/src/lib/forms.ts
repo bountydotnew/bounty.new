@@ -9,7 +9,7 @@ export const createBountySchema = z.object({
   description: z
     .string()
     .min(10, 'Description must be at least 10 characters')
-    .max(1000, 'Description too long'),
+    .max(50_000, 'Description too long'),
 
   amount: z
     .string()
@@ -125,6 +125,33 @@ export const betaApplicationDefaults: BetaApplicationForm = {
 };
 
 // =====================
+// USERNAME/HANDLE FORMS
+// =====================
+
+export const handleSchema = z
+  .string()
+  .min(3, 'Handle must be at least 3 characters')
+  .max(20, 'Handle must be at most 20 characters')
+  .regex(/^[a-z0-9_-]+$/, 'Handle can only contain lowercase letters, numbers, hyphens, and underscores')
+  .refine((val) => !(val.startsWith('-') || val.endsWith('-')), {
+    message: 'Handle cannot start or end with a hyphen',
+  })
+  .refine((val) => !(val.startsWith('_') || val.endsWith('_')), {
+    message: 'Handle cannot start or end with an underscore',
+  });
+
+export const checkHandleSchema = z.object({
+  handle: handleSchema,
+});
+
+export const setHandleSchema = z.object({
+  handle: handleSchema,
+});
+
+export type CheckHandleForm = z.infer<typeof checkHandleSchema>;
+export type SetHandleForm = z.infer<typeof setHandleSchema>;
+
+// =====================
 // FUTURE FORMS
 // =====================
 
@@ -139,8 +166,66 @@ export const profileSchema = z.object({
   website: z.string().url('Invalid URL').optional().or(z.literal('')),
   github: z.string().optional(),
   twitter: z.string().optional(),
+  isProfilePrivate: z.boolean().optional(),
 });
 
 export type ProfileForm = z.infer<typeof profileSchema>;
+
+// =====================
+// TASK FORM (for dashboard task creation)
+// =====================
+
+export const taskSchema = z.object({
+  title: z
+    .string()
+    .min(1, "Task title is required")
+    .max(200, "Task title too long"),
+  description: z
+    .string()
+    .min(1, "Task description is required")
+    .max(1000, "Task description too long"),
+  dueDate: z.string().optional(),
+  priority: z.enum(["low", "medium", "high"], {
+    message: "Please select a priority",
+  }),
+});
+
+export type TaskForm = z.infer<typeof taskSchema>;
+
+export const taskDefaults: TaskForm = {
+  title: "",
+  description: "",
+  dueDate: undefined,
+  priority: "medium",
+};
+
+// =====================
+// SUBMISSION FORM
+// =====================
+
+export const submissionSchema = z.object({
+  pullRequestUrl: z
+    .string()
+    .url("Please enter a valid pull request URL")
+    .min(1, "Pull request URL is required")
+    .refine(
+      (url) =>
+        url.includes("github.com") &&
+        (url.includes("/pull/") || url.includes("/pulls/")),
+      "Must be a GitHub pull request URL",
+    ),
+  notes: z
+    .string()
+    .max(500, "Notes too long (max 500 characters)")
+    .optional()
+    .or(z.literal("")),
+});
+
+export type SubmissionForm = z.infer<typeof submissionSchema>;
+
+export const submissionDefaults: SubmissionForm = {
+  pullRequestUrl: "",
+  notes: "",
+};
 
 // Add more form schemas as needed...

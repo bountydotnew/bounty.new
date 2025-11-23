@@ -5,7 +5,9 @@ interface AvatarProps {
 
 export function Avatar({ className = '', children }: AvatarProps) {
   return (
-    <div className={`relative flex size-8 shrink-0 overflow-hidden rounded-full ${className}`}>
+    <div
+      className={`relative flex size-8 shrink-0 overflow-hidden rounded-full ${className}`}
+    >
       {children}
     </div>
   );
@@ -19,7 +21,7 @@ interface AvatarImageProps {
 
 export function AvatarImage({ src, alt, className = '' }: AvatarImageProps) {
   if (!src) return null;
-  
+
   return (
     <img
       src={src}
@@ -34,9 +36,14 @@ interface AvatarFallbackProps {
   children: React.ReactNode;
 }
 
-export function AvatarFallback({ className = '', children }: AvatarFallbackProps) {
+export function AvatarFallback({
+  className = '',
+  children,
+}: AvatarFallbackProps) {
   return (
-    <div className={`flex size-full items-center justify-center rounded-full bg-muted text-muted-foreground ${className}`}>
+    <div
+      className={`flex size-full items-center justify-center rounded-full bg-muted text-muted-foreground ${className}`}
+    >
       {children}
     </div>
   );

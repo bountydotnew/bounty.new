@@ -50,3 +50,6 @@ next-env.d.ts
 
 # Other
 dev-dist
+
+# Sentry Config File
+.env.sentry-build-plugin

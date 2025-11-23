@@ -19,16 +19,11 @@ export interface Bounty {
     image: string | null;
   };
   votes?: number;
+  isFeatured?: boolean;
 }
 
 export interface UserData {
   name?: string | null;
-  betaAccessStatus: 'none' | 'pending' | 'approved' | 'denied';
-  accessStage: 'none' | 'alpha' | 'beta' | 'production';
-}
-
-export interface BetaSubmission {
-  hasSubmitted: boolean;
 }
 
 export interface ActivityItem {
@@ -57,10 +52,6 @@ interface DashboardQueries {
   myBounties: {
     data?: { data: Bounty[] };
     isLoading: boolean;
-    refetch: () => void;
-  };
-  existingSubmission: {
-    data?: BetaSubmission;
     refetch: () => void;
   };
   userData: {

@@ -106,6 +106,9 @@ export default function BountyPage() {
   const canEdit = session?.user?.id
     ? canEditBounty(bountyDetail.data.bounty, session.user.id)
     : false;
+  const canDelete = session?.user?.id
+    ? bountyDetail.data.bounty.createdById === session.user.id
+    : false;
 
   const detailAmount: number = bountyDetail.data.bounty.amount;
   const detailTitle: string = bountyDetail.data.bounty.title;
@@ -183,6 +186,7 @@ export default function BountyPage() {
     <BountyDetailPage
       amount={detailAmount}
       avatarSrc={detailAvatarSrc}
+      canDeleteBounty={canDelete}
       canEditBounty={canEdit}
       description={detailDescription}
       hasBadge={false}

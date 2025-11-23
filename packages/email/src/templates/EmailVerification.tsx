@@ -32,10 +32,12 @@ export const EmailVerification = ({
           <Section style={body}>
             <Heading style={h1}>Verify your email address</Heading>
             <Text style={text}>
-              Thanks for signing up for Bounty.new! We're excited to have you on board.
+              Thanks for signing up for Bounty.new! We're excited to have you on
+              board.
             </Text>
             <Text style={text}>
-              To complete your registration and start using your account, please verify your email address by clicking the button below:
+              To complete your registration and start using your account, please
+              verify your email address by clicking the button below:
             </Text>
             <Section style={buttonContainer}>
               <Button style={button} href={verificationUrl}>
@@ -43,12 +45,14 @@ export const EmailVerification = ({
               </Button>
             </Section>
             <Text style={text}>
-              If you're having trouble with the button above, you can also copy and paste this link into your browser:
+              If you're having trouble with the button above, you can also copy
+              and paste this link into your browser:
             </Text>
             <Text style={link}>{verificationUrl}</Text>
             <Hr style={hr} />
             <Text style={footer}>
-              This verification link will expire in 24 hours. If you didn't create an account with {email}, you can safely ignore this email.
+              This verification link will expire in 24 hours. If you didn't
+              create an account with {email}, you can safely ignore this email.
             </Text>
           </Section>
         </Container>

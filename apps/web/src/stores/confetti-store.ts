@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { create } from "zustand";
-import { devtools } from "zustand/middleware";
+import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 
 interface ConfettiState {
   shouldCelebrate: boolean;
@@ -16,6 +16,6 @@ export const useConfettiStore = create<ConfettiState>()(
       celebrate: () => set({ shouldCelebrate: true }),
       reset: () => set({ shouldCelebrate: false }),
     }),
-    { name: "confetti-store" }
+    { name: 'confetti-store' }
   )
 );
