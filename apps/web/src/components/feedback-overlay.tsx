@@ -108,8 +108,8 @@ export function FeedbackOverlay() {
         <div
           className="absolute border-2 pointer-events-none transition-all duration-75 ease-out rounded-sm"
           style={{
-            top: hoveredElement.rect.top + window.scrollY,
-            left: hoveredElement.rect.left + window.scrollX,
+            top: hoveredElement.rect.top,
+            left: hoveredElement.rect.left,
             width: hoveredElement.rect.width,
             height: hoveredElement.rect.height,
             borderColor: primaryColor,
