@@ -4,7 +4,6 @@ export * from './components/animated-group';
 export * from './components/avatar';
 export * from './components/backed-by-badge';
 export * from './components/badge';
-export * from './components/bell';
 export * from './components/book-text';
 export * from './components/breadcrumb';
 export * from './components/button';
@@ -51,7 +50,6 @@ export * from './components/textarea';
 export * from './components/toggle';
 export * from './components/tooltip';
 export * from './components/tracked-button';
-export * from './components/user';
 
 export * from './components/icons/huge';
 

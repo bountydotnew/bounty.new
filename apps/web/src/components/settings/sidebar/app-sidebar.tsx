@@ -20,21 +20,15 @@ import {
 import { usePathname, useRouter } from 'next/navigation';
 import Link from '@bounty/ui/components/link';
 import { LINKS } from '@/constants';
-import {
-  User,
-  CreditCard,
-  DollarSign,
-  Shield,
-  Bell,
-  ArrowLeft,
-} from 'lucide-react';
+import { BellIcon, UserIcon, DollarBillIcon, SecurityIcon, CardIcon } from '@bounty/ui';
+import { ArrowLeftIcon } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { title: 'Profile', url: '/settings/profile', icon: User },
-  { title: 'Billing', url: '/settings/billing', icon: CreditCard },
-  { title: 'Payments', url: '/settings/payments', icon: DollarSign },
-  { title: 'Security', url: '/settings/security', icon: Shield },
-  { title: 'Notifications', url: '/settings/notifications', icon: Bell, disabled: true },
+  { title: 'Profile', url: '/settings/profile', icon: UserIcon },
+  { title: 'Billing', url: '/settings/billing', icon: CardIcon },
+  { title: 'Payments', url: '/settings/payments', icon: DollarBillIcon },
+  { title: 'Security', url: '/settings/security', icon: SecurityIcon },
+  { title: 'Notifications', url: '/settings/notifications', icon: BellIcon, disabled: true },
 ];
 
 const BackButton = () => {
@@ -54,7 +48,7 @@ const BackButton = () => {
           'h-[28px] px-[6px] py-[4px] rounded-lg'
         )}
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeftIcon className="h-4 w-4" />
         <span className="ml-0.5">Back</span>
       </button>
       <SidebarTrigger

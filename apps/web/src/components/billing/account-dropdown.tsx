@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
 import { useBilling } from '@/hooks/use-billing';
-import { LogOut, UserIcon } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { toast } from 'sonner';
@@ -25,6 +25,7 @@ import { BillingSettingsIcon } from '@bounty/ui/components/icons/huge/billing-se
 import { DropdownMenuItem } from '@bounty/ui/components/dropdown-menu';
 import { DropdownIcon } from '@bounty/ui';
 import { Feedback } from '@bounty/ui';
+import { UserIcon } from '@bounty/ui';
 import { useFeedback } from '@/components/feedback-context';
 
 // Constants for better maintainability
@@ -146,7 +147,7 @@ export function AccountDropdown({
               </div>
             </div>
 
-            <AccountSwitcher 
+            <AccountSwitcher
               currentUserId={session?.user?.id}
               trigger={
                 <button
@@ -186,20 +187,6 @@ export function AccountDropdown({
             <SettingsGearIcon className="h-[19px] w-[19px]" />
             <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
               Settings
-            </span>
-          </button>
-          <button
-            className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-white"
-            onClick={() => {
-              setMenuOpen(false);
-              // Use setTimeout to ensure dropdown closes before starting selection
-              setTimeout(() => startSelection(), 100);
-            }}
-            type="button"
-          >
-            <Feedback className="h-[19px] w-[19px]" />
-            <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
-              Send Feedback
             </span>
           </button>
         </div>
@@ -242,22 +229,37 @@ export function AccountDropdown({
               Billing
             </span>
           </button>
+          <button
+            className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white"
+            onClick={() => {
+              setMenuOpen(false);
+              // Use setTimeout to ensure dropdown closes before starting selection
+              setTimeout(() => startSelection(), 100);
+            }}
+            type="button"
+          >
+            <Feedback className="h-[19px] w-[19px]" />
+            <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
+              Send Feedback
+            </span>
+          </button>
         </div>
 
-        
 
-        {/* Sign out */}
-        <DropdownMenuItem
-          aria-label="Sign out of account"
+
+        <button
+          className="flex items-center gap-2 rounded-[10px] px-4 py-2 text-text-secondary transition-colors hover:text-white"
           onClick={() => {
             setMenuOpen(false);
             handleSignOut();
           }}
-          variant="destructive"
+          type="button"
         >
-          <LogOut />
-          Sign out
-        </DropdownMenuItem>
+          <LogOut className="h-[19px] w-[19px] text-red-500" />
+          <span className="text-[16px] font-medium leading-[150%] tracking-[0.03em] text-red-500">
+            Sign out
+          </span>
+        </button>
       </DropdownMenuContent>
     </DropdownMenu>
   );

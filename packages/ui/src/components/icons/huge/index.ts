@@ -18,3 +18,8 @@ export * from './submissions-people';
 export * from './switch-users';
 export * from './switch-workspace';
 export * from './feedback';
+export * from './user';
+export * from './card';
+export * from './security';
+export * from './dollar-bill';
+export * from './bell';

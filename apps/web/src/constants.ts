@@ -46,7 +46,7 @@ export const LINKS = {
   HOME: '/',
   DASHBOARD: '/dashboard',
   ACCOUNT: '/settings',
-  SETTINGS: '/settings',
+  SETTINGS: '/settings/profile',
   LOGIN: '/login',
   BOOKMARKS: '/bookmarks',
   CONTRIBUTORS: '/contributors',
