@@ -22,11 +22,11 @@ import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear
 import { SwitchWorkspaceIcon } from '@bounty/ui/components/icons/huge/switch-workspace';
 import { ManageUsersWorkspaceIcon } from '@bounty/ui/components/icons/huge/manage-users-workspace';
 import { BillingSettingsIcon } from '@bounty/ui/components/icons/huge/billing-settings';
-import { DropdownMenuItem } from '@bounty/ui/components/dropdown-menu';
 import { DropdownIcon } from '@bounty/ui';
 import { Feedback } from '@bounty/ui';
 import { UserIcon } from '@bounty/ui';
 import { useFeedback } from '@/components/feedback-context';
+import { useUser } from '@/context/user-context';
 
 // Constants for better maintainability
 const MESSAGES = {
@@ -105,6 +105,7 @@ export function AccountDropdown({
 }) {
   const router = useRouter();
   const { data: session } = authClient.useSession();
+  const { user: currentUser } = useUser();
   const [menuOpen, setMenuOpen] = React.useState(false);
 
   const handleOpenChange = React.useCallback(
@@ -120,6 +121,18 @@ export function AccountDropdown({
   const handleBillingPortal = useBillingPortal();
   const handleSignOut = useSignOut();
   const { startSelection } = useFeedback();
+
+  const profileHref = currentUser?.handle
+    ? `/profile/${currentUser.handle}`
+    : null;
+
+  const handleProfileNavigation = () => {
+    if (!profileHref) {
+      return;
+    }
+    setMenuOpen(false);
+    router.push(profileHref);
+  };
 
   return (
     <DropdownMenu onOpenChange={handleOpenChange} open={menuOpen}>
@@ -162,13 +175,8 @@ export function AccountDropdown({
           </div>
           <button
             className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={() => {
-              setMenuOpen(false);
-              if (session?.user?.id) {
-                router.push(`/profile/${session.user.id}`);
-              }
-            }}
-            disabled={!session?.user?.id}
+            onClick={handleProfileNavigation}
+            disabled={!profileHref}
             type="button"
           >
             <UserIcon className="h-[19px] w-[19px]" />
