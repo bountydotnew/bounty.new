@@ -4,9 +4,12 @@ import { authClient } from '@bounty/auth/client';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
 import { useBilling } from '@/hooks/use-billing';
+import { cn } from '@bounty/ui';
 import { LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
@@ -27,21 +30,16 @@ import { Feedback } from '@bounty/ui';
 import { UserIcon } from '@bounty/ui';
 import { useFeedback } from '@/components/feedback-context';
 import { useUser } from '@/context/user-context';
+import { useTransition } from 'react';
 
 // Constants for better maintainability
 const MESSAGES = {
-  SIGN_IN_REQUIRED: 'Please sign in to access billing.',
-  BILLING_PORTAL_SUCCESS: 'Opening billing portal...',
   BILLING_PORTAL_ERROR: 'Failed to open billing portal. Please try again.',
-  LOADING: 'Loading...',
-  CHECKING_SUBSCRIPTION: 'Checking...',
-  VERIFYING_SUBSCRIPTION: 'Verifying subscription...',
-  PRO_BADGE: 'Pro',
-  SEND_FEEDBACK: 'Send Feedback',
+  BILLING_PORTAL_SUCCESS: 'Opening billing portal...',
+  SIGN_IN_REQUIRED: 'Please sign in to access billing.',
 } as const;
 
 const LOGIN_REDIRECT = '/login';
-
 // Custom hook for user display logic
 function useUserDisplay(
   sessionUser?: { name?: string; email?: string; image?: string | null } | null,
@@ -72,7 +70,8 @@ function useBillingPortal() {
     try {
       await openBillingPortal();
       toast.success(MESSAGES.BILLING_PORTAL_SUCCESS);
-    } catch (_error) {
+    } catch (error) {
+      console.error('Billing portal error', error);
       toast.error(MESSAGES.BILLING_PORTAL_ERROR);
     }
   }, [session?.user, openBillingPortal]);
@@ -83,15 +82,26 @@ function useBillingPortal() {
 // Custom hook for sign out functionality
 function useSignOut() {
   const router = useRouter();
-  return React.useCallback(() => {
-    authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          router.push(LOGIN_REDIRECT);
-        },
-      },
+  const [pending, startSignOut] = useTransition();
+
+  const handleSignOut = React.useCallback(() => {
+    startSignOut(() => {
+      authClient
+        .signOut({
+          fetchOptions: {
+            onSuccess: () => {
+              router.push(LOGIN_REDIRECT);
+            },
+          },
+        })
+        .catch((error) => {
+          console.error('Sign out failed', error);
+          toast.error('Failed to sign out. Please try again.');
+        });
     });
   }, [router]);
+
+  return { handleSignOut, pending };
 }
 
 // Main component
@@ -119,7 +129,7 @@ export function AccountDropdown({
   // Custom hooks for better separation of concerns
   const userDisplay = useUserDisplay(session?.user, user);
   const handleBillingPortal = useBillingPortal();
-  const handleSignOut = useSignOut();
+  const { handleSignOut, pending: signOutPending } = useSignOut();
   const { startSelection } = useFeedback();
 
   const profileHref = currentUser?.handle
@@ -201,10 +211,9 @@ export function AccountDropdown({
 
         {/* Actions section */}
         <div className="flex flex-col gap-2 border-b border-[#292828] px-0 py-2">
-          <button
-            className="flex items-center justify-between rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white"
+          <DropdownMenuItem
+            className="flex items-center justify-between rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
             onClick={() => setMenuOpen(false)}
-            type="button"
           >
             <div className="flex items-center gap-2.25">
               <SwitchWorkspaceIcon className="h-[19px] w-[19px]" />
@@ -213,61 +222,60 @@ export function AccountDropdown({
               </span>
             </div>
             <DropdownIcon className="h-[19px] w-[19px] -rotate-90" />
-          </button>
-          <button
-            className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white"
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
             onClick={() => setMenuOpen(false)}
-            type="button"
           >
             <ManageUsersWorkspaceIcon className="h-[19px] w-[19px]" />
             <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
               Manage members
             </span>
-          </button>
-          <button
-            className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white"
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
             onClick={() => {
               setMenuOpen(false);
               handleBillingPortal();
             }}
-            type="button"
           >
             <BillingSettingsIcon className="h-[19px] w-[19px]" />
             <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
               Billing
             </span>
-          </button>
-          <button
-            className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white"
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
             onClick={() => {
               setMenuOpen(false);
-              // Use setTimeout to ensure dropdown closes before starting selection
               setTimeout(() => startSelection(), 100);
             }}
-            type="button"
           >
             <Feedback className="h-[19px] w-[19px]" />
             <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
               Send Feedback
             </span>
-          </button>
+          </DropdownMenuItem>
         </div>
 
+        <DropdownMenuSeparator className="border-[#292828]" />
 
-
-        <button
-          className="flex items-center gap-2 rounded-[10px] px-4 py-2 text-text-secondary transition-colors hover:text-white"
+        <DropdownMenuItem
+          className={cn(
+            'flex items-center gap-2 rounded-[10px] px-4 py-2 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg',
+            signOutPending && 'opacity-70'
+          )}
+          disabled={signOutPending}
           onClick={() => {
             setMenuOpen(false);
             handleSignOut();
           }}
-          type="button"
         >
           <LogOut className="h-[19px] w-[19px] text-red-500" />
           <span className="text-[16px] font-medium leading-[150%] tracking-[0.03em] text-red-500">
             Sign out
           </span>
-        </button>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
