@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "@bounty/auth/client";
+import { useState, useEffect } from "react";
+import { signIn, useSession } from "@bounty/auth/client";
 import { api } from "@/trpc/client";
 
 interface WaitlistOnboardingProps {
@@ -14,17 +14,48 @@ export function WaitlistOnboarding({ entryId, onComplete }: WaitlistOnboardingPr
   const [role, setRole] = useState<"creator" | "developer" | null>(null);
   const [githubConnected, setGithubConnected] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [githubData, setGithubData] = useState<{
+    githubId: string;
+    githubUsername: string;
+    name: string;
+    email: string;
+  } | null>(null);
 
   const completeMutation = api.waitlist.completeOnboarding.useMutation();
+  const { data: session } = useSession();
+
+  // Check if user has already connected GitHub via session
+  useEffect(() => {
+    if (session?.user) {
+      const accounts = (session as any).user?.accounts || [];
+      const githubAccount = accounts.find((acc: any) => acc.providerId === "github");
+
+      if (githubAccount && session.user) {
+        setGithubConnected(true);
+        setGithubData({
+          githubId: githubAccount.accountId,
+          githubUsername: githubAccount.username || session.user.name || "",
+          name: session.user.name || "",
+          email: session.user.email || "",
+        });
+      }
+    }
+  }, [session]);
 
   const handleConnectGitHub = async () => {
     try {
+      // Store current state before redirect
+      localStorage.setItem("waitlist_onboarding_state", JSON.stringify({
+        entryId,
+        role,
+        step,
+      }));
+
       // Trigger GitHub OAuth via Better Auth
       await signIn.social({
         provider: "github",
         callbackURL: window.location.href,
       });
-      setGithubConnected(true);
     } catch (error) {
       console.error("GitHub connection failed:", error);
     }
@@ -39,12 +70,18 @@ export function WaitlistOnboarding({ entryId, onComplete }: WaitlistOnboardingPr
       setIsSubmitting(true);
 
       try {
-        // GitHub data will be fetched from the session after OAuth
-        // For now, we'll pass role only
+        // Pass GitHub data from OAuth if available
         await completeMutation.mutateAsync({
           entryId,
           role: role!,
+          githubId: githubData?.githubId,
+          githubUsername: githubData?.githubUsername,
+          name: githubData?.name,
+          email: githubData?.email,
         });
+
+        // Clean up stored state
+        localStorage.removeItem("waitlist_onboarding_state");
 
         onComplete();
       } catch (error) {
@@ -183,8 +220,12 @@ export function WaitlistOnboarding({ entryId, onComplete }: WaitlistOnboardingPr
                 </svg>
               </div>
               <div className="flex-1">
-                <p className="text-white text-base">Connected</p>
-                <p className="text-[#5A5A5A] text-sm">GitHub account linked</p>
+                <p className="text-white text-base">
+                  @{githubData?.githubUsername || "Connected"}
+                </p>
+                <p className="text-[#5A5A5A] text-sm">
+                  {githubData?.name || "GitHub account linked"}
+                </p>
               </div>
               <svg
                 className="w-5 h-5 text-green-400"
