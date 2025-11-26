@@ -6,3 +6,4 @@ export * from './invites';
 export * from './notifications';
 export * from './passkey';
 export * from './profiles';
+export * from './waitlist-entries';
