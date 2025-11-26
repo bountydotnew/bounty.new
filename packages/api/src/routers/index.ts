@@ -8,6 +8,7 @@ import { notificationsRouter } from './notifications';
 import { profilesRouter } from './profiles';
 import { repositoryRouter } from './repository';
 import { userRouter } from './user';
+import { waitlistRouter } from './waitlist';
 
 export const appRouter = router({
   healthCheck: publicProcedure.query(() => {
@@ -39,6 +40,7 @@ export const appRouter = router({
   emails: emailsRouter,
   repository: repositoryRouter,
   billing: billingRouter,
+  waitlist: waitlistRouter,
 });
 
 export type AppRouter = typeof appRouter;

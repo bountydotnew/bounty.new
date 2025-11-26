@@ -1,25 +1,42 @@
-import { Suspense } from 'react';
+"use client"
+
+import { useState } from 'react';
+import Link from 'next/link';
 import { YCombinator } from '@/components/icons/g-combinator';
 import { BountyStatistics } from '@/components/sections/home/bounty-statistics';
 import { Footer } from '@/components/sections/home/footer';
-import { Header } from '@/components/sections/home/header';
-import { ConditionalForm } from '@/components/sections/home/conditional-form';
 import { BackedByBadge } from '../../registry/new-york/gcombinator-badge/gcombinator-badge';
+import { BountyForm } from '@/components/waitlist/bounty-form';
+import { VerifyEmail } from '@/components/waitlist/verify-email';
+import { Onboarding } from '@/components/waitlist/onboarding';
+import { DashboardPreview } from '@/components/waitlist/dashboard-preview';
+
+type FlowStep = "landing" | "verify" | "onboarding" | "dashboard"
 
 export default function Home() {
+  const [step, setStep] = useState<FlowStep>("landing")
+  const [email, setEmail] = useState("")
+  const [entryId, setEntryId] = useState("")
+
+  const handleWaitlistSubmit = (submittedEmail: string, id: string) => {
+    setEmail(submittedEmail)
+    setEntryId(id)
+    setStep("verify")
+  }
+
   return (
     <>
       <div
-        className="relative pb-10 text-white"
+        className="relative min-h-svh pb-10 text-white overflow-hidden"
         style={{
           background:
-            'linear-gradient(180deg, rgba(22, 22, 22, 1) 0%, rgba(12, 12, 12, 1) 100%)',
+            'linear-gradient(180deg, rgba(24, 24, 24, 1) 0%, rgba(17, 17, 17, 1) 100%)',
         }}
       >
         {/* Background geometric shapes */}
-        <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <svg
-            className="-right-140 desktop-svg absolute top-0 z-0 h-300 w-300 opacity-0 transition-transform duration-300 ease-out md:opacity-20 lg:opacity-10"
+            className="absolute -right-[10rem] top-1/2 -translate-y-1/2 h-[50rem] w-[50rem] opacity-[0.06]"
             fill="none"
             height="179"
             viewBox="0 0 153 179"
@@ -29,61 +46,86 @@ export default function Home() {
             <title>Background geometric shapes</title>
             <path
               d="M91.1385 71.1097C107.031 77.947 125.457 70.6065 132.294 54.7141C139.132 38.8217 131.791 20.3956 115.899 13.5582C100.006 6.72079 81.5803 14.0613 74.7429 29.9537C67.9055 45.8461 75.2461 64.2723 91.1385 71.1097ZM91.1385 71.1097L29.921 44.7722M5 102.256L33.9985 114.732C49.8909 121.57 68.317 114.229 75.1544 98.3367C81.9918 82.4443 74.6513 64.0182 58.7589 57.1808L29.7603 44.7048M148.655 95.8569L119.657 83.3808C103.764 76.5434 85.338 83.8839 78.5006 99.7763L78.5182 179"
-              stroke="url(#paint0_linear_34_3652)"
+              stroke="currentColor"
               strokeWidth="21.3696"
             />
-            <defs>
-              <linearGradient
-                gradientUnits="userSpaceOnUse"
-                id="paint0_linear_34_3652"
-                x1="35.4019"
-                x2="150.598"
-                y1="-16.1847"
-                y2="205.685"
-              >
-                <stop stopColor="rgba(239, 239, 239, 1)" />
-                <stop offset="1" stopColor="rgba(146, 146, 146, 1)" />
-              </linearGradient>
-            </defs>
           </svg>
         </div>
 
-        <Header />
-
-        {/* Main content */}
-        <main className="relative z-10 mx-auto max-w-7xl px-6 pt-20">
-          <div className="max-w-4xl">
-            <BackedByBadge
-              className="px-2.5 py-1"
-              icon={<YCombinator />}
-              text="rejected by ycombinator"
-            />
-            <h1
-              className="mb-8 font-display text-5xl leading-tight md:text-7xl"
-              style={{ color: 'rgba(239, 239, 239, 1)' }}
+        {/* Header */}
+        <header className="relative z-10 mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
+          <Link href="/" className="flex items-center gap-2">
+            <svg
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="21.3696"
+              viewBox="0 0 153 179"
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-9 w-9"
             >
-              Ship fast.
-              <br />
-              Get paid faster.
-            </h1>
-
-            <p
-              className="mb-12 max-w-2xl font-display-book text-xl leading-relaxed"
-              style={{ color: 'rgba(146, 146, 146, 1)' }}
+              <path d="M91.1385 71.1097C107.031 77.947 125.457 70.6065 132.294 54.7141C139.132 38.8217 131.791 20.3956 115.899 13.5582C100.006 6.72079 81.5803 14.0613 74.7429 29.9537C67.9055 45.8461 75.2461 64.2723 91.1385 71.1097ZM91.1385 71.1097L29.921 44.7722M5 102.256L33.9985 114.732C49.8909 121.57 68.317 114.229 75.1544 98.3367C81.9918 82.4443 74.6513 64.0182 58.7589 57.1808L29.7603 44.7048M148.655 95.8569L119.657 83.3808C103.764 76.5434 85.338 83.8839 78.5006 99.7763L78.5182 179" />
+            </svg>
+          </Link>
+          <nav className="flex items-center gap-5">
+            <Link href="/blog" className="text-base font-medium text-white/90 transition-colors hover:text-white">
+              Blog
+            </Link>
+            <Link href="/contributors" className="text-base font-medium text-white/90 transition-colors hover:text-white">
+              Contributors
+            </Link>
+            <Link
+              href="https://github.com"
+              className="flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-base font-medium text-black transition-opacity hover:opacity-90"
             >
-              The bounty platform where creators post challenges and developers
-              deliver solutions. Instant payouts, integration, zero friction.
-            </p>
+              GitHub
+            </Link>
+          </nav>
+        </header>
 
-            <Suspense
-              fallback={
-                <div className="mb-8 h-[68px] w-full max-w-md rounded-2xl border border-white/10 bg-white/5" />
-              }
-            >
-              <ConditionalForm />
-            </Suspense>
-            <BountyStatistics />
-          </div>
+        {/* Main Content */}
+        <main className="relative z-10 flex flex-col items-center justify-center px-6 pt-24 pb-24">
+          {step === "landing" && (
+            <>
+              {/* YC Badge */}
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#565656] bg-[#2C2C2C] px-4 py-1.5">
+                <span className="flex h-[23px] w-[23px] items-center justify-center bg-[#F15C22] text-sm font-normal text-white">
+                  Y
+                </span>
+                <span className="text-base font-semibold text-white">rejected by ycombinator</span>
+              </div>
+
+              {/* Headline */}
+              <h1 className="text-center text-[72px] md:text-[87px] font-medium leading-[1.1] tracking-[-0.06em]">
+                <span className="text-white">Ship fast.</span>
+              </h1>
+              <h1 className="text-center text-[72px] md:text-[87px] font-medium leading-[1.1] tracking-[-0.06em]">
+                <span className="text-white">Get paid faster.</span>
+              </h1>
+
+              {/* Subtitle */}
+              <p className="mt-6 max-w-[775px] text-center text-lg md:text-[22px] font-medium leading-relaxed text-[#929292]">
+                The bounty platform where creators post challenges and developers deliver solutions. Instant payouts,
+                integration, zero friction.
+              </p>
+
+              {/* Bounty Form */}
+              <div className="mt-10 w-full max-w-[703px]">
+                <BountyForm onSubmitSuccess={handleWaitlistSubmit} />
+              </div>
+
+              <div className="mt-12">
+                <BountyStatistics />
+              </div>
+            </>
+          )}
+
+          {step === "verify" && (
+            <VerifyEmail email={email} onVerified={() => setStep("onboarding")} onBack={() => setStep("landing")} />
+          )}
+
+          {step === "onboarding" && <Onboarding entryId={entryId} onComplete={() => setStep("dashboard")} />}
+
+          {step === "dashboard" && <DashboardPreview entryId={entryId} email={email} />}
         </main>
       </div>
 
