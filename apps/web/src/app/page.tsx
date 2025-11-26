@@ -1,10 +1,10 @@
 import { Suspense } from 'react';
-import { YCombinator } from '@/components/icons/g-combinator';
+import { YCombinator } from '@bounty/ui/components/icons/gcombinator';
 import { BountyStatistics } from '@/components/sections/home/bounty-statistics';
 import { Footer } from '@/components/sections/home/footer';
 import { Header } from '@/components/sections/home/header';
 import { ConditionalForm } from '@/components/sections/home/conditional-form';
-import { BackedByBadge } from '../../registry/new-york/gcombinator-badge/gcombinator-badge';
+import { BackedByBadge } from '@bounty/ui/components/backed-by-badge';
 
 export default function Home() {
   return (

@@ -2,9 +2,10 @@ import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
 import { count, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { grim } from '../lib/use-dev-log';
 
-const { error, info, warn } = grim();
+const info = console.info.bind(console);
+const error = console.error.bind(console);
+const warn = console.warn.bind(console);
 
 import { db, user as userTable, waitlist } from '@bounty/db';
 import { AlphaAccessGranted, FROM_ADDRESSES, sendEmail } from '@bounty/email';

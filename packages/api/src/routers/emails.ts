@@ -8,7 +8,6 @@ import {
 } from '@bounty/email';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
-import { grim } from '../lib/use-dev-log';
 import { adminProcedure, router } from '../trpc';
 
 const fromKeySchema = z.custom<FromKey>(
@@ -36,8 +35,7 @@ export const emailsRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      const { info } = grim();
-      info('email.send', {
+      console.info('email.send', {
         to: Array.isArray(input.to) ? input.to : [input.to],
         subject: input.subject,
         fromKey: input.fromKey,

@@ -6,7 +6,6 @@
   "dependencies": {
     "@bounty/auth": "workspace:*",
     "@bounty/db": "workspace:*",
-    "@bounty/dev-logger": "workspace:*",
     "@bounty/realtime": "workspace:*",
     "@bounty/track": "workspace:*",
     "zod": "catalog:",

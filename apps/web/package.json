@@ -12,7 +12,6 @@
     "@bounty/api": "workspace:*",
     "@bounty/auth": "workspace:*",
     "@bounty/db": "workspace:*",
-    "@bounty/dev-logger": "workspace:*",
     "@bounty/realtime": "workspace:*",
     "@bounty/ui": "workspace:*",
     "@daveyplate/better-auth-ui": "catalog:",
