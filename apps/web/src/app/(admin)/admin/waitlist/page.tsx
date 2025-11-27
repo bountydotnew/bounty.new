@@ -44,6 +44,14 @@ export default function WaitlistPage() {
     }),
   });
 
+  const waitlistStats = {
+    total: Number(data?.stats.total ?? 0),
+    withAccess: Number(data?.stats.withAccess ?? 0),
+    pending: Number(data?.stats.pending ?? 0),
+  };
+  const waitlistEntries = data?.entries ?? [];
+  const totalPages = Number(data?.totalPages ?? 1);
+
   const updateAccessMutation = useMutation({
     ...trpc.earlyAccess.updateWaitlistAccess.mutationOptions({}),
     onSuccess: () => {
@@ -119,7 +127,7 @@ export default function WaitlistPage() {
           </CardHeader>
           <CardContent>
             <div className="font-semibold text-neutral-100 text-xl">
-              {data?.stats.total || 0}
+              {waitlistStats.total}
             </div>
           </CardContent>
         </Card>
@@ -131,7 +139,7 @@ export default function WaitlistPage() {
           </CardHeader>
           <CardContent>
             <div className="font-semibold text-green-600 text-xl">
-              {data?.stats.withAccess || 0}
+              {waitlistStats.withAccess}
             </div>
           </CardContent>
         </Card>
@@ -143,7 +151,7 @@ export default function WaitlistPage() {
           </CardHeader>
           <CardContent>
             <div className="font-semibold text-orange-600 text-xl">
-              {data?.stats.pending || 0}
+              {waitlistStats.pending}
             </div>
           </CardContent>
         </Card>
@@ -178,7 +186,7 @@ export default function WaitlistPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {data?.entries.map((entry) => (
+                {waitlistEntries.map((entry) => (
                   <div
                     className="flex items-center justify-between rounded-md border border-neutral-800 bg-[#222222] p-3"
                     key={entry.id}
@@ -238,7 +246,7 @@ export default function WaitlistPage() {
                   </div>
                 ))}
 
-                {data?.entries.length === 0 && (
+                {waitlistEntries.length === 0 && (
                   <div className="py-8 text-center">
                     <p className="text-muted-foreground">
                       No waitlist entries found
@@ -248,7 +256,7 @@ export default function WaitlistPage() {
               </div>
             )}
 
-            {data && data.totalPages > 1 && (
+            {totalPages > 1 && (
               <div className="flex items-center justify-center space-x-2 border-neutral-800 border-t pt-4">
                 <Button
                   disabled={page === 1}
@@ -259,10 +267,10 @@ export default function WaitlistPage() {
                   Previous
                 </Button>
                 <span className="text-sm">
-                  Page {page} of {data.totalPages}
+                  Page {page} of {totalPages}
                 </span>
                 <Button
-                  disabled={page === data.totalPages}
+                  disabled={page === totalPages}
                   onClick={() => setPage(page + 1)}
                   size="sm"
                   variant="outline"

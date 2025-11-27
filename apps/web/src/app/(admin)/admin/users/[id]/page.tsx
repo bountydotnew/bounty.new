@@ -27,6 +27,7 @@ export default function AdminUserProfilePage() {
   );
 
   const user = profile.data?.user;
+  const bountiesCreated = Number(profile.data?.metrics.bountiesCreated ?? 0);
 
   return (
     <div className="space-y-6">
@@ -52,9 +53,7 @@ export default function AdminUserProfilePage() {
               <div className="text-neutral-400">Email</div>
               <div className="text-neutral-200">{user?.email}</div>
               <div className="text-neutral-400">Bounties created</div>
-              <div className="text-neutral-200">
-                {profile.data?.metrics.bountiesCreated ?? 0}
-              </div>
+              <div className="text-neutral-200">{bountiesCreated}</div>
             </div>
           </CardContent>
         </Card>

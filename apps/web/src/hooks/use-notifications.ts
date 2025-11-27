@@ -22,14 +22,20 @@ export const useNotifications = () => {
     ...trpc.notifications.getUnreadCount.queryOptions(),
     enabled: isAuthenticated && !isPending,
   });
+  const unreadCount = Number(unreadCountQuery.data ?? 0);
 
   useRealtime<RealtimeSchema, 'notifications.refresh'>({
-    event: 'notifications.refresh',
-    history: false,
     enabled: isAuthenticated && !isPending,
-    onData: ({ data }) => {
-      const payload = data as RealtimeEvents['notifications']['refresh'];
-      if (payload.userId && payload.userId === session?.user?.id) {
+    onData: (payload) => {
+      const message = payload as unknown as {
+        event: 'notifications.refresh';
+        data: RealtimeEvents['notifications']['refresh'];
+        channel: string;
+      };
+      if (message.event !== 'notifications.refresh') {
+        return;
+      }
+      if (message.data.userId && message.data.userId === session?.user?.id) {
         notificationsQuery.refetch();
         unreadCountQuery.refetch();
       }
@@ -63,11 +69,10 @@ export const useNotifications = () => {
   );
 
   const markAllAsRead = useCallback(() => {
-    const count = unreadCountQuery.data ?? 0;
-    if (count > 0) {
+    if (unreadCount > 0) {
       markAllAsReadMutation.mutate();
     }
-  }, [markAllAsReadMutation, unreadCountQuery.data]);
+  }, [markAllAsReadMutation, unreadCount]);
 
   const refetch = useCallback(() => {
     notificationsQuery.refetch();
@@ -86,7 +91,7 @@ export const useNotifications = () => {
 
   return {
     notifications: (notificationsQuery.data ?? []) as NotificationItem[],
-    unreadCount: unreadCountQuery.data ?? 0,
+    unreadCount,
     isLoading: notificationsQuery.isLoading,
     hasError: notificationsQuery.isError || unreadCountQuery.isError,
     error: notificationsQuery.error || unreadCountQuery.error,

@@ -1,5 +1,4 @@
-import { bounty, db } from '@bounty/db';
-import { eq } from 'drizzle-orm';
+import { db } from '@bounty/db';
 import type { Metadata } from 'next';
 import { baseUrl } from '../../../../../../../packages/ui/src/lib/constants';
 import BountyPage from './page.client';
@@ -12,7 +11,7 @@ export async function generateMetadata({
   const { id } = await params;
 
   const thisBounty = await db.query.bounty.findFirst({
-    where: eq(bounty.id, id),
+    where: (fields, { eq }) => eq(fields.id, id),
   });
 
   if (!thisBounty) {

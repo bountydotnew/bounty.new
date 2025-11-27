@@ -1,4 +1,7 @@
-import type { AdminUserStatsResponse } from '@bounty/types';
+import type {
+  AdminUserProfileResponse,
+  AdminUserStatsResponse,
+} from '@bounty/types';
 import {
   bounty,
   bountyComment,
@@ -109,7 +112,7 @@ export const userRouter = router({
         user: u,
         metrics: { bountiesCreated: bountyCount },
         sessions,
-      };
+      } satisfies AdminUserProfileResponse;
     }),
 
   adminUpdateName: adminProcedure
@@ -492,7 +495,7 @@ export const userRouter = router({
         env.BETTER_AUTH_URL?.replace(TRAILING_SLASH_REGEX, '') ||
         'https://bounty.new';
       const inviteUrl = `${baseUrl}/login?invite=${rawToken}`;
-      await sendEmail({ 
+      await sendEmail({
         to: email,
         subject: "You're invited to bounty.new",
         from: FROM_ADDRESSES.notifications,
@@ -624,7 +627,10 @@ export const userRouter = router({
 
         await ctx.db
           .update(user)
-          .set({ isProfilePrivate: input.isProfilePrivate, updatedAt: new Date() })
+          .set({
+            isProfilePrivate: input.isProfilePrivate,
+            updatedAt: new Date(),
+          })
           .where(eq(user.id, ctx.session.user.id));
 
         // Invalidate user cache

@@ -9,6 +9,7 @@ import { useParams, useRouter } from 'next/navigation';
 import BountyDetailPage from '@/components/bounty/bounty-detail';
 import { BountyDetailSkeleton } from '@/components/dashboard/skeletons/bounty-detail-skeleton';
 import Bounty from '@/components/icons/bounty';
+import type { BountyCommentCacheItem } from '@/types/comments';
 import { trpc } from '@/utils/trpc';
 
 const UUID_REGEX =
@@ -118,6 +119,11 @@ export default function BountyPage() {
   const detailAvatarSrc: string = bountyDetail.data.bounty.creator.image ?? '';
   const detailRank: string = bountyDetail.data.bounty.difficulty;
 
+  const initialComments = (bountyDetail.data.comments ?? []).map((comment) => ({
+    ...comment,
+    likeCount: typeof comment.likeCount === 'number' ? comment.likeCount : 0,
+  })) as BountyCommentCacheItem[];
+
   return (
     // <div className="p-8 max-w-4xl mx-auto">
     //   <div className="flex items-center gap-4 mb-6">
@@ -192,7 +198,7 @@ export default function BountyPage() {
       hasBadge={false}
       id={id ?? ''}
       initialBookmarked={Boolean(bountyDetail.data.bookmarked)}
-      initialComments={bountyDetail.data.comments}
+      initialComments={initialComments}
       initialVotes={bountyDetail.data.votes}
       rank={detailRank}
       tags={detailTags}
