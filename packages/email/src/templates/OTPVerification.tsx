@@ -1,149 +1,117 @@
+import * as React from 'react';
 import {
   Body,
-  Button,
   Container,
   Head,
-  Heading,
   Hr,
   Html,
   Img,
+  Link,
   Preview,
   Section,
   Text,
+  Button,
+  Tailwind,
 } from '@react-email/components';
 
 interface OTPVerificationProps {
   code: string;
+  entryId: string;
   email: string;
-  type?: 'email-verification' | 'sign-in' | 'forget-password';
-  continueUrl?: string;
 }
 
-export default function OTPVerification({
-  code,
-  email,
-  type = 'email-verification',
-  continueUrl,
-}: OTPVerificationProps) {
-  const purpose =
-    type === 'email-verification'
-      ? 'Verify your email'
-      : type === 'sign-in'
-        ? 'Sign in'
-        : 'Reset your password';
-
-  const pretty = (c: string) =>
-    c.replace(/\s+/g, '').split('').slice(0, 6).join(' ');
+const OTPVerification = ({ code, entryId, email }: OTPVerificationProps) => {
+  const verifyUrl = `https://bounty.new/waitlist/verify?entryId=${entryId}&email=${encodeURIComponent(email)}&code=${code}`;
 
   return (
-    <Html>
-      <Head />
-      <Preview>{purpose} code for Bounty.new</Preview>
-      <Body style={main}>
-        <Container style={container}>
-          <Section>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                padding: '32px 0',
-              }}
-            >
+    <Html lang="en" dir="ltr">
+      <Tailwind>
+        <Head />
+        <Preview>Your verification code: {code}</Preview>
+        <Body className="bg-[#f7f7f7] font-sans py-[40px]">
+          <Container className="bg-white rounded-[8px] p-[18px] mx-auto max-w-[600px]">
+            {/* Logo Section */}
+            <Section className="text-center mb-[20px]">
               <Img
-                src="https://di867tnz6fwga.cloudfront.net/brand-kits/d27e3c53-bdbd-4c35-919f-2b27a9974bb5/primary/8aa9d0cb-9288-4e1b-8c31-4e738bb9255d.png"
-                alt="Bounty.new"
-                width={100}
-                height={100}
-                style={{ display: 'block' }}
+                src="https://di867tnz6fwga.cloudfront.net/brand-kits/d27e3c53-bdbd-4c35-919f-2b27a9974bb5/icon/bd8de183-36e3-4a36-93aa-3dd09842811b.png"
+                alt="bounty icon"
+                width="60"
+                className="mx-auto h-auto"
               />
-            </div>
-          </Section>
-
-          <Section style={body}>
-            <Heading style={h1}>Your one time password is</Heading>
-
-            <Section style={codeWrap}>
-              <div style={codeBox}>{pretty(code)}</div>
             </Section>
 
-            <Hr style={hr} />
-
-            <Text style={footer}>
-              Under no circumstances should you give this code to anyone.
+            {/* Main Content */}
+            <Text className="text-[14px] leading-[24px] text-[#26251E] font-semibold m-0 mb-[12px]">
+              Your verification code: {code}
             </Text>
 
-            <Section style={{ textAlign: 'center', marginTop: 16 }}>
-              <Button href={continueUrl || 'https://bounty.new'} style={button}>
-                Continue
+            <Text className="text-[14px] leading-[1.6] text-[rgba(38,37,30,0.6)] m-0 mb-[12px]">
+              We received a request to verify the email address associated with your Bounty.new account. If you didn't make this request, you can safely ignore this email.
+            </Text>
+
+            <Text className="text-[14px] leading-[1.6] text-[rgba(38,37,30,0.6)] m-0 mb-[12px]">
+              To verify your code, click the button below. This code will expire in 10 minutes for security reasons.
+            </Text>
+
+            {/* CTA Button */}
+            <Section className="text-left mt-[6px] mb-[4px]">
+              <Button
+                href={verifyUrl}
+                className="bg-[#26251E] text-[#F7F7F4] text-[14px] font-normal py-[8px] px-[12px] rounded-full border border-solid border-[#3B3A33] box-border"
+              >
+                Verify Code
               </Button>
             </Section>
-          </Section>
-        </Container>
-      </Body>
+
+            <Text className="text-[14px] leading-[1.6] text-[rgba(38,37,30,0.6)] m-0 mb-[12px]">
+              If the button doesn't work, copy and paste this link into your browser:
+            </Text>
+
+            <Text className="text-[12px] leading-[1.6] text-[rgba(38,37,30,0.5)] m-0 mb-[16px] break-all">
+              {verifyUrl}
+            </Text>
+
+            <Text className="text-[14px] leading-[1.6] text-[rgba(38,37,30,0.6)] m-0 mb-[16px]">
+              If you need help, feel free to{' '}
+              <Link
+                href="mailto:support@bounty.new"
+                className="text-[#26251E] underline"
+              >
+                contact our support team
+              </Link>.
+            </Text>
+
+            {/* Divider */}
+            <Hr className="border-solid border-[1px] border-[#F2F1ED] my-[16px]" />
+
+            {/* Footer */}
+            <Text className="text-[11px] leading-[24px] text-[rgba(38,37,30,0.6)] m-0">
+              bounty.new ·{' '}
+              <Link
+                href="mailto:support@bounty.new"
+                className="text-[#26251E] no-underline"
+              >
+                support@bounty.new
+              </Link>{' '}
+              ·{' '}
+              <Link
+                href="https://bounty.new"
+                className="text-[#26251E] no-underline"
+              >
+                bounty.new
+              </Link>
+            </Text>
+          </Container>
+        </Body>
+      </Tailwind>
     </Html>
   );
-}
-
-const main = {
-  backgroundColor: '#000000',
-  fontFamily:
-    '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
 };
 
-const container = {
-  margin: '0 auto',
-  padding: '20px 0 48px',
-  maxWidth: '580px',
-};
+OTPVerification.PreviewProps = {
+  code: '123456',
+  entryId: 'abc123',
+  email: 'user@example.com',
+} satisfies OTPVerificationProps;
 
-const body = {
-  padding: '0 20px',
-};
-
-const h1 = {
-  color: '#ffffff',
-  fontSize: '24px',
-  fontWeight: 'normal',
-  textAlign: 'center' as const,
-  margin: '30px 0 8px 0',
-  padding: '0',
-};
-
-const codeWrap = {
-  textAlign: 'center' as const,
-  margin: '18px 0 8px 0',
-};
-
-const codeBox = {
-  display: 'inline-block',
-  letterSpacing: '10px',
-  fontSize: '28px',
-  fontWeight: 700,
-  color: '#ffffff',
-};
-
-const button = {
-  backgroundColor: '#ffffff',
-  borderRadius: '15px',
-  color: '#000000',
-  fontSize: '14px',
-  fontWeight: 'normal',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
-  display: 'inline-block',
-  padding: '10px 18px',
-};
-
-const hr = {
-  borderColor: '#e6ebf1',
-  margin: '24px 0',
-};
-
-const footer = {
-  color: '#ffffff',
-  fontSize: '12px',
-  lineHeight: '20px',
-  textAlign: 'center' as const,
-  margin: '16px 0 0',
-};
+export default OTPVerification;

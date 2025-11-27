@@ -5,9 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { SidebarTrigger } from '@bounty/ui/components/sidebar';
 import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
-import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { cn } from '@bounty/ui/lib/utils';
-import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
 import { CommandMenu } from '@/components/command-menu';
 import type { Bounty } from '@/types/dashboard';
 
@@ -20,8 +18,6 @@ export const Header = ({}: HeaderProps = {}) => {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const router = useRouter();
   const pathname = usePathname();
-  const { createModalOpen, openCreateModal, closeCreateModal } =
-    useBountyModals();
   const [commandMenuOpen, setCommandMenuOpen] = useState(false);
 
   const handleCreateBounty = () => {
@@ -100,10 +96,6 @@ export const Header = ({}: HeaderProps = {}) => {
           </button>
         </div>
       </header>
-      <CreateBountyModal
-        onOpenChange={closeCreateModal}
-        open={createModalOpen}
-      />
       <CommandMenu onOpenChange={setCommandMenuOpen} open={commandMenuOpen} />
     </>
   );

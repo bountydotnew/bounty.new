@@ -5,16 +5,15 @@ import Link from 'next/link';
 import React from 'react';
 import { authClient } from '@bounty/auth/client';
 import { Button } from '@bounty/ui/components/button';
-import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
-import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
 import GithubImportModal from '@/components/bounty/github-import-modal';
 import { Header } from '@/components/dual-sidebar/sidebar-header';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { trpc } from '@/utils/trpc';
 
 export default function BountiesPage() {
-  const { data: session, isPending: isSessionPending } = authClient.useSession();
+  const { data: session, isPending: isSessionPending } =
+    authClient.useSession();
   const isAuthenticated = !!session?.user;
 
   const {
@@ -29,8 +28,6 @@ export default function BountiesPage() {
     enabled: isAuthenticated && !isSessionPending,
   });
 
-  const { createModalOpen, closeCreateModal } =
-    useBountyModals();
   const [importOpen, setImportOpen] = React.useState(false);
 
   if (error) {
@@ -65,10 +62,6 @@ export default function BountiesPage() {
         </AuthGuard>
       </div>
 
-      <CreateBountyModal
-        onOpenChange={closeCreateModal}
-        open={createModalOpen}
-      />
       <GithubImportModal onOpenChange={setImportOpen} open={importOpen} />
     </>
   );

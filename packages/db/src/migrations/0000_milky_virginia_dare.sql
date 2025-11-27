@@ -2,42 +2,42 @@ DO $$ BEGIN
  CREATE TYPE "public"."access_stage" AS ENUM('none', 'alpha', 'beta', 'production');
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE TYPE "public"."beta_access_status" AS ENUM('none', 'pending', 'approved', 'denied');
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE TYPE "public"."device_code_status" AS ENUM('pending', 'approved', 'denied');
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE TYPE "public"."beta_application_status" AS ENUM('pending', 'approved', 'rejected');
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE TYPE "public"."bounty_status" AS ENUM('draft', 'open', 'in_progress', 'completed', 'cancelled');
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE TYPE "public"."difficulty" AS ENUM('beginner', 'intermediate', 'advanced', 'expert');
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE TYPE "public"."submission_status" AS ENUM('pending', 'approved', 'rejected', 'revision_requested');
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE TYPE "public"."notification_type" AS ENUM('system', 'bounty_comment', 'submission_received', 'submission_approved', 'submission_rejected', 'bounty_awarded', 'beta_application_approved', 'beta_application_rejected', 'custom');
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "account" (
 	"id" text PRIMARY KEY NOT NULL,
 	"account_id" text NOT NULL,
@@ -320,234 +320,231 @@ CREATE TABLE IF NOT EXISTS "user_reputation" (
 	CONSTRAINT "user_reputation_user_id_unique" UNIQUE("user_id")
 );
 --> statement-breakpoint
-DO $ BEGIN
+DO $$ BEGIN
  ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;
-EXCEPTION
- WHEN duplicate_object THEN null;
 END $$;--> statement-breakpoint
-DO $ BEGIN
+DO $$ BEGIN
  ALTER TABLE "device_code" ADD CONSTRAINT "device_code_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "email_otp" ADD CONSTRAINT "email_otp_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "last_login_method" ADD CONSTRAINT "last_login_method_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "beta_application" ADD CONSTRAINT "beta_application_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "beta_application" ADD CONSTRAINT "beta_application_reviewed_by_user_id_fk" FOREIGN KEY ("reviewed_by") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "bounty" ADD CONSTRAINT "bounty_created_by_id_user_id_fk" FOREIGN KEY ("created_by_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "bounty" ADD CONSTRAINT "bounty_assigned_to_id_user_id_fk" FOREIGN KEY ("assigned_to_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "bounty_application" ADD CONSTRAINT "bounty_application_bounty_id_bounty_id_fk" FOREIGN KEY ("bounty_id") REFERENCES "public"."bounty"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "bounty_application" ADD CONSTRAINT "bounty_application_applicant_id_user_id_fk" FOREIGN KEY ("applicant_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "bounty_bookmark" ADD CONSTRAINT "bounty_bookmark_bounty_id_bounty_id_fk" FOREIGN KEY ("bounty_id") REFERENCES "public"."bounty"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "bounty_bookmark" ADD CONSTRAINT "bounty_bookmark_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "bounty_comment" ADD CONSTRAINT "bounty_comment_bounty_id_bounty_id_fk" FOREIGN KEY ("bounty_id") REFERENCES "public"."bounty"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "bounty_comment" ADD CONSTRAINT "bounty_comment_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "bounty_comment" ADD CONSTRAINT "bounty_comment_parent_id_bounty_comment_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."bounty_comment"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "bounty_comment_like" ADD CONSTRAINT "bounty_comment_like_comment_id_bounty_comment_id_fk" FOREIGN KEY ("comment_id") REFERENCES "public"."bounty_comment"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "bounty_comment_like" ADD CONSTRAINT "bounty_comment_like_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "bounty_vote" ADD CONSTRAINT "bounty_vote_bounty_id_bounty_id_fk" FOREIGN KEY ("bounty_id") REFERENCES "public"."bounty"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "bounty_vote" ADD CONSTRAINT "bounty_vote_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "submission" ADD CONSTRAINT "submission_bounty_id_bounty_id_fk" FOREIGN KEY ("bounty_id") REFERENCES "public"."bounty"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "submission" ADD CONSTRAINT "submission_contributor_id_user_id_fk" FOREIGN KEY ("contributor_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "invite" ADD CONSTRAINT "invite_used_by_user_id_user_id_fk" FOREIGN KEY ("used_by_user_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "notification" ADD CONSTRAINT "notification_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "passkey" ADD CONSTRAINT "passkey_userId_user_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "user_profile" ADD CONSTRAINT "user_profile_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "user_rating" ADD CONSTRAINT "user_rating_rated_user_id_user_id_fk" FOREIGN KEY ("rated_user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "user_rating" ADD CONSTRAINT "user_rating_rater_user_id_user_id_fk" FOREIGN KEY ("rater_user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "user_rating" ADD CONSTRAINT "user_rating_bounty_id_bounty_id_fk" FOREIGN KEY ("bounty_id") REFERENCES "public"."bounty"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
-DO $ BEGIN
+END $$;--> statement-breakpoint
+DO $$ BEGIN
  ALTER TABLE "user_reputation" ADD CONSTRAINT "user_reputation_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE UNIQUE INDEX "bounty_bookmark_unique_idx" ON "bounty_bookmark" USING btree ("bounty_id","user_id");
 EXCEPTION
  WHEN duplicate_table THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE INDEX "bounty_bookmark_bounty_id_idx" ON "bounty_bookmark" USING btree ("bounty_id");
 EXCEPTION
  WHEN duplicate_table THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE INDEX "bounty_bookmark_user_id_idx" ON "bounty_bookmark" USING btree ("user_id");
 EXCEPTION
  WHEN duplicate_table THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE INDEX "bounty_comment_bounty_id_idx" ON "bounty_comment" USING btree ("bounty_id");
 EXCEPTION
  WHEN duplicate_table THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE INDEX "bounty_comment_user_id_idx" ON "bounty_comment" USING btree ("user_id");
 EXCEPTION
  WHEN duplicate_table THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE INDEX "bounty_comment_parent_id_idx" ON "bounty_comment" USING btree ("parent_id");
 EXCEPTION
  WHEN duplicate_table THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE UNIQUE INDEX "bounty_comment_like_unique_idx" ON "bounty_comment_like" USING btree ("comment_id","user_id");
 EXCEPTION
  WHEN duplicate_table THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE INDEX "bounty_comment_like_comment_id_idx" ON "bounty_comment_like" USING btree ("comment_id");
 EXCEPTION
  WHEN duplicate_table THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE INDEX "bounty_comment_like_user_id_idx" ON "bounty_comment_like" USING btree ("user_id");
 EXCEPTION
  WHEN duplicate_table THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE UNIQUE INDEX "bounty_vote_unique_idx" ON "bounty_vote" USING btree ("bounty_id","user_id");
 EXCEPTION
  WHEN duplicate_table THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE INDEX "bounty_vote_bounty_id_idx" ON "bounty_vote" USING btree ("bounty_id");
 EXCEPTION
  WHEN duplicate_table THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE INDEX "bounty_vote_user_id_idx" ON "bounty_vote" USING btree ("user_id");
 EXCEPTION
  WHEN duplicate_table THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE INDEX "notification_user_id_idx" ON "notification" USING btree ("user_id");
 EXCEPTION
  WHEN duplicate_table THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE INDEX "notification_read_idx" ON "notification" USING btree ("read");
 EXCEPTION
  WHEN duplicate_table THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE INDEX "notification_type_idx" ON "notification" USING btree ("type");
 EXCEPTION
  WHEN duplicate_table THEN null;
-END $;--> statement-breakpoint
+END $$;--> statement-breakpoint
 DO $$ BEGIN
  CREATE INDEX "notification_created_at_idx" ON "notification" USING btree ("created_at");
 EXCEPTION

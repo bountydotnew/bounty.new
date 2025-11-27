@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { LINKS } from '@/constants';
-import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { trpc } from '@/utils/trpc';
 import styles from './command-menu.module.css';
 import {
@@ -93,7 +92,6 @@ function BountyCommandItem({
 
 export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
   const router = useRouter();
-  const { openCreateModal } = useBountyModals();
 
   const [search, setSearch] = useState('');
   const [selectedValue, setSelectedValue] = useState<string>('');
@@ -232,7 +230,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
         router.push(LINKS.SETTINGS);
         break;
       case 'create-bounty':
-        openCreateModal();
+        router.push('/dashboard#focus-textarea');
         break;
       default:
         if (value.startsWith('bounty-')) {

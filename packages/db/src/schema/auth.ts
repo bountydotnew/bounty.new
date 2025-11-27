@@ -45,6 +45,7 @@ export const user = pgTable('user', {
   banned: boolean('banned').notNull().default(false),
   banReason: text('ban_reason'),
   banExpires: timestamp('ban_expires'),
+  lastLoginMethod: text('last_login_method'),
   // Note: Consider using timestamptz for timezone-aware timestamps in production
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
@@ -97,6 +98,21 @@ export const waitlist = pgTable('waitlist', {
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   hasAccess: boolean('has_access').notNull().default(false),
   ipAddress: text('ip_address'),
+  // OTP verification fields
+  otpCode: text('otp_code'),
+  otpExpiresAt: timestamp('otp_expires_at'),
+  otpAttempts: integer('otp_attempts').notNull().default(0),
+  emailVerified: boolean('email_verified').notNull().default(false),
+  // Bounty draft fields
+  bountyTitle: text('bounty_title'),
+  bountyDescription: text('bounty_description'),
+  bountyAmount: text('bounty_amount'),
+  bountyDifficulty: text('bounty_difficulty'),
+  bountyGithubIssueUrl: text('bounty_github_issue_url'),
+  // User linkage (after GitHub OAuth)
+  userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+  // Waitlist position
+  position: integer('position'),
 });
 
 export const deviceCode = pgTable('device_code', {

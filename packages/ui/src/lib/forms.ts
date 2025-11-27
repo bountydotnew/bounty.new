@@ -230,4 +230,45 @@ export const submissionDefaults: SubmissionForm = {
   notes: "",
 };
 
+// =====================
+// WAITLIST BOUNTY FORM
+// =====================
+
+// Email is always required, bounty fields are optional but validated if provided
+export const waitlistEmailSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+});
+
+// Regex for amount validation (at top level for performance)
+const AMOUNT_REGEX = /^\d{1,13}(\.\d{1,2})?$/;
+
+// Helper: validates only if the field has content (not empty/undefined)
+const optionalWithMinMax = (min: number, max: number, minMsg: string, maxMsg: string) =>
+  z
+    .string()
+    .optional()
+    .refine((val) => !val || val.length === 0 || val.length >= min, { message: minMsg })
+    .refine((val) => !val || val.length <= max, { message: maxMsg });
+
+export const waitlistBountySchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  // Same validation as createBountySchema, but optional
+  bountyTitle: optionalWithMinMax(1, 200, 'Title cannot be empty', 'Title too long'),
+  bountyDescription: optionalWithMinMax(
+    10,
+    50_000,
+    'Description must be at least 10 characters',
+    'Description too long'
+  ),
+  bountyAmount: z
+    .string()
+    .optional()
+    .refine((val) => !val || val.length === 0 || AMOUNT_REGEX.test(val), {
+      message: 'Please enter a valid amount (e.g., 100 or 99.99)',
+    }),
+});
+
+export type WaitlistEmailForm = z.infer<typeof waitlistEmailSchema>;
+export type WaitlistBountyForm = z.infer<typeof waitlistBountySchema>;
+
 // Add more form schemas as needed...

@@ -1,13 +1,11 @@
 'use client';
 
 import { authClient } from '@bounty/auth/client';
-import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { track } from '@databuddy/sdk';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
-import { CreateBountyModal } from '@/components/bounty/create-bounty-modal';
 import GithubImportModal from '@/components/bounty/github-import-modal';
 // Dashboard components
 import { ErrorBoundary } from '@/components/dashboard/error-boundary';
@@ -17,7 +15,6 @@ import { TaskInputForm, type TaskInputFormRef } from '@/components/dashboard/tas
 // Constants and types
 import { PAGINATION_DEFAULTS, PAGINATION_LIMITS } from '@/constants';
 import { trpc } from '@/utils/trpc';
-
 track('screen_view', { screen_name: 'dashboard' });
 
 export default function Dashboard() {
@@ -78,7 +75,6 @@ export default function Dashboard() {
     ...myBountiesQuery,
     enabled: isAuthenticated && !isSessionPending,
   });
-  const { createModalOpen, closeCreateModal } = useBountyModals();
   const [importOpen, setImportOpen] = useState(false);
 
   return (
@@ -117,10 +113,6 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <CreateBountyModal
-          onOpenChange={closeCreateModal}
-          open={createModalOpen}
-        />
         <GithubImportModal onOpenChange={setImportOpen} open={importOpen} />
       </AuthGuard>
     </ErrorBoundary>
