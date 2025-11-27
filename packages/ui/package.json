@@ -32,9 +32,15 @@
     "next-themes": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "rehype-autolink-headings": "catalog:",
+    "rehype-parse": "catalog:",
+    "rehype-sanitize": "catalog:",
+    "rehype-slug": "catalog:",
+    "rehype-stringify": "catalog:",
     "sonner": "catalog:",
     "tailwind-merge": "catalog:",
     "tw-animate-css": "catalog:",
+    "unified": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
@@ -44,6 +50,7 @@
     "@types/react-dom": "catalog:",
     "next": "catalog:",
     "tailwindcss": "catalog:",
+    "tailwindcss-animate": "catalog:",
     "typescript": "catalog:"
   },
   "exports": {

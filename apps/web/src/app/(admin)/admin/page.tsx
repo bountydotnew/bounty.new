@@ -7,6 +7,17 @@ import { OverviewKPIs } from '@/components/admin/analytics/overview';
 import { StatCard } from '@/components/admin/stat-card';
 import { trpc } from '@/utils/trpc';
 
+const formatStatValue = (value: unknown): string | number => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : '–';
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? '–' : parsed;
+  }
+  return '–';
+};
+
 export default function AdminPage() {
   const { data: userStats } = useQuery(trpc.user.getUserStats.queryOptions());
   const { data: notifications } = useQuery(
@@ -16,9 +27,11 @@ export default function AdminPage() {
     trpc.earlyAccess.getAdminWaitlist.queryOptions({ page: 1, limit: 1 })
   );
 
-  const usersTotal = userStats?.data.platformStats.totalUsers ?? '–';
-  const waitlistPending = waitlist ? waitlist.stats.pending : '–';
-  const notificationsSent = notifications ? notifications.stats.sent : '–';
+  const usersTotal = formatStatValue(
+    userStats?.data.platformStats.totalUsers
+  );
+  const waitlistPending = formatStatValue(waitlist?.stats.pending);
+  const notificationsSent = formatStatValue(notifications?.stats.sent);
   return (
     <div className="space-y-6">
       <AdminHeader

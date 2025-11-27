@@ -120,6 +120,7 @@
       "remark-parse": "^11.0.0",
       "remark-rehype": "^11.1.0",
       "server-only": "0.0.1",
+      "unified": "^11.0.4",
       "sonner": "^2.0.5",
       "superjson": "2.2.2",
       "tailwind-merge": "^3.3.1",

@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { Github, Code, Briefcase } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { trpcClient } from "@/utils/trpc";
-import { signIn, useSession } from "@bounty/auth/client";
-
+import { authClient } from "@bounty/auth/client";
+import { toast } from "sonner";
 interface OnboardingProps {
   entryId: string;
   onComplete: () => void;
@@ -17,7 +17,7 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
   const [step, setStep] = useState<OnboardingStep>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [role, setRole] = useState<"creator" | "developer" | null>(null);
-  const { data: session } = useSession();
+  const { data: session } = authClient.useSession();
 
   const completeMutation = useMutation({
     mutationFn: async (input: {
@@ -45,7 +45,10 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
 
   const handleNext = async () => {
     if (step === 1) {
-      if (!role) return;
+      if (!role) {
+        toast.error("Please select a role");
+        return;
+      }
       setStep(2);
     } else {
       // Complete onboarding
@@ -54,7 +57,7 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
       try {
         await completeMutation.mutateAsync({
           entryId,
-          role,
+          role: role as "creator" | "developer",
         });
 
         onComplete();
@@ -67,7 +70,7 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
 
   const handleConnectGithub = async () => {
     try {
-      await signIn.social({
+      await authClient.signIn.social({
         provider: "github",
         callbackURL: window.location.href,
       });

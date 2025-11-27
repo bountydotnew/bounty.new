@@ -22,6 +22,7 @@
     }
   },
   "dependencies": {
+    "@polar-sh/better-auth": "catalog:",
     "better-auth": "catalog:",
     "@bounty/db": "workspace:*",
     "@bounty/env": "workspace:*"

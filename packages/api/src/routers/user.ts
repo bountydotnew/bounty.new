@@ -1,3 +1,4 @@
+import type { AdminUserStatsResponse } from '@bounty/types';
 import {
   bounty,
   bountyComment,
@@ -22,9 +23,24 @@ import {
   router,
 } from '../trpc';
 
+type UserReputationRow = typeof userReputation.$inferSelect;
+
 // Reused regex for token generation
 const DASH_REGEX = /-/g;
 const TRAILING_SLASH_REGEX = /\/$/;
+
+const mapUserReputationToMetrics = (
+  rep?: UserReputationRow
+): AdminUserStatsResponse['data']['userStats'] => ({
+  totalEarned: rep?.totalEarned ?? '0.00',
+  bountiesCompleted: rep?.bountiesCompleted ?? 0,
+  bountiesCreated: rep?.bountiesCreated ?? 0,
+  averageRating: rep?.averageRating ?? '0.00',
+  totalRatings: rep?.totalRatings ?? 0,
+  successRate: rep?.successRate ?? '0.00',
+  completionRate: rep?.completionRate ?? '0.00',
+  responseTime: rep?.responseTime ?? null,
+});
 
 // LRU Cache for current user data (cache for 3 minutes, max 500 users)
 const currentUserCache = new LRUCache<{
@@ -289,17 +305,9 @@ export const userRouter = router({
           platformStats: {
             totalUsers: stats?.totalUsers ?? 0,
           },
-          userStats: userRep || {
-            totalEarned: '0.00',
-            bountiesCompleted: 0,
-            bountiesCreated: 0,
-            averageRating: '0.00',
-            totalRatings: 0,
-            successRate: '0.00',
-            completionRate: '0.00',
-          },
+          userStats: mapUserReputationToMetrics(userRep),
         },
-      };
+      } satisfies AdminUserStatsResponse;
     } catch (error) {
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
