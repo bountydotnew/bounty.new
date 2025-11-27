@@ -5,7 +5,7 @@
     "type": true
   },
   "tags": ["-lintignore"],
-  "ignoreWorkspaces": ["packages/db", "packages/vscode-extension"],
+  "ignoreWorkspaces": ["packages/db"],
   "workspaces": {
     ".": {
       "entry": [
