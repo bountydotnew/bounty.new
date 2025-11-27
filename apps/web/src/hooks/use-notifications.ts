@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import type { NotificationItem } from '@/types/notifications';
 import { trpc } from '@/utils/trpc';
 import { useRealtime } from '@upstash/realtime/client';
-import type { RealtimeEvents } from '@bounty/types/realtime';
+import type { RealtimeEvents, RealtimeSchema } from '@bounty/types/realtime';
 import { authClient } from '@bounty/auth/client';
 
 export const useNotifications = () => {
@@ -23,7 +23,7 @@ export const useNotifications = () => {
     enabled: isAuthenticated && !isPending,
   });
 
-  useRealtime<RealtimeEvents, 'notifications.refresh'>({
+  useRealtime<RealtimeSchema, 'notifications.refresh'>({
     event: 'notifications.refresh',
     history: false,
     enabled: isAuthenticated && !isPending,

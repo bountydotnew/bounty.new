@@ -1,16 +1,16 @@
 import { z } from 'zod';
 
-// Client-safe schema (matches server schema)
-const schema = {
+export const realtimeSchema = {
   notifications: {
     refresh: z.object({ userId: z.string(), ts: z.number() }),
   },
 } as const;
 
-// Manually define the type structure to match InferRealtimeEvents
+export type RealtimeSchema = typeof realtimeSchema;
+
 export type RealtimeEvents = {
   notifications: {
-    refresh: z.infer<typeof schema.notifications.refresh>;
+    refresh: z.infer<typeof realtimeSchema.notifications.refresh>;
   };
 };
 
