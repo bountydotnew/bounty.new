@@ -23,9 +23,7 @@ export const useNotifications = () => {
     enabled: isAuthenticated && !isPending,
   });
 
-  useRealtime<RealtimeEvents>({
-    // @ts-expect-error - Event name type inference doesn't match runtime event name
-    // The API emits 'notifications.refresh' but TypeScript expects a different format
+  useRealtime<RealtimeEvents, 'notifications.refresh'>({
     event: 'notifications.refresh',
     history: false,
     enabled: isAuthenticated && !isPending,
