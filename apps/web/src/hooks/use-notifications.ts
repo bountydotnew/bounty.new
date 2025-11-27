@@ -27,8 +27,9 @@ export const useNotifications = () => {
     event: 'notifications.refresh',
     history: false,
     enabled: isAuthenticated && !isPending,
-    onData: (data: RealtimeEvents['notifications']['refresh']) => {
-      if (data.userId && data.userId === session?.user?.id) {
+    onData: ({ data }) => {
+      const payload = data as RealtimeEvents['notifications']['refresh'];
+      if (payload.userId && payload.userId === session?.user?.id) {
         notificationsQuery.refetch();
         unreadCountQuery.refetch();
       }
