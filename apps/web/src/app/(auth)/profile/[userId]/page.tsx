@@ -1,5 +1,4 @@
-import { db, user } from '@bounty/db';
-import { eq } from 'drizzle-orm';
+import { db } from '@bounty/db';
 import type { Metadata } from 'next';
 import { baseUrl } from '@bounty/ui/lib/constants';
 import ProfilePageClient from './page.client';
@@ -12,28 +11,26 @@ export async function generateMetadata({
   const { userId } = await params;
 
   // Try to fetch user by handle first, then by userId
-  const [userData] = await db
-    .select({
-      id: user.id,
-      name: user.name,
-      handle: user.handle,
-    })
-    .from(user)
-    .where(eq(user.handle, userId.toLowerCase()))
-    .limit(1);
+  const userData = await db.query.user.findFirst({
+    where: (fields, { eq }) => eq(fields.handle, userId.toLowerCase()),
+    columns: {
+      id: true,
+      name: true,
+      handle: true,
+    },
+  });
 
   // If not found by handle, try by userId
-  const [userById] = userData
-    ? []
-    : await db
-        .select({
-          id: user.id,
-          name: user.name,
-          handle: user.handle,
-        })
-        .from(user)
-        .where(eq(user.id, userId))
-        .limit(1);
+  const userById = userData
+    ? null
+    : await db.query.user.findFirst({
+        where: (fields, { eq }) => eq(fields.id, userId),
+        columns: {
+          id: true,
+          name: true,
+          handle: true,
+        },
+      });
 
   const profileUser = userData || userById;
 
@@ -79,4 +76,3 @@ export async function generateMetadata({
 export default function ProfilePage() {
   return <ProfilePageClient />;
 }
-
