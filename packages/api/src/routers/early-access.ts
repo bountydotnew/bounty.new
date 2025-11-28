@@ -9,13 +9,23 @@ const warn = console.warn.bind(console);
 
 // Generate 6-digit OTP code
 const generateOTP = (): string => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return Math.floor(100_000 + Math.random() * 900_000).toString();
 };
 
 import { db, user as userTable, waitlist, bounty } from '@bounty/db';
-import { AlphaAccessGranted, FROM_ADDRESSES, sendEmail, OTPVerification } from '@bounty/email';
+import {
+  AlphaAccessGranted,
+  FROM_ADDRESSES,
+  sendEmail,
+  OTPVerification,
+} from '@bounty/email';
 import { getRateLimiter } from '../lib/ratelimiter';
-import { adminProcedure, publicProcedure, protectedProcedure, router } from '../trpc';
+import {
+  adminProcedure,
+  publicProcedure,
+  protectedProcedure,
+  router,
+} from '../trpc';
 import { env } from '@bounty/env/server';
 
 export const earlyAccessRouter = router({
@@ -356,7 +366,9 @@ export const earlyAccessRouter = router({
         bountyTitle: z.string().optional(),
         bountyDescription: z.string().optional(),
         bountyAmount: z.string().optional(),
-        bountyDifficulty: z.enum(['beginner', 'intermediate', 'advanced', 'expert']).optional(),
+        bountyDifficulty: z
+          .enum(['beginner', 'intermediate', 'advanced', 'expert'])
+          .optional(),
         bountyGithubIssueUrl: z.string().url().optional(),
       })
     )
@@ -395,7 +407,7 @@ export const earlyAccessRouter = router({
         if (existingEntry[0]) {
           // Update existing entry
           entryId = existingEntry[0].id;
-          
+
           // Get position before update
           const positionResult = await db
             .select({ count: sql<number>`count(*)` })
@@ -410,11 +422,15 @@ export const earlyAccessRouter = router({
               otpExpiresAt,
               otpAttempts: 0,
               bountyTitle: input.bountyTitle ?? existingEntry[0].bountyTitle,
-              bountyDescription: input.bountyDescription ?? existingEntry[0].bountyDescription,
+              bountyDescription:
+                input.bountyDescription ?? existingEntry[0].bountyDescription,
               bountyAmount: input.bountyAmount ?? existingEntry[0].bountyAmount,
-              bountyDifficulty: input.bountyDifficulty ?? existingEntry[0].bountyDifficulty,
-              bountyGithubIssueUrl: input.bountyGithubIssueUrl ?? existingEntry[0].bountyGithubIssueUrl,
-              position: position,
+              bountyDifficulty:
+                input.bountyDifficulty ?? existingEntry[0].bountyDifficulty,
+              bountyGithubIssueUrl:
+                input.bountyGithubIssueUrl ??
+                existingEntry[0].bountyGithubIssueUrl,
+              position,
             })
             .where(eq(waitlist.id, entryId));
         } else {
@@ -509,7 +525,8 @@ export const earlyAccessRouter = router({
         if (entry.otpAttempts >= 5) {
           throw new TRPCError({
             code: 'TOO_MANY_REQUESTS',
-            message: 'Too many verification attempts. Please request a new code.',
+            message:
+              'Too many verification attempts. Please request a new code.',
           });
         }
 
@@ -700,7 +717,7 @@ export const earlyAccessRouter = router({
             .update(waitlist)
             .set({ userId })
             .where(eq(waitlist.id, entry.id));
-          
+
           info('[getMyWaitlistEntry] Auto-linked entry by email:', userEmail);
         }
       }
@@ -717,7 +734,6 @@ export const earlyAccessRouter = router({
         bountyTitle: entry.bountyTitle,
         bountyDescription: entry.bountyDescription,
         bountyAmount: entry.bountyAmount,
-        onboardingCompletedAt: entry.onboardingCompletedAt,
         createdAt: entry.createdAt,
       };
     } catch (error: unknown) {
@@ -785,7 +801,8 @@ export const earlyAccessRouter = router({
         if (existingLink) {
           throw new TRPCError({
             code: 'CONFLICT',
-            message: 'Your GitHub account is already linked to another waitlist entry. Please disconnect it first.',
+            message:
+              'Your GitHub account is already linked to another waitlist entry. Please disconnect it first.',
           });
         }
 
@@ -806,7 +823,12 @@ export const earlyAccessRouter = router({
                 description: entry.bountyDescription ?? '',
                 amount: entry.bountyAmount,
                 currency: 'USD',
-                difficulty: (entry.bountyDifficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert') ?? 'intermediate',
+                difficulty:
+                  (entry.bountyDifficulty as
+                    | 'beginner'
+                    | 'intermediate'
+                    | 'advanced'
+                    | 'expert') ?? 'intermediate',
                 status: 'draft',
                 issueUrl: entry.bountyGithubIssueUrl ?? undefined,
                 createdById: userId,
@@ -822,7 +844,12 @@ export const earlyAccessRouter = router({
           }
         }
 
-        info('[linkUserToWaitlist] User linked:', userId, 'to entry:', entry.id);
+        info(
+          '[linkUserToWaitlist] User linked:',
+          userId,
+          'to entry:',
+          entry.id
+        );
         return {
           success: true,
           entryId: entry.id,
