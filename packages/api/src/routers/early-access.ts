@@ -1,6 +1,6 @@
 import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
-import { count, eq, sql } from 'drizzle-orm';
+import { eq, lt } from 'drizzle-orm';
 import { z } from 'zod';
 
 const info = console.info.bind(console);
@@ -32,19 +32,12 @@ export const earlyAccessRouter = router({
   getWaitlistCount: publicProcedure.query(async () => {
     try {
       info('[getWaitlistCount] called');
-      const waitlistCount = await db.select({ count: count() }).from(waitlist);
-      info('[getWaitlistCount] db result:', waitlistCount);
-
-      if (!waitlistCount[0] || typeof waitlistCount[0].count !== 'number') {
-        error('[getWaitlistCount] Invalid result:', waitlistCount);
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Invalid database response',
-        });
-      }
+      const allEntries = await db.query.waitlist.findMany();
+      const count = allEntries.length;
+      info('[getWaitlistCount] db result:', count);
 
       return {
-        count: waitlistCount[0].count,
+        count,
       };
     } catch (err) {
       error('[getWaitlistCount] Error:', err);
@@ -110,12 +103,11 @@ export const earlyAccessRouter = router({
         }
         info('[addToWaitlist] Processing email:', input.email);
 
-        const userAlreadyInWaitlist = await db
-          .select()
-          .from(waitlist)
-          .where(eq(waitlist.email, input.email));
+        const userAlreadyInWaitlist = await db.query.waitlist.findFirst({
+          where: (fields, { eq }) => eq(fields.email, input.email),
+        });
 
-        if (userAlreadyInWaitlist[0]) {
+        if (userAlreadyInWaitlist) {
           return { message: "You're already on the waitlist!" };
         }
 
@@ -196,30 +188,29 @@ export const earlyAccessRouter = router({
     .query(async ({ input }) => {
       try {
         const { page, limit, search } = input;
-        const _offset = (page - 1) * limit;
+        const offset = (page - 1) * limit;
 
         let entries;
         if (search) {
-          entries = await db
-            .select()
-            .from(waitlist)
-            .where(eq(waitlist.email, search));
+          entries = await db.query.waitlist.findMany({
+            where: (fields, { eq }) => eq(fields.email, search),
+            limit,
+            offset,
+          });
         } else {
-          entries = await db.select().from(waitlist);
+          entries = await db.query.waitlist.findMany({
+            limit,
+            offset,
+          });
         }
 
-        const totalCount = await db.select({ count: count() }).from(waitlist);
-        const total = totalCount[0]?.count || 0;
+        const allEntries = await db.query.waitlist.findMany();
+        const total = allEntries.length;
 
-        const stats = await db
-          .select({
-            total: count(),
-            withAccess: count(),
-          })
-          .from(waitlist)
-          .where(eq(waitlist.hasAccess, true));
-
-        const totalWithAccess = stats[0]?.withAccess || 0;
+        const entriesWithAccess = await db.query.waitlist.findMany({
+          where: (fields, { eq }) => eq(fields.hasAccess, true),
+        });
+        const totalWithAccess = entriesWithAccess.length;
 
         return {
           entries,
@@ -253,7 +244,10 @@ export const earlyAccessRouter = router({
       try {
         const { id, hasAccess } = input;
 
-        await db.update(waitlist).set({ hasAccess }).where(eq(waitlist.id, id));
+        await db
+          .update(waitlist)
+          .set({ hasAccess })
+          .where(eq(waitlist.id as any, id) as any);
 
         info(
           '[updateWaitlistAccess] Updated access for ID:',
@@ -263,20 +257,18 @@ export const earlyAccessRouter = router({
         );
 
         if (hasAccess) {
-          const [entry] = await db
-            .select()
-            .from(waitlist)
-            .where(eq(waitlist.id, id));
+          const entry = await db.query.waitlist.findFirst({
+            where: (fields, { eq }) => eq(fields.id, id),
+          });
           if (entry?.email) {
-            const [u] = await db
-              .select({
-                id: userTable.id,
-                name: userTable.name,
-                email: userTable.email,
-              })
-              .from(userTable)
-              .where(eq(userTable.email, entry.email))
-              .limit(1);
+            const u = await db.query.user.findFirst({
+              columns: {
+                id: true,
+                name: true,
+                email: true,
+              },
+              where: (fields, { eq }) => eq(fields.email, entry.email),
+            });
             const to = u?.email ?? entry.email;
             await sendEmail({
               to,
@@ -304,11 +296,9 @@ export const earlyAccessRouter = router({
     )
     .mutation(async ({ input }) => {
       try {
-        const [entry] = await db
-          .select()
-          .from(waitlist)
-          .where(eq(waitlist.id, input.id))
-          .limit(1);
+        const entry = await db.query.waitlist.findFirst({
+          where: (fields, { eq }) => eq(fields.id, input.id),
+        });
 
         if (!entry) {
           throw new TRPCError({
@@ -317,15 +307,14 @@ export const earlyAccessRouter = router({
           });
         }
 
-        const [u] = await db
-          .select({
-            id: userTable.id,
-            name: userTable.name,
-            email: userTable.email,
-          })
-          .from(userTable)
-          .where(eq(userTable.email, entry.email))
-          .limit(1);
+        const u = await db.query.user.findFirst({
+          columns: {
+            id: true,
+            name: true,
+            email: true,
+          },
+          where: (fields, { eq }) => eq(fields.email, entry.email),
+        });
 
         if (!u?.id) {
           throw new TRPCError({
@@ -340,7 +329,7 @@ export const earlyAccessRouter = router({
             betaAccessStatus: 'approved',
             updatedAt: new Date(),
           })
-          .where(eq(userTable.id, u.id));
+          .where(eq(userTable.id as any, u.id) as any);
 
         await sendEmail({
           to: u.email,
@@ -392,11 +381,9 @@ export const earlyAccessRouter = router({
         info('[submitWithBounty] Processing email:', input.email);
 
         // Check if entry exists
-        const existingEntry = await db
-          .select()
-          .from(waitlist)
-          .where(eq(waitlist.email, input.email))
-          .limit(1);
+        const existingEntry = await db.query.waitlist.findFirst({
+          where: (fields, { eq }) => eq(fields.email, input.email),
+        });
 
         const otpCode = generateOTP();
         const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
@@ -404,16 +391,15 @@ export const earlyAccessRouter = router({
         let entryId: string;
         let position: number;
 
-        if (existingEntry[0]) {
+        if (existingEntry) {
           // Update existing entry
-          entryId = existingEntry[0].id;
+          entryId = existingEntry.id;
 
           // Get position before update
-          const positionResult = await db
-            .select({ count: sql<number>`count(*)` })
-            .from(waitlist)
-            .where(sql`${waitlist.createdAt} < ${existingEntry[0].createdAt}`);
-          position = Number(positionResult[0]?.count ?? 0) + 1;
+          const allEntries = await db.query.waitlist.findMany({
+            where: (fields, { lt }) => lt(fields.createdAt, existingEntry.createdAt),
+          });
+          position = allEntries.length + 1;
 
           await db
             .update(waitlist)
@@ -421,25 +407,23 @@ export const earlyAccessRouter = router({
               otpCode,
               otpExpiresAt,
               otpAttempts: 0,
-              bountyTitle: input.bountyTitle ?? existingEntry[0].bountyTitle,
+              bountyTitle: input.bountyTitle ?? existingEntry.bountyTitle,
               bountyDescription:
-                input.bountyDescription ?? existingEntry[0].bountyDescription,
-              bountyAmount: input.bountyAmount ?? existingEntry[0].bountyAmount,
+                input.bountyDescription ?? existingEntry.bountyDescription,
+              bountyAmount: input.bountyAmount ?? existingEntry.bountyAmount,
               bountyDifficulty:
-                input.bountyDifficulty ?? existingEntry[0].bountyDifficulty,
+                input.bountyDifficulty ?? existingEntry.bountyDifficulty,
               bountyGithubIssueUrl:
                 input.bountyGithubIssueUrl ??
-                existingEntry[0].bountyGithubIssueUrl,
+                existingEntry.bountyGithubIssueUrl,
               position,
             })
-            .where(eq(waitlist.id, entryId));
+            .where(eq(waitlist.id as any, entryId) as any);
         } else {
           // Create new entry
           // Get position (count of existing entries)
-          const positionResult = await db
-            .select({ count: sql<number>`count(*)` })
-            .from(waitlist);
-          position = Number(positionResult[0]?.count ?? 0) + 1;
+          const allEntries = await db.query.waitlist.findMany();
+          position = allEntries.length + 1;
 
           const [newEntry] = await db
             .insert(waitlist)
@@ -458,6 +442,13 @@ export const earlyAccessRouter = router({
               createdAt: new Date(),
             })
             .returning({ id: waitlist.id });
+
+          if (!newEntry) {
+            throw new TRPCError({
+              code: 'INTERNAL_SERVER_ERROR',
+              message: 'Failed to create waitlist entry',
+            });
+          }
 
           entryId = newEntry.id;
         }
@@ -508,11 +499,9 @@ export const earlyAccessRouter = router({
     )
     .mutation(async ({ input }) => {
       try {
-        const [entry] = await db
-          .select()
-          .from(waitlist)
-          .where(eq(waitlist.email, input.email))
-          .limit(1);
+        const entry = await db.query.waitlist.findFirst({
+          where: (fields, { eq }) => eq(fields.email, input.email),
+        });
 
         if (!entry) {
           throw new TRPCError({
@@ -543,7 +532,7 @@ export const earlyAccessRouter = router({
           await db
             .update(waitlist)
             .set({ otpAttempts: (entry.otpAttempts ?? 0) + 1 })
-            .where(eq(waitlist.id, entry.id));
+            .where(eq(waitlist.id as any, entry.id) as any);
 
           throw new TRPCError({
             code: 'BAD_REQUEST',
@@ -555,7 +544,7 @@ export const earlyAccessRouter = router({
         await db
           .update(waitlist)
           .set({ emailVerified: true, otpAttempts: 0 })
-          .where(eq(waitlist.id, entry.id));
+          .where(eq(waitlist.id as any, entry.id) as any);
 
         info('[verifyOTP] Email verified:', input.email);
         return { success: true, entryId: entry.id };
@@ -580,11 +569,9 @@ export const earlyAccessRouter = router({
     )
     .mutation(async ({ input }) => {
       try {
-        const [entry] = await db
-          .select()
-          .from(waitlist)
-          .where(eq(waitlist.email, input.email))
-          .limit(1);
+        const entry = await db.query.waitlist.findFirst({
+          where: (fields, { eq }) => eq(fields.email, input.email),
+        });
 
         if (!entry) {
           throw new TRPCError({
@@ -603,7 +590,7 @@ export const earlyAccessRouter = router({
             otpExpiresAt,
             otpAttempts: 0,
           })
-          .where(eq(waitlist.id, entry.id));
+          .where(eq(waitlist.id as any, entry.id) as any);
 
         // Send OTP email
         try {
@@ -648,11 +635,9 @@ export const earlyAccessRouter = router({
     )
     .query(async ({ input }) => {
       try {
-        const [entry] = await db
-          .select()
-          .from(waitlist)
-          .where(eq(waitlist.id, input.entryId))
-          .limit(1);
+        const entry = await db.query.waitlist.findFirst({
+          where: (fields, { eq }) => eq(fields.id, input.entryId),
+        });
 
         if (!entry) {
           throw new TRPCError({
@@ -697,26 +682,22 @@ export const earlyAccessRouter = router({
       const userEmail = ctx.session.user.email;
 
       // First try to find by userId
-      let [entry] = await db
-        .select()
-        .from(waitlist)
-        .where(eq(waitlist.userId, userId))
-        .limit(1);
+      let entry = await db.query.waitlist.findFirst({
+        where: (fields, { eq }) => eq(fields.userId, userId),
+      });
 
       // If not found by userId, try by email and auto-link
       if (!entry && userEmail) {
-        [entry] = await db
-          .select()
-          .from(waitlist)
-          .where(eq(waitlist.email, userEmail))
-          .limit(1);
+        entry = await db.query.waitlist.findFirst({
+          where: (fields, { eq }) => eq(fields.email, userEmail),
+        });
 
         // If found by email, link it to this user
         if (entry && !entry.userId) {
           await db
             .update(waitlist)
             .set({ userId })
-            .where(eq(waitlist.id, entry.id));
+            .where(eq(waitlist.id as any, entry.id) as any);
 
           info('[getMyWaitlistEntry] Auto-linked entry by email:', userEmail);
         }
@@ -760,11 +741,9 @@ export const earlyAccessRouter = router({
         const userId = ctx.session.user.id;
 
         // Find waitlist entry by ID (more reliable than email matching)
-        const [entry] = await db
-          .select()
-          .from(waitlist)
-          .where(eq(waitlist.id, input.entryId))
-          .limit(1);
+        const entry = await db.query.waitlist.findFirst({
+          where: (fields, { eq }) => eq(fields.id, input.entryId),
+        });
 
         if (!entry) {
           throw new TRPCError({
@@ -792,11 +771,9 @@ export const earlyAccessRouter = router({
         }
 
         // Check if this GitHub account is already linked to another waitlist entry
-        const [existingLink] = await db
-          .select()
-          .from(waitlist)
-          .where(eq(waitlist.userId, userId))
-          .limit(1);
+        const existingLink = await db.query.waitlist.findFirst({
+          where: (fields, { eq }) => eq(fields.userId, userId),
+        });
 
         if (existingLink) {
           throw new TRPCError({
@@ -810,7 +787,7 @@ export const earlyAccessRouter = router({
         await db
           .update(waitlist)
           .set({ userId })
-          .where(eq(waitlist.id, entry.id));
+          .where(eq(waitlist.id as any, entry.id) as any);
 
         // Create real bounty from draft if draft data exists
         let bountyId: string | null = null;
@@ -837,7 +814,9 @@ export const earlyAccessRouter = router({
               })
               .returning({ id: bounty.id });
 
-            bountyId = newBounty.id;
+            if (newBounty) {
+              bountyId = newBounty.id;
+            }
           } catch (bountyError) {
             warn('[linkUserToWaitlist] Failed to create bounty:', bountyError);
             // Don't fail the whole operation if bounty creation fails
@@ -880,11 +859,9 @@ export const earlyAccessRouter = router({
         const userId = ctx.session.user.id;
 
         // Find waitlist entry
-        const [entry] = await db
-          .select()
-          .from(waitlist)
-          .where(eq(waitlist.id, input.entryId))
-          .limit(1);
+        const entry = await db.query.waitlist.findFirst({
+          where: (fields, { eq }) => eq(fields.id, input.entryId),
+        });
 
         if (!entry) {
           throw new TRPCError({
@@ -914,7 +891,7 @@ export const earlyAccessRouter = router({
         await db
           .update(waitlist)
           .set({ userId: null })
-          .where(eq(waitlist.id, entry.id));
+          .where(eq(waitlist.id as any, entry.id) as any);
 
         info('[unlinkGithub] User unlinked:', userId, 'from entry:', entry.id);
         return {
@@ -951,11 +928,9 @@ export const earlyAccessRouter = router({
         const { entryId, ...bountyData } = input;
 
         // Find entry first
-        const [entry] = await db
-          .select()
-          .from(waitlist)
-          .where(eq(waitlist.id, entryId))
-          .limit(1);
+        const entry = await db.query.waitlist.findFirst({
+          where: (fields, { eq }) => eq(fields.id, entryId),
+        });
 
         if (!entry) {
           throw new TRPCError({
@@ -975,7 +950,7 @@ export const earlyAccessRouter = router({
             bountyDifficulty:
               bountyData.bountyDifficulty ?? entry.bountyDifficulty,
           })
-          .where(eq(waitlist.id, entryId));
+          .where(eq(waitlist.id as any, entryId) as any);
 
         info('[updateBountyDraft] Updated draft for entry:', entryId);
 

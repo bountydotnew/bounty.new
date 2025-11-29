@@ -16,12 +16,14 @@ import {
 
 interface OTPVerificationProps {
   code: string;
-  entryId: string;
+  entryId?: string;
   email: string;
+  type?: string;
+  continueUrl?: string;
 }
 
-const OTPVerification = ({ code, entryId, email }: OTPVerificationProps) => {
-  const verifyUrl = `https://bounty.new/waitlist/verify?entryId=${entryId}&email=${encodeURIComponent(email)}&code=${code}`;
+const OTPVerification = ({ code, entryId, email, type, continueUrl }: OTPVerificationProps) => {
+  const verifyUrl = continueUrl || (entryId ? `https://bounty.new/waitlist/verify?entryId=${entryId}&email=${encodeURIComponent(email)}&code=${code}` : undefined);
 
   return (
     <Html lang="en" dir="ltr">
@@ -50,26 +52,32 @@ const OTPVerification = ({ code, entryId, email }: OTPVerificationProps) => {
             </Text>
 
             <Text className="text-[14px] leading-[1.6] text-[rgba(38,37,30,0.6)] m-0 mb-[12px]">
-              To verify your code, click the button below. This code will expire in 10 minutes for security reasons.
+              {verifyUrl 
+                ? 'To verify your code, click the button below. This code will expire in 10 minutes for security reasons.'
+                : 'Use this code to verify your email. This code will expire in 10 minutes for security reasons.'}
             </Text>
 
             {/* CTA Button */}
-            <Section className="text-left mt-[6px] mb-[4px]">
-              <Button
-                href={verifyUrl}
-                className="bg-[#26251E] text-[#F7F7F4] text-[14px] font-normal py-[8px] px-[12px] rounded-full border border-solid border-[#3B3A33] box-border"
-              >
-                Verify Code
-              </Button>
-            </Section>
+            {verifyUrl && (
+              <>
+                <Section className="text-left mt-[6px] mb-[4px]">
+                  <Button
+                    href={verifyUrl}
+                    className="bg-[#26251E] text-[#F7F7F4] text-[14px] font-normal py-[8px] px-[12px] rounded-full border border-solid border-[#3B3A33] box-border"
+                  >
+                    Verify Code
+                  </Button>
+                </Section>
 
-            <Text className="text-[14px] leading-[1.6] text-[rgba(38,37,30,0.6)] m-0 mb-[12px]">
-              If the button doesn't work, copy and paste this link into your browser:
-            </Text>
+                <Text className="text-[14px] leading-[1.6] text-[rgba(38,37,30,0.6)] m-0 mb-[12px]">
+                  If the button doesn't work, copy and paste this link into your browser:
+                </Text>
 
-            <Text className="text-[12px] leading-[1.6] text-[rgba(38,37,30,0.5)] m-0 mb-[16px] break-all">
-              {verifyUrl}
-            </Text>
+                <Text className="text-[12px] leading-[1.6] text-[rgba(38,37,30,0.5)] m-0 mb-[16px] break-all">
+                  {verifyUrl}
+                </Text>
+              </>
+            )}
 
             <Text className="text-[14px] leading-[1.6] text-[rgba(38,37,30,0.6)] m-0 mb-[16px]">
               If you need help, feel free to{' '}

@@ -24,7 +24,7 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { AdminHeader } from '@/components/admin';
-import { trpc } from '@/utils/trpc';
+import { trpc, trpcClient } from '@/utils/trpc';
 
 export default function WaitlistPage() {
   const [search, setSearch] = useState('');
@@ -37,11 +37,24 @@ export default function WaitlistPage() {
     isLoading,
     error: queryError,
   } = useQuery({
-    ...trpc.earlyAccess.getAdminWaitlist.queryOptions({
-      page,
-      limit: 20,
-      search: search || undefined,
-    }),
+    queryKey: ['earlyAccess', 'getAdminWaitlist', page, search],
+    queryFn: async () => {
+      const result = await (trpcClient.earlyAccess.getAdminWaitlist as {
+        query: (input: { page: number; limit: number; search?: string }) => Promise<{
+          entries: Array<{ id: string; email: string; hasAccess: boolean; createdAt: Date | string; [key: string]: unknown }>;
+          total: number;
+          page: number;
+          limit: number;
+          totalPages: number;
+          stats: { total: number; withAccess: number; pending: number };
+        }>;
+      }).query({
+        page,
+        limit: 20,
+        search: search || undefined,
+      });
+      return result;
+    },
   });
 
   const waitlistStats = {
@@ -53,20 +66,31 @@ export default function WaitlistPage() {
   const totalPages = Number(data?.totalPages ?? 1);
 
   const updateAccessMutation = useMutation({
-    ...trpc.earlyAccess.updateWaitlistAccess.mutationOptions({}),
+    mutationFn: async (input: { id: string; hasAccess: boolean }) => {
+      const result = await (trpcClient.earlyAccess.updateWaitlistAccess as {
+        mutate: (input: { id: string; hasAccess: boolean }) => Promise<{ success: boolean }>;
+      }).mutate(input);
+      return result;
+    },
     onSuccess: () => {
       toast.success('Access updated successfully');
       queryClient.invalidateQueries({
         queryKey: ['earlyAccess', 'getAdminWaitlist'],
       });
     },
-    onError: (mutationError: TRPCClientErrorLike<AppRouter>) => {
-      toast.error(mutationError.message || 'Failed to update access');
+    onError: (mutationError: unknown) => {
+      const error = mutationError as TRPCClientErrorLike<AppRouter>;
+      toast.error(error.message || 'Failed to update access');
     },
   });
 
   const inviteToBetaMutation = useMutation({
-    ...trpc.earlyAccess.inviteToBeta.mutationOptions({}),
+    mutationFn: async (input: { id: string }) => {
+      const result = await (trpcClient.earlyAccess.inviteToBeta as {
+        mutate: (input: { id: string }) => Promise<{ success: boolean }>;
+      }).mutate(input);
+      return result;
+    },
     onMutate: (vars: { id: string }) => {
       setUpdatingIds((prev) => new Set(prev).add(vars.id));
     },
@@ -76,10 +100,11 @@ export default function WaitlistPage() {
         queryKey: ['earlyAccess', 'getAdminWaitlist'],
       });
     },
-    onError: (mutationError: TRPCClientErrorLike<AppRouter>) => {
-      toast.error(mutationError.message || 'Failed to invite to beta');
+    onError: (mutationError: unknown) => {
+      const error = mutationError as TRPCClientErrorLike<AppRouter>;
+      toast.error(error.message || 'Failed to invite to beta');
     },
-    onSettled: (_data, _err, vars) => {
+    onSettled: (_data: unknown, _err: unknown, vars: { id: string }) => {
       setUpdatingIds((prev) => {
         const next = new Set(prev);
         next.delete(vars.id);
@@ -186,7 +211,7 @@ export default function WaitlistPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {waitlistEntries.map((entry) => (
+                {waitlistEntries.map((entry: { id: string; email: string; hasAccess: boolean; createdAt: Date | string; [key: string]: unknown }) => (
                   <div
                     className="flex items-center justify-between rounded-md border border-neutral-800 bg-[#222222] p-3"
                     key={entry.id}

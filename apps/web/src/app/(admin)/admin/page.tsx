@@ -5,7 +5,7 @@ import { Clock, Users } from 'lucide-react';
 import { AdminHeader } from '@/components/admin';
 import { OverviewKPIs } from '@/components/admin/analytics/overview';
 import { StatCard } from '@/components/admin/stat-card';
-import { trpc } from '@/utils/trpc';
+import { trpc, trpcClient } from '@/utils/trpc';
 
 const formatStatValue = (value: unknown): string | number => {
   if (typeof value === 'number') {
@@ -23,14 +23,18 @@ export default function AdminPage() {
   const { data: notifications } = useQuery(
     trpc.notifications.getStats.queryOptions()
   );
-  const { data: waitlist } = useQuery(
-    trpc.earlyAccess.getAdminWaitlist.queryOptions({ page: 1, limit: 1 })
-  );
+  const { data: waitlist } = useQuery({
+    queryKey: ['earlyAccess', 'getWaitlistCount'],
+    queryFn: async () => {
+      const result = await (trpcClient.earlyAccess.getWaitlistCount as { query: () => Promise<{ count: number }> }).query();
+      return result;
+    },
+  });
 
   const usersTotal = formatStatValue(
     userStats?.data.platformStats.totalUsers
   );
-  const waitlistPending = formatStatValue(waitlist?.stats.pending);
+  const waitlistPending = formatStatValue(waitlist?.count);
   const notificationsSent = formatStatValue(notifications?.stats.sent);
   return (
     <div className="space-y-6">
