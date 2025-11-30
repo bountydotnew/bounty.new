@@ -5,6 +5,7 @@ import html2canvas from "html2canvas-pro"
 import { useState } from "react"
 import { useFeedback } from "@/components/feedback-context"
 import { X, Loader2, CheckCircle2 } from "lucide-react"
+import { toast } from "sonner"
 
 /**
  * Modal component that displays the feedback form.
