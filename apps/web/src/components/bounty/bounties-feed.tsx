@@ -1,10 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
+'use client';
+
+import { authClient } from '@bounty/auth/client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { memo, useMemo } from 'react';
+import { toast } from 'sonner';
 import { BountyCard } from '@/components/bounty/bounty-card';
 import { BountySkeleton } from '@/components/dashboard/skeletons/bounty-skeleton';
 import { LOADING_SKELETON_COUNTS } from '@/constants';
 import type { Bounty } from '@/types/dashboard';
-import { trpc } from '@/utils/trpc';
+import { trpc, trpcClient } from '@/utils/trpc';
 
 interface BountiesFeedProps {
   title?: string;
@@ -27,6 +31,43 @@ export const BountiesFeed = memo(function BountiesFeed({
   className = '',
 }: BountiesFeedProps) {
   const isGrid = layout === 'grid';
+  const queryClient = useQueryClient();
+  const { data: session } = authClient.useSession();
+
+  const deleteBounty = useMutation({
+    mutationFn: async (input: { id: string }) => {
+      return await trpcClient.bounties.deleteBounty.mutate(input);
+    },
+    onSuccess: () => {
+      toast.success('Bounty deleted successfully');
+      // Invalidate all bounty-related queries to refresh the list
+      // tRPC query keys are structured as [['bounties', 'procedureName'], { input }]
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey;
+          // Check if query key starts with 'bounties' (tRPC format: [['bounties', ...], ...])
+          if (Array.isArray(key) && key.length > 0) {
+            const firstPart = key[0];
+            if (Array.isArray(firstPart) && firstPart[0] === 'bounties') {
+              return true;
+            }
+            // Also check for flat array format ['bounties', ...]
+            if (typeof firstPart === 'string' && firstPart === 'bounties') {
+              return true;
+            }
+          }
+          return false;
+        },
+      });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to delete bounty: ${error.message}`);
+    },
+  });
+
+  const handleDelete = (bountyId: string) => {
+    deleteBounty.mutate({ id: bountyId });
+  };
 
   const ids = useMemo(() => (bounties || []).map((b) => b.id), [bounties]);
   const statsQuery = useQuery({
@@ -43,7 +84,10 @@ export const BountiesFeed = memo(function BountiesFeed({
         bookmarked: boolean;
       }
     >();
-    (statsQuery.data?.stats || []).forEach((s: any) => m.set(s.bountyId, s));
+    const stats = statsQuery.data?.stats ?? [];
+    for (const stat of stats) {
+      m.set(stat.bountyId, stat);
+    }
     return m;
   }, [statsQuery.data]);
 
@@ -95,13 +139,19 @@ export const BountiesFeed = memo(function BountiesFeed({
             : 'space-y-4'
         }
       >
-        {bounties.map((bounty) => (
-          <BountyCard
-            bounty={bounty}
-            key={bounty.id}
-            stats={statsMap.get(bounty.id)}
-          />
-        ))}
+        {bounties.map((bounty) => {
+          const canDelete = session?.user?.id
+            ? bounty.creator.id === session.user.id
+            : false;
+          return (
+            <BountyCard
+              bounty={bounty}
+              key={bounty.id}
+              onDelete={canDelete ? () => handleDelete(bounty.id) : undefined}
+              stats={statsMap.get(bounty.id)}
+            />
+          );
+        })}
       </div>
     </div>
   );

@@ -31,7 +31,7 @@ const rateUserSchema = z.object({
 });
 
 // LRU Cache for user profiles (cache for 5 minutes, max 200 profiles)
-const userProfileCache = new LRUCache<{
+export const userProfileCache = new LRUCache<{
   success: boolean;
   data: {
     user: {
@@ -60,15 +60,27 @@ const topContributorsCache = new LRUCache<{
 
 export const profilesRouter = router({
   getProfile: publicProcedure
-    .input(z.object({ userId: z.string().uuid() }))
-    .query(async ({ input }) => {
+    .input(
+      z.object({
+        userId: z.string().optional(),
+        handle: z.string().min(3).max(20).optional(),
+      })
+    )
+    .query(async ({ input, ctx }) => {
       try {
-        // Check cache first
-        const cached = userProfileCache.get(input.userId);
-
-        if (cached) {
-          return cached;
+        if (!(input.userId || input.handle)) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Either userId or handle must be provided',
+          });
         }
+
+        // Build query condition
+        const condition = input.handle
+          ? eq(user.handle, input.handle.toLowerCase())
+          : input.userId
+            ? eq(user.id, input.userId)
+            : eq(user.id, ''); // This should never happen due to validation above
 
         const [profile] = await db
           .select({
@@ -77,6 +89,8 @@ export const profilesRouter = router({
               name: user.name,
               email: user.email,
               image: user.image,
+              handle: user.handle,
+              isProfilePrivate: user.isProfilePrivate,
               createdAt: user.createdAt,
             },
             profile: userProfile,
@@ -85,7 +99,7 @@ export const profilesRouter = router({
           .from(user)
           .leftJoin(userProfile, eq(user.id, userProfile.userId))
           .leftJoin(userReputation, eq(user.id, userReputation.userId))
-          .where(eq(user.id, input.userId));
+          .where(condition);
 
         if (!profile) {
           throw new TRPCError({
@@ -94,13 +108,57 @@ export const profilesRouter = router({
           });
         }
 
+        // Check if profile is private and user is not the owner
+        const isOwner = ctx.session?.user?.id === profile.user.id;
+        
+        // Determine cache key - include viewer identity for private profiles
+        // This ensures owner vs non-owner views are cached separately
+        const profileIdentifier = input.handle || input.userId || '';
+        const viewerId = ctx.session?.user?.id || 'anonymous';
+        const cacheKey = profile.user.isProfilePrivate
+          ? `${profileIdentifier}:${viewerId}`
+          : profileIdentifier;
+
+        // Check cache first (only after we know if it's private and who's viewing)
+        const cached = userProfileCache.get(cacheKey);
+
+        if (cached) {
+          return cached;
+        }
+        if (profile.user.isProfilePrivate && !isOwner) {
+          // Return limited profile info (hide isProfilePrivate from non-owners)
+          const result = {
+            success: true,
+            data: {
+              user: {
+                id: profile.user.id,
+                name: profile.user.name,
+                image: profile.user.image,
+                handle: profile.user.handle,
+                isProfilePrivate: false, // Hide the actual setting from non-owners
+                createdAt: profile.user.createdAt,
+                email: '',
+              },
+              profile: null,
+              reputation: null,
+            },
+            isPrivate: true,
+          };
+
+          // Cache the result
+          userProfileCache.set(cacheKey, result);
+
+          return result;
+        }
+
         const result = {
           success: true,
           data: profile,
+          isPrivate: false,
         };
 
         // Cache the result
-        userProfileCache.set(input.userId, result);
+        userProfileCache.set(cacheKey, result);
 
         return result;
       } catch (error) {
@@ -157,7 +215,7 @@ export const profilesRouter = router({
           .from(userProfile)
           .where(eq(userProfile.userId, ctx.session.user.id));
 
-        let updatedProfile;
+        let updatedProfile: typeof existingProfile;
 
         if (existingProfile) {
           [updatedProfile] = await db
@@ -293,7 +351,7 @@ export const profilesRouter = router({
           })
           .returning();
 
-        const [{ averageRating, totalRatings }] = await db
+        const [ratingStats] = await db
           .select({
             averageRating: sql<number>`AVG(${userRating.rating})`,
             totalRatings: sql<number>`COUNT(*)`,
@@ -301,11 +359,18 @@ export const profilesRouter = router({
           .from(userRating)
           .where(eq(userRating.ratedUserId, input.ratedUserId));
 
+        if (!ratingStats) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to calculate rating statistics',
+          });
+        }
+
         await db
           .update(userReputation)
           .set({
-            averageRating: averageRating.toString(),
-            totalRatings,
+            averageRating: ratingStats.averageRating.toString(),
+            totalRatings: ratingStats.totalRatings,
             updatedAt: new Date(),
           })
           .where(eq(userReputation.userId, input.ratedUserId));
@@ -360,10 +425,12 @@ export const profilesRouter = router({
           .limit(input.limit)
           .offset(offset);
 
-        const [{ count }] = await db
+        const [countResult] = await db
           .select({ count: sql<number>`count(*)` })
           .from(userRating)
           .where(eq(userRating.ratedUserId, input.userId));
+
+        const count = countResult?.count ?? 0;
 
         return {
           success: true,

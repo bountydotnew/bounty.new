@@ -39,7 +39,20 @@ export function ImpersonationUserPicker({ open, onOpenChange, onPick }: Props) {
     })
   );
 
-  const users = useMemo(() => data?.users || [], [data?.users]);
+  type UserListItem = {
+    id: string;
+    name: string | null;
+    email: string;
+    image: string | null;
+    role: string;
+    hasAccess: boolean;
+    betaAccessStatus: 'none' | 'pending' | 'approved' | 'denied';
+    banned: boolean;
+    createdAt: string;
+    updatedAt: string;
+  };
+
+  const users = useMemo(() => (data?.users || []) as UserListItem[], [data?.users]);
 
   const content = (
     <div className="p-4">
@@ -61,11 +74,12 @@ export function ImpersonationUserPicker({ open, onOpenChange, onPick }: Props) {
             {isLoading ? (
               <div className="text-neutral-500 text-sm">Loading...</div>
             ) : users.length ? (
-              users.map((u: any) => (
+              users.map((u) => (
                 <button
                   className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900/40 p-3 text-left transition hover:bg-neutral-900/60"
                   key={u.id}
                   onClick={() => onPick(u.id)}
+                  type="button"
                 >
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-neutral-500" />

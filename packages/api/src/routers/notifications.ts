@@ -2,7 +2,6 @@ import { createNotification, db, notification } from '@bounty/db';
 import { TRPCError } from '@trpc/server';
 import { and, count, desc, eq, lt } from 'drizzle-orm';
 import { z } from 'zod';
-import { grim } from '../lib/use-dev-log';
 import { sendErrorWebhook, sendInfoWebhook } from '../lib/use-discord-webhook';
 import {
   adminProcedure,
@@ -10,8 +9,11 @@ import {
   publicProcedure,
   router,
 } from '../trpc';
+import { realtime } from '@bounty/realtime';
 
-const { info, error, warn } = grim();
+const info = console.info.bind(console);
+const error = console.error.bind(console);
+const warn = console.warn.bind(console);
 
 const sendWebhookSchema = z.object({
   message: z.string().min(1).max(2000),
@@ -61,6 +63,18 @@ export const notificationsRouter = router({
         message: input.message,
         ...(input.data && { data: input.data }),
       });
+      try {
+        await realtime.emit('notifications.refresh', {
+          userId: input.userId,
+          ts: Date.now(),
+        });
+      } catch (emitError) {
+        error('[sendToUser] Failed to emit realtime event:', {
+          operation: 'sendToUser',
+          userId: input.userId,
+          error: emitError,
+        });
+      }
       return { success: true, data: n };
     }),
   getAll: protectedProcedure
@@ -117,6 +131,18 @@ export const notificationsRouter = router({
           )
         )
         .returning();
+      try {
+        await realtime.emit('notifications.refresh', {
+          userId: ctx.session.user.id,
+          ts: Date.now(),
+        });
+      } catch (emitError) {
+        error('[markAsRead] Failed to emit realtime event:', {
+          operation: 'markAsRead',
+          userId: ctx.session.user.id,
+          error: emitError,
+        });
+      }
       return updated;
     }),
 
@@ -126,6 +152,18 @@ export const notificationsRouter = router({
       .set({ read: true, updatedAt: new Date() })
       .where(eq(notification.userId, ctx.session.user.id))
       .returning();
+    try {
+      await realtime.emit('notifications.refresh', {
+        userId: ctx.session.user.id,
+        ts: Date.now(),
+      });
+    } catch (emitError) {
+      error('[markAllAsRead] Failed to emit realtime event:', {
+        operation: 'markAllAsRead',
+        userId: ctx.session.user.id,
+        error: emitError,
+      });
+    }
     return updated;
   }),
 

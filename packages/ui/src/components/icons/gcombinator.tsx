@@ -1,0 +1,33 @@
+export default function GCombinator() {
+    return (
+      <svg
+        className="h-5 w-5 rounded-[2px]"
+        viewBox="0 0 30.12 30.5"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path d="m0,0h30.12v30.5H0V0Z" fill="#f15c22" />
+        <path
+          d="m21.13,22.21c-.86.31-2.55.81-4.55.81-2.24,0-4.09-.57-5.54-1.96-1.27-1.23-2.07-3.21-2.07-5.51.02-4.42,3.05-7.65,8.02-7.65,1.71,0,3.05.37,3.69.68l-.46,1.56c-.79-.35-1.78-.64-3.27-.64-3.6,0-5.95,2.24-5.95,5.95s2.26,5.98,5.71,5.98c1.25,0,2.11-.18,2.55-.4v-4.42h-3.01v-1.54h4.88v7.12Z"
+          fill="#fff"
+        />
+      </svg>
+    );
+  }
+  
+  export function YCombinator() {
+    return (
+      <svg
+        className="h-5 w-5 rounded-[2px]"
+        fill="none"
+        viewBox="0 0 31 31"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path d="M0 0H30.12V30.5H0V0Z" fill="#F15C22" />
+        <path
+          d="M8.51136 8.45455H10.5284L14.5625 15.2443H14.733L18.767 8.45455H20.7841L15.5284 17.0057V23H13.767V17.0057L8.51136 8.45455Z"
+          fill="white"
+        />
+      </svg>
+    );
+  }
+  

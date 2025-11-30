@@ -10,6 +10,7 @@ import {
   db,
   deviceCode,
   invite,
+  lastLoginMethod,
   notification,
   passkey,
   session,
@@ -20,9 +21,9 @@ import {
   userReputation,
   verification,
   waitlist,
-} from "@bounty/db";
-import { env } from "@bounty/env/server";
-import type { PolarError } from "@bounty/types";
+} from '@bounty/db';
+import { env } from '@bounty/env/server';
+import type { PolarError } from '@bounty/types';
 import {
   checkout,
   polar,
@@ -33,12 +34,12 @@ import {
 import { Polar } from "@polar-sh/sdk";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { bearer, deviceAuthorization, lastLoginMethod, openAPI } from "better-auth/plugins";
+import { bearer, deviceAuthorization, lastLoginMethod as lastLoginMethodPlugin, openAPI, multiSession } from "better-auth/plugins";
 import { admin } from "better-auth/plugins/admin";
 import { passkey as passkeyPlugin } from "better-auth/plugins/passkey";
 import { emailOTP } from "better-auth/plugins/email-otp";
 import { sendEmail } from "@bounty/email";
-import { OTPVerification } from "@bounty/email";
+import { OTPVerification, ForgotPassword } from "@bounty/email";
 
 const schema = {
   account,
@@ -51,6 +52,7 @@ const schema = {
   bountyVote,
   deviceCode,
   invite,
+  lastLoginMethod,
   notification,
   passkey,
   session,
@@ -63,13 +65,13 @@ const schema = {
   waitlist,
 };
 
-const polarEnv = env.NODE_ENV === "production" ? "production" : "sandbox";
+const polarEnv = env.NODE_ENV === 'production' ? 'production' : 'sandbox';
 const polarClient = new Polar({
   accessToken: env.POLAR_ACCESS_TOKEN,
   server: polarEnv,
 });
 
-const allowedDeviceClientIds = env.DEVICE_AUTH_ALLOWED_CLIENT_IDS?.split(",")
+const allowedDeviceClientIds = env.DEVICE_AUTH_ALLOWED_CLIENT_IDS?.split(',')
   .map((clientId) => clientId.trim())
   .filter(Boolean);
 
@@ -77,7 +79,9 @@ const deviceAuthorizationPlugin = deviceAuthorization({
   expiresIn: '30m',
   interval: '5s',
   validateClient: (clientId) =>
-    allowedDeviceClientIds?.length ? allowedDeviceClientIds.includes(clientId) : true,
+    allowedDeviceClientIds?.length
+      ? allowedDeviceClientIds.includes(clientId)
+      : true,
   onDeviceAuthRequest: (clientId, scope) => {
     console.info('Device authorization requested', { clientId, scope });
   },
@@ -85,7 +89,7 @@ const deviceAuthorizationPlugin = deviceAuthorization({
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
-    provider: "pg",
+    provider: 'pg',
     schema,
     usePlural: false,
   }),
@@ -96,24 +100,48 @@ export const auth = betterAuth({
       // Errors are thrown due to throw: true flag above
       // Add proper error logging/monitoring here if needed
     },
-    errorURL: "/auth/error",
+    errorURL: '/auth/error',
   },
   trustedOrigins: [
-    "https://bounty.new",
-    "https://www.bounty.new",
-    "https://*.vercel.app",
-    "http://localhost:3001",
-    "http://localhost:3000",
-    "https://preview.bounty.new",
+    'https://bounty.new',
+    'https://www.bounty.new',
+    'https://*.vercel.app',
+    'http://localhost:3001',
+    'http://localhost:3000',
+    'https://preview.bounty.new',
   ].filter(Boolean),
   socialProviders: {
     github: {
       clientId: env.GITHUB_CLIENT_ID,
       clientSecret: env.GITHUB_CLIENT_SECRET,
+      scopes: ['read:user', 'repo', 'read:org'],
     },
   },
   emailAndPassword: {
     enabled: true,
+    sendResetPassword: async ({ user, url }) => {
+      try {
+        const result = await sendEmail({
+          from: 'Bounty.new <noreply@mail.bounty.new>',
+          to: user.email,
+          subject: 'Reset your password',
+          react: ForgotPassword({
+            userName: user.name,
+            resetUrl: url,
+          }),
+        });
+
+        if (result.error) {
+          console.error('❌ Failed to send password reset email:', result.error);
+          throw new Error(`Email send failed: ${result.error.message}`);
+        }
+
+        console.log('✅ Password reset email sent successfully:', result.data?.id);
+      } catch (error) {
+        console.error('❌ Error in sendResetPassword:', error);
+        throw error;
+      }
+    },
   },
   plugins: [
     polar({
@@ -122,17 +150,17 @@ export const auth = betterAuth({
       getCustomerCreateParams: async ({ user }) => {
         await Promise.resolve();
         return {
-          metadata: { userId: user.id || "unknown" },
+          metadata: { userId: user.id || 'unknown' },
         };
       },
       onCustomerCreateError: async ({ error }: { error: unknown }) => {
         await Promise.resolve();
         const e = error as PolarError;
-        const msg = String(e?.message || e?.body$ || e?.detail || "");
+        const msg = String(e?.message || e?.body$ || e?.detail || '');
         if (
           e?.status === 409 ||
-          msg.includes("external ID cannot be updated") ||
-          msg.toLowerCase().includes("external_id cannot be updated") ||
+          msg.includes('external ID cannot be updated') ||
+          msg.toLowerCase().includes('external_id cannot be updated') ||
           msg.includes('"error":"PolarRequestValidationError"')
         ) {
           return;
@@ -144,11 +172,11 @@ export const auth = betterAuth({
           products: [
             {
               productId: env.BOUNTY_PRO_ANNUAL_ID,
-              slug: "pro-annual",
+              slug: 'pro-annual',
             },
             {
               productId: env.BOUNTY_PRO_MONTHLY_ID,
-              slug: "pro-monthly",
+              slug: 'pro-monthly',
             },
           ],
           successUrl: env.POLAR_SUCCESS_URL,
@@ -170,17 +198,17 @@ export const auth = betterAuth({
       ],
     }),
     passkeyPlugin({
-      rpID: env.NODE_ENV === "production" ? "bounty.new" : "localhost",
-      rpName: "Bounty.new",
+      rpID: env.NODE_ENV === 'production' ? 'bounty.new' : 'localhost',
+      rpName: 'Bounty.new',
       origin:
-        env.NODE_ENV === "production"
-          ? "https://bounty.new"
-          : "http://localhost:3000",
+        env.NODE_ENV === 'production'
+          ? 'https://bounty.new'
+          : 'http://localhost:3000',
     }),
     admin(),
     bearer(),
     openAPI(),
-    lastLoginMethod({
+    lastLoginMethodPlugin({
       storeInDatabase: true,
     }),
     emailOTP({
@@ -189,7 +217,7 @@ export const auth = betterAuth({
           const result = await sendEmail({
             from: 'Bounty.new <noreply@mail.bounty.new>',
             to: email,
-            subject: type === 'email-verification' 
+            subject: type === 'email-verification'
               ? 'Verify your email address'
               : type === 'sign-in'
               ? 'Sign in to Bounty.new'
@@ -215,6 +243,9 @@ export const auth = betterAuth({
       },
     }),
     deviceAuthorizationPlugin,
+    multiSession({
+      maximumSessions: 5,
+    }),
   ],
   secret: env.BETTER_AUTH_SECRET,
 });

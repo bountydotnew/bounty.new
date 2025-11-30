@@ -44,7 +44,6 @@ export interface BillingFeature {
   interval?: string;
 }
 
-
 export type CustomerState = Partial<PolarCustomerState> & {
   products?: BillingProduct[];
   activeSubscriptions?: BillingSubscription[];

@@ -27,7 +27,7 @@ export function BillingSettingsClient({
     openBillingPortal,
   } = useBilling({
     enabled: true,
-    initialCustomerState
+    initialCustomerState,
   });
 
   const renderLoadingState = () => (
@@ -81,7 +81,15 @@ export function BillingSettingsClient({
           </h5>
           <div className="space-y-2">
             {subscriptions.map((sub: BillingSubscription) => (
-              <div className="rounded-lg border p-3" key={sub.productId ?? sub.product?.id ?? sub.product?.slug ?? 'subscription'}>
+              <div
+                className="rounded-lg border p-3"
+                key={
+                  sub.productId ??
+                  sub.product?.id ??
+                  sub.product?.slug ??
+                  'subscription'
+                }
+              >
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="font-medium">
@@ -112,8 +120,8 @@ export function BillingSettingsClient({
         <div className="space-y-2">
           <h4 className="font-medium">Billing Portal Access</h4>
           <p className="text-muted-foreground text-sm">
-            Manage your subscription, payment methods, and billing history through
-            the Stripe billing portal.
+            Manage your subscription, payment methods, and billing history
+            through the Stripe billing portal.
           </p>
         </div>
       </>
@@ -190,7 +198,17 @@ export function BillingSettingsClient({
               >
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{feature.title}</span>
-                  <Badge variant={feature.badgeVariant as 'default' | 'secondary' | 'destructive' | 'outline' | null | undefined}>
+                  <Badge
+                    variant={
+                      feature.badgeVariant as
+                        | 'default'
+                        | 'secondary'
+                        | 'destructive'
+                        | 'outline'
+                        | null
+                        | undefined
+                    }
+                  >
                     {feature.badge}
                   </Badge>
                 </div>
@@ -208,7 +226,8 @@ export function BillingSettingsClient({
             <div className="space-y-3 text-center">
               <h4 className="font-medium">Upgrade to Pro</h4>
               <p className="text-muted-foreground text-sm">
-                Get access to lower fees, unlimited concurrent bounties, and more features.
+                Get access to lower fees, unlimited concurrent bounties, and
+                more features.
               </p>
             </div>
           </>

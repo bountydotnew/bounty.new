@@ -40,7 +40,6 @@ import {
   Search,
   Shield,
   User,
-  UserCheck,
   UserCog,
   Users,
   X,
@@ -50,12 +49,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { AdminHeader } from '@/components/admin';
 import { ExternalInviteModal } from '@/components/admin/external-invite-modal';
-import { trpc } from '@/utils/trpc';
-import type {
-  AccessStage,
-  AdminListUsersResponse,
-  AdminUser,
-} from '@/types';
+import type { AdminListUsersResponse, AdminUser } from '@/types';
 
 export default function UsersPage() {
   const [search, setSearch] = useState('');
@@ -94,7 +88,7 @@ export default function UsersPage() {
         throw new Error(authError.message || 'Failed to load users');
       }
 
-      // Just return auth data and handle accessStage in the component
+      // Return auth data
       return authData ?? null;
     },
   });
@@ -128,33 +122,16 @@ export default function UsersPage() {
     },
   });
 
-  // Get access stages separately using tRPC
-  const { data: accessData } = useQuery({
-    ...trpc.user.getAllUsers.queryOptions({
-      search: search || undefined,
-      page,
-      limit: pageSize,
-    }),
-  });
-
-  // Merge auth client users with access stage data
+  // Map auth users to include role
   const users = useMemo<
-    (AdminUser & { role?: 'user' | 'admin'; accessStage: AccessStage })[]
+    (AdminUser & { role?: 'user' | 'admin' })[]
   >(() => {
     const authUsers = data?.users ?? [];
-    const accessStageMap = new Map<string, AccessStage>(
-      (accessData?.users ?? []).map((entry) => {
-        const stage = (entry.accessStage ?? 'none') as AccessStage;
-        return [entry.id, stage];
-      })
-    );
-
     return authUsers.map((user) => ({
       ...user,
       role: user.role === 'admin' ? 'admin' : 'user',
-      accessStage: accessStageMap.get(user.id) ?? 'none',
     }));
-  }, [data?.users, accessData?.users]);
+  }, [data?.users]);
   const currentPageUsers = users.length;
   const adminCount = users.filter((user) => user.role === 'admin').length;
   const regularUserCount = currentPageUsers - adminCount;
@@ -258,42 +235,6 @@ export default function UsersPage() {
           return next;
         });
       });
-  };
-
-  // Handle invite user to access stage
-  const inviteUserMutationOptions = trpc.user.inviteUser.mutationOptions({});
-
-  const inviteUserMutation = useMutation({
-    ...inviteUserMutationOptions,
-    onSuccess(result, variables, context, mutation) {
-      inviteUserMutationOptions.onSuccess?.(
-        result,
-        variables,
-        context,
-        mutation
-      );
-      const stageName =
-        variables.accessStage === 'none'
-          ? 'removed access'
-          : `${variables.accessStage} access`;
-      toast.success(`Updated user to ${stageName}`);
-      queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
-    },
-    onError(error, variables, context, mutation) {
-      inviteUserMutationOptions.onError?.(
-        error,
-        variables,
-        context,
-        mutation
-      );
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to update user'
-      );
-    },
-  });
-
-  const handleInviteUser = (userId: string, accessStage: AccessStage) => {
-    inviteUserMutation.mutate({ userId, accessStage });
   };
 
   const unbanUser = (userId: string) => {
@@ -593,73 +534,14 @@ export default function UsersPage() {
                           <DropdownMenuLabel>User Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
 
-                          <DropdownMenuSub>
-                            <DropdownMenuItem
-                              onClick={() =>
-                                router.push(`/admin/users/${user.id}`)
-                              }
-                            >
-                              <User className="mr-2 h-4 w-4" />
-                              View User&apos;s Profile
-                            </DropdownMenuItem>
-                            <DropdownMenuSubTrigger>
-                              <UserCheck className="mr-2 h-4 w-4" />
-                              Access Stage
-                            </DropdownMenuSubTrigger>
-                            <DropdownMenuSubContent>
-                              <DropdownMenuItem
-                                disabled={user.accessStage === 'alpha'}
-                                onClick={() =>
-                                  handleInviteUser(user.id, 'alpha')
-                                }
-                              >
-                                <span className="mr-2">α</span>
-                                Alpha Access
-                                {user.accessStage === 'alpha' && (
-                                  <Check className="ml-auto h-4 w-4" />
-                                )}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                disabled={user.accessStage === 'beta'}
-                                onClick={() =>
-                                  handleInviteUser(user.id, 'beta')
-                                }
-                              >
-                                <span className="mr-2">β</span>
-                                Beta Access
-                                {user.accessStage === 'beta' && (
-                                  <Check className="ml-auto h-4 w-4" />
-                                )}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                disabled={user.accessStage === 'production'}
-                                onClick={() =>
-                                  handleInviteUser(user.id, 'production')
-                                }
-                              >
-                                <span className="mr-2">🚀</span>
-                                Production Access
-                                {user.accessStage === 'production' && (
-                                  <Check className="ml-auto h-4 w-4" />
-                                )}
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-red-400"
-                                disabled={user.accessStage === 'none'}
-                                onClick={() =>
-                                  handleInviteUser(user.id, 'none')
-                                }
-                              >
-                                <X className="mr-2 h-4 w-4" />
-                                Remove Access
-                                {user.accessStage === 'none' && (
-                                  <Check className="ml-auto h-4 w-4" />
-                                )}
-                              </DropdownMenuItem>
-                            </DropdownMenuSubContent>
-                          </DropdownMenuSub>
-
+                          <DropdownMenuItem
+                            onClick={() =>
+                              router.push(`/admin/users/${user.id}`)
+                            }
+                          >
+                            <User className="mr-2 h-4 w-4" />
+                            View User&apos;s Profile
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
 
                           <DropdownMenuSub>

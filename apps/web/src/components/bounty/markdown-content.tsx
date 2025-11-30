@@ -32,7 +32,9 @@ function CopyButton({ text }: CopyButtonProps) {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (_err) {}
+    } catch (_err) {
+      // Clipboard API may fail in some contexts, silently ignore
+    }
   };
 
   return (
@@ -41,6 +43,7 @@ function CopyButton({ text }: CopyButtonProps) {
       className="rounded bg-neutral-800 p-1.5 text-neutral-400 transition-colors hover:bg-neutral-700 hover:text-white"
       onClick={handleCopy}
       title={copied ? 'Copied!' : 'Copy to clipboard'}
+      type="button"
     >
       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
     </button>
@@ -102,18 +105,24 @@ const markdownComponents: Components = {
       {children}
     </Link>
   ),
-  img: ({ src, alt, ...props }) => (
-    <img // eslint-disable-line @next/next/no-img-element
-      alt={alt || ''}
-      src={src}
-      {...props}
-      className="my-3 inline-block h-auto max-w-full border-neutral-800"
-    />
-  ),
+  img: ({ src, alt, ...props }) => {
+    // Convert Blob to data URL if needed, otherwise use string
+    const srcString =
+      typeof src === 'string' ? src : src instanceof Blob ? URL.createObjectURL(src) : undefined;
+    
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      // biome-ignore lint/performance/noImgElement: Markdown content may contain external images that can't use Next.js Image
+      <img
+        alt={alt || ''}
+        src={srcString}
+        {...props}
+        className="my-3 inline-block h-auto max-w-full border-neutral-800"
+      />
+    );
+  },
   pre: ({ children }) => {
-    // TODO: Fix this
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const extractTextFromChildren = (children: any): string => {
+    const extractTextFromChildren = (children: React.ReactNode): string => {
       if (!children) {
         return '';
       }
@@ -123,13 +132,9 @@ const markdownComponents: Components = {
       if (Array.isArray(children)) {
         return children.map(extractTextFromChildren).join('');
       }
-      if (
-        typeof children === 'object' &&
-        children !== null &&
-        'props' in children &&
-        children.props
-      ) {
-        return extractTextFromChildren(children.props.children);
+      if (React.isValidElement(children)) {
+        const element = children as React.ReactElement<{ children?: React.ReactNode }>;
+        return extractTextFromChildren(element.props.children);
       }
       return String(children);
     };
@@ -189,9 +194,11 @@ export function MarkdownContent({ content, encoding }: MarkdownContentProps) {
 
   return (
     <div className="prose prose-invert prose-neutral markdown-content max-w-none">
-      {/* TODO: Fix this */}
-      {/* eslint-disable-next-line */}
-      <style global jsx>{`
+      {/* eslint-disable-next-line react/no-danger */}
+      {/* biome-ignore lint/security/noDangerouslySetInnerHtml: CSS styles need to be injected for markdown content */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         .markdown-content ul ul,
         .markdown-content ol ol,
         .markdown-content ul ol,
@@ -235,7 +242,9 @@ export function MarkdownContent({ content, encoding }: MarkdownContentProps) {
         .markdown-content ul ul ul {
           list-style-type: square !important;
         }
-      `}</style>
+      `,
+        }}
+      />
       <ReactMarkdown
         components={markdownComponents}
         rehypePlugins={[rehypeRaw, rehypeSanitize]}

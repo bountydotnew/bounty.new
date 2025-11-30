@@ -1,28 +1,41 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Clock, FileText, Users } from 'lucide-react';
+import { Clock, Users } from 'lucide-react';
 import { AdminHeader } from '@/components/admin';
 import { OverviewKPIs } from '@/components/admin/analytics/overview';
 import { StatCard } from '@/components/admin/stat-card';
-import { trpc } from '@/utils/trpc';
+import { trpc, trpcClient } from '@/utils/trpc';
+
+const formatStatValue = (value: unknown): string | number => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : '–';
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? '–' : parsed;
+  }
+  return '–';
+};
 
 export default function AdminPage() {
-  const { data: betaApps } = useQuery(
-    trpc.betaApplications.getAll.queryOptions({ page: 1, limit: 1 })
-  );
   const { data: userStats } = useQuery(trpc.user.getUserStats.queryOptions());
   const { data: notifications } = useQuery(
     trpc.notifications.getStats.queryOptions()
   );
-  const { data: waitlist } = useQuery(
-    trpc.earlyAccess.getAdminWaitlist.queryOptions({ page: 1, limit: 1 })
-  );
+  const { data: waitlist } = useQuery({
+    queryKey: ['earlyAccess', 'getWaitlistCount'],
+    queryFn: async () => {
+      const result = await (trpcClient.earlyAccess.getWaitlistCount as { query: () => Promise<{ count: number }> }).query();
+      return result;
+    },
+  });
 
-  const betaTotal = betaApps?.total ?? '–';
-  const usersTotal = userStats?.data.platformStats.totalUsers ?? '–';
-  const waitlistPending = waitlist ? waitlist.stats.pending : '–';
-  const notificationsSent = notifications ? notifications.stats.sent : '–';
+  const usersTotal = formatStatValue(
+    userStats?.data.platformStats.totalUsers
+  );
+  const waitlistPending = formatStatValue(waitlist?.count);
+  const notificationsSent = formatStatValue(notifications?.stats.sent);
   return (
     <div className="space-y-6">
       <AdminHeader
@@ -30,14 +43,7 @@ export default function AdminPage() {
         title="Admin"
       />
 
-      <div className="grid grid-cols-2 gap-3 border-neutral-800 border-b pb-6 md:grid-cols-4">
-        <StatCard
-          hint="Total"
-          href="/admin/beta-applications"
-          icon={<FileText className="h-4 w-4" />}
-          title="Beta Applications"
-          value={betaTotal}
-        />
+      <div className="grid grid-cols-2 gap-3 border-neutral-800 border-b pb-6 md:grid-cols-3">
         <StatCard
           hint="Total registered"
           href="/admin/users"

@@ -10,30 +10,15 @@ import {
 } from '@bounty/ui/components/dialog';
 import { Input } from '@bounty/ui/components/input';
 import { Label } from '@bounty/ui/components/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@bounty/ui/components/select';
 import { useMutation } from '@tanstack/react-query';
 import { Mail, Send } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import type { AccessStage } from '@/types/access';
 import { trpc } from '@/utils/trpc';
-
-const ACCESS_STAGES: { value: AccessStage; label: string }[] = [
-  { value: 'alpha', label: 'Alpha Access' },
-  { value: 'beta', label: 'Beta Access' },
-  { value: 'production', label: 'Production Access' },
-];
 
 export function ExternalInviteModal() {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
-  const [accessStage, setAccessStage] = useState<AccessStage>('beta');
 
   const inviteExternalMutation = useMutation({
     ...trpc.user.inviteExternalUser.mutationOptions({}),
@@ -53,7 +38,7 @@ export function ExternalInviteModal() {
       toast.error('Email is required');
       return;
     }
-    inviteExternalMutation.mutate({ email, accessStage });
+    inviteExternalMutation.mutate({ email });
   };
 
   return (
@@ -79,25 +64,6 @@ export function ExternalInviteModal() {
               type="email"
               value={email}
             />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="access-stage">Access Level</Label>
-            <Select
-              onValueChange={(value: AccessStage) => setAccessStage(value)}
-              value={accessStage}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select access level" />
-              </SelectTrigger>
-              <SelectContent>
-                {ACCESS_STAGES.map((stage) => (
-                  <SelectItem key={stage.value} value={stage.value}>
-                    {stage.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="flex justify-end space-x-2">

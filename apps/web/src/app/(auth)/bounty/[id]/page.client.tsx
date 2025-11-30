@@ -9,6 +9,7 @@ import { useParams, useRouter } from 'next/navigation';
 import BountyDetailPage from '@/components/bounty/bounty-detail';
 import { BountyDetailSkeleton } from '@/components/dashboard/skeletons/bounty-detail-skeleton';
 import Bounty from '@/components/icons/bounty';
+import type { BountyCommentCacheItem } from '@/types/comments';
 import { trpc } from '@/utils/trpc';
 
 const UUID_REGEX =
@@ -106,6 +107,9 @@ export default function BountyPage() {
   const canEdit = session?.user?.id
     ? canEditBounty(bountyDetail.data.bounty, session.user.id)
     : false;
+  const canDelete = session?.user?.id
+    ? bountyDetail.data.bounty.createdById === session.user.id
+    : false;
 
   const detailAmount: number = bountyDetail.data.bounty.amount;
   const detailTitle: string = bountyDetail.data.bounty.title;
@@ -113,7 +117,11 @@ export default function BountyPage() {
   const detailTags: string[] = bountyDetail.data.bounty.tags ?? [];
   const detailUser: string = bountyDetail.data.bounty.creator.name ?? '';
   const detailAvatarSrc: string = bountyDetail.data.bounty.creator.image ?? '';
-  const detailRank: string = bountyDetail.data.bounty.difficulty;
+
+  const initialComments = (bountyDetail.data.comments ?? []).map((comment) => ({
+    ...comment,
+    likeCount: typeof comment.likeCount === 'number' ? comment.likeCount : 0,
+  })) as BountyCommentCacheItem[];
 
   return (
     // <div className="p-8 max-w-4xl mx-auto">
@@ -183,14 +191,14 @@ export default function BountyPage() {
     <BountyDetailPage
       amount={detailAmount}
       avatarSrc={detailAvatarSrc}
+      canDeleteBounty={canDelete}
       canEditBounty={canEdit}
       description={detailDescription}
       hasBadge={false}
       id={id ?? ''}
       initialBookmarked={Boolean(bountyDetail.data.bookmarked)}
-      initialComments={bountyDetail.data.comments}
+      initialComments={initialComments}
       initialVotes={bountyDetail.data.votes}
-      rank={detailRank}
       tags={detailTags}
       title={detailTitle}
       user={detailUser}

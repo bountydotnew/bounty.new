@@ -21,7 +21,10 @@ interface BlogPostContentProps {
   processedContent: string;
 }
 
-export function BlogPostContent({ post, processedContent }: BlogPostContentProps) {
+export function BlogPostContent({
+  post,
+  processedContent,
+}: BlogPostContentProps) {
   const router = useRouter();
 
   return (
@@ -143,8 +146,8 @@ export function BlogPostContent({ post, processedContent }: BlogPostContentProps
               Ready to ship faster?
             </h2>
             <p className="text-white/50 leading-relaxed">
-              Join the waitlist and be among the first to experience the new
-              way to collaborate, create, and get paid for exceptional work.
+              Join the waitlist and be among the first to experience the new way
+              to collaborate, create, and get paid for exceptional work.
             </p>
             <Button
               className="h-10 rounded-lg bg-white px-8 font-medium text-black transition-all duration-200 hover:bg-white/90"
@@ -163,4 +166,3 @@ export function BlogPostContent({ post, processedContent }: BlogPostContentProps
     </div>
   );
 }
-

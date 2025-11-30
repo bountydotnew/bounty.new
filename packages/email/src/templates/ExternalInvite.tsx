@@ -13,13 +13,9 @@ import * as React from 'react';
 
 interface ExternalInviteProps {
   inviteUrl: string;
-  accessStage?: 'alpha' | 'beta' | 'production' | 'none';
 }
 
-const ExternalInvite = ({
-  inviteUrl,
-  accessStage = 'beta',
-}: ExternalInviteProps) => {
+const ExternalInvite = ({ inviteUrl }: ExternalInviteProps) => {
   return (
     <Html dir="ltr" lang="en">
       <Tailwind>
@@ -34,9 +30,6 @@ const ExternalInvite = ({
             />
             <Text className="m-0 mb-[24px] font-bold text-[#fdfdfd] text-[36px] leading-[40px]">
               You're invited.
-            </Text>
-            <Text className="m-0 mb-[40px] font-normal text-[#848484] text-[16px] leading-[24px] tracking-[0.3px]">
-              Access level: {accessStage.toUpperCase()}
             </Text>
             <Button
               className="mb-[40px] box-border inline-block rounded-[22px] bg-[#fdfdfd] px-[48px] py-[16px] font-semibold text-[#000000] text-[16px] no-underline"

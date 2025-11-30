@@ -1,9 +1,9 @@
 import { cn } from '@bounty/ui/lib/utils';
-import GCombinator from '@/components/icons/g-combinator';
+import GCombinator from '@bounty/ui/components/icons/gcombinator';
 
 /**
- * Usage:
- * <BackedByBadge />
+   * Usage:
+   * <BackedByBadge />
  */
 
 export function BackedByBadge() {

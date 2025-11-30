@@ -5,20 +5,33 @@ import { useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import type { NotificationItem } from '@/types/notifications';
 import { trpc } from '@/utils/trpc';
+import { useRealtime } from '@upstash/realtime/client';
+import type { RealtimeEvents, RealtimeSchema } from '@bounty/types/realtime';
+import { authClient } from '@bounty/auth/client';
 
-const POLL_MS = 30_000;
+export const useNotifications = () => {
+  const { data: session, isPending } = authClient.useSession();
+  const isAuthenticated = !!session?.user;
 
-export function useNotifications() {
   const notificationsQuery = useQuery({
     ...trpc.notifications.getAll.queryOptions({ limit: 50 }),
-    refetchInterval: POLL_MS,
-    refetchIntervalInBackground: false,
+    enabled: isAuthenticated && !isPending,
   });
 
   const unreadCountQuery = useQuery({
     ...trpc.notifications.getUnreadCount.queryOptions(),
-    refetchInterval: POLL_MS,
-    refetchIntervalInBackground: false,
+    enabled: isAuthenticated && !isPending,
+  });
+  const unreadCount = Number(unreadCountQuery.data ?? 0);
+
+  useRealtime<RealtimeSchema, 'notifications.refresh'>({
+    enabled: isAuthenticated && !isPending,
+    onData: (payload: { data: RealtimeEvents['notifications']['refresh'] }) => {
+      if (payload.data.userId === session?.user?.id) {
+        notificationsQuery.refetch();
+        unreadCountQuery.refetch();
+      }
+    },
   });
 
   const markAsReadMutation = useMutation(
@@ -48,11 +61,10 @@ export function useNotifications() {
   );
 
   const markAllAsRead = useCallback(() => {
-    const count = unreadCountQuery.data ?? 0;
-    if (count > 0) {
+    if (unreadCount > 0) {
       markAllAsReadMutation.mutate();
     }
-  }, [markAllAsReadMutation, unreadCountQuery.data]);
+  }, [markAllAsReadMutation, unreadCount]);
 
   const refetch = useCallback(() => {
     notificationsQuery.refetch();
@@ -71,7 +83,7 @@ export function useNotifications() {
 
   return {
     notifications: (notificationsQuery.data ?? []) as NotificationItem[],
-    unreadCount: unreadCountQuery.data ?? 0,
+    unreadCount,
     isLoading: notificationsQuery.isLoading,
     hasError: notificationsQuery.isError || unreadCountQuery.isError,
     error: notificationsQuery.error || unreadCountQuery.error,
@@ -81,5 +93,4 @@ export function useNotifications() {
     isMarkingAsRead: markAsReadMutation.isPending,
     isMarkingAllAsRead: markAllAsReadMutation.isPending,
   } as const;
-}
-
+};

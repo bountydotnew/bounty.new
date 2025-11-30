@@ -4,13 +4,8 @@
     "interface": true,
     "type": true
   },
-  "tags": [
-    "-lintignore"
-  ],
-  "ignoreWorkspaces": [
-    "packages/db",
-    "packages/vscode-extension"
-  ],
+  "tags": ["-lintignore"],
+  "ignoreWorkspaces": ["packages/db"],
   "workspaces": {
     ".": {
       "entry": [
@@ -35,22 +30,11 @@
         "src/index.{ts,tsx}",
         "src/server/**/*.{ts,tsx}"
       ],
-      "project": [
-        "src/**/*.{ts,tsx}",
-        "scripts/**/*.{ts,js}"
-      ]
+      "project": ["src/**/*.{ts,tsx}", "scripts/**/*.{ts,js}"]
     },
     "packages/*": {
-      "entry": [
-        "src/index.{ts,tsx}",
-        "src/cli.{ts,tsx}",
-        "index.ts",
-        "cli.ts"
-      ],
-      "project": [
-        "src/**/*.{ts,tsx}",
-        "cli/**/*.{ts,js}"
-      ]
+      "entry": ["src/index.{ts,tsx}", "src/cli.{ts,tsx}", "index.ts", "cli.ts"],
+      "project": ["src/**/*.{ts,tsx}", "cli/**/*.{ts,js}"]
     }
   }
 }
