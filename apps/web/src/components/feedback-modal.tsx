@@ -158,7 +158,7 @@ export function FeedbackModal() {
       console.error("[Feedback] Error sending feedback:", error)
       // Reset status so user can try again
       setStatus("idle")
-      alert("Failed to send feedback. Please try again.")
+      toast.error("Failed to send feedback. Please try again.")
     }
   }
 
