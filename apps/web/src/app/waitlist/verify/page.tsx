@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { trpc } from '@/utils/trpc';
+import { db } from '@bounty/db';
 import { VerifyEmailClient } from './verify-client';
 
 interface VerifyPageProps {
@@ -17,11 +17,15 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
   // Fetch email server-side using entryId
   let email: string;
   try {
-    const entry = await trpc.earlyAccess.getWaitlistEntry.query({ entryId });
-    if (!entry.success || !entry.data?.email) {
+    // Query database directly to avoid exposing email in URL/logs
+    const entry = await db.query.waitlist.findFirst({
+      where: (fields, { eq }) => eq(fields.id, entryId),
+    });
+
+    if (!entry || !entry.email) {
       redirect('/');
     }
-    email = entry.data.email;
+    email = entry.email;
   } catch (error) {
     // If entry not found or error, redirect to home
     redirect('/');
