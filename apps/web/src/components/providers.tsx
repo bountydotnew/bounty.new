@@ -27,7 +27,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       enableSystem
     >
       <QueryClientProvider client={queryClient}>
-        <RealtimeProvider endpoint="/api/realtime">
+        <RealtimeProvider>
           <ConfettiProvider>
             <UserProvider>
               <AuthUIProvider
