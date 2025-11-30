@@ -64,36 +64,6 @@ export async function GET(
       };
     } = await repoResponse.json();
 
-    let difficultyStyles: {
-      border: string;
-      backgroundColor: string;
-    } = {
-      border: '1px solid #151515',
-      backgroundColor: '#151515',
-    };
-
-    if (thisBounty.difficulty === 'beginner') {
-      difficultyStyles = {
-        border: '1px solid #151515',
-        backgroundColor: '#151515',
-      };
-    } else if (thisBounty.difficulty === 'intermediate') {
-      difficultyStyles = {
-        border: '1px solid #147224',
-        backgroundColor: '#147224',
-      };
-    } else if (thisBounty.difficulty === 'advanced') {
-      difficultyStyles = {
-        border: '1px solid #C44F16',
-        backgroundColor: '#C44F16',
-      };
-    } else if (thisBounty.difficulty === 'expert') {
-      difficultyStyles = {
-        border: '1px solid #9f0712',
-        backgroundColor: '#9f0712',
-      };
-    }
-
     repoData = await repoResponse.json();
 
     return new ImageResponse(
@@ -272,26 +242,6 @@ export async function GET(
                 }}
               >
                 {formatCurrency(Number(thisBounty.amount), thisBounty.currency)}
-              </div>
-              <div
-                style={{
-                  fontSize: '24px',
-                  color: '#D0D0D0',
-                  lineHeight: '1.4',
-                  maxWidth: '700px',
-                  display: 'flex',
-
-                  ...difficultyStyles,
-                  borderTop: '1px solid #ffffff50',
-                  borderRadius: '16px',
-                  padding: '6px 12px',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0px 0px 8.5px 0px rgba(0, 0, 0, 0.25)',
-                  textTransform: 'capitalize',
-                }}
-              >
-                {thisBounty.difficulty}
               </div>
             </div>
           </div>

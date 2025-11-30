@@ -7,6 +7,7 @@ import { Databuddy } from '@databuddy/sdk';
 import { AuthUIProvider } from '@daveyplate/better-auth-ui';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { RealtimeProvider } from '@upstash/realtime/client';
 import { useRouter } from 'next/navigation';
 import ImpersonationBanner from '@/components/impersonation-banner';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -26,22 +27,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
       enableSystem
     >
       <QueryClientProvider client={queryClient}>
-        <ConfettiProvider>
-          <UserProvider>
-            <AuthUIProvider
-              authClient={authClient}
-              Link={Link}
-              navigate={router.push}
-              onSessionChange={() => {
-                // Clear router cache (protected routes)
-                router.refresh();
-              }}
-              replace={router.replace}
-            >
-              <ImpersonationBanner />
-              {children}
-            </AuthUIProvider>
-          </UserProvider>
+        <RealtimeProvider endpoint="/api/realtime">
+          <ConfettiProvider>
+            <UserProvider>
+              <AuthUIProvider
+                authClient={authClient}
+                Link={Link}
+                navigate={router.push}
+                onSessionChange={() => {
+                  // Clear router cache (protected routes)
+                  router.refresh();
+                }}
+                replace={router.replace}
+              >
+                <ImpersonationBanner />
+                {children}
+              </AuthUIProvider>
+            </UserProvider>
           <Databuddy
             clientId="bounty"
             enableBatching={true}
@@ -56,7 +58,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
             trackScrollDepth={true}
             trackWebVitals={true}
           />
-        </ConfettiProvider>
+          </ConfettiProvider>
+        </RealtimeProvider>
         <ReactQueryDevtools />
         <Toaster
           icons={TOAST_ICONS}

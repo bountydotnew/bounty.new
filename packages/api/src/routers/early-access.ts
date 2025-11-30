@@ -355,9 +355,6 @@ export const earlyAccessRouter = router({
         bountyTitle: z.string().optional(),
         bountyDescription: z.string().optional(),
         bountyAmount: z.string().optional(),
-        bountyDifficulty: z
-          .enum(['beginner', 'intermediate', 'advanced', 'expert'])
-          .optional(),
         bountyGithubIssueUrl: z.string().url().optional(),
       })
     )
@@ -411,8 +408,6 @@ export const earlyAccessRouter = router({
               bountyDescription:
                 input.bountyDescription ?? existingEntry.bountyDescription,
               bountyAmount: input.bountyAmount ?? existingEntry.bountyAmount,
-              bountyDifficulty:
-                input.bountyDifficulty ?? existingEntry.bountyDifficulty,
               bountyGithubIssueUrl:
                 input.bountyGithubIssueUrl ??
                 existingEntry.bountyGithubIssueUrl,
@@ -436,7 +431,6 @@ export const earlyAccessRouter = router({
               bountyTitle: input.bountyTitle,
               bountyDescription: input.bountyDescription,
               bountyAmount: input.bountyAmount,
-              bountyDifficulty: input.bountyDifficulty,
               bountyGithubIssueUrl: input.bountyGithubIssueUrl,
               position,
               createdAt: new Date(),
@@ -656,7 +650,6 @@ export const earlyAccessRouter = router({
             bountyTitle: entry.bountyTitle,
             bountyDescription: entry.bountyDescription,
             bountyAmount: entry.bountyAmount,
-            bountyDifficulty: entry.bountyDifficulty,
             bountyGithubIssueUrl: entry.bountyGithubIssueUrl,
             userId: entry.userId,
             createdAt: entry.createdAt,
@@ -800,12 +793,6 @@ export const earlyAccessRouter = router({
                 description: entry.bountyDescription ?? '',
                 amount: entry.bountyAmount,
                 currency: 'USD',
-                difficulty:
-                  (entry.bountyDifficulty as
-                    | 'beginner'
-                    | 'intermediate'
-                    | 'advanced'
-                    | 'expert') ?? 'intermediate',
                 status: 'draft',
                 issueUrl: entry.bountyGithubIssueUrl ?? undefined,
                 createdById: userId,
@@ -918,9 +905,6 @@ export const earlyAccessRouter = router({
         bountyTitle: z.string().optional(),
         bountyDescription: z.string().optional(),
         bountyAmount: z.string().optional(),
-        bountyDifficulty: z
-          .enum(['beginner', 'intermediate', 'advanced', 'expert'])
-          .optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -947,8 +931,6 @@ export const earlyAccessRouter = router({
             bountyDescription:
               bountyData.bountyDescription ?? entry.bountyDescription,
             bountyAmount: bountyData.bountyAmount ?? entry.bountyAmount,
-            bountyDifficulty:
-              bountyData.bountyDifficulty ?? entry.bountyDifficulty,
           })
           .where(eq(waitlist.id as any, entryId) as any);
 

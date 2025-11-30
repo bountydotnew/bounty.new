@@ -12,7 +12,6 @@ const MOCK_BOUNTY = {
   amount: 500,
   currency: 'USD',
   status: 'open' as const,
-  difficulty: 'intermediate' as const,
   creator: {
     id: '1',
     name: 'Sarah Chen',

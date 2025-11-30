@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server"
 
 const DISCORD_WEBHOOK_URL =
-  process.env.FEEDBACK_WEBHOOK_URL ||
-  "https://discord.com/api/webhooks/1441983688421281954/ios8LHlLEQdYwOM5jKhDOzIhuIZqg_QsPCKJmVJ_5453ljHnJsPWfzo-jqlyH3gK_z9d"
+  process.env.FEEDBACK_WEBHOOK_URL as string
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +14,7 @@ export async function POST(request: Request) {
     const element = elementStr ? JSON.parse(elementStr) : null
 
     if (!DISCORD_WEBHOOK_URL) {
-      return NextResponse.json({ error: "Webhook URL not configured" }, { status: 500 })
+      return NextResponse.json({ error: "Webhook URL not configured" }, { status: 400 })
     }
 
     const discordPayload = {

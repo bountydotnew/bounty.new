@@ -31,7 +31,6 @@ interface BountyDetailPageProps {
   description: string;
   tags: string[];
   user: string;
-  rank: string;
   avatarSrc: string;
   hasBadge: boolean;
   canEditBounty: boolean;
@@ -47,7 +46,6 @@ export default function BountyDetailPage({
   description,
   amount,
   user,
-  rank,
   avatarSrc,
   canEditBounty,
   canDeleteBounty = false,
@@ -321,7 +319,6 @@ export default function BountyDetailPage({
                         <Check className="-rotate-45 h-2.5 w-2.5 transform text-white" />
                       </div>
                     </div>
-                    <span className="text-gray-400 text-xs">{rank}</span>
                   </div>
                 </div>
 

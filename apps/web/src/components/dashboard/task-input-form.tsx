@@ -20,6 +20,8 @@ import {
     formatFormData,
 } from '@bounty/ui/lib/forms';
 import { cn } from '@bounty/ui/lib/utils';
+import { Calendar } from 'lucide-react';
+import GitHub from '@/components/icons/github';
 
 // Hooks
 import { useRepositories } from '@bounty/ui/hooks/useRepositories';
@@ -29,7 +31,6 @@ import { useIssues } from '@bounty/ui/hooks/useIssues';
 // Components
 import { TitleChip } from './task-form/components/TitleChip';
 import { PriceChip } from './task-form/components/PriceChip';
-import { DifficultyChip } from './task-form/components/DifficultyChip';
 import { DescriptionTextarea } from './task-form/components/DescriptionTextarea';
 import { RepoSelector } from './task-form/components/RepoSelector';
 import { BranchSelector } from './task-form/components/BranchSelector';
@@ -112,6 +113,8 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
     const [selectedIssue, setSelectedIssue] = useState<{ number: number; title: string; url: string } | null>(null);
     const [showImportPrompt, setShowImportPrompt] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
+    const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
+    const deadline = watch('deadline');
 
     // Autofill prompt state (for issues)
     const [showAutofillPrompt, setShowAutofillPrompt] = useState(false);
@@ -121,7 +124,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
 
     // Bounty creation mutation
     const createBounty = useMutation({
-        mutationFn: async (input: CreateBountyForm & { difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert' }) => {
+        mutationFn: async (input: CreateBountyForm) => {
             return await trpcClient.bounties.createBounty.mutate(input);
         },
         onSuccess: (result) => {
@@ -134,9 +137,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
             setSelectedRepository('');
             setSelectedIssue(null);
             setIssueQuery('');
-            if (result?.data?.id) {
-                router.push(`/bounty/${result.data.id}`);
-            }
+            router.push(`/dashboard`);
         },
         onError: (error: Error) => {
             toast.error(`Failed to create bounty: ${error.message}`);
@@ -145,13 +146,11 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
 
     const onSubmit = formHandleSubmit(
         (data: CreateBountyForm) => {
-            // Type assertion needed because schema allows empty string initially but validates it
-            // By this point, validation ensures difficulty is not empty
             const formattedData = formatFormData.createBounty({
                 ...data,
                 repositoryUrl: selectedRepository ? `https://github.com/${selectedRepository}` : undefined,
                 issueUrl: selectedIssue?.url,
-            }) as CreateBountyForm & { difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert' };
+            });
             
             createBounty.mutate(formattedData);
         },
@@ -295,6 +294,43 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                                 <TitleChip control={control} />
                                 <PriceChip control={control} />
                                 
+                                {/* Deadline chip */}
+                                <Popover open={showDeadlinePicker} onOpenChange={setShowDeadlinePicker}>
+                                    <PopoverTrigger asChild>
+                                        <button 
+                                            type="button"
+                                            className="rounded-[7px] px-1.5 py-[3px] bg-[#201F1F] text-[#5A5A5A] text-[16px] leading-5 font-normal flex items-center gap-1 hover:text-white transition-colors"
+                                        >
+                                            <Calendar className="w-4 h-4 shrink-0" />
+                                            {deadline ? new Date(deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Deadline"}
+                                        </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Controller
+                                            control={control}
+                                            name="deadline"
+                                            render={({ field }) => (
+                                                <input
+                                                    type="datetime-local"
+                                                    value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ""}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        if (value) {
+                                                            const date = new Date(value);
+                                                            field.onChange(date.toISOString());
+                                                        } else {
+                                                            field.onChange(undefined);
+                                                        }
+                                                        setShowDeadlinePicker(false);
+                                                    }}
+                                                    className="bg-transparent text-white p-4 outline-none"
+                                                    min={new Date().toISOString().slice(0, 16)}
+                                                />
+                                            )}
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                                
                                 {/* Currency selector - hidden but kept for form */}
                                 <Controller
                                     control={control}
@@ -310,20 +346,16 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                                     )}
                                 />
 
-                                <DifficultyChip control={control} />
                             </div>
                             
                             {/* Error messages below chips */}
-                            {(errors.title || errors.amount || errors.difficulty) && (
+                            {(errors.title || errors.amount) && (
                                 <div className="flex flex-row flex-wrap items-center gap-3 px-1">
                                     {errors.title && (
                                         <span className="text-red-500 text-xs">{errors.title.message}</span>
                                     )}
                                     {errors.amount && (
                                         <span className="text-red-500 text-xs">{errors.amount.message}</span>
-                                    )}
-                                    {errors.difficulty && (
-                                        <span className="text-red-500 text-xs">{errors.difficulty.message}</span>
                                     )}
                                 </div>
                             )}
@@ -332,7 +364,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                         {/* Main textarea for description */}
                         <DescriptionTextarea
                             control={control}
-                            placeholder={placeholder}
+                            placeholder="Start typing your description..."
                             textareaRef={textareaRef}
                         />
 
@@ -419,18 +451,18 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                                 type="submit"
                                 disabled={createBounty.isPending || !title || !amount}
                                 className={cn(
-                                    "w-10 h-8 rounded-full flex items-center justify-center transition-all duration-200",
+                                    "flex items-center justify-center gap-1.5 px-[13px] h-[31.9965px] rounded-full text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50",
                                     createBounty.isPending
                                         ? "bg-[#1a1a1a] cursor-wait"
                                         : title && amount
-                                            ? "bg-[#0F0F0F] hover:bg-[#252525] cursor-pointer"
-                                            : "bg-[#0F0F0F] opacity-50 cursor-not-allowed"
+                                            ? "bg-white text-black cursor-pointer"
+                                            : "bg-white text-black opacity-50 cursor-not-allowed"
                                 )}
                             >
                                 {createBounty.isPending ? (
-                                    <Spinner size="sm" className="w-4 h-4 text-[#5A5A5A]" />
+                                    <Spinner size="sm" className="w-4 h-4" />
                                 ) : (
-                                    <ArrowRight className="w-4 h-4 text-[#5A5A5A]" />
+                                    <span>Create bounty</span>
                                 )}
                             </button>
                         </div>

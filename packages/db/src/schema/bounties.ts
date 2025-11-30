@@ -26,12 +26,6 @@ export const submissionStatusEnum = pgEnum('submission_status', [
   'rejected',
   'revision_requested',
 ]);
-export const difficultyEnum = pgEnum('difficulty', [
-  'beginner',
-  'intermediate',
-  'advanced',
-  'expert',
-]);
 
 export const bounty = pgTable('bounty', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
@@ -40,7 +34,6 @@ export const bounty = pgTable('bounty', {
   amount: decimal('amount', { precision: 15, scale: 2 }).notNull(),
   currency: text('currency').notNull().default('USD'),
   status: bountyStatusEnum('status').notNull().default('draft'),
-  difficulty: difficultyEnum('difficulty').notNull().default('intermediate'),
   deadline: timestamp('deadline'),
   tags: text('tags').array(),
   repositoryUrl: text('repository_url'),

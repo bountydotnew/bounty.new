@@ -17,10 +17,6 @@ export const createBountySchema = z.object({
     .min(1, 'Amount cannot be empty')
     .max(10_000_000_000, 'Amount cannot be greater than 100,000'),
   currency: z.string().min(1, 'Currency cannot be empty'),
-  difficulty: z.enum(['beginner', 'intermediate', 'advanced', 'expert'], {
-    required_error: 'Please select a difficulty',
-    invalid_type_error: 'Please select a difficulty',
-  }),
   deadline: z.string().optional(),
   tags: z.array(z.string()).optional(),
   repositoryUrl: z.string().url().optional().or(z.literal('')),
@@ -34,7 +30,6 @@ export const createBountyDefaults: CreateBountyForm = {
   description: '',
   amount: '',
   currency: 'USD',
-  difficulty: 'beginner',
   deadline: '',
   tags: [],
   repositoryUrl: '',
@@ -56,12 +51,6 @@ export const currencyOptions = [
   { value: 'GBP', label: 'GBP' },
 ];
 
-export const difficultyOptions = [
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'advanced', label: 'Advanced' },
-  { value: 'expert', label: 'Expert' },
-];
 
 // =====================
 // FORM HELPERS

@@ -117,7 +117,6 @@ export default function BountyPage() {
   const detailTags: string[] = bountyDetail.data.bounty.tags ?? [];
   const detailUser: string = bountyDetail.data.bounty.creator.name ?? '';
   const detailAvatarSrc: string = bountyDetail.data.bounty.creator.image ?? '';
-  const detailRank: string = bountyDetail.data.bounty.difficulty;
 
   const initialComments = (bountyDetail.data.comments ?? []).map((comment) => ({
     ...comment,
@@ -200,7 +199,6 @@ export default function BountyPage() {
       initialBookmarked={Boolean(bountyDetail.data.bookmarked)}
       initialComments={initialComments}
       initialVotes={bountyDetail.data.votes}
-      rank={detailRank}
       tags={detailTags}
       title={detailTitle}
       user={detailUser}

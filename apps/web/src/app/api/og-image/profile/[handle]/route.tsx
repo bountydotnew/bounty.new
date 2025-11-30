@@ -1,6 +1,5 @@
-import { db, user } from '@bounty/db';
+import { db } from '@bounty/db';
 import { ImageResponse } from '@vercel/og';
-import { eq } from 'drizzle-orm';
 import type { NextRequest } from 'next/server';
 
 // Force dynamic rendering to avoid build-time static generation issues
@@ -36,30 +35,28 @@ export async function GET(
             return new Response('Handle is required', { status: 400 });
         }
 
-        // Try to fetch user by handle first
-        let [userData] = await db
-            .select({
-                id: user.id,
-                name: user.name,
-                handle: user.handle,
-                image: user.image,
-            })
-            .from(user)
-            .where(eq(user.handle, handle.toLowerCase()))
-            .limit(1);
+        // Try to fetch user by handle first using relational query API
+        let userData = await db.query.user.findFirst({
+            columns: {
+                id: true,
+                name: true,
+                handle: true,
+                image: true,
+            },
+            where: (fields, { eq }) => eq(fields.handle, handle.toLowerCase()),
+        });
 
         // If not found by handle, try by userId (for backwards compatibility)
         if (!userData) {
-            [userData] = await db
-                .select({
-                    id: user.id,
-                    name: user.name,
-                    handle: user.handle,
-                    image: user.image,
-                })
-                .from(user)
-                .where(eq(user.id, handle))
-                .limit(1);
+            userData = await db.query.user.findFirst({
+                columns: {
+                    id: true,
+                    name: true,
+                    handle: true,
+                    image: true,
+                },
+                where: (fields, { eq }) => eq(fields.id, handle),
+            });
         }
 
         if (!userData) {

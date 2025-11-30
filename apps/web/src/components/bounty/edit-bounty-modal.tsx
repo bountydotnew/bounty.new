@@ -17,7 +17,6 @@ import {
   createBountyDefaults,
   createBountySchema,
   currencyOptions,
-  difficultyOptions,
   formatFormData,
 } from '@bounty/ui/lib/forms';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -72,7 +71,6 @@ export function EditBountyModal({
         description: bounty.description,
         amount: bounty.amount.toString(),
         currency: bounty.currency,
-        difficulty: bounty.difficulty,
         deadline: bounty.deadline
           ? new Date(bounty.deadline).toISOString().slice(0, 16)
           : '',
@@ -310,32 +308,6 @@ export function EditBountyModal({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="difficulty">Difficulty *</Label>
-              <Controller
-                control={control}
-                name="difficulty"
-                render={({ field }) => (
-                  <select
-                    {...field}
-                    className={`w-full rounded-md border px-3 py-2 ${errors.difficulty ? 'border-red-500' : 'border-border'}`}
-                    id="difficulty"
-                  >
-                    {difficultyOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              />
-              {errors.difficulty && (
-                <p className="mt-1 text-red-500 text-sm">
-                  {errors.difficulty.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="repositoryUrl">Repository URL (Optional)</Label>
               <Controller
                 control={control}
@@ -512,32 +484,6 @@ export function EditBountyModal({
                 </p>
               )}
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="difficulty">Difficulty *</Label>
-            <Controller
-              control={control}
-              name="difficulty"
-              render={({ field }) => (
-                <select
-                  {...field}
-                  className={`w-full rounded-md border px-3 py-2 ${errors.difficulty ? 'border-red-500' : 'border-border'}`}
-                  id="difficulty"
-                >
-                  {difficultyOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              )}
-            />
-            {errors.difficulty && (
-              <p className="mt-1 text-red-500 text-sm">
-                {errors.difficulty.message}
-              </p>
-            )}
           </div>
 
           {/* <div className="space-y-2">

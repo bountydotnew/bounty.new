@@ -11,8 +11,17 @@ export function TitleChip({ control }: TitleChipProps) {
     const titleRef = useRef<HTMLInputElement>(null);
     const [isTitleFocused, setIsTitleFocused] = useState(false);
 
+    const handleContainerClick = () => {
+        if (titleRef.current) {
+            titleRef.current.focus();
+        }
+    };
+
     return (
-        <div className="relative rounded-[7px] flex flex-row items-center px-1.5 py-[3px] bg-[#201F1F] gap-1">
+        <div 
+            className="relative rounded-[7px] flex flex-row items-center px-1.5 py-[3px] bg-[#201F1F] gap-1 cursor-text"
+            onClick={handleContainerClick}
+        >
             <Controller
                 control={control}
                 name="title"
@@ -21,13 +30,14 @@ export function TitleChip({ control }: TitleChipProps) {
                     const isNotFocused = !isTitleFocused;
                     const showPlaceholder = !hasFieldValue && isNotFocused;
                     const shouldUseWiderWidth = isTitleFocused || hasFieldValue;
-                    const minWidth = shouldUseWiderWidth ? 60 : 20;
-                    const inputWidth = calculateWidth(field.value, minWidth);
+                    // Ensure minimum width covers the placeholder text
+                    const minWidth = shouldUseWiderWidth ? 60 : 50;
+                    const inputWidth = calculateWidth(field.value || 'Title', minWidth);
                     
                     return (
                         <>
                             {showPlaceholder && (
-                                <span className="text-[#5A5A5A] text-[16px] leading-5 font-normal pointer-events-none">Title</span>
+                                <span className="text-[#5A5A5A] text-[16px] leading-5 font-normal pointer-events-none absolute left-1.5">Title</span>
                             )}
                             <input
                                 ref={(e) => {

@@ -65,7 +65,6 @@ export interface ProfileBounty {
   amount: number;
   currency: string;
   status: 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled';
-  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
   deadline: string | null;
   tags: string[] | null;
   repositoryUrl: string | null;

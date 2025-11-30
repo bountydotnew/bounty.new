@@ -1,14 +1,15 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useQueryState, parseAsString } from 'nuqs';
 import { VerifyEmail } from '@/components/waitlist/verify-email';
 
-export default function VerifyPage() {
+function VerifyContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const entryId = searchParams.get('entryId');
-  const email = searchParams.get('email');
+  const [entryId] = useQueryState('entryId', parseAsString);
+  const [email] = useQueryState('email', parseAsString);
 
   const [verifiedEntryId, setVerifiedEntryId] = useState<string | null>(null);
 
@@ -38,5 +39,19 @@ export default function VerifyPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense fallback={
+      <div className="relative min-h-screen text-white flex items-center justify-center" style={{
+        background: 'linear-gradient(180deg, rgba(22, 22, 22, 1) 0%, rgba(12, 12, 12, 1) 100%)',
+      }}>
+        <div className="h-8 w-8 animate-spin rounded-full border-foreground border-b-2" />
+      </div>
+    }>
+      <VerifyContent />
+    </Suspense>
   );
 }

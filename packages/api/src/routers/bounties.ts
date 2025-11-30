@@ -42,7 +42,6 @@ const createBountySchema = z.object({
 
   amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, 'Incorrect amount.'),
   currency: z.string().default('USD'),
-  difficulty: z.enum(['beginner', 'intermediate', 'advanced', 'expert']),
   deadline: z.string().datetime().optional(),
   tags: z.array(z.string()).optional(),
   repositoryUrl: z.string().url().optional(),
@@ -59,9 +58,6 @@ const updateBountySchema = z.object({
     .regex(/^\d{1,13}(\.\d{1,2})?$/, 'Incorrect amount.')
     .optional(),
   currency: z.string().optional(),
-  difficulty: z
-    .enum(['beginner', 'intermediate', 'advanced', 'expert'])
-    .optional(),
   deadline: z.string().datetime().optional(),
   tags: z.array(z.string()).optional(),
   repositoryUrl: z.string().url().optional(),
@@ -76,9 +72,6 @@ const getBountiesSchema = z.object({
   limit: z.number().int().positive().max(100).default(20),
   status: z
     .enum(['draft', 'open', 'in_progress', 'completed', 'cancelled'])
-    .optional(),
-  difficulty: z
-    .enum(['beginner', 'intermediate', 'advanced', 'expert'])
     .optional(),
   search: z.string().optional(),
   tags: z.array(z.string()).optional(),
@@ -227,7 +220,6 @@ export const bountiesRouter = router({
             description: input.description,
             amount: normalizedAmount,
             currency: input.currency,
-            difficulty: input.difficulty,
             deadline,
             tags: cleanedTags ?? null,
             repositoryUrl,
@@ -251,7 +243,6 @@ export const bountiesRouter = router({
             user_id: ctx.session.user.id,
             amount: parseAmount(normalizedAmount),
             currency: input.currency,
-            difficulty: input.difficulty,
             has_repo: Boolean(repositoryUrl),
             has_issue: Boolean(issueUrl),
             tags_count: cleanedTags?.length ?? 0,
@@ -291,10 +282,6 @@ export const bountiesRouter = router({
           conditions.push(eq(bounty.status, input.status));
         }
 
-        if (input.difficulty) {
-          conditions.push(eq(bounty.difficulty, input.difficulty));
-        }
-
         if (input.search) {
           conditions.push(
             or(
@@ -316,7 +303,6 @@ export const bountiesRouter = router({
             amount: bounty.amount,
             currency: bounty.currency,
             status: bounty.status,
-            difficulty: bounty.difficulty,
             deadline: bounty.deadline,
             tags: bounty.tags,
             repositoryUrl: bounty.repositoryUrl,
@@ -385,7 +371,6 @@ export const bountiesRouter = router({
             amount: bounty.amount,
             currency: bounty.currency,
             status: bounty.status,
-            difficulty: bounty.difficulty,
             deadline: bounty.deadline,
             tags: bounty.tags,
             repositoryUrl: bounty.repositoryUrl,
@@ -442,7 +427,6 @@ export const bountiesRouter = router({
           amount: bounty.amount,
           currency: bounty.currency,
           status: bounty.status,
-          difficulty: bounty.difficulty,
           deadline: bounty.deadline,
           tags: bounty.tags,
           repositoryUrl: bounty.repositoryUrl,
@@ -500,7 +484,6 @@ export const bountiesRouter = router({
             amount: bounty.amount,
             currency: bounty.currency,
             status: bounty.status,
-            difficulty: bounty.difficulty,
             deadline: bounty.deadline,
             tags: bounty.tags,
             repositoryUrl: bounty.repositoryUrl,
@@ -543,7 +526,6 @@ export const bountiesRouter = router({
             amount: bounty.amount,
             currency: bounty.currency,
             status: bounty.status,
-            difficulty: bounty.difficulty,
             deadline: bounty.deadline,
             tags: bounty.tags,
             repositoryUrl: bounty.repositoryUrl,
@@ -682,7 +664,6 @@ export const bountiesRouter = router({
             user_id: ctx.session.user.id,
             amount: parseAmount(updatedBounty.amount),
             currency: input.currency,
-            difficulty: input.difficulty,
             has_repo: Boolean(updatedBounty.repositoryUrl),
             has_issue: Boolean(updatedBounty.issueUrl),
             tags_count: updatedBounty.tags?.length ?? 0,
@@ -870,7 +851,6 @@ export const bountiesRouter = router({
             amount: bounty.amount,
             currency: bounty.currency,
             status: bounty.status,
-            difficulty: bounty.difficulty,
             deadline: bounty.deadline,
             tags: bounty.tags,
             repositoryUrl: bounty.repositoryUrl,
@@ -1166,7 +1146,6 @@ export const bountiesRouter = router({
             amount: bounty.amount,
             currency: bounty.currency,
             status: bounty.status,
-            difficulty: bounty.difficulty,
             deadline: bounty.deadline,
             tags: bounty.tags,
             repositoryUrl: bounty.repositoryUrl,
@@ -1728,7 +1707,6 @@ export const bountiesRouter = router({
             amount: bounty.amount,
             currency: bounty.currency,
             status: bounty.status,
-            difficulty: bounty.difficulty,
             deadline: bounty.deadline,
             tags: bounty.tags,
             repositoryUrl: bounty.repositoryUrl,
