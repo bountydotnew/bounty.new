@@ -109,6 +109,7 @@ export function AccountDropdown({
   user,
   children,
   onOpenChange: externalOnOpenChange,
+  onUpgradeClick,
 }: AccountDropdownProps & {
   children?: React.ReactNode;
   onOpenChange?: (open: boolean) => void;
@@ -211,6 +212,19 @@ export function AccountDropdown({
 
         {/* Actions section */}
         <div className="flex flex-col gap-2 border-b border-[#292828] px-0 py-2">
+          {onUpgradeClick && (
+            <DropdownMenuItem
+              className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
+              onClick={() => {
+                setMenuOpen(false);
+                onUpgradeClick();
+              }}
+            >
+              <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
+                Upgrade
+              </span>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             className="flex items-center justify-between rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
             onClick={() => setMenuOpen(false)}

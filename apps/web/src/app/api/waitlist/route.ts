@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       return NextResponse.json(
         {
-          error: error instanceof Error ? error.message : 'Database temporarily unavailable',
+          error: 'Database temporarily unavailable',
           success: false,
         },
         { status: 500 }

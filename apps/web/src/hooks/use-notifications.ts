@@ -26,16 +26,8 @@ export const useNotifications = () => {
 
   useRealtime<RealtimeSchema, 'notifications.refresh'>({
     enabled: isAuthenticated && !isPending,
-    onData: (payload) => {
-      const message = payload as unknown as {
-        event: 'notifications.refresh';
-        data: RealtimeEvents['notifications']['refresh'];
-        channel: string;
-      };
-      if (message.event !== 'notifications.refresh') {
-        return;
-      }
-      if (message.data.userId && message.data.userId === session?.user?.id) {
+    onData: (payload: { data: RealtimeEvents['notifications']['refresh'] }) => {
+      if (payload.data.userId === session?.user?.id) {
         notificationsQuery.refetch();
         unreadCountQuery.refetch();
       }

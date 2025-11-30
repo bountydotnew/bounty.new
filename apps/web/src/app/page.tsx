@@ -42,9 +42,7 @@ export default function Home() {
       WAITLIST_STORAGE_KEY,
       JSON.stringify({ entryId, email })
     );
-    router.push(
-      `/waitlist/verify?entryId=${entryId}&email=${encodeURIComponent(email)}`
-    );
+    router.push(`/waitlist/verify?entryId=${entryId}`);
   };
 
   const handleCheckPlace = () => {

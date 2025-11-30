@@ -2,17 +2,21 @@ import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
 import { eq, lt } from 'drizzle-orm';
 import { z } from 'zod';
+import { randomInt } from 'crypto';
 
 const info = console.info.bind(console);
 const error = console.error.bind(console);
 const warn = console.warn.bind(console);
 
-// Generate 6-digit OTP code
+// Generate 6-digit OTP code using cryptographically secure random number
 const generateOTP = (): string => {
-  return Math.floor(100_000 + Math.random() * 900_000).toString();
+  // Generate a number between 100000 (inclusive) and 1000000 (exclusive)
+  const code = randomInt(100_000, 1_000_000);
+  // Convert to string and pad with zeros if necessary (shouldn't be needed but ensures 6 digits)
+  return code.toString().padStart(6, '0');
 };
 
-import { db, user as userTable, waitlist, bounty } from '@bounty/db';
+import { db, user as userTable, waitlist, bounty, userProfile } from '@bounty/db';
 import {
   AlphaAccessGranted,
   FROM_ADDRESSES,
@@ -487,14 +491,14 @@ export const earlyAccessRouter = router({
   verifyOTP: publicProcedure
     .input(
       z.object({
-        email: z.string().email(),
+        entryId: z.string(),
         code: z.string().length(6, 'OTP code must be 6 digits'),
       })
     )
     .mutation(async ({ input }) => {
       try {
         const entry = await db.query.waitlist.findFirst({
-          where: (fields, { eq }) => eq(fields.email, input.email),
+          where: (fields, { eq }) => eq(fields.id, input.entryId),
         });
 
         if (!entry) {
@@ -540,7 +544,7 @@ export const earlyAccessRouter = router({
           .set({ emailVerified: true, otpAttempts: 0 })
           .where(eq(waitlist.id as any, entry.id) as any);
 
-        info('[verifyOTP] Email verified:', input.email);
+        info('[verifyOTP] Entry verified:', input.entryId);
         return { success: true, entryId: entry.id };
       } catch (error: unknown) {
         if (error instanceof TRPCError) {
@@ -558,13 +562,13 @@ export const earlyAccessRouter = router({
   resendOTP: publicProcedure
     .input(
       z.object({
-        email: z.string().email(),
+        entryId: z.string(),
       })
     )
     .mutation(async ({ input }) => {
       try {
         const entry = await db.query.waitlist.findFirst({
-          where: (fields, { eq }) => eq(fields.email, input.email),
+          where: (fields, { eq }) => eq(fields.id, input.entryId),
         });
 
         if (!entry) {
@@ -589,13 +593,13 @@ export const earlyAccessRouter = router({
         // Send OTP email
         try {
           await sendEmail({
-            to: input.email,
+            to: entry.email,
             subject: `Your verification code: ${otpCode}`,
             from: FROM_ADDRESSES.notifications,
             react: OTPVerification({
               code: otpCode,
               entryId: entry.id,
-              email: input.email,
+              email: entry.email,
             }),
           });
         } catch (emailError) {
@@ -606,7 +610,7 @@ export const earlyAccessRouter = router({
           });
         }
 
-        info('[resendOTP] OTP resent:', input.email);
+        info('[resendOTP] OTP resent for entry:', input.entryId);
         return { success: true };
       } catch (error: unknown) {
         if (error instanceof TRPCError) {
@@ -727,6 +731,11 @@ export const earlyAccessRouter = router({
     .input(
       z.object({
         entryId: z.string(),
+        role: z.enum(['creator', 'developer']).optional(),
+        githubId: z.string().optional(),
+        githubUsername: z.string().optional(),
+        name: z.string().optional(),
+        username: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -781,6 +790,41 @@ export const earlyAccessRouter = router({
           .update(waitlist)
           .set({ userId })
           .where(eq(waitlist.id as any, entry.id) as any);
+
+        // Update userProfile with GitHub username and role preference if provided
+        if (input.githubUsername || input.role) {
+          const existingProfile = await db.query.userProfile.findFirst({
+            where: (fields, { eq }) => eq(fields.userId, userId),
+          });
+
+          const profileUpdate: {
+            githubUsername?: string;
+            updatedAt: Date;
+          } = {
+            updatedAt: new Date(),
+          };
+
+          if (input.githubUsername) {
+            profileUpdate.githubUsername = input.githubUsername;
+          }
+
+          if (existingProfile) {
+            await db
+              .update(userProfile)
+              .set(profileUpdate)
+              .where(eq(userProfile.userId as any, userId) as any);
+          } else {
+            await db.insert(userProfile).values({
+              userId,
+              ...profileUpdate,
+            });
+          }
+
+          // Log role preference for now (can be persisted to a new field later)
+          if (input.role) {
+            info('[linkUserToWaitlist] Role preference:', input.role, 'for user:', userId);
+          }
+        }
 
         // Create real bounty from draft if draft data exists
         let bountyId: string | null = null;
@@ -898,7 +942,7 @@ export const earlyAccessRouter = router({
       }
     }),
 
-  updateBountyDraft: publicProcedure
+  updateBountyDraft: protectedProcedure
     .input(
       z.object({
         entryId: z.string(),
@@ -907,9 +951,11 @@ export const earlyAccessRouter = router({
         bountyAmount: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       try {
         const { entryId, ...bountyData } = input;
+        const userId = ctx.session.user.id;
+        const userEmail = ctx.session.user.email;
 
         // Find entry first
         const entry = await db.query.waitlist.findFirst({
@@ -920,6 +966,15 @@ export const earlyAccessRouter = router({
           throw new TRPCError({
             code: 'NOT_FOUND',
             message: 'Waitlist entry not found',
+          });
+        }
+
+        // Verify ownership: check userId match or email match
+        const isOwner = entry.userId === userId || entry.email === userEmail;
+        if (!isOwner) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You do not have permission to update this waitlist entry',
           });
         }
 

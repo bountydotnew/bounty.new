@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Github, Code, Briefcase } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
-import { trpcClient } from "@/utils/trpc";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { trpc, trpcClient } from "@/utils/trpc";
 import { authClient } from "@bounty/auth/client";
 import { toast } from "sonner";
 interface OnboardingProps {
@@ -18,6 +18,10 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [role, setRole] = useState<"creator" | "developer" | null>(null);
   const { data: session } = authClient.useSession();
+  const { data: githubAccount } = useQuery({
+    ...trpc.user.getGithubAccount.queryOptions(),
+    enabled: !!session?.user,
+  });
 
   const completeMutation = useMutation({
     mutationFn: async (input: {
@@ -31,6 +35,11 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
       // Use linkUserToWaitlist which handles the onboarding completion
       return await trpcClient.earlyAccess.linkUserToWaitlist.mutate({
         entryId: input.entryId,
+        role: input.role,
+        githubId: input.githubId,
+        githubUsername: input.githubUsername,
+        name: input.name,
+        username: input.username,
       });
     },
   });
@@ -58,6 +67,8 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
         await completeMutation.mutateAsync({
           entryId,
           role: role as "creator" | "developer",
+          githubUsername: githubAccount?.username ? githubAccount.username : undefined,
+          name: session?.user?.name ?? undefined,
         });
 
         onComplete();
@@ -177,7 +188,7 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
               </div>
               <div className="flex-1">
                 <p className="text-white text-base">
-                  @{session.user.name || "user"}
+                  @{githubAccount?.username || session.user.name || "user"}
                 </p>
                 <p className="text-[#5A5A5A] text-sm">Connected</p>
               </div>

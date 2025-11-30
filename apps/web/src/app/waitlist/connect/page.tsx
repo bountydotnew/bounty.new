@@ -16,7 +16,7 @@ function ConnectContent() {
   }
 
   const handleComplete = () => {
-    router.push(`/waitlist/dashboard?entryId=${entryId}${email ? `&email=${encodeURIComponent(email)}` : ''}`);
+    router.push(`/waitlist/dashboard?entryId=${entryId}`);
   };
 
   return (

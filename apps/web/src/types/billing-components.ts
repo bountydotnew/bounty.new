@@ -17,7 +17,7 @@ export interface SessionUser {
 
 export interface AccountDropdownProps {
   user: User;
-  onUpgradeClick: () => void;
+  onUpgradeClick?: () => void;
 }
 
 export interface UserDisplayData {

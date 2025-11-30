@@ -1,57 +1,31 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { trpc } from '@/utils/trpc';
+import { VerifyEmailClient } from './verify-client';
 
-import { Suspense } from 'react';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { useQueryState, parseAsString } from 'nuqs';
-import { VerifyEmail } from '@/components/waitlist/verify-email';
-
-function VerifyContent() {
-  const router = useRouter();
-  const [entryId] = useQueryState('entryId', parseAsString);
-  const [email] = useQueryState('email', parseAsString);
-
-  const [verifiedEntryId, setVerifiedEntryId] = useState<string | null>(null);
-
-  if (!entryId || !email) {
-    router.push('/');
-    return null;
-  }
-
-  const handleVerified = (verifiedId: string) => {
-    setVerifiedEntryId(verifiedId);
-    router.push(`/waitlist/connect?entryId=${verifiedId}&email=${encodeURIComponent(email)}`);
-  };
-
-  const handleBack = () => {
-    router.push('/');
-  };
-
-  return (
-    <div className="relative min-h-screen text-white" style={{
-      background: 'linear-gradient(180deg, rgba(22, 22, 22, 1) 0%, rgba(12, 12, 12, 1) 100%)',
-    }}>
-      <div className="flex min-h-screen items-center justify-center px-6 py-20">
-        <VerifyEmail
-          email={decodeURIComponent(email)}
-          onVerified={handleVerified}
-          onBack={handleBack}
-        />
-      </div>
-    </div>
-  );
+interface VerifyPageProps {
+  searchParams: Promise<{ entryId?: string }>;
 }
 
-export default function VerifyPage() {
-  return (
-    <Suspense fallback={
-      <div className="relative min-h-screen text-white flex items-center justify-center" style={{
-        background: 'linear-gradient(180deg, rgba(22, 22, 22, 1) 0%, rgba(12, 12, 12, 1) 100%)',
-      }}>
-        <div className="h-8 w-8 animate-spin rounded-full border-foreground border-b-2" />
-      </div>
-    }>
-      <VerifyContent />
-    </Suspense>
-  );
+export default async function VerifyPage({ searchParams }: VerifyPageProps) {
+  const params = await searchParams;
+  const entryId = params.entryId;
+
+  if (!entryId) {
+    redirect('/');
+  }
+
+  // Fetch email server-side using entryId
+  let email: string;
+  try {
+    const entry = await trpc.earlyAccess.getWaitlistEntry.query({ entryId });
+    if (!entry.success || !entry.data?.email) {
+      redirect('/');
+    }
+    email = entry.data.email;
+  } catch (error) {
+    // If entry not found or error, redirect to home
+    redirect('/');
+  }
+
+  return <VerifyEmailClient entryId={entryId} email={email} />;
 }

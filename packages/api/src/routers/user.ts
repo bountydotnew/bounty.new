@@ -3,6 +3,7 @@ import type {
   AdminUserStatsResponse,
 } from '@bounty/types';
 import {
+  account,
   bounty,
   bountyComment,
   db,
@@ -380,6 +381,20 @@ export const userRouter = router({
     }
 
     return userData;
+  }),
+
+  getGithubAccount: protectedProcedure.query(async ({ ctx }) => {
+    const githubAccount = await ctx.db.query.account.findFirst({
+      where: (account, { eq, and }) =>
+        and(
+          eq(account.userId, ctx.session.user.id),
+          eq(account.providerId, 'github')
+        ),
+    });
+
+    return githubAccount
+      ? { username: githubAccount.accountId }
+      : { username: null };
   }),
 
   getAllUsers: adminProcedure

@@ -22,7 +22,10 @@ export interface Bounty {
 }
 
 export interface UserData {
-  name?: string | null;
+  id: string;
+  name: string | null;
+  handle: string | null;
+  isProfilePrivate: boolean;
 }
 
 export interface ActivityItem {

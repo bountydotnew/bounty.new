@@ -6,25 +6,31 @@ import { useMutation } from "@tanstack/react-query";
 import { trpcClient } from "@/utils/trpc";
 
 interface VerifyEmailProps {
+  entryId: string;
   email: string;
   onVerified: (entryId: string) => void;
   onBack: () => void;
 }
 
-export function VerifyEmail({ email, onVerified, onBack }: VerifyEmailProps) {
+export function VerifyEmail({
+  entryId,
+  email,
+  onVerified,
+  onBack,
+}: VerifyEmailProps) {
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState("");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const verifyMutation = useMutation({
-    mutationFn: async (input: { email: string; code: string }) => {
+    mutationFn: async (input: { entryId: string; code: string }) => {
       return await trpcClient.earlyAccess.verifyOTP.mutate(input);
     },
   });
 
   const resendMutation = useMutation({
-    mutationFn: async (input: { email: string }) => {
+    mutationFn: async (input: { entryId: string }) => {
       return await trpcClient.earlyAccess.resendOTP.mutate(input);
     },
   });
@@ -66,7 +72,7 @@ export function VerifyEmail({ email, onVerified, onBack }: VerifyEmailProps) {
 
     try {
       const result = await verifyMutation.mutateAsync({
-        email,
+        entryId,
         code: fullCode,
       });
       if (result.success && result.entryId) {
@@ -82,7 +88,7 @@ export function VerifyEmail({ email, onVerified, onBack }: VerifyEmailProps) {
 
   const handleResend = async () => {
     try {
-      await resendMutation.mutateAsync({ email });
+      await resendMutation.mutateAsync({ entryId });
       setError("");
     } catch (err: any) {
       setError(err.message || "Failed to resend code");

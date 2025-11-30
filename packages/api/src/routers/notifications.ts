@@ -63,10 +63,18 @@ export const notificationsRouter = router({
         message: input.message,
         ...(input.data && { data: input.data }),
       });
-      await realtime.emit('notifications.refresh', {
-        userId: input.userId,
-        ts: Date.now(),
-      });
+      try {
+        await realtime.emit('notifications.refresh', {
+          userId: input.userId,
+          ts: Date.now(),
+        });
+      } catch (emitError) {
+        error('[sendToUser] Failed to emit realtime event:', {
+          operation: 'sendToUser',
+          userId: input.userId,
+          error: emitError,
+        });
+      }
       return { success: true, data: n };
     }),
   getAll: protectedProcedure
@@ -123,10 +131,18 @@ export const notificationsRouter = router({
           )
         )
         .returning();
-      await realtime.emit('notifications.refresh', {
-        userId: ctx.session.user.id,
-        ts: Date.now(),
-      });
+      try {
+        await realtime.emit('notifications.refresh', {
+          userId: ctx.session.user.id,
+          ts: Date.now(),
+        });
+      } catch (emitError) {
+        error('[markAsRead] Failed to emit realtime event:', {
+          operation: 'markAsRead',
+          userId: ctx.session.user.id,
+          error: emitError,
+        });
+      }
       return updated;
     }),
 
@@ -136,10 +152,18 @@ export const notificationsRouter = router({
       .set({ read: true, updatedAt: new Date() })
       .where(eq(notification.userId, ctx.session.user.id))
       .returning();
-    await realtime.emit('notifications.refresh', {
-      userId: ctx.session.user.id,
-      ts: Date.now(),
-    });
+    try {
+      await realtime.emit('notifications.refresh', {
+        userId: ctx.session.user.id,
+        ts: Date.now(),
+      });
+    } catch (emitError) {
+      error('[markAllAsRead] Failed to emit realtime event:', {
+        operation: 'markAllAsRead',
+        userId: ctx.session.user.id,
+        error: emitError,
+      });
+    }
     return updated;
   }),
 
