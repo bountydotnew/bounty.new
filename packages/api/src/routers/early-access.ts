@@ -669,6 +669,7 @@ export const earlyAccessRouter = router({
             bountyTitle: entry.bountyTitle,
             bountyDescription: entry.bountyDescription,
             bountyAmount: entry.bountyAmount,
+            bountyDeadline: entry.bountyDeadline,
             bountyGithubIssueUrl: entry.bountyGithubIssueUrl,
             userId: entry.userId,
             createdAt: entry.createdAt,
@@ -771,6 +772,7 @@ export const earlyAccessRouter = router({
         bountyTitle: entry.bountyTitle,
         bountyDescription: entry.bountyDescription,
         bountyAmount: entry.bountyAmount,
+        bountyDeadline: entry.bountyDeadline,
         createdAt: entry.createdAt,
       };
     } catch (error: unknown) {
@@ -1007,6 +1009,27 @@ export const earlyAccessRouter = router({
         bountyTitle: z.string().optional(),
         bountyDescription: z.string().optional(),
         bountyAmount: z.string().optional(),
+        bountyDeadline: z
+          .string()
+          .optional()
+          .refine(
+            (val) => {
+              if (!val || val === '') return true; // Optional field
+              try {
+                const date = new Date(val);
+                if (isNaN(date.getTime())) return false; // Invalid date
+                // Compare dates (ignore time for day-level comparison)
+                const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                const nowOnly = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+                return dateOnly >= nowOnly; // Must be today or in the future
+              } catch {
+                return false;
+              }
+            },
+            {
+              message: 'Deadline must be today or in the future',
+            }
+          ),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -1044,6 +1067,9 @@ export const earlyAccessRouter = router({
             bountyDescription:
               bountyData.bountyDescription ?? entry.bountyDescription,
             bountyAmount: bountyData.bountyAmount ?? entry.bountyAmount,
+            bountyDeadline: bountyData.bountyDeadline
+              ? new Date(bountyData.bountyDeadline)
+              : entry.bountyDeadline,
           })
           .where(eq(waitlist.id as any, entryId) as any);
 

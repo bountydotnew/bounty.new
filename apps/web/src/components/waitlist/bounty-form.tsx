@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { authClient } from "@bounty/auth/client";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { TRPCClientError } from "@trpc/client";
+import { toast } from "sonner";
 import { trpc, trpcClient } from "@/utils/trpc";
 import { DatePicker } from "@bounty/ui/components/date-picker";
 import { CalendarIcon } from "@bounty/ui/components/icons/huge/calendar";
@@ -84,7 +86,7 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
   useEffect(() => {
     if (descriptionRef.current) {
       descriptionRef.current.style.height = 'auto';
-      const newHeight = Math.min(Math.max(descriptionRef.current.scrollHeight, 160), 600);
+      const newHeight = Math.min(Math.max(descriptionRef.current.scrollHeight, 100), 600);
       descriptionRef.current.style.height = `${newHeight}px`;
     }
   }, [description]);
@@ -95,6 +97,34 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
     enabled: !!session?.user && !entryId,
   });
 
+  // Parse TRPC validation errors and show toast
+  const parseAndShowErrors = (error: unknown) => {
+    if (error instanceof TRPCClientError) {
+      try {
+        // TRPC validation errors come as JSON string in the message
+        const parsed = JSON.parse(error.message);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Show the first error message
+          const firstError = parsed[0];
+          if (firstError.message) {
+            toast.error(firstError.message);
+          } else {
+            toast.error('Validation error');
+          }
+        } else {
+          toast.error(error.message || 'An error occurred');
+        }
+      } catch {
+        // If parsing fails, show a generic error
+        toast.error(error.message || 'An error occurred');
+      }
+    } else if (error instanceof Error) {
+      toast.error(error.message);
+    } else {
+      toast.error('An unexpected error occurred');
+    }
+  };
+
   const saveBountyMutation = useMutation({
     mutationFn: async (data: {
       entryId: string;
@@ -103,11 +133,14 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
       amount: string;
       deadline?: string;
     }) => {
+      // Remove commas from price before sending
+      const cleanedAmount = data.amount.replace(/,/g, '');
       return await trpcClient.earlyAccess.updateBountyDraft.mutate({
         entryId: data.entryId,
         bountyTitle: data.title,
         bountyDescription: data.description,
-        bountyAmount: data.amount,
+        bountyAmount: cleanedAmount,
+        bountyDeadline: data.deadline,
       });
     },
   });
@@ -117,14 +150,17 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
     if (onSubmit && entryId) {
       setIsSubmitting(true);
       try {
-        await onSubmit({
-          title: title || "Untitled Bounty",
-          description: description || "",
-          amount: price || "0",
-          deadline: deadline || undefined,
-        });
+      // Remove commas from price before submitting
+      const cleanedPrice = price.replace(/,/g, '');
+      await onSubmit({
+        title: title || "Untitled Bounty",
+        description: description || "",
+        amount: cleanedPrice || "0",
+        deadline: deadline || undefined,
+      });
       } catch (error) {
         console.error("Failed to update bounty:", error);
+        parseAndShowErrors(error);
       } finally {
         setIsSubmitting(false);
       }
@@ -147,11 +183,13 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
 
     setIsSubmitting(true);
     try {
+      // Remove commas from price before submitting
+      const cleanedPrice = price.replace(/,/g, '');
       await saveBountyMutation.mutateAsync({
         entryId: effectiveEntryId,
         title: title || "Untitled Bounty",
         description: description || "",
-        amount: price || "0",
+        amount: cleanedPrice || "0",
         deadline: deadline || undefined,
       });
       
@@ -162,6 +200,7 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
       router.push('/waitlist/dashboard');
     } catch (error) {
       console.error("Failed to save bounty:", error);
+      parseAndShowErrors(error);
     } finally {
       setIsSubmitting(false);
     }
@@ -185,7 +224,7 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
   };
 
   return (
-    <div className="w-full max-w-[703px] min-h-[226px] rounded-[21px] bg-[#191919] border border-[#232323] flex flex-col">
+    <div className="w-full max-w-[703px] min-h-[180px] rounded-[21px] bg-[#191919] border border-[#232323] flex flex-col">
       {/* Top row: Chips */}
       <div className="flex items-center gap-2.5 px-[14px] pt-3 pb-2 overflow-x-auto no-scrollbar">
         {/* Title chip */}
@@ -212,11 +251,15 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
           <input
             ref={priceRef}
             type="text"
-            value={price}
-            onChange={(e) => setPrice(e.target.value.replace(/[^0-9.]/g, ""))}
-            placeholder="$ Price"
+            value={price ? price.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+            onChange={(e) => {
+              // Remove commas and non-numeric characters for storage
+              const cleaned = e.target.value.replace(/[^0-9.]/g, "");
+              setPrice(cleaned);
+            }}
+            placeholder="Price"
             className="bg-transparent text-white text-base outline-none placeholder:text-[#5A5A5A] min-w-[60px]"
-            style={{ width: `${calculateWidth(price ? `$${price}` : "$ Price", 60)}px` }}
+            style={{ width: `${calculateWidth(price ? price.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : "Price", 60)}px` }}
           />
         </div>
 
@@ -228,7 +271,7 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
           <DatePicker
             value={deadline}
             onChange={(value) => setDeadline(value)}
-            placeholder="Tomorrow"
+            placeholder="Deadline, e.g. tomorrow"
             className="flex-1 min-w-[100px]"
             id="deadline"
           />
@@ -248,13 +291,13 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
       </div>
 
       {/* Description textarea */}
-      <div className="px-[19px] py-2 flex-1 flex">
+      <div className="px-[19px] py-1.5 flex-1 flex">
         <textarea
           ref={descriptionRef}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Start typing your description..."
-          className="w-full bg-transparent text-[#5A5A5A] text-base outline-none placeholder:text-[#5A5A5A] resize-none min-h-[160px]"
+          className="w-full bg-transparent text-[#5A5A5A] text-base outline-none placeholder:text-[#5A5A5A] resize-none min-h-[100px]"
         />
       </div>
 

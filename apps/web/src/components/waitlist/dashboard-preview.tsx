@@ -31,6 +31,7 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
       bountyTitle?: string;
       bountyDescription?: string;
       bountyAmount?: string;
+      bountyDeadline?: string;
     }) => {
       return await trpcClient.earlyAccess.updateBountyDraft.mutate(input);
     },
@@ -66,6 +67,7 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
               bountyTitle: draft.title,
               bountyDescription: draft.description,
               bountyAmount: draft.amount,
+              bountyDeadline: draft.deadline,
             });
             
             // Clear localStorage
@@ -94,10 +96,35 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
     );
   }
 
+  // Helper to format price with commas
+  const formatPrice = (price: string | null | undefined): string => {
+    if (!price) return '';
+    const num = parseFloat(price);
+    if (isNaN(num)) return price;
+    return num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  };
+
+  // Helper to format deadline
+  const formatDeadline = (deadline: string | Date | null | undefined): string => {
+    if (!deadline) return '';
+    try {
+      const date = typeof deadline === 'string' ? new Date(deadline) : deadline;
+      if (isNaN(date.getTime())) return '';
+      return date.toLocaleDateString('en-US', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      });
+    } catch {
+      return '';
+    }
+  };
+
   const bountyDraft = entry ? {
     title: entry.bountyTitle,
     description: entry.bountyDescription,
-    price: entry.bountyAmount ? parseInt(entry.bountyAmount) : undefined,
+    price: entry.bountyAmount,
+    deadline: entry.bountyDeadline,
   } : null;
 
   return (
@@ -119,7 +146,8 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
             initialValues={bountyDraft ? {
               title: bountyDraft.title,
               description: bountyDraft.description,
-              amount: bountyDraft.price?.toString(),
+              amount: bountyDraft.price || '',
+              deadline: bountyDraft.deadline ? (typeof bountyDraft.deadline === 'string' ? bountyDraft.deadline : bountyDraft.deadline.toISOString()) : '',
             } : undefined}
             entryId={entryId}
             onSubmit={async (data) => {
@@ -128,6 +156,7 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
                 bountyTitle: data.title,
                 bountyDescription: data.description,
                 bountyAmount: data.amount,
+                bountyDeadline: data.deadline,
               });
             }}
             onCancel={() => setIsEditing(false)}
@@ -143,7 +172,12 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
                 </span>
                 {bountyDraft.price && (
                   <span className="px-2 py-0.5 rounded-full bg-[#1E3A2F] text-[#4ADE80] text-xs">
-                    ${(bountyDraft.price / 100).toFixed(2)}
+                    ${formatPrice(bountyDraft.price)}
+                  </span>
+                )}
+                {bountyDraft.deadline && (
+                  <span className="px-2 py-0.5 rounded-full bg-[#2A2A2A] text-[#929292] text-xs">
+                    Due: {formatDeadline(bountyDraft.deadline)}
                   </span>
                 )}
               </div>
@@ -201,6 +235,7 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
                 bountyTitle: data.title,
                 bountyDescription: data.description,
                 bountyAmount: data.amount,
+                bountyDeadline: data.deadline,
               });
             }}
           />

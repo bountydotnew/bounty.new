@@ -42,7 +42,24 @@ const createBountySchema = z.object({
 
   amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, 'Incorrect amount.'),
   currency: z.string().default('USD'),
-  deadline: z.string().datetime().optional(),
+  deadline: z
+    .string()
+    .datetime('Deadline must be a valid date')
+    .optional()
+    .refine(
+      (val) => {
+        if (!val) return true; // Optional field
+        const date = new Date(val);
+        if (isNaN(date.getTime())) return false; // Invalid date
+        // Compare dates (ignore time for day-level comparison)
+        const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const nowOnly = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+        return dateOnly >= nowOnly; // Must be today or in the future
+      },
+      {
+        message: 'Deadline must be today or in the future',
+      }
+    ),
   tags: z.array(z.string()).optional(),
   repositoryUrl: z.string().url().optional(),
   issueUrl: z.string().url().optional(),
@@ -58,7 +75,24 @@ const updateBountySchema = z.object({
     .regex(/^\d{1,13}(\.\d{1,2})?$/, 'Incorrect amount.')
     .optional(),
   currency: z.string().optional(),
-  deadline: z.string().datetime().optional(),
+  deadline: z
+    .string()
+    .datetime('Deadline must be a valid date')
+    .optional()
+    .refine(
+      (val) => {
+        if (!val) return true; // Optional field
+        const date = new Date(val);
+        if (isNaN(date.getTime())) return false; // Invalid date
+        // Compare dates (ignore time for day-level comparison)
+        const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const nowOnly = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+        return dateOnly >= nowOnly; // Must be today or in the future
+      },
+      {
+        message: 'Deadline must be today or in the future',
+      }
+    ),
   tags: z.array(z.string()).optional(),
   repositoryUrl: z.string().url().optional(),
   issueUrl: z.string().url().optional(),

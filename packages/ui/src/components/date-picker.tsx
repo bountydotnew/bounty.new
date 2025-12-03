@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { parseDate } from 'chrono-node';
 import { CalendarIcon } from '@bounty/ui/components/icons/huge/calendar';
 import { Button } from '@bounty/ui/components/button';
@@ -31,33 +31,95 @@ interface DatePickerProps {
 export function DatePicker({
   value = '',
   onChange,
-  placeholder = 'Tomorrow or next week',
+  placeholder = 'Deadline, e.g. tomorrow',
   className,
   id,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
-  const [textValue, setTextValue] = useState(value);
-  const [date, setDate] = useState<Date | undefined>(
-    value ? parseDate(value) || undefined : undefined
-  );
-  const [month, setMonth] = useState<Date | undefined>(date);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isTypingRef = useRef(false);
+
+  // Helper to parse value (ISO string or natural language)
+  const parseValue = (val: string): { date: Date | undefined; text: string } => {
+    if (!val) {
+      return { date: undefined, text: '' };
+    }
+
+    // Try parsing as ISO string first
+    try {
+      const isoDate = new Date(val);
+      if (!isNaN(isoDate.getTime())) {
+        return { date: isoDate, text: formatDate(isoDate) };
+      }
+    } catch {
+      // Not an ISO string, continue
+    }
+
+    // Try parsing as natural language
+    const parsed = parseDate(val);
+    if (parsed) {
+      return { date: parsed, text: formatDate(parsed) };
+    }
+
+    // If neither works, return empty
+    return { date: undefined, text: '' };
+  };
+
+  const initialParse = parseValue(value);
+  const [textValue, setTextValue] = useState(initialParse.text);
+  const [date, setDate] = useState<Date | undefined>(initialParse.date);
+  const [month, setMonth] = useState<Date | undefined>(initialParse.date);
+
+  // Sync with external value changes (only when not actively typing)
+  useEffect(() => {
+    if (!isTypingRef.current) {
+      const parsed = parseValue(value);
+      setTextValue(parsed.text);
+      setDate(parsed.date);
+      if (parsed.date) {
+        setMonth(parsed.date);
+      }
+    }
+  }, [value]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setTextValue(newValue);
-    const parsedDate = parseDate(newValue);
-    if (parsedDate) {
-      setDate(parsedDate);
-      setMonth(parsedDate);
-      onChange?.(formatDate(parsedDate));
+    isTypingRef.current = true;
+
+    // Clear existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
     }
+
+    // Set new timer for debounced onChange (fires AFTER user stops typing)
+    debounceTimerRef.current = setTimeout(() => {
+      isTypingRef.current = false;
+      
+      const parsedDate = parseDate(newValue);
+      if (parsedDate) {
+        const formatted = formatDate(parsedDate);
+        setDate(parsedDate);
+        setMonth(parsedDate);
+        setTextValue(formatted); // Update to formatted version
+        onChange?.(parsedDate.toISOString());
+      } else if (newValue === '') {
+        setDate(undefined);
+        setMonth(undefined);
+        onChange?.('');
+      } else {
+        // Invalid input, keep what user typed but don't call onChange
+        // This allows them to continue typing
+      }
+    }, 200);
   };
 
   const handleCalendarSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
       setDate(selectedDate);
-      setTextValue(formatDate(selectedDate));
-      onChange?.(formatDate(selectedDate));
+      const formatted = formatDate(selectedDate);
+      setTextValue(formatted);
+      onChange?.(selectedDate.toISOString());
       setOpen(false);
     }
   };
@@ -69,13 +131,22 @@ export function DatePicker({
     }
   };
 
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div className={cn('relative flex-1', className)}>
-      <Input
+      <input
         id={id}
         value={textValue}
         placeholder={placeholder}
-        className="bg-transparent border-0 pr-8 text-white text-base outline-none placeholder:text-[#5A5A5A] h-auto p-0"
+        className="bg-transparent text-white text-base outline-none placeholder:text-[#5A5A5A] h-auto p-0 w-full border-0"
         onChange={handleTextChange}
         onKeyDown={handleKeyDown}
       />
@@ -102,6 +173,16 @@ export function DatePicker({
             month={month}
             onMonthChange={setMonth}
             onSelect={handleCalendarSelect}
+            classNames={{
+              months: 'flex flex-col',
+              month: 'space-y-0',
+              caption: 'flex justify-center pt-3 pb-2 relative items-center',
+              caption_label: 'text-sm font-medium',
+              nav: 'flex items-center justify-between px-3 pt-0 pb-0 absolute top-0 left-0 right-0',
+              nav_button: 'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 text-white',
+              nav_button_previous: 'absolute left-3',
+              nav_button_next: 'absolute right-3',
+            }}
           />
         </PopoverContent>
       </Popover>

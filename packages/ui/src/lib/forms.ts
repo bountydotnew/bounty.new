@@ -17,7 +17,30 @@ export const createBountySchema = z.object({
     .min(1, 'Amount cannot be empty')
     .max(10_000_000_000, 'Amount cannot be greater than 100,000'),
   currency: z.string().min(1, 'Currency cannot be empty'),
-  deadline: z.string().optional(),
+  deadline: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val || val === '') return true; // Optional field
+        try {
+          const date = new Date(val);
+          if (isNaN(date.getTime())) {
+            return false; // Invalid date
+          }
+          const now = new Date();
+          // Compare dates (ignore time for day-level comparison)
+          const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+          const nowOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          return dateOnly >= nowOnly; // Must be today or in the future
+        } catch {
+          return false;
+        }
+      },
+      {
+        message: 'Deadline must be today or in the future',
+      }
+    ),
   tags: z.array(z.string()).optional(),
   repositoryUrl: z.string().url().optional().or(z.literal('')),
   issueUrl: z.string().url().optional().or(z.literal('')),
@@ -254,6 +277,24 @@ export const waitlistBountySchema = z.object({
     .refine((val) => !val || val.length === 0 || AMOUNT_REGEX.test(val), {
       message: 'Please enter a valid amount (e.g., 100 or 99.99)',
     }),
+  bountyDeadline: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val || val === '') return true; // Optional field
+        try {
+          const date = new Date(val);
+          if (isNaN(date.getTime())) return false; // Invalid date
+          return date > new Date(); // Must be in the future
+        } catch {
+          return false;
+        }
+      },
+      {
+        message: 'Deadline must be a valid date in the future',
+      }
+    ),
 });
 
 export type WaitlistEmailForm = z.infer<typeof waitlistEmailSchema>;
