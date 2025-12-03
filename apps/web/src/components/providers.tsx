@@ -15,6 +15,7 @@ import { ConfettiProvider } from '@/context/confetti-context';
 import { UserProvider } from '@/context/user-context';
 import { TOAST_ICONS, TOAST_OPTIONS } from '@/context/toast';
 import { queryClient } from '@/utils/trpc';
+import { FeedbackProvider } from '@/components/feedback-context';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -41,7 +42,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 replace={router.replace}
               >
                 <ImpersonationBanner />
-                {children}
+                <FeedbackProvider>
+                  {children}
+                </FeedbackProvider>
               </AuthUIProvider>
             </UserProvider>
           <Databuddy
