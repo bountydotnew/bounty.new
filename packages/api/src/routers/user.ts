@@ -510,7 +510,7 @@ export const userRouter = router({
         env.BETTER_AUTH_URL?.replace(TRAILING_SLASH_REGEX, '') ||
         'https://bounty.new';
       const inviteUrl = `${baseUrl}/login?invite=${rawToken}`;
-      await sendEmail({
+      await sendEmail({ 
         to: email,
         subject: "You're invited to bounty.new",
         from: FROM_ADDRESSES.notifications,

@@ -395,7 +395,7 @@ export const earlyAccessRouter = router({
         if (existingEntry) {
           // Update existing entry
           entryId = existingEntry.id;
-
+          
           // Get position before update
           const allEntries = await db.query.waitlist.findMany({
             where: (fields, { lt }) => lt(fields.createdAt, existingEntry.createdAt),
@@ -695,7 +695,7 @@ export const earlyAccessRouter = router({
             .update(waitlist)
             .set({ userId })
             .where(eq(waitlist.id as any, entry.id) as any);
-
+          
           info('[getMyWaitlistEntry] Auto-linked entry by email:', userEmail);
         }
       }
@@ -820,7 +820,6 @@ export const earlyAccessRouter = router({
             });
           }
 
-          // Log role preference for now (can be persisted to a new field later)
           if (input.role) {
             info('[linkUserToWaitlist] Role preference:', input.role, 'for user:', userId);
           }
@@ -846,7 +845,7 @@ export const earlyAccessRouter = router({
               .returning({ id: bounty.id });
 
             if (newBounty) {
-              bountyId = newBounty.id;
+            bountyId = newBounty.id;
             }
           } catch (bountyError) {
             warn('[linkUserToWaitlist] Failed to create bounty:', bountyError);

@@ -467,39 +467,39 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                             </button>
                         </div>
 
-                        {/* Issue import prompt */}
-                        <Dialog open={showImportPrompt} onOpenChange={setShowImportPrompt}>
-                            <DialogContent className="border border-[#232323] bg-[#191919] text-[#CFCFCF]">
-                                <DialogHeader>
-                                    <DialogTitle className="text-[#CFCFCF]">Import issue details?</DialogTitle>
-                                    <DialogDescription className="text-[#5A5A5A]">
-                                        Found issue #{selectedIssue?.number} in {selectedRepository}. Would you like to import the title and description?
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="flex gap-2 justify-end mt-4">
-                                    <Button
-                                        variant="outline"
-                                        onClick={handleSkipImport}
-                                        disabled={isImporting}
-                                    >
-                                        Skip
-                                    </Button>
-                                    <Button
-                                        onClick={handleImportIssue}
-                                        disabled={isImporting}
-                                    >
-                                        {isImporting ? (
-                                            <>
-                                                <Spinner size="sm" className="mr-2" />
-                                                Importing...
-                                            </>
-                                        ) : (
-                                            'Import'
-                                        )}
-                                    </Button>
-                                </div>
-                            </DialogContent>
-                        </Dialog>
+                                {/* Issue import prompt */}
+                                {/* <Dialog open={showImportPrompt} onOpenChange={setShowImportPrompt}>
+                                    <DialogContent className="border border-[#232323] bg-[#191919] text-[#CFCFCF]">
+                                        <DialogHeader>
+                                            <DialogTitle className="text-[#CFCFCF]">Import issue details?</DialogTitle>
+                                            <DialogDescription className="text-[#5A5A5A]">
+                                                Found issue #{selectedIssue?.number} in {selectedRepository}. Would you like to import the title and description?
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="flex gap-2 justify-end mt-4">
+                                            <Button
+                                                variant="outline"
+                                                onClick={handleSkipImport}
+                                                disabled={isImporting}
+                                            >
+                                                Skip
+                                            </Button>
+                                            <Button
+                                                onClick={handleImportIssue}
+                                                disabled={isImporting}
+                                            >
+                                                {isImporting ? (
+                                                    <>
+                                                        <Spinner size="sm" className="mr-2" />
+                                                        Importing...
+                                                    </>
+                                                ) : (
+                                                    'Import'
+                                                )}
+                                            </Button>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog> */}
                     </div>
                 </fieldset>
             </form>

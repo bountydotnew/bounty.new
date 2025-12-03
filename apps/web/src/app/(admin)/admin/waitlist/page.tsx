@@ -49,9 +49,9 @@ export default function WaitlistPage() {
           stats: { total: number; withAccess: number; pending: number };
         }>;
       }).query({
-        page,
-        limit: 20,
-        search: search || undefined,
+      page,
+      limit: 20,
+      search: search || undefined,
       });
       return result;
     },

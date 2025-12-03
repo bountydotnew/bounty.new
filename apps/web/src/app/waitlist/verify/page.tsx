@@ -14,10 +14,8 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
     redirect('/');
   }
 
-  // Fetch email server-side using entryId
   let email: string;
   try {
-    // Query database directly to avoid exposing email in URL/logs
     const entry = await db.query.waitlist.findFirst({
       where: (fields, { eq }) => eq(fields.id, entryId),
     });
@@ -27,7 +25,6 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
     }
     email = entry.email;
   } catch (error) {
-    // If entry not found or error, redirect to home
     redirect('/');
   }
 

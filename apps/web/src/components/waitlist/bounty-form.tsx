@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { trpcClient } from "@/utils/trpc";
 import { authClient } from "@bounty/auth/client";
@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { Popover, PopoverContent, PopoverTrigger } from "@bounty/ui/components/popover";
 import { Calendar } from "lucide-react";
 import GitHub from "@/components/icons/github";
+import { calculateWidth } from "@bounty/ui/lib/calculateWidth";
 
 interface BountyFormProps {
   onSubmitSuccess?: (email: string, entryId: string) => void;
@@ -29,9 +30,12 @@ export function BountyForm({ onSubmitSuccess }: BountyFormProps) {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [deadline, setDeadline] = useState<string>("");
-  const [activeField, setActiveField] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
+
+  const titleRef = useRef<HTMLInputElement>(null);
+  const priceRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
   // Load draft from localStorage on mount
   useEffect(() => {
@@ -60,24 +64,28 @@ export function BountyForm({ onSubmitSuccess }: BountyFormProps) {
     localStorage.setItem(BOUNTY_DRAFT_STORAGE_KEY, JSON.stringify(draft));
   }, [title, description, price, deadline]);
 
+  // Auto-resize description
+  useEffect(() => {
+    if (descriptionRef.current) {
+      descriptionRef.current.style.height = 'auto';
+      const newHeight = Math.min(Math.max(descriptionRef.current.scrollHeight, 160), 600);
+      descriptionRef.current.style.height = `${newHeight}px`;
+    }
+  }, [description]);
+
   const convertToISOString = (datetimeLocal: string): string => {
     if (!datetimeLocal) return "";
-    // datetime-local format is "YYYY-MM-DDTHH:mm"
-    // Convert to ISO string by creating a Date object and converting to ISO
-    // This handles timezone conversion properly
     const date = new Date(datetimeLocal);
     return date.toISOString();
   };
 
   const handleCreateBounty = async () => {
-    // If not authenticated, redirect to login
     if (!session?.user) {
       const callbackUrl = encodeURIComponent(window.location.pathname);
       router.push(`/login?callback=${callbackUrl}`);
       return;
     }
 
-    // If authenticated, create the bounty
     setIsSubmitting(true);
     try {
       const result = await trpcClient.bounties.createBounty.mutate({
@@ -88,11 +96,10 @@ export function BountyForm({ onSubmitSuccess }: BountyFormProps) {
         deadline: deadline ? convertToISOString(deadline) : undefined,
       });
 
-      // Clear draft after successful creation
       localStorage.removeItem(BOUNTY_DRAFT_STORAGE_KEY);
       
       if (result?.data?.id) {
-        router.push(`/dashboard`);
+        router.push(`/waitlist/dashboard`);
       }
     } catch (error) {
       console.error("Failed to create bounty:", error);
@@ -102,13 +109,13 @@ export function BountyForm({ onSubmitSuccess }: BountyFormProps) {
   };
 
   const handleSkipAndJoinWaitlist = async () => {
-    // This is the old flow - join waitlist without creating bounty
-    // For now, we'll keep this as a placeholder
-    if (onSubmitSuccess) {
-      // You can implement waitlist-only flow here if needed
-    }
+    setIsSubmitting(true);
+    // For waitlist-only flow, we just redirect to login
+    // The callback URL should point to the dashboard where they'll see their waitlist status
+    const callbackUrl = encodeURIComponent('/waitlist/dashboard');
+    router.push(`/login?callback=${callbackUrl}`);
   };
-
+// 
   const formatDeadline = (dateString: string) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -118,53 +125,47 @@ export function BountyForm({ onSubmitSuccess }: BountyFormProps) {
   return (
     <div className="w-full max-w-[703px] min-h-[226px] rounded-[21px] bg-[#191919] border border-[#232323] flex flex-col">
       {/* Top row: Chips */}
-      <div className="flex items-center gap-2.5 px-[14px] pt-3 pb-2">
+      <div className="flex items-center gap-2.5 px-[14px] pt-3 pb-2 overflow-x-auto no-scrollbar">
         {/* Title chip */}
-        {activeField === "title" ? (
+        <div 
+          className="rounded-[14px] px-[15px] py-1.5 bg-[#1B1A1A] border border-[#232323] transition-colors h-[31.9965px] flex items-center cursor-text"
+          onClick={() => titleRef.current?.focus()}
+        >
           <input
+            ref={titleRef}
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            onBlur={() => !title && setActiveField(null)}
             placeholder="Enter a title"
-            autoFocus
-            className="rounded-[14px] px-[15px] py-1.5 bg-[#1B1A1A] border border-[#232323] text-white text-base outline-none placeholder:text-[#5A5A5A] min-w-[120px] h-[31.9965px]"
+            className="bg-transparent text-white text-base outline-none placeholder:text-[#5A5A5A] min-w-[100px]"
+            style={{ width: `${calculateWidth(title || "Enter a title", 100)}px` }}
           />
-        ) : (
-          <button
-            onClick={() => setActiveField("title")}
-            className="rounded-[14px] px-[15px] py-1.5 bg-[#1B1A1A] border border-[#232323] text-base text-[#5A5A5A] transition-colors h-[31.9965px]"
-          >
-            {title || "Enter a title"}
-          </button>
-        )}
+        </div>
 
         {/* Price chip */}
-        {activeField === "price" ? (
+        <div 
+          className="rounded-[14px] px-[15px] py-1.5 bg-[#1B1A1A] border border-[#232323] transition-colors h-[31.9965px] flex items-center cursor-text shrink-0"
+          onClick={() => priceRef.current?.focus()}
+        >
           <input
+            ref={priceRef}
             type="text"
             value={price}
             onChange={(e) => setPrice(e.target.value.replace(/[^0-9.]/g, ""))}
-            onBlur={() => !price && setActiveField(null)}
-            placeholder="0"
-            autoFocus
-            className="rounded-[14px] px-[15px] py-1.5 bg-[#1B1A1A] border border-[#232323] text-white text-base outline-none placeholder:text-[#5A5A5A] w-[80px] h-[31.9965px]"
+            placeholder="$ Price"
+            className="bg-transparent text-white text-base outline-none placeholder:text-[#5A5A5A] min-w-[60px]"
+            style={{ width: `${calculateWidth(price ? `$${price}` : "$ Price", 60)}px` }}
           />
-        ) : (
-          <button
-            onClick={() => setActiveField("price")}
-            className="rounded-[14px] px-[15px] py-1.5 bg-[#1B1A1A] border border-[#232323] text-base text-[#5A5A5A] transition-colors h-[31.9965px] shrink-0"
-          >
-            {price ? `$${price}` : "$ Price"}
-          </button>
-        )}
+        </div>
 
         {/* Deadline chip */}
         <Popover open={showDeadlinePicker} onOpenChange={setShowDeadlinePicker}>
           <PopoverTrigger asChild>
-            <button className="rounded-[14px] px-[15px] py-1.5 bg-[#1B1A1A] border border-[#232323] text-base text-[#5A5A5A] transition-colors flex items-center gap-[5px] shrink-0 h-[31.9965px]">
+            <button className="rounded-[14px] px-[15px] py-1.5 bg-[#1B1A1A] border border-[#232323] text-base text-[#5A5A5A] transition-colors flex items-center gap-[5px] shrink-0 h-[31.9965px] hover:text-white">
               <Calendar className="w-4 h-4 shrink-0" />
-              {deadline ? formatDeadline(deadline) : "Create a deadline"}
+              <span className={deadline ? "text-white" : "text-[#5A5A5A]"}>
+                {deadline ? formatDeadline(deadline) : "Create a deadline"}
+              </span>
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
@@ -182,46 +183,37 @@ export function BountyForm({ onSubmitSuccess }: BountyFormProps) {
         </Popover>
 
         {/* Divider */}
-        <span className="text-[#5A5A5A] text-base shrink-0">or</span>
+        {/* <span className="text-[#5A5A5A] text-base shrink-0">or</span> */}
 
         {/* GitHub import chip (placeholder) */}
-        <button 
-          className="rounded-[14px] px-[15px] py-1.5 bg-[#313030] text-base text-[#828181] transition-colors flex items-center gap-[5px] shrink-0 h-[31.9965px]"
+        {/* <button 
+          className="rounded-[14px] px-[15px] py-1.5 bg-[#313030] text-base text-[#828181] transition-colors flex items-center gap-[5px] shrink-0 h-[31.9965px] opacity-50 cursor-not-allowed"
           disabled
         >
           <GitHub className="w-4 h-4 shrink-0" />
           Import from GitHub
-        </button>
+        </button> */}
       </div>
 
       {/* Description textarea */}
-      <div className="px-[19px] py-2 flex-1">
-        {activeField === "description" ? (
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            onBlur={() => setActiveField(null)}
-            placeholder="Start typing your description..."
-            autoFocus
-            className="w-full bg-transparent text-[#5A5A5A] text-base outline-none placeholder:text-[#5A5A5A] resize-none min-h-[60px]"
-          />
-        ) : (
-          <button
-            onClick={() => setActiveField("description")}
-            className="w-full text-left text-[#5A5A5A] text-base transition-colors"
-          >
-            {description || "Start typing your description..."}
-          </button>
-        )}
+      <div className="px-[19px] py-2 flex-1 flex">
+        <textarea
+          ref={descriptionRef}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Start typing your description..."
+          className="w-full bg-transparent text-[#5A5A5A] text-base outline-none placeholder:text-[#5A5A5A] resize-none min-h-[160px]"
+        />
       </div>
 
       {/* Footer row with buttons */}
       <div className="flex justify-end items-center gap-2 px-3 py-3">
         <button
           onClick={handleSkipAndJoinWaitlist}
-          className="flex items-center justify-center gap-1.5 px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-base font-normal transition-opacity hover:opacity-90"
+          disabled={isSubmitting}
+          className="flex items-center justify-center gap-1.5 px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          Skip & join waitlist
+          {isSubmitting ? "Redirecting..." : "Skip & join waitlist"}
         </button>
         <button
           onClick={handleCreateBounty}
@@ -231,6 +223,9 @@ export function BountyForm({ onSubmitSuccess }: BountyFormProps) {
           <GitHub className="w-4 h-4 shrink-0" />
           {isSubmitting ? "Creating..." : "Create bounty"}
         </button>
+      </div>
+      <div className="text-[#5A5A5A] text-sm text-center pb-3">
+        Creating a draft bounty is optional. This step is not required to sign up.
       </div>
     </div>
   );

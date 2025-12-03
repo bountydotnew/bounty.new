@@ -4,13 +4,33 @@ import { Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsString } from 'nuqs';
 import { DashboardPreview } from '@/components/waitlist/dashboard-preview';
+import { authClient } from '@bounty/auth/client';
+import { trpc } from '@/utils/trpc';
+import { useQuery } from '@tanstack/react-query';
 
 function DashboardContent() {
   const router = useRouter();
   const [entryId] = useQueryState('entryId', parseAsString);
   const [email] = useQueryState('email', parseAsString);
 
-  if (!entryId) {
+  const { data: session, isPending: isSessionPending } = authClient.useSession();
+  const { data: myEntry, isLoading: isLoadingMyEntry } = useQuery({
+    ...trpc.earlyAccess.getMyWaitlistEntry.queryOptions(),
+    enabled: !entryId && !!session?.user,
+  });
+
+  const effectiveEntryId = entryId || myEntry?.id;
+  const effectiveEmail = email || myEntry?.email;
+
+  if (isSessionPending || (!!session?.user && !entryId && isLoadingMyEntry)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-foreground border-b-2" />
+      </div>
+    );
+  }
+
+  if (!effectiveEntryId) {
     router.push('/');
     return null;
   }
@@ -21,8 +41,8 @@ function DashboardContent() {
     }}>
       <div className="flex min-h-screen items-center justify-center px-6 py-20">
         <DashboardPreview
-          entryId={entryId}
-          email={email ? decodeURIComponent(email) : ''}
+          entryId={effectiveEntryId}
+          email={effectiveEmail ? decodeURIComponent(effectiveEmail) : ''}
         />
       </div>
     </div>
