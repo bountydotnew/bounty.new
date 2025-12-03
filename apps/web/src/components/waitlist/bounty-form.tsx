@@ -1,18 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { trpcClient } from "@/utils/trpc";
 import { authClient } from "@bounty/auth/client";
 import { useRouter } from "next/navigation";
-import { Popover, PopoverContent, PopoverTrigger } from "@bounty/ui/components/popover";
-import { Calendar } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { trpc, trpcClient } from "@/utils/trpc";
+import { DatePicker } from "@bounty/ui/components/date-picker";
+import { CalendarIcon } from "@bounty/ui/components/icons/huge/calendar";
 import GitHub from "@/components/icons/github";
 import { calculateWidth } from "@bounty/ui/lib/calculateWidth";
-
-interface BountyFormProps {
-  onSubmitSuccess?: (email: string, entryId: string) => void;
-}
 
 const BOUNTY_DRAFT_STORAGE_KEY = 'bounty_draft';
 
@@ -23,22 +19,40 @@ interface BountyDraft {
   deadline?: string;
 }
 
-export function BountyForm({ onSubmitSuccess }: BountyFormProps) {
+interface BountyFormProps {
+  initialValues?: {
+    title?: string;
+    description?: string;
+    amount?: string;
+    deadline?: string;
+  };
+  entryId?: string;
+  onSubmit?: (data: {
+    title: string;
+    description: string;
+    amount: string;
+    deadline?: string;
+  }) => Promise<void>;
+  onCancel?: () => void;
+}
+
+export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: BountyFormProps) {
   const router = useRouter();
   const { data: session } = authClient.useSession();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [deadline, setDeadline] = useState<string>("");
+  const [title, setTitle] = useState(initialValues?.title || "");
+  const [description, setDescription] = useState(initialValues?.description || "");
+  const [price, setPrice] = useState(initialValues?.amount || "");
+  const [deadline, setDeadline] = useState<string>(initialValues?.deadline || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
 
   const titleRef = useRef<HTMLInputElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load draft from localStorage on mount
+  // Load draft from localStorage on mount (only if not in edit mode)
   useEffect(() => {
+    if (initialValues) return; // Skip if initial values provided
+    
     try {
       const stored = localStorage.getItem(BOUNTY_DRAFT_STORAGE_KEY);
       if (stored) {
@@ -51,10 +65,12 @@ export function BountyForm({ onSubmitSuccess }: BountyFormProps) {
     } catch {
       // Ignore parse errors
     }
-  }, []);
+  }, [initialValues]);
 
-  // Save draft to localStorage whenever fields change
+  // Save draft to localStorage whenever fields change (only if not in edit mode)
   useEffect(() => {
+    if (onSubmit) return; // Skip if in edit mode
+    
     const draft: BountyDraft = {
       title: title || undefined,
       description: description || undefined,
@@ -62,7 +78,7 @@ export function BountyForm({ onSubmitSuccess }: BountyFormProps) {
       deadline: deadline || undefined,
     };
     localStorage.setItem(BOUNTY_DRAFT_STORAGE_KEY, JSON.stringify(draft));
-  }, [title, description, price, deadline]);
+  }, [title, description, price, deadline, onSubmit]);
 
   // Auto-resize description
   useEffect(() => {
@@ -73,53 +89,99 @@ export function BountyForm({ onSubmitSuccess }: BountyFormProps) {
     }
   }, [description]);
 
-  const convertToISOString = (datetimeLocal: string): string => {
-    if (!datetimeLocal) return "";
-    const date = new Date(datetimeLocal);
-    return date.toISOString();
-  };
+  // Get waitlist entry ID when logged in
+  const { data: myEntry } = useQuery({
+    ...trpc.earlyAccess.getMyWaitlistEntry.queryOptions(),
+    enabled: !!session?.user && !entryId,
+  });
+
+  const saveBountyMutation = useMutation({
+    mutationFn: async (data: {
+      entryId: string;
+      title: string;
+      description: string;
+      amount: string;
+      deadline?: string;
+    }) => {
+      return await trpcClient.earlyAccess.updateBountyDraft.mutate({
+        entryId: data.entryId,
+        bountyTitle: data.title,
+        bountyDescription: data.description,
+        bountyAmount: data.amount,
+      });
+    },
+  });
 
   const handleCreateBounty = async () => {
+    // If onSubmit is provided (edit mode), use it
+    if (onSubmit && entryId) {
+      setIsSubmitting(true);
+      try {
+        await onSubmit({
+          title: title || "Untitled Bounty",
+          description: description || "",
+          amount: price || "0",
+          deadline: deadline || undefined,
+        });
+      } catch (error) {
+        console.error("Failed to update bounty:", error);
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // If logged out, save draft and redirect to login
     if (!session?.user) {
-      const callbackUrl = encodeURIComponent(window.location.pathname);
+      const callbackUrl = encodeURIComponent('/waitlist/dashboard');
       router.push(`/login?callback=${callbackUrl}`);
+      return;
+    }
+
+    // If logged in, save bounty to waitlist entry
+    const effectiveEntryId = entryId || myEntry?.id;
+    if (!effectiveEntryId) {
+      console.error("No waitlist entry found");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const result = await trpcClient.bounties.createBounty.mutate({
+      await saveBountyMutation.mutateAsync({
+        entryId: effectiveEntryId,
         title: title || "Untitled Bounty",
         description: description || "",
         amount: price || "0",
-        currency: "USD",
-        deadline: deadline ? convertToISOString(deadline) : undefined,
+        deadline: deadline || undefined,
       });
-
+      
+      // Clear localStorage draft
       localStorage.removeItem(BOUNTY_DRAFT_STORAGE_KEY);
       
-      if (result?.data?.id) {
-        router.push(`/waitlist/dashboard`);
-      }
+      // Redirect to dashboard
+      router.push('/waitlist/dashboard');
     } catch (error) {
-      console.error("Failed to create bounty:", error);
+      console.error("Failed to save bounty:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleSkipAndJoinWaitlist = async () => {
-    setIsSubmitting(true);
-    // For waitlist-only flow, we just redirect to login
-    // The callback URL should point to the dashboard where they'll see their waitlist status
-    const callbackUrl = encodeURIComponent('/waitlist/dashboard');
-    router.push(`/login?callback=${callbackUrl}`);
-  };
-// 
-  const formatDeadline = (dateString: string) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const handleSkipAndJoinWaitlist = () => {
+    // If onSubmit is provided, we're in edit/create mode - don't show skip button
+    if (onSubmit) {
+      return;
+    }
+
+    if (!session?.user) {
+      // Save draft and redirect to login
+      const callbackUrl = encodeURIComponent('/waitlist/dashboard');
+      router.push(`/login?callback=${callbackUrl}`);
+      return;
+    }
+
+    // If logged in, redirect to dashboard
+    router.push('/waitlist/dashboard');
   };
 
   return (
@@ -159,28 +221,18 @@ export function BountyForm({ onSubmitSuccess }: BountyFormProps) {
         </div>
 
         {/* Deadline chip */}
-        <Popover open={showDeadlinePicker} onOpenChange={setShowDeadlinePicker}>
-          <PopoverTrigger asChild>
-            <button className="rounded-[14px] px-[15px] py-1.5 bg-[#1B1A1A] border border-[#232323] text-base text-[#5A5A5A] transition-colors flex items-center gap-[5px] shrink-0 h-[31.9965px] hover:text-white">
-              <Calendar className="w-4 h-4 shrink-0" />
-              <span className={deadline ? "text-white" : "text-[#5A5A5A]"}>
-                {deadline ? formatDeadline(deadline) : "Create a deadline"}
-              </span>
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <input
-              type="datetime-local"
-              value={deadline}
-              onChange={(e) => {
-                setDeadline(e.target.value);
-                setShowDeadlinePicker(false);
-              }}
-              className="bg-transparent text-white p-4 outline-none"
-              min={new Date().toISOString().slice(0, 16)}
-            />
-          </PopoverContent>
-        </Popover>
+        <div 
+          className="rounded-[14px] px-[15px] py-1.5 bg-[#1B1A1A] border border-[#232323] transition-colors h-[31.9965px] flex items-center gap-[5px] shrink-0 cursor-text min-w-[140px]"
+        >
+          <CalendarIcon className="w-4 h-4 shrink-0 text-[#5A5A5A]" />
+          <DatePicker
+            value={deadline}
+            onChange={(value) => setDeadline(value)}
+            placeholder="Tomorrow"
+            className="flex-1 min-w-[100px]"
+            id="deadline"
+          />
+        </div>
 
         {/* Divider */}
         {/* <span className="text-[#5A5A5A] text-base shrink-0">or</span> */}
@@ -208,20 +260,31 @@ export function BountyForm({ onSubmitSuccess }: BountyFormProps) {
 
       {/* Footer row with buttons */}
       <div className="flex justify-end items-center gap-2 px-3 py-3">
-        <button
-          onClick={handleSkipAndJoinWaitlist}
-          disabled={isSubmitting}
-          className="flex items-center justify-center gap-1.5 px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
-          {isSubmitting ? "Redirecting..." : "Skip & join waitlist"}
-        </button>
+        {onCancel && (
+          <button
+            onClick={onCancel}
+            disabled={isSubmitting}
+            className="flex items-center justify-center gap-1.5 px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+        )}
+        {!onSubmit && !onCancel && (
+          <button
+            onClick={handleSkipAndJoinWaitlist}
+            disabled={isSubmitting}
+            className="flex items-center justify-center gap-1.5 px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {isSubmitting ? "Redirecting..." : "Skip & join waitlist"}
+          </button>
+        )}
         <button
           onClick={handleCreateBounty}
           disabled={isSubmitting || !title}
           className="flex items-center justify-center gap-1.5 px-[13px] h-[31.9965px] rounded-full bg-white text-black text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           <GitHub className="w-4 h-4 shrink-0" />
-          {isSubmitting ? "Creating..." : "Create bounty"}
+          {isSubmitting ? (onSubmit ? "Saving..." : "Creating...") : (onSubmit ? "Save" : "Create bounty")}
         </button>
       </div>
       <div className="text-[#5A5A5A] text-sm text-center pb-3">

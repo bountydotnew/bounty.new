@@ -23,3 +23,4 @@ export * from './card';
 export * from './security';
 export * from './dollar-bill';
 export * from './bell';
+export * from './calendar';

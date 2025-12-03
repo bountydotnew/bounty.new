@@ -182,7 +182,7 @@ export default function Home() {
               </div>
             ) : (
               <>
-                <BountyForm onSubmitSuccess={handleSubmitSuccess} />
+                <BountyForm />
 
                 {/* Divider */}
                 <div className="mt-8 flex w-full max-w-md items-center gap-4">

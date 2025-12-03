@@ -644,13 +644,28 @@ export const earlyAccessRouter = router({
           });
         }
 
+        // Calculate position if not set
+        let position = entry.position;
+        if (!position) {
+          const allEntries = await db.query.waitlist.findMany({
+            where: (fields, { lt }) => lt(fields.createdAt, entry.createdAt),
+          });
+          position = allEntries.length + 1;
+          
+          // Update position in database for future queries
+          await db
+            .update(waitlist)
+            .set({ position })
+            .where(eq(waitlist.id as any, entry.id) as any);
+        }
+
         return {
           success: true,
           data: {
             id: entry.id,
             email: entry.email,
             emailVerified: entry.emailVerified,
-            position: entry.position,
+            position,
             bountyTitle: entry.bountyTitle,
             bountyDescription: entry.bountyDescription,
             bountyAmount: entry.bountyAmount,
@@ -700,15 +715,59 @@ export const earlyAccessRouter = router({
         }
       }
 
+      // If no entry exists, create one using the user's email
+      if (!entry && userEmail) {
+        // Calculate position (count of existing entries)
+        const allEntries = await db.query.waitlist.findMany();
+        const position = allEntries.length + 1;
+
+        const [newEntry] = await db
+          .insert(waitlist)
+          .values({
+            email: userEmail,
+            userId: userId,
+            position,
+            createdAt: new Date(),
+          })
+          .returning();
+
+        if (newEntry) {
+          info('[getMyWaitlistEntry] Auto-created entry for user:', userId);
+          
+          // Fetch the full entry to get position
+          entry = await db.query.waitlist.findFirst({
+            where: (fields, { eq }) => eq(fields.id, newEntry.id),
+          });
+        }
+      }
+
       if (!entry) {
-        return null;
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to create waitlist entry',
+        });
+      }
+
+      // Calculate position if not set
+      let position = entry.position;
+      if (!position) {
+        const allEntries = await db.query.waitlist.findMany({
+          where: (fields, { lt }) => lt(fields.createdAt, entry.createdAt),
+        });
+        position = allEntries.length + 1;
+        
+        // Update position in database for future queries
+        await db
+          .update(waitlist)
+          .set({ position })
+          .where(eq(waitlist.id as any, entry.id) as any);
       }
 
       return {
         id: entry.id,
         email: entry.email,
         emailVerified: entry.emailVerified,
-        position: entry.position,
+        position,
         bountyTitle: entry.bountyTitle,
         bountyDescription: entry.bountyDescription,
         bountyAmount: entry.bountyAmount,

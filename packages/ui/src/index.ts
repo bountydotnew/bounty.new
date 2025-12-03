@@ -13,6 +13,8 @@ export * from './components/checkbox';
 export * from './components/cog';
 export * from './components/collapsible';
 export * from './components/context-menu';
+export * from './components/calendar';
+export * from './components/date-picker';
 export * from './components/default-bar-chart';
 export * from './components/dev-warning-dialog';
 export * from './components/dialog';
