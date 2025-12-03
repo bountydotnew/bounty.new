@@ -22,6 +22,7 @@ import {
   verification,
   waitlist,
 } from '@bounty/db';
+import { eq } from 'drizzle-orm';
 import { env } from '@bounty/env/server';
 import type { PolarError } from '@bounty/types';
 import {
@@ -40,6 +41,7 @@ import { passkey as passkeyPlugin } from "better-auth/plugins/passkey";
 import { emailOTP } from "better-auth/plugins/email-otp";
 import { sendEmail } from "@bounty/email";
 import { OTPVerification, ForgotPassword } from "@bounty/email";
+import { GithubManager } from "@bounty/api/driver/github";
 
 const schema = {
   account,
@@ -87,19 +89,64 @@ const deviceAuthorizationPlugin = deviceAuthorization({
   },
 });
 
+async function syncGitHubHandle(userId: string, accessToken: string): Promise<void> {
+  if (!userId || !accessToken) {
+    return;
+  }
+
+  const existingUser = await db.query.user.findFirst({
+    where: (fields, { eq }) => eq(fields.id, userId),
+  });
+
+  if (existingUser?.handle) {
+    return;
+  }
+
+  try {
+    const github = new GithubManager({ token: accessToken });
+    const githubUser = await github.getAuthenticatedUser();
+    
+    if (githubUser?.login) {
+      await db
+        .update(userTable)
+        .set({
+          handle: githubUser.login.toLowerCase(),
+          updatedAt: new Date(),
+        })
+        .where(eq(userTable.id, userId));
+    }
+  } catch (error) {
+    console.error('[GitHub Handle Sync] Error:', error);
+  }
+}
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema,
     usePlural: false,
   }),
+  databaseHooks: {
+    account: {
+      create: {
+        after: async (accountData: any) => {
+          if (accountData.providerId === 'github' && accountData.userId && accountData.accessToken) {
+            await syncGitHubHandle(accountData.userId, accountData.accessToken);
+          }
+        },
+      },
+      update: {
+        after: async (accountData: any) => {
+          if (accountData.providerId === 'github' && accountData.userId && accountData.accessToken) {
+            await syncGitHubHandle(accountData.userId, accountData.accessToken);
+          }
+        },
+      },
+    },
+  },
   onAPIError: {
     throw: true,
-    onError: (_error) => {
-      // Custom error handling
-      // Errors are thrown due to throw: true flag above
-      // Add proper error logging/monitoring here if needed
-    },
+    onError: () => {},
     errorURL: '/auth/error',
   },
   trustedOrigins: [
@@ -114,7 +161,12 @@ export const auth = betterAuth({
     github: {
       clientId: env.GITHUB_CLIENT_ID,
       clientSecret: env.GITHUB_CLIENT_SECRET,
-      scopes: ['read:user', 'repo', 'read:org'],
+      scope: ['read:user', 'repo', 'read:org'],
+      mapProfileToUser: (profile) => {
+        return {
+          handle: profile.login?.toLowerCase(),
+        };
+      },
     },
   },
   emailAndPassword: {

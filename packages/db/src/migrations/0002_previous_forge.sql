@@ -1,1 +1,0 @@
-ALTER TABLE "bounty" ADD COLUMN "is_featured" boolean DEFAULT false;

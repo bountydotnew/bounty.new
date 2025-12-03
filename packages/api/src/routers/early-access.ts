@@ -395,7 +395,7 @@ export const earlyAccessRouter = router({
         if (existingEntry) {
           // Update existing entry
           entryId = existingEntry.id;
-
+          
           // Get position before update
           const allEntries = await db.query.waitlist.findMany({
             where: (fields, { lt }) => lt(fields.createdAt, existingEntry.createdAt),
@@ -644,16 +644,32 @@ export const earlyAccessRouter = router({
           });
         }
 
+        // Calculate position if not set
+        let position = entry.position;
+        if (!position) {
+          const allEntries = await db.query.waitlist.findMany({
+            where: (fields, { lt }) => lt(fields.createdAt, entry.createdAt),
+          });
+          position = allEntries.length + 1;
+          
+          // Update position in database for future queries
+          await db
+            .update(waitlist)
+            .set({ position })
+            .where(eq(waitlist.id as any, entry.id) as any);
+        }
+
         return {
           success: true,
           data: {
             id: entry.id,
             email: entry.email,
             emailVerified: entry.emailVerified,
-            position: entry.position,
+            position,
             bountyTitle: entry.bountyTitle,
             bountyDescription: entry.bountyDescription,
             bountyAmount: entry.bountyAmount,
+            bountyDeadline: entry.bountyDeadline,
             bountyGithubIssueUrl: entry.bountyGithubIssueUrl,
             userId: entry.userId,
             createdAt: entry.createdAt,
@@ -695,23 +711,68 @@ export const earlyAccessRouter = router({
             .update(waitlist)
             .set({ userId })
             .where(eq(waitlist.id as any, entry.id) as any);
-
+          
           info('[getMyWaitlistEntry] Auto-linked entry by email:', userEmail);
         }
       }
 
+      // If no entry exists, create one using the user's email
+      if (!entry && userEmail) {
+        // Calculate position (count of existing entries)
+        const allEntries = await db.query.waitlist.findMany();
+        const position = allEntries.length + 1;
+
+        const [newEntry] = await db
+          .insert(waitlist)
+          .values({
+            email: userEmail,
+            userId: userId,
+            position,
+            createdAt: new Date(),
+          })
+          .returning();
+
+        if (newEntry) {
+          info('[getMyWaitlistEntry] Auto-created entry for user:', userId);
+          
+          // Fetch the full entry to get position
+          entry = await db.query.waitlist.findFirst({
+            where: (fields, { eq }) => eq(fields.id, newEntry.id),
+          });
+        }
+      }
+
       if (!entry) {
-        return null;
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to create waitlist entry',
+        });
+      }
+
+      // Calculate position if not set
+      let position = entry.position;
+      if (!position) {
+        const allEntries = await db.query.waitlist.findMany({
+          where: (fields, { lt }) => lt(fields.createdAt, entry.createdAt),
+        });
+        position = allEntries.length + 1;
+        
+        // Update position in database for future queries
+        await db
+          .update(waitlist)
+          .set({ position })
+          .where(eq(waitlist.id as any, entry.id) as any);
       }
 
       return {
         id: entry.id,
         email: entry.email,
         emailVerified: entry.emailVerified,
-        position: entry.position,
+        position,
         bountyTitle: entry.bountyTitle,
         bountyDescription: entry.bountyDescription,
         bountyAmount: entry.bountyAmount,
+        bountyDeadline: entry.bountyDeadline,
         createdAt: entry.createdAt,
       };
     } catch (error: unknown) {
@@ -820,7 +881,6 @@ export const earlyAccessRouter = router({
             });
           }
 
-          // Log role preference for now (can be persisted to a new field later)
           if (input.role) {
             info('[linkUserToWaitlist] Role preference:', input.role, 'for user:', userId);
           }
@@ -846,7 +906,7 @@ export const earlyAccessRouter = router({
               .returning({ id: bounty.id });
 
             if (newBounty) {
-              bountyId = newBounty.id;
+            bountyId = newBounty.id;
             }
           } catch (bountyError) {
             warn('[linkUserToWaitlist] Failed to create bounty:', bountyError);
@@ -949,6 +1009,27 @@ export const earlyAccessRouter = router({
         bountyTitle: z.string().optional(),
         bountyDescription: z.string().optional(),
         bountyAmount: z.string().optional(),
+        bountyDeadline: z
+          .string()
+          .optional()
+          .refine(
+            (val) => {
+              if (!val || val === '') return true; // Optional field
+              try {
+                const date = new Date(val);
+                if (isNaN(date.getTime())) return false; // Invalid date
+                // Compare dates (ignore time for day-level comparison)
+                const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                const nowOnly = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+                return dateOnly >= nowOnly; // Must be today or in the future
+              } catch {
+                return false;
+              }
+            },
+            {
+              message: 'Deadline must be today or in the future',
+            }
+          ),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -986,6 +1067,9 @@ export const earlyAccessRouter = router({
             bountyDescription:
               bountyData.bountyDescription ?? entry.bountyDescription,
             bountyAmount: bountyData.bountyAmount ?? entry.bountyAmount,
+            bountyDeadline: bountyData.bountyDeadline
+              ? new Date(bountyData.bountyDeadline)
+              : entry.bountyDeadline,
           })
           .where(eq(waitlist.id as any, entryId) as any);
 

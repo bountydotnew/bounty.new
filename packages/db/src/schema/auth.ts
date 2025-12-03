@@ -107,6 +107,7 @@ export const waitlist = pgTable('waitlist', {
   bountyTitle: text('bounty_title'),
   bountyDescription: text('bounty_description'),
   bountyAmount: text('bounty_amount'),
+  bountyDeadline: timestamp('bounty_deadline'),
   bountyGithubIssueUrl: text('bounty_github_issue_url'),
   // User linkage (after GitHub OAuth)
   userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),

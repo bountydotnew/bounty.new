@@ -20,7 +20,8 @@ import {
     formatFormData,
 } from '@bounty/ui/lib/forms';
 import { cn } from '@bounty/ui/lib/utils';
-import { Calendar } from 'lucide-react';
+import { DatePicker } from '@bounty/ui/components/date-picker';
+import { CalendarIcon } from '@bounty/ui/components/icons/huge/calendar';
 import GitHub from '@/components/icons/github';
 
 // Hooks
@@ -113,8 +114,6 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
     const [selectedIssue, setSelectedIssue] = useState<{ number: number; title: string; url: string } | null>(null);
     const [showImportPrompt, setShowImportPrompt] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
-    const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
-    const deadline = watch('deadline');
 
     // Autofill prompt state (for issues)
     const [showAutofillPrompt, setShowAutofillPrompt] = useState(false);
@@ -137,7 +136,11 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
             setSelectedRepository('');
             setSelectedIssue(null);
             setIssueQuery('');
-            router.push(`/dashboard`);
+            if (result?.data?.id) {
+                router.push(`/bounty/${result.data.id}`);
+            } else {
+                router.push(`/dashboard`);
+            }
         },
         onError: (error: Error) => {
             toast.error(`Failed to create bounty: ${error.message}`);
@@ -295,41 +298,22 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                                 <PriceChip control={control} />
                                 
                                 {/* Deadline chip */}
-                                <Popover open={showDeadlinePicker} onOpenChange={setShowDeadlinePicker}>
-                                    <PopoverTrigger asChild>
-                                        <button 
-                                            type="button"
-                                            className="rounded-[7px] px-1.5 py-[3px] bg-[#201F1F] text-[#5A5A5A] text-[16px] leading-5 font-normal flex items-center gap-1 hover:text-white transition-colors"
-                                        >
-                                            <Calendar className="w-4 h-4 shrink-0" />
-                                            {deadline ? new Date(deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Deadline"}
-                                        </button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <Controller
-                                            control={control}
-                                            name="deadline"
-                                            render={({ field }) => (
-                                                <input
-                                                    type="datetime-local"
-                                                    value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ""}
-                                                    onChange={(e) => {
-                                                        const value = e.target.value;
-                                                        if (value) {
-                                                            const date = new Date(value);
-                                                            field.onChange(date.toISOString());
-                                                        } else {
-                                                            field.onChange(undefined);
-                                                        }
-                                                        setShowDeadlinePicker(false);
-                                                    }}
-                                                    className="bg-transparent text-white p-4 outline-none"
-                                                    min={new Date().toISOString().slice(0, 16)}
-                                                />
-                                            )}
-                                        />
-                                    </PopoverContent>
-                                </Popover>
+                                <div className="rounded-[7px] px-1.5 py-[3px] bg-[#201F1F] text-[#5A5A5A] text-[16px] leading-5 font-normal flex items-center gap-1 shrink-0">
+                                    <CalendarIcon className="w-4 h-4 shrink-0" />
+                                    <Controller
+                                        control={control}
+                                        name="deadline"
+                                        render={({ field }) => (
+                                            <DatePicker
+                                                value={field.value}
+                                                onChange={(value) => field.onChange(value || undefined)}
+                                                placeholder="Deadline, e.g. tomorrow"
+                                                className="min-w-[140px]"
+                                                id="deadline"
+                                            />
+                                        )}
+                                    />
+                                </div>
                                 
                                 {/* Currency selector - hidden but kept for form */}
                                 <Controller
@@ -467,39 +451,39 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                             </button>
                         </div>
 
-                        {/* Issue import prompt */}
-                        <Dialog open={showImportPrompt} onOpenChange={setShowImportPrompt}>
-                            <DialogContent className="border border-[#232323] bg-[#191919] text-[#CFCFCF]">
-                                <DialogHeader>
-                                    <DialogTitle className="text-[#CFCFCF]">Import issue details?</DialogTitle>
-                                    <DialogDescription className="text-[#5A5A5A]">
-                                        Found issue #{selectedIssue?.number} in {selectedRepository}. Would you like to import the title and description?
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="flex gap-2 justify-end mt-4">
-                                    <Button
-                                        variant="outline"
-                                        onClick={handleSkipImport}
-                                        disabled={isImporting}
-                                    >
-                                        Skip
-                                    </Button>
-                                    <Button
-                                        onClick={handleImportIssue}
-                                        disabled={isImporting}
-                                    >
-                                        {isImporting ? (
-                                            <>
-                                                <Spinner size="sm" className="mr-2" />
-                                                Importing...
-                                            </>
-                                        ) : (
-                                            'Import'
-                                        )}
-                                    </Button>
-                                </div>
-                            </DialogContent>
-                        </Dialog>
+                                {/* Issue import prompt */}
+                                {/* <Dialog open={showImportPrompt} onOpenChange={setShowImportPrompt}>
+                                    <DialogContent className="border border-[#232323] bg-[#191919] text-[#CFCFCF]">
+                                        <DialogHeader>
+                                            <DialogTitle className="text-[#CFCFCF]">Import issue details?</DialogTitle>
+                                            <DialogDescription className="text-[#5A5A5A]">
+                                                Found issue #{selectedIssue?.number} in {selectedRepository}. Would you like to import the title and description?
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="flex gap-2 justify-end mt-4">
+                                            <Button
+                                                variant="outline"
+                                                onClick={handleSkipImport}
+                                                disabled={isImporting}
+                                            >
+                                                Skip
+                                            </Button>
+                                            <Button
+                                                onClick={handleImportIssue}
+                                                disabled={isImporting}
+                                            >
+                                                {isImporting ? (
+                                                    <>
+                                                        <Spinner size="sm" className="mr-2" />
+                                                        Importing...
+                                                    </>
+                                                ) : (
+                                                    'Import'
+                                                )}
+                                            </Button>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog> */}
                     </div>
                 </fieldset>
             </form>

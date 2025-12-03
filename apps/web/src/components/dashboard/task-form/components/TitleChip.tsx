@@ -55,7 +55,7 @@ export function TitleChip({ control }: TitleChipProps) {
                                         setIsTitleFocused(false);
                                     }, 200);
                                 }}
-                                className="bg-transparent text-white text-[16px] leading-5 outline-none placeholder:text-[#3a3a3a]"
+                                className="bg-transparent text-white text-[16px] leading-5 outline-none placeholder:text-[#5A5A5A]"
                                 style={{ width: `${inputWidth}px` }}
                             />
                         </>

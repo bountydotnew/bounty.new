@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Copy, Check } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { trpc } from "@/utils/trpc";
+import Image from "next/image";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { trpc, trpcClient } from "@/utils/trpc";
+import { authClient } from "@bounty/auth/client";
+import { BountyForm } from "./bounty-form";
+
+const BOUNTY_DRAFT_STORAGE_KEY = 'bounty_draft';
 
 interface DashboardPreviewProps {
   entryId: string;
@@ -11,11 +15,32 @@ interface DashboardPreviewProps {
 }
 
 export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
-  const [copied, setCopied] = useState(false);
   const [entry, setEntry] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [hasAutoSaved, setHasAutoSaved] = useState(false);
+  const queryClient = useQueryClient();
+  const { data: session } = authClient.useSession();
 
   const { data, isLoading } = useQuery({
     ...trpc.earlyAccess.getWaitlistEntry.queryOptions({ entryId }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (input: {
+      entryId: string;
+      bountyTitle?: string;
+      bountyDescription?: string;
+      bountyAmount?: string;
+      bountyDeadline?: string;
+    }) => {
+      return await trpcClient.earlyAccess.updateBountyDraft.mutate(input);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [['earlyAccess', 'getWaitlistEntry'], { input: { entryId }, type: 'query' }],
+      });
+      setIsEditing(false);
+    },
   });
 
   useEffect(() => {
@@ -24,15 +49,41 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
     }
   }, [data]);
 
-  const referralLink = entry
-    ? `https://bounty.new?ref=${entry.id}`
-    : "";
+  // Auto-save localStorage draft on mount if entry has no bounty
+  useEffect(() => {
+    if (hasAutoSaved || isLoading || !entry || entry.bountyTitle || entry.bountyDescription || entry.bountyAmount) {
+      return;
+    }
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(referralLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+    const autoSaveDraft = async () => {
+      try {
+        const stored = localStorage.getItem(BOUNTY_DRAFT_STORAGE_KEY);
+        if (stored) {
+          const draft = JSON.parse(stored);
+          if (draft.title || draft.description || draft.amount) {
+            // Auto-save draft to database
+            await updateMutation.mutateAsync({
+              entryId,
+              bountyTitle: draft.title,
+              bountyDescription: draft.description,
+              bountyAmount: draft.amount,
+              bountyDeadline: draft.deadline,
+            });
+            
+            // Clear localStorage
+            localStorage.removeItem(BOUNTY_DRAFT_STORAGE_KEY);
+            setHasAutoSaved(true);
+          }
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    };
+
+    autoSaveDraft();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entry, isLoading, entryId, hasAutoSaved]);
+
 
   if (isLoading || !entry) {
     return (
@@ -45,10 +96,35 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
     );
   }
 
+  // Helper to format price with commas
+  const formatPrice = (price: string | null | undefined): string => {
+    if (!price) return '';
+    const num = parseFloat(price);
+    if (isNaN(num)) return price;
+    return num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  };
+
+  // Helper to format deadline
+  const formatDeadline = (deadline: string | Date | null | undefined): string => {
+    if (!deadline) return '';
+    try {
+      const date = typeof deadline === 'string' ? new Date(deadline) : deadline;
+      if (isNaN(date.getTime())) return '';
+      return date.toLocaleDateString('en-US', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      });
+    } catch {
+      return '';
+    }
+  };
+
   const bountyDraft = entry ? {
     title: entry.bountyTitle,
     description: entry.bountyDescription,
-    price: entry.bountyAmount ? parseInt(entry.bountyAmount) : undefined,
+    price: entry.bountyAmount,
+    deadline: entry.bountyDeadline,
   } : null;
 
   return (
@@ -63,8 +139,30 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
         </p>
       </div>
 
-      {/* Bounty card */}
-      {bountyDraft && (
+      {/* Bounty card or edit form */}
+      {isEditing ? (
+        <div className="mb-6">
+          <BountyForm
+            initialValues={bountyDraft ? {
+              title: bountyDraft.title,
+              description: bountyDraft.description,
+              amount: bountyDraft.price || '',
+              deadline: bountyDraft.deadline ? (typeof bountyDraft.deadline === 'string' ? bountyDraft.deadline : bountyDraft.deadline.toISOString()) : '',
+            } : undefined}
+            entryId={entryId}
+            onSubmit={async (data) => {
+              await updateMutation.mutateAsync({
+                entryId,
+                bountyTitle: data.title,
+                bountyDescription: data.description,
+                bountyAmount: data.amount,
+                bountyDeadline: data.deadline,
+              });
+            }}
+            onCancel={() => setIsEditing(false)}
+          />
+        </div>
+      ) : bountyDraft ? (
         <div className="rounded-xl bg-[#191919] border border-[#232323] overflow-hidden mb-6">
           <div className="p-5 border-b border-[#232323]">
             <div className="flex items-start justify-between mb-3">
@@ -74,7 +172,12 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
                 </span>
                 {bountyDraft.price && (
                   <span className="px-2 py-0.5 rounded-full bg-[#1E3A2F] text-[#4ADE80] text-xs">
-                    ${(bountyDraft.price / 100).toFixed(2)}
+                    ${formatPrice(bountyDraft.price)}
+                  </span>
+                )}
+                {bountyDraft.deadline && (
+                  <span className="px-2 py-0.5 rounded-full bg-[#2A2A2A] text-[#929292] text-xs">
+                    Due: {formatDeadline(bountyDraft.deadline)}
                   </span>
                 )}
               </div>
@@ -89,13 +192,53 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
           </div>
           <div className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#232323]" />
+              {session?.user?.image ? (
+                <Image
+                  src={session.user.image}
+                  alt={session.user.name || 'You'}
+                  width={32}
+                  height={32}
+                  className="w-8 h-8 rounded-full"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-[#232323] flex items-center justify-center">
+                  <span className="text-[#929292] text-xs">
+                    {(session?.user?.name || 'Y').charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
               <span className="text-[#929292] text-sm">You</span>
             </div>
-            <button className="text-sm text-[#5A5A5A] hover:text-white transition-colors">
+            <button 
+              onClick={() => setIsEditing(true)}
+              className="text-sm text-[#5A5A5A] hover:text-white transition-colors"
+            >
               Edit draft
             </button>
           </div>
+        </div>
+      ) : (
+        <div className="mb-6">
+          <div className="mb-4 text-center">
+            <h3 className="text-white text-xl font-medium mb-2">
+              Create your bounty draft
+            </h3>
+            <p className="text-[#929292] text-sm">
+              This is optional. You can skip and just join the waitlist.
+            </p>
+          </div>
+          <BountyForm
+            entryId={entryId}
+            onSubmit={async (data) => {
+              await updateMutation.mutateAsync({
+                entryId,
+                bountyTitle: data.title,
+                bountyDescription: data.description,
+                bountyAmount: data.amount,
+                bountyDeadline: data.deadline,
+              });
+            }}
+          />
         </div>
       )}
 
@@ -103,7 +246,9 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
       <div className="mt-6 grid grid-cols-3 gap-4">
         <div className="rounded-xl bg-[#191919] border border-[#232323] p-4">
           <p className="text-[#5A5A5A] text-sm mb-1">Position</p>
-          <p className="text-white text-2xl font-medium">#{entry.position}</p>
+          <p className="text-white text-2xl font-medium">
+            {entry.position ? `#${entry.position}` : '—'}
+          </p>
         </div>
         <div className="rounded-xl bg-[#191919] border border-[#232323] p-4">
           <p className="text-[#5A5A5A] text-sm mb-1">Draft bounties</p>
@@ -128,26 +273,10 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
           </p>
         </div>
         <button
-          onClick={handleCopy}
-          className="flex items-center justify-center gap-1.5 px-5 h-[36px] rounded-full text-white text-sm font-normal"
-          style={{
-            backgroundImage: "linear-gradient(180deg, #ccc 0%, #808080 100%)",
-          }}
+          disabled
+          className="flex items-center justify-center gap-1.5 px-[13px] h-[31.9965px] rounded-full bg-white text-black text-base font-normal transition-opacity opacity-50 cursor-not-allowed"
         >
-          {copied ? <Check size={16} /> : <Copy size={16} />}
-          {copied ? "Copied" : "Copy link"}
-          {!copied && (
-            <svg
-              className="w-4 h-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            >
-              <rect x="9" y="9" width="13" height="13" rx="2" />
-              <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-            </svg>
-          )}
+          Coming soon
         </button>
       </div>
     </div>

@@ -13,7 +13,7 @@ export function DescriptionTextarea({ control, placeholder, textareaRef }: Descr
         if (textareaRef.current) {
             const textarea = textareaRef.current;
             textarea.style.height = 'auto';
-            const newHeight = Math.min(Math.max(textarea.scrollHeight, 60), 400);
+            const newHeight = Math.min(Math.max(textarea.scrollHeight, 160), 600);
             textarea.style.height = `${newHeight}px`;
         }
     });
@@ -35,11 +35,11 @@ export function DescriptionTextarea({ control, placeholder, textareaRef }: Descr
                         field.onChange(e.target.value);
                         const target = e.target;
                         target.style.height = 'auto';
-                        const newHeight = Math.min(Math.max(target.scrollHeight, 60), 400);
+                        const newHeight = Math.min(Math.max(target.scrollHeight, 160), 600);
                         target.style.height = `${newHeight}px`;
                     }}
                     placeholder={placeholder}
-                    className="flex-1 min-h-[60px] bg-transparent text-white text-[16px] leading-6 outline-none resize-none placeholder:text-[#5A5A5A]"
+                    className="flex-1 min-h-[160px] bg-transparent text-white text-[16px] leading-6 outline-none resize-none placeholder:text-[#5A5A5A]"
                 />
             )}
         />
