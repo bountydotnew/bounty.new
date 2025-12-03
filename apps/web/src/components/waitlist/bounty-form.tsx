@@ -218,7 +218,7 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
       router.push(`/login?callback=${callbackUrl}`);
       return;
     }
-co
+
     // If logged in, redirect to dashboard
     router.push('/waitlist/dashboard');
   };
