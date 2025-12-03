@@ -18,3 +18,4 @@ stagewise.json
 /agents
 /.guides
 packages/db/migrations/meta/_journal.json
+/scripts
