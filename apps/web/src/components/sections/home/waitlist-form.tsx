@@ -241,7 +241,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
   } else {
     waitlistStatus = (
       <span className="font-display-book font-medium text-green-400">
-        <NumberFlow value={waitlistCount.count} />+ people already joined
+        <NumberFlow value={waitlistCount.count} />+ people are already on the waitlist
       </span>
     );
   }

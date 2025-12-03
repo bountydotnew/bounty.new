@@ -7,6 +7,8 @@ import { Footer } from '@/components/sections/home/footer';
 import { Header } from '@/components/sections/home/header';
 import { BackedByBadge } from '@bounty/ui/components/backed-by-badge';
 import { BountyForm } from '@/components/waitlist/bounty-form';
+import { BountyStatistics } from '@/components/sections/home/bounty-statistics';
+import { WaitlistCount } from '@/components/sections/home/waitlist-count';
 
 const WAITLIST_STORAGE_KEY = 'bounty_waitlist_entry';
 
@@ -35,15 +37,6 @@ export default function Home() {
     }
     setIsLoading(false);
   }, []);
-
-  const handleSubmitSuccess = (email: string, entryId: string) => {
-    // Store entry for future visits
-    localStorage.setItem(
-      WAITLIST_STORAGE_KEY,
-      JSON.stringify({ entryId, email })
-    );
-    router.push(`/waitlist/verify?entryId=${entryId}`);
-  };
 
   const handleCheckPlace = () => {
     if (existingEntry) {
@@ -94,7 +87,7 @@ export default function Home() {
 
         <main className="relative z-10 flex min-h-[calc(100vh-80px)] flex-col items-center justify-start px-6 py-20">
           <div className="flex w-full max-w-2xl flex-col items-center text-center">
-            <div className="mb-8">
+            <div className="">
               <BackedByBadge />
             </div>
 
@@ -114,6 +107,16 @@ export default function Home() {
               The bounty platform where creators post challenges and developers
               deliver solutions. Instant payouts, integration, zero friction.
             </p>
+
+
+            {/* Bounty Statistics */}
+            <div className="mb-12 flex w-full items-center justify-center">
+              <BountyStatistics />
+            </div>
+            {/* Waitlist Count */}
+            <div className="flex w-full items-center justify-center mb-8">
+              <WaitlistCount />
+            </div>
 
             {isLoading ? (
               <div className="h-[200px] flex items-center justify-center">
