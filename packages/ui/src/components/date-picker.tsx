@@ -157,7 +157,7 @@ export function DatePicker({
             variant="text"
             className="absolute top-1/2 right-0 size-4 -translate-y-1/2 p-0 h-auto"
           >
-            <CalendarIcon className="size-4 text-[#5A5A5A]" />
+            {/* <CalendarIcon className="size-4 text-[#5A5A5A]" /> */}
             <span className="sr-only">Pick a date</span>
           </Button>
         </PopoverTrigger>

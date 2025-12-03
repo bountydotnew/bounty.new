@@ -218,18 +218,19 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
       router.push(`/login?callback=${callbackUrl}`);
       return;
     }
-
+co
     // If logged in, redirect to dashboard
     router.push('/waitlist/dashboard');
   };
 
   return (
-    <div className="w-full max-w-[703px] min-h-[180px] rounded-[21px] bg-[#191919] border border-[#232323] flex flex-col">
+    <div className="w-full max-w-[95vw] sm:max-w-[703px] mx-auto">
+      <div className="w-full min-h-[140px] sm:min-h-[180px] rounded-[12px] sm:rounded-[21px] bg-[#191919] border border-[#232323] flex flex-col px-2 sm:px-0">
       {/* Top row: Chips */}
-      <div className="flex items-center gap-2.5 px-[14px] pt-3 pb-2 overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-1.5 sm:gap-2.5 px-1.5 sm:px-[14px] pt-2 sm:pt-3 pb-1.5 sm:pb-2 overflow-x-auto no-scrollbar">
         {/* Title chip */}
         <div 
-          className="rounded-[14px] px-[15px] py-1.5 bg-[#1B1A1A] border border-[#232323] transition-colors h-[31.9965px] flex items-center cursor-text"
+          className="rounded-[8px] sm:rounded-[14px] px-2 sm:px-[15px] py-1 sm:py-1.5 bg-[#1B1A1A] border border-[#232323] transition-colors h-[26px] sm:h-[31.9965px] flex items-center cursor-text shrink-0"
           onClick={() => titleRef.current?.focus()}
         >
           <input
@@ -238,14 +239,14 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Enter a title"
-            className="bg-transparent text-white text-base outline-none placeholder:text-[#5A5A5A] min-w-[100px]"
-            style={{ width: `${calculateWidth(title || "Enter a title", 100)}px` }}
+            className="bg-transparent text-white text-sm sm:text-base outline-none placeholder:text-[#5A5A5A] min-w-[80px] sm:min-w-[100px] max-w-[120px] sm:max-w-none"
+            style={{ width: `${calculateWidth(title || "Enter a title", 80)}px` }}
           />
         </div>
 
         {/* Price chip */}
         <div 
-          className="rounded-[14px] px-[15px] py-1.5 bg-[#1B1A1A] border border-[#232323] transition-colors h-[31.9965px] flex items-center cursor-text shrink-0"
+          className="rounded-[8px] sm:rounded-[14px] px-2 sm:px-[15px] py-1 sm:py-1.5 bg-[#1B1A1A] border border-[#232323] transition-colors h-[26px] sm:h-[31.9965px] flex items-center cursor-text shrink-0"
           onClick={() => priceRef.current?.focus()}
         >
           <input
@@ -258,21 +259,21 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
               setPrice(cleaned);
             }}
             placeholder="Price"
-            className="bg-transparent text-white text-base outline-none placeholder:text-[#5A5A5A] min-w-[60px]"
-            style={{ width: `${calculateWidth(price ? price.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : "Price", 60)}px` }}
+            className="bg-transparent text-white text-sm sm:text-base outline-none placeholder:text-[#5A5A5A] min-w-[50px] sm:min-w-[60px]"
+            style={{ width: `${calculateWidth(price ? price.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : "Price", 50)}px` }}
           />
         </div>
 
         {/* Deadline chip */}
         <div 
-          className="rounded-[14px] px-[15px] py-1.5 bg-[#1B1A1A] border border-[#232323] transition-colors h-[31.9965px] flex items-center gap-[5px] shrink-0 cursor-text min-w-[140px]"
+          className="rounded-[8px] sm:rounded-[14px] px-2 sm:px-[15px] py-1 sm:py-1.5 bg-[#1B1A1A] border border-[#232323] transition-colors h-[26px] sm:h-[31.9965px] flex items-center gap-1.5 sm:gap-[5px] shrink-0 cursor-text min-w-[110px] sm:min-w-[140px]"
         >
-          <CalendarIcon className="w-4 h-4 shrink-0 text-[#5A5A5A]" />
+          <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 shrink-0 text-[#5A5A5A]" />
           <DatePicker
             value={deadline}
             onChange={(value) => setDeadline(value)}
             placeholder="Deadline, e.g. tomorrow"
-            className="flex-1 min-w-[100px]"
+            className="flex-1 min-w-[80px] sm:min-w-[100px] text-sm sm:text-base [&>input]:pl-0.5 sm:[&>input]:pl-0"
             id="deadline"
           />
         </div>
@@ -291,23 +292,23 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
       </div>
 
       {/* Description textarea */}
-      <div className="px-[19px] py-1.5 flex-1 flex">
+      <div className="px-2 sm:px-[19px] py-1 sm:py-1.5 flex-1 flex">
         <textarea
           ref={descriptionRef}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Start typing your description..."
-          className="w-full bg-transparent text-[#5A5A5A] text-base outline-none placeholder:text-[#5A5A5A] resize-none min-h-[100px]"
+          className="w-full bg-transparent text-[#5A5A5A] text-sm sm:text-base outline-none placeholder:text-[#5A5A5A] resize-none min-h-[80px] sm:min-h-[100px]"
         />
       </div>
 
       {/* Footer row with buttons */}
-      <div className="flex justify-end items-center gap-2 px-3 py-3">
+      <div className="flex justify-end items-center gap-1.5 sm:gap-2 px-1.5 sm:px-3 py-2 sm:py-3 flex-wrap">
         {onCancel && (
           <button
             onClick={onCancel}
             disabled={isSubmitting}
-            className="flex items-center justify-center gap-1.5 px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
           >
             Cancel
           </button>
@@ -316,21 +317,24 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
           <button
             onClick={handleSkipAndJoinWaitlist}
             disabled={isSubmitting}
-            className="flex items-center justify-center gap-1.5 px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
           >
-            {isSubmitting ? "Redirecting..." : "Skip & join waitlist"}
+            <span className="hidden sm:inline">{isSubmitting ? "Redirecting..." : "Skip & join waitlist"}</span>
+            <span className="sm:hidden">{isSubmitting ? "Redirecting..." : "Skip"}</span>
           </button>
         )}
         <button
           onClick={handleCreateBounty}
           disabled={isSubmitting || !title}
-          className="flex items-center justify-center gap-1.5 px-[13px] h-[31.9965px] rounded-full bg-white text-black text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-white text-black text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
         >
           <GitHub className="w-4 h-4 shrink-0" />
-          {isSubmitting ? (onSubmit ? "Saving..." : "Creating...") : (onSubmit ? "Save" : "Create bounty")}
+          <span className="hidden sm:inline">{isSubmitting ? (onSubmit ? "Saving..." : "Creating...") : (onSubmit ? "Save" : "Create bounty")}</span>
+          <span className="sm:hidden">{isSubmitting ? (onSubmit ? "Saving..." : "Creating...") : (onSubmit ? "Save" : "Create")}</span>
         </button>
       </div>
-      <div className="text-[#5A5A5A] text-sm text-center pb-3">
+      </div>
+      <div className="text-[#5A5A5A] text-[10px] sm:text-sm text-center pt-2 sm:pt-3 px-2 sm:px-0">
         Creating a draft bounty is optional. This step is not required to sign up.
       </div>
     </div>
