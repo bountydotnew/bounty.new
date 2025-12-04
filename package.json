@@ -21,7 +21,7 @@
   "packageManager": "bun@1.2.17",
   "private": true,
   "scripts": {
-    "dev": "dotenv -- turbo dev",
+    "dev": "npx @react-grab/cursor@latest &&dotenv -- turbo dev ",
     "start": "dotenv -- turbo start",
     "build": "dotenv -- turbo build",
     "check-types": "dotenv -- turbo check-types",
