@@ -84,8 +84,8 @@ const deviceAuthorizationPlugin = deviceAuthorization({
     allowedDeviceClientIds?.length
       ? allowedDeviceClientIds.includes(clientId)
       : true,
-  onDeviceAuthRequest: (clientId, scope) => {
-    console.info('Device authorization requested', { clientId, scope });
+  onDeviceAuthRequest: () => {
+    // Device authorization requested
   },
 });
 
@@ -116,7 +116,7 @@ async function syncGitHubHandle(userId: string, accessToken: string): Promise<vo
         .where(eq(userTable.id, userId));
     }
   } catch (error) {
-    console.error('[GitHub Handle Sync] Error:', error);
+    // Silently handle errors - don't block account creation/update
   }
 }
 
