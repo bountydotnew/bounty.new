@@ -1,12 +1,14 @@
 import { handle } from '@upstash/realtime';
 import { realtime } from '@bounty/realtime';
-import { getServerSession } from '@bounty/auth/server-utils';
+import { auth } from '@bounty/auth/server';
 
 export const GET = handle({
   realtime,
   middleware: async ({ request }) => {
-    const { data } = await getServerSession();
-    if (!data?.user) {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    if (!session?.user) {
       return new Response('Unauthorized', { status: 401 });
     }
   },
