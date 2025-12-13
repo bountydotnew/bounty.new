@@ -5,14 +5,14 @@ export function Footer() {
   return (
     <footer className="flex w-full flex-row bg-[#0E0E0E] px-4 py-10 sm:px-6 sm:py-6 md:px-8 md:py-8">
       <div className="mx-auto flex w-full max-w-7xl flex-row items-center justify-between">
-        <p className="inline-flex items-center gap-2 font-bold text-foreground text-md tracking-tight opacity-50">
+        <p className="inline-flex items-center gap-2 font-bold text-white text-md tracking-tight opacity-50">
           <Bounty className="h-6 w-6 text-white" />
           <span className="hidden font-medium text-xl md:block">
             bounty.new
           </span>
         </p>
 
-        <div className="flex flex-row items-center justify-center gap-4 text-muted-foreground">
+        <div className="flex flex-row items-center justify-center gap-4 text-neutral-400">
           <Image
             alt="Vercel OSS Program"
             className="h-6 w-auto opacity-70 transition-opacity hover:opacity-100"
