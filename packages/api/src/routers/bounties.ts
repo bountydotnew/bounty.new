@@ -109,6 +109,7 @@ const getBountiesSchema = z.object({
     .optional(),
   search: z.string().optional(),
   tags: z.array(z.string()).optional(),
+  creatorId: z.string().uuid().optional(),
   sortBy: z
     .enum(['created_at', 'amount', 'deadline', 'title'])
     .default('created_at'),
@@ -327,6 +328,10 @@ export const bountiesRouter = router({
 
         if (input.tags && input.tags.length > 0) {
           conditions.push(sql`${bounty.tags} && ${input.tags}`);
+        }
+
+        if (input.creatorId) {
+          conditions.push(eq(bounty.createdById, input.creatorId));
         }
 
         const results = await db
