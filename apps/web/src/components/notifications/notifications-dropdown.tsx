@@ -160,12 +160,10 @@ export function NotificationsDropdown({
     <DropdownMenu onOpenChange={(open) => !open && setShowAll(false)}>
       <DropdownMenuTrigger asChild>
         {children ? (
-          <div className={cn('relative', triggerClassName)}>
+          <div className={cn('relative cursor-pointer', triggerClassName)}>
             {children}
             {unreadCount > 0 && (
-              <p className="absolute -top-1 right-1.5 text-[13px] font-semibold leading-[150%] text-white">
-                {unreadCount}
-              </p>
+              <div className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#6CFF00]" />
             )}
           </div>
         ) : (
