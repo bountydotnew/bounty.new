@@ -124,9 +124,11 @@ function Row({ item, onRead }: NotificationRowProps) {
 
 // biome-ignore lint: UI component with conditional rendering
 export function NotificationsDropdown({
+  className,
   triggerClassName,
   children,
 }: {
+  className?: string;
   triggerClassName?: string;
   children?: React.ReactNode;
 }) {
@@ -157,6 +159,7 @@ export function NotificationsDropdown({
   }
 
   return (
+    <div className={className}>
     <DropdownMenu onOpenChange={(open) => !open && setShowAll(false)}>
       <DropdownMenuTrigger asChild>
         {children ? (
@@ -265,5 +268,6 @@ export function NotificationsDropdown({
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
+    </div>
   );
 }

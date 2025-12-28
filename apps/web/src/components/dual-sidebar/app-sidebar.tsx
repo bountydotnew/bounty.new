@@ -115,7 +115,7 @@ const SidebarFooterActions = () => {
   const isAuthenticated = !!session?.user;
 
   return (
-    <div className="flex items-end justify-between gap-2 py-0">
+    <div className="flex items-end justify-between gap-2 py-0 group-data-[collapsible=icon]:justify-center">
       <button
         className="inline-flex items-center gap-2 rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
         onClick={() => router.push(LINKS.SETTINGS)}
@@ -127,11 +127,12 @@ const SidebarFooterActions = () => {
         </span>
       </button>
       {isAuthenticated && !isPending && (
-        <div className="group-data-[collapsible=icon]:hidden">
-          <NotificationsDropdown triggerClassName="flex h-auto w-auto items-center justify-center rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white">
-            <NotificationsIcon className="h-[19px] w-[19px]" />
-          </NotificationsDropdown>
-        </div>
+        <NotificationsDropdown
+          className="group-data-[collapsible=icon]:hidden"
+          triggerClassName="flex h-auto w-auto items-center justify-center rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white"
+        >
+          <NotificationsIcon className="h-[19px] w-[19px]" />
+        </NotificationsDropdown>
       )}
     </div>
   );
