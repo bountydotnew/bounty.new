@@ -1716,6 +1716,130 @@ export const bountiesRouter = router({
       }
     }),
 
+  approveSubmission: protectedProcedure
+    .input(
+      z.object({
+        bountyId: z.string().uuid(),
+        submissionId: z.string().uuid(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Verify the bounty exists and belongs to the user
+        const [existingBounty] = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId));
+
+        if (!existingBounty) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        if (existingBounty.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only approve submissions for your own bounties',
+          });
+        }
+
+        // Verify the submission exists and belongs to this bounty
+        const [existingSubmission] = await db
+          .select()
+          .from(submission)
+          .where(eq(submission.id, input.submissionId));
+
+        if (!existingSubmission) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Submission not found',
+          });
+        }
+
+        if (existingSubmission.bountyId !== input.bountyId) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Submission does not belong to this bounty',
+          });
+        }
+
+        if (existingSubmission.status === 'approved') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Submission is already approved',
+          });
+        }
+
+        // Update submission status to approved
+        const [updatedSubmission] = await db
+          .update(submission)
+          .set({
+            status: 'approved',
+            reviewedAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(submission.id, input.submissionId))
+          .returning();
+
+        // Update bounty status to completed
+        await db
+          .update(bounty)
+          .set({
+            status: 'completed',
+            updatedAt: new Date(),
+          })
+          .where(eq(bounty.id, input.bountyId));
+
+        // Invalidate caches
+        bountyStatsCache.clear();
+        bountyListCache.clear();
+        bountyDetailCache.delete(input.bountyId);
+
+        try {
+          await track('submission_approved', {
+            bounty_id: input.bountyId,
+            submission_id: input.submissionId,
+            user_id: ctx.session.user.id,
+            contributor_id: existingSubmission.contributorId,
+            source: 'api',
+          });
+        } catch {}
+
+        // Notify the contributor
+        try {
+          await createNotification({
+            userId: existingSubmission.contributorId,
+            type: 'submission_approved',
+            title: `Your submission was approved!`,
+            message: `Your submission for "${existingBounty.title}" has been approved.`,
+            data: { bountyId: input.bountyId, submissionId: input.submissionId },
+          });
+          await realtime.emit('notifications.refresh', {
+            userId: existingSubmission.contributorId,
+            ts: Date.now(),
+          });
+        } catch {}
+
+        return {
+          success: true,
+          data: updatedSubmission,
+          message: 'Submission approved successfully',
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to approve submission',
+          cause: error,
+        });
+      }
+    }),
+
   fetchMyBounties: protectedProcedure
     .input(
       z.object({

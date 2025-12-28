@@ -1,9 +1,7 @@
-// Validate env first (using server env since bounty commands might need more vars)
-import { env } from '@bounty/env/server';
-
-// Now safe to import db
+import { discordBotEnv as env } from '@bounty/env/discord-bot';
 import { db } from '@bounty/db';
-import React from 'react';
+import { account } from '@bounty/db/src/schema/auth';
+import { createServerCaller } from '@bounty/api';
 import {
   ActionRow,
   Container,
@@ -12,22 +10,15 @@ import {
   TextDisplay,
   makeReacord,
 } from '@bounty/reacord';
-import type { ChatInputCommandInteraction } from 'discord.js';
-import { SlashCommandBuilder as Builder, Routes, REST, MessageFlags } from 'discord.js';
+import type { ChatInputCommandInteraction, Client } from 'discord.js';
+import { SlashCommandBuilder as Builder, MessageFlags } from 'discord.js';
 import { Runtime } from 'effect';
-import { user, account } from '@bounty/db/src/schema/auth';
-import { eq } from 'drizzle-orm';
-import { createServerCaller } from '@bounty/api';
-import type { Client } from 'discord.js';
+import { eq, and } from 'drizzle-orm';
 
 /**
  * Get the bounty.new user ID from Discord user ID
- * TODO: This will be implemented when Discord linking is added
- * For now, we'll check the account table for Discord provider
  */
 async function getUserIdFromDiscordId(discordId: string): Promise<string | null> {
-  // Check account table for Discord provider
-  const { and } = await import('drizzle-orm');
   const [discordAccount] = await db
     .select({ userId: account.userId })
     .from(account)
@@ -36,8 +27,49 @@ async function getUserIdFromDiscordId(discordId: string): Promise<string | null>
       eq(account.accountId, discordId)
     ))
     .limit(1);
-  
+
   return discordAccount?.userId ?? null;
+}
+
+/**
+ * Clean and truncate description for Discord display
+ */
+function cleanDescription(description: string, maxLength = 80): string {
+  const cleaned = description
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\*\*Summary by.*?\*\*/g, '')
+    .replace(/^---.*?---$/gm, '')
+    .replace(/^\*\*.*?\*\*$/gm, '')
+    .replace(/\n{2,}/g, '\n')
+    .trim();
+
+  if (cleaned.length <= maxLength) {
+    return cleaned;
+  }
+
+  const truncated = cleaned.slice(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(' ');
+  const finalText = lastSpace > maxLength * 0.7
+    ? truncated.slice(0, lastSpace)
+    : truncated;
+
+  return `${finalText.trim()}...`;
+}
+
+/**
+ * Reply to modal interaction, handling deferred state
+ */
+async function replyToModal(
+  interaction: { replied: boolean; deferred: boolean; reply: (opts: unknown) => Promise<void>; followUp: (opts: unknown) => Promise<void> },
+  content: string,
+): Promise<void> {
+  const opts = { content, flags: MessageFlags.Ephemeral };
+  if (interaction.replied || interaction.deferred) {
+    await interaction.followUp(opts);
+  } else {
+    await interaction.reply(opts);
+  }
 }
 
 /**
@@ -260,33 +292,11 @@ async function handleCreate(
                     ],
                   });
                 } else {
-                  // Reacord defers the modal, so we need to use followUp instead of reply
-                  if (modalInteraction.replied || modalInteraction.deferred) {
-                    await modalInteraction.followUp({
-                      content: '❌ Failed to create bounty',
-                      flags: MessageFlags.Ephemeral,
-                    });
-                  } else {
-                    await modalInteraction.reply({
-                      content: '❌ Failed to create bounty',
-                      flags: MessageFlags.Ephemeral,
-                    });
-                  }
+                  await replyToModal(modalInteraction, '❌ Failed to create bounty');
                 }
               } catch (error) {
-                const errorContent = `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
-                // Reacord defers the modal, so we need to use followUp instead of reply
-                if (modalInteraction.replied || modalInteraction.deferred) {
-                  await modalInteraction.followUp({
-                    content: errorContent,
-                    flags: MessageFlags.Ephemeral,
-                  });
-                } else {
-                  await modalInteraction.reply({
-                    content: errorContent,
-                    flags: MessageFlags.Ephemeral,
-                  });
-                }
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                await replyToModal(modalInteraction, `❌ Error: ${errorMessage}`);
               }
             }}
           />
@@ -350,36 +360,8 @@ async function handleList(
               {'\n'}
               `{bounty.id}`
               {'\n'}
-              {(() => {
-                // Remove HTML comments and clean up the description
-                const cleanedDesc = bounty.description
-                  .replace(/<!--[\s\S]*?-->/g, '') // Remove HTML comments
-                  .replace(/\n{3,}/g, '\n\n') // Replace 3+ newlines with 2
-                  .replace(/\*\*Summary by.*?\*\*/g, '') // Remove "Summary by" sections
-                  .replace(/^---.*?---$/gm, '') // Remove markdown dividers
-                  .replace(/^\*\*.*?\*\*$/gm, '') // Remove bold-only lines
-                  .replace(/\n{2,}/g, '\n') // Replace multiple newlines with single
-                  .trim();
-                
-                const maxLength = 80;
-                const isLong = cleanedDesc.length > maxLength;
-                if (isLong) {
-                  // Try to truncate at a word boundary
-                  const truncated = cleanedDesc.slice(0, maxLength);
-                  const lastSpace = truncated.lastIndexOf(' ');
-                  const finalText = lastSpace > maxLength * 0.7 
-                    ? truncated.slice(0, lastSpace)
-                    : truncated;
-                  return `${finalText.trim()}...`;
-                }
-                return cleanedDesc;
-              })()}
-              {(() => {
-                const cleanedDesc = bounty.description
-                  .replace(/<!--[\s\S]*?-->/g, '')
-                  .trim();
-                return cleanedDesc.length > 80;
-              })() && (
+              {cleanDescription(bounty.description)}
+              {bounty.description.replace(/<!--[\s\S]*?-->/g, '').trim().length > 80 && (
                 <>
                   {'\n\n'}
                   *View full details on bounty.new*
@@ -461,7 +443,6 @@ async function handleView(
 
 async function handleClose(
   interaction: ChatInputCommandInteraction,
-  reacord: Reacord,
 ) {
   const userId = await requireAuth(interaction);
   const bountyId = interaction.options.getString('id', true);
@@ -515,72 +496,28 @@ async function handleApprove(interaction: ChatInputCommandInteraction) {
 
   const caller = await createServerCaller(userId);
 
-  // Verify the bounty exists and belongs to the user
-  const bountyResult = await caller.bounties.fetchBountyById({
-    id: bountyId,
-  });
+  try {
+    const result = await caller.bounties.approveSubmission({
+      bountyId,
+      submissionId,
+    });
 
-  if (!bountyResult.success || !bountyResult.data) {
+    if (result.success) {
+      await interaction.reply({
+        content: `✅ Submission approved! The bounty has been marked as completed.`,
+        flags: MessageFlags.Ephemeral,
+      });
+    } else {
+      await interaction.reply({
+        content: '❌ Failed to approve submission',
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     await interaction.reply({
-      content: '❌ Bounty not found',
+      content: `❌ ${message}`,
       flags: MessageFlags.Ephemeral,
     });
-    return;
   }
-
-  if (bountyResult.data.createdById !== userId) {
-    await interaction.reply({
-      content: '❌ You can only approve submissions for your own bounties',
-      flags: MessageFlags.Ephemeral,
-    });
-    return;
-  }
-
-  // Approve the submission by updating its status
-  // Note: This requires a direct database call since there's no API endpoint for this yet
-  const { submission } = await import('@bounty/db/src/schema/bounties');
-  const { eq } = await import('drizzle-orm');
-
-  const [submissionRecord] = await db
-    .select()
-    .from(submission)
-    .where(eq(submission.id, submissionId))
-    .limit(1);
-
-  if (!submissionRecord) {
-    await interaction.reply({
-      content: '❌ Submission not found',
-      flags: MessageFlags.Ephemeral,
-    });
-    return;
-  }
-
-  if (submissionRecord.bountyId !== bountyId) {
-    await interaction.reply({
-      content: '❌ Submission does not belong to this bounty',
-      flags: MessageFlags.Ephemeral,
-    });
-    return;
-  }
-
-  // Update submission status to approved
-  await db
-    .update(submission)
-    .set({
-      status: 'approved',
-      reviewedAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .where(eq(submission.id, submissionId));
-
-  // Update bounty status to completed
-  await caller.bounties.updateBounty({
-    id: bountyId,
-    status: 'completed',
-  });
-
-  await interaction.reply({
-    content: `✅ Submission approved! The bounty "${bountyResult.data.title}" has been marked as completed.`,
-    ephemeral: true,
-  });
 }

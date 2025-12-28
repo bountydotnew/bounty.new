@@ -1,8 +1,6 @@
-// Validate env first
 import { discordBotEnv as env } from '@bounty/env/discord-bot';
-
-// Now safe to import db
 import { db } from '@bounty/db';
+import { account } from '@bounty/db/src/schema/auth';
 import {
   ActionRow,
   Button,
@@ -10,12 +8,11 @@ import {
   TextDisplay,
   makeReacord,
 } from '@bounty/reacord';
-import { SlashCommandBuilder as Builder, Routes, REST } from 'discord.js';
+import type { Client } from 'discord.js';
+import { SlashCommandBuilder as Builder, MessageFlags } from 'discord.js';
 import { Runtime } from 'effect';
-import { account } from '@bounty/db/src/schema/auth';
 import { eq, and } from 'drizzle-orm';
 import { randomBytes } from 'node:crypto';
-import type { Client } from 'discord.js';
 
 /**
  * Generate a secure state token for OAuth flow
@@ -25,13 +22,34 @@ function generateStateToken(): string {
 }
 
 /**
- * Store OAuth state in database (or use Redis in production)
- * For now, we'll use a simple in-memory store with expiration
+ * OAuth state storage
+ * Note: In production, consider using Redis or database for persistence across bot restarts
  */
 const oauthStates = new Map<
   string,
   { discordId: string; expiresAt: number }
 >();
+
+/**
+ * Validate and consume an OAuth state token
+ * Returns the Discord ID if valid, null otherwise
+ */
+export function validateOAuthState(state: string): string | null {
+  const data = oauthStates.get(state);
+  if (!data) {
+    return null;
+  }
+
+  // Delete the state after use (one-time use)
+  oauthStates.delete(state);
+
+  // Check if expired
+  if (data.expiresAt < Date.now()) {
+    return null;
+  }
+
+  return data.discordId;
+}
 
 // Clean up expired states every 10 minutes
 setInterval(() => {

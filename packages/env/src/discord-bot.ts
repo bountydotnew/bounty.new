@@ -38,5 +38,5 @@ export const discordBotEnv = createEnv({
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     NODE_ENV: process.env.NODE_ENV,
   },
-  skipValidation: process.env.NODE_ENV !== 'production',
+  skipValidation: false,
 });
