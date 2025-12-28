@@ -127,9 +127,11 @@ const SidebarFooterActions = () => {
         </span>
       </button>
       {isAuthenticated && !isPending && (
-        <NotificationsDropdown triggerClassName="flex h-auto w-auto items-center justify-center rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]">
-          <NotificationsIcon className="h-[19px] w-[19px]" />
-        </NotificationsDropdown>
+        <div className="group-data-[collapsible=icon]:hidden">
+          <NotificationsDropdown triggerClassName="flex h-auto w-auto items-center justify-center rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white">
+            <NotificationsIcon className="h-[19px] w-[19px]" />
+          </NotificationsDropdown>
+        </div>
       )}
     </div>
   );
