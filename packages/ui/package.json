@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@bounty/types": "workspace:*",
+    "@bounty/auth": "workspace:*",
     "@databuddy/sdk": "catalog:",
     "@radix-ui/react-avatar": "catalog:",
     "@radix-ui/react-checkbox": "^1.3.3",
@@ -40,6 +42,7 @@
     "motion": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "react-hook-form": "catalog:",
     "rehype-autolink-headings": "catalog:",
     "rehype-parse": "catalog:",
     "rehype-sanitize": "catalog:",
@@ -49,6 +52,7 @@
     "tailwind-merge": "catalog:",
     "tw-animate-css": "catalog:",
     "unified": "catalog:",
+    "recharts": "catalog:",
     "vaul": "catalog:",
     "zod": "catalog:"
   },

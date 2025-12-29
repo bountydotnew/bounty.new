@@ -35,6 +35,10 @@ export const env = createEnv({
     BOUNTY_PRO_MONTHLY_ID: z.string().min(1),
     POLAR_SUCCESS_URL: z.string().url(),
     POLAR_WEBHOOK_SECRET: z.string().min(1),
+    // Stripe
+    STRIPE_SECRET_KEY: z.string().min(1),
+    STRIPE_PUBLISHABLE_KEY: z.string().min(1),
+    STRIPE_CONNECT_WEBHOOK_SECRET: z.string().min(1),
     RESEND_API_KEY: z.string().min(1),
     DEVICE_AUTH_ALLOWED_CLIENT_IDS: z.string().optional().default(''),
     // Upstash Redis
@@ -60,6 +64,9 @@ export const env = createEnv({
     BOUNTY_PRO_MONTHLY_ID: process.env.BOUNTY_PRO_MONTHLY_ID,
     POLAR_SUCCESS_URL: process.env.POLAR_SUCCESS_URL,
     POLAR_WEBHOOK_SECRET: process.env.POLAR_WEBHOOK_SECRET,
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
+    STRIPE_CONNECT_WEBHOOK_SECRET: process.env.STRIPE_CONNECT_WEBHOOK_SECRET,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     DEVICE_AUTH_ALLOWED_CLIENT_IDS: process.env.DEVICE_AUTH_ALLOWED_CLIENT_IDS,
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,

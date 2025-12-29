@@ -1,28 +1,17 @@
 import { stripeClient } from "./client";
 
 /**
- * Create a Stripe Connect account using V2 API
- * V2 accounts don't use top-level 'type' field - configuration is set via configuration object
+ * Create a Stripe Connect Express account
+ * Express accounts are the simplest to set up and use Stripe's hosted onboarding
  */
 export async function createConnectAccount(email: string, displayName: string) {
-  return stripeClient.v2.core.accounts.create({
-    display_name: displayName,
-    contact_email: email,
-    identity: { country: "us" },
-    dashboard: "full",
-    defaults: {
-      responsibilities: {
-        fees_collector: "stripe",
-        losses_collector: "stripe",
-      },
-    },
-    configuration: {
-      customer: {},
-      merchant: {
-        capabilities: {
-          card_payments: { requested: true },
-        },
-      },
+  return stripeClient.accounts.create({
+    type: "express",
+    country: "US",
+    email: email,
+    capabilities: {
+      card_payments: { requested: true },
+      transfers: { requested: true },
     },
   });
 }
@@ -36,16 +25,11 @@ export async function createAccountLink(
   returnUrl: string,
   refreshUrl: string
 ) {
-  return stripeClient.v2.core.accountLinks.create({
+  return stripeClient.accountLinks.create({
     account: accountId,
-    use_case: {
-      type: "account_onboarding",
-      account_onboarding: {
-        configurations: ["merchant", "customer"],
-        refresh_url: refreshUrl,
-        return_url: `${returnUrl}?accountId=${accountId}`,
-      },
-    },
+    refresh_url: refreshUrl,
+    return_url: `${returnUrl}?accountId=${accountId}`,
+    type: "account_onboarding",
   });
 }
 
@@ -54,19 +38,25 @@ export async function createAccountLink(
  * Returns whether card payments are active and if onboarding is complete
  */
 export async function getConnectAccountStatus(accountId: string) {
-  const account = await stripeClient.v2.core.accounts.retrieve(accountId, {
-    include: ["configuration.merchant", "requirements"],
-  });
+  const account = await stripeClient.accounts.retrieve(accountId);
 
   const cardPaymentsActive =
-    account?.configuration?.merchant?.capabilities?.card_payments?.status ===
-    "active";
-  const requirementsStatus =
-    account.requirements?.summary?.minimum_deadline?.status;
+    account.capabilities?.card_payments === "active";
+  const transfersActive =
+    account.capabilities?.transfers === "active";
+  
+  // Check if onboarding is complete
+  // For Express accounts, check if charges_enabled and details_submitted
   const onboardingComplete =
-    requirementsStatus !== "currently_due" && requirementsStatus !== "past_due";
+    account.details_submitted === true &&
+    account.charges_enabled === true;
 
-  return { cardPaymentsActive, onboardingComplete, account };
+  return {
+    cardPaymentsActive: cardPaymentsActive || false,
+    transfersActive: transfersActive || false,
+    onboardingComplete,
+    account,
+  };
 }
 
 /**
@@ -76,13 +66,21 @@ export async function createDashboardLink(
   accountId: string,
   returnUrl: string
 ) {
-  return stripeClient.v2.core.accountLinks.create({
+  return stripeClient.accountLinks.create({
     account: accountId,
-    use_case: {
-      type: "account_management",
-      account_management: {
-        return_url: returnUrl,
-      },
-    },
+    return_url: returnUrl,
+    type: "account_update",
   });
+}
+
+/**
+ * Create a Connect account link for onboarding
+ * This is a convenience wrapper that creates an onboarding link
+ */
+export async function createConnectAccountLink(params: {
+  accountId: string;
+  returnUrl: string;
+  refreshUrl: string;
+}) {
+  return createAccountLink(params.accountId, params.returnUrl, params.refreshUrl);
 }

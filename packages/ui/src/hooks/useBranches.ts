@@ -1,25 +1,26 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, useEffect } from 'react';
-import { trpc } from '@/utils/trpc';
 
-export function useBranches(selectedRepository: string) {
+export function useBranches(
+    selectedRepository: string,
+    options: {
+        defaultBranchQueryOptions: Parameters<typeof useQuery>[0];
+        branchesQueryOptions: Parameters<typeof useQuery>[0];
+    }
+) {
     const { data: defaultBranchData } = useQuery({
-        ...trpc.repository.defaultBranch.queryOptions({
-            repo: selectedRepository,
-        }),
+        ...options.defaultBranchQueryOptions,
         enabled: !!selectedRepository,
         staleTime: 60_000, // 1 minute
     });
 
     const { data: branchesData, isLoading: branchesLoading } = useQuery({
-        ...trpc.repository.branches.queryOptions({
-            repo: selectedRepository,
-        }),
+        ...options.branchesQueryOptions,
         enabled: !!selectedRepository,
         staleTime: 60_000, // 1 minute
     });
 
-    const branches = branchesData || [];
+    const branches: string[] = (branchesData as string[]) || [];
     const [branchSearchQuery, setBranchSearchQuery] = useState('');
     const [selectedBranch, setSelectedBranch] = useState<string>('main');
 
@@ -37,12 +38,14 @@ export function useBranches(selectedRepository: string) {
     // Set default branch when repository changes or default branch is fetched
     useEffect(() => {
         if (selectedRepository && defaultBranchData) {
-            setSelectedBranch(defaultBranchData);
+            setSelectedBranch(defaultBranchData as string);
         } else if (selectedRepository && branches.length > 0 && !defaultBranchData) {
             const fallbackBranch =
-                branches.find((b) => b === 'main' || b === 'master') ||
+                branches.find((b: string) => b === 'main' || b === 'master') ||
                 branches[0];
-            setSelectedBranch(fallbackBranch);
+            if (fallbackBranch) {
+                setSelectedBranch(fallbackBranch);
+            }
         }
     }, [selectedRepository, defaultBranchData, branches]);
 

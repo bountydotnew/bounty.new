@@ -5,14 +5,14 @@ import {
   lastLoginMethodClient,
   emailOTPClient,
 } from 'better-auth/client/plugins';
-import { passkeyClient } from "@better-auth/passkey/client"
+import { passkey } from "@better-auth/passkey"
 import { createAuthClient } from 'better-auth/react';
 import { multiSessionClient } from "better-auth/client/plugins"
 
 export const authClient = createAuthClient({
   plugins: [
     polarClient(),
-    passkeyClient(),
+    passkey(),
     adminClient(),
     deviceAuthorizationClient(),
     lastLoginMethodClient(),

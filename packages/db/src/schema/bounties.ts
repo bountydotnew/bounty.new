@@ -26,6 +26,13 @@ export const submissionStatusEnum = pgEnum('submission_status', [
   'rejected',
   'revision_requested',
 ]);
+export const paymentStatusEnum = pgEnum('payment_status', [
+  'pending',
+  'held',
+  'released',
+  'refunded',
+  'failed',
+]);
 
 export const bounty = pgTable('bounty', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
@@ -45,6 +52,11 @@ export const bounty = pgTable('bounty', {
     onDelete: 'set null',
   }),
   isFeatured: boolean('is_featured').default(false).notNull(),
+  // Stripe payment fields
+  stripePaymentIntentId: text('stripe_payment_intent_id'),
+  stripeCheckoutSessionId: text('stripe_checkout_session_id'),
+  stripeTransferId: text('stripe_transfer_id'),
+  paymentStatus: paymentStatusEnum('payment_status').default('pending'),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
 });

@@ -5,4 +5,5 @@ export * from './device-code';
 export * from './invites';
 export * from './notifications';
 export * from './passkey';
+export * from './payments';
 export * from './profiles';

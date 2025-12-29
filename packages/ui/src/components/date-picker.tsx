@@ -170,7 +170,7 @@ export function DatePicker({
           <Calendar
             mode="single"
             selected={date}
-            month={month}
+            month={month || new Date()}
             onMonthChange={setMonth}
             onSelect={handleCalendarSelect}
             classNames={{
