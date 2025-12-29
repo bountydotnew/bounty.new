@@ -1,0 +1,13 @@
+{
+  "name": "@bounty/stripe",
+  "version": "0.1.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "stripe": "^17.4.0"
+  },
+  "devDependencies": {
+    "@bounty/typescript-config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

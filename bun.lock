@@ -256,7 +256,7 @@
       },
       "devDependencies": {
         "@bounty/typescript-config": "workspace:*",
-        "typescript": "^5.8.3",
+        "typescript": "catalog:",
       },
     },
     "packages/track": {
