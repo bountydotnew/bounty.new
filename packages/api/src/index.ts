@@ -3,3 +3,4 @@ export * from './context';
 export type { AppRouter } from './routers';
 export * from './routers';
 export * from './trpc';
+export { createServerCaller } from './server-caller';
