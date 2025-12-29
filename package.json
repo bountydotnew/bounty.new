@@ -139,7 +139,9 @@
             "@tailwindcss/typography": "^0.5.16",
             "@upstash/realtime": "latest",
             "@upstash/redis": "latest",
-            "ua-parser-js": "^2.0.7"
+            "ua-parser-js": "^2.0.7",
+            "react-activity-calendar": "^3.0.5",
+            "react-tooltip": "^5.30.0"
         }
     },
     "dependencies": {

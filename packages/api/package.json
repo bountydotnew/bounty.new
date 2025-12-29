@@ -8,6 +8,7 @@
     "@bounty/db": "workspace:*",
     "@bounty/realtime": "workspace:*",
     "@bounty/track": "workspace:*",
+    "drizzle-orm": "catalog:",
     "@octokit/core": "catalog:",
     "@octokit/plugin-rest-endpoint-methods": "catalog:",
     "zod": "catalog:",
