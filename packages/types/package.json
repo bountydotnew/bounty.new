@@ -14,7 +14,8 @@
     "./realtime": "./src/realtime.ts"
   },
   "dependencies": {
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "react": "catalog:"
   },
   "devDependencies": {
     "@types/node": "catalog:",

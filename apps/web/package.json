@@ -6,12 +6,15 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@bounty/api": "workspace:*",
     "@bounty/auth": "workspace:*",
     "@bounty/db": "workspace:*",
+    "@bounty/types": "workspace:*",
+    "@bounty/stripe": "workspace:*",
     "@bounty/realtime": "workspace:*",
     "@bounty/ui": "workspace:*",
     "@daveyplate/better-auth-ui": "catalog:",
@@ -65,6 +68,8 @@
     "remark-rehype": "catalog:",
     "sonner": "catalog:",
     "tailwind-merge": "catalog:",
+    "unified": "catalog:",
+    "ua-parser-js": "catalog:",
     "zod": "catalog:",
     "zustand": "^5.0.8"
   },

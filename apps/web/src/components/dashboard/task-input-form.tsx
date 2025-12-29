@@ -91,7 +91,9 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
         setRepoSearchQuery,
         selectedRepository,
         setSelectedRepository,
-    } = useRepositories(githubUsername);
+    } = useRepositories(githubUsername, {
+        myReposQueryOptions: trpc.repository.myRepos.queryOptions(),
+    });
 
     const {
         filteredBranches,
@@ -100,7 +102,14 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
         setBranchSearchQuery,
         selectedBranch,
         setSelectedBranch,
-    } = useBranches(selectedRepository);
+    } = useBranches(selectedRepository, {
+        defaultBranchQueryOptions: trpc.repository.defaultBranch.queryOptions({
+            repo: selectedRepository,
+        }),
+        branchesQueryOptions: trpc.repository.branches.queryOptions({
+            repo: selectedRepository,
+        }),
+    });
 
     const {
         issuesList,
@@ -108,7 +117,9 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
         issueQuery,
         setIssueQuery,
         repoInfo,
-    } = useIssues(selectedRepository);
+    } = useIssues(selectedRepository, {
+        listIssues: (params) => trpcClient.repository.listIssues.query(params),
+    });
 
     // Issue selector state
     const [selectedIssue, setSelectedIssue] = useState<{ number: number; title: string; url: string } | null>(null);

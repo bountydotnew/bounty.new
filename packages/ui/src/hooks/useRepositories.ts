@@ -1,17 +1,23 @@
+import type { UseQueryOptions } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, useEffect, useRef } from 'react';
-import { trpc } from '@/utils/trpc';
-import { GITHUB_URL_REGEX } from '@/utils/utils';
+import { GITHUB_URL_REGEX } from '@bounty/ui/lib/utils';
 
-export function useRepositories(githubUsername?: string) {
+export function useRepositories(
+    githubUsername?: string,
+    options?: {
+        myReposQueryOptions: UseQueryOptions;
+    }
+) {
     const { data: reposData, isLoading: reposLoading, error: reposError } = useQuery({
-        ...trpc.repository.myRepos.queryOptions(),
+        ...options?.myReposQueryOptions,
         staleTime: 120_000, // 2 minutes
+        queryKey: ['github.myRepos', githubUsername],
     });
 
     // Extract repository names from the response
     const repositories = useMemo(() => {
-        if (!reposData) {
+        if (!reposData || typeof reposData !== 'object') {
             return [];
         }
         if (!('success' in reposData)) {
@@ -52,7 +58,8 @@ export function useRepositories(githubUsername?: string) {
         if (
             repositories.length > 0 &&
             !selectedRepository &&
-            !reposLoading
+            !reposLoading &&
+            repositories[0]
         ) {
             setSelectedRepository(repositories[0]);
         }

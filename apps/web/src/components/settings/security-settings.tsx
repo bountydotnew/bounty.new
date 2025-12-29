@@ -19,7 +19,6 @@ import {
 import { Input } from '@bounty/ui/components/input';
 import { Label } from '@bounty/ui/components/label';
 import { Separator } from '@bounty/ui/components/separator';
-import { usePasskey } from '@bounty/ui/hooks/use-passkey';
 import { formatDate } from '@bounty/ui/lib/utils';
 import { Laptop, Loader2, Smartphone } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -63,16 +62,6 @@ export function SecuritySettings() {
     },
   ]);
 
-  const {
-    addPasskey,
-    listPasskeys,
-    deletePasskey,
-    updatePasskey,
-    isLoading: passkeyLoading,
-    error: passkeyError,
-    passkeys,
-  } = usePasskey();
-
   const removeActiveSession = (sessionId: string) => {
     setActiveSessions((sessions) =>
       sessions.filter((session) => session.id !== sessionId)
@@ -102,45 +91,6 @@ export function SecuritySettings() {
       toast.error(`Failed to terminate session: ${error}`);
     } finally {
       setTerminatingSession(null);
-    }
-  };
-
-  const handleAddPasskey = async (
-    authenticatorAttachment?: 'platform' | 'cross-platform'
-  ) => {
-    try {
-      await addPasskey({ authenticatorAttachment });
-      toast.success('Passkey added successfully');
-      listPasskeys();
-      setIsAddDialogOpen(false);
-      setNewPasskeyName('');
-    } catch (_error) {
-      toast.error('Failed to add passkey');
-    }
-  };
-
-  const handleDeletePasskey = async (id: string) => {
-    try {
-      await deletePasskey(id);
-      toast.success('Passkey deleted successfully');
-    } catch (_error) {
-      toast.error('Failed to delete passkey');
-    }
-  };
-
-  const handleUpdatePasskey = async () => {
-    if (!(editingPasskey && editName.trim())) {
-      return;
-    }
-
-    try {
-      await updatePasskey(editingPasskey.id, editName);
-      toast.success('Passkey updated successfully');
-      setEditingPasskey(null);
-      setEditName('');
-      setIsEditDialogOpen(false);
-    } catch (_error) {
-      toast.error('Failed to update passkey');
     }
   };
 
@@ -188,15 +138,13 @@ export function SecuritySettings() {
                   <div className="mt-4 flex space-x-2">
                     <Button
                       className="flex-1"
-                      disabled={passkeyLoading}
-                      onClick={() => handleAddPasskey('platform')}
+                      onClick={() => console.log('todo: add platform passkey:')}
                     >
                       Platform (Fingerprint/Face ID)
                     </Button>
                     <Button
                       className="flex-1"
-                      disabled={passkeyLoading}
-                      onClick={() => handleAddPasskey('cross-platform')}
+                      onClick={() => console.log('todo: add cross-platform passkey:')}
                       variant="outline"
                     >
                       Security Key
@@ -210,113 +158,10 @@ export function SecuritySettings() {
           <Separator />
 
           <div className="space-y-3">
-            <h4 className="font-medium">Your Passkeys ({passkeys.length})</h4>
-            {passkeyError && (
-              <p className="text-red-600 text-sm">{passkeyError}</p>
-            )}
-
-            {passkeys.length === 0 ? (
-              <div className="rounded-lg border border-dashed py-8 text-center">
-                <p className="mb-2 text-muted-foreground text-sm">
-                  No passkeys found
-                </p>
-                <p className="text-muted-foreground text-xs">
-                  Add your first passkey above for secure authentication
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {passkeys.map((passkey) => (
-                  <div
-                    className="flex items-center justify-between rounded-lg border p-3"
-                    key={passkey.id}
-                  >
-                    <div className="space-y-1">
-                      <p className="font-medium">
-                        {passkey.name || 'Unnamed Passkey'}
-                      </p>
-                      <div className="flex space-x-2 text-muted-foreground text-xs">
-                        <span>Device: {passkey.deviceType || 'Unknown'}</span>
-                        <span>•</span>
-                        <span>
-                          Backed up: {passkey.backedUp ? 'Yes' : 'No'}
-                        </span>
-                        <span>•</span>
-                        <span>Created: {formatDate(passkey.createdAt)}</span>
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Dialog
-                        onOpenChange={setIsEditDialogOpen}
-                        open={isEditDialogOpen}
-                      >
-                        <DialogTrigger asChild>
-                          <Button
-                            onClick={() => {
-                              setEditingPasskey({
-                                id: passkey.id,
-                                name: passkey.name || '',
-                              });
-                              setEditName(passkey.name || '');
-                              setIsEditDialogOpen(true);
-                            }}
-                            size="sm"
-                            variant="outline"
-                          >
-                            Edit
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Edit Passkey Name</DialogTitle>
-                            <DialogDescription>
-                              Update the name for your passkey
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="edit-name">Passkey Name</Label>
-                              <Input
-                                id="edit-name"
-                                onChange={(e) => setEditName(e.target.value)}
-                                placeholder="Enter passkey name"
-                                value={editName}
-                              />
-                            </div>
-                            <div className="flex space-x-2">
-                              <Button
-                                disabled={!editName.trim()}
-                                onClick={handleUpdatePasskey}
-                              >
-                                Update
-                              </Button>
-                              <Button
-                                onClick={() => {
-                                  setEditingPasskey(null);
-                                  setEditName('');
-                                  setIsEditDialogOpen(false);
-                                }}
-                                variant="outline"
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                      <Button
-                        disabled={passkeyLoading}
-                        onClick={() => handleDeletePasskey(passkey.id)}
-                        size="sm"
-                        variant="destructive"
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <h4 className="font-medium">Your Passkeys</h4>
+            <p className="text-muted-foreground text-sm">
+              No passkeys found.
+            </p>
           </div>
         </CardContent>
       </Card>

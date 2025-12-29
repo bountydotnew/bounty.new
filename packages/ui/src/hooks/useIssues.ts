@@ -1,23 +1,27 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { trpcClient } from '@/utils/trpc';
-import { parseRepo } from '@/utils/utils';
+import { parseRepo } from '@bounty/ui/lib/utils';
 
-export function useIssues(selectedRepository: string) {
+export function useIssues(
+    selectedRepository: string,
+    options?: {
+        listIssues?: (params: { owner: string; repo: string }) => Promise<unknown[]>;
+    }
+) {
     const repoInfo = parseRepo(selectedRepository);
     
     const issuesList = useQuery({
         queryKey: ['repository.listIssues', repoInfo?.owner, repoInfo?.repo],
         queryFn: () => {
-            if (!repoInfo) {
+            if (!repoInfo || !options?.listIssues) {
                 return Promise.resolve([]);
             }
-            return trpcClient.repository.listIssues.query({
+            return options.listIssues({
                 owner: repoInfo.owner,
                 repo: repoInfo.repo,
             });
         },
-        enabled: !!repoInfo,
+        enabled: !!repoInfo && !!options?.listIssues,
         staleTime: 60_000,
     });
 
@@ -34,8 +38,8 @@ export function useIssues(selectedRepository: string) {
         const query = issueQuery.toLowerCase();
         return issuesList.data.filter((issue) => {
             return (
-                String(issue.number).includes(query) ||
-                issue.title.toLowerCase().includes(query)
+                String((issue as { number: number }).number).includes(query) ||
+                (issue as { title: string }).title.toLowerCase().includes(query)
             );
         });
     }, [issuesList.data, issueQuery]);

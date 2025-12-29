@@ -8,7 +8,7 @@ import {
 } from '@trpc/client';
 import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query';
 import { showAppErrorToast } from '@/context/toast';
-import type { ReasonCode } from '@bounty/types';
+import { ReasonCode } from '@bounty/types/auth';
 
 export const queryClient = new QueryClient();
 

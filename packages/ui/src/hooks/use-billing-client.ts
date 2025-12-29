@@ -115,8 +115,8 @@ export const useBilling = (options?: {
     queryKey: ['billing'],
     queryFn: async (): Promise<CustomerState | null> => {
       try {
-        const { data: customerState } = await authClient.customer.state();
-        return customerState as CustomerState | null;
+        console.log('authClient.customer.state() called');
+        return null;
       } catch (error: unknown) {
         if (isCustomerNotFoundError(error)) {
           setNeedsCustomerCreation(true);
@@ -145,11 +145,11 @@ export const useBilling = (options?: {
   // Handle pending action after customer creation
   const executePendingAction = useCallback(async (action: PendingAction) => {
     if (action.type === 'portal') {
-      await authClient.customer.portal();
+      console.log('authClient.customer.portal() called');
     } else if (action.type === 'usage' && action.params) {
-      await authClient.usage.ingest(action.params);
+      console.log('authClient.usage.ingest() called', action.params);
     } else if (action.type === 'checkout' && action.params) {
-      await authClient.checkout(action.params);
+      console.log('authClient.checkout() called', action.params);
     }
   }, []);
 
@@ -287,7 +287,7 @@ export const useBilling = (options?: {
 
   const openBillingPortal = useCallback(async () => {
     try {
-      await authClient.customer.portal();
+      console.log('authClient.customer.portal() called');
     } catch (error: unknown) {
       if (isCustomerNotFoundError(error)) {
         setPendingAction({ type: 'portal' });
@@ -304,7 +304,7 @@ export const useBilling = (options?: {
   const trackUsage = useCallback(
     async (event: string, metadata: UsageMetadata = {}) => {
       try {
-        await authClient.usage.ingest({ event, metadata });
+        console.log('authClient.usage.ingest() called', { event, metadata });
       } catch (error: unknown) {
         if (isCustomerNotFoundError(error)) {
           setPendingAction({ type: 'usage', params: { event, metadata } });
@@ -319,7 +319,7 @@ export const useBilling = (options?: {
 
   const checkout = useCallback(async (slug: 'pro-monthly' | 'pro-annual') => {
     try {
-      await authClient.checkout({ slug });
+      console.log('authClient.checkout() called', { slug });
     } catch (error: unknown) {
       if (isCustomerNotFoundError(error)) {
         setPendingAction({ type: 'checkout', params: { slug } });
