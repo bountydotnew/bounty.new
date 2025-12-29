@@ -110,9 +110,9 @@ export default function Home() {
 
 
             {/* Bounty Statistics */}
-            <div className="mb-12 flex w-full items-center justify-center">
+            {/* <div className="mb-12 flex w-full items-center justify-center">
               <BountyStatistics />
-            </div>
+            </div> */}
             {/* Waitlist Count */}
             <div className="flex w-full items-center justify-center mb-8">
               <WaitlistCount />

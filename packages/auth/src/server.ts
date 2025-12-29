@@ -10,7 +10,6 @@ import {
   db,
   deviceCode,
   invite,
-  lastLoginMethod,
   notification,
   passkey,
   session,
@@ -35,7 +34,7 @@ import {
 import { Polar } from "@polar-sh/sdk";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { bearer, deviceAuthorization, lastLoginMethod as lastLoginMethodPlugin, openAPI, multiSession } from "better-auth/plugins";
+import { bearer, deviceAuthorization, lastLoginMethod, openAPI, multiSession } from "better-auth/plugins";
 import { admin } from "better-auth/plugins/admin";
 import { passkey as passkeyPlugin } from "@better-auth/passkey";
 import { emailOTP } from "better-auth/plugins/email-otp";
@@ -54,7 +53,6 @@ const schema = {
   bountyVote,
   deviceCode,
   invite,
-  lastLoginMethod,
   notification,
   passkey,
   session,
@@ -84,8 +82,8 @@ const deviceAuthorizationPlugin = deviceAuthorization({
     allowedDeviceClientIds?.length
       ? allowedDeviceClientIds.includes(clientId)
       : true,
-  onDeviceAuthRequest: (clientId, scope) => {
-    console.info('Device authorization requested', { clientId, scope });
+  onDeviceAuthRequest: () => {
+    // Device authorization requested
   },
 });
 
@@ -116,7 +114,7 @@ async function syncGitHubHandle(userId: string, accessToken: string): Promise<vo
         .where(eq(userTable.id, userId));
     }
   } catch (error) {
-    console.error('[GitHub Handle Sync] Error:', error);
+    // Silently handle errors - don't block account creation/update
   }
 }
 
@@ -260,7 +258,7 @@ export const auth = betterAuth({
     admin(),
     bearer(),
     openAPI(),
-    lastLoginMethodPlugin({
+    lastLoginMethod({
       storeInDatabase: true,
     }),
     emailOTP({
