@@ -12,6 +12,55 @@ function calculateBreakEvenFee(amount: number): number {
 }
 
 /**
+ * Calculate total payment amount including Stripe fees
+ * Returns the amount the user needs to pay (bounty amount + fees)
+ */
+export function calculateTotalWithFees(bountyAmount: number): {
+  bountyAmount: number;
+  fees: number;
+  total: number;
+} {
+  // Stripe's fee: 2.9% + $0.30
+  const fees = Math.round(bountyAmount * 0.029 + 30);
+  const total = bountyAmount + fees;
+  
+  return {
+    bountyAmount,
+    fees,
+    total,
+  };
+}
+
+/**
+ * Create a PaymentIntent to hold funds for a bounty (escrow)
+ * The payment will be held until the bounty is completed or cancelled
+ */
+export async function createPaymentIntent(params: {
+  amount: number; // Amount in cents
+  currency: string;
+  customerId: string; // Stripe customer ID
+  bountyId: string;
+}) {
+  return stripeClient.paymentIntents.create({
+    amount: params.amount,
+    currency: params.currency.toLowerCase(),
+    customer: params.customerId,
+    capture_method: "manual", // Hold funds, don't capture immediately
+    metadata: {
+      bountyId: params.bountyId,
+    },
+  });
+}
+
+/**
+ * Capture a PaymentIntent to release funds to the platform
+ * This is called after payment is confirmed via Stripe Elements
+ */
+export async function capturePayment(paymentIntentId: string) {
+  return stripeClient.paymentIntents.capture(paymentIntentId);
+}
+
+/**
  * Create a Checkout Session for bounty payment
  * Uses Stripe's hosted Checkout page - no custom card input needed
  * 
@@ -19,20 +68,19 @@ function calculateBreakEvenFee(amount: number): number {
  */
 export async function createBountyCheckoutSession(params: {
   bountyId: string;
-  amount: number; // Amount in cents
+  amount: number; // Amount in cents (bounty amount only, fees added separately)
+  fees: number; // Fees in cents
   currency: string;
+  customerId: string; // Stripe customer ID
   successUrl: string;
   cancelUrl: string;
-  applicationFeePercent?: number; // Optional override, otherwise uses break-even calculation
 }) {
-  // Calculate application fee - break even with Stripe fees by default
-  const applicationFee = params.applicationFeePercent
-    ? Math.round(params.amount * (params.applicationFeePercent / 100))
-    : calculateBreakEvenFee(params.amount);
+  const totalAmount = params.amount + params.fees;
 
   // Create Checkout Session - Stripe handles all payment UI
   return stripeClient.checkout.sessions.create({
     mode: "payment",
+    customer: params.customerId,
     line_items: [
       {
         price_data: {
@@ -45,16 +93,26 @@ export async function createBountyCheckoutSession(params: {
         },
         quantity: 1,
       },
+      {
+        price_data: {
+          currency: params.currency.toLowerCase(),
+          unit_amount: params.fees,
+          product_data: {
+            name: `Processing Fees`,
+            description: `Stripe processing fees (2.9% + $0.30)`,
+          },
+        },
+        quantity: 1,
+      },
     ],
     payment_intent_data: {
-      capture_method: "automatic", // Capture immediately, hold in platform account
+      capture_method: "automatic", // Capture immediately - funds held in platform account
       metadata: { bountyId: params.bountyId },
     },
     metadata: {
       bountyId: params.bountyId,
-      applicationFee: applicationFee.toString(),
     },
-    success_url: `${params.successUrl}?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${params.successUrl}?session_id={CHECKOUT_SESSION_ID}&payment=success`,
     cancel_url: params.cancelUrl,
   });
 }
@@ -77,6 +135,23 @@ export async function transferToSolver(params: {
 
   return stripeClient.transfers.create({
     amount: netAmount,
+    currency: "usd",
+    destination: params.connectAccountId,
+    metadata: { bountyId: params.bountyId },
+  });
+}
+
+/**
+ * Create a transfer to a Connect account (for bounty payouts)
+ * This is a simpler version that transfers the full amount
+ */
+export async function createTransfer(params: {
+  amount: number; // Amount in cents
+  connectAccountId: string; // Solver's Connect account ID
+  bountyId: string;
+}) {
+  return stripeClient.transfers.create({
+    amount: params.amount,
     currency: "usd",
     destination: params.connectAccountId,
     metadata: { bountyId: params.bountyId },

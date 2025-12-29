@@ -19,6 +19,7 @@ export interface Bounty {
   };
   votes?: number;
   isFeatured?: boolean;
+  paymentStatus?: 'pending' | 'held' | 'released' | 'refunded' | 'failed' | null;
 }
 
 export interface UserData {

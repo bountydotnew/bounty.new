@@ -72,6 +72,8 @@
     "remark-parse": "catalog:",
     "remark-rehype": "catalog:",
     "sonner": "catalog:",
+    "@stripe/stripe-js": "catalog:",
+    "@stripe/react-stripe-js": "catalog:",
     "tailwind-merge": "catalog:",
     "unified": "catalog:",
     "ua-parser-js": "catalog:",

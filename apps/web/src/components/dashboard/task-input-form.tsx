@@ -7,10 +7,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Spinner } from '@bounty/ui';
-import { ArrowRight } from 'lucide-react';
 import { trpc, trpcClient } from '@/utils/trpc';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@bounty/ui/components/dialog';
-import { Button } from '@bounty/ui/components/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@bounty/ui/components/popover';
 import {
     type CreateBountyForm,
@@ -22,7 +19,6 @@ import {
 import { cn } from '@bounty/ui/lib/utils';
 import { DatePicker } from '@bounty/ui/components/date-picker';
 import { CalendarIcon } from '@bounty/ui/components/icons/huge/calendar';
-import GitHub from '@/components/icons/github';
 
 // Hooks
 import { useRepositories } from '@bounty/ui/hooks/useRepositories';
@@ -134,21 +130,39 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
 
     // Bounty creation mutation
     const createBounty = useMutation({
-        mutationFn: async (input: CreateBountyForm) => {
-            return await trpcClient.bounties.createBounty.mutate(input);
+        mutationFn: async (input: CreateBountyForm & { payLater?: boolean }) => {
+            return await trpcClient.bounties.createBounty.mutate({
+                ...input,
+                payLater: input.payLater ?? false,
+            });
         },
         onSuccess: (result) => {
-            toast.success('Bounty created successfully!');
             queryClient.invalidateQueries({
                 queryKey: ['bounties'],
                 type: 'all',
             });
-            reset();
-            setSelectedRepository('');
-            setSelectedIssue(null);
-            setIssueQuery('');
+            
             if (result?.data?.id) {
-                router.push(`/bounty/${result.data.id}`);
+                if (result.checkoutUrl && !result.payLater) {
+                    // Redirect to Stripe Checkout
+                    window.location.href = result.checkoutUrl;
+                } else if (result.payLater) {
+                    // Pay later - just redirect
+                    toast.success('Bounty created! Complete payment to make it live.');
+                    reset();
+                    setSelectedRepository('');
+                    setSelectedIssue(null);
+                    setIssueQuery('');
+                    router.push(`/bounty/${result.data.id}`);
+                } else {
+                    // Shouldn't happen, but handle it
+                    toast.success('Bounty created successfully!');
+                    reset();
+                    setSelectedRepository('');
+                    setSelectedIssue(null);
+                    setIssueQuery('');
+                    router.push(`/bounty/${result.data.id}`);
+                }
             } else {
                 router.push(`/dashboard`);
             }
@@ -166,12 +180,14 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                 issueUrl: selectedIssue?.url,
             });
             
-            createBounty.mutate(formattedData);
+            // Always require payment upfront (payLater: false)
+            createBounty.mutate({ ...formattedData, payLater: false });
         },
         (errors) => {
             console.log('[TaskInputForm] Submit - validation errors:', errors);
         }
     );
+
 
     const handleRepositorySelect = (repo: string) => {
         setSelectedRepository(repo);
@@ -498,6 +514,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                     </div>
                 </fieldset>
             </form>
+            
         </div>
     );
 });

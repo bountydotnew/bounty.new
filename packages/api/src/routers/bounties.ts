@@ -7,11 +7,21 @@ import {
   bountyVote,
   createNotification,
   db,
+  payout,
   submission,
+  transaction,
   user,
 } from '@bounty/db';
 import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
+import {
+  createBountyCheckoutSession,
+  capturePayment,
+  createTransfer,
+  refundPayment,
+  calculateTotalWithFees,
+} from '@bounty/stripe';
+import { stripeClient } from '@bounty/stripe';
 import {
   and,
   desc,
@@ -35,6 +45,42 @@ const parseAmount = (amount: string | number | null): number => {
   const parsed = Number(amount);
   return Number.isNaN(parsed) ? 0 : parsed;
 };
+
+/**
+ * Ensure a Stripe customer exists for a user
+ * Creates one if it doesn't exist, returns existing if it does
+ */
+async function ensureStripeCustomer(
+  userId: string,
+  email: string,
+  name: string | null
+): Promise<string> {
+  // Check if user already has a Stripe customer ID
+  const [existingUser] = await db
+    .select({ stripeCustomerId: user.stripeCustomerId })
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1);
+
+  if (existingUser?.stripeCustomerId) {
+    return existingUser.stripeCustomerId;
+  }
+
+  // Create new Stripe customer
+  const customer = await stripeClient.customers.create({
+    email,
+    name: name || email,
+    metadata: { userId },
+  });
+
+  // Update user record with Stripe customer ID
+  await db
+    .update(user)
+    .set({ stripeCustomerId: customer.id })
+    .where(eq(user.id, userId));
+
+  return customer.id;
+}
 
 const createBountySchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
@@ -63,6 +109,7 @@ const createBountySchema = z.object({
   tags: z.array(z.string()).optional(),
   repositoryUrl: z.string().url().optional(),
   issueUrl: z.string().url().optional(),
+  payLater: z.boolean().optional().default(false), // Allow creating bounty without payment
 });
 
 const updateBountySchema = z.object({
@@ -247,6 +294,34 @@ export const bountiesRouter = router({
             ? input.issueUrl
             : undefined;
         const deadline = input.deadline ? new Date(input.deadline) : undefined;
+        const payLater = input.payLater ?? false;
+
+        // Calculate fees
+        const bountyAmountInCents = Math.round(parseAmount(normalizedAmount) * 100);
+        const { total: totalWithFees, fees } = calculateTotalWithFees(bountyAmountInCents);
+
+        let checkoutSessionUrl = null;
+
+        // If not paying later, require payment upfront
+        if (!payLater) {
+          // Ensure user has Stripe customer ID
+          const userEmail = ctx.session.user.email;
+          if (!userEmail) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'User email is required to create a bounty with payment',
+            });
+          }
+
+          const stripeCustomerId = await ensureStripeCustomer(
+            ctx.session.user.id,
+            userEmail,
+            ctx.session.user.name
+          );
+
+          // Create Checkout Session - will be created after bounty is saved
+          // We'll update this after bounty creation
+        }
 
         const newBountyResult = await db
           .insert(bounty)
@@ -260,7 +335,9 @@ export const bountiesRouter = router({
             repositoryUrl,
             issueUrl,
             createdById: ctx.session.user.id,
-            status: 'open',
+            status: 'draft', // Draft until payment confirmed
+            stripePaymentIntentId: null, // Will be set via webhook
+            paymentStatus: 'pending',
           })
           .returning();
 
@@ -272,6 +349,35 @@ export const bountiesRouter = router({
           });
         }
 
+        // Create Checkout Session if not paying later
+        if (!payLater) {
+          const userEmail = ctx.session.user.email!;
+          const stripeCustomerId = await ensureStripeCustomer(
+            ctx.session.user.id,
+            userEmail,
+            ctx.session.user.name
+          );
+
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+          const checkoutSession = await createBountyCheckoutSession({
+            bountyId: newBounty.id,
+            amount: bountyAmountInCents,
+            fees,
+            currency: input.currency,
+            customerId: stripeCustomerId,
+            successUrl: `${baseUrl}/bounty/${newBounty.id}`,
+            cancelUrl: `${baseUrl}/bounty/${newBounty.id}?payment=cancelled`,
+          });
+
+          checkoutSessionUrl = checkoutSession.url;
+
+          // Store checkout session ID for verification
+          await db
+            .update(bounty)
+            .set({ stripeCheckoutSessionId: checkoutSession.id })
+            .where(eq(bounty.id, newBounty.id));
+        }
+
         try {
           await track('bounty_created', {
             bounty_id: newBounty.id,
@@ -281,6 +387,7 @@ export const bountiesRouter = router({
             has_repo: Boolean(repositoryUrl),
             has_issue: Boolean(issueUrl),
             tags_count: cleanedTags?.length ?? 0,
+            pay_later: payLater,
             source: 'api',
           });
         } catch {
@@ -294,7 +401,13 @@ export const bountiesRouter = router({
         return {
           success: true,
           data: newBounty,
-          message: 'Bounty created successfully',
+          checkoutUrl: checkoutSessionUrl,
+          fees: fees / 100, // Convert back to dollars
+          totalWithFees: totalWithFees / 100, // Convert back to dollars
+          payLater,
+          message: payLater
+            ? 'Bounty created. Complete payment to make it live.'
+            : 'Bounty created successfully',
         };
       } catch (error) {
         throw new TRPCError({
@@ -346,6 +459,7 @@ export const bountiesRouter = router({
             tags: bounty.tags,
             repositoryUrl: bounty.repositoryUrl,
             isFeatured: bounty.isFeatured,
+            paymentStatus: bounty.paymentStatus,
             createdAt: bounty.createdAt,
             updatedAt: bounty.updatedAt,
             creator: {
@@ -417,6 +531,7 @@ export const bountiesRouter = router({
             isFeatured: bounty.isFeatured,
             createdById: bounty.createdById,
             assignedToId: bounty.assignedToId,
+            paymentStatus: bounty.paymentStatus,
             createdAt: bounty.createdAt,
             updatedAt: bounty.updatedAt,
             creator: {
@@ -458,31 +573,32 @@ export const bountiesRouter = router({
 
   randomBounty: publicProcedure.query(async ({ ctx }) => {
     try {
-      const [result] = await ctx.db
-        .select({
-          id: bounty.id,
-          title: bounty.title,
-          description: bounty.description,
-          amount: bounty.amount,
-          currency: bounty.currency,
-          status: bounty.status,
-          deadline: bounty.deadline,
-          tags: bounty.tags,
-          repositoryUrl: bounty.repositoryUrl,
-          issueUrl: bounty.issueUrl,
-          createdById: bounty.createdById,
-          createdAt: bounty.createdAt,
-          creator: {
-            id: user.id,
-            name: user.name,
-            image: user.image,
-          },
-        })
-        .from(bounty)
-        .innerJoin(user, eq(bounty.createdById, user.id))
-        .where(eq(bounty.status, 'open'))
-        .orderBy(sql`RANDOM()`)
-        .limit(1);
+        const [result] = await ctx.db
+          .select({
+            id: bounty.id,
+            title: bounty.title,
+            description: bounty.description,
+            amount: bounty.amount,
+            currency: bounty.currency,
+            status: bounty.status,
+            deadline: bounty.deadline,
+            tags: bounty.tags,
+            repositoryUrl: bounty.repositoryUrl,
+            issueUrl: bounty.issueUrl,
+            paymentStatus: bounty.paymentStatus,
+            createdById: bounty.createdById,
+            createdAt: bounty.createdAt,
+            creator: {
+              id: user.id,
+              name: user.name,
+              image: user.image,
+            },
+          })
+          .from(bounty)
+          .innerJoin(user, eq(bounty.createdById, user.id))
+          .where(eq(bounty.status, 'open'))
+          .orderBy(sql`RANDOM()`)
+          .limit(1);
 
       if (!result) {
         throw new TRPCError({
@@ -528,6 +644,7 @@ export const bountiesRouter = router({
             repositoryUrl: bounty.repositoryUrl,
             issueUrl: bounty.issueUrl,
             isFeatured: bounty.isFeatured,
+            paymentStatus: bounty.paymentStatus,
             createdAt: bounty.createdAt,
             updatedAt: bounty.updatedAt,
             creator: {
@@ -570,6 +687,7 @@ export const bountiesRouter = router({
             repositoryUrl: bounty.repositoryUrl,
             issueUrl: bounty.issueUrl,
             isFeatured: bounty.isFeatured,
+            paymentStatus: bounty.paymentStatus,
             createdAt: bounty.createdAt,
             updatedAt: bounty.updatedAt,
             creator: {
@@ -756,6 +874,36 @@ export const bountiesRouter = router({
           });
         }
 
+        // If payment was held, refund it
+        if (
+          existingBounty.stripePaymentIntentId &&
+          existingBounty.paymentStatus === 'held'
+        ) {
+          try {
+            await refundPayment(existingBounty.stripePaymentIntentId);
+
+            // Update payment status
+            await db
+              .update(bounty)
+              .set({
+                paymentStatus: 'refunded',
+                updatedAt: new Date(),
+              })
+              .where(eq(bounty.id, input.id));
+
+            // Create transaction record
+            await db.insert(transaction).values({
+              bountyId: input.id,
+              type: 'refund',
+              amount: existingBounty.amount,
+              stripeId: existingBounty.stripePaymentIntentId,
+            });
+          } catch (refundError) {
+            // Log error but continue with deletion
+            console.error('Failed to refund payment:', refundError);
+          }
+        }
+
         await db.delete(bounty).where(eq(bounty.id, input.id));
 
         try {
@@ -896,6 +1044,8 @@ export const bountiesRouter = router({
             issueUrl: bounty.issueUrl,
             createdById: bounty.createdById,
             assignedToId: bounty.assignedToId,
+            paymentStatus: bounty.paymentStatus,
+            stripePaymentIntentId: bounty.stripePaymentIntentId,
             createdAt: bounty.createdAt,
             updatedAt: bounty.updatedAt,
             creator: {
@@ -1793,6 +1943,714 @@ export const bountiesRouter = router({
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to fetch your bounties',
+          cause: error,
+        });
+      }
+    }),
+
+  confirmBountyPayment: protectedProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const [existingBounty] = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId))
+          .limit(1);
+
+        if (!existingBounty) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        if (existingBounty.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only confirm payment for your own bounties',
+          });
+        }
+
+        if (!existingBounty.stripePaymentIntentId) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'No payment intent found for this bounty',
+          });
+        }
+
+        // Capture the payment intent (this holds the funds)
+        await capturePayment(existingBounty.stripePaymentIntentId);
+
+        // Update bounty status
+        await db
+          .update(bounty)
+          .set({
+            paymentStatus: 'held',
+            status: 'open',
+            updatedAt: new Date(),
+          })
+          .where(eq(bounty.id, input.bountyId));
+
+        // Create transaction record
+        await db.insert(transaction).values({
+          bountyId: input.bountyId,
+          type: 'payment_intent',
+          amount: existingBounty.amount,
+          stripeId: existingBounty.stripePaymentIntentId,
+        });
+
+        return {
+          success: true,
+          message: 'Payment confirmed and bounty is now live',
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to confirm payment',
+          cause: error,
+        });
+      }
+    }),
+
+  approveBountySubmission: protectedProcedure
+    .input(z.object({ bountyId: z.string().uuid(), submissionId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const [existingBounty] = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId))
+          .limit(1);
+
+        if (!existingBounty) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        if (existingBounty.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only approve submissions for your own bounties',
+          });
+        }
+
+        if (existingBounty.paymentStatus !== 'held') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: existingBounty.paymentStatus === 'pending'
+              ? 'This bounty requires payment before you can approve submissions. Please complete payment first.'
+              : 'Payment must be held before approving submission',
+          });
+        }
+
+        // Get the submission and solver
+        const [submissionData] = await db
+          .select()
+          .from(submission)
+          .where(eq(submission.id, input.submissionId))
+          .limit(1);
+
+        if (!submissionData) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Submission not found',
+          });
+        }
+
+        if (submissionData.bountyId !== input.bountyId) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Submission does not belong to this bounty',
+          });
+        }
+
+        // Get solver's Stripe Connect account
+        const [solver] = await db
+          .select({
+            id: user.id,
+            stripeConnectAccountId: user.stripeConnectAccountId,
+            stripeConnectOnboardingComplete: user.stripeConnectOnboardingComplete,
+          })
+          .from(user)
+          .where(eq(user.id, submissionData.contributorId))
+          .limit(1);
+
+        if (!solver) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Solver not found',
+          });
+        }
+
+        if (!solver.stripeConnectAccountId || !solver.stripeConnectOnboardingComplete) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Solver must have a connected Stripe account to receive payment',
+          });
+        }
+
+        // Convert amount to cents for Stripe
+        const amountInCents = Math.round(parseAmount(existingBounty.amount) * 100);
+
+        // Create transfer to solver
+        const transfer = await createTransfer({
+          amount: amountInCents,
+          connectAccountId: solver.stripeConnectAccountId,
+          bountyId: input.bountyId,
+        });
+
+        // Update submission status
+        await db
+          .update(submission)
+          .set({
+            status: 'approved',
+            reviewedAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(submission.id, input.submissionId));
+
+        // Update bounty status
+        await db
+          .update(bounty)
+          .set({
+            status: 'completed',
+            paymentStatus: 'released',
+            stripeTransferId: transfer.id,
+            updatedAt: new Date(),
+          })
+          .where(eq(bounty.id, input.bountyId));
+
+        // Create payout record
+        await db.insert(payout).values({
+          userId: solver.id,
+          bountyId: input.bountyId,
+          amount: existingBounty.amount,
+          status: 'processing',
+          stripeTransferId: transfer.id,
+        });
+
+        // Create transaction record
+        await db.insert(transaction).values({
+          bountyId: input.bountyId,
+          type: 'transfer',
+          amount: existingBounty.amount,
+          stripeId: transfer.id,
+        });
+
+        return {
+          success: true,
+          message: 'Submission approved and payment released',
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to approve submission',
+          cause: error,
+        });
+      }
+    }),
+
+  getBountyPaymentStatus: protectedProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        const [bountyData] = await db
+          .select({
+            id: bounty.id,
+            amount: bounty.amount,
+            currency: bounty.currency,
+            paymentStatus: bounty.paymentStatus,
+            stripePaymentIntentId: bounty.stripePaymentIntentId,
+            stripeTransferId: bounty.stripeTransferId,
+            createdById: bounty.createdById,
+          })
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId))
+          .limit(1);
+
+        if (!bountyData) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        // Only creator can check payment status
+        if (bountyData.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only check payment status for your own bounties',
+          });
+        }
+
+        // Calculate fees
+        const bountyAmountInCents = Math.round(parseAmount(bountyData.amount) * 100);
+        const { fees, total: totalWithFees } = calculateTotalWithFees(bountyAmountInCents);
+
+        return {
+          success: true,
+          data: {
+            paymentStatus: bountyData.paymentStatus,
+            stripePaymentIntentId: bountyData.stripePaymentIntentId,
+            stripeTransferId: bountyData.stripeTransferId,
+            fees: fees / 100,
+            totalWithFees: totalWithFees / 100,
+            bountyAmount: parseAmount(bountyData.amount),
+          },
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to get payment status',
+          cause: error,
+        });
+      }
+    }),
+
+  verifyCheckoutPayment: protectedProcedure
+    .input(z.object({ sessionId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Retrieve the checkout session from Stripe
+        const session = await stripeClient.checkout.sessions.retrieve(input.sessionId);
+        const bountyId = session.metadata?.bountyId;
+        const paymentIntentId = session.payment_intent as string | null;
+
+        if (!bountyId) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'No bounty ID found in checkout session',
+          });
+        }
+
+        // Verify user owns this bounty
+        const [existingBounty] = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, bountyId))
+          .limit(1);
+
+        if (!existingBounty) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        if (existingBounty.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only verify payment for your own bounties',
+          });
+        }
+
+        // If payment intent exists, check its status
+        if (paymentIntentId) {
+          const paymentIntent = await stripeClient.paymentIntents.retrieve(paymentIntentId);
+
+          if (paymentIntent.status === 'succeeded') {
+            // Idempotency check: Update bounty status if not already updated
+            if (existingBounty.paymentStatus !== 'held') {
+              await db
+                .update(bounty)
+                .set({
+                  paymentStatus: 'held',
+                  status: 'open',
+                  stripePaymentIntentId: paymentIntentId,
+                  stripeCheckoutSessionId: input.sessionId, // Store session ID
+                  updatedAt: new Date(),
+                })
+                .where(eq(bounty.id, bountyId));
+
+              // Create transaction record if it doesn't exist (idempotency)
+              const [existingTransaction] = await db
+                .select()
+                .from(transaction)
+                .where(eq(transaction.stripeId, paymentIntentId))
+                .limit(1);
+
+              if (!existingTransaction) {
+                await db.insert(transaction).values({
+                  bountyId,
+                  type: 'payment_intent',
+                  amount: existingBounty.amount,
+                  stripeId: paymentIntentId,
+                });
+              }
+            } else {
+              // Already processed, but ensure session ID is stored
+              if (!existingBounty.stripeCheckoutSessionId) {
+                await db
+                  .update(bounty)
+                  .set({ stripeCheckoutSessionId: input.sessionId })
+                  .where(eq(bounty.id, bountyId));
+              }
+            }
+
+            return {
+              success: true,
+              paymentStatus: 'held',
+              message: 'Payment verified and bounty is now live',
+            };
+          }
+
+          // Payment intent exists but hasn't succeeded yet
+          return {
+            success: false,
+            paymentStatus: existingBounty.paymentStatus,
+            stripeStatus: paymentIntent.status,
+            message: `Payment not yet completed. Status: ${paymentIntent.status}`,
+          };
+        }
+
+        return {
+          success: false,
+          paymentStatus: existingBounty.paymentStatus,
+          message: 'Payment not yet completed',
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to verify payment',
+          cause: error,
+        });
+      }
+    }),
+
+  recheckPaymentStatus: protectedProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Get the bounty
+        const [existingBounty] = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId))
+          .limit(1);
+
+        if (!existingBounty) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        // Verify user owns this bounty
+        if (existingBounty.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only recheck payment status for your own bounties',
+          });
+        }
+
+        // If we have a payment intent ID, check its status directly
+        if (existingBounty.stripePaymentIntentId) {
+          const paymentIntent = await stripeClient.paymentIntents.retrieve(
+            existingBounty.stripePaymentIntentId
+          );
+
+          if (paymentIntent.status === 'succeeded' && existingBounty.paymentStatus !== 'held') {
+            // Payment succeeded but status wasn't updated - fix it
+            await db
+              .update(bounty)
+              .set({
+                paymentStatus: 'held',
+                status: 'open',
+                updatedAt: new Date(),
+              })
+              .where(eq(bounty.id, input.bountyId));
+
+            // Create transaction record if it doesn't exist
+            const [existingTransaction] = await db
+              .select()
+              .from(transaction)
+              .where(eq(transaction.stripeId, existingBounty.stripePaymentIntentId))
+              .limit(1);
+
+            if (!existingTransaction) {
+              await db.insert(transaction).values({
+                bountyId: input.bountyId,
+                type: 'payment_intent',
+                amount: existingBounty.amount,
+                stripeId: existingBounty.stripePaymentIntentId,
+              });
+            }
+
+            return {
+              success: true,
+              paymentStatus: 'held',
+              message: 'Payment verified! Bounty is now live.',
+            };
+          }
+
+          return {
+            success: true,
+            paymentStatus: existingBounty.paymentStatus,
+            stripeStatus: paymentIntent.status,
+            message: `Payment Intent status: ${paymentIntent.status}, Bounty status: ${existingBounty.paymentStatus}`,
+          };
+        }
+
+        // If no payment intent ID, search for payment intents directly by metadata
+        // This is more reliable than searching checkout sessions
+        const paymentIntents = await stripeClient.paymentIntents.list({
+          limit: 100, // Check last 100 payment intents
+        });
+
+        // Find payment intents for this bounty (check metadata)
+        const bountyPaymentIntents = paymentIntents.data.filter(
+          (pi) => pi.metadata?.bountyId === input.bountyId
+        );
+
+        if (bountyPaymentIntents.length === 0) {
+          // Fallback: search checkout sessions
+          const sessions = await stripeClient.checkout.sessions.list({
+            limit: 100,
+          });
+
+          const bountySessions = sessions.data.filter(
+            (session) => session.metadata?.bountyId === input.bountyId
+          );
+
+          if (bountySessions.length === 0) {
+            return {
+              success: false,
+              paymentStatus: existingBounty.paymentStatus,
+              message: `No payment intents or checkout sessions found for this bounty. Current status: ${existingBounty.paymentStatus}`,
+            };
+          }
+
+          // Get payment intent from session
+          const latestSession = bountySessions.sort(
+            (a, b) => (b.created ?? 0) - (a.created ?? 0)
+          )[0];
+
+          if (!latestSession) {
+            return {
+              success: false,
+              paymentStatus: existingBounty.paymentStatus,
+              message: `No checkout sessions found for this bounty. Current status: ${existingBounty.paymentStatus}`,
+            };
+          }
+
+          const sessionPaymentIntentId = latestSession.payment_intent as string | null;
+
+          if (!sessionPaymentIntentId) {
+            return {
+              success: false,
+              paymentStatus: existingBounty.paymentStatus,
+              message: `Checkout session found but no payment intent. Session status: ${latestSession.payment_status}`,
+            };
+          }
+
+          const paymentIntent = await stripeClient.paymentIntents.retrieve(sessionPaymentIntentId);
+
+          if (paymentIntent.status === 'succeeded' && existingBounty.paymentStatus !== 'held') {
+            await db
+              .update(bounty)
+              .set({
+                paymentStatus: 'held',
+                status: 'open',
+                stripePaymentIntentId: sessionPaymentIntentId,
+                updatedAt: new Date(),
+              })
+              .where(eq(bounty.id, input.bountyId));
+
+            const [existingTransaction] = await db
+              .select()
+              .from(transaction)
+              .where(eq(transaction.stripeId, sessionPaymentIntentId))
+              .limit(1);
+
+            if (!existingTransaction) {
+              await db.insert(transaction).values({
+                bountyId: input.bountyId,
+                type: 'payment_intent',
+                amount: existingBounty.amount,
+                stripeId: sessionPaymentIntentId,
+              });
+            }
+
+            return {
+              success: true,
+              paymentStatus: 'held',
+              message: 'Payment verified via checkout session! Bounty is now live.',
+            };
+          }
+
+          return {
+            success: true,
+            paymentStatus: existingBounty.paymentStatus,
+            stripeStatus: paymentIntent.status,
+            sessionStatus: latestSession.payment_status,
+            message: `Payment Intent status: ${paymentIntent.status}, Session status: ${latestSession.payment_status}, Bounty status: ${existingBounty.paymentStatus}`,
+          };
+        }
+
+        // Use the most recent payment intent
+        const latestPaymentIntent = bountyPaymentIntents.sort(
+          (a, b) => (b.created ?? 0) - (a.created ?? 0)
+        )[0];
+
+        if (!latestPaymentIntent) {
+          return {
+            success: false,
+            paymentStatus: existingBounty.paymentStatus,
+            message: `No payment intents found for this bounty. Current status: ${existingBounty.paymentStatus}`,
+          };
+        }
+
+        const paymentIntentId = latestPaymentIntent.id;
+
+        if (latestPaymentIntent.status === 'succeeded' && existingBounty.paymentStatus !== 'held') {
+          // Payment succeeded but status wasn't updated - fix it
+          await db
+            .update(bounty)
+            .set({
+              paymentStatus: 'held',
+              status: 'open',
+              stripePaymentIntentId: paymentIntentId,
+              updatedAt: new Date(),
+            })
+            .where(eq(bounty.id, input.bountyId));
+
+          // Create transaction record if it doesn't exist
+          const [existingTransaction] = await db
+            .select()
+            .from(transaction)
+            .where(eq(transaction.stripeId, paymentIntentId))
+            .limit(1);
+
+          if (!existingTransaction) {
+            await db.insert(transaction).values({
+              bountyId: input.bountyId,
+              type: 'payment_intent',
+              amount: existingBounty.amount,
+              stripeId: paymentIntentId,
+            });
+          }
+
+          return {
+            success: true,
+            paymentStatus: 'held',
+            message: 'Payment verified! Bounty is now live.',
+          };
+        }
+
+        return {
+          success: true,
+          paymentStatus: existingBounty.paymentStatus,
+          stripeStatus: latestPaymentIntent.status,
+          paymentIntentId: paymentIntentId,
+          message: `Payment Intent status: ${latestPaymentIntent.status}, Bounty status: ${existingBounty.paymentStatus}`,
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to recheck payment status',
+          cause: error,
+        });
+      }
+    }),
+
+  createPaymentForBounty: protectedProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const [existingBounty] = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId))
+          .limit(1);
+
+        if (!existingBounty) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        if (existingBounty.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only create payment for your own bounties',
+          });
+        }
+
+        if (existingBounty.paymentStatus === 'held') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'This bounty is already paid',
+          });
+        }
+
+        // Ensure user has Stripe customer ID
+        const userEmail = ctx.session.user.email;
+        if (!userEmail) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'User email is required',
+          });
+        }
+
+        const stripeCustomerId = await ensureStripeCustomer(
+          ctx.session.user.id,
+          userEmail,
+          ctx.session.user.name
+        );
+
+        // Calculate fees
+        const bountyAmountInCents = Math.round(parseAmount(existingBounty.amount) * 100);
+        const { fees } = calculateTotalWithFees(bountyAmountInCents);
+
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const checkoutSession = await createBountyCheckoutSession({
+          bountyId: input.bountyId,
+          amount: bountyAmountInCents,
+          fees,
+          currency: existingBounty.currency,
+          customerId: stripeCustomerId,
+          successUrl: `${baseUrl}/bounty/${input.bountyId}`,
+          cancelUrl: `${baseUrl}/bounty/${input.bountyId}?payment=cancelled`,
+        });
+
+        // Store checkout session ID for verification
+        await db
+          .update(bounty)
+          .set({ stripeCheckoutSessionId: checkoutSession.id })
+          .where(eq(bounty.id, input.bountyId));
+
+        return {
+          success: true,
+          data: {
+            checkoutUrl: checkoutSession.url,
+          },
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to create payment',
           cause: error,
         });
       }

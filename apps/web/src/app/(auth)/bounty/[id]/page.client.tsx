@@ -3,31 +3,77 @@
 import { authClient } from '@bounty/auth/client';
 import { Button } from '@bounty/ui/components/button';
 import { canEditBounty } from '@bounty/ui/lib/bounty-utils';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
+import { useQueryState, parseAsString } from 'nuqs';
+import { useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 import BountyDetailPage from '@/components/bounty/bounty-detail';
 import { BountyDetailSkeleton } from '@/components/dashboard/skeletons/bounty-detail-skeleton';
 import Bounty from '@/components/icons/bounty';
 import type { BountyCommentCacheItem } from '@/types/comments';
-import { trpc } from '@/utils/trpc';
+import { trpc, trpcClient } from '@/utils/trpc';
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export default function BountyPage() {
   const { id } = useParams<{ id: string }>();
+  const [payment] = useQueryState('payment', parseAsString);
+  const [sessionId] = useQueryState('session_id', parseAsString);
   const isValidUuid = (v: string | undefined | null) =>
     typeof v === 'string' && UUID_REGEX.test(v);
   const validId = isValidUuid(id);
 
   const { data: session } = authClient.useSession();
+  const queryClient = useQueryClient();
   const bountyDetail = useQuery({
     ...trpc.bounties.getBountyDetail.queryOptions({ id: id ?? '' }),
     enabled: validId,
     staleTime: Number.POSITIVE_INFINITY,
   });
   const router = useRouter();
+  const hasVerifiedRef = useRef(false);
+
+  // Verify payment mutation
+  const verifyPaymentMutation = useMutation({
+    mutationFn: async (input: { sessionId: string }) => {
+      return await trpcClient.bounties.verifyCheckoutPayment.mutate(input);
+    },
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success(result.message || 'Payment verified! Your bounty is now live.');
+        // Invalidate queries to refresh the page
+        queryClient.invalidateQueries({
+          queryKey: [['bounties', 'getBountyDetail']],
+        });
+        queryClient.invalidateQueries({
+          queryKey: [['bounties', 'getBountyPaymentStatus']],
+        });
+      } else {
+        toast.info(result.message || 'Payment is being processed. Please wait...');
+      }
+    },
+    onError: (error: Error) => {
+      console.error('Payment verification error:', error);
+      toast.error(`Failed to verify payment: ${error.message}`);
+    },
+  });
+
+  // Handle Stripe Checkout return - verify payment immediately
+  useEffect(() => {
+    if (payment === 'success' && sessionId && !hasVerifiedRef.current) {
+      hasVerifiedRef.current = true;
+      // Verify payment immediately
+      verifyPaymentMutation.mutate({ sessionId });
+      // Clean up URL immediately
+      router.replace(`/bounty/${id}`);
+    } else if (payment === 'cancelled') {
+      toast.info('Payment was cancelled. You can complete payment later.');
+      router.replace(`/bounty/${id}`);
+    }
+  }, [payment, sessionId, id, router, verifyPaymentMutation]);
 
   if (!validId) {
     return (
@@ -117,8 +163,10 @@ export default function BountyPage() {
   const detailTags: string[] = bountyDetail.data.bounty.tags ?? [];
   const detailUser: string = bountyDetail.data.bounty.creator.name ?? '';
   const detailAvatarSrc: string = bountyDetail.data.bounty.creator.image ?? '';
+  const detailPaymentStatus: string | null = bountyDetail.data.bounty.paymentStatus ?? null;
+  const detailCreatedById: string = bountyDetail.data.bounty.createdById;
 
-  const initialComments = (bountyDetail.data.comments ?? []).map((comment) => ({
+  const initialComments = (bountyDetail.data.comments ?? []).map((comment: BountyCommentCacheItem) => ({
     ...comment,
     likeCount: typeof comment.likeCount === 'number' ? comment.likeCount : 0,
   })) as BountyCommentCacheItem[];
@@ -199,6 +247,8 @@ export default function BountyPage() {
       initialBookmarked={Boolean(bountyDetail.data.bookmarked)}
       initialComments={initialComments}
       initialVotes={bountyDetail.data.votes}
+      paymentStatus={detailPaymentStatus}
+      createdById={detailCreatedById}
       tags={detailTags}
       title={detailTitle}
       user={detailUser}
