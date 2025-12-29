@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@bounty/api": "workspace:*",
+    "date-fns": "catalog:",
     "@bounty/auth": "workspace:*",
     "@bounty/db": "workspace:*",
     "@bounty/types": "workspace:*",
@@ -18,6 +19,7 @@
     "@bounty/realtime": "workspace:*",
     "@bounty/ui": "workspace:*",
     "@daveyplate/better-auth-ui": "catalog:",
+    "drizzle-orm": "catalog:",
     "@databuddy/sdk": "catalog:",
     "@number-flow/react": "catalog:",
     "@polar-sh/sdk": "catalog:",

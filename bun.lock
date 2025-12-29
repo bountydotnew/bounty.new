@@ -87,6 +87,8 @@
         "better-auth": "catalog:",
         "class-variance-authority": "catalog:",
         "clsx": "catalog:",
+        "date-fns": "catalog:",
+        "drizzle-orm": "catalog:",
         "js-base64": "^3.7.8",
         "lucide-react": "catalog:",
         "motion": "catalog:",
