@@ -30,24 +30,24 @@ export interface ApiSuccessResponse<T = unknown> {
   data: T;
 }
 
-export type ApiResponse<T = unknown> = ApiSuccessResponse<T> | ApiErrorResponse;
+type ApiResponse<T = unknown> = ApiSuccessResponse<T> | ApiErrorResponse;
 
-export interface RequestHeaders {
+interface RequestHeaders {
   'content-type': string;
   'x-api-key'?: string;
   cookie?: string;
 }
 
-export interface HttpResponseHeaders {
+interface HttpResponseHeaders {
   'content-type': string;
 }
 
-export interface NextApiRequest extends Request {
+interface NextApiRequest extends Request {
   json(): Promise<DataBuddyQueryBody>;
   url: string;
 }
 
-export interface NextApiResponse extends Response {
+interface NextApiResponse extends Response {
   status: number;
   headers: Headers;
 }

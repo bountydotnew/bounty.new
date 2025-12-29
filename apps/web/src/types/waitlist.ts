@@ -17,7 +17,7 @@ export interface WaitlistCookieData {
   email: string;
 }
 
-export interface WaitlistResponse {
+interface WaitlistResponse {
   message?: string;
   warning?: string;
   remaining: number;

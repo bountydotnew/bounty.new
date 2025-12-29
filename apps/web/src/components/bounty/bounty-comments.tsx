@@ -1,16 +1,14 @@
 'use client';
 
-import type { AppRouter } from '@bounty/api';
 import { authClient } from '@bounty/auth/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { TRPCClientErrorLike } from '@trpc/client';
 import { ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import BountyComment from '@/components/bounty/bounty-comment';
 import BountyCommentForm from '@/components/bounty/bounty-comment-form';
 import CommentEditDialog from '@/components/bounty/comment-edit-dialog';
 import type { BountyCommentCacheItem } from '@/types/comments';
-import { trpc } from '@/utils/trpc';
+import { trpc, trpcClient } from '@/utils/trpc';
 
 export interface BountyCommentsProps {
   bountyId: string;
@@ -40,17 +38,29 @@ export default function BountyComments({
   });
 
   const addComment = useMutation({
-    ...trpc.bounties.addBountyComment.mutationOptions(),
+    mutationFn: async (input: {
+      bountyId: string;
+      content: string;
+      parentId?: string;
+    }) => {
+      return await trpcClient.bounties.addBountyComment.mutate(input);
+    },
   });
   const toggleLike = useMutation({
-    ...trpc.bounties.toggleCommentLike.mutationOptions(),
+    mutationFn: async (input: { commentId: string }) => {
+      return await trpcClient.bounties.toggleCommentLike.mutate(input);
+    },
   });
   const updateComment = useMutation({
-    ...trpc.bounties.updateBountyComment.mutationOptions(),
+    mutationFn: async (input: { commentId: string; content: string }) => {
+      return await trpcClient.bounties.updateBountyComment.mutate(input);
+    },
   });
   const [editError, setEditError] = useState<string | null>(null);
   const deleteComment = useMutation({
-    ...trpc.bounties.deleteBountyComment.mutationOptions(),
+    mutationFn: async (input: { commentId: string }) => {
+      return await trpcClient.bounties.deleteBountyComment.mutate(input);
+    },
   });
   const [editState, setEditState] = useState<{
     id: string;
@@ -192,7 +202,7 @@ export default function BountyComments({
     addComment.mutate(
       { bountyId, content, parentId },
       {
-        onError: (err: TRPCClientErrorLike<AppRouter>) => {
+        onError: (err: Error) => {
           if (err?.message?.toLowerCase().includes('duplicate')) {
             setFormError('Duplicate comment on this bounty');
             setFormErrorKey((k) => k + 1);
@@ -250,7 +260,7 @@ export default function BountyComments({
         onSuccess: () => {
           setEditState(null);
         },
-        onError: (err: TRPCClientErrorLike<AppRouter>) => {
+        onError: (err: Error) => {
           queryClient.setQueryData(key, previous);
           if (err?.message?.toLowerCase?.().includes('inappropriate')) {
             setEditError(
@@ -292,12 +302,14 @@ export default function BountyComments({
           <button
             className={`rounded-md border px-2 py-1 ${sort === 'newest' ? 'border-neutral-700 bg-neutral-800/60' : 'border-transparent'}`}
             onClick={() => setSort('newest')}
+            type="button"
           >
             Newest
           </button>
           <button
             className={`rounded-md border px-2 py-1 ${sort === 'top' ? 'border-neutral-700 bg-neutral-800/60' : 'border-transparent'}`}
             onClick={() => setSort('top')}
+            type="button"
           >
             Top
           </button>
@@ -349,7 +361,8 @@ export default function BountyComments({
             {Array.from({ length: 3 }).map((_, i) => (
               <div
                 className="animate-pulse rounded-md border border-neutral-800 bg-neutral-900/30 p-3"
-                key={i}
+                key="comment-pulse-placeholder"
+                aria-hidden="true"
               >
                 <div className="mb-2 h-4 w-24 rounded bg-neutral-800" />
                 <div className="h-3 w-full rounded bg-neutral-800" />
@@ -419,6 +432,7 @@ export default function BountyComments({
                       <button
                         className="flex items-center gap-1 text-[11px] text-neutral-400 hover:text-neutral-200"
                         onClick={() => toggleThread(root.id)}
+                        type="button"
                       >
                         <ChevronDown
                           className={`h-3 w-3 transition-transform ${expanded ? 'rotate-180' : ''}`}
@@ -469,7 +483,7 @@ export default function BountyComments({
                             }
                             onLike={likeComment}
                             parentRef={{
-                              userName: root.user?.name || 'Anonymous',
+                              userName: root.user?.name || 'User',
                               snippet:
                                 String(root.content).slice(0, 40) +
                                 (String(root.content).length > 40 ? '…' : ''),
@@ -494,6 +508,7 @@ export default function BountyComments({
             className="rounded-md border border-neutral-700 bg-neutral-800/60 px-3 py-1 text-neutral-300 text-xs disabled:opacity-50"
             disabled={page <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
+            type="button"
           >
             Previous
           </button>
@@ -501,6 +516,7 @@ export default function BountyComments({
             className="rounded-md border border-neutral-700 bg-neutral-800/60 px-3 py-1 text-neutral-300 text-xs disabled:opacity-50"
             disabled={page >= pages}
             onClick={() => setPage((p) => Math.min(pages, p + 1))}
+            type="button"
           >
             Next
           </button>
@@ -517,6 +533,7 @@ export default function BountyComments({
               className="rounded-md border border-neutral-700 bg-neutral-800/60 px-2 py-1 text-[11px] text-neutral-300 disabled:opacity-50"
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
+              type="button"
             >
               Prev
             </button>
@@ -527,6 +544,7 @@ export default function BountyComments({
               className="rounded-md border border-neutral-700 bg-neutral-800/60 px-2 py-1 text-[11px] text-neutral-300 disabled:opacity-50"
               disabled={page >= pages}
               onClick={() => setPage((p) => Math.min(pages, p + 1))}
+              type="button"
             >
               Next
             </button>

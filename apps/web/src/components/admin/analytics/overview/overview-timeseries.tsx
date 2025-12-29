@@ -40,7 +40,7 @@ function calcRange(days: number) {
   };
 }
 
-export function OverviewTimeseries({ websiteId }: Props) {
+function OverviewTimeseries({ websiteId }: Props) {
   const [days, setDays] = useState(30);
   const { start, end } = useMemo(() => calcRange(days), [days]);
 

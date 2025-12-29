@@ -27,7 +27,7 @@ export interface GithubImportModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export interface GithubRepository {
+interface GithubRepository {
   id: number;
   name: string;
   full_name: string;
@@ -39,7 +39,7 @@ export interface GithubRepository {
   language?: string;
 }
 
-export interface GithubIssue {
+interface GithubIssue {
   id: number;
   number: number;
   title: string;

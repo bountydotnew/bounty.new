@@ -20,13 +20,12 @@
   "dependencies": {
     "@react-email/components": "^0.0.25",
     "react": "catalog:",
-    "react-dom": "catalog:",
     "resend": "catalog:"
   },
   "devDependencies": {
+    "@types/minimatch": "^6.0.0",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
-    "@types/react-dom": "catalog:",
     "typescript": "catalog:"
   }
 }

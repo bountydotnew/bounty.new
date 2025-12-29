@@ -1,18 +1,15 @@
 import { db, waitlist } from '@bounty/db';
 import { track } from '@bounty/track';
-import { grim } from '@bounty/ui/hooks/use-dev-log';
 import { validateFingerprint } from '@bounty/ui/lib/fingerprint-validation';
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-
-const { log, error, warn } = grim();
 
 const requestSchema = z.object({
   email: z.string().email('Invalid email format'),
   fingerprintData: z.object({
     thumbmark: z.string(),
-    components: z.record(z.any()),
-    info: z.record(z.any()).optional(),
+    components: z.record(z.string(), z.any()),
+    info: z.record(z.string(), z.any()).optional(),
     version: z.string().optional(),
   }),
 });
@@ -25,7 +22,7 @@ export async function POST(request: NextRequest) {
     if (!validation.success) {
       return NextResponse.json(
         {
-          error: validation.error.errors[0]?.message || 'Invalid request data',
+          error: validation.error.issues[0]?.message || 'Invalid request data',
           success: false,
         },
         { status: 400 }
@@ -34,14 +31,8 @@ export async function POST(request: NextRequest) {
 
     const { email, fingerprintData } = validation.data;
 
-    log('[Waitlist] Processing request for email:', email);
-
     const fingerprintValidation = validateFingerprint(fingerprintData);
     if (!fingerprintValidation.isValid) {
-      log(
-        '[Waitlist] Fingerprint validation failed:',
-        fingerprintValidation.errors
-      );
       return NextResponse.json(
         {
           error:
@@ -54,22 +45,18 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      log('[Waitlist] Adding email to waitlist:', email);
-
       await db.insert(waitlist).values({
         email,
         hasAccess: false,
         createdAt: new Date(),
       });
 
-      log('[Waitlist] Successfully added email to waitlist:', email);
       await track('waitlist_joined', { source: 'api' });
       return NextResponse.json({
         success: true,
         message: 'Successfully added to waitlist!',
       });
-    } catch (dbConnectionError) {
-      error('[Waitlist] Database connection error:', dbConnectionError);
+    } catch (error) {
       return NextResponse.json(
         {
           error: 'Database temporarily unavailable',
@@ -79,10 +66,9 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error) {
-    warn('[Waitlist] Unexpected error:', error);
     return NextResponse.json(
       {
-        error: 'Internal server error',
+        error: error instanceof Error ? error.message : 'Internal server error',
         success: false,
       },
       { status: 500 }

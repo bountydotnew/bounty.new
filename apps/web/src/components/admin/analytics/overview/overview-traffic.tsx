@@ -14,7 +14,7 @@ import {
 
 type Props = { websiteId: string; timezone?: string };
 
-export function OverviewTraffic({ websiteId, timezone = 'UTC' }: Props) {
+function OverviewTraffic({ websiteId, timezone = 'UTC' }: Props) {
   useDatabuddyParameters({
     websiteId,
     parameters: ['traffic_sources', 'top_referrers'],

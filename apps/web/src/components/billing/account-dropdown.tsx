@@ -2,69 +2,48 @@
 
 import { authClient } from '@bounty/auth/client';
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@bounty/ui/components/avatar';
-import { BellIcon } from '@bounty/ui/components/bell';
-import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from '@bounty/ui/components/sidebar';
-import { Spinner } from '@bounty/ui/components/spinner';
-import { UserIcon } from '@bounty/ui/components/user';
 import { useBilling } from '@/hooks/use-billing';
-import { useQuery } from '@tanstack/react-query';
-import { CreditCard, LogOut, Shield, Sparkles } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
+import { cn } from '@bounty/ui';
+import { LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import * as React from 'react';
-import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { LINKS } from '@/constants';
 import type {
   AccountDropdownProps,
-  SessionUser,
-  User,
   UserDisplayData,
 } from '@/types/billing-components';
-import { trpc } from '@/utils/trpc';
+import { AccountSwitcher } from '@/components/auth/account-switcher';
+import { SwitchUsersIcon } from '@bounty/ui/components/icons/huge/switch-users';
+import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear';
+import { SwitchWorkspaceIcon } from '@bounty/ui/components/icons/huge/switch-workspace';
+import { ManageUsersWorkspaceIcon } from '@bounty/ui/components/icons/huge/manage-users-workspace';
+import { BillingSettingsIcon } from '@bounty/ui/components/icons/huge/billing-settings';
+import { DropdownIcon } from '@bounty/ui';
+import { Feedback } from '@bounty/ui';
+import { UserIcon } from '@bounty/ui';
+import { useFeedback } from '@/components/feedback-context';
+import { useUser } from '@/context/user-context';
+import { useTransition } from 'react';
 
 // Constants for better maintainability
 const MESSAGES = {
-  SIGN_IN_REQUIRED: 'Please sign in to access billing.',
-  BILLING_PORTAL_SUCCESS: 'Opening billing portal...',
   BILLING_PORTAL_ERROR: 'Failed to open billing portal. Please try again.',
-  LOADING: 'Loading...',
-  CHECKING_SUBSCRIPTION: 'Checking...',
-  VERIFYING_SUBSCRIPTION: 'Verifying subscription...',
-  PRO_BADGE: 'Pro',
-} as const;
-
-const MENU_ITEMS = {
-  UPGRADE: 'Upgrade to Pro',
-  ACCOUNT: 'Account',
-  BILLING: 'Billing',
-  NOTIFICATIONS: 'Notifications',
-  LOGOUT: 'Log out',
+  BILLING_PORTAL_SUCCESS: 'Opening billing portal...',
+  SIGN_IN_REQUIRED: 'Please sign in to access billing.',
 } as const;
 
 const LOGIN_REDIRECT = '/login';
-
 // Custom hook for user display logic
 function useUserDisplay(
-  sessionUser?: SessionUser | null,
-  fallbackUser?: User
+  sessionUser?: { name?: string; email?: string; image?: string | null } | null,
+  fallbackUser?: { name?: string; email?: string; image?: string | null }
 ): UserDisplayData {
   return React.useMemo(() => {
     const user = sessionUser || fallbackUser;
@@ -91,7 +70,8 @@ function useBillingPortal() {
     try {
       await openBillingPortal();
       toast.success(MESSAGES.BILLING_PORTAL_SUCCESS);
-    } catch (_error) {
+    } catch (error) {
+      console.error('Billing portal error', error);
       toast.error(MESSAGES.BILLING_PORTAL_ERROR);
     }
   }, [session?.user, openBillingPortal]);
@@ -102,249 +82,215 @@ function useBillingPortal() {
 // Custom hook for sign out functionality
 function useSignOut() {
   const router = useRouter();
-  return useCallback(() => {
-    authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          router.push(LOGIN_REDIRECT);
-        },
-      },
+  const [pending, startSignOut] = useTransition();
+
+  const handleSignOut = React.useCallback(() => {
+    startSignOut(() => {
+      authClient
+        .signOut({
+          fetchOptions: {
+            onSuccess: () => {
+              router.push(LOGIN_REDIRECT);
+            },
+          },
+        })
+        .catch((error) => {
+          console.error('Sign out failed', error);
+          toast.error('Failed to sign out. Please try again.');
+        });
     });
   }, [router]);
+
+  return { handleSignOut, pending };
 }
-
-// Memoized Avatar component to prevent unnecessary re-renders
-const UserAvatar = React.memo<{
-  userDisplay: UserDisplayData;
-  isLoading: boolean;
-  className?: string;
-}>(({ userDisplay, isLoading, className = 'h-8 w-8 rounded-lg' }) => (
-  <Avatar className={className}>
-    {userDisplay.image && (
-      <AvatarImage
-        alt={userDisplay.name}
-        onError={(e) => {
-          // Fallback to initials if image fails to load
-          e.currentTarget.style.display = 'none';
-        }}
-        src={userDisplay.image}
-      />
-    )}
-    <AvatarFallback className="rounded-lg">
-      {isLoading ? (
-        <Spinner aria-label="Loading user information" size="sm" />
-      ) : (
-        userDisplay.initials
-      )}
-    </AvatarFallback>
-  </Avatar>
-));
-
-UserAvatar.displayName = 'UserAvatar';
-
-// Memoized dropdown header component
-const DropdownHeader = React.memo<{
-  userDisplay: UserDisplayData;
-  isPro: boolean;
-  isLoading: boolean;
-}>(({ userDisplay, isPro, isLoading }) => (
-  <DropdownMenuLabel className="p-0 font-normal">
-    <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-      <UserAvatar isLoading={isLoading} userDisplay={userDisplay} />
-      <div className="grid flex-1 text-left text-sm leading-tight">
-        <div className="flex items-center gap-2">
-          <span className="truncate font-medium">
-            {isLoading ? MESSAGES.LOADING : userDisplay.name}
-          </span>
-          {!isLoading && isPro && (
-            <span className="text-muted-foreground text-xs">
-              {MESSAGES.PRO_BADGE}
-            </span>
-          )}
-          {isLoading && (
-            <span className="animate-pulse text-muted-foreground text-xs">
-              {MESSAGES.CHECKING_SUBSCRIPTION}
-            </span>
-          )}
-        </div>
-        <span className="truncate text-xs">
-          {isLoading ? MESSAGES.VERIFYING_SUBSCRIPTION : userDisplay.email}
-        </span>
-      </div>
-    </div>
-  </DropdownMenuLabel>
-));
-
-DropdownHeader.displayName = 'DropdownHeader';
-
-// Upgrade menu item component
-const UpgradeMenuItem = React.memo<{
-  isPro: boolean;
-  isLoading: boolean;
-  onUpgradeClick: () => void;
-}>(({ isPro, isLoading, onUpgradeClick }) => {
-  if (isLoading) {
-    return (
-      <DropdownMenuItem aria-label="Loading subscription status" disabled>
-        <Spinner className="mr-2" size="sm" />
-        Checking subscription...
-      </DropdownMenuItem>
-    );
-  }
-
-  if (!isPro) {
-    return (
-      <DropdownMenuItem
-        aria-label="Upgrade to Pro plan"
-        onClick={onUpgradeClick}
-      >
-        <Sparkles />
-        {MENU_ITEMS.UPGRADE}
-      </DropdownMenuItem>
-    );
-  }
-
-  return null;
-});
-
-UpgradeMenuItem.displayName = 'UpgradeMenuItem';
 
 // Main component
 export function AccountDropdown({
   user,
+  children,
+  onOpenChange: externalOnOpenChange,
   onUpgradeClick,
-}: AccountDropdownProps) {
+}: AccountDropdownProps & {
+  children?: React.ReactNode;
+  onOpenChange?: (open: boolean) => void;
+}) {
   const router = useRouter();
-  const pathname = usePathname();
-  const { isMobile } = useSidebar();
   const { data: session } = authClient.useSession();
+  const { user: currentUser } = useUser();
   const [menuOpen, setMenuOpen] = React.useState(false);
-  const { isPro, isLoading: isBillingLoading } = useBilling({
-    enabled: menuOpen && !!session?.user,
-  });
-  const { data: me } = useQuery({
-    ...trpc.user.getMe.queryOptions(),
-    enabled: !!session?.user,
-  });
-  const isImpersonating = Boolean(
-    (session as any)?.session?.impersonatedBy ||
-      (session as any)?.impersonatedBy
+
+  const handleOpenChange = React.useCallback(
+    (open: boolean) => {
+      setMenuOpen(open);
+      externalOnOpenChange?.(open);
+    },
+    [externalOnOpenChange]
   );
 
   // Custom hooks for better separation of concerns
   const userDisplay = useUserDisplay(session?.user, user);
   const handleBillingPortal = useBillingPortal();
-  const handleSignOut = useSignOut();
+  const { handleSignOut, pending: signOutPending } = useSignOut();
+  const { startSelection } = useFeedback();
 
-  // Memoize dropdown content positioning
-  const dropdownProps = React.useMemo(
-    () => ({
-      className:
-        'w-[var(--radix-dropdown-menu-trigger-width)] min-w-56 rounded-lg',
-      side: isMobile ? ('bottom' as const) : ('right' as const),
-      align: 'end' as const,
-      sideOffset: 4,
-    }),
-    [isMobile]
-  );
+  const profileHref = currentUser?.handle
+    ? `/profile/${currentUser.handle}`
+    : null;
 
-  const handleAccountClick = useCallback(() => {
-    router.push(LINKS.ACCOUNT);
-  }, [router]);
-
-  const handleAdminClick = useCallback(() => {
-    if (pathname?.startsWith('/admin')) {
-      router.push('/');
-    } else {
-      router.push('/admin');
+  const handleProfileNavigation = () => {
+    if (!profileHref) {
+      return;
     }
-  }, [router, pathname]);
+    setMenuOpen(false);
+    router.push(profileHref);
+  };
 
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu onOpenChange={setMenuOpen} open={menuOpen}>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              aria-expanded={false}
-              aria-label={`Account menu for ${userDisplay.name}`}
-            >
-              <div>
-                <UserAvatar
-                  isLoading={isBillingLoading}
-                  userDisplay={userDisplay}
-                />
+    <DropdownMenu onOpenChange={handleOpenChange} open={menuOpen}>
+      <DropdownMenuTrigger asChild>
+        {children || (
+          <button
+            aria-label={`Account menu for ${userDisplay.name}`}
+            type="button"
+          >
+            {userDisplay.name}
+          </button>
+        )}
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent className="rounded-[15px] w-74 bg-nav-active-bg border border-card-border-color">
+        {/* User header section */}
+        <div className="flex flex-col gap-1.5 border-b border-[#292828] px-4 py-1.5">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-0">
+              <div className="text-lg font-medium leading-[150%] text-text-workspace">
+                {userDisplay.name}
               </div>
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
+              <div className="text-base font-medium leading-[150%] tracking-[0.03em] text-[#999999]">
+                {userDisplay.email}
+              </div>
+            </div>
 
-          <DropdownMenuContent {...dropdownProps}>
-            <DropdownHeader
-              isLoading={isBillingLoading}
-              isPro={isPro}
-              userDisplay={userDisplay}
-            />
-
-            <DropdownMenuSeparator />
-
-            {/* Upgrade section */}
-            <DropdownMenuGroup>
-              {(me?.role === 'admin' || isImpersonating) && (
-                <DropdownMenuItem
-                  aria-label="Open admin panel"
-                  onClick={handleAdminClick}
+            <AccountSwitcher
+              currentUserId={session?.user?.id}
+              trigger={
+                <button
+                  className="cursor-pointer transition-opacity hover:opacity-70"
+                  type="button"
+                  aria-label="Switch account"
                 >
-                  <Shield />
-                  Admin
-                </DropdownMenuItem>
-              )}
+                  <SwitchUsersIcon className="h-[19px] w-[19px] text-text-secondary" />
+                </button>
+              }
+            />
+          </div>
+          <button
+            className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleProfileNavigation}
+            disabled={!profileHref}
+            type="button"
+          >
+            <UserIcon className="h-[19px] w-[19px]" />
+            <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
+              Profile
+            </span>
+          </button>
+          <button
+            className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-white"
+            onClick={() => {
+              setMenuOpen(false);
+              router.push(LINKS.SETTINGS);
+            }}
+            type="button"
+          >
+            <SettingsGearIcon className="h-[19px] w-[19px]" />
+            <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
+              Settings
+            </span>
+          </button>
+        </div>
 
-              <UpgradeMenuItem
-                isLoading={isBillingLoading}
-                isPro={isPro}
-                onUpgradeClick={onUpgradeClick}
-              />
-            </DropdownMenuGroup>
-
-            {/* Account actions */}
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                aria-label="View account settings"
-                onClick={handleAccountClick}
-              >
-                <UserIcon />
-                {MENU_ITEMS.ACCOUNT}
-              </DropdownMenuItem>
-
-              <DropdownMenuItem
-                aria-label="Open billing portal"
-                disabled={isBillingLoading}
-                onClick={handleBillingPortal}
-              >
-                <CreditCard />
-                {isBillingLoading ? MESSAGES.LOADING : MENU_ITEMS.BILLING}
-              </DropdownMenuItem>
-
-              <DropdownMenuItem aria-label="View notifications">
-                <BellIcon />
-                {MENU_ITEMS.NOTIFICATIONS}
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-
-            <DropdownMenuSeparator />
-
-            {/* Sign out */}
+        {/* Actions section */}
+        <div className="flex flex-col gap-2 border-b border-[#292828] px-0 py-2">
+          {onUpgradeClick && (
             <DropdownMenuItem
-              aria-label="Sign out of account"
-              onClick={handleSignOut}
-              variant="destructive"
+              className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
+              onClick={() => {
+                setMenuOpen(false);
+                onUpgradeClick();
+              }}
             >
-              <LogOut />
-              {MENU_ITEMS.LOGOUT}
+              <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
+                Upgrade
+              </span>
             </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
+          )}
+          <DropdownMenuItem
+            className="flex items-center justify-between rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
+            onClick={() => setMenuOpen(false)}
+          >
+            <div className="flex items-center gap-2.25">
+              <SwitchWorkspaceIcon className="h-[19px] w-[19px]" />
+              <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
+                Switch workspace
+              </span>
+            </div>
+            <DropdownIcon className="h-[19px] w-[19px] -rotate-90" />
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
+            onClick={() => setMenuOpen(false)}
+          >
+            <ManageUsersWorkspaceIcon className="h-[19px] w-[19px]" />
+            <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
+              Manage members
+            </span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
+            onClick={() => {
+              setMenuOpen(false);
+              handleBillingPortal();
+            }}
+          >
+            <BillingSettingsIcon className="h-[19px] w-[19px]" />
+            <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
+              Billing
+            </span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
+            onClick={() => {
+              setMenuOpen(false);
+              setTimeout(() => startSelection(), 100);
+            }}
+          >
+            <Feedback className="h-[19px] w-[19px]" />
+            <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
+              Send Feedback
+            </span>
+          </DropdownMenuItem>
+        </div>
+
+        <DropdownMenuSeparator className="border-[#292828]" />
+
+        <DropdownMenuItem
+          className={cn(
+            'flex items-center gap-2 rounded-[10px] px-4 py-2 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg',
+            signOutPending && 'opacity-70'
+          )}
+          disabled={signOutPending}
+          onClick={() => {
+            setMenuOpen(false);
+            handleSignOut();
+          }}
+        >
+          <LogOut className="h-[19px] w-[19px] text-red-500" />
+          <span className="text-[16px] font-medium leading-[150%] tracking-[0.03em] text-red-500">
+            Sign out
+          </span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

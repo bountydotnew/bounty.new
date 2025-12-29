@@ -9,7 +9,9 @@ import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { formatLargeNumber } from '@bounty/ui/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import BountyActions from '@/components/bounty/bounty-actions';
 import BountyComments from '@/components/bounty/bounty-comments';
 import CollapsibleText from '@/components/bounty/collapsible-text';
@@ -19,7 +21,8 @@ import { MarkdownContent } from '@/components/bounty/markdown-content';
 import SubmissionCard from '@/components/bounty/submission-card';
 import { SubmissionsMobileSidebar } from '@/components/bounty/submissions-mobile-sidebar';
 import type { BountyCommentCacheItem } from '@/types/comments';
-import { trpc } from '@/utils/trpc';
+import { trpc, trpcClient } from '@/utils/trpc';
+import { Header } from '../dual-sidebar/sidebar-header';
 
 interface BountyDetailPageProps {
   id: string;
@@ -28,10 +31,10 @@ interface BountyDetailPageProps {
   description: string;
   tags: string[];
   user: string;
-  rank: string;
   avatarSrc: string;
   hasBadge: boolean;
   canEditBounty: boolean;
+  canDeleteBounty?: boolean;
   initialVotes?: { count: number; isVoted: boolean };
   initialComments?: BountyCommentCacheItem[];
   initialBookmarked?: boolean;
@@ -43,9 +46,9 @@ export default function BountyDetailPage({
   description,
   amount,
   user,
-  rank,
   avatarSrc,
   canEditBounty,
+  canDeleteBounty = false,
   initialVotes,
   initialComments,
   initialBookmarked,
@@ -53,13 +56,16 @@ export default function BountyDetailPage({
   const { editModalOpen, openEditModal, closeEditModal, editingBountyId } =
     useBountyModals();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const votes = useQuery({
     ...trpc.bounties.getBountyVotes.queryOptions({ bountyId: id }),
     initialData: initialVotes,
     staleTime: Number.POSITIVE_INFINITY,
   });
   const voteMutation = useMutation({
-    ...trpc.bounties.voteBounty.mutationOptions(),
+    mutationFn: async (input: { bountyId: string; vote: boolean }) => {
+      return await trpcClient.bounties.voteBounty.mutate(input);
+    },
   });
 
   const handleUpvote = () => {
@@ -75,7 +81,7 @@ export default function BountyDetailPage({
       : { count: 1, isVoted: true };
     queryClient.setQueryData(key, next);
     voteMutation.mutate(
-      { bountyId: id },
+      { bountyId: id, vote: next.isVoted },
       {
         onError: () => {
           if (previous) {
@@ -103,6 +109,29 @@ export default function BountyDetailPage({
     id: string;
     initial: string;
   } | null>(null);
+
+  const deleteBounty = useMutation({
+    mutationFn: async (input: { id: string }) => {
+      return await trpcClient.bounties.deleteBounty.mutate(input);
+    },
+    onSuccess: () => {
+      toast.success('Bounty deleted successfully');
+      queryClient.invalidateQueries({
+        queryKey: ['bounties'],
+        type: 'all',
+      });
+      router.push('/dashboard');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to delete bounty: ${error.message}`);
+    },
+  });
+
+  const handleDelete = () => {
+    if (confirm('Are you sure you want to delete this bounty? This action cannot be undone.')) {
+      deleteBounty.mutate({ id });
+    }
+  };
 
   // const postComment = (content: string, parentId?: string) => {
   //   const key = trpc.bounties.getBountyComments.queryKey({ bountyId: id });
@@ -172,7 +201,9 @@ export default function BountyDetailPage({
   // };
 
   const updateComment = useMutation({
-    ...trpc.bounties.updateBountyComment.mutationOptions(),
+    mutationFn: async (input: { commentId: string; content: string }) => {
+      return await trpcClient.bounties.updateBountyComment.mutate(input);
+    },
   });
   // const deleteComment = useMutation({
   //   ...trpc.bounties.deleteBountyComment.mutationOptions(),
@@ -214,6 +245,7 @@ export default function BountyDetailPage({
 
   return (
     <div className="min-h-screen bg-[#111110] text-white">
+      <Header />
       <div className="mx-auto max-w-[90%]">
         {/* Header */}
         <div className="mb-4 flex w-full items-center justify-between">
@@ -225,7 +257,7 @@ export default function BountyDetailPage({
 
         <div className="flex flex-col gap-8 xl:flex-row">
           {/* Main Content */}
-          <div className="flex-1 p-8 xl:flex-[2]">
+          <div className="flex-1 p-8 xl:flex-2">
             {/* Header */}
             <div className="mb-6">
               <div className="mb-4 flex items-center justify-between">
@@ -287,7 +319,6 @@ export default function BountyDetailPage({
                         <Check className="-rotate-45 h-2.5 w-2.5 transform text-white" />
                       </div>
                     </div>
-                    <span className="text-gray-400 text-xs">{rank}</span>
                   </div>
                 </div>
 
@@ -295,8 +326,10 @@ export default function BountyDetailPage({
                   <BountyActions
                     bookmarked={initialBookmarked}
                     bountyId={id}
+                    canDelete={canDeleteBounty}
                     canEdit={canEditBounty}
                     isVoted={Boolean(votes.data?.isVoted)}
+                    onDelete={handleDelete}
                     onEdit={() => openEditModal(id)}
                     onShare={() => {
                       navigator.share({
@@ -346,7 +379,7 @@ export default function BountyDetailPage({
             />
           </div>
 
-          <div className="hidden xl:block xl:w-[480px] xl:flex-shrink-0">
+          <div className="hidden xl:block xl:w-[480px] xl:shrink-0">
             <div className="sticky top-0 xl:h-[calc(100vh-8rem)] xl:overflow-y-auto xl:pr-2">
               <div className="mb-6 flex items-center justify-between">
                 <h3 className="font-medium text-lg text-white">Submissions</h3>

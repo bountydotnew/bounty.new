@@ -21,11 +21,13 @@ export default function AdminUserProfilePage() {
     ...trpc.user.adminGetProfile.queryOptions({ userId: id }),
     staleTime: Number.POSITIVE_INFINITY,
   });
-  const updateName = useMutation(trpc.user.adminUpdateName.mutationOptions());
-  const invite = useMutation(trpc.user.inviteUser.mutationOptions());
-  const sendNoti = useMutation(trpc.notifications.sendToUser.mutationOptions());
+  const updateName = useMutation(trpc.user.adminUpdateName.mutationOptions({}));
+  const sendNoti = useMutation(
+    trpc.notifications.sendToUser.mutationOptions({})
+  );
 
   const user = profile.data?.user;
+  const bountiesCreated = Number(profile.data?.metrics.bountiesCreated ?? 0);
 
   return (
     <div className="space-y-6">
@@ -51,9 +53,7 @@ export default function AdminUserProfilePage() {
               <div className="text-neutral-400">Email</div>
               <div className="text-neutral-200">{user?.email}</div>
               <div className="text-neutral-400">Bounties created</div>
-              <div className="text-neutral-200">
-                {profile.data?.metrics.bountiesCreated ?? 0}
-              </div>
+              <div className="text-neutral-200">{bountiesCreated}</div>
             </div>
           </CardContent>
         </Card>
@@ -81,25 +81,6 @@ export default function AdminUserProfilePage() {
                   }}
                   placeholder="Change name"
                 />
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={() =>
-                      invite.mutate({ userId: id, accessStage: 'beta' })
-                    }
-                    size="sm"
-                  >
-                    Set Beta
-                  </Button>
-                  <Button
-                    onClick={() =>
-                      invite.mutate({ userId: id, accessStage: 'production' })
-                    }
-                    size="sm"
-                    variant="outline"
-                  >
-                    Set Prod
-                  </Button>
-                </div>
                 <div className="flex items-center gap-2">
                   <Button
                     onClick={() =>

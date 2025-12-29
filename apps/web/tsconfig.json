@@ -12,7 +12,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": false,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "types": [],
     "plugins": [
@@ -29,7 +29,8 @@
     "./**/*.tsx",
     "./.next/types/**/*.ts",
     "./next-env.d.ts",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": ["./node_modules"]
 }

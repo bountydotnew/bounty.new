@@ -1,7 +1,7 @@
 import type * as React from 'react';
 import type * as RechartsPrimitive from 'recharts';
 
-export interface ChartTheme {
+interface ChartTheme {
   light: string;
   dark: string;
 }
@@ -27,18 +27,18 @@ export interface ChartConfig {
   [k: string]: ChartConfigValue;
 }
 
-export interface ChartContextProps {
+interface ChartContextProps {
   config: ChartConfig;
 }
 
-export interface ChartContainerProps extends React.ComponentProps<'div'> {
+interface ChartContainerProps extends React.ComponentProps<'div'> {
   config: ChartConfig;
   children: React.ComponentProps<
     typeof RechartsPrimitive.ResponsiveContainer
   >['children'];
 }
 
-export interface ChartStyleProps {
+interface ChartStyleProps {
   id: string;
   config: ChartConfig;
 }

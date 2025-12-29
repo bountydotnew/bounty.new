@@ -1,5 +1,11 @@
+import type {
+  AdminUserProfileResponse,
+  AdminUserStatsResponse,
+} from '@bounty/types';
 import {
+  account,
   bounty,
+  bountyComment,
   db,
   invite,
   session,
@@ -10,14 +16,56 @@ import {
 import { ExternalInvite, FROM_ADDRESSES, sendEmail } from '@bounty/email';
 import { env } from '@bounty/env/server';
 import { TRPCError } from '@trpc/server';
-import { count, desc, eq, sql } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { LRUCache } from '../lib/lru-cache';
+import { userProfileCache } from './profiles';
 import {
   adminProcedure,
   protectedProcedure,
   publicProcedure,
   router,
 } from '../trpc';
+
+type UserReputationRow = typeof userReputation.$inferSelect;
+
+// Reused regex for token generation
+const DASH_REGEX = /-/g;
+const TRAILING_SLASH_REGEX = /\/$/;
+
+const mapUserReputationToMetrics = (
+  rep?: UserReputationRow
+): AdminUserStatsResponse['data']['userStats'] => ({
+  totalEarned: rep?.totalEarned ?? '0.00',
+  bountiesCompleted: rep?.bountiesCompleted ?? 0,
+  bountiesCreated: rep?.bountiesCreated ?? 0,
+  averageRating: rep?.averageRating ?? '0.00',
+  totalRatings: rep?.totalRatings ?? 0,
+  successRate: rep?.successRate ?? '0.00',
+  completionRate: rep?.completionRate ?? '0.00',
+  responseTime: rep?.responseTime ?? null,
+});
+
+// LRU Cache for current user data (cache for 3 minutes, max 500 users)
+const currentUserCache = new LRUCache<{
+  success: boolean;
+  data: {
+    user: {
+      id: string;
+      name: string | null;
+      email: string;
+      image: string | null;
+      hasAccess: boolean;
+      createdAt: Date;
+      updatedAt: Date;
+    };
+    profile: unknown;
+    reputation: unknown;
+  } | null;
+}>({
+  maxSize: 500,
+  ttl: 3 * 60 * 1000, // 3 minutes
+});
 
 export const userRouter = router({
   adminGetProfile: adminProcedure
@@ -31,7 +79,6 @@ export const userRouter = router({
           image: user.image,
           role: user.role,
           hasAccess: user.hasAccess,
-          accessStage: user.accessStage,
           betaAccessStatus: user.betaAccessStatus,
           banned: user.banned,
           createdAt: user.createdAt,
@@ -66,7 +113,7 @@ export const userRouter = router({
         user: u,
         metrics: { bountiesCreated: bountyCount },
         sessions,
-      };
+      } satisfies AdminUserProfileResponse;
     }),
 
   adminUpdateName: adminProcedure
@@ -118,6 +165,13 @@ export const userRouter = router({
 
       const userId = ctx.session.user.id;
 
+      // Check cache first
+      const cached = currentUserCache.get(userId);
+
+      if (cached) {
+        return cached;
+      }
+
       const [userRecord] = await db
         .select({
           user: {
@@ -145,10 +199,15 @@ export const userRouter = router({
         });
       }
 
-      return {
+      const result = {
         success: true,
         data: userRecord,
       };
+
+      // Cache the result
+      currentUserCache.set(userId, result);
+
+      return result;
     } catch (error) {
       if (error instanceof TRPCError) {
         throw error;
@@ -248,19 +307,11 @@ export const userRouter = router({
         success: true,
         data: {
           platformStats: {
-            totalUsers: stats.totalUsers,
+            totalUsers: stats?.totalUsers ?? 0,
           },
-          userStats: userRep || {
-            totalEarned: '0.00',
-            bountiesCompleted: 0,
-            bountiesCreated: 0,
-            averageRating: '0.00',
-            totalRatings: 0,
-            successRate: '0.00',
-            completionRate: '0.00',
-          },
+          userStats: mapUserReputationToMetrics(userRep),
         },
-      };
+      } satisfies AdminUserStatsResponse;
     } catch (error) {
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
@@ -332,6 +383,20 @@ export const userRouter = router({
     return userData;
   }),
 
+  getGithubAccount: protectedProcedure.query(async ({ ctx }) => {
+    const githubAccount = await ctx.db.query.account.findFirst({
+      where: (account, { eq, and }) =>
+        and(
+          eq(account.userId, ctx.session.user.id),
+          eq(account.providerId, 'github')
+        ),
+    });
+
+    return githubAccount
+      ? { username: githubAccount.accountId }
+      : { username: null };
+  }),
+
   getAllUsers: adminProcedure
     .input(
       z.object({
@@ -344,11 +409,6 @@ export const userRouter = router({
       const { search, page, limit } = input;
       const offset = (page - 1) * limit;
 
-      let whereClause;
-      if (search) {
-        whereClause = sql`(${user.name} ILIKE ${`%${search}%`} OR ${user.email} ILIKE ${`%${search}%`})`;
-      }
-
       const [users, total] = await Promise.all([
         ctx.db
           .select({
@@ -359,20 +419,27 @@ export const userRouter = router({
             role: user.role,
             hasAccess: user.hasAccess,
             betaAccessStatus: user.betaAccessStatus,
-            accessStage: user.accessStage,
             banned: user.banned,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
           })
           .from(user)
-          .where(whereClause)
+          .where(
+            search
+              ? sql`(${user.name} ILIKE ${`%${search}%`} OR ${user.email} ILIKE ${`%${search}%`})`
+              : undefined
+          )
           .orderBy(desc(user.createdAt))
           .limit(limit)
           .offset(offset),
         ctx.db
           .select({ count: sql<number>`count(*)` })
           .from(user)
-          .where(whereClause)
+          .where(
+            search
+              ? sql`(${user.name} ILIKE ${`%${search}%`} OR ${user.email} ILIKE ${`%${search}%`})`
+              : undefined
+          )
           .then((result) => result[0]?.count || 0),
       ]);
 
@@ -397,56 +464,20 @@ export const userRouter = router({
 
       await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
 
+      // Invalidate user cache
+      currentUserCache.delete(userId);
+
       return { success: true };
-    }),
-
-  inviteUser: adminProcedure
-    .input(
-      z.object({
-        userId: z.string(),
-        accessStage: z.enum(['none', 'alpha', 'beta', 'production']),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const { userId, accessStage } = input;
-
-      const [updatedUser] = await ctx.db
-        .update(user)
-        .set({
-          accessStage,
-          updatedAt: new Date(),
-        })
-        .where(eq(user.id, userId))
-        .returning({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          accessStage: user.accessStage,
-        });
-
-      if (!updatedUser) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'User not found',
-        });
-      }
-
-      return {
-        success: true,
-        user: updatedUser,
-        message: `User access updated to ${accessStage}. Email invitation will be sent.`,
-      };
     }),
 
   inviteExternalUser: adminProcedure
     .input(
       z.object({
         email: z.string().email(),
-        accessStage: z.enum(['none', 'alpha', 'beta', 'production']),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { email, accessStage } = input;
+      const { email } = input;
 
       const existingUser = await ctx.db
         .select({ id: user.id })
@@ -463,8 +494,8 @@ export const userRouter = router({
       }
 
       const rawToken =
-        crypto.randomUUID().replace(/-/g, '') +
-        crypto.randomUUID().replace(/-/g, '');
+        crypto.randomUUID().replace(DASH_REGEX, '') +
+        crypto.randomUUID().replace(DASH_REGEX, '');
       const tokenHash = await crypto.subtle
         .digest('SHA-256', new TextEncoder().encode(rawToken))
         .then((b) => Buffer.from(new Uint8Array(b)).toString('hex'));
@@ -473,21 +504,18 @@ export const userRouter = router({
 
       await ctx.db
         .insert(invite)
-        .values({ email, accessStage, tokenHash, expiresAt });
+        .values({ email, accessStage: 'none', tokenHash, expiresAt });
 
       const baseUrl =
-        env.BETTER_AUTH_URL?.replace(/\/$/, '') || 'https://bounty.new';
+        env.BETTER_AUTH_URL?.replace(TRAILING_SLASH_REGEX, '') ||
+        'https://bounty.new';
       const inviteUrl = `${baseUrl}/login?invite=${rawToken}`;
-      await sendEmail({
+      await sendEmail({ 
         to: email,
-        subject: 'You’re invited to bounty.new',
+        subject: "You're invited to bounty.new",
         from: FROM_ADDRESSES.notifications,
         react: ExternalInvite({
           inviteUrl,
-          accessStage:
-            accessStage === 'none'
-              ? undefined
-              : (accessStage as 'alpha' | 'beta' | 'production'),
         }),
       });
 
@@ -508,19 +536,22 @@ export const userRouter = router({
         .where(eq(invite.tokenHash, tokenHash))
         .limit(1);
       const row = rows[0];
-      if (!row)
+      if (!row) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Invalid invite' });
-      if (row.usedAt)
+      }
+      if (row.usedAt) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Invite already used',
         });
-      if (row.expiresAt && row.expiresAt < new Date())
+      }
+      if (row.expiresAt && row.expiresAt < new Date()) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invite expired' });
+      }
 
       await ctx.db
         .update(user)
-        .set({ accessStage: row.accessStage, updatedAt: new Date() })
+        .set({ updatedAt: new Date() })
         .where(eq(user.id, ctx.session.user.id));
 
       await ctx.db
@@ -528,6 +559,163 @@ export const userRouter = router({
         .set({ usedAt: new Date(), usedByUserId: ctx.session.user.id })
         .where(eq(invite.id, row.id));
 
+      // Invalidate user cache
+      currentUserCache.delete(ctx.session.user.id);
+
       return { success: true };
+    }),
+
+  checkHandleAvailability: publicProcedure
+    .input(z.object({ handle: z.string().min(3).max(20) }))
+    .query(async ({ ctx, input }) => {
+      // No try-catch needed - let TRPC handle errors naturally
+      // Database errors will be caught by TRPC's error handler
+      const [existingUser] = await ctx.db
+        .select({ id: user.id })
+        .from(user)
+        .where(eq(user.handle, input.handle.toLowerCase()))
+        .limit(1);
+
+      return {
+        success: true,
+        available: !existingUser,
+      };
+    }),
+
+  setHandle: protectedProcedure
+    .input(z.object({ handle: z.string().min(3).max(20) }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const handleLower = input.handle.toLowerCase();
+
+        // Check if handle is already taken
+        const [existingUser] = await ctx.db
+          .select({ id: user.id })
+          .from(user)
+          .where(eq(user.handle, handleLower))
+          .limit(1);
+
+        if (existingUser && existingUser.id !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: 'Handle is already taken',
+          });
+        }
+
+        // Update user's handle
+        await ctx.db
+          .update(user)
+          .set({ handle: handleLower, updatedAt: new Date() })
+          .where(eq(user.id, ctx.session.user.id));
+
+        // Invalidate user cache
+        currentUserCache.delete(ctx.session.user.id);
+
+        return {
+          success: true,
+          handle: handleLower,
+          message: 'Handle set successfully',
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to set handle',
+          cause: error,
+        });
+      }
+    }),
+
+  updateProfilePrivacy: protectedProcedure
+    .input(z.object({ isProfilePrivate: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Get user's handle before updating (to invalidate cache)
+        const [userRecord] = await ctx.db
+          .select({ handle: user.handle, id: user.id })
+          .from(user)
+          .where(eq(user.id, ctx.session.user.id))
+          .limit(1);
+
+        await ctx.db
+          .update(user)
+          .set({
+            isProfilePrivate: input.isProfilePrivate,
+            updatedAt: new Date(),
+          })
+          .where(eq(user.id, ctx.session.user.id));
+
+        // Invalidate user cache
+        currentUserCache.delete(ctx.session.user.id);
+
+        // Invalidate profile cache by both handle and userId
+        if (userRecord?.handle) {
+          userProfileCache.delete(userRecord.handle.toLowerCase());
+        }
+        userProfileCache.delete(ctx.session.user.id);
+
+        return {
+          success: true,
+          message: `Profile is now ${input.isProfilePrivate ? 'private' : 'public'}`,
+        };
+      } catch (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to update profile privacy',
+          cause: error,
+        });
+      }
+    }),
+
+  getUserActivity: publicProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        limit: z.number().min(1).max(20).default(10),
+      })
+    )
+    .query(async ({ input }) => {
+      const recentBounties = await db
+        .select({
+          type: sql<string>`'bounty_created'`,
+          id: bounty.id,
+          title: bounty.title,
+          createdAt: bounty.createdAt,
+          data: {
+            amount: bounty.amount,
+            currency: bounty.currency,
+          },
+        })
+        .from(bounty)
+        .where(eq(bounty.createdById, input.userId))
+        .orderBy(desc(bounty.createdAt))
+        .limit(input.limit);
+
+      const recentComments = await db
+        .select({
+          type: sql<string>`'comment_created'`,
+          id: bountyComment.id,
+          title: bounty.title,
+          createdAt: bountyComment.createdAt,
+          data: {
+            bountyId: bounty.id,
+            content: bountyComment.content,
+          },
+        })
+        .from(bountyComment)
+        .innerJoin(bounty, eq(bountyComment.bountyId, bounty.id))
+        .where(eq(bountyComment.userId, input.userId))
+        .orderBy(desc(bountyComment.createdAt))
+        .limit(input.limit);
+
+      // Combine and sort
+      const activity = [...recentBounties, ...recentComments]
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .slice(0, input.limit);
+
+      return activity;
     }),
 });

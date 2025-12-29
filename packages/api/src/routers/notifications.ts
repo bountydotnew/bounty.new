@@ -2,7 +2,6 @@ import { createNotification, db, notification } from '@bounty/db';
 import { TRPCError } from '@trpc/server';
 import { and, count, desc, eq, lt } from 'drizzle-orm';
 import { z } from 'zod';
-import { grim } from '../lib/use-dev-log';
 import { sendErrorWebhook, sendInfoWebhook } from '../lib/use-discord-webhook';
 import {
   adminProcedure,
@@ -10,8 +9,11 @@ import {
   publicProcedure,
   router,
 } from '../trpc';
+import { realtime } from '@bounty/realtime';
 
-const { info, error, warn } = grim();
+const info = console.info.bind(console);
+const error = console.error.bind(console);
+const warn = console.warn.bind(console);
 
 const sendWebhookSchema = z.object({
   message: z.string().min(1).max(2000),
@@ -59,8 +61,20 @@ export const notificationsRouter = router({
         type: input.type,
         title: input.title,
         message: input.message,
-        data: input.data,
+        ...(input.data && { data: input.data }),
       });
+      try {
+        await realtime.emit('notifications.refresh', {
+          userId: input.userId,
+          ts: Date.now(),
+        });
+      } catch (emitError) {
+        error('[sendToUser] Failed to emit realtime event:', {
+          operation: 'sendToUser',
+          userId: input.userId,
+          error: emitError,
+        });
+      }
       return { success: true, data: n };
     }),
   getAll: protectedProcedure
@@ -72,7 +86,7 @@ export const notificationsRouter = router({
           unreadOnly: z.boolean().default(false),
         })
         .optional()
-        .default({})
+        .default({ limit: 50, offset: 0, unreadOnly: false })
     )
     .query(async ({ ctx, input }) => {
       const where = input.unreadOnly
@@ -117,6 +131,18 @@ export const notificationsRouter = router({
           )
         )
         .returning();
+      try {
+        await realtime.emit('notifications.refresh', {
+          userId: ctx.session.user.id,
+          ts: Date.now(),
+        });
+      } catch (emitError) {
+        error('[markAsRead] Failed to emit realtime event:', {
+          operation: 'markAsRead',
+          userId: ctx.session.user.id,
+          error: emitError,
+        });
+      }
       return updated;
     }),
 
@@ -126,6 +152,18 @@ export const notificationsRouter = router({
       .set({ read: true, updatedAt: new Date() })
       .where(eq(notification.userId, ctx.session.user.id))
       .returning();
+    try {
+      await realtime.emit('notifications.refresh', {
+        userId: ctx.session.user.id,
+        ts: Date.now(),
+      });
+    } catch (emitError) {
+      error('[markAllAsRead] Failed to emit realtime event:', {
+        operation: 'markAllAsRead',
+        userId: ctx.session.user.id,
+        error: emitError,
+      });
+    }
     return updated;
   }),
 
@@ -134,7 +172,7 @@ export const notificationsRouter = router({
       z
         .object({ daysToKeep: z.number().min(1).max(365).default(30) })
         .optional()
-        .default({})
+        .default({ daysToKeep: 30 })
     )
     .mutation(async ({ ctx, input }) => {
       const cutoff = new Date();
@@ -182,7 +220,7 @@ export const notificationsRouter = router({
             input.title ||
             `${input.type.charAt(0).toUpperCase() + input.type.slice(1)} from bounty.new`,
           message: input.message,
-          context: input.context,
+          ...(input.context && { context: input.context }),
           color: colorMap[input.type],
         });
 
@@ -221,8 +259,8 @@ export const notificationsRouter = router({
         const success = await sendErrorWebhook({
           webhookUrl,
           error: input.error,
-          context: input.context,
-          location: input.location,
+          ...(input.context && { context: input.context }),
+          ...(input.location && { location: input.location }),
         });
 
         return {

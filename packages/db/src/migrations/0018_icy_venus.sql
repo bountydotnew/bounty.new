@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX "bounty_comment_unique_user_content_per_bounty" ON "bounty_comment" USING btree ("bounty_id","user_id","content");

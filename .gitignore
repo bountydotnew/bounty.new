@@ -1,7 +1,6 @@
 node_modules
 .turbo
 .vercel
-/.cursor
 /.vscode
 /.grim
 
@@ -16,8 +15,7 @@ AGENT.md
 CODEBASE_RULES.md
 stagewise.json
 *.tsbuildinfo
-*.tsbuildinfo
 /agents
-packages/dev-logger/tsconfig.tsbuildinfo
-*.tsbuildinfo
 /.guides
+packages/db/migrations/meta/_journal.json
+/scripts

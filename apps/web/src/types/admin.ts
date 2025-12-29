@@ -1,10 +1,10 @@
 // Analytics types
-export interface EventsByDateRow {
+interface EventsByDateRow {
   date: string;
   count: number;
 }
 
-export interface SummaryMetricsRow {
+interface SummaryMetricsRow {
   totalEvents: number;
   uniqueVisitors: number;
   pageViews: number;
@@ -19,7 +19,7 @@ export interface KpiSeriesPoint {
   previousValue?: number;
 }
 
-export interface Kpi {
+interface Kpi {
   title: string;
   value: number;
   change: number;
@@ -42,7 +42,7 @@ export interface StatCardProps {
 }
 
 // Compose form types
-export interface ComposeFormProps {
+interface ComposeFormProps {
   onSend: (data: NotificationComposeData) => void;
   disabled?: boolean;
 }

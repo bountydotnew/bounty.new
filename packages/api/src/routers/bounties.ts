@@ -24,7 +24,9 @@ import {
   sql,
 } from 'drizzle-orm';
 import { z } from 'zod';
+import { LRUCache } from '../lib/lru-cache';
 import { protectedProcedure, publicProcedure, router } from '../trpc';
+import { realtime } from '@bounty/realtime';
 
 const parseAmount = (amount: string | number | null): number => {
   if (amount === null || amount === undefined) {
@@ -40,8 +42,24 @@ const createBountySchema = z.object({
 
   amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, 'Incorrect amount.'),
   currency: z.string().default('USD'),
-  difficulty: z.enum(['beginner', 'intermediate', 'advanced', 'expert']),
-  deadline: z.string().datetime().optional(),
+  deadline: z
+    .string()
+    .datetime('Deadline must be a valid date')
+    .optional()
+    .refine(
+      (val) => {
+        if (!val) return true; // Optional field
+        const date = new Date(val);
+        if (isNaN(date.getTime())) return false; // Invalid date
+        // Compare dates (ignore time for day-level comparison)
+        const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const nowOnly = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+        return dateOnly >= nowOnly; // Must be today or in the future
+      },
+      {
+        message: 'Deadline must be today or in the future',
+      }
+    ),
   tags: z.array(z.string()).optional(),
   repositoryUrl: z.string().url().optional(),
   issueUrl: z.string().url().optional(),
@@ -57,10 +75,24 @@ const updateBountySchema = z.object({
     .regex(/^\d{1,13}(\.\d{1,2})?$/, 'Incorrect amount.')
     .optional(),
   currency: z.string().optional(),
-  difficulty: z
-    .enum(['beginner', 'intermediate', 'advanced', 'expert'])
-    .optional(),
-  deadline: z.string().datetime().optional(),
+  deadline: z
+    .string()
+    .datetime('Deadline must be a valid date')
+    .optional()
+    .refine(
+      (val) => {
+        if (!val) return true; // Optional field
+        const date = new Date(val);
+        if (isNaN(date.getTime())) return false; // Invalid date
+        // Compare dates (ignore time for day-level comparison)
+        const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const nowOnly = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+        return dateOnly >= nowOnly; // Must be today or in the future
+      },
+      {
+        message: 'Deadline must be today or in the future',
+      }
+    ),
   tags: z.array(z.string()).optional(),
   repositoryUrl: z.string().url().optional(),
   issueUrl: z.string().url().optional(),
@@ -74,9 +106,6 @@ const getBountiesSchema = z.object({
   limit: z.number().int().positive().max(100).default(20),
   status: z
     .enum(['draft', 'open', 'in_progress', 'completed', 'cancelled'])
-    .optional(),
-  difficulty: z
-    .enum(['beginner', 'intermediate', 'advanced', 'expert'])
     .optional(),
   search: z.string().optional(),
   tags: z.array(z.string()).optional(),
@@ -102,9 +131,57 @@ const submitBountyWorkSchema = z.object({
   pullRequestUrl: z.string().url().optional(),
 });
 
+// LRU Cache for bounty statistics (cache for 5 minutes)
+const bountyStatsCache = new LRUCache<{
+  totalBounties: number;
+  activeBounties: number;
+  totalBountiesValue: number;
+  totalPayout: number;
+}>({
+  maxSize: 1,
+  ttl: 5 * 60 * 1000, // 5 minutes
+});
+
+// LRU Cache for individual bounty details (cache for 2 minutes, max 100 items)
+const bountyDetailCache = new LRUCache<{
+  bounty: unknown;
+  votes: { count: number; isVoted: boolean };
+  bookmarked: boolean;
+  comments: unknown[];
+}>({
+  maxSize: 100,
+  ttl: 2 * 60 * 1000, // 2 minutes
+});
+
+// LRU Cache for bounty lists (cache for 1 minute, max 50 different queries)
+const bountyListCache = new LRUCache<{
+  success: boolean;
+  data: unknown[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}>({
+  maxSize: 50,
+  ttl: 60 * 1000, // 1 minute
+});
+
 export const bountiesRouter = router({
   getBountyStats: publicProcedure.query(async () => {
     try {
+      // Check cache first
+      const cacheKey = 'bounty_stats';
+      const cached = bountyStatsCache.get(cacheKey);
+
+      if (cached) {
+        return {
+          success: true,
+          data: cached,
+        };
+      }
+
       const totalBountiesResult = await db
         .select({ count: sql<number>`count(*)` })
         .from(bounty);
@@ -128,14 +205,19 @@ export const bountiesRouter = router({
         .from(bounty)
         .where(eq(bounty.status, 'completed'));
 
+      const stats = {
+        totalBounties: totalBountiesResult[0]?.count ?? 0,
+        activeBounties: activeBountiesResult[0]?.count ?? 0,
+        totalBountiesValue: Number(totalBountiesValueResult[0]?.total) || 0,
+        totalPayout: Number(totalPayoutResult[0]?.total) || 0,
+      };
+
+      // Cache the result
+      bountyStatsCache.set(cacheKey, stats);
+
       return {
         success: true,
-        data: {
-          totalBounties: totalBountiesResult[0]?.count ?? 0,
-          activeBounties: activeBountiesResult[0]?.count ?? 0,
-          totalBountiesValue: Number(totalBountiesValueResult[0]?.total) || 0,
-          totalPayout: Number(totalPayoutResult[0]?.total) || 0,
-        },
+        data: stats,
       };
     } catch (error) {
       throw new TRPCError({
@@ -172,7 +254,6 @@ export const bountiesRouter = router({
             description: input.description,
             amount: normalizedAmount,
             currency: input.currency,
-            difficulty: input.difficulty,
             deadline,
             tags: cleanedTags ?? null,
             repositoryUrl,
@@ -196,13 +277,18 @@ export const bountiesRouter = router({
             user_id: ctx.session.user.id,
             amount: parseAmount(normalizedAmount),
             currency: input.currency,
-            difficulty: input.difficulty,
             has_repo: Boolean(repositoryUrl),
             has_issue: Boolean(issueUrl),
             tags_count: cleanedTags?.length ?? 0,
             source: 'api',
           });
-        } catch {}
+        } catch {
+          // ignore
+        }
+
+        // Invalidate caches
+        bountyStatsCache.clear();
+        bountyListCache.clear();
 
         return {
           success: true,
@@ -230,10 +316,6 @@ export const bountiesRouter = router({
           conditions.push(eq(bounty.status, input.status));
         }
 
-        if (input.difficulty) {
-          conditions.push(eq(bounty.difficulty, input.difficulty));
-        }
-
         if (input.search) {
           conditions.push(
             or(
@@ -255,10 +337,10 @@ export const bountiesRouter = router({
             amount: bounty.amount,
             currency: bounty.currency,
             status: bounty.status,
-            difficulty: bounty.difficulty,
             deadline: bounty.deadline,
             tags: bounty.tags,
             repositoryUrl: bounty.repositoryUrl,
+            isFeatured: bounty.isFeatured,
             createdAt: bounty.createdAt,
             updatedAt: bounty.updatedAt,
             creator: {
@@ -282,7 +364,7 @@ export const bountiesRouter = router({
           .select({ count: sql<number>`count(*)` })
           .from(bounty)
           .where(conditions.length > 0 ? and(...conditions) : undefined);
-        
+
         const count = countResult[0]?.count ?? 0;
 
         const processedResults = results.map((result) => ({
@@ -323,11 +405,11 @@ export const bountiesRouter = router({
             amount: bounty.amount,
             currency: bounty.currency,
             status: bounty.status,
-            difficulty: bounty.difficulty,
             deadline: bounty.deadline,
             tags: bounty.tags,
             repositoryUrl: bounty.repositoryUrl,
             issueUrl: bounty.issueUrl,
+            isFeatured: bounty.isFeatured,
             createdById: bounty.createdById,
             assignedToId: bounty.assignedToId,
             createdAt: bounty.createdAt,
@@ -369,22 +451,197 @@ export const bountiesRouter = router({
       }
     }),
 
+  randomBounty: publicProcedure.query(async ({ ctx }) => {
+    try {
+      const [result] = await ctx.db
+        .select({
+          id: bounty.id,
+          title: bounty.title,
+          description: bounty.description,
+          amount: bounty.amount,
+          currency: bounty.currency,
+          status: bounty.status,
+          deadline: bounty.deadline,
+          tags: bounty.tags,
+          repositoryUrl: bounty.repositoryUrl,
+          issueUrl: bounty.issueUrl,
+          createdById: bounty.createdById,
+          createdAt: bounty.createdAt,
+          creator: {
+            id: user.id,
+            name: user.name,
+            image: user.image,
+          },
+        })
+        .from(bounty)
+        .innerJoin(user, eq(bounty.createdById, user.id))
+        .where(eq(bounty.status, 'open'))
+        .orderBy(sql`RANDOM()`)
+        .limit(1);
+
+      if (!result) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'No open bounties available',
+        });
+      }
+
+      return {
+        success: true,
+        data: {
+          ...result,
+          amount: parseAmount(result.amount),
+        },
+      };
+    } catch (error) {
+      if (error instanceof TRPCError) {
+        throw error;
+      }
+
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch random bounty',
+        cause: error,
+      });
+    }
+  }),
+
   getBountiesByUserId: publicProcedure
-    .input(z.object({ userId: z.string().uuid() }))
+    .input(z.object({ userId: z.string() }))
     .query(async ({ input }) => {
       try {
         const results = await db
-          .select()
+          .select({
+            id: bounty.id,
+            title: bounty.title,
+            description: bounty.description,
+            amount: bounty.amount,
+            currency: bounty.currency,
+            status: bounty.status,
+            deadline: bounty.deadline,
+            tags: bounty.tags,
+            repositoryUrl: bounty.repositoryUrl,
+            issueUrl: bounty.issueUrl,
+            isFeatured: bounty.isFeatured,
+            createdAt: bounty.createdAt,
+            updatedAt: bounty.updatedAt,
+            creator: {
+              id: user.id,
+              name: user.name,
+              image: user.image,
+            },
+          })
           .from(bounty)
-          .where(eq(bounty.createdById, input.userId));
+          .innerJoin(user, eq(bounty.createdById, user.id))
+          .where(eq(bounty.createdById, input.userId))
+          .orderBy(desc(bounty.createdAt));
         return {
           success: true,
-          data: results,
+          data: results.map((r) => ({ ...r, amount: parseAmount(r.amount) })),
         };
       } catch (error) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to fetch bounties',
+          cause: error,
+        });
+      }
+    }),
+
+  getHighlights: publicProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(async ({ input }) => {
+      try {
+        const results = await db
+          .select({
+            id: bounty.id,
+            title: bounty.title,
+            description: bounty.description,
+            amount: bounty.amount,
+            currency: bounty.currency,
+            status: bounty.status,
+            deadline: bounty.deadline,
+            tags: bounty.tags,
+            repositoryUrl: bounty.repositoryUrl,
+            issueUrl: bounty.issueUrl,
+            isFeatured: bounty.isFeatured,
+            createdAt: bounty.createdAt,
+            updatedAt: bounty.updatedAt,
+            creator: {
+              id: user.id,
+              name: user.name,
+              image: user.image,
+            },
+          })
+          .from(bounty)
+          .innerJoin(user, eq(bounty.createdById, user.id))
+          .where(
+            and(
+              eq(bounty.createdById, input.userId),
+              eq(bounty.isFeatured, true)
+            )
+          )
+          .orderBy(desc(bounty.createdAt));
+
+        return {
+          success: true,
+          data: results.map((r) => ({ ...r, amount: parseAmount(r.amount) })),
+        };
+      } catch (error) {
+        // If isFeatured column doesn't exist, return empty array
+        console.error('Error fetching highlights:', error);
+        return {
+          success: true,
+          data: [],
+        };
+      }
+    }),
+
+  toggleBountyPin: protectedProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const [existingBounty] = await db
+          .select({ createdById: bounty.createdById, isFeatured: bounty.isFeatured })
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId))
+          .limit(1);
+
+        if (!existingBounty) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        if (existingBounty.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only pin your own bounties',
+          });
+        }
+
+        const newFeaturedValue = !existingBounty.isFeatured;
+
+        await db
+          .update(bounty)
+          .set({ 
+            isFeatured: newFeaturedValue,
+            updatedAt: new Date(),
+          })
+          .where(eq(bounty.id, input.bountyId));
+
+        return {
+          success: true,
+          isFeatured: newFeaturedValue,
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to toggle pin',
           cause: error,
         });
       }
@@ -441,13 +698,17 @@ export const bountiesRouter = router({
             user_id: ctx.session.user.id,
             amount: parseAmount(updatedBounty.amount),
             currency: input.currency,
-            difficulty: input.difficulty,
             has_repo: Boolean(updatedBounty.repositoryUrl),
             has_issue: Boolean(updatedBounty.issueUrl),
             tags_count: updatedBounty.tags?.length ?? 0,
             source: 'api',
           });
         } catch {}
+
+        // Invalidate caches
+        bountyStatsCache.clear();
+        bountyListCache.clear();
+        bountyDetailCache.delete(id);
 
         return {
           success: true,
@@ -499,6 +760,11 @@ export const bountiesRouter = router({
             source: 'api',
           });
         } catch {}
+
+        // Invalidate caches
+        bountyStatsCache.clear();
+        bountyListCache.clear();
+        bountyDetailCache.delete(input.id);
 
         return {
           success: true,
@@ -619,7 +885,6 @@ export const bountiesRouter = router({
             amount: bounty.amount,
             currency: bounty.currency,
             status: bounty.status,
-            difficulty: bounty.difficulty,
             deadline: bounty.deadline,
             tags: bounty.tags,
             repositoryUrl: bounty.repositoryUrl,
@@ -915,7 +1180,6 @@ export const bountiesRouter = router({
             amount: bounty.amount,
             currency: bounty.currency,
             status: bounty.status,
-            difficulty: bounty.difficulty,
             deadline: bounty.deadline,
             tags: bounty.tags,
             repositoryUrl: bounty.repositoryUrl,
@@ -939,7 +1203,7 @@ export const bountiesRouter = router({
           .select({ count: sql<number>`count(*)` })
           .from(bountyBookmark)
           .where(eq(bountyBookmark.userId, ctx.session.user.id));
-        
+
         const count = countResult[0]?.count ?? 0;
 
         return {
@@ -1054,6 +1318,10 @@ export const bountiesRouter = router({
               message:
                 trimmed.length > 100 ? `${trimmed.slice(0, 100)}...` : trimmed,
               data: { bountyId: input.bountyId, commentId: inserted.id },
+            });
+            await realtime.emit('notifications.refresh', {
+              userId: owner.createdById,
+              ts: Date.now(),
             });
           }
         } catch (_e) {}
@@ -1473,7 +1741,6 @@ export const bountiesRouter = router({
             amount: bounty.amount,
             currency: bounty.currency,
             status: bounty.status,
-            difficulty: bounty.difficulty,
             deadline: bounty.deadline,
             tags: bounty.tags,
             repositoryUrl: bounty.repositoryUrl,
@@ -1499,7 +1766,7 @@ export const bountiesRouter = router({
           .select({ count: sql<number>`count(*)` })
           .from(bounty)
           .where(eq(bounty.createdById, ctx.session.user.id));
-        
+
         const count = countResult[0]?.count ?? 0;
 
         const processedResults = results.map((result) => ({

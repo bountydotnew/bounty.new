@@ -6,7 +6,6 @@ export interface Bounty {
   amount: number;
   currency: string;
   status: 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled';
-  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
   deadline?: string | null;
   tags?: string[] | null;
   repositoryUrl?: string | null;
@@ -19,16 +18,14 @@ export interface Bounty {
     image: string | null;
   };
   votes?: number;
+  isFeatured?: boolean;
 }
 
 export interface UserData {
-  name?: string;
-  betaAccessStatus: 'none' | 'pending' | 'approved' | 'denied';
-  accessStage: 'none' | 'alpha' | 'beta' | 'production';
-}
-
-export interface BetaSubmission {
-  hasSubmitted: boolean;
+  id: string;
+  name: string | null;
+  handle: string | null;
+  isProfilePrivate: boolean;
 }
 
 export interface ActivityItem {
@@ -47,7 +44,7 @@ export interface RecommendedBounty {
   amount: number;
 }
 
-export interface DashboardQueries {
+interface DashboardQueries {
   bounties: {
     data?: { data: Bounty[] };
     isLoading: boolean;
@@ -57,10 +54,6 @@ export interface DashboardQueries {
   myBounties: {
     data?: { data: Bounty[] };
     isLoading: boolean;
-    refetch: () => void;
-  };
-  existingSubmission: {
-    data?: BetaSubmission;
     refetch: () => void;
   };
   userData: {

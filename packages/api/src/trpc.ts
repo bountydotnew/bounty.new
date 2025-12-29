@@ -1,8 +1,34 @@
 import type { ExtendedAuthSession } from '@bounty/types';
 import { initTRPC, TRPCError } from '@trpc/server';
+import type { ReasonCode } from '@bounty/types';
 import type { Context } from './context';
 
-export const t = initTRPC.context<Context>().create();
+export const t = initTRPC.context<Context>().create({
+  errorFormatter({ shape, error, path }) {
+    const cause = error.cause as unknown;
+    const reason = (typeof cause === 'object' && cause && 'reason' in (cause as Record<string, unknown>)
+      ? (cause as { reason?: ReasonCode }).reason
+      : undefined);
+
+    // Log errors to console in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('tRPC Error:', {
+        code: error.code,
+        message: error.message,
+        path,
+        reason,
+      });
+    }
+
+    return {
+      ...shape,
+      data: {
+        ...shape.data,
+        reason,
+      },
+    };
+  },
+});
 
 export const router = t.router;
 
@@ -13,7 +39,7 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
     throw new TRPCError({
       code: 'UNAUTHORIZED',
       message: 'Authentication required',
-      cause: 'No session',
+      cause: { reason: 'unauthenticated' },
     });
   }
   return next({
@@ -32,6 +58,7 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
     throw new TRPCError({
       code: 'FORBIDDEN',
       message: 'Stop impersonating to view the admin panel',
+      cause: { reason: 'forbidden' },
     });
   }
 
@@ -43,6 +70,7 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
     throw new TRPCError({
       code: 'FORBIDDEN',
       message: 'Admin access required',
+      cause: { reason: 'forbidden' },
     });
   }
 

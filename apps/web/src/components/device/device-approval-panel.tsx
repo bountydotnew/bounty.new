@@ -51,7 +51,7 @@ const getActionSuccessMessage = (type: 'approve' | 'deny'): string => {
     : 'Device denied. The requesting device has been notified.';
 };
 
-export function DeviceApprovalPanel({ userCode }: DeviceApprovalPanelProps) {
+export const DeviceApprovalPanel = ({ userCode }: DeviceApprovalPanelProps) => {
   const router = useRouter();
   const sanitizedCode = useMemo(() => normalizeCode(userCode), [userCode]);
   const [status, setStatus] = useState<DeviceStatus | null>(null);
@@ -146,7 +146,7 @@ export function DeviceApprovalPanel({ userCode }: DeviceApprovalPanelProps) {
       const errorMessage =
         'error_description' in response.error
           ? response.error.error_description
-          : response.error.message || 'An error occurred';
+          : response.error || 'An error occurred';
       throw new Error(errorMessage);
     }
 
@@ -279,4 +279,4 @@ export function DeviceApprovalPanel({ userCode }: DeviceApprovalPanelProps) {
       </Card>
     </div>
   );
-}
+};

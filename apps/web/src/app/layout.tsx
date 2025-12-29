@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Inter } from 'next/font/google';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import './index.css';
 import { Providers } from '@/components/providers';
+import Script from 'next/script';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -67,6 +68,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {process.env.NODE_ENV === "development" && (
+          <>
+            <Script
+              src="//unpkg.com/react-grab/dist/index.global.js"
+              strategy="beforeInteractive"
+            />
+            <Script
+              src="//unpkg.com/@react-grab/cursor/dist/client.global.js"
+              strategy="lazyOnload"
+            />
+          </>
+        )}
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${interDisplay.variable} bg-background antialiased`}
       >
@@ -78,7 +93,9 @@ export default function RootLayout({
               id="toolbar-script"
               src="https://get.usetool.bar/embedded-app.js"
             />
-            <div className="grid h-svh grid-rows-[auto_1fr]">{children}</div>
+            <div className="grid min-h-svh grid-rows-[auto_1fr]">
+              {children}
+            </div>
           </Providers>
         </NuqsAdapter>
       </body>

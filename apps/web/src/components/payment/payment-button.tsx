@@ -44,7 +44,7 @@ export function PaymentButton({
 }
 
 // Standalone embeddable version for external use
-export function EmbeddablePaymentButton({
+function EmbeddablePaymentButton({
   username,
   apiKey,
   size = 'md',

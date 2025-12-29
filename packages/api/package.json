@@ -6,13 +6,14 @@
   "dependencies": {
     "@bounty/auth": "workspace:*",
     "@bounty/db": "workspace:*",
-    "@bounty/dev-logger": "workspace:*",
+    "@bounty/realtime": "workspace:*",
     "@bounty/track": "workspace:*",
+    "@octokit/core": "catalog:",
+    "@octokit/plugin-rest-endpoint-methods": "catalog:",
     "zod": "catalog:",
     "@trpc/server": "catalog:",
     "@unkey/ratelimit": "catalog:",
-    "@octokit/core": "catalog:",
-    "@octokit/plugin-rest-endpoint-methods": "catalog:"
+    "lru-cache": "catalog:"
   },
   "devDependencies": {
     "typescript": "catalog:"

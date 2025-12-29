@@ -17,7 +17,7 @@ export interface SessionUser {
 
 export interface AccountDropdownProps {
   user: User;
-  onUpgradeClick: () => void;
+  onUpgradeClick?: () => void;
 }
 
 export interface UserDisplayData {
@@ -37,14 +37,14 @@ export interface PaymentButtonProps {
 }
 
 // Pricing dialog types
-export interface PricingDialogProps {
+interface PricingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpgrade?: () => void;
 }
 
 // Payment modal types
-export interface PaymentModalProps {
+interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   recipientUsername: string;

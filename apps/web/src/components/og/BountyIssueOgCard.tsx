@@ -35,7 +35,7 @@ function currencyToSymbol(code?: string) {
   }
 }
 
-export function BountyIssueOgCard({
+function BountyIssueOgCard({
   owner,
   repo,
   issueNumber,

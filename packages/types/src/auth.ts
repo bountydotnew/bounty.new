@@ -1,6 +1,6 @@
 export interface BetterAuthUser {
   id: string;
-  name: string;
+  name: string | null;
   email: string;
   emailVerified: boolean;
   image?: string;
@@ -38,3 +38,15 @@ export interface ExtendedAuthSession extends BetterAuthSession {
     impersonatedBy?: string;
   };
 }
+
+// Reason codes used to classify auth/authorization client UX
+export const ReasonCode = {
+  Unauthenticated: 'unauthenticated',
+  BetaRequired: 'beta_required',
+  EmailUnverified: 'email_unverified',
+  Banned: 'banned',
+  PlanRequired: 'plan_required',
+  Forbidden: 'forbidden',
+} as const;
+export type ReasonCode = (typeof ReasonCode)[keyof typeof ReasonCode];
+
