@@ -33,18 +33,13 @@ import { RepoSelector } from './task-form/components/RepoSelector';
 import { BranchSelector } from './task-form/components/BranchSelector';
 import { IssueSelector } from './task-form/components/IssueSelector';
 
-interface TaskInputFormProps {
-    placeholder?: string;
-    onSubmit?: (value: string, repository?: string, branch?: string) => void;
-}
+type TaskInputFormProps = Record<string, never>;
 
 export interface TaskInputFormRef {
     focus: () => void;
 }
 
-export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
-    placeholder = 'Create a new bounty...',
-}, ref) => {
+export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_props, ref) => {
     const router = useRouter();
     const queryClient = useQueryClient();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -88,7 +83,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
         selectedRepository,
         setSelectedRepository,
     } = useRepositories(githubUsername, {
-        myReposQueryOptions: trpc.repository.myRepos.queryOptions(),
+        myReposQueryOptions: trpc.repository.myRepos.queryOptions() as unknown as Parameters<typeof useQuery>[0] as Parameters<typeof useQuery<unknown, Error>>[0],
     });
 
     const {
@@ -99,12 +94,16 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
         selectedBranch,
         setSelectedBranch,
     } = useBranches(selectedRepository, {
-        defaultBranchQueryOptions: trpc.repository.defaultBranch.queryOptions({
-            repo: selectedRepository,
-        }),
-        branchesQueryOptions: trpc.repository.branches.queryOptions({
-            repo: selectedRepository,
-        }),
+        defaultBranchQueryOptions: {
+            ...trpc.repository.defaultBranch.queryOptions({
+                repo: selectedRepository,
+            }),
+        } as Parameters<typeof useQuery>[0],
+        branchesQueryOptions: {
+            ...trpc.repository.branches.queryOptions({
+                repo: selectedRepository,
+            }),
+        } as Parameters<typeof useQuery>[0],
     });
 
     const {
@@ -119,8 +118,6 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
 
     // Issue selector state
     const [selectedIssue, setSelectedIssue] = useState<{ number: number; title: string; url: string } | null>(null);
-    const [showImportPrompt, setShowImportPrompt] = useState(false);
-    const [isImporting, setIsImporting] = useState(false);
 
     // Autofill prompt state (for issues)
     const [showAutofillPrompt, setShowAutofillPrompt] = useState(false);
@@ -164,7 +161,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                     router.push(`/bounty/${result.data.id}`);
                 }
             } else {
-                router.push(`/dashboard`);
+                router.push('/dashboard');
             }
         },
         onError: (error: Error) => {
@@ -282,33 +279,6 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
         }
     };
 
-    const handleImportIssue = async () => {
-        if (!selectedIssue) {
-            return;
-        }
-        setIsImporting(true);
-        try {
-            const result = await trpcClient.repository.issueFromUrl.query({ url: selectedIssue.url });
-            if (result?.data) {
-                if (result.data.title) {
-                    setValue('title', result.data.title);
-                }
-                if (result.data.body) {
-                    setValue('description', result.data.body);
-                }
-                toast.success('Issue details imported');
-            }
-        } catch {
-            toast.error('Failed to import issue details');
-        } finally {
-            setIsImporting(false);
-            setShowImportPrompt(false);
-        }
-    };
-
-    const handleSkipImport = () => {
-        setShowImportPrompt(false);
-    };
 
     return (
         <div className="flex w-full shrink-0 flex-col px-4 lg:max-w-[805px] xl:px-0 mx-auto min-w-0">
@@ -386,7 +356,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                                     selectedRepository={selectedRepository}
                                     filteredRepositories={filteredRepositories}
                                     reposLoading={reposLoading}
-                                    reposData={reposData}
+                                    reposData={reposData as { success: boolean; error?: string; data?: Array<{ name: string; url: string }> } | undefined}
                                     githubUsername={repoGithubUsername}
                                     repoSearchQuery={repoSearchQuery}
                                     setRepoSearchQuery={setRepoSearchQuery}
@@ -415,8 +385,12 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                                                 <div className="inline-flex">
                                                     <IssueSelector
                                                         selectedIssue={selectedIssue}
-                                                        filteredIssues={filteredIssues}
-                                                        issuesList={issuesList}
+                                                        filteredIssues={filteredIssues as Array<{ number: number; title: string }>}
+                                                        issuesList={{
+                                                            isLoading: issuesList.isLoading,
+                                                            isFetching: issuesList.isFetching,
+                                                            data: issuesList.data as Array<{ number: number; title: string }> | undefined,
+                                                        }}
                                                         issueQuery={issueQuery}
                                                         setIssueQuery={setIssueQuery}
                                                         onSelect={handleIssueSelect}

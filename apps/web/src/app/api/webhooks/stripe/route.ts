@@ -69,16 +69,19 @@ export async function POST(request: Request) {
           // Retrieve the payment intent to check its status
           const paymentIntent = await stripeClient.paymentIntents.retrieve(paymentIntentId);
           
-          // Update bounty with payment intent ID
+          // Retrieve the payment intent to check its status
+          const paymentIntent = await stripeClient.paymentIntents.retrieve(paymentIntentId);
+          
+          // Build update data
           const updateData: {
             stripePaymentIntentId: string;
-            stripeCheckoutSessionId?: string;
+            stripeCheckoutSessionId: string;
             updatedAt: Date;
             paymentStatus?: 'held' | 'pending' | 'released' | 'refunded' | 'failed' | null;
-            status?: string;
+            status?: 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled';
           } = {
             stripePaymentIntentId: paymentIntentId,
-            stripeCheckoutSessionId: session.id, // Store session ID
+            stripeCheckoutSessionId: session.id,
             updatedAt: new Date(),
           };
 
@@ -95,7 +98,9 @@ export async function POST(request: Request) {
               .where(eq(transaction.stripeId, paymentIntentId))
               .limit(1);
 
-            if (!existingTransaction) {
+            if (existingTransaction) {
+              console.log(`[Stripe Webhook] Transaction already exists for payment intent ${paymentIntentId}, skipping`);
+            } else {
               await db.insert(transaction).values({
                 bountyId,
                 type: 'payment_intent',
@@ -103,8 +108,6 @@ export async function POST(request: Request) {
                 stripeId: paymentIntentId,
               });
               console.log(`[Stripe Webhook] Created transaction record for bounty ${bountyId}`);
-            } else {
-              console.log(`[Stripe Webhook] Transaction already exists for payment intent ${paymentIntentId}, skipping`);
             }
 
             console.log(`[Stripe Webhook] Updating bounty ${bountyId} to held/open`);
@@ -166,7 +169,9 @@ export async function POST(request: Request) {
             .where(eq(transaction.stripeId, paymentIntent.id))
             .limit(1);
 
-          if (!existingTransaction) {
+          if (existingTransaction) {
+            console.log(`[Stripe Webhook] Transaction already exists for payment intent ${paymentIntent.id}, skipping`);
+          } else {
             await db.insert(transaction).values({
               bountyId,
               type: 'payment_intent',
@@ -174,13 +179,11 @@ export async function POST(request: Request) {
               stripeId: paymentIntent.id,
             });
             console.log(`[Stripe Webhook] Created transaction record for bounty ${bountyId}`);
-          } else {
-            console.log(`[Stripe Webhook] Transaction already exists for payment intent ${paymentIntent.id}, skipping`);
           }
           
           console.log(`[Stripe Webhook] Successfully updated bounty ${bountyId} to held/open`);
         } else {
-          console.warn(`[Stripe Webhook] Missing bountyId in payment_intent.succeeded event`);
+          console.warn('[Stripe Webhook] Missing bountyId in payment_intent.succeeded event');
         }
         break;
       }
@@ -233,12 +236,13 @@ export async function POST(request: Request) {
         break;
       }
 
-      case 'transfer.failed': {
+      case 'transfer.updated': {
         const transfer = event.data.object as Stripe.Transfer;
         const bountyId = transfer.metadata?.bountyId;
 
-        if (bountyId) {
-          // Update payout status to failed
+        // Check if transfer failed
+        if (bountyId && transfer.reversed) {
+          // Update payout status to failed if transfer was reversed
           await db
             .update(payout)
             .set({
@@ -258,7 +262,6 @@ export async function POST(request: Request) {
       }
 
       case 'payout.paid': {
-        const payoutEvent = event.data.object as Stripe.Payout;
         // Update payout status when funds reach solver's bank
         // Note: This might be a platform payout, not a transfer payout
         // We'll handle transfer.paid events instead
