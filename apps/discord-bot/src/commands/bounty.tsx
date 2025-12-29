@@ -16,7 +16,7 @@ import type { ChatInputCommandInteraction } from 'discord.js';
 import { SlashCommandBuilder as Builder, Routes, REST, MessageFlags } from 'discord.js';
 import { Runtime } from 'effect';
 import { user, account } from '@bounty/db/src/schema/auth';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { createServerCaller } from '@bounty/api';
 import type { Client } from 'discord.js';
 
@@ -27,7 +27,6 @@ import type { Client } from 'discord.js';
  */
 async function getUserIdFromDiscordId(discordId: string): Promise<string | null> {
   // Check account table for Discord provider
-  const { and } = await import('drizzle-orm');
   const [discordAccount] = await db
     .select({ userId: account.userId })
     .from(account)
@@ -130,7 +129,7 @@ export function setupBountyCommands(client: Client) {
   const reacord = makeReacord(client);
   const runtime = Runtime.defaultRuntime;
 
-  client.on('interactionCreate', async (interaction: ChatInputCommandInteraction) => {
+  client.on('interactionCreate', async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
     if (interaction.commandName !== 'bounty') return;
 
@@ -144,7 +143,7 @@ export function setupBountyCommands(client: Client) {
       } else if (subcommand === 'view') {
         await handleView(interaction, reacord, runtime);
       } else if (subcommand === 'close') {
-        await handleClose(interaction);
+        await handleClose(interaction, reacord);
       } else if (subcommand === 'approve') {
         await handleApprove(interaction);
       }
@@ -430,7 +429,7 @@ async function handleView(
           accessory={{
             type: 'link',
             url: bountyUrl,
-            label: 'View on Website',
+            label: 'View on Bounty.new',
           }}
         >
           <TextDisplay>
@@ -461,7 +460,7 @@ async function handleView(
 
 async function handleClose(
   interaction: ChatInputCommandInteraction,
-  reacord: Reacord,
+  reacord: ReturnType<typeof makeReacord>,
 ) {
   const userId = await requireAuth(interaction);
   const bountyId = interaction.options.getString('id', true);
@@ -539,7 +538,6 @@ async function handleApprove(interaction: ChatInputCommandInteraction) {
   // Approve the submission by updating its status
   // Note: This requires a direct database call since there's no API endpoint for this yet
   const { submission } = await import('@bounty/db/src/schema/bounties');
-  const { eq } = await import('drizzle-orm');
 
   const [submissionRecord] = await db
     .select()

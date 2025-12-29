@@ -15,11 +15,13 @@
     "@bounty/reacord": "workspace:*",
     "@effect-atom/atom-react": "^0.4.4",
     "discord.js": "^14.25.1",
-    "react": "catalog:"
+    "drizzle-orm": "0.44.2",
+    "react": "^19.2.1"
   },
   "devDependencies": {
-    "@types/node": "catalog:",
-    "@types/react": "catalog:",
-    "typescript": "catalog:"
+    "@bounty/typescript-config": "workspace:*",
+    "@types/node": "^24",
+    "@types/react": "19.2.2",
+    "typescript": "^5.8.3"
   }
 }
