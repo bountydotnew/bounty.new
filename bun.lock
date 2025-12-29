@@ -138,6 +138,7 @@
         "@bounty/track": "workspace:*",
         "@octokit/core": "catalog:",
         "@octokit/plugin-rest-endpoint-methods": "catalog:",
+        "@polar-sh/sdk": "catalog:",
         "@trpc/server": "catalog:",
         "@unkey/ratelimit": "catalog:",
         "drizzle-orm": "catalog:",

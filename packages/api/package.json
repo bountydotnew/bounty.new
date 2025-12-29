@@ -9,6 +9,7 @@
     "@bounty/realtime": "workspace:*",
     "@bounty/track": "workspace:*",
     "drizzle-orm": "catalog:",
+    "@polar-sh/sdk": "catalog:",
     "@octokit/core": "catalog:",
     "@octokit/plugin-rest-endpoint-methods": "catalog:",
     "zod": "catalog:",
