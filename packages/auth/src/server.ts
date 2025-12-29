@@ -37,7 +37,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer, deviceAuthorization, lastLoginMethod as lastLoginMethodPlugin, openAPI, multiSession } from "better-auth/plugins";
 import { admin } from "better-auth/plugins/admin";
-import { passkey as passkeyPlugin } from "better-auth/plugins/passkey";
+import { passkey as passkeyPlugin } from "@better-auth/passkey";
 import { emailOTP } from "better-auth/plugins/email-otp";
 import { sendEmail } from "@bounty/email";
 import { OTPVerification, ForgotPassword } from "@bounty/email";

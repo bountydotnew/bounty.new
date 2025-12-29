@@ -2,10 +2,10 @@ import { polarClient } from '@polar-sh/better-auth';
 import {
   adminClient,
   deviceAuthorizationClient,
-  passkeyClient,
   lastLoginMethodClient,
   emailOTPClient,
 } from 'better-auth/client/plugins';
+import { passkeyClient } from "@better-auth/passkey/client"
 import { createAuthClient } from 'better-auth/react';
 import { multiSessionClient } from "better-auth/client/plugins"
 

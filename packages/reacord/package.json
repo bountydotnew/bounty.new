@@ -10,6 +10,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
+		"@effect-atom/atom-react": "^0.4.4",
 		"react": "catalog:",
 		"react-reconciler": "^0.31.0"
 	},
