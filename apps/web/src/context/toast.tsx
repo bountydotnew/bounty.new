@@ -1,13 +1,13 @@
 import { CircleCheckIcon, CircleX, Info, TriangleAlert } from 'lucide-react';
 import type { ToasterProps } from 'sonner';
-import { toast } from 'sonner';
+import { toast } from '@bounty/ui/components/toast';
 import type { ReasonCode } from '@bounty/types';
 
 export const TOAST_OPTIONS = {
   unstyled: true,
   classNames: {
     toast:
-      'group toast flex flex-row gap-2 !items-start w-full !bg-[#191919] !p-4 !rounded-xl !border !border-border/70',
+      'group toast flex flex-row gap-2 !items-start !bg-[#191919] !p-4 !rounded-xl !border !border-border/70 !min-w-[250px] !max-w-[600px]',
   },
 } satisfies ToasterProps['toastOptions'];
 

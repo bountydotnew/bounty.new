@@ -46,6 +46,8 @@ export * from './components/skeleton';
 export * from './components/smart-breadcrumb';
 export * from './components/sonner';
 export * from './components/spinner';
+export * from './components/toast';
+export * from './components/toast/index';
 export * from './components/switch';
 export * from './components/tabs';
 export * from './components/textarea';

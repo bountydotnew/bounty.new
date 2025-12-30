@@ -155,7 +155,7 @@ export function Features() {
           <GridFeature 
             icon={Shield} 
             title="Secure Payments" 
-            description="Funds are held in escrow until the work is verified and merged. 100% safe." 
+            description="Funds are held securely until the work is verified and merged. 100% safe." 
           />
            <GridFeature 
             icon={Code2} 

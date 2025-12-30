@@ -32,7 +32,7 @@ export function calculateTotalWithFees(bountyAmount: number): {
 }
 
 /**
- * Create a PaymentIntent to hold funds for a bounty (escrow)
+ * Create a PaymentIntent to hold funds for a bounty
  * The payment will be held until the bounty is completed or cancelled
  */
 export async function createPaymentIntent(params: {
@@ -87,8 +87,8 @@ export async function createBountyCheckoutSession(params: {
           currency: params.currency.toLowerCase(),
           unit_amount: params.amount,
           product_data: {
-            name: `Bounty Payment`,
-            description: `Escrow payment for bounty`,
+            name: `Bounty creation deposit`,
+            description: `Upfront bounty creation deposit`,
           },
         },
         quantity: 1,

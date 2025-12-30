@@ -419,7 +419,7 @@ export default function BountyDetailPage({
                   </Avatar>
                   <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm text-white">
+                      <span className="font-medium text-sm text-white whitespace-nowrap">
                         {user}
                       </span>
                       <div className="flex h-4 w-4 rotate-45 transform items-center justify-center rounded bg-blue-500">

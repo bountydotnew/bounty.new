@@ -37,6 +37,7 @@
     "@tanstack/react-query": "^5.90.5",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
+    "date-fns": "catalog:",
     "lucide-react": "catalog:",
     "next-themes": "catalog:",
     "nuqs": "catalog:",

@@ -49,6 +49,7 @@ const parseAmount = (amount: string | number | null): number => {
 /**
  * Ensure a Stripe customer exists for a user
  * Creates one if it doesn't exist, returns existing if it does
+ * Verifies the customer exists in Stripe and recreates if needed
  */
 async function ensureStripeCustomer(
   userId: string,
@@ -63,7 +64,17 @@ async function ensureStripeCustomer(
     .limit(1);
 
   if (existingUser?.stripeCustomerId) {
-    return existingUser.stripeCustomerId;
+    // Verify the customer exists in Stripe
+    try {
+      await stripeClient.customers.retrieve(existingUser.stripeCustomerId);
+      return existingUser.stripeCustomerId;
+    } catch (error) {
+      // Customer doesn't exist in Stripe (deleted, wrong environment, etc.)
+      // Create a new one and update the database
+      console.warn(
+        `Stripe customer ${existingUser.stripeCustomerId} not found, creating new customer for user ${userId}`
+      );
+    }
   }
 
   // Create new Stripe customer
@@ -1476,7 +1487,13 @@ export const bountiesRouter = router({
               title: `New comment on "${owner.title}"`,
               message:
                 trimmed.length > 100 ? `${trimmed.slice(0, 100)}...` : trimmed,
-              data: { bountyId: input.bountyId, commentId: inserted.id },
+              data: {
+                bountyId: input.bountyId,
+                commentId: inserted.id,
+                userId: ctx.session.user.id,
+                userName: ctx.session.user.name ?? undefined,
+                userImage: ctx.session.user.image ?? undefined,
+              },
             });
             await realtime.emit('notifications.refresh', {
               userId: owner.createdById,

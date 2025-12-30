@@ -23,11 +23,10 @@ export const Header = (_props: HeaderProps = {}) => {
 
   const handleCreateBounty = () => {
     const isOnDashboard = pathname === '/dashboard';
-    toast.info("hi", { duration: 100000 });
-    toast.success("hi", { duration: 100000 });
-    toast.warning("hi", { duration: 100000 });
-    toast.error("hi", { duration: 100000 });
-
+    toast.success('Payment verified! Your bounty is now live.');
+    // toast.custom((t) => (
+    // put custom toast here
+    // ));
     if (isOnDashboard) {
       // Already on dashboard - scroll to top and focus textarea
       window.scrollTo({ top: 0, behavior: 'smooth' });
