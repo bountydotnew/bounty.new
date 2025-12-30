@@ -80,11 +80,8 @@ export function SuccessClient({ initialCustomerState }: SuccessClientProps) {
   };
 
   const activePlanId = customer?.activeSubscriptions?.reduce<
-    PlanId | undefined
-  >(
-    (current, subscription) => current ?? identifyPlan(subscription),
-    undefined
-  );
+    PlanId
+  >((current, subscription) => current ?? identifyPlan(subscription), 'pro-annual');
 
   const planDetails = activePlanId ? PLAN_DETAILS[activePlanId] : undefined;
   const planName = planDetails?.name ?? 'Pro Plan';
