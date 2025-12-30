@@ -33,7 +33,7 @@ import { RepoSelector } from './task-form/components/RepoSelector';
 import { BranchSelector } from './task-form/components/BranchSelector';
 import { IssueSelector } from './task-form/components/IssueSelector';
 
-type TaskInputFormProps = Record<string, never>;
+type TaskInputFormProps = {};
 
 export interface TaskInputFormRef {
     focus: () => void;
