@@ -45,7 +45,6 @@ export const user = pgTable('user', {
   banned: boolean('banned').notNull().default(false),
   banReason: text('ban_reason'),
   banExpires: timestamp('ban_expires'),
-  lastLoginMethod: text('last_login_method'),
   // Stripe fields
   stripeCustomerId: text('stripe_customer_id'),
   stripeConnectAccountId: text('stripe_connect_account_id'),

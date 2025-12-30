@@ -410,9 +410,13 @@ export const bountiesRouter = router({
             : 'Bounty created successfully',
         };
       } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to create bounty',
+          message: `Failed to create bounty: ${errorMessage}`,
           cause: error,
         });
       }
@@ -2008,9 +2012,10 @@ export const bountiesRouter = router({
         if (error instanceof TRPCError) {
           throw error;
         }
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to confirm payment',
+          message: `Failed to confirm payment: ${errorMessage}`,
           cause: error,
         });
       }
@@ -2151,9 +2156,10 @@ export const bountiesRouter = router({
         if (error instanceof TRPCError) {
           throw error;
         }
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to approve submission',
+          message: `Failed to approve submission: ${errorMessage}`,
           cause: error,
         });
       }
@@ -2211,9 +2217,10 @@ export const bountiesRouter = router({
         if (error instanceof TRPCError) {
           throw error;
         }
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to get payment status',
+          message: `Failed to get payment status: ${errorMessage}`,
           cause: error,
         });
       }
@@ -2563,9 +2570,10 @@ export const bountiesRouter = router({
         if (error instanceof TRPCError) {
           throw error;
         }
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to recheck payment status',
+          message: `Failed to recheck payment status: ${errorMessage}`,
           cause: error,
         });
       }
@@ -2648,9 +2656,10 @@ export const bountiesRouter = router({
         if (error instanceof TRPCError) {
           throw error;
         }
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to create payment',
+          message: `Failed to create payment: ${errorMessage}`,
           cause: error,
         });
       }

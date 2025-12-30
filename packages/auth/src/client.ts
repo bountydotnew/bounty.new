@@ -2,7 +2,6 @@ import { polarClient } from '@polar-sh/better-auth';
 import {
   adminClient,
   deviceAuthorizationClient,
-  lastLoginMethodClient,
   emailOTPClient,
 } from 'better-auth/client/plugins';
 import { passkey } from "@better-auth/passkey"
@@ -15,7 +14,6 @@ export const authClient = createAuthClient({
     passkey(),
     adminClient(),
     deviceAuthorizationClient(),
-    lastLoginMethodClient(),
     emailOTPClient(),
     multiSessionClient(),
   ],

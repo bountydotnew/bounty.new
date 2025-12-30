@@ -65,8 +65,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         </RealtimeProvider>
         <ReactQueryDevtools />
         <Toaster
-          icons={TOAST_ICONS}
-          position="bottom-right"
+          //icons={TOAST_ICONS}
+          position="bottom-center"
           richColors
           toastOptions={TOAST_OPTIONS}
           visibleToasts={4}
