@@ -50,6 +50,7 @@
     "lucide-react": "catalog:",
     "media-chrome": "catalog:",
     "motion": "catalog:",
+    "@hookform/resolvers": "catalog:",
     "next": "catalog:",
     "next-themes": "catalog:",
     "posthog-js": "catalog:",

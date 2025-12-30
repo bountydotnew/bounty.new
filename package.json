@@ -135,5 +135,7 @@
       "@tailwindcss/typography": "^0.5.16"
     }
   },
-  "dependencies": {}
+  "dependencies": {
+    "@hookform/resolvers": "^5.2.2"
+  }
 }
