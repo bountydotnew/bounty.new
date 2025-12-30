@@ -16,6 +16,7 @@
     "@bounty/db": "workspace:*",
     "@bounty/types": "workspace:*",
     "@bounty/stripe": "workspace:*",
+    "@bounty/env": "workspace:*",
     "@bounty/realtime": "workspace:*",
     "@bounty/track": "workspace:*",
     "@bounty/ui": "workspace:*",
