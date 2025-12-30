@@ -25,11 +25,12 @@
     "@polar-sh/better-auth": "catalog:",
     "better-auth": "catalog:",
     "@better-auth/passkey": "catalog:",
-    "@bounty/api": "workspace:*",
     "@bounty/db": "workspace:*",
     "@bounty/email": "workspace:*",
     "@bounty/types": "workspace:*",
     "@bounty/env": "workspace:*",
+    "@octokit/core": "catalog:",
+    "@octokit/plugin-rest-endpoint-methods": "catalog:",
     "drizzle-orm": "catalog:",
     "@polar-sh/sdk": "catalog:"
   },

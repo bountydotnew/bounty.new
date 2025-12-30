@@ -40,7 +40,10 @@ import { passkey as passkeyPlugin } from "@better-auth/passkey";
 import { emailOTP } from "better-auth/plugins/email-otp";
 import { sendEmail } from "@bounty/email";
 import { OTPVerification, ForgotPassword } from "@bounty/email";
-import { GithubManager } from "@bounty/api/driver/github";
+import { Octokit } from '@octokit/core';
+import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods';
+
+const GitHubOctokit = Octokit.plugin(restEndpointMethods);
 
 const schema = {
   account,
@@ -101,14 +104,14 @@ async function syncGitHubHandle(userId: string, accessToken: string): Promise<vo
   }
 
   try {
-    const github = new GithubManager({ token: accessToken });
-    const githubUser = await github.getAuthenticatedUser();
+    const octokit = new GitHubOctokit({ auth: accessToken });
+    const { data } = await octokit.rest.users.getAuthenticated();
     
-    if (githubUser?.login) {
+    if (data?.login) {
       await db
         .update(userTable)
         .set({
-          handle: githubUser.login.toLowerCase(),
+          handle: data.login.toLowerCase(),
           updatedAt: new Date(),
         })
         .where(eq(userTable.id, userId));
