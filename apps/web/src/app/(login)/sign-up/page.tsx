@@ -98,10 +98,7 @@ function SignUpContent() {
             // Trigger OTP send after successful sign-up
             // Use 'sign-in' type to auto-sign-in after verification
             try {
-              await authClient.emailOtp.sendVerificationOtp({
-                email,
-                type: 'sign-in',
-              });
+              await authClient.sendVerificationEmail(email, 'sign-in');
 
               toast.success(
                 'Account created! Please check your email to sign in.'
