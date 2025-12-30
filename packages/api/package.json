@@ -6,6 +6,7 @@
   "dependencies": {
     "@bounty/auth": "workspace:*",
     "@bounty/db": "workspace:*",
+    "@bounty/env": "workspace:*",
     "@bounty/stripe": "workspace:*",
     "@bounty/realtime": "workspace:*",
     "@bounty/track": "workspace:*",
