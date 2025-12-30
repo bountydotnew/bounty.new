@@ -1481,19 +1481,27 @@ export const bountiesRouter = router({
             .where(eq(bounty.id, input.bountyId))
             .limit(1);
           if (owner?.createdById && owner.createdById !== ctx.session.user.id) {
+            const notificationData: {
+              bountyId: string;
+              commentId: string;
+              userId: string;
+              userName?: string;
+              userImage?: string;
+            } = {
+              bountyId: input.bountyId,
+              commentId: inserted.id,
+              userId: ctx.session.user.id,
+              ...(ctx.session.user.name && { userName: ctx.session.user.name }),
+              ...(ctx.session.user.image && { userImage: ctx.session.user.image }),
+            };
+
             await createNotification({
               userId: owner.createdById,
               type: 'bounty_comment',
               title: `New comment on "${owner.title}"`,
               message:
                 trimmed.length > 100 ? `${trimmed.slice(0, 100)}...` : trimmed,
-              data: {
-                bountyId: input.bountyId,
-                commentId: inserted.id,
-                userId: ctx.session.user.id,
-                userName: ctx.session.user.name ?? undefined,
-                userImage: ctx.session.user.image ?? undefined,
-              },
+              data: notificationData,
             });
             await realtime.emit('notifications.refresh', {
               userId: owner.createdById,
