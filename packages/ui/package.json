@@ -12,6 +12,7 @@
   "dependencies": {
     "@bounty/types": "workspace:*",
     "@bounty/auth": "workspace:*",
+    "@bounty/track": "workspace:*",
     "@databuddy/sdk": "catalog:",
     "@radix-ui/react-avatar": "catalog:",
     "@radix-ui/react-checkbox": "^1.3.3",

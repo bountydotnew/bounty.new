@@ -17,6 +17,7 @@
     "@bounty/types": "workspace:*",
     "@bounty/stripe": "workspace:*",
     "@bounty/realtime": "workspace:*",
+    "@bounty/track": "workspace:*",
     "@bounty/ui": "workspace:*",
     "@daveyplate/better-auth-ui": "catalog:",
     "drizzle-orm": "catalog:",
