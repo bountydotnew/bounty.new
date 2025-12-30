@@ -19,3 +19,4 @@ stagewise.json
 /.guides
 packages/db/migrations/meta/_journal.json
 /scripts
+/_backup
