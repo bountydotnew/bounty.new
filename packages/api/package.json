@@ -9,6 +9,7 @@
     "@bounty/env": "workspace:*",
     "@bounty/stripe": "workspace:*",
     "@bounty/realtime": "workspace:*",
+    "@bounty/email": "workspace:*",
     "@bounty/track": "workspace:*",
     "drizzle-orm": "catalog:",
     "@polar-sh/sdk": "catalog:",
