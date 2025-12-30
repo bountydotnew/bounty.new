@@ -53,6 +53,7 @@
         "@bounty/db": "workspace:*",
         "@bounty/realtime": "workspace:*",
         "@bounty/stripe": "workspace:*",
+        "@bounty/track": "workspace:*",
         "@bounty/types": "workspace:*",
         "@bounty/ui": "workspace:*",
         "@databuddy/sdk": "catalog:",
@@ -270,6 +271,7 @@
         "stripe": "^17.4.0",
       },
       "devDependencies": {
+        "@bounty/env": "workspace:*",
         "@bounty/typescript-config": "workspace:*",
         "typescript": "catalog:",
       },
@@ -306,6 +308,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@bounty/auth": "workspace:*",
+        "@bounty/track": "workspace:*",
         "@bounty/types": "workspace:*",
         "@databuddy/sdk": "catalog:",
         "@radix-ui/react-avatar": "catalog:",

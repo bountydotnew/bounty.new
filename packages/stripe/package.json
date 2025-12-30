@@ -8,6 +8,7 @@
   },
   "devDependencies": {
     "@bounty/typescript-config": "workspace:*",
+    "@bounty/env": "workspace:*",
     "typescript": "catalog:"
   }
 }
