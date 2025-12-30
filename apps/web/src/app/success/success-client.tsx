@@ -79,11 +79,14 @@ export function SuccessClient({ initialCustomerState }: SuccessClientProps) {
     );
   };
 
-  const activePlanId = customer?.activeSubscriptions?.reduce<
-    PlanId
-  >((current: PlanId, subscription: BillingSubscription) => current ?? identifyPlan(subscription) ?? 'pro-annual', 'pro-annual');
+  const activePlanId: PlanId = 
+    customer?.activeSubscriptions?.reduce<PlanId>(
+      (current: PlanId, subscription: BillingSubscription) => 
+        current ?? identifyPlan(subscription) ?? 'pro-annual', 
+      'pro-annual'
+    ) ?? 'pro-annual';
 
-  const planDetails = activePlanId ? PLAN_DETAILS[activePlanId] : undefined;
+  const planDetails = PLAN_DETAILS[activePlanId];
   const planName = planDetails?.name ?? 'Pro Plan';
   const planPrice = planDetails?.price ?? 'Pro Pricing';
 
