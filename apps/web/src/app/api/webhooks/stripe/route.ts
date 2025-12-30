@@ -69,8 +69,6 @@ export async function POST(request: Request) {
           // Retrieve the payment intent to check its status
           const paymentIntent = await stripeClient.paymentIntents.retrieve(paymentIntentId);
           
-          // Retrieve the payment intent to check its status
-          const paymentIntent = await stripeClient.paymentIntents.retrieve(paymentIntentId);
           
           // Build update data
           const updateData: {
