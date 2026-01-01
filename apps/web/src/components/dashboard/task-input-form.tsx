@@ -32,6 +32,7 @@ import { DescriptionTextarea } from './task-form/components/DescriptionTextarea'
 import { RepoSelector } from './task-form/components/RepoSelector';
 import { BranchSelector } from './task-form/components/BranchSelector';
 import { IssueSelector } from './task-form/components/IssueSelector';
+import { FundBountyModal } from '@/components/payment/fund-bounty-modal';
 
 type TaskInputFormProps = {};
 
@@ -125,6 +126,10 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
     const [pendingIssueData, setPendingIssueData] = useState<{ title?: string; body?: string } | null>(null);
     const isOpeningPromptRef = useRef(false);
 
+    // Fund bounty modal state
+    const [showFundModal, setShowFundModal] = useState(false);
+    const [pendingFormData, setPendingFormData] = useState<CreateBountyForm & { repositoryUrl?: string; issueUrl?: string } | null>(null);
+
     // Bounty creation mutation
     const createBounty = useMutation({
         mutationFn: async (input: CreateBountyForm & { payLater?: boolean }) => {
@@ -141,10 +146,15 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
             
             if (result?.data?.id) {
                 if (result.checkoutUrl && !result.payLater) {
+                    // Close modal before redirect
+                    setShowFundModal(false);
+                    setPendingFormData(null);
                     // Redirect to Stripe Checkout
                     window.location.href = result.checkoutUrl;
                 } else if (result.payLater) {
                     // Pay later - just redirect
+                    setShowFundModal(false);
+                    setPendingFormData(null);
                     toast.success('Bounty created! Complete payment to make it live.');
                     reset();
                     setSelectedRepository('');
@@ -153,6 +163,8 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                     router.push(`/bounty/${result.data.id}`);
                 } else {
                     // Shouldn't happen, but handle it
+                    setShowFundModal(false);
+                    setPendingFormData(null);
                     toast.success('Bounty created successfully!');
                     reset();
                     setSelectedRepository('');
@@ -161,11 +173,14 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                     router.push(`/bounty/${result.data.id}`);
                 }
             } else {
+                setShowFundModal(false);
+                setPendingFormData(null);
                 router.push('/dashboard');
             }
         },
         onError: (error: Error) => {
             toast.error(`Failed to create bounty: ${error.message}`);
+            // Keep modal open on error so user can retry
         },
     });
 
@@ -177,13 +192,34 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                 issueUrl: selectedIssue?.url,
             });
             
-            // Always require payment upfront (payLater: false)
-            createBounty.mutate({ ...formattedData, payLater: false });
+            // Store formatted data and show funding modal
+            setPendingFormData(formattedData);
+            setShowFundModal(true);
         },
         (errors) => {
             console.log('[TaskInputForm] Submit - validation errors:', errors);
         }
     );
+
+    const handleSkip = () => {
+        if (!pendingFormData) return;
+        setShowFundModal(false);
+        createBounty.mutate({ ...pendingFormData, payLater: true });
+        setPendingFormData(null);
+    };
+
+    const handlePayWithStripe = () => {
+        if (!pendingFormData) return;
+        // Don't close modal yet - let it stay open until redirect happens
+        createBounty.mutate({ ...pendingFormData, payLater: false });
+        // Modal will close automatically when redirect happens
+    };
+
+    const handlePayWithBalance = () => {
+        // Future implementation for paying with award balance
+        // For now, default to Stripe
+        handlePayWithStripe();
+    };
 
 
     const handleRepositorySelect = (repo: string) => {
@@ -488,7 +524,19 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                     </div>
                 </fieldset>
             </form>
-            
+
+            {/* Fund Bounty Modal */}
+            {pendingFormData && (
+                <FundBountyModal
+                    open={showFundModal}
+                    onOpenChange={setShowFundModal}
+                    bountyAmount={Number(pendingFormData.amount) || 0}
+                    onSkip={handleSkip}
+                    onPayWithStripe={handlePayWithStripe}
+                    onPayWithBalance={handlePayWithBalance}
+                    isLoading={createBounty.isPending}
+                />
+            )}
         </div>
     );
 });

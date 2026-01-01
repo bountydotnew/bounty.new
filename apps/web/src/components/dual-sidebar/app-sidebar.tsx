@@ -34,6 +34,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { NavMain } from '@/components/dual-sidebar/nav-main';
 import { NotificationsDropdown } from '@/components/notifications/notifications-dropdown';
 import { AccountDropdown } from '@/components/billing/account-dropdown';
+import { FundBountyModal } from '@/components/payment/fund-bounty-modal';
 import { LINKS } from '@/constants';
 import { Clock, UsersIcon } from 'lucide-react';
 
@@ -113,25 +114,57 @@ const SidebarFooterActions = () => {
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const isAuthenticated = !!session?.user;
+  const [showFundModal, setShowFundModal] = React.useState(false);
 
   return (
-    <div className="flex items-end justify-between gap-2 py-0">
-      <button
-        className="inline-flex items-center gap-2 rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
-        onClick={() => router.push(LINKS.SETTINGS)}
-        type="button"
-      >
-        <SettingsGearIcon className="h-[19px] w-[19px]" />
-        <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em] group-data-[collapsible=icon]:hidden">
-          Settings
-        </span>
-      </button>
+    <>
+      <div className="flex items-end justify-between gap-2 py-0">
+        <button
+          className="inline-flex items-center gap-2 rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
+          onClick={() => router.push(LINKS.SETTINGS)}
+          type="button"
+        >
+          <SettingsGearIcon className="h-[19px] w-[19px]" />
+          <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em] group-data-[collapsible=icon]:hidden">
+            Settings
+          </span>
+        </button>
+        {isAuthenticated && !isPending && (
+          <NotificationsDropdown triggerClassName="flex h-auto w-auto items-center justify-center rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]">
+            <NotificationsIcon className="h-[19px] w-[19px]" />
+          </NotificationsDropdown>
+        )}
+      </div>
+      {/* Test button for fund modal */}
       {isAuthenticated && !isPending && (
-        <NotificationsDropdown triggerClassName="flex h-auto w-auto items-center justify-center rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]">
-          <NotificationsIcon className="h-[19px] w-[19px]" />
-        </NotificationsDropdown>
+        <button
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
+          onClick={() => setShowFundModal(true)}
+          type="button"
+        >
+          <span className="text-[14px] font-medium leading-[150%] group-data-[collapsible=icon]:hidden">
+            Test Fund Modal
+          </span>
+        </button>
       )}
-    </div>
+      <FundBountyModal
+        open={showFundModal}
+        onOpenChange={setShowFundModal}
+        bountyAmount={100}
+        onSkip={() => {
+          console.log('Skipped payment');
+          setShowFundModal(false);
+        }}
+        onPayWithStripe={() => {
+          console.log('Pay with Stripe');
+          setShowFundModal(false);
+        }}
+        onPayWithBalance={() => {
+          console.log('Pay with balance');
+          setShowFundModal(false);
+        }}
+      />
+    </>
   );
 };
 
