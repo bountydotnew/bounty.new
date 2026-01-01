@@ -13,26 +13,45 @@ import { ExternalLink, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { ConnectOnboardingModal } from '@/components/payment/connect-onboarding-modal';
+import { IssuesBlock } from './payment/issues-block';
+import { AccountBalance } from './payment/account-balance';
 import { useState, useEffect } from 'react';
+import { useQueryState, parseAsString } from 'nuqs';
 
 export function PaymentSettings() {
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
-
-  // Check for onboarding success/refresh in URL params
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('onboarding') === 'success') {
-      toast.success('Stripe account connected successfully!');
-      // Clean up URL
-      window.history.replaceState({}, '', '/settings/payments');
-    } else if (params.get('onboarding') === 'refresh') {
-      toast.info('Please complete the onboarding process');
-    }
-  }, []);
+  const [onboardingStatus, setOnboardingStatus] = useQueryState(
+    'onboarding',
+    parseAsString.withDefault('')
+  );
+  const [refreshParam, setRefreshParam] = useQueryState(
+    'refresh',
+    parseAsString.withDefault('')
+  );
 
   const { data: connectStatus, isLoading, refetch } = useQuery(
     trpc.connect.getConnectStatus.queryOptions()
   );
+
+  // Check for onboarding success/refresh in URL params
+  useEffect(() => {
+    if (onboardingStatus === 'success') {
+      toast.success('Stripe account connected successfully!');
+      // Refetch status to update UI
+      refetch();
+      // Clean up URL
+      setOnboardingStatus(null);
+    } else if (onboardingStatus === 'refresh') {
+      toast.info('Please complete the onboarding process');
+      // Refetch status
+      refetch();
+      setOnboardingStatus(null);
+    } else if (refreshParam === 'true') {
+      // Refresh status when returning from Stripe dashboard
+      refetch();
+      setRefreshParam(null);
+    }
+  }, [onboardingStatus, refreshParam, refetch, setOnboardingStatus, setRefreshParam]);
 
   const createAccountLink = useMutation({
     mutationFn: async () => {
@@ -54,7 +73,13 @@ export function PaymentSettings() {
     },
     onSuccess: (result) => {
       if (result?.data?.url) {
-        window.open(result.data.url, '_blank');
+        if (result.data.isOnboarding) {
+          // Redirect to onboarding if Stripe requires it
+          window.location.href = result.data.url;
+        } else {
+          // Open dashboard in new tab if onboarding is complete
+          window.open(result.data.url, '_blank');
+        }
       }
     },
     onError: (error: Error) => {
@@ -62,7 +87,7 @@ export function PaymentSettings() {
     },
   });
 
-  const { data: payoutHistory } = useQuery(
+  const { data: payoutHistoryResponse } = useQuery(
     trpc.connect.getPayoutHistory.queryOptions({ page: 1, limit: 10 })
   );
 
@@ -115,7 +140,7 @@ export function PaymentSettings() {
                 {!status?.hasConnectAccount
                   ? 'Connect your Stripe account to receive bounty payouts directly to your bank account'
                   : status.onboardingComplete && status.cardPaymentsActive
-                    ? 'Your account is set up and ready to receive payouts'
+                    ? 'Your account is set up and ready to receive payouts. Click "Open Stripe Express Dashboard" to manage your account, view payouts, and update bank details.'
                     : 'Complete the verification process to start receiving payouts'}
               </p>
             </div>
@@ -144,6 +169,21 @@ export function PaymentSettings() {
               )}
             </div>
           )}
+
+          {/* Account Balance - Only shows for bounty solvers with pending balance */}
+          {status?.hasConnectAccount && <AccountBalance />}
+
+          {/* Issues Block - Only shows when there are problems */}
+          {status?.hasConnectAccount && status.accountDetails && (
+            <IssuesBlock
+              chargesEnabled={status.accountDetails.chargesEnabled}
+              detailsSubmitted={status.accountDetails.detailsSubmitted}
+              payoutsEnabled={status.accountDetails.payoutsEnabled}
+              cardPaymentsActive={status.cardPaymentsActive}
+              requirements={status.accountDetails.requirements}
+              onCompleteOnboarding={handleConnect}
+            />
+          )}
         </CardContent>
       </Card>
 
@@ -154,9 +194,18 @@ export function PaymentSettings() {
             <CardTitle>Payout History</CardTitle>
           </CardHeader>
           <CardContent>
-            {payoutHistory?.data?.data && payoutHistory.data.data.length > 0 ? (
+            {payoutHistoryResponse?.data && payoutHistoryResponse.data.length > 0 ? (
               <div className="space-y-2">
-                {payoutHistory.data.data.map((payout) => (
+                {payoutHistoryResponse.data.map((payout: {
+                  id: string;
+                  createdAt: string;
+                  updatedAt: string;
+                  userId: string;
+                  status: 'pending' | 'completed' | 'failed' | 'processing';
+                  amount: string;
+                  stripeTransferId: string | null;
+                  bountyId: string;
+                }) => (
                   <div
                     key={payout.id}
                     className="flex items-center justify-between p-3 rounded-lg border border-border"

@@ -46,10 +46,17 @@ export async function getConnectAccountStatus(accountId: string) {
     account.capabilities?.transfers === "active";
   
   // Check if onboarding is complete
-  // For Express accounts, check if charges_enabled and details_submitted
+  // For Express accounts, check if charges_enabled, details_submitted, and payouts_enabled
+  // Also check that there are no pending requirements
+  const hasNoPendingRequirements =
+    (!account.requirements?.currently_due || account.requirements.currently_due.length === 0) &&
+    (!account.requirements?.past_due || account.requirements.past_due.length === 0);
+  
   const onboardingComplete =
     account.details_submitted === true &&
-    account.charges_enabled === true;
+    account.charges_enabled === true &&
+    account.payouts_enabled === true &&
+    hasNoPendingRequirements;
 
   return {
     cardPaymentsActive: cardPaymentsActive || false,
@@ -60,17 +67,12 @@ export async function getConnectAccountStatus(accountId: string) {
 }
 
 /**
- * Get a link to the Stripe Express Dashboard for a connected account
+ * Create a login link for the Stripe Express Dashboard
+ * This allows connected accounts to access their Express Dashboard
+ * See: https://docs.stripe.com/connect/express-dashboard#create-a-login-link
  */
-export async function createDashboardLink(
-  accountId: string,
-  returnUrl: string
-) {
-  return stripeClient.accountLinks.create({
-    account: accountId,
-    return_url: returnUrl,
-    type: "account_update",
-  });
+export async function createLoginLink(accountId: string) {
+  return stripeClient.accounts.createLoginLink(accountId);
 }
 
 /**
@@ -83,4 +85,31 @@ export async function createConnectAccountLink(params: {
   refreshUrl: string;
 }) {
   return createAccountLink(params.accountId, params.returnUrl, params.refreshUrl);
+}
+
+/**
+ * Get the balance for a Connect account
+ * Returns the available balance, pending balance, and other balance information
+ */
+export async function getConnectAccountBalance(accountId: string) {
+  const balance = await stripeClient.balance.retrieve({
+    stripeAccount: accountId,
+  });
+
+  return {
+    available: balance.available.map((b) => ({
+      amount: b.amount,
+      currency: b.currency,
+      sourceTypes: b.source_types,
+    })),
+    pending: balance.pending.map((b) => ({
+      amount: b.amount,
+      currency: b.currency,
+      sourceTypes: b.source_types,
+    })),
+    connectReserved: balance.connect_reserved?.map((b) => ({
+      amount: b.amount,
+      currency: b.currency,
+    })) || [],
+  };
 }

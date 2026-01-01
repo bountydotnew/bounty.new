@@ -1,12 +1,12 @@
 import { db, payout, user } from '@bounty/db';
 import { TRPCError } from '@trpc/server';
-import { eq, desc, sql } from 'drizzle-orm';
+import { eq, desc, sql, or, and } from 'drizzle-orm';
 import { z } from 'zod';
 import { protectedProcedure, router } from '../trpc';
 import {
   createConnectAccount,
   createConnectAccountLink,
-  createDashboardLink,
+  createLoginLink,
   getConnectAccountStatus,
 } from '@bounty/stripe';
 import { env } from '@bounty/env/server';
@@ -31,6 +31,7 @@ export const connectRouter = router({
       }
 
       let accountStatus = null;
+      let accountDetails = null;
       if (userData.stripeConnectAccountId) {
         try {
           const status = await getConnectAccountStatus(
@@ -39,6 +40,24 @@ export const connectRouter = router({
           accountStatus = {
             cardPaymentsActive: status.cardPaymentsActive,
             onboardingComplete: status.onboardingComplete,
+            transfersActive: status.transfersActive,
+          };
+          
+          // Extract detailed account information
+          const account = status.account;
+          accountDetails = {
+            chargesEnabled: account.charges_enabled ?? false,
+            detailsSubmitted: account.details_submitted ?? false,
+            payoutsEnabled: account.payouts_enabled ?? false,
+            capabilities: {
+              cardPayments: account.capabilities?.card_payments ?? 'inactive',
+              transfers: account.capabilities?.transfers ?? 'inactive',
+            },
+            requirements: {
+              currentlyDue: account.requirements?.currently_due ?? [],
+              eventuallyDue: account.requirements?.eventually_due ?? [],
+              pastDue: account.requirements?.past_due ?? [],
+            },
           };
           
           // Update user's onboarding status if it changed
@@ -63,7 +82,9 @@ export const connectRouter = router({
             userData.stripeConnectOnboardingComplete ??
             false,
           cardPaymentsActive: accountStatus?.cardPaymentsActive || false,
+          transfersActive: accountStatus?.transfersActive || false,
           connectAccountId: userData.stripeConnectAccountId,
+          accountDetails,
         },
       };
     } catch (error) {
@@ -192,25 +213,86 @@ export const connectRouter = router({
         });
       }
 
-      const baseUrl = env.BETTER_AUTH_URL;
-      const dashboardLink = await createDashboardLink(
-        userData.stripeConnectAccountId,
-        `${baseUrl}/settings/payments`
-      );
+      // Verify the account exists and check onboarding status
+      let accountStatus;
+      try {
+        accountStatus = await getConnectAccountStatus(userData.stripeConnectAccountId);
+      } catch (statusError) {
+        console.error('Connect account not found in Stripe:', statusError);
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Connect account not found. Please complete onboarding again.',
+          cause: statusError,
+        });
+      }
 
-      return {
-        success: true,
-        data: {
-          url: dashboardLink.url,
-        },
-      };
+      // If onboarding is not complete, return an onboarding link instead
+      if (!accountStatus.onboardingComplete) {
+        const baseUrl = env.BETTER_AUTH_URL;
+        const accountLink = await createConnectAccountLink({
+          accountId: userData.stripeConnectAccountId,
+          returnUrl: `${baseUrl}/settings/payments?onboarding=success`,
+          refreshUrl: `${baseUrl}/settings/payments?onboarding=refresh`,
+        });
+
+        return {
+          success: true,
+          data: {
+            url: accountLink.url,
+            isOnboarding: true,
+          },
+        };
+      }
+
+      // Account is onboarded, create login link for Express Dashboard
+      // Login links allow connected accounts to access their Express Dashboard
+      // See: https://docs.stripe.com/connect/express-dashboard#create-a-login-link
+      try {
+        const loginLink = await createLoginLink(userData.stripeConnectAccountId);
+
+        return {
+          success: true,
+          data: {
+            url: loginLink.url,
+            isOnboarding: false,
+          },
+        };
+      } catch (loginError) {
+        // If login link creation fails, account might not be fully onboarded
+        // Fallback to onboarding link
+        const errorMessage =
+          loginError instanceof Error ? loginError.message : 'Unknown error';
+        
+        console.log(
+          'Failed to create login link, falling back to onboarding:',
+          errorMessage
+        );
+        
+        const baseUrl = env.BETTER_AUTH_URL;
+        const accountLink = await createConnectAccountLink({
+          accountId: userData.stripeConnectAccountId,
+          returnUrl: `${baseUrl}/settings/payments?onboarding=success`,
+          refreshUrl: `${baseUrl}/settings/payments?onboarding=refresh`,
+        });
+
+        return {
+          success: true,
+          data: {
+            url: accountLink.url,
+            isOnboarding: true,
+          },
+        };
+      }
     } catch (error) {
       if (error instanceof TRPCError) {
         throw error;
       }
+      console.error('Failed to get dashboard link:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to get dashboard link',
+        message: `Failed to get dashboard link: ${errorMessage}`,
         cause: error,
       });
     }
@@ -260,4 +342,52 @@ export const connectRouter = router({
         });
       }
     }),
+
+  getAccountBalance: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const [userData] = await db
+        .select({
+          stripeConnectAccountId: user.stripeConnectAccountId,
+        })
+        .from(user)
+        .where(eq(user.id, ctx.session.user.id))
+        .limit(1);
+
+      if (!userData?.stripeConnectAccountId) {
+        return {
+          success: true,
+          data: {
+            available: 0,
+            pending: 0,
+            total: 0,
+          },
+        };
+      }
+
+      // Get balance from Stripe Connect account
+      const { getConnectAccountBalance } = await import('@bounty/stripe');
+      const balance = await getConnectAccountBalance(userData.stripeConnectAccountId);
+
+      // Sum up USD balances
+      const availableUSD = balance.available.find((b) => b.currency === 'usd')?.amount || 0;
+      const pendingUSD = balance.pending.find((b) => b.currency === 'usd')?.amount || 0;
+      const totalUSD = (availableUSD + pendingUSD) / 100; // Convert from cents
+
+      return {
+        success: true,
+        data: {
+          available: availableUSD / 100,
+          pending: pendingUSD / 100,
+          total: totalUSD,
+        },
+      };
+    } catch (error) {
+      console.error('Failed to get account balance:', error);
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to get account balance',
+        cause: error,
+      });
+    }
+  }),
 });
