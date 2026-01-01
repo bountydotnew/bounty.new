@@ -56,7 +56,8 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
     // Form state
     const form = useForm<CreateBountyForm>({
         resolver: zodResolver(createBountySchema),
-        mode: 'onChange',
+        mode: 'onSubmit',
+        reValidateMode: 'onSubmit',
         defaultValues: {
             ...createBountyDefaults,
             description: '',
@@ -366,13 +367,16 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                             </div>
                             
                             {/* Error messages below chips */}
-                            {(errors.title || errors.amount) && (
+                            {(errors.title || errors.amount || errors.deadline) && (
                                 <div className="flex flex-row flex-wrap items-center gap-3 px-1">
                                     {errors.title && (
                                         <span className="text-red-500 text-xs">{errors.title.message}</span>
                                     )}
                                     {errors.amount && (
                                         <span className="text-red-500 text-xs">{errors.amount.message}</span>
+                                    )}
+                                    {errors.deadline && (
+                                        <span className="text-red-500 text-xs">{errors.deadline.message}</span>
                                     )}
                                 </div>
                             )}
@@ -384,6 +388,13 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                             placeholder="Start typing your description..."
                             textareaRef={textareaRef}
                         />
+                        
+                        {/* Description error message */}
+                        {errors.description && (
+                            <div className="px-1 pt-1">
+                                <span className="text-red-500 text-xs">{errors.description.message}</span>
+                            </div>
+                        )}
 
                         {/* Bottom row with selectors and submit */}
                         <div className="flex flex-row justify-between items-center pt-2">

@@ -173,6 +173,14 @@ export function DatePicker({
             month={month || new Date()}
             onMonthChange={setMonth}
             onSelect={handleCalendarSelect}
+            disabled={(date) => {
+              // Disable past dates (before today)
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const compareDate = new Date(date);
+              compareDate.setHours(0, 0, 0, 0);
+              return compareDate < today;
+            }}
             classNames={{
               months: 'flex flex-col',
               month: 'space-y-0',
