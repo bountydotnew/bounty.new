@@ -17,10 +17,10 @@ export const discordBotEnv = createEnv({
           message: 'DATABASE_URL must start with postgresql:// or postgres://',
         }
       ),
-    // Discord bot credentials
-    DISCORD_BOT_TOKEN: z.string().min(1, 'DISCORD_BOT_TOKEN is required'),
-    DISCORD_CLIENT_ID: z.string().min(1, 'DISCORD_CLIENT_ID is required'),
-    DISCORD_CLIENT_SECRET: z.string().min(1, 'DISCORD_CLIENT_SECRET is required'),
+    // Discord bot credentials - optional during build, validated at runtime when used
+    DISCORD_BOT_TOKEN: z.string().min(1).optional(),
+    DISCORD_CLIENT_ID: z.string().min(1).optional(),
+    DISCORD_CLIENT_SECRET: z.string().min(1).optional(),
     // Better Auth - required for API calls
     BETTER_AUTH_URL: z.string().url('BETTER_AUTH_URL must be a valid URL'),
     BETTER_AUTH_SECRET: z.string().min(1, 'BETTER_AUTH_SECRET is required'),

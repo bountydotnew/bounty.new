@@ -12,6 +12,24 @@ import { discordBotEnv as env } from '@bounty/env/discord-bot';
  */
 export async function GET(request: NextRequest) {
   try {
+    // Validate Discord env variables at runtime
+    const discordClientId = env.DISCORD_CLIENT_ID;
+    const discordClientSecret = env.DISCORD_CLIENT_SECRET;
+    
+    if (!discordClientId) {
+      return NextResponse.json(
+        { error: 'Discord OAuth is not configured: DISCORD_CLIENT_ID is missing' },
+        { status: 500 }
+      );
+    }
+    
+    if (!discordClientSecret) {
+      return NextResponse.json(
+        { error: 'Discord OAuth is not configured: DISCORD_CLIENT_SECRET is missing' },
+        { status: 500 }
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const code = searchParams.get('code');
     const state = searchParams.get('state');
@@ -24,9 +42,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!code || !state) {
+    if (!code) {
       return NextResponse.redirect(
-        `${env.BETTER_AUTH_URL}/discord/link?error=${encodeURIComponent('Missing code or state parameter')}`
+        `${env.BETTER_AUTH_URL}/discord/link?error=${encodeURIComponent('Missing code parameter')}`
+      );
+    }
+    
+    if (!state) {
+      return NextResponse.redirect(
+        `${env.BETTER_AUTH_URL}/discord/link?error=${encodeURIComponent('Missing state parameter')}`
       );
     }
 
@@ -48,8 +72,8 @@ export async function GET(request: NextRequest) {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        client_id: env.DISCORD_CLIENT_ID,
-        client_secret: env.DISCORD_CLIENT_SECRET,
+        client_id: discordClientId,
+        client_secret: discordClientSecret,
         grant_type: 'authorization_code',
         code,
         redirect_uri: `${env.BETTER_AUTH_URL}/api/discord/callback`,
