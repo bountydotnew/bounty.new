@@ -150,7 +150,6 @@ const SidebarFooterActions = () => {
       <FundBountyModal
         open={showFundModal}
         onOpenChange={setShowFundModal}
-        bountyAmount={100}
         onSkip={() => {
           console.log('Skipped payment');
           setShowFundModal(false);
