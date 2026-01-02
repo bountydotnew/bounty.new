@@ -4,7 +4,7 @@ import { auth } from '@bounty/auth/server';
 import { db } from '@bounty/db';
 import { account } from '@bounty/db/src/schema/auth';
 import { eq, and } from 'drizzle-orm';
-import { discordBotEnv as env } from '@bounty/env/discord-bot';
+import { env as serverEnv } from '@bounty/env/server';
 
 // Force dynamic rendering to prevent build-time validation
 export const dynamic = 'force-dynamic';
@@ -16,6 +16,9 @@ export const runtime = 'nodejs';
  */
 export async function GET(request: NextRequest) {
   try {
+    // Lazy import to avoid build-time evaluation
+    const { discordBotEnv: env } = await import('@bounty/env/discord-bot');
+    
     // Validate Discord env variables at runtime
     const discordClientId = env.DISCORD_CLIENT_ID;
     const discordClientSecret = env.DISCORD_CLIENT_SECRET;
@@ -158,8 +161,10 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     console.error('Discord OAuth callback error:', error);
+    // Fallback to server env if Discord env import failed
+    const fallbackUrl = serverEnv.BETTER_AUTH_URL;
     return NextResponse.redirect(
-      `${env.BETTER_AUTH_URL}/discord/link?error=${encodeURIComponent('An unexpected error occurred')}`
+      `${fallbackUrl}/discord/link?error=${encodeURIComponent('An unexpected error occurred')}`
     );
   }
 }
