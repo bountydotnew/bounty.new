@@ -38,5 +38,7 @@ export const discordBotEnv = createEnv({
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     NODE_ENV: process.env.NODE_ENV,
   },
-  skipValidation: process.env.NODE_ENV !== 'production',
+  // Skip validation - we validate Discord env vars at runtime when they're actually used
+  // This allows web builds to succeed without Discord env vars
+  skipValidation: true,
 });

@@ -6,6 +6,10 @@ import { account } from '@bounty/db/src/schema/auth';
 import { eq, and } from 'drizzle-orm';
 import { discordBotEnv as env } from '@bounty/env/discord-bot';
 
+// Force dynamic rendering to prevent build-time validation
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 /**
  * Discord OAuth callback endpoint
  * This handles linking Discord accounts to bounty.new accounts
