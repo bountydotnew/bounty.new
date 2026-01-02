@@ -24,17 +24,6 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
   const isAddingAccount = addAccountParam === 'true';
 
   useEffect(() => {
-    if (
-      typeof PublicKeyCredential === 'undefined' ||
-      !PublicKeyCredential.isConditionalMediationAvailable?.()
-    ) {
-      return;
-    }
-
-    authClient.signIn.passkey({ autoFill: true });
-  }, []);
-
-  useEffect(() => {
     try {
       const method =
         typeof localStorage !== 'undefined'

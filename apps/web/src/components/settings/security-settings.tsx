@@ -8,17 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@bounty/ui/components/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@bounty/ui/components/dialog';
-import { Input } from '@bounty/ui/components/input';
-import { Label } from '@bounty/ui/components/label';
-import { Separator } from '@bounty/ui/components/separator';
 import { formatDate } from '@bounty/ui/lib/utils';
 import { Laptop, Loader2, Smartphone } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -28,14 +17,6 @@ import { UAParser } from 'ua-parser-js';
 
 export function SecuritySettings() {
   const router = useRouter();
-  const [newPasskeyName, setNewPasskeyName] = useState('');
-  const [editingPasskey, setEditingPasskey] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
-  const [editName, setEditName] = useState('');
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [terminatingSession, setTerminatingSession] = useState<string | null>(
     null
   );
@@ -96,76 +77,6 @@ export function SecuritySettings() {
 
   return (
     <div className="space-y-6">
-      {/* Add Passkey */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Passkey Authentication</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium">Add New Passkey</h4>
-              <p className="text-muted-foreground text-sm">
-                Add a new passkey to your account for secure authentication
-              </p>
-            </div>
-            <Dialog onOpenChange={setIsAddDialogOpen} open={isAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={() => setIsAddDialogOpen(true)}>
-                  Add Passkey
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md gap-4" overlayVariant="default">
-                <DialogHeader>
-                  <DialogTitle>Add New Passkey</DialogTitle>
-                  <DialogDescription>
-                    Choose the type of authenticator you want to register
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="gap-4 space-y-4">
-                  <div>
-                    <Label className="mt-4" htmlFor="passkey-name">
-                      Passkey Name (Optional)
-                    </Label>
-                    <Input
-                      className="mt-2"
-                      id="passkey-name"
-                      onChange={(e) => setNewPasskeyName(e.target.value)}
-                      placeholder="e.g., iPhone, MacBook, Security Key"
-                      value={newPasskeyName}
-                    />
-                  </div>
-                  <div className="mt-4 flex space-x-2">
-                    <Button
-                      className="flex-1"
-                      onClick={() => console.log('todo: add platform passkey:')}
-                    >
-                      Platform (Fingerprint/Face ID)
-                    </Button>
-                    <Button
-                      className="flex-1"
-                      onClick={() => console.log('todo: add cross-platform passkey:')}
-                      variant="outline"
-                    >
-                      Security Key
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-3">
-            <h4 className="font-medium">Your Passkeys</h4>
-            <p className="text-muted-foreground text-sm">
-              No passkeys found.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Active Sessions */}
       <Card>
         <CardHeader>

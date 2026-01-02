@@ -11,7 +11,6 @@ import {
   deviceCode,
   invite,
   notification,
-  passkey,
   session,
   submission,
   user as userTable,
@@ -36,7 +35,6 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer, deviceAuthorization, openAPI, multiSession } from "better-auth/plugins";
 import { admin } from "better-auth/plugins";
-import { passkey as passkeyPlugin } from "@better-auth/passkey";
 import { emailOTP } from "better-auth/plugins/email-otp";
 import { sendEmail } from "@bounty/email";
 import { OTPVerification, ForgotPassword } from "@bounty/email";
@@ -57,7 +55,6 @@ const schema = {
   deviceCode,
   invite,
   notification,
-  passkey,
   session,
   submission,
   user: userTable,
@@ -249,14 +246,6 @@ export const auth = betterAuth({
           },
         }),
       ],
-    }),
-    passkeyPlugin({
-      rpID: env.NODE_ENV === 'production' ? 'bounty.new' : 'localhost',
-      rpName: 'Bounty.new',
-      origin:
-        env.NODE_ENV === 'production'
-          ? 'https://bounty.new'
-          : 'http://localhost:3000',
     }),
     admin(),
     bearer(),
