@@ -25,6 +25,8 @@ export const env = createEnv({
     UNKEY_ROOT_KEY: z.string().min(1),
     // Discord webhook
     DISCORD_WEBHOOK_URL: z.string().url().optional(),
+    // Marble CMS webhook
+    MARBLE_WEBHOOK_SECRET: z.string().min(1).optional(),
     // Node environment
     NODE_ENV: z
       .enum(['development', 'production', 'test'])
@@ -58,6 +60,7 @@ export const env = createEnv({
     // GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     UNKEY_ROOT_KEY: process.env.UNKEY_ROOT_KEY,
     DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL,
+    MARBLE_WEBHOOK_SECRET: process.env.MARBLE_WEBHOOK_SECRET,
     NODE_ENV: process.env.NODE_ENV,
     POLAR_ACCESS_TOKEN: process.env.POLAR_ACCESS_TOKEN,
     BOUNTY_PRO_ANNUAL_ID: process.env.BOUNTY_PRO_ANNUAL_ID,
