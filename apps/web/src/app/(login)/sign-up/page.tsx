@@ -165,7 +165,7 @@ function SignUpContent() {
     );
   };
 
-  const lastMethod = authClient.getLastUsedLoginMethod();
+  const lastMethod = localStorage.getItem('bounty-last-login-method');
 
   return (
     <div className="flex min-h-screen flex-col bg-[#111110] text-[#f3f3f3] md:flex-row">

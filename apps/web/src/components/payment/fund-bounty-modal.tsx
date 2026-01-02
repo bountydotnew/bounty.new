@@ -16,7 +16,6 @@ import * as React from 'react';
 interface FundBountyModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  bountyAmount: number;
   onSkip: () => void;
   onPayWithStripe: () => void;
   onPayWithBalance?: () => void;
@@ -26,22 +25,24 @@ interface FundBountyModalProps {
 export function FundBountyModal({
   open,
   onOpenChange,
-  bountyAmount,
   onSkip,
   onPayWithStripe,
-  onPayWithBalance,
   isLoading = false,
 }: FundBountyModalProps) {
   const [selectedMethod, setSelectedMethod] = useState<'balance' | 'stripe' | null>(null);
 
   const handleContinue = () => {
     // Only Stripe payments are supported for now
-    if (isLoading) return;
+    if (isLoading) {
+      return;
+    }
     onPayWithStripe();
   };
 
   const handleSkip = () => {
-    if (isLoading) return;
+    if (isLoading) {
+      return;
+    }
     onSkip();
     setSelectedMethod(null);
   };
@@ -88,7 +89,9 @@ export function FundBountyModal({
                   sublabel="Coming soon"
                   selected={false}
                   disabled={true}
-                  onClick={() => {}}
+                  onClick={() => {
+                    console.log('Pay with award balance');
+                  }}
                 />
 
                 {/* Stripe Card */}

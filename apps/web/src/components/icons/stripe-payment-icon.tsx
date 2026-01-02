@@ -1,4 +1,4 @@
-export function StripePaymentIcon({ className }: { className?: string }) {
+export function StripePaymentIcon() {
   // Mini checkout visualization - simplified version of the checkout form
   return (
     <div className="absolute top-[-70px] w-[70px] h-[95px] shrink-0 overflow-hidden rounded-[6px] bg-white p-2">

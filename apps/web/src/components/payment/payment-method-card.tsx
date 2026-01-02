@@ -34,10 +34,10 @@ export function PaymentMethodCard({
             'transition-all duration-200',
             overflowHidden && 'overflow-hidden',
             selected
-              ? 'bg-[#0B0B09] border border-solid border-[#12121266] outline outline-1 outline-[#747474] outline-offset-2'
+              ? 'bg-[#0B0B09] border border-solid border-[#12121266] outline outline-[#747474] outline-offset-2'
               : 'bg-[#1F1F1F] border border-solid border-[#232323]',
             disabled && 'opacity-100 cursor-not-allowed',
-            !disabled && !selected && 'hover:bg-[#252525]'
+            !(disabled || selected ) && 'hover:bg-[#252525]'
           )}
         >
           <div className="flex items-center justify-center shrink-0 relative">{icon}</div>
