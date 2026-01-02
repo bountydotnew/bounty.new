@@ -541,7 +541,6 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                 <FundBountyModal
                     open={showFundModal}
                     onOpenChange={setShowFundModal}
-                    bountyAmount={Number(pendingFormData.amount) || 0}
                     onSkip={handleSkip}
                     onPayWithStripe={handlePayWithStripe}
                     onPayWithBalance={handlePayWithBalance}
