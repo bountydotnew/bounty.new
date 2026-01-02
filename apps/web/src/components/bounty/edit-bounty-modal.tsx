@@ -141,7 +141,7 @@ export function EditBountyModal({
       <Dialog onOpenChange={handleClose} open={open}>
         <DialogContent
           className="max-h-[75vh] w-[92vw] max-w-lg overflow-y-auto p-0 sm:rounded-lg md:max-w-lg lg:max-w-lg"
-          showOverlay
+          overlayVariant="default"
         >
           <div className="flex h-40 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-foreground border-b-2" />
@@ -178,7 +178,7 @@ export function EditBountyModal({
       <Dialog onOpenChange={handleClose} open={open}>
         <DialogContent
           className="w-[92vw] max-w-lg p-0 sm:rounded-lg md:max-w-lg lg:max-w-lg"
-          showOverlay
+          overlayVariant="default"
         >
           <DialogHeader className="px-6 pt-6">
             <DialogTitle className="text-xl">Error</DialogTitle>
@@ -381,7 +381,7 @@ export function EditBountyModal({
     <Dialog onOpenChange={handleClose} open={open}>
       <DialogContent
         className="max-h-[75vh] w-[92vw] max-w-lg overflow-y-auto p-0 sm:rounded-lg md:max-w-lg lg:max-w-lg"
-        showOverlay
+        overlayVariant="default"
       >
         <DialogHeader className="px-6 pt-6">
           <DialogTitle className="text-xl">Edit Bounty</DialogTitle>

@@ -35,18 +35,3 @@ export interface PaymentButtonProps {
   variant?: 'default' | 'outline';
   className?: string;
 }
-
-// Pricing dialog types
-interface PricingDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onUpgrade?: () => void;
-}
-
-// Payment modal types
-interface PaymentModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  recipientUsername: string;
-  amount?: number;
-}

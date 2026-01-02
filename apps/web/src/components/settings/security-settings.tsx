@@ -115,7 +115,7 @@ export function SecuritySettings() {
                   Add Passkey
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md gap-4" showOverlay>
+              <DialogContent className="max-w-md gap-4" overlayVariant="default">
                 <DialogHeader>
                   <DialogTitle>Add New Passkey</DialogTitle>
                   <DialogDescription>
