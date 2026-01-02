@@ -10,7 +10,7 @@ export function parseThinEvent(
   signature: string,
   webhookSecret: string
 ): Stripe.Event {
-  return stripeClient.webhooks.parseThinEvent(body, signature, webhookSecret);
+  return stripeClient.webhooks.constructEvent(body, signature, webhookSecret);
 }
 
 /**
@@ -30,5 +30,5 @@ export function constructEvent(
  * Used when processing thin events to get full event data
  */
 export async function retrieveEvent(eventId: string) {
-  return stripeClient.v2.core.events.retrieve(eventId);
+  return await stripeClient.v2.core.events.retrieve(eventId);
 }
