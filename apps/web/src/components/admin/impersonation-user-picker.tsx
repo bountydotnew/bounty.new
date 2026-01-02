@@ -123,7 +123,7 @@ export function ImpersonationUserPicker({ open, onOpenChange, onPick }: Props) {
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="p-0" showOverlay>
+      <DialogContent className="p-0">
         {content}
       </DialogContent>
     </Dialog>
