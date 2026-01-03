@@ -74,7 +74,7 @@ const bountyOutputSchema = z.object({
   tags: z.array(z.string()).nullable(),
   repositoryUrl: z.string().nullable(),
   issueUrl: z.string().nullable().optional(),
-  isFeatured: z.boolean().nullable().optional(),
+  isFeatured: z.boolean().optional(),
   createdById: z.string().optional(),
   assignedToId: z.string().nullable().optional(),
   createdAt: z.date(),
