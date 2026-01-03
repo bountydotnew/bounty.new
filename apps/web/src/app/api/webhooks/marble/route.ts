@@ -39,7 +39,7 @@ function verifyWebhookSignature(
 function handleRevalidation(event: string, data?: MarbleWebhookPayload['data']) {
   if (event.startsWith('post.')) {
     // Revalidate posts list tag
-    revalidateTag('posts');
+    revalidateTag('posts', 'max');
 
     // If we have a slug, also revalidate the specific post path
     if (data?.slug) {
@@ -57,15 +57,15 @@ function handleRevalidation(event: string, data?: MarbleWebhookPayload['data']) 
       console.log(`[Marble Webhook] Post ${event}, revalidated posts cache`);
     }
   } else if (event.startsWith('tag.')) {
-    revalidateTag('tags');
+    revalidateTag('tags', 'max');
     revalidatePath('/blog');
     console.log(`[Marble Webhook] Tag ${event}, revalidated tags cache`);
   } else if (event.startsWith('category.')) {
-    revalidateTag('categories');
+    revalidateTag('categories', 'max');
     revalidatePath('/blog');
     console.log(`[Marble Webhook] Category ${event}, revalidated categories cache`);
   } else if (event.startsWith('author.')) {
-    revalidateTag('authors');
+    revalidateTag('authors', 'max');
     revalidatePath('/blog');
     console.log(`[Marble Webhook] Author ${event}, revalidated authors cache`);
   } else {
