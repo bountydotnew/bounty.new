@@ -1,7 +1,6 @@
 'use client';
 
 import { authClient } from '@bounty/auth/client';
-import { Badge } from '@bounty/ui/components/badge';
 import { Button } from '@bounty/ui/components/button';
 import { Spinner } from '@bounty/ui/components/spinner';
 import { Input } from '@bounty/ui/components/input';
@@ -165,8 +164,6 @@ function SignUpContent() {
     );
   };
 
-  const lastMethod = authClient.getLastUsedLoginMethod();
-
   return (
     <div className="flex min-h-screen flex-col bg-[#111110] text-[#f3f3f3] md:flex-row">
       {/* Left Column: Sign-Up Section */}
@@ -257,11 +254,6 @@ function SignUpContent() {
                 <GithubIcon className="h-5 w-5 fill-white" />
                 Continue with GitHub
               </Button>
-              {lastMethod === 'github' && (
-                <Badge className="-top-2 -right-2 absolute bg-primary px-1 py-0.5 text-primary-foreground text-xs">
-                  Last used
-                </Badge>
-              )}
             </div>
           </div>
         </div>

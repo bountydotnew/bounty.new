@@ -110,12 +110,12 @@ export function BlogPageContent({ posts }: BlogPageContentProps) {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
                 {posts.map((post) => (
-                  <Link href={`/blog/${post.slug}`} key={post.id}>
-                    <article className="group overflow-hidden rounded-2xl border border-[#282828] transition-all hover:bg-white/5">
+                  <Link href={`/blog/${post.slug}`} key={post.id} className="h-full">
+                    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#282828] transition-all hover:bg-white/5 bg-[#121212]">
                       {post.coverImage && (
-                        <div className="relative aspect-video overflow-hidden">
+                        <div className="relative aspect-video overflow-hidden flex-shrink-0">
                           <Image
                             alt={post.title}
                             className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -125,9 +125,9 @@ export function BlogPageContent({ posts }: BlogPageContentProps) {
                         </div>
                       )}
 
-                      <div className="p-8">
+                      <div className="flex flex-1 flex-col p-8">
                         {post.authors && post.authors.length > 0 && (
-                          <div className="mb-4 flex items-center gap-3">
+                          <div className="mb-4 flex items-center gap-3 flex-shrink-0">
                             {post.authors.map((author, index) => (
                               <div
                                 className="flex items-center gap-2"
@@ -160,13 +160,13 @@ export function BlogPageContent({ posts }: BlogPageContentProps) {
                           </div>
                         )}
                         <h2
-                          className="mb-3 font-bold font-display text-2xl"
+                          className="mb-3 font-bold font-display text-2xl flex-shrink-0"
                           style={{ color: 'rgba(239, 239, 239, 1)' }}
                         >
                           {post.title}
                         </h2>
                         <p
-                          className="font-display-book leading-relaxed"
+                          className="font-display-book leading-relaxed line-clamp-3"
                           style={{ color: 'rgba(146, 146, 146, 1)' }}
                         >
                           {post.description}

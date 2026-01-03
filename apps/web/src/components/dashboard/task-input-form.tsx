@@ -7,10 +7,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Spinner } from '@bounty/ui';
-import { ArrowRight } from 'lucide-react';
 import { trpc, trpcClient } from '@/utils/trpc';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@bounty/ui/components/dialog';
-import { Button } from '@bounty/ui/components/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@bounty/ui/components/popover';
 import {
     type CreateBountyForm,
@@ -22,7 +19,6 @@ import {
 import { cn } from '@bounty/ui/lib/utils';
 import { DatePicker } from '@bounty/ui/components/date-picker';
 import { CalendarIcon } from '@bounty/ui/components/icons/huge/calendar';
-import GitHub from '@/components/icons/github';
 
 // Hooks
 import { useRepositories } from '@bounty/ui/hooks/useRepositories';
@@ -36,19 +32,15 @@ import { DescriptionTextarea } from './task-form/components/DescriptionTextarea'
 import { RepoSelector } from './task-form/components/RepoSelector';
 import { BranchSelector } from './task-form/components/BranchSelector';
 import { IssueSelector } from './task-form/components/IssueSelector';
+import { FundBountyModal } from '@/components/payment/fund-bounty-modal';
 
-interface TaskInputFormProps {
-    placeholder?: string;
-    onSubmit?: (value: string, repository?: string, branch?: string) => void;
-}
+type TaskInputFormProps = {};
 
 export interface TaskInputFormRef {
     focus: () => void;
 }
 
-export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
-    placeholder = 'Create a new bounty...',
-}, ref) => {
+export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_props, ref) => {
     const router = useRouter();
     const queryClient = useQueryClient();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -64,7 +56,8 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
     // Form state
     const form = useForm<CreateBountyForm>({
         resolver: zodResolver(createBountySchema),
-        mode: 'onChange',
+        mode: 'onSubmit',
+        reValidateMode: 'onSubmit',
         defaultValues: {
             ...createBountyDefaults,
             description: '',
@@ -91,7 +84,9 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
         setRepoSearchQuery,
         selectedRepository,
         setSelectedRepository,
-    } = useRepositories(githubUsername);
+    } = useRepositories(githubUsername, {
+        myReposQueryOptions: trpc.repository.myRepos.queryOptions() as unknown as Parameters<typeof useQuery>[0] as Parameters<typeof useQuery<unknown, Error>>[0],
+    });
 
     const {
         filteredBranches,
@@ -100,7 +95,18 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
         setBranchSearchQuery,
         selectedBranch,
         setSelectedBranch,
-    } = useBranches(selectedRepository);
+    } = useBranches(selectedRepository, {
+        defaultBranchQueryOptions: {
+            ...trpc.repository.defaultBranch.queryOptions({
+                repo: selectedRepository,
+            }),
+        } as Parameters<typeof useQuery>[0],
+        branchesQueryOptions: {
+            ...trpc.repository.branches.queryOptions({
+                repo: selectedRepository,
+            }),
+        } as Parameters<typeof useQuery>[0],
+    });
 
     const {
         issuesList,
@@ -108,12 +114,12 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
         issueQuery,
         setIssueQuery,
         repoInfo,
-    } = useIssues(selectedRepository);
+    } = useIssues(selectedRepository, {
+        listIssues: (params) => trpcClient.repository.listIssues.query(params),
+    });
 
     // Issue selector state
     const [selectedIssue, setSelectedIssue] = useState<{ number: number; title: string; url: string } | null>(null);
-    const [showImportPrompt, setShowImportPrompt] = useState(false);
-    const [isImporting, setIsImporting] = useState(false);
 
     // Autofill prompt state (for issues)
     const [showAutofillPrompt, setShowAutofillPrompt] = useState(false);
@@ -121,29 +127,61 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
     const [pendingIssueData, setPendingIssueData] = useState<{ title?: string; body?: string } | null>(null);
     const isOpeningPromptRef = useRef(false);
 
+    // Fund bounty modal state
+    const [showFundModal, setShowFundModal] = useState(false);
+    const [pendingFormData, setPendingFormData] = useState<CreateBountyForm & { repositoryUrl?: string; issueUrl?: string } | null>(null);
+
     // Bounty creation mutation
     const createBounty = useMutation({
-        mutationFn: async (input: CreateBountyForm) => {
-            return await trpcClient.bounties.createBounty.mutate(input);
+        mutationFn: async (input: CreateBountyForm & { payLater?: boolean }) => {
+            return await trpcClient.bounties.createBounty.mutate({
+                ...input,
+                payLater: input.payLater ?? false,
+            });
         },
         onSuccess: (result) => {
-            toast.success('Bounty created successfully!');
             queryClient.invalidateQueries({
                 queryKey: ['bounties'],
                 type: 'all',
             });
-            reset();
-            setSelectedRepository('');
-            setSelectedIssue(null);
-            setIssueQuery('');
+            
             if (result?.data?.id) {
-                router.push(`/bounty/${result.data.id}`);
+                if (result.checkoutUrl && !result.payLater) {
+                    // Close modal before redirect
+                    setShowFundModal(false);
+                    setPendingFormData(null);
+                    // Redirect to Stripe Checkout
+                    window.location.href = result.checkoutUrl;
+                } else if (result.payLater) {
+                    // Pay later - just redirect
+                    setShowFundModal(false);
+                    setPendingFormData(null);
+                    toast.success('Bounty created! Complete payment to make it live.');
+                    reset();
+                    setSelectedRepository('');
+                    setSelectedIssue(null);
+                    setIssueQuery('');
+                    router.push(`/bounty/${result.data.id}`);
+                } else {
+                    // Shouldn't happen, but handle it
+                    setShowFundModal(false);
+                    setPendingFormData(null);
+                    toast.success('Bounty created successfully!');
+                    reset();
+                    setSelectedRepository('');
+                    setSelectedIssue(null);
+                    setIssueQuery('');
+                    router.push(`/bounty/${result.data.id}`);
+                }
             } else {
-                router.push(`/dashboard`);
+                setShowFundModal(false);
+                setPendingFormData(null);
+                router.push('/dashboard');
             }
         },
         onError: (error: Error) => {
             toast.error(`Failed to create bounty: ${error.message}`);
+            // Keep modal open on error so user can retry
         },
     });
 
@@ -155,12 +193,35 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                 issueUrl: selectedIssue?.url,
             });
             
-            createBounty.mutate(formattedData);
+            // Store formatted data and show funding modal
+            setPendingFormData(formattedData);
+            setShowFundModal(true);
         },
         (errors) => {
             console.log('[TaskInputForm] Submit - validation errors:', errors);
         }
     );
+
+    const handleSkip = () => {
+        if (!pendingFormData) return;
+        setShowFundModal(false);
+        createBounty.mutate({ ...pendingFormData, payLater: true });
+        setPendingFormData(null);
+    };
+
+    const handlePayWithStripe = () => {
+        if (!pendingFormData) return;
+        // Don't close modal yet - let it stay open until redirect happens
+        createBounty.mutate({ ...pendingFormData, payLater: false });
+        // Modal will close automatically when redirect happens
+    };
+
+    const handlePayWithBalance = () => {
+        // Future implementation for paying with award balance
+        // For now, default to Stripe
+        handlePayWithStripe();
+    };
+
 
     const handleRepositorySelect = (repo: string) => {
         setSelectedRepository(repo);
@@ -255,33 +316,6 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
         }
     };
 
-    const handleImportIssue = async () => {
-        if (!selectedIssue) {
-            return;
-        }
-        setIsImporting(true);
-        try {
-            const result = await trpcClient.repository.issueFromUrl.query({ url: selectedIssue.url });
-            if (result?.data) {
-                if (result.data.title) {
-                    setValue('title', result.data.title);
-                }
-                if (result.data.body) {
-                    setValue('description', result.data.body);
-                }
-                toast.success('Issue details imported');
-            }
-        } catch {
-            toast.error('Failed to import issue details');
-        } finally {
-            setIsImporting(false);
-            setShowImportPrompt(false);
-        }
-    };
-
-    const handleSkipImport = () => {
-        setShowImportPrompt(false);
-    };
 
     return (
         <div className="flex w-full shrink-0 flex-col px-4 lg:max-w-[805px] xl:px-0 mx-auto min-w-0">
@@ -333,13 +367,16 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                             </div>
                             
                             {/* Error messages below chips */}
-                            {(errors.title || errors.amount) && (
+                            {(errors.title || errors.amount || errors.deadline) && (
                                 <div className="flex flex-row flex-wrap items-center gap-3 px-1">
                                     {errors.title && (
                                         <span className="text-red-500 text-xs">{errors.title.message}</span>
                                     )}
                                     {errors.amount && (
                                         <span className="text-red-500 text-xs">{errors.amount.message}</span>
+                                    )}
+                                    {errors.deadline && (
+                                        <span className="text-red-500 text-xs">{errors.deadline.message}</span>
                                     )}
                                 </div>
                             )}
@@ -351,6 +388,13 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                             placeholder="Start typing your description..."
                             textareaRef={textareaRef}
                         />
+                        
+                        {/* Description error message */}
+                        {errors.description && (
+                            <div className="px-1 pt-1">
+                                <span className="text-red-500 text-xs">{errors.description.message}</span>
+                            </div>
+                        )}
 
                         {/* Bottom row with selectors and submit */}
                         <div className="flex flex-row justify-between items-center pt-2">
@@ -359,7 +403,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                                     selectedRepository={selectedRepository}
                                     filteredRepositories={filteredRepositories}
                                     reposLoading={reposLoading}
-                                    reposData={reposData}
+                                    reposData={reposData as { success: boolean; error?: string; data?: Array<{ name: string; url: string }> } | undefined}
                                     githubUsername={repoGithubUsername}
                                     repoSearchQuery={repoSearchQuery}
                                     setRepoSearchQuery={setRepoSearchQuery}
@@ -388,8 +432,12 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                                                 <div className="inline-flex">
                                                     <IssueSelector
                                                         selectedIssue={selectedIssue}
-                                                        filteredIssues={filteredIssues}
-                                                        issuesList={issuesList}
+                                                        filteredIssues={filteredIssues as Array<{ number: number; title: string }>}
+                                                        issuesList={{
+                                                            isLoading: issuesList.isLoading,
+                                                            isFetching: issuesList.isFetching,
+                                                            data: issuesList.data as Array<{ number: number; title: string }> | undefined,
+                                                        }}
                                                         issueQuery={issueQuery}
                                                         setIssueQuery={setIssueQuery}
                                                         onSelect={handleIssueSelect}
@@ -487,6 +535,18 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(({
                     </div>
                 </fieldset>
             </form>
+
+            {/* Fund Bounty Modal */}
+            {pendingFormData && (
+                <FundBountyModal
+                    open={showFundModal}
+                    onOpenChange={setShowFundModal}
+                    onSkip={handleSkip}
+                    onPayWithStripe={handlePayWithStripe}
+                    onPayWithBalance={handlePayWithBalance}
+                    isLoading={createBounty.isPending}
+                />
+            )}
         </div>
     );
 });

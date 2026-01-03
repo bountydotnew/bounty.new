@@ -6,8 +6,13 @@
   "dependencies": {
     "@bounty/auth": "workspace:*",
     "@bounty/db": "workspace:*",
+    "@bounty/env": "workspace:*",
+    "@bounty/stripe": "workspace:*",
     "@bounty/realtime": "workspace:*",
+    "@bounty/email": "workspace:*",
     "@bounty/track": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "@polar-sh/sdk": "catalog:",
     "@octokit/core": "catalog:",
     "@octokit/plugin-rest-endpoint-methods": "catalog:",
     "zod": "catalog:",

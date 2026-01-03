@@ -47,7 +47,7 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent
         className="flex w-auto items-center justify-center rounded-2xl border-none p-1"
-        showOverlay
+        overlayVariant="solid"
       >
         <DialogTitle className="text-center text-2xl" />
 

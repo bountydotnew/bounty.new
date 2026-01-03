@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { protectedProcedure, publicProcedure, router } from '../trpc';
 import { billingRouter } from './billing';
 import { bountiesRouter } from './bounties';
+import { connectRouter } from './connect';
 import { earlyAccessRouter } from './early-access';
 import { emailsRouter } from './emails';
 import { newsRouter } from './news';
@@ -70,6 +71,7 @@ export const appRouter = router({
   emails: emailsRouter,
   repository: repositoryRouter,
   billing: billingRouter,
+  connect: connectRouter,
 });
 
 export type AppRouter = typeof appRouter;

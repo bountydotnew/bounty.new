@@ -153,6 +153,9 @@ export const BountyCard = memo(function BountyCard({
         .replace('http://github.com/', '')
     : 'ripgrim/bountydotnew';
 
+  // Determine funding status - simple funded or unfunded
+  const isFunded = bounty.paymentStatus === 'held';
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
@@ -191,6 +194,13 @@ export const BountyCard = memo(function BountyCard({
         <div className="flex h-5 items-center gap-[5px] px-[3px]">
           <span className="text-[13px] font-semibold leading-[150%] text-[#6CFF0099]">
             {formattedAmount}
+          </span>
+          <span
+            className={isFunded
+              ? 'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#6CFF0015] text-[#6CFF0099] border border-[#6CFF0020]'
+              : 'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#FFFFFF08] text-[#FFFFFF66] border border-[#FFFFFF12]'}
+          >
+            {isFunded ? 'Funded' : 'Unfunded'}
           </span>
         </div>
       </div>

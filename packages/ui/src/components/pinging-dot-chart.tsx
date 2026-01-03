@@ -71,7 +71,7 @@ export function PingingDotChart({
               dataKey={yKey}
               dot={<CustomizedDot />}
               stroke={`var(--color-${yKey})`}
-              strokeDasharray={dashed ? '4 4' : undefined}
+              strokeDasharray={dashed ? '4 4' : 0}
               type="linear"
             />
           </LineChart>

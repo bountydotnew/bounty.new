@@ -45,7 +45,7 @@ const roadmapItems: {
   {
     title: 'Payment Integration',
     description:
-      "Integration with payment providers for secure transactions. Escrow system for bounty funds, automatic payouts, and billing management. Nobody gives a shit about your platform if they can't get paid reliably.",
+      "Integration with payment providers for secure transactions. Secure payment system for bounty funds, automatic payouts, and billing management. Nobody gives a shit about your platform if they can't get paid reliably.",
     status: {
       text: 'In Progress',
       type: 'pending',

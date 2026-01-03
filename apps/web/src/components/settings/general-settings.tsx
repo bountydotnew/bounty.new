@@ -124,12 +124,6 @@ const FeaturesCard = ({ billingLoading, isPro }: FeaturesCardProps) => {
       badgeLabel: 'Available',
       badgeVariant: 'default',
     },
-    {
-      title: 'Passkey Security',
-      description: 'Passwordless authentication',
-      badgeLabel: 'Available',
-      badgeVariant: 'default',
-    },
   ];
 
   return (

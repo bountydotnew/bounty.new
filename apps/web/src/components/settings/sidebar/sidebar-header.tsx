@@ -8,6 +8,7 @@ import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
 import { cn } from '@bounty/ui/lib/utils';
 import { CommandMenu } from '@/components/command-menu';
 import type { Bounty } from '@/types/dashboard';
+import { toast } from 'sonner';
 
 interface HeaderProps {
   myBounties?: Bounty[];
@@ -22,7 +23,7 @@ export const Header = ({}: HeaderProps = {}) => {
 
   const handleCreateBounty = () => {
     const isOnDashboard = pathname === '/dashboard';
-    
+    toast.info('Bounty created successfully');
     if (isOnDashboard) {
       // Already on dashboard - scroll to top and focus textarea
       window.scrollTo({ top: 0, behavior: 'smooth' });

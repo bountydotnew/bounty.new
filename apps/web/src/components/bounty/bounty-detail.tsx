@@ -23,6 +23,8 @@ import { SubmissionsMobileSidebar } from '@/components/bounty/submissions-mobile
 import type { BountyCommentCacheItem } from '@/types/comments';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { Header } from '../dual-sidebar/sidebar-header';
+import { authClient } from '@bounty/auth/client';
+import { Alert, AlertDescription } from '@bounty/ui/components/alert';
 
 interface BountyDetailPageProps {
   id: string;
@@ -38,6 +40,8 @@ interface BountyDetailPageProps {
   initialVotes?: { count: number; isVoted: boolean };
   initialComments?: BountyCommentCacheItem[];
   initialBookmarked?: boolean;
+  paymentStatus?: string | null;
+  createdById?: string;
 }
 
 export default function BountyDetailPage({
@@ -52,11 +56,81 @@ export default function BountyDetailPage({
   initialVotes,
   initialComments,
   initialBookmarked,
+  paymentStatus,
+  createdById,
 }: BountyDetailPageProps) {
   const { editModalOpen, openEditModal, closeEditModal, editingBountyId } =
     useBountyModals();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const { data: session } = authClient.useSession();
+
+  // Fetch payment status if needed
+  const paymentStatusQuery = useQuery({
+    ...trpc.bounties.getBountyPaymentStatus.queryOptions({ bountyId: id }),
+    enabled: Boolean(
+      id &&
+      session?.user?.id &&
+      createdById &&
+      createdById === session.user.id &&
+      paymentStatus === 'pending'
+    ),
+  });
+
+  const createPaymentMutation = useMutation({
+    mutationFn: async () => {
+      return await trpcClient.bounties.createPaymentForBounty.mutate({
+        bountyId: id,
+      });
+    },
+    onSuccess: (result) => {
+      if (result?.data?.checkoutUrl) {
+        // Redirect to Stripe Checkout
+        window.location.href = result.data.checkoutUrl;
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to create payment: ${error.message}`);
+    },
+  });
+
+  const handleCompletePayment = () => {
+    createPaymentMutation.mutate();
+  };
+
+  const isCreator = session?.user?.id === createdById;
+  const needsPayment = paymentStatus === 'pending' && isCreator;
+  const isUnfunded = paymentStatus !== 'held' && paymentStatus !== null;
+
+  const recheckPaymentMutation = useMutation({
+    mutationFn: async () => {
+      return await trpcClient.bounties.recheckPaymentStatus.mutate({
+        bountyId: id,
+      });
+    },
+    onSuccess: (result) => {
+      if (result.success && result.paymentStatus === 'held') {
+        toast.success(result.message || 'Payment verified! Bounty is now live.');
+        // Invalidate queries to refresh the page
+        queryClient.invalidateQueries({
+          queryKey: [['bounties', 'getBountyDetail']],
+        });
+        queryClient.invalidateQueries({
+          queryKey: [['bounties', 'getBountyPaymentStatus']],
+        });
+      } else {
+        toast.info(result.message || 'Payment status checked. No changes needed.');
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to recheck payment: ${error.message}`);
+    },
+  });
+
+  const handleRecheckPayment = () => {
+    recheckPaymentMutation.mutate();
+  };
+
   const votes = useQuery({
     ...trpc.bounties.getBountyVotes.queryOptions({ bountyId: id }),
     initialData: initialVotes,
@@ -260,6 +334,39 @@ export default function BountyDetailPage({
           <div className="flex-1 p-8 xl:flex-2">
             {/* Header */}
             <div className="mb-6">
+              {needsPayment && (
+                <Alert className="mb-4 border-yellow-500/20 bg-yellow-500/10">
+                  <AlertDescription className="flex items-center justify-between">
+                    <span className="text-yellow-400">
+                      This bounty requires payment to become active. Complete payment to allow submissions.
+                    </span>
+                    <div className="flex items-center gap-2 ml-4">
+                      <Button
+                        onClick={handleRecheckPayment}
+                        disabled={recheckPaymentMutation.isPending || paymentStatusQuery.isLoading}
+                        size="sm"
+                        variant="outline"
+                      >
+                        {recheckPaymentMutation.isPending ? 'Checking...' : 'Recheck'}
+                      </Button>
+                      <Button
+                        onClick={handleCompletePayment}
+                        disabled={createPaymentMutation.isPending || paymentStatusQuery.isLoading}
+                        size="sm"
+                      >
+                        {createPaymentMutation.isPending ? 'Preparing...' : 'Complete Payment'}
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+              {!isCreator && isUnfunded && (
+                <Alert className="mb-4 border-[#232323] bg-[#191919]">
+                  <AlertDescription className="text-[#FFFFFF99]">
+                    This bounty is not yet funded. Submissions may be restricted until payment is completed.
+                  </AlertDescription>
+                </Alert>
+              )}
               <div className="mb-4 flex items-center justify-between">
                 <h1 className="font-bold text-4xl text-white leading-[120%] tracking-tight">
                   {title}
@@ -312,7 +419,7 @@ export default function BountyDetailPage({
                   </Avatar>
                   <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm text-white">
+                      <span className="font-medium text-sm text-white whitespace-nowrap">
                         {user}
                       </span>
                       <div className="flex h-4 w-4 rotate-45 transform items-center justify-center rounded bg-blue-500">

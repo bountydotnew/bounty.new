@@ -9,7 +9,7 @@
 # bounty.new
 
 A modern bounty platform for developers and creators.
-
+<!-- 
 ## What is bounty.new?
 
 bounty.new connects talented developers with rewarding opportunities through structured bounties. Post tasks, complete challenges, earn rewards.
@@ -128,7 +128,7 @@ bun dev
 1. Build: `bun build`
 2. Setup PostgreSQL
 3. Configure environment
-4. Start: `bun start`
+4. Start: `bun start` -->
 
 ## Links
 

@@ -11,7 +11,6 @@ import {
   deviceCode,
   invite,
   notification,
-  passkey,
   session,
   submission,
   user as userTable,
@@ -34,13 +33,15 @@ import {
 import { Polar } from "@polar-sh/sdk";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { bearer, deviceAuthorization, lastLoginMethod, openAPI, multiSession } from "better-auth/plugins";
-import { admin } from "better-auth/plugins/admin";
-import { passkey as passkeyPlugin } from "better-auth/plugins/passkey";
+import { bearer, deviceAuthorization, openAPI, multiSession } from "better-auth/plugins";
+import { admin } from "better-auth/plugins";
 import { emailOTP } from "better-auth/plugins/email-otp";
 import { sendEmail } from "@bounty/email";
 import { OTPVerification, ForgotPassword } from "@bounty/email";
-import { GithubManager } from "@bounty/api/driver/github";
+import { Octokit } from '@octokit/core';
+import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods';
+
+const GitHubOctokit = Octokit.plugin(restEndpointMethods);
 
 const schema = {
   account,
@@ -54,7 +55,6 @@ const schema = {
   deviceCode,
   invite,
   notification,
-  passkey,
   session,
   submission,
   user: userTable,
@@ -101,14 +101,14 @@ async function syncGitHubHandle(userId: string, accessToken: string): Promise<vo
   }
 
   try {
-    const github = new GithubManager({ token: accessToken });
-    const githubUser = await github.getAuthenticatedUser();
+    const octokit = new GitHubOctokit({ auth: accessToken });
+    const { data } = await octokit.rest.users.getAuthenticated();
     
-    if (githubUser?.login) {
+    if (data?.login) {
       await db
         .update(userTable)
         .set({
-          handle: githubUser.login.toLowerCase(),
+          handle: data.login.toLowerCase(),
           updatedAt: new Date(),
         })
         .where(eq(userTable.id, userId));
@@ -247,20 +247,9 @@ export const auth = betterAuth({
         }),
       ],
     }),
-    passkeyPlugin({
-      rpID: env.NODE_ENV === 'production' ? 'bounty.new' : 'localhost',
-      rpName: 'Bounty.new',
-      origin:
-        env.NODE_ENV === 'production'
-          ? 'https://bounty.new'
-          : 'http://localhost:3000',
-    }),
     admin(),
     bearer(),
     openAPI(),
-    lastLoginMethod({
-      storeInDatabase: true,
-    }),
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {
         try {

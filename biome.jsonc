@@ -6,6 +6,9 @@
       "suspicious": {
         "noConsole": "off"
       },
+      "correctness": {
+        "noUnusedImports": "off"
+      },
       "performance": {
         "noNamespaceImport": "off"
       },

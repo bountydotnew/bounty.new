@@ -32,6 +32,7 @@ export const t = initTRPC.context<Context>().meta<OpenApiMeta>().create({
 });
 
 export const router = t.router;
+export const createCallerFactory = t.createCallerFactory;
 
 export const publicProcedure = t.procedure;
 

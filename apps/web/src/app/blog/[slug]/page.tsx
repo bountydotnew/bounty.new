@@ -28,21 +28,21 @@ function BlogPostSkeleton() {
 }
 
 async function BlogPost({ slug }: { slug: string }) {
-  try {
-    const postData = await getSinglePost(slug);
-    const { post } = postData;
+  const postData = await getSinglePost(slug);
 
-    const processedContent = await processHtmlContent(post.content);
-
-    return (
-      <BlogPostContent
-        post={post as Post}
-        processedContent={processedContent}
-      />
-    );
-  } catch (_error) {
+  if (!postData?.post) {
     notFound();
   }
+
+  const { post } = postData;
+  const processedContent = await processHtmlContent(post.content);
+
+  return (
+    <BlogPostContent
+      post={post as Post}
+      processedContent={processedContent}
+    />
+  );
 }
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {

@@ -3,12 +3,9 @@ import type { Post } from '@/types/post';
 import { BlogPageContent } from '@/components/blog/blog-page-content';
 
 export default async function BlogPage() {
-  let posts: Post[] = [];
+  const postsData = await getPosts();
 
-  try {
-    const postsData = await getPosts();
-    posts = postsData?.posts ?? [];
-  } catch {
+  if (!postsData?.posts) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-24 text-center text-white">
         Error loading blog posts. Please try again later.
@@ -16,5 +13,5 @@ export default async function BlogPage() {
     );
   }
 
-  return <BlogPageContent posts={posts} />;
+  return <BlogPageContent posts={postsData.posts} />;
 }
