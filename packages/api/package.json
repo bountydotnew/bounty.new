@@ -13,10 +13,10 @@
     "zod": "catalog:",
     "@trpc/server": "catalog:",
     "@unkey/ratelimit": "catalog:",
-    "lru-cache": "catalog:"
+    "lru-cache": "catalog:",
+    "trpc-to-openapi": "^3.1.0"
   },
   "devDependencies": {
-    "typescript": "catalog:",
-    "trpc-to-openapi": "^3.1.0"
+    "typescript": "catalog:"
   }
 }

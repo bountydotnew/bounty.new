@@ -324,6 +324,7 @@ export const profilesRouter = router({
           .default('totalEarned'),
       })
     )
+    .output(topContributorsOutputSchema)
     .query(async ({ input }) => {
       try {
         // Check cache first
