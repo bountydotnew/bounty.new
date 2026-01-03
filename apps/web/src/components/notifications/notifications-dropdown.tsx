@@ -163,7 +163,7 @@ export function NotificationsDropdown({
           <div className={cn('relative cursor-pointer', triggerClassName)}>
             {children}
             {unreadCount > 0 && (
-              <div className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#6CFF00]" />
+              <div className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-[#6CFF00]" />
             )}
           </div>
         ) : (
