@@ -27,6 +27,23 @@ import {
   router,
 } from '../trpc';
 
+// Output schemas for OpenAPI
+const hasAccessOutputSchema = z.object({
+  success: z.boolean(),
+  hasAccess: z.boolean(),
+});
+
+const handleAvailabilityOutputSchema = z.object({
+  success: z.boolean(),
+  available: z.boolean(),
+});
+
+const setHandleOutputSchema = z.object({
+  success: z.boolean(),
+  handle: z.string(),
+  message: z.string(),
+});
+
 type UserReputationRow = typeof userReputation.$inferSelect;
 
 // Reused regex for token generation
@@ -131,7 +148,20 @@ export const userRouter = router({
       }
       return updated;
     }),
-  hasAccess: protectedProcedure.query(async ({ ctx }) => {
+  hasAccess: protectedProcedure
+    .meta({
+      openapi: {
+        method: 'GET',
+        path: '/users/me/access',
+        summary: 'Check user access',
+        description: 'Returns whether the current user has platform access. Requires authentication.',
+        tags: ['Users'],
+        protect: true,
+      },
+    })
+    .input(z.void())
+    .output(hasAccessOutputSchema)
+    .query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 
     const userRecord = await db
@@ -566,7 +596,17 @@ export const userRouter = router({
     }),
 
   checkHandleAvailability: publicProcedure
+    .meta({
+      openapi: {
+        method: 'GET',
+        path: '/users/handle-availability',
+        summary: 'Check handle availability',
+        description: 'Checks if a username handle is available',
+        tags: ['Users'],
+      },
+    })
     .input(z.object({ handle: z.string().min(3).max(20) }))
+    .output(handleAvailabilityOutputSchema)
     .query(async ({ ctx, input }) => {
       // No try-catch needed - let TRPC handle errors naturally
       // Database errors will be caught by TRPC's error handler
@@ -583,7 +623,18 @@ export const userRouter = router({
     }),
 
   setHandle: protectedProcedure
+    .meta({
+      openapi: {
+        method: 'POST',
+        path: '/users/me/handle',
+        summary: 'Set user handle',
+        description: 'Sets the username handle for the current user. Requires authentication.',
+        tags: ['Users'],
+        protect: true,
+      },
+    })
     .input(z.object({ handle: z.string().min(3).max(20) }))
+    .output(setHandleOutputSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const handleLower = input.handle.toLowerCase();
