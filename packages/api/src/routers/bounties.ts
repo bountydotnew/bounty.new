@@ -100,6 +100,10 @@ const createBountyOutputSchema = z.object({
     updatedAt: z.date(),
   }),
   message: z.string(),
+  checkoutUrl: z.string().nullable().optional(),
+  fees: z.number().optional(),
+  totalWithFees: z.number().optional(),
+  payLater: z.boolean().optional(),
 });
 
 const bountyListOutputSchema = z.object({
