@@ -1,9 +1,10 @@
 import type { ExtendedAuthSession } from '@bounty/types';
 import { initTRPC, TRPCError } from '@trpc/server';
 import type { ReasonCode } from '@bounty/types';
+import type { OpenApiMeta } from 'trpc-to-openapi';
 import type { Context } from './context';
 
-export const t = initTRPC.context<Context>().create({
+export const t = initTRPC.context<Context>().meta<OpenApiMeta>().create({
   errorFormatter({ shape, error, path }) {
     const cause = error.cause as unknown;
     const reason = (typeof cause === 'object' && cause && 'reason' in (cause as Record<string, unknown>)

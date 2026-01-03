@@ -36,6 +36,111 @@ const parseAmount = (amount: string | number | null): number => {
   return Number.isNaN(parsed) ? 0 : parsed;
 };
 
+// Output schemas for OpenAPI documentation
+const bountyStatsOutputSchema = z.object({
+  success: z.boolean(),
+  data: z.object({
+    totalBounties: z.number(),
+    activeBounties: z.number(),
+    totalBountiesValue: z.number(),
+    totalPayout: z.number(),
+  }),
+});
+
+const creatorSchema = z.object({
+  id: z.string(),
+  name: z.string().nullable(),
+  image: z.string().nullable(),
+});
+
+const bountyOutputSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string(),
+  description: z.string(),
+  amount: z.number(),
+  currency: z.string(),
+  status: z.enum(['draft', 'open', 'in_progress', 'completed', 'cancelled']),
+  deadline: z.date().nullable(),
+  tags: z.array(z.string()).nullable(),
+  repositoryUrl: z.string().nullable(),
+  issueUrl: z.string().nullable().optional(),
+  isFeatured: z.boolean().nullable().optional(),
+  createdById: z.string().optional(),
+  assignedToId: z.string().nullable().optional(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  creator: creatorSchema,
+});
+
+const createBountyOutputSchema = z.object({
+  success: z.boolean(),
+  data: z.object({
+    id: z.string().uuid(),
+    title: z.string(),
+    description: z.string(),
+    amount: z.string(),
+    currency: z.string(),
+    status: z.string(),
+    deadline: z.date().nullable(),
+    tags: z.array(z.string()).nullable(),
+    repositoryUrl: z.string().nullable(),
+    issueUrl: z.string().nullable(),
+    createdById: z.string(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+  }),
+  message: z.string(),
+});
+
+const bountyListOutputSchema = z.object({
+  success: z.boolean(),
+  data: z.array(bountyOutputSchema),
+  pagination: z.object({
+    page: z.number(),
+    limit: z.number(),
+    total: z.number(),
+    totalPages: z.number(),
+  }),
+});
+
+const singleBountyOutputSchema = z.object({
+  success: z.boolean(),
+  data: bountyOutputSchema,
+});
+
+const deleteBountyOutputSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+});
+
+const bountyVotesOutputSchema = z.object({
+  count: z.number(),
+  isVoted: z.boolean(),
+});
+
+const commentSchema = z.object({
+  id: z.string().uuid(),
+  content: z.string(),
+  originalContent: z.string().nullable(),
+  parentId: z.string().nullable(),
+  createdAt: z.date(),
+  editCount: z.number().nullable(),
+  user: z.object({
+    id: z.string(),
+    name: z.string().nullable(),
+    image: z.string().nullable(),
+  }).nullable(),
+  likeCount: z.number(),
+  isLiked: z.boolean(),
+});
+
+const bountyDetailOutputSchema = z.object({
+  bounty: bountyOutputSchema,
+  votes: bountyVotesOutputSchema,
+  bookmarked: z.boolean(),
+  comments: z.array(commentSchema),
+});
+
 const createBountySchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
@@ -169,7 +274,19 @@ const bountyListCache = new LRUCache<{
 });
 
 export const bountiesRouter = router({
-  getBountyStats: publicProcedure.query(async () => {
+  getBountyStats: publicProcedure
+    .meta({
+      openapi: {
+        method: 'GET',
+        path: '/bounties/stats',
+        summary: 'Get bounty statistics',
+        description: 'Returns platform-wide bounty statistics including total bounties, active bounties, and payout information',
+        tags: ['Bounties'],
+      },
+    })
+    .input(z.void())
+    .output(bountyStatsOutputSchema)
+    .query(async () => {
     try {
       // Check cache first
       const cacheKey = 'bounty_stats';
@@ -229,7 +346,18 @@ export const bountiesRouter = router({
   }),
 
   createBounty: protectedProcedure
+    .meta({
+      openapi: {
+        method: 'POST',
+        path: '/bounties',
+        summary: 'Create a new bounty',
+        description: 'Creates a new bounty with the provided details. Requires authentication.',
+        tags: ['Bounties'],
+        protect: true,
+      },
+    })
     .input(createBountySchema)
+    .output(createBountyOutputSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const normalizedAmount = String(input.amount);
@@ -305,7 +433,18 @@ export const bountiesRouter = router({
     }),
 
   fetchAllBounties: protectedProcedure
+    .meta({
+      openapi: {
+        method: 'GET',
+        path: '/bounties',
+        summary: 'List all bounties',
+        description: 'Returns a paginated list of bounties with optional filtering by status, tags, and search query. Requires authentication.',
+        tags: ['Bounties'],
+        protect: true,
+      },
+    })
     .input(getBountiesSchema)
+    .output(bountyListOutputSchema)
     .query(async ({ input }) => {
       try {
         const offset = (input.page - 1) * input.limit;
@@ -392,7 +531,18 @@ export const bountiesRouter = router({
     }),
 
   fetchBountyById: protectedProcedure
+    .meta({
+      openapi: {
+        method: 'GET',
+        path: '/bounties/{id}',
+        summary: 'Get bounty by ID',
+        description: 'Returns the details of a specific bounty by its ID. Requires authentication.',
+        tags: ['Bounties'],
+        protect: true,
+      },
+    })
     .input(z.object({ id: z.string().uuid() }))
+    .output(singleBountyOutputSchema)
     .query(async ({ input }) => {
       try {
         const [result] = await db
@@ -648,6 +798,16 @@ export const bountiesRouter = router({
     }),
 
   updateBounty: protectedProcedure
+    .meta({
+      openapi: {
+        method: 'PATCH',
+        path: '/bounties/{id}',
+        summary: 'Update a bounty',
+        description: 'Updates an existing bounty. Only the bounty creator can update it. Requires authentication.',
+        tags: ['Bounties'],
+        protect: true,
+      },
+    })
     .input(updateBountySchema)
     .mutation(async ({ ctx, input }) => {
       try {
@@ -729,7 +889,18 @@ export const bountiesRouter = router({
     }),
 
   deleteBounty: protectedProcedure
+    .meta({
+      openapi: {
+        method: 'DELETE',
+        path: '/bounties/{id}',
+        summary: 'Delete a bounty',
+        description: 'Deletes a bounty. Only the bounty creator can delete it. Requires authentication.',
+        tags: ['Bounties'],
+        protect: true,
+      },
+    })
     .input(z.object({ id: z.string().uuid() }))
+    .output(deleteBountyOutputSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const [existingBounty] = await db
@@ -841,7 +1012,17 @@ export const bountiesRouter = router({
     }),
 
   getBountyVotes: publicProcedure
+    .meta({
+      openapi: {
+        method: 'GET',
+        path: '/bounties/{bountyId}/votes',
+        summary: 'Get bounty votes',
+        description: 'Returns the vote count for a bounty and whether the current user has voted',
+        tags: ['Bounties'],
+      },
+    })
     .input(z.object({ bountyId: z.string().uuid() }))
+    .output(bountyVotesOutputSchema)
     .query(async ({ ctx, input }) => {
       try {
         const [countRes] = await db
@@ -874,7 +1055,17 @@ export const bountiesRouter = router({
     }),
 
   getBountyDetail: publicProcedure
+    .meta({
+      openapi: {
+        method: 'GET',
+        path: '/bounties/{id}/detail',
+        summary: 'Get bounty detail',
+        description: 'Returns complete bounty details including votes, bookmark status, and comments',
+        tags: ['Bounties'],
+      },
+    })
     .input(z.object({ id: z.string().uuid() }))
+    .output(bountyDetailOutputSchema)
     .query(async ({ ctx, input }) => {
       try {
         const [bountyRow] = await db
@@ -1350,7 +1541,17 @@ export const bountiesRouter = router({
     }),
 
   getBountyComments: publicProcedure
+    .meta({
+      openapi: {
+        method: 'GET',
+        path: '/bounties/{bountyId}/comments',
+        summary: 'Get bounty comments',
+        description: 'Returns all comments for a bounty with like counts',
+        tags: ['Comments'],
+      },
+    })
     .input(z.object({ bountyId: z.string().uuid() }))
+    .output(z.array(commentSchema))
     .query(async ({ ctx, input }) => {
       try {
         const comments = await db

@@ -30,6 +30,38 @@ const rateUserSchema = z.object({
   comment: z.string().max(500).optional(),
 });
 
+// Output schemas for OpenAPI
+const profileOutputSchema = z.object({
+  success: z.boolean(),
+  data: z.object({
+    user: z.object({
+      id: z.string(),
+      name: z.string().nullable(),
+      email: z.string(),
+      image: z.string().nullable(),
+      handle: z.string().nullable().optional(),
+      isProfilePrivate: z.boolean().optional(),
+      createdAt: z.date(),
+    }),
+    profile: z.any().nullable(),
+    reputation: z.any().nullable(),
+  }),
+  isPrivate: z.boolean().optional(),
+});
+
+const topContributorsOutputSchema = z.object({
+  success: z.boolean(),
+  data: z.array(z.object({
+    user: z.object({
+      id: z.string(),
+      name: z.string().nullable(),
+      image: z.string().nullable(),
+    }),
+    profile: z.any().nullable(),
+    reputation: z.any().nullable(),
+  })),
+});
+
 // LRU Cache for user profiles (cache for 5 minutes, max 200 profiles)
 export const userProfileCache = new LRUCache<{
   success: boolean;
@@ -60,12 +92,22 @@ const topContributorsCache = new LRUCache<{
 
 export const profilesRouter = router({
   getProfile: publicProcedure
+    .meta({
+      openapi: {
+        method: 'GET',
+        path: '/profiles',
+        summary: 'Get user profile',
+        description: 'Returns a user profile by userId or handle',
+        tags: ['Profiles'],
+      },
+    })
     .input(
       z.object({
         userId: z.string().optional(),
         handle: z.string().min(3).max(20).optional(),
       })
     )
+    .output(profileOutputSchema)
     .query(async ({ input, ctx }) => {
       try {
         if (!(input.userId || input.handle)) {
@@ -265,6 +307,15 @@ export const profilesRouter = router({
     }),
 
   getTopContributors: publicProcedure
+    .meta({
+      openapi: {
+        method: 'GET',
+        path: '/profiles/top-contributors',
+        summary: 'Get top contributors',
+        description: 'Returns a list of top contributors sorted by earnings, completions, or rating',
+        tags: ['Profiles'],
+      },
+    })
     .input(
       z.object({
         limit: z.number().int().positive().max(50).default(10),
