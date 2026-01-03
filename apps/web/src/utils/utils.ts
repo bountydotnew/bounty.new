@@ -12,11 +12,12 @@ export const GITHUB_URL_REGEX = /github\.com\/([^/]+)\/([^/]+)/;
  * @param repo - Repository string in format "owner/repo"
  * @returns Object with owner and repo, or null if invalid format
  */
-export function parseRepo(repo: string): { owner: string; repo: string } | null {
-    const parts = repo.split('/');
-    if (parts.length === 2) {
-        return { owner: parts[0], repo: parts[1] };
-    }
-    return null;
+export function parseRepo(
+  repo: string
+): { owner: string; repo: string } | null {
+  const parts = repo.split('/');
+  if (parts.length === 2) {
+    return { owner: parts[0], repo: parts[1] };
+  }
+  return null;
 }
-

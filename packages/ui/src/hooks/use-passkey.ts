@@ -43,7 +43,9 @@ export function usePasskey(): UsePasskeyReturn {
       if ('data' in result && result.data) {
         setPasskeys(result.data);
       }
-    } catch (_err) {}
+    } catch {
+      // Silently fail on initial load
+    }
   }, []);
 
   useEffect(() => {

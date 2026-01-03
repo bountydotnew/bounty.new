@@ -1,6 +1,11 @@
 'use client';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@bounty/ui/components/tabs';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@bounty/ui/components/tabs';
 import { ProfileBounties } from './profile-bounties';
 import { ProfileActivity } from './profile-activity';
 import { ProfileHighlights } from './profile-highlights';

@@ -1,8 +1,8 @@
 import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
-import { eq, lt } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { randomInt } from 'crypto';
+import { randomInt } from 'node:crypto';
 
 const info = console.info.bind(console);
 const error = console.error.bind(console);
@@ -16,7 +16,13 @@ const generateOTP = (): string => {
   return code.toString().padStart(6, '0');
 };
 
-import { db, user as userTable, waitlist, bounty, userProfile } from '@bounty/db';
+import {
+  db,
+  user as userTable,
+  waitlist,
+  bounty,
+  userProfile,
+} from '@bounty/db';
 import {
   AlphaAccessGranted,
   FROM_ADDRESSES,
@@ -30,7 +36,6 @@ import {
   protectedProcedure,
   router,
 } from '../trpc';
-import { env } from '@bounty/env/server';
 
 export const earlyAccessRouter = router({
   getWaitlistCount: publicProcedure.query(async () => {
@@ -395,10 +400,11 @@ export const earlyAccessRouter = router({
         if (existingEntry) {
           // Update existing entry
           entryId = existingEntry.id;
-          
+
           // Get position before update
           const allEntries = await db.query.waitlist.findMany({
-            where: (fields, { lt }) => lt(fields.createdAt, existingEntry.createdAt),
+            where: (fields, { lt }) =>
+              lt(fields.createdAt, existingEntry.createdAt),
           });
           position = allEntries.length + 1;
 
@@ -651,7 +657,7 @@ export const earlyAccessRouter = router({
             where: (fields, { lt }) => lt(fields.createdAt, entry.createdAt),
           });
           position = allEntries.length + 1;
-          
+
           // Update position in database for future queries
           await db
             .update(waitlist)
@@ -711,7 +717,7 @@ export const earlyAccessRouter = router({
             .update(waitlist)
             .set({ userId })
             .where(eq(waitlist.id as any, entry.id) as any);
-          
+
           info('[getMyWaitlistEntry] Auto-linked entry by email:', userEmail);
         }
       }
@@ -726,7 +732,7 @@ export const earlyAccessRouter = router({
           .insert(waitlist)
           .values({
             email: userEmail,
-            userId: userId,
+            userId,
             position,
             createdAt: new Date(),
           })
@@ -734,7 +740,7 @@ export const earlyAccessRouter = router({
 
         if (newEntry) {
           info('[getMyWaitlistEntry] Auto-created entry for user:', userId);
-          
+
           // Fetch the full entry to get position
           entry = await db.query.waitlist.findFirst({
             where: (fields, { eq }) => eq(fields.id, newEntry.id),
@@ -756,7 +762,7 @@ export const earlyAccessRouter = router({
           where: (fields, { lt }) => lt(fields.createdAt, entry.createdAt),
         });
         position = allEntries.length + 1;
-        
+
         // Update position in database for future queries
         await db
           .update(waitlist)
@@ -882,7 +888,12 @@ export const earlyAccessRouter = router({
           }
 
           if (input.role) {
-            info('[linkUserToWaitlist] Role preference:', input.role, 'for user:', userId);
+            info(
+              '[linkUserToWaitlist] Role preference:',
+              input.role,
+              'for user:',
+              userId
+            );
           }
         }
 
@@ -906,7 +917,7 @@ export const earlyAccessRouter = router({
               .returning({ id: bounty.id });
 
             if (newBounty) {
-            bountyId = newBounty.id;
+              bountyId = newBounty.id;
             }
           } catch (bountyError) {
             warn('[linkUserToWaitlist] Failed to create bounty:', bountyError);
@@ -1014,13 +1025,25 @@ export const earlyAccessRouter = router({
           .optional()
           .refine(
             (val) => {
-              if (!val || val === '') return true; // Optional field
+              if (!val || val === '') {
+                return true; // Optional field
+              }
               try {
                 const date = new Date(val);
-                if (isNaN(date.getTime())) return false; // Invalid date
+                if (Number.isNaN(date.getTime())) {
+                  return false; // Invalid date
+                }
                 // Compare dates (ignore time for day-level comparison)
-                const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-                const nowOnly = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+                const dateOnly = new Date(
+                  date.getFullYear(),
+                  date.getMonth(),
+                  date.getDate()
+                );
+                const nowOnly = new Date(
+                  new Date().getFullYear(),
+                  new Date().getMonth(),
+                  new Date().getDate()
+                );
                 return dateOnly >= nowOnly; // Must be today or in the future
               } catch {
                 return false;

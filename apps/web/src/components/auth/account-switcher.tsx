@@ -37,7 +37,10 @@ interface DeviceSession {
   };
 }
 
-export function AccountSwitcher({ currentUserId, trigger }: AccountSwitcherProps) {
+export function AccountSwitcher({
+  currentUserId,
+  trigger,
+}: AccountSwitcherProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isSwitching, setIsSwitching] = React.useState(false);
@@ -47,8 +50,9 @@ export function AccountSwitcher({ currentUserId, trigger }: AccountSwitcherProps
   const { data: sessions = [], isLoading } = useQuery({
     queryKey: ['auth', 'multiSession', 'listDeviceSessions'],
     queryFn: async () => {
-        const { data, error } = await authClient.multiSession.listDeviceSessions();
-        if (error) {
+      const { data, error } =
+        await authClient.multiSession.listDeviceSessions();
+      if (error) {
         console.error('Failed to load sessions:', error);
         return [];
       }
@@ -95,7 +99,7 @@ export function AccountSwitcher({ currentUserId, trigger }: AccountSwitcherProps
   }, [router]);
 
   const content = (
-    <PopoverContent 
+    <PopoverContent
       className="w-56 rounded-lg border border-[#232323] bg-[#141414] p-2 shadow-[rgba(0,0,0,0.08)_0px_16px_40px_0px]"
       align="start"
       sideOffset={8}
@@ -103,27 +107,29 @@ export function AccountSwitcher({ currentUserId, trigger }: AccountSwitcherProps
       {isLoading ? (
         <div className="flex items-center gap-2 px-2 py-2">
           <Spinner className="h-4 w-4" size="sm" />
-          <span className="text-sm text-text-secondary">Loading accounts...</span>
+          <span className="text-sm text-text-secondary">
+            Loading accounts...
+          </span>
         </div>
       ) : (
         <div className="flex flex-col gap-1">
-        {sessions.map((deviceSession) => {
-          const isActive = deviceSession.user.id === currentUserId;
-          const initials = deviceSession.user.name
-            ? deviceSession.user.name.charAt(0).toUpperCase()
-            : '?';
+          {sessions.map((deviceSession) => {
+            const isActive = deviceSession.user.id === currentUserId;
+            const initials = deviceSession.user.name
+              ? deviceSession.user.name.charAt(0).toUpperCase()
+              : '?';
 
-          return (
+            return (
               <button
-              key={deviceSession.session.token}
+                key={deviceSession.session.token}
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-[#232323] disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={isSwitching || isActive}
-              onClick={() =>
-                !isActive && handleSwitchAccount(deviceSession.session.token)
-              }
+                disabled={isSwitching || isActive}
+                onClick={() =>
+                  !isActive && handleSwitchAccount(deviceSession.session.token)
+                }
                 type="button"
                 aria-label={`Switch to ${deviceSession.user.name}`}
-            >
+              >
                 <Avatar className="h-8 w-8 shrink-0">
                   {deviceSession.user.image && (
                     <AvatarImage
@@ -147,13 +153,13 @@ export function AccountSwitcher({ currentUserId, trigger }: AccountSwitcherProps
                   <Check className="h-4 w-4 shrink-0 text-primary" />
                 )}
               </button>
-          );
-        })}
-          
+            );
+          })}
+
           {/* Add new account button */}
           <button
             className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-[#232323]"
-          onClick={handleAddAccount}
+            onClick={handleAddAccount}
             type="button"
           >
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-[#383838]">
@@ -171,9 +177,7 @@ export function AccountSwitcher({ currentUserId, trigger }: AccountSwitcherProps
   if (trigger) {
     return (
       <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-        <PopoverTrigger asChild>
-          {trigger}
-        </PopoverTrigger>
+        <PopoverTrigger asChild>{trigger}</PopoverTrigger>
         {content}
       </Popover>
     );

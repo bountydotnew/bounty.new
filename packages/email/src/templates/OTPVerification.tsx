@@ -1,4 +1,3 @@
-import * as React from 'react';
 import {
   Body,
   Container,
@@ -22,8 +21,18 @@ interface OTPVerificationProps {
   continueUrl?: string;
 }
 
-const OTPVerification = ({ code, entryId, email, type, continueUrl }: OTPVerificationProps) => {
-  const verifyUrl = continueUrl || (entryId ? `https://bounty.new/waitlist/verify?entryId=${entryId}&email=${encodeURIComponent(email)}&code=${code}` : undefined);
+const OTPVerification = ({
+  code,
+  entryId,
+  email,
+  type,
+  continueUrl,
+}: OTPVerificationProps) => {
+  const verifyUrl =
+    continueUrl ||
+    (entryId
+      ? `https://bounty.new/waitlist/verify?entryId=${entryId}&email=${encodeURIComponent(email)}&code=${code}`
+      : undefined);
 
   return (
     <Html lang="en" dir="ltr">
@@ -48,11 +57,13 @@ const OTPVerification = ({ code, entryId, email, type, continueUrl }: OTPVerific
             </Text>
 
             <Text className="text-[14px] leading-[1.6] text-[rgba(38,37,30,0.6)] m-0 mb-[12px]">
-              We received a request to verify the email address associated with your Bounty.new account. If you didn't make this request, you can safely ignore this email.
+              We received a request to verify the email address associated with
+              your Bounty.new account. If you didn't make this request, you can
+              safely ignore this email.
             </Text>
 
             <Text className="text-[14px] leading-[1.6] text-[rgba(38,37,30,0.6)] m-0 mb-[12px]">
-              {verifyUrl 
+              {verifyUrl
                 ? 'To verify your code, click the button below. This code will expire in 10 minutes for security reasons.'
                 : 'Use this code to verify your email. This code will expire in 10 minutes for security reasons.'}
             </Text>
@@ -70,7 +81,8 @@ const OTPVerification = ({ code, entryId, email, type, continueUrl }: OTPVerific
                 </Section>
 
                 <Text className="text-[14px] leading-[1.6] text-[rgba(38,37,30,0.6)] m-0 mb-[12px]">
-                  If the button doesn't work, copy and paste this link into your browser:
+                  If the button doesn't work, copy and paste this link into your
+                  browser:
                 </Text>
 
                 <Text className="text-[12px] leading-[1.6] text-[rgba(38,37,30,0.5)] m-0 mb-[16px] break-all">
@@ -86,7 +98,8 @@ const OTPVerification = ({ code, entryId, email, type, continueUrl }: OTPVerific
                 className="text-[#26251E] underline"
               >
                 contact our support team
-              </Link>.
+              </Link>
+              .
             </Text>
 
             {/* Divider */}

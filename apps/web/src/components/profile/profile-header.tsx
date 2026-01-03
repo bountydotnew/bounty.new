@@ -1,15 +1,29 @@
 'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@bounty/ui/components/avatar';
 import { format } from 'date-fns';
 import { CalendarIcon, MapPinIcon, LinkIcon } from 'lucide-react';
 import { GitHubActivityChart } from './github-activity-chart';
-import type { ProfileUser, ProfileData, ProfileReputation } from '@bounty/types';
+import type {
+  ProfileUser,
+  ProfileData,
+  ProfileReputation,
+} from '@bounty/types';
 
 interface ProfileHeaderProps {
   user: ProfileUser;
-  profile: Pick<ProfileData, 'bio' | 'location' | 'website' | 'githubUsername' | 'skills'> | null;
-  reputation: Pick<ProfileReputation, 'totalEarned' | 'bountiesCompleted' | 'bountiesCreated'> | null;
+  profile: Pick<
+    ProfileData,
+    'bio' | 'location' | 'website' | 'githubUsername' | 'skills'
+  > | null;
+  reputation: Pick<
+    ProfileReputation,
+    'totalEarned' | 'bountiesCompleted' | 'bountiesCreated'
+  > | null;
 }
 
 /**
@@ -61,27 +75,31 @@ function sanitizeUrl(url: string | null | undefined): string | null {
 
 export function ProfileHeader({ user, profile }: ProfileHeaderProps) {
   const initials = user.name ? user.name.charAt(0).toUpperCase() : 'U';
-  
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
           <Avatar className="h-24 w-24 rounded-xl border-2 border-[#232323] shadow-lg md:h-32 md:w-32">
             {user.image && (
-              <AvatarImage alt={user.name || 'User'} src={user.image} className="rounded-xl" />
+              <AvatarImage
+                alt={user.name || 'User'}
+                src={user.image}
+                className="rounded-xl"
+              />
             )}
             <AvatarFallback className="rounded-xl text-4xl bg-[#232323] text-[#5A5A5A]">
               {initials}
             </AvatarFallback>
           </Avatar>
-          
+
           <div className="flex flex-col gap-2 pt-1">
             <div className="flex flex-col gap-1">
               <h1 className="text-2xl font-semibold text-white md:text-3xl">
                 {user.name || 'Anonymous User'}
               </h1>
               {profile?.githubUsername && (
-                <a 
+                <a
                   href={`https://github.com/${profile.githubUsername}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -93,17 +111,17 @@ export function ProfileHeader({ user, profile }: ProfileHeaderProps) {
             </div>
 
             {profile?.bio && (
-              <p className="max-w-md text-sm text-[#929292]">
-                {profile.bio}
-              </p>
+              <p className="max-w-md text-sm text-[#929292]">{profile.bio}</p>
             )}
 
             <div className="flex flex-wrap items-center gap-4 pt-1 text-sm text-[#5A5A5A]">
               <div className="flex items-center gap-1.5">
                 <CalendarIcon className="h-3.5 w-3.5" />
-                <span>Joined {format(new Date(user.createdAt), 'MMMM yyyy')}</span>
+                <span>
+                  Joined {format(new Date(user.createdAt), 'MMMM yyyy')}
+                </span>
               </div>
-              
+
               {profile?.location && (
                 <div className="flex items-center gap-1.5">
                   <MapPinIcon className="h-3.5 w-3.5" />
@@ -114,7 +132,7 @@ export function ProfileHeader({ user, profile }: ProfileHeaderProps) {
               {(() => {
                 const safeUrl = sanitizeUrl(profile?.website);
                 return safeUrl ? (
-                  <a 
+                  <a
                     href={safeUrl}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -159,4 +177,3 @@ export function ProfileHeader({ user, profile }: ProfileHeaderProps) {
     </div>
   );
 }
-

@@ -310,11 +310,11 @@ export const AdminAppSidebar = ({
       isActive: isActive('/admin/waitlist'),
     },
     {
-      title: "Notifications",
+      title: 'Notifications',
       url: '/admin/notifications',
       icon: BellIcon,
       isActive: isActive('/admin/notifications'),
-    }
+    },
   ];
 
   return (

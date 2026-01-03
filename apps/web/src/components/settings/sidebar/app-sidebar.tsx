@@ -1,9 +1,7 @@
 'use client';
 
 import type * as React from 'react';
-import {
-  SidebarToggleIcon,
-} from '@bounty/ui';
+import { SidebarToggleIcon } from '@bounty/ui';
 import { cn } from '@bounty/ui/lib/utils';
 import {
   Sidebar,
@@ -20,7 +18,13 @@ import {
 import { usePathname, useRouter } from 'next/navigation';
 import Link from '@bounty/ui/components/link';
 import { LINKS } from '@/constants';
-import { BellIcon, UserIcon, DollarBillIcon, SecurityIcon, CardIcon } from '@bounty/ui';
+import {
+  BellIcon,
+  UserIcon,
+  DollarBillIcon,
+  SecurityIcon,
+  CardIcon,
+} from '@bounty/ui';
 import { ArrowLeftIcon } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -28,7 +32,12 @@ const NAV_ITEMS = [
   { title: 'Billing', url: '/settings/billing', icon: CardIcon },
   { title: 'Payments', url: '/settings/payments', icon: DollarBillIcon },
   { title: 'Security', url: '/settings/security', icon: SecurityIcon },
-  { title: 'Notifications', url: '/settings/notifications', icon: BellIcon, disabled: true },
+  {
+    title: 'Notifications',
+    url: '/settings/notifications',
+    icon: BellIcon,
+    disabled: true,
+  },
 ];
 
 const BackButton = () => {
@@ -61,10 +70,7 @@ const BackButton = () => {
   );
 };
 
-const renderNavItems = (
-  items: typeof NAV_ITEMS,
-  pathname: string
-) => {
+const renderNavItems = (items: typeof NAV_ITEMS, pathname: string) => {
   return (
     <SidebarMenu className="flex flex-col gap-[8px] w-full">
       {items.map((item) => {
@@ -130,4 +136,3 @@ export const AppSidebar = ({
     </Sidebar>
   );
 };
-

@@ -1,11 +1,6 @@
 import type * as React from 'react';
 import type * as RechartsPrimitive from 'recharts';
 
-interface ChartTheme {
-  light: string;
-  dark: string;
-}
-
 export interface ChartConfigItem {
   label?: React.ReactNode;
   icon?: React.ComponentType;

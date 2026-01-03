@@ -7,7 +7,6 @@ import { Footer } from '@/components/sections/home/footer';
 import { Header } from '@/components/sections/home/header';
 import { BackedByBadge } from '@bounty/ui/components/backed-by-badge';
 import { BountyForm } from '@/components/waitlist/bounty-form';
-import { BountyStatistics } from '@/components/sections/home/bounty-statistics';
 import { WaitlistCount } from '@/components/sections/home/waitlist-count';
 
 const WAITLIST_STORAGE_KEY = 'bounty_waitlist_entry';
@@ -19,7 +18,9 @@ interface WaitlistEntry {
 
 export default function Home() {
   const router = useRouter();
-  const [existingEntry, setExistingEntry] = useState<WaitlistEntry | null>(null);
+  const [existingEntry, setExistingEntry] = useState<WaitlistEntry | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(true);
 
   // Check for existing waitlist entry on mount
@@ -107,7 +108,6 @@ export default function Home() {
               The bounty platform where creators post challenges and developers
               deliver solutions. Instant payouts, integration, zero friction.
             </p>
-
 
             {/* Bounty Statistics */}
             {/* <div className="mb-12 flex w-full items-center justify-center">

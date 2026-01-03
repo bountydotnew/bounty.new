@@ -48,12 +48,24 @@ const createBountySchema = z.object({
     .optional()
     .refine(
       (val) => {
-        if (!val) return true; // Optional field
+        if (!val) {
+          return true; // Optional field
+        }
         const date = new Date(val);
-        if (isNaN(date.getTime())) return false; // Invalid date
+        if (Number.isNaN(date.getTime())) {
+          return false; // Invalid date
+        }
         // Compare dates (ignore time for day-level comparison)
-        const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        const nowOnly = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+        const dateOnly = new Date(
+          date.getFullYear(),
+          date.getMonth(),
+          date.getDate()
+        );
+        const nowOnly = new Date(
+          new Date().getFullYear(),
+          new Date().getMonth(),
+          new Date().getDate()
+        );
         return dateOnly >= nowOnly; // Must be today or in the future
       },
       {
@@ -81,12 +93,24 @@ const updateBountySchema = z.object({
     .optional()
     .refine(
       (val) => {
-        if (!val) return true; // Optional field
+        if (!val) {
+          return true; // Optional field
+        }
         const date = new Date(val);
-        if (isNaN(date.getTime())) return false; // Invalid date
+        if (Number.isNaN(date.getTime())) {
+          return false; // Invalid date
+        }
         // Compare dates (ignore time for day-level comparison)
-        const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        const nowOnly = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+        const dateOnly = new Date(
+          date.getFullYear(),
+          date.getMonth(),
+          date.getDate()
+        );
+        const nowOnly = new Date(
+          new Date().getFullYear(),
+          new Date().getMonth(),
+          new Date().getDate()
+        );
         return dateOnly >= nowOnly; // Must be today or in the future
       },
       {
@@ -602,7 +626,10 @@ export const bountiesRouter = router({
     .mutation(async ({ ctx, input }) => {
       try {
         const [existingBounty] = await db
-          .select({ createdById: bounty.createdById, isFeatured: bounty.isFeatured })
+          .select({
+            createdById: bounty.createdById,
+            isFeatured: bounty.isFeatured,
+          })
           .from(bounty)
           .where(eq(bounty.id, input.bountyId))
           .limit(1);
@@ -625,7 +652,7 @@ export const bountiesRouter = router({
 
         await db
           .update(bounty)
-          .set({ 
+          .set({
             isFeatured: newFeaturedValue,
             updatedAt: new Date(),
           })
@@ -1002,7 +1029,9 @@ export const bountiesRouter = router({
           comments: commentsWithLikes,
         };
       } catch (error) {
-        if (error instanceof TRPCError) throw error;
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to fetch bounty detail',

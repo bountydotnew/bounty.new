@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         success: true,
         message: 'Successfully added to waitlist!',
       });
-    } catch (error) {
+    } catch (_error) {
       return NextResponse.json(
         {
           error: 'Database temporarily unavailable',

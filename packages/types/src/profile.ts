@@ -77,4 +77,3 @@ export interface ProfileBounty {
     image: string | null;
   };
 }
-

@@ -79,7 +79,8 @@ export function usePrefetchInitialData() {
         queryKey: ['auth', 'multiSession', 'listDeviceSessions'],
         queryFn: async () => {
           try {
-            const { data, error } = await authClient.multiSession.listDeviceSessions();
+            const { data, error } =
+              await authClient.multiSession.listDeviceSessions();
             if (error) {
               console.error('Failed to prefetch device sessions:', error);
               return [];

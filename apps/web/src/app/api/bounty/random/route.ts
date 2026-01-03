@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { db } from '@bounty/db';
-import { sql } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,7 +12,8 @@ export async function GET(request: NextRequest) {
     });
 
     // Pick a random one
-    const randomBounty = allOpenBounties[Math.floor(Math.random() * allOpenBounties.length)];
+    const randomBounty =
+      allOpenBounties[Math.floor(Math.random() * allOpenBounties.length)];
 
     if (randomBounty?.id) {
       return NextResponse.redirect(

@@ -1,7 +1,7 @@
-import { AlertTriangle, X } from "lucide-react";
-import { useState } from "react";
-import { cn } from "../lib/utils";
-import { Button } from "./button";
+import { AlertTriangle, X } from 'lucide-react';
+import { useState } from 'react';
+import { cn } from '../lib/utils';
+import { Button } from './button';
 
 interface ErrorBannerProps {
   message: string;
@@ -32,8 +32,8 @@ export function ErrorBanner({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-3 rounded-lg border border-red-500/50 bg-red-500/10 p-4",
-        className,
+        'flex items-center justify-between gap-3 rounded-lg border border-red-500/50 bg-red-500/10 p-4',
+        className
       )}
       role="alert"
       aria-live="assertive"

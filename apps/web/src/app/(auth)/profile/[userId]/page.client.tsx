@@ -12,7 +12,13 @@ import { Lock } from 'lucide-react';
 function prepareProfileData(
   profile: unknown,
   isPrivate: boolean
-): { bio: string | null; location: string | null; website: string | null; githubUsername: string | null; skills: string[] | null } | null {
+): {
+  bio: string | null;
+  location: string | null;
+  website: string | null;
+  githubUsername: string | null;
+  skills: string[] | null;
+} | null {
   if (isPrivate || !profile) {
     return null;
   }
@@ -32,7 +38,11 @@ function prepareProfileData(
 function prepareReputationData(
   reputation: unknown,
   isPrivate: boolean
-): { totalEarned: string | null; bountiesCompleted: number | null; bountiesCreated: number | null } | null {
+): {
+  totalEarned: string | null;
+  bountiesCompleted: number | null;
+  bountiesCreated: number | null;
+} | null {
   if (isPrivate || !reputation) {
     return null;
   }
@@ -47,13 +57,21 @@ function prepareReputationData(
   };
 }
 
-function PrivateProfileMessage({ handle, fallbackHandle }: { handle: string | null; fallbackHandle: string }) {
+function PrivateProfileMessage({
+  handle,
+  fallbackHandle,
+}: {
+  handle: string | null;
+  fallbackHandle: string;
+}) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 rounded-xl p-12">
       <div className="flex h-16 w-16 items-center justify-center rounded-full">
         <Lock className="h-8 w-8 text-[#5A5A5A]" />
       </div>
-      <h2 className="text-xl font-semibold text-white">This profile is private</h2>
+      <h2 className="text-xl font-semibold text-white">
+        This profile is private
+      </h2>
       <p className="text-center text-[#929292]">
         @{handle || fallbackHandle} has set their profile to private.
       </p>
@@ -62,7 +80,7 @@ function PrivateProfileMessage({ handle, fallbackHandle }: { handle: string | nu
 }
 
 export default function ProfilePageClient() {
-  const params = useParams();   
+  const params = useParams();
   const handleOrUserId = params.userId as string;
 
   // Treat the param as a handle (since handles are what users will use in URLs)
@@ -83,7 +101,9 @@ export default function ProfilePageClient() {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center gap-4">
         <h1 className="text-2xl font-bold text-white">User not found</h1>
-        <p className="text-[#929292]">The user you are looking for does not exist.</p>
+        <p className="text-[#929292]">
+          The user you are looking for does not exist.
+        </p>
       </div>
     );
   }
@@ -92,21 +112,26 @@ export default function ProfilePageClient() {
   const { data } = response;
   const { user, profile, reputation } = data;
   // Check isPrivate from response, or fallback to checking if profile/reputation are null (indicating private)
-  const isPrivate = response.isPrivate ?? (profile === null && reputation === null && user.isProfilePrivate);
+  const isPrivate =
+    response.isPrivate ??
+    (profile === null && reputation === null && user.isProfilePrivate);
 
   return (
     <div className="mx-auto w-full max-w-[800px] px-4 py-8 md:py-12">
       <div className="flex flex-col gap-8">
-        <ProfileHeader 
+        <ProfileHeader
           user={{
             ...user,
             createdAt: new Date(user.createdAt),
-          }} 
+          }}
           profile={prepareProfileData(profile, isPrivate)}
           reputation={prepareReputationData(reputation, isPrivate)}
         />
         {isPrivate ? (
-          <PrivateProfileMessage handle={(user as { handle?: string | null }).handle ?? null} fallbackHandle={handleOrUserId} />
+          <PrivateProfileMessage
+            handle={(user as { handle?: string | null }).handle ?? null}
+            fallbackHandle={handleOrUserId}
+          />
         ) : (
           <ProfileTabs userId={user.id} />
         )}
@@ -114,4 +139,3 @@ export default function ProfilePageClient() {
     </div>
   );
 }
-

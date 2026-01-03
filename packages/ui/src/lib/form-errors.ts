@@ -1,16 +1,23 @@
-import type { FieldErrors, FieldValues } from "react-hook-form";
+import type { FieldErrors, FieldValues } from 'react-hook-form';
+
+const CAMEL_CASE_REGEX = /([A-Z])/g;
+const FIRST_CHAR_REGEX = /^./;
 
 /**
  * Get the first error message from form errors
  */
 export function getFirstError<T extends FieldValues>(
-  errors: FieldErrors<T>,
+  errors: FieldErrors<T>
 ): string | undefined {
   const firstErrorKey = Object.keys(errors)[0];
-  if (!firstErrorKey) return undefined;
+  if (!firstErrorKey) {
+    return;
+  }
 
   const error = errors[firstErrorKey as keyof T];
-  if (!error) return undefined;
+  if (!error) {
+    return;
+  }
 
   return error.message as string;
 }
@@ -20,7 +27,7 @@ export function getFirstError<T extends FieldValues>(
  */
 export function hasFieldError<T extends FieldValues>(
   fieldName: keyof T,
-  errors: FieldErrors<T>,
+  errors: FieldErrors<T>
 ): boolean {
   return !!errors[fieldName];
 }
@@ -30,10 +37,12 @@ export function hasFieldError<T extends FieldValues>(
  */
 export function getFieldError<T extends FieldValues>(
   fieldName: keyof T,
-  errors: FieldErrors<T>,
+  errors: FieldErrors<T>
 ): string | undefined {
   const error = errors[fieldName];
-  if (!error) return undefined;
+  if (!error) {
+    return;
+  }
   return error.message as string;
 }
 
@@ -41,7 +50,7 @@ export function getFieldError<T extends FieldValues>(
  * Get all error messages from form errors
  */
 export function getAllErrors<T extends FieldValues>(
-  errors: FieldErrors<T>,
+  errors: FieldErrors<T>
 ): string[] {
   return Object.values(errors)
     .map((error) => error?.message as string)
@@ -53,7 +62,7 @@ export function getAllErrors<T extends FieldValues>(
  */
 export function formatFieldName(fieldName: string): string {
   return fieldName
-    .replace(/([A-Z])/g, " $1")
-    .replace(/^./, (str) => str.toUpperCase())
+    .replace(CAMEL_CASE_REGEX, ' $1')
+    .replace(FIRST_CHAR_REGEX, (str) => str.toUpperCase())
     .trim();
 }

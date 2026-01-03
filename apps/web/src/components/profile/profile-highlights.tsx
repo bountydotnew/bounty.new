@@ -37,4 +37,3 @@ export function ProfileHighlights({ userId }: ProfileHighlightsProps) {
     </div>
   );
 }
-

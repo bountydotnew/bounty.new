@@ -35,7 +35,10 @@ function isSafeRedirectUrl(url: string | undefined): boolean {
   return true;
 }
 
-export default function AuthForm({ callbackUrl, isAddingAccount }: AuthFormProps) {
+export default function AuthForm({
+  callbackUrl,
+  isAddingAccount,
+}: AuthFormProps) {
   // Validate and sanitize the callback URL to prevent open redirects
   const safeCallbackUrl: string =
     isSafeRedirectUrl(callbackUrl) && callbackUrl ? callbackUrl : '/dashboard';
@@ -123,7 +126,7 @@ export default function AuthForm({ callbackUrl, isAddingAccount }: AuthFormProps
                   window.location.href = '/dashboard';
                 }, 500);
               } else {
-              window.location.href = safeCallbackUrl;
+                window.location.href = safeCallbackUrl;
               }
             },
           },
@@ -135,16 +138,16 @@ export default function AuthForm({ callbackUrl, isAddingAccount }: AuthFormProps
   return (
     <div className="w-full max-w-md space-y-6">
       {!isAddingAccount && (
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-white">
-          {mode === 'signup' ? 'Create account' : 'Welcome back'}
-        </h1>
-        <p className="text-gray-400 text-sm">
-          {mode === 'signup'
-            ? 'Enter your email below to create your account'
-            : 'Enter your email below to sign in to your account'}
-        </p>
-      </div>
+        <div className="space-y-2 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight text-white">
+            {mode === 'signup' ? 'Create account' : 'Welcome back'}
+          </h1>
+          <p className="text-gray-400 text-sm">
+            {mode === 'signup'
+              ? 'Enter your email below to create your account'
+              : 'Enter your email below to sign in to your account'}
+          </p>
+        </div>
       )}
 
       <form onSubmit={handleEmailPasswordAuth} className="space-y-4">

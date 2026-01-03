@@ -26,14 +26,16 @@ export default function AdminPage() {
   const { data: waitlist } = useQuery({
     queryKey: ['earlyAccess', 'getWaitlistCount'],
     queryFn: async () => {
-      const result = await (trpcClient.earlyAccess.getWaitlistCount as { query: () => Promise<{ count: number }> }).query();
+      const result = await (
+        trpcClient.earlyAccess.getWaitlistCount as {
+          query: () => Promise<{ count: number }>;
+        }
+      ).query();
       return result;
     },
   });
 
-  const usersTotal = formatStatValue(
-    userStats?.data.platformStats.totalUsers
-  );
+  const usersTotal = formatStatValue(userStats?.data.platformStats.totalUsers);
   const waitlistPending = formatStatValue(waitlist?.count);
   const notificationsSent = formatStatValue(notifications?.stats.sent);
   return (

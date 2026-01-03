@@ -24,7 +24,7 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { AdminHeader } from '@/components/admin';
-import { trpc, trpcClient } from '@/utils/trpc';
+import { trpcClient } from '@/utils/trpc';
 
 export default function WaitlistPage() {
   const [search, setSearch] = useState('');
@@ -39,19 +39,31 @@ export default function WaitlistPage() {
   } = useQuery({
     queryKey: ['earlyAccess', 'getAdminWaitlist', page, search],
     queryFn: async () => {
-      const result = await (trpcClient.earlyAccess.getAdminWaitlist as {
-        query: (input: { page: number; limit: number; search?: string }) => Promise<{
-          entries: Array<{ id: string; email: string; hasAccess: boolean; createdAt: Date | string; [key: string]: unknown }>;
-          total: number;
-          page: number;
-          limit: number;
-          totalPages: number;
-          stats: { total: number; withAccess: number; pending: number };
-        }>;
-      }).query({
-      page,
-      limit: 20,
-      search: search || undefined,
+      const result = await (
+        trpcClient.earlyAccess.getAdminWaitlist as {
+          query: (input: {
+            page: number;
+            limit: number;
+            search?: string;
+          }) => Promise<{
+            entries: Array<{
+              id: string;
+              email: string;
+              hasAccess: boolean;
+              createdAt: Date | string;
+              [key: string]: unknown;
+            }>;
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+            stats: { total: number; withAccess: number; pending: number };
+          }>;
+        }
+      ).query({
+        page,
+        limit: 20,
+        search: search || undefined,
       });
       return result;
     },
@@ -67,9 +79,14 @@ export default function WaitlistPage() {
 
   const updateAccessMutation = useMutation({
     mutationFn: async (input: { id: string; hasAccess: boolean }) => {
-      const result = await (trpcClient.earlyAccess.updateWaitlistAccess as {
-        mutate: (input: { id: string; hasAccess: boolean }) => Promise<{ success: boolean }>;
-      }).mutate(input);
+      const result = await (
+        trpcClient.earlyAccess.updateWaitlistAccess as {
+          mutate: (input: {
+            id: string;
+            hasAccess: boolean;
+          }) => Promise<{ success: boolean }>;
+        }
+      ).mutate(input);
       return result;
     },
     onSuccess: () => {
@@ -86,9 +103,11 @@ export default function WaitlistPage() {
 
   const inviteToBetaMutation = useMutation({
     mutationFn: async (input: { id: string }) => {
-      const result = await (trpcClient.earlyAccess.inviteToBeta as {
-        mutate: (input: { id: string }) => Promise<{ success: boolean }>;
-      }).mutate(input);
+      const result = await (
+        trpcClient.earlyAccess.inviteToBeta as {
+          mutate: (input: { id: string }) => Promise<{ success: boolean }>;
+        }
+      ).mutate(input);
       return result;
     },
     onMutate: (vars: { id: string }) => {
@@ -211,65 +230,73 @@ export default function WaitlistPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {waitlistEntries.map((entry: { id: string; email: string; hasAccess: boolean; createdAt: Date | string; [key: string]: unknown }) => (
-                  <div
-                    className="flex items-center justify-between rounded-md border border-neutral-800 bg-[#222222] p-3"
-                    key={entry.id}
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium text-neutral-200 text-sm">
-                          {entry.email}
-                        </span>
+                {waitlistEntries.map(
+                  (entry: {
+                    id: string;
+                    email: string;
+                    hasAccess: boolean;
+                    createdAt: Date | string;
+                    [key: string]: unknown;
+                  }) => (
+                    <div
+                      className="flex items-center justify-between rounded-md border border-neutral-800 bg-[#222222] p-3"
+                      key={entry.id}
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium text-neutral-200 text-sm">
+                            {entry.email}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-neutral-400 text-sm">
+                            {new Date(entry.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        {entry.hasAccess ? (
+                          <Badge className="bg-green-600" variant="default">
+                            Has Access
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">Pending</Badge>
+                        )}
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-neutral-400 text-sm">
-                          {new Date(entry.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      {entry.hasAccess ? (
-                        <Badge className="bg-green-600" variant="default">
-                          Has Access
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">Pending</Badge>
-                      )}
-                    </div>
 
-                    <div className="flex items-center space-x-2">
-                      {entry.hasAccess ? (
+                      <div className="flex items-center space-x-2">
+                        {entry.hasAccess ? (
+                          <Button
+                            disabled={updatingIds.has(entry.id)}
+                            onClick={() => handleUpdateAccess(entry.id, false)}
+                            size="sm"
+                            variant="outline"
+                          >
+                            Revoke Access
+                          </Button>
+                        ) : (
+                          <Button
+                            disabled={updatingIds.has(entry.id)}
+                            onClick={() => handleUpdateAccess(entry.id, true)}
+                            size="sm"
+                          >
+                            Grant Access
+                          </Button>
+                        )}
                         <Button
                           disabled={updatingIds.has(entry.id)}
-                          onClick={() => handleUpdateAccess(entry.id, false)}
+                          onClick={() =>
+                            inviteToBetaMutation.mutate({ id: entry.id })
+                          }
                           size="sm"
                           variant="outline"
                         >
-                          Revoke Access
+                          Beta Invite
                         </Button>
-                      ) : (
-                        <Button
-                          disabled={updatingIds.has(entry.id)}
-                          onClick={() => handleUpdateAccess(entry.id, true)}
-                          size="sm"
-                        >
-                          Grant Access
-                        </Button>
-                      )}
-                      <Button
-                        disabled={updatingIds.has(entry.id)}
-                        onClick={() =>
-                          inviteToBetaMutation.mutate({ id: entry.id })
-                        }
-                        size="sm"
-                        variant="outline"
-                      >
-                        Beta Invite
-                      </Button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                )}
 
                 {waitlistEntries.length === 0 && (
                   <div className="py-8 text-center">

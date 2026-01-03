@@ -10,4 +10,3 @@ export interface AuthGuardProps {
 export interface AuthLayoutProps {
   children: ReactNode;
 }
-

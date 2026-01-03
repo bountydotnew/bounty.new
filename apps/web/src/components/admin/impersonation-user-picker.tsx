@@ -52,7 +52,10 @@ export function ImpersonationUserPicker({ open, onOpenChange, onPick }: Props) {
     updatedAt: string;
   };
 
-  const users = useMemo(() => (data?.users || []) as UserListItem[], [data?.users]);
+  const users = useMemo(
+    () => (data?.users || []) as UserListItem[],
+    [data?.users]
+  );
 
   const content = (
     <div className="p-4">

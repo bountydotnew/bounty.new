@@ -42,25 +42,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 replace={router.replace}
               >
                 <ImpersonationBanner />
-                <FeedbackProvider>
-                  {children}
-                </FeedbackProvider>
+                <FeedbackProvider>{children}</FeedbackProvider>
               </AuthUIProvider>
             </UserProvider>
-          <Databuddy
-            clientId="bounty"
-            enableBatching={true}
-            trackAttributes={true}
-            trackBounceRate={true}
-            trackEngagement={true}
-            trackErrors={true}
-            trackExitIntent={true}
-            trackHashChanges={true}
-            trackInteractions={true}
-            trackOutgoingLinks={true}
-            trackScrollDepth={true}
-            trackWebVitals={true}
-          />
+            <Databuddy
+              clientId="bounty"
+              enableBatching={true}
+              trackAttributes={true}
+              trackBounceRate={true}
+              trackEngagement={true}
+              trackErrors={true}
+              trackExitIntent={true}
+              trackHashChanges={true}
+              trackInteractions={true}
+              trackOutgoingLinks={true}
+              trackScrollDepth={true}
+              trackWebVitals={true}
+            />
           </ConfettiProvider>
         </RealtimeProvider>
         <ReactQueryDevtools />

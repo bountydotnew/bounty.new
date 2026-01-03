@@ -37,4 +37,3 @@ export function ProfileBounties({ userId }: ProfileBountiesProps) {
     </div>
   );
 }
-

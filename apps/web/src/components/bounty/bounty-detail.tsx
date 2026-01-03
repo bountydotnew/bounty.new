@@ -128,7 +128,11 @@ export default function BountyDetailPage({
   });
 
   const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this bounty? This action cannot be undone.')) {
+    if (
+      confirm(
+        'Are you sure you want to delete this bounty? This action cannot be undone.'
+      )
+    ) {
       deleteBounty.mutate({ id });
     }
   };

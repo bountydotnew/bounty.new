@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Github, Code, Briefcase } from "lucide-react";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { trpc, trpcClient } from "@/utils/trpc";
-import { authClient } from "@bounty/auth/client";
-import { toast } from "sonner";
+import { useState, useEffect } from 'react';
+import { Github, Code, Briefcase } from 'lucide-react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { trpc, trpcClient } from '@/utils/trpc';
+import { authClient } from '@bounty/auth/client';
+import { toast } from 'sonner';
 interface OnboardingProps {
   entryId: string;
   onComplete: () => void;
@@ -16,7 +16,7 @@ type OnboardingStep = 1 | 2;
 export function Onboarding({ entryId, onComplete }: OnboardingProps) {
   const [step, setStep] = useState<OnboardingStep>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [role, setRole] = useState<"creator" | "developer" | null>(null);
+  const [role, setRole] = useState<'creator' | 'developer' | null>(null);
   const { data: session } = authClient.useSession();
   const { data: githubAccount } = useQuery({
     ...trpc.user.getGithubAccount.queryOptions(),
@@ -26,7 +26,7 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
   const completeMutation = useMutation({
     mutationFn: async (input: {
       entryId: string;
-      role: "creator" | "developer";
+      role: 'creator' | 'developer';
       githubId?: string;
       githubUsername?: string;
       name?: string;
@@ -48,14 +48,14 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
   useEffect(() => {
     if (session?.user) {
       // User has signed in with GitHub during this session
-      console.log("GitHub connected:", session.user);
+      console.log('GitHub connected:', session.user);
     }
   }, [session]);
 
   const handleNext = async () => {
     if (step === 1) {
       if (!role) {
-        toast.error("Please select a role");
+        toast.error('Please select a role');
         return;
       }
       setStep(2);
@@ -66,14 +66,16 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
       try {
         await completeMutation.mutateAsync({
           entryId,
-          role: role as "creator" | "developer",
-          githubUsername: githubAccount?.username ? githubAccount.username : undefined,
+          role: role as 'creator' | 'developer',
+          githubUsername: githubAccount?.username
+            ? githubAccount.username
+            : undefined,
           name: session?.user?.name ?? undefined,
         });
 
         onComplete();
       } catch (error) {
-        console.error("Failed to complete onboarding:", error);
+        console.error('Failed to complete onboarding:', error);
         setIsSubmitting(false);
       }
     }
@@ -82,16 +84,18 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
   const handleConnectGithub = async () => {
     try {
       await authClient.signIn.social({
-        provider: "github",
+        provider: 'github',
         callbackURL: window.location.href,
       });
     } catch (error) {
-      console.error("GitHub sign in failed:", error);
+      console.error('GitHub sign in failed:', error);
     }
   };
 
   const canProceed = () => {
-    if (step === 1) return role !== null;
+    if (step === 1) {
+      return role !== null;
+    }
     return true;
   };
 
@@ -103,7 +107,7 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
           <div
             key={s}
             className={`h-1 flex-1 rounded-full transition-colors ${
-              s <= step ? "bg-white" : "bg-[#232323]"
+              s <= step ? 'bg-white' : 'bg-[#232323]'
             }`}
           />
         ))}
@@ -121,11 +125,11 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
 
           <div className="space-y-3">
             <button
-              onClick={() => setRole("creator")}
+              onClick={() => setRole('creator')}
               className={`w-full p-5 rounded-xl border text-left transition-colors ${
-                role === "creator"
-                  ? "bg-[#1E1E1E] border-white"
-                  : "bg-[#191919] border-[#232323] hover:border-[#3A3A3A]"
+                role === 'creator'
+                  ? 'bg-[#1E1E1E] border-white'
+                  : 'bg-[#191919] border-[#232323] hover:border-[#3A3A3A]'
               }`}
             >
               <div className="flex items-start gap-4">
@@ -144,11 +148,11 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
             </button>
 
             <button
-              onClick={() => setRole("developer")}
+              onClick={() => setRole('developer')}
               className={`w-full p-5 rounded-xl border text-left transition-colors ${
-                role === "developer"
-                  ? "bg-[#1E1E1E] border-white"
-                  : "bg-[#191919] border-[#232323] hover:border-[#3A3A3A]"
+                role === 'developer'
+                  ? 'bg-[#1E1E1E] border-white'
+                  : 'bg-[#191919] border-[#232323] hover:border-[#3A3A3A]'
               }`}
             >
               <div className="flex items-start gap-4">
@@ -176,9 +180,9 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
             Connect GitHub
           </h2>
           <p className="text-[#929292] text-base mb-8">
-            {role === "creator"
-              ? "Import issues as bounties directly from your repos"
-              : "Showcase your work and submit PRs seamlessly"}
+            {role === 'creator'
+              ? 'Import issues as bounties directly from your repos'
+              : 'Showcase your work and submit PRs seamlessly'}
           </p>
 
           {session?.user ? (
@@ -188,7 +192,7 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
               </div>
               <div className="flex-1">
                 <p className="text-white text-base">
-                  @{githubAccount?.username || session.user.name || "user"}
+                  @{githubAccount?.username || session.user.name || 'user'}
                 </p>
                 <p className="text-[#5A5A5A] text-sm">Connected</p>
               </div>
@@ -227,14 +231,14 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
         disabled={!canProceed() || isSubmitting}
         className="mt-10 flex items-center justify-center gap-1.5 px-6 h-[40px] rounded-full text-white text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50"
         style={{
-          backgroundImage: "linear-gradient(180deg, #ccc 0%, #808080 100%)",
+          backgroundImage: 'linear-gradient(180deg, #ccc 0%, #808080 100%)',
         }}
       >
         {isSubmitting
-          ? "Finishing..."
+          ? 'Finishing...'
           : step === 2
-            ? "Go to dashboard"
-            : "Continue"}
+            ? 'Go to dashboard'
+            : 'Continue'}
         <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
           <path
             d="M3 8h10M9 4l4 4-4 4"

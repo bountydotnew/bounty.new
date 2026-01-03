@@ -19,4 +19,3 @@ export const ChevronDoubleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     />
   </svg>
 );
-

@@ -12,8 +12,8 @@ import type {
   MarbleTagList,
 } from '@bounty/types';
 
-const url = process.env.NEXT_PUBLIC_MARBLE_API_URL!;
-const key = process.env.MARBLE_WORKSPACE_KEY!;
+const url = process.env.NEXT_PUBLIC_MARBLE_API_URL || '';
+const key = process.env.MARBLE_WORKSPACE_KEY || '';
 
 async function fetchFromMarble<T>(endpoint: string): Promise<T> {
   const response = await fetch(`${url}/${key}/${endpoint}`);
@@ -25,23 +25,23 @@ async function fetchFromMarble<T>(endpoint: string): Promise<T> {
   return (await response.json()) as T;
 }
 
-export async function getPosts() {
+export function getPosts() {
   return fetchFromMarble<MarblePostList>('posts');
 }
 
-export async function getTags() {
+export function getTags() {
   return fetchFromMarble<MarbleTagList>('tags');
 }
 
-export async function getSinglePost(slug: string) {
+export function getSinglePost(slug: string) {
   return fetchFromMarble<MarblePost>(`posts/${slug}`);
 }
 
-export async function getCategories() {
+export function getCategories() {
   return fetchFromMarble<MarbleCategoryList>('categories');
 }
 
-export async function getAuthors() {
+export function getAuthors() {
   return fetchFromMarble<MarbleAuthorList>('authors');
 }
 

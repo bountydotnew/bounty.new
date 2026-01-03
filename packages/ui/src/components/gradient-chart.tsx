@@ -15,7 +15,7 @@ import {
 } from '@bounty/ui/components/chart';
 import { TrendingUp } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
-import type { ChartConfig, ChartConfigValue } from '../types/charts';
+import type { ChartConfig } from '../types/charts';
 
 const chartData = [
   { month: 'January', desktop: 342, mobile: 245 },
