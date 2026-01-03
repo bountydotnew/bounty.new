@@ -1,7 +1,7 @@
-import * as Sentry from "@sentry/nextjs";
+import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({
-  dsn: "https://4a48fe74894a0f7b744f4652df0fd570@o4510390840000512.ingest.us.sentry.io/4510390840721408",
+  dsn: 'https://4a48fe74894a0f7b744f4652df0fd570@o4510390840000512.ingest.us.sentry.io/4510390840721408',
   // Enable logs to be sent to Sentry
   enableLogs: true,
 
@@ -32,12 +32,12 @@ Sentry.init({
     const error = hint.originalException;
 
     // Filter out network errors that are temporary
-    if (error && typeof error === "object" && "message" in error) {
+    if (error && typeof error === 'object' && 'message' in error) {
       const message = String(error.message);
       if (
-        message.includes("Failed to fetch") ||
-        message.includes("NetworkError") ||
-        message.includes("Load failed")
+        message.includes('Failed to fetch') ||
+        message.includes('NetworkError') ||
+        message.includes('Load failed')
       ) {
         return null;
       }
@@ -46,5 +46,5 @@ Sentry.init({
     return event;
   },
 
-  environment: process.env.NEXT_PUBLIC_VERCEL_ENV || "development",
+  environment: process.env.NEXT_PUBLIC_VERCEL_ENV || 'development',
 });

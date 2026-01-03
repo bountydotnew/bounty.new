@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { trpc, trpcClient } from "@/utils/trpc";
-import { authClient } from "@bounty/auth/client";
-import { BountyForm } from "./bounty-form";
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { trpc, trpcClient } from '@/utils/trpc';
+import { authClient } from '@bounty/auth/client';
+import { BountyForm } from './bounty-form';
 
 const BOUNTY_DRAFT_STORAGE_KEY = 'bounty_draft';
 
@@ -37,7 +37,10 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: [['earlyAccess', 'getWaitlistEntry'], { input: { entryId }, type: 'query' }],
+        queryKey: [
+          ['earlyAccess', 'getWaitlistEntry'],
+          { input: { entryId }, type: 'query' },
+        ],
       });
       setIsEditing(false);
     },
@@ -51,7 +54,14 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
 
   // Auto-save localStorage draft on mount if entry has no bounty
   useEffect(() => {
-    if (hasAutoSaved || isLoading || !entry || entry.bountyTitle || entry.bountyDescription || entry.bountyAmount) {
+    if (
+      hasAutoSaved ||
+      isLoading ||
+      !entry ||
+      entry.bountyTitle ||
+      entry.bountyDescription ||
+      entry.bountyAmount
+    ) {
       return;
     }
 
@@ -69,7 +79,7 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
               bountyAmount: draft.amount,
               bountyDeadline: draft.deadline,
             });
-            
+
             // Clear localStorage
             localStorage.removeItem(BOUNTY_DRAFT_STORAGE_KEY);
             setHasAutoSaved(true);
@@ -82,8 +92,7 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
 
     autoSaveDraft();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entry, isLoading, entryId, hasAutoSaved]);
-
+  }, [entry, isLoading, entryId, hasAutoSaved, updateMutation.mutateAsync]);
 
   if (isLoading || !entry) {
     return (
@@ -98,18 +107,31 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
 
   // Helper to format price with commas
   const formatPrice = (price: string | null | undefined): string => {
-    if (!price) return '';
-    const num = parseFloat(price);
-    if (isNaN(num)) return price;
-    return num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    if (!price) {
+      return '';
+    }
+    const num = Number.parseFloat(price);
+    if (Number.isNaN(num)) {
+      return price;
+    }
+    return num.toLocaleString('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    });
   };
 
   // Helper to format deadline
-  const formatDeadline = (deadline: string | Date | null | undefined): string => {
-    if (!deadline) return '';
+  const formatDeadline = (
+    deadline: string | Date | null | undefined
+  ): string => {
+    if (!deadline) {
+      return '';
+    }
     try {
       const date = typeof deadline === 'string' ? new Date(deadline) : deadline;
-      if (isNaN(date.getTime())) return '';
+      if (Number.isNaN(date.getTime())) {
+        return '';
+      }
       return date.toLocaleDateString('en-US', {
         day: '2-digit',
         month: 'long',
@@ -120,12 +142,14 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
     }
   };
 
-  const bountyDraft = entry ? {
-    title: entry.bountyTitle,
-    description: entry.bountyDescription,
-    price: entry.bountyAmount,
-    deadline: entry.bountyDeadline,
-  } : null;
+  const bountyDraft = entry
+    ? {
+        title: entry.bountyTitle,
+        description: entry.bountyDescription,
+        price: entry.bountyAmount,
+        deadline: entry.bountyDeadline,
+      }
+    : null;
 
   return (
     <div className="w-full max-w-[800px] mx-auto">
@@ -134,7 +158,7 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
           You're on the list!
         </h2>
         <p className="text-[#929292] text-base">
-          Your bounty draft is saved. We'll notify you at{" "}
+          Your bounty draft is saved. We'll notify you at{' '}
           <span className="text-white">{email}</span> when bounty.new launches.
         </p>
       </div>
@@ -143,12 +167,20 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
       {isEditing ? (
         <div className="mb-6">
           <BountyForm
-            initialValues={bountyDraft ? {
-              title: bountyDraft.title,
-              description: bountyDraft.description,
-              amount: bountyDraft.price || '',
-              deadline: bountyDraft.deadline ? (typeof bountyDraft.deadline === 'string' ? bountyDraft.deadline : bountyDraft.deadline.toISOString()) : '',
-            } : undefined}
+            initialValues={
+              bountyDraft
+                ? {
+                    title: bountyDraft.title,
+                    description: bountyDraft.description,
+                    amount: bountyDraft.price || '',
+                    deadline: bountyDraft.deadline
+                      ? typeof bountyDraft.deadline === 'string'
+                        ? bountyDraft.deadline
+                        : bountyDraft.deadline.toISOString()
+                      : '',
+                  }
+                : undefined
+            }
             entryId={entryId}
             onSubmit={async (data) => {
               await updateMutation.mutateAsync({
@@ -183,7 +215,7 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
               </div>
             </div>
             <h3 className="text-white text-xl font-medium mb-2">
-              {bountyDraft.title || "Your first bounty"}
+              {bountyDraft.title || 'Your first bounty'}
             </h3>
             <p className="text-[#929292] text-sm">
               {bountyDraft.description ||
@@ -209,7 +241,7 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
               )}
               <span className="text-[#929292] text-sm">You</span>
             </div>
-            <button 
+            <button
               onClick={() => setIsEditing(true)}
               className="text-sm text-[#5A5A5A] hover:text-white transition-colors"
             >

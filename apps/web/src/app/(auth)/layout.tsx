@@ -43,14 +43,14 @@ export default async function RootLayout({
         <FeedbackProvider
           config={{
             metadata: {
-              appVersion: "1.0.0",
+              appVersion: '1.0.0',
               environment: process.env.NODE_ENV,
             },
             ui: {
-              title: "Report an Issue",
-              placeholder: "Found a bug? Let us know what happened...",
+              title: 'Report an Issue',
+              placeholder: 'Found a bug? Let us know what happened...',
               colors: {
-                primary: "#232323",
+                primary: '#232323',
               },
               zIndex: 9999,
             },
@@ -58,10 +58,8 @@ export default async function RootLayout({
         >
           <FeedbackModal />
           <FeedbackOverlay />
-          <Sidebar admin={false}>
-            {children}
-          </Sidebar>
-          </FeedbackProvider>
+          <Sidebar admin={false}>{children}</Sidebar>
+        </FeedbackProvider>
       </AuthLayout>
     </DeviceProvider>
   );

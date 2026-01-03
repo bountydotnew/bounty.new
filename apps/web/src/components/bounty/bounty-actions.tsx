@@ -177,7 +177,9 @@ export default function BountyActions({
   ];
   const mergedActions = [...baseActions, ...(actions ?? [])];
   const handleToggleBookmark = () => {
-    if (onToggleBookmark) return onToggleBookmark();
+    if (onToggleBookmark) {
+      return onToggleBookmark();
+    }
     const key = trpc.bounties.getBountyBookmark.queryKey({ bountyId });
     const current = bookmarkQuery.data?.bookmarked ?? false;
     queryClient.setQueryData(key, { bookmarked: !current });

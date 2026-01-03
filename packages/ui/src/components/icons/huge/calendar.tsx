@@ -26,4 +26,3 @@ export const CalendarIcon = (props: React.SVGProps<SVGSVGElement>) => (
     />
   </svg>
 );
-

@@ -86,16 +86,14 @@ export function AddAccountView({ callbackUrl, session }: AddAccountViewProps) {
             <p className="font-medium text-sm text-white">
               {session.user.name}
             </p>
-            <p className="text-gray-400 text-xs">
-              {session.user.email}
-            </p>
+            <p className="text-gray-400 text-xs">{session.user.email}</p>
           </div>
         </div>
 
         <div className="space-y-4">
           <div className="space-y-3">
             <AuthForm callbackUrl={callbackUrl} isAddingAccount={true} />
-            
+
             <Button
               className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#2A2A28] py-3 font-medium text-gray-200 transition-colors hover:bg-[#383838]"
               disabled={loading}
@@ -122,4 +120,3 @@ export function AddAccountView({ callbackUrl, session }: AddAccountViewProps) {
     </div>
   );
 }
-

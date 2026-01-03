@@ -22,7 +22,7 @@ export const Header = ({}: HeaderProps = {}) => {
 
   const handleCreateBounty = () => {
     const isOnDashboard = pathname === '/dashboard';
-    
+
     if (isOnDashboard) {
       // Already on dashboard - scroll to top and focus textarea
       window.scrollTo({ top: 0, behavior: 'smooth' });

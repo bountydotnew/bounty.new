@@ -7,7 +7,9 @@ import { lt, sql } from 'drizzle-orm';
  * @param bufferMinutes Optional buffer time in minutes to keep recently expired sessions (default: 0)
  * @returns Number of deleted sessions
  */
-export async function cleanupExpiredSessions(bufferMinutes = 0): Promise<number> {
+export async function cleanupExpiredSessions(
+  bufferMinutes = 0
+): Promise<number> {
   const cutoffDate = new Date();
   cutoffDate.setMinutes(cutoffDate.getMinutes() - bufferMinutes);
 
@@ -31,4 +33,3 @@ export async function getExpiredSessionCount(): Promise<number> {
 
   return result[0]?.count ?? 0;
 }
-

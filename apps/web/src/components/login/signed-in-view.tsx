@@ -36,9 +36,7 @@ export function SignedInView({ callbackUrl, session }: SignedInViewProps) {
           <h1 className="flex h-7 items-center justify-center font-medium text-sand-12 text-xl tracking-tight">
             Welcome back!
           </h1>
-          <p className="text-gray-400 text-sm">
-            You're already signed in
-          </p>
+          <p className="text-gray-400 text-sm">You're already signed in</p>
         </div>
       </div>
 
@@ -57,9 +55,7 @@ export function SignedInView({ callbackUrl, session }: SignedInViewProps) {
             <p className="font-medium text-sm text-white">
               {session.user.name}
             </p>
-            <p className="text-gray-400 text-xs">
-              {session.user.email}
-            </p>
+            <p className="text-gray-400 text-xs">{session.user.email}</p>
           </div>
         </div>
 
@@ -92,4 +88,3 @@ export function SignedInView({ callbackUrl, session }: SignedInViewProps) {
     </div>
   );
 }
-

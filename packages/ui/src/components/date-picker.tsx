@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { parseDate } from 'chrono-node';
-import { CalendarIcon } from '@bounty/ui/components/icons/huge/calendar';
 import { Button } from '@bounty/ui/components/button';
 import { Calendar } from '@bounty/ui/components/calendar';
-import { Input } from '@bounty/ui/components/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@bounty/ui/components/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@bounty/ui/components/popover';
 import { cn } from '@bounty/ui/lib/utils';
 
 function formatDate(date: Date | undefined) {
@@ -40,7 +42,9 @@ export function DatePicker({
   const isTypingRef = useRef(false);
 
   // Helper to parse value (ISO string or natural language)
-  const parseValue = (val: string): { date: Date | undefined; text: string } => {
+  const parseValue = (
+    val: string
+  ): { date: Date | undefined; text: string } => {
     if (!val) {
       return { date: undefined, text: '' };
     }
@@ -48,7 +52,7 @@ export function DatePicker({
     // Try parsing as ISO string first
     try {
       const isoDate = new Date(val);
-      if (!isNaN(isoDate.getTime())) {
+      if (!Number.isNaN(isoDate.getTime())) {
         return { date: isoDate, text: formatDate(isoDate) };
       }
     } catch {
@@ -80,7 +84,7 @@ export function DatePicker({
         setMonth(parsed.date);
       }
     }
-  }, [value]);
+  }, [value, parseValue]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -95,7 +99,7 @@ export function DatePicker({
     // Set new timer for debounced onChange (fires AFTER user stops typing)
     debounceTimerRef.current = setTimeout(() => {
       isTypingRef.current = false;
-      
+
       const parsedDate = parseDate(newValue);
       if (parsedDate) {
         const formatted = formatDate(parsedDate);
@@ -179,7 +183,8 @@ export function DatePicker({
               caption: 'flex justify-center pt-3 pb-2 relative items-center',
               caption_label: 'text-sm font-medium',
               nav: 'flex items-center justify-between px-3 pt-0 pb-0 absolute top-0 left-0 right-0',
-              nav_button: 'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 text-white',
+              nav_button:
+                'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 text-white',
               nav_button_previous: 'absolute left-3',
               nav_button_next: 'absolute right-3',
             }}
@@ -189,4 +194,3 @@ export function DatePicker({
     </div>
   );
 }
-

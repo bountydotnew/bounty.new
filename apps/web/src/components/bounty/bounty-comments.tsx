@@ -358,7 +358,7 @@ export default function BountyComments({
       >
         {commentsQuery.isLoading ? (
           <div className="mt-4 space-y-2">
-            {Array.from({ length: 3 }).map((_, i) => (
+            {Array.from({ length: 3 }).map((_, _i) => (
               <div
                 className="animate-pulse rounded-md border border-neutral-800 bg-neutral-900/30 p-3"
                 key="comment-pulse-placeholder"

@@ -13,4 +13,3 @@ export type RealtimeEvents = {
     refresh: z.infer<typeof realtimeSchema.notifications.refresh>;
   };
 };
-

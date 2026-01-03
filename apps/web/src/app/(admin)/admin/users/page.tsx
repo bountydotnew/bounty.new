@@ -123,9 +123,7 @@ export default function UsersPage() {
   });
 
   // Map auth users to include role
-  const users = useMemo<
-    (AdminUser & { role?: 'user' | 'admin' })[]
-  >(() => {
+  const users = useMemo<(AdminUser & { role?: 'user' | 'admin' })[]>(() => {
     const authUsers = data?.users ?? [];
     return authUsers.map((user) => ({
       ...user,

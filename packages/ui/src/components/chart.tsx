@@ -124,7 +124,10 @@ function ChartTooltipContent({
   indicator?: 'line' | 'dot' | 'dashed';
   hideLabel?: boolean;
   hideIndicator?: boolean;
-  labelFormatter?: (value: React.ReactNode, payload: ChartPayloadItem[]) => React.ReactNode;
+  labelFormatter?: (
+    value: React.ReactNode,
+    payload: ChartPayloadItem[]
+  ) => React.ReactNode;
   labelClassName?: string;
   formatter?: (
     value: number | string | undefined,

@@ -182,7 +182,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
     if (stored?.submitted) {
       waitlistSubmission.setSuccess(true);
     }
-  }, [setSuccess]);
+  }, [waitlistSubmission.setSuccess]);
 
   useEffect(() => {
     // Generate device fingerprint when component mounts
@@ -241,7 +241,8 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
   } else {
     waitlistStatus = (
       <span className="font-display-book font-medium text-green-400">
-        <NumberFlow value={waitlistCount.count} />+ people are already on the waitlist
+        <NumberFlow value={waitlistCount.count} />+ people are already on the
+        waitlist
       </span>
     );
   }

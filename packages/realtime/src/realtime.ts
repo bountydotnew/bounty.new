@@ -1,4 +1,4 @@
-import { Realtime, InferRealtimeEvents } from '@upstash/realtime';
+import { Realtime, type InferRealtimeEvents } from '@upstash/realtime';
 import { redis } from './redis';
 import { z } from 'zod';
 
@@ -10,4 +10,3 @@ const schema = {
 
 export const realtime = new Realtime({ schema, redis });
 export type RealtimeEvents = InferRealtimeEvents<typeof realtime>;
-

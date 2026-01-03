@@ -11,7 +11,10 @@ import GithubImportModal from '@/components/bounty/github-import-modal';
 import { ErrorBoundary } from '@/components/dashboard/error-boundary';
 import { Header } from '@/components/dual-sidebar/sidebar-header';
 import { Onboarding } from '@/components/onboarding';
-import { TaskInputForm, type TaskInputFormRef } from '@/components/dashboard/task-input-form';
+import {
+  TaskInputForm,
+  type TaskInputFormRef,
+} from '@/components/dashboard/task-input-form';
 // Constants and types
 import { PAGINATION_DEFAULTS, PAGINATION_LIMITS } from '@/constants';
 import { trpc } from '@/utils/trpc';
@@ -63,7 +66,8 @@ export default function Dashboard() {
     []
   );
 
-  const { data: session, isPending: isSessionPending } = authClient.useSession();
+  const { data: session, isPending: isSessionPending } =
+    authClient.useSession();
   const isAuthenticated = !!session?.user;
 
   // Queries - only run when authenticated

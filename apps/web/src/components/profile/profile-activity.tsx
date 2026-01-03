@@ -40,4 +40,3 @@ export function ProfileActivity({ userId }: ProfileActivityProps) {
 
   return <ActivityList activities={activities} />;
 }
-

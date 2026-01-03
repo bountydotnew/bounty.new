@@ -1,5 +1,5 @@
-import { AlertCircle } from "lucide-react";
-import { cn } from "../lib/utils";
+import { AlertCircle } from 'lucide-react';
+import { cn } from '../lib/utils';
 
 interface ErrorMessageProps {
   message?: string;
@@ -7,13 +7,15 @@ interface ErrorMessageProps {
 }
 
 export function ErrorMessage({ message, className }: ErrorMessageProps) {
-  if (!message) return null;
+  if (!message) {
+    return null;
+  }
 
   return (
     <div
       className={cn(
-        "mt-1 flex items-start gap-1.5 text-red-500 text-sm",
-        className,
+        'mt-1 flex items-start gap-1.5 text-red-500 text-sm',
+        className
       )}
       role="alert"
       aria-live="polite"
