@@ -1398,7 +1398,7 @@ export const bountiesRouter = router({
       }
     }),
 
-  addBountyComment: protectedProcedure
+  addBountyComment: rateLimitedProtectedProcedure('bounty:comment')
     .input(
       z.object({
         bountyId: z.string().uuid(),

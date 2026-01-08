@@ -23,12 +23,12 @@ import {
   sendEmail,
   OTPVerification,
 } from '@bounty/email';
-import { getRateLimiter } from '../lib/ratelimiter';
 import {
   adminProcedure,
   publicProcedure,
   protectedProcedure,
   router,
+  rateLimitedPublicProcedure,
 } from '../trpc';
 import { env } from '@bounty/env/server';
 
@@ -82,8 +82,8 @@ export const earlyAccessRouter = router({
       };
     }
   }),
-  // Simplified endpoint for adding emails to waitlist (rate limiting handled by web app)
-  addToWaitlist: publicProcedure
+  // Rate-limited endpoint for adding emails to waitlist (5 requests/minute)
+  addToWaitlist: rateLimitedPublicProcedure('waitlist')
     .input(
       z.object({
         email: z.string().email(),
@@ -91,20 +91,6 @@ export const earlyAccessRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const limiter = getRateLimiter('waitlist');
-        if (limiter) {
-          const safeIp =
-            ctx.clientIP ||
-            `anonymous-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-          const { success } = await limiter.limit(safeIp);
-
-          if (!success) {
-            throw new TRPCError({
-              code: 'TOO_MANY_REQUESTS',
-              message: 'Too many requests. Please try again later.',
-            });
-          }
-        }
         info('[addToWaitlist] Processing email:', input.email);
 
         const userAlreadyInWaitlist = await db.query.waitlist.findFirst({
@@ -352,7 +338,7 @@ export const earlyAccessRouter = router({
       }
     }),
 
-  submitWithBounty: publicProcedure
+  submitWithBounty: rateLimitedPublicProcedure('waitlist')
     .input(
       z.object({
         email: z.string().email(),
@@ -364,21 +350,6 @@ export const earlyAccessRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const limiter = getRateLimiter('waitlist');
-        if (limiter) {
-          const safeIp =
-            ctx.clientIP ||
-            `anonymous-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-          const { success } = await limiter.limit(safeIp);
-
-          if (!success) {
-            throw new TRPCError({
-              code: 'TOO_MANY_REQUESTS',
-              message: 'Too many requests. Please try again later.',
-            });
-          }
-        }
-
         info('[submitWithBounty] Processing email:', input.email);
 
         // Check if entry exists
