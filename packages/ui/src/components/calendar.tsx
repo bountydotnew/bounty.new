@@ -69,10 +69,6 @@ function Calendar({
           'absolute bg-popover inset-0 opacity-0',
           defaultClassNames.dropdown
         ),
-        dropdown_icon: cn(
-          'mr-1 h-4 w-4',
-          defaultClassNames.dropdown_icon
-        ),
         caption_label: cn(
           'select-none font-medium text-sm text-white',
           defaultClassNames.caption_label
