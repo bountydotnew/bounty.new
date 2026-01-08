@@ -83,7 +83,7 @@ function DeadlinePicker({ value, onChange }: DeadlinePickerProps) {
             setInputValue(formatDate(selectedDate));
             onChange(isoString);
         } else {
-            setDate();
+            setDate(undefined);
             setInputValue('');
             onChange('');
         }
