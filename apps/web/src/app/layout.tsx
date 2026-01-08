@@ -57,7 +57,7 @@ export const metadata: Metadata = {
       template: '%s | bounty',
     },
     description: 'Ship faster. Get paid instantly.',
-    images: ['/og-image.png'],
+    images: ['/og.jpg'],
   },
 };
 
