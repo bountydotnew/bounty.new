@@ -6,6 +6,7 @@ export * from './bounties';
 export * from './bounties-dropdown';
 export * from './branch';
 export * from './chevron-double';
+export * from './chevron-sort';
 export * from './comments';
 export * from './dropdown';
 export * from './github';

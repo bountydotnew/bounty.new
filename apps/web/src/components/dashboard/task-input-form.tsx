@@ -18,7 +18,6 @@ import {
 } from '@bounty/ui/lib/forms';
 import { cn } from '@bounty/ui/lib/utils';
 import { DatePicker } from '@bounty/ui/components/date-picker';
-import { CalendarIcon } from '@bounty/ui/components/icons/huge/calendar';
 
 // Hooks
 import { useRepositories } from '@bounty/ui/hooks/useRepositories';
@@ -28,6 +27,7 @@ import { useIssues } from '@bounty/ui/hooks/useIssues';
 // Components
 import { TitleChip } from './task-form/components/TitleChip';
 import { PriceChip } from './task-form/components/PriceChip';
+import { DeadlineChip } from './task-form/components/DeadlineChip';
 import { DescriptionTextarea } from './task-form/components/DescriptionTextarea';
 import { RepoSelector } from './task-form/components/RepoSelector';
 import { BranchSelector } from './task-form/components/BranchSelector';
@@ -330,25 +330,8 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                             <div className="flex flex-row flex-wrap items-center gap-[5px]">
                                 <TitleChip control={control} />
                                 <PriceChip control={control} />
-                                
-                                {/* Deadline chip */}
-                                <div className="rounded-[7px] px-1.5 py-[3px] bg-[#201F1F] text-[#5A5A5A] text-[16px] leading-5 font-normal flex items-center gap-1 shrink-0">
-                                    <CalendarIcon className="w-4 h-4 shrink-0" />
-                                    <Controller
-                                        control={control}
-                                        name="deadline"
-                                        render={({ field }) => (
-                                            <DatePicker
-                                                value={field.value}
-                                                onChange={(value) => field.onChange(value || undefined)}
-                                                placeholder="Deadline, e.g. tomorrow"
-                                                className="min-w-[140px]"
-                                                id="deadline"
-                                            />
-                                        )}
-                                    />
-                                </div>
-                                
+                                <DeadlineChip control={control} />
+
                                 {/* Currency selector - hidden but kept for form */}
                                 <Controller
                                     control={control}
@@ -498,40 +481,6 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                                 )}
                             </button>
                         </div>
-
-                                {/* Issue import prompt */}
-                                {/* <Dialog open={showImportPrompt} onOpenChange={setShowImportPrompt}>
-                                    <DialogContent className="border border-[#232323] bg-[#191919] text-[#CFCFCF]">
-                                        <DialogHeader>
-                                            <DialogTitle className="text-[#CFCFCF]">Import issue details?</DialogTitle>
-                                            <DialogDescription className="text-[#5A5A5A]">
-                                                Found issue #{selectedIssue?.number} in {selectedRepository}. Would you like to import the title and description?
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <div className="flex gap-2 justify-end mt-4">
-                                            <Button
-                                                variant="outline"
-                                                onClick={handleSkipImport}
-                                                disabled={isImporting}
-                                            >
-                                                Skip
-                                            </Button>
-                                            <Button
-                                                onClick={handleImportIssue}
-                                                disabled={isImporting}
-                                            >
-                                                {isImporting ? (
-                                                    <>
-                                                        <Spinner size="sm" className="mr-2" />
-                                                        Importing...
-                                                    </>
-                                                ) : (
-                                                    'Import'
-                                                )}
-                                            </Button>
-                                        </div>
-                                    </DialogContent>
-                                </Dialog> */}
                     </div>
                 </fieldset>
             </form>
