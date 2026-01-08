@@ -63,10 +63,18 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
       const stored = localStorage.getItem(BOUNTY_DRAFT_STORAGE_KEY);
       if (stored) {
         const draft = JSON.parse(stored) as BountyDraft;
-        if (draft.title) setTitle(draft.title);
-        if (draft.description) setDescription(draft.description);
-        if (draft.amount) setPrice(draft.amount);
-        if (draft.deadline) setDeadline(draft.deadline);
+        if (draft.title) {
+          setTitle(draft.title);
+        }
+        if (draft.description) {
+          setDescription(draft.description);
+        }
+        if (draft.amount) {
+          setPrice(draft.amount);
+        }
+        if (draft.deadline) {
+          setDeadline(draft.deadline);
+        }
       }
     } catch {
       // Ignore parse errors
@@ -75,7 +83,9 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
 
   // Save draft to localStorage whenever fields change (only if not in edit mode)
   useEffect(() => {
-    if (onSubmit) return; // Skip if in edit mode
+    if (onSubmit) {
+      return; // Skip if in edit mode
+    }
     
     const draft: BountyDraft = {
       title: title || undefined,
@@ -235,11 +245,11 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
         {/* Title chip */}
         <Popover open={titlePopoverOpen} onOpenChange={setTitlePopoverOpen}>
           <PopoverTrigger asChild>
-            <div className="rounded-full flex justify-center items-center px-1.5 py-[3px] shrink-0 gap-2 bg-[#141414] border border-solid border-[#232323] hover:border-[#333] transition-colors cursor-pointer">
+            <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-[#141414] border border-solid border-[#232323] hover:border-[#333] transition-colors cursor-pointer">
               <span className={`text-[16px] leading-5 font-sans ${title ? 'text-white' : 'text-[#7C7878]'}`}>
                 {title || "Title"}
               </span>
-              <ChevronSortIcon className="size-2 text-black/[24%] shrink-0" />
+              <ChevronSortIcon className="size-2 text-[#7D7878] shrink-0" />
             </div>
           </PopoverTrigger>
           <PopoverContent
@@ -262,11 +272,11 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
         {/* Price chip */}
         <Popover open={pricePopoverOpen} onOpenChange={setPricePopoverOpen}>
           <PopoverTrigger asChild>
-            <div className="rounded-full flex justify-center items-center px-1.5 py-[3px] shrink-0 gap-2 bg-[#141414] border border-solid border-[#232323] hover:border-[#333] transition-colors cursor-pointer">
+            <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-[#141414] border border-solid border-[#232323] hover:border-[#333] transition-colors cursor-pointer">
               <span className={`text-[16px] leading-5 font-sans ${price ? 'text-white' : 'text-[#7C7878]'}`}>
                 {price ? price.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : "Price"}
               </span>
-              <ChevronSortIcon className="size-2 text-black/[24%] shrink-0" />
+              <ChevronSortIcon className="size-2 text-[#7D7878] shrink-0" />
             </div>
           </PopoverTrigger>
           <PopoverContent
