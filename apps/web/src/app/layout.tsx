@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     siteName: 'bounty',
     images: [
       {
-        url: '/og.jpg',
+        url: '/og-image.png',
         width: 1200,
         height: 630,
         alt: 'bounty.new - Ship faster. Get paid instantly.',
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
       template: '%s | bounty',
     },
     description: 'Ship faster. Get paid instantly.',
-    images: ['/og.jpg'],
+    images: ['/og-image.png'],
   },
 };
 
