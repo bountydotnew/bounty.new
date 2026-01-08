@@ -49,7 +49,7 @@ async function sendDiscordWebhook({
   try {
     const payload: DiscordWebhookPayload = {
       username,
-      avatar_url: avatarUrl,
+      ...(avatarUrl && { avatar_url: avatarUrl }),
     };
 
     if (content) {

@@ -34,8 +34,25 @@ import {
   sql,
 } from 'drizzle-orm';
 import { z } from 'zod';
-import { LRUCache } from '../lib/lru-cache';
-import { protectedProcedure, publicProcedure, router } from '../trpc';
+import {
+  bountyStatsCache,
+  bountyDetailCache,
+  bountyListCache,
+  invalidateBountyCaches,
+} from '../lib/redis-cache';
+import {
+  withPaymentLock,
+  wasOperationPerformed,
+  markOperationPerformed,
+  PaymentLockError,
+} from '../lib/payment-lock';
+import { stripeCircuitBreaker } from '../lib/circuit-breaker';
+import {
+  protectedProcedure,
+  publicProcedure,
+  router,
+  rateLimitedProtectedProcedure,
+} from '../trpc';
 import { realtime } from '@bounty/realtime';
 
 const parseAmount = (amount: string | number | null): number => {
@@ -190,49 +207,14 @@ const submitBountyWorkSchema = z.object({
   pullRequestUrl: z.string().url().optional(),
 });
 
-// LRU Cache for bounty statistics (cache for 5 minutes)
-const bountyStatsCache = new LRUCache<{
-  totalBounties: number;
-  activeBounties: number;
-  totalBountiesValue: number;
-  totalPayout: number;
-}>({
-  maxSize: 1,
-  ttl: 5 * 60 * 1000, // 5 minutes
-});
-
-// LRU Cache for individual bounty details (cache for 2 minutes, max 100 items)
-const bountyDetailCache = new LRUCache<{
-  bounty: unknown;
-  votes: { count: number; isVoted: boolean };
-  bookmarked: boolean;
-  comments: unknown[];
-}>({
-  maxSize: 100,
-  ttl: 2 * 60 * 1000, // 2 minutes
-});
-
-// LRU Cache for bounty lists (cache for 1 minute, max 50 different queries)
-const bountyListCache = new LRUCache<{
-  success: boolean;
-  data: unknown[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}>({
-  maxSize: 50,
-  ttl: 60 * 1000, // 1 minute
-});
+// Redis-based caching is now imported from ../lib/redis-cache
 
 export const bountiesRouter = router({
   getBountyStats: publicProcedure.query(async () => {
     try {
-      // Check cache first
-      const cacheKey = 'bounty_stats';
-      const cached = bountyStatsCache.get(cacheKey);
+      // Check Redis cache first
+      const cacheKey = 'global';
+      const cached = await bountyStatsCache.get(cacheKey);
 
       if (cached) {
         return {
@@ -271,8 +253,8 @@ export const bountiesRouter = router({
         totalPayout: Number(totalPayoutResult[0]?.total) || 0,
       };
 
-      // Cache the result
-      bountyStatsCache.set(cacheKey, stats);
+      // Cache the result in Redis
+      await bountyStatsCache.set(cacheKey, stats);
 
       return {
         success: true,
@@ -287,7 +269,7 @@ export const bountiesRouter = router({
     }
   }),
 
-  createBounty: protectedProcedure
+  createBounty: rateLimitedProtectedProcedure('bounty:create')
     .input(createBountySchema)
     .mutation(async ({ ctx, input }) => {
       try {
@@ -405,9 +387,8 @@ export const bountiesRouter = router({
           // ignore
         }
 
-        // Invalidate caches
-        bountyStatsCache.clear();
-        bountyListCache.clear();
+        // Invalidate caches (async)
+        await invalidateBountyCaches();
 
         return {
           success: true,
@@ -843,10 +824,9 @@ export const bountiesRouter = router({
           });
         } catch {}
 
-        // Invalidate caches
-        bountyStatsCache.clear();
-        bountyListCache.clear();
-        bountyDetailCache.delete(id);
+        // Invalidate caches (async)
+        await invalidateBountyCaches();
+        await bountyDetailCache.delete(id);
 
         return {
           success: true,
@@ -929,10 +909,9 @@ export const bountiesRouter = router({
           });
         } catch {}
 
-        // Invalidate caches
-        bountyStatsCache.clear();
-        bountyListCache.clear();
-        bountyDetailCache.delete(input.id);
+        // Invalidate caches (async)
+        await invalidateBountyCaches();
+        await bountyDetailCache.delete(input.id);
 
         return {
           success: true,
@@ -1045,33 +1024,90 @@ export const bountiesRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       try {
-        const [bountyRow] = await db
-          .select({
-            id: bounty.id,
-            title: bounty.title,
-            description: bounty.description,
-            amount: bounty.amount,
-            currency: bounty.currency,
-            status: bounty.status,
-            deadline: bounty.deadline,
-            tags: bounty.tags,
-            repositoryUrl: bounty.repositoryUrl,
-            issueUrl: bounty.issueUrl,
-            createdById: bounty.createdById,
-            assignedToId: bounty.assignedToId,
-            paymentStatus: bounty.paymentStatus,
-            stripePaymentIntentId: bounty.stripePaymentIntentId,
-            createdAt: bounty.createdAt,
-            updatedAt: bounty.updatedAt,
-            creator: {
-              id: user.id,
-              name: user.name,
-              image: user.image,
-            },
-          })
-          .from(bounty)
-          .innerJoin(user, eq(bounty.createdById, user.id))
-          .where(eq(bounty.id, input.id));
+        const userId = ctx.session?.user?.id;
+
+        // OPTIMIZATION: Run independent queries in parallel to reduce latency
+        // This reduces the N+1 problem by batching related queries
+        const [
+          bountyResult,
+          voteCountResult,
+          userInteractionsResult,
+          commentsResult,
+        ] = await Promise.all([
+          // Query 1: Get bounty with creator
+          db
+            .select({
+              id: bounty.id,
+              title: bounty.title,
+              description: bounty.description,
+              amount: bounty.amount,
+              currency: bounty.currency,
+              status: bounty.status,
+              deadline: bounty.deadline,
+              tags: bounty.tags,
+              repositoryUrl: bounty.repositoryUrl,
+              issueUrl: bounty.issueUrl,
+              createdById: bounty.createdById,
+              assignedToId: bounty.assignedToId,
+              paymentStatus: bounty.paymentStatus,
+              stripePaymentIntentId: bounty.stripePaymentIntentId,
+              createdAt: bounty.createdAt,
+              updatedAt: bounty.updatedAt,
+              creator: {
+                id: user.id,
+                name: user.name,
+                image: user.image,
+              },
+            })
+            .from(bounty)
+            .innerJoin(user, eq(bounty.createdById, user.id))
+            .where(eq(bounty.id, input.id)),
+
+          // Query 2: Get vote count
+          db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(bountyVote)
+            .where(eq(bountyVote.bountyId, input.id)),
+
+          // Query 3: Get user's vote and bookmark status (if logged in)
+          userId
+            ? db.execute<{ has_voted: boolean; has_bookmarked: boolean }>(sql`
+                SELECT
+                  EXISTS(
+                    SELECT 1 FROM ${bountyVote}
+                    WHERE ${bountyVote.bountyId} = ${input.id}
+                    AND ${bountyVote.userId} = ${userId}
+                  ) as has_voted,
+                  EXISTS(
+                    SELECT 1 FROM ${bountyBookmark}
+                    WHERE ${bountyBookmark.bountyId} = ${input.id}
+                    AND ${bountyBookmark.userId} = ${userId}
+                  ) as has_bookmarked
+              `)
+            : Promise.resolve({ rows: [{ has_voted: false, has_bookmarked: false }] }),
+
+          // Query 4: Get comments with user info
+          db
+            .select({
+              id: bountyComment.id,
+              content: bountyComment.content,
+              originalContent: bountyComment.originalContent,
+              parentId: bountyComment.parentId,
+              createdAt: bountyComment.createdAt,
+              editCount: bountyComment.editCount,
+              user: {
+                id: user.id,
+                name: user.name,
+                image: user.image,
+              },
+            })
+            .from(bountyComment)
+            .leftJoin(user, eq(bountyComment.userId, user.id))
+            .where(eq(bountyComment.bountyId, input.id))
+            .orderBy(desc(bountyComment.createdAt)),
+        ]);
+
+        const bountyRow = bountyResult[0];
         if (!bountyRow) {
           throw new TRPCError({
             code: 'NOT_FOUND',
@@ -1079,95 +1115,62 @@ export const bountiesRouter = router({
           });
         }
 
-        const [voteCountRow] = await db
-          .select({ count: sql<number>`count(*)::int` })
-          .from(bountyVote)
-          .where(eq(bountyVote.bountyId, input.id));
+        const voteCount = voteCountResult[0]?.count || 0;
+        const userInteraction = (userInteractionsResult as { rows: { has_voted: boolean; has_bookmarked: boolean }[] }).rows[0];
+        const isVoted = userInteraction?.has_voted ?? false;
+        const bookmarked = userInteraction?.has_bookmarked ?? false;
+        const comments = commentsResult;
 
-        let isVoted = false;
-        let bookmarked = false;
-        if (ctx.session?.user?.id) {
-          const [existingVote] = await db
-            .select({ id: bountyVote.id })
-            .from(bountyVote)
-            .where(
-              and(
-                eq(bountyVote.bountyId, input.id),
-                eq(bountyVote.userId, ctx.session.user.id)
-              )
-            );
-          isVoted = Boolean(existingVote);
+        // OPTIMIZATION: Get comment likes in parallel (batch query)
+        const commentIds = comments.map((c) => c.id);
 
-          const [existingBookmark] = await db
-            .select({ id: bountyBookmark.id })
-            .from(bountyBookmark)
-            .where(
-              and(
-                eq(bountyBookmark.bountyId, input.id),
-                eq(bountyBookmark.userId, ctx.session.user.id)
-              )
-            );
-          bookmarked = Boolean(existingBookmark);
+        if (commentIds.length === 0) {
+          return {
+            bounty: { ...bountyRow, amount: parseAmount(bountyRow.amount) },
+            votes: { count: Number(voteCount), isVoted },
+            bookmarked,
+            comments: [],
+          };
         }
 
-        const comments = await db
-          .select({
-            id: bountyComment.id,
-            content: bountyComment.content,
-            originalContent: bountyComment.originalContent,
-            parentId: bountyComment.parentId,
-            createdAt: bountyComment.createdAt,
-            editCount: bountyComment.editCount,
-            user: {
-              id: user.id,
-              name: user.name,
-              image: user.image,
-            },
-          })
-          .from(bountyComment)
-          .leftJoin(user, eq(bountyComment.userId, user.id))
-          .where(eq(bountyComment.bountyId, input.id))
-          .orderBy(desc(bountyComment.createdAt));
+        // Run like count and user likes queries in parallel
+        const [likeCounts, userLikes] = await Promise.all([
+          db
+            .select({
+              commentId: bountyCommentLike.commentId,
+              likeCount: sql<number>`count(*)::int`.as('likeCount'),
+            })
+            .from(bountyCommentLike)
+            .where(inArray(bountyCommentLike.commentId, commentIds))
+            .groupBy(bountyCommentLike.commentId),
 
-        const commentIds = comments.map((c) => c.id);
-        const likeCounts = commentIds.length
-          ? await db
-              .select({
-                commentId: bountyCommentLike.commentId,
-                likeCount: sql<number>`count(*)::int`.as('likeCount'),
-              })
-              .from(bountyCommentLike)
-              .where(inArray(bountyCommentLike.commentId, commentIds))
-              .groupBy(bountyCommentLike.commentId)
-          : [];
-
-        const userLikes =
-          ctx.session?.user?.id && commentIds.length
-            ? await db
+          userId
+            ? db
                 .select({ commentId: bountyCommentLike.commentId })
                 .from(bountyCommentLike)
                 .where(
                   and(
-                    eq(bountyCommentLike.userId, ctx.session.user.id),
+                    eq(bountyCommentLike.userId, userId),
                     inArray(bountyCommentLike.commentId, commentIds)
                   )
                 )
-            : [];
+            : Promise.resolve([]),
+        ]);
 
-        const commentsWithLikes = comments.map((c) => {
-          const lc = likeCounts.find((x) => x.commentId === c.id);
-          const isLiked = (userLikes || []).some((x) => x.commentId === c.id);
-          return {
-            ...c,
-            originalContent: c.originalContent ?? null,
-            likeCount: lc?.likeCount || 0,
-            isLiked,
-          } as const;
-        });
+        // Build a map for O(1) lookup instead of O(n) find
+        const likeCountMap = new Map(likeCounts.map((lc) => [lc.commentId, lc.likeCount]));
+        const userLikeSet = new Set(userLikes.map((ul) => ul.commentId));
+
+        const commentsWithLikes = comments.map((c) => ({
+          ...c,
+          originalContent: c.originalContent ?? null,
+          likeCount: likeCountMap.get(c.id) || 0,
+          isLiked: userLikeSet.has(c.id),
+        }));
 
         return {
           bounty: { ...bountyRow, amount: parseAmount(bountyRow.amount) },
-          votes: { count: Number(voteCountRow?.count || 0), isVoted },
+          votes: { count: Number(voteCount), isVoted },
           bookmarked,
           comments: commentsWithLikes,
         };
@@ -2251,12 +2254,14 @@ export const bountiesRouter = router({
       }
     }),
 
-  verifyCheckoutPayment: protectedProcedure
+  verifyCheckoutPayment: rateLimitedProtectedProcedure('payment:verify')
     .input(z.object({ sessionId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       try {
-        // Retrieve the checkout session from Stripe
-        const session = await stripeClient.checkout.sessions.retrieve(input.sessionId);
+        // Retrieve the checkout session from Stripe with circuit breaker
+        const session = await stripeCircuitBreaker.execute(() =>
+          stripeClient.checkout.sessions.retrieve(input.sessionId)
+        );
         const bountyId = session.metadata?.bountyId;
         const paymentIntentId = session.payment_intent as string | null;
 
@@ -2290,52 +2295,79 @@ export const bountiesRouter = router({
 
         // If payment intent exists, check its status
         if (paymentIntentId) {
-          const paymentIntent = await stripeClient.paymentIntents.retrieve(paymentIntentId);
+          const paymentIntent = await stripeCircuitBreaker.execute(() =>
+            stripeClient.paymentIntents.retrieve(paymentIntentId)
+          );
 
           if (paymentIntent.status === 'succeeded') {
-            // Idempotency check: Update bounty status if not already updated
-            if (existingBounty.paymentStatus !== 'held') {
-              await db
-                .update(bounty)
-                .set({
-                  paymentStatus: 'held',
-                  status: 'open',
-                  stripePaymentIntentId: paymentIntentId,
-                  stripeCheckoutSessionId: input.sessionId, // Store session ID
-                  updatedAt: new Date(),
-                })
-                .where(eq(bounty.id, bountyId));
-
-              // Create transaction record if it doesn't exist (idempotency)
-              const [existingTransaction] = await db
+            // Use distributed lock to prevent race conditions
+            return await withPaymentLock(bountyId, async () => {
+              // Re-fetch bounty to get latest state within lock
+              const [currentBounty] = await db
                 .select()
-                .from(transaction)
-                .where(eq(transaction.stripeId, paymentIntentId))
+                .from(bounty)
+                .where(eq(bounty.id, bountyId))
                 .limit(1);
 
-              if (!existingTransaction) {
-                await db.insert(transaction).values({
+              // Idempotency check: Update bounty status if not already updated
+              if (currentBounty && currentBounty.paymentStatus !== 'held') {
+                // Check if this operation was already performed
+                const alreadyProcessed = await wasOperationPerformed(
+                  'verify-payment',
                   bountyId,
-                  type: 'payment_intent',
-                  amount: existingBounty.amount,
-                  stripeId: paymentIntentId,
-                });
-              }
-            } else {
-              // Already processed, but ensure session ID is stored
-              if (!existingBounty.stripeCheckoutSessionId) {
+                  paymentIntentId
+                );
+
+                if (!alreadyProcessed) {
+                  await db
+                    .update(bounty)
+                    .set({
+                      paymentStatus: 'held',
+                      status: 'open',
+                      stripePaymentIntentId: paymentIntentId,
+                      stripeCheckoutSessionId: input.sessionId,
+                      updatedAt: new Date(),
+                    })
+                    .where(eq(bounty.id, bountyId));
+
+                  // Create transaction record if it doesn't exist
+                  const [existingTransaction] = await db
+                    .select()
+                    .from(transaction)
+                    .where(eq(transaction.stripeId, paymentIntentId))
+                    .limit(1);
+
+                  if (!existingTransaction) {
+                    await db.insert(transaction).values({
+                      bountyId,
+                      type: 'payment_intent',
+                      amount: currentBounty.amount,
+                      stripeId: paymentIntentId,
+                    });
+                  }
+
+                  // Mark operation as completed for idempotency
+                  await markOperationPerformed(
+                    'verify-payment',
+                    bountyId,
+                    'success',
+                    paymentIntentId
+                  );
+                }
+              } else if (currentBounty && !currentBounty.stripeCheckoutSessionId) {
+                // Already processed, but ensure session ID is stored
                 await db
                   .update(bounty)
                   .set({ stripeCheckoutSessionId: input.sessionId })
                   .where(eq(bounty.id, bountyId));
               }
-            }
 
-            return {
-              success: true,
-              paymentStatus: 'held',
-              message: 'Payment verified and bounty is now live',
-            };
+              return {
+                success: true,
+                paymentStatus: 'held',
+                message: 'Payment verified and bounty is now live',
+              };
+            });
           }
 
           // Payment intent exists but hasn't succeeded yet
@@ -2353,6 +2385,13 @@ export const bountiesRouter = router({
           message: 'Payment not yet completed',
         };
       } catch (error) {
+        if (error instanceof PaymentLockError) {
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: 'Payment verification already in progress. Please wait.',
+            cause: error,
+          });
+        }
         if (error instanceof TRPCError) {
           throw error;
         }
@@ -2364,7 +2403,7 @@ export const bountiesRouter = router({
       }
     }),
 
-  recheckPaymentStatus: protectedProcedure
+  recheckPaymentStatus: rateLimitedProtectedProcedure('payment:verify')
     .input(z.object({ bountyId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       try {
@@ -2392,8 +2431,8 @@ export const bountiesRouter = router({
 
         // If we have a payment intent ID, check its status directly
         if (existingBounty.stripePaymentIntentId) {
-          const paymentIntent = await stripeClient.paymentIntents.retrieve(
-            existingBounty.stripePaymentIntentId
+          const paymentIntent = await stripeCircuitBreaker.execute(() =>
+            stripeClient.paymentIntents.retrieve(existingBounty.stripePaymentIntentId!)
           );
 
           if (paymentIntent.status === 'succeeded' && existingBounty.paymentStatus !== 'held') {

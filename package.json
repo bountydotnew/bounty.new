@@ -141,6 +141,7 @@
       "nuqs": "^2.7.0",
       "zod": "^4.0.5",
       "@tailwindcss/typography": "^0.5.16",
+      "@upstash/ratelimit": "latest",
       "@upstash/realtime": "latest",
       "@upstash/redis": "latest",
       "ua-parser-js": "^2.0.7",

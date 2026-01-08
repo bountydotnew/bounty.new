@@ -6,14 +6,10 @@ import { sendErrorWebhook, sendInfoWebhook } from '../lib/use-discord-webhook';
 import {
   adminProcedure,
   protectedProcedure,
-  publicProcedure,
+  rateLimitedPublicProcedure,
   router,
 } from '../trpc';
 import { realtime } from '@bounty/realtime';
-
-const info = console.info.bind(console);
-const error = console.error.bind(console);
-const warn = console.warn.bind(console);
 
 const sendWebhookSchema = z.object({
   message: z.string().min(1).max(2000),
@@ -69,7 +65,7 @@ export const notificationsRouter = router({
           ts: Date.now(),
         });
       } catch (emitError) {
-        error('[sendToUser] Failed to emit realtime event:', {
+        console.error('[sendToUser] Failed to emit realtime event:', {
           operation: 'sendToUser',
           userId: input.userId,
           error: emitError,
@@ -137,7 +133,7 @@ export const notificationsRouter = router({
           ts: Date.now(),
         });
       } catch (emitError) {
-        error('[markAsRead] Failed to emit realtime event:', {
+        console.error('[markAsRead] Failed to emit realtime event:', {
           operation: 'markAsRead',
           userId: ctx.session.user.id,
           error: emitError,
@@ -158,7 +154,7 @@ export const notificationsRouter = router({
         ts: Date.now(),
       });
     } catch (emitError) {
-      error('[markAllAsRead] Failed to emit realtime event:', {
+      console.error('[markAllAsRead] Failed to emit realtime event:', {
         operation: 'markAllAsRead',
         userId: ctx.session.user.id,
         error: emitError,
@@ -189,7 +185,9 @@ export const notificationsRouter = router({
         .returning();
       return deleted;
     }),
-  sendWebhook: publicProcedure
+
+  // SECURED: Now requires admin access for internal webhook sending
+  sendWebhook: adminProcedure
     .input(sendWebhookSchema)
     .mutation(async ({ input }) => {
       try {
@@ -201,11 +199,6 @@ export const notificationsRouter = router({
             message: 'Discord webhook not configured',
           });
         }
-
-        info('[sendWebhook] Sending webhook:', {
-          type: input.type,
-          title: input.title,
-        });
 
         const colorMap = {
           log: 0xff_ff_ff,
@@ -233,7 +226,7 @@ export const notificationsRouter = router({
 
         return { success: true, message: 'Webhook sent successfully' };
       } catch (err) {
-        error('[sendWebhook] Error:', err);
+        console.error('[sendWebhook] Error:', err);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to send webhook',
@@ -241,20 +234,17 @@ export const notificationsRouter = router({
       }
     }),
 
-  sendError: publicProcedure
+  // SECURED: Now requires admin access for internal error webhooks
+  sendError: adminProcedure
     .input(sendErrorSchema)
     .mutation(async ({ input }) => {
       try {
         const webhookUrl = process.env.DISCORD_WEBHOOK_URL as string;
 
         if (!webhookUrl) {
-          warn('[sendError] Discord webhook not configured');
+          console.warn('[sendError] Discord webhook not configured');
           return { success: false, message: 'Webhook not configured' };
         }
-
-        info('[sendError] Sending error webhook:', {
-          location: input.location,
-        });
 
         const success = await sendErrorWebhook({
           webhookUrl,
@@ -270,12 +260,13 @@ export const notificationsRouter = router({
             : 'Failed to send error webhook',
         };
       } catch (err) {
-        error('[sendError] Error:', err);
+        console.error('[sendError] Error:', err);
         return { success: false, message: 'Failed to send error webhook' };
       }
     }),
 
-  testWebhook: publicProcedure.query(async () => {
+  // Admin-only webhook test
+  testWebhook: adminProcedure.query(async () => {
     try {
       const webhookUrl = process.env.DISCORD_WEBHOOK_URL as string;
 
@@ -286,11 +277,9 @@ export const notificationsRouter = router({
         });
       }
 
-      info('[testWebhook] Testing webhook connection');
-
       const success = await sendInfoWebhook({
         webhookUrl,
-        title: '🧪 Test Webhook',
+        title: 'Test Webhook',
         message: 'This is a test message from bounty.new tRPC API',
         context: {
           timestamp: new Date().toISOString(),
@@ -310,7 +299,7 @@ export const notificationsRouter = router({
         message: 'Test webhook sent successfully',
       };
     } catch (err) {
-      error('[testWebhook] Error:', err);
+      console.error('[testWebhook] Error:', err);
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Failed to test webhook',
@@ -318,87 +307,42 @@ export const notificationsRouter = router({
     }
   }),
 
-  // Public webhook test (limited functionality for security)
-  testPublicWebhook: publicProcedure.query(async () => {
-    try {
-      const webhookUrl = process.env.DISCORD_WEBHOOK_URL as string;
-
-      if (!webhookUrl) {
-        return {
-          success: false,
-          message: 'Discord webhook not configured',
-        };
-      }
-
-      // Only test in development, just check config in production
-      if (process.env.NODE_ENV === 'development') {
-        info('[testPublicWebhook] Testing webhook connection (dev mode)');
-
-        const success = await sendInfoWebhook({
-          webhookUrl,
-          title: '🧪 Public Test Webhook',
-          message: 'This is a test message from bounty.new public API',
-          context: {
-            timestamp: new Date().toISOString(),
-            environment: process.env.NODE_ENV,
-          },
-        });
-
-        return {
-          success,
-          message: success
-            ? 'Public test webhook sent successfully'
-            : 'Webhook test failed',
-        };
-      }
-      return {
-        success: true,
-        message: 'Webhook configured (production mode - test not sent)',
-      };
-    } catch (err) {
-      error('[testPublicWebhook] Error:', err);
-      return {
-        success: false,
-        message: 'Failed to test webhook',
-      };
-    }
-  }),
-
-  // Public endpoint for error reporting (with rate limiting in production)
-  reportError: publicProcedure
+  // SECURED: Rate-limited public error reporting endpoint
+  // Only allows client-side error reporting with strict rate limits
+  reportError: rateLimitedPublicProcedure('webhook:error')
     .input(
       z.object({
-        error: z.string().min(1),
-        location: z.string().optional(),
-        userAgent: z.string().optional(),
-        url: z.string().optional(),
+        error: z.string().min(1).max(1000), // Limit error message length
+        location: z.string().max(200).optional(),
+        userAgent: z.string().max(500).optional(),
+        url: z.string().max(500).optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       try {
         const webhookUrl = process.env.DISCORD_WEBHOOK_URL as string;
 
         if (!webhookUrl) {
-          warn('[reportError] Discord webhook not configured');
           return { success: false, message: 'Error reporting not configured' };
         }
 
-        // Only send to Discord in production
-        if (process.env.NODE_ENV === 'development') {
-          info('[reportError] Reporting client-side error:', {
-            location: input.location,
-          });
+        // Only send to Discord in production to avoid spam during development
+        if (process.env.NODE_ENV === 'production') {
+          // Sanitize input to prevent webhook abuse
+          const sanitizedError = input.error.slice(0, 500);
+          const sanitizedLocation = input.location?.slice(0, 100) || 'Unknown';
 
           const success = await sendErrorWebhook({
             webhookUrl,
-            error: input.error,
+            error: sanitizedError,
             context: {
-              userAgent: input.userAgent,
-              url: input.url,
+              userAgent: input.userAgent?.slice(0, 200),
+              url: input.url?.slice(0, 200),
               timestamp: new Date().toISOString(),
               source: 'client-side',
+              clientIP: ctx.clientIP, // Track for abuse detection
             },
-            location: input.location || 'Unknown',
+            location: sanitizedLocation,
           });
 
           return {
@@ -406,13 +350,12 @@ export const notificationsRouter = router({
             message: success ? 'Error reported' : 'Failed to report error',
           };
         }
-        info(
-          '[reportError] Error reported (dev mode - not sent to Discord):',
-          input.error
-        );
+
+        // In development, just log locally
+        console.info('[reportError] Client error (dev mode):', input.error);
         return { success: true, message: 'Error logged in development' };
       } catch (err) {
-        error('[reportError] Error:', err);
+        console.error('[reportError] Error:', err);
         return { success: false, message: 'Failed to report error' };
       }
     }),

@@ -52,6 +52,7 @@ export async function createServerCaller(userId?: string) {
   const context: Context = {
     session,
     clientIP: 'server-side',
+    requestId: `server_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`,
     req: null as unknown as Context['req'], // Not needed for server-side calls
     db,
   };

@@ -10,10 +10,29 @@ function getClientIP(req: NextRequest): string {
   let clientIP = forwarded || realIP || cfConnectingIP || 'unknown';
 
   if (clientIP?.includes(',')) {
-    clientIP = clientIP.split(',')[0].trim();
+    clientIP = clientIP.split(',')[0]?.trim() ?? clientIP;
   }
 
   return clientIP;
+}
+
+/**
+ * Generate a unique request ID for tracing
+ * Uses existing header if present (from load balancer/CDN), otherwise generates new
+ */
+function getRequestId(req: NextRequest): string {
+  // Check for existing request ID from upstream (CloudFlare, Vercel, etc.)
+  const existingId =
+    req.headers.get('x-request-id') ||
+    req.headers.get('x-vercel-id') ||
+    req.headers.get('cf-ray');
+
+  if (existingId) {
+    return existingId;
+  }
+
+  // Generate a new request ID
+  return `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
 export async function createContext(req: NextRequest) {
@@ -24,10 +43,12 @@ export async function createContext(req: NextRequest) {
   });
 
   const clientIP = getClientIP(req);
+  const requestId = getRequestId(req);
 
   return {
     session,
     clientIP,
+    requestId,
     req,
     db,
   };
