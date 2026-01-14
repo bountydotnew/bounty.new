@@ -4,8 +4,20 @@ import { setupLoginCommand, getLoginCommandDefinition } from './login.js';
 import { setupBountyCommands, getBountyCommandDefinitions } from './bounty.js';
 import { setupUserCommand } from './user';
 import { discordBotEnv as env } from '@bounty/env/discord-bot';
+import { requireDevAuth } from '../utils/devMode.js';
 
 export function setupCommands(client: Client) {
+  // Global dev mode check - applies to all commands
+  client.on('interactionCreate', async (interaction) => {
+    if (!interaction.isChatInputCommand()) return;
+    try {
+      await requireDevAuth(interaction);
+    } catch {
+      // Error already handled in requireDevAuth (reply sent to user)
+      return;
+    }
+  });
+
   // Set up command handlers first
   setupLoginCommand(client);
   setupBountyCommands(client);

@@ -22,3 +22,4 @@ packages/db/migrations/meta/_journal.json
 docs/STRIPE_WEBHOOK_SETUP.md
 /.cursor/plans
 /_backup
+/.claude

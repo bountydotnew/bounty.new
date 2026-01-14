@@ -24,6 +24,12 @@ export const discordBotEnv = createEnv({
     // Better Auth - required for API calls
     BETTER_AUTH_URL: z.string().url('BETTER_AUTH_URL must be a valid URL'),
     BETTER_AUTH_SECRET: z.string().min(1, 'BETTER_AUTH_SECRET is required'),
+    // Dev mode - restrict bot to only allow commands from a specific user
+    DEV_MODE: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((val) => val === 'true'),
+    DEV_USER_ID: z.string().min(1).optional(),
     // Node environment
     NODE_ENV: z
       .enum(['development', 'production', 'test'])
@@ -36,6 +42,8 @@ export const discordBotEnv = createEnv({
     DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET,
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
+    DEV_MODE: process.env.DEV_MODE,
+    DEV_USER_ID: process.env.DEV_USER_ID,
     NODE_ENV: process.env.NODE_ENV,
   },
   // Skip validation - we validate Discord env vars at runtime when they're actually used
