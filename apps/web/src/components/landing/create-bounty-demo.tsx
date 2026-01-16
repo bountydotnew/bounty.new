@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { BountyCard } from '@/components/bounty/bounty-card';
 import type { Bounty } from '@/types/dashboard';
 import { devNames } from './demo-data';
-import { MockBrowser, useMockBrowser } from './mockup';
+import { MockBrowser, useMockBrowser, TutorialProvider, TutorialHighlight, useTutorial } from './mockup';
 import { HomeIcon, BountiesIcon, BookmarksIcon, SettingsGearIcon, GithubIcon } from '@bounty/ui';
 import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
 import { CalendarIcon } from '@bounty/ui/components/icons/huge/calendar';
@@ -15,6 +15,7 @@ import { CalendarIcon } from '@bounty/ui/components/icons/huge/calendar';
 // ─────────────────────────────────────────────────────────────────────────────
 function BountyDashboardPage() {
   const { navigate } = useMockBrowser();
+  const { advanceStep } = useTutorial();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [feedBounties, setFeedBounties] = useState<Bounty[]>([]);
   const [visibleCount, setVisibleCount] = useState(0);
@@ -118,6 +119,7 @@ function BountyDashboardPage() {
   }, [feedBounties]);
 
   const handleCreateBounty = () => {
+    advanceStep();
     navigate('checkout.stripe.com/c/pay_bounty_1234');
   };
 
@@ -228,13 +230,15 @@ function BountyDashboardPage() {
                     <ChevronDown className="w-3 h-3" />
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleCreateBounty}
-                  className="flex items-center justify-center gap-1.5 px-[16px] h-[34px] rounded-full text-[15px] font-medium bg-white text-black shadow-[0_6px_16px_rgba(255,255,255,0.18)] hover:bg-gray-100 transition-colors"
-                >
-                  Create bounty
-                </button>
+                <TutorialHighlight stepId="create-bounty" tooltip="Click to create your bounty" borderRadius="rounded-full">
+                  <button
+                    type="button"
+                    onClick={handleCreateBounty}
+                    className="flex items-center justify-center gap-1.5 px-[16px] h-[34px] rounded-full text-[15px] font-medium bg-white text-black shadow-[0_6px_16px_rgba(255,255,255,0.18)] hover:bg-gray-100 transition-colors"
+                  >
+                    Create bounty
+                  </button>
+                </TutorialHighlight>
               </div>
             </div>
           </div>
@@ -272,8 +276,10 @@ function BountyDashboardPage() {
 // ─────────────────────────────────────────────────────────────────────────────
 function StripeCheckoutPage() {
   const { navigate } = useMockBrowser();
+  const { advanceStep } = useTutorial();
 
   const handlePay = () => {
+    advanceStep();
     navigate('github.com/bountydotnew/bounty.new/issues/42');
   };
 
@@ -382,13 +388,15 @@ function StripeCheckoutPage() {
               </label>
 
               {/* Pay button */}
-              <button
-                type="button"
-                onClick={handlePay}
-                className="w-full h-12 rounded-md bg-[#111] text-white font-semibold hover:bg-[#333] transition-colors"
-              >
-                Pay
-              </button>
+              <TutorialHighlight stepId="stripe-pay" tooltip="Click to complete payment" tooltipPosition="bottom" borderRadius="rounded-md" fullWidth>
+                <button
+                  type="button"
+                  onClick={handlePay}
+                  className="w-full h-12 rounded-md bg-[#111] text-white font-semibold hover:bg-[#333] transition-colors"
+                >
+                  Pay
+                </button>
+              </TutorialHighlight>
 
               <p className="text-xs text-[#666] text-center mt-4">
                 By paying, you agree to Link&apos;s Terms and Privacy.
@@ -502,18 +510,20 @@ function GitHubIssuePage() {
 export function CreateBountyDemo() {
   return (
     <MockBrowser initialUrl="bounty.new/dashboard" headlights>
-      <MockBrowser.Toolbar />
-      <div className="flex-1 relative overflow-hidden">
-        <MockBrowser.Page url="bounty.new/dashboard">
-          <BountyDashboardPage />
-        </MockBrowser.Page>
-        <MockBrowser.Page url="checkout.stripe.com/c/pay_bounty_1234">
-          <StripeCheckoutPage />
-        </MockBrowser.Page>
-        <MockBrowser.Page url="github.com/bountydotnew/bounty.new/issues/42">
-          <GitHubIssuePage />
-        </MockBrowser.Page>
-      </div>
+      <TutorialProvider>
+        <MockBrowser.Toolbar />
+        <div className="flex-1 relative overflow-hidden">
+          <MockBrowser.Page url="bounty.new/dashboard">
+            <BountyDashboardPage />
+          </MockBrowser.Page>
+          <MockBrowser.Page url="checkout.stripe.com/c/pay_bounty_1234">
+            <StripeCheckoutPage />
+          </MockBrowser.Page>
+          <MockBrowser.Page url="github.com/bountydotnew/bounty.new/issues/42">
+            <GitHubIssuePage />
+          </MockBrowser.Page>
+        </div>
+      </TutorialProvider>
     </MockBrowser>
   );
 }

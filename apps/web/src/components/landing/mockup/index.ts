@@ -2,6 +2,10 @@
 export { MockBrowser } from './mock-browser';
 export { useMockBrowser } from './mock-browser-context';
 
+// Tutorial System
+export { TutorialProvider, useTutorial, useTutorialOptional } from './tutorial-context';
+export { TutorialHighlight } from './tutorial-highlight';
+
 // Legacy exports (deprecated - use MockBrowser instead)
 export { MockupBrowser } from './mockup-browser';
 export { MockupNavigate } from './mockup-navigate';
