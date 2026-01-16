@@ -348,6 +348,7 @@ export function BountyForm({
         <div className="flex justify-end items-center gap-1.5 sm:gap-2 px-1.5 sm:px-3 py-2 sm:py-3 flex-wrap">
           {onCancel && (
             <button
+              type="button"
               onClick={onCancel}
               disabled={isSubmitting}
               className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
@@ -355,69 +356,28 @@ export function BountyForm({
               Cancel
             </button>
           )}
-          {!(onSubmit || onCancel) && (
+          {!onSubmit && !onCancel && (
             <button
+              type="button"
               onClick={handleSkipAndJoinWaitlist}
               disabled={isSubmitting}
               className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
             >
-              <span className="hidden sm:inline">
-                {isSubmitting ? 'Redirecting...' : 'Skip & join waitlist'}
-              </span>
-              <span className="sm:hidden">
-                {isSubmitting ? 'Redirecting...' : 'Skip'}
-              </span>
+              <span className="hidden sm:inline">{isSubmitting ? "Redirecting..." : "Skip & join waitlist"}</span>
+              <span className="sm:hidden">{isSubmitting ? "Redirecting..." : "Skip"}</span>
             </button>
           )}
           <button
             type="button"
-            onClick={onCancel}
-            disabled={isSubmitting}
-            className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+            onClick={handleCreateBounty}
+            disabled={isSubmitting || !title}
+            className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-white text-black text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
           >
             <GitHub className="w-4 h-4 shrink-0" />
-            <span className="hidden sm:inline">
-              {isSubmitting
-                ? onSubmit
-                  ? 'Saving...'
-                  : 'Creating...'
-                : onSubmit
-                  ? 'Save'
-                  : 'Create bounty'}
-            </span>
-            <span className="sm:hidden">
-              {isSubmitting
-                ? onSubmit
-                  ? 'Saving...'
-                  : 'Creating...'
-                : onSubmit
-                  ? 'Save'
-                  : 'Create'}
-            </span>
+            <span className="hidden sm:inline">{isSubmitting ? (onSubmit ? "Saving..." : "Creating...") : (onSubmit ? "Save" : "Create bounty")}</span>
+            <span className="sm:hidden">{isSubmitting ? (onSubmit ? "Saving..." : "Creating...") : (onSubmit ? "Save" : "Create")}</span>
           </button>
-        )}
-        {!onSubmit && !onCancel && (
-          <button
-            type="button"
-            onClick={handleSkipAndJoinWaitlist}
-            disabled={isSubmitting}
-            className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
-          >
-            <span className="hidden sm:inline">{isSubmitting ? "Redirecting..." : "Skip & join waitlist"}</span>
-            <span className="sm:hidden">{isSubmitting ? "Redirecting..." : "Skip"}</span>
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={handleCreateBounty}
-          disabled={isSubmitting || !title}
-          className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-white text-black text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
-        >
-          <GitHub className="w-4 h-4 shrink-0" />
-          <span className="hidden sm:inline">{isSubmitting ? (onSubmit ? "Saving..." : "Creating...") : (onSubmit ? "Save" : "Create bounty")}</span>
-          <span className="sm:hidden">{isSubmitting ? (onSubmit ? "Saving..." : "Creating...") : (onSubmit ? "Save" : "Create")}</span>
-        </button>
-      </div>
+        </div>
       </div>
       <div className="text-[#5A5A5A] text-[10px] sm:text-sm text-center pt-2 sm:pt-3 px-2 sm:px-0">
         Creating a draft bounty is optional. This step is not required to sign

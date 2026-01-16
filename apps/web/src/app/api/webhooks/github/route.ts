@@ -24,12 +24,294 @@ import { withPaymentLock, wasOperationPerformed, markOperationPerformed, Payment
 
 const ISSUE_REFERENCE_PATTERN = /(?:fixes|closes|resolves|related to)\s+#?(\d+)/i;
 
+// Issue comment event (action: created/edited/deleted with comment)
+type IssueCommentEvent = {
+  action: 'created' | 'edited' | 'deleted';
+  issue: {
+    number: number;
+    title: string;
+    body: string | null;
+    html_url: string;
+    user: { login: string };
+    comments: number;
+    pull_request?: Record<string, unknown>;
+  };
+  repository: { name: string; owner: { login: string } };
+  installation: { id: number | null };
+  comment: { id: number; user: { login: string }; body: string };
+};
+
+// Pull request event
+type PullRequestEvent = {
+  action: 'opened' | 'closed' | 'reopened';
+  pull_request: {
+    number: number;
+    title: string;
+    body: string | null;
+    html_url: string;
+    user: { login: string };
+    merged: boolean;
+    merged_at: string | null;
+    head: { sha: string };
+    state: string;
+  };
+  repository: { name: string; owner: { login: string } };
+  installation: { id: number | null };
+};
+
+// Installation event
+type InstallationEvent = {
+  action: 'created' | 'deleted';
+  installation: {
+    id: number;
+    account: { login: string; avatar_url?: string };
+    repository_selection: string;
+    repositories: Array<{ id: number; name: string; full_name: string }>;
+  };
+  sender: { id: number; login: string };
+};
+
+// Issue edited event (no comment)
+type IssueEditedEvent = {
+  action: 'edited';
+  issue: { number: number; title: string; body: string | null };
+  repository: { name: string; owner: { login: string } };
+  installation: { id: number | null };
+};
+
+// Issue deleted event (no comment)
+type IssueDeletedEvent = {
+  action: 'deleted';
+  issue: { number: number };
+  repository: { name: string; owner: { login: string } };
+  installation: { id: number | null };
+};
+
 type WebhookEvent =
-  | { action: 'created' | 'edited' | 'deleted'; issue: { number: number; title: string; body: string | null; html_url: string; user: { login: string }; comments: number; pull_request?: Record<string, unknown> }; repository: { name: string; owner: { login: string } }; installation: { id: number | null }; comment: { id: number; user: { login: string }; body: string } }
-  | { action: 'opened' | 'closed' | 'reopened'; pull_request: { number: number; title: string; body: string | null; html_url: string; user: { login: string }; merged: boolean; merged_at: string | null; head: { sha: string }; state: string }; repository: { name: string; owner: { login: string } }; installation: { id: number | null } }
-  | { action: 'created' | 'deleted'; installation: { id: number; account: { login: string }; repository_selection: string; repositories: Array<{ id: number; name: string; full_name: string }> }; sender: { id: number; login: string } }
-  | { action: 'edited'; issue: { number: number; title: string; body: string | null }; repository: { name: string; owner: { login: string } }; installation: { id: number | null } }
-  | { action: 'deleted'; issue: { number: number }; repository: { name: string; owner: { login: string } }; installation: { id: number | null } };
+  | IssueCommentEvent
+  | PullRequestEvent
+  | InstallationEvent
+  | IssueEditedEvent
+  | IssueDeletedEvent;
+
+// Type for GitHub API pull request response
+type GitHubPullRequest = {
+  id: number;
+  number: number;
+  title: string;
+  state: string;
+  html_url: string;
+  user: { login: string; id: number };
+  body: string | null;
+  head: { sha: string; repoFullName?: string | null };
+  merged: boolean;
+  merged_at: string | null;
+};
+
+// Type for GitHub API issue response
+type GitHubIssue = {
+  id: number;
+  number: number;
+  title: string;
+  state: string;
+  html_url: string;
+  user: { login: string; id: number };
+  body: string | null;
+};
+
+// Common validation context passed to helper functions
+type ValidationContext = {
+  installationId: number;
+  owner: string;
+  repo: string;
+  issueNumber: number;
+};
+
+// Permission levels that grant write access
+const MAINTAINER_PERMISSIONS = ['admin', 'maintain', 'write'] as const;
+type MaintainerPermission = typeof MAINTAINER_PERMISSIONS[number];
+
+// Payment status checks
+const PAYMENT_STATUS_FUNDED = 'held' as const;
+const PAYMENT_STATUS_RELEASED = 'released' as const;
+
+function isMaintainerPermission(permission: string | null): permission is MaintainerPermission {
+  return permission !== null && MAINTAINER_PERMISSIONS.includes(permission as MaintainerPermission);
+}
+
+function isBountyFunded(bounty: { paymentStatus: string | null }): boolean {
+  return bounty.paymentStatus === PAYMENT_STATUS_FUNDED;
+}
+
+function isBountyReleased(bounty: { paymentStatus: string | null; stripeTransferId?: string | null }): boolean {
+  return bounty.paymentStatus === PAYMENT_STATUS_RELEASED || Boolean(bounty.stripeTransferId);
+}
+
+// Check if PR references the issue (when not commenting from PR itself)
+function prMustReferenceIssue(isPrComment: boolean, prBody: string | null, issueNumber: number): boolean {
+  if (isPrComment) {
+    return true; // When commenting on PR, reference is implicit
+  }
+  return pullRequestReferencesIssue(prBody, issueNumber);
+}
+
+// Type for solver with stripe requirements
+type SolverWithStripe = {
+  stripeConnectAccountId: string;
+  stripeConnectOnboardingComplete: boolean;
+};
+
+function isSolverReadyForPayout(
+  solver: { stripeConnectAccountId: string | null; stripeConnectOnboardingComplete: boolean | null } | undefined
+): solver is SolverWithStripe {
+  return Boolean(solver?.stripeConnectAccountId && solver.stripeConnectOnboardingComplete);
+}
+
+// Result type for validation functions
+type ValidationResult<T> =
+  | { success: true; data: T }
+  | { success: false; handled: true }; // Error was handled (comment posted), caller should return
+
+// Helper to validate PR exists and is from same repo
+async function validatePullRequest(
+  ctx: ValidationContext,
+  prNumber: number
+): Promise<ValidationResult<GitHubPullRequest>> {
+  const githubApp = getGithubAppManager();
+  
+  let pullRequest: GitHubPullRequest;
+  try {
+    pullRequest = await githubApp.getPullRequest(ctx.installationId, ctx.owner, ctx.repo, prNumber);
+  } catch {
+    await githubApp.createIssueComment(
+      ctx.installationId,
+      ctx.owner,
+      ctx.repo,
+      ctx.issueNumber,
+      `\nI couldn't find PR #${prNumber}. Double‑check the number and try again.\n`
+    );
+    return { success: false, handled: true };
+  }
+
+  if (pullRequest.head.repoFullName && 
+      pullRequest.head.repoFullName.toLowerCase() !== `${ctx.owner}/${ctx.repo}`.toLowerCase()) {
+    await githubApp.createIssueComment(
+      ctx.installationId,
+      ctx.owner,
+      ctx.repo,
+      ctx.issueNumber,
+      `\nPR #${prNumber} is from a different repository. Please open the PR from this repo.\n`
+    );
+    return { success: false, handled: true };
+  }
+
+  return { success: true, data: pullRequest };
+}
+
+// Helper to validate bounty exists
+async function validateBountyExists(
+  ctx: ValidationContext,
+  bountyIssueNumber: number
+): Promise<ValidationResult<typeof bounty.$inferSelect>> {
+  const githubApp = getGithubAppManager();
+  const bountyRecord = await findBountyForIssue({
+    issueNumber: bountyIssueNumber,
+    owner: ctx.owner,
+    repo: ctx.repo,
+  });
+
+  if (!bountyRecord) {
+    await githubApp.createIssueComment(
+      ctx.installationId,
+      ctx.owner,
+      ctx.repo,
+      ctx.issueNumber,
+      '\nNo bounty found for this issue.\n'
+    );
+    return { success: false, handled: true };
+  }
+
+  return { success: true, data: bountyRecord };
+}
+
+// Helper to check if user has maintainer-level permission
+async function checkMaintainerPermission(
+  ctx: ValidationContext,
+  username: string
+): Promise<boolean> {
+  const githubApp = getGithubAppManager();
+  const permission = await githubApp.getUserPermission(ctx.installationId, ctx.owner, ctx.repo, username);
+  return isMaintainerPermission(permission);
+}
+
+// Helper to validate submission exists for a PR
+async function validateSubmissionExists(
+  ctx: ValidationContext,
+  bountyId: string,
+  prNumber: number
+): Promise<ValidationResult<typeof submission.$inferSelect>> {
+  const githubApp = getGithubAppManager();
+  const [submissionRecord] = await db
+    .select()
+    .from(submission)
+    .where(and(eq(submission.bountyId, bountyId), eq(submission.githubPullRequestNumber, prNumber)))
+    .limit(1);
+
+  if (!submissionRecord) {
+    await githubApp.createIssueComment(
+      ctx.installationId,
+      ctx.owner,
+      ctx.repo,
+      ctx.issueNumber,
+      `\nNo submission found for PR #${prNumber}.\n`
+    );
+    return { success: false, handled: true };
+  }
+
+  return { success: true, data: submissionRecord };
+}
+
+// Helper to check if PR is valid for submission
+function isPrOpenOrMerged(pr: { state: string; merged: boolean }): boolean {
+  return pr.state === 'open' || pr.merged;
+}
+
+function isPrOpen(pr: { state: string }): boolean {
+  return pr.state === 'open';
+}
+
+function isBountyAcceptingSubmissions(bounty: { status: string }): boolean {
+  return bounty.status !== 'in_progress' && bounty.status !== 'completed';
+}
+
+// Helper to resolve bounty issue number for unsubmit command
+async function resolveBountyIssueForUnsubmit(
+  ctx: ValidationContext,
+  isPrComment: boolean,
+  pullRequest: GitHubPullRequest,
+  targetPrNumber: number
+): Promise<number | null> {
+  const githubApp = getGithubAppManager();
+  
+  if (isPrComment) {
+    const linkedIssueNumber = getIssueNumberFromPrBody(pullRequest.body || '');
+    if (!linkedIssueNumber) {
+      await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
+        '\nI couldn\'t tell which issue this PR is for. Add "Fixes #123" to the PR body or unsubmit from the issue with `/unsubmit <PR#>`.\n');
+      return null;
+    }
+    return linkedIssueNumber;
+  }
+  
+  if (!pullRequestReferencesIssue(pullRequest.body, ctx.issueNumber)) {
+    await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
+      `\nPR #${targetPrNumber} doesn't reference this issue. Add "Fixes #${ctx.issueNumber}" (or similar) to the PR description and try again.\n`);
+    return null;
+  }
+  
+  return ctx.issueNumber;
+}
+
 
 export async function POST(request: Request) {
   try {
@@ -77,12 +359,12 @@ export async function POST(request: Request) {
     else if ('issue' in event && event.action === 'deleted' && !('comment' in event)) {
       await handleIssueDeleted(event);
     }
-    // Handle installation events
-    else if ('installation' in event && 'action' in event && (event.action === 'created' || event.action === 'deleted')) {
+    // Handle installation events (must not have issue or pull_request to distinguish from other events)
+    else if ('sender' in event && 'installation' in event && (event.action === 'created' || event.action === 'deleted')) {
       await handleInstallationEvent(event);
     }
     else {
-      console.log(`[GitHub Webhook] Unhandled event type`);
+      console.log('[GitHub Webhook] Unhandled event type');
     }
 
     return NextResponse.json({ received: true });
@@ -100,7 +382,7 @@ function getIssueNumberFromPrBody(prBody: string | null): number | null {
     return null;
   }
   const issueMatch = prBody.match(ISSUE_REFERENCE_PATTERN);
-  return issueMatch ? parseInt(issueMatch[1], 10) : null;
+  return issueMatch ? Number.parseInt(issueMatch[1], 10) : null;
 }
 
 function pullRequestReferencesIssue(prBody: string | null, issueNumber: number): boolean {
@@ -149,7 +431,7 @@ async function findUserByGithubLogin(login: string) {
   return linkedUser;
 }
 
-async function handleIssueComment(event: Extract<WebhookEvent, { issue: any; action: 'created' }>) {
+async function handleIssueComment(event: IssueCommentEvent) {
   const { issue, comment, repository, installation } = event;
 
   console.log(`[GitHub Webhook] Issue comment created: ${repository.owner.login}/${repository.name}#${issue.number}`);
@@ -211,11 +493,10 @@ async function handleIssueComment(event: Extract<WebhookEvent, { issue: any; act
 }
 
 async function handleBountyUnsubmitCommand(
-  event: Extract<WebhookEvent, { issue: any }>,
+  event: IssueCommentEvent,
   command: Extract<ReturnType<typeof parseBotCommand>, { action: 'unsubmit' }>
 ) {
   const { issue, repository, installation, comment } = event;
-
   console.log('[GitHub Webhook] Unsubmit command received');
 
   if (!installation?.id) {
@@ -223,155 +504,58 @@ async function handleBountyUnsubmitCommand(
     return;
   }
 
+  const ctx: ValidationContext = {
+    installationId: installation.id,
+    owner: repository.owner.login,
+    repo: repository.name,
+    issueNumber: issue.number,
+  };
   const githubApp = getGithubAppManager();
   const isPrComment = Boolean(issue.pull_request);
   const targetPrNumber = isPrComment ? issue.number : command.prNumber;
 
   if (!targetPrNumber) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-Please include a PR number, like \`/unsubmit 123\`.
-`
-    );
+    await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
+      '\nPlease include a PR number, like `/unsubmit 123`.\n');
     return;
   }
 
-  let bountyIssueNumber = issue.number;
-  let pullRequest;
+  // Validate PR
+  const prResult = await validatePullRequest(ctx, targetPrNumber);
+  if (!prResult.success) {
+    return;
+  }
+  const pullRequest = prResult.data;
 
-  try {
-    pullRequest = await githubApp.getPullRequest(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      targetPrNumber
-    );
-  } catch (error) {
-    console.error('[GitHub Webhook] Failed to fetch PR for unsubmit:', error);
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-I couldn't find PR #${targetPrNumber}. Double‑check the number and try again.
-`
-    );
+  // Resolve bounty issue number
+  const bountyIssueNumber = await resolveBountyIssueForUnsubmit(ctx, isPrComment, pullRequest, targetPrNumber);
+  if (bountyIssueNumber === null) {
     return;
   }
 
-  if (
-    pullRequest.head.repoFullName &&
-    pullRequest.head.repoFullName.toLowerCase() !==
-      `${repository.owner.login}/${repository.name}`.toLowerCase()
-  ) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-PR #${targetPrNumber} is from a different repository. Please open the PR from this repo before unsubmit.
-`
-    );
+  // Validate bounty exists
+  const bountyResult = await validateBountyExists({ ...ctx, issueNumber: bountyIssueNumber }, bountyIssueNumber);
+  if (!bountyResult.success) {
     return;
   }
+  const bountyRecord = bountyResult.data;
 
-  if (isPrComment) {
-    const linkedIssueNumber = getIssueNumberFromPrBody(pullRequest.body || '');
-    if (!linkedIssueNumber) {
-      await githubApp.createIssueComment(
-        installation.id,
-        repository.owner.login,
-        repository.name,
-        issue.number,
-        `
-I couldn't tell which issue this PR is for. Add “Fixes #123” to the PR body or unsubmit from the issue with \`/unsubmit <PR#>\`.
-`
-      );
-      return;
-    }
-    bountyIssueNumber = linkedIssueNumber;
-  } else if (!pullRequestReferencesIssue(pullRequest.body, bountyIssueNumber)) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-PR #${targetPrNumber} doesn’t reference this issue. Add “Fixes #${bountyIssueNumber}” (or similar) to the PR description and try again.
-`
-    );
-    return;
-  }
-
-  const bountyRecord = await findBountyForIssue({
-    issueNumber: bountyIssueNumber,
-    owner: repository.owner.login,
-    repo: repository.name,
-  });
-
-  if (!bountyRecord) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-No bounty found for this issue.
-`
-    );
-    return;
-  }
-
+  // Check permission (PR author or maintainer)
   if (comment.user.login !== pullRequest.user.login) {
-    const permission = await githubApp.getUserPermission(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      comment.user.login
-    );
-    if (!permission || !['admin', 'maintain', 'write'].includes(permission)) {
-      await githubApp.createIssueComment(
-        installation.id,
-        repository.owner.login,
-        repository.name,
-        issue.number,
-        `
-Only the PR author (or a repo maintainer) can unsubmit this PR.
-`
-      );
+    const isMaintainer = await checkMaintainerPermission(ctx, comment.user.login);
+    if (!isMaintainer) {
+      await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
+        '\nOnly the PR author (or a repo maintainer) can unsubmit this PR.\n');
       return;
     }
   }
 
-  const [submissionRecord] = await db
-    .select()
-    .from(submission)
-    .where(
-      and(
-        eq(submission.bountyId, bountyRecord.id),
-        eq(submission.githubPullRequestNumber, targetPrNumber)
-      )
-    )
-    .limit(1);
-
-  if (!submissionRecord) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-I couldn’t find a submission for PR #${targetPrNumber}.
-`
-    );
+  // Validate submission exists
+  const submissionResult = await validateSubmissionExists(ctx, bountyRecord.id, targetPrNumber);
+  if (!submissionResult.success) {
     return;
   }
+  const submissionRecord = submissionResult.data;
 
   if (submissionRecord.status !== 'pending') {
     await githubApp.createIssueComment(
@@ -408,7 +592,7 @@ This submission can’t be unsubmitted because it’s already ${submissionRecord
     .where(eq(submission.bountyId, bountyRecord.id));
 
   if (bountyRecord.githubCommentId) {
-    const amount = parseFloat(bountyRecord.amount);
+    const amount = Number.parseFloat(bountyRecord.amount);
     const isFunded = bountyRecord.paymentStatus === 'held';
 
     const newComment = isFunded
@@ -444,7 +628,7 @@ Submission for PR #${targetPrNumber} has been withdrawn.
 }
 
 async function handleBountyCreateCommand(
-  event: Extract<WebhookEvent, { issue: any }>,
+  event: IssueCommentEvent,
   command: Extract<ReturnType<typeof parseBotCommand>, { action: 'create' }>
 ) {
   const { issue, repository, installation, comment } = event;
@@ -495,7 +679,7 @@ Invalid currency: ${command.currency}. Supported currencies are USD, EUR, and GB
     comment.user.login
   );
 
-  if (!permission || !['admin', 'maintain', 'write'].includes(permission)) {
+  if (!isMaintainerPermission(permission)) {
     console.log(`[GitHub Webhook] User ${comment.user.login} does not have permission to create bounties`);
     await githubApp.createIssueComment(
       installation.id,
@@ -690,11 +874,15 @@ async function createSubmissionFromPullRequest(params: {
     .returning({ id: submission.id });
 
   const githubApp = getGithubAppManager();
+  if (!bountyRecord.githubIssueNumber) {
+    console.error('[GitHub Webhook] No GitHub issue number for bounty');
+    return { status: 'skipped', reason: 'no_github_issue' } as const;
+  }
   const submissionComment = await githubApp.createIssueComment(
     installationId,
     repository.owner.login,
     repository.name,
-    bountyRecord.githubIssueNumber!,
+    bountyRecord.githubIssueNumber,
     createSubmissionReceivedComment(bountyRecord.paymentStatus === 'held')
   );
   if (newSubmission?.id) {
@@ -713,7 +901,7 @@ async function createSubmissionFromPullRequest(params: {
     .where(eq(submission.bountyId, bountyRecord.id));
 
   if (bountyRecord.githubCommentId) {
-    const amount = parseFloat(bountyRecord.amount);
+    const amount = Number.parseFloat(bountyRecord.amount);
     const isFunded = bountyRecord.paymentStatus === 'held';
 
     const newComment = isFunded
@@ -741,178 +929,76 @@ async function createSubmissionFromPullRequest(params: {
 }
 
 async function handleBountySubmitCommand(
-  event: Extract<WebhookEvent, { issue: any }>,
+  event: IssueCommentEvent,
   command: Extract<ReturnType<typeof parseBotCommand>, { action: 'submit' }>
 ) {
   const { issue, repository, installation, comment } = event;
-
-  console.log(`[GitHub Webhook] Submit command received`);
+  console.log('[GitHub Webhook] Submit command received');
 
   if (!installation?.id) {
     console.warn('[GitHub Webhook] No installation ID, skipping');
     return;
   }
 
+  const ctx: ValidationContext = {
+    installationId: installation.id,
+    owner: repository.owner.login,
+    repo: repository.name,
+    issueNumber: issue.number,
+  };
   const githubApp = getGithubAppManager();
   const isPrComment = Boolean(issue.pull_request);
   const targetPrNumber = isPrComment ? issue.number : command.prNumber;
 
-  const permission = await githubApp.getUserPermission(
-    installation.id,
-    repository.owner.login,
-    repository.name,
-    comment.user.login
-  );
-
-  if (!permission || !['admin', 'maintain', 'write'].includes(permission)) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-Sorry, you don't have permission to approve submissions on this repository. Only repo admins, maintainers, or collaborators with write access can do this.
-`
-    );
+  // Check maintainer permission upfront
+  const isMaintainer = await checkMaintainerPermission(ctx, comment.user.login);
+  if (!isMaintainer) {
+    await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
+      '\nSorry, you don\'t have permission to approve submissions on this repository. Only repo admins, maintainers, or collaborators with write access can do this.\n');
     return;
   }
 
   if (!targetPrNumber) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-Please include a PR number, like \`/submit 123\`, or add \`@bountydotnew submit\` to your PR description.
-`
-    );
+    await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
+      '\nPlease include a PR number, like `/submit 123`, or add `@bountydotnew submit` to your PR description.\n');
     return;
   }
 
-  let bountyIssueNumber = issue.number;
-  let pullRequest;
+  // Validate PR exists and is from this repo
+  const prResult = await validatePullRequest(ctx, targetPrNumber);
+  if (!prResult.success) {
+    return;
+  }
+  const pullRequest = prResult.data;
 
-  try {
-    pullRequest = await githubApp.getPullRequest(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      targetPrNumber
-    );
-  } catch (error) {
-    console.error('[GitHub Webhook] Failed to fetch PR for submit:', error);
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-I couldn't find PR #${targetPrNumber}. Double‑check the number and try again.
-`
-    );
+  if (!isPrOpenOrMerged(pullRequest)) {
+    await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
+      `\nPR #${targetPrNumber} isn't open. Please reopen it before approving.\n`);
     return;
   }
 
-  if (
-    pullRequest.head.repoFullName &&
-    pullRequest.head.repoFullName.toLowerCase() !==
-      `${repository.owner.login}/${repository.name}`.toLowerCase()
-  ) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-PR #${targetPrNumber} is from a different repository. Please open the PR from this repo before submitting.
-`
-    );
+  // Resolve bounty issue number (reuses unsubmit resolver - same logic, slightly different messages)
+  const bountyIssueNumber = await resolveBountyIssueForUnsubmit(ctx, isPrComment, pullRequest, targetPrNumber);
+  if (bountyIssueNumber === null) {
     return;
   }
 
-  if (pullRequest.state !== 'open' && !pullRequest.merged) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-PR #${targetPrNumber} isn’t open. Please reopen it before approving.
-`
-    );
+  // Validate bounty exists
+  const bountyResult = await validateBountyExists({ ...ctx, issueNumber: bountyIssueNumber }, bountyIssueNumber);
+  if (!bountyResult.success) {
+    return;
+  }
+  const bountyRecord = bountyResult.data;
+
+  if (!isBountyAcceptingSubmissions(bountyRecord)) {
+    await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
+      `\nThis bounty already has an approved submission. New submissions are closed. If you need to switch winners, use \`/unapprove ${targetPrNumber}\` or \`/reapprove <PR#>\`.\n`);
     return;
   }
 
-  if (isPrComment) {
-    const linkedIssueNumber = getIssueNumberFromPrBody(pullRequest.body || '');
-    if (!linkedIssueNumber) {
-      await githubApp.createIssueComment(
-        installation.id,
-        repository.owner.login,
-        repository.name,
-        issue.number,
-        `
-I couldn't tell which issue this PR is for. Add “Fixes #123” to the PR body or submit from the issue with \`/submit <PR#>\`.
-`
-      );
-      return;
-    }
-    bountyIssueNumber = linkedIssueNumber;
-  } else if (!pullRequestReferencesIssue(pullRequest.body, bountyIssueNumber)) {
-      await githubApp.createIssueComment(
-        installation.id,
-        repository.owner.login,
-        repository.name,
-        issue.number,
-        `
-PR #${targetPrNumber} doesn’t reference this issue. Add “Fixes #${bountyIssueNumber}” (or similar) to the PR description and try again.
-`
-      );
-      return;
-  }
-
-  const bountyRecord = await findBountyForIssue({
-    issueNumber: bountyIssueNumber,
-    owner: repository.owner.login,
-    repo: repository.name,
-  });
-
-  if (!bountyRecord) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-No bounty found for this issue. Create one first with \`@bountydotnew <amount>\`.
-`
-    );
-    return;
-  }
-
-  if (bountyRecord.status === 'in_progress' || bountyRecord.status === 'completed') {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-This bounty already has an approved submission. New submissions are closed. If you need to switch winners, use \`/unapprove ${targetPrNumber}\` or \`/reapprove <PR#>\`.
-`
-    );
-    return;
-  }
-
-  if (pullRequest.state !== 'open') {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-PR #${targetPrNumber} isn’t open. Please open it before submitting.
-`
+  if (!isPrOpen(pullRequest)) {
+    await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
+      `\nPR #${targetPrNumber} isn't open. Please open it before submitting.\n`
     );
     return;
   }
@@ -924,7 +1010,7 @@ PR #${targetPrNumber} isn’t open. Please open it before submitting.
       repository.name,
       comment.user.login
     );
-    if (!permission || !['admin', 'maintain', 'write'].includes(permission)) {
+    if (!isMaintainerPermission(permission)) {
       await githubApp.createIssueComment(
         installation.id,
         repository.owner.login,
@@ -974,7 +1060,7 @@ ${skipMessage}
 }
 
 async function handleBountyApproveCommand(
-  event: Extract<WebhookEvent, { issue: any }>,
+  event: IssueCommentEvent,
   command: Extract<ReturnType<typeof parseBotCommand>, { action: 'approve' }>
 ) {
   const { issue, repository, installation, comment } = event;
@@ -984,142 +1070,54 @@ async function handleBountyApproveCommand(
     return;
   }
 
+  const ctx: ValidationContext = {
+    installationId: installation.id,
+    owner: repository.owner.login,
+    repo: repository.name,
+    issueNumber: issue.number,
+  };
   const githubApp = getGithubAppManager();
   const isPrComment = Boolean(issue.pull_request);
   const targetPrNumber = isPrComment ? issue.number : command.prNumber;
 
-  const permission = await githubApp.getUserPermission(
-    installation.id,
-    repository.owner.login,
-    repository.name,
-    comment.user.login
-  );
-
-  if (!permission || !['admin', 'maintain', 'write'].includes(permission)) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-Sorry, you don't have permission to approve submissions on this repository. Only repo admins, maintainers, or writers can do this.
-`
-    );
+  // Check maintainer permission
+  const isMaintainer = await checkMaintainerPermission(ctx, comment.user.login);
+  if (!isMaintainer) {
+    await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
+      '\nSorry, you don\'t have permission to approve submissions on this repository. Only repo admins, maintainers, or writers can do this.\n');
     return;
   }
 
   if (!targetPrNumber) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-Please include a PR number, like \`/approve 123\`.
-`
-    );
+    await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
+      '\nPlease include a PR number, like `/approve 123`.\n');
     return;
   }
 
-  let pullRequest;
-  try {
-    pullRequest = await githubApp.getPullRequest(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      targetPrNumber
-    );
-  } catch (error) {
-    console.error('[GitHub Webhook] Failed to fetch PR for approve:', error);
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-I couldn't find PR #${targetPrNumber}. Double‑check the number and try again.
-`
-    );
+  // Validate PR
+  const prResult = await validatePullRequest(ctx, targetPrNumber);
+  if (!prResult.success) {
+    return;
+  }
+  const pullRequest = prResult.data;
+
+  // Resolve bounty issue number
+  const bountyIssueNumber = await resolveBountyIssueForUnsubmit(ctx, isPrComment, pullRequest, targetPrNumber);
+  if (bountyIssueNumber === null) {
     return;
   }
 
-  if (
-    pullRequest.head.repoFullName &&
-    pullRequest.head.repoFullName.toLowerCase() !==
-      `${repository.owner.login}/${repository.name}`.toLowerCase()
-  ) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-PR #${targetPrNumber} is from a different repository. Please open the PR from this repo before approving.
-`
-    );
+  // Validate bounty exists
+  const bountyResult = await validateBountyExists({ ...ctx, issueNumber: bountyIssueNumber }, bountyIssueNumber);
+  if (!bountyResult.success) {
     return;
   }
+  const bountyRecord = bountyResult.data;
 
-  const bountyIssueNumber = isPrComment
-    ? getIssueNumberFromPrBody(pullRequest.body || '')
-    : issue.number;
-
-  if (!bountyIssueNumber) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-I couldn't tell which issue this PR is for. Add “Fixes #123” to the PR body or approve from the issue with \`/approve <PR#>\`.
-`
-    );
-    return;
-  }
-
-  if (!isPrComment && !pullRequestReferencesIssue(pullRequest.body, issue.number)) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-PR #${targetPrNumber} doesn’t reference this issue. Add “Fixes #${issue.number}” (or similar) to the PR description and try again.
-`
-    );
-    return;
-  }
-
-  const bountyRecord = await findBountyForIssue({
-    issueNumber: bountyIssueNumber,
-    owner: repository.owner.login,
-    repo: repository.name,
-  });
-
-  if (!bountyRecord) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-No bounty found for this issue.
-`
-    );
-    return;
-  }
-
-  if (bountyRecord.paymentStatus !== 'held') {
+  if (!isBountyFunded(bountyRecord)) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-This bounty isn’t funded yet. Fund it at ${baseUrl}/bounty/${bountyRecord.id} before approving submissions.
-`
-    );
+    await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
+      `\nThis bounty isn't funded yet. Fund it at ${baseUrl}/bounty/${bountyRecord.id} before approving submissions.\n`);
     return;
   }
 
@@ -1178,7 +1176,7 @@ I couldn’t find a submission for PR #${targetPrNumber}. Ask the contributor to
           .then((rows) => rows[0])
       : undefined);
 
-  if (!solver || !solver.stripeConnectAccountId || !solver.stripeConnectOnboardingComplete) {
+  if (!isSolverReadyForPayout(solver)) {
     const mention = `@${comment.user.login}`;
     await githubApp.createIssueComment(
       installation.id,
@@ -1241,7 +1239,7 @@ ${followup}
 }
 
 async function handleBountyUnapproveCommand(
-  event: Extract<WebhookEvent, { issue: any }>,
+  event: IssueCommentEvent,
   command: Extract<ReturnType<typeof parseBotCommand>, { action: 'unapprove' }>
 ) {
   const { issue, repository, installation, comment } = event;
@@ -1251,137 +1249,52 @@ async function handleBountyUnapproveCommand(
     return;
   }
 
+  const ctx: ValidationContext = {
+    installationId: installation.id,
+    owner: repository.owner.login,
+    repo: repository.name,
+    issueNumber: issue.number,
+  };
   const githubApp = getGithubAppManager();
   const isPrComment = Boolean(issue.pull_request);
   const targetPrNumber = isPrComment ? issue.number : command.prNumber;
 
-  const permission = await githubApp.getUserPermission(
-    installation.id,
-    repository.owner.login,
-    repository.name,
-    comment.user.login
-  );
-
-  if (!permission || !['admin', 'maintain', 'write'].includes(permission)) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-Sorry, you don't have permission to unapprove submissions on this repository. Only repo admins, maintainers, or writers can do this.
-`
-    );
+  // Check maintainer permission
+  const isMaintainer = await checkMaintainerPermission(ctx, comment.user.login);
+  if (!isMaintainer) {
+    await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
+      '\nSorry, you don\'t have permission to unapprove submissions on this repository. Only repo admins, maintainers, or writers can do this.\n');
     return;
   }
 
   if (!targetPrNumber) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-Please include a PR number, like \`/unapprove 123\`.
-`
-    );
+    await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
+      '\nPlease include a PR number, like `/unapprove 123`.\n');
     return;
   }
 
-  let pullRequest;
-  try {
-    pullRequest = await githubApp.getPullRequest(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      targetPrNumber
-    );
-  } catch (error) {
-    console.error('[GitHub Webhook] Failed to fetch PR for unapprove:', error);
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-I couldn't find PR #${targetPrNumber}. Double‑check the number and try again.
-`
-    );
+  // Validate PR
+  const prResult = await validatePullRequest(ctx, targetPrNumber);
+  if (!prResult.success) {
+    return;
+  }
+  const pullRequest = prResult.data;
+
+  // Resolve bounty issue number
+  const bountyIssueNumber = await resolveBountyIssueForUnsubmit(ctx, isPrComment, pullRequest, targetPrNumber);
+  if (bountyIssueNumber === null) {
     return;
   }
 
-  if (
-    pullRequest.head.repoFullName &&
-    pullRequest.head.repoFullName.toLowerCase() !==
-      `${repository.owner.login}/${repository.name}`.toLowerCase()
-  ) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-PR #${targetPrNumber} is from a different repository. Please open the PR from this repo before unapproving.
-`
-    );
+  // Validate bounty exists
+  const bountyResult = await validateBountyExists({ ...ctx, issueNumber: bountyIssueNumber }, bountyIssueNumber);
+  if (!bountyResult.success) {
     return;
   }
+  const bountyRecord = bountyResult.data;
 
-  const bountyIssueNumber = isPrComment
-    ? getIssueNumberFromPrBody(pullRequest.body || '')
-    : issue.number;
-
-  if (!bountyIssueNumber) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-I couldn't tell which issue this PR is for. Add “Fixes #123” to the PR body or unapprove from the issue with \`/unapprove <PR#>\`.
-`
-    );
-    return;
-  }
-
-  if (!isPrComment && !pullRequestReferencesIssue(pullRequest.body, issue.number)) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-PR #${targetPrNumber} doesn’t reference this issue. Add “Fixes #${issue.number}” (or similar) to the PR description and try again.
-`
-    );
-    return;
-  }
-
-  const bountyRecord = await findBountyForIssue({
-    issueNumber: bountyIssueNumber,
-    owner: repository.owner.login,
-    repo: repository.name,
-  });
-
-  if (!bountyRecord) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-No bounty found for this issue.
-`
-    );
-    return;
-  }
-
-  if (bountyRecord.paymentStatus === 'released' || bountyRecord.stripeTransferId) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
+  if (isBountyReleased(bountyRecord)) {
+    await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
       `
 This bounty has already been paid out and can’t be unapproved.
 `
@@ -1463,7 +1376,7 @@ PR #${targetPrNumber} isn’t approved, so there’s nothing to unapprove.
     .where(eq(submission.bountyId, bountyRecord.id));
 
   if (bountyRecord.githubCommentId) {
-    const amount = parseFloat(bountyRecord.amount);
+    const amount = Number.parseFloat(bountyRecord.amount);
     const isFunded = bountyRecord.paymentStatus === 'held';
 
     const newComment = isFunded
@@ -1499,7 +1412,7 @@ Approval withdrawn for PR #${targetPrNumber}. The bounty is open for another sub
 }
 
 async function handleBountyReapproveCommand(
-  event: Extract<WebhookEvent, { issue: any }>,
+  event: IssueCommentEvent,
   command: Extract<ReturnType<typeof parseBotCommand>, { action: 'reapprove' }>
 ) {
   const { issue, repository, installation, comment } = event;
@@ -1520,7 +1433,7 @@ async function handleBountyReapproveCommand(
     comment.user.login
   );
 
-  if (!permission || !['admin', 'maintain', 'write'].includes(permission)) {
+  if (!isMaintainerPermission(permission)) {
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
@@ -1546,7 +1459,7 @@ Please include a PR number, like \`/reapprove 123\`.
     return;
   }
 
-  let pullRequest;
+  let pullRequest: GitHubPullRequest;
   try {
     pullRequest = await githubApp.getPullRequest(
       installation.id,
@@ -1602,7 +1515,7 @@ I couldn't tell which issue this PR is for. Add “Fixes #123” to the PR body 
     return;
   }
 
-  if (!isPrComment && !pullRequestReferencesIssue(pullRequest.body, issue.number)) {
+  if (!prMustReferenceIssue(isPrComment, pullRequest.body, issue.number)) {
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
@@ -1634,21 +1547,8 @@ No bounty found for this issue.
     return;
   }
 
-  if (bountyRecord.paymentStatus !== 'held') {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-This bounty isn’t funded yet. Fund it at ${baseUrl}/bounty/${bountyRecord.id} before approving submissions.
-`
-    );
-    return;
-  }
-
-  if (bountyRecord.paymentStatus === 'released' || bountyRecord.stripeTransferId) {
+  // Check if already paid first (released or has transfer ID)
+  if (isBountyReleased(bountyRecord)) {
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
@@ -1656,6 +1556,21 @@ This bounty isn’t funded yet. Fund it at ${baseUrl}/bounty/${bountyRecord.id} 
       issue.number,
       `
 This bounty has already been paid out.
+`
+    );
+    return;
+  }
+
+  // Then check if not yet funded (pending)
+  if (!isBountyFunded(bountyRecord)) {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
+    await githubApp.createIssueComment(
+      installation.id,
+      repository.owner.login,
+      repository.name,
+      issue.number,
+      `
+This bounty isn't funded yet. Fund it at ${baseUrl}/bounty/${bountyRecord.id} before approving submissions.
 `
     );
     return;
@@ -1729,7 +1644,7 @@ This submission is already approved. When you're ready, merge the PR and confirm
           .then((rows) => rows[0])
       : undefined);
 
-  if (!solver || !solver.stripeConnectAccountId || !solver.stripeConnectOnboardingComplete) {
+  if (!isSolverReadyForPayout(solver)) {
     const mention = `@${comment.user.login}`;
     await githubApp.createIssueComment(
       installation.id,
@@ -1798,7 +1713,7 @@ ${followup}
 }
 
 async function handleBountyMergeCommand(
-  event: Extract<WebhookEvent, { issue: any }>,
+  event: IssueCommentEvent,
   command: Extract<ReturnType<typeof parseBotCommand>, { action: 'merge' }>
 ) {
   const { issue, repository, installation, comment } = event;
@@ -1819,7 +1734,7 @@ async function handleBountyMergeCommand(
     comment.user.login
   );
 
-  if (!permission || !['admin', 'maintain', 'write'].includes(permission)) {
+  if (!isMaintainerPermission(permission)) {
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
@@ -1845,7 +1760,7 @@ Please include a PR number, like \`/merge 123\`.
     return;
   }
 
-  let pullRequest;
+  let pullRequest: GitHubPullRequest;
   try {
     pullRequest = await githubApp.getPullRequest(
       installation.id,
@@ -1901,7 +1816,7 @@ I couldn't tell which issue this PR is for. Add “Fixes #123” to the PR body 
     return;
   }
 
-  if (!isPrComment && !pullRequestReferencesIssue(pullRequest.body, issue.number)) {
+  if (!prMustReferenceIssue(isPrComment, pullRequest.body, issue.number)) {
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
@@ -1983,21 +1898,8 @@ PR #${targetPrNumber} isn’t merged yet. Merge it, then run \`/merge ${targetPr
     return;
   }
 
-  if (bountyRecord.paymentStatus !== 'held') {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-This bounty isn’t funded yet. Fund it at ${baseUrl}/bounty/${bountyRecord.id}, then run \`/merge ${targetPrNumber}\` to release the payout.
-`
-    );
-    return;
-  }
-
-  if (bountyRecord.paymentStatus === 'released' || bountyRecord.stripeTransferId) {
+  // Check if already paid first (released or has transfer ID)
+  if (isBountyReleased(bountyRecord)) {
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
@@ -2005,6 +1907,21 @@ This bounty isn’t funded yet. Fund it at ${baseUrl}/bounty/${bountyRecord.id},
       issue.number,
       `
 This bounty has already been paid out.
+`
+    );
+    return;
+  }
+
+  // Then check if not yet funded (pending)
+  if (!isBountyFunded(bountyRecord)) {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
+    await githubApp.createIssueComment(
+      installation.id,
+      repository.owner.login,
+      repository.name,
+      issue.number,
+      `
+This bounty isn't funded yet. Fund it at ${baseUrl}/bounty/${bountyRecord.id}, then run \`/merge ${targetPrNumber}\` to release the payout.
 `
     );
     return;
@@ -2041,7 +1958,7 @@ This bounty has already been paid out.
           .then((rows) => rows[0])
       : undefined);
 
-  if (!solver || !solver.stripeConnectAccountId || !solver.stripeConnectOnboardingComplete) {
+  if (!isSolverReadyForPayout(solver)) {
     const mention = `@${comment.user.login}`;
     await githubApp.createIssueComment(
       installation.id,
@@ -2055,7 +1972,9 @@ ${mention} The solver needs to connect Stripe before payout. Ask them to visit h
     return;
   }
 
-  const amountInCents = Math.round(parseFloat(bountyRecord.amount) * 100);
+  // Store validated value for use in callback (TypeScript narrowing doesn't carry into callbacks)
+  const stripeConnectAccountId = solver.stripeConnectAccountId;
+  const amountInCents = Math.round(Number.parseFloat(bountyRecord.amount) * 100);
 
   try {
     await withPaymentLock(bountyRecord.id, async () => {
@@ -2071,7 +1990,7 @@ ${mention} The solver needs to connect Stripe before payout. Ask them to visit h
 
       const transfer = await createTransfer({
         amount: amountInCents,
-        connectAccountId: solver.stripeConnectAccountId!,
+        connectAccountId: stripeConnectAccountId,
         bountyId: bountyRecord.id,
       });
 
@@ -2143,7 +2062,7 @@ Something went wrong releasing the payout. Please try again or contact support.
     return;
   }
 
-  const completionMessage = createBountyCompletedComment(parseFloat(bountyRecord.amount), bountyRecord.currency);
+  const completionMessage = createBountyCompletedComment(Number.parseFloat(bountyRecord.amount), bountyRecord.currency);
 
   await githubApp.createIssueComment(
     installation.id,
@@ -2155,7 +2074,7 @@ Something went wrong releasing the payout. Please try again or contact support.
 }
 
 async function handleBountyMoveCommand(
-  event: Extract<WebhookEvent, { issue: any }>,
+  event: IssueCommentEvent,
   command: Extract<ReturnType<typeof parseBotCommand>, { action: 'move' }>
 ) {
   const { issue, repository, installation, comment } = event;
@@ -2177,7 +2096,7 @@ async function handleBountyMoveCommand(
     comment.user.login
   );
 
-  if (!permission || !['admin', 'maintain', 'write'].includes(permission)) {
+  if (!isMaintainerPermission(permission)) {
     console.log(`[GitHub Webhook] User ${comment.user.login} does not have permission to move bounties`);
     await githubApp.createIssueComment(
       installation.id,
@@ -2223,7 +2142,7 @@ No bounty found for this issue. Cannot move.
   }
 
   // Validate target is an issue, not a PR, and get issue details
-  let targetIssue;
+  let targetIssue: GitHubIssue;
   try {
     // Use octokit directly to check if it's a PR (issues.get returns PRs with pull_request field)
     const octokit = await githubApp.getInstallationOctokit(installation.id);
@@ -2257,7 +2176,7 @@ Cannot move bounty to a pull request. Please specify an issue number.
       command.targetIssueNumber
     );
   } catch (error) {
-    console.error(`[GitHub Webhook] Failed to validate target issue:`, error);
+    console.error('[GitHub Webhook] Failed to validate target issue:', error);
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
@@ -2296,12 +2215,12 @@ Failed to validate target issue #${command.targetIssueNumber}. Please ensure it 
       );
     } catch (error) {
       // Comment might already be deleted, ignore error
-      console.warn(`[GitHub Webhook] Failed to delete old comment:`, error);
+      console.warn('[GitHub Webhook] Failed to delete old comment:', error);
     }
   }
 
   // Post new bot comment on target issue
-  const amount = parseFloat(bountyRecord.amount);
+  const amount = Number.parseFloat(bountyRecord.amount);
   const isFunded = bountyRecord.paymentStatus === 'held';
   
   // Get submission count
@@ -2352,10 +2271,10 @@ Bounty moved to issue #${command.targetIssueNumber}.
 `
   );
 
-  console.log(`[GitHub Webhook] Move command completed successfully`);
+  console.log('[GitHub Webhook] Move command completed successfully');
 }
 
-async function handlePullRequest(event: Extract<WebhookEvent, { pull_request: any }>) {
+async function handlePullRequest(event: PullRequestEvent) {
   const { pull_request, repository, installation } = event;
 
   console.log(`[GitHub Webhook] Pull request ${event.action}: ${repository.owner.login}/${repository.name}#${pull_request.number}`);
@@ -2405,9 +2324,9 @@ async function handlePullRequest(event: Extract<WebhookEvent, { pull_request: an
 }
 
 async function handlePullRequestOpened(
-  event: Extract<WebhookEvent, { pull_request: any }>,
+  event: PullRequestEvent,
   bountyRecord: typeof bounty.$inferSelect,
-  pull_request: { number: number; title: string; body: string | null; html_url: string; user: { login: string }; head: { sha: string } }
+  pull_request: { number: number; title: string; body: string | null; html_url: string; user: { login: string }; head: { sha: string }; state: string }
 ) {
   const { repository, installation } = event;
   const installationId = installation?.id;
@@ -2441,11 +2360,11 @@ async function handlePullRequestOpened(
 }
 
 async function handlePullRequestMerged(
-  event: Extract<WebhookEvent, { pull_request: any }>,
+  event: PullRequestEvent,
   bountyRecord: typeof bounty.$inferSelect,
   pull_request: { number: number; user: { login: string }; merged_at: string | null }
 ) {
-  const { repository, installation } = event;
+  const { installation } = event;
   const installationId = installation?.id;
   if (!installationId) {
     console.warn('[GitHub Webhook] No installation ID, skipping comment');
@@ -2471,11 +2390,11 @@ async function handlePullRequestMerged(
     return;
   }
 
-  console.log(`[GitHub Webhook] PR merged; waiting for manual approval + merge confirmation to release payout`);
+  console.log('[GitHub Webhook] PR merged; waiting for manual approval + merge confirmation to release payout');
 }
 
-async function handleInstallationEvent(event: Extract<WebhookEvent, { installation: any; action: 'created' | 'deleted' }>) {
-  const { installation, action, sender } = event as { installation: any; action: string; sender?: { id: number; login: string } };
+async function handleInstallationEvent(event: InstallationEvent) {
+  const { installation, action, sender } = event;
 
   console.log(`[GitHub Webhook] Installation ${action}: ${installation.id}`);
 
@@ -2484,13 +2403,7 @@ async function handleInstallationEvent(event: Extract<WebhookEvent, { installati
     return;
   }
 
-  if (action === 'created' && (installation as any).account) {
-    const inst = installation as {
-      id: number;
-      account: { login: string; avatar_url?: string; type?: string };
-      repository_selection: string;
-      repositories?: Array<{ id: number }>;
-    };
+  if (action === 'created' && installation.account) {
 
     // Find the user's GitHub account by sender ID (numeric GitHub user ID)
     const [githubAccount] = await db
@@ -2506,22 +2419,22 @@ async function handleInstallationEvent(event: Extract<WebhookEvent, { installati
 
     // Get repositories from installation
     const githubApp = getGithubAppManager();
-    const repos = await githubApp.getInstallationRepositories(inst.id);
+    const repos = await githubApp.getInstallationRepositories(installation.id);
 
     // Store installation in database, linked to user if found
     await db.insert(githubInstallation).values({
-      githubInstallationId: inst.id,
+      githubInstallationId: installation.id,
       githubAccountId: githubAccount?.id || null,
-      accountLogin: inst.account.login,
-      accountType: inst.repository_selection === 'all' ? 'Organization' : 'User',
-      accountAvatarUrl: inst.account.avatar_url || null,
+      accountLogin: installation.account.login,
+      accountType: installation.repository_selection === 'all' ? 'Organization' : 'User',
+      accountAvatarUrl: installation.account.avatar_url || null,
       repositoryIds: repos.repositories.map((r) => String(r.id)),
     }).onConflictDoUpdate({
       target: githubInstallation.githubInstallationId,
       set: {
-        accountLogin: inst.account.login,
-        accountType: inst.repository_selection === 'all' ? 'Organization' : 'User',
-        accountAvatarUrl: inst.account.avatar_url || null,
+        accountLogin: installation.account.login,
+        accountType: installation.repository_selection === 'all' ? 'Organization' : 'User',
+        accountAvatarUrl: installation.account.avatar_url || null,
         repositoryIds: repos.repositories.map((r) => String(r.id)),
         updatedAt: new Date(),
       },
@@ -2535,7 +2448,7 @@ async function handleInstallationEvent(event: Extract<WebhookEvent, { installati
   }
 }
 
-async function handleIssueEdited(event: Extract<WebhookEvent, { issue: any; action: 'edited' }>) {
+async function handleIssueEdited(event: IssueEditedEvent) {
   const { issue, repository, installation } = event;
 
   console.log(`[GitHub Webhook] Issue edited: ${repository.owner.login}/${repository.name}#${issue.number}`);
@@ -2573,7 +2486,7 @@ async function handleIssueEdited(event: Extract<WebhookEvent, { issue: any; acti
   }
 }
 
-async function handleIssueDeleted(event: Extract<WebhookEvent, { issue: any; action: 'deleted' }>) {
+async function handleIssueDeleted(event: IssueDeletedEvent) {
   const { issue, repository, installation } = event;
 
   console.log(`[GitHub Webhook] Issue deleted: ${repository.owner.login}/${repository.name}#${issue.number}`);

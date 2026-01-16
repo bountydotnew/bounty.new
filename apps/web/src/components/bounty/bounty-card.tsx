@@ -207,78 +207,55 @@ export const BountyCard = memo(function BountyCard({
                 {creatorName}
               </span>
             </div>
-          )}
-          <span className="text-[13px] font-normal leading-[150%] text-[#FFFFFF99]">
-            {creatorName}
-          </span>
-        </div>
-        <div className="flex h-5 items-center gap-[5px] px-[3px]">
-          <span className="text-[13px] font-semibold leading-[150%] text-[#6CFF0099]">
-            {formattedAmount}
-          </span>
-          <span
-            className={isFunded
-              ? 'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#6CFF0015] text-[#6CFF0099] border border-[#6CFF0020]'
-              : 'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#FFFFFF08] text-[#FFFFFF66] border border-[#FFFFFF12]'}
-          >
-            {isFunded ? 'Funded' : 'Unfunded'}
-          </span>
-        </div>
-      </div>
-
-      {/* Title row */}
-      <div className="flex items-center justify-between min-w-0">
-        <div className="flex h-[19.5px] items-center gap-[5px] min-w-0 flex-1">
-          <span className="text-[13px] font-medium leading-[150%] text-white whitespace-normal wrap-break-word min-w-0">
-            {bounty.title}
-          </span>
-        </div>
-      </div>
-
-      {/* Bottom row: Stats + Timestamp */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 min-w-0">
-        <div className="flex flex-wrap items-center gap-[6px] sm:gap-[10px] min-w-0 flex-1">
-          {/* Comments */}
-          <div className="flex h-fit items-center gap-[5px] px-[3px] shrink-0">
-            <div className="flex h-fit items-center opacity-30">
-              <CommentsIcon className="h-4 w-4" />
+            <div className="flex h-5 items-center gap-[5px] px-[3px]">
+              <span className="text-[13px] font-semibold leading-[150%] text-[#6CFF0099]">
+                {formattedAmount}
+              </span>
+              <span
+                className={isFunded
+                  ? 'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#6CFF0015] text-[#6CFF0099] border border-[#6CFF0020]'
+                  : 'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#FFFFFF08] text-[#FFFFFF66] border border-[#FFFFFF12]'}
+              >
+                {isFunded ? 'Funded' : 'Unfunded'}
+              </span>
             </div>
           </div>
 
-          {/* Submissions (hardcoded) */}
-          <div className="flex h-fit items-center gap-[5px] px-[3px] shrink-0">
-          <div className="flex h-fit items-center opacity-30">
-              <SubmissionsPeopleIcon className="h-4 w-4" />
+          {/* Title row */}
+          <div className="flex items-center justify-between min-w-0">
+            <div className="flex h-[19.5px] items-center gap-[5px] min-w-0 flex-1">
+              <span className="text-[13px] font-medium leading-[150%] text-white whitespace-normal wrap-break-word min-w-0">
+                {bounty.title}
+              </span>
             </div>
-          <span className="text-[11px] sm:text-[13px] font-normal leading-[150%] text-[#FFFFFF99] whitespace-nowrap">
-            {submissionCount} {submissionCount === 1 ? 'submission' : 'submissions'}
-            </span>
           </div>
 
-          {/* GitHub repo */}
-          <div className="flex h-fit items-center gap-[5px] px-[3px] min-w-0 flex-1 sm:flex-initial">
-          <div className="flex h-fit items-center opacity-30 shrink-0">
-              <GithubIcon className="h-3 w-3" />
-            </div>
-            <span className="h-5 text-[11px] flex items-center md:text-[13px] lg:text-[13px] font-normal leading-[150%] text-[#FFFFFF99] truncate min-w-0">
-              {repoDisplay}
-            </span>
-          </div>
-        </div>
-
-              {/* Submissions (hardcoded) */}
+          {/* Bottom row: Stats + Timestamp */}
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 min-w-0">
+            <div className="flex flex-wrap items-center gap-[6px] sm:gap-[10px] min-w-0 flex-1">
+              {/* Comments */}
               <div className="flex h-fit items-center gap-[5px] px-[3px] shrink-0">
-                <div className="flex h-fit items-center opacity-100">
+                <div className="flex h-fit items-center opacity-30">
+                  <CommentsIcon className="h-4 w-4" />
+                </div>
+                <span className="text-[11px] sm:text-[13px] font-normal leading-[150%] text-[#FFFFFF99] whitespace-nowrap">
+                  {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
+                </span>
+              </div>
+
+              {/* Submissions */}
+              <div className="flex h-fit items-center gap-[5px] px-[3px] shrink-0">
+                <div className="flex h-fit items-center opacity-30">
                   <SubmissionsPeopleIcon className="h-4 w-4" />
                 </div>
                 <span className="text-[11px] sm:text-[13px] font-normal leading-[150%] text-[#FFFFFF99] whitespace-nowrap">
-                  10 submissions
+                  {submissionCount} {submissionCount === 1 ? 'submission' : 'submissions'}
                 </span>
               </div>
 
               {/* GitHub repo */}
               <div className="flex h-fit items-center gap-[5px] px-[3px] min-w-0 flex-1 sm:flex-initial">
-                <div className="flex h-fit items-center opacity-100 shrink-0">
+                <div className="flex h-fit items-center opacity-30 shrink-0">
                   <GithubIcon className="h-3 w-3" />
                 </div>
                 <span className="h-5 text-[11px] flex items-center md:text-[13px] lg:text-[13px] font-normal leading-[150%] text-[#FFFFFF99] truncate min-w-0">

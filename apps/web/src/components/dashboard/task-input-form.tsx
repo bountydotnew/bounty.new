@@ -9,12 +9,7 @@ import { toast } from 'sonner';
 import { Spinner } from '@bounty/ui';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { Popover, PopoverContent, PopoverTrigger } from '@bounty/ui/components/popover';
-import Link from '@bounty/ui/components/link';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@bounty/ui/components/popover';
+import Link from 'next/link';
 import {
   type CreateBountyForm,
   createBountyDefaults,
@@ -426,23 +421,22 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                                     />
                                 )}
 
-                {/* Error messages below chips */}
-                {(errors.title || errors.amount) && (
-                  <div className="flex flex-row flex-wrap items-center gap-3 px-1">
-                    {errors.title && (
-                      <span className="text-red-500 text-xs">
-                        {errors.title.message}
-                      </span>
-                    )}
-                    {errors.amount && (
-                      <span className="text-red-500 text-xs">
-                        {errors.amount.message}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
+                                {/* Branch selector - only show if repo selected */}
+                                {selectedRepository && (
+                                    <>
+                                        <div className="w-px h-4 bg-[#333]" />
+                                        <BranchSelector
+                                            selectedBranch={selectedBranch}
+                                            filteredBranches={filteredBranches}
+                                            branchesLoading={branchesLoading}
+                                            branchSearchQuery={branchSearchQuery}
+                                            setBranchSearchQuery={setBranchSearchQuery}
+                                            onSelect={handleBranchSelect}
+                                        />
+                                    </>
+                                )}
 
+                                {/* Issue selector with autofill prompt */}
                                 {selectedRepository && repoInfo && (
                                     <>
                                         <div className="w-px h-4 bg-[#333]" />
@@ -497,76 +491,17 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                                 )}
                             </div>
 
-              {/* Bottom row with selectors and submit */}
-              <div className="flex flex-row justify-between items-center pt-2">
-                <div className="relative flex items-center gap-2">
-                  <RepoSelector
-                    selectedRepository={selectedRepository}
-                    filteredRepositories={filteredRepositories}
-                    reposLoading={reposLoading}
-                    reposData={reposData}
-                    githubUsername={repoGithubUsername}
-                    repoSearchQuery={repoSearchQuery}
-                    setRepoSearchQuery={setRepoSearchQuery}
-                    onSelect={handleRepositorySelect}
-                  />
-
-                  {selectedRepository && (
-                    <>
-                      <div className="w-px h-4 bg-[#333]" />
-                      <BranchSelector
-                        selectedBranch={selectedBranch}
-                        filteredBranches={filteredBranches}
-                        branchesLoading={branchesLoading}
-                        branchSearchQuery={branchSearchQuery}
-                        setBranchSearchQuery={setBranchSearchQuery}
-                        onSelect={handleBranchSelect}
-                      />
-                    </>
-                  )}
-
-                  {selectedRepository && repoInfo && (
-                    <>
-                      <div className="w-px h-4 bg-[#333]" />
-                      <Popover
-                        open={showAutofillPrompt}
-                        onOpenChange={handlePopoverOpenChange}
-                        modal={false}
-                      >
-                        <PopoverTrigger asChild>
-                          <div className="inline-flex">
-                            <IssueSelector
-                              selectedIssue={selectedIssue}
-                              filteredIssues={filteredIssues}
-                              issuesList={issuesList}
-                              issueQuery={issueQuery}
-                              setIssueQuery={setIssueQuery}
-                              onSelect={handleIssueSelect}
-                            />
-                          </div>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          className="w-72 p-3 bg-[#191919] border-[#232323] rounded-xl shadow-[rgba(0,0,0,0.16)_0px_16px_40px_0px]"
-                          side="bottom"
-                          align="start"
-                          sideOffset={8}
-                        >
-                          <p className="text-[#CFCFCF] text-sm mb-3">
-                            Would you like to autofill form fields based on{' '}
-                            <span className="text-white font-medium">
-                              {pendingAutofillIssue
-                                ? `#${pendingAutofillIssue.number}`
-                                : ''}
-                            </span>
-                            ?
-                          </p>
-                          <div className="flex items-center gap-2">
+                            {/* Submit button */}
                             <button
-                              type="button"
-                              onClick={() => handleAutofill(true)}
-                              className="flex-1 px-3 py-1.5 bg-white text-black text-sm font-medium rounded-lg hover:bg-white/90 transition-colors"
+                                type="submit"
+                                disabled={createBounty.isPending || !title || !amount}
+                                className="flex items-center justify-center gap-1.5 px-[16px] h-[34px] rounded-full text-[15px] font-medium bg-white text-black shadow-[0_6px_16px_rgba(255,255,255,0.18)] hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              Yes, autofill
+                                {createBounty.isPending ? (
+                                    <Spinner className="h-4 w-4" />
+                                ) : (
+                                    'Create bounty'
+                                )}
                             </button>
                         </div>
                     </div>
