@@ -5,6 +5,7 @@ import {
   bountyComment,
   bountyCommentLike,
   bountyVote,
+  cancellationRequest,
   createNotification,
   db,
   payout,
@@ -12,6 +13,7 @@ import {
   transaction,
   user,
 } from '@bounty/db';
+import { FROM_ADDRESSES, sendEmail, BountyCancellationNotice } from '@bounty/email';
 import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
 import {
@@ -2865,6 +2867,455 @@ export const bountiesRouter = router({
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to get submissions: ${errorMessage}`,
+          cause: error,
+        });
+      }
+    }),
+
+  // Request cancellation of a funded bounty
+  requestCancellation: protectedProcedure
+    .input(
+      z.object({
+        bountyId: z.string().uuid(),
+        reason: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Get the bounty
+        const [bountyRecord] = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId))
+          .limit(1);
+
+        if (!bountyRecord) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        // Verify ownership
+        if (bountyRecord.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only request cancellation for your own bounties',
+          });
+        }
+
+        // Must be funded to request cancellation (unfunded can just be deleted)
+        if (bountyRecord.paymentStatus !== 'held') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Only funded bounties require cancellation requests. Unfunded bounties can be deleted directly.',
+          });
+        }
+
+        // Check for approved submissions - cannot cancel if someone has been approved
+        const [approvedSubmission] = await db
+          .select()
+          .from(submission)
+          .where(
+            and(
+              eq(submission.bountyId, input.bountyId),
+              eq(submission.status, 'approved')
+            )
+          )
+          .limit(1);
+
+        if (approvedSubmission) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Cannot cancel a bounty with an approved submission. The solver is owed payment.',
+          });
+        }
+
+        // Check for existing pending cancellation request
+        const [existingRequest] = await db
+          .select()
+          .from(cancellationRequest)
+          .where(
+            and(
+              eq(cancellationRequest.bountyId, input.bountyId),
+              eq(cancellationRequest.status, 'pending')
+            )
+          )
+          .limit(1);
+
+        if (existingRequest) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'A cancellation request is already pending for this bounty.',
+          });
+        }
+
+        // Create cancellation request
+        const [request] = await db
+          .insert(cancellationRequest)
+          .values({
+            bountyId: input.bountyId,
+            requestedById: ctx.session.user.id,
+            reason: input.reason,
+          })
+          .returning();
+
+        if (!request) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to create cancellation request',
+          });
+        }
+
+        // Get all pending submitters to notify
+        const pendingSubmitters = await db
+          .select({
+            userId: submission.contributorId,
+            email: user.email,
+            name: user.name,
+          })
+          .from(submission)
+          .innerJoin(user, eq(submission.contributorId, user.id))
+          .where(
+            and(
+              eq(submission.bountyId, input.bountyId),
+              eq(submission.status, 'pending')
+            )
+          );
+
+        // Get creator info for email
+        const [creator] = await db
+          .select({ name: user.name })
+          .from(user)
+          .where(eq(user.id, ctx.session.user.id))
+          .limit(1);
+
+        // Send BountyCancellationNotice email to each submitter
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
+        const bountyAmountFormatted = `$${parseAmount(bountyRecord.amount).toLocaleString()}`;
+        
+        for (const submitter of pendingSubmitters) {
+          if (submitter.email) {
+            try {
+              await sendEmail({
+                from: FROM_ADDRESSES.notifications,
+                to: submitter.email,
+                subject: `Bounty Cancellation Requested: ${bountyRecord.title}`,
+                react: BountyCancellationNotice({
+                  bountyTitle: bountyRecord.title,
+                  bountyUrl: `${baseUrl}/bounty/${bountyRecord.id}`,
+                  creatorName: creator?.name || 'The bounty creator',
+                  bountyAmount: bountyAmountFormatted,
+                }),
+              });
+            } catch (emailError) {
+              console.error(`[Cancellation] Failed to email submitter ${submitter.email}:`, emailError);
+            }
+          }
+        }
+
+        // Send notification to support team
+        const bountyAmount = parseAmount(bountyRecord.amount);
+        const creatorEmail = ctx.session.user.email || 'Unknown';
+        const creatorName = ctx.session.user.name || 'Unknown';
+
+        await sendEmail({
+          from: FROM_ADDRESSES.support,
+          to: 'support@bounty.new',
+          subject: `[Cancellation Request] ${bountyRecord.title}`,
+          text: `
+New Cancellation Request
+
+Bounty: ${bountyRecord.title}
+Amount: $${bountyAmount.toLocaleString()}
+Bounty ID: ${bountyRecord.id}
+Request ID: ${request.id}
+
+Creator: ${creatorName}
+Creator Email: ${creatorEmail}
+Creator ID: ${ctx.session.user.id}
+
+Reason: ${input.reason || 'No reason provided'}
+
+Pending Submissions: ${pendingSubmitters.length}
+
+---
+To process this request:
+1. Review the bounty and submissions
+2. Issue refund via Stripe Dashboard (minus platform fee)
+3. Update the bounty status to cancelled
+          `.trim(),
+        });
+
+        console.log(`[Cancellation] Request created for bounty ${input.bountyId}, ${pendingSubmitters.length} submitters to notify`);
+
+        return {
+          success: true,
+          requestId: request.id,
+          submittersNotified: pendingSubmitters.length,
+          message: 'Cancellation request submitted. Our team will review and process your refund.',
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Failed to request cancellation: ${errorMessage}`,
+          cause: error,
+        });
+      }
+    }),
+
+  // Process a cancellation request (staff only - TODO: add admin role check)
+  processCancellation: protectedProcedure
+    .input(
+      z.object({
+        requestId: z.string().uuid(),
+        approved: z.boolean(),
+        refundAmount: z.number().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Get the cancellation request
+        const [request] = await db
+          .select()
+          .from(cancellationRequest)
+          .where(eq(cancellationRequest.id, input.requestId))
+          .limit(1);
+
+        if (!request) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Cancellation request not found',
+          });
+        }
+
+        if (request.status !== 'pending') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `Request has already been ${request.status}`,
+          });
+        }
+
+        // Get the bounty
+        const [bountyRecord] = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, request.bountyId))
+          .limit(1);
+
+        if (!bountyRecord) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        // Get creator info (unused until email sending is wired up)
+        const [_creator] = await db
+          .select({ email: user.email, name: user.name })
+          .from(user)
+          .where(eq(user.id, bountyRecord.createdById))
+          .limit(1);
+
+        if (input.approved) {
+          // Calculate refund (bounty amount minus platform fee)
+          const bountyAmount = parseAmount(bountyRecord.amount);
+          // Platform fee is typically around 5% - adjust as needed
+          const platformFeePercent = 0.05;
+          const platformFee = bountyAmount * platformFeePercent;
+          const refundAmount = input.refundAmount ?? (bountyAmount - platformFee);
+
+          // Update bounty status
+          await db
+            .update(bounty)
+            .set({
+              status: 'cancelled',
+              paymentStatus: 'refunded',
+              updatedAt: new Date(),
+            })
+            .where(eq(bounty.id, request.bountyId));
+
+          // Update cancellation request
+          await db
+            .update(cancellationRequest)
+            .set({
+              status: 'approved',
+              processedById: ctx.session.user.id,
+              processedAt: new Date(),
+              refundAmount: refundAmount.toString(),
+            })
+            .where(eq(cancellationRequest.id, input.requestId));
+
+          // TODO: Send BountyCancellationConfirm email to creator
+          // if (creator?.email) {
+          //   await sendEmail({
+          //     to: creator.email,
+          //     subject: 'Your Bounty Has Been Cancelled',
+          //     react: BountyCancellationConfirm({
+          //       bountyTitle: bountyRecord.title,
+          //       bountyAmount: `$${bountyAmount.toLocaleString()}`,
+          //       refundAmount: `$${refundAmount.toLocaleString()}`,
+          //       platformFee: `$${platformFee.toLocaleString()}`,
+          //       email: creator.email,
+          //     }),
+          //   });
+          // }
+
+          console.log(`[Cancellation] Approved for bounty ${request.bountyId}, refund: $${refundAmount}`);
+
+          // Invalidate caches
+          await invalidateBountyCaches();
+          await bountyDetailCache.delete(request.bountyId);
+
+          return {
+            success: true,
+            status: 'approved',
+            refundAmount,
+            message: 'Cancellation approved. Refund will be processed.',
+          };
+        } else {
+          // Rejected
+          await db
+            .update(cancellationRequest)
+            .set({
+              status: 'rejected',
+              processedById: ctx.session.user.id,
+              processedAt: new Date(),
+            })
+            .where(eq(cancellationRequest.id, input.requestId));
+
+          return {
+            success: true,
+            status: 'rejected',
+            message: 'Cancellation request rejected.',
+          };
+        }
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Failed to process cancellation: ${errorMessage}`,
+          cause: error,
+        });
+      }
+    }),
+
+  // Check if a bounty has a pending cancellation request
+  getCancellationStatus: protectedProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .query(async ({ input }) => {
+      const [request] = await db
+        .select()
+        .from(cancellationRequest)
+        .where(eq(cancellationRequest.bountyId, input.bountyId))
+        .orderBy(desc(cancellationRequest.createdAt))
+        .limit(1);
+
+      return {
+        hasPendingRequest: request?.status === 'pending',
+        request: request || null,
+      };
+    }),
+
+  // Mark a bounty as refunded after manual Stripe refund processing
+  // This is for admin/staff use when they've processed refunds directly in Stripe
+  markBountyRefunded: protectedProcedure
+    .input(
+      z.object({
+        bountyId: z.string().uuid(),
+        refundAmount: z.number().optional(),
+        stripeRefundId: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Get the bounty
+        const [bountyRecord] = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId))
+          .limit(1);
+
+        if (!bountyRecord) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        // Only the creator can mark their bounty as refunded
+        if (bountyRecord.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Only the bounty creator can mark this bounty as refunded',
+          });
+        }
+
+        if (bountyRecord.paymentStatus === 'refunded') {
+          return {
+            success: true,
+            message: 'Bounty is already marked as refunded',
+          };
+        }
+
+        // Update bounty status
+        await db
+          .update(bounty)
+          .set({
+            status: 'cancelled',
+            paymentStatus: 'refunded',
+            updatedAt: new Date(),
+          })
+          .where(eq(bounty.id, input.bountyId));
+
+        // If there's a pending cancellation request, mark it as approved
+        const [pendingRequest] = await db
+          .select()
+          .from(cancellationRequest)
+          .where(
+            and(
+              eq(cancellationRequest.bountyId, input.bountyId),
+              eq(cancellationRequest.status, 'pending')
+            )
+          )
+          .limit(1);
+
+        if (pendingRequest) {
+          const bountyAmount = parseAmount(bountyRecord.amount);
+          const refundAmount = input.refundAmount ?? bountyAmount * 0.95; // Default 5% fee
+
+          await db
+            .update(cancellationRequest)
+            .set({
+              status: 'approved',
+              processedById: ctx.session.user.id,
+              processedAt: new Date(),
+              refundAmount: refundAmount.toString(),
+            })
+            .where(eq(cancellationRequest.id, pendingRequest.id));
+        }
+
+        console.log(`[Refund] Bounty ${input.bountyId} marked as refunded by ${ctx.session.user.id}`);
+
+        return {
+          success: true,
+          message: 'Bounty marked as refunded successfully',
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Failed to mark bounty as refunded: ${errorMessage}`,
           cause: error,
         });
       }

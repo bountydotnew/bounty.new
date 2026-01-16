@@ -35,6 +35,12 @@ export const paymentStatusEnum = pgEnum('payment_status', [
   'failed',
 ]);
 
+export const cancellationRequestStatusEnum = pgEnum('cancellation_request_status', [
+  'pending',
+  'approved',
+  'rejected',
+]);
+
 export const bounty = pgTable('bounty', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
   title: text('title').notNull(),
@@ -191,5 +197,30 @@ export const bountyBookmark = pgTable(
     uniqueIndex('bounty_bookmark_unique_idx').on(t.bountyId, t.userId),
     index('bounty_bookmark_bounty_id_idx').on(t.bountyId),
     index('bounty_bookmark_user_id_idx').on(t.userId),
+  ]
+);
+
+export const cancellationRequest = pgTable(
+  'cancellation_request',
+  {
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    bountyId: text('bounty_id')
+      .notNull()
+      .references(() => bounty.id, { onDelete: 'cascade' }),
+    requestedById: text('requested_by_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    reason: text('reason'),
+    status: cancellationRequestStatusEnum('status').notNull().default('pending'),
+    processedById: text('processed_by_id').references(() => user.id, {
+      onDelete: 'set null',
+    }),
+    processedAt: timestamp('processed_at'),
+    refundAmount: decimal('refund_amount', { precision: 15, scale: 2 }),
+    createdAt: timestamp('created_at').notNull().default(sql`now()`),
+  },
+  (t) => [
+    index('cancellation_request_bounty_id_idx').on(t.bountyId),
+    index('cancellation_request_status_idx').on(t.status),
   ]
 );

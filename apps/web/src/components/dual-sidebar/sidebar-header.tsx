@@ -84,13 +84,13 @@ export const Header = (_props: HeaderProps = {}) => {
         <div className="flex items-center gap-2">
           {/* Create Bounty Button */}
           <button
-            className="hidden md:flex lg:flex items-center gap-[7px] rounded-[12px] border border-[#232323] bg-[#191919] py-[5px] px-[10px] transition-colors hover:bg-[#141414]"
+            className="hidden md:flex lg:flex items-center gap-[7px] rounded-lg bg-[#2A2A28] px-2 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#383838]"
             onClick={handleCreateBounty}
             type="button"
           >
             <Plus className="h-4 w-4 text-[#CFCFCF]" />
-            <span className="text-[16px] font-semibold leading-[150%] tracking-[0.01em] text-[#CFCFCF]">
-              Create Bounty
+            <span className="text-sm font-semibold leading-[150%] tracking-[0.01em] text-[#CFCFCF]">
+              Create a bounty
             </span>
           </button>
         </div>

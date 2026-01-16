@@ -8,7 +8,8 @@ import { SmartNavigation } from '@bounty/ui/components/smart-breadcrumb';
 import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { formatLargeNumber } from '@bounty/ui/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check } from 'lucide-react';
+import { Check, X } from 'lucide-react';
+import type { ActionItem } from '@/types/bounty-actions';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -25,6 +26,15 @@ import { trpc, trpcClient } from '@/utils/trpc';
 import { Header } from '../dual-sidebar/sidebar-header';
 import { authClient } from '@bounty/auth/client';
 import { Alert, AlertDescription } from '@bounty/ui/components/alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@bounty/ui/components/dialog';
+import { Textarea } from '@bounty/ui/components/textarea';
 
 interface BountyDetailPageProps {
   id: string;
@@ -220,6 +230,58 @@ export default function BountyDetailPage({
     ) {
       deleteBounty.mutate({ id });
     }
+  };
+
+  // Cancellation request logic for funded bounties
+  const isFunded = paymentStatus === 'held';
+  const canDelete = isCreator && !isFunded;
+  const canRequestCancellation = isCreator && isFunded;
+
+  const [showCancellationDialog, setShowCancellationDialog] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState('');
+
+  // Check if there's already a pending cancellation request
+  const cancellationStatusQuery = useQuery({
+    ...trpc.bounties.getCancellationStatus.queryOptions({ bountyId: id }),
+    enabled: canRequestCancellation,
+  });
+
+  const hasPendingCancellation = cancellationStatusQuery.data?.hasPendingRequest ?? false;
+
+  const requestCancellationMutation = useMutation({
+    mutationFn: async (input: { bountyId: string; reason?: string }) => {
+      return await trpcClient.bounties.requestCancellation.mutate(input);
+    },
+    onSuccess: (result) => {
+      toast.success(result.message || 'Cancellation request submitted');
+      setShowCancellationDialog(false);
+      setCancellationReason('');
+      // Refresh cancellation status
+      queryClient.invalidateQueries({
+        queryKey: [['bounties', 'getCancellationStatus']],
+      });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to request cancellation: ${error.message}`);
+    },
+  });
+
+  const handleRequestCancellation = () => {
+    if (hasPendingCancellation) {
+      toast.error('You already have a pending cancellation request for this bounty.');
+      return;
+    }
+    setShowCancellationDialog(true);
+  };
+
+  const handleConfirmCancellation = () => {
+    if (!canRequestCancellation || requestCancellationMutation.isPending) {
+      return;
+    }
+    requestCancellationMutation.mutate({
+      bountyId: id,
+      reason: cancellationReason || undefined,
+    });
   };
 
   // const postComment = (content: string, parentId?: string) => {
@@ -448,10 +510,10 @@ export default function BountyDetailPage({
                   <BountyActions
                     bookmarked={initialBookmarked}
                     bountyId={id}
-                    canDelete={canDeleteBounty}
+                    canDelete={canDelete}
                     canEdit={canEditBounty}
                     isVoted={Boolean(votes.data?.isVoted)}
-                    onDelete={handleDelete}
+                    onDelete={canDelete ? handleDelete : undefined}
                     onEdit={() => openEditModal(id)}
                     onShare={() => {
                       navigator.share({
@@ -462,6 +524,25 @@ export default function BountyDetailPage({
                     }}
                     onUpvote={handleUpvote}
                     voteCount={votes.data?.count ?? 0}
+                    actions={
+                      canRequestCancellation
+                        ? [
+                            {
+                              key: 'request-cancellation',
+                              label: hasPendingCancellation ? 'Cancellation pending' : 'Request cancellation',
+                              onSelect: handleRequestCancellation,
+                              icon: <X className="h-3.5 w-3.5" />,
+                              disabled: hasPendingCancellation || cancellationStatusQuery.isLoading,
+                              className: hasPendingCancellation
+                                ? 'text-yellow-500/50 cursor-not-allowed opacity-50'
+                                : 'text-yellow-500 hover:bg-yellow-500/10 focus:bg-yellow-500/10',
+                              tooltip: hasPendingCancellation
+                                ? 'A cancellation request is already pending for this bounty.'
+                                : undefined,
+                            } satisfies ActionItem,
+                          ]
+                        : undefined
+                    }
                   />
                 </div>
               </div>
@@ -533,7 +614,7 @@ export default function BountyDetailPage({
                         href={`https://github.com/${githubRepoOwner}/${githubRepoName}/compare`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 rounded-lg bg-[#2A2A28] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#2ea043]"
+                        className="inline-flex items-center gap-2 rounded-lg bg-[#2A2A28] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#383838]"
                       >
                         <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.09-.745.08-.73.08-.73 1.205.085 1.838 1.238 1.838 1.238 1.07 1.835 2.807 1.305 3.492.998.108-.775.418-1.305.762-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
@@ -554,6 +635,41 @@ export default function BountyDetailPage({
         onOpenChange={closeEditModal}
         open={editModalOpen}
       />
+
+      {/* Cancellation Request Dialog */}
+      <Dialog open={showCancellationDialog} onOpenChange={setShowCancellationDialog}>
+        <DialogContent className="border border-[#232323] bg-[#191919] text-[#CFCFCF]">
+          <DialogHeader>
+            <DialogTitle className="text-white mb-2">
+              Request Cancellation
+            </DialogTitle>
+            <DialogDescription className="text-[#A0A0A0]">
+              Request to cancel this funded bounty. Our team will review your request
+              and process a refund. Note: The platform fee is non-refundable.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              placeholder="Reason for cancellation (optional)"
+              value={cancellationReason}
+              onChange={(e) => setCancellationReason(e.target.value)}
+              className="min-h-[100px] border-[#333] bg-[#0a0a0a] text-white placeholder:text-[#666]"
+            />
+          </div>
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <Button variant="outline" onClick={() => setShowCancellationDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmCancellation}
+              disabled={requestCancellationMutation.isPending}
+              className="bg-yellow-600 hover:bg-yellow-700 text-white"
+            >
+              {requestCancellationMutation.isPending ? 'Submitting...' : 'Submit Request'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -14,7 +14,7 @@ import {
 import { addNavigationContext } from '@bounty/ui/hooks/use-navigation-context';
 import { authClient } from '@bounty/auth/client';
 import { formatDistanceToNow } from 'date-fns';
-import { Pin, PinOff, Trash2 } from 'lucide-react';
+import { Pin, PinOff, Trash2, XCircle } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { memo, useState } from 'react';
 import type { Bounty } from '@/types/dashboard';
@@ -30,6 +30,13 @@ import {
   DialogTitle,
 } from '@bounty/ui/components/dialog';
 import { Button } from '@bounty/ui/components/button';
+import { Textarea } from '@bounty/ui/components/textarea';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@bounty/ui/components/tooltip';
 import { toast } from 'sonner';
 
 interface BountyCardProps {
@@ -54,9 +61,16 @@ export const BountyCard = memo(function BountyCard({
   const { data: session } = authClient.useSession();
   const queryClient = useQueryClient();
 
-  const canDelete = session?.user?.id
+  const isOwner = session?.user?.id
     ? bounty.creator.id === session.user.id
     : false;
+
+  // Determine funding status - simple funded or unfunded
+  const isFunded = bounty.paymentStatus === 'held';
+
+  // Owner can see delete option, but can only actually delete if not funded
+  const canDelete = isOwner && !isFunded;
+  const showDeleteOption = isOwner;
 
   const canPin = session?.user?.id
     ? bounty.creator.id === session.user.id
@@ -140,6 +154,40 @@ export const BountyCard = memo(function BountyCard({
     setShowDeleteDialog(false);
   };
 
+  // Cancellation request for funded bounties
+  const [showCancellationDialog, setShowCancellationDialog] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState('');
+
+  const requestCancellationMutation = useMutation({
+    mutationFn: async (input: { bountyId: string; reason?: string }) => {
+      return await trpcClient.bounties.requestCancellation.mutate(input);
+    },
+    onSuccess: (result) => {
+      toast.success(result.message || 'Cancellation request submitted');
+      setShowCancellationDialog(false);
+      setCancellationReason('');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to request cancellation: ${error.message}`);
+    },
+  });
+
+  const openCancellationDialog = () => {
+    if (isOwner && isFunded) {
+      setShowCancellationDialog(true);
+    }
+  };
+
+  const handleConfirmCancellation = () => {
+    if (!isOwner || !isFunded || requestCancellationMutation.isPending) {
+      return;
+    }
+    requestCancellationMutation.mutate({
+      bountyId: bounty.id,
+      reason: cancellationReason || undefined,
+    });
+  };
+
   // Show name or fallback - never "Anonymous" for private profiles
   // Private profiles still show name, only profile details are hidden
   const creatorName = bounty.creator.name || 'User';
@@ -168,9 +216,6 @@ export const BountyCard = memo(function BountyCard({
     const match = urlCandidate.match(/github\.com\/([^/]+\/[^/]+)/i);
     return match?.[1] || 'Unknown repo';
   })();
-
-  // Determine funding status - simple funded or unfunded
-  const isFunded = bounty.paymentStatus === 'held';
 
   return (
     <ContextMenu>
@@ -275,8 +320,8 @@ export const BountyCard = memo(function BountyCard({
           </div>
         </button>
       </ContextMenuTrigger>
-      {(canDelete || canPin) && (
-        <ContextMenuContent className="w-48 rounded-md border border-[#232323] bg-[#191919] text-[#CFCFCF] shadow-[rgba(0,0,0,0.08)_0px_16px_40px_0px]">
+      {(showDeleteOption || canPin) && (
+        <ContextMenuContent className="w-56 rounded-md border border-[#232323] bg-[#191919] text-[#CFCFCF] shadow-[rgba(0,0,0,0.08)_0px_16px_40px_0px]">
           {canPin && (
             <ContextMenuItem
               className="cursor-pointer focus:bg-accent focus:text-accent-foreground"
@@ -296,6 +341,7 @@ export const BountyCard = memo(function BountyCard({
               )}
             </ContextMenuItem>
           )}
+          {/* Show delete for unfunded bounties */}
           {canDelete && (
             <ContextMenuItem
               className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
@@ -303,6 +349,16 @@ export const BountyCard = memo(function BountyCard({
             >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete bounty
+            </ContextMenuItem>
+          )}
+          {/* Show request cancellation for funded bounties */}
+          {isOwner && isFunded && (
+            <ContextMenuItem
+              className="cursor-pointer text-yellow-500 focus:text-yellow-500 focus:bg-yellow-500/10"
+              onClick={openCancellationDialog}
+            >
+              <XCircle className="mr-2 h-4 w-4" />
+              Request cancellation
             </ContextMenuItem>
           )}
         </ContextMenuContent>
@@ -328,6 +384,40 @@ export const BountyCard = memo(function BountyCard({
               disabled={!canDelete || deleteBountyMutation.isPending}
             >
               Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showCancellationDialog} onOpenChange={setShowCancellationDialog}>
+        <DialogContent className="border border-[#232323] bg-[#191919] text-[#CFCFCF]">
+          <DialogHeader>
+            <DialogTitle className="text-white mb-2">
+              Request Cancellation
+            </DialogTitle>
+            <DialogDescription className="text-[#A0A0A0]">
+              Request to cancel this funded bounty. Our team will review your request
+              and process a refund. Note: The platform fee is non-refundable.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              placeholder="Reason for cancellation (optional)"
+              value={cancellationReason}
+              onChange={(e) => setCancellationReason(e.target.value)}
+              className="min-h-[100px] border-[#333] bg-[#0a0a0a] text-white placeholder:text-[#666]"
+            />
+          </div>
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <Button variant="outline" onClick={() => setShowCancellationDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmCancellation}
+              disabled={requestCancellationMutation.isPending}
+              className="bg-yellow-600 hover:bg-yellow-700 text-white"
+            >
+              {requestCancellationMutation.isPending ? 'Submitting...' : 'Submit Request'}
             </Button>
           </DialogFooter>
         </DialogContent>
