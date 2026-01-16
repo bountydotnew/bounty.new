@@ -20,7 +20,7 @@ function Calendar({
   ...props
 }: React.ComponentProps<typeof DayPicker>) {
   const defaultClassNames = getDefaultClassNames();
-  const isDropdownLayout = captionLayout === 'dropdown' || captionLayout === 'dropdown-buttons';
+  const isDropdownLayout = captionLayout === 'dropdown' || captionLayout === 'dropdown-months' || captionLayout === 'dropdown-years';
 
   return (
     <DayPicker

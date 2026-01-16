@@ -111,7 +111,7 @@ export function EditBountyModal({
   const onSubmit = handleSubmit((data: CreateBountyForm) => {
     const formattedData = formatFormData.createBounty(data);
     // Remove amount and currency - prices cannot be changed
-    const { amount, currency, ...updateData } = formattedData;
+    const { ...updateData } = formattedData;
     updateBounty.mutate({ id: bountyId, ...updateData });
   });
 

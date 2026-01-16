@@ -899,7 +899,7 @@ export const bountiesRouter = router({
             bounty_id: updatedBounty.id,
             user_id: ctx.session.user.id,
             amount: parseAmount(updatedBounty.amount),
-            currency: input.currency,
+            currency: updatedBounty.currency,
             has_repo: Boolean(updatedBounty.repositoryUrl),
             has_issue: Boolean(updatedBounty.issueUrl),
             tags_count: updatedBounty.tags?.length ?? 0,

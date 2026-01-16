@@ -492,6 +492,7 @@ export default function BountyDetailPage({
                 </CollapsibleText>
               </div>
             )}
+            {/* 
             <BountyComments
               bountyId={id}
               initialComments={
@@ -499,6 +500,7 @@ export default function BountyDetailPage({
               }
               pageSize={5}
             />
+            */}
           </div>
 
           <div className="hidden xl:block xl:w-[480px] xl:shrink-0">
