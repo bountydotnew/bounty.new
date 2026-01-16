@@ -10,7 +10,8 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowUpRight, GitFork, GitGraph, Github, Star } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataBuddyIcon, MarbleIcon } from '@/components/icons';
-import { Header } from '@/components/sections/home/header';
+import { Header } from '@/components/landing/header';
+import { Footer } from '@/components/landing/footer';
 import { LINKS } from '@/constants';
 import { trpc } from '@/utils/trpc';
 
@@ -139,7 +140,7 @@ export default function ContributorsPage() {
         <Header />
 
         {/* Main content */}
-        <main className="relative z-10 mx-auto max-w-7xl px-6 pt-20 pb-20">
+        <main className="relative z-10 mx-auto max-w-7xl px-6 pt-32 pb-20">
           {/* Hero Section */}
           <div className="mb-20 max-w-4xl">
             <h1
@@ -390,6 +391,8 @@ export default function ContributorsPage() {
             </div>
           </section>
         </main>
+
+        <Footer />
       </div>
     </>
   );

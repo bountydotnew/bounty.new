@@ -12,8 +12,8 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import type { Post } from '@/types/post';
-import { Footer } from '@/components/sections/home/footer';
-import { Header } from '@/components/sections/home/header';
+import { Footer } from '@/components/landing/footer';
+import { Header } from '@/components/landing/header';
 
 interface BlogPageContentProps {
   posts: Post[];
@@ -64,7 +64,7 @@ export function BlogPageContent({ posts }: BlogPageContentProps) {
 
         <Header />
 
-        <main className="relative z-10 mx-auto max-w-7xl px-6 pt-20 pb-20">
+        <main className="relative z-10 mx-auto max-w-7xl px-6 pt-32 pb-20">
           <div className="mb-20 max-w-4xl">
             <h1
               className="mb-8 font-display text-7xl leading-tight"

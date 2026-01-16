@@ -12,8 +12,8 @@ import { ArrowLeft, ArrowRight, Calendar } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Prose from '@/components/prose';
-import { Footer } from '@/components/sections/home/footer';
-import { Header } from '@/components/sections/home/header';
+import { Footer } from '@/components/landing/footer';
+import { Header } from '@/components/landing/header';
 import type { Post } from '@/types/post';
 
 interface BlogPostContentProps {

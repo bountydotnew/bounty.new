@@ -4,8 +4,8 @@ import { cn } from '@bounty/ui/lib/utils';
 import type { Metadata } from 'next';
 import ReactMarkdown from 'react-markdown';
 import { GithubIcon } from '@/components/icons';
-import { Footer } from '@/components/sections/home/footer';
-import { Header } from '@/components/sections/home/header';
+import { Footer } from '@/components/landing/footer';
+import { Header } from '@/components/landing/header';
 
 const roadmapItems: {
   title: string;
@@ -125,7 +125,7 @@ export default function RoadmapPage() {
           <div className="-top-40 -right-40 absolute h-96 w-96 rounded-full bg-linear-to-br from-muted/20 to-transparent blur-3xl" />
           <div className="-left-40 absolute top-1/2 h-80 w-80 rounded-full bg-linear-to-tr from-muted/10 to-transparent blur-3xl" />
         </div>
-        <div className="container relative mx-auto px-4 py-16">
+        <div className="container relative mx-auto px-4 pt-24 pb-16">
           <div className="mx-auto max-w-4xl">
             <div className="mb-10 text-center">
               <Link
