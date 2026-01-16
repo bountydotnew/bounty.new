@@ -362,7 +362,7 @@ export default function BountyDetailPage({
                         size="sm"
                         variant="outline"
                       >
-                        {recheckPaymentMutation.isPending ? 'Checking...' : 'Recheck'}
+                        {recheckPaymentMutation.isPending ? 'Syncing...' : 'Sync'}
                       </Button>
                       <Button
                         onClick={handleCompletePayment}
