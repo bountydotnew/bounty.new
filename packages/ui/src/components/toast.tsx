@@ -57,7 +57,7 @@ const BaseToast = (props: BaseToastProps) => {
   return (
     <div
       className={cn(
-        'group toast flex flex-row gap-2 items-start bg-[#191919] p-4 rounded-xl border border-border/70 min-w-[200px] max-w-[600px]'
+        'group toast flex flex-row gap-2 items-start bg-[#191919] p-4 rounded-xl border border-border/70 min-w-[280px] max-w-[840px]'
       )}
     >
       {props.renderContent ? (

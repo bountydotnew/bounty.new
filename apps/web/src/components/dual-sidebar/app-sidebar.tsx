@@ -135,18 +135,6 @@ const SidebarFooterActions = () => {
           </NotificationsDropdown>
         )}
       </div>
-      {/* Test button for fund modal */}
-      {isAuthenticated && !isPending && (
-        <button
-          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
-          onClick={() => setShowFundModal(true)}
-          type="button"
-        >
-          <span className="text-[14px] font-medium leading-[150%] group-data-[collapsible=icon]:hidden">
-            Test Fund Modal
-          </span>
-        </button>
-      )}
       <FundBountyModal
         open={showFundModal}
         onOpenChange={setShowFundModal}

@@ -165,6 +165,8 @@ export default function BountyPage() {
   const detailAvatarSrc: string = bountyDetail.data.bounty.creator.image ?? '';
   const detailPaymentStatus: string | null = bountyDetail.data.bounty.paymentStatus ?? null;
   const detailCreatedById: string = bountyDetail.data.bounty.createdById;
+  const detailGithubRepoOwner: string | null = bountyDetail.data.bounty.githubRepoOwner ?? null;
+  const detailGithubRepoName: string | null = bountyDetail.data.bounty.githubRepoName ?? null;
 
   const initialComments = (bountyDetail.data.comments ?? []).map((comment: BountyCommentCacheItem) => ({
     ...comment,
@@ -252,6 +254,8 @@ export default function BountyPage() {
       tags={detailTags}
       title={detailTitle}
       user={detailUser}
+      githubRepoOwner={detailGithubRepoOwner}
+      githubRepoName={detailGithubRepoName}
     />
   );
 }

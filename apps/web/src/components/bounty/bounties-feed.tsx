@@ -80,6 +80,7 @@ export const BountiesFeed = memo(function BountiesFeed({
       {
         commentCount: number;
         voteCount: number;
+        submissionCount: number;
         isVoted: boolean;
         bookmarked: boolean;
       }

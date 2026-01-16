@@ -9,6 +9,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { RealtimeProvider } from '@upstash/realtime/client';
 import { useRouter } from 'next/navigation';
+import { useEffect, useRef } from 'react';
 import ImpersonationBanner from '@/components/impersonation-banner';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ConfettiProvider } from '@/context/confetti-context';
@@ -19,6 +20,17 @@ import { FeedbackProvider } from '@/components/feedback-context';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const lastSessionIdRef = useRef<string | null>(null);
+  const { data: session } = authClient.useSession();
+
+  useEffect(() => {
+    const nextSessionId = session?.user?.id ?? null;
+    if (lastSessionIdRef.current === nextSessionId) {
+      return;
+    }
+    lastSessionIdRef.current = nextSessionId;
+    router.refresh();
+  }, [session?.user?.id, router]);
 
   return (
     <ThemeProvider
@@ -36,8 +48,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 Link={Link}
                 navigate={router.push}
                 onSessionChange={() => {
-                  // Clear router cache (protected routes)
-                  router.refresh();
+                  // No-op: handled via authClient.useSession above
                 }}
                 replace={router.replace}
               >

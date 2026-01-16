@@ -24,6 +24,7 @@ import {
 import { stripeClient } from '@bounty/stripe';
 import {
   and,
+  count,
   desc,
   eq,
   ilike,
@@ -113,7 +114,6 @@ async function ensureStripeCustomer(
 const createBountySchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
-
   amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, 'Incorrect amount.'),
   currency: z.string().default('USD'),
   deadline: z
@@ -138,18 +138,18 @@ const createBountySchema = z.object({
   repositoryUrl: z.string().url().optional(),
   issueUrl: z.string().url().optional(),
   payLater: z.boolean().optional().default(false), // Allow creating bounty without payment
+  // GitHub App fields
+  githubInstallationId: z.number().optional(),
+  githubIssueNumber: z.number().optional(),
+  githubRepoOwner: z.string().optional(),
+  githubRepoName: z.string().optional(),
 });
 
 const updateBountySchema = z.object({
   id: z.string().uuid(),
   title: z.string().min(1).max(200).optional(),
   description: z.string().min(10).optional(),
-
-  amount: z
-    .string()
-    .regex(/^\d{1,13}(\.\d{1,2})?$/, 'Incorrect amount.')
-    .optional(),
-  currency: z.string().optional(),
+  // Removed: amount, currency - prices cannot be changed after creation
   deadline: z
     .string()
     .datetime('Deadline must be a valid date')
@@ -289,6 +289,20 @@ export const bountiesRouter = router({
         const deadline = input.deadline ? new Date(input.deadline) : undefined;
         const payLater = input.payLater ?? false;
 
+        // Parse GitHub issue URL to extract issue number and repo info
+        let githubIssueNumber: number | undefined = undefined;
+        let githubRepoOwner: string | undefined = undefined;
+        let githubRepoName: string | undefined = undefined;
+
+        if (issueUrl) {
+          const urlMatch = issueUrl.match(/github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/i);
+          if (urlMatch) {
+            githubRepoOwner = urlMatch[1] || undefined;
+            githubRepoName = urlMatch[2] || undefined;
+            githubIssueNumber = parseInt(urlMatch[3] || '0', 10);
+          }
+        }
+
         // Calculate fees
         const bountyAmountInCents = Math.round(parseAmount(normalizedAmount) * 100);
         const { total: totalWithFees, fees } = calculateTotalWithFees(bountyAmountInCents);
@@ -327,6 +341,11 @@ export const bountiesRouter = router({
             tags: cleanedTags ?? null,
             repositoryUrl,
             issueUrl,
+            // GitHub fields
+            githubIssueNumber: input.githubIssueNumber ?? githubIssueNumber,
+            githubInstallationId: input.githubInstallationId,
+            githubRepoOwner: input.githubRepoOwner ?? githubRepoOwner,
+            githubRepoName: input.githubRepoName ?? githubRepoName,
             createdById: ctx.session.user.id,
             status: 'draft', // Draft until payment confirmed
             stripePaymentIntentId: null, // Will be set via webhook
@@ -340,6 +359,43 @@ export const bountiesRouter = router({
             code: 'INTERNAL_SERVER_ERROR',
             message: 'Failed to create bounty',
           });
+        }
+
+        // Post bot comment on GitHub issue if bounty is linked to an issue
+        if (
+          newBounty.githubIssueNumber &&
+          newBounty.githubRepoOwner &&
+          newBounty.githubRepoName &&
+          newBounty.githubInstallationId
+        ) {
+          try {
+            const { getGithubAppManager, createUnfundedBountyComment } = await import('@bounty/api/driver/github-app');
+            const githubApp = getGithubAppManager();
+
+            const commentBody = createUnfundedBountyComment(
+              parseAmount(normalizedAmount),
+              newBounty.id,
+              input.currency,
+              0
+            );
+
+            const botComment = await githubApp.createIssueComment(
+              newBounty.githubInstallationId,
+              newBounty.githubRepoOwner,
+              newBounty.githubRepoName,
+              newBounty.githubIssueNumber,
+              commentBody
+            );
+
+            // Store comment ID for later editing
+            await db
+              .update(bounty)
+              .set({ githubCommentId: botComment.id })
+              .where(eq(bounty.id, newBounty.id));
+          } catch (error) {
+            console.error('Failed to post GitHub bot comment:', error);
+            // Continue even if bot comment fails
+          }
         }
 
         // Create Checkout Session if not paying later
@@ -869,34 +925,28 @@ export const bountiesRouter = router({
           });
         }
 
-        // If payment was held, refund it
+        const [submissionCount] = await db
+          .select({ count: count() })
+          .from(submission)
+          .where(eq(submission.bountyId, input.id));
+
+        if ((submissionCount?.count || 0) > 0) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message:
+              'Cannot delete a bounty that already has submissions. Please remove submissions first or contact support.',
+          });
+        }
+
+        // Block deletion if bounty is funded
         if (
           existingBounty.stripePaymentIntentId &&
           existingBounty.paymentStatus === 'held'
         ) {
-          try {
-            await refundPayment(existingBounty.stripePaymentIntentId);
-
-            // Update payment status
-            await db
-              .update(bounty)
-              .set({
-                paymentStatus: 'refunded',
-                updatedAt: new Date(),
-              })
-              .where(eq(bounty.id, input.id));
-
-            // Create transaction record
-            await db.insert(transaction).values({
-              bountyId: input.id,
-              type: 'refund',
-              amount: existingBounty.amount,
-              stripeId: existingBounty.stripePaymentIntentId,
-            });
-          } catch (refundError) {
-            // Log error but continue with deletion
-            console.error('Failed to refund payment:', refundError);
-          }
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Cannot delete a funded bounty. Please contact support at support@bounty.new if you need assistance.',
+          });
         }
 
         await db.delete(bounty).where(eq(bounty.id, input.id));
@@ -1053,6 +1103,13 @@ export const bountiesRouter = router({
               stripePaymentIntentId: bounty.stripePaymentIntentId,
               createdAt: bounty.createdAt,
               updatedAt: bounty.updatedAt,
+              // GitHub fields
+              githubIssueNumber: bounty.githubIssueNumber,
+              githubInstallationId: bounty.githubInstallationId,
+              githubRepoOwner: bounty.githubRepoOwner,
+              githubRepoName: bounty.githubRepoName,
+              githubCommentId: bounty.githubCommentId,
+              submissionKeyword: bounty.submissionKeyword,
               creator: {
                 id: user.id,
                 name: user.name,
@@ -1281,6 +1338,15 @@ export const bountiesRouter = router({
           .where(inArray(bountyVote.bountyId, ids))
           .groupBy(bountyVote.bountyId);
 
+        const submissionRows = await db
+          .select({
+            bountyId: submission.bountyId,
+            count: sql<number>`count(*)::int`,
+          })
+          .from(submission)
+          .where(inArray(submission.bountyId, ids))
+          .groupBy(submission.bountyId);
+
         let userVotes: { bountyId: string }[] = [];
         let userBookmarks: { bountyId: string }[] = [];
 
@@ -1309,12 +1375,14 @@ export const bountiesRouter = router({
         const out = ids.map((id) => {
           const c = commentRows.find((r) => r.bountyId === id)?.count ?? 0;
           const v = voteRows.find((r) => r.bountyId === id)?.count ?? 0;
+          const s = submissionRows.find((r) => r.bountyId === id)?.count ?? 0;
           const isVoted = userVotes.some((r) => r.bountyId === id);
           const bookmarked = userBookmarks.some((r) => r.bountyId === id);
           return {
             bountyId: id,
             commentCount: c,
             voteCount: v,
+            submissionCount: s,
             isVoted,
             bookmarked,
           };
@@ -2724,6 +2792,50 @@ export const bountiesRouter = router({
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to create payment: ${errorMessage}`,
+          cause: error,
+        });
+      }
+    }),
+
+  getBountySubmissions: publicProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .query(async ({ input }) => {
+      try {
+        const submissions = await db
+          .select({
+            id: submission.id,
+            description: submission.description,
+            deliverableUrl: submission.deliverableUrl,
+            pullRequestUrl: submission.pullRequestUrl,
+            status: submission.status,
+            submittedAt: submission.submittedAt,
+            reviewedAt: submission.reviewedAt,
+            reviewNotes: submission.reviewNotes,
+            // GitHub PR fields
+            githubPullRequestNumber: submission.githubPullRequestNumber,
+            githubPullRequestId: submission.githubPullRequestId,
+            githubCommentId: submission.githubCommentId,
+            githubUsername: submission.githubUsername,
+            githubHeadSha: submission.githubHeadSha,
+            // Contributor info
+            contributorId: submission.contributorId,
+            contributorName: user.name,
+            contributorImage: user.image,
+          })
+          .from(submission)
+          .leftJoin(user, eq(submission.contributorId, user.id))
+          .where(eq(submission.bountyId, input.bountyId))
+          .orderBy(desc(submission.submittedAt));
+
+        return {
+          success: true,
+          submissions,
+        };
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Failed to get submissions: ${errorMessage}`,
           cause: error,
         });
       }

@@ -20,6 +20,7 @@ function Calendar({
   ...props
 }: React.ComponentProps<typeof DayPicker>) {
   const defaultClassNames = getDefaultClassNames();
+  const isDropdownLayout = captionLayout === 'dropdown' || captionLayout === 'dropdown-buttons';
 
   return (
     <DayPicker
@@ -42,7 +43,9 @@ function Calendar({
         ),
         month: cn('flex flex-col w-full gap-4', defaultClassNames.month),
         nav: cn(
-          'flex items-center gap-1 w-full absolute top-0 inset-x-0 justify-between z-10',
+          isDropdownLayout
+            ? 'flex items-center gap-1 w-full justify-between'
+            : 'flex items-center gap-1 w-full absolute top-0 inset-x-0 justify-between z-10',
           defaultClassNames.nav
         ),
         button_previous: cn(
@@ -54,7 +57,9 @@ function Calendar({
           defaultClassNames.button_next
         ),
         month_caption: cn(
-          'flex items-center justify-center h-7 w-full px-1 relative',
+          isDropdownLayout
+            ? 'flex items-center justify-between h-7 w-full px-1 relative'
+            : 'flex items-center justify-center h-7 w-full px-1 relative',
           defaultClassNames.month_caption
         ),
         dropdowns: cn(
@@ -62,15 +67,21 @@ function Calendar({
           defaultClassNames.dropdowns
         ),
         dropdown_root: cn(
-          'relative bg-[#191919] border border-[#232323] rounded-md hover:bg-[#2a2a2a] transition-colors',
+          isDropdownLayout
+            ? 'relative bg-[#191919] border border-[#232323] rounded-md hover:bg-[#2a2a2a] transition-colors px-2'
+            : 'relative bg-[#191919] border border-[#232323] rounded-md hover:bg-[#2a2a2a] transition-colors',
           defaultClassNames.dropdown_root
         ),
         dropdown: cn(
-          'absolute bg-popover inset-0 opacity-0',
+          isDropdownLayout
+            ? 'relative bg-transparent text-white text-sm font-medium px-1 py-0.5 focus:outline-none appearance-none'
+            : 'absolute bg-popover inset-0 opacity-0',
           defaultClassNames.dropdown
         ),
         caption_label: cn(
-          'select-none font-medium text-sm text-white',
+          isDropdownLayout
+            ? 'sr-only'
+            : 'select-none font-medium text-sm text-white',
           defaultClassNames.caption_label
         ),
         table: 'w-full border-collapse',

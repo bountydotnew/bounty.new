@@ -37,6 +37,7 @@ interface BountyCardProps {
   stats?: {
     commentCount: number;
     voteCount: number;
+    submissionCount: number;
     isVoted: boolean;
     bookmarked: boolean;
   };
@@ -144,14 +145,17 @@ export const BountyCard = memo(function BountyCard({
   const avatarColor = colors[colorIndex];
 
   const commentCount = initialStats?.commentCount ?? 0;
+  const submissionCount = initialStats?.submissionCount ?? 0;
   const formattedAmount = `$${bounty.amount.toLocaleString()}`;
 
-  // Extract repo name from repositoryUrl if available, otherwise use hardcoded
-  const repoDisplay = bounty.repositoryUrl
-    ? bounty.repositoryUrl
-        .replace('https://github.com/', '')
-        .replace('http://github.com/', '')
-    : 'ripgrim/bountydotnew';
+  const repoDisplay = (() => {
+    const urlCandidate = bounty.repositoryUrl || bounty.issueUrl;
+    if (!urlCandidate) {
+      return 'Unknown repo';
+    }
+    const match = urlCandidate.match(/github\.com\/([^/]+\/[^/]+)/i);
+    return match?.[1] || 'Unknown repo';
+  })();
 
   // Determine funding status - simple funded or unfunded
   const isFunded = bounty.paymentStatus === 'held';
@@ -229,17 +233,17 @@ export const BountyCard = memo(function BountyCard({
 
           {/* Submissions (hardcoded) */}
           <div className="flex h-fit items-center gap-[5px] px-[3px] shrink-0">
-            <div className="flex h-fit items-center opacity-100">
+          <div className="flex h-fit items-center opacity-30">
               <SubmissionsPeopleIcon className="h-4 w-4" />
             </div>
-            <span className="text-[11px] sm:text-[13px] font-normal leading-[150%] text-[#FFFFFF99] whitespace-nowrap">
-              10 submissions
+          <span className="text-[11px] sm:text-[13px] font-normal leading-[150%] text-[#FFFFFF99] whitespace-nowrap">
+            {submissionCount} {submissionCount === 1 ? 'submission' : 'submissions'}
             </span>
           </div>
 
           {/* GitHub repo */}
           <div className="flex h-fit items-center gap-[5px] px-[3px] min-w-0 flex-1 sm:flex-initial">
-            <div className="flex h-fit items-center opacity-100 shrink-0">
+          <div className="flex h-fit items-center opacity-30 shrink-0">
               <GithubIcon className="h-3 w-3" />
             </div>
             <span className="h-5 text-[11px] flex items-center md:text-[13px] lg:text-[13px] font-normal leading-[150%] text-[#FFFFFF99] truncate min-w-0">

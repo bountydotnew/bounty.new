@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import {
+  bigint,
   boolean,
   decimal,
   index,
@@ -45,6 +46,13 @@ export const bounty = pgTable('bounty', {
   tags: text('tags').array(),
   repositoryUrl: text('repository_url'),
   issueUrl: text('issue_url'),
+  // GitHub App integration fields
+  githubIssueNumber: integer('github_issue_number'),
+  githubInstallationId: integer('github_installation_id'),
+  githubRepoOwner: text('github_repo_owner'),
+  githubRepoName: text('github_repo_name'),
+  githubCommentId: bigint('github_comment_id', { mode: 'number' }), // For editing bot comments
+  submissionKeyword: text('submission_keyword').default('@bountydotnew submit'),
   createdById: text('created_by_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
@@ -72,6 +80,12 @@ export const submission = pgTable('submission', {
   description: text('description').notNull(),
   deliverableUrl: text('deliverable_url').notNull(),
   pullRequestUrl: text('pull_request_url'),
+  // GitHub PR integration fields
+  githubPullRequestNumber: integer('github_pull_request_number'),
+  githubPullRequestId: bigint('github_pull_request_id', { mode: 'number' }),
+  githubCommentId: bigint('github_comment_id', { mode: 'number' }),
+  githubUsername: text('github_username'),
+  githubHeadSha: text('github_head_sha'), // For tracking the commit
   status: submissionStatusEnum('status').notNull().default('pending'),
   reviewNotes: text('review_notes'),
   submittedAt: timestamp('submitted_at').notNull().default(sql`now()`),

@@ -94,7 +94,7 @@ export function Features() {
       >
          <div className="w-full max-w-md transform transition-transform hover:scale-105 duration-500">
             <div className="pointer-events-none select-none">
-               <BountyCard bounty={MOCK_BOUNTY} stats={{ commentCount: 5, voteCount: 12, isVoted: false, bookmarked: false }} />
+               <BountyCard bounty={MOCK_BOUNTY} stats={{ commentCount: 5, voteCount: 12, submissionCount: 3, isVoted: false, bookmarked: false }} />
             </div>
          </div>
       </FeatureSection>

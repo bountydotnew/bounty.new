@@ -55,9 +55,19 @@ function DeadlinePicker({ value, onChange }: DeadlinePickerProps) {
     const [date, setDate] = useState<Date | undefined>(() => parseFieldValue(value));
 
     useEffect(() => {
+        if (!value) {
+            setDate(undefined);
+            setInputValue('');
+            return;
+        }
         const parsed = parseFieldValue(value);
-        setDate(parsed);
-        setInputValue(parsed ? formatDate(parsed) : '');
+        if (parsed) {
+            setDate(parsed);
+            setInputValue(formatDate(parsed));
+            return;
+        }
+        setDate(undefined);
+        setInputValue(value);
     }, [value]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

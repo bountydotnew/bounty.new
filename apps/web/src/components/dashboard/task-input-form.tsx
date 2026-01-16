@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Spinner } from '@bounty/ui';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { Popover, PopoverContent, PopoverTrigger } from '@bounty/ui/components/popover';
+import Link from '@bounty/ui/components/link';
 import {
     type CreateBountyForm,
     createBountyDefaults,
@@ -20,7 +21,7 @@ import { cn } from '@bounty/ui/lib/utils';
 import { DatePicker } from '@bounty/ui/components/date-picker';
 
 // Hooks
-import { useRepositories } from '@bounty/ui/hooks/useRepositories';
+import { useGitHubInstallationRepositories } from '@/hooks/use-github-installation-repos';
 import { useBranches } from '@bounty/ui/hooks/useBranches';
 import { useIssues } from '@bounty/ui/hooks/useIssues';
 
@@ -68,25 +69,17 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
     const title = watch('title');
     const amount = watch('amount');
 
-    // Get user data to fetch GitHub username
-    const { data: userData } = useQuery(trpc.user.getMe.queryOptions());
-    const githubUsername =
-        (userData as { data?: { profile?: { githubUsername?: string } } })?.data
-            ?.profile?.githubUsername;
-
-    // Custom hooks for data fetching
+    // Custom hooks for data fetching - use GitHub App installations
     const {
         filteredRepositories,
+        installations,
+        installationsLoading,
         reposLoading,
-        reposData,
-        githubUsername: repoGithubUsername,
         repoSearchQuery,
         setRepoSearchQuery,
         selectedRepository,
         setSelectedRepository,
-    } = useRepositories(githubUsername, {
-        myReposQueryOptions: trpc.repository.myRepos.queryOptions() as unknown as Parameters<typeof useQuery>[0] as Parameters<typeof useQuery<unknown, Error>>[0],
-    });
+    } = useGitHubInstallationRepositories();
 
     const {
         filteredBranches,
@@ -382,16 +375,32 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                         {/* Bottom row with selectors and submit */}
                         <div className="flex flex-row justify-between items-center pt-2">
                             <div className="relative flex items-center gap-2">
-                                <RepoSelector
-                                    selectedRepository={selectedRepository}
-                                    filteredRepositories={filteredRepositories}
-                                    reposLoading={reposLoading}
-                                    reposData={reposData as { success: boolean; error?: string; data?: Array<{ name: string; url: string }> } | undefined}
-                                    githubUsername={repoGithubUsername}
-                                    repoSearchQuery={repoSearchQuery}
-                                    setRepoSearchQuery={setRepoSearchQuery}
-                                    onSelect={handleRepositorySelect}
-                                />
+                                {/* Show install prompt if no installations */}
+                                {!installationsLoading && installations.length === 0 && (
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-[#191919] border border-[#232323] rounded-lg text-sm">
+                                        <span className="text-[#929292]">Install GitHub App to create bounties</span>
+                                        <Link
+                                            href="/settings/integrations"
+                                            className="text-white hover:underline font-medium"
+                                        >
+                                            Install
+                                        </Link>
+                                    </div>
+                                )}
+
+                                {/* Repo selector - only show if installations exist */}
+                                {installations.length > 0 && (
+                                    <RepoSelector
+                                        selectedRepository={selectedRepository}
+                                        filteredRepositories={filteredRepositories}
+                                        reposLoading={reposLoading}
+                                        reposData={undefined}
+                                        githubUsername={undefined}
+                                        repoSearchQuery={repoSearchQuery}
+                                        setRepoSearchQuery={setRepoSearchQuery}
+                                        onSelect={handleRepositorySelect}
+                                    />
+                                )}
 
                                 {selectedRepository && (
                                     <>

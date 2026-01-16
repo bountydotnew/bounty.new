@@ -42,6 +42,9 @@ interface BountyDetailPageProps {
   initialBookmarked?: boolean;
   paymentStatus?: string | null;
   createdById?: string;
+  // GitHub fields for PR links
+  githubRepoOwner?: string | null;
+  githubRepoName?: string | null;
 }
 
 export default function BountyDetailPage({
@@ -58,6 +61,8 @@ export default function BountyDetailPage({
   initialBookmarked,
   paymentStatus,
   createdById,
+  githubRepoOwner,
+  githubRepoName,
 }: BountyDetailPageProps) {
   const { editModalOpen, openEditModal, closeEditModal, editingBountyId } =
     useBountyModals();
@@ -172,6 +177,12 @@ export default function BountyDetailPage({
     ...trpc.bounties.getBountyComments.queryOptions({ bountyId: id }),
     initialData: initialComments,
     staleTime: Number.POSITIVE_INFINITY,
+  });
+
+  // Fetch submissions for this bounty
+  const submissionsQuery = useQuery({
+    ...trpc.bounties.getBountySubmissions.queryOptions({ bountyId: id }),
+    staleTime: 10_000, // Refetch every 10 seconds
   });
   // const [commentText] = useState('');
   // const maxChars = 245;
@@ -488,49 +499,49 @@ export default function BountyDetailPage({
 
           <div className="hidden xl:block xl:w-[480px] xl:shrink-0">
             <div className="sticky top-0 xl:h-[calc(100vh-8rem)] xl:overflow-y-auto xl:pr-2">
-              <div className="mb-6 flex items-center justify-between">
-                <h3 className="font-medium text-lg text-white">Submissions</h3>
-                <div className="hidden items-center gap-2 xl:flex">
-                  <Button className="items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-primary-foreground transition-colors">
-                    Add submission
-                  </Button>
-                </div>
+              <div className="mb-6">
+                <h3 className="font-medium text-lg text-white">
+                  Submissions
+                  {submissionsQuery.data?.submissions && submissionsQuery.data.submissions.length > 0 && (
+                    <span className="ml-2 text-sm text-gray-400">
+                      ({submissionsQuery.data.submissions.length})
+                    </span>
+                  )}
+                </h3>
               </div>
 
               <div className="space-y-4">
-                <SubmissionCard
-                  avatarSrc="/placeholder.svg?height=40&width=40"
-                  className="w-full"
-                  description="Here is my submission for the shadcn styling, in the ss you can se how the user can select the theme"
-                  hasBadge={true}
-                  previewSrc="/placeholder.svg?height=80&width=80"
-                  rank="Rank 5"
-                  user="Fishy"
-                />
-
-                <SubmissionCard
-                  avatarSrc="/placeholder.svg?height=40&width=40"
-                  className="w-full"
-                  description="I one shotted this with v0"
-                  hasBadge={true}
-                  previewSrc="/placeholder.svg?height=80&width=80"
-                  rank="Rank 2"
-                  user="Sergio"
-                />
-
-                <SubmissionCard
-                  avatarSrc="/placeholder.svg?height=40&width=40"
-                  className="w-full"
-                  description="There is my try"
-                  hasBadge={false}
-                  previewSrc="/placeholder.svg?height=80&width=80"
-                  rank="New user"
-                  user="Ahmet"
-                />
-
-                <div className="mt-6 text-center text-gray-400 text-sm">
-                  That&apos;s all for now...
-                </div>
+                {submissionsQuery.isLoading ? (
+                  <div className="text-center text-gray-400 text-sm">Loading submissions...</div>
+                ) : submissionsQuery.data?.submissions && submissionsQuery.data.submissions.length > 0 ? (
+                  submissionsQuery.data.submissions.map((sub) => (
+                    <SubmissionCard
+                      key={sub.id}
+                      className="w-full"
+                      description={sub.description}
+                      status={sub.status}
+                      username={sub.githubUsername || undefined}
+                      contributorName={sub.contributorName || undefined}
+                      contributorImage={sub.contributorImage || undefined}
+                      githubPullRequestNumber={sub.githubPullRequestNumber}
+                      githubRepoOwner={githubRepoOwner || undefined}
+                      githubRepoName={githubRepoName || undefined}
+                      pullRequestUrl={sub.pullRequestUrl || undefined}
+                      deliverableUrl={sub.deliverableUrl || undefined}
+                    />
+                  ))
+                ) : (
+                  <div className="rounded-lg border border-[#232323] bg-[#191919] p-6 text-center">
+                    <p className="text-gray-400 text-sm mb-2">
+                      No submissions yet
+                    </p>
+                    {githubRepoOwner && githubRepoName && (
+                      <p className="text-gray-500 text-xs">
+                        Open a PR with <code className="rounded bg-[#232323] px-1.5 py-0.5">@bountydotnew submit</code> in the description to submit
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

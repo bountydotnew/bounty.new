@@ -72,9 +72,8 @@ export function BountyDetailSkeleton() {
 
           <div className="hidden xl:block xl:w-[480px] xl:flex-shrink-0">
             <div className="sticky top-0 xl:h-[calc(100vh-8rem)] xl:overflow-y-auto xl:pr-2">
-              <div className="mb-6 flex items-center justify-between">
+              <div className="mb-6">
                 <div className="h-6 w-24 rounded bg-[#383838]/20" />
-                <div className="h-10 w-32 rounded bg-[#383838]/20" />
               </div>
 
               <div className="space-y-4">

@@ -20,13 +20,14 @@ import {
 import { usePathname, useRouter } from 'next/navigation';
 import Link from '@bounty/ui/components/link';
 import { LINKS } from '@/constants';
-import { BellIcon, UserIcon, DollarBillIcon, SecurityIcon, CardIcon } from '@bounty/ui';
+import { BellIcon, UserIcon, DollarBillIcon, SecurityIcon, CardIcon, SettingsGearIcon } from '@bounty/ui';
 import { ArrowLeftIcon } from 'lucide-react';
 
 const NAV_ITEMS = [
   { title: 'Profile', url: '/settings/profile', icon: UserIcon },
   { title: 'Billing', url: '/settings/billing', icon: CardIcon },
   { title: 'Payments', url: '/settings/payments', icon: DollarBillIcon },
+  { title: 'Integrations', url: '/settings/integrations', icon: SettingsGearIcon },
   { title: 'Security', url: '/settings/security', icon: SecurityIcon },
   { title: 'Notifications', url: '/settings/notifications', icon: BellIcon, disabled: true },
 ];

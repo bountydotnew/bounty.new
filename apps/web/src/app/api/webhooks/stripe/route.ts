@@ -1,10 +1,137 @@
-import { db, bounty, transaction, payout } from '@bounty/db';
+import { db, bounty, transaction, payout, submission } from '@bounty/db';
 import { env } from '@bounty/env/server';
 import { constructEvent, stripeClient } from '@bounty/stripe';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNotNull } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
+import {
+  getGithubAppManager,
+  createFundedBountyComment,
+  createSubmissionReceivedComment,
+} from '@bounty/api/driver/github-app';
+import { count } from 'drizzle-orm';
+
+/**
+ * Updates the GitHub bot comment when a bounty becomes funded
+ */
+async function updateGitHubBotCommentOnFunding(bountyId: string) {
+  try {
+    // Get the bounty with GitHub fields
+    const [bountyRecord] = await db
+      .select({
+        id: bounty.id,
+        amount: bounty.amount,
+        currency: bounty.currency,
+        githubCommentId: bounty.githubCommentId,
+        githubInstallationId: bounty.githubInstallationId,
+        githubRepoOwner: bounty.githubRepoOwner,
+        githubRepoName: bounty.githubRepoName,
+      })
+      .from(bounty)
+      .where(eq(bounty.id, bountyId))
+      .limit(1);
+
+    if (!bountyRecord) {
+      console.log(`[Stripe Webhook] Bounty ${bountyId} not found, skipping GitHub comment update`);
+      return;
+    }
+
+    // Check if this bounty has a GitHub bot comment to update
+    if (!bountyRecord.githubCommentId || !bountyRecord.githubInstallationId || !bountyRecord.githubRepoOwner || !bountyRecord.githubRepoName) {
+      console.log(`[Stripe Webhook] Bounty ${bountyId} does not have GitHub integration, skipping comment update`);
+      return;
+    }
+
+    // Get current submission count
+    const [submissionCount] = await db
+      .select({ count: count() })
+      .from(submission)
+      .where(eq(submission.bountyId, bountyId));
+
+    // Create the funded comment
+    const newComment = createFundedBountyComment(
+      bountyRecord.id,
+      submissionCount?.count || 0
+    );
+
+    // Update the GitHub comment
+    const githubApp = getGithubAppManager();
+    await githubApp.editComment(
+      bountyRecord.githubInstallationId,
+      bountyRecord.githubRepoOwner,
+      bountyRecord.githubRepoName,
+      bountyRecord.githubCommentId,
+      newComment
+    );
+
+    console.log(`[Stripe Webhook] Updated GitHub bot comment for bounty ${bountyId}`);
+  } catch (error) {
+    // Don't fail the webhook if GitHub update fails
+    console.error(`[Stripe Webhook] Failed to update GitHub comment for bounty ${bountyId}:`, error);
+  }
+}
+
+/**
+ * Updates all "Submission received" comments to funded messaging
+ */
+async function updateSubmissionReceivedCommentsOnFunding(bountyId: string) {
+  try {
+    const [bountyRecord] = await db
+      .select({
+        id: bounty.id,
+        githubInstallationId: bounty.githubInstallationId,
+        githubRepoOwner: bounty.githubRepoOwner,
+        githubRepoName: bounty.githubRepoName,
+      })
+      .from(bounty)
+      .where(eq(bounty.id, bountyId))
+      .limit(1);
+
+    if (!bountyRecord) {
+      console.log(`[Stripe Webhook] Bounty ${bountyId} not found, skipping submission comment updates`);
+      return;
+    }
+
+    if (!bountyRecord.githubInstallationId || !bountyRecord.githubRepoOwner || !bountyRecord.githubRepoName) {
+      console.log(`[Stripe Webhook] Bounty ${bountyId} does not have GitHub integration, skipping submission comment updates`);
+      return;
+    }
+
+    const submissionComments = await db
+      .select({ githubCommentId: submission.githubCommentId })
+      .from(submission)
+      .where(
+        and(
+          eq(submission.bountyId, bountyId),
+          isNotNull(submission.githubCommentId)
+        )
+      );
+
+    if (!submissionComments.length) {
+      return;
+    }
+
+    const githubApp = getGithubAppManager();
+    const updatedBody = createSubmissionReceivedComment(true);
+
+    await Promise.all(
+      submissionComments.map((record) =>
+        githubApp.editComment(
+          bountyRecord.githubInstallationId!,
+          bountyRecord.githubRepoOwner!,
+          bountyRecord.githubRepoName!,
+          record.githubCommentId!,
+          updatedBody
+        )
+      )
+    );
+
+    console.log(`[Stripe Webhook] Updated ${submissionComments.length} submission comments for bounty ${bountyId}`);
+  } catch (error) {
+    console.error(`[Stripe Webhook] Failed to update submission comments for bounty ${bountyId}:`, error);
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -115,7 +242,13 @@ export async function POST(request: Request) {
             .update(bounty)
             .set(updateData)
             .where(eq(bounty.id, bountyId));
-          
+
+          // Update GitHub bot comments if bounty is now funded
+          if (updateData.paymentStatus === 'held') {
+            await updateGitHubBotCommentOnFunding(bountyId);
+            await updateSubmissionReceivedCommentsOnFunding(bountyId);
+          }
+
           console.log(`[Stripe Webhook] Successfully updated bounty ${bountyId}`);
         } else {
           console.warn(`[Stripe Webhook] Missing bountyId or paymentIntentId: bountyId=${bountyId}, paymentIntentId=${paymentIntentId}`);
@@ -178,7 +311,11 @@ export async function POST(request: Request) {
             });
             console.log(`[Stripe Webhook] Created transaction record for bounty ${bountyId}`);
           }
-          
+
+          // Update GitHub bot comments now that bounty is funded
+          await updateGitHubBotCommentOnFunding(bountyId);
+          await updateSubmissionReceivedCommentsOnFunding(bountyId);
+
           console.log(`[Stripe Webhook] Successfully updated bounty ${bountyId} to held/open`);
         } else {
           console.warn('[Stripe Webhook] Missing bountyId in payment_intent.succeeded event');

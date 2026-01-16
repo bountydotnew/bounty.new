@@ -69,8 +69,8 @@ export function EditBountyModal({
       reset({
         title: bounty.title,
         description: bounty.description,
-        amount: bounty.amount.toString(),
-        currency: bounty.currency,
+        amount: '', // Price cannot be edited
+        currency: 'USD', // Price cannot be edited
         deadline: bounty.deadline
           ? new Date(bounty.deadline).toISOString().slice(0, 16)
           : '',
@@ -110,7 +110,9 @@ export function EditBountyModal({
 
   const onSubmit = handleSubmit((data: CreateBountyForm) => {
     const formattedData = formatFormData.createBounty(data);
-    updateBounty.mutate({ id: bountyId, ...formattedData });
+    // Remove amount and currency - prices cannot be changed
+    const { amount, currency, ...updateData } = formattedData;
+    updateBounty.mutate({ id: bountyId, ...updateData });
   });
 
   const handleClose = () => {
@@ -435,56 +437,6 @@ export function EditBountyModal({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="amount">Amount *</Label>
-              <Controller
-                control={control}
-                name="amount"
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    className={
-                      errors.amount ? 'border-red-500' : 'border-border'
-                    }
-                    id="amount"
-                    placeholder="100.00"
-                  />
-                )}
-              />
-              {errors.amount && (
-                <p className="mt-1 text-red-500 text-sm">
-                  {errors.amount.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="currency">Currency</Label>
-              <Controller
-                control={control}
-                name="currency"
-                render={({ field }) => (
-                  <select
-                    {...field}
-                    className={`w-full rounded-md border px-3 py-2 ${errors.currency ? 'border-red-500' : 'border-border'}`}
-                    id="currency"
-                  >
-                    {currencyOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              />
-              {errors.currency && (
-                <p className="mt-1 text-red-500 text-sm">
-                  {errors.currency.message}
-                </p>
-              )}
-            </div>
-          </div>
 
           {/* <div className="space-y-2">
             <Label htmlFor="deadline">Deadline (Optional)</Label>

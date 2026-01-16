@@ -18,6 +18,105 @@ import { AccountBalance } from './payment/account-balance';
 import { useState, useEffect } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
 
+type ConnectStatus = {
+  hasConnectAccount?: boolean;
+  onboardingComplete?: boolean;
+  cardPaymentsActive?: boolean;
+  accountDetails?: {
+    chargesEnabled?: boolean;
+    detailsSubmitted?: boolean;
+    payoutsEnabled?: boolean;
+    requirements?: unknown;
+  } | null;
+} | null | undefined;
+
+function getConnectStatusMessage(status: ConnectStatus, hasConnectAccount: boolean): string {
+  if (!hasConnectAccount) {
+    return 'Connect your Stripe account to receive bounty payouts directly to your bank account';
+  }
+  if (status?.onboardingComplete && status?.cardPaymentsActive) {
+    return 'Your account is set up and ready to receive payouts. Click "Open Stripe Express Dashboard" to manage your account, view payouts, and update bank details.';
+  }
+  return 'Complete the verification process to start receiving payouts';
+}
+
+function ConnectActionButtons({
+  hasConnectAccount,
+  onboardingComplete,
+  createAccountLinkPending,
+  getDashboardLinkPending,
+  onConnect,
+  onOpenDashboard,
+}: {
+  hasConnectAccount: boolean;
+  onboardingComplete?: boolean;
+  createAccountLinkPending: boolean;
+  getDashboardLinkPending: boolean;
+  onConnect: () => void;
+  onOpenDashboard: () => void;
+}) {
+  if (!hasConnectAccount) {
+    return (
+      <Button onClick={onConnect} disabled={createAccountLinkPending}>
+        {createAccountLinkPending ? 'Loading...' : 'Connect with Stripe'}
+      </Button>
+    );
+  }
+
+  return (
+    <div className="flex gap-2">
+      {!onboardingComplete && (
+        <Button onClick={onConnect} disabled={createAccountLinkPending}>
+          {createAccountLinkPending ? 'Loading...' : 'Complete Onboarding'}
+        </Button>
+      )}
+      {onboardingComplete && (
+        <Button
+          variant="outline"
+          onClick={onOpenDashboard}
+          disabled={getDashboardLinkPending}
+        >
+          <ExternalLink className="mr-2 h-4 w-4" />
+          {getDashboardLinkPending ? 'Loading...' : 'Open Stripe Dashboard'}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function useHandleConnectRedirect({
+  onboardingStatus,
+  refreshParam,
+  refetch,
+  setOnboardingStatus,
+  setRefreshParam,
+}: {
+  onboardingStatus: string;
+  refreshParam: string;
+  refetch: () => void;
+  setOnboardingStatus: (value: string | null) => void;
+  setRefreshParam: (value: string | null) => void;
+}) {
+  useEffect(() => {
+    if (onboardingStatus === 'success') {
+      toast.success('Stripe account connected successfully!');
+      refetch();
+      setOnboardingStatus(null);
+      return;
+    }
+    if (onboardingStatus === 'refresh') {
+      toast.info('Please complete the onboarding process');
+      refetch();
+      setOnboardingStatus(null);
+      return;
+    }
+    if (refreshParam === 'true') {
+      refetch();
+      setRefreshParam(null);
+    }
+  }, [onboardingStatus, refreshParam, refetch, setOnboardingStatus, setRefreshParam]);
+}
+
 export function PaymentSettings() {
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [onboardingStatus, setOnboardingStatus] = useQueryState(
@@ -33,25 +132,13 @@ export function PaymentSettings() {
     trpc.connect.getConnectStatus.queryOptions()
   );
 
-  // Check for onboarding success/refresh in URL params
-  useEffect(() => {
-    if (onboardingStatus === 'success') {
-      toast.success('Stripe account connected successfully!');
-      // Refetch status to update UI
-      refetch();
-      // Clean up URL
-      setOnboardingStatus(null);
-    } else if (onboardingStatus === 'refresh') {
-      toast.info('Please complete the onboarding process');
-      // Refetch status
-      refetch();
-      setOnboardingStatus(null);
-    } else if (refreshParam === 'true') {
-      // Refresh status when returning from Stripe dashboard
-      refetch();
-      setRefreshParam(null);
-    }
-  }, [onboardingStatus, refreshParam, refetch, setOnboardingStatus, setRefreshParam]);
+  useHandleConnectRedirect({
+    onboardingStatus,
+    refreshParam,
+    refetch,
+    setOnboardingStatus,
+    setRefreshParam,
+  });
 
   const createAccountLink = useMutation({
     mutationFn: async () => {
@@ -122,6 +209,9 @@ export function PaymentSettings() {
     );
   }
 
+  const hasConnectAccount = Boolean(status?.hasConnectAccount);
+  const statusMessage = getConnectStatusMessage(status, hasConnectAccount);
+
   return (
     <div className="space-y-6">
       {/* Stripe Connect Status */}
@@ -136,39 +226,18 @@ export function PaymentSettings() {
                 <span className="font-medium text-base">Stripe Connect Status</span>
                 {getStatusBadge()}
               </div>
-              <p className="text-muted-foreground text-sm">
-                {!status?.hasConnectAccount
-                  ? 'Connect your Stripe account to receive bounty payouts directly to your bank account'
-                  : status.onboardingComplete && status.cardPaymentsActive
-                    ? 'Your account is set up and ready to receive payouts. Click "Open Stripe Express Dashboard" to manage your account, view payouts, and update bank details.'
-                    : 'Complete the verification process to start receiving payouts'}
-              </p>
+              <p className="text-muted-foreground text-sm">{statusMessage}</p>
             </div>
           </div>
 
-          {!status?.hasConnectAccount ? (
-            <Button onClick={handleConnect} disabled={createAccountLink.isPending}>
-              {createAccountLink.isPending ? 'Loading...' : 'Connect with Stripe'}
-            </Button>
-          ) : (
-            <div className="flex gap-2">
-              {!status.onboardingComplete && (
-                <Button onClick={handleConnect} disabled={createAccountLink.isPending}>
-                  {createAccountLink.isPending ? 'Loading...' : 'Complete Onboarding'}
-                </Button>
-              )}
-              {status.onboardingComplete && (
-                <Button
-                  variant="outline"
-                  onClick={handleOpenDashboard}
-                  disabled={getDashboardLink.isPending}
-                >
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  {getDashboardLink.isPending ? 'Loading...' : 'Open Stripe Dashboard'}
-                </Button>
-              )}
-            </div>
-          )}
+          <ConnectActionButtons
+            hasConnectAccount={hasConnectAccount}
+            onboardingComplete={status?.onboardingComplete}
+            createAccountLinkPending={createAccountLink.isPending}
+            getDashboardLinkPending={getDashboardLink.isPending}
+            onConnect={handleConnect}
+            onOpenDashboard={handleOpenDashboard}
+          />
 
           {/* Account Balance - Only shows for bounty solvers with pending balance */}
           {status?.hasConnectAccount && <AccountBalance />}
