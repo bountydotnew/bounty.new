@@ -55,6 +55,7 @@ interface BountyDetailPageProps {
   // GitHub fields for PR links
   githubRepoOwner?: string | null;
   githubRepoName?: string | null;
+  githubIssueNumber?: number | null;
 }
 
 export default function BountyDetailPage({
@@ -73,6 +74,7 @@ export default function BountyDetailPage({
   createdById,
   githubRepoOwner,
   githubRepoName,
+  githubIssueNumber,
 }: BountyDetailPageProps) {
   const { editModalOpen, openEditModal, closeEditModal, editingBountyId } =
     useBountyModals();
@@ -609,9 +611,9 @@ export default function BountyDetailPage({
                     <p className="text-gray-400 text-sm mb-3">
                       No submissions yet
                     </p>
-                    {githubRepoOwner && githubRepoName && (
+                    {githubRepoOwner && githubRepoName && githubIssueNumber && (
                       <a
-                        href={`https://github.com/${githubRepoOwner}/${githubRepoName}/compare`}
+                        href={`https://github.com/${githubRepoOwner}/${githubRepoName}/issues/${githubIssueNumber}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 rounded-lg bg-[#2A2A28] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#383838]"

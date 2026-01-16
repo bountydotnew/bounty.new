@@ -19,8 +19,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { memo, useState } from 'react';
 import type { Bounty } from '@/types/dashboard';
 import { CommentsIcon, GithubIcon, SubmissionsPeopleIcon } from '@bounty/ui';
-import { trpcClient } from '@/utils/trpc';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { trpc, trpcClient } from '@/utils/trpc';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
@@ -158,6 +158,15 @@ export const BountyCard = memo(function BountyCard({
   const [showCancellationDialog, setShowCancellationDialog] = useState(false);
   const [cancellationReason, setCancellationReason] = useState('');
 
+  // Query cancellation status - shared cache with bounty-detail page
+  const canRequestCancellation = isOwner && isFunded;
+  const cancellationStatusQuery = useQuery({
+    ...trpc.bounties.getCancellationStatus.queryOptions({ bountyId: bounty.id }),
+    enabled: canRequestCancellation,
+  });
+
+  const hasPendingCancellation = cancellationStatusQuery.data?.hasPendingRequest ?? false;
+
   const requestCancellationMutation = useMutation({
     mutationFn: async (input: { bountyId: string; reason?: string }) => {
       return await trpcClient.bounties.requestCancellation.mutate(input);
@@ -166,6 +175,10 @@ export const BountyCard = memo(function BountyCard({
       toast.success(result.message || 'Cancellation request submitted');
       setShowCancellationDialog(false);
       setCancellationReason('');
+      // Invalidate the shared cache so both card and detail page update
+      queryClient.invalidateQueries({
+        queryKey: [['bounties', 'getCancellationStatus']],
+      });
     },
     onError: (error: Error) => {
       toast.error(`Failed to request cancellation: ${error.message}`);
@@ -173,13 +186,13 @@ export const BountyCard = memo(function BountyCard({
   });
 
   const openCancellationDialog = () => {
-    if (isOwner && isFunded) {
+    if (canRequestCancellation && !hasPendingCancellation) {
       setShowCancellationDialog(true);
     }
   };
 
   const handleConfirmCancellation = () => {
-    if (!isOwner || !isFunded || requestCancellationMutation.isPending) {
+    if (!canRequestCancellation || hasPendingCancellation || requestCancellationMutation.isPending) {
       return;
     }
     requestCancellationMutation.mutate({
@@ -352,14 +365,32 @@ export const BountyCard = memo(function BountyCard({
             </ContextMenuItem>
           )}
           {/* Show request cancellation for funded bounties */}
-          {isOwner && isFunded && (
-            <ContextMenuItem
-              className="cursor-pointer text-yellow-500 focus:text-yellow-500 focus:bg-yellow-500/10"
-              onClick={openCancellationDialog}
-            >
-              <XCircle className="mr-2 h-4 w-4" />
-              Request cancellation
-            </ContextMenuItem>
+          {canRequestCancellation && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <ContextMenuItem
+                      className={
+                        hasPendingCancellation
+                          ? 'cursor-not-allowed text-yellow-500/50 opacity-50'
+                          : 'cursor-pointer text-yellow-500 focus:text-yellow-500 focus:bg-yellow-500/10'
+                      }
+                      onClick={hasPendingCancellation ? undefined : openCancellationDialog}
+                      disabled={hasPendingCancellation}
+                    >
+                      <XCircle className="mr-2 h-4 w-4" />
+                      {hasPendingCancellation ? 'Cancellation pending' : 'Request cancellation'}
+                    </ContextMenuItem>
+                  </div>
+                </TooltipTrigger>
+                {hasPendingCancellation && (
+                  <TooltipContent side="left" className="max-w-[200px] text-center">
+                    <p>A cancellation request is already pending for this bounty.</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           )}
         </ContextMenuContent>
       )}

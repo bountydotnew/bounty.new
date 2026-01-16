@@ -3320,4 +3320,187 @@ To process this request:
         });
       }
     }),
+
+  // Sync refund status from Stripe - checks if a bounty has been refunded in Stripe
+  // and updates the database accordingly
+  syncRefundStatusFromStripe: protectedProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const [bountyRecord] = await db
+          .select({
+            id: bounty.id,
+            title: bounty.title,
+            amount: bounty.amount,
+            paymentStatus: bounty.paymentStatus,
+            stripePaymentIntentId: bounty.stripePaymentIntentId,
+            createdById: bounty.createdById,
+          })
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId))
+          .limit(1);
+
+        if (!bountyRecord) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        // Only the creator can sync their bounty
+        if (bountyRecord.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Only the bounty creator can sync refund status',
+          });
+        }
+
+        if (!bountyRecord.stripePaymentIntentId) {
+          return {
+            success: false,
+            message: 'This bounty has no payment intent to check',
+            refunded: false,
+          };
+        }
+
+        // Already refunded in our system
+        if (bountyRecord.paymentStatus === 'refunded') {
+          return {
+            success: true,
+            message: 'Bounty is already marked as refunded',
+            refunded: true,
+          };
+        }
+
+        // Check Stripe for refunds on this payment intent
+        const paymentIntent = await stripeClient.paymentIntents.retrieve(
+          bountyRecord.stripePaymentIntentId,
+          { expand: ['latest_charge'] }
+        );
+
+        const latestCharge = paymentIntent.latest_charge;
+        if (!latestCharge || typeof latestCharge === 'string') {
+          // Need to fetch the charge separately
+          const charges = await stripeClient.charges.list({
+            payment_intent: bountyRecord.stripePaymentIntentId,
+            limit: 1,
+          });
+
+          if (charges.data.length === 0) {
+            return {
+              success: true,
+              message: 'No charges found for this payment intent',
+              refunded: false,
+            };
+          }
+
+          const charge = charges.data[0];
+          if (!charge.refunded && charge.amount_refunded === 0) {
+            return {
+              success: true,
+              message: 'This bounty has not been refunded in Stripe',
+              refunded: false,
+            };
+          }
+
+          // Has been refunded - update database
+          const refundedAmount = charge.amount_refunded / 100;
+          const originalAmount = Number(bountyRecord.amount);
+          const platformFee = originalAmount - refundedAmount;
+
+          await db
+            .update(bounty)
+            .set({
+              status: 'cancelled',
+              paymentStatus: 'refunded',
+              updatedAt: new Date(),
+            })
+            .where(eq(bounty.id, input.bountyId));
+
+          // Close any pending cancellation request
+          await db
+            .update(cancellationRequest)
+            .set({
+              status: 'approved',
+              processedAt: new Date(),
+              refundAmount: refundedAmount.toString(),
+            })
+            .where(
+              and(
+                eq(cancellationRequest.bountyId, input.bountyId),
+                eq(cancellationRequest.status, 'pending')
+              )
+            );
+
+          console.log(`[Sync] Bounty ${input.bountyId} synced as refunded (${refundedAmount} of ${originalAmount})`);
+
+          return {
+            success: true,
+            message: `Bounty synced as refunded. Refund: $${refundedAmount}, Fee: $${platformFee}`,
+            refunded: true,
+            refundAmount: refundedAmount,
+            platformFee,
+          };
+        }
+
+        // latestCharge is expanded
+        const charge = latestCharge;
+        if (!charge.refunded && charge.amount_refunded === 0) {
+          return {
+            success: true,
+            message: 'This bounty has not been refunded in Stripe',
+            refunded: false,
+          };
+        }
+
+        // Has been refunded
+        const refundedAmount = charge.amount_refunded / 100;
+        const originalAmount = Number(bountyRecord.amount);
+        const platformFee = originalAmount - refundedAmount;
+
+        await db
+          .update(bounty)
+          .set({
+            status: 'cancelled',
+            paymentStatus: 'refunded',
+            updatedAt: new Date(),
+          })
+          .where(eq(bounty.id, input.bountyId));
+
+        // Close any pending cancellation request
+        await db
+          .update(cancellationRequest)
+          .set({
+            status: 'approved',
+            processedAt: new Date(),
+            refundAmount: refundedAmount.toString(),
+          })
+          .where(
+            and(
+              eq(cancellationRequest.bountyId, input.bountyId),
+              eq(cancellationRequest.status, 'pending')
+            )
+          );
+
+        console.log(`[Sync] Bounty ${input.bountyId} synced as refunded (${refundedAmount} of ${originalAmount})`);
+
+        return {
+          success: true,
+          message: `Bounty synced as refunded. Refund: $${refundedAmount}, Fee: $${platformFee}`,
+          refunded: true,
+          refundAmount: refundedAmount,
+          platformFee,
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Failed to sync refund status: ${errorMessage}`,
+          cause: error,
+        });
+      }
+    }),
 });

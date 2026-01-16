@@ -40,7 +40,7 @@ export const BountyCancellationNotice = ({
               requested to cancel the following bounty:
             </Text>
             <Section style={bountyBox}>
-              <Text style={bountyTitle}>{bountyTitle}</Text>
+              <Text style={bountyTitleStyle}>{bountyTitle}</Text>
               <Text style={bountyAmountText}>{bountyAmount}</Text>
             </Section>
             <Text style={text}>
@@ -122,7 +122,7 @@ const bountyBox = {
   textAlign: 'center' as const,
 };
 
-const bountyTitle = {
+const bountyTitleStyle = {
   color: '#000',
   fontSize: '18px',
   fontWeight: 'bold',
