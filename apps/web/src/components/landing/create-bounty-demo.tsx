@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import { Plus, ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BountyCard } from '@/components/bounty/bounty-card';
@@ -417,9 +418,38 @@ function StripeCheckoutPage() {
 // ─────────────────────────────────────────────────────────────────────────────
 // GitHub Issue Page
 // ─────────────────────────────────────────────────────────────────────────────
-function GitHubIssuePage() {
+function GitHubIssuePage({ onShowNotifications }: { onShowNotifications?: () => void }) {
+  const [botCommentVisible, setBotCommentVisible] = useState(false);
+  const [botReacted, setBotReacted] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Timed sequence for bot animations
+  useEffect(() => {
+    const t1 = setTimeout(() => setBotCommentVisible(true), 800);
+    const t2 = setTimeout(() => setBotReacted(true), 2000);
+    const t3 = setTimeout(() => {
+      setShowSuccess(true);
+      onShowNotifications?.();
+    }, 3200);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [onShowNotifications]);
+
+  // Auto-scroll when new content appears
+  useEffect(() => {
+    if (botCommentVisible || botReacted || showSuccess) {
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+      }, 100);
+    }
+  }, [botCommentVisible, botReacted, showSuccess]);
+
   return (
-    <div className="h-full bg-[#0d1117] overflow-auto">
+    <div className="h-full bg-[#0d1117] overflow-auto" ref={scrollRef}>
       {/* GitHub header */}
       <div className="bg-[#010409] border-b border-[#30363d] px-6 py-4">
         <div className="flex items-center gap-4">
@@ -461,34 +491,69 @@ function GitHubIssuePage() {
           </div>
         </div>
 
-        {/* Bot comment - Bounty created */}
-        <div className="border border-[#30363d] rounded-md mb-6">
-          <div className="bg-[#161b22] px-4 py-3 border-b border-[#30363d] flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-[#238636] flex items-center justify-center text-white">
-              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
-              </svg>
-            </div>
-            <span className="text-sm text-[#58a6ff] font-semibold">bountydotnew[bot]</span>
-            <span className="text-sm text-[#7d8590]">commented just now</span>
-          </div>
-          <div className="p-4 text-sm text-[#e6edf3]">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="px-2 py-1 text-xs font-medium rounded bg-[#238636]/20 text-[#3fb950] border border-[#238636]/40">
-                💰 Bounty Active
+        {/* Bot comment - Bounty created (animated) */}
+        {botCommentVisible && (
+          <div className="border border-[#30363d] rounded-md mb-6 animate-in fade-in slide-in-from-top-2 duration-500">
+            <div className="bg-[#161b22] px-4 py-3 border-b border-[#30363d] flex items-center gap-3">
+              <Image
+                src="/images/ruo10xfk-400x400.jpg"
+                alt="bountydotnew"
+                width={32}
+                height={32}
+                className="rounded-full"
+              />
+              <span className="text-sm text-[#58a6ff] font-semibold">bountydotnew</span>
+              <span className="inline-flex items-center gap-1 bg-[#30363d] text-[#8b949e] px-1.5 py-0.5 rounded text-xs border border-[#30363d]">
+                bot
               </span>
+              <span className="text-sm text-[#7d8590]">commented just now</span>
             </div>
-            <p className="mb-3">This issue has a <strong>$500.00 USD</strong> bounty attached!</p>
-            <div className="bg-[#161b22] border border-[#30363d] rounded-md p-3 text-[#7d8590] text-xs">
-              <p><strong className="text-[#e6edf3]">To claim this bounty:</strong></p>
-              <ol className="list-decimal list-inside mt-2 space-y-1">
-                <li>Submit a pull request that fixes this issue</li>
-                <li>Comment <code className="px-1.5 py-0.5 bg-[#30363d] rounded">/submit #PR_NUMBER</code> on this issue</li>
-                <li>Wait for the maintainer to approve your solution</li>
-              </ol>
+            <div className="p-4 text-sm text-[#e6edf3]">
+              <div className="flex items-center gap-2 mb-3">
+                <span className={`px-2 py-1 text-xs font-medium rounded bg-[#238636]/20 text-[#3fb950] border border-[#238636]/40 transition-all duration-500 ${showSuccess ? 'shadow-[0_0_12px_rgba(63,185,80,0.5)]' : ''}`}>
+                  💰 Bounty Active
+                </span>
+              </div>
+              <p className="mb-3">This issue has a <strong>$500.00 USD</strong> bounty attached!</p>
+              <div className="bg-[#161b22] border border-[#30363d] rounded-md p-3 text-[#7d8590] text-xs">
+                <p><strong className="text-[#e6edf3]">To claim this bounty:</strong></p>
+                <ol className="list-decimal list-inside mt-2 space-y-1">
+                  <li>Submit a pull request that fixes this issue</li>
+                  <li>Comment <code className="px-1.5 py-0.5 bg-[#30363d] rounded">/submit #PR_NUMBER</code> on this issue</li>
+                  <li>Wait for the maintainer to approve your solution</li>
+                </ol>
+              </div>
+            </div>
+            {/* Bot reactions */}
+            <div className="px-4 pb-3 flex items-center gap-2">
+              <button
+                type="button"
+                className="w-7 h-7 rounded-full border border-[#30363d] flex items-center justify-center text-[#8b949e] hover:border-[#58a6ff] hover:text-[#58a6ff] transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </button>
+              {botReacted && (
+                <span className="inline-flex items-center gap-1 bg-[#30363d] px-2 py-0.5 rounded-full text-xs animate-in fade-in zoom-in duration-300">
+                  <span>👀</span>
+                  <span className="text-[#8b949e]">1</span>
+                </span>
+              )}
+              {showSuccess && (
+                <span className="inline-flex items-center gap-1 bg-[#238636]/20 px-2 py-0.5 rounded-full text-xs animate-in fade-in zoom-in duration-300">
+                  <span>🎉</span>
+                  <span className="text-[#3fb950]">1</span>
+                </span>
+              )}
             </div>
           </div>
-        </div>
+        )}
 
         {/* Labels sidebar simulation */}
         <div className="border border-[#30363d] rounded-md p-4 bg-[#161b22]">
@@ -507,7 +572,7 @@ function GitHubIssuePage() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Main Demo Component
 // ─────────────────────────────────────────────────────────────────────────────
-export function CreateBountyDemo() {
+export function CreateBountyDemo({ onShowNotifications }: { onShowNotifications?: () => void }) {
   return (
     <MockBrowser initialUrl="bounty.new/dashboard" headlights>
       <TutorialProvider>
@@ -520,7 +585,7 @@ export function CreateBountyDemo() {
             <StripeCheckoutPage />
           </MockBrowser.Page>
           <MockBrowser.Page url="github.com/bountydotnew/bounty.new/issues/42">
-            <GitHubIssuePage />
+            <GitHubIssuePage onShowNotifications={onShowNotifications} />
           </MockBrowser.Page>
         </div>
       </TutorialProvider>

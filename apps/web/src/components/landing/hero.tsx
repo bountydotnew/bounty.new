@@ -43,7 +43,27 @@ export function Hero() {
         </div>
 
         <div className="relative rounded-2xl overflow-hidden">
-          {showNotifications && (
+          {showNotifications && activeDemo === 'create' && (
+            <div className="absolute top-4 right-4 z-50 space-y-3">
+              <MacNotification
+                appIcon="github"
+                appName="GitHub"
+                title="Issue Created"
+                message="bountydotnew/bounty.new#42 is now live with your bounty"
+                time="now"
+                delay={0}
+              />
+              <MacNotification
+                appIcon="stripe"
+                appName="Stripe"
+                title="Payment Authorized"
+                message="$500 charged and held in escrow until completion"
+                time="now"
+                delay={400}
+              />
+            </div>
+          )}
+          {showNotifications && activeDemo === 'approve' && (
             <div className="absolute top-4 right-4 z-50 space-y-3">
               <MacNotification
                 appIcon="gmail"
@@ -113,7 +133,9 @@ export function Hero() {
                 </button>
 
                 <div className="h-[500px] lg:h-[600px]">
-                  {activeDemo === 'create' && <CreateBountyDemo key={demoKey} />}
+                  {activeDemo === 'create' && (
+                    <CreateBountyDemo key={demoKey} onShowNotifications={() => setShowNotifications(true)} />
+                  )}
                   {activeDemo === 'submit' && <SubmitSolutionDemo key={demoKey} />}
                   {activeDemo === 'approve' && (
                     <ApprovePayDemo key={demoKey} onShowNotifications={() => setShowNotifications(true)} />
