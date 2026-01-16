@@ -11,11 +11,16 @@ import { trpc, trpcClient } from '@/utils/trpc';
 import { Popover, PopoverContent, PopoverTrigger } from '@bounty/ui/components/popover';
 import Link from '@bounty/ui/components/link';
 import {
-    type CreateBountyForm,
-    createBountyDefaults,
-    createBountySchema,
-    currencyOptions,
-    formatFormData,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@bounty/ui/components/popover';
+import {
+  type CreateBountyForm,
+  createBountyDefaults,
+  createBountySchema,
+  currencyOptions,
+  formatFormData,
 } from '@bounty/ui/lib/forms';
 import { cn } from '@bounty/ui/lib/utils';
 import { DatePicker } from '@bounty/ui/components/date-picker';
@@ -38,7 +43,7 @@ import { FundBountyModal } from '@/components/payment/fund-bounty-modal';
 type TaskInputFormProps = {};
 
 export interface TaskInputFormRef {
-    focus: () => void;
+  focus: () => void;
 }
 
 export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_props, ref) => {
@@ -47,11 +52,11 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     useImperativeHandle(ref, () => ({
-        focus: () => {
-            if (textareaRef.current) {
-                textareaRef.current.focus();
-            }
-        },
+      focus: () => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+        }
+      },
     }));
 
     // Form state
@@ -65,7 +70,14 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
         },
     });
 
-    const { control, handleSubmit: formHandleSubmit, formState: { errors }, setValue, watch, reset } = form;
+    const {
+      control,
+      handleSubmit: formHandleSubmit,
+      formState: { errors },
+      setValue,
+      watch,
+      reset,
+    } = form;
     const title = watch('title');
     const amount = watch('amount');
 
@@ -116,8 +128,15 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
 
     // Autofill prompt state (for issues)
     const [showAutofillPrompt, setShowAutofillPrompt] = useState(false);
-    const [pendingAutofillIssue, setPendingAutofillIssue] = useState<{ number: number; title: string; url: string } | null>(null);
-    const [pendingIssueData, setPendingIssueData] = useState<{ title?: string; body?: string } | null>(null);
+    const [pendingAutofillIssue, setPendingAutofillIssue] = useState<{
+      number: number;
+      title: string;
+      url: string;
+    } | null>(null);
+    const [pendingIssueData, setPendingIssueData] = useState<{
+      title?: string;
+      body?: string;
+    } | null>(null);
     const isOpeningPromptRef = useRef(false);
 
     // Fund bounty modal state
@@ -217,96 +236,101 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
 
 
     const handleRepositorySelect = (repo: string) => {
-        setSelectedRepository(repo);
-        setRepoSearchQuery('');
-        setSelectedIssue(null);
-        setIssueQuery('');
+      setSelectedRepository(repo);
+      setRepoSearchQuery('');
+      setSelectedIssue(null);
+      setIssueQuery('');
     };
 
     const handleAutofill = (shouldAutofill: boolean) => {
-        if (shouldAutofill && pendingAutofillIssue && pendingIssueData) {
-            // Autofill with actual issue data
-            if (pendingIssueData.title) {
-                setValue('title', pendingIssueData.title);
-            }
-            if (pendingIssueData.body) {
-                setValue('description', pendingIssueData.body);
-            }
+      if (shouldAutofill && pendingAutofillIssue && pendingIssueData) {
+        // Autofill with actual issue data
+        if (pendingIssueData.title) {
+          setValue('title', pendingIssueData.title);
         }
-        // Set the issue regardless
-        if (pendingAutofillIssue) {
-            setSelectedIssue(pendingAutofillIssue);
+        if (pendingIssueData.body) {
+          setValue('description', pendingIssueData.body);
         }
-        setShowAutofillPrompt(false);
-        setPendingAutofillIssue(null);
-        setPendingIssueData(null);
+      }
+      // Set the issue regardless
+      if (pendingAutofillIssue) {
+        setSelectedIssue(pendingAutofillIssue);
+      }
+      setShowAutofillPrompt(false);
+      setPendingAutofillIssue(null);
+      setPendingIssueData(null);
     };
 
     const handlePopoverOpenChange = (open: boolean) => {
-        // Prevent auto-closing when issue is selected - only close on explicit user action
-        if (open) {
-            // Opening - ensure state is synced
-            if (pendingAutofillIssue) {
-                setShowAutofillPrompt(true);
-            }
-            return;
+      // Prevent auto-closing when issue is selected - only close on explicit user action
+      if (open) {
+        // Opening - ensure state is synced
+        if (pendingAutofillIssue) {
+          setShowAutofillPrompt(true);
         }
-        
-        // If we're in the process of opening the prompt, ignore close events
-        if (isOpeningPromptRef.current) {
-            return;
-        }
-        
-        // Closing - only close if we're currently showing the prompt
-        if (!showAutofillPrompt) {
-            return;
-        }
-        
-        setShowAutofillPrompt(false);
-        // If we have a pending issue and user dismissed, select it without autofill
-        if (pendingAutofillIssue && !selectedIssue) {
-            setSelectedIssue(pendingAutofillIssue);
-        }
-        setPendingAutofillIssue(null);
-        setPendingIssueData(null);
+        return;
+      }
+
+      // If we're in the process of opening the prompt, ignore close events
+      if (isOpeningPromptRef.current) {
+        return;
+      }
+
+      // Closing - only close if we're currently showing the prompt
+      if (!showAutofillPrompt) {
+        return;
+      }
+
+      setShowAutofillPrompt(false);
+      // If we have a pending issue and user dismissed, select it without autofill
+      if (pendingAutofillIssue && !selectedIssue) {
+        setSelectedIssue(pendingAutofillIssue);
+      }
+      setPendingAutofillIssue(null);
+      setPendingIssueData(null);
     };
 
     const handleBranchSelect = (branch: string) => {
-        setSelectedBranch(branch);
-        setBranchSearchQuery('');
+      setSelectedBranch(branch);
+      setBranchSearchQuery('');
     };
 
-    const handleIssueSelect = async (issue: { number: number; title: string }) => {
-        if (!repoInfo) {
-            return;
+    const handleIssueSelect = async (issue: {
+      number: number;
+      title: string;
+    }) => {
+      if (!repoInfo) {
+        return;
+      }
+      const issueUrl = `https://github.com/${repoInfo.owner}/${repoInfo.repo}/issues/${issue.number}`;
+      const issueWithUrl = { ...issue, url: issueUrl };
+
+      setIssueQuery('');
+
+      // Fetch issue data to check if there's content to autofill
+      try {
+        const result = await trpcClient.repository.issueFromUrl.query({
+          url: issueUrl,
+        });
+        if (result?.data && (result.data.title || result.data.body)) {
+          // There's actual data to autofill - show prompt
+          setPendingAutofillIssue(issueWithUrl);
+          setPendingIssueData(result.data);
+          isOpeningPromptRef.current = true;
+          setTimeout(() => {
+            setShowAutofillPrompt(true);
+            setTimeout(() => {
+              isOpeningPromptRef.current = false;
+            }, 200);
+          }, 150);
+        } else {
+          // No data to autofill - just select the issue
+          setSelectedIssue(issueWithUrl);
         }
-        const issueUrl = `https://github.com/${repoInfo.owner}/${repoInfo.repo}/issues/${issue.number}`;
-        const issueWithUrl = { ...issue, url: issueUrl };
-        
-        setIssueQuery('');
-        
-        // Fetch issue data to check if there's content to autofill
-        try {
-            const result = await trpcClient.repository.issueFromUrl.query({ url: issueUrl });
-            if (result?.data && (result.data.title || result.data.body)) {
-                // There's actual data to autofill - show prompt
-                setPendingAutofillIssue(issueWithUrl);
-                setPendingIssueData(result.data);
-                isOpeningPromptRef.current = true;
-                setTimeout(() => {
-                    setShowAutofillPrompt(true);
-                    setTimeout(() => {
-                        isOpeningPromptRef.current = false;
-                    }, 200);
-                }, 150);
-            } else {
-                // No data to autofill - just select the issue
-                setSelectedIssue(issueWithUrl);
-            }
-        } catch {
-            // If fetch fails, just select the issue
-            setSelectedIssue(issueWithUrl);
-        }
+      } catch {
+        // If fetch fails, just select the issue
+        setSelectedIssue(issueWithUrl);
+      }
     };
 
 
@@ -402,19 +426,22 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                                     />
                                 )}
 
-                                {selectedRepository && (
-                                    <>
-                                        <div className="w-px h-4 bg-[#333]" />
-                                        <BranchSelector
-                                            selectedBranch={selectedBranch}
-                                            filteredBranches={filteredBranches}
-                                            branchesLoading={branchesLoading}
-                                            branchSearchQuery={branchSearchQuery}
-                                            setBranchSearchQuery={setBranchSearchQuery}
-                                            onSelect={handleBranchSelect}
-                                        />
-                                    </>
-                                )}
+                {/* Error messages below chips */}
+                {(errors.title || errors.amount) && (
+                  <div className="flex flex-row flex-wrap items-center gap-3 px-1">
+                    {errors.title && (
+                      <span className="text-red-500 text-xs">
+                        {errors.title.message}
+                      </span>
+                    )}
+                    {errors.amount && (
+                      <span className="text-red-500 text-xs">
+                        {errors.amount.message}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
 
                                 {selectedRepository && repoInfo && (
                                     <>
@@ -470,24 +497,76 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                                 )}
                             </div>
 
-                            {/* Submit Button */}
+              {/* Bottom row with selectors and submit */}
+              <div className="flex flex-row justify-between items-center pt-2">
+                <div className="relative flex items-center gap-2">
+                  <RepoSelector
+                    selectedRepository={selectedRepository}
+                    filteredRepositories={filteredRepositories}
+                    reposLoading={reposLoading}
+                    reposData={reposData}
+                    githubUsername={repoGithubUsername}
+                    repoSearchQuery={repoSearchQuery}
+                    setRepoSearchQuery={setRepoSearchQuery}
+                    onSelect={handleRepositorySelect}
+                  />
+
+                  {selectedRepository && (
+                    <>
+                      <div className="w-px h-4 bg-[#333]" />
+                      <BranchSelector
+                        selectedBranch={selectedBranch}
+                        filteredBranches={filteredBranches}
+                        branchesLoading={branchesLoading}
+                        branchSearchQuery={branchSearchQuery}
+                        setBranchSearchQuery={setBranchSearchQuery}
+                        onSelect={handleBranchSelect}
+                      />
+                    </>
+                  )}
+
+                  {selectedRepository && repoInfo && (
+                    <>
+                      <div className="w-px h-4 bg-[#333]" />
+                      <Popover
+                        open={showAutofillPrompt}
+                        onOpenChange={handlePopoverOpenChange}
+                        modal={false}
+                      >
+                        <PopoverTrigger asChild>
+                          <div className="inline-flex">
+                            <IssueSelector
+                              selectedIssue={selectedIssue}
+                              filteredIssues={filteredIssues}
+                              issuesList={issuesList}
+                              issueQuery={issueQuery}
+                              setIssueQuery={setIssueQuery}
+                              onSelect={handleIssueSelect}
+                            />
+                          </div>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="w-72 p-3 bg-[#191919] border-[#232323] rounded-xl shadow-[rgba(0,0,0,0.16)_0px_16px_40px_0px]"
+                          side="bottom"
+                          align="start"
+                          sideOffset={8}
+                        >
+                          <p className="text-[#CFCFCF] text-sm mb-3">
+                            Would you like to autofill form fields based on{' '}
+                            <span className="text-white font-medium">
+                              {pendingAutofillIssue
+                                ? `#${pendingAutofillIssue.number}`
+                                : ''}
+                            </span>
+                            ?
+                          </p>
+                          <div className="flex items-center gap-2">
                             <button
-                                type="submit"
-                                disabled={createBounty.isPending || !title || !amount}
-                                className={cn(
-                                    "flex items-center justify-center gap-1.5 px-[13px] h-[31.9965px] rounded-full text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50",
-                                    createBounty.isPending
-                                        ? "bg-[#1a1a1a] cursor-wait"
-                                        : title && amount
-                                            ? "bg-white text-black cursor-pointer"
-                                            : "bg-white text-black opacity-50 cursor-not-allowed"
-                                )}
+                              type="button"
+                              onClick={() => handleAutofill(true)}
+                              className="flex-1 px-3 py-1.5 bg-white text-black text-sm font-medium rounded-lg hover:bg-white/90 transition-colors"
                             >
-                                {createBounty.isPending ? (
-                                    <Spinner size="sm" className="w-4 h-4" />
-                                ) : (
-                                    <span>Create bounty</span>
-                                )}
+                              Yes, autofill
                             </button>
                         </div>
                     </div>
@@ -507,6 +586,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
             )}
         </div>
     );
-});
+  }
+);
 
 TaskInputForm.displayName = 'TaskInputForm';

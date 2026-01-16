@@ -23,20 +23,19 @@ export async function GET(request: NextRequest) {
 
   if (authHeader !== `Bearer ${cronSecret}`) {
     console.warn('[Cron] Unauthorized cron job attempt');
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     // Get count of expired sessions before cleanup
     const expiredCount = await getExpiredSessionCount();
-    
+
     // Clean up expired sessions (no buffer - delete all expired)
     const deletedCount = await cleanupExpiredSessions(0);
 
-    console.log(`[Cron] Cleaned up ${deletedCount} expired sessions (${expiredCount} were expired)`);
+    console.log(
+      `[Cron] Cleaned up ${deletedCount} expired sessions (${expiredCount} were expired)`
+    );
 
     return NextResponse.json({
       success: true,
@@ -55,4 +54,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

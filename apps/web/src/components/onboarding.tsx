@@ -21,7 +21,9 @@ export function Onboarding() {
   const [handle, setHandle] = useState('');
   const [handleError, setHandleError] = useState<string>('');
   const [isCheckingHandle, setIsCheckingHandle] = useState(false);
-  const [isHandleAvailable, setIsHandleAvailable] = useState<boolean | null>(null);
+  const [isHandleAvailable, setIsHandleAvailable] = useState<boolean | null>(
+    null
+  );
 
   const queryClient = useQueryClient();
   const { user: userData } = useUser();
@@ -161,14 +163,18 @@ export function Onboarding() {
               <Title title="have fun!" />
               <Description description="join our [discord](https://bounty.new/discord), chat with the rest of the nerds and tell me what else is broken lmao." />
             </div>
-            <NextButton onClick={() => {
-              // Only allow closing if user has a handle, otherwise go to handle step
-              if (userData?.handle) {
-                handleClose();
-              } else {
-                setStep(3);
-              }
-            }}>close this FOREVER!!</NextButton>
+            <NextButton
+              onClick={() => {
+                // Only allow closing if user has a handle, otherwise go to handle step
+                if (userData?.handle) {
+                  handleClose();
+                } else {
+                  setStep(3);
+                }
+              }}
+            >
+              close this FOREVER!!
+            </NextButton>
           </div>
         );
       case 3:
@@ -247,14 +253,14 @@ export function Onboarding() {
   };
 
   return (
-    <Dialog 
+    <Dialog
       onOpenChange={(open) => {
         // Prevent closing if user doesn't have a handle
         if (!open && userData && !userData.handle) {
           return; // Don't allow closing
         }
         handleClose();
-      }} 
+      }}
       open={isOpen}
     >
       <DialogContent className="!outline-none sm:max-w-[425px]">

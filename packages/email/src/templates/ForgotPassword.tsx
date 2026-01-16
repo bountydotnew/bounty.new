@@ -1,4 +1,3 @@
-import * as React from 'react';
 import {
   Body,
   Container,
@@ -19,7 +18,10 @@ interface ForgotPasswordProps {
   resetUrl: string;
 }
 
-const ForgotPassword = ({ userName = "there", resetUrl }: ForgotPasswordProps) => {
+const ForgotPassword = ({
+  userName = 'there',
+  resetUrl,
+}: ForgotPasswordProps) => {
   return (
     <Html lang="en" dir="ltr">
       <Tailwind>
@@ -43,11 +45,14 @@ const ForgotPassword = ({ userName = "there", resetUrl }: ForgotPasswordProps) =
             </Text>
 
             <Text className="text-[14px] leading-[1.6] text-[rgba(38,37,30,0.6)] m-0 mb-[12px]">
-              We received a request to reset your password for your Bounty.new account. If you didn't make this request, you can safely ignore this email.
+              We received a request to reset your password for your Bounty.new
+              account. If you didn't make this request, you can safely ignore
+              this email.
             </Text>
 
             <Text className="text-[14px] leading-[1.6] text-[rgba(38,37,30,0.6)] m-0 mb-[12px]">
-              To reset your password, click the button below. This link will expire in 1 hour for security reasons.
+              To reset your password, click the button below. This link will
+              expire in 1 hour for security reasons.
             </Text>
 
             {/* CTA Button */}
@@ -61,7 +66,8 @@ const ForgotPassword = ({ userName = "there", resetUrl }: ForgotPasswordProps) =
             </Section>
 
             <Text className="text-[14px] leading-[1.6] text-[rgba(38,37,30,0.6)] m-0 mb-[12px]">
-              If the button doesn't work, copy and paste this link into your browser:
+              If the button doesn't work, copy and paste this link into your
+              browser:
             </Text>
 
             <Text className="text-[12px] leading-[1.6] text-[rgba(38,37,30,0.5)] m-0 mb-[16px] break-all">
@@ -75,7 +81,8 @@ const ForgotPassword = ({ userName = "there", resetUrl }: ForgotPasswordProps) =
                 className="text-[#26251E] underline"
               >
                 contact our support team
-              </Link>.
+              </Link>
+              .
             </Text>
 
             {/* Divider */}
@@ -106,8 +113,8 @@ const ForgotPassword = ({ userName = "there", resetUrl }: ForgotPasswordProps) =
 };
 
 ForgotPassword.PreviewProps = {
-  userName: "John",
-  resetUrl: "https://bounty.new/reset-password?token=example_token",
+  userName: 'John',
+  resetUrl: 'https://bounty.new/reset-password?token=example_token',
 };
 
 export default ForgotPassword;

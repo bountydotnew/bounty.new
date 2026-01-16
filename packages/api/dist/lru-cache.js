@@ -1,19 +1,19 @@
 // ../../node_modules/lru-cache/dist/esm/index.js
-var defaultPerf =
+const defaultPerf =
   typeof performance === 'object' &&
   performance &&
   typeof performance.now === 'function'
     ? performance
     : Date;
-var warned = new Set();
-var PROCESS = typeof process === 'object' && !!process ? process : {};
-var emitWarning = (msg, type, code, fn) => {
+const warned = new Set();
+const PROCESS = typeof process === 'object' && !!process ? process : {};
+const emitWarning = (msg, type, code, fn) => {
   typeof PROCESS.emitWarning === 'function'
     ? PROCESS.emitWarning(msg, type, code, fn)
     : console.error(`[${code}] ${type}: ${msg}`);
 };
-var AC = globalThis.AbortController;
-var AS = globalThis.AbortSignal;
+let AC = globalThis.AbortController;
+let AS = globalThis.AbortSignal;
 if (typeof AC === 'undefined') {
   AS = class AbortSignal {
     onabort;
@@ -30,7 +30,9 @@ if (typeof AC === 'undefined') {
     }
     signal = new AS();
     abort(reason) {
-      if (this.signal.aborted) return;
+      if (this.signal.aborted) {
+        return;
+      }
       this.signal.reason = reason;
       this.signal.aborted = true;
       for (const fn of this.signal._onabort) {
@@ -41,7 +43,9 @@ if (typeof AC === 'undefined') {
   };
   let printACPolyfillWarning = PROCESS.env?.LRU_CACHE_IGNORE_AC_WARNING !== '1';
   const warnACPolyfill = () => {
-    if (!printACPolyfillWarning) return;
+    if (!printACPolyfillWarning) {
+      return;
+    }
     printACPolyfillWarning = false;
     emitWarning(
       'AbortController is not defined. If using lru-cache in node 14, load an AbortController polyfill from the `node-abort-controller` package. A minimal polyfill is provided for use by LRUCache.fetch(), but it should not be relied upon in other contexts (eg, passing it to other APIs that use AbortController/AbortSignal might have undesirable effects). You may disable this with LRU_CACHE_IGNORE_AC_WARNING=1 in the env.',
@@ -51,10 +55,10 @@ if (typeof AC === 'undefined') {
     );
   };
 }
-var shouldWarn = (code) => !warned.has(code);
-var TYPE = Symbol('type');
-var isPosInt = (n) => n && n === Math.floor(n) && n > 0 && isFinite(n);
-var getUintArray = (max) =>
+const shouldWarn = (code) => !warned.has(code);
+const _TYPE = Symbol('type');
+const isPosInt = (n) => n && n === Math.floor(n) && n > 0 && Number.isFinite(n);
+const getUintArray = (max) =>
   isPosInt(max)
     ? max <= 2 ** 8
       ? Uint8Array
@@ -80,7 +84,9 @@ class Stack {
   static #constructing = false;
   static create(max) {
     const HeapCls = getUintArray(max);
-    if (!HeapCls) return [];
+    if (!HeapCls) {
+      return [];
+    }
     Stack.#constructing = true;
     const s = new Stack(max, HeapCls);
     Stack.#constructing = false;
@@ -234,7 +240,7 @@ class LRUCache {
     }
     const UintArray = max ? getUintArray(max) : Array;
     if (!UintArray) {
-      throw new Error('invalid max value: ' + max);
+      throw new Error(`invalid max value: ${max}`);
     }
     this.#max = max;
     this.#maxSize = maxSize;
@@ -358,7 +364,9 @@ class LRUCache {
       if (ttls[index]) {
         const ttl = ttls[index];
         const start = starts[index];
-        if (!(ttl && start)) return;
+        if (!(ttl && start)) {
+          return;
+        }
         status.ttl = ttl;
         status.start = start;
         status.now = cachedNow || getNow();
@@ -556,7 +564,9 @@ class LRUCache {
     for (const i of this.#indexes()) {
       const v = this.#valList[i];
       const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
-      if (value === undefined) continue;
+      if (value === undefined) {
+        continue;
+      }
       if (fn(value, this.#keyList[i], this)) {
         return this.get(this.#keyList[i], getOptions);
       }
@@ -566,7 +576,9 @@ class LRUCache {
     for (const i of this.#indexes()) {
       const v = this.#valList[i];
       const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
-      if (value === undefined) continue;
+      if (value === undefined) {
+        continue;
+      }
       fn.call(thisp, value, this.#keyList[i], this);
     }
   }
@@ -574,7 +586,9 @@ class LRUCache {
     for (const i of this.#rindexes()) {
       const v = this.#valList[i];
       const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
-      if (value === undefined) continue;
+      if (value === undefined) {
+        continue;
+      }
       fn.call(thisp, value, this.#keyList[i], this);
     }
   }
@@ -590,10 +604,14 @@ class LRUCache {
   }
   info(key) {
     const i = this.#keyMap.get(key);
-    if (i === undefined) return;
+    if (i === undefined) {
+      return;
+    }
     const v = this.#valList[i];
     const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
-    if (value === undefined) return;
+    if (value === undefined) {
+      return;
+    }
     const entry = { value };
     if (this.#ttls && this.#starts) {
       const ttl = this.#ttls[i];
@@ -615,7 +633,9 @@ class LRUCache {
       const key = this.#keyList[i];
       const v = this.#valList[i];
       const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
-      if (value === undefined || key === undefined) continue;
+      if (value === undefined || key === undefined) {
+        continue;
+      }
       const entry = { value };
       if (this.#ttls && this.#starts) {
         entry.ttl = this.#ttls[i];
@@ -679,7 +699,9 @@ class LRUCache {
       this.#tail = index;
       this.#size++;
       this.#addItemSize(index, size, status);
-      if (status) status.set = 'add';
+      if (status) {
+        status.set = 'add';
+      }
       noUpdateTTL = false;
       if (this.#hasOnInsert) {
         this.#onInsert?.(v, k, 'add');
@@ -716,7 +738,9 @@ class LRUCache {
             oldVal && this.#isBackgroundFetch(oldVal)
               ? oldVal.__staleWhileFetching
               : oldVal;
-          if (oldValue !== undefined) status.oldValue = oldValue;
+          if (oldValue !== undefined) {
+            status.oldValue = oldValue;
+          }
         }
       } else if (status) {
         status.set = 'update';
@@ -732,7 +756,9 @@ class LRUCache {
       if (!noUpdateTTL) {
         this.#setItemTTL(index, ttl, start);
       }
-      if (status) this.#statusTTL(status, index);
+      if (status) {
+        this.#statusTTL(status, index);
+      }
     }
     if (!noDisposeOnSet && this.#hasDisposeAfter && this.#disposed) {
       const dt = this.#disposed;
@@ -854,7 +880,9 @@ class LRUCache {
         if (aborted && !updateCache) {
           options.status.fetchAborted = true;
           options.status.fetchError = ac.signal.reason;
-          if (ignoreAbort) options.status.fetchAbortIgnored = true;
+          if (ignoreAbort) {
+            options.status.fetchAbortIgnored = true;
+          }
         } else {
           options.status.fetchResolved = true;
         }
@@ -872,7 +900,9 @@ class LRUCache {
             this.#delete(k, 'fetch');
           }
         } else {
-          if (options.status) options.status.fetchUpdated = true;
+          if (options.status) {
+            options.status.fetchUpdated = true;
+          }
           this.set(k, v2, fetchOpts.options);
         }
       }
@@ -924,7 +954,9 @@ class LRUCache {
         }
       });
     };
-    if (options.status) options.status.fetchDispatched = true;
+    if (options.status) {
+      options.status.fetchDispatched = true;
+    }
     const p = new Promise(pcall).then(cb, eb);
     const bf = Object.assign(p, {
       __abortController: ac,
@@ -940,7 +972,9 @@ class LRUCache {
     return bf;
   }
   #isBackgroundFetch(p) {
-    if (!this.#hasFetchMethod) return false;
+    if (!this.#hasFetchMethod) {
+      return false;
+    }
     const b = p;
     return (
       !!b &&
@@ -969,7 +1003,9 @@ class LRUCache {
       signal,
     } = fetchOptions;
     if (!this.#hasFetchMethod) {
-      if (status) status.fetch = 'get';
+      if (status) {
+        status.fetch = 'get';
+      }
       return this.get(k, {
         allowStale,
         updateAgeOnGet,
@@ -995,7 +1031,9 @@ class LRUCache {
     };
     const index = this.#keyMap.get(k);
     if (index === undefined) {
-      if (status) status.fetch = 'miss';
+      if (status) {
+        status.fetch = 'miss';
+      }
       const p = this.#backgroundFetch(k, index, options, context);
       return (p.__returned = p);
     }
@@ -1004,18 +1042,24 @@ class LRUCache {
       const stale = allowStale && v.__staleWhileFetching !== undefined;
       if (status) {
         status.fetch = 'inflight';
-        if (stale) status.returnedStale = true;
+        if (stale) {
+          status.returnedStale = true;
+        }
       }
       return stale ? v.__staleWhileFetching : (v.__returned = v);
     }
     const isStale = this.#isStale(index);
     if (!(forceRefresh || isStale)) {
-      if (status) status.fetch = 'hit';
+      if (status) {
+        status.fetch = 'hit';
+      }
       this.#moveToTail(index);
       if (updateAgeOnGet) {
         this.#updateItemAge(index);
       }
-      if (status) this.#statusTTL(status, index);
+      if (status) {
+        this.#statusTTL(status, index);
+      }
       return v;
     }
     const p = this.#backgroundFetch(k, index, options, context);
@@ -1023,13 +1067,17 @@ class LRUCache {
     const staleVal = hasStale && allowStale;
     if (status) {
       status.fetch = isStale ? 'stale' : 'refresh';
-      if (staleVal && isStale) status.returnedStale = true;
+      if (staleVal && isStale) {
+        status.returnedStale = true;
+      }
     }
     return staleVal ? p.__staleWhileFetching : (p.__returned = p);
   }
   async forceFetch(k, fetchOptions = {}) {
     const v = await this.fetch(k, fetchOptions);
-    if (v === undefined) throw new Error('fetch() returned undefined');
+    if (v === undefined) {
+      throw new Error('fetch() returned undefined');
+    }
     return v;
   }
   memo(k, memoOptions = {}) {
@@ -1039,7 +1087,9 @@ class LRUCache {
     }
     const { context, forceRefresh, ...options } = memoOptions;
     const v = this.get(k, options);
-    if (!forceRefresh && v !== undefined) return v;
+    if (!forceRefresh && v !== undefined) {
+      return v;
+    }
     const vv = memoMethod(k, v, {
       options,
       context,
@@ -1058,9 +1108,13 @@ class LRUCache {
     if (index !== undefined) {
       const value = this.#valList[index];
       const fetching = this.#isBackgroundFetch(value);
-      if (status) this.#statusTTL(status, index);
+      if (status) {
+        this.#statusTTL(status, index);
+      }
       if (this.#isStale(index)) {
-        if (status) status.get = 'stale';
+        if (status) {
+          status.get = 'stale';
+        }
         if (fetching) {
           if (
             status &&
@@ -1074,10 +1128,14 @@ class LRUCache {
         if (!noDeleteOnStaleGet) {
           this.#delete(k, 'expire');
         }
-        if (status && allowStale) status.returnedStale = true;
+        if (status && allowStale) {
+          status.returnedStale = true;
+        }
         return allowStale ? value : undefined;
       }
-      if (status) status.get = 'hit';
+      if (status) {
+        status.get = 'hit';
+      }
       if (fetching) {
         return value.__staleWhileFetching;
       }
@@ -1246,7 +1304,7 @@ class LRUCache2 {
     };
   }
 }
-var createMemoizedFunction = (fn, options, keyGenerator) => {
+const createMemoizedFunction = (fn, options, keyGenerator) => {
   const cache = new LRUCache2(options);
   const defaultKeyGenerator = (...args) => {
     return JSON.stringify(args);

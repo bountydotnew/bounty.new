@@ -9,4 +9,3 @@ import type { AuthLayoutProps } from '@bounty/types';
 export function AuthLayout({ children }: AuthLayoutProps) {
   return <>{children}</>;
 }
-

@@ -87,8 +87,11 @@ const deviceAuthorizationPlugin = deviceAuthorization({
   },
 });
 
-async function syncGitHubHandle(userId: string, accessToken: string): Promise<void> {
-  if (!userId || !accessToken) {
+async function syncGitHubHandle(
+  userId: string,
+  accessToken: string
+): Promise<void> {
+  if (!(userId && accessToken)) {
     return;
   }
 
@@ -113,7 +116,7 @@ async function syncGitHubHandle(userId: string, accessToken: string): Promise<vo
         })
         .where(eq(userTable.id, userId));
     }
-  } catch (error) {
+  } catch (_error) {
     // Silently handle errors - don't block account creation/update
   }
 }
@@ -128,14 +131,22 @@ export const auth = betterAuth({
     account: {
       create: {
         after: async (accountData: any) => {
-          if (accountData.providerId === 'github' && accountData.userId && accountData.accessToken) {
+          if (
+            accountData.providerId === 'github' &&
+            accountData.userId &&
+            accountData.accessToken
+          ) {
             await syncGitHubHandle(accountData.userId, accountData.accessToken);
           }
         },
       },
       update: {
         after: async (accountData: any) => {
-          if (accountData.providerId === 'github' && accountData.userId && accountData.accessToken) {
+          if (
+            accountData.providerId === 'github' &&
+            accountData.userId &&
+            accountData.accessToken
+          ) {
             await syncGitHubHandle(accountData.userId, accountData.accessToken);
           }
         },
@@ -182,11 +193,17 @@ export const auth = betterAuth({
         });
 
         if (result.error) {
-          console.error('❌ Failed to send password reset email:', result.error);
+          console.error(
+            '❌ Failed to send password reset email:',
+            result.error
+          );
           throw new Error(`Email send failed: ${result.error.message}`);
         }
 
-        console.log('✅ Password reset email sent successfully:', result.data?.id);
+        console.log(
+          '✅ Password reset email sent successfully:',
+          result.data?.id
+        );
       } catch (error) {
         console.error('❌ Error in sendResetPassword:', error);
         throw error;
@@ -256,11 +273,12 @@ export const auth = betterAuth({
           const result = await sendEmail({
             from: 'Bounty.new <noreply@mail.bounty.new>',
             to: email,
-            subject: type === 'email-verification'
-              ? 'Verify your email address'
-              : type === 'sign-in'
-              ? 'Sign in to Bounty.new'
-              : 'Reset your password',
+            subject:
+              type === 'email-verification'
+                ? 'Verify your email address'
+                : type === 'sign-in'
+                  ? 'Sign in to Bounty.new'
+                  : 'Reset your password',
             react: OTPVerification({
               code: otp,
               email,

@@ -108,8 +108,12 @@ const markdownComponents: Components = {
   img: ({ src, alt, ...props }) => {
     // Convert Blob to data URL if needed, otherwise use string
     const srcString =
-      typeof src === 'string' ? src : src instanceof Blob ? URL.createObjectURL(src) : undefined;
-    
+      typeof src === 'string'
+        ? src
+        : src instanceof Blob
+          ? URL.createObjectURL(src)
+          : undefined;
+
     return (
       // eslint-disable-next-line @next/next/no-img-element
       // biome-ignore lint/performance/noImgElement: Markdown content may contain external images that can't use Next.js Image
@@ -133,7 +137,9 @@ const markdownComponents: Components = {
         return children.map(extractTextFromChildren).join('');
       }
       if (React.isValidElement(children)) {
-        const element = children as React.ReactElement<{ children?: React.ReactNode }>;
+        const element = children as React.ReactElement<{
+          children?: React.ReactNode;
+        }>;
         return extractTextFromChildren(element.props.children);
       }
       return String(children);

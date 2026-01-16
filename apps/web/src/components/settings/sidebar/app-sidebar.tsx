@@ -1,9 +1,7 @@
 'use client';
 
 import type * as React from 'react';
-import {
-  SidebarToggleIcon,
-} from '@bounty/ui';
+import { SidebarToggleIcon } from '@bounty/ui';
 import { cn } from '@bounty/ui/lib/utils';
 import {
   Sidebar,
@@ -29,7 +27,12 @@ const NAV_ITEMS = [
   { title: 'Payments', url: '/settings/payments', icon: DollarBillIcon },
   { title: 'Integrations', url: '/settings/integrations', icon: SettingsGearIcon },
   { title: 'Security', url: '/settings/security', icon: SecurityIcon },
-  { title: 'Notifications', url: '/settings/notifications', icon: BellIcon, disabled: true },
+  {
+    title: 'Notifications',
+    url: '/settings/notifications',
+    icon: BellIcon,
+    disabled: true,
+  },
 ];
 
 const BackButton = () => {
@@ -62,10 +65,7 @@ const BackButton = () => {
   );
 };
 
-const renderNavItems = (
-  items: typeof NAV_ITEMS,
-  pathname: string
-) => {
+const renderNavItems = (items: typeof NAV_ITEMS, pathname: string) => {
   return (
     <SidebarMenu className="flex flex-col gap-[8px] w-full">
       {items.map((item) => {
@@ -131,4 +131,3 @@ export const AppSidebar = ({
     </Sidebar>
   );
 };
-

@@ -110,7 +110,7 @@ export const profilesRouter = router({
 
         // Check if profile is private and user is not the owner
         const isOwner = ctx.session?.user?.id === profile.user.id;
-        
+
         // Determine cache key - include viewer identity for private profiles
         // This ensures owner vs non-owner views are cached separately
         const profileIdentifier = input.handle || input.userId || '';

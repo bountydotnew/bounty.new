@@ -1,14 +1,8 @@
 import type React from 'react';
 import { SidebarInset, SidebarProvider } from '@bounty/ui/components/sidebar';
-import {
-  AppSidebar,
-} from '@/components/settings/sidebar/app-sidebar';
+import { AppSidebar } from '@/components/settings/sidebar/app-sidebar';
 
-const Sidebar = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+const Sidebar = ({ children }: { children: React.ReactNode }) => {
   return (
     <SidebarProvider variant="sidebar">
       <AppSidebar side="left" />

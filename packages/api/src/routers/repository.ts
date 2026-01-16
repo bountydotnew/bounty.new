@@ -5,7 +5,8 @@ import { protectedProcedure, publicProcedure, router } from '../trpc';
 import { account } from '@bounty/db';
 import { eq, and } from 'drizzle-orm';
 
-const githubToken = process.env.GITHUB_TOKEN || process.env.NEXT_PUBLIC_GITHUB_TOKEN || undefined;
+const githubToken =
+  process.env.GITHUB_TOKEN || process.env.NEXT_PUBLIC_GITHUB_TOKEN || undefined;
 const github = new GithubManager(githubToken ? { token: githubToken } : {});
 
 export const repositoryRouter = router({
@@ -82,34 +83,41 @@ export const repositoryRouter = router({
       }
 
       // Create GithubManager with user's token
-      const userGithub = new GithubManager({ token: githubAccount.accessToken });
+      const userGithub = new GithubManager({
+        token: githubAccount.accessToken,
+      });
 
       // Get authenticated user's repos
       const repos = await userGithub.getAuthenticatedUserRepos();
-      
+
       // Check if the result indicates a bad credentials error
       if (!repos.success && repos.error?.includes('Bad credentials')) {
-        return { 
-          success: false, 
-          error: 'GitHub token expired or invalid. Please reconnect your GitHub account.' 
+        return {
+          success: false,
+          error:
+            'GitHub token expired or invalid. Please reconnect your GitHub account.',
         };
       }
-      
+
       return repos;
     } catch (error) {
       const errorMessage =
         error instanceof Error
           ? error.message
           : 'Unknown error occurred while fetching repositories';
-      
+
       // Check for bad credentials in the error message
-      if (errorMessage.includes('Bad credentials') || errorMessage.includes('401')) {
-        return { 
-          success: false, 
-          error: 'GitHub token expired or invalid. Please reconnect your GitHub account.' 
+      if (
+        errorMessage.includes('Bad credentials') ||
+        errorMessage.includes('401')
+      ) {
+        return {
+          success: false,
+          error:
+            'GitHub token expired or invalid. Please reconnect your GitHub account.',
         };
       }
-      
+
       return { success: false, error: errorMessage };
     }
   }),
@@ -156,7 +164,9 @@ export const repositoryRouter = router({
             return b.comments - a.comments;
           }
           // Secondary sort: by updated_at (most recent)
-          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+          return (
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+          );
         });
       } catch {
         return [];

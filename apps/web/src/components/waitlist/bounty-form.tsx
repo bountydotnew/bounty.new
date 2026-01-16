@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useEffect, useRef } from "react";
 import { authClient } from "@bounty/auth/client";
@@ -38,13 +38,22 @@ interface BountyFormProps {
   onCancel?: () => void;
 }
 
-export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: BountyFormProps) {
+export function BountyForm({
+  initialValues,
+  entryId,
+  onSubmit,
+  onCancel,
+}: BountyFormProps) {
   const router = useRouter();
   const { data: session } = authClient.useSession();
-  const [title, setTitle] = useState(initialValues?.title || "");
-  const [description, setDescription] = useState(initialValues?.description || "");
-  const [price, setPrice] = useState(initialValues?.amount || "");
-  const [deadline, setDeadline] = useState<string>(initialValues?.deadline || "");
+  const [title, setTitle] = useState(initialValues?.title || '');
+  const [description, setDescription] = useState(
+    initialValues?.description || ''
+  );
+  const [price, setPrice] = useState(initialValues?.amount || '');
+  const [deadline, setDeadline] = useState<string>(
+    initialValues?.deadline || ''
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const titleRef = useRef<HTMLInputElement>(null);
@@ -57,8 +66,10 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
 
   // Load draft from localStorage on mount (only if not in edit mode)
   useEffect(() => {
-    if (initialValues) return; // Skip if initial values provided
-    
+    if (initialValues) {
+      return; // Skip if initial values provided
+    }
+
     try {
       const stored = localStorage.getItem(BOUNTY_DRAFT_STORAGE_KEY);
       if (stored) {
@@ -100,10 +111,13 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
   useEffect(() => {
     if (descriptionRef.current) {
       descriptionRef.current.style.height = 'auto';
-      const newHeight = Math.min(Math.max(descriptionRef.current.scrollHeight, 100), 600);
+      const newHeight = Math.min(
+        Math.max(descriptionRef.current.scrollHeight, 100),
+        600
+      );
       descriptionRef.current.style.height = `${newHeight}px`;
     }
-  }, [description]);
+  }, []);
 
   // Get waitlist entry ID when logged in
   const { data: myEntry } = useQuery({
@@ -164,16 +178,16 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
     if (onSubmit && entryId) {
       setIsSubmitting(true);
       try {
-      // Remove commas from price before submitting
-      const cleanedPrice = price.replace(/,/g, '');
-      await onSubmit({
-        title: title || "Untitled Bounty",
-        description: description || "",
-        amount: cleanedPrice || "0",
-        deadline: deadline || undefined,
-      });
+        // Remove commas from price before submitting
+        const cleanedPrice = price.replace(/,/g, '');
+        await onSubmit({
+          title: title || 'Untitled Bounty',
+          description: description || '',
+          amount: cleanedPrice || '0',
+          deadline: deadline || undefined,
+        });
       } catch (error) {
-        console.error("Failed to update bounty:", error);
+        console.error('Failed to update bounty:', error);
         parseAndShowErrors(error);
       } finally {
         setIsSubmitting(false);
@@ -191,7 +205,7 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
     // If logged in, save bounty to waitlist entry
     const effectiveEntryId = entryId || myEntry?.id;
     if (!effectiveEntryId) {
-      console.error("No waitlist entry found");
+      console.error('No waitlist entry found');
       return;
     }
 
@@ -201,19 +215,19 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
       const cleanedPrice = price.replace(/,/g, '');
       await saveBountyMutation.mutateAsync({
         entryId: effectiveEntryId,
-        title: title || "Untitled Bounty",
-        description: description || "",
-        amount: cleanedPrice || "0",
+        title: title || 'Untitled Bounty',
+        description: description || '',
+        amount: cleanedPrice || '0',
         deadline: deadline || undefined,
       });
-      
+
       // Clear localStorage draft
       localStorage.removeItem(BOUNTY_DRAFT_STORAGE_KEY);
-      
+
       // Redirect to dashboard
       router.push('/waitlist/dashboard');
     } catch (error) {
-      console.error("Failed to save bounty:", error);
+      console.error('Failed to save bounty:', error);
       parseAndShowErrors(error);
     } finally {
       setIsSubmitting(false);
@@ -306,40 +320,80 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
         {/* Deadline chip */}
         <DeadlineChip value={deadline} onChange={setDeadline} />
 
-        {/* Divider */}
-        {/* <span className="text-[#5A5A5A] text-base shrink-0">or</span> */}
+          {/* Divider */}
+          {/* <span className="text-[#5A5A5A] text-base shrink-0">or</span> */}
 
-        {/* GitHub import chip (placeholder) */}
-        {/* <button 
+          {/* GitHub import chip (placeholder) */}
+          {/* <button 
           className="rounded-[14px] px-[15px] py-1.5 bg-[#313030] text-base text-[#828181] transition-colors flex items-center gap-[5px] shrink-0 h-[31.9965px] opacity-50 cursor-not-allowed"
           disabled
         >
           <GitHub className="w-4 h-4 shrink-0" />
           Import from GitHub
         </button> */}
-      </div>
+        </div>
 
-      {/* Description textarea */}
-      <div className="px-2 sm:px-[19px] py-1 sm:py-1.5 flex-1 flex">
-        <textarea
-          ref={descriptionRef}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Start typing your description..."
-          className="w-full bg-transparent text-[#5A5A5A] text-sm sm:text-base outline-none placeholder:text-[#5A5A5A] resize-none min-h-[80px] sm:min-h-[100px]"
-        />
-      </div>
+        {/* Description textarea */}
+        <div className="px-2 sm:px-[19px] py-1 sm:py-1.5 flex-1 flex">
+          <textarea
+            ref={descriptionRef}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Start typing your description..."
+            className="w-full bg-transparent text-[#5A5A5A] text-sm sm:text-base outline-none placeholder:text-[#5A5A5A] resize-none min-h-[80px] sm:min-h-[100px]"
+          />
+        </div>
 
-      {/* Footer row with buttons */}
-      <div className="flex justify-end items-center gap-1.5 sm:gap-2 px-1.5 sm:px-3 py-2 sm:py-3 flex-wrap">
-        {onCancel && (
+        {/* Footer row with buttons */}
+        <div className="flex justify-end items-center gap-1.5 sm:gap-2 px-1.5 sm:px-3 py-2 sm:py-3 flex-wrap">
+          {onCancel && (
+            <button
+              onClick={onCancel}
+              disabled={isSubmitting}
+              className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+            >
+              Cancel
+            </button>
+          )}
+          {!(onSubmit || onCancel) && (
+            <button
+              onClick={handleSkipAndJoinWaitlist}
+              disabled={isSubmitting}
+              className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+            >
+              <span className="hidden sm:inline">
+                {isSubmitting ? 'Redirecting...' : 'Skip & join waitlist'}
+              </span>
+              <span className="sm:hidden">
+                {isSubmitting ? 'Redirecting...' : 'Skip'}
+              </span>
+            </button>
+          )}
           <button
             type="button"
             onClick={onCancel}
             disabled={isSubmitting}
             className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
           >
-            Cancel
+            <GitHub className="w-4 h-4 shrink-0" />
+            <span className="hidden sm:inline">
+              {isSubmitting
+                ? onSubmit
+                  ? 'Saving...'
+                  : 'Creating...'
+                : onSubmit
+                  ? 'Save'
+                  : 'Create bounty'}
+            </span>
+            <span className="sm:hidden">
+              {isSubmitting
+                ? onSubmit
+                  ? 'Saving...'
+                  : 'Creating...'
+                : onSubmit
+                  ? 'Save'
+                  : 'Create'}
+            </span>
           </button>
         )}
         {!onSubmit && !onCancel && (
@@ -366,7 +420,8 @@ export function BountyForm({ initialValues, entryId, onSubmit, onCancel }: Bount
       </div>
       </div>
       <div className="text-[#5A5A5A] text-[10px] sm:text-sm text-center pt-2 sm:pt-3 px-2 sm:px-0">
-        Creating a draft bounty is optional. This step is not required to sign up.
+        Creating a draft bounty is optional. This step is not required to sign
+        up.
       </div>
     </div>
   );

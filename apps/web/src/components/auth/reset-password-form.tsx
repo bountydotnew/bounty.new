@@ -94,9 +94,7 @@ export default function ResetPasswordForm() {
           <h1 className="text-2xl font-semibold tracking-tight text-white">
             Reset your password
           </h1>
-          <p className="text-gray-400 text-sm">
-            Enter your new password below
-          </p>
+          <p className="text-gray-400 text-sm">Enter your new password below</p>
         </div>
 
         <form onSubmit={handleResetPassword} className="space-y-4">
@@ -126,11 +124,7 @@ export default function ResetPasswordForm() {
             />
           </div>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isPending}
-          >
+          <Button type="submit" className="w-full" disabled={isPending}>
             {isPending ? 'Resetting password...' : 'Reset password'}
           </Button>
         </form>
@@ -174,11 +168,7 @@ export default function ResetPasswordForm() {
           />
         </div>
 
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={isPending}
-        >
+        <Button type="submit" className="w-full" disabled={isPending}>
           {isPending ? 'Sending reset link...' : 'Send reset link'}
         </Button>
       </form>
@@ -187,7 +177,8 @@ export default function ResetPasswordForm() {
         <div className="space-y-3">
           <div className="rounded-lg bg-[#1a1a1a] p-4 border border-[#383838]">
             <p className="text-sm text-gray-400 text-center">
-              Haven&apos;t received the email? Check your spam folder or resend it below.
+              Haven&apos;t received the email? Check your spam folder or resend
+              it below.
             </p>
           </div>
           <Button

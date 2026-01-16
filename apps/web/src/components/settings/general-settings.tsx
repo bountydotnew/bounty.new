@@ -206,8 +206,8 @@ const PrivacySettingsCard = ({
         <div className="space-y-1">
           <Label htmlFor="profile-privacy">Private Profile</Label>
           <p className="text-muted-foreground text-sm">
-            When enabled, only you can view your profile information. Others will
-            see a private profile message.
+            When enabled, only you can view your profile information. Others
+            will see a private profile message.
           </p>
         </div>
         <Switch
@@ -240,14 +240,18 @@ export function GeneralSettings({
         // Invalidate user data
         const userQueryKey = trpc.user.getMe.queryOptions().queryKey;
         queryClient.invalidateQueries({ queryKey: userQueryKey });
-        
+
         // Invalidate profile cache by handle and userId
         if (userData?.handle) {
-          const profileQueryKey = trpc.profiles.getProfile.queryOptions({ handle: userData.handle }).queryKey;
+          const profileQueryKey = trpc.profiles.getProfile.queryOptions({
+            handle: userData.handle,
+          }).queryKey;
           queryClient.invalidateQueries({ queryKey: profileQueryKey });
         }
         if (userData?.id) {
-          const profileQueryKeyById = trpc.profiles.getProfile.queryOptions({ userId: userData.id }).queryKey;
+          const profileQueryKeyById = trpc.profiles.getProfile.queryOptions({
+            userId: userData.id,
+          }).queryKey;
           queryClient.invalidateQueries({ queryKey: profileQueryKeyById });
         }
       },
@@ -272,9 +276,7 @@ export function GeneralSettings({
         await updateProfilePrivacyMutation.mutateAsync({
           isProfilePrivate: value,
         });
-        toast.success(
-          `Profile is now ${value ? 'private' : 'public'}`
-        );
+        toast.success(`Profile is now ${value ? 'private' : 'public'}`);
       } catch {
         setIsProfilePrivate(!value);
         toast.error('Failed to update privacy settings');

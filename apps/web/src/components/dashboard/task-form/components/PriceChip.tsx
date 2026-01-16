@@ -10,7 +10,7 @@ import {
 import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
 
 interface PriceChipProps {
-    control: Control<CreateBountyForm>;
+  control: Control<CreateBountyForm>;
 }
 
 function formatPrice(value: string): string {

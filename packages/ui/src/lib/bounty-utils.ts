@@ -62,7 +62,6 @@ export const getBountyStatusColor = (status: string) => {
   }
 };
 
-
 // Format bounty amount for display
 export const formatBountyAmount = (amount: number, currency: string) => {
   return new Intl.NumberFormat('en-US', {

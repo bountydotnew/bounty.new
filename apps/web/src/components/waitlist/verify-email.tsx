@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import type React from "react";
-import { useState, useRef, useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { trpcClient } from "@/utils/trpc";
+import type React from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { trpcClient } from '@/utils/trpc';
 
 interface VerifyEmailProps {
   entryId: string;
@@ -18,9 +18,9 @@ export function VerifyEmail({
   onVerified,
   onBack,
 }: VerifyEmailProps) {
-  const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const [code, setCode] = useState(['', '', '', '', '', '']);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const verifyMutation = useMutation({
@@ -40,13 +40,17 @@ export function VerifyEmail({
   }, []);
 
   const handleChange = (index: number, value: string) => {
-    if (value.length > 1) value = value[0];
-    if (!/^\d*$/.test(value)) return;
+    if (value.length > 1) {
+      value = value[0];
+    }
+    if (!/^\d*$/.test(value)) {
+      return;
+    }
 
     const newCode = [...code];
     newCode[index] = value;
     setCode(newCode);
-    setError("");
+    setError('');
 
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
@@ -54,19 +58,21 @@ export function VerifyEmail({
 
     // Auto-submit when all digits entered
     if (value && index === 5 && newCode.every((d) => d)) {
-      handleVerify(newCode.join(""));
+      handleVerify(newCode.join(''));
     }
   };
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !code[index] && index > 0) {
+    if (e.key === 'Backspace' && !code[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
 
   const handleVerify = async (codeStr?: string) => {
-    const fullCode = codeStr || code.join("");
-    if (fullCode.length !== 6) return;
+    const fullCode = codeStr || code.join('');
+    if (fullCode.length !== 6) {
+      return;
+    }
 
     setIsVerifying(true);
 
@@ -79,8 +85,8 @@ export function VerifyEmail({
         onVerified(result.entryId);
       }
     } catch (err: any) {
-      setError(err.message || "Invalid code. Please try again.");
-      setCode(["", "", "", "", "", ""]);
+      setError(err.message || 'Invalid code. Please try again.');
+      setCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
       setIsVerifying(false);
     }
@@ -89,9 +95,9 @@ export function VerifyEmail({
   const handleResend = async () => {
     try {
       await resendMutation.mutateAsync({ entryId });
-      setError("");
+      setError('');
     } catch (err: any) {
-      setError(err.message || "Failed to resend code");
+      setError(err.message || 'Failed to resend code');
     }
   };
 
@@ -163,10 +169,10 @@ export function VerifyEmail({
         disabled={isVerifying || code.some((d) => !d)}
         className="flex items-center justify-center gap-1.5 px-6 h-[40px] rounded-full text-white text-base font-normal mx-auto transition-opacity hover:opacity-90 disabled:opacity-50"
         style={{
-          backgroundImage: "linear-gradient(180deg, #ccc 0%, #808080 100%)",
+          backgroundImage: 'linear-gradient(180deg, #ccc 0%, #808080 100%)',
         }}
       >
-        {isVerifying ? "Verifying..." : "Verify"}
+        {isVerifying ? 'Verifying...' : 'Verify'}
         <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
           <path
             d="M3 8h10M9 4l4 4-4 4"
@@ -179,13 +185,13 @@ export function VerifyEmail({
       </button>
 
       <p className="text-[#5A5A5A] text-sm mt-6">
-        Didn't receive the code?{" "}
+        Didn't receive the code?{' '}
         <button
           onClick={handleResend}
           disabled={resendMutation.isPending}
           className="text-white hover:underline disabled:opacity-50"
         >
-          {resendMutation.isPending ? "Sending..." : "Resend"}
+          {resendMutation.isPending ? 'Sending...' : 'Resend'}
         </button>
       </p>
     </div>

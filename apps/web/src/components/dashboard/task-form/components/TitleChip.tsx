@@ -9,7 +9,7 @@ import {
 import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
 
 interface TitleChipProps {
-    control: Control<CreateBountyForm>;
+  control: Control<CreateBountyForm>;
 }
 
 export function TitleChip({ control }: TitleChipProps) {

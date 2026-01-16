@@ -1,12 +1,13 @@
+const MOBILE_REGEX =
+  /Android(?!.*Tablet)|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i;
+const TABLET_REGEX = /iPad|Android.*Tablet|Kindle|Silk|PlayBook/i;
+
 export function isMobileDevice(userAgent: string): boolean {
-  const mobileRegex =
-    /Android(?!.*Tablet)|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i;
-  return mobileRegex.test(userAgent);
+  return MOBILE_REGEX.test(userAgent);
 }
 
 export function isTabletDevice(userAgent: string): boolean {
-  const tabletRegex = /iPad|Android.*Tablet|Kindle|Silk|PlayBook/i;
-  return tabletRegex.test(userAgent);
+  return TABLET_REGEX.test(userAgent);
 }
 
 export function getDeviceType(

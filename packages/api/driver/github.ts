@@ -7,13 +7,16 @@ const MyOctokit = Octokit.plugin(restEndpointMethods);
 // Top-level regex patterns for performance
 const CO_AUTHOR_REGEX = /Co-authored-by:\s*(.+?)\s*<[^>]+>/g;
 const NUMERIC_TERM_REGEX = /^\d+$/;
-const GITHUB_ISSUE_URL_REGEX = /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/i;
+const GITHUB_ISSUE_URL_REGEX =
+  /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/i;
 const CURRENCY_SYMBOL_REGEX = /[$€£]/;
 const DOLLAR_PATTERN = /\$\s*(\d{1,13}(?:[.,]\d{1,2})?)/i;
 const EURO_PATTERN = /€\s*(\d{1,13}(?:[.,]\d{1,2})?)/i;
 const POUND_PATTERN = /£\s*(\d{1,13}(?:[.,]\d{1,2})?)/i;
-const AMOUNT_CURRENCY_PATTERN = /\b(\d{1,13}(?:[.,]\d{1,2})?)\s*(usd|eur|gbp|dollars|pounds|euros)\b/i;
-const CURRENCY_AMOUNT_PATTERN = /\b(usd|eur|gbp)\s*(\d{1,13}(?:[.,]\d{1,2})?)\b/i;
+const AMOUNT_CURRENCY_PATTERN =
+  /\b(\d{1,13}(?:[.,]\d{1,2})?)\s*(usd|eur|gbp|dollars|pounds|euros)\b/i;
+const CURRENCY_AMOUNT_PATTERN =
+  /\b(usd|eur|gbp)\s*(\d{1,13}(?:[.,]\d{1,2})?)\b/i;
 const DIGIT_PATTERN = /\d/;
 const TRAILING_DOT_PATTERN = /\.$/;
 
@@ -121,11 +124,11 @@ export class GithubManager {
       });
       const repos: UserRepo[] = (data as GitHubRepository[]).map((r) => {
         const repo: UserRepo = {
-        id: r.id,
-        name: r.name,
-        url: r.html_url,
-        stargazersCount: r.stargazers_count,
-        private: r.private,
+          id: r.id,
+          name: r.name,
+          url: r.html_url,
+          stargazersCount: r.stargazers_count,
+          private: r.private,
         };
         if (r.description !== null && r.description !== undefined) {
           repo.description = r.description;
@@ -143,70 +146,74 @@ export class GithubManager {
     }
   }
 
-// Pagination requires sequential awaits - cannot use Promise.all
-// eslint-disable-next-line @typescript-eslint/no-await-in-loop
-async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
-  try {
-    // Fetch all repos with pagination to ensure we get organization repos
-    const allRepos: GitHubRepository[] = [];
-    const perPage = 100;
-    const maxPages = 10; // Safety limit: max 1000 repos
-    
-    // Helper function to fetch a single page
-    const fetchPage = async (pageNum: number): Promise<GitHubRepository[]> => {
-      const { data } = await this.octokit.rest.repos.listForAuthenticatedUser({
-        per_page: perPage,
-        page: pageNum,
-        sort: 'pushed',
-        affiliation: 'owner,collaborator,organization_member',
-      });
-      return data as GitHubRepository[];
-    };
+  // Pagination requires sequential awaits - cannot use Promise.all
+  // eslint-disable-next-line @typescript-eslint/no-await-in-loop
+  async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
+    try {
+      // Fetch all repos with pagination to ensure we get organization repos
+      const allRepos: GitHubRepository[] = [];
+      const perPage = 100;
+      const maxPages = 10; // Safety limit: max 1000 repos
 
-    // Fetch pages sequentially (required for pagination - each page depends on knowing if previous had more)
-    for (let page = 1; page <= maxPages; page++) {
-      // biome-ignore lint/nursery/noAwaitInLoop: Pagination requires sequential awaits - cannot use Promise.all
-      const pageData = await fetchPage(page);
+      // Helper function to fetch a single page
+      const fetchPage = async (
+        pageNum: number
+      ): Promise<GitHubRepository[]> => {
+        const { data } = await this.octokit.rest.repos.listForAuthenticatedUser(
+          {
+            per_page: perPage,
+            page: pageNum,
+            sort: 'pushed',
+            affiliation: 'owner,collaborator,organization_member',
+          }
+        );
+        return data as GitHubRepository[];
+      };
 
-      if (pageData.length === 0) {
-        break; // No more repos
+      // Fetch pages sequentially (required for pagination - each page depends on knowing if previous had more)
+      for (let page = 1; page <= maxPages; page++) {
+        // biome-ignore lint/nursery/noAwaitInLoop: Pagination requires sequential awaits - cannot use Promise.all
+        const pageData = await fetchPage(page);
+
+        if (pageData.length === 0) {
+          break; // No more repos
+        }
+
+        allRepos.push(...pageData);
+
+        // If we got fewer than perPage results, we've reached the end
+        if (pageData.length < perPage) {
+          break;
+        }
       }
-      
-      allRepos.push(...pageData);
-      
-      // If we got fewer than perPage results, we've reached the end
-      if (pageData.length < perPage) {
-        break;
-      }
-    }
-    
-    // Filter to ONLY public repos - private repos don't align with open source mission
-    const publicRepos = allRepos.filter((r) => !r.private);
-    
+
+      // Filter to ONLY public repos - private repos don't align with open source mission
+      const publicRepos = allRepos.filter((r) => !r.private);
+
       const repos: UserRepo[] = publicRepos.map((r) => {
         const repo: UserRepo = {
-      id: r.id,
-      name: r.name,
-      full_name: r.full_name, // Include full_name (owner/repo) for reliable org repo handling
-      url: r.html_url,
-      stargazersCount: r.stargazers_count,
-      private: r.private,
+          id: r.id,
+          name: r.name,
+          full_name: r.full_name, // Include full_name (owner/repo) for reliable org repo handling
+          url: r.html_url,
+          stargazersCount: r.stargazers_count,
+          private: r.private,
         };
         if (r.description !== null && r.description !== undefined) {
           repo.description = r.description;
         }
         return repo;
       });
-    
-    return { success: true, data: repos };
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error
-        ? error.message
-        : 'Unknown error occurred while fetching repositories';
-    return { success: false, error: errorMessage };
+
+      return { success: true, data: repos };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Unknown error occurred while fetching repositories';
+      return { success: false, error: errorMessage };
+    }
   }
-}
 
   async getAuthenticatedUser(): Promise<{ login: string } | null> {
     try {
@@ -271,10 +278,10 @@ async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
         typeof c.contributions === 'number'
       ) {
         contributors.push({
-      login: c.login,
-      avatar_url: c.avatar_url,
-      html_url: c.html_url,
-      contributions: c.contributions,
+          login: c.login,
+          avatar_url: c.avatar_url,
+          html_url: c.html_url,
+          contributions: c.contributions,
         });
       }
     }
@@ -337,17 +344,17 @@ async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
         if (!c.sha) {
           throw new Error('Commit SHA is missing');
         }
-      const { data: detail } = await this.octokit.request(
-        'GET /repos/{owner}/{repo}/commits/{ref}',
-        {
-          owner,
-          repo,
-          ref: c.sha,
-        }
-      );
-      const additions = detail.stats?.additions || 0;
-      const deletions = detail.stats?.deletions || 0;
-      const total = additions + deletions;
+        const { data: detail } = await this.octokit.request(
+          'GET /repos/{owner}/{repo}/commits/{ref}',
+          {
+            owner,
+            repo,
+            ref: c.sha,
+          }
+        );
+        const additions = detail.stats?.additions || 0;
+        const deletions = detail.stats?.deletions || 0;
+        const total = additions + deletions;
         const commitMessage = c.commit?.message || '';
         const htmlUrl = c.html_url;
         if (!htmlUrl) {
@@ -457,7 +464,15 @@ async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
   async listIssues(
     owner: string,
     repo: string
-  ): Promise<{ number: number; title: string; state: string; updated_at: string; comments: number }[]> {
+  ): Promise<
+    {
+      number: number;
+      title: string;
+      state: string;
+      updated_at: string;
+      comments: number;
+    }[]
+  > {
     try {
       const { data } = await this.octokit.rest.issues.listForRepo({
         owner,
@@ -580,7 +595,7 @@ async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
     let currency = this.detectCurrencyFromSymbols(text);
     if (!currency) {
       currency = this.detectCurrencyFromText(lower);
-      }
+    }
 
     const patterns: RegExp[] = [
       DOLLAR_PATTERN,
@@ -604,7 +619,7 @@ async getAuthenticatedUserRepos(): Promise<GetUserReposResult> {
           };
           if (finalCurrency !== undefined) {
             result.currency = finalCurrency;
-    }
+          }
           return result;
         }
       }

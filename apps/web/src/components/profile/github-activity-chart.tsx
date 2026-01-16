@@ -66,4 +66,3 @@ export function GitHubActivityChart({ username }: GitHubActivityChartProps) {
     </div>
   );
 }
-

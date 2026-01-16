@@ -15,4 +15,3 @@ export const BranchIcon = (props: React.SVGProps<SVGSVGElement>) => (
     />
   </svg>
 );
-

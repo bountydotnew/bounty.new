@@ -22,16 +22,26 @@ export const createBountySchema = z.object({
     .optional()
     .refine(
       (val) => {
-        if (!val || val === '') return true; // Optional field
+        if (!val || val === '') {
+          return true; // Optional field
+        }
         try {
           const date = new Date(val);
-          if (isNaN(date.getTime())) {
+          if (Number.isNaN(date.getTime())) {
             return false; // Invalid date
           }
           const now = new Date();
           // Compare dates (ignore time for day-level comparison)
-          const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-          const nowOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const dateOnly = new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate()
+          );
+          const nowOnly = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate()
+          );
           return dateOnly >= nowOnly; // Must be today or in the future
         } catch {
           return false;
@@ -73,7 +83,6 @@ export const currencyOptions = [
   { value: 'EUR', label: 'EUR' },
   { value: 'GBP', label: 'GBP' },
 ];
-
 
 // =====================
 // FORM HELPERS
@@ -145,7 +154,10 @@ export const handleSchema = z
   .string()
   .min(3, 'Handle must be at least 3 characters')
   .max(20, 'Handle must be at most 20 characters')
-  .regex(/^[a-z0-9_-]+$/, 'Handle can only contain lowercase letters, numbers, hyphens, and underscores')
+  .regex(
+    /^[a-z0-9_-]+$/,
+    'Handle can only contain lowercase letters, numbers, hyphens, and underscores'
+  )
   .refine((val) => !(val.startsWith('-') || val.endsWith('-')), {
     message: 'Handle cannot start or end with a hyphen',
   })
@@ -191,25 +203,25 @@ export type ProfileForm = z.infer<typeof profileSchema>;
 export const taskSchema = z.object({
   title: z
     .string()
-    .min(1, "Task title is required")
-    .max(200, "Task title too long"),
+    .min(1, 'Task title is required')
+    .max(200, 'Task title too long'),
   description: z
     .string()
-    .min(1, "Task description is required")
-    .max(1000, "Task description too long"),
+    .min(1, 'Task description is required')
+    .max(1000, 'Task description too long'),
   dueDate: z.string().optional(),
-  priority: z.enum(["low", "medium", "high"], {
-    message: "Please select a priority",
+  priority: z.enum(['low', 'medium', 'high'], {
+    message: 'Please select a priority',
   }),
 });
 
 export type TaskForm = z.infer<typeof taskSchema>;
 
 export const taskDefaults: TaskForm = {
-  title: "",
-  description: "",
+  title: '',
+  description: '',
   dueDate: undefined,
-  priority: "medium",
+  priority: 'medium',
 };
 
 // =====================
@@ -219,26 +231,26 @@ export const taskDefaults: TaskForm = {
 export const submissionSchema = z.object({
   pullRequestUrl: z
     .string()
-    .url("Please enter a valid pull request URL")
-    .min(1, "Pull request URL is required")
+    .url('Please enter a valid pull request URL')
+    .min(1, 'Pull request URL is required')
     .refine(
       (url) =>
-        url.includes("github.com") &&
-        (url.includes("/pull/") || url.includes("/pulls/")),
-      "Must be a GitHub pull request URL",
+        url.includes('github.com') &&
+        (url.includes('/pull/') || url.includes('/pulls/')),
+      'Must be a GitHub pull request URL'
     ),
   notes: z
     .string()
-    .max(500, "Notes too long (max 500 characters)")
+    .max(500, 'Notes too long (max 500 characters)')
     .optional()
-    .or(z.literal("")),
+    .or(z.literal('')),
 });
 
 export type SubmissionForm = z.infer<typeof submissionSchema>;
 
 export const submissionDefaults: SubmissionForm = {
-  pullRequestUrl: "",
-  notes: "",
+  pullRequestUrl: '',
+  notes: '',
 };
 
 // =====================
@@ -254,17 +266,29 @@ export const waitlistEmailSchema = z.object({
 const AMOUNT_REGEX = /^\d{1,13}(\.\d{1,2})?$/;
 
 // Helper: validates only if the field has content (not empty/undefined)
-const optionalWithMinMax = (min: number, max: number, minMsg: string, maxMsg: string) =>
+const optionalWithMinMax = (
+  min: number,
+  max: number,
+  minMsg: string,
+  maxMsg: string
+) =>
   z
     .string()
     .optional()
-    .refine((val) => !val || val.length === 0 || val.length >= min, { message: minMsg })
+    .refine((val) => !val || val.length === 0 || val.length >= min, {
+      message: minMsg,
+    })
     .refine((val) => !val || val.length <= max, { message: maxMsg });
 
 export const waitlistBountySchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   // Same validation as createBountySchema, but optional
-  bountyTitle: optionalWithMinMax(1, 200, 'Title cannot be empty', 'Title too long'),
+  bountyTitle: optionalWithMinMax(
+    1,
+    200,
+    'Title cannot be empty',
+    'Title too long'
+  ),
   bountyDescription: optionalWithMinMax(
     10,
     50_000,
@@ -282,10 +306,14 @@ export const waitlistBountySchema = z.object({
     .optional()
     .refine(
       (val) => {
-        if (!val || val === '') return true; // Optional field
+        if (!val || val === '') {
+          return true; // Optional field
+        }
         try {
           const date = new Date(val);
-          if (isNaN(date.getTime())) return false; // Invalid date
+          if (Number.isNaN(date.getTime())) {
+            return false; // Invalid date
+          }
           return date > new Date(); // Must be in the future
         } catch {
           return false;

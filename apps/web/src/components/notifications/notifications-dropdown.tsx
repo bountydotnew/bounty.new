@@ -10,12 +10,7 @@ import {
 import { cn } from '@bounty/ui/lib/utils';
 import { useNotifications } from '@/hooks/use-notifications';
 import { formatDistanceToNow } from 'date-fns';
-import {
-  Award,
-  Bell,
-  CheckCircle2,
-  FilePlus2, XCircle
-} from 'lucide-react';
+import { Award, Bell, CheckCircle2, FilePlus2, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import type {
@@ -90,9 +85,7 @@ function Row({ item, onRead }: NotificationRowProps) {
       )}
       onClick={handleClick}
     >
-      <div
-        className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-[6px] text-[8px] leading-[150%] text-white shadow-[inset_0px_2px_3px_#00000033]"
-      >
+      <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-[6px] text-[8px] leading-[150%] text-white shadow-[inset_0px_2px_3px_#00000033]">
         <Icon className="size-4" />
       </div>
       <div className="min-w-0 flex-1 flex flex-col gap-[5px]">
@@ -100,7 +93,9 @@ function Row({ item, onRead }: NotificationRowProps) {
           <span
             className={cn(
               'text-[13px] leading-[150%] whitespace-normal wrap-break-word min-w-0',
-              item.read ? 'font-normal text-[#FFFFFF99]' : 'font-medium text-white'
+              item.read
+                ? 'font-normal text-[#FFFFFF99]'
+                : 'font-medium text-white'
             )}
           >
             {item.title}

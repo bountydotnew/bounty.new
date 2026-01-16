@@ -86,13 +86,13 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
           </div>
         )}
 
-        {!isPending && session && (
-          isAddingAccount ? (
+        {!isPending &&
+          session &&
+          (isAddingAccount ? (
             <AddAccountView callbackUrl={callbackUrl} session={session} />
           ) : (
             <SignedInView callbackUrl={callbackUrl} session={session} />
-          )
-        )}
+          ))}
 
         {!(isPending || session) && (
           <div className="w-full max-w-96 space-y-8">
@@ -143,5 +143,3 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
     </div>
   );
 }
-
-

@@ -82,43 +82,63 @@ export function validateFingerprintRealism(
     return false; // Should have at least a few components
   }
 
-  // Check screen component if it exists
-  const screen = components.screen as Record<string, unknown> | undefined;
-  if (screen && typeof screen === 'object') {
-    const colorDepth = screen.colorDepth as number | undefined;
-    if (typeof colorDepth === 'number') {
-      // Be more permissive with color depth - allow more values
-      if (colorDepth < 1 || colorDepth > 48) {
-        return false; // Only reject obviously invalid values
-      }
-    }
+  // Validate screen component
+  if (!validateScreenComponent(components.screen)) {
+    return false;
   }
 
-  // Check system/navigator info if available
-  const system = components.system as Record<string, unknown> | undefined;
-  if (system && typeof system === 'object') {
-    const userAgent = system.useragent as string | undefined;
-    if (typeof userAgent === 'string') {
-      // Only reject if it's obviously fake (too short or missing basic structure)
-      if (userAgent.length < 10) {
-        return false;
-      }
-    }
-
-    // Check hardware concurrency if available
-    const hardwareConcurrency = system.hardwareConcurrency as
-      | number
-      | undefined;
-    if (typeof hardwareConcurrency === 'number') {
-      // Be more permissive - only reject obviously invalid values
-      if (hardwareConcurrency < 1 || hardwareConcurrency > 128) {
-        return false;
-      }
-    }
+  // Validate system/navigator component
+  if (!validateSystemComponent(components.system)) {
+    return false;
   }
 
   // For thumbmark.js, we'll trust the library's fingerprinting
   // and only reject obviously manipulated data
+  return true;
+}
+
+// Helper: Validate screen component properties
+function validateScreenComponent(screen: unknown): boolean {
+  if (!screen || typeof screen !== 'object') {
+    return true; // Optional component
+  }
+
+  const screenObj = screen as Record<string, unknown>;
+  const colorDepth = screenObj.colorDepth as number | undefined;
+
+  if (typeof colorDepth !== 'number') {
+    return true; // Optional property
+  }
+
+  // Be more permissive with color depth - allow more values
+  return colorDepth >= 1 && colorDepth <= 48;
+}
+
+// Helper: Validate system component properties
+function validateSystemComponent(system: unknown): boolean {
+  if (!system || typeof system !== 'object') {
+    return true; // Optional component
+  }
+
+  const systemObj = system as Record<string, unknown>;
+
+  // Check userAgent if present
+  const userAgent = systemObj.useragent as string | undefined;
+  if (typeof userAgent === 'string' && userAgent.length < 10) {
+    return false;
+  }
+
+  // Check hardware concurrency if present
+  const hardwareConcurrency = systemObj.hardwareConcurrency as
+    | number
+    | undefined;
+  if (
+    typeof hardwareConcurrency === 'number' &&
+    (hardwareConcurrency < 1 || hardwareConcurrency > 128)
+  ) {
+    return false;
+  }
+
   return true;
 }
 

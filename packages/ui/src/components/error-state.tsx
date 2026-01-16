@@ -1,6 +1,6 @@
-import { AlertTriangle, RefreshCw } from "lucide-react";
-import { cn } from "../lib/utils";
-import { Button } from "./button";
+import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { cn } from '../lib/utils';
+import { Button } from './button';
 
 interface ErrorStateProps {
   title?: string;
@@ -11,8 +11,8 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({
-  title = "Something went wrong",
-  message = "We encountered an error while loading this content. Please try again.",
+  title = 'Something went wrong',
+  message = 'We encountered an error while loading this content. Please try again.',
   onRetry,
   className,
   fullScreen = false,
@@ -20,9 +20,9 @@ export function ErrorState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-4 p-8 text-center",
-        fullScreen && "min-h-[400px]",
-        className,
+        'flex flex-col items-center justify-center gap-4 p-8 text-center',
+        fullScreen && 'min-h-[400px]',
+        className
       )}
       role="alert"
     >

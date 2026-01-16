@@ -6,9 +6,11 @@ import { useQuery } from '@tanstack/react-query';
 import { trpc } from '@/utils/trpc';
 
 export function WaitlistStatistics({ className }: { className?: string }) {
-  const { data: waitlistData, isLoading, isError } = useQuery(
-    trpc.earlyAccess.getWaitlistCount.queryOptions()
-  );
+  const {
+    data: waitlistData,
+    isLoading,
+    isError,
+  } = useQuery(trpc.earlyAccess.getWaitlistCount.queryOptions());
 
   let waitlistStatus: React.ReactNode;
   if (isError) {
