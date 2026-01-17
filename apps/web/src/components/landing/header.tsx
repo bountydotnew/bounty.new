@@ -19,7 +19,7 @@ export function Header() {
             <Link href="/blog" className="text-sm text-[#989898] hover:text-white transition-colors">
               Blog
             </Link>
-            <Link href="/bounties" className="text-sm text-[#989898] hover:text-white transition-colors">
+            <Link href="/dashboard" className="text-sm text-[#989898] hover:text-white transition-colors">
               Browse Bounties
             </Link>
             <Link href="/contributors" className="text-sm text-[#989898] hover:text-white transition-colors">
@@ -36,7 +36,7 @@ export function Header() {
               Sign in
             </Link>
             <Link
-              href="/bounties"
+              href="/dashboard"
               className="inline-flex items-center justify-center bg-white text-[#0E0E0E] rounded-full text-sm font-medium hover:bg-[#e5e5e5] transition-colors"
               style={{ padding: '.4em .75em .42em' }}
             >

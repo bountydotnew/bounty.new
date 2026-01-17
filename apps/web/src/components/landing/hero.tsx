@@ -33,11 +33,10 @@ export function Hero() {
           </h1>
           <div className="flex items-center gap-4">
             <a
-              href="/bounties"
+              href="/dashboard"
               className="inline-flex items-center justify-center gap-2 bg-white text-black px-6 py-3 rounded-full font-medium hover:bg-white/90 transition-colors"
             >
-              Browse Bounties
-              <span aria-hidden="true">&gt;</span>
+              Create your first bounty
             </a>
           </div>
         </div>
@@ -57,7 +56,7 @@ export function Hero() {
                 appIcon="stripe"
                 appName="Stripe"
                 title="Payment Authorized"
-                message="$500 charged and held in escrow until completion"
+                message="$500 charged and held until completion"
                 time="now"
                 delay={400}
               />
