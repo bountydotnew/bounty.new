@@ -236,7 +236,7 @@ export default function BountyDetailPage({
 
   // Cancellation request logic for funded bounties
   const isFunded = paymentStatus === 'held';
-  const canDelete = isCreator && !isFunded;
+  const isCancelled = paymentStatus === 'refunded';
   const canRequestCancellation = isCreator && isFunded;
 
   const [showCancellationDialog, setShowCancellationDialog] = useState(false);
@@ -245,10 +245,16 @@ export default function BountyDetailPage({
   // Check if there's already a pending cancellation request
   const cancellationStatusQuery = useQuery({
     ...trpc.bounties.getCancellationStatus.queryOptions({ bountyId: id }),
-    enabled: canRequestCancellation,
+    enabled: isCreator && isFunded,
   });
 
   const hasPendingCancellation = cancellationStatusQuery.data?.hasPendingRequest ?? false;
+
+  // Owner can delete if:
+  // 1. Bounty is not funded, OR
+  // 2. Bounty has a pending cancellation request, OR
+  // 3. Bounty is already cancelled/refunded
+  const canDelete = isCreator && (!isFunded || hasPendingCancellation || isCancelled);
 
   const requestCancellationMutation = useMutation({
     mutationFn: async (input: { bountyId: string; reason?: string }) => {
@@ -527,20 +533,16 @@ export default function BountyDetailPage({
                     onUpvote={handleUpvote}
                     voteCount={votes.data?.count ?? 0}
                     actions={
-                      canRequestCancellation
+                      // Only show cancellation option if funded and no pending request
+                      canRequestCancellation && !hasPendingCancellation && !isCancelled
                         ? [
                             {
                               key: 'request-cancellation',
-                              label: hasPendingCancellation ? 'Cancellation pending' : 'Request cancellation',
+                              label: 'Request cancellation',
                               onSelect: handleRequestCancellation,
                               icon: <X className="h-3.5 w-3.5" />,
-                              disabled: hasPendingCancellation || cancellationStatusQuery.isLoading,
-                              className: hasPendingCancellation
-                                ? 'text-yellow-500/50 cursor-not-allowed opacity-50'
-                                : 'text-yellow-500 hover:bg-yellow-500/10 focus:bg-yellow-500/10',
-                              tooltip: hasPendingCancellation
-                                ? 'A cancellation request is already pending for this bounty.'
-                                : undefined,
+                              disabled: cancellationStatusQuery.isLoading,
+                              className: 'text-yellow-500 hover:bg-yellow-500/10 focus:bg-yellow-500/10',
                             } satisfies ActionItem,
                           ]
                         : undefined

@@ -65,12 +65,10 @@ export const BountyCard = memo(function BountyCard({
     ? bounty.creator.id === session.user.id
     : false;
 
-  // Determine funding status - simple funded or unfunded
+  // Determine funding and cancellation status
   const isFunded = bounty.paymentStatus === 'held';
-
-  // Owner can see delete option, but can only actually delete if not funded
-  const canDelete = isOwner && !isFunded;
-  const showDeleteOption = isOwner;
+  const isCancelled = bounty.status === 'cancelled';
+  const isRefunded = bounty.paymentStatus === 'refunded';
 
   const canPin = session?.user?.id
     ? bounty.creator.id === session.user.id
@@ -166,6 +164,41 @@ export const BountyCard = memo(function BountyCard({
   });
 
   const hasPendingCancellation = cancellationStatusQuery.data?.hasPendingRequest ?? false;
+
+  // Owner can delete if:
+  // 1. Bounty is not funded, OR
+  // 2. Bounty has a pending cancellation request (safe to delete), OR
+  // 3. Bounty is already cancelled/refunded
+  const canDelete = isOwner && (!isFunded || hasPendingCancellation || isCancelled || isRefunded);
+  const showDeleteOption = isOwner;
+
+  // Determine badge status
+  const getBadgeInfo = () => {
+    if (isCancelled || isRefunded) {
+      return {
+        label: 'Cancelled',
+        className: 'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#FF000015] text-[#FF6B6B] border border-[#FF000020]',
+      };
+    }
+    if (hasPendingCancellation) {
+      return {
+        label: 'Cancelling',
+        className: 'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#FFB30015] text-[#FFB300] border border-[#FFB30020]',
+      };
+    }
+    if (isFunded) {
+      return {
+        label: 'Funded',
+        className: 'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#6CFF0015] text-[#6CFF0099] border border-[#6CFF0020]',
+      };
+    }
+    return {
+      label: 'Unfunded',
+      className: 'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#FFFFFF08] text-[#FFFFFF66] border border-[#FFFFFF12]',
+    };
+  };
+
+  const badgeInfo = getBadgeInfo();
 
   const requestCancellationMutation = useMutation({
     mutationFn: async (input: { bountyId: string; reason?: string }) => {
@@ -269,12 +302,8 @@ export const BountyCard = memo(function BountyCard({
               <span className="text-[13px] font-semibold leading-[150%] text-[#6CFF0099]">
                 {formattedAmount}
               </span>
-              <span
-                className={isFunded
-                  ? 'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#6CFF0015] text-[#6CFF0099] border border-[#6CFF0020]'
-                  : 'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#FFFFFF08] text-[#FFFFFF66] border border-[#FFFFFF12]'}
-              >
-                {isFunded ? 'Funded' : 'Unfunded'}
+              <span className={badgeInfo.className}>
+                {badgeInfo.label}
               </span>
             </div>
           </div>
@@ -354,7 +383,7 @@ export const BountyCard = memo(function BountyCard({
               )}
             </ContextMenuItem>
           )}
-          {/* Show delete for unfunded bounties */}
+          {/* Show delete for deletable bounties (unfunded, pending cancellation, or cancelled) */}
           {canDelete && (
             <ContextMenuItem
               className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
@@ -364,33 +393,15 @@ export const BountyCard = memo(function BountyCard({
               Delete bounty
             </ContextMenuItem>
           )}
-          {/* Show request cancellation for funded bounties */}
-          {canRequestCancellation && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <ContextMenuItem
-                      className={
-                        hasPendingCancellation
-                          ? 'cursor-not-allowed text-yellow-500/50 opacity-50'
-                          : 'cursor-pointer text-yellow-500 focus:text-yellow-500 focus:bg-yellow-500/10'
-                      }
-                      onClick={hasPendingCancellation ? undefined : openCancellationDialog}
-                      disabled={hasPendingCancellation}
-                    >
-                      <XCircle className="mr-2 h-4 w-4" />
-                      {hasPendingCancellation ? 'Cancellation pending' : 'Request cancellation'}
-                    </ContextMenuItem>
-                  </div>
-                </TooltipTrigger>
-                {hasPendingCancellation && (
-                  <TooltipContent side="left" className="max-w-[200px] text-center">
-                    <p>A cancellation request is already pending for this bounty.</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
+          {/* Show request cancellation for funded bounties without pending request */}
+          {canRequestCancellation && !hasPendingCancellation && !isCancelled && !isRefunded && (
+            <ContextMenuItem
+              className="cursor-pointer text-yellow-500 focus:text-yellow-500 focus:bg-yellow-500/10"
+              onClick={openCancellationDialog}
+            >
+              <XCircle className="mr-2 h-4 w-4" />
+              Request cancellation
+            </ContextMenuItem>
           )}
         </ContextMenuContent>
       )}
