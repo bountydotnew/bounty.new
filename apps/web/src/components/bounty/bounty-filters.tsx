@@ -155,7 +155,7 @@ export function BountyFilters() {
                 onClick={handleClearCreator}
                 size="sm"
                 type="button"
-                variant="ghost"
+                variant="link"
               >
                 <X className="h-3 w-3 text-[#666]" />
               </Button>
