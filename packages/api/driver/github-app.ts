@@ -15,12 +15,62 @@ function formatCurrency(amount: number, currency = 'USD'): string {
 }
 
 /**
+ * Decode base64-encoded private key
+ */
+function decodePrivateKey(privateKey: string): string {
+  const hasBeginMarker = privateKey.includes('BEGIN');
+  const hasPrivateKeyMarker = privateKey.includes('PRIVATE KEY');
+  
+  // Check if already PEM format (shouldn't be, but handle gracefully)
+  if (hasBeginMarker && hasPrivateKeyMarker) {
+    throw new Error(
+      'Private key appears to be in PEM format. Please base64 encode it first. ' +
+      'Run: cat private-key.pem | base64'
+    );
+  }
+
+  try {
+    const decoded = Buffer.from(privateKey, 'base64').toString('utf-8');
+    
+    // Validate it's actually a PEM key after decoding
+    const hasBegin = decoded.includes('BEGIN');
+    const hasPrivateKey = decoded.includes('PRIVATE KEY');
+    const isValidPem = hasBegin && hasPrivateKey;
+    if (!isValidPem) {
+      throw new Error(
+        'Invalid private key format. Expected base64-encoded PEM key. ' +
+        'If you have a PEM file, encode it with: cat private-key.pem | base64'
+      );
+    }
+    
+    return decoded;
+  } catch (error) {
+    const isInvalidFormatError = error instanceof Error && error.message.includes('Invalid private key');
+    if (isInvalidFormatError) {
+      throw error;
+    }
+    const errorMessage = error instanceof Error ? error.message : 'Invalid base64 format';
+    throw new Error(
+      `Failed to decode private key: ${errorMessage}. ` +
+      'Ensure GITHUB_APP_PRIVATE_KEY is base64-encoded.'
+    );
+  }
+}
+
+/**
  * Convert PKCS#1 private key to PKCS#8 format
  * GitHub provides PKCS#1 but @octokit/auth-app requires PKCS#8
  */
 function convertPkcs1ToPkcs8(pkcs1Key: string): string {
-  const keyObject = crypto.createPrivateKey(pkcs1Key);
-  return keyObject.export({ type: 'pkcs8', format: 'pem' }).toString();
+  try {
+    const keyObject = crypto.createPrivateKey(pkcs1Key);
+    return keyObject.export({ type: 'pkcs8', format: 'pem' }).toString();
+  } catch (error) {
+    throw new Error(
+      `Failed to parse private key: ${error instanceof Error ? error.message : 'Unknown error'}. ` +
+      'Ensure GITHUB_APP_PRIVATE_KEY is a valid base64-encoded PEM key.'
+    );
+  }
 }
 
 export function createUnfundedBountyComment(
@@ -463,11 +513,8 @@ export function getGithubAppManager(): GithubAppManager {
       throw new Error('Missing GitHub App configuration: GITHUB_WEBHOOK_SECRET is required');
     }
 
-    // Convert private key from base64 if stored that way
-    const isPemFormat = privateKey.includes('BEGIN RSA PRIVATE KEY');
-    const decodedPrivateKey = isPemFormat
-      ? privateKey
-      : Buffer.from(privateKey, 'base64').toString('utf-8');
+    // Decode base64-encoded private key
+    const decodedPrivateKey = decodePrivateKey(privateKey);
 
     githubAppManager = new GithubAppManager({
       appId,

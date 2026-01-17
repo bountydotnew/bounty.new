@@ -1,6 +1,5 @@
 'use client';
 
-import { authClient } from '@bounty/auth/client';
 import { track } from '@databuddy/sdk';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, useRef, useEffect } from 'react';
@@ -18,6 +17,7 @@ import {
 // Constants and types
 import { PAGINATION_DEFAULTS, PAGINATION_LIMITS } from '@/constants';
 import { trpc } from '@/utils/trpc';
+import { useSession } from '@/context/session-context';
 track('screen_view', { screen_name: 'dashboard' });
 
 export default function Dashboard() {
@@ -66,18 +66,18 @@ export default function Dashboard() {
     []
   );
 
-  const { data: session, isPending: isSessionPending } =
-    authClient.useSession();
-  const isAuthenticated = !!session?.user;
+  const { isAuthenticated, isPending: isSessionPending } = useSession();
 
-  // Queries - only run when authenticated
+  // Queries - only run when authenticated, with staleTime to prevent refetching
   const bounties = useQuery({
     ...bountiesQuery,
     enabled: isAuthenticated && !isSessionPending,
+    staleTime: 2 * 60 * 1000, // 2 minutes - bounties can change frequently
   });
   const myBounties = useQuery({
     ...myBountiesQuery,
     enabled: isAuthenticated && !isSessionPending,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
   const [importOpen, setImportOpen] = useState(false);
 

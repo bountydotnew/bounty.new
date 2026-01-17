@@ -10,7 +10,17 @@ import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query';
 import { showAppErrorToast } from '@/context/toast';
 import { ReasonCode } from '@bounty/types/auth';
 
-export const queryClient = new QueryClient();
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Default staleTime for all queries (5 minutes)
+      // This prevents excessive refetching on component mounts
+      staleTime: 5 * 60 * 1000,
+      // Better Auth session queries should be cached longer
+      // We'll override this specifically for session queries in the session context
+    },
+  },
+});
 
 const toastDeduper = new Map<string, number>();
 const CLEANUP_INTERVAL = 60_000; // 1 minute

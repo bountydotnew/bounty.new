@@ -1,9 +1,9 @@
 'use client';
 
-import { authClient } from '@bounty/auth/client';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { AuthGuardProps } from '@bounty/types';
+import { useSession } from '@/context/session-context';
 
 /**
  * AuthGuard - Protects client-side routes by checking authentication
@@ -26,9 +26,8 @@ export function AuthGuard({
 }: AuthGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { data: session, isPending } = authClient.useSession();
+  const { isAuthenticated, isPending } = useSession();
   const [hasRedirected, setHasRedirected] = useState(false);
-  const isAuthenticated = !!session?.user;
 
   useEffect(() => {
     // Only redirect client-side to avoid hydration issues

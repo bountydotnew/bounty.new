@@ -7,22 +7,23 @@ import type { NotificationItem } from '@/types/notifications';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { useRealtime } from '@upstash/realtime/client';
 import type { RealtimeEvents, RealtimeSchema } from '@bounty/types/realtime';
-import { authClient } from '@bounty/auth/client';
 import { showBountyCommentToast } from '@bounty/ui/components/toast/bounty-comment-toast';
+import { useSession } from '@/context/session-context';
 
 export const useNotifications = () => {
-  const { data: session, isPending } = authClient.useSession();
-  const isAuthenticated = !!session?.user;
+  const { isAuthenticated, isPending } = useSession();
   const previousNotificationIdsRef = useRef<Set<string>>(new Set());
 
   const notificationsQuery = useQuery({
     ...trpc.notifications.getAll.queryOptions({ limit: 50 }),
     enabled: isAuthenticated && !isPending,
+    staleTime: 1 * 60 * 1000, // 1 minute - notifications can change frequently
   });
 
   const unreadCountQuery = useQuery({
     ...trpc.notifications.getUnreadCount.queryOptions(),
     enabled: isAuthenticated && !isPending,
+    staleTime: 1 * 60 * 1000, // 1 minute
   });
   const unreadCount = Number(unreadCountQuery.data ?? 0);
 
