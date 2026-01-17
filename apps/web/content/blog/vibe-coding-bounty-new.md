@@ -2,25 +2,25 @@
 
 A contributor opened a PR to the Zettlr project adding RTL support. +16,555 lines. −1,510 lines. When the maintainer asked them to explain the changes, they couldn't. When asked for incremental, reviewable commits, the response was: "just pick what you want from the pile."
 
-Months of back-and-forth followed. The maintainer, Hendrik Erz, eventually wrote a 3,000-word post titled "Vibe Coding: The Final Form of Hyper-Individualism." He wasn't being dramatic. He was describing what it feels like to receive contributions from someone who doesn't understand their own code.
+Months of back-and-forth followed. The maintainer, Hendrik Erz, eventually wrote a 3,000-word post titled ["Vibe Coding: The Final Form of Hyper-Individualism."](https://www.hendrik-erz.de/post/vibe-coding-the-final-form-of-hyper-individualism) He wasn't being dramatic. He was describing what it feels like to receive contributions from someone who doesn't understand their own code.
 
 This pattern is now everywhere. And it has nothing to do with AI being good or bad at coding. The problem is that the incentive structure of open source contributions was already fragile, and vibe coding shattered it.
 
 ## What the Numbers Actually Show
 
-An analysis of 40.3 million GitHub PRs found AI agents involved in 14.9% of pull requests by late 2025. That number alone isn't the problem. The problem is what happens next: nearly 70% of AI-authored review feedback goes unresolved.
+[An analysis of 40.3 million GitHub PRs](https://www.gitclear.com/ai_assistant_code_quality_2025) found AI agents involved in 14.9% of pull requests by late 2025. That number alone isn't the problem. The problem is what happens next: nearly 70% of AI-authored review feedback goes unresolved.
 
 That's not contribution. That's noise with a good commit message.
 
-Tldraw, a popular drawing library, paused external contributions entirely in January 2026. The maintainers cited vibe-coded PRs as a primary factor. Their reasoning was simple: reading code is already the hardest part of maintenance. Reading code that someone generated without understanding it—and can't explain or modify—isn't reviewing. It's archaeology.
+Tldraw, a popular drawing library, [paused external contributions entirely](https://tldraw.substack.com/p/were-pausing-open-contributions) in January 2026. The maintainers cited vibe-coded PRs as a primary factor. Their reasoning was simple: reading code is already the hardest part of maintenance. Reading code that someone generated without understanding it—and can't explain or modify—isn't reviewing. It's archaeology.
 
 ## The Curl and Django Response
 
-Daniel Stenberg, creator of Curl, implemented an outright ban on AI-generated security reports after none of the AI-assisted reports over several years found a real vulnerability. Zero percent hit rate. Django followed with their own policy: unverified AI output gets closed without response.
+Daniel Stenberg, creator of Curl, [implemented an outright ban](https://daniel.haxx.se/blog/2024/01/02/the-i-in-llm-stands-for-intelligence/) on AI-generated security reports after none of the AI-assisted reports over several years found a real vulnerability. Zero percent hit rate. Django followed with [their own policy](https://www.djangoproject.com/weblog/2024/feb/28/ai-generated-content-policy/): unverified AI output gets closed without response.
 
 These aren't anti-AI stances. They're self-preservation.
 
-The st0012.dev maintainer proposed a model that makes the division clearer: PRs and discussions should remain human-to-human. AI agents stay on the contributor's side—helping them write and test—but never speaking directly to maintainers. The triad is maintainer ↔ contributor ↔ contributor's agent, not maintainer ↔ agent.
+The [st0012.dev maintainer proposed a model](https://st0012.dev/from-human-to-human) that makes the division clearer: PRs and discussions should remain human-to-human. AI agents stay on the contributor's side—helping them write and test—but never speaking directly to maintainers. The triad is maintainer ↔ contributor ↔ contributor's agent, not maintainer ↔ agent.
 
 ## Why Volunteer-Based Contributions Stopped Working
 
@@ -28,9 +28,9 @@ The original open source model assumed contributors had skin in the game. Maybe 
 
 Vibe coding broke that assumption. Now you can generate a PR in twenty minutes without reading the codebase. The contributor gets the dopamine hit of "contributing." The maintainer inherits debugging, architectural debt, security holes, and the time cost of explaining why the approach won't work.
 
-A 2025 survey found a large fraction of maintainers had considered quitting. Work hours exceeded anything officially acknowledged. Funding gaps remained chronic. Entitlement from users who'd never contributed kept growing.
+[A 2025 survey](https://tidelift.com/open-source-maintainer-survey) found a large fraction of maintainers had considered quitting. Work hours exceeded anything officially acknowledged. Funding gaps remained chronic. Entitlement from users who'd never contributed kept growing.
 
-Hector Martin resigned as Asahi Linux project lead citing burnout, demanding users, and interpersonal abuse. That was *before* the vibe-coded PR flood became routine.
+Hector Martin [resigned as Asahi Linux project lead](https://social.treehouse.systems/@marcan/113669626190764058) citing burnout, demanding users, and interpersonal abuse. That was *before* the vibe-coded PR flood became routine.
 
 The contribution model was already straining. Vibe coding didn't cause the break, but it accelerated it.
 
