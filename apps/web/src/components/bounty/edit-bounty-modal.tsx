@@ -83,7 +83,7 @@ export function EditBountyModal({
   }, [bountyQuery.data, open, reset]);
 
   const updateBounty = useMutation({
-    mutationFn: async (input: CreateBountyForm & { id: string }) => {
+    mutationFn: async (input: Partial<CreateBountyForm> & { id: string }) => {
       return await trpcClient.bounties.updateBounty.mutate(input);
     },
     onSuccess: () => {
