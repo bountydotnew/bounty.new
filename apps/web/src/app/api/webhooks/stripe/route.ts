@@ -12,7 +12,7 @@ import {
 } from '@bounty/api/driver/github-app';
 import { count } from 'drizzle-orm';
 import { FROM_ADDRESSES, sendEmail, BountyCancellationConfirm } from '@bounty/email';
-import { sendBountyCreatedWebhook } from '@bounty/api/lib/use-discord-webhook';
+import { sendBountyCreatedWebhook } from '@bounty/api/src/lib/use-discord-webhook';
 
 /**
  * Sends Discord webhook notification when a bounty becomes funded
