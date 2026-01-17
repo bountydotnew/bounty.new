@@ -24,3 +24,4 @@ docs/STRIPE_WEBHOOK_SETUP.md
 /_backup
 /.claude
 /docs
+*.pem
