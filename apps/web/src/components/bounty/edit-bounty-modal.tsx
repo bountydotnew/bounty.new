@@ -70,7 +70,7 @@ export function EditBountyModal({
         title: bounty.title,
         description: bounty.description,
         // Use actual values but mark as readonly in UI - needed for schema validation
-        amount: bounty.amount,
+        amount: String(bounty.amount),
         currency: bounty.currency || 'USD',
         deadline: bounty.deadline
           ? new Date(bounty.deadline).toISOString().slice(0, 16)
