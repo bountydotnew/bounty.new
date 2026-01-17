@@ -12,8 +12,8 @@ import {
   ContextMenuTrigger,
 } from '@bounty/ui/components/context-menu';
 import { addNavigationContext } from '@bounty/ui/hooks/use-navigation-context';
-import { authClient } from '@bounty/auth/client';
 import { formatDistanceToNow } from 'date-fns';
+import { useSession } from '@/context/session-context';
 import { Pin, PinOff, Trash2, XCircle } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { memo, useState } from 'react';
@@ -58,7 +58,7 @@ export const BountyCard = memo(function BountyCard({
 }: BountyCardProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { data: session } = authClient.useSession();
+  const { session } = useSession();
   const queryClient = useQueryClient();
 
   const isOwner = session?.user?.id
@@ -321,15 +321,15 @@ export const BountyCard = memo(function BountyCard({
           {/* Bottom row: Stats + Timestamp */}
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 min-w-0">
             <div className="flex flex-wrap items-center gap-[6px] sm:gap-[10px] min-w-0 flex-1">
-              {/* Comments */}
-              <div className="flex h-fit items-center gap-[5px] px-[3px] shrink-0">
+              {/* Comments - commented out */}
+              {/* <div className="flex h-fit items-center gap-[5px] px-[3px] shrink-0">
                 <div className="flex h-fit items-center opacity-30">
                   <CommentsIcon className="h-4 w-4" />
                 </div>
                 <span className="text-[11px] sm:text-[13px] font-normal leading-[150%] text-[#FFFFFF99] whitespace-nowrap">
                   {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
                 </span>
-              </div>
+              </div> */}
 
               {/* Submissions */}
               <div className="flex h-fit items-center gap-[5px] px-[3px] shrink-0">

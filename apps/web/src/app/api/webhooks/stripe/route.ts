@@ -12,6 +12,76 @@ import {
 } from '@bounty/api/driver/github-app';
 import { count } from 'drizzle-orm';
 import { FROM_ADDRESSES, sendEmail, BountyCancellationConfirm } from '@bounty/email';
+import { sendBountyCreatedWebhook } from '@bounty/api/lib/use-discord-webhook';
+
+/**
+ * Sends Discord webhook notification when a bounty becomes funded
+ */
+async function sendFundedBountyWebhook(bountyId: string) {
+  const webhookUrl = env.BOUNTY_FUNDED_WEBHOOK_URL || env.BOUNTY_FEED_WEBHOOK_URL;
+  if (!webhookUrl) {
+    return;
+  }
+
+  try {
+    // Fetch bounty and creator info
+    const [bountyRecord] = await db
+      .select({
+        id: bounty.id,
+        title: bounty.title,
+        description: bounty.description,
+        amount: bounty.amount,
+        currency: bounty.currency,
+        createdById: bounty.createdById,
+        repositoryUrl: bounty.repositoryUrl,
+        issueUrl: bounty.issueUrl,
+        tags: bounty.tags,
+        deadline: bounty.deadline,
+      })
+      .from(bounty)
+      .where(eq(bounty.id, bountyId))
+      .limit(1);
+
+    if (!bountyRecord) {
+      return;
+    }
+
+    const [creator] = await db
+      .select({
+        name: user.name,
+        handle: user.handle,
+      })
+      .from(user)
+      .where(eq(user.id, bountyRecord.createdById))
+      .limit(1);
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
+    // Fire-and-forget: don't await, don't let webhook failures affect payment processing
+    sendBountyCreatedWebhook({
+      webhookUrl,
+      bounty: {
+        id: bountyRecord.id,
+        title: bountyRecord.title,
+        description: bountyRecord.description,
+        amount: bountyRecord.amount,
+        currency: bountyRecord.currency,
+        creatorName: creator?.name ?? null,
+        creatorHandle: creator?.handle ?? null,
+        bountyUrl: `${baseUrl}/bounty/${bountyRecord.id}`,
+        repositoryUrl: bountyRecord.repositoryUrl ?? null,
+        issueUrl: bountyRecord.issueUrl ?? null,
+        tags: (bountyRecord.tags as string[] | null) ?? null,
+        deadline: bountyRecord.deadline ?? null,
+      },
+    }).catch((error) => {
+      // Silently log webhook failures
+      console.error('Failed to send funded bounty webhook:', error);
+    });
+  } catch (error) {
+    console.error('Error sending funded bounty webhook:', error);
+  }
+}
 
 /**
  * Updates the GitHub bot comment when a bounty becomes funded
@@ -244,10 +314,11 @@ export async function POST(request: Request) {
             .set(updateData)
             .where(eq(bounty.id, bountyId));
 
-          // Update GitHub bot comments if bounty is now funded
+          // Update GitHub bot comments and send webhook if bounty is now funded
           if (updateData.paymentStatus === 'held') {
             await updateGitHubBotCommentOnFunding(bountyId);
             await updateSubmissionReceivedCommentsOnFunding(bountyId);
+            await sendFundedBountyWebhook(bountyId);
           }
 
           console.log(`[Stripe Webhook] Successfully updated bounty ${bountyId}`);
@@ -313,9 +384,10 @@ export async function POST(request: Request) {
             console.log(`[Stripe Webhook] Created transaction record for bounty ${bountyId}`);
           }
 
-          // Update GitHub bot comments now that bounty is funded
+          // Update GitHub bot comments and send webhook now that bounty is funded
           await updateGitHubBotCommentOnFunding(bountyId);
           await updateSubmissionReceivedCommentsOnFunding(bountyId);
+          await sendFundedBountyWebhook(bountyId);
 
           console.log(`[Stripe Webhook] Successfully updated bounty ${bountyId} to held/open`);
         } else {

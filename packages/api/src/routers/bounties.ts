@@ -26,6 +26,7 @@ import {
 import { stripeClient } from '@bounty/stripe';
 import {
   and,
+  asc,
   count,
   desc,
   eq,
@@ -49,6 +50,8 @@ import {
   markOperationPerformed,
   PaymentLockError,
 } from '../lib/payment-lock';
+import { sendBountyCreatedWebhook } from '../lib/use-discord-webhook';
+import { env } from '@bounty/env/server';
 import { stripeCircuitBreaker } from '../lib/circuit-breaker';
 import {
   protectedProcedure,
@@ -210,7 +213,7 @@ const getBountiesSchema = z.object({
     .optional(),
   search: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  creatorId: z.string().uuid().optional(),
+  creatorId: z.string().optional(), // Changed from .uuid() to accept any string ID
   sortBy: z
     .enum(['created_at', 'amount', 'deadline', 'title'])
     .default('created_at'),
@@ -472,6 +475,45 @@ export const bountiesRouter = router({
         // Invalidate caches (async)
         await invalidateBountyCaches();
 
+        // Send Discord webhook notification for unfunded bounty (non-blocking, fire-and-forget)
+        // At creation time, bounties are always unfunded (paymentStatus: 'pending')
+        const webhookUrl = env.BOUNTY_UNFUNDED_WEBHOOK_URL || env.BOUNTY_FEED_WEBHOOK_URL;
+        if (webhookUrl) {
+          // Fetch creator info for webhook
+          const creator = await db
+            .select({
+              name: user.name,
+              handle: user.handle,
+            })
+            .from(user)
+            .where(eq(user.id, ctx.session.user.id))
+            .limit(1);
+
+          const creatorData = creator[0];
+
+          // Fire-and-forget: don't await, don't let webhook failures affect bounty creation
+          sendBountyCreatedWebhook({
+            webhookUrl,
+            bounty: {
+              id: newBounty.id,
+              title: newBounty.title,
+              description: newBounty.description,
+              amount: normalizedAmount,
+              currency: input.currency,
+              creatorName: creatorData?.name ?? null,
+              creatorHandle: creatorData?.handle ?? null,
+              bountyUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/bounty/${newBounty.id}`,
+              repositoryUrl: repositoryUrl ?? null,
+              issueUrl: issueUrl ?? null,
+              tags: cleanedTags ?? null,
+              deadline: deadline ?? null,
+            },
+          }).catch((error) => {
+            // Silently log webhook failures - don't affect bounty creation
+            console.error('Failed to send unfunded bounty webhook:', error);
+          });
+        }
+
         return {
           success: true,
           data: newBounty,
@@ -550,9 +592,17 @@ export const bountiesRouter = router({
           .innerJoin(user, eq(bounty.createdById, user.id))
           .where(conditions.length > 0 ? and(...conditions) : undefined)
           .orderBy(
-            input.sortOrder === 'asc'
-              ? bounty.createdAt
-              : desc(bounty.createdAt)
+            input.sortBy === 'amount'
+              ? input.sortOrder === 'asc'
+                ? asc(bounty.amount)
+                : desc(bounty.amount)
+              : input.sortBy === 'created_at'
+                ? input.sortOrder === 'asc'
+                  ? asc(bounty.createdAt)
+                  : desc(bounty.createdAt)
+                : input.sortOrder === 'asc'
+                  ? asc(bounty.createdAt)
+                  : desc(bounty.createdAt)
           )
           .limit(input.limit)
           .offset(offset);

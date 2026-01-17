@@ -178,3 +178,89 @@ export async function sendInfoWebhook({
     embed,
   });
 }
+
+interface SendBountyCreatedWebhookOptions {
+  webhookUrl: string;
+  bounty: {
+    id: string;
+    title: string;
+    description: string;
+    amount: string;
+    currency: string;
+    creatorName: string | null;
+    creatorHandle: string | null;
+    bountyUrl: string;
+    repositoryUrl?: string | null;
+    issueUrl?: string | null;
+    tags?: string[] | null;
+    deadline?: Date | null;
+  };
+}
+
+export async function sendBountyCreatedWebhook({
+  webhookUrl,
+  bounty,
+}: SendBountyCreatedWebhookOptions): Promise<boolean> {
+  const fields: DiscordEmbedField[] = [
+    {
+      name: 'Amount',
+      value: `${bounty.currency === 'USD' ? '$' : ''}${bounty.amount} ${bounty.currency}`,
+      inline: true,
+    },
+    {
+      name: 'Creator',
+      value: bounty.creatorName || bounty.creatorHandle || 'Unknown',
+      inline: true,
+    },
+  ];
+
+  if (bounty.repositoryUrl) {
+    fields.push({
+      name: 'Repository',
+      value: `[View Repo](${bounty.repositoryUrl})`,
+      inline: true,
+    });
+  }
+
+  if (bounty.issueUrl) {
+    fields.push({
+      name: 'GitHub Issue',
+      value: `[View Issue](${bounty.issueUrl})`,
+      inline: true,
+    });
+  }
+
+  if (bounty.deadline) {
+    fields.push({
+      name: 'Deadline',
+      value: new Date(bounty.deadline).toLocaleDateString(),
+      inline: true,
+    });
+  }
+
+  if (bounty.tags && bounty.tags.length > 0) {
+    fields.push({
+      name: 'Tags',
+      value: bounty.tags.slice(0, 5).join(', '),
+      inline: false,
+    });
+  }
+
+  const embed: Omit<DiscordEmbed, 'timestamp'> = {
+    title: '💰 New Bounty Created',
+    description: bounty.description.length > 500 
+      ? `${bounty.description.slice(0, 500)}...` 
+      : bounty.description,
+    color: 0x00_ff_88, // Teal/green color
+    fields,
+    footer: {
+      text: 'bounty.new',
+    },
+  };
+
+  return sendDiscordWebhook({
+    webhookUrl,
+    content: `**[${bounty.title}](${bounty.bountyUrl})**`,
+    embed,
+  });
+}

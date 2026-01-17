@@ -1,6 +1,5 @@
 'use client';
 
-import { authClient } from '@bounty/auth/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { memo, useMemo } from 'react';
 import { toast } from 'sonner';
@@ -9,6 +8,7 @@ import { BountySkeleton } from '@/components/dashboard/skeletons/bounty-skeleton
 import { LOADING_SKELETON_COUNTS } from '@/constants';
 import type { Bounty } from '@/types/dashboard';
 import { trpc, trpcClient } from '@/utils/trpc';
+import { useSession } from '@/context/session-context';
 
 interface BountiesFeedProps {
   title?: string;
@@ -32,7 +32,7 @@ export const BountiesFeed = memo(function BountiesFeed({
 }: BountiesFeedProps) {
   const isGrid = layout === 'grid';
   const queryClient = useQueryClient();
-  const { data: session } = authClient.useSession();
+  const { session } = useSession();
 
   const deleteBounty = useMutation({
     mutationFn: async (input: { id: string }) => {
