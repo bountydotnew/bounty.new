@@ -128,7 +128,11 @@ function PRCommentsPage({ onShowNotifications }: { onShowNotifications: () => vo
   const [botReplied, setBotReplied] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const [randomDev] = useState(() => devNames[Math.floor(Math.random() * devNames.length)]);
+  // Use first dev as default to avoid hydration mismatch, then randomize after mount
+  const [randomDev, setRandomDev] = useState(devNames[0]);
+  useEffect(() => {
+    setRandomDev(devNames[Math.floor(Math.random() * devNames.length)]);
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {

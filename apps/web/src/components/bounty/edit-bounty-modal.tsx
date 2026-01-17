@@ -69,8 +69,9 @@ export function EditBountyModal({
       reset({
         title: bounty.title,
         description: bounty.description,
-        amount: '', // Price cannot be edited
-        currency: 'USD', // Price cannot be edited
+        // Use actual values but mark as readonly in UI - needed for schema validation
+        amount: bounty.amount,
+        currency: bounty.currency || 'USD',
         deadline: bounty.deadline
           ? new Date(bounty.deadline).toISOString().slice(0, 16)
           : '',
@@ -110,8 +111,8 @@ export function EditBountyModal({
 
   const onSubmit = handleSubmit((data: CreateBountyForm) => {
     const formattedData = formatFormData.createBounty(data);
-    // Remove amount and currency - prices cannot be changed
-    const { ...updateData } = formattedData;
+    // Remove amount and currency - prices cannot be changed after creation
+    const { amount: _amount, currency: _currency, ...updateData } = formattedData;
     updateBounty.mutate({ id: bountyId, ...updateData });
   });
 
@@ -260,26 +261,20 @@ export function EditBountyModal({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="amount">Amount *</Label>
+                <Label htmlFor="amount">Amount (cannot be changed)</Label>
                 <Controller
                   control={control}
                   name="amount"
                   render={({ field }) => (
                     <Input
                       {...field}
-                      className={
-                        errors.amount ? 'border-red-500' : 'border-border'
-                      }
+                      className="border-border bg-muted cursor-not-allowed opacity-60"
                       id="amount"
-                      placeholder="100.00"
+                      disabled
+                      readOnly
                     />
                   )}
                 />
-                {errors.amount && (
-                  <p className="mt-1 text-red-500 text-sm">
-                    {errors.amount.message}
-                  </p>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -290,8 +285,9 @@ export function EditBountyModal({
                   render={({ field }) => (
                     <select
                       {...field}
-                      className={`w-full rounded-md border px-3 py-2 ${errors.currency ? 'border-red-500' : 'border-border'}`}
+                      className="w-full rounded-md border px-3 py-2 border-border bg-muted cursor-not-allowed opacity-60"
                       id="currency"
+                      disabled
                     >
                       {currencyOptions.map((option) => (
                         <option key={option.value} value={option.value}>
@@ -301,11 +297,6 @@ export function EditBountyModal({
                     </select>
                   )}
                 />
-                {errors.currency && (
-                  <p className="mt-1 text-red-500 text-sm">
-                    {errors.currency.message}
-                  </p>
-                )}
               </div>
             </div>
 

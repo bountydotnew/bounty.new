@@ -20,6 +20,16 @@ export async function GET(request: NextRequest) {
 
   // Link installation to current user if installationId is provided
   if (installationId) {
+    // Validate installationId is numeric
+    const parsedInstallationId = Number(installationId);
+    if (!Number.isFinite(parsedInstallationId) || parsedInstallationId <= 0) {
+      console.error(`[Installation Callback] Invalid installation_id: ${installationId}`);
+      return NextResponse.json(
+        { error: 'Invalid installation_id parameter' },
+        { status: 400 }
+      );
+    }
+
     try {
       // Get the user's GitHub account
       const [githubAccount] = await db
@@ -37,7 +47,7 @@ export async function GET(request: NextRequest) {
         const githubApp = getGithubAppManager();
         
         // Fetch installation details from GitHub to verify ownership
-        const installation = await githubApp.getInstallation(Number(installationId));
+        const installation = await githubApp.getInstallation(parsedInstallationId);
         
         // Verify that the installation account matches the user's GitHub account
         // For user installations, account.login should match the user's GitHub username
@@ -46,7 +56,7 @@ export async function GET(request: NextRequest) {
         const [existingInstallation] = await db
           .select()
           .from(githubInstallation)
-          .where(eq(githubInstallation.githubInstallationId, Number(installationId)))
+          .where(eq(githubInstallation.githubInstallationId, parsedInstallationId))
           .limit(1);
 
         // Only link if:
@@ -55,10 +65,10 @@ export async function GET(request: NextRequest) {
         // 3. Installation exists and is already linked to this user (update metadata)
         // We don't re-link installations that belong to other users
         if (!existingInstallation || !existingInstallation.githubAccountId || existingInstallation.githubAccountId === githubAccount.id) {
-          const repos = await githubApp.getInstallationRepositories(Number(installationId));
+          const repos = await githubApp.getInstallationRepositories(parsedInstallationId);
 
           await db.insert(githubInstallation).values({
-            githubInstallationId: Number(installationId),
+            githubInstallationId: parsedInstallationId,
             githubAccountId: githubAccount.id,
             accountLogin: installation.account.login,
             accountType: installation.account.type,

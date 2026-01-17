@@ -10,10 +10,10 @@ import {
   TextDisplay,
   makeReacord,
 } from '@bounty/reacord';
-import { SlashCommandBuilder as Builder, Routes, REST } from 'discord.js';
+import { SlashCommandBuilder as Builder } from 'discord.js';
 import { Runtime } from 'effect';
-import { account } from '@bounty/db/src/schema/auth';
-import { eq, and } from 'drizzle-orm';
+import { account, oauthState } from '@bounty/db/src/schema/auth';
+import { eq, and, lt } from 'drizzle-orm';
 import { randomBytes } from 'node:crypto';
 import type { Client } from 'discord.js';
 
@@ -24,22 +24,12 @@ function generateStateToken(): string {
   return randomBytes(32).toString('hex');
 }
 
-/**
- * Store OAuth state in database (or use Redis in production)
- * For now, we'll use a simple in-memory store with expiration
- */
-const oauthStates = new Map<
-  string,
-  { discordId: string; expiresAt: number }
->();
-
-// Clean up expired states every 10 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [state, data] of oauthStates.entries()) {
-    if (data.expiresAt < now) {
-      oauthStates.delete(state);
-    }
+// Clean up expired OAuth states every 10 minutes
+setInterval(async () => {
+  try {
+    await db.delete(oauthState).where(lt(oauthState.expiresAt, new Date()));
+  } catch (error) {
+    console.error('Failed to clean up expired OAuth states:', error);
   }
 }, 10 * 60 * 1000);
 
@@ -91,10 +81,15 @@ export function setupLoginCommand(client: Client) {
         return;
       }
 
-      // Generate OAuth state token
+      // Generate OAuth state token and store in database
       const state = generateStateToken();
-      const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
-      oauthStates.set(state, { discordId, expiresAt });
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+      await db.insert(oauthState).values({
+        state,
+        provider: 'discord',
+        providerId: discordId,
+        expiresAt,
+      });
 
       // Create OAuth URL
       const redirectUri = `${env.BETTER_AUTH_URL}/api/discord/callback`;

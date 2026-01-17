@@ -214,6 +214,15 @@ async function handleCreate(
             ]}
             onSubmit={async (values, modalInteraction) => {
               try {
+                // SECURITY: Verify modal submitter matches original command invoker
+                if (modalInteraction.user.id !== interaction.user.id) {
+                  await modalInteraction.reply({
+                    content: '❌ You are not authorized to submit this form. Please use `/bounty create` yourself.',
+                    flags: MessageFlags.Ephemeral,
+                  });
+                  return;
+                }
+
                 const title = values.getTextInput('title') || '';
                 const description = values.getTextInput('description') || '';
                 const amount = values.getTextInput('amount') || '';

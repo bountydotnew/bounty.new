@@ -3068,7 +3068,7 @@ To process this request:
       }
     }),
 
-  // Process a cancellation request (staff only - TODO: add admin role check)
+  // Process a cancellation request (admin only)
   processCancellation: protectedProcedure
     .input(
       z.object({
@@ -3079,6 +3079,14 @@ To process this request:
     )
     .mutation(async ({ ctx, input }) => {
       try {
+        // Check if user has admin role
+        if (ctx.session.user.role !== 'admin') {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Only administrators can process cancellation requests',
+          });
+        }
+
         // Get the cancellation request
         const [request] = await db
           .select()
@@ -3236,6 +3244,14 @@ To process this request:
     )
     .mutation(async ({ ctx, input }) => {
       try {
+        // Check if user has admin role
+        if (ctx.session.user.role !== 'admin') {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Only administrators can mark bounties as refunded',
+          });
+        }
+
         // Get the bounty
         const [bountyRecord] = await db
           .select()
@@ -3247,14 +3263,6 @@ To process this request:
           throw new TRPCError({
             code: 'NOT_FOUND',
             message: 'Bounty not found',
-          });
-        }
-
-        // Only the creator can mark their bounty as refunded
-        if (bountyRecord.createdById !== ctx.session.user.id) {
-          throw new TRPCError({
-            code: 'FORBIDDEN',
-            message: 'Only the bounty creator can mark this bounty as refunded',
           });
         }
 
@@ -3322,11 +3330,19 @@ To process this request:
     }),
 
   // Sync refund status from Stripe - checks if a bounty has been refunded in Stripe
-  // and updates the database accordingly
+  // and updates the database accordingly (admin only)
   syncRefundStatusFromStripe: protectedProcedure
     .input(z.object({ bountyId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       try {
+        // Check if user has admin role
+        if (ctx.session.user.role !== 'admin') {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Only administrators can sync refund status from Stripe',
+          });
+        }
+
         const [bountyRecord] = await db
           .select({
             id: bounty.id,
@@ -3344,14 +3360,6 @@ To process this request:
           throw new TRPCError({
             code: 'NOT_FOUND',
             message: 'Bounty not found',
-          });
-        }
-
-        // Only the creator can sync their bounty
-        if (bountyRecord.createdById !== ctx.session.user.id) {
-          throw new TRPCError({
-            code: 'FORBIDDEN',
-            message: 'Only the bounty creator can sync refund status',
           });
         }
 

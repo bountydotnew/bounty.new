@@ -66,7 +66,8 @@ export const BountyCard = memo(function BountyCard({
     : false;
 
   // Determine funding and cancellation status
-  const isFunded = bounty.paymentStatus === 'held';
+  // Include 'released' so completed bounties still show as funded
+  const isFunded = bounty.paymentStatus === 'held' || bounty.paymentStatus === 'released';
   const isCancelled = bounty.status === 'cancelled';
   const isRefunded = bounty.paymentStatus === 'refunded';
 

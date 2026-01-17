@@ -1,17 +1,6 @@
 import { stripeClient } from "./client";
 
 /**
- * Calculate application fee to break even with Stripe's processing fees
- * Stripe charges 2.9% + $0.30 per transaction
- * This function calculates the fee needed to cover those costs
- */
-function calculateBreakEvenFee(amount: number): number {
-  // Stripe's fee: 2.9% + $0.30
-  const stripeFee = Math.round(amount * 0.029 + 30);
-  return stripeFee;
-}
-
-/**
  * Calculate total payment amount including Stripe fees
  * Returns the amount the user needs to pay (bounty amount + fees)
  */

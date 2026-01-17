@@ -125,10 +125,7 @@ export default withSentryConfig(nextConfig, {
   // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
   // side errors will fail.
   tunnelRoute: "/monitoring",
-  webpack:{
-    treeshake: {
-      removeDebugLogging: true,
-    },
-    automaticVercelMonitors: true,
-  },
+
+  // Automatically instrument Vercel Cron Monitors (must be at top level, not nested in webpack)
+  automaticVercelMonitors: true,
 });

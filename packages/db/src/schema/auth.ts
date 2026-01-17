@@ -149,3 +149,17 @@ export const emailOTP = pgTable('email_otp', {
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
 });
+
+/**
+ * OAuth state tokens for CSRF protection during OAuth flows
+ * Used to validate that OAuth callbacks match initiated flows
+ */
+export const oauthState = pgTable('oauth_state', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  state: text('state').notNull().unique(),
+  provider: text('provider').notNull(), // 'discord', 'github', etc.
+  providerId: text('provider_id'), // The external provider's user ID (e.g., Discord user ID)
+  expiresAt: timestamp('expires_at').notNull(),
+  used: boolean('used').notNull().default(false),
+  createdAt: timestamp('created_at').notNull().default(sql`now()`),
+});

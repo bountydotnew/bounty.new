@@ -235,7 +235,8 @@ export default function BountyDetailPage({
   };
 
   // Cancellation request logic for funded bounties
-  const isFunded = paymentStatus === 'held';
+  // Include 'released' so completed bounties still show as funded
+  const isFunded = paymentStatus === 'held' || paymentStatus === 'released';
   const isCancelled = paymentStatus === 'refunded';
   const canRequestCancellation = isCreator && isFunded;
 

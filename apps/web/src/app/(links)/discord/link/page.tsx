@@ -83,7 +83,7 @@ export default function DiscordLinkPage() {
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
-                aria-label="Success Icon"
+                aria-label="Error Icon"
                 role="img"
               >
                 <path

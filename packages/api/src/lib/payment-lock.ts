@@ -114,7 +114,9 @@ export async function createIdempotencyKey(
   additionalContext?: string
 ): Promise<string | null> {
   const key = `${IDEMPOTENCY_PREFIX}:${operation}:${bountyId}${additionalContext ? `:${additionalContext}` : ''}`;
-  const idempotencyKey = `bounty-${operation}-${bountyId}-${Date.now()}`;
+  // Idempotency key is deterministic based on operation parameters only (no timestamp)
+  // This ensures the same operation always produces the same key for Stripe deduplication
+  const idempotencyKey = `bounty-${operation}-${bountyId}${additionalContext ? `-${additionalContext}` : ''}`;
 
   // Check if this operation was already performed
   const existing = await redis.get(key);

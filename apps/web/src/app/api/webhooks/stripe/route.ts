@@ -361,13 +361,26 @@ export async function POST(request: Request) {
         const bountyId = transfer.metadata?.bountyId;
 
         if (bountyId) {
-          // Log payout initiated
+          // Idempotency check: Skip if transaction already exists
+          const [existingTransaction] = await db
+            .select()
+            .from(transaction)
+            .where(eq(transaction.stripeId, transfer.id))
+            .limit(1);
+
+          if (existingTransaction) {
+            console.log(`[Stripe Webhook] Transaction already exists for transfer ${transfer.id}, skipping`);
+            break;
+          }
+
+          // Log payout initiated - use toFixed(2) for consistent precision
           await db.insert(transaction).values({
             bountyId,
             type: 'transfer',
-            amount: String(transfer.amount / 100), // Convert from cents
+            amount: (transfer.amount / 100).toFixed(2),
             stripeId: transfer.id,
           });
+          console.log(`[Stripe Webhook] Created transaction record for transfer ${transfer.id}`);
         }
         break;
       }
@@ -508,13 +521,25 @@ export async function POST(request: Request) {
           }
         }
 
-        // Log the refund transaction
-        await db.insert(transaction).values({
-          bountyId: bountyRecord.id,
-          type: 'refund',
-          amount: refundedAmount.toString(),
-          stripeId: charge.id,
-        });
+        // Idempotency check for refund transaction
+        const [existingRefundTransaction] = await db
+          .select()
+          .from(transaction)
+          .where(eq(transaction.stripeId, charge.id))
+          .limit(1);
+
+        if (!existingRefundTransaction) {
+          // Log the refund transaction
+          await db.insert(transaction).values({
+            bountyId: bountyRecord.id,
+            type: 'refund',
+            amount: refundedAmount.toFixed(2),
+            stripeId: charge.id,
+          });
+          console.log(`[Stripe Webhook] Created refund transaction for charge ${charge.id}`);
+        } else {
+          console.log(`[Stripe Webhook] Refund transaction already exists for charge ${charge.id}, skipping`);
+        }
 
         console.log(`[Stripe Webhook] Successfully processed refund for bounty ${bountyRecord.id}`);
         break;
@@ -527,6 +552,7 @@ export async function POST(request: Request) {
     console.log('[Stripe Webhook] Webhook processed successfully');
     return NextResponse.json({ received: true });
   } catch (error) {
+    // Log detailed error internally
     console.error('[Stripe Webhook] Error processing webhook:', error);
     if (error instanceof Error) {
       console.error('[Stripe Webhook] Error details:', {
@@ -534,8 +560,9 @@ export async function POST(request: Request) {
         stack: error.stack,
       });
     }
+    // Return generic error to client - don't leak implementation details
     return NextResponse.json(
-      { error: 'Webhook handler failed', details: error instanceof Error ? error.message : String(error) },
+      { error: 'Webhook processing failed' },
       { status: 400 }
     );
   }

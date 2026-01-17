@@ -2,8 +2,8 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { auth } from '@bounty/auth/server';
 import { db } from '@bounty/db';
-import { account } from '@bounty/db/src/schema/auth';
-import { eq, and } from 'drizzle-orm';
+import { account, oauthState } from '@bounty/db/src/schema/auth';
+import { eq, and, gt } from 'drizzle-orm';
 import { env as serverEnv } from '@bounty/env/server';
 
 // Force dynamic rendering to prevent build-time validation
@@ -61,6 +61,32 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Validate state token from database (CSRF protection)
+    const [storedState] = await db
+      .select()
+      .from(oauthState)
+      .where(
+        and(
+          eq(oauthState.state, state),
+          eq(oauthState.provider, 'discord'),
+          eq(oauthState.used, false),
+          gt(oauthState.expiresAt, new Date())
+        )
+      )
+      .limit(1);
+
+    if (!storedState) {
+      return NextResponse.redirect(
+        `${env.BETTER_AUTH_URL}/discord/link?error=${encodeURIComponent('Invalid or expired state token. Please try again.')}`
+      );
+    }
+
+    // Mark state as used to prevent replay attacks
+    await db
+      .update(oauthState)
+      .set({ used: true })
+      .where(eq(oauthState.id, storedState.id));
+
     // Get the current session to link Discord to the logged-in user
     const session = await auth.api.getSession({
       headers: request.headers,
@@ -113,6 +139,13 @@ export async function GET(request: NextRequest) {
 
     const discordUser = await userResponse.json();
     const discordId = discordUser.id;
+
+    // If state had a providerId (from Discord bot flow), verify it matches
+    if (storedState.providerId && storedState.providerId !== discordId) {
+      return NextResponse.redirect(
+        `${env.BETTER_AUTH_URL}/discord/link?error=${encodeURIComponent('Discord account mismatch. Please use the same Discord account that initiated the link.')}`
+      );
+    }
 
     // Check if this Discord account is already linked to another user
     const [existingAccount] = await db
