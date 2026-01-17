@@ -1,9 +1,11 @@
-import { getPosts } from '@bounty/ui/lib/blog-query';
-import type { Post } from '@/types/post';
+import { getPosts, getCategories } from '@bounty/ui/lib/blog-query';
 import { BlogPageContent } from '@/components/blog/blog-page-content';
 
 export default async function BlogPage() {
-  const postsData = await getPosts();
+  const [postsData, categoriesData] = await Promise.all([
+    getPosts(),
+    getCategories(),
+  ]);
 
   if (!postsData?.posts) {
     return (
@@ -13,5 +15,10 @@ export default async function BlogPage() {
     );
   }
 
-  return <BlogPageContent posts={postsData.posts} />;
+  return (
+    <BlogPageContent
+      posts={postsData.posts}
+      categories={categoriesData?.categories ?? []}
+    />
+  );
 }
