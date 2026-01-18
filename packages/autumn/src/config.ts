@@ -27,6 +27,11 @@ export const AUTUMN_CONFIG = {
   secretKey: env.AUTUMN_SECRET_KEY,
 
   /**
+   * Default success URL for checkout sessions
+   */
+  successURL: `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://bounty.new'}/dashboard?checkout=success`,
+
+  /**
    * Whether to use debug mode (logs all API calls)
    */
   debug: env.NODE_ENV === 'development',
