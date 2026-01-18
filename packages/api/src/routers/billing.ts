@@ -168,10 +168,17 @@ export const billingRouter = router({
 
         return { checkoutUrl: checkout.checkout_url };
       } catch (error) {
+        const errorMessage = extractErrorMessage(error);
+        console.error('[Billing] createCheckout error:', {
+          userId: user.id,
+          productId,
+          error: errorMessage,
+          fullError: error,
+        });
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to create checkout session',
-          cause: extractErrorMessage(error),
+          message: `Failed to create checkout: ${errorMessage}`,
+          cause: error,
         });
       }
     }),

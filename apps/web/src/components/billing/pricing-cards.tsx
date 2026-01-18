@@ -93,8 +93,10 @@ function PricingCard({
       if (result?.checkoutUrl) {
         window.location.href = result.checkoutUrl;
       }
-    } catch {
-      toast.error('Failed to start checkout. Please try again.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[Checkout Error]', error);
+      toast.error(`Checkout failed: ${message}`);
     } finally {
       setIsLoading(false);
     }
