@@ -136,11 +136,21 @@ export const billingRouter = router({
       throw new Error('Invalid input: slug must be a valid plan tier');
     })
     .mutation(async ({ ctx, input }) => {
+      // Debug logging
+      console.log('[Billing] createCheckout called:', {
+        hasSession: !!ctx.session,
+        hasUser: !!ctx.session?.user,
+        userId: ctx.session?.user?.id,
+        userEmail: ctx.session?.user?.email,
+        slug: input.slug,
+      });
+
       const user = ctx.session?.user;
       if (!user?.id) {
+        console.error('[Billing] No user in session:', { session: ctx.session });
         throw new TRPCError({
           code: 'UNAUTHORIZED',
-          message: 'Authentication required',
+          message: 'No session found - please log in again',
         });
       }
 

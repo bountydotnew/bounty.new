@@ -42,6 +42,26 @@ export async function createContext(req: NextRequest) {
     headers: req.headers,
   });
 
+  // Debug logging for session issues
+  const cookieHeader = req.headers.get('cookie');
+  const hasCookies = !!cookieHeader;
+  const hasSessionCookie = cookieHeader?.includes('better-auth.session') ?? false;
+  const authHeader = req.headers.get('authorization');
+  
+  // Only log for protected endpoints that need auth
+  const isBillingEndpoint = req.url.includes('billing');
+  if (!session && isBillingEndpoint) {
+    console.log('[Context] No session found for billing:', {
+      hasCookies,
+      hasSessionCookie,
+      hasAuthHeader: !!authHeader,
+      cookies: cookieHeader ? cookieHeader.substring(0, 100) + '...' : 'none',
+      url: req.url,
+      origin: req.headers.get('origin'),
+      referer: req.headers.get('referer'),
+    });
+  }
+
   const clientIP = getClientIP(req);
   const requestId = getRequestId(req);
 
