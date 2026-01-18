@@ -1,9 +1,6 @@
-import { getServerCustomerState } from '@bounty/auth/server-utils';
 import { GeneralSettings } from '@/components/settings/general-settings';
 
 export default async function ProfileSettingsPage() {
-  const { data: customerState } = await getServerCustomerState();
-
   return (
     <div className="space-y-6">
       <header>
@@ -12,7 +9,7 @@ export default async function ProfileSettingsPage() {
           Manage your account settings and preferences.
         </p>
       </header>
-      <GeneralSettings initialCustomerState={customerState} />
+      <GeneralSettings />
     </div>
   );
 }

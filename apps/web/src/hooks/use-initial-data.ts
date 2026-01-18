@@ -1,8 +1,8 @@
-import { authClient } from '@bounty/auth/client';
 import { useQueries } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import type { CustomerState } from '@bounty/types/billing';
+import { authClient } from '@bounty/auth/client';
 import { trpc, queryClient } from '@/utils/trpc';
+import { useSession } from '@/context/session-context';
 
 /**
  * Hook to batch-fetch essential data on initial app load
@@ -16,8 +16,7 @@ import { trpc, queryClient } from '@/utils/trpc';
  * @param enabled - Whether to fetch data (should be true when user is authenticated)
  */
 export function useInitialData(enabled = true) {
-  const { data: session } = authClient.useSession();
-  const isAuthenticated = !!session?.user;
+  const { isAuthenticated } = useSession();
   const shouldFetch = enabled && isAuthenticated;
 
   // Fetch essential user data
@@ -51,27 +50,17 @@ export function useInitialData(enabled = true) {
  * - Device sessions (Better Auth - for account switcher)
  */
 export function usePrefetchInitialData() {
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated } = useSession();
 
   useEffect(() => {
-    if (session?.user) {
+    if (isAuthenticated) {
       // Prefetch tRPC queries
       queryClient.prefetchQuery(trpc.user.getMe.queryOptions());
 
-      // Prefetch billing data (Better Auth) - runs in parallel with tRPC batch
+      // Prefetch billing data (Autumn via tRPC) - runs in parallel
       queryClient.prefetchQuery({
-        queryKey: ['billing'],
-        queryFn: async (): Promise<CustomerState | null> => {
-          try {
-            const { data: customerState } = await authClient.customer.state();
-            return customerState as CustomerState | null;
-          } catch {
-            // Fail silently - billing might not be set up yet
-            return null;
-          }
-        },
+        ...trpc.billing.getCustomerState.queryOptions(),
         staleTime: 5 * 60 * 1000, // 5 minutes
-        retry: false,
       });
 
       // Prefetch device sessions (Better Auth) - for account switcher
@@ -95,5 +84,5 @@ export function usePrefetchInitialData() {
         retry: false,
       });
     }
-  }, [session?.user]);
+  }, [isAuthenticated]);
 }

@@ -6,6 +6,8 @@ export interface ActionItem {
   onSelect: () => void;
   icon?: ReactNode;
   disabled?: boolean;
+  className?: string;
+  tooltip?: string;
 }
 
 export interface BountyActionsProps {

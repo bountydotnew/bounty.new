@@ -10,25 +10,15 @@ import {
 } from '@bounty/ui/components/card';
 import { Separator } from '@bounty/ui/components/separator';
 import { useBilling } from '@/hooks/use-billing';
-import type { BillingSubscription, CustomerState } from '@/types/billing';
 import { Loader2 } from 'lucide-react';
 
-interface BillingSettingsClientProps {
-  initialCustomerState?: CustomerState | null;
-}
-
-export function BillingSettingsClient({
-  initialCustomerState,
-}: BillingSettingsClientProps) {
+export function BillingSettingsClient() {
   const {
     isPro,
     customer,
     isLoading: billingLoading,
     openBillingPortal,
-  } = useBilling({
-    enabled: true,
-    initialCustomerState,
-  });
+  } = useBilling();
 
   const renderLoadingState = () => (
     <div className="flex items-center space-x-2">
@@ -67,7 +57,7 @@ export function BillingSettingsClient({
   );
 
   const renderActiveSubscriptions = () => {
-    const subscriptions = customer?.activeSubscriptions ?? [];
+    const subscriptions = customer?.subscriptions ?? [];
     if (!isPro || subscriptions.length === 0) {
       return null;
     }
@@ -80,15 +70,10 @@ export function BillingSettingsClient({
             Active Subscriptions
           </h5>
           <div className="space-y-2">
-            {subscriptions.map((sub: BillingSubscription) => (
+            {subscriptions.map((sub) => (
               <div
                 className="rounded-lg border p-3"
-                key={
-                  sub.productId ??
-                  sub.product?.id ??
-                  sub.product?.slug ??
-                  'subscription'
-                }
+                key={sub.id}
               >
                 <div className="flex items-start justify-between">
                   <div>

@@ -15,47 +15,54 @@ const DialogClose = DialogPrimitive.Close;
 type DialogOverlayProps = React.ComponentPropsWithoutRef<
   typeof DialogPrimitive.Overlay
 > & {
-  showOverlay?: boolean;
+  overlayVariant?: 'solid' | 'default';
 };
 
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   DialogOverlayProps
->(({ className, showOverlay = true, ...props }, ref) => (
-  <DialogPrimitive.Overlay
-    ref={ref}
-    {...props}
-    className={cn('fixed inset-0 z-[9998]')}
-  >
-    <div
+>(({ className, overlayVariant = 'default', ...props }, ref) => {
+  const overlayBg =
+    overlayVariant === 'solid'
+      ? 'bg-[#0E0E0E]'
+      : 'bg-black/80';
+
+  return (
+    <DialogPrimitive.Overlay
+      ref={ref}
+      {...props}
       className={cn(
-        'absolute inset-0 z-0',
-        showOverlay ? 'bg-black/80' : 'bg-black/20',
+        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-[9998]',
         className
       )}
-    />
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-0 z-0 opacity-[0.025]"
     >
-      {/* <div className="absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,black,transparent_70%)]" />
-      <div className="absolute inset-0 wiggle [background-image:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20153%20179%22%20fill%3D%22none%22%20stroke%3D%22white%22%20strokeWidth%3D%2221.3696%22%3E%3Cg%20transform%3D%22scale(0.5)%22%3E%3Cpath%20d%3D%22M91.1385%2071.1097C107.031%2077.947%20125.457%2070.6065%20132.294%2054.7141C139.132%2038.8217%20131.791%2020.3956%20115.899%2013.5582C100.006%206.72079%2081.5803%2014.0613%2074.7429%2029.9537C67.9055%2045.8461%2075.2461%2064.2723%2091.1385%2071.1097ZM91.1385%2071.1097L29.921%2044.7722M5%20102.256L33.9985%20114.732C49.8909%20121.57%2068.317%20114.229%2075.1544%2098.3367C81.9918%2082.4443%2074.6513%2064.0182%2058.7589%2057.1808L29.7603%2044.7048M148.655%2095.8569L119.657%2083.3808C103.764%2076.5434%2085.338%2083.8839%2078.5006%2099.7763L78.5182%20179%22/%3E%3C/g%3E%3C/svg%3E')] [background-size:120px_120px] [background-repeat:repeat] [background-position:60px_60px],url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20153%20179%22%20fill%3D%22none%22%20stroke%3D%22white%22%20strokeWidth%3D%2221.3696%22%3E%3Cg%20transform%3D%22scale(0.5)%22%3E%3Cpath%20d%3D%22M91.1385%2071.1097C107.031%2077.947%20125.457%2070.6065%20132.294%2054.7141C139.132%2038.8217%20131.791%2020.3956%20115.899%2013.5582C100.006%206.72079%2081.5803%2014.0613%2074.7429%2029.9537C67.9055%2045.8461%2075.2461%2064.2723%2091.1385%2071.1097ZM91.1385%2071.1097L29.921%2044.7722M5%20102.256L33.9985%20114.732C49.8909%20121.57%2068.317%20114.229%2075.1544%2098.3367C81.9918%2082.4443%2074.6513%2064.0182%2058.7589%2057.1808L29.7603%2044.7048M148.655%2095.8569L119.657%2083.3808C103.764%2076.5434%2085.338%2083.8839%2078.5006%2099.7763L78.5182%20179%22/%3E%3C/g%3E%3C/svg%3E')] [background-size:120px_120px] [background-repeat:repeat] [background-position:120px_120px]" /> */}
-    </div>
-  </DialogPrimitive.Overlay>
-));
+      <div
+        className={cn('absolute inset-0 z-0', overlayBg)}
+        aria-hidden="true"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-0 opacity-[0.025]"
+      >
+        {/* <div className="absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,black,transparent_70%)]" />
+        <div className="absolute inset-0 wiggle [background-image:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20153%20179%22%20fill%3D%22none%22%20stroke%3D%22white%22%20strokeWidth%3D%2221.3696%22%3E%3Cg%20transform%3D%22scale(0.5)%22%3E%3Cpath%20d%3D%22M91.1385%2071.1097C107.031%2077.947%20125.457%2070.6065%20132.294%2054.7141C139.132%2038.8217%20131.791%2020.3956%20115.899%2013.5582C100.006%206.72079%2081.5803%2014.0613%2074.7429%2029.9537C67.9055%2045.8461%2075.2461%2064.2723%2091.1385%2071.1097ZM91.1385%2071.1097L29.921%2044.7722M5%20102.256L33.9985%20114.732C49.8909%20121.57%2068.317%20114.229%2075.1544%2098.3367C81.9918%2082.4443%2074.6513%2064.0182%2058.7589%2057.1808L29.7603%2044.7048M148.655%2095.8569L119.657%2083.3808C103.764%2076.5434%2085.338%2083.8839%2078.5006%2099.7763L78.5182%20179%22/%3E%3C/g%3E%3C/svg%3E')] [background-size:120px_120px] [background-repeat:repeat] [background-position:60px_60px],url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20153%20179%22%20fill%3D%22none%22%20stroke%3D%22white%22%20strokeWidth%3D%2221.3696%22%3E%3Cg%20transform%3D%22scale(0.5)%22%3E%3Cpath%20d%3D%22M91.1385%2071.1097C107.031%2077.947%20125.457%2070.6065%20132.294%2054.7141C139.132%2038.8217%20131.791%2020.3956%20115.899%2013.5582C100.006%206.72079%2081.5803%2014.0613%2074.7429%2029.9537C67.9055%2045.8461%2075.2461%2064.2723%2091.1385%2071.1097ZM91.1385%2071.1097L29.921%2044.7722M5%20102.256L33.9985%20114.732C49.8909%20121.57%2068.317%20114.229%2075.1544%2098.3367C81.9918%2082.4443%2074.6513%2064.0182%2058.7589%2057.1808L29.7603%2044.7048M148.655%2095.8569L119.657%2083.3808C103.764%2076.5434%2085.338%2083.8839%2078.5006%2099.7763L78.5182%20179%22/%3E%3C/g%3E%3C/svg%3E')] [background-size:120px_120px] [background-repeat:repeat] [background-position:120px_120px]" /> */}
+      </div>
+    </DialogPrimitive.Overlay>
+  );
+});
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 interface DialogContentProps
   extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {
-  showOverlay?: boolean;
+  overlayVariant?: 'solid' | 'default';
 }
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, showOverlay = true, ...props }, ref) => (
+>(({ className, children, overlayVariant = 'default', ...props }, ref) => (
   <DialogPortal>
-    <DialogOverlay showOverlay={showOverlay} />
+    <DialogOverlay overlayVariant={overlayVariant} />
     <DialogPrimitive.Content
       className={cn(
         'fixed top-[50%] left-[50%] z-[10000] translate-x-[-50%] translate-y-[-50%] duration-200',

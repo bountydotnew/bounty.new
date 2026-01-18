@@ -17,6 +17,12 @@ import {
   Share2,
   Trash2,
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@bounty/ui/components/tooltip';
 import BookmarkButton from '@/components/bounty/bookmark-button';
 import type {
   ActionItem,
@@ -84,18 +90,37 @@ function ActionsDropdown({
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="z-10 w-44 rounded-md border border-neutral-800 bg-neutral-900 p-1 shadow">
-        {actions?.map((action) => (
-          <DropdownMenuItem
-            className="text-neutral-200 hover:bg-neutral-800"
-            disabled={action.disabled}
-            key={action.key}
-            onClick={action.onSelect}
-          >
-            {action.icon}
-            {action.label}
-          </DropdownMenuItem>
-        ))}
+      <DropdownMenuContent className="z-10 w-48 rounded-md border border-neutral-800 bg-neutral-900 p-1 shadow">
+        {actions?.map((action) => {
+          const menuItem = (
+            <DropdownMenuItem
+              className={action.className || "text-neutral-200 hover:bg-neutral-800"}
+              disabled={action.disabled}
+              key={action.key}
+              onClick={action.disabled ? undefined : action.onSelect}
+            >
+              {action.icon}
+              {action.label}
+            </DropdownMenuItem>
+          );
+
+          if (action.tooltip && action.disabled) {
+            return (
+              <TooltipProvider key={action.key}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>{menuItem}</div>
+                  </TooltipTrigger>
+                  <TooltipContent side="left" className="max-w-[200px] text-center">
+                    <p>{action.tooltip}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            );
+          }
+
+          return menuItem;
+        })}
         <DropdownMenuItem
           className="text-neutral-200 hover:bg-neutral-800"
           onClick={handleShare}

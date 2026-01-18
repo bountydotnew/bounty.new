@@ -25,16 +25,29 @@ export const env = createEnv({
     UNKEY_ROOT_KEY: z.string().min(1),
     // Discord webhook
     DISCORD_WEBHOOK_URL: z.string().url().optional(),
+    // Bounty feed webhooks (for Discord channel notifications)
+    BOUNTY_FEED_WEBHOOK_URL: z.string().url().optional(),
+    BOUNTY_FUNDED_WEBHOOK_URL: z.string().url().optional(),
+    BOUNTY_UNFUNDED_WEBHOOK_URL: z.string().url().optional(),
+    // Marble CMS webhook
+    MARBLE_WEBHOOK_SECRET: z.string().min(1).optional(),
     // Node environment
     NODE_ENV: z
       .enum(['development', 'production', 'test'])
       .default('development'),
-    // Polar
+    // Polar (deprecated - use Autumn)
     POLAR_ACCESS_TOKEN: z.string().min(1),
     BOUNTY_PRO_ANNUAL_ID: z.string().min(1),
     BOUNTY_PRO_MONTHLY_ID: z.string().min(1),
     POLAR_SUCCESS_URL: z.string().url(),
     POLAR_WEBHOOK_SECRET: z.string().min(1),
+    // Autumn billing
+    AUTUMN_API_URL: z.string().url().optional(),
+    AUTUMN_SECRET_KEY: z.string().min(1),
+    // Stripe
+    STRIPE_SECRET_KEY: z.string().min(1),
+    STRIPE_PUBLISHABLE_KEY: z.string().min(1),
+    STRIPE_CONNECT_WEBHOOK_SECRET: z.string().min(1),
     RESEND_API_KEY: z.string().min(1),
     DEVICE_AUTH_ALLOWED_CLIENT_IDS: z.string().optional().default(''),
     // Upstash Redis
@@ -54,12 +67,22 @@ export const env = createEnv({
     // GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     UNKEY_ROOT_KEY: process.env.UNKEY_ROOT_KEY,
     DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL,
+    BOUNTY_FEED_WEBHOOK_URL: process.env.BOUNTY_FEED_WEBHOOK_URL,
+    BOUNTY_FUNDED_WEBHOOK_URL: process.env.BOUNTY_FUNDED_WEBHOOK_URL,
+    BOUNTY_UNFUNDED_WEBHOOK_URL: process.env.BOUNTY_UNFUNDED_WEBHOOK_URL,
+    MARBLE_WEBHOOK_SECRET: process.env.MARBLE_WEBHOOK_SECRET,
     NODE_ENV: process.env.NODE_ENV,
     POLAR_ACCESS_TOKEN: process.env.POLAR_ACCESS_TOKEN,
     BOUNTY_PRO_ANNUAL_ID: process.env.BOUNTY_PRO_ANNUAL_ID,
     BOUNTY_PRO_MONTHLY_ID: process.env.BOUNTY_PRO_MONTHLY_ID,
     POLAR_SUCCESS_URL: process.env.POLAR_SUCCESS_URL,
     POLAR_WEBHOOK_SECRET: process.env.POLAR_WEBHOOK_SECRET,
+    // Autumn billing
+    AUTUMN_API_URL: process.env.AUTUMN_API_URL,
+    AUTUMN_SECRET_KEY: process.env.AUTUMN_SECRET_KEY,
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
+    STRIPE_CONNECT_WEBHOOK_SECRET: process.env.STRIPE_CONNECT_WEBHOOK_SECRET,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     DEVICE_AUTH_ALLOWED_CLIENT_IDS: process.env.DEVICE_AUTH_ALLOWED_CLIENT_IDS,
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,

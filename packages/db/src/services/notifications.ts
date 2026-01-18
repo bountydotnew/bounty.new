@@ -18,6 +18,10 @@ export interface CreateNotificationInput {
     commentId?: string;
     linkTo?: string;
     applicationId?: string;
+    // User who performed the action
+    userId?: string;
+    userName?: string;
+    userImage?: string;
     [key: string]: unknown;
   };
 }
@@ -113,4 +117,31 @@ export async function cleanupOldNotifications(daysToKeep = 30) {
     .returning();
 
   return deletedNotifications;
+}
+
+export interface CreateNotificationWithActorInput
+  extends Omit<CreateNotificationInput, 'data'> {
+  actor: {
+    id: string;
+    name?: string | null;
+    image?: string | null;
+  };
+  data?: Omit<
+    CreateNotificationInput['data'],
+    'userId' | 'userName' | 'userImage'
+  >;
+}
+
+export async function createNotificationWithActor(
+  input: CreateNotificationWithActorInput
+) {
+  return createNotification({
+    ...input,
+    data: {
+      ...input.data,
+      userId: input.actor.id,
+      userName: input.actor.name ?? undefined,
+      userImage: input.actor.image ?? undefined,
+    },
+  });
 }

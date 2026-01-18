@@ -1,16 +1,16 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { authClient } from '@bounty/auth/client';
-import { useRouter } from 'next/navigation';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { TRPCClientError } from '@trpc/client';
-import { toast } from 'sonner';
-import { trpc, trpcClient } from '@/utils/trpc';
-import { DatePicker } from '@bounty/ui/components/date-picker';
-import { CalendarIcon } from '@bounty/ui/components/icons/huge/calendar';
-import GitHub from '@/components/icons/github';
-import { calculateWidth } from '@bounty/ui/lib/calculateWidth';
+import { useState, useEffect, useRef } from "react";
+import { authClient } from "@bounty/auth/client";
+import { useRouter } from "next/navigation";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { TRPCClientError } from "@trpc/client";
+import { toast } from "sonner";
+import { trpc, trpcClient } from "@/utils/trpc";
+import { ChevronSortIcon } from "@bounty/ui/components/icons/huge/chevron-sort";
+import GitHub from "@/components/icons/github";
+import { Popover, PopoverContent, PopoverTrigger } from "@bounty/ui/components/popover";
+import { DeadlineChip } from "@/components/dashboard/task-form/components/DeadlineChip";
 
 const BOUNTY_DRAFT_STORAGE_KEY = 'bounty_draft';
 
@@ -60,6 +60,10 @@ export function BountyForm({
   const priceRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
+  // Popover states
+  const [titlePopoverOpen, setTitlePopoverOpen] = useState(false);
+  const [pricePopoverOpen, setPricePopoverOpen] = useState(false);
+
   // Load draft from localStorage on mount (only if not in edit mode)
   useEffect(() => {
     if (initialValues) {
@@ -93,7 +97,7 @@ export function BountyForm({
     if (onSubmit) {
       return; // Skip if in edit mode
     }
-
+    
     const draft: BountyDraft = {
       title: title || undefined,
       description: description || undefined,
@@ -250,12 +254,22 @@ export function BountyForm({
   return (
     <div className="w-full max-w-[95vw] sm:max-w-[703px] mx-auto">
       <div className="w-full min-h-[140px] sm:min-h-[180px] rounded-[12px] sm:rounded-[21px] bg-[#191919] border border-[#232323] flex flex-col px-2 sm:px-0">
-        {/* Top row: Chips */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 px-1.5 sm:px-[14px] pt-2 sm:pt-3 pb-1.5 sm:pb-2 overflow-x-auto no-scrollbar">
-          {/* Title chip */}
-          <div
-            className="rounded-[8px] sm:rounded-[14px] px-2 sm:px-[15px] py-1 sm:py-1.5 bg-[#1B1A1A] border border-[#232323] transition-colors h-[26px] sm:h-[31.9965px] flex items-center cursor-text shrink-0"
-            onClick={() => titleRef.current?.focus()}
+      {/* Top row: Chips */}
+      <div className="flex items-center gap-1.5 sm:gap-2.5 px-1.5 sm:px-[14px] pt-2 sm:pt-3 pb-1.5 sm:pb-2 overflow-x-auto no-scrollbar">
+        {/* Title chip */}
+        <Popover open={titlePopoverOpen} onOpenChange={setTitlePopoverOpen}>
+          <PopoverTrigger asChild>
+            <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-[#141414] border border-solid border-[#232323] hover:border-[#333] transition-colors cursor-pointer">
+              <span className={`text-[16px] leading-5 font-sans ${title ? 'text-white' : 'text-[#7C7878]'}`}>
+                {title || "Title"}
+              </span>
+              <ChevronSortIcon className="size-2 text-[#7D7878] shrink-0" />
+            </div>
+          </PopoverTrigger>
+          <PopoverContent
+            className="w-64 p-3 bg-[#191919] border-[#232323] rounded-xl"
+            align="start"
+            sideOffset={8}
           >
             <input
               ref={titleRef}
@@ -263,46 +277,48 @@ export function BountyForm({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter a title"
-              className="bg-transparent text-white text-sm sm:text-base outline-none placeholder:text-[#5A5A5A] min-w-[80px] sm:min-w-[100px] max-w-[120px] sm:max-w-none"
-              style={{
-                width: `${calculateWidth(title || 'Enter a title', 80)}px`,
-              }}
+              className="w-full bg-transparent text-white text-[16px] leading-5 outline-none placeholder:text-[#5A5A5A]"
+              autoFocus
             />
-          </div>
+          </PopoverContent>
+        </Popover>
 
-          {/* Price chip */}
-          <div
-            className="rounded-[8px] sm:rounded-[14px] px-2 sm:px-[15px] py-1 sm:py-1.5 bg-[#1B1A1A] border border-[#232323] transition-colors h-[26px] sm:h-[31.9965px] flex items-center cursor-text shrink-0"
-            onClick={() => priceRef.current?.focus()}
+        {/* Price chip */}
+        <Popover open={pricePopoverOpen} onOpenChange={setPricePopoverOpen}>
+          <PopoverTrigger asChild>
+            <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-[#141414] border border-solid border-[#232323] hover:border-[#333] transition-colors cursor-pointer">
+              <span className={`text-[16px] leading-5 font-sans ${price ? 'text-white' : 'text-[#7C7878]'}`}>
+                {price ? price.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : "Price"}
+              </span>
+              <ChevronSortIcon className="size-2 text-[#7D7878] shrink-0" />
+            </div>
+          </PopoverTrigger>
+          <PopoverContent
+            className="w-48 p-3 bg-[#191919] border-[#232323] rounded-xl"
+            align="start"
+            sideOffset={8}
           >
-            <input
-              ref={priceRef}
-              type="text"
-              value={price ? price.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-              onChange={(e) => {
-                // Remove commas and non-numeric characters for storage
-                const cleaned = e.target.value.replace(/[^0-9.]/g, '');
-                setPrice(cleaned);
-              }}
-              placeholder="Price"
-              className="bg-transparent text-white text-sm sm:text-base outline-none placeholder:text-[#5A5A5A] min-w-[50px] sm:min-w-[60px]"
-              style={{
-                width: `${calculateWidth(price ? price.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 'Price', 50)}px`,
-              }}
-            />
-          </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[#5A5A5A] text-[16px]">$</span>
+              <input
+                ref={priceRef}
+                type="text"
+                value={price}
+                onChange={(e) => {
+                  // Remove non-numeric characters for storage
+                  const cleaned = e.target.value.replace(/[^0-9.]/g, "");
+                  setPrice(cleaned);
+                }}
+                placeholder="0.00"
+                className="flex-1 bg-transparent text-white text-[16px] leading-5 outline-none placeholder:text-[#5A5A5A]"
+                autoFocus
+              />
+            </div>
+          </PopoverContent>
+        </Popover>
 
-          {/* Deadline chip */}
-          <div className="rounded-[8px] sm:rounded-[14px] px-2 sm:px-[15px] py-1 sm:py-1.5 bg-[#1B1A1A] border border-[#232323] transition-colors h-[26px] sm:h-[31.9965px] flex items-center gap-1.5 sm:gap-[5px] shrink-0 cursor-text min-w-[110px] sm:min-w-[140px]">
-            <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 shrink-0 text-[#5A5A5A]" />
-            <DatePicker
-              value={deadline}
-              onChange={(value) => setDeadline(value)}
-              placeholder="Deadline, e.g. tomorrow"
-              className="flex-1 min-w-[80px] sm:min-w-[100px] text-sm sm:text-base [&>input]:pl-0.5 sm:[&>input]:pl-0"
-              id="deadline"
-            />
-          </div>
+        {/* Deadline chip */}
+        <DeadlineChip value={deadline} onChange={setDeadline} />
 
           {/* Divider */}
           {/* <span className="text-[#5A5A5A] text-base shrink-0">or</span> */}
@@ -332,6 +348,7 @@ export function BountyForm({
         <div className="flex justify-end items-center gap-1.5 sm:gap-2 px-1.5 sm:px-3 py-2 sm:py-3 flex-wrap">
           {onCancel && (
             <button
+              type="button"
               onClick={onCancel}
               disabled={isSubmitting}
               className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
@@ -339,44 +356,26 @@ export function BountyForm({
               Cancel
             </button>
           )}
-          {!(onSubmit || onCancel) && (
+          {!onSubmit && !onCancel && (
             <button
+              type="button"
               onClick={handleSkipAndJoinWaitlist}
               disabled={isSubmitting}
               className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
             >
-              <span className="hidden sm:inline">
-                {isSubmitting ? 'Redirecting...' : 'Skip & join waitlist'}
-              </span>
-              <span className="sm:hidden">
-                {isSubmitting ? 'Redirecting...' : 'Skip'}
-              </span>
+              <span className="hidden sm:inline">{isSubmitting ? "Redirecting..." : "Skip & join waitlist"}</span>
+              <span className="sm:hidden">{isSubmitting ? "Redirecting..." : "Skip"}</span>
             </button>
           )}
           <button
+            type="button"
             onClick={handleCreateBounty}
             disabled={isSubmitting || !title}
             className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-white text-black text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
           >
             <GitHub className="w-4 h-4 shrink-0" />
-            <span className="hidden sm:inline">
-              {isSubmitting
-                ? onSubmit
-                  ? 'Saving...'
-                  : 'Creating...'
-                : onSubmit
-                  ? 'Save'
-                  : 'Create bounty'}
-            </span>
-            <span className="sm:hidden">
-              {isSubmitting
-                ? onSubmit
-                  ? 'Saving...'
-                  : 'Creating...'
-                : onSubmit
-                  ? 'Save'
-                  : 'Create'}
-            </span>
+            <span className="hidden sm:inline">{isSubmitting ? (onSubmit ? "Saving..." : "Creating...") : (onSubmit ? "Save" : "Create bounty")}</span>
+            <span className="sm:hidden">{isSubmitting ? (onSubmit ? "Saving..." : "Creating...") : (onSubmit ? "Save" : "Create")}</span>
           </button>
         </div>
       </div>

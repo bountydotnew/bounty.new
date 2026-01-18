@@ -19,4 +19,11 @@ stagewise.json
 /.guides
 packages/db/migrations/meta/_journal.json
 /scripts
+docs/STRIPE_WEBHOOK_SETUP.md
+/.cursor/plans
 /_backup
+/.claude
+/docs
+*.pem
+/.cursor
+/.opencode

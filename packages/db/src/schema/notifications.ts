@@ -38,6 +38,10 @@ export const notification = pgTable(
       commentId?: string;
       linkTo?: string;
       applicationId?: string;
+      // User who performed the action
+      userId?: string;
+      userName?: string;
+      userImage?: string;
       [key: string]: unknown;
     } | null>(),
     read: boolean('read').notNull().default(false),

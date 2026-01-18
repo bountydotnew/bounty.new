@@ -45,7 +45,12 @@ export const user = pgTable('user', {
   banned: boolean('banned').notNull().default(false),
   banReason: text('ban_reason'),
   banExpires: timestamp('ban_expires'),
-  lastLoginMethod: text('last_login_method'),
+  // Stripe fields
+  stripeCustomerId: text('stripe_customer_id'),
+  stripeConnectAccountId: text('stripe_connect_account_id'),
+  stripeConnectOnboardingComplete: boolean('stripe_connect_onboarding_complete')
+    .notNull()
+    .default(false),
   // Note: Consider using timestamptz for timezone-aware timestamps in production
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
@@ -143,4 +148,18 @@ export const emailOTP = pgTable('email_otp', {
   verified: boolean('verified').notNull().default(false),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
+});
+
+/**
+ * OAuth state tokens for CSRF protection during OAuth flows
+ * Used to validate that OAuth callbacks match initiated flows
+ */
+export const oauthState = pgTable('oauth_state', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  state: text('state').notNull().unique(),
+  provider: text('provider').notNull(), // 'discord', 'github', etc.
+  providerId: text('provider_id'), // The external provider's user ID (e.g., Discord user ID)
+  expiresAt: timestamp('expires_at').notNull(),
+  used: boolean('used').notNull().default(false),
+  createdAt: timestamp('created_at').notNull().default(sql`now()`),
 });

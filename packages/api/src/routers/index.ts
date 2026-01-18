@@ -1,8 +1,10 @@
 import { protectedProcedure, publicProcedure, router } from '../trpc';
 import { billingRouter } from './billing';
 import { bountiesRouter } from './bounties';
+import { connectRouter } from './connect';
 import { earlyAccessRouter } from './early-access';
 import { emailsRouter } from './emails';
+import { githubInstallationRouter } from './github-installation';
 import { newsRouter } from './news';
 import { notificationsRouter } from './notifications';
 import { profilesRouter } from './profiles';
@@ -38,7 +40,9 @@ export const appRouter = router({
   notifications: notificationsRouter,
   emails: emailsRouter,
   repository: repositoryRouter,
+  githubInstallation: githubInstallationRouter,
   billing: billingRouter,
+  connect: connectRouter,
 });
 
 export type AppRouter = typeof appRouter;

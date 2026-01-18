@@ -15,7 +15,7 @@ import {
 import { ExternalInvite, FROM_ADDRESSES, sendEmail } from '@bounty/email';
 import { env } from '@bounty/env/server';
 import { TRPCError } from '@trpc/server';
-import { desc, eq, sql } from 'drizzle-orm';
+import { desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { LRUCache } from '../lib/lru-cache';
 import { userProfileCache } from './profiles';
@@ -667,6 +667,34 @@ export const userRouter = router({
           cause: error,
         });
       }
+    }),
+
+  searchCreators: protectedProcedure
+    .input(z.object({ query: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const searchTerm = `%${input.query}%`;
+      
+      const results = await db
+        .select({
+          id: user.id,
+          name: user.name,
+          handle: user.handle,
+          image: user.image,
+        })
+        .from(user)
+        .where(
+          or(
+            ilike(user.name, searchTerm),
+            ilike(user.handle, searchTerm),
+            eq(user.id, input.query) // Allow searching by ID
+          )
+        )
+        .limit(10);
+
+      return {
+        success: true,
+        data: results,
+      };
     }),
 
   getUserActivity: publicProcedure

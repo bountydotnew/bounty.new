@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     siteName: 'bounty.new - Login',
     images: [
       {
-        url: '/ogimage.png',
+        url: '/og-image.png',
         width: 1200,
         height: 630,
         alt: 'bounty.new - Ship fast, get paid faster.',

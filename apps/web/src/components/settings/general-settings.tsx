@@ -17,7 +17,6 @@ import {
 import { Label } from '@bounty/ui/components/label';
 import { Switch } from '@bounty/ui/components/switch';
 import { useBilling } from '@/hooks/use-billing';
-import type { CustomerState } from '@/types/billing';
 import { trpc } from '@/utils/trpc';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -25,10 +24,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useUser } from '@/context/user-context';
-
-interface GeneralSettingsProps {
-  initialCustomerState?: CustomerState | null;
-}
 
 type FeatureItem = {
   title: string;
@@ -121,12 +116,6 @@ const FeaturesCard = ({ billingLoading, isPro }: FeaturesCardProps) => {
     {
       title: 'Payment Button',
       description: 'Embeddable payment buttons for GitHub',
-      badgeLabel: 'Available',
-      badgeVariant: 'default',
-    },
-    {
-      title: 'Passkey Security',
-      description: 'Passwordless authentication',
       badgeLabel: 'Available',
       badgeVariant: 'default',
     },
@@ -227,14 +216,9 @@ const PrivacySettingsCard = ({
   </Card>
 );
 
-export function GeneralSettings({
-  initialCustomerState,
-}: GeneralSettingsProps) {
+export function GeneralSettings() {
   const { data: session } = authClient.useSession();
-  const { isPro, isLoading: billingLoading } = useBilling({
-    enabled: true,
-    initialCustomerState,
-  });
+  const { isPro, isLoading: billingLoading } = useBilling();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user: userData } = useUser();

@@ -52,7 +52,7 @@ export function useBreadcrumbs({
 
       // Use custom label if provided
       if (customLabels[segment] || customLabels[href]) {
-        label = customLabels[segment] || customLabels[href];
+        label = customLabels[segment] || customLabels[href] || '';
       }
 
       items.push({

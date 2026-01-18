@@ -51,10 +51,14 @@ export function useNavigationContext(): NavigationContext {
           part.includes('github.com')
         );
         if (githubIndex !== -1) {
+          const owner = parts[githubIndex + 1];
+          const repo = parts[githubIndex + 2];
+          const issueNumber = parts[parts.indexOf('issues') + 1];
+          
           referrerInfo = {
-            owner: parts[githubIndex + 1],
-            repo: parts[githubIndex + 2],
-            issueNumber: parts[parts.indexOf('issues') + 1],
+            ...(owner !== undefined && { owner }),
+            ...(repo !== undefined && { repo }),
+            ...(issueNumber !== undefined && { issueNumber }),
           };
         }
       }

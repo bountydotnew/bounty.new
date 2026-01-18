@@ -54,7 +54,7 @@ export function GitHubActivityChart({ username }: GitHubActivityChartProps) {
           labels={{
             totalCount: '{{count}} contributions in the last year',
           }}
-          renderBlock={(block, activity) =>
+          renderBlock={(block: React.ReactElement<any>, activity: { count: number; date: string }) =>
             cloneElement(block, {
               'data-tooltip-id': 'github-tooltip',
               'data-tooltip-content': `${activity.count} contributions on ${activity.date}`,
