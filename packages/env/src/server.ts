@@ -35,12 +35,15 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(['development', 'production', 'test'])
       .default('development'),
-    // Polar
+    // Polar (deprecated - use Autumn)
     POLAR_ACCESS_TOKEN: z.string().min(1),
     BOUNTY_PRO_ANNUAL_ID: z.string().min(1),
     BOUNTY_PRO_MONTHLY_ID: z.string().min(1),
     POLAR_SUCCESS_URL: z.string().url(),
     POLAR_WEBHOOK_SECRET: z.string().min(1),
+    // Autumn billing
+    AUTUMN_API_URL: z.string().url().optional(),
+    AUTUMN_SECRET_KEY: z.string().min(1),
     // Stripe
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_PUBLISHABLE_KEY: z.string().min(1),
@@ -74,6 +77,9 @@ export const env = createEnv({
     BOUNTY_PRO_MONTHLY_ID: process.env.BOUNTY_PRO_MONTHLY_ID,
     POLAR_SUCCESS_URL: process.env.POLAR_SUCCESS_URL,
     POLAR_WEBHOOK_SECRET: process.env.POLAR_WEBHOOK_SECRET,
+    // Autumn billing
+    AUTUMN_API_URL: process.env.AUTUMN_API_URL,
+    AUTUMN_SECRET_KEY: process.env.AUTUMN_SECRET_KEY,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
     STRIPE_CONNECT_WEBHOOK_SECRET: process.env.STRIPE_CONNECT_WEBHOOK_SECRET,

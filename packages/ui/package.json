@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@bounty/api": "workspace:*",
+    "@bounty/autumn": "workspace:*",
     "@bounty/types": "workspace:*",
     "@bounty/auth": "workspace:*",
     "@bounty/track": "workspace:*",

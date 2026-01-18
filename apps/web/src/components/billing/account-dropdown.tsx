@@ -60,7 +60,7 @@ function useUserDisplay(
 // Custom hook for billing portal operations
 function useBillingPortal() {
   const { data: session } = authClient.useSession();
-  const { openBillingPortal } = useBilling({ enabled: false });
+  const { openBillingPortal } = useBilling();
 
   const handleBillingPortal = React.useCallback(async () => {
     if (!session?.user) {

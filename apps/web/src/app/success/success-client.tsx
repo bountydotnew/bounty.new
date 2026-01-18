@@ -11,26 +11,19 @@ import {
 } from '@bounty/ui/components/card';
 import { Separator } from '@bounty/ui/components/separator';
 import { useBilling } from '@/hooks/use-billing';
-import type { BillingSubscription, CustomerState } from '@/types/billing';
 import { ArrowRight } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { Sidebar } from '@/components/dual-sidebar';
 import Bounty from '@/components/icons/bounty';
 import { useConfetti } from '@/context/confetti-context';
+import { PRICING_TIERS } from '@bounty/types';
 
-interface SuccessClientProps {
-  initialCustomerState?: CustomerState | null;
-}
-
-export function SuccessClient({ initialCustomerState }: SuccessClientProps) {
+export function SuccessClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const checkoutId = searchParams.get('checkout_id');
-  const { refetch, customer } = useBilling({
-    enabled: true,
-    initialCustomerState,
-  });
+  const { refetch, customer } = useBilling();
   const { data: session } = authClient.useSession();
   const { celebrate } = useConfetti();
 
@@ -51,44 +44,19 @@ export function SuccessClient({ initialCustomerState }: SuccessClientProps) {
     return null;
   }
 
-  type PlanId = 'pro-annual' | 'pro-monthly';
+  // Get plan details from the customer's subscription
+  const subscription = customer?.subscriptions?.[0];
+  const productId = subscription?.product_id;
 
-  const PLAN_DETAILS: Record<PlanId, { name: string; price: string }> = {
-    'pro-annual': { name: 'Pro Annual', price: '$15/month' },
-    'pro-monthly': { name: 'Pro Monthly', price: '$20/month' },
-  };
+  // Find matching pricing tier
+  const planTier = productId
+    ? Object.values(PRICING_TIERS).find((tier) => tier.slug === productId)
+    : null;
 
-  const PLAN_IDS: PlanId[] = ['pro-annual', 'pro-monthly'];
-
-  const identifyPlan = (
-    subscription?: BillingSubscription
-  ): PlanId | undefined => {
-    if (!subscription) {
-      return;
-    }
-
-    const identifiers = [
-      subscription.product?.slug,
-      subscription.product?.id,
-      subscription.product?.name,
-      subscription.productId,
-    ];
-
-    return PLAN_IDS.find((planId) =>
-      identifiers.some((identifier) => identifier?.includes(planId))
-    );
-  };
-
-  const activePlanId: PlanId = 
-    customer?.activeSubscriptions?.reduce<PlanId>(
-      (current: PlanId, subscription: BillingSubscription) => 
-        current ?? identifyPlan(subscription) ?? 'pro-annual', 
-      'pro-annual'
-    ) ?? 'pro-annual';
-
-  const planDetails = PLAN_DETAILS[activePlanId];
-  const planName = planDetails?.name ?? 'Pro Plan';
-  const planPrice = planDetails?.price ?? 'Pro Pricing';
+  const planName = planTier?.name ?? 'Pro Plan';
+  const planPrice = planTier
+    ? `$${planTier.monthlyPrice}/month`
+    : 'Pro Pricing';
 
   return (
     <Sidebar>

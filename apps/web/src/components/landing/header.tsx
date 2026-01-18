@@ -9,8 +9,8 @@ export function Header() {
       <div className="container mx-auto px-6 lg:px-8">
         <div className="grid grid-cols-[1fr_auto_auto] lg:grid-cols-[auto_1fr_auto] items-center h-16 gap-8">
           <div className="col-start-1">
-            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <Logo className="h-8 w-8" />
+            <Link href="/" className="flex items-center gap-1 hover:opacity-80 transition-opacity">
+              <Logo className="h-5 w-5" />
               <span className="text-base font-medium text-white">bounty.new</span>
             </Link>
           </div>
@@ -25,9 +25,16 @@ export function Header() {
             <Link href="/contributors" className="text-sm text-[#989898] hover:text-white transition-colors">
               For Devs
             </Link>
+            <Link
+              href="/pricing"
+              className="text-sm text-[#989898] hover:text-white transition-colors hidden sm:inline-flex"
+            >
+              Pricing
+            </Link>
           </nav>
 
           <div className="flex items-center gap-3 col-start-3">
+
             <Link
               href="/login"
               className="inline-flex items-center justify-center bg-[#1a1a1a] text-white rounded-full text-sm font-medium hover:bg-[#252525] transition-colors border border-[#333] hidden sm:inline-flex"

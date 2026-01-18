@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from './logo';
+import { CTASection } from './cta-section';
+import { FooterFAQ } from './footer-faq';
 
 export function Footer() {
   const router = useRouter();
@@ -23,7 +25,17 @@ export function Footer() {
   };
 
   return (
-    <footer className="border-t border-border py-12 px-4 sm:px-6 lg:px-8">
+    <footer className="border-t border-[#1a1a1a]">
+      {/* CTA Section */}
+      <CTASection />
+      
+      {/* FAQ Section */}
+      <div className="border-t border-[#1a1a1a]">
+        <FooterFAQ />
+      </div>
+      
+      {/* Footer Links */}
+      <div className="border-t border-[#1a1a1a] py-12 px-4 sm:px-6 lg:px-8">
       <div className="container mx-auto max-w-7xl">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-8 mb-12">
           <div>
@@ -42,6 +54,11 @@ export function Footer() {
                 >
                   Create Bounty
                 </button>
+              </li>
+              <li>
+                <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Pricing
+                </Link>
               </li>
             </ul>
           </div>
@@ -87,7 +104,9 @@ export function Footer() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-border">
           <div className="flex items-center gap-2">
             <Logo className="h-6 w-6" />
-            <span className="text-sm text-muted-foreground">© 2026 bounty.new. All rights reserved.</span>
+            <span className="text-sm text-muted-foreground" suppressHydrationWarning>
+              © {new Date().getFullYear()} bounty.new. All rights reserved.
+            </span>
           </div>
           <div className="flex items-center gap-6">
             <a
@@ -117,6 +136,7 @@ export function Footer() {
           </div>
         </div>
       </div>
+    </div>
     </footer>
   );
 }

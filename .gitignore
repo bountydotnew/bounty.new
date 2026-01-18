@@ -25,3 +25,5 @@ docs/STRIPE_WEBHOOK_SETUP.md
 /.claude
 /docs
 *.pem
+/.cursor
+/.opencode

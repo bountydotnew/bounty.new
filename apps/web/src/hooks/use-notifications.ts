@@ -11,7 +11,7 @@ import { showBountyCommentToast } from '@bounty/ui/components/toast/bounty-comme
 import { useSession } from '@/context/session-context';
 
 export const useNotifications = () => {
-  const { isAuthenticated, isPending } = useSession();
+  const { isAuthenticated, isPending, session } = useSession();
   const previousNotificationIdsRef = useRef<Set<string>>(new Set());
 
   const notificationsQuery = useQuery({

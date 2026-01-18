@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@bounty/api": "workspace:*",
+    "@bounty/autumn": "workspace:*",
     "date-fns": "catalog:",
     "@bounty/auth": "workspace:*",
     "@bounty/db": "workspace:*",
@@ -24,7 +25,6 @@
     "drizzle-orm": "catalog:",
     "@databuddy/sdk": "catalog:",
     "@number-flow/react": "catalog:",
-    "@polar-sh/sdk": "catalog:",
     "@radix-ui/react-avatar": "catalog:",
     "@radix-ui/react-checkbox": "catalog:",
     "@radix-ui/react-collapsible": "catalog:",
