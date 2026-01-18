@@ -7,6 +7,7 @@
 import type { AutumnError } from '@bounty/types';
 import { autumnClient, isConflictError, isCustomerNotFoundError, extractErrorMessage } from '@bounty/autumn';
 import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
 import { protectedProcedure, router } from '../trpc';
 
 // ============================================================================
@@ -136,25 +137,14 @@ export const billingRouter = router({
       throw new Error('Invalid input: slug must be a valid plan tier');
     })
     .mutation(async ({ ctx, input }) => {
-      // Debug logging
-      console.log('[Billing] createCheckout called:', {
-        hasSession: !!ctx.session,
-        hasUser: !!ctx.session?.user,
-        userId: ctx.session?.user?.id,
-        userEmail: ctx.session?.user?.email,
-        slug: input.slug,
-      });
-
       const user = ctx.session?.user;
       if (!user?.id) {
-        console.error('[Billing] No user in session:', { session: ctx.session });
         throw new TRPCError({
           code: 'UNAUTHORIZED',
           message: 'No session found - please log in again',
         });
       }
 
-      // Map plan slug to Autumn product ID (slug is used as product_id in Autumn)
       const productId = input.slug;
 
       try {
@@ -176,18 +166,62 @@ export const billingRouter = router({
           },
         });
 
-        return { checkoutUrl: checkout.checkout_url };
+        // Return either checkout URL or preview data
+        return {
+          checkoutUrl: checkout.checkout_url ?? checkout.url ?? null,
+          preview: checkout.preview ?? null,
+        };
       } catch (error) {
-        const errorMessage = extractErrorMessage(error);
-        console.error('[Billing] createCheckout error:', {
-          userId: user.id,
-          productId,
-          error: errorMessage,
-          fullError: error,
-        });
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: `Failed to create checkout: ${errorMessage}`,
+          message: `Failed to create checkout: ${extractErrorMessage(error)}`,
+          cause: error,
+        });
+      }
+    }),
+
+  /**
+   * Attach a product to a customer (confirm purchase when payment method is on file)
+   * This is called after checkout returns preview data instead of a URL
+   */
+  attachProduct: protectedProcedure
+    .input((val) => {
+      if (typeof val === 'object' && val !== null && 'slug' in val) {
+        const slug = val.slug;
+        // Accept both monthly and yearly plan slugs
+        const validSlugs = [
+          'tier_1_basic',
+          'tier_2_pro',
+          'tier_3_pro_plus',
+          'tier_1_basic_yearly',
+          'tier_2_pro_yearly',
+          'tier_3_pro_plus_yearly',
+        ];
+        if (typeof slug === 'string' && validSlugs.includes(slug)) {
+          return { slug };
+        }
+      }
+      throw new Error('Invalid input: slug must be a valid plan tier');
+    })
+    .mutation(async ({ ctx, input }) => {
+      const user = ctx.session?.user;
+      if (!user?.id) {
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+      }
+
+      try {
+        await autumnClient.attach({
+          productId: input.slug,
+          customerId: user.id,
+        });
+        return { success: true };
+      } catch (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Failed to attach product: ${extractErrorMessage(error)}`,
           cause: error,
         });
       }
@@ -240,13 +274,11 @@ export const billingRouter = router({
    */
   trackUsage: protectedProcedure
     .input((val) => {
-      if (typeof val === 'object' && val !== null && 'event' in val) {
-        if (typeof val.event === 'string') {
-          return {
-            event: val.event,
-            metadata: (val as { metadata?: Record<string, unknown> }).metadata,
-          };
-        }
+      if (typeof val === 'object' && val !== null && 'event' in val && typeof val.event === 'string') {
+        return {
+          event: val.event,
+          metadata: (val as { metadata?: Record<string, unknown> }).metadata,
+        };
       }
       throw new Error('Invalid input: event is required');
     })
@@ -268,7 +300,6 @@ export const billingRouter = router({
         return { ok: true } as const;
       } catch (error) {
         // Don't fail the request if tracking fails, just log
-        console.error('[Billing] Failed to track usage:', error);
         return { ok: false } as const;
       }
     }),

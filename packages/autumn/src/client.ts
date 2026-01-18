@@ -24,11 +24,8 @@ import type {
 import {
   AUTUMN_CONFIG,
   debugLog,
-  extractErrorMessage,
   isConflictError,
   isCustomerNotFoundError,
-  isPermissionDeniedError,
-  logError,
 } from './config';
 
 // ============================================================================
@@ -43,14 +40,6 @@ export interface AutumnClientOptions {
   apiURL?: string;
 }
 
-/**
- * API response wrapper
- */
-interface ApiResponse<T> {
-  data?: T;
-  error?: string;
-  status: number;
-}
 
 // ============================================================================
 // Client Class
@@ -67,6 +56,9 @@ export class AutumnClient {
   private readonly apiURL: string;
 
   constructor(options: AutumnClientOptions) {
+    if (!options.apiKey || options.apiKey.trim() === '') {
+      throw new Error('Autumn API key is required. Set AUTUMN_SECRET_KEY in your environment variables.');
+    }
     this.apiKey = options.apiKey;
     this.apiURL = options.apiURL ?? AUTUMN_CONFIG.apiURL;
   }
@@ -74,6 +66,37 @@ export class AutumnClient {
   // ==========================================================================
   // HTTP Methods
   // ==========================================================================
+
+  private validateApiKey(): void {
+    if (!this.apiKey || this.apiKey.trim() === '') {
+      throw new Error(
+        'Autumn API key is missing or empty. ' +
+        'Set AUTUMN_SECRET_KEY in your environment variables. ' +
+        'Get your key from: https://app.useautumn.com/sandbox/dev?tab=api_keys'
+      );
+    }
+  }
+
+  private buildRequestInit(method: string, body?: unknown): RequestInit {
+    this.validateApiKey();
+
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${this.apiKey}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    };
+
+    const init: RequestInit = {
+      method,
+      headers,
+    };
+
+    if (body != null) {
+      init.body = JSON.stringify(body);
+    }
+
+    return init;
+  }
 
   private async request<T>(
     method: string,
@@ -83,52 +106,27 @@ export class AutumnClient {
     const url = `${this.apiURL}${path}`;
     debugLog(`${method} ${path}`, body);
 
-    const init: RequestInit = {
-      method,
-      headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    };
+    const response = await fetch(url, this.buildRequestInit(method, body));
+    const contentType = response.headers.get('content-type') ?? '';
+    const isJson = contentType.includes('application/json');
 
-    if (body != null) {
-      init.body = JSON.stringify(body);
-    }
-
-    try {
-      const response = await fetch(url, init);
-
-      const contentType = response.headers.get('content-type') ?? '';
-      const isJson = contentType.includes('application/json');
-
-      if (!response.ok) {
-        const errorBody = isJson ? await response.json().catch(() => null) : null;
-        const error: AutumnError = new Error(
-          errorBody?.message ?? errorBody?.error ?? `HTTP ${response.status}`
-        ) as AutumnError;
-        error.status = response.status;
-        error.code = errorBody?.code;
-        error.detail = errorBody?.detail;
-        error.body = errorBody;
-        throw error;
-      }
-
-      if (isJson && response.status !== 204) {
-        return await response.json();
-      }
-
-      return undefined as T;
-    } catch (error) {
-      if (error instanceof Error && ('status' in error)) {
-        throw error;
-      }
-      const apiError: AutumnError = new Error(
-        extractErrorMessage(error)
+    if (!response.ok) {
+      const errorBody = isJson ? await response.json().catch(() => null) : null;
+      const error: AutumnError = new Error(
+        errorBody?.message ?? errorBody?.error ?? `HTTP ${response.status}`
       ) as AutumnError;
-      apiError.status = 500;
-      throw apiError;
+      error.status = response.status;
+      error.code = errorBody?.code;
+      error.detail = errorBody?.detail;
+      error.body = errorBody;
+      throw error;
     }
+
+    if (isJson && response.status !== 204) {
+      return await response.json();
+    }
+
+    return undefined as T;
   }
 
   private get<T>(path: string): Promise<T> {
@@ -156,7 +154,7 @@ export class AutumnClient {
    */
   async getCustomer(externalId: string): Promise<AutumnCustomer | null> {
     try {
-      return await this.get<AutumnCustomer>(`/customers/external/${externalId}`);
+      return await this.get<AutumnCustomer>(`/customers/${externalId}`);
     } catch (error) {
       if (isCustomerNotFoundError(error)) {
         return null;
@@ -171,7 +169,14 @@ export class AutumnClient {
   async createCustomer(
     params: AutumnCustomerCreateParams
   ): Promise<AutumnCustomer> {
-    return await this.post<AutumnCustomer>('/customers', params);
+    // Transform external_id to id for the API
+    const body = {
+      id: params.external_id,
+      email: params.email,
+      ...(params.name !== undefined && { name: params.name }),
+      ...(params.metadata !== undefined && { metadata: params.metadata }),
+    };
+    return await this.post<AutumnCustomer>('/customers', body);
   }
 
   /**
@@ -209,7 +214,9 @@ export class AutumnClient {
       if (isConflictError(error)) {
         // Customer was created concurrently, fetch again
         const customer = await this.getCustomer(params.external_id);
-        if (customer) return customer;
+        if (customer) {
+          return customer;
+        }
       }
       throw error;
     }
@@ -225,7 +232,7 @@ export class AutumnClient {
    */
   async getCustomerState(externalId: string): Promise<CustomerState | null> {
     try {
-      return await this.get<CustomerState>(`/customers/external/${externalId}/state`);
+      return await this.get<CustomerState>(`/customers/${externalId}/state`);
     } catch (error) {
       if (isCustomerNotFoundError(error)) {
         return null;
@@ -268,6 +275,7 @@ export class AutumnClient {
 
   /**
    * Create a checkout session for a product
+   * Returns either a checkout URL (first-time payment) or preview data (payment on file)
    */
   async createCheckout(params: {
     productId: string;
@@ -281,11 +289,31 @@ export class AutumnClient {
       success_url: params.successUrl ?? AUTUMN_CONFIG.successURL,
     };
 
-    if (params.customerId) body.customer_id = params.customerId;
-    if (params.cancelUrl) body.cancel_url = params.cancelUrl;
-    if (params.metadata) body.metadata = params.metadata;
+    if (params.customerId) {
+      body.customer_id = params.customerId;
+    }
+    if (params.cancelUrl) {
+      body.cancel_url = params.cancelUrl;
+    }
+    if (params.metadata) {
+      body.metadata = params.metadata;
+    }
 
     return await this.post<AutumnCheckoutSession>('/checkout', body);
+  }
+
+  /**
+   * Attach a product to a customer (confirm purchase when payment method is on file)
+   * This is called after checkout returns preview data instead of a URL
+   */
+  async attach(params: {
+    productId: string;
+    customerId: string;
+  }): Promise<{ success: boolean }> {
+    return await this.post<{ success: boolean }>('/attach', {
+      product_id: params.productId,
+      customer_id: params.customerId,
+    });
   }
 
   // ==========================================================================

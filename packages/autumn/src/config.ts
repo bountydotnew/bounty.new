@@ -14,6 +14,8 @@ import { env } from '@bounty/env/server';
 /**
  * Autumn API configuration
  */
+const secretKey = env.AUTUMN_SECRET_KEY;
+
 export const AUTUMN_CONFIG = {
   /**
    * Autumn API base URL
@@ -23,8 +25,18 @@ export const AUTUMN_CONFIG = {
 
   /**
    * Autumn secret key for server-side operations
+   * @throws Error if secret key is not set or invalid
    */
-  secretKey: env.AUTUMN_SECRET_KEY,
+  get secretKey(): string {
+    if (!secretKey || secretKey.trim() === '') {
+      throw new Error(
+        'AUTUMN_SECRET_KEY is not set. ' +
+        'Add it to your environment variables. ' +
+        'Get your key from: https://app.useautumn.com'
+      );
+    }
+    return secretKey.trim();
+  },
 
   /**
    * Default success URL for checkout sessions
@@ -123,11 +135,17 @@ export function isConflictError(error: unknown): boolean {
  * Extract error message from various error formats
  */
 export function extractErrorMessage(error: unknown): string {
-  if (typeof error === 'string') return error;
-  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') {
+    return error;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
 
   const err = error as Record<string, unknown> | null;
-  if (!err) return 'Unknown error';
+  if (!err) {
+    return 'Unknown error';
+  }
 
   return String(
     err?.message ??

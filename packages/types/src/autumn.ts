@@ -232,11 +232,32 @@ export interface AutumnCheckoutParams {
 }
 
 /**
+ * Checkout preview data (returned when payment method is on file)
+ */
+export interface AutumnCheckoutPreview {
+  total: number;
+  currency: string;
+  product: {
+    id: string;
+    name: string;
+  };
+  // Additional preview fields may be present
+  [key: string]: unknown;
+}
+
+/**
  * Checkout session response
+ * Can return either a URL (first-time payment) or preview data (payment on file)
  */
 export interface AutumnCheckoutSession {
-  checkout_url: string;
-  id: string;
+  // URL returned when payment details needed (first-time)
+  checkout_url?: string;
+  url?: string; // alias used in some responses
+  
+  // Preview returned when payment method on file
+  preview?: AutumnCheckoutPreview;
+  
+  id?: string;
 }
 
 /**
@@ -301,7 +322,7 @@ export const PRICING_TIERS: Record<BountyProPlan, PricingPlan> = {
     name: 'Pro+',
     description: 'For scaling organizations',
     monthlyPrice: 150,
-    feeFreeAllowance: 12000,
+    feeFreeAllowance: 12_000,
     platformFeePercent: 4,
     concurrentBounties: -1, // unlimited
   },
@@ -342,9 +363,15 @@ export const calculateBountyCost = (
 export const getRecommendedPlan = (
   monthlyBountySpend: number
 ): BountyProPlan => {
-  if (monthlyBountySpend <= 200) return 'free';
-  if (monthlyBountySpend <= 500) return 'tier_1_basic';
-  if (monthlyBountySpend <= 5000) return 'tier_2_pro';
+  if (monthlyBountySpend <= 200) {
+    return 'free';
+  }
+  if (monthlyBountySpend <= 500) {
+    return 'tier_1_basic';
+  }
+  if (monthlyBountySpend <= 5000) {
+    return 'tier_2_pro';
+  }
   return 'tier_3_pro_plus';
 };
 
@@ -352,7 +379,9 @@ export const getRecommendedPlan = (
  * Format fee percentage for display
  */
 export const formatFeePercent = (percent: number): string => {
-  if (percent === 0) return '0%';
+  if (percent === 0) {
+    return '0%';
+  }
   return `${percent}%`;
 };
 

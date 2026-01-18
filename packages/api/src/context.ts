@@ -38,9 +38,17 @@ function getRequestId(req: NextRequest): string {
 export async function createContext(req: NextRequest) {
   // Better Auth's getSession supports both cookies AND Bearer tokens
   // Just pass the headers and it will check both!
-  const session = await auth.api.getSession({
-    headers: req.headers,
-  });
+  let session = null;
+  let sessionError: string | null = null;
+  
+  try {
+    session = await auth.api.getSession({
+      headers: req.headers,
+    });
+  } catch (error) {
+    sessionError = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Context] getSession threw error:', sessionError);
+  }
 
   // Debug logging for session issues
   const cookieHeader = req.headers.get('cookie');
@@ -55,7 +63,8 @@ export async function createContext(req: NextRequest) {
       hasCookies,
       hasSessionCookie,
       hasAuthHeader: !!authHeader,
-      cookies: cookieHeader ? cookieHeader.substring(0, 100) + '...' : 'none',
+      sessionError,
+      cookies: cookieHeader ? cookieHeader.substring(0, 150) + '...' : 'none',
       url: req.url,
       origin: req.headers.get('origin'),
       referer: req.headers.get('referer'),

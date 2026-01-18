@@ -21,30 +21,42 @@ export function PricingPageContent() {
   // Handle checkout callback after login redirect
   useEffect(() => {
     const checkoutPlan = searchParams.get('checkout');
+    const shouldProcessCheckout = checkoutPlan && isAuthenticated && !isPending;
     
-    if (checkoutPlan && isAuthenticated && !isPending) {
-      // Clear the checkout param from URL
-      const url = new URL(window.location.href);
-      url.searchParams.delete('checkout');
-      window.history.replaceState({}, '', url.pathname);
-
-      // Trigger checkout for non-free plans (includes yearly variants)
-      if (checkoutPlan !== 'free') {
-        const startCheckout = async () => {
-          try {
-            const result = await trpcClient.billing.createCheckout.mutate({ slug: checkoutPlan });
-            if (result?.checkoutUrl) {
-              window.location.href = result.checkoutUrl;
-            }
-          } catch (error) {
-            const message = error instanceof Error ? error.message : 'Unknown error';
-            console.error('[Checkout Error]', error);
-            toast.error(`Checkout failed: ${message}`);
-          }
-        };
-        startCheckout();
-      }
+    if (!shouldProcessCheckout) {
+      return;
     }
+
+    // Clear the checkout param from URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete('checkout');
+    window.history.replaceState({}, '', url.pathname);
+
+    // Trigger checkout for non-free plans (includes yearly variants)
+    if (checkoutPlan === 'free') {
+      return;
+    }
+
+    const startCheckout = async () => {
+      try {
+        const result = await trpcClient.billing.createCheckout.mutate({ slug: checkoutPlan });
+        if (result?.checkoutUrl) {
+          // Redirect to Stripe checkout (first-time payment)
+          window.location.href = result.checkoutUrl;
+        } else if (result?.preview) {
+          // For preview flow, show a toast and let the user click the button again
+          // The pricing card will handle the confirmation dialog
+          toast.info('Please confirm your purchase on the pricing card');
+        } else {
+          toast.error('Invalid checkout response. Please try again.');
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error('[Checkout Error]', error);
+        toast.error(`Checkout failed: ${message}`);
+      }
+    };
+    startCheckout();
   }, [searchParams, isAuthenticated, isPending]);
 
   return (
