@@ -12,7 +12,6 @@
   "dependencies": {
     "@bounty/api": "workspace:*",
     "@bounty/auth": "workspace:*",
-    "@bounty/autumn": "workspace:*",
     "@bounty/db": "workspace:*",
     "@bounty/env": "workspace:*",
     "@bounty/realtime": "workspace:*",

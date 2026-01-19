@@ -13,48 +13,52 @@ import { Input } from '@bounty/ui/components/input';
 import { Label } from '@bounty/ui/components/label';
 import { Loader2, RefreshCw, Check, X } from 'lucide-react';
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { trpc } from '@/utils/trpc';
+import { useCustomer } from 'autumn-js/react';
 
 export function TestBillingClient() {
-  const queryClient = useQueryClient();
   const [featureId, setFeatureId] = useState('concurrent_bounties');
   const [trackValue, setTrackValue] = useState(1);
   const [checkResult, setCheckResult] = useState<any>(null);
   const [trackResult, setTrackResult] = useState<any>(null);
 
-  // Get all billing test data
-  const { data: testData, isLoading, refetch } = useQuery(trpc.billing.testBilling.queryOptions());
+  // Use the autumn-js SDK hook
+  const {
+    customer,
+    isLoading,
+    refetch,
+    check,
+    track,
+  } = useCustomer();
 
-  // Track feature mutation
-  const trackFeatureMutation = useMutation(
-    trpc.billing.trackFeature.mutationOptions({
-      onSuccess: () => {
-        refetch();
-      },
-    })
-  );
-
-  // Check feature (use fetchQuery since it's a .query() with dynamic input)
+  // Check feature
   const handleCheck = async () => {
     setCheckResult(null);
     try {
-      const result = await queryClient.fetchQuery(trpc.billing.checkFeature.queryOptions({ featureId }));
+      const result = check({
+        featureId,
+        requiredBalance: 1,
+      });
       setCheckResult({ data: result, error: null });
     } catch (err: unknown) {
       setCheckResult({ data: null, error: String(err) });
     }
   };
 
-  // Track feature
+  // Track usage
   const handleTrack = async () => {
     setTrackResult(null);
     try {
-      const result = await trackFeatureMutation.mutateAsync({
-        featureId,
+      const result = await track({
+        eventName: featureId,
         value: trackValue,
+        entityData: undefined,
       });
-      setTrackResult({ data: result, error: null });
+      if (result.error) {
+        setTrackResult({ data: null, error: result.error.message });
+      } else {
+        setTrackResult({ data: result.data, error: null });
+        refetch();
+      }
     } catch (err: unknown) {
       setTrackResult({ data: null, error: String(err) });
     }
@@ -68,10 +72,22 @@ export function TestBillingClient() {
     );
   }
 
-  const customer = testData?.customer;
-  const subscriptions = testData?.activeProducts ?? [];
-  const features = testData?.features ?? {};
-  const products = testData?.products ?? [];
+  // Get products from customer (products contain subscription info)
+  const products = customer?.products ?? [];
+
+  // Products with subscription_ids are subscriptions
+  const subscriptions = products.filter((p: any) => p.subscription_ids && p.subscription_ids.length > 0);
+
+  // Get features from customer
+  const features = customer?.features ?? {};
+
+  // Fee calculation scenarios (static data)
+  const feeScenarios = [
+    { monthlySpend: 0, expected: 'Free tier: 5% fee, 1 concurrent bounty' },
+    { monthlySpend: 100, expected: 'Basic ($10/mo): $500 allowance, 0% fee, unlimited bounties' },
+    { monthlySpend: 1000, expected: 'Pro ($25/mo): $5,000 allowance, 2% fee, unlimited bounties' },
+    { monthlySpend: 10000, expected: 'Pro+ ($150/mo): $12,000 allowance, 4% fee, unlimited bounties' },
+  ];
 
   return (
     <div className="space-y-6">
@@ -86,7 +102,7 @@ export function TestBillingClient() {
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Customer ID:</span>
-                <code className="rounded bg-muted px-2 py-1 text-xs">{customer.id}</code>
+                <code className="rounded bg-muted px-2 py-1 text-xs">{customer.id ?? 'N/A'}</code>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Email:</span>
@@ -124,12 +140,12 @@ export function TestBillingClient() {
                 <div key={sub.id} className="rounded-lg border p-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">{sub.product_id}</p>
+                      <p className="font-medium">{sub.name || sub.id}</p>
                       <p className="text-muted-foreground text-sm">
                         Status: {sub.status}
                       </p>
                     </div>
-                    <Badge variant={sub.status === 'active' ? 'default' : 'secondary'}>
+                    <Badge variant={sub.status === 'active' || sub.status === 'trialing' ? 'default' : 'secondary'}>
                       {sub.status}
                     </Badge>
                   </div>
@@ -156,11 +172,11 @@ export function TestBillingClient() {
               {Object.entries(features).map(([key, feature]) => {
                 const f = feature as unknown as {
                   enabled?: boolean;
-                  type?: string;
                   balance?: number;
                   usage?: number;
                   included_usage?: number;
                   next_reset_at?: number | string;
+                  unlimited?: boolean;
                 };
                 return (
                   <div key={key} className="rounded-lg border p-4">
@@ -172,12 +188,8 @@ export function TestBillingClient() {
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>
-                        <span className="text-muted-foreground">Type:</span>{' '}
-                        {f.type}
-                      </div>
-                      <div>
                         <span className="text-muted-foreground">Balance:</span>{' '}
-                        {f.balance ?? 'N/A'}
+                        {f.unlimited ? 'Unlimited' : (f.balance ?? 'N/A')}
                       </div>
                       <div>
                         <span className="text-muted-foreground">Usage:</span>{' '}
@@ -297,7 +309,7 @@ export function TestBillingClient() {
       {/* Feature Track Test */}
       <Card>
         <CardHeader>
-          <CardTitle>Test Feature Tracking</CardTitle>
+          <CardTitle>Test Usage Tracking</CardTitle>
           <CardDescription>
             Track usage for a feature (increments usage counter)
           </CardDescription>
@@ -345,14 +357,9 @@ export function TestBillingClient() {
                     <Check className="h-5 w-5 text-green-500" />
                     <p className="font-medium">Tracked Successfully</p>
                   </div>
-                  <div>
-                    <span className="text-muted-foreground">New Balance:</span>{' '}
-                    {trackResult.data.balance}
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">New Usage:</span>{' '}
-                    {trackResult.data.usage}
-                  </div>
+                  <p className="text-muted-foreground">
+                    Data refreshed. Check feature access above for updated usage.
+                  </p>
                 </div>
               ) : null}
             </div>
@@ -370,7 +377,7 @@ export function TestBillingClient() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {testData?.feeScenarios?.map((scenario: any, i: number) => (
+            {feeScenarios.map((scenario, i) => (
               <div key={i} className="rounded-lg border p-3">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">${scenario.monthlySpend}/mo spend</span>

@@ -5,7 +5,6 @@
   "types": "./src/index.ts",
   "dependencies": {
     "@bounty/auth": "workspace:*",
-    "@bounty/autumn": "workspace:*",
     "@bounty/db": "workspace:*",
     "@bounty/env": "workspace:*",
     "@bounty/stripe": "workspace:*",

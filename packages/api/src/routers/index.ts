@@ -1,5 +1,4 @@
 import { protectedProcedure, publicProcedure, router } from '../trpc';
-import { billingRouter } from './billing';
 import { bountiesRouter } from './bounties';
 import { connectRouter } from './connect';
 import { earlyAccessRouter } from './early-access';
@@ -41,7 +40,6 @@ export const appRouter = router({
   emails: emailsRouter,
   repository: repositoryRouter,
   githubInstallation: githubInstallationRouter,
-  billing: billingRouter,
   connect: connectRouter,
 });
 
