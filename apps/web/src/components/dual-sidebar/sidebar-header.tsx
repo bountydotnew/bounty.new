@@ -59,11 +59,12 @@ export const Header = (_props: HeaderProps = {}) => {
           'px-4 sm:px-6'
         )}
       >
-        <div className="flex flex-1 items-center justify-center gap-6">
+        {/* Left side - Sidebar trigger and search */}
+        <div className="flex items-center gap-4 flex-1">
           {isMobile && <SidebarTrigger />}
-          {/* Search Bar Trigger
+          {/* Search Bar Trigger - hidden on mobile */}
           <button
-            className="relative flex w-[270px] items-center rounded-lg border cursor-pointer border-[#232323] bg-[#191919] py-[5px] pl-[10px] pr-[53px] text-left transition-colors hover:bg-[#141414]"
+            className="hidden sm:relative sm:flex w-[270px] items-center rounded-lg border cursor-pointer border-[#232323] bg-[#191919] py-[5px] pl-[10px] pr-[53px] text-left transition-colors hover:bg-[#141414]"
             onClick={() => setCommandMenuOpen(true)}
             type="button"
           >
@@ -78,18 +79,18 @@ export const Header = (_props: HeaderProps = {}) => {
               </div>
             </div>
           </button>
-           */}
         </div>
 
+        {/* Right side - Create Bounty button */}
         <div className="flex items-center gap-2">
-          {/* Create Bounty Button */}
+          {/* Create Bounty Button - icon only on mobile */}
           <button
-            className="hidden md:flex lg:flex items-center gap-[7px] rounded-lg bg-[#2A2A28] px-2 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#383838]"
+            className="flex items-center gap-[7px] rounded-lg bg-[#2A2A28] px-2 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#383838]"
             onClick={handleCreateBounty}
             type="button"
           >
             <Plus className="h-4 w-4 text-[#CFCFCF]" />
-            <span className="text-sm font-semibold leading-[150%] tracking-[0.01em] text-[#CFCFCF]">
+            <span className="hidden md:inline text-sm font-semibold leading-[150%] tracking-[0.01em] text-[#CFCFCF]">
               Create a bounty
             </span>
           </button>

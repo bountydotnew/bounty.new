@@ -14,21 +14,27 @@ import { CalendarIcon } from '@bounty/ui/components/icons/huge/calendar';
 // ─────────────────────────────────────────────────────────────────────────────
 // Bounty Dashboard Page (Create Bounty form + feed)
 // ─────────────────────────────────────────────────────────────────────────────
-function BountyDashboardPage() {
+interface BountyDashboardPageProps {
+  compact?: boolean;
+}
+
+function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
   const { navigate } = useMockBrowser();
   const { advanceStep } = useTutorial();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [feedBounties, setFeedBounties] = useState<Bounty[]>([]);
   const [visibleCount, setVisibleCount] = useState(0);
 
+  // Skip scroll animation on compact
   useEffect(() => {
+    if (compact) return;
     const timer = setTimeout(() => {
       if (scrollRef.current) {
         scrollRef.current.scrollTo({ top: 100, behavior: 'smooth' });
       }
     }, 1800);
     return () => clearTimeout(timer);
-  }, []);
+  }, [compact]);
 
   const mockBounties = useMemo(() => {
     const titles = [
@@ -127,41 +133,40 @@ function BountyDashboardPage() {
   return (
     <div className="bg-[#0E0E0E] h-full flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-[#0E0E0E] border-r border-[#232323] flex flex-col">
+      <aside className={`${compact ? 'w-12' : 'w-64'} bg-[#0E0E0E] border-r border-[#232323] flex flex-col`}>
         {/* Workspace header */}
-        <div className="px-[15px] py-4">
-          <div className="flex items-center gap-[10px]">
-            <div className="h-[27px] w-[27px] rounded-[6px] bg-[#E66700] flex items-center justify-center text-white text-base font-semibold">
+        <div className={`${compact ? 'px-2 py-3' : 'px-[15px] py-4'}`}>
+          <div className={`${compact ? ' justify-center flex items-center gap-2' : 'flex items-center gap-2'}`}>
+            <div className={`${compact ? 'h-5 w-5 text-xs' : 'h-[27px] w-[27px]'} rounded-[6px] bg-[#E66700] flex items-center justify-center text-white font-semibold shrink-0`}>
               g
             </div>
-            <span className="text-[18px] font-semibold leading-[150%] text-[#F2F2F2]">grim</span>
+            {!compact && <span className="text-[18px] font-semibold leading-[150%] text-[#F2F2F2]">grim</span>}
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex flex-col gap-[8px] px-[15px] flex-1">
+        <nav className={`${compact ? 'gap-1 px-1' : 'flex flex-col gap-[8px] px-[15px]'} flex-1`}>
           <button
             type="button"
-            className="flex items-center gap-[10px] rounded-[10px] border border-[#232323] bg-[#191919] px-[12px] py-[8px] text-[16px] font-medium text-[#F2F2F2] w-full"
+            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] border border-[#232323] bg-[#191919] px-[12px] py-[8px] text-[16px]'} font-medium text-[#F2F2F2] w-full`}
           >
-            <HomeIcon className="h-4 w-4 text-[#CFCFCF]" />
-            <span>Home</span>
+            <HomeIcon className={`${compact ? 'h-4 w-4' : 'h-4 w-4'} text-[#CFCFCF] shrink-0`} />
+            {!compact && <span>Home</span>}
           </button>
-          <button type="button" className="flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px] font-medium text-[#929292] hover:text-white hover:bg-[#191919] transition-colors w-full">
-            <BountiesIcon className="h-4 w-4" />
-            <span>Bounties</span>
+          <button type="button" className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} font-medium text-[#929292] hover:text-white hover:bg-[#191919] transition-colors w-full`}>
+            <BountiesIcon className={compact ? 'h-4 w-4' : 'h-4 w-4'} shrink-0 />
+            {!compact && <span>Bounties</span>}
           </button>
-          <button type="button" className="flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px] font-medium text-[#929292] hover:text-white hover:bg-[#191919] transition-colors w-full">
-            <BookmarksIcon className="h-4 w-4" />
-            <span>Bookmarks</span>
+          <button type="button" className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} font-medium text-[#929292] hover:text-white hover:bg-[#191919] transition-colors w-full`}>
+            <BookmarksIcon className={compact ? 'h-4 w-4' : 'h-4 w-4'} shrink-0 />
+            {!compact && <span>Bookmarks</span>}
           </button>
         </nav>
 
         {/* Footer */}
-        <div className="px-[15px] py-4">
-          <button type="button" className="flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[#929292] transition-colors hover:text-white hover:bg-[#191919] w-full">
-            <SettingsGearIcon className="h-[18px] w-[18px]" />
-            <span className="text-[16px] font-medium leading-[150%]">Settings</span>
+        <div className={`${compact ? 'px-1 py-2' : 'px-[15px] py-4'}`}>
+          <button type="button" className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} text-[#929292] transition-colors hover:text-white hover:bg-[#191919] w-full`}>
+            <SettingsGearIcon className={compact ? 'h-4 w-4' : 'h-[18px] w-[18px]'} />
           </button>
         </div>
       </aside>
@@ -169,47 +174,36 @@ function BountyDashboardPage() {
       {/* Main content */}
       <div className="flex-1 overflow-auto" ref={scrollRef}>
         {/* Header */}
-        <div className="flex h-[72px] items-center justify-between bg-[#0E0E0E] border-b border-[#232323] px-4 sm:px-6 sticky top-0 z-10">
-          <div className="flex flex-1 items-center justify-center gap-6">
-            {/* <button className="relative flex w-[270px] items-center rounded-lg border cursor-pointer border-[#232323] bg-[#191919] py-[5px] pl-[10px] pr-[53px] text-left transition-colors hover:bg-[#141414]" type="button">
-              <span className="flex-1 bg-transparent text-[16px] font-medium leading-[150%] tracking-[-0.03em] text-[#5A5A5A] flex items-center">
-                Search for anything...
-              </span>
-              <div className="absolute right-[10px] top-1/2 flex -translate-y-1/2 items-center">
-                <div className="flex h-[23px] w-[43px] items-center justify-center rounded-full bg-[#232323]">
-                  <span className="text-[16px] font-medium leading-[150%] text-[#5A5A5A]">⌘K</span>
-                </div>
-              </div>
-            </button> */}
-          </div>
+        <div className={`flex items-center justify-between bg-[#0E0E0E] border-b border-[#232323] ${compact ? 'h-10 px-2' : 'h-[72px] px-4 sm:px-6'} sticky top-0 z-10`}>
+          <div className="flex flex-1 items-center justify-center gap-6"></div>
           <div className="flex items-center gap-2">
-            <button className="hidden md:flex lg:flex items-center gap-[7px] rounded-[12px] border border-[#232323] bg-[#191919] py-[5px] px-[10px] transition-colors hover:bg-[#141414]" type="button">
-              <Plus className="h-4 w-4 text-[#CFCFCF]" />
-              <span className="text-[16px] font-semibold leading-[150%] tracking-[0.01em] text-[#CFCFCF]">Create Bounty</span>
+            <button className={`flex items-center gap-[7px] rounded-[12px] border border-[#232323] bg-[#191919] transition-colors hover:bg-[#141414] ${compact ? 'px-1.5 py-1' : 'py-[5px] px-[10px]'}`} type="button">
+              <Plus className={`${compact ? 'h-3 w-3' : 'h-4 w-4'} text-[#CFCFCF]`} />
+              <span className={`${compact ? 'text-[10px]' : 'text-[16px]'} font-semibold leading-[150%] tracking-[0.01em] text-[#CFCFCF]`}>Create Bounty</span>
             </button>
           </div>
         </div>
 
         {/* Create bounty form */}
-        <div className="flex w-full shrink-0 flex-col px-6 lg:px-8 max-w-[880px] mx-auto min-w-0">
-          <div className="w-full flex flex-col mt-8 mb-6 min-w-0">
-            <div className="bg-[#191919] text-[#5A5A5A] border border-[#232323] rounded-[24px] relative overflow-hidden w-full min-w-0 p-5 flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <div className="flex flex-row flex-wrap items-center gap-[6px]">
-                  <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-[#141414] border border-solid border-[#232323]">
-                    <span className="text-[16px] leading-5 font-sans text-white">Add OAuth integration</span>
-                    <ChevronSortIcon className="size-2 text-[#7D7878] shrink-0" />
+        <div className={`flex w-full shrink-0 flex-col ${compact ? 'px-3 py-2' : 'px-6 lg:px-8'} max-w-[880px] mx-auto min-w-0`}>
+          <div className={`w-full flex flex-col ${compact ? 'my-2' : 'mt-8 mb-6'} min-w-0`}>
+            <div className={`bg-[#191919] text-[#5A5A5A] border border-[#232323] ${compact ? 'rounded-xl' : 'rounded-[24px]'} relative overflow-hidden w-full min-w-0 flex flex-col ${compact ? 'p-3 gap-2' : 'p-5 gap-4'}`}>
+              <div className={`flex flex-col ${compact ? 'gap-1.5' : 'gap-2'}`}>
+                <div className={`flex flex-row flex-wrap items-center ${compact ? 'gap-1.5' : 'gap-[6px]'}`}>
+                  <div className={`rounded-full flex justify-center items-center shrink-0 gap-1.5 bg-[#141414] border border-solid border-[#232323] ${compact ? 'px-2 py-1' : 'px-[11px] py-[6px]'}`}>
+                    <span className={`${compact ? 'text-[11px]' : 'text-[16px]'} leading-5 font-sans text-white truncate`}>Add OAuth integration</span>
+                    <ChevronSortIcon className={`${compact ? 'size-1.5' : 'size-2'} text-[#7D7878] shrink-0`} />
                   </div>
-                  <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-[#141414] border border-solid border-[#232323]">
-                    <span className="text-[16px] leading-5 font-sans text-white">$500</span>
-                    <ChevronSortIcon className="size-2 text-[#7D7878] shrink-0" />
+                  <div className={`rounded-full flex justify-center items-center shrink-0 gap-1.5 bg-[#141414] border border-solid border-[#232323] ${compact ? 'px-2 py-1' : 'px-[11px] py-[6px]'}`}>
+                    <span className={`${compact ? 'text-[11px]' : 'text-[16px]'} leading-5 font-sans text-white`}>$500</span>
+                    <ChevronSortIcon className={`${compact ? 'size-1.5' : 'size-2'} text-[#7D7878] shrink-0`} />
                   </div>
-                  <div className="relative flex">
-                    <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] bg-[#141414] border border-solid border-[#232323] text-[16px] leading-5 font-sans text-white pr-8 min-w-[150px]">
-                      Deadline, e.g. tomorrow
+                  <div className={`relative flex ${compact ? '' : ''}`}>
+                    <div className={`rounded-full flex justify-center items-center bg-[#141414] border border-solid border-[#232323] ${compact ? 'text-[11px] px-2 py-1 pr-6' : 'text-[16px] leading-5 px-[11px] py-[6px] pr-8 min-w-[150px]'} font-sans text-white`}>
+                      Deadline
                     </div>
                     <button type="button" className="absolute top-1/2 right-2 -translate-y-1/2 text-[#7C7878] hover:text-white transition-colors">
-                      <CalendarIcon className="size-3.5" />
+                      <CalendarIcon className={compact ? 'size-2.5' : 'size-3.5'} />
                     </button>
                   </div>
                 </div>
@@ -217,29 +211,40 @@ function BountyDashboardPage() {
 
               <textarea
                 readOnly
-                value="Need Google & GitHub OAuth integration with proper error handling and session management."
-                className="flex-1 min-h-[160px] bg-transparent text-white text-[15px] leading-6 outline-none resize-none"
+                value={compact ? "Need Google & GitHub OAuth integration..." : "Need Google & GitHub OAuth integration with proper error handling and session management."}
+                className={`flex-1 bg-transparent text-white outline-none resize-none ${compact ? 'min-h-[60px] text-[11px] leading-tight' : 'min-h-[160px] text-[15px] leading-6'}`}
               />
 
-              <div className="flex flex-row justify-between items-center pt-1">
+              <div className={`flex flex-row justify-between items-center ${compact ? 'pt-0' : 'pt-1'}`}>
                 <div className="relative flex items-center gap-2">
-                  <div className="flex flex-row items-center gap-2 text-[#5A5A5A]">
-                    <GithubIcon className="w-4 h-4" />
-                    <span className="text-[14px] leading-[150%] tracking-[-0.02em] font-medium text-white">
+                  <div className={`flex flex-row items-center gap-1.5 text-[#5A5A5A] ${compact ? '' : ''}`}>
+                    <GithubIcon className={compact ? 'w-3 h-3' : 'w-4 h-4'} />
+                    <span className={`${compact ? 'text-[11px]' : 'text-[14px]'} leading-[150%] tracking-[-0.02em] font-medium text-white truncate`}>
                       bountydotnew/bounty.new
                     </span>
-                    <ChevronDown className="w-3 h-3" />
+                    <ChevronDown className={compact ? 'w-2 h-2' : 'w-3 h-3'} />
                   </div>
                 </div>
-                <TutorialHighlight stepId="create-bounty" tooltip="Click to create your bounty" borderRadius="rounded-full">
+                {!compact && (
+                  <TutorialHighlight stepId="create-bounty" tooltip="Click to create your bounty" borderRadius="rounded-full">
+                    <button
+                      type="button"
+                      onClick={handleCreateBounty}
+                      className="flex items-center justify-center gap-1.5 px-[16px] h-[34px] rounded-full text-[15px] font-medium bg-white text-black shadow-[0_6px_16px_rgba(255,255,255,0.18)] hover:bg-gray-100 transition-colors"
+                    >
+                      Create bounty
+                    </button>
+                  </TutorialHighlight>
+                )}
+                {compact && (
                   <button
                     type="button"
                     onClick={handleCreateBounty}
-                    className="flex items-center justify-center gap-1.5 px-[16px] h-[34px] rounded-full text-[15px] font-medium bg-white text-black shadow-[0_6px_16px_rgba(255,255,255,0.18)] hover:bg-gray-100 transition-colors"
+                    className="flex items-center justify-center gap-1 px-3 h-7 rounded-full text-[11px] font-medium bg-white text-black hover:bg-gray-100 transition-colors"
                   >
-                    Create bounty
+                    Create
                   </button>
-                </TutorialHighlight>
+                )}
               </div>
             </div>
           </div>
@@ -249,12 +254,13 @@ function BountyDashboardPage() {
         <div className="h-px w-full shrink-0 bg-[#232323]" />
 
         {/* Bounty feed */}
-        <div className="flex w-full shrink-0 flex-col px-6 lg:px-8 max-w-[880px] mx-auto min-w-0 pb-10">
-          <div className="flex flex-col gap-3 pt-4 pointer-events-none">
-            {feedBounties.slice(0, visibleCount).map((bounty, index) => (
+        <div className={`flex w-full shrink-0 flex-col ${compact ? 'px-3 py-2' : 'px-6 lg:px-8'} max-w-[880px] mx-auto min-w-0 ${compact ? '' : 'pb-10'}`}>
+          <div className={`flex flex-col ${compact ? 'gap-2' : 'gap-3'} ${compact ? 'py-1' : 'pt-4'} pointer-events-none`}>
+            {feedBounties.slice(0, compact ? 3 : visibleCount).map((bounty, index) => (
               <div key={bounty.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                 <BountyCard
                   bounty={bounty}
+                  compact={compact}
                   stats={{
                     commentCount: 3 + index,
                     voteCount: 2,
@@ -572,14 +578,19 @@ function GitHubIssuePage({ onShowNotifications }: { onShowNotifications?: () => 
 // ─────────────────────────────────────────────────────────────────────────────
 // Main Demo Component
 // ─────────────────────────────────────────────────────────────────────────────
-export function CreateBountyDemo({ onShowNotifications }: { onShowNotifications?: () => void }) {
+interface CreateBountyDemoProps {
+  compact?: boolean;
+  onShowNotifications?: () => void;
+}
+
+export function CreateBountyDemo({ compact = false, onShowNotifications }: CreateBountyDemoProps) {
   return (
-    <MockBrowser initialUrl="bounty.new/dashboard" headlights>
+    <MockBrowser initialUrl="bounty.new/dashboard" headlights compact={compact}>
       <TutorialProvider>
         <MockBrowser.Toolbar />
         <div className="flex-1 relative overflow-hidden">
           <MockBrowser.Page url="bounty.new/dashboard">
-            <BountyDashboardPage />
+            <BountyDashboardPage compact={compact} />
           </MockBrowser.Page>
           <MockBrowser.Page url="checkout.stripe.com/c/pay_bounty_1234">
             <StripeCheckoutPage />

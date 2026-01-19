@@ -332,7 +332,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
 
     return (
         <div className="flex w-full shrink-0 flex-col px-4 lg:max-w-[805px] xl:px-0 mx-auto min-w-0">
-            <form className="w-full flex flex-col mt-10 mb-6 min-w-0" onSubmit={onSubmit}>
+            <form className="w-full flex flex-col mt-3 mb-3 md:mt-10 md:mb-6 min-w-0" onSubmit={onSubmit}>
                 <fieldset className="w-full [all:unset] min-w-0">
                     <div
                         role="presentation"
@@ -393,12 +393,12 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                         )}
 
                         {/* Bottom row with selectors and submit */}
-                        <div className="flex flex-row justify-between items-center pt-2">
-                            <div className="relative flex items-center gap-2">
+                        <div className="flex flex-row justify-between items-center pt-2 gap-2">
+                            <div className="relative flex items-center gap-2 flex-1 min-w-0 overflow-x-auto">
                                 {/* Show install prompt if no installations */}
                                 {!installationsLoading && installations.length === 0 && (
-                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-[#191919] border border-[#232323] rounded-lg text-sm">
-                                        <span className="text-[#929292]">Install GitHub App to create bounties</span>
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-[#191919] border border-[#232323] rounded-lg text-sm whitespace-nowrap">
+                                        <span className="text-[#929292]">Install GitHub App</span>
                                         <Link
                                             href="/settings/integrations"
                                             className="text-white hover:underline font-medium"
@@ -426,7 +426,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                                 {/* Branch selector - only show if repo selected */}
                                 {selectedRepository && (
                                     <>
-                                        <div className="w-px h-4 bg-[#333]" />
+                                        <div className="w-px h-4 bg-[#333] shrink-0" />
                                         <BranchSelector
                                             selectedBranch={selectedBranch}
                                             filteredBranches={filteredBranches}
@@ -441,7 +441,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                                 {/* Issue selector with autofill prompt */}
                                 {selectedRepository && repoInfo && (
                                     <>
-                                        <div className="w-px h-4 bg-[#333]" />
+                                        <div className="w-px h-4 bg-[#333] shrink-0" />
                                         <Popover open={showAutofillPrompt} onOpenChange={handlePopoverOpenChange} modal={false}>
                                             <PopoverTrigger asChild>
                                                 <div className="inline-flex">
@@ -497,12 +497,15 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                             <button
                                 type="submit"
                                 disabled={createBounty.isPending || !title || !amount}
-                                className="flex items-center justify-center gap-1.5 px-[16px] h-[34px] rounded-full text-[15px] font-medium bg-white text-black shadow-[0_6px_16px_rgba(255,255,255,0.18)] hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex items-center justify-center gap-1.5 px-4 h-[34px] rounded-full text-[15px] font-medium bg-white text-black shadow-[0_6px_16px_rgba(255,255,255,0.18)] hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                             >
                                 {createBounty.isPending ? (
                                     <Spinner className="h-4 w-4" />
                                 ) : (
-                                    'Create bounty'
+                                    <>
+                                        <span className="hidden sm:inline">Create bounty</span>
+                                        <span className="sm:hidden">Create</span>
+                                    </>
                                 )}
                             </button>
                         </div>

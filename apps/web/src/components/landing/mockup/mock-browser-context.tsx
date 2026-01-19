@@ -17,6 +17,7 @@ interface MockBrowserState {
   historyIndex: number;
   isNavigating: boolean;
   loadingProgress: number; // 0-100
+  compact: boolean; // Compact mode for mobile
 }
 
 interface MockBrowserContextValue extends MockBrowserState {
@@ -32,15 +33,17 @@ const MockBrowserContext = createContext<MockBrowserContextValue | null>(null);
 interface MockBrowserProviderProps {
   initialUrl: string;
   children: ReactNode;
+  compact?: boolean;
 }
 
-export function MockBrowserProvider({ initialUrl, children }: MockBrowserProviderProps) {
+export function MockBrowserProvider({ initialUrl, children, compact = false }: MockBrowserProviderProps) {
   const [state, setState] = useState<MockBrowserState>({
     currentUrl: initialUrl,
     history: [initialUrl],
     historyIndex: 0,
     isNavigating: false,
     loadingProgress: 0,
+    compact,
   });
 
   const loadingIntervalRef = useRef<NodeJS.Timeout | null>(null);

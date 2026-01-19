@@ -13,7 +13,7 @@ const FAQ_ITEMS: FAQItem[] = [
   {
     question: 'What is the fee-free allowance?',
     answer:
-      'The fee-free allowance is the monthly amount you can spend on bounties without any platform fee. For example, with the Basic plan ($500 allowance), you pay 0% fee on the first $500 in bounties each month.',
+      'The fee-free allowance is the monthly amount you can spend on bounties without any platform fee. For example, with the Basic plan ($500 allowance), you pay 0% platform fee on the first $500 in bounties each month. (Stripe fees still apply).',
   },
   {
     question: 'What happens when I exceed my allowance?',
