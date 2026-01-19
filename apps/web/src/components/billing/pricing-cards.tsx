@@ -4,16 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PRICING_TIERS, type BountyProPlan } from '@bounty/types';
 import { cn } from '@bounty/ui';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@bounty/ui/components/dialog';
 import { useSession } from '@/context/session-context';
-import { trpcClient } from '@/utils/trpc';
+import { useCustomer } from 'autumn-js/react';
 import { toast } from 'sonner';
 
 const PLAN_ORDER: BountyProPlan[] = [
@@ -61,63 +53,13 @@ const YEARLY_PRICES: Record<BountyProPlan, number> = {
   tier_3_pro_plus: 1500, // $150/mo * 10 months
 };
 
-interface ConfirmPurchaseDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  previewData: { product: { name: string }; total: number; currency: string } | null;
-  onConfirm: () => void;
-  isLoading: boolean;
-}
-
-function ConfirmPurchaseDialog({
-  open,
-  onOpenChange,
-  previewData,
-  onConfirm,
-  isLoading,
-}: ConfirmPurchaseDialogProps) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#1a1a1a] border-[#2a2a2a]">
-        <DialogHeader>
-          <DialogTitle className="text-[#efefef]">Confirm Purchase</DialogTitle>
-          <DialogDescription className="text-[#888]">
-            {previewData && (
-              <>
-                You're about to subscribe to <strong className="text-[#efefef]">{previewData.product.name}</strong>.
-                <br />
-                <br />
-                Total: <strong className="text-[#efefef]">{previewData.currency === 'usd' ? '$' : ''}{previewData.total.toFixed(2)}</strong>
-              </>
-            )}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <button
-            type="button"
-            onClick={() => {
-              onOpenChange(false);
-            }}
-            className="rounded-full px-4 py-2 text-sm font-medium text-[#888] hover:text-[#efefef] transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={isLoading}
-            className={cn(
-              'rounded-full px-4 py-2 text-sm font-medium bg-white text-[#0E0E0E] hover:bg-[#e5e5e5] transition-colors',
-              isLoading && 'opacity-50 cursor-not-allowed'
-            )}
-          >
-            {isLoading ? 'Processing...' : 'Confirm'}
-          </button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
+// Get the base URL for success/redirects
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  return process.env.NEXT_PUBLIC_BASE_URL ?? 'https://bounty.new';
+};
 
 function PricingCard({
   plan,
@@ -130,17 +72,15 @@ function PricingCard({
 }) {
   const router = useRouter();
   const { isAuthenticated } = useSession();
+  const { attach } = useCustomer();
   const pricing = PRICING_TIERS[plan];
   const [isLoading, setIsLoading] = useState(false);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [previewData, setPreviewData] = useState<{ product: { name: string }; total: number; currency: string } | null>(null);
-  const [pendingSlug, setPendingSlug] = useState<string | null>(null);
 
   const displayPrice = isYearly ? YEARLY_PRICES[plan] : pricing.monthlyPrice;
-  const checkoutSlug = plan === 'free' 
-    ? 'free' 
-    : isYearly 
-      ? `${plan}_yearly` 
+  const checkoutSlug = plan === 'free'
+    ? 'free'
+    : isYearly
+      ? `${plan}_yearly`
       : plan;
 
   const handleCheckoutClick = () => {
@@ -164,47 +104,43 @@ function PricingCard({
   const handleCheckout = async () => {
     setIsLoading(true);
     try {
-      const result = await trpcClient.billing.createCheckout.mutate({ slug: checkoutSlug });
-      
-      if (result?.checkoutUrl) {
-        // Redirect to Stripe checkout (first-time payment)
-        window.location.href = result.checkoutUrl;
-      } else if (result?.preview) {
-        // Show confirmation dialog (payment method on file)
-        setPreviewData(result.preview);
-        setPendingSlug(checkoutSlug);
-        setShowConfirmDialog(true);
-      } else {
-        toast.error('Invalid checkout response. Please try again.');
+      // Use the SDK's attach method with explicit success URL
+      // forceCheckout: true ensures users always go through the checkout page
+      const result = await attach({
+        productId: checkoutSlug,
+        successUrl: `${getBaseUrl()}/settings/billing?checkout=success`,
+        checkoutSessionParams: {
+          cancel_url: `${getBaseUrl()}/pricing`,
+        },
+        forceCheckout: true,
+      });
+
+      if (result.error) {
+        toast.error(result.error.message ?? 'Checkout failed');
+        setIsLoading(false);
+        return;
       }
+
+      const data = result.data;
+      if (!data) {
+        toast.error('Invalid checkout response');
+        setIsLoading(false);
+        return;
+      }
+
+      // Redirect to checkout URL
+      if ('checkout_url' in data && data.checkout_url) {
+        window.location.href = data.checkout_url;
+        return;
+      }
+
+      // Fallback: if for some reason no checkout URL, show error
+      toast.error('Unable to open checkout page. Please try again.');
+      setIsLoading(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('[Checkout Error]', error);
       toast.error(`Checkout failed: ${message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleConfirmPurchase = async () => {
-    if (!pendingSlug) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await trpcClient.billing.attachProduct.mutate({ slug: pendingSlug });
-      toast.success('Plan activated successfully!');
-      setShowConfirmDialog(false);
-      setPreviewData(null);
-      setPendingSlug(null);
-      // Refresh the page to show updated plan status
-      router.refresh();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('[Attach Error]', error);
-      toast.error(`Failed to activate plan: ${message}`);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -215,8 +151,8 @@ function PricingCard({
         'group relative flex flex-col justify-between rounded-lg border p-6 transition-all duration-200',
         'bg-[#1a1a1a]',
         // Recommended card gets highlighted styling
-        isRecommended 
-          ? 'border-white/30 bg-[#1f1f1f]' 
+        isRecommended
+          ? 'border-white/30 bg-[#1f1f1f]'
           : 'border-[#2a2a2a]'
       )}
     >
@@ -285,21 +221,6 @@ function PricingCard({
               : `Get ${pricing.name}`}
         </button>
       </div>
-
-      {/* Confirmation Dialog for Preview Flow */}
-      <ConfirmPurchaseDialog
-        open={showConfirmDialog}
-        onOpenChange={(open) => {
-          setShowConfirmDialog(open);
-          if (!open) {
-            setPreviewData(null);
-            setPendingSlug(null);
-          }
-        }}
-        previewData={previewData}
-        onConfirm={handleConfirmPurchase}
-        isLoading={isLoading}
-      />
     </div>
   );
 }

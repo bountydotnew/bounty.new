@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
-import { GithubIcon } from '@bounty/ui';
+import { GithubIcon, Spinner } from '@bounty/ui';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -69,8 +69,8 @@ export function IssueSelector({
           <DropdownMenuSeparator className="h-px bg-[#232323] my-1 -mx-1" />
           <div className="max-h-[240px] overflow-y-auto px-1 pb-1">
             {issuesList.isLoading || issuesList.isFetching ? (
-              <div className="px-2 py-1.5 text-sm text-[#5A5A5A]">
-                Loading issues...
+              <div className="flex items-center justify-center py-4">
+                <Spinner size="sm" className="w-4 h-4" />
               </div>
             ) : filteredIssues.length > 0 ? (
               filteredIssues.map((issue: Issue) => (

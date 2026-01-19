@@ -39,6 +39,7 @@ export const cancellationRequestStatusEnum = pgEnum('cancellation_request_status
   'pending',
   'approved',
   'rejected',
+  'withdrawn',
 ]);
 
 export const bounty = pgTable('bounty', {

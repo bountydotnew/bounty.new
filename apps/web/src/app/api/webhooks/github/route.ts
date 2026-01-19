@@ -441,6 +441,13 @@ async function handleIssueComment(event: IssueCommentEvent) {
     return;
   }
 
+  // Ignore comments from the bot itself to avoid infinite loops
+  // GitHub bot accounts have '[bot]' in their login name (e.g., 'bountydotnew[bot]')
+  if (comment.user.login.includes('[bot]')) {
+    console.log('[GitHub Webhook] Ignoring comment from bot');
+    return;
+  }
+
   // Parse the comment for bot commands
   const command = parseBotCommand(comment.body);
 

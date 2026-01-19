@@ -332,6 +332,32 @@ export const bountiesRouter = router({
           }
         }
 
+        // Enforce: only 1 bounty per GitHub issue
+        // Check if a bounty already exists for this issue
+        if (githubIssueNumber && githubRepoOwner && githubRepoName) {
+          const [existingBountyForIssue] = await db
+            .select({ id: bounty.id, title: bounty.title })
+            .from(bounty)
+            .where(
+              and(
+                eq(bounty.githubIssueNumber, githubIssueNumber),
+                eq(bounty.githubRepoOwner, githubRepoOwner),
+                eq(bounty.githubRepoName, githubRepoName),
+                // Only count active bounties (not cancelled or completed)
+                sql`${bounty.status} != 'cancelled'`,
+                sql`${bounty.status} != 'completed'`
+              )
+            )
+            .limit(1);
+
+          if (existingBountyForIssue) {
+            throw new TRPCError({
+              code: 'CONFLICT',
+              message: `This GitHub issue already has an active bounty: "${existingBountyForIssue.title}". Only one bounty per issue is allowed.`,
+            });
+          }
+        }
+
         // Calculate fees
         const bountyAmountInCents = Math.round(parseAmount(normalizedAmount) * 100);
         const { total: totalWithFees, fees } = calculateTotalWithFees(bountyAmountInCents);
@@ -578,6 +604,7 @@ export const bountiesRouter = router({
             deadline: bounty.deadline,
             tags: bounty.tags,
             repositoryUrl: bounty.repositoryUrl,
+            issueUrl: bounty.issueUrl,
             isFeatured: bounty.isFeatured,
             paymentStatus: bounty.paymentStatus,
             createdAt: bounty.createdAt,
@@ -2495,6 +2522,33 @@ export const bountiesRouter = router({
                     });
                   }
 
+                  // Update GitHub bot comment to "funded" status
+                  if (
+                    currentBounty.githubIssueNumber &&
+                    currentBounty.githubRepoOwner &&
+                    currentBounty.githubRepoName &&
+                    currentBounty.githubInstallationId &&
+                    currentBounty.githubCommentId
+                  ) {
+                    try {
+                      const { getGithubAppManager, createFundedBountyComment } = await import('@bounty/api/driver/github-app');
+                      const githubApp = getGithubAppManager();
+
+                      const updatedCommentBody = createFundedBountyComment(bountyId, 0);
+
+                      await githubApp.editComment(
+                        currentBounty.githubInstallationId,
+                        currentBounty.githubRepoOwner,
+                        currentBounty.githubRepoName,
+                        currentBounty.githubCommentId,
+                        updatedCommentBody
+                      );
+                    } catch (error) {
+                      console.error('Failed to update GitHub comment to funded status:', error);
+                      // Continue even if comment update fails
+                    }
+                  }
+
                   // Mark operation as completed for idempotency
                   await markOperationPerformed(
                     'verify-payment',
@@ -2611,6 +2665,33 @@ export const bountiesRouter = router({
               });
             }
 
+            // Update GitHub bot comment to "funded" status
+            if (
+              existingBounty.githubIssueNumber &&
+              existingBounty.githubRepoOwner &&
+              existingBounty.githubRepoName &&
+              existingBounty.githubInstallationId &&
+              existingBounty.githubCommentId
+            ) {
+              try {
+                const { getGithubAppManager, createFundedBountyComment } = await import('@bounty/api/driver/github-app');
+                const githubApp = getGithubAppManager();
+
+                const updatedCommentBody = createFundedBountyComment(input.bountyId, 0);
+
+                await githubApp.editComment(
+                  existingBounty.githubInstallationId,
+                  existingBounty.githubRepoOwner,
+                  existingBounty.githubRepoName,
+                  existingBounty.githubCommentId,
+                  updatedCommentBody
+                );
+              } catch (error) {
+                console.error('Failed to update GitHub comment to funded status:', error);
+                // Continue even if comment update fails
+              }
+            }
+
             return {
               success: true,
               paymentStatus: 'held',
@@ -2706,6 +2787,33 @@ export const bountiesRouter = router({
               });
             }
 
+            // Update GitHub bot comment to "funded" status
+            if (
+              existingBounty.githubIssueNumber &&
+              existingBounty.githubRepoOwner &&
+              existingBounty.githubRepoName &&
+              existingBounty.githubInstallationId &&
+              existingBounty.githubCommentId
+            ) {
+              try {
+                const { getGithubAppManager, createFundedBountyComment } = await import('@bounty/api/driver/github-app');
+                const githubApp = getGithubAppManager();
+
+                const updatedCommentBody = createFundedBountyComment(input.bountyId, 0);
+
+                await githubApp.editComment(
+                  existingBounty.githubInstallationId,
+                  existingBounty.githubRepoOwner,
+                  existingBounty.githubRepoName,
+                  existingBounty.githubCommentId,
+                  updatedCommentBody
+                );
+              } catch (error) {
+                console.error('Failed to update GitHub comment to funded status:', error);
+                // Continue even if comment update fails
+              }
+            }
+
             return {
               success: true,
               paymentStatus: 'held',
@@ -2763,6 +2871,33 @@ export const bountiesRouter = router({
               amount: existingBounty.amount,
               stripeId: paymentIntentId,
             });
+          }
+
+          // Update GitHub bot comment to "funded" status
+          if (
+            existingBounty.githubIssueNumber &&
+            existingBounty.githubRepoOwner &&
+            existingBounty.githubRepoName &&
+            existingBounty.githubInstallationId &&
+            existingBounty.githubCommentId
+          ) {
+            try {
+              const { getGithubAppManager, createFundedBountyComment } = await import('@bounty/api/driver/github-app');
+              const githubApp = getGithubAppManager();
+
+              const updatedCommentBody = createFundedBountyComment(input.bountyId, 0);
+
+              await githubApp.editComment(
+                existingBounty.githubInstallationId,
+                existingBounty.githubRepoOwner,
+                existingBounty.githubRepoName,
+                existingBounty.githubCommentId,
+                updatedCommentBody
+              );
+            } catch (error) {
+              console.error('Failed to update GitHub comment to funded status:', error);
+              // Continue even if comment update fails
+            }
           }
 
           return {
@@ -3113,6 +3248,94 @@ To process this request:
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to request cancellation: ${errorMessage}`,
+          cause: error,
+        });
+      }
+    }),
+
+  // Cancel a pending cancellation request (withdraw by the creator)
+  cancelCancellationRequest: protectedProcedure
+    .input(
+      z.object({
+        bountyId: z.string().uuid(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Get the bounty
+        const [bountyRecord] = await db
+          .select()
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId))
+          .limit(1);
+
+        if (!bountyRecord) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        // Verify ownership
+        if (bountyRecord.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only cancel cancellation requests for your own bounties',
+          });
+        }
+
+        // Check for existing pending cancellation request
+        const [existingRequest] = await db
+          .select()
+          .from(cancellationRequest)
+          .where(
+            and(
+              eq(cancellationRequest.bountyId, input.bountyId),
+              eq(cancellationRequest.status, 'pending')
+            )
+          )
+          .limit(1);
+
+        if (!existingRequest) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'No pending cancellation request found for this bounty.',
+          });
+        }
+
+        // Update the cancellation request status to withdrawn
+        const [updatedRequest] = await db
+          .update(cancellationRequest)
+          .set({
+            status: 'withdrawn',
+            processedById: ctx.session.user.id,
+            processedAt: new Date(),
+          })
+          .where(eq(cancellationRequest.id, existingRequest.id))
+          .returning();
+
+        if (!updatedRequest) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to cancel cancellation request',
+          });
+        }
+
+        console.log(`[Cancellation] Request ${existingRequest.id} withdrawn by creator for bounty ${input.bountyId}`);
+
+        return {
+          success: true,
+          requestId: updatedRequest.id,
+          message: 'Cancellation request withdrawn.',
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Failed to cancel cancellation request: ${errorMessage}`,
           cause: error,
         });
       }
@@ -3557,6 +3780,458 @@ To process this request:
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to sync refund status: ${errorMessage}`,
+          cause: error,
+        });
+      }
+    }),
+
+  // Check if bounty's GitHub bot comment is in sync with expected content
+  checkGithubSync: protectedProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const [bountyRecord] = await db
+          .select({
+            id: bounty.id,
+            title: bounty.title,
+            amount: bounty.amount,
+            paymentStatus: bounty.paymentStatus,
+            githubIssueNumber: bounty.githubIssueNumber,
+            githubRepoOwner: bounty.githubRepoOwner,
+            githubRepoName: bounty.githubRepoName,
+            githubInstallationId: bounty.githubInstallationId,
+            githubCommentId: bounty.githubCommentId,
+            createdById: bounty.createdById,
+          })
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId))
+          .limit(1);
+
+        if (!bountyRecord) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        // Only creator can check sync status
+        if (bountyRecord.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only check sync status for your own bounties',
+          });
+        }
+
+        // Check if bounty is linked to a GitHub issue
+        if (
+          !bountyRecord.githubIssueNumber ||
+          !bountyRecord.githubRepoOwner ||
+          !bountyRecord.githubRepoName ||
+          !bountyRecord.githubInstallationId
+        ) {
+          return {
+            synced: false,
+            message: 'This bounty is not linked to a GitHub issue',
+            hasComment: false,
+            needsInitialComment: false,
+          };
+        }
+
+        // Check if there's a bot comment ID stored
+        if (!bountyRecord.githubCommentId) {
+          return {
+            synced: false,
+            message: 'No bot comment was created for this bounty',
+            hasComment: false,
+            needsInitialComment: true,
+          };
+        }
+
+        // Fetch the actual comment from GitHub
+        const { getGithubAppManager, createFundedBountyComment, createUnfundedBountyComment } = await import('@bounty/api/driver/github-app');
+        const githubApp = getGithubAppManager();
+
+        const comment = await githubApp.getComment(
+          bountyRecord.githubInstallationId,
+          bountyRecord.githubRepoOwner,
+          bountyRecord.githubRepoName,
+          bountyRecord.githubCommentId
+        );
+
+        if (!comment) {
+          return {
+            synced: false,
+            message: 'Bot comment not found on GitHub (may have been deleted)',
+            hasComment: false,
+            needsInitialComment: true,
+          };
+        }
+
+        // Generate expected comment based on payment status
+        const isFunded = bountyRecord.paymentStatus === 'held';
+        const expectedComment = isFunded
+          ? createFundedBountyComment(input.bountyId, 0)
+          : createUnfundedBountyComment(
+              parseAmount(bountyRecord.amount),
+              input.bountyId,
+              'USD',
+              0
+            );
+
+        // Compare normalized (trim whitespace)
+        const actualBody = comment.body?.trim() ?? '';
+        const expectedBody = expectedComment.trim();
+        const isSynced = actualBody === expectedBody;
+
+        if (isSynced) {
+          return {
+            synced: true,
+            message: 'GitHub bot comment is in sync',
+            hasComment: true,
+            paymentStatus: bountyRecord.paymentStatus,
+            needsInitialComment: false,
+          };
+        }
+
+        // If not synced, provide details
+        return {
+          synced: false,
+          message: isFunded
+            ? 'Bounty is funded but GitHub comment still shows as unfunded. Try resyncing.'
+            : 'Bounty comment is out of sync',
+          hasComment: true,
+          paymentStatus: bountyRecord.paymentStatus,
+          canResync: isFunded, // Can resync if bounty is funded
+          needsInitialComment: false,
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Failed to check GitHub sync: ${errorMessage}`,
+          cause: error,
+        });
+      }
+    }),
+
+  // Sync a bounty to its GitHub issue by creating the bot comment
+  syncToGithub: protectedProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const [bountyRecord] = await db
+          .select({
+            id: bounty.id,
+            title: bounty.title,
+            amount: bounty.amount,
+            paymentStatus: bounty.paymentStatus,
+            issueUrl: bounty.issueUrl,
+            githubIssueNumber: bounty.githubIssueNumber,
+            githubRepoOwner: bounty.githubRepoOwner,
+            githubRepoName: bounty.githubRepoName,
+            githubInstallationId: bounty.githubInstallationId,
+            githubCommentId: bounty.githubCommentId,
+            createdById: bounty.createdById,
+          })
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId))
+          .limit(1);
+
+        if (!bountyRecord) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        // Only creator can sync
+        if (bountyRecord.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only sync your own bounties',
+          });
+        }
+
+        // Check if bounty has an issue URL
+        if (!bountyRecord.issueUrl) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'This bounty has no GitHub issue URL. Please add an issue URL first.',
+          });
+        }
+
+        // If already fully synced, just return success
+        if (
+          bountyRecord.githubIssueNumber &&
+          bountyRecord.githubRepoOwner &&
+          bountyRecord.githubRepoName &&
+          bountyRecord.githubInstallationId &&
+          bountyRecord.githubCommentId
+        ) {
+          return {
+            success: true,
+            message: 'Bounty is already synced to GitHub',
+            synced: true,
+          };
+        }
+
+        // Parse the issue URL if we don't have the details
+        let githubIssueNumber = bountyRecord.githubIssueNumber;
+        let githubRepoOwner = bountyRecord.githubRepoOwner ?? undefined;
+        let githubRepoName = bountyRecord.githubRepoName ?? undefined;
+
+        if (!githubIssueNumber || !githubRepoOwner || !githubRepoName) {
+          const urlMatch = bountyRecord.issueUrl.match(/github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/i);
+          if (!urlMatch) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'Invalid GitHub issue URL format',
+            });
+          }
+          githubRepoOwner = urlMatch[1];
+          githubRepoName = urlMatch[2];
+          githubIssueNumber = parseInt(urlMatch[3] || '0', 10);
+        }
+
+        // At this point, we should have all the required values
+        // Use type assertions since we've validated above
+        const repoOwner: string = githubRepoOwner!;
+        const repoName: string = githubRepoName!;
+        const issueNumber: number = githubIssueNumber!;
+
+        // Get installation ID for the repo
+        const { getGithubAppManager } = await import('@bounty/api/driver/github-app');
+        const githubApp = getGithubAppManager();
+
+        const installation = await githubApp.getInstallationForRepo(repoOwner, repoName);
+        if (!installation) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'GitHub App is not installed on this repository. Please install the bounty.new GitHub App first.',
+          });
+        }
+
+        const installationId = installation.id;
+
+        // Create the bot comment
+        const isFunded = bountyRecord.paymentStatus === 'held';
+        const { createFundedBountyComment, createUnfundedBountyComment } = await import('@bounty/api/driver/github-app');
+        const commentBody = isFunded
+          ? createFundedBountyComment(input.bountyId, 0)
+          : createUnfundedBountyComment(
+              parseAmount(bountyRecord.amount),
+              input.bountyId,
+              'USD',
+              0
+            );
+
+        const botComment = await githubApp.createIssueComment(
+          installationId,
+          repoOwner,
+          repoName,
+          issueNumber,
+          commentBody
+        );
+
+        // Update bounty with GitHub details
+        await db
+          .update(bounty)
+          .set({
+            githubIssueNumber,
+            githubRepoOwner,
+            githubRepoName,
+            githubInstallationId: installationId,
+            githubCommentId: botComment.id,
+            updatedAt: new Date(),
+          })
+          .where(eq(bounty.id, input.bountyId));
+
+        console.log(`[Sync] Bounty ${input.bountyId} synced to GitHub issue ${repoOwner}/${repoName}#${issueNumber}`);
+
+        return {
+          success: true,
+          message: `Bounty synced to GitHub! Bot comment created on ${repoOwner}/${repoName}#${issueNumber}`,
+          synced: true,
+          commentUrl: botComment.html_url,
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Failed to sync to GitHub: ${errorMessage}`,
+          cause: error,
+        });
+      }
+    }),
+
+  // Create a GitHub issue from a bounty (for bounties with repositoryUrl but no issueUrl)
+  createGithubIssue: protectedProcedure
+    .input(z.object({ bountyId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const [bountyRecord] = await db
+          .select({
+            id: bounty.id,
+            title: bounty.title,
+            description: bounty.description,
+            amount: bounty.amount,
+            paymentStatus: bounty.paymentStatus,
+            repositoryUrl: bounty.repositoryUrl,
+            issueUrl: bounty.issueUrl,
+            githubIssueNumber: bounty.githubIssueNumber,
+            githubRepoOwner: bounty.githubRepoOwner,
+            githubRepoName: bounty.githubRepoName,
+            githubInstallationId: bounty.githubInstallationId,
+            githubCommentId: bounty.githubCommentId,
+            createdById: bounty.createdById,
+          })
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId))
+          .limit(1);
+
+        if (!bountyRecord) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Bounty not found',
+          });
+        }
+
+        // Only creator can create GitHub issue
+        if (bountyRecord.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only create GitHub issues for your own bounties',
+          });
+        }
+
+        // Check if bounty already has an issue URL
+        if (bountyRecord.issueUrl) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'This bounty already has a GitHub issue URL',
+          });
+        }
+
+        // Check if bounty has a repository URL
+        if (!bountyRecord.repositoryUrl) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'This bounty has no repository URL. Please add a repository URL first.',
+          });
+        }
+
+        // Parse repository URL to get owner and repo name
+        const repoMatch = bountyRecord.repositoryUrl.match(/github\.com\/([^/]+)\/([^/\/]+)(?:\/.*)?/i);
+        if (!repoMatch || !repoMatch[1] || !repoMatch[2]) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Invalid repository URL format. Expected: https://github.com/owner/repo',
+          });
+        }
+
+        const repoOwner = repoMatch[1];
+        const repoName = repoMatch[2].replace(/\.git$/, '');
+
+        const { getGithubAppManager } = await import('@bounty/api/driver/github-app');
+        const githubApp = getGithubAppManager();
+
+        // Get installation for the repo
+        const installation = await githubApp.getInstallationForRepo(repoOwner, repoName);
+        if (!installation) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `GitHub App is not installed on ${repoOwner}/${repoName}. Please install the app first.`,
+          });
+        }
+
+        const installationId = installation.id;
+
+        // Create issue on GitHub
+        const bountyAmount = parseAmount(bountyRecord.amount);
+        const formattedAmount = new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+        }).format(bountyAmount);
+
+        // Get creator info
+        const [creator] = await db
+          .select({
+            name: user.name,
+            email: user.email,
+          })
+          .from(user)
+          .where(eq(user.id, bountyRecord.createdById))
+          .limit(1);
+
+        const creatorName = creator?.name || 'Anonymous';
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
+        const buttonUrl = `${baseUrl}/bounty-button.svg`;
+        const isFunded = bountyRecord.paymentStatus === 'held';
+        const fundedBadgeUrl = `${baseUrl}/bounty-funded-button.svg`;
+
+        const issueBody = `${bountyRecord.description}
+
+---
+
+[![bounty.new](${buttonUrl})](${baseUrl}/bounty/${bountyRecord.id})
+
+${formattedAmount} ${isFunded ? `![Funded](${fundedBadgeUrl})` : ''}
+
+**Bounty by:** ${creatorName}
+
+### How to Submit
+1. Create a pull request that addresses this issue
+2. Include \`@bountydotnew submit\` in your PR description
+3. Wait for the bounty creator to review and approve your submission
+4. After merge, confirm with \`@bountydotnew merge\` to receive payment
+`.trim();
+
+        const issue = await githubApp.createIssue(
+          installationId,
+          repoOwner,
+          repoName,
+          bountyRecord.title ?? 'Bounty',
+          issueBody,
+          ['bounty']
+        );
+
+        // Update bounty with GitHub issue details
+        const issueUrl = `https://github.com/${repoOwner}/${repoName}/issues/${issue.number}`;
+
+        await db
+          .update(bounty)
+          .set({
+            issueUrl,
+            githubIssueNumber: issue.number,
+            githubRepoOwner: repoOwner,
+            githubRepoName: repoName,
+            githubInstallationId: installationId,
+            updatedAt: new Date(),
+          })
+          .where(eq(bounty.id, input.bountyId));
+
+        console.log(`[Create Issue] GitHub issue created for bounty ${input.bountyId}: ${repoOwner}/${repoName}#${issue.number}`);
+
+        return {
+          success: true,
+          message: `GitHub issue created! View it at ${issueUrl}`,
+          issueUrl,
+          issueNumber: issue.number,
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Failed to create GitHub issue: ${errorMessage}`,
           cause: error,
         });
       }

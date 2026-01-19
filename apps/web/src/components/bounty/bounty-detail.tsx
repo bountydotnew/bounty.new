@@ -8,7 +8,7 @@ import { SmartNavigation } from '@bounty/ui/components/smart-breadcrumb';
 import { useBountyModals } from '@bounty/ui/lib/bounty-utils';
 import { formatLargeNumber } from '@bounty/ui/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, X } from 'lucide-react';
+import { AlertTriangle, Check, X } from 'lucide-react';
 import type { ActionItem } from '@/types/bounty-actions';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -56,6 +56,8 @@ interface BountyDetailPageProps {
   githubRepoOwner?: string | null;
   githubRepoName?: string | null;
   githubIssueNumber?: number | null;
+  repositoryUrl?: string | null;
+  issueUrl?: string | null;
 }
 
 export default function BountyDetailPage({
@@ -75,6 +77,8 @@ export default function BountyDetailPage({
   githubRepoOwner,
   githubRepoName,
   githubIssueNumber,
+  repositoryUrl,
+  issueUrl,
 }: BountyDetailPageProps) {
   const { editModalOpen, openEditModal, closeEditModal, editingBountyId } =
     useBountyModals();
@@ -272,6 +276,22 @@ export default function BountyDetailPage({
     },
     onError: (error: Error) => {
       toast.error(`Failed to request cancellation: ${error.message}`);
+    },
+  });
+
+  const cancelCancellationRequestMutation = useMutation({
+    mutationFn: async (input: { bountyId: string }) => {
+      return await trpcClient.bounties.cancelCancellationRequest.mutate(input);
+    },
+    onSuccess: (result) => {
+      toast.success(result.message || 'Cancellation request withdrawn');
+      // Refresh cancellation status
+      queryClient.invalidateQueries({
+        queryKey: [['bounties', 'getCancellationStatus']],
+      });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to cancel cancellation request: ${error.message}`);
     },
   });
 
@@ -532,19 +552,30 @@ export default function BountyDetailPage({
                       });
                     }}
                     onUpvote={handleUpvote}
+                    repositoryUrl={repositoryUrl}
+                    issueUrl={issueUrl}
                     voteCount={votes.data?.count ?? 0}
                     actions={
-                      // Only show cancellation option if funded and no pending request
-                      canRequestCancellation && !hasPendingCancellation && !isCancelled
+                      // Show cancellation options based on state
+                      canRequestCancellation && !isCancelled
                         ? [
-                            {
-                              key: 'request-cancellation',
-                              label: 'Request cancellation',
-                              onSelect: handleRequestCancellation,
-                              icon: <X className="h-3.5 w-3.5" />,
-                              disabled: cancellationStatusQuery.isLoading,
-                              className: 'text-yellow-500 hover:bg-yellow-500/10 focus:bg-yellow-500/10',
-                            } satisfies ActionItem,
+                            hasPendingCancellation
+                              ? {
+                                  key: 'cancel-cancellation-request',
+                                  label: 'Cancel cancellation request',
+                                  onSelect: () => cancelCancellationRequestMutation.mutate({ bountyId: id }),
+                                  icon: <X className="h-3.5 w-3.5" />,
+                                  disabled: cancelCancellationRequestMutation.isPending,
+                                  className: 'text-green-500 hover:bg-green-500/10 focus:bg-green-500/10',
+                                } satisfies ActionItem
+                              : {
+                                  key: 'request-cancellation',
+                                  label: 'Request cancellation',
+                                  onSelect: handleRequestCancellation,
+                                  icon: <AlertTriangle className="h-3.5 w-3.5" />,
+                                  disabled: cancellationStatusQuery.isLoading,
+                                  className: 'text-yellow-500 hover:bg-yellow-500/10 focus:bg-yellow-500/10',
+                                } satisfies ActionItem,
                           ]
                         : undefined
                     }

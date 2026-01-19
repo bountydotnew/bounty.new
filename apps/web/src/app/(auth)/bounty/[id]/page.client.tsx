@@ -168,6 +168,8 @@ export default function BountyPage() {
   const detailGithubRepoOwner: string | null = bountyDetail.data.bounty.githubRepoOwner ?? null;
   const detailGithubRepoName: string | null = bountyDetail.data.bounty.githubRepoName ?? null;
   const detailGithubIssueNumber: number | null = bountyDetail.data.bounty.githubIssueNumber ?? null;
+  const detailRepositoryUrl: string | null = bountyDetail.data.bounty.repositoryUrl ?? null;
+  const detailIssueUrl: string | null = bountyDetail.data.bounty.issueUrl ?? null;
 
   const initialComments = (bountyDetail.data.comments ?? []).map((comment: BountyCommentCacheItem) => ({
     ...comment,
@@ -258,6 +260,8 @@ export default function BountyPage() {
       githubRepoOwner={detailGithubRepoOwner}
       githubRepoName={detailGithubRepoName}
       githubIssueNumber={detailGithubIssueNumber}
+      repositoryUrl={detailRepositoryUrl}
+      issueUrl={detailIssueUrl}
     />
   );
 }

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="20" viewBox="0 0 100 20">
+  <defs>
+    <style>
+      .button-text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 600; fill: #166534; }
+    </style>
+  </defs>
+  <rect x="0.5" y="0.5" width="99" height="19" rx="4" fill="#dcfce7" stroke="#86efac" stroke-width="1"/>
+  <text class="button-text" x="50" y="14" text-anchor="middle">✓ Funded</text>
+</svg>

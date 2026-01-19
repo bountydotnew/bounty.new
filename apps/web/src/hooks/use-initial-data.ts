@@ -46,8 +46,9 @@ export function useInitialData(enabled = true) {
  *
  * Prefetches:
  * - User profile (tRPC)
- * - Billing/subscription data (Better Auth - separate request)
  * - Device sessions (Better Auth - for account switcher)
+ *
+ * Note: Billing data is handled by autumn-js SDK which manages its own caching
  */
 export function usePrefetchInitialData() {
   const { isAuthenticated } = useSession();
@@ -57,11 +58,8 @@ export function usePrefetchInitialData() {
       // Prefetch tRPC queries
       queryClient.prefetchQuery(trpc.user.getMe.queryOptions());
 
-      // Prefetch billing data (Autumn via tRPC) - runs in parallel
-      queryClient.prefetchQuery({
-        ...trpc.billing.getCustomerState.queryOptions(),
-        staleTime: 5 * 60 * 1000, // 5 minutes
-      });
+      // Note: Billing data is now handled by autumn-js SDK which manages its own caching
+      // The SDK's useCustomer hook will automatically fetch and cache customer data
 
       // Prefetch device sessions (Better Auth) - for account switcher
       queryClient.prefetchQuery({

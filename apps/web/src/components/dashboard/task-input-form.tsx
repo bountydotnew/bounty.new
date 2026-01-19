@@ -17,8 +17,6 @@ import {
   currencyOptions,
   formatFormData,
 } from '@bounty/ui/lib/forms';
-import { cn } from '@bounty/ui/lib/utils';
-import { DatePicker } from '@bounty/ui/components/date-picker';
 
 // Hooks
 import { useGitHubInstallationRepositories } from '@/hooks/use-github-installation-repos';
@@ -78,10 +76,13 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
 
     // Custom hooks for data fetching - use GitHub App installations
     const {
-        filteredRepositories,
         installations,
+        installationRepos,
+        filteredInstallations,
         installationsLoading,
         reposLoading,
+        accountSearchQuery,
+        setAccountSearchQuery,
         repoSearchQuery,
         setRepoSearchQuery,
         selectedRepository,
@@ -411,10 +412,11 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                                 {installations.length > 0 && (
                                     <RepoSelector
                                         selectedRepository={selectedRepository}
-                                        filteredRepositories={filteredRepositories}
+                                        installations={filteredInstallations}
+                                        installationRepos={installationRepos}
                                         reposLoading={reposLoading}
-                                        reposData={undefined}
-                                        githubUsername={undefined}
+                                        accountSearchQuery={accountSearchQuery}
+                                        setAccountSearchQuery={setAccountSearchQuery}
                                         repoSearchQuery={repoSearchQuery}
                                         setRepoSearchQuery={setRepoSearchQuery}
                                         onSelect={handleRepositorySelect}

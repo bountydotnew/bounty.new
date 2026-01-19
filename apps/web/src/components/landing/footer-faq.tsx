@@ -85,7 +85,7 @@ export function FooterFAQ() {
       <div className="grid gap-12 lg:grid-cols-2">
         {/* Left: Title */}
         <div>
-          <h2 className="text-3xl font-light text-[#efefef] lg:text-4xl">
+          <h2 className="text-3xl font-medium text-[#efefef] lg:text-4xl">
             Questions &amp; Answers
           </h2>
           <p className="mt-4 text-[#888]">

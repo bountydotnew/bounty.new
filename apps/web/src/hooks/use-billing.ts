@@ -1,22 +1,18 @@
 /**
  * useBilling Hook
  *
- * Client-side billing hook using Autumn billing via tRPC.
+ * Client-side billing hook using autumn-js SDK.
  * This hook provides the billing functionality for the web app.
  */
 
-import { trpc, trpcClient } from '@/utils/trpc';
+import { useCustomer } from 'autumn-js/react';
 import type {
   BillingHookResult,
-  CustomerState,
   FeatureState,
-  PendingAction,
   UsageMetadata,
-  AutumnError,
   BountyProPlan,
 } from '@bounty/types';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
 // Feature IDs matching Autumn configuration
 const AUTUMN_FEATURE_IDS = {
@@ -24,31 +20,15 @@ const AUTUMN_FEATURE_IDS = {
 } as const;
 
 // Default features for non-paying users
-const DEFAULT_FEATURES = {
-  concurrentBounties: {
-    total: 1,
-    remaining: 1,
-    unlimited: false,
-    enabled: true,
-    usage: 0,
-    nextResetAt: null,
-    interval: '',
-    included_usage: 1,
-  },
-} as const;
-
-// ============================================================================
-// Error Helpers
-// ============================================================================
-
-const isCustomerNotFoundError = (error: unknown): boolean => {
-  const autumnError = error as AutumnError;
-  const errorMessage = String(autumnError?.message ?? '').toLowerCase();
-  return (
-    autumnError?.status === 404 ||
-    errorMessage.includes('not found') ||
-    errorMessage.includes('customer does not exist')
-  );
+const DEFAULT_FEATURES: FeatureState = {
+  total: 1,
+  remaining: 1,
+  unlimited: false,
+  enabled: true,
+  usage: 0,
+  nextResetAt: null,
+  interval: '',
+  included_usage: 1,
 };
 
 // ============================================================================
@@ -56,15 +36,16 @@ const isCustomerNotFoundError = (error: unknown): boolean => {
 // ============================================================================
 
 /**
- * Map Autumn feature state to application FeatureState
+ * Map Autumn SDK feature state to application FeatureState
  */
 const mapFeature = (feature?: {
-  feature_id: string;
-  limit: number | null;
-  usage: number;
-  reset_at: string | null;
-  interval: string;
-  will_reset: boolean;
+  enabled?: boolean;
+  balance?: number | null;
+  usage?: number;
+  included_usage?: number;
+  unlimited?: boolean;
+  next_reset_at?: number | null;
+  interval?: string | null;
 }): FeatureState => {
   if (!feature) {
     return {
@@ -79,19 +60,20 @@ const mapFeature = (feature?: {
     };
   }
 
-  const limit = feature.limit ?? 0;
-  const isUnlimited = feature.limit === null;
-  const remaining = isUnlimited ? Infinity : Math.max(0, limit - feature.usage);
+  const isUnlimited = feature.unlimited ?? false;
+  const includedUsage = feature.included_usage ?? 0;
+  const usage = feature.usage ?? 0;
+  const remaining = isUnlimited ? Infinity : Math.max(0, includedUsage - usage);
 
   return {
-    total: limit,
+    total: includedUsage,
     remaining,
     unlimited: isUnlimited,
-    enabled: isUnlimited || remaining > 0,
-    usage: feature.usage,
-    nextResetAt: feature.reset_at ? new Date(feature.reset_at).getTime() : null,
-    interval: feature.interval,
-    included_usage: limit,
+    enabled: feature.enabled ?? false,
+    usage,
+    nextResetAt: feature.next_reset_at ? feature.next_reset_at * 1000 : null,
+    interval: feature.interval ?? '',
+    included_usage: includedUsage,
   };
 };
 
@@ -100,7 +82,7 @@ const mapFeature = (feature?: {
 // ============================================================================
 
 /**
- * Client-side billing hook that integrates with Autumn via tRPC
+ * Client-side billing hook that integrates with Autumn via autumn-js SDK
  *
  * @example
  * ```tsx
@@ -110,7 +92,7 @@ const mapFeature = (feature?: {
  *   return (
  *     <div>
  *       <p>Concurrent Bounties: {concurrentBounties.remaining}</p>
- *       <button onClick={() => checkout('pro-monthly')}>
+ *       <button onClick={() => checkout('tier_2_pro')}>
  *         Upgrade to Pro
  *       </button>
  *     </div>
@@ -119,173 +101,100 @@ const mapFeature = (feature?: {
  * ```
  */
 export const useBilling = (): BillingHookResult => {
-  const [needsCustomerCreation, setNeedsCustomerCreation] = useState(false);
-  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
-
-  // tRPC query for customer state
-  const customerStateQuery = useQuery({
-    ...trpc.billing.getCustomerState.queryOptions(),
-    retry: false,
-    refetchOnWindowFocus: false,
-    staleTime: 300_000, // 5 minutes
-  });
-
-  // tRPC mutation for customer creation
-  const ensureCustomerMutation = useMutation(
-    trpc.billing.ensureCustomer.mutationOptions()
-  );
-
-  // Handle pending action after customer creation
-  const executePendingAction = useCallback(async (action: PendingAction) => {
-    if (action.type === 'portal') {
-      const result = await trpcClient.billing.createPortal.mutate(undefined);
-      if (result?.portalUrl) {
-        window.location.href = result.portalUrl;
-      }
-    } else if (action.type === 'usage' && action.params) {
-      await trpcClient.billing.trackUsage.mutate({
-        event: action.params.event,
-        metadata: action.params.metadata,
-      });
-    } else if (action.type === 'checkout' && action.params) {
-      const result = await trpcClient.billing.createCheckout.mutate({ slug: action.params.slug });
-      if (result?.checkoutUrl) {
-        window.location.href = result.checkoutUrl;
-      }
-    }
-  }, []);
-
-  // Handle customer creation when needed
-  useEffect(() => {
-    if (!needsCustomerCreation || ensureCustomerMutation.isPending) {
-      return;
-    }
-
-    const createCustomer = async () => {
-      try {
-        await ensureCustomerMutation.mutateAsync(undefined);
-        setNeedsCustomerCreation(false);
-        await customerStateQuery.refetch();
-
-        if (pendingAction) {
-          const action = pendingAction;
-          setPendingAction(null);
-          await executePendingAction(action);
-        }
-      } catch {
-        setNeedsCustomerCreation(false);
-        setPendingAction(null);
-      }
-    };
-
-    createCustomer();
-  }, [
-    needsCustomerCreation,
-    ensureCustomerMutation,
-    customerStateQuery,
-    pendingAction,
-    executePendingAction,
-  ]);
+  const {
+    customer,
+    isLoading,
+    refetch,
+    attach,
+    openBillingPortal,
+    track,
+  } = useCustomer();
 
   // Helper to check if customer has pro status
-  const checkProStatus = useCallback(
-    (customerState: CustomerState | null | undefined): boolean => {
-      if (!customerState) {
-        return false;
-      }
-
-      // Check if user has any paid subscription (not the free tier)
-      const subscriptions = customerState.subscriptions ?? [];
-      const hasPaidSubscription = subscriptions.some(
-        (sub) => sub.product_id && sub.product_id !== 'free'
-      );
-
-      return Boolean(hasPaidSubscription);
-    },
-    []
-  );
-
-  // Compute feature states and pro status
-  const { isPro, ...customerFeatures } = useMemo((): {
-    isPro: boolean;
-    concurrentBounties: FeatureState;
-  } => {
-    if (customerStateQuery.isLoading || !customerStateQuery.data) {
-      return { isPro: false, ...DEFAULT_FEATURES };
+  const checkProStatus = useCallback((): boolean => {
+    if (!customer) {
+      return false;
     }
 
-    const hasProStatus = checkProStatus(customerStateQuery.data);
-
-    if (!customerStateQuery.data.features) {
-      return { isPro: hasProStatus, ...DEFAULT_FEATURES };
-    }
-
-    const concurrentBounties = mapFeature(
-      customerStateQuery.data.features[AUTUMN_FEATURE_IDS.CONCURRENT_BOUNTIES]
+    // Check if user has any active paid subscription (not free tier)
+    const products = customer.products ?? [];
+    const hasPaidSubscription = products.some(
+      (p) => p.status === 'active' || p.status === 'trialing'
     );
 
-    return { isPro: hasProStatus, concurrentBounties };
-  }, [customerStateQuery.data, customerStateQuery.isLoading, checkProStatus]);
+    return Boolean(hasPaidSubscription);
+  }, [customer]);
 
-  // Open billing portal
-  const openBillingPortal = useCallback(async () => {
-    try {
-      const result = await trpcClient.billing.createPortal.mutate(undefined);
-      if (result?.portalUrl) {
-        window.location.href = result.portalUrl;
-      }
-    } catch (error: unknown) {
-      if (isCustomerNotFoundError(error)) {
-        setPendingAction({ type: 'portal' });
-        setNeedsCustomerCreation(true);
-        return;
-      }
-      // Silently ignore other errors
-    }
-  }, []);
+  // Compute feature states and pro status
+  const billingState = useMemo(() => {
+    const isPro = checkProStatus();
+    const concurrentBounties = customer?.features?.[AUTUMN_FEATURE_IDS.CONCURRENT_BOUNTIES]
+      ? mapFeature(customer.features[AUTUMN_FEATURE_IDS.CONCURRENT_BOUNTIES])
+      : DEFAULT_FEATURES;
+
+    return { isPro, concurrentBounties };
+  }, [customer, checkProStatus]);
 
   // Track usage event
-  const trackUsageEvent = useCallback(
+  // Note: SDK's track() uses 'entityData' not 'metadata'
+  const trackUsage = useCallback(
     async (event: string, metadata: UsageMetadata = {}) => {
-      try {
-        await trpcClient.billing.trackUsage.mutate({ event, metadata });
-      } catch (error: unknown) {
-        if (isCustomerNotFoundError(error)) {
-          setPendingAction({ type: 'usage', params: { event, metadata } });
-          setNeedsCustomerCreation(true);
-          return;
-        }
-        // Silently ignore other errors
+      const result = await track({
+        eventName: event,
+        value: 1,
+        entityData: Object.keys(metadata).length > 0 ? metadata : undefined,
+      });
+      if (result.error) {
+        console.error('Failed to track usage:', result.error);
+        // Silently ignore tracking errors
       }
     },
-    []
+    [track]
   );
 
   // Start checkout - accepts Autumn product IDs (all except free)
   const checkout = useCallback(async (slug: Exclude<BountyProPlan, 'free'>) => {
-    try {
-      const result = await trpcClient.billing.createCheckout.mutate({ slug });
-      if (result?.checkoutUrl) {
-        window.location.href = result.checkoutUrl;
-      }
-    } catch (error: unknown) {
-      if (isCustomerNotFoundError(error)) {
-        setPendingAction({ type: 'checkout', params: { slug } });
-        setNeedsCustomerCreation(true);
-        return;
-      }
-      throw error;
+    const baseUrl = typeof window !== 'undefined'
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_BASE_URL ?? 'https://bounty.new';
+
+    const result = await attach({
+      productId: slug,
+      successUrl: `${baseUrl}/settings/billing?checkout=success`,
+      checkoutSessionParams: {
+        cancel_url: `${baseUrl}/pricing`,
+      },
+      forceCheckout: true,
+    });
+
+    if (result.error) {
+      throw new Error(result.error.message ?? 'Checkout failed');
     }
-  }, []);
+
+    const data = result.data;
+    if (data && 'checkout_url' in data && data.checkout_url) {
+      window.location.href = data.checkout_url;
+    }
+  }, [attach]);
+
+  // Wrap openBillingPortal to return Promise<void> for backward compatibility
+  const handleOpenBillingPortal = useCallback(async () => {
+    const result = await openBillingPortal();
+    if (result.error) {
+      throw new Error(result.error.message ?? 'Failed to open billing portal');
+    }
+    if (result.data?.url) {
+      window.location.href = result.data.url;
+    }
+  }, [openBillingPortal]);
 
   return {
-    isLoading: customerStateQuery.isLoading,
-    customer: customerStateQuery.data as CustomerState | null | undefined,
-    refetch: customerStateQuery.refetch,
-    openBillingPortal,
-    trackUsage: trackUsageEvent,
+    isLoading,
+    customer,
+    refetch,
+    openBillingPortal: handleOpenBillingPortal,
+    trackUsage,
     checkout,
-    isPro,
-    ...customerFeatures,
+    ...billingState,
   };
 };

@@ -92,14 +92,21 @@ export const DEFAULT_FEATURES = {
  * Check if an error is a customer not found error
  */
 export function isCustomerNotFoundError(error: unknown): boolean {
-  const err = error as { status?: number; message?: string; detail?: string };
+  const err = error as { status?: number; message?: string; detail?: string; code?: string };
   const errorMessage = String(err?.message ?? '').toLowerCase();
   const errorDetail = String(err?.detail ?? '').toLowerCase();
+  const errorCode = String(err?.code ?? '').toLowerCase();
+
   return (
     err?.status === 404 ||
+    err?.status === 401 || // Autumn returns 401 for non-existent customers (security measure)
+    errorCode === 'not_found' ||
+    errorCode === 'no_auth_header' || // Customer doesn't exist with this external_id
     errorMessage.includes('not found') ||
     errorMessage.includes('customer does not exist') ||
-    errorDetail.includes('customer does not exist')
+    errorMessage.includes('no such customer') ||
+    errorDetail.includes('customer does not exist') ||
+    errorDetail.includes('no such customer')
   );
 }
 

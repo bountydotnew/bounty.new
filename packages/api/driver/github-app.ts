@@ -98,7 +98,7 @@ After merge, confirm with \`/merge <PR#>\` or \`@bountydotnew merge\` to release
 
 export function createFundedBountyComment(
   bountyId: string,
-  submissionCount = 0
+  _submissionCount = 0
 ): string {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
   const buttonUrl = `${baseUrl}/bounty-button.svg`;
@@ -106,7 +106,7 @@ export function createFundedBountyComment(
 
 [![bounty.new](${buttonUrl})](${baseUrl}/bounty/${bountyId})
 
-Funded • ${submissionCount} submissions
+Funded
 
 Submit with \`@bountydotnew submit\` in the PR description or \`/submit <PR#>\` on the issue.
 Approve with \`/approve <PR#>\` on the issue or \`@bountydotnew approve\` on the PR.
@@ -242,6 +242,34 @@ export class GithubAppManager {
   }
 
   /**
+   * Get a single comment by ID
+   */
+  async getComment(
+    installationId: number,
+    owner: string,
+    repo: string,
+    commentId: number
+  ): Promise<{ id: number; body: string | null } | null> {
+    const octokit = await this.getInstallationOctokit(installationId);
+
+    try {
+      const response = await octokit.rest.issues.getComment({
+        owner,
+        repo,
+        comment_id: commentId,
+      });
+
+      return {
+        id: response.data.id,
+        body: response.data.body ?? null,
+      };
+    } catch (error) {
+      console.error('Failed to fetch GitHub comment:', error);
+      return null;
+    }
+  }
+
+  /**
    * Add a reaction to an issue comment
    */
   async createReaction(
@@ -326,6 +354,49 @@ export class GithubAppManager {
       owner,
       repo,
       issue_number: issueNumber,
+    });
+
+    return {
+      id: data.id,
+      number: data.number,
+      title: data.title,
+      state: data.state,
+      html_url: data.html_url,
+      user: {
+        login: data.user?.login || '',
+        id: data.user?.id || 0,
+      },
+      body: data.body ?? null,
+    };
+  }
+
+  /**
+   * Create an issue on GitHub
+   */
+  async createIssue(
+    installationId: number,
+    owner: string,
+    repo: string,
+    title: string,
+    body: string,
+    labels?: string[]
+  ): Promise<{
+    id: number;
+    number: number;
+    title: string;
+    state: string;
+    html_url: string;
+    user: { login: string; id: number };
+    body: string | null;
+  }> {
+    const octokit = await this.getInstallationOctokit(installationId);
+
+    const { data } = await octokit.rest.issues.create({
+      owner,
+      repo,
+      title,
+      body,
+      labels: labels || [],
     });
 
     return {
@@ -442,7 +513,7 @@ export class GithubAppManager {
     });
 
     const account = data.account as { login?: string; type?: string; avatar_url?: string } | null;
-    
+
     return {
       id: data.id,
       account: {
@@ -452,6 +523,47 @@ export class GithubAppManager {
       },
       suspended_at: data.suspended_at,
     };
+  }
+
+  /**
+   * Get installation for a specific repository
+   * Returns the installation object if the app is installed on the repo
+   */
+  async getInstallationForRepo(owner: string, repo: string): Promise<{
+    id: number;
+    account: {
+      login: string;
+      type: string;
+      avatar_url: string;
+    };
+    suspended_at: string | null;
+  } | null> {
+    try {
+      const octokit = await this.getAppOctokit();
+
+      const { data } = await octokit.rest.apps.getRepoInstallation({
+        owner,
+        repo,
+      });
+
+      const account = data.account as { login?: string; type?: string; avatar_url?: string } | null;
+
+      return {
+        id: data.id,
+        account: {
+          login: account?.login || '',
+          type: account?.type || '',
+          avatar_url: account?.avatar_url || '',
+        },
+        suspended_at: data.suspended_at,
+      };
+    } catch (error: any) {
+      if (error.status === 404) {
+        // App not installed on this repo
+        return null;
+      }
+      throw error;
+    }
   }
 
   /**

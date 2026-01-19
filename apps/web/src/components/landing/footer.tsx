@@ -126,7 +126,7 @@ export function Footer() {
               Twitter
             </a>
             <a
-              href="https://discord.gg/bountydotnew"
+              href="https://discord.gg/bounty"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               target="_blank"
               rel="noreferrer"

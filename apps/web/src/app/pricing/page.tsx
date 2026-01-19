@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 function PricingLoader() {
   return (
     <div className="mx-auto max-w-7xl px-8 pt-32 pb-24">
-      <h1 className="text-center text-5xl font-light tracking-tight text-[#efefef]">
+      <h1 className="text-center text-5xl font-bold tracking-tight text-[#efefef]">
         Pricing
       </h1>
       <div className="mt-16 flex items-center justify-center">

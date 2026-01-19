@@ -13,6 +13,7 @@ import {
 import { count } from 'drizzle-orm';
 import { FROM_ADDRESSES, sendEmail, BountyCancellationConfirm } from '@bounty/email';
 import { sendBountyCreatedWebhook } from '@bounty/api/src/lib/use-discord-webhook';
+import { createNotification } from '@bounty/db/src/services/notifications';
 
 /**
  * Sends Discord webhook notification when a bounty becomes funded
@@ -489,6 +490,121 @@ export async function POST(request: Request) {
         break;
       }
 
+      case 'charge.refund.updated': {
+        console.log('[Stripe Webhook] Processing charge.refund.updated');
+        const refund = event.data.object as Stripe.Refund;
+        const chargeId = refund.charge as string | null;
+        const paymentIntentId = refund.payment_intent as string | null;
+
+        if (!paymentIntentId && !chargeId) {
+          console.warn('[Stripe Webhook] charge.refund.updated: No payment_intent or charge on refund');
+          break;
+        }
+
+        // Use payment_intent from refund if available, otherwise fetch from charge
+        let finalPaymentIntentId = paymentIntentId;
+        if (!finalPaymentIntentId && chargeId) {
+          try {
+            const charge = await stripeClient.charges.retrieve(chargeId);
+            finalPaymentIntentId = charge.payment_intent as string | null;
+          } catch (e) {
+            console.warn('[Stripe Webhook] charge.refund.updated: Failed to fetch charge:', e);
+          }
+        }
+
+        if (!finalPaymentIntentId) {
+          console.warn('[Stripe Webhook] charge.refund.updated: Could not determine payment_intent');
+          break;
+        }
+
+        // Only process succeeded refunds
+        if (refund.status !== 'succeeded') {
+          console.log(`[Stripe Webhook] charge.refund.updated: Refund status is ${refund.status}, skipping`);
+          break;
+        }
+
+        // Find the bounty by payment intent ID
+        const [bountyRecord] = await db
+          .select({
+            id: bounty.id,
+            title: bounty.title,
+            amount: bounty.amount,
+            paymentStatus: bounty.paymentStatus,
+            status: bounty.status,
+            createdById: bounty.createdById,
+          })
+          .from(bounty)
+          .where(eq(bounty.stripePaymentIntentId, finalPaymentIntentId))
+          .limit(1);
+
+        if (!bountyRecord) {
+          console.warn(`[Stripe Webhook] charge.refund.updated: No bounty found for payment intent ${finalPaymentIntentId}`);
+          break;
+        }
+
+        // Skip if already refunded
+        if (bountyRecord.paymentStatus === 'refunded') {
+          console.log(`[Stripe Webhook] Bounty ${bountyRecord.id} already marked as refunded, skipping`);
+          break;
+        }
+
+        // Calculate refund amount
+        const refundedAmount = refund.amount / 100; // Convert from cents
+        const originalAmount = Number(bountyRecord.amount);
+        const platformFee = originalAmount - refundedAmount;
+
+        console.log(`[Stripe Webhook] charge.refund.updated: Refund ${refundedAmount} of ${originalAmount} (fee: ${platformFee})`);
+
+        // Update bounty status to cancelled/refunded
+        await db
+          .update(bounty)
+          .set({
+            status: 'cancelled',
+            paymentStatus: 'refunded',
+            updatedAt: new Date(),
+          })
+          .where(eq(bounty.id, bountyRecord.id));
+
+        // If there's a pending cancellation request, mark it as approved
+        const [pendingRequest] = await db
+          .select()
+          .from(cancellationRequest)
+          .where(
+            and(
+              eq(cancellationRequest.bountyId, bountyRecord.id),
+              eq(cancellationRequest.status, 'pending')
+            )
+          )
+          .limit(1);
+
+        if (pendingRequest) {
+          await db
+            .update(cancellationRequest)
+            .set({
+              status: 'approved',
+              processedAt: new Date(),
+              refundAmount: refundedAmount.toString(),
+            })
+            .where(eq(cancellationRequest.id, pendingRequest.id));
+          console.log(`[Stripe Webhook] Marked cancellation request ${pendingRequest.id} as approved`);
+        }
+
+        // Create notification for the bounty creator
+        await createNotification({
+          userId: bountyRecord.createdById,
+          type: 'system',
+          title: 'Bounty Refunded',
+          message: `Your bounty "${bountyRecord.title}" has been refunded and cancelled. Refund amount: $${refundedAmount.toLocaleString()}`,
+          data: {
+            bountyId: bountyRecord.id,
+            linkTo: `/bounty/${bountyRecord.id}`,
+          },
+        });
+
+        console.log(`[Stripe Webhook] charge.refund.updated: Successfully processed refund for bounty ${bountyRecord.id}`);
+        break;
+      }
+
       case 'charge.refunded': {
         console.log('[Stripe Webhook] Processing charge.refunded');
         const charge = event.data.object as Stripe.Charge;
@@ -592,6 +708,18 @@ export async function POST(request: Request) {
             console.error(`[Stripe Webhook] Failed to send refund email to ${creator.email}:`, emailError);
           }
         }
+
+        // Create in-app notification for the bounty creator
+        await createNotification({
+          userId: bountyRecord.createdById,
+          type: 'system',
+          title: 'Bounty Refunded',
+          message: `Your bounty "${bountyRecord.title}" has been refunded and cancelled. Refund amount: $${refundedAmount.toLocaleString()}`,
+          data: {
+            bountyId: bountyRecord.id,
+            linkTo: `/bounty/${bountyRecord.id}`,
+          },
+        });
 
         // Idempotency check for refund transaction
         const [existingRefundTransaction] = await db

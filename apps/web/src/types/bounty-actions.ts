@@ -24,6 +24,8 @@ export interface BountyActionsProps {
   bookmarked?: boolean;
   onToggleBookmark?: () => void;
   actions?: ActionItem[];
+  repositoryUrl?: string | null;
+  issueUrl?: string | null;
 }
 
 export interface UpvoteButtonProps {

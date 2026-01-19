@@ -14,7 +14,7 @@ import {
 import { addNavigationContext } from '@bounty/ui/hooks/use-navigation-context';
 import { formatDistanceToNow } from 'date-fns';
 import { useSession } from '@/context/session-context';
-import { Pin, PinOff, Trash2, XCircle } from 'lucide-react';
+import { AlertTriangle, Pin, PinOff, Trash2, XCircle } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { memo, useState } from 'react';
 import type { Bounty } from '@/types/dashboard';
@@ -219,6 +219,22 @@ export const BountyCard = memo(function BountyCard({
     },
   });
 
+  const cancelCancellationRequestMutation = useMutation({
+    mutationFn: async (input: { bountyId: string }) => {
+      return await trpcClient.bounties.cancelCancellationRequest.mutate(input);
+    },
+    onSuccess: (result) => {
+      toast.success(result.message || 'Cancellation request withdrawn');
+      // Invalidate the shared cache so both card and detail page update
+      queryClient.invalidateQueries({
+        queryKey: [['bounties', 'getCancellationStatus']],
+      });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to cancel cancellation request: ${error.message}`);
+    },
+  });
+
   const openCancellationDialog = () => {
     if (canRequestCancellation && !hasPendingCancellation) {
       setShowCancellationDialog(true);
@@ -262,6 +278,24 @@ export const BountyCard = memo(function BountyCard({
     }
     const match = urlCandidate.match(/github\.com\/([^/]+\/[^/]+)/i);
     return match?.[1] || 'Unknown repo';
+  })();
+
+  const issueDisplay = (() => {
+    if (!bounty.issueUrl) {
+      return null;
+    }
+    const match = bounty.issueUrl.match(/github\.com\/[^/]+\/[^/]+\/issues\/(\d+)/i);
+    if (!match) {
+      return null;
+    }
+    const issueNumber = match[1];
+    const repoMatch = bounty.issueUrl.match(/github\.com\/([^/]+\/[^/]+)/i);
+    const repoSlug = repoMatch?.[1] || 'unknown';
+    return {
+      number: issueNumber,
+      repo: repoSlug,
+      url: bounty.issueUrl,
+    };
   })();
 
   return (
@@ -342,14 +376,46 @@ export const BountyCard = memo(function BountyCard({
               </div>
 
               {/* GitHub repo */}
-              <div className="flex h-fit items-center gap-[5px] px-[3px] min-w-0 flex-1 sm:flex-initial">
-                <div className="flex h-fit items-center opacity-30 shrink-0">
-                  <GithubIcon className="h-3 w-3" />
+              {issueDisplay ? (
+                <a
+                  href={issueDisplay.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-fit items-center gap-[5px] px-[3px] min-w-0 flex-1 sm:flex-initial hover:bg-[#2A2A28] rounded-md transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex h-fit items-center opacity-30 shrink-0">
+                    <GithubIcon className="h-3 w-3" />
+                  </div>
+                  <span className="h-5 text-[11px] flex items-center md:text-[13px] lg:text-[13px] font-normal leading-[150%] text-[#FFFFFF99] truncate min-w-0">
+                    {issueDisplay.repo}
+                  </span>
+                </a>
+              ) : (
+                <div className="flex h-fit items-center gap-[5px] px-[3px] min-w-0 flex-1 sm:flex-initial">
+                  <div className="flex h-fit items-center opacity-30 shrink-0">
+                    <GithubIcon className="h-3 w-3" />
+                  </div>
+                  <span className="h-5 text-[11px] flex items-center md:text-[13px] lg:text-[13px] font-normal leading-[150%] text-[#FFFFFF99] truncate min-w-0">
+                    {repoDisplay}
+                  </span>
                 </div>
-                <span className="h-5 text-[11px] flex items-center md:text-[13px] lg:text-[13px] font-normal leading-[150%] text-[#FFFFFF99] truncate min-w-0">
-                  {repoDisplay}
-                </span>
-              </div>
+              )}
+
+              {/* GitHub issue link */}
+              {issueDisplay && (
+                <a
+                  href={issueDisplay.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-fit items-center gap-[5px] px-[3px] shrink-0 hover:bg-[#2A2A28] rounded-md transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <span className="h-5 text-[11px] flex items-center md:text-[13px] lg:text-[13px] font-normal leading-[150%] text-[#6CFF0099] whitespace-nowrap">
+                    #{issueDisplay.number}
+                  </span>
+                </a>
+              )}
             </div>
 
             {/* Timestamp */}
@@ -394,15 +460,28 @@ export const BountyCard = memo(function BountyCard({
               Delete bounty
             </ContextMenuItem>
           )}
-          {/* Show request cancellation for funded bounties without pending request */}
-          {canRequestCancellation && !hasPendingCancellation && !isCancelled && !isRefunded && (
-            <ContextMenuItem
-              className="cursor-pointer text-yellow-500 focus:text-yellow-500 focus:bg-yellow-500/10"
-              onClick={openCancellationDialog}
-            >
-              <XCircle className="mr-2 h-4 w-4" />
-              Request cancellation
-            </ContextMenuItem>
+          {/* Show cancellation options for funded bounties */}
+          {canRequestCancellation && !isCancelled && !isRefunded && (
+            <>
+              {!hasPendingCancellation ? (
+                <ContextMenuItem
+                  className="cursor-pointer text-yellow-500 focus:text-yellow-500 focus:bg-yellow-500/10"
+                  onClick={openCancellationDialog}
+                >
+                  <AlertTriangle className="mr-2 h-4 w-4" />
+                  Request cancellation
+                </ContextMenuItem>
+              ) : (
+                <ContextMenuItem
+                  className="cursor-pointer text-green-500 focus:text-green-500 focus:bg-green-500/10"
+                  onClick={() => cancelCancellationRequestMutation.mutate({ bountyId: bounty.id })}
+                  disabled={cancelCancellationRequestMutation.isPending}
+                >
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Cancel cancellation request
+                </ContextMenuItem>
+              )}
+            </>
           )}
         </ContextMenuContent>
       )}

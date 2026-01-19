@@ -9,11 +9,15 @@
 
 import type {
   AutumnCheckoutSession,
+  AutumnCheckParams,
+  AutumnCheckResponse,
   AutumnCustomer,
   AutumnCustomerCreateParams,
   AutumnCustomerUpdateParams,
   AutumnFeatureState,
   AutumnPortalSession,
+  AutumnTrackParams,
+  AutumnTrackResponse,
   AutumnUsageEvent,
   AutumnUsageEventResponse,
   AutumnSubscription,
@@ -80,6 +84,10 @@ export class AutumnClient {
   private buildRequestInit(method: string, body?: unknown): RequestInit {
     this.validateApiKey();
 
+    // Mask the API key for logging
+    const maskedKey = this.apiKey.substring(0, 8) + '...' + this.apiKey.substring(Math.max(0, this.apiKey.length - 4));
+    debugLog(`[Autumn] Using API key:`, maskedKey);
+
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.apiKey}`,
       'Content-Type': 'application/json',
@@ -106,7 +114,10 @@ export class AutumnClient {
     const url = `${this.apiURL}${path}`;
     debugLog(`${method} ${path}`, body);
 
-    const response = await fetch(url, this.buildRequestInit(method, body));
+    const requestInit = this.buildRequestInit(method, body);
+    debugLog(`[Autumn] Request headers:`, requestInit.headers);
+
+    const response = await fetch(url, requestInit);
     const contentType = response.headers.get('content-type') ?? '';
     const isJson = contentType.includes('application/json');
 
@@ -280,6 +291,8 @@ export class AutumnClient {
   async createCheckout(params: {
     productId: string;
     customerId?: string;
+    customerEmail?: string;
+    customerName?: string;
     successUrl?: string;
     cancelUrl?: string;
     metadata?: Record<string, unknown>;
@@ -291,6 +304,12 @@ export class AutumnClient {
 
     if (params.customerId) {
       body.customer_id = params.customerId;
+    }
+    if (params.customerEmail) {
+      body.customer_email = params.customerEmail;
+    }
+    if (params.customerName) {
+      body.customer_name = params.customerName;
     }
     if (params.cancelUrl) {
       body.cancel_url = params.cancelUrl;
@@ -359,6 +378,53 @@ export class AutumnClient {
       event.metadata = metadata;
     }
     return await this.trackEvent(event);
+  }
+
+  // ==========================================================================
+  // Check & Track API
+  // ==========================================================================
+
+  /**
+   * Check if a customer has access to a feature
+   * Returns the allowed status along with balance information
+   */
+  async check(params: AutumnCheckParams): Promise<AutumnCheckResponse> {
+    const body: Record<string, unknown> = {
+      customer_id: params.customerId,
+      feature_id: params.featureId,
+    };
+
+    if (params.requiredBalance !== undefined) {
+      body.required_balance = params.requiredBalance;
+    }
+
+    if (params.sendEvent) {
+      body.send_event = true;
+    }
+
+    return await this.post<AutumnCheckResponse>('/check', body);
+  }
+
+  /**
+   * Track feature usage for a customer
+   * Increments the usage counter for the given feature
+   */
+  async trackFeature(params: AutumnTrackParams): Promise<AutumnTrackResponse> {
+    const body: Record<string, unknown> = {
+      customer_id: params.customerId,
+      feature_id: params.featureId,
+      value: params.value,
+    };
+
+    if (params.idempotencyKey) {
+      body.idempotency_key = params.idempotencyKey;
+    }
+
+    if (params.metadata) {
+      body.metadata = params.metadata;
+    }
+
+    return await this.post<AutumnTrackResponse>('/track', body);
   }
 
   // ==========================================================================

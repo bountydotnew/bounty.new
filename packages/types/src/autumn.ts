@@ -30,6 +30,7 @@ export interface AutumnCustomer {
   metadata?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
+  env?: string; // Environment: 'dev' or 'prod'
 }
 
 /**
@@ -60,6 +61,7 @@ export interface AutumnCustomerUpdateParams {
  */
 export type AutumnSubscriptionStatus =
   | 'active'
+  | 'trialing'
   | 'past_due'
   | 'canceled'
   | 'unpaid'
@@ -89,6 +91,7 @@ export interface AutumnProduct {
   name: string;
   description?: string | null;
   slug?: string | null;
+  env?: string; // Environment: 'dev' or 'prod'
 }
 
 // ============================================================================
@@ -164,6 +167,8 @@ export interface CustomerState {
   >;
   features: Record<string, AutumnFeatureState>;
   products: AutumnProduct[];
+  /** Flag indicating customer exists via email lookup but external_id doesn't match user.id */
+  _unlinked?: boolean;
 }
 
 // ============================================================================
@@ -248,16 +253,32 @@ export interface AutumnCheckoutPreview {
 /**
  * Checkout session response
  * Can return either a URL (first-time payment) or preview data (payment on file)
+ * When url is null, the entire response is preview data (upgrade scenario)
  */
 export interface AutumnCheckoutSession {
   // URL returned when payment details needed (first-time)
   checkout_url?: string;
-  url?: string; // alias used in some responses
-  
+  url?: string; // alias used in some responses - when null, entire response is preview data
+
+  // Customer information
+  customer_id?: string;
+
+  // Current product (when already attached or in preview)
+  current_product?: {
+    id: string;
+    name: string;
+    description?: string | null;
+    slug?: string | null;
+    env?: string;
+  };
+
   // Preview returned when payment method on file
   preview?: AutumnCheckoutPreview;
-  
+
+  // Additional fields that may be present
+  has_prorations?: boolean;
   id?: string;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -422,6 +443,63 @@ export interface AutumnUsageEventResponse {
 }
 
 // ============================================================================
+// Check & Track Types
+// ============================================================================
+
+/**
+ * Check feature access request
+ */
+export interface AutumnCheckParams {
+  customerId: string;
+  featureId: string;
+  requiredBalance?: number;
+  sendEvent?: boolean;
+}
+
+/**
+ * Check feature access response
+ */
+export interface AutumnCheckResponse {
+  allowed: boolean;
+  feature_id: string;
+  customer_id: string;
+  required_balance: number;
+  unlimited: boolean;
+  interval: string | null;
+  balance: number;
+  usage: number;
+  included_usage: number;
+  next_reset_at: number | null;
+  overage_allowed: boolean;
+}
+
+/**
+ * Track usage request
+ */
+export interface AutumnTrackParams {
+  customerId: string;
+  featureId: string;
+  value: number;
+  idempotencyKey?: string;
+  metadata?: Record<string, string | number | boolean>;
+}
+
+/**
+ * Track usage response
+ */
+export interface AutumnTrackResponse {
+  customer_id: string;
+  feature_id: string;
+  value: number;
+  balance: number;
+  usage: number;
+  included_usage: number;
+  unlimited: boolean;
+  interval: string | null;
+  next_reset_at: number | null;
+}
+
+// ============================================================================
 // Error Types
 // ============================================================================
 
@@ -450,12 +528,20 @@ export interface AutumnWebhookPayload {
 // ============================================================================
 
 /**
+ * Import ExpandedCustomer from autumn-js SDK for type compatibility
+ * We use any here to avoid importing from the SDK directly in the types package
+ * The actual implementation will type this correctly from autumn-js
+ */
+export type SDKExpandedCustomer = any;
+
+/**
  * Return type for useBilling hook
+ * Uses SDK's ExpandedCustomer type instead of wrapper CustomerState
  */
 export interface BillingHookResult {
   isLoading: boolean;
-  customer: CustomerState | null | undefined;
-  refetch: () => Promise<unknown>;
+  customer: SDKExpandedCustomer | null;
+  refetch: () => Promise<SDKExpandedCustomer | null>;
   openBillingPortal: () => Promise<void>;
   trackUsage: (event: string, metadata?: UsageMetadata) => Promise<void>;
   checkout: (slug: Exclude<BountyProPlan, 'free'>) => Promise<void>;
