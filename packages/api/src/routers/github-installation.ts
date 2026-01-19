@@ -42,6 +42,7 @@ export const githubInstallationRouter = router({
         accountAvatarUrl: inst.accountAvatarUrl,
         repositoryIds: inst.repositoryIds,
         suspendedAt: inst.suspendedAt,
+        isDefault: inst.isDefault,
         createdAt: inst.createdAt,
         updatedAt: inst.updatedAt,
       })),
@@ -53,7 +54,7 @@ export const githubInstallationRouter = router({
    */
   getRepositories: protectedProcedure
     .input(z.object({ installationId: z.number() }))
-    .query(async ({ input, ctx }) => {
+    .query(async ({ input }) => {
       const githubApp = getGithubAppManager();
 
       try {
@@ -84,7 +85,7 @@ export const githubInstallationRouter = router({
    */
   getInstallation: protectedProcedure
     .input(z.object({ installationId: z.number() }))
-    .query(async ({ input, ctx }) => {
+    .query(async ({ input }) => {
       const githubApp = getGithubAppManager();
 
       try {
@@ -216,4 +217,113 @@ export const githubInstallationRouter = router({
 
       return { success: true };
     }),
+
+  /**
+   * Set an installation as the default for the current user
+   */
+  setDefaultInstallation: protectedProcedure
+    .input(z.object({ installationId: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      // Get the user's GitHub account
+      const [githubAccount] = await ctx.db
+        .select()
+        .from(account)
+        .where(
+          and(
+            eq(account.userId, ctx.session.user.id),
+            eq(account.providerId, 'github')
+          )
+        )
+        .limit(1);
+
+      if (!githubAccount) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'GitHub account not connected',
+        });
+      }
+
+      // Verify the installation belongs to this user
+      const [installation] = await ctx.db
+        .select()
+        .from(githubInstallation)
+        .where(
+          and(
+            eq(githubInstallation.githubInstallationId, input.installationId),
+            eq(githubInstallation.githubAccountId, githubAccount.id)
+          )
+        )
+        .limit(1);
+
+      if (!installation) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Installation not found',
+        });
+      }
+
+      // Unset all other defaults for this user
+      await ctx.db
+        .update(githubInstallation)
+        .set({ isDefault: false })
+        .where(
+          and(
+            eq(githubInstallation.githubAccountId, githubAccount.id),
+            eq(githubInstallation.isDefault, true)
+          )
+        );
+
+      // Set this installation as default
+      await ctx.db
+        .update(githubInstallation)
+        .set({ isDefault: true })
+        .where(eq(githubInstallation.id, installation.id));
+
+      return { success: true };
+    }),
+
+  /**
+   * Get the default installation for the current user
+   */
+  getDefaultInstallation: protectedProcedure.query(async ({ ctx }) => {
+    // Get the user's GitHub account
+    const [githubAccount] = await ctx.db
+      .select()
+      .from(account)
+      .where(
+        and(
+          eq(account.userId, ctx.session.user.id),
+          eq(account.providerId, 'github')
+        )
+      )
+      .limit(1);
+
+    if (!githubAccount) {
+      return null;
+    }
+
+    // Get the default installation
+    const [installation] = await ctx.db
+      .select()
+      .from(githubInstallation)
+      .where(
+        and(
+          eq(githubInstallation.githubAccountId, githubAccount.id),
+          eq(githubInstallation.isDefault, true)
+        )
+      )
+      .limit(1);
+
+    if (!installation) {
+      return null;
+    }
+
+    return {
+      id: installation.githubInstallationId,
+      accountLogin: installation.accountLogin,
+      accountType: installation.accountType,
+      accountAvatarUrl: installation.accountAvatarUrl,
+      isDefault: installation.isDefault,
+    };
+  }),
 });

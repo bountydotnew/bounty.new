@@ -7,7 +7,7 @@ import { Button } from '@bounty/ui/components/button';
 import { Card } from '@bounty/ui/components/card';
 import { GithubIcon } from '@bounty/ui';
 import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear';
-import { ExternalLink, RefreshCw, ArrowLeft, Loader2, MoreVertical, GitBranch, BookOpen, Plus } from 'lucide-react';
+import { ExternalLink, RefreshCw, ArrowLeft, Loader2, MoreVertical, GitBranch, BookOpen, Plus, Star, Check } from 'lucide-react';
 import { trpcClient, queryClient } from '@/utils/trpc';
 import Link from 'next/link';
 import { useQueryState, parseAsString } from 'nuqs';
@@ -34,11 +34,24 @@ export default function InstallationConfigurePage() {
     queryFn: () => trpcClient.githubInstallation.getInstallation.query({ installationId }),
   });
 
+  const { data: installations } = useQuery({
+    queryKey: ['githubInstallation.getInstallations'],
+    queryFn: () => trpcClient.githubInstallation.getInstallations.query(),
+  });
+
   const syncMutation = useMutation({
     mutationFn: () => trpcClient.githubInstallation.syncInstallation.mutate({ installationId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['githubInstallation.getRepositories', installationId] });
       queryClient.invalidateQueries({ queryKey: ['githubInstallation.getInstallation', installationId] });
+      queryClient.invalidateQueries({ queryKey: ['githubInstallation.getInstallations'] });
+    },
+  });
+
+  const setDefaultMutation = useMutation({
+    mutationFn: () => trpcClient.githubInstallation.setDefaultInstallation.mutate({ installationId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['githubInstallation.getInstallations'] });
     },
   });
 
@@ -132,6 +145,17 @@ export default function InstallationConfigurePage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-[#191919] border-[#232323]">
+              <DropdownMenuItem
+                className="focus:bg-[#232323]"
+                onClick={() => {
+                  if (setDefaultMutation.isPending) return;
+                  setDefaultMutation.mutate();
+                }}
+                disabled={setDefaultMutation.isPending}
+              >
+                <Star className="mr-2 h-4 w-4" />
+                Make default
+              </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-red-400 focus:text-red-400 focus:bg-[#232323]"
                 onClick={() => {

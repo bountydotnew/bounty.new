@@ -3,6 +3,7 @@
 import { track } from '@databuddy/sdk';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
 import GithubImportModal from '@/components/bounty/github-import-modal';
@@ -21,7 +22,23 @@ import { useSession } from '@/context/session-context';
 track('screen_view', { screen_name: 'dashboard' });
 
 export default function Dashboard() {
+  const router = useRouter();
   const taskInputRef = useRef<TaskInputFormRef>(null);
+
+  // Check onboarding cookie
+  useEffect(() => {
+    const getCookie = (name: string) => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift();
+      return undefined;
+    };
+
+    const onboardingComplete = getCookie('onboarding_complete');
+    if (!onboardingComplete) {
+      router.push('/onboarding/step/1');
+    }
+  }, [router]);
 
   // Focus textarea if hash is present (for navigation from other pages)
   useEffect(() => {

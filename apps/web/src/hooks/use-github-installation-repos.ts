@@ -8,6 +8,7 @@ export interface InstallationRepos {
   accountType: string | null;
   repositories: string[];
   loading: boolean;
+  isDefault?: boolean;
 }
 
 export function useGitHubInstallationRepositories() {
@@ -52,24 +53,34 @@ export function useGitHubInstallationRepositories() {
     },
   });
 
-  // Build InstallationRepos array
+  // Build InstallationRepos array, with default installation first
   const installationRepos: InstallationRepos[] = useMemo(() => {
     const reposData = reposQueries.data ?? {};
 
-    return installations.map((installation) => ({
+    const installationsWithRepos = installations.map((installation) => ({
       installationId: installation.id,
       accountLogin: installation.accountLogin,
       accountType: installation.accountType,
       repositories: reposData[installation.id] ?? [],
       loading: reposQueries.isLoading || !reposQueries.data,
+      isDefault: installation.isDefault ?? false,
     }));
+
+    // Sort: default installation first, then by account login
+    return installationsWithRepos.sort((a, b) => {
+      if (a.isDefault && !b.isDefault) return -1;
+      if (!a.isDefault && b.isDefault) return 1;
+      return (a.accountLogin ?? '').localeCompare(b.accountLogin ?? '');
+    });
   }, [installations, reposQueries.data, reposQueries.isLoading]);
 
   // Flatten all repositories for backward compatibility
+  // Repositories from default installation come first
   const allRepositories = useMemo(() => {
     if (!reposQueries.data) return [];
-    return Object.values(reposQueries.data).flat();
-  }, [reposQueries.data]);
+    // Return repos in installation order (default first)
+    return installationRepos.flatMap((install) => install.repositories);
+  }, [reposQueries.data, installationRepos]);
 
   const [repoSearchQuery, setRepoSearchQuery] = useState('');
   const [selectedRepository, setSelectedRepository] = useState<string>('');

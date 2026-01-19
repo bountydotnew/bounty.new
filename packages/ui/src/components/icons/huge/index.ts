@@ -27,4 +27,7 @@ export * from './card';
 export * from './security';
 export * from './dollar-bill';
 export * from './bell';
+export * from './book-open';
 export * from './calendar';
+export * from './clock';
+export * from './file';

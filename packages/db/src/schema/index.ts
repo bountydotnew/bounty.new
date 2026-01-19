@@ -5,6 +5,7 @@ export * from './device-code';
 export * from './github-installation';
 export * from './invites';
 export * from './notifications';
+export * from './onboarding';
 export * from './passkey';
 export * from './payments';
 export * from './profiles';
