@@ -171,7 +171,7 @@ function BountyDashboardPage() {
         {/* Header */}
         <div className="flex h-[72px] items-center justify-between bg-[#0E0E0E] border-b border-[#232323] px-4 sm:px-6 sticky top-0 z-10">
           <div className="flex flex-1 items-center justify-center gap-6">
-            <button className="relative flex w-[270px] items-center rounded-lg border cursor-pointer border-[#232323] bg-[#191919] py-[5px] pl-[10px] pr-[53px] text-left transition-colors hover:bg-[#141414]" type="button">
+            {/* <button className="relative flex w-[270px] items-center rounded-lg border cursor-pointer border-[#232323] bg-[#191919] py-[5px] pl-[10px] pr-[53px] text-left transition-colors hover:bg-[#141414]" type="button">
               <span className="flex-1 bg-transparent text-[16px] font-medium leading-[150%] tracking-[-0.03em] text-[#5A5A5A] flex items-center">
                 Search for anything...
               </span>
@@ -180,7 +180,7 @@ function BountyDashboardPage() {
                   <span className="text-[16px] font-medium leading-[150%] text-[#5A5A5A]">⌘K</span>
                 </div>
               </div>
-            </button>
+            </button> */}
           </div>
           <div className="flex items-center gap-2">
             <button className="hidden md:flex lg:flex items-center gap-[7px] rounded-[12px] border border-[#232323] bg-[#191919] py-[5px] px-[10px] transition-colors hover:bg-[#141414]" type="button">

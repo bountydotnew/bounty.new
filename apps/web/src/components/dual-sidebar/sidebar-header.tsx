@@ -61,7 +61,7 @@ export const Header = (_props: HeaderProps = {}) => {
       >
         <div className="flex flex-1 items-center justify-center gap-6">
           {isMobile && <SidebarTrigger />}
-          {/* Search Bar Trigger */}
+          {/* Search Bar Trigger
           <button
             className="relative flex w-[270px] items-center rounded-lg border cursor-pointer border-[#232323] bg-[#191919] py-[5px] pl-[10px] pr-[53px] text-left transition-colors hover:bg-[#141414]"
             onClick={() => setCommandMenuOpen(true)}
@@ -70,7 +70,6 @@ export const Header = (_props: HeaderProps = {}) => {
             <span className="flex-1 bg-transparent text-[16px] font-medium leading-[150%] tracking-[-0.03em] text-[#5A5A5A] flex items-center">
               Search for anything...
             </span>
-            {/* Keyboard Shortcut Badge */}
             <div className="absolute right-[10px] top-1/2 flex -translate-y-1/2 items-center">
               <div className="flex h-[23px] w-[43px] items-center justify-center rounded-full bg-[#232323]">
                 <span className="text-[16px] font-medium leading-[150%] text-[#5A5A5A]">
@@ -79,6 +78,7 @@ export const Header = (_props: HeaderProps = {}) => {
               </div>
             </div>
           </button>
+           */}
         </div>
 
         <div className="flex items-center gap-2">
