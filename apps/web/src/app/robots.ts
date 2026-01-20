@@ -24,6 +24,7 @@ export default function robots(): MetadataRoute.Robots {
           '/bounty/edit/*',
           '/_next/*',
           '/favicon.ico',
+          '/favicon/*',
         ],
       },
     ],

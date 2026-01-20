@@ -29,7 +29,8 @@ export const metadata: Metadata = {
   },
   description: 'Ship faster. Get paid instantly.',
   icons: {
-    icon: '/icon.svg',
+    icon: '/favicon/favicon_light.png',
+    apple: '/favicon/favicon_light.png',
   },
   openGraph: {
     title: {
@@ -69,6 +70,20 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Favicons with dark/light mode support */}
+        <link
+          rel="icon"
+          type="image/png"
+          href="/favicon/favicon_light.png"
+          media="(prefers-color-scheme: light)"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          href="/favicon/favicon_dark.png"
+          media="(prefers-color-scheme: dark)"
+        />
+        <link rel="apple-touch-icon" href="/favicon/favicon_light.png" />
         {process.env.NODE_ENV === 'development' && (
           <>
             <Script
