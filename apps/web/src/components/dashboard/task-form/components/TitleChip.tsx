@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Controller, type Control } from 'react-hook-form';
 import type { CreateBountyForm } from '@bounty/ui/lib/forms';
-import { calculateWidth } from '@bounty/ui/lib/calculateWidth';
+import { calculateWidth } from '@bounty/ui/lib/calculate-width';
 
 interface TitleChipProps {
   control: Control<CreateBountyForm>;
