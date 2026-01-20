@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect, useRef } from 'react';
 import { authClient } from '@bounty/auth/client';
@@ -14,7 +14,7 @@ import { calculateWidth } from '@bounty/ui/lib/calculate-width';
 import { ChevronDown } from 'lucide-react';
 import { GithubIcon } from '@bounty/ui';
 
-const BOUNTY_DRAFT_STORAGE_KEY = 'bounty_draft';
+const BOUNTY_DRAFT_STORAGE_KEY = "bounty_draft";
 
 interface BountyDraft {
   title?: string;
@@ -108,7 +108,7 @@ export function BountyForm({
 
   const resizeDescription = (el: HTMLTextAreaElement | null) => {
     if (!el) return;
-    el.style.height = 'auto';
+    el.style.height = "auto";
     const newHeight = Math.min(Math.max(el.scrollHeight, 160), 600);
     el.style.height = `${newHeight}px`;
   };
@@ -136,19 +136,19 @@ export function BountyForm({
           if (firstError.message) {
             toast.error(firstError.message);
           } else {
-            toast.error('Validation error');
+            toast.error("Validation error");
           }
         } else {
-          toast.error(error.message || 'An error occurred');
+          toast.error(error.message || "An error occurred");
         }
       } catch {
         // If parsing fails, show a generic error
-        toast.error(error.message || 'An error occurred');
+        toast.error(error.message || "An error occurred");
       }
     } else if (error instanceof Error) {
       toast.error(error.message);
     } else {
-      toast.error('An unexpected error occurred');
+      toast.error("An unexpected error occurred");
     }
   };
 
@@ -178,11 +178,11 @@ export function BountyForm({
       setIsSubmitting(true);
       try {
         // Remove commas from price before submitting
-        const cleanedPrice = price.replace(/,/g, '');
+        const cleanedPrice = price.replace(/,/g, "");
         await onSubmit({
           title,
-          description: description || '',
-          amount: cleanedPrice || '0',
+          description: description || "",
+          amount: cleanedPrice || "0",
           deadline: deadline || undefined,
         });
       } catch (error) {
@@ -196,7 +196,7 @@ export function BountyForm({
 
     // If logged out, save draft and redirect to login
     if (!session?.user) {
-      const callbackUrl = encodeURIComponent('/waitlist/dashboard');
+      const callbackUrl = encodeURIComponent("/waitlist/dashboard");
       router.push(`/login?callback=${callbackUrl}`);
       return;
     }
@@ -211,12 +211,12 @@ export function BountyForm({
     setIsSubmitting(true);
     try {
       // Remove commas from price before submitting
-      const cleanedPrice = price.replace(/,/g, '');
+      const cleanedPrice = price.replace(/,/g, "");
       await saveBountyMutation.mutateAsync({
         entryId: effectiveEntryId,
         title,
-        description: description || '',
-        amount: cleanedPrice || '0',
+        description: description || "",
+        amount: cleanedPrice || "0",
         deadline: deadline || undefined,
       });
 
@@ -241,42 +241,42 @@ export function BountyForm({
 
     if (!session?.user) {
       // Save draft and redirect to login
-      const callbackUrl = encodeURIComponent('/waitlist/dashboard');
+      const callbackUrl = encodeURIComponent("/waitlist/dashboard");
       router.push(`/login?callback=${callbackUrl}`);
       return;
     }
 
     // If logged in, redirect to dashboard
-    router.push('/waitlist/dashboard');
+    router.push("/waitlist/dashboard");
   };
 
   const formatWithCommas = (value: string) =>
-    value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let cleaned = e.target.value.replace(/[^0-9.]/g, '');
-    const parts = cleaned.split('.');
+    let cleaned = e.target.value.replace(/[^0-9.]/g, "");
+    const parts = cleaned.split(".");
     if (parts.length > 2) {
-      cleaned = parts[0] + '.' + parts.slice(1).join('');
+      cleaned = parts[0] + "." + parts.slice(1).join("");
     }
     setPrice(cleaned);
   };
 
   const submitButtonLabel = isSubmitting
     ? onSubmit
-      ? 'Saving...'
-      : 'Creating...'
+      ? "Saving..."
+      : "Creating..."
     : onSubmit
-      ? 'Save'
-      : 'Create bounty';
+      ? "Save"
+      : "Create bounty";
 
   const submitButtonLabelMobile = isSubmitting
     ? onSubmit
-      ? 'Saving...'
-      : 'Creating...'
+      ? "Saving..."
+      : "Creating..."
     : onSubmit
-      ? 'Save'
-      : 'Create';
+      ? "Save"
+      : "Create";
 
   return (
     <div className="w-full max-w-[95vw] sm:max-w-[805px] mx-auto">
@@ -290,7 +290,10 @@ export function BountyForm({
               onClick={() => titleRef.current?.focus()}
             >
               {!title && !isTitleFocused && (
-                <span className="text-[#5A5A5A] text-[16px] leading-5 font-normal pointer-events-none absolute left-1.5">
+                <span
+                  className="text-[#5A5A5A] text-[16px] leading-5 font-normal pointer-events-none absolute left-1.5"
+                  aria-hidden="true"
+                >
                   Title
                 </span>
               )}
@@ -301,6 +304,7 @@ export function BountyForm({
                 onChange={(e) => setTitle(e.target.value)}
                 onFocus={() => setIsTitleFocused(true)}
                 onBlur={() => setIsTitleFocused(false)}
+                aria-label="Title"
                 className="bg-transparent text-white text-[16px] leading-5 outline-none placeholder:text-[#5A5A5A]"
                 style={{
                   width: `${calculateWidth(title || "Title", 50)}px`,
@@ -319,6 +323,7 @@ export function BountyForm({
                 value={price ? formatWithCommas(price) : ""}
                 onChange={handlePriceChange}
                 placeholder="Price"
+                aria-label="Price"
                 className="bg-transparent text-white text-[16px] leading-5 outline-none placeholder:text-[#5A5A5A]"
                 style={{
                   width: `${calculateWidth(price ? formatWithCommas(price) : "Price", 40)}px`,
@@ -387,10 +392,10 @@ export function BountyForm({
                 className="flex items-center justify-center gap-1.5 px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
               >
                 <span className="hidden sm:inline">
-                  {isSubmitting ? 'Redirecting...' : 'Skip & join waitlist'}
+                  {isSubmitting ? "Redirecting..." : "Skip & join waitlist"}
                 </span>
                 <span className="sm:hidden">
-                  {isSubmitting ? 'Redirecting...' : 'Skip'}
+                  {isSubmitting ? "Redirecting..." : "Skip"}
                 </span>
               </button>
             )}
