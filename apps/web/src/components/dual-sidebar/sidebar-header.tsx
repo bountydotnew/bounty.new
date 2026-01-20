@@ -93,9 +93,9 @@ export const Header = (_props: HeaderProps = {}) => {
             onClick={handleCreateBounty}
             type="button"
           >
-            <Plus className="h-4 w-4 text-[#CFCFCF]" />
+            {/* <Plus className="h-4 w-4 text-[#CFCFCF]" /> */}
             <span className="hidden md:inline text-sm font-semibold leading-[150%] tracking-[0.01em] text-[#CFCFCF]">
-              Create a bounty
+              New bounty
             </span>
           </button>
         </div>
