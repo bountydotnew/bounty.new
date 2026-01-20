@@ -287,7 +287,7 @@ export function BountyForm({
                 type="text"
                 value={price ? price.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
                 onChange={(e) => {
-                  const cleaned = e.target.value.replace(/[^0-9.]/g, '');
+                  const cleaned = e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
                   setPrice(cleaned);
                 }}
                 placeholder="Price"
