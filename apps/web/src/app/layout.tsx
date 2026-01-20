@@ -70,20 +70,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Favicons with dark/light mode support */}
+        {/* Favicon - using dark version for everything */}
         <link
           rel="icon"
           type="image/png"
-          href="/favicon/favicon_dark.png"
-          media="(prefers-color-scheme: light)"
+          href="/favicon/favicon_dark.png.png"
         />
-        <link
-          rel="icon"
-          type="image/png"
-          href="/favicon/favicon_dark.png"
-          media="(prefers-color-scheme: dark)"
-        />
-        <link rel="apple-touch-icon" href="/favicon/favicon_light.png" />
+        <link rel="apple-touch-icon" href="/favicon/favicon_dark.png.png" />
         {process.env.NODE_ENV === 'development' && (
           <>
             <Script
