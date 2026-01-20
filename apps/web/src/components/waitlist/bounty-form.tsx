@@ -57,6 +57,7 @@ export function BountyForm({
     initialValues?.deadline || ''
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTitleFocused, setIsTitleFocused] = useState(false);
 
   const titleRef = useRef<HTMLInputElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
@@ -105,17 +106,17 @@ export function BountyForm({
     localStorage.setItem(BOUNTY_DRAFT_STORAGE_KEY, JSON.stringify(draft));
   }, [title, description, price, deadline, onSubmit]);
 
+  const resizeDescription = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = 'auto';
+    const newHeight = Math.min(Math.max(el.scrollHeight, 160), 600);
+    el.style.height = `${newHeight}px`;
+  };
+
   // Auto-resize description
   useEffect(() => {
-    if (descriptionRef.current) {
-      descriptionRef.current.style.height = 'auto';
-      const newHeight = Math.min(
-        Math.max(descriptionRef.current.scrollHeight, 160),
-        600
-      );
-      descriptionRef.current.style.height = `${newHeight}px`;
-    }
-  }, []);
+    resizeDescription(descriptionRef.current);
+  }, [description]);
 
   // Get waitlist entry ID when logged in
   const { data: myEntry } = useQuery({
@@ -179,7 +180,7 @@ export function BountyForm({
         // Remove commas from price before submitting
         const cleanedPrice = price.replace(/,/g, '');
         await onSubmit({
-          title: title || 'Untitled Bounty',
+          title,
           description: description || '',
           amount: cleanedPrice || '0',
           deadline: deadline || undefined,
@@ -213,7 +214,7 @@ export function BountyForm({
       const cleanedPrice = price.replace(/,/g, '');
       await saveBountyMutation.mutateAsync({
         entryId: effectiveEntryId,
-        title: title || 'Untitled Bounty',
+        title,
         description: description || '',
         amount: cleanedPrice || '0',
         deadline: deadline || undefined,
@@ -249,6 +250,34 @@ export function BountyForm({
     router.push('/waitlist/dashboard');
   };
 
+  const formatWithCommas = (value: string) =>
+    value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let cleaned = e.target.value.replace(/[^0-9.]/g, '');
+    const parts = cleaned.split('.');
+    if (parts.length > 2) {
+      cleaned = parts[0] + '.' + parts.slice(1).join('');
+    }
+    setPrice(cleaned);
+  };
+
+  const submitButtonLabel = isSubmitting
+    ? onSubmit
+      ? 'Saving...'
+      : 'Creating...'
+    : onSubmit
+      ? 'Save'
+      : 'Create bounty';
+
+  const submitButtonLabelMobile = isSubmitting
+    ? onSubmit
+      ? 'Saving...'
+      : 'Creating...'
+    : onSubmit
+      ? 'Save'
+      : 'Create';
+
   return (
     <div className="w-full max-w-[95vw] sm:max-w-[805px] mx-auto">
       <div className="w-full rounded-[21px] bg-[#191919] border border-[#232323] flex flex-col p-4 gap-3">
@@ -260,7 +289,7 @@ export function BountyForm({
               className="relative rounded-[7px] flex flex-row items-center px-1.5 py-[3px] bg-[#201F1F] gap-1 cursor-text"
               onClick={() => titleRef.current?.focus()}
             >
-              {!title && (
+              {!title && !isTitleFocused && (
                 <span className="text-[#5A5A5A] text-[16px] leading-5 font-normal pointer-events-none absolute left-1.5">
                   Title
                 </span>
@@ -270,9 +299,11 @@ export function BountyForm({
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                onFocus={() => setIsTitleFocused(true)}
+                onBlur={() => setIsTitleFocused(false)}
                 className="bg-transparent text-white text-[16px] leading-5 outline-none placeholder:text-[#5A5A5A]"
                 style={{
-                  width: `${calculateWidth(title || 'Title', 50)}px`,
+                  width: `${calculateWidth(title || "Title", 50)}px`,
                 }}
               />
             </div>
@@ -285,15 +316,12 @@ export function BountyForm({
               <input
                 ref={priceRef}
                 type="text"
-                value={price ? price.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-                onChange={(e) => {
-                  const cleaned = e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
-                  setPrice(cleaned);
-                }}
+                value={price ? formatWithCommas(price) : ""}
+                onChange={handlePriceChange}
                 placeholder="Price"
                 className="bg-transparent text-white text-[16px] leading-5 outline-none placeholder:text-[#5A5A5A]"
                 style={{
-                  width: `${calculateWidth(price ? price.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 'Price', 40)}px`,
+                  width: `${calculateWidth(price ? formatWithCommas(price) : "Price", 40)}px`,
                 }}
               />
             </div>
@@ -318,10 +346,7 @@ export function BountyForm({
           value={description}
           onChange={(e) => {
             setDescription(e.target.value);
-            const target = e.target;
-            target.style.height = 'auto';
-            const newHeight = Math.min(Math.max(target.scrollHeight, 160), 600);
-            target.style.height = `${newHeight}px`;
+            resizeDescription(e.target);
           }}
           placeholder="Start typing your description..."
           className="flex-1 min-h-[160px] bg-transparent text-white text-[16px] leading-6 outline-none resize-none placeholder:text-[#5A5A5A]"
@@ -375,24 +400,8 @@ export function BountyForm({
               className="flex items-center justify-center gap-1.5 px-[13px] h-[31.9965px] rounded-full bg-white text-black text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
             >
               <GitHub className="w-4 h-4 shrink-0" />
-              <span className="hidden sm:inline">
-                {isSubmitting
-                  ? onSubmit
-                    ? 'Saving...'
-                    : 'Creating...'
-                  : onSubmit
-                    ? 'Save'
-                    : 'Create bounty'}
-              </span>
-              <span className="sm:hidden">
-                {isSubmitting
-                  ? onSubmit
-                    ? 'Saving...'
-                    : 'Creating...'
-                  : onSubmit
-                    ? 'Save'
-                    : 'Create'}
-              </span>
+              <span className="hidden sm:inline">{submitButtonLabel}</span>
+              <span className="sm:hidden">{submitButtonLabelMobile}</span>
             </button>
           </div>
         </div>
