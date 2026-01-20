@@ -5,40 +5,40 @@ import { Zap, Shield, Globe, Code2, Users, ArrowRight } from 'lucide-react';
 import { cn } from '@bounty/ui/lib/utils';
 import Link from 'next/link';
 
-// Mock data for the showcase
+// Mock data for the showcase - using realistic data to match the actual app
 const MOCK_BOUNTY = {
   id: '1',
-  title: 'Implement virtual scrolling for large lists',
-  amount: 500,
+  title: 'Improve the live product demo on Bounty page',
+  amount: 100,
   currency: 'USD',
   status: 'open' as const,
   creator: {
     id: '1',
-    name: 'Sarah Chen',
-    image: 'https://avatars.githubusercontent.com/u/1?v=4',
+    name: 'grim',
+    image: 'https://avatars.githubusercontent.com/u/12608159?v=4',
   },
   repository: {
     id: '1',
-    name: 'frontend-core',
+    name: 'bounty.new',
     owner: {
-      login: 'acme-inc',
+      login: 'bountydotnew',
     },
   },
-  repositoryUrl: 'https://github.com/acme-inc/frontend-core',
+  repositoryUrl: 'https://github.com/bountydotnew/bounty.new',
   description: '',
-  createdAt: new Date().toISOString(),
+  createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
   updatedAt: new Date().toISOString(),
   bountyContext: 'full',
 };
 
 const MOCK_SUBMISSION = {
-  user: 'Alex Rivera',
+  user: 'Sergio',
   description:
-    "I've implemented the virtualization using react-window. Performance improved by 300%.",
-  avatarSrc: 'https://avatars.githubusercontent.com/u/2?v=4',
-  rank: 'Rank 42',
+    "I made ur website use tweakcn now pay me!!",
+  avatarSrc: 'https://pbs.twimg.com/profile_images/1939906364119109632/vu8pOSiH_400x400.jpg',
+  rank: 'Rank 186',
   hasBadge: true,
-  previewSrc: 'https://github.com/shadcn.png', // Placeholder image
+  previewSrc: 'https://pbs.twimg.com/media/GwjyS7FX0AMIz4H?format=png&name=small',
 };
 
 function FeatureSection({
@@ -118,10 +118,10 @@ export function Features() {
             <BountyCard
               bounty={MOCK_BOUNTY}
               stats={{
-                commentCount: 5,
-                voteCount: 12,
-                isVoted: false,
-                bookmarked: false,
+                commentCount: 8,
+                voteCount: 24,
+                isVoted: true,
+                bookmarked: true,
               }}
             />
           </div>
