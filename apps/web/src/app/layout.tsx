@@ -74,7 +74,7 @@ export default function RootLayout({
         <link
           rel="icon"
           type="image/png"
-          href="/favicon/favicon_light.png"
+          href="/favicon/favicon_dark.png"
           media="(prefers-color-scheme: light)"
         />
         <link
