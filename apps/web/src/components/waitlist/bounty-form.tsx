@@ -110,7 +110,7 @@ export function BountyForm({
     if (descriptionRef.current) {
       descriptionRef.current.style.height = 'auto';
       const newHeight = Math.min(
-        Math.max(descriptionRef.current.scrollHeight, 100),
+        Math.max(descriptionRef.current.scrollHeight, 160),
         600
       );
       descriptionRef.current.style.height = `${newHeight}px`;
