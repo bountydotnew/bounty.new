@@ -8,7 +8,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Spinner } from '@bounty/ui';
 import { trpc, trpcClient } from '@/utils/trpc';
-import { Popover, PopoverContent, PopoverTrigger } from '@bounty/ui/components/popover';
 import Link from 'next/link';
 import {
   type CreateBountyForm,
@@ -28,9 +27,7 @@ import { TitleChip } from './task-form/components/TitleChip';
 import { PriceChip } from './task-form/components/PriceChip';
 import { DeadlineChip } from './task-form/components/DeadlineChip';
 import { DescriptionTextarea } from './task-form/components/DescriptionTextarea';
-import { RepoSelector } from './task-form/components/RepoSelector';
-import { BranchSelector } from './task-form/components/BranchSelector';
-import { IssueSelector } from './task-form/components/IssueSelector';
+import { RepoBranchIssueSelector } from './task-form/components/RepoBranchIssueSelector';
 import { FundBountyModal } from '@/components/payment/fund-bounty-modal';
 
 type TaskInputFormProps = {};
@@ -408,88 +405,33 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                                     </div>
                                 )}
 
-                                {/* Repo selector - only show if installations exist */}
+                                {/* Unified Repo/Branch/Issue selector */}
                                 {installations.length > 0 && (
-                                    <RepoSelector
+                                    <RepoBranchIssueSelector
                                         selectedRepository={selectedRepository}
+                                        selectedBranch={selectedBranch}
+                                        selectedIssue={selectedIssue}
                                         installations={filteredInstallations}
                                         installationRepos={installationRepos}
-                                        reposLoading={reposLoading}
+                                        filteredBranches={filteredBranches}
+                                        filteredIssues={filteredIssues as Array<{ number: number; title: string }>}
+                                        branchesLoading={branchesLoading}
+                                        issuesList={{
+                                            isLoading: issuesList.isLoading,
+                                            isFetching: issuesList.isFetching,
+                                            data: issuesList.data as Array<{ number: number; title: string }> | undefined,
+                                        }}
                                         accountSearchQuery={accountSearchQuery}
                                         setAccountSearchQuery={setAccountSearchQuery}
-                                        repoSearchQuery={repoSearchQuery}
-                                        setRepoSearchQuery={setRepoSearchQuery}
-                                        onSelect={handleRepositorySelect}
+                                        branchSearchQuery={branchSearchQuery}
+                                        setBranchSearchQuery={setBranchSearchQuery}
+                                        issueQuery={issueQuery}
+                                        setIssueQuery={setIssueQuery}
+                                        onSelectRepo={handleRepositorySelect}
+                                        onSelectBranch={handleBranchSelect}
+                                        onSelectIssue={handleIssueSelect}
+                                        openStep="repos"
                                     />
-                                )}
-
-                                {/* Branch selector - only show if repo selected */}
-                                {selectedRepository && (
-                                    <>
-                                        <div className="w-px h-4 bg-[#333] shrink-0" />
-                                        <BranchSelector
-                                            selectedBranch={selectedBranch}
-                                            filteredBranches={filteredBranches}
-                                            branchesLoading={branchesLoading}
-                                            branchSearchQuery={branchSearchQuery}
-                                            setBranchSearchQuery={setBranchSearchQuery}
-                                            onSelect={handleBranchSelect}
-                                        />
-                                    </>
-                                )}
-
-                                {/* Issue selector with autofill prompt */}
-                                {selectedRepository && repoInfo && (
-                                    <>
-                                        <div className="w-px h-4 bg-[#333] shrink-0" />
-                                        <Popover open={showAutofillPrompt} onOpenChange={handlePopoverOpenChange} modal={false}>
-                                            <PopoverTrigger asChild>
-                                                <div className="inline-flex">
-                                                    <IssueSelector
-                                                        selectedIssue={selectedIssue}
-                                                        filteredIssues={filteredIssues as Array<{ number: number; title: string }>}
-                                                        issuesList={{
-                                                            isLoading: issuesList.isLoading,
-                                                            isFetching: issuesList.isFetching,
-                                                            data: issuesList.data as Array<{ number: number; title: string }> | undefined,
-                                                        }}
-                                                        issueQuery={issueQuery}
-                                                        setIssueQuery={setIssueQuery}
-                                                        onSelect={handleIssueSelect}
-                                                    />
-                                                </div>
-                                            </PopoverTrigger>
-                                            <PopoverContent
-                                                className="w-72 p-3 bg-[#191919] border-[#232323] rounded-xl shadow-[rgba(0,0,0,0.16)_0px_16px_40px_0px]"
-                                                side="bottom"
-                                                align="start"
-                                                sideOffset={8}
-                                            >
-                                                <p className="text-[#CFCFCF] text-sm mb-3">
-                                                    Would you like to autofill form fields based on{' '}
-                                                    <span className="text-white font-medium">
-                                                        {pendingAutofillIssue ? `#${pendingAutofillIssue.number}` : ''}
-                                                    </span>?
-                                                </p>
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleAutofill(true)}
-                                                        className="flex-1 px-3 py-1.5 bg-white text-black text-sm font-medium rounded-lg hover:bg-white/90 transition-colors"
-                                                    >
-                                                        Yes, autofill
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleAutofill(false)}
-                                                        className="flex-1 px-3 py-1.5 bg-[#232323] text-[#CFCFCF] text-sm font-medium rounded-lg hover:bg-[#2a2a2a] transition-colors"
-                                                    >
-                                                        No thanks
-                                                    </button>
-                                                </div>
-                                            </PopoverContent>
-                                        </Popover>
-                                    </>
                                 )}
                             </div>
 

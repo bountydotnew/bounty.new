@@ -106,7 +106,7 @@ function RepoSelectorContent({
       </div>
 
       {/* Content */}
-      <div className="max-h-[280px] overflow-y-auto p-1">
+      <div className="min-h-[250px] overflow-y-auto p-1">
         {reposLoading && !selectedAccount ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-4 h-4 animate-spin text-[#5A5A5A]" />
@@ -222,7 +222,6 @@ export function RepoSelector({
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerTrigger asChild>{TriggerButton}</DrawerTrigger>
         <DrawerContent className="border-[#232323] bg-[#191919] rounded-t-xl">
-          <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-[#333] shrink-0" />
           <RepoSelectorContent
             installations={installations}
             installationRepos={installationRepos}
