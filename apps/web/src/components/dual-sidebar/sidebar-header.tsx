@@ -59,12 +59,16 @@ export const Header = (_props: HeaderProps = {}) => {
           'px-4 sm:px-6'
         )}
       >
-        {/* Left side - Sidebar trigger and search */}
-        <div className="flex items-center gap-4 flex-1">
+        {/* Left side - empty spacer */}
+        <div className="flex items-center gap-2">
           {isMobile && <SidebarTrigger />}
+        </div>
+
+        {/* Center - Search bar */}
+        <div className="flex h-7 flex-1 justify-center px-4">
           {/* Search Bar Trigger - hidden on mobile */}
           <button
-            className="hidden sm:relative sm:flex w-[270px] items-center rounded-lg border cursor-pointer border-[#232323] bg-[#191919] py-[5px] pl-[10px] pr-[53px] text-left transition-colors hover:bg-[#141414]"
+            className="hidden sm:relative sm:flex w-[270px] h-9 items-center rounded-lg border cursor-pointer border-[#232323] bg-[#191919] py-[10px] pl-[10px] pr-[53px] text-left transition-colors hover:bg-[#141414]"
             onClick={() => setCommandMenuOpen(true)}
             type="button"
           >
@@ -82,7 +86,7 @@ export const Header = (_props: HeaderProps = {}) => {
         </div>
 
         {/* Right side - Create Bounty button */}
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center">
           {/* Create Bounty Button - icon only on mobile */}
           <button
             className="flex items-center gap-[7px] rounded-lg bg-[#2A2A28] px-2 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#383838]"

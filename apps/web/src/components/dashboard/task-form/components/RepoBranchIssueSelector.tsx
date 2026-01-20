@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronRight, ChevronLeft, Check, Loader2 } from 'lucide-react';
 import { GithubIcon, BranchIcon } from '@bounty/ui';
+import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -67,7 +68,7 @@ interface RepoBranchIssueSelectorProps {
   openStep?: Step;
 }
 
-// Pagination component with page numbers
+// Minimal pagination: prev/next arrows with page count
 function Pagination({
   currentPage,
   totalPages,
@@ -79,35 +80,8 @@ function Pagination({
 }) {
   if (totalPages <= 1) return null;
 
-  const pages: (number | string)[] = [];
-  const maxVisible = 5;
-
-  if (totalPages <= maxVisible) {
-    for (let i = 1; i <= totalPages; i++) {
-      pages.push(i);
-    }
-  } else {
-    pages.push(1);
-
-    if (currentPage <= 3) {
-      for (let i = 2; i <= 4; i++) pages.push(i);
-      pages.push('...');
-      pages.push(totalPages);
-    } else if (currentPage >= totalPages - 2) {
-      pages.push('...');
-      for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
-    } else {
-      pages.push('...');
-      pages.push(currentPage - 1);
-      pages.push(currentPage);
-      pages.push(currentPage + 1);
-      pages.push('...');
-      pages.push(totalPages);
-    }
-  }
-
   return (
-    <div className="flex items-center justify-center gap-1 px-3 py-2 border-t border-[#232323]">
+    <div className="flex items-center justify-center gap-4 px-3 py-2 border-t border-[#232323]">
       <button
         type="button"
         onClick={() => onPageChange(currentPage - 1)}
@@ -116,30 +90,9 @@ function Pagination({
       >
         <ChevronLeft className="w-4 h-4" />
       </button>
-      {pages.map((page, idx) => {
-        if (page === '...') {
-          return (
-            <span key={`ellipsis-${idx}`} className="text-xs text-[#5A5A5A] px-1">
-              ...
-            </span>
-          );
-        }
-        return (
-          <button
-            key={page}
-            type="button"
-            onClick={() => onPageChange(page as number)}
-            className={cn(
-              "min-w-[28px] h-7 rounded text-xs font-medium",
-              currentPage === page
-                ? "bg-[#2A2A28] text-white"
-                : "text-[#CFCFCF] hover:bg-[#141414]"
-            )}
-          >
-            {page}
-          </button>
-        );
-      })}
+      <span className="text-xs text-[#5A5A5A]">
+        {currentPage} / {totalPages}
+      </span>
       <button
         type="button"
         onClick={() => onPageChange(currentPage + 1)}
@@ -178,28 +131,31 @@ function AccountsSelectorContent({
     <div className="flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-[#232323]">
-        <GithubIcon className="w-4 h-4 text-[#5A5A5A]" />
         {!selectedAccount ? (
-          <input
-            className="flex-1 bg-transparent text-sm text-[#CFCFCF] placeholder:text-[#5A5A5A] outline-none"
-            placeholder={installations.length === 1
-              ? installations[0]?.accountLogin ?? 'Search accounts...'
-              : 'Search accounts...'}
-            autoComplete="off"
-            spellCheck={false}
-          />
+          <>
+            <GithubIcon className="w-4 h-4 text-[#5A5A5A]" />
+            <input
+              className="flex-1 bg-transparent text-sm text-[#CFCFCF] placeholder:text-[#5A5A5A] outline-none"
+              placeholder={installations.length === 1
+                ? installations[0]?.accountLogin ?? 'Search accounts...'
+                : 'Search accounts...'}
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </>
         ) : (
           <>
-            <span className="text-sm text-[#CFCFCF]">
-              {selectedAccount.accountLogin ?? 'Unknown Account'}
-            </span>
             <button
               type="button"
               onClick={() => setSelectedAccount(null)}
-              className="p-1 rounded hover:bg-[#141414] text-[#CFCFCF] ml-auto"
+              className="p-1 -ml-1 rounded hover:bg-[#141414] text-[#CFCFCF]"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
+            <GithubIcon className="w-4 h-4 text-[#5A5A5A]" />
+            <span className="text-sm text-[#CFCFCF]">
+              {selectedAccount.accountLogin ?? 'Unknown Account'}
+            </span>
           </>
         )}
       </div>
@@ -309,13 +265,6 @@ function BranchesSelectorContent({
       <div className="flex items-center gap-2 px-3 py-2 border-b border-[#232323]">
         <BranchIcon className="w-4 h-4 text-[#5A5A5A]" />
         <span className="text-sm text-[#CFCFCF]">Select branch</span>
-        <button
-          type="button"
-          onClick={onClose}
-          className="p-1 -ml-1 rounded hover:bg-[#141414] text-[#CFCFCF] ml-auto"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
       </div>
 
       {/* Content */}
@@ -337,7 +286,6 @@ function BranchesSelectorContent({
             >
               <BranchIcon className="w-3.5 h-3.5 text-[#5A5A5A] shrink-0" />
               <span className="flex-1 text-sm text-[#CFCFCF] truncate">{branch}</span>
-              <ChevronRight className="w-3 h-3 text-[#5A5A5A] shrink-0" />
             </button>
           ))
         ) : (
@@ -390,13 +338,6 @@ function IssuesSelectorContent({
       <div className="flex items-center gap-2 px-3 py-2 border-b border-[#232323]">
         <GithubIcon className="w-4 h-4 text-[#5A5A5A]" />
         <span className="text-sm text-[#CFCFCF]">Select issue</span>
-        <button
-          type="button"
-          onClick={onClose}
-          className="p-1 -ml-1 rounded hover:bg-[#141414] text-[#CFCFCF] ml-auto"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
       </div>
 
       {/* Content */}
@@ -541,7 +482,10 @@ function MobileSelectorContent({
                 ? installations[0]?.accountLogin ?? 'Search accounts...'
                 : 'Search accounts...'}
               value={accountSearchQuery}
-              onChange={(e) => setAccountSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setAccountSearchQuery(e.target.value);
+                setAccountsPage(1);
+              }}
               autoComplete="off"
               spellCheck={false}
             />
@@ -572,7 +516,10 @@ function MobileSelectorContent({
               className="flex-1 bg-transparent text-sm text-[#CFCFCF] placeholder:text-[#5A5A5A] outline-none"
               placeholder="Search branches..."
               value={branchSearchQuery}
-              onChange={(e) => setBranchSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setBranchSearchQuery(e.target.value);
+                setBranchesPage(1);
+              }}
               autoComplete="off"
               spellCheck={false}
             />
@@ -587,7 +534,10 @@ function MobileSelectorContent({
               className="flex-1 bg-transparent text-sm text-[#CFCFCF] placeholder:text-[#5A5A5A] outline-none"
               placeholder="Search issues..."
               value={issueQuery}
-              onChange={(e) => setIssueQuery(e.target.value)}
+              onChange={(e) => {
+                setIssueQuery(e.target.value);
+                setIssuesPage(1);
+              }}
               autoComplete="off"
               spellCheck={false}
             />
@@ -847,6 +797,22 @@ export function RepoBranchIssueSelector({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Reset pagination when search queries change
+  useEffect(() => {
+    setAccountsPage(1);
+    setMobileAccountsPage(1);
+  }, [accountSearchQuery]);
+
+  useEffect(() => {
+    setBranchesPage(1);
+    setMobileBranchesPage(1);
+  }, [branchSearchQuery]);
+
+  useEffect(() => {
+    setIssuesPage(1);
+    setMobileIssuesPage(1);
+  }, [issueQuery]);
+
   const handleSelectRepo = (repo: string) => {
     onSelectRepo(repo);
   };
@@ -877,7 +843,7 @@ export function RepoBranchIssueSelector({
     return (
       <Drawer open={mobileOpen} onOpenChange={setMobileOpen}>
         <DrawerTrigger asChild>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             {/* Repo trigger */}
             <button
               type="button"
@@ -894,7 +860,7 @@ export function RepoBranchIssueSelector({
               ) : (
                 <span className="text-sm">Select repository</span>
               )}
-              <ChevronRight className="w-3 h-3" />
+              <ChevronSortIcon className="size-2" />
             </button>
 
             {/* Branch trigger */}
@@ -912,7 +878,7 @@ export function RepoBranchIssueSelector({
                 >
                   <BranchIcon className="w-3.5 h-3.5" />
                   <span className="text-[14px] text-[#888]">{selectedBranch}</span>
-                  <ChevronRight className="w-3 h-3" />
+                  <ChevronSortIcon className="size-2" />
                 </button>
               </>
             )}
@@ -934,7 +900,7 @@ export function RepoBranchIssueSelector({
                   <span className="text-[14px] text-[#888]">
                     {selectedIssue ? `#${selectedIssue.number}` : 'Issue'}
                   </span>
-                  <ChevronRight className="w-3 h-3" />
+                  <ChevronSortIcon className="size-2" />
                 </button>
               </>
             )}
@@ -994,7 +960,7 @@ export function RepoBranchIssueSelector({
           ) : (
             <span className="text-sm">Select repository</span>
           )}
-          <ChevronRight className="w-3 h-3" />
+          <ChevronSortIcon className="size-2" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -1024,7 +990,7 @@ export function RepoBranchIssueSelector({
         >
           <BranchIcon className="w-3.5 h-3.5" />
           <span className="text-[14px] text-[#888]">{selectedBranch}</span>
-          <ChevronRight className="w-3 h-3" />
+          <ChevronSortIcon className="size-2" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -1056,7 +1022,7 @@ export function RepoBranchIssueSelector({
           <span className="text-[14px] text-[#888]">
             {selectedIssue ? `#${selectedIssue.number}` : 'Issue'}
           </span>
-          <ChevronRight className="w-3 h-3" />
+          <ChevronSortIcon className="size-2" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -1078,11 +1044,9 @@ export function RepoBranchIssueSelector({
   ) : null;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-4">
       {AccountsDropdown}
-      {BranchesDropdown && <div className="w-px h-4 bg-[#333] shrink-0" />}
       {BranchesDropdown}
-      {IssuesDropdown && <div className="w-px h-4 bg-[#333] shrink-0" />}
       {IssuesDropdown}
     </div>
   );
