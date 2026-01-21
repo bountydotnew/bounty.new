@@ -74,9 +74,9 @@ export default function RootLayout({
         <link
           rel="icon"
           type="image/png"
-          href="/favicon/favicon_dark.png.png"
+          href="/favicon/favicon_dark.png"
         />
-        <link rel="apple-touch-icon" href="/favicon/favicon_dark.png.png" />
+        <link rel="apple-touch-icon" href="/favicon/favicon_dark.png" />
         {process.env.NODE_ENV === 'development' && (
           <>
             <Script
