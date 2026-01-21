@@ -1,6 +1,7 @@
 'use client';
 
 import { authClient } from '@bounty/auth/client';
+import { useSession } from '@/context/session-context';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,7 +60,7 @@ function useUserDisplay(
 
 // Custom hook for billing portal operations
 function useBillingPortal() {
-  const { data: session } = authClient.useSession();
+  const { session } = useSession();
   const { openBillingPortal } = useBilling();
 
   const handleBillingPortal = React.useCallback(async () => {
@@ -116,7 +117,7 @@ export function AccountDropdown({
   onOpenChange?: (open: boolean) => void;
 }) {
   const router = useRouter();
-  const { data: session } = authClient.useSession();
+  const { session } = useSession();
   const { user: currentUser } = useUser();
   const [menuOpen, setMenuOpen] = React.useState(false);
 

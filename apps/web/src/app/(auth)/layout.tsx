@@ -11,7 +11,8 @@ export const metadata: Metadata = {
   title: 'bounty',
   description: 'bounty',
   icons: {
-    icon: '/icon.svg',
+    icon: '/favicon/favicon_dark.png',
+    apple: '/favicon/favicon_dark.png',
   },
   openGraph: {
     title: 'bounty - App',

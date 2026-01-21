@@ -3,14 +3,13 @@
 import { Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardPreview } from '@/components/waitlist/dashboard-preview';
-import { authClient } from '@bounty/auth/client';
+import { useSession } from '@/context/session-context';
 import { trpc } from '@/utils/trpc';
 import { useQuery } from '@tanstack/react-query';
 
 function DashboardContent() {
   const router = useRouter();
-  const { data: session, isPending: isSessionPending } =
-    authClient.useSession();
+  const { session, isPending: isSessionPending } = useSession();
 
   const { data: myEntry, isLoading: isLoadingMyEntry } = useQuery({
     ...trpc.earlyAccess.getMyWaitlistEntry.queryOptions(),

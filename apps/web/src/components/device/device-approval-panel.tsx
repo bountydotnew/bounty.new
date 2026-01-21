@@ -1,6 +1,7 @@
 'use client';
 
 import { authClient } from '@bounty/auth/client';
+import { useSession } from '@/context/session-context';
 import { Badge } from '@bounty/ui/components/badge';
 import { Button } from '@bounty/ui/components/button';
 import {
@@ -60,7 +61,7 @@ export const DeviceApprovalPanel = ({ userCode }: DeviceApprovalPanelProps) => {
     null
   );
   const [error, setError] = useState<string | null>(null);
-  const { data: session, isPending: sessionLoading } = authClient.useSession();
+  const { session, isPending: sessionLoading } = useSession();
 
   useEffect(() => {
     if (!(sessionLoading || session?.user) && sanitizedCode) {

@@ -3,6 +3,7 @@
 import Link from '@bounty/ui/components/link';
 import { Footer } from '@/components/landing/footer';
 import { Header } from '@/components/landing/header';
+import { formatDate } from '@bounty/ui/lib/utils';
 import type { Category, Post } from '@/types/post';
 
 interface BlogPageContentProps {
@@ -16,15 +17,6 @@ export function BlogPageContent({
   categories,
   activeCategory,
 }: BlogPageContentProps) {
-  const formatDate = (date: Date | string) => {
-    const d = date instanceof Date ? date : new Date(date);
-    return d.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
   return (
     <div className="flex min-h-screen flex-col bg-[#0a0a0a] text-white">
       <Header />

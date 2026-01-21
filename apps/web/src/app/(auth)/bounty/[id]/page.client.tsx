@@ -1,7 +1,7 @@
 'use client';
 
-import { authClient } from '@bounty/auth/client';
 import { Button } from '@bounty/ui/components/button';
+import { useSession } from '@/context/session-context';
 import { canEditBounty } from '@bounty/ui/lib/bounty-utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
@@ -26,7 +26,7 @@ export default function BountyPage() {
     typeof v === 'string' && UUID_REGEX.test(v);
   const validId = isValidUuid(id);
 
-  const { data: session } = authClient.useSession();
+  const { session } = useSession();
   const queryClient = useQueryClient();
   const bountyDetail = useQuery({
     ...trpc.bounties.getBountyDetail.queryOptions({ id: id ?? '' }),
@@ -43,7 +43,9 @@ export default function BountyPage() {
     },
     onSuccess: (result) => {
       if (result.success) {
-        toast.success(result.message || 'Payment verified! Your bounty is now live.');
+        toast.success(
+          result.message || 'Payment verified! Your bounty is now live.'
+        );
         // Invalidate queries to refresh the page
         queryClient.invalidateQueries({
           queryKey: [['bounties', 'getBountyDetail']],
@@ -52,7 +54,9 @@ export default function BountyPage() {
           queryKey: [['bounties', 'getBountyPaymentStatus']],
         });
       } else {
-        toast.info(result.message || 'Payment is being processed. Please wait...');
+        toast.info(
+          result.message || 'Payment is being processed. Please wait...'
+        );
       }
     },
     onError: (error: Error) => {
@@ -163,18 +167,26 @@ export default function BountyPage() {
   const detailTags: string[] = bountyDetail.data.bounty.tags ?? [];
   const detailUser: string = bountyDetail.data.bounty.creator.name ?? '';
   const detailAvatarSrc: string = bountyDetail.data.bounty.creator.image ?? '';
-  const detailPaymentStatus: string | null = bountyDetail.data.bounty.paymentStatus ?? null;
+  const detailPaymentStatus: string | null =
+    bountyDetail.data.bounty.paymentStatus ?? null;
   const detailCreatedById: string = bountyDetail.data.bounty.createdById;
-  const detailGithubRepoOwner: string | null = bountyDetail.data.bounty.githubRepoOwner ?? null;
-  const detailGithubRepoName: string | null = bountyDetail.data.bounty.githubRepoName ?? null;
-  const detailGithubIssueNumber: number | null = bountyDetail.data.bounty.githubIssueNumber ?? null;
-  const detailRepositoryUrl: string | null = bountyDetail.data.bounty.repositoryUrl ?? null;
-  const detailIssueUrl: string | null = bountyDetail.data.bounty.issueUrl ?? null;
+  const detailGithubRepoOwner: string | null =
+    bountyDetail.data.bounty.githubRepoOwner ?? null;
+  const detailGithubRepoName: string | null =
+    bountyDetail.data.bounty.githubRepoName ?? null;
+  const detailGithubIssueNumber: number | null =
+    bountyDetail.data.bounty.githubIssueNumber ?? null;
+  const detailRepositoryUrl: string | null =
+    bountyDetail.data.bounty.repositoryUrl ?? null;
+  const detailIssueUrl: string | null =
+    bountyDetail.data.bounty.issueUrl ?? null;
 
-  const initialComments = (bountyDetail.data.comments ?? []).map((comment: BountyCommentCacheItem) => ({
-    ...comment,
-    likeCount: typeof comment.likeCount === 'number' ? comment.likeCount : 0,
-  })) as BountyCommentCacheItem[];
+  const initialComments = (bountyDetail.data.comments ?? []).map(
+    (comment: BountyCommentCacheItem) => ({
+      ...comment,
+      likeCount: typeof comment.likeCount === 'number' ? comment.likeCount : 0,
+    })
+  ) as BountyCommentCacheItem[];
 
   return (
     // <div className="p-8 max-w-4xl mx-auto">

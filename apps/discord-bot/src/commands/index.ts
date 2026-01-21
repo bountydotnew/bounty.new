@@ -1,6 +1,7 @@
 import type { Client } from 'discord.js';
 import { REST, Routes } from 'discord.js';
 import { setupLoginCommand, getLoginCommandDefinition } from './login.js';
+import { setupLogoutCommand, getLogoutCommandDefinition } from './logout.js';
 import { setupBountyCommands, getBountyCommandDefinitions } from './bounty.js';
 import { setupUserCommand } from './user';
 import { discordBotEnv as env } from '@bounty/env/discord-bot';
@@ -20,6 +21,7 @@ export function setupCommands(client: Client) {
 
   // Set up command handlers first
   setupLoginCommand(client);
+  setupLogoutCommand(client);
   setupBountyCommands(client);
   setupUserCommand(client);
 
@@ -37,11 +39,11 @@ export function setupCommands(client: Client) {
 
       const data = await rest.put(
         Routes.applicationCommands(env.DISCORD_CLIENT_ID),
-        { body: commands },
+        { body: commands }
       );
 
       console.log(
-        `Successfully registered ${Array.isArray(data) ? data.length : 0} application (/) commands.`,
+        `Successfully registered ${Array.isArray(data) ? data.length : 0} application (/) commands.`
       );
     } catch (error) {
       console.error('Error registering commands:', error);

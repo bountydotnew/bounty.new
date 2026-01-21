@@ -9,18 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@bounty/ui/components/popover';
-import { cn } from '@bounty/ui/lib/utils';
-
-function formatDate(date: Date | undefined) {
-  if (!date) {
-    return '';
-  }
-  return date.toLocaleDateString('en-US', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  });
-}
+import { cn, formatDateLong } from '@bounty/ui/lib/utils';
 
 interface DatePickerProps {
   value?: string;
@@ -53,7 +42,7 @@ export function DatePicker({
     try {
       const isoDate = new Date(val);
       if (!Number.isNaN(isoDate.getTime())) {
-        return { date: isoDate, text: formatDate(isoDate) };
+        return { date: isoDate, text: formatDateLong(isoDate) };
       }
     } catch {
       // Not an ISO string, continue
@@ -62,7 +51,7 @@ export function DatePicker({
     // Try parsing as natural language
     const parsed = parseDate(val);
     if (parsed) {
-      return { date: parsed, text: formatDate(parsed) };
+      return { date: parsed, text: formatDateLong(parsed) };
     }
 
     // If neither works, return empty
@@ -102,7 +91,7 @@ export function DatePicker({
 
       const parsedDate = parseDate(newValue);
       if (parsedDate) {
-        const formatted = formatDate(parsedDate);
+        const formatted = formatDateLong(parsedDate);
         setDate(parsedDate);
         setMonth(parsedDate);
         setTextValue(formatted); // Update to formatted version
@@ -121,7 +110,7 @@ export function DatePicker({
   const handleCalendarSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
       setDate(selectedDate);
-      const formatted = formatDate(selectedDate);
+      const formatted = formatDateLong(selectedDate);
       setTextValue(formatted);
       onChange?.(selectedDate.toISOString());
       setOpen(false);

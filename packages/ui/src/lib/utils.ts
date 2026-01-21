@@ -107,6 +107,126 @@ export function formatLargeNumber(num: number): string {
 }
 
 /**
+ * Format date with long month format (e.g., "January 15, 2024")
+ */
+export function formatDateLong(date: string | Date | null | undefined): string {
+  if (!date) {
+    return '';
+  }
+
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+
+  if (Number.isNaN(dateObj.getTime())) {
+    return '';
+  }
+
+  return dateObj.toLocaleDateString('en-US', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+/**
+ * Format currency with compact notation (K, M, B)
+ * e.g., 1500 -> "$1.50K", 1500000 -> "$1.50M"
+ */
+export function formatCompactCurrency(num: number): string {
+  if (num >= 1_000_000_000) {
+    return `$${(num / 1_000_000_000).toFixed(2)}B`;
+  }
+  if (num >= 1_000_000) {
+    return `$${(num / 1_000_000).toFixed(2)}M`;
+  }
+  if (num >= 1000) {
+    return `$${(num / 1000).toFixed(2)}K`;
+  }
+  return `$${num.toFixed(2)}`;
+}
+
+/**
+ * Format price with dynamic precision for crypto/token prices
+ * Uses more decimals for smaller values
+ */
+export function formatPrecisionPrice(num: number): string {
+  if (num < 0.0001) {
+    return `$${num.toFixed(8)}`;
+  }
+  if (num < 0.01) {
+    return `$${num.toFixed(6)}`;
+  }
+  if (num < 1) {
+    return `$${num.toFixed(4)}`;
+  }
+  return `$${num.toFixed(2)}`;
+}
+
+/**
+ * Format number with compact notation (K, M, B) - no currency symbol
+ */
+export function formatCompactNumber(num: number): string {
+  if (num >= 1_000_000_000) {
+    return `${(num / 1_000_000_000).toFixed(2)}B`;
+  }
+  if (num >= 1_000_000) {
+    return `${(num / 1_000_000).toFixed(2)}M`;
+  }
+  if (num >= 1000) {
+    return `${(num / 1000).toFixed(1)}K`;
+  }
+  return num.toLocaleString();
+}
+
+/**
+ * Format token balance from string with null handling
+ */
+export function formatTokenBalance(balance: string | null | undefined): string {
+  if (!balance) {
+    return '0';
+  }
+  const num = Number.parseFloat(balance);
+  if (Number.isNaN(num)) {
+    return '0';
+  }
+
+  if (num >= 1_000_000) {
+    return `${(num / 1_000_000).toFixed(2)}M`;
+  }
+  if (num >= 1000) {
+    return `${(num / 1000).toFixed(2)}K`;
+  }
+  return num.toFixed(2);
+}
+
+/**
+ * Format currency for billing (K only, conditional decimals)
+ * e.g., 1000 -> "$1k", 1500 -> "$1.5k"
+ */
+export function formatBillingCurrency(amount: number): string {
+  if (amount >= 1000) {
+    return `$${(amount / 1000).toFixed(amount % 1000 === 0 ? 0 : 1)}k`;
+  }
+  return `$${amount}`;
+}
+
+/**
+ * Format a price string with commas (for display)
+ */
+export function formatPriceString(price: string | null | undefined): string {
+  if (!price) {
+    return '';
+  }
+  const num = Number.parseFloat(price);
+  if (Number.isNaN(num)) {
+    return price;
+  }
+  return num.toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+}
+
+/**
  * GitHub helper utilities
  * These are helper functions for GitHub-related operations.
  * For GitHub API functions, see @bounty/api/driver/github
@@ -120,11 +240,12 @@ export const GITHUB_URL_REGEX = /github\.com\/([^/]+)\/([^/]+)/;
  * @param repo - Repository string in format "owner/repo"
  * @returns Object with owner and repo, or null if invalid format
  */
-export function parseRepo(repo: string): { owner: string; repo: string } | null {
-    const parts = repo.split('/');
-    if (parts.length === 2) {
-        return { owner: parts[0] ?? '', repo: parts[1] ?? '' };
-    }
-    return null;
+export function parseRepo(
+  repo: string
+): { owner: string; repo: string } | null {
+  const parts = repo.split('/');
+  if (parts.length === 2) {
+    return { owner: parts[0] ?? '', repo: parts[1] ?? '' };
+  }
+  return null;
 }
-

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { BountyCard } from '@/components/bounty/bounty-card';
 import { Header } from '@/components/dual-sidebar/sidebar-header';
+import { BookmarksEmpty } from '@/components/empty-states/bookmarks-empty';
 import type { Bounty } from '@/types/dashboard';
 import { trpc } from '@/utils/trpc';
 
@@ -54,9 +55,7 @@ export default function BookmarksPage() {
           }
 
           if (items.length === 0) {
-            return (
-              <div className="text-neutral-400 text-sm">No bookmarks yet.</div>
-            );
+            return <BookmarksEmpty />;
           }
 
           return (

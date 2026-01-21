@@ -3,16 +3,9 @@ import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods';
 import { createAppAuth } from '@octokit/auth-app';
 import { sign } from '@octokit/webhooks-methods';
 import crypto from 'node:crypto';
+import { formatCurrency } from '@bounty/ui/lib/utils';
 
 const MyOctokit = Octokit.plugin(restEndpointMethods);
-
-// Bot comment templates with branded button
-function formatCurrency(amount: number, currency = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-  }).format(amount);
-}
 
 /**
  * Decode base64-encoded private key
@@ -20,18 +13,18 @@ function formatCurrency(amount: number, currency = 'USD'): string {
 function decodePrivateKey(privateKey: string): string {
   const hasBeginMarker = privateKey.includes('BEGIN');
   const hasPrivateKeyMarker = privateKey.includes('PRIVATE KEY');
-  
+
   // Check if already PEM format (shouldn't be, but handle gracefully)
   if (hasBeginMarker && hasPrivateKeyMarker) {
     throw new Error(
       'Private key appears to be in PEM format. Please base64 encode it first. ' +
-      'Run: cat private-key.pem | base64'
+        'Run: cat private-key.pem | base64'
     );
   }
 
   try {
     const decoded = Buffer.from(privateKey, 'base64').toString('utf-8');
-    
+
     // Validate it's actually a PEM key after decoding
     const hasBegin = decoded.includes('BEGIN');
     const hasPrivateKey = decoded.includes('PRIVATE KEY');
@@ -39,20 +32,22 @@ function decodePrivateKey(privateKey: string): string {
     if (!isValidPem) {
       throw new Error(
         'Invalid private key format. Expected base64-encoded PEM key. ' +
-        'If you have a PEM file, encode it with: cat private-key.pem | base64'
+          'If you have a PEM file, encode it with: cat private-key.pem | base64'
       );
     }
-    
+
     return decoded;
   } catch (error) {
-    const isInvalidFormatError = error instanceof Error && error.message.includes('Invalid private key');
+    const isInvalidFormatError =
+      error instanceof Error && error.message.includes('Invalid private key');
     if (isInvalidFormatError) {
       throw error;
     }
-    const errorMessage = error instanceof Error ? error.message : 'Invalid base64 format';
+    const errorMessage =
+      error instanceof Error ? error.message : 'Invalid base64 format';
     throw new Error(
       `Failed to decode private key: ${errorMessage}. ` +
-      'Ensure GITHUB_APP_PRIVATE_KEY is base64-encoded.'
+        'Ensure GITHUB_APP_PRIVATE_KEY is base64-encoded.'
     );
   }
 }
@@ -68,7 +63,7 @@ function convertPkcs1ToPkcs8(pkcs1Key: string): string {
   } catch (error) {
     throw new Error(
       `Failed to parse private key: ${error instanceof Error ? error.message : 'Unknown error'}. ` +
-      'Ensure GITHUB_APP_PRIVATE_KEY is a valid base64-encoded PEM key.'
+        'Ensure GITHUB_APP_PRIVATE_KEY is a valid base64-encoded PEM key.'
     );
   }
 }
@@ -130,7 +125,10 @@ Submission withdrawn.
 `;
 }
 
-export function createBountyCompletedComment(amount: number, currency = 'USD'): string {
+export function createBountyCompletedComment(
+  amount: number,
+  currency = 'USD'
+): string {
   const formattedAmount = formatCurrency(amount, currency);
   return `
 
@@ -174,7 +172,9 @@ export class GithubAppManager {
   /**
    * Get an octokit instance authenticated for a specific installation
    */
-  async getInstallationOctokit(installationId: number): Promise<InstanceType<typeof MyOctokit>> {
+  async getInstallationOctokit(
+    installationId: number
+  ): Promise<InstanceType<typeof MyOctokit>> {
     const token = await this.getInstallationAccessToken(installationId);
     return new MyOctokit({ auth: token });
   }
@@ -277,7 +277,15 @@ export class GithubAppManager {
     owner: string,
     repo: string,
     commentId: number,
-    reaction: '+1' | '-1' | 'laugh' | 'hooray' | 'confused' | 'heart' | 'rocket' | 'eyes' = 'eyes'
+    reaction:
+      | '+1'
+      | '-1'
+      | 'laugh'
+      | 'hooray'
+      | 'confused'
+      | 'heart'
+      | 'rocket'
+      | 'eyes' = 'eyes'
   ): Promise<void> {
     const octokit = await this.getInstallationOctokit(installationId);
 
@@ -452,7 +460,10 @@ export class GithubAppManager {
         id: data.user?.id || 0,
       },
       body: data.body ?? null,
-      head: { sha: data.head.sha, repoFullName: data.head.repo?.full_name ?? null },
+      head: {
+        sha: data.head.sha,
+        repoFullName: data.head.repo?.full_name ?? null,
+      },
       merged: data.merged,
       merged_at: data.merged_at,
     };
@@ -473,24 +484,27 @@ export class GithubAppManager {
   }> {
     const octokit = await this.getInstallationOctokit(installationId);
 
-    const { data } = await octokit.rest.apps.listReposAccessibleToInstallation();
+    const { data } =
+      await octokit.rest.apps.listReposAccessibleToInstallation();
 
     return {
-      repositories: data.repositories.map((r: {
-        id: number;
-        name: string;
-        full_name: string;
-        private: boolean;
-        html_url: string;
-        description: string | null;
-      }) => ({
-        id: r.id,
-        name: r.name,
-        full_name: r.full_name,
-        private: r.private,
-        html_url: r.html_url,
-        description: r.description || null,
-      })),
+      repositories: data.repositories.map(
+        (r: {
+          id: number;
+          name: string;
+          full_name: string;
+          private: boolean;
+          html_url: string;
+          description: string | null;
+        }) => ({
+          id: r.id,
+          name: r.name,
+          full_name: r.full_name,
+          private: r.private,
+          html_url: r.html_url,
+          description: r.description || null,
+        })
+      ),
     };
   }
 
@@ -512,7 +526,11 @@ export class GithubAppManager {
       installation_id: installationId,
     });
 
-    const account = data.account as { login?: string; type?: string; avatar_url?: string } | null;
+    const account = data.account as {
+      login?: string;
+      type?: string;
+      avatar_url?: string;
+    } | null;
 
     return {
       id: data.id,
@@ -529,7 +547,10 @@ export class GithubAppManager {
    * Get installation for a specific repository
    * Returns the installation object if the app is installed on the repo
    */
-  async getInstallationForRepo(owner: string, repo: string): Promise<{
+  async getInstallationForRepo(
+    owner: string,
+    repo: string
+  ): Promise<{
     id: number;
     account: {
       login: string;
@@ -546,7 +567,11 @@ export class GithubAppManager {
         repo,
       });
 
-      const account = data.account as { login?: string; type?: string; avatar_url?: string } | null;
+      const account = data.account as {
+        login?: string;
+        type?: string;
+        avatar_url?: string;
+      } | null;
 
       return {
         id: data.id,
@@ -574,10 +599,7 @@ export class GithubAppManager {
     payload: string
   ): Promise<boolean> {
     try {
-      const expectedSignature = await sign(
-        this.config.webhookSecret,
-        payload
-      );
+      const expectedSignature = await sign(this.config.webhookSecret, payload);
 
       // Compare signatures using timing-safe comparison
       const signatureBuffer = Buffer.from(signature);
@@ -616,13 +638,19 @@ export function getGithubAppManager(): GithubAppManager {
     const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
 
     if (!appId) {
-      throw new Error('Missing GitHub App configuration: GITHUB_APP_ID is required');
+      throw new Error(
+        'Missing GitHub App configuration: GITHUB_APP_ID is required'
+      );
     }
     if (!privateKey) {
-      throw new Error('Missing GitHub App configuration: GITHUB_APP_PRIVATE_KEY is required');
+      throw new Error(
+        'Missing GitHub App configuration: GITHUB_APP_PRIVATE_KEY is required'
+      );
     }
     if (!webhookSecret) {
-      throw new Error('Missing GitHub App configuration: GITHUB_WEBHOOK_SECRET is required');
+      throw new Error(
+        'Missing GitHub App configuration: GITHUB_WEBHOOK_SECRET is required'
+      );
     }
 
     // Decode base64-encoded private key

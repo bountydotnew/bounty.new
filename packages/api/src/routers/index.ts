@@ -1,12 +1,14 @@
 import { protectedProcedure, publicProcedure, router } from '../trpc';
 import { bountiesRouter } from './bounties';
 import { connectRouter } from './connect';
+import { discordRouter } from './discord';
 import { earlyAccessRouter } from './early-access';
 import { emailsRouter } from './emails';
 import { githubInstallationRouter } from './github-installation';
 import { newsRouter } from './news';
 import { notificationsRouter } from './notifications';
 import { onboardingRouter } from './onboarding';
+import { phantomRouter } from './phantom';
 import { profilesRouter } from './profiles';
 import { repositoryRouter } from './repository';
 import { userRouter } from './user';
@@ -42,7 +44,9 @@ export const appRouter = router({
   repository: repositoryRouter,
   githubInstallation: githubInstallationRouter,
   connect: connectRouter,
+  discord: discordRouter,
   onboarding: onboardingRouter,
+  phantom: phantomRouter,
 });
 
 export type AppRouter = typeof appRouter;

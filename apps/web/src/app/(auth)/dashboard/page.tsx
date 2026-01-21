@@ -1,9 +1,11 @@
 'use client';
 
 import { track } from '@databuddy/sdk';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryState, parseAsStringLiteral } from 'nuqs';
+import { toast } from 'sonner';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
 import GithubImportModal from '@/components/bounty/github-import-modal';
@@ -15,23 +17,64 @@ import {
   TaskInputForm,
   type TaskInputFormRef,
 } from '@/components/dashboard/task-input-form';
+import { SolClaimDialog } from '@/components/sol/sol-claim-dialog';
 // Constants and types
 import { PAGINATION_DEFAULTS, PAGINATION_LIMITS } from '@/constants';
-import { trpc } from '@/utils/trpc';
+import { trpc, trpcClient } from '@/utils/trpc';
 import { useSession } from '@/context/session-context';
 track('screen_view', { screen_name: 'dashboard' });
 
+// Define valid claim param values
+const claimValues = ['sol', 'sol-success'] as const;
+
 export default function Dashboard() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const taskInputRef = useRef<TaskInputFormRef>(null);
+
+  // Sol claim dialog state using nuqs
+  const [claimParam, setClaimParam] = useQueryState(
+    'claim',
+    parseAsStringLiteral(claimValues)
+  );
+
+  // Mark claim complete mutation (called after successful Stripe checkout)
+  const markClaimComplete = useMutation({
+    mutationFn: () => trpcClient.phantom.markClaimComplete.mutate(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['phantom'] });
+      toast.success('Pro activated! Enjoy your free month.');
+      setClaimParam(null);
+    },
+    onError: () => {
+      // Even if marking fails, they got Pro via Stripe - just clear the param
+      setClaimParam(null);
+    },
+  });
+
+  // Handle sol-success (after Stripe checkout completes)
+  useEffect(() => {
+    if (claimParam === 'sol-success') {
+      markClaimComplete.mutate();
+    }
+  }, [claimParam, markClaimComplete]);
+
+  const showClaimDialog = claimParam === 'sol';
+  const handleClaimDialogChange = (open: boolean) => {
+    if (!open) {
+      setClaimParam(null);
+    }
+  };
 
   // Check onboarding cookie
   useEffect(() => {
     const getCookie = (name: string) => {
       const value = `; ${document.cookie}`;
       const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop()?.split(';').shift();
-      return undefined;
+      if (parts.length === 2) {
+        return parts.pop()?.split(';').shift();
+      }
+      return;
     };
 
     const onboardingComplete = getCookie('onboarding_complete');
@@ -135,6 +178,10 @@ export default function Dashboard() {
           </div>
         </div>
         <GithubImportModal onOpenChange={setImportOpen} open={importOpen} />
+        <SolClaimDialog
+          open={showClaimDialog}
+          onOpenChange={handleClaimDialogChange}
+        />
       </AuthGuard>
     </ErrorBoundary>
   );

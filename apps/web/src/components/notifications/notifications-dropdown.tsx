@@ -18,7 +18,7 @@ import type {
   NotificationItem,
   NotificationRowProps,
 } from '@/types/notifications';
-import { authClient } from '@bounty/auth/client';
+import { useSession } from '@/context/session-context';
 import { CommentsIcon } from '@bounty/ui';
 
 function Row({ item, onRead }: NotificationRowProps) {
@@ -125,7 +125,7 @@ export function NotificationsDropdown({
   triggerClassName?: string;
   children?: React.ReactNode;
 }) {
-  const { data: session } = authClient.useSession();
+  const { session } = useSession();
   const enabled = Boolean(session?.user);
 
   // Always call hooks before any conditional returns

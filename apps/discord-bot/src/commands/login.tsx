@@ -1,7 +1,4 @@
-// Validate env first
 import { discordBotEnv as env } from '@bounty/env/discord-bot';
-
-// Now safe to import db
 import { db } from '@bounty/db';
 import {
   ActionRow,
@@ -10,28 +7,11 @@ import {
   TextDisplay,
   makeReacord,
 } from '@bounty/reacord';
-import { SlashCommandBuilder as Builder } from 'discord.js';
+import { SlashCommandBuilder as Builder, MessageFlags } from 'discord.js';
 import { Runtime } from 'effect';
-import { account, oauthState } from '@bounty/db/src/schema/auth';
-import { eq, and, lt } from 'drizzle-orm';
-import { randomBytes } from 'node:crypto';
+import { account } from '@bounty/db/src/schema/auth';
+import { eq, and } from 'drizzle-orm';
 import type { Client } from 'discord.js';
-
-/**
- * Generate a secure state token for OAuth flow
- */
-function generateStateToken(): string {
-  return randomBytes(32).toString('hex');
-}
-
-// Clean up expired OAuth states every 10 minutes
-setInterval(async () => {
-  try {
-    await db.delete(oauthState).where(lt(oauthState.expiresAt, new Date()));
-  } catch (error) {
-    console.error('Failed to clean up expired OAuth states:', error);
-  }
-}, 10 * 60 * 1000);
 
 /**
  * Get the login command definition (without registering it)
@@ -68,7 +48,8 @@ export function setupLoginCommand(client: Client) {
 
       if (existingAccount) {
         await Runtime.runPromise(runtime)(
-          reacord.reply(interaction, (
+          reacord.reply(
+            interaction,
             <Container>
               <TextDisplay>
                 ✅ Your Discord account is already linked to bounty.new!
@@ -76,39 +57,33 @@ export function setupLoginCommand(client: Client) {
                 Visit your profile: {env.BETTER_AUTH_URL}/profile
               </TextDisplay>
             </Container>
-          )),
+          )
         );
         return;
       }
 
-      // Generate OAuth state token and store in database
-      const state = generateStateToken();
-      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-      await db.insert(oauthState).values({
-        state,
-        provider: 'discord',
-        providerId: discordId,
-        expiresAt,
-      });
-
-      // Create OAuth URL
-      const redirectUri = `${env.BETTER_AUTH_URL}/api/discord/callback`;
+      // Use Better Auth's Discord OAuth flow
+      // The callback URL is handled by Better Auth at /api/auth/callback/discord
       const oauthUrl = new URL('https://discord.com/api/oauth2/authorize');
-      oauthUrl.searchParams.set('client_id', env.DISCORD_CLIENT_ID);
-      oauthUrl.searchParams.set('redirect_uri', redirectUri);
+      oauthUrl.searchParams.set('client_id', env.DISCORD_CLIENT_ID || '');
+      oauthUrl.searchParams.set(
+        'redirect_uri',
+        `${env.BETTER_AUTH_URL}/api/auth/callback/discord`
+      );
       oauthUrl.searchParams.set('response_type', 'code');
       oauthUrl.searchParams.set('scope', 'identify email');
-      oauthUrl.searchParams.set('state', state);
 
       await Runtime.runPromise(runtime)(
-        reacord.reply(interaction, (
+        reacord.reply(
+          interaction,
           <Container>
             <TextDisplay>
               🔗 **Link your Discord account to bounty.new**
               {'\n\n'}
-              Click the button below to authorize the connection. This will open a secure OAuth flow.
+              Click the button below to authorize the connection.
               {'\n\n'}
-              ⚠️ **Note:** You must be logged into bounty.new in your browser for this to work.
+              ⚠️ **Note:** You must be logged into bounty.new in your browser for
+              this to work.
             </TextDisplay>
             <ActionRow>
               <Button
@@ -123,11 +98,11 @@ export function setupLoginCommand(client: Client) {
               />
             </ActionRow>
           </Container>
-        )),
+        )
       );
     } catch (error) {
       console.error('Error handling login command:', error);
-      if (!interaction.replied && !interaction.deferred) {
+      if (!(interaction.replied || interaction.deferred)) {
         await interaction.reply({
           content: `❌ An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`,
           flags: MessageFlags.Ephemeral,

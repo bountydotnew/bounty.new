@@ -4,6 +4,7 @@ import Link from '@bounty/ui/components/link';
 import Prose from '@/components/prose';
 import { Footer } from '@/components/landing/footer';
 import { Header } from '@/components/landing/header';
+import { formatDate } from '@bounty/ui/lib/utils';
 import type { Post } from '@/types/post';
 
 interface BlogPostContentProps {
@@ -19,15 +20,6 @@ export function BlogPostContent({
   prevPost,
   nextPost,
 }: BlogPostContentProps) {
-  const formatDate = (date: Date | string) => {
-    const d = date instanceof Date ? date : new Date(date);
-    return d.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
   const authorName = post.authors?.[0]?.name ?? 'Team';
 
   return (
@@ -159,9 +151,7 @@ export function BlogPostContent({
                     href={`/blog/${nextPost.slug}`}
                     className="group flex flex-1 flex-col rounded-xl border border-transparent px-6 py-5 text-right transition-all duration-200 hover:border-[#222] hover:bg-[#111]"
                   >
-                    <span className="text-[14px] text-[#666]">
-                      Next post →
-                    </span>
+                    <span className="text-[14px] text-[#666]">Next post →</span>
                     <span className="text-[15px] text-[#efefef] transition-colors duration-200 group-hover:text-white">
                       {nextPost.title}
                     </span>

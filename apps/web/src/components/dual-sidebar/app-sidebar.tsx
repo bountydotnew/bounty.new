@@ -31,7 +31,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from '@bounty/ui/components/avatar';
-import { authClient } from '@bounty/auth/client';
+import { useSession } from '@/context/session-context';
 import { usePathname, useRouter } from 'next/navigation';
 import { NavMain } from '@/components/dual-sidebar/nav-main';
 import { RecentBountiesGroup } from '@/components/dual-sidebar/recent-bounties';
@@ -45,6 +45,7 @@ const NAV_ITEMS = [
   { title: 'Home', url: LINKS.DASHBOARD, icon: HugeHomeIcon },
   { title: 'Bounties', url: LINKS.BOUNTIES, icon: BountiesIcon },
   { title: 'Bookmarks', url: LINKS.BOOKMARKS, icon: BookmarksIcon },
+  { title: 'Integrations', url: '/integrations', icon: SettingsGearIcon },
 ];
 
 const FALLBACK_USER = {
@@ -54,7 +55,7 @@ const FALLBACK_USER = {
 };
 
 const WorkspaceSwitcher = () => {
-  const { data: session } = authClient.useSession();
+  const { session } = useSession();
   const userName = session?.user?.name ?? 'grim';
   const userImage = session?.user?.image ?? null;
   const initials = userName.charAt(0).toLowerCase();
@@ -114,7 +115,7 @@ const WorkspaceSwitcher = () => {
 };
 
 const SidebarFooterActions = () => {
-  const { data: session, isPending } = authClient.useSession();
+  const { session, isPending } = useSession();
   const isAuthenticated = !!session?.user;
   const [showFundModal, setShowFundModal] = React.useState(false);
 
@@ -136,7 +137,9 @@ const SidebarFooterActions = () => {
           <div className="flex items-center gap-0">
             <button
               className="inline-flex items-center gap-2 rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
-              onClick={() => window.open('https://discord.gg/bountynew', '_blank')}
+              onClick={() =>
+                window.open('https://discord.gg/bountynew', '_blank')
+              }
               type="button"
             >
               <DiscordIcon className="h-[19px] w-[19px]" />
@@ -145,7 +148,7 @@ const SidebarFooterActions = () => {
               </span>
             </button>
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 animate-pulse"></span>
+              <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 animate-pulse" />
             </span>
           </div>
         </div>
@@ -270,7 +273,7 @@ export const AppSidebar = ({
   ...props
 }: React.ComponentProps<typeof Sidebar>) => {
   const pathname = usePathname();
-  const { data: session, isPending } = authClient.useSession();
+  const { session, isPending } = useSession();
   const isAuthenticated = !!session?.user;
 
   const navItems = NAV_ITEMS.map((item) => ({
