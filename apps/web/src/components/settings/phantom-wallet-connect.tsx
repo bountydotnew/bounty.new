@@ -69,7 +69,7 @@ export function PhantomWalletConnect() {
 
   // Generate verification message mutation
   const generateMessage = useMutation({
-    mutationFn: async () => (walletAddress: string) => {
+    mutationFn: async (walletAddress: string) => {
       return trpcClient.phantom.generateVerificationMessage.mutate({
         walletAddress,
       });
@@ -78,15 +78,13 @@ export function PhantomWalletConnect() {
 
   // Connect wallet mutation
   const connectWallet = useMutation({
-    mutationFn:
-      async () =>
-      (params: {
-        walletAddress: string;
-        signature: string;
-        message: string;
-      }) => {
-        return trpcClient.phantom.connectWallet.mutate(params);
-      },
+    mutationFn: async (params: {
+      walletAddress: string;
+      signature: string;
+      message: string;
+    }) => {
+      return trpcClient.phantom.connectWallet.mutate(params);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['phantom.getConnectionStatus'],
@@ -103,7 +101,7 @@ export function PhantomWalletConnect() {
 
   // Disconnect wallet mutation
   const disconnectWallet = useMutation({
-    mutationFn: async () => () => {
+    mutationFn: async () => {
       return trpcClient.phantom.disconnectWallet.mutate();
     },
     onSuccess: () => {
@@ -117,7 +115,7 @@ export function PhantomWalletConnect() {
 
   // Refresh balance mutation
   const refreshBalance = useMutation({
-    mutationFn: async () => () => {
+    mutationFn: async () => {
       return trpcClient.phantom.refreshBalance.mutate();
     },
     onSuccess: (data) => {
@@ -133,7 +131,7 @@ export function PhantomWalletConnect() {
 
   // Claim free month mutation
   const claimFreeMonth = useMutation({
-    mutationFn: async () => () => {
+    mutationFn: async () => {
       return trpcClient.phantom.claimFreeMonth.mutate();
     },
     onSuccess: () => {
