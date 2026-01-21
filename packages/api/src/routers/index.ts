@@ -7,6 +7,7 @@ import { githubInstallationRouter } from './github-installation';
 import { newsRouter } from './news';
 import { notificationsRouter } from './notifications';
 import { onboardingRouter } from './onboarding';
+import { phantomRouter } from './phantom';
 import { profilesRouter } from './profiles';
 import { repositoryRouter } from './repository';
 import { userRouter } from './user';
@@ -43,6 +44,7 @@ export const appRouter = router({
   githubInstallation: githubInstallationRouter,
   connect: connectRouter,
   onboarding: onboardingRouter,
+  phantom: phantomRouter,
 });
 
 export type AppRouter = typeof appRouter;

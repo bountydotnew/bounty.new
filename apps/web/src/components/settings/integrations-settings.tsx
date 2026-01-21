@@ -4,10 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useQueryState, parseAsString } from 'nuqs';
-import { GithubIcon, DiscordIcon, TwitterIcon, SlackIcon } from '@bounty/ui';
+import { GithubIcon, DiscordIcon, TwitterIcon, SlackIcon, PhantomIcon } from '@bounty/ui';
 import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear';
 import { trpc } from '@/utils/trpc';
 import Link from 'next/link';
+import { PhantomWalletConnect } from './phantom-wallet-connect';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -131,6 +132,7 @@ function IntegrationCard({ icon, title, description, status, action, href }: Int
 
 type IntegrationItem =
   | { type: 'github'; installations: Array<{ id: number; accountLogin?: string | null; accountType?: string | null; repositoryIds?: string[] | null }> }
+  | { type: 'phantom' }
   | { type: 'discord' }
   | { type: 'twitter' }
   | { type: 'slack' };
@@ -201,6 +203,9 @@ function renderIntegrationCard(
   switch (item.type) {
     case 'github':
       return renderGithubIntegrationCard(item.installations, filter, installUrl);
+    case 'phantom':
+      // Phantom gets a special full-width card due to its expanded UI
+      return null; // Handled separately below the grid
     case 'discord':
       return (
         <IntegrationCard
@@ -265,6 +270,7 @@ export function IntegrationsSettings() {
         type: 'github' as const,
         installations: installations?.installations || [],
       },
+      { type: 'phantom' as const },
       { type: 'discord' as const },
       { type: 'twitter' as const },
       { type: 'slack' as const },
@@ -272,9 +278,15 @@ export function IntegrationsSettings() {
     [installations?.installations]
   );
 
+  // Filter out phantom from the main grid since it has its own section
+  const gridIntegrations = useMemo(
+    () => allIntegrations.filter((item) => item.type !== 'phantom'),
+    [allIntegrations]
+  );
+
   const filteredIntegrations = filter === 'installed'
-    ? allIntegrations.filter((item) => item.type === 'github' && item.installations.length > 0)
-    : allIntegrations;
+    ? gridIntegrations.filter((item) => item.type === 'github' && item.installations.length > 0)
+    : gridIntegrations;
 
   return (
     <div className="space-y-6">
@@ -310,6 +322,23 @@ export function IntegrationsSettings() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filteredIntegrations.map((item) => renderIntegrationCard(item, filter, installUrl))}
       </div>
+
+      {/* Phantom Wallet Section */}
+      {filter === 'all' && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <PhantomIcon className="size-6" />
+            <h3 className="text-sm font-semibold text-white">Phantom Wallet</h3>
+            <span className="text-xs text-[#929292] bg-[#232323] px-2 py-0.5 rounded-full">
+              Token Holder Benefits
+            </span>
+          </div>
+          <p className="text-xs text-[#929292]">
+            Connect your Solana wallet to verify BOUNTY token holdings and unlock exclusive benefits.
+          </p>
+          <PhantomWalletConnect />
+        </div>
+      )}
     </div>
   );
 }

@@ -55,6 +55,10 @@ export const env = createEnv({
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
     // Cron jobs
     CRON_SECRET: z.string().min(16).optional(),
+    // Helius Solana RPC
+    HELIUS_API_KEY: z.string().min(1).optional(),
+    // Bounty token mint address (Solana SPL token)
+    BOUNTY_TOKEN_MINT_ADDRESS: z.string().min(1).optional(),
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
@@ -88,6 +92,9 @@ export const env = createEnv({
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     CRON_SECRET: process.env.CRON_SECRET,
+    // Helius Solana RPC
+    HELIUS_API_KEY: process.env.HELIUS_API_KEY,
+    BOUNTY_TOKEN_MINT_ADDRESS: process.env.BOUNTY_TOKEN_MINT_ADDRESS,
   },
   skipValidation: process.env.NODE_ENV !== 'production',
 });

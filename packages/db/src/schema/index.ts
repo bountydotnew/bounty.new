@@ -9,3 +9,4 @@ export * from './onboarding';
 export * from './passkey';
 export * from './payments';
 export * from './profiles';
+export * from './phantom-wallet';
