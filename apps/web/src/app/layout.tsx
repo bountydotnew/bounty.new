@@ -29,8 +29,8 @@ export const metadata: Metadata = {
   },
   description: 'Ship faster. Get paid instantly.',
   icons: {
-    icon: '/favicon/favicon_dark.png',
-    apple: '/favicon/favicon_dark.png',
+    icon: '/favicon/favicon_dark.png.png',
+    apple: '/favicon/favicon_dark.png.png',
   },
   openGraph: {
     title: {
