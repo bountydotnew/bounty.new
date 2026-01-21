@@ -123,7 +123,7 @@ export function PhantomWalletConnect() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['phantom'] });
       toast.success(
-        `Balance refreshed: $${data.data.tokenValueUsd} in BOUNTY tokens`
+        `Balance refreshed: $${data.tokenValueUsd} in BOUNTY tokens`
       );
     },
     onError: (error) => {
