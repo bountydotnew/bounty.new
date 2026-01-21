@@ -45,6 +45,7 @@ const NAV_ITEMS = [
   { title: 'Home', url: LINKS.DASHBOARD, icon: HugeHomeIcon },
   { title: 'Bounties', url: LINKS.BOUNTIES, icon: BountiesIcon },
   { title: 'Bookmarks', url: LINKS.BOOKMARKS, icon: BookmarksIcon },
+  { title: 'Integrations', url: '/integrations', icon: SettingsGearIcon },
 ];
 
 const FALLBACK_USER = {

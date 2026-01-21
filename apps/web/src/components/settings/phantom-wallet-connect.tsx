@@ -4,9 +4,10 @@ import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { Button } from '@bounty/ui/components/button';
-import { PhantomIcon } from '@bounty/ui/components/icons/huge';
+import { PhantomIcon } from '@bounty/ui/components/icons/huge/phantom';
 import { Spinner } from '@bounty/ui/components/spinner';
 import { toast } from 'sonner';
+import bs58 from 'bs58';
 
 interface PhantomProvider {
   isPhantom: boolean;
@@ -31,26 +32,7 @@ declare global {
 
 // Base58 encoding for signature
 const encodeBase58 = (bytes: Uint8Array): string => {
-  const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-  let result = '';
-  let num = BigInt('0x' + Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join(''));
-
-  while (num > 0) {
-    const remainder = Number(num % 58n);
-    result = ALPHABET[remainder] + result;
-    num = num / 58n;
-  }
-
-  // Add leading zeros
-  for (const byte of bytes) {
-    if (byte === 0) {
-      result = ALPHABET[0] + result;
-    } else {
-      break;
-    }
-  }
-
-  return result || ALPHABET[0];
+  return bs58.encode(bytes);
 };
 
 export function PhantomWalletConnect() {

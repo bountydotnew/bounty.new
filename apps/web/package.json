@@ -52,6 +52,7 @@
     "@vercel/og": "catalog:",
     "autumn-js": "^0.1.69",
     "better-auth": "catalog:",
+    "bs58": "^6.0.0",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "date-fns": "catalog:",

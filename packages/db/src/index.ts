@@ -8,6 +8,7 @@ import * as notificationsSchema from './schema/notifications';
 import * as passkeySchema from './schema/passkey';
 import * as profilesSchema from './schema/profiles';
 import * as paymentsSchema from './schema/payments';
+import * as phantomSchema from './schema/phantom-wallet';
 
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is required');
@@ -31,6 +32,7 @@ export const db = drizzle(pool, {
     ...notificationsSchema,
     ...invitesSchema,
     ...paymentsSchema,
+    ...phantomSchema,
   },
 });
 
@@ -44,3 +46,4 @@ export * from './schema/passkey';
 export * from './schema/profiles';
 export * from './services';
 export * from './schema/payments';
+export * from './schema/phantom-wallet';

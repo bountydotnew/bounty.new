@@ -20,6 +20,8 @@ export const phantomWallet = pgTable('phantom_wallet', {
     .references(() => user.id, { onDelete: 'cascade' }),
   // Solana wallet public key (base58 encoded)
   walletAddress: text('wallet_address').notNull(),
+  // User-defined display name for the wallet
+  displayName: text('display_name'),
   // Last verified token balance in lamports/smallest unit
   lastTokenBalance: text('last_token_balance'),
   // Last USD value of token holdings

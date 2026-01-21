@@ -88,7 +88,7 @@ export default function InstallationConfigurePage() {
     return (
       <div className="space-y-6">
         <div>
-          <Link href="/settings/integrations" className="flex items-center gap-2 text-sm text-[#929292] hover:text-white">
+          <Link href="/integrations" className="flex items-center gap-2 text-sm text-[#929292] hover:text-white">
             <ArrowLeft className="h-4 w-4" />
             Back to integrations
           </Link>
@@ -104,7 +104,7 @@ export default function InstallationConfigurePage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4">
-        <Link href="/settings/integrations" className="flex items-center gap-2 text-sm text-[#929292] hover:text-white">
+        <Link href="/integrations" className="flex items-center gap-2 text-sm text-[#929292] hover:text-white">
           <ArrowLeft className="h-4 w-4" />
           Back to integrations
         </Link>
@@ -181,7 +181,7 @@ export default function InstallationConfigurePage() {
               </span>
             )}
           </div>
-          
+
           {repositories?.repositories && repositories.repositories.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">

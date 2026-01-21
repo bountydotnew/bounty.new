@@ -729,7 +729,7 @@ Sorry, you don't have permission to create bounties on this repository. Only rep
 
 Could not create bounty: Your GitHub account is not linked to a bounty.new account.
 
-Please visit https://bounty.new/settings/integrations to link your GitHub account, then try again.
+Please visit https://bounty.new/integrations to link your GitHub account, then try again.
 
 `
     );

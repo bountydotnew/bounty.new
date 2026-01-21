@@ -1,20 +1,18 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
-import { GithubIcon, DiscordIcon, TwitterIcon, SlackIcon, PhantomIcon } from '@bounty/ui';
+import { GithubIcon, DiscordIcon, TwitterIcon, SlackIcon } from '@bounty/ui';
 import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear';
-import { trpc } from '@/utils/trpc';
+import { PhantomIcon } from '@bounty/ui/components/icons/huge/phantom';
 import Link from 'next/link';
-import { PhantomWalletConnect } from './phantom-wallet-connect';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
+import { useIntegrations } from '@/hooks/use-integrations';
 
 interface IntegrationCardProps {
   icon: React.ReactNode;
@@ -23,8 +21,8 @@ interface IntegrationCardProps {
   status?: {
     type: 'installed' | 'coming-soon';
     count?: number;
-    accounts?: Array<{ id: number; accountLogin?: string | null }>;
-    onAccountSelect?: (installationId: number) => void;
+    accounts?: Array<{ id: number; accountLogin?: string | null; icon?: string; walletAddress?: string }>;
+    onAccountSelect?: (id: number | string) => void;
   };
   action?: {
     label: string;
@@ -54,9 +52,9 @@ function IntegrationCard({ icon, title, description, status, action, href }: Int
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                 }}
                 className="w-full h-[29px] rounded-[7px] flex justify-center items-center self-stretch shrink-0 gap-1.5 bg-[#303030] p-0"
               >
@@ -75,17 +73,18 @@ function IntegrationCard({ icon, title, description, status, action, href }: Int
               >
                 {status.accounts.map((account) => {
                   const accountLabel = account.accountLogin || 'Unknown account';
+                  const AccountIcon = account.icon === 'phantom' ? PhantomIcon : GithubIcon;
                   return (
                     <DropdownMenuItem
                       key={account.id}
                       className="focus:bg-[#232323] gap-2"
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         status.onAccountSelect?.(account.id);
                       }}
                     >
-                      <GithubIcon className="size-4 opacity-60 text-white" />
+                      <AccountIcon className="size-4 opacity-60 text-white" />
                       {accountLabel}
                     </DropdownMenuItem>
                   );
@@ -94,7 +93,7 @@ function IntegrationCard({ icon, title, description, status, action, href }: Int
             )}
           </DropdownMenu>
         )}
-        
+
         {action && (
           <button
             type="button"
@@ -132,7 +131,12 @@ function IntegrationCard({ icon, title, description, status, action, href }: Int
 
 type IntegrationItem =
   | { type: 'github'; installations: Array<{ id: number; accountLogin?: string | null; accountType?: string | null; repositoryIds?: string[] | null }> }
-  | { type: 'phantom' }
+  | {
+      type: 'phantom';
+      connectionStatus: { connected: boolean; wallets?: Array<{ walletAddress: string; displayName?: string | null; tokenBalance?: string | null; tokenBalanceFormatted?: string | null; tokenValueUsd?: string | null }> } | null;
+      onConnect: () => void;
+      isConnecting: boolean;
+    }
   | { type: 'discord' }
   | { type: 'twitter' }
   | { type: 'slack' };
@@ -144,14 +148,14 @@ function renderGithubIntegrationCard(
 ) {
   const primaryInstallation = installations[0];
   const installedCount = installations.length;
-  if (filter === 'installed' && installedCount === 0) {
-    return null;
-  }
+  if (filter === 'installed' && installedCount === 0) return null;
+
   const description = installedCount === 0
     ? 'Connect Bounty to your GitHub and access all of our tools from any repository, even your own'
     : installedCount === 1 && primaryInstallation
       ? `${primaryInstallation.accountLogin || 'GitHub'} • ${primaryInstallation.accountType === 'Organization' ? 'Organization' : 'User'} • ${primaryInstallation.repositoryIds?.length || 0} repositories`
       : `${installedCount} accounts connected`;
+
   return (
     <IntegrationCard
       key="github"
@@ -168,7 +172,7 @@ function renderGithubIntegrationCard(
                 accountLogin: installation.accountLogin,
               })),
               onAccountSelect: (installationId) => {
-                window.location.href = `/settings/integrations/configure/${installationId}`;
+                window.location.href = `/integrations/configure/${installationId}`;
               },
             }
           : undefined
@@ -180,7 +184,64 @@ function renderGithubIntegrationCard(
           window.location.href = installUrl?.url || fallbackUrl;
         },
       }}
-      href={primaryInstallation ? `/settings/integrations/configure/${primaryInstallation.id}` : undefined}
+      href={primaryInstallation ? `/integrations/configure/${primaryInstallation.id}` : undefined}
+    />
+  );
+}
+
+function truncateAddress(address: string) {
+  return `${address.slice(0, 3)}...${address.slice(-3)}`;
+}
+
+function renderPhantomIntegrationCard(
+  connectionStatus: { connected: boolean; wallets?: Array<{ walletAddress: string; displayName?: string | null; tokenBalance?: string | null; tokenBalanceFormatted?: string | null; tokenValueUsd?: string | null }> } | null,
+  onConnect: () => void,
+  isConnecting: boolean,
+  filter: 'all' | 'installed'
+) {
+  if (filter === 'installed' && !connectionStatus?.connected) return null;
+
+  const isConnected = connectionStatus?.connected;
+  const wallets = connectionStatus?.wallets || [];
+  const walletCount = wallets.length;
+
+  const description = !isConnected
+    ? 'Connect your Solana wallet to verify BOUNTY token holdings and unlock exclusive benefits'
+    : walletCount === 1 && wallets[0]
+      ? `${wallets[0].tokenBalanceFormatted || wallets[0].tokenBalance || '0'} $BOUNTY • ${wallets[0].displayName || truncateAddress(wallets[0].walletAddress)}`
+      : `${walletCount} wallet${walletCount > 1 ? 's' : ''} connected`;
+
+  return (
+    <IntegrationCard
+      key="phantom"
+      icon={<PhantomIcon className="size-7 text-white" />}
+      title="Phantom Wallet"
+      description={description}
+      status={
+        isConnected && walletCount > 0
+          ? {
+              type: 'installed',
+              count: walletCount,
+              accounts: wallets.map((w, idx) => ({
+                id: idx,
+                accountLogin: w.displayName || truncateAddress(w.walletAddress),
+                walletAddress: w.walletAddress,
+                icon: 'phantom',
+              })),
+              onAccountSelect: (idx) => {
+                const wallet = wallets[idx as number];
+                if (wallet) {
+                  window.location.href = `/integrations/phantom/${wallet.walletAddress}`;
+                }
+              },
+            }
+          : undefined
+      }
+      action={{
+        label: isConnecting ? 'Connecting...' : 'Install',
+        onClick: onConnect,
+        disabled: isConnecting,
+      }}
     />
   );
 }
@@ -193,9 +254,7 @@ function renderIntegrationCard(
   const comingSoonProps = {
     action: {
       label: 'Coming soon',
-      onClick: () => {
-        // No-op: coming soon
-      },
+      onClick: () => {},
       disabled: true,
     },
   };
@@ -204,8 +263,12 @@ function renderIntegrationCard(
     case 'github':
       return renderGithubIntegrationCard(item.installations, filter, installUrl);
     case 'phantom':
-      // Phantom gets a special full-width card due to its expanded UI
-      return null; // Handled separately below the grid
+      return renderPhantomIntegrationCard(
+        item.connectionStatus,
+        item.onConnect,
+        item.isConnecting,
+        filter
+      );
     case 'discord':
       return (
         <IntegrationCard
@@ -242,51 +305,90 @@ function renderIntegrationCard(
 }
 
 export function IntegrationsSettings() {
-  const queryClient = useQueryClient();
   const [setupAction, setSetupAction] = useQueryState(
     'setup_action',
     parseAsString.withDefault('')
   );
   const [installationId, setInstallationId] = useQueryState(
-    'installation_id',
+    'setup_id',
     parseAsString.withDefault('')
   );
-  const { data: installations } = useQuery(trpc.githubInstallation.getInstallations.queryOptions());
-  const { data: installUrl } = useQuery(trpc.githubInstallation.getInstallationUrl.queryOptions({}));
+
+  // Use the new integrations hook
+  const {
+    isLoading,
+    githubInstallations,
+    githubInstallUrl,
+    phantomWallets,
+    connectPhantom,
+    refreshAll,
+    invalidateAll,
+  } = useIntegrations();
+
+  const [isConnecting, setIsConnecting] = useState(false);
   const [filter, setFilter] = useState<'all' | 'installed'>('all');
 
+  // Track if we've already handled this setup action to prevent infinite loops
+  const handledSetupRef = useRef<string>(`${setupAction}-${installationId}`);
+
   useEffect(() => {
-    if (setupAction && installationId) {
-      queryClient.invalidateQueries({ queryKey: ['githubInstallation.getInstallations'] });
+    const key = `${setupAction}-${installationId}`;
+    if (setupAction && installationId && key !== handledSetupRef.current) {
+      handledSetupRef.current = key;
+      invalidateAll();
       setSetupAction(null);
       setInstallationId(null);
     }
-  }, [setupAction, installationId, queryClient, setSetupAction, setInstallationId]);
+  }, [setupAction, installationId, invalidateAll]);
 
-  const installedCount = installations?.installations?.length || 0;
+  // Handle Phantom wallet connection
+  const handlePhantomConnect = useCallback(async () => {
+    setIsConnecting(true);
+    const success = await connectPhantom();
+    setIsConnecting(false);
+    if (success) {
+      refreshAll();
+    }
+  }, [connectPhantom, refreshAll]);
+
+  const installedCount = githubInstallations.length + (phantomWallets.length > 0 ? 1 : 0);
+
   const allIntegrations = useMemo(
     () => [
       {
         type: 'github' as const,
-        installations: installations?.installations || [],
+        installations: githubInstallations,
       },
-      { type: 'phantom' as const },
+      {
+        type: 'phantom' as const,
+        connectionStatus: {
+          connected: phantomWallets.length > 0,
+          wallets: phantomWallets,
+        } as { connected: boolean; wallets: Array<{ walletAddress: string; displayName?: string | null; tokenBalance?: string | null; tokenBalanceFormatted?: string | null; tokenValueUsd?: string | null }> },
+        onConnect: handlePhantomConnect,
+        isConnecting,
+      },
       { type: 'discord' as const },
       { type: 'twitter' as const },
       { type: 'slack' as const },
     ],
-    [installations?.installations]
-  );
-
-  // Filter out phantom from the main grid since it has its own section
-  const gridIntegrations = useMemo(
-    () => allIntegrations.filter((item) => item.type !== 'phantom'),
-    [allIntegrations]
+    [githubInstallations, phantomWallets, handlePhantomConnect, isConnecting]
   );
 
   const filteredIntegrations = filter === 'installed'
-    ? gridIntegrations.filter((item) => item.type === 'github' && item.installations.length > 0)
-    : gridIntegrations;
+    ? allIntegrations.filter((item) =>
+        (item.type === 'github' && item.installations.length > 0) ||
+        (item.type === 'phantom' && item.connectionStatus?.connected)
+      )
+    : allIntegrations;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#5A5A5A] border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -320,25 +422,8 @@ export function IntegrationsSettings() {
 
       {/* Integration Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filteredIntegrations.map((item) => renderIntegrationCard(item, filter, installUrl))}
+        {filteredIntegrations.map((item) => renderIntegrationCard(item, filter, { url: githubInstallUrl }))}
       </div>
-
-      {/* Phantom Wallet Section */}
-      {filter === 'all' && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <PhantomIcon className="size-6" />
-            <h3 className="text-sm font-semibold text-white">Phantom Wallet</h3>
-            <span className="text-xs text-[#929292] bg-[#232323] px-2 py-0.5 rounded-full">
-              Token Holder Benefits
-            </span>
-          </div>
-          <p className="text-xs text-[#929292]">
-            Connect your Solana wallet to verify BOUNTY token holdings and unlock exclusive benefits.
-          </p>
-          <PhantomWalletConnect />
-        </div>
-      )}
     </div>
   );
 }

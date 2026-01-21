@@ -397,7 +397,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>((_
                                     <div className="flex items-center gap-2 px-3 py-1.5 bg-[#191919] border border-[#232323] rounded-lg text-sm whitespace-nowrap">
                                         <span className="text-[#929292]">Install GitHub App</span>
                                         <Link
-                                            href="/settings/integrations"
+                                            href="/integrations"
                                             className="text-white hover:underline font-medium"
                                         >
                                             Install
