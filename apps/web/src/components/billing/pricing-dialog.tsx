@@ -1,9 +1,6 @@
 'use client';
 
-import {
-  Dialog,
-  DialogContent,
-} from '@bounty/ui/components/dialog';
+import { Dialog, DialogContent } from '@bounty/ui/components/dialog';
 import { useBilling } from '@/hooks/use-billing';
 import { Check, Info, Sparkles } from 'lucide-react';
 import { useState } from 'react';
@@ -16,13 +13,14 @@ import {
   type BountyProPlan,
 } from '@bounty/types';
 import { cn } from '@bounty/ui';
+import { formatBillingCurrency } from '@bounty/ui/lib/utils';
 
 interface PricingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const SPEND_PRESETS = [100, 500, 1000, 2500, 5000, 10000, 25000, 50000];
+const SPEND_PRESETS = [100, 500, 1000, 2500, 5000, 10_000, 25_000, 50_000];
 
 const ALL_FEATURES = [
   { key: 'concurrent', label: 'Concurrent Bounties' },
@@ -33,25 +31,26 @@ const ALL_FEATURES = [
 
 type FeatureKey = 'concurrent' | 'allowance' | 'fee' | 'support';
 
-function formatCurrency(amount: number): string {
-  if (amount >= 1000) {
-    return `$${(amount / 1000).toFixed(amount % 1000 === 0 ? 0 : 1)}k`;
-  }
-  return `$${amount}`;
-}
-
 function getFeatureValue(plan: BountyProPlan, feature: FeatureKey): string {
   const pricing = PRICING_TIERS[plan];
 
   switch (feature) {
     case 'concurrent':
-      return pricing.concurrentBounties === -1 ? 'Unlimited' : `${pricing.concurrentBounties}`;
+      return pricing.concurrentBounties === -1
+        ? 'Unlimited'
+        : `${pricing.concurrentBounties}`;
     case 'allowance':
-      return pricing.feeFreeAllowance === 0 ? 'None' : formatCurrency(pricing.feeFreeAllowance);
+      return pricing.feeFreeAllowance === 0
+        ? 'None'
+        : formatBillingCurrency(pricing.feeFreeAllowance);
     case 'fee':
       return `${pricing.platformFeePercent}%`;
     case 'support':
-      return plan === 'free' ? 'Standard' : plan === 'tier_3_pro_plus' ? '24/7 Dedicated' : 'Priority';
+      return plan === 'free'
+        ? 'Standard'
+        : plan === 'tier_3_pro_plus'
+          ? '24/7 Dedicated'
+          : 'Priority';
     default:
       return '-';
   }
@@ -124,10 +123,12 @@ function PricingCard({
           const value = getFeatureValue(plan, feature.key as FeatureKey);
           return (
             <div key={feature.key} className="flex items-center gap-2 text-sm">
-              <Check className={cn(
-                'h-4 w-4 shrink-0',
-                plan === 'free' ? 'text-gray-500' : 'text-green-500'
-              )} />
+              <Check
+                className={cn(
+                  'h-4 w-4 shrink-0',
+                  plan === 'free' ? 'text-gray-500' : 'text-green-500'
+                )}
+              />
               <span className="flex-1 text-gray-400">{feature.label}</span>
               <span className="font-semibold text-white">{value}</span>
             </div>
@@ -164,7 +165,7 @@ function SpendSlider({
   onChange: (value: number) => void;
 }) {
   const min = 0;
-  const max = Math.log(50000);
+  const max = Math.log(50_000);
   const logValue = value > 0 ? Math.log(value) : 0;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -185,7 +186,7 @@ function SpendSlider({
         </div>
         <div className="flex items-baseline gap-1">
           <span className="text-2xl font-bold text-white">
-            {formatCurrency(value)}
+            {formatBillingCurrency(value)}
           </span>
         </div>
       </div>
@@ -215,7 +216,9 @@ function SpendSlider({
         {/* Thumb */}
         <div
           className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full border-2 border-white bg-white shadow-lg transition-all"
-          style={{ left: `calc(${Math.max(0, Math.min(100, percentage))}% - 10px)` }}
+          style={{
+            left: `calc(${Math.max(0, Math.min(100, percentage))}% - 10px)`,
+          }}
         >
           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 opacity-50" />
         </div>
@@ -234,7 +237,7 @@ function SpendSlider({
                 : 'border-gray-700 bg-zinc-900/50 text-gray-400 hover:border-gray-600 hover:text-white'
             )}
           >
-            {formatCurrency(preset)}
+            {formatBillingCurrency(preset)}
           </button>
         ))}
       </div>
@@ -336,7 +339,9 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
           {/* Footer */}
           <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
             <Info className="h-4 w-4" />
-            <span>Upgrade or downgrade anytime. No contracts, cancel anytime.</span>
+            <span>
+              Upgrade or downgrade anytime. No contracts, cancel anytime.
+            </span>
           </div>
         </div>
 

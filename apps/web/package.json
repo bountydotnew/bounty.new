@@ -62,6 +62,7 @@
     "motion": "catalog:",
     "next": "catalog:",
     "next-themes": "catalog:",
+    "nuqs": "^2.8.6",
     "posthog-js": "catalog:",
     "react": "catalog:",
     "react-activity-calendar": "catalog:",

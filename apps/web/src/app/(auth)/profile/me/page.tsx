@@ -1,6 +1,6 @@
 'use client';
 
-import { authClient } from '@bounty/auth/client';
+import { useSession } from '@/context/session-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Spinner } from '@bounty/ui';
@@ -8,7 +8,7 @@ import { useUser } from '@/context/user-context';
 
 export default function MyProfilePage() {
   const router = useRouter();
-  const { data: session, isPending } = authClient.useSession();
+  const { session, isPending } = useSession();
   const { user: userData } = useUser();
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { authClient } from '@bounty/auth/client';
+import { useSession } from '@/context/session-context';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { AccountDropdown } from '@/components/billing/account-dropdown';
@@ -17,7 +17,7 @@ export function NavUser({
   };
 }) {
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
-  const { data: session, isPending } = authClient.useSession();
+  const { session, isPending } = useSession();
   const isAuthenticated = !!session?.user;
 
   const handleUpgrade = async () => {

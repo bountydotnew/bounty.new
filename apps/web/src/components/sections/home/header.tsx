@@ -1,6 +1,6 @@
 'use client';
 
-import { authClient } from '@bounty/auth/client';
+import { useSession } from '@/context/session-context';
 import { Button } from '@bounty/ui/components/button';
 import { DevWarningDialog } from '@bounty/ui/components/dev-warning-dialog';
 import Link from '@bounty/ui/components/link';
@@ -12,7 +12,7 @@ import { LINKS } from '@/constants';
 import { setCookie, getCookie } from '@bounty/ui/lib/utils';
 
 export function Header() {
-  const { data: session } = authClient.useSession();
+  const { session } = useSession();
   const [showDialog, setShowDialog] = useState(false);
   const router = useRouter();
   // Cookie helpers

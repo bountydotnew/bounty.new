@@ -1,6 +1,7 @@
 import { protectedProcedure, publicProcedure, router } from '../trpc';
 import { bountiesRouter } from './bounties';
 import { connectRouter } from './connect';
+import { discordRouter } from './discord';
 import { earlyAccessRouter } from './early-access';
 import { emailsRouter } from './emails';
 import { githubInstallationRouter } from './github-installation';
@@ -43,6 +44,7 @@ export const appRouter = router({
   repository: repositoryRouter,
   githubInstallation: githubInstallationRouter,
   connect: connectRouter,
+  discord: discordRouter,
   onboarding: onboardingRouter,
   phantom: phantomRouter,
 });

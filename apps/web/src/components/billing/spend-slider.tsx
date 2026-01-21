@@ -1,24 +1,22 @@
 'use client';
 
 import { useMemo } from 'react';
-import { getRecommendedPlan, PRICING_TIERS, type BountyProPlan } from '@bounty/types';
+import {
+  getRecommendedPlan,
+  PRICING_TIERS,
+  type BountyProPlan,
+} from '@bounty/types';
+import { formatBillingCurrency } from '@bounty/ui/lib/utils';
 
 // Slider stops for better UX (non-linear scale for large values)
 const SLIDER_STOPS = [
-  0, 100, 200, 300, 500, 750, 1000, 1500, 2000, 3000, 5000, 7500, 10000,
-  15000, 20000, 25000, 35000, 50000, 75000, 100000,
+  0, 100, 200, 300, 500, 750, 1000, 1500, 2000, 3000, 5000, 7500, 10_000,
+  15_000, 20_000, 25_000, 35_000, 50_000, 75_000, 100_000,
 ];
 
 function getValueFromSliderPosition(position: number): number {
   const index = Math.round((position / 100) * (SLIDER_STOPS.length - 1));
   return SLIDER_STOPS[Math.min(index, SLIDER_STOPS.length - 1)] ?? 0;
-}
-
-function formatCurrency(amount: number): string {
-  if (amount >= 1000) {
-    return `$${(amount / 1000).toFixed(amount % 1000 === 0 ? 0 : 1)}k`;
-  }
-  return `$${amount}`;
 }
 
 interface SpendSliderProps {
@@ -39,15 +37,13 @@ export function SpendSlider({ value, onChange }: SpendSliderProps) {
   };
 
   const recommendedPlan = getRecommendedPlan(value);
-  const needsEnterprise = value > 12000;
+  const needsEnterprise = value > 12_000;
 
   return (
     <div className="py-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-[#888]">
-          Estimated monthly spend
-        </p>
-        
+        <p className="text-sm text-[#888]">Estimated monthly spend</p>
+
         <div className="flex items-center gap-4 flex-1 sm:max-w-md">
           <input
             type="range"
@@ -80,11 +76,11 @@ export function SpendSlider({ value, onChange }: SpendSliderProps) {
               [&::-moz-range-thumb]:bg-white"
           />
           <span className="text-sm font-medium text-[#efefef] w-16 text-right">
-            {formatCurrency(value)}
+            {formatBillingCurrency(value)}
           </span>
         </div>
       </div>
-      
+
       {/* Recommendation text */}
       <p className="mt-3 text-sm text-[#666]">
         {needsEnterprise ? (
@@ -99,9 +95,19 @@ export function SpendSlider({ value, onChange }: SpendSliderProps) {
           </>
         ) : (
           <>
-            Recommended: <span className="text-[#888]">{PRICING_TIERS[recommendedPlan].name}</span>
+            Recommended:{' '}
+            <span className="text-[#888]">
+              {PRICING_TIERS[recommendedPlan].name}
+            </span>
             {recommendedPlan !== 'free' && (
-              <span className="text-[#666]"> — {formatCurrency(PRICING_TIERS[recommendedPlan].feeFreeAllowance)} fee-free</span>
+              <span className="text-[#666]">
+                {' '}
+                —{' '}
+                {formatBillingCurrency(
+                  PRICING_TIERS[recommendedPlan].feeFreeAllowance
+                )}{' '}
+                fee-free
+              </span>
             )}
           </>
         )}

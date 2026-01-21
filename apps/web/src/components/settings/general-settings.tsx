@@ -1,6 +1,7 @@
 'use client';
 
 import { authClient } from '@bounty/auth/client';
+import { useSession } from '@/context/session-context';
 import {
   Avatar,
   AvatarFallback,
@@ -217,7 +218,7 @@ const PrivacySettingsCard = ({
 );
 
 export function GeneralSettings() {
-  const { data: session } = authClient.useSession();
+  const { session } = useSession();
   const { isPro, isLoading: billingLoading } = useBilling();
   const router = useRouter();
   const queryClient = useQueryClient();

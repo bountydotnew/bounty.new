@@ -13,13 +13,14 @@ const TOKEN_HOLDER_THRESHOLD_USD = 20;
 // Format large token numbers nicely (e.g., 27061159.55 -> "27.06M")
 const formatTokenBalance = (balance: string | null | undefined): string => {
   if (!balance) return '0';
-  const num = parseFloat(balance);
+  const num = Number.parseFloat(balance);
   if (isNaN(num)) return '0';
 
   if (num >= 1_000_000) {
     return (num / 1_000_000).toFixed(2) + 'M';
-  } else if (num >= 1_000) {
-    return (num / 1_000).toFixed(2) + 'K';
+  }
+  if (num >= 1000) {
+    return (num / 1000).toFixed(2) + 'K';
   }
   return num.toFixed(2);
 };
@@ -128,10 +129,7 @@ interface TokenAccountsByOwnerResult {
 }
 
 // Helper to make Helius RPC calls
-const heliusRpc = async <T>(
-  method: string,
-  params: unknown[]
-): Promise<T> => {
+const heliusRpc = async <T>(method: string, params: unknown[]): Promise<T> => {
   const response = await fetch(getHeliusRpcUrl(), {
     method: 'POST',
     headers: {
@@ -197,7 +195,8 @@ const getTokenBalance = async (
     return null;
   }
 
-  const { amount, uiAmount } = tokenAccount.account.data.parsed.info.tokenAmount;
+  const { amount, uiAmount } =
+    tokenAccount.account.data.parsed.info.tokenAmount;
   return { balance: amount, uiAmount };
 };
 
@@ -205,8 +204,12 @@ const getTokenBalance = async (
 const getTokenPriceUsd = async (): Promise<number> => {
   try {
     const mintAddress = getBountyTokenMint();
-    const response = await fetch(`https://price.jup.ag/v4/price?ids=${mintAddress}`);
-    const data = await response.json() as { data?: Record<string, { price?: number }> };
+    const response = await fetch(
+      `https://price.jup.ag/v4/price?ids=${mintAddress}`
+    );
+    const data = (await response.json()) as {
+      data?: Record<string, { price?: number }>;
+    };
     const bountyPrice = data?.data?.[mintAddress]?.price;
     if (bountyPrice && bountyPrice > 0 && bountyPrice < 1) {
       return bountyPrice;
@@ -216,7 +219,7 @@ const getTokenPriceUsd = async (): Promise<number> => {
   }
   // Fallback price - approximately $0.0000102 per $BOUNTY token
   // (based on user having 27M tokens worth ~$255)
-  return 0.0000094;
+  return 0.000_009_4;
 };
 
 export const phantomRouter = router({
@@ -346,7 +349,8 @@ export const phantomRouter = router({
         ? (balance.uiAmount * tokenPrice).toFixed(2)
         : '0.00';
 
-      const qualifiesForBenefits = parseFloat(tokenValueUsd) >= TOKEN_HOLDER_THRESHOLD_USD;
+      const qualifiesForBenefits =
+        Number.parseFloat(tokenValueUsd) >= TOKEN_HOLDER_THRESHOLD_USD;
 
       // Store the human-readable uiAmount as the balance
       const displayBalance = balance?.uiAmount?.toString() ?? null;
@@ -409,7 +413,8 @@ export const phantomRouter = router({
       ? (balance.uiAmount * tokenPrice).toFixed(2)
       : '0.00';
 
-    const qualifiesForBenefits = parseFloat(tokenValueUsd) >= TOKEN_HOLDER_THRESHOLD_USD;
+    const qualifiesForBenefits =
+      Number.parseFloat(tokenValueUsd) >= TOKEN_HOLDER_THRESHOLD_USD;
 
     // Store the human-readable uiAmount as the balance
     const displayBalance = balance?.uiAmount?.toString() ?? null;
@@ -437,66 +442,163 @@ export const phantomRouter = router({
   }),
 
   // Claim free month of Pro (for token holders)
-  claimFreeMonth: protectedProcedure.mutation(async ({ ctx }) => {
-    const wallet = await db.query.phantomWallet.findFirst({
-      where: (w, { eq }) => eq(w.userId, ctx.session.user.id),
-    });
-
-    if (!wallet) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'No wallet connected. Please connect your wallet first.',
+  // This is a USER-level benefit - only one claim per user across all wallets
+  claimFreeMonth: protectedProcedure
+    .input(z.object({ origin: z.string().url().optional() }).optional())
+    .mutation(async ({ ctx, input }) => {
+      // Get ALL wallets for this user
+      const wallets = await db.query.phantomWallet.findMany({
+        where: (w, { eq }) => eq(w.userId, ctx.session.user.id),
       });
-    }
 
-    // Check if user has already claimed
-    if (wallet.freeMonthGrantedAt) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'You have already claimed your free month of Pro.',
+      if (wallets.length === 0) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'No wallet connected. Please connect your wallet first.',
+        });
+      }
+
+      // Check if ANY wallet has already claimed - this is a user-level benefit
+      const alreadyClaimed = wallets.some((w) => w.freeMonthGrantedAt !== null);
+      if (alreadyClaimed) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'You have already claimed your free month of Pro.',
+        });
+      }
+
+      // Refresh balances for all wallets and find the best one
+      const tokenMint = getBountyTokenMint();
+      const tokenPrice = await getTokenPriceUsd();
+
+      // Fetch all balances in parallel
+      const walletBalances = await Promise.all(
+        wallets.map(async (wallet) => {
+          const balance = await getTokenBalance(
+            wallet.walletAddress,
+            tokenMint
+          );
+          const tokenValueUsd = balance
+            ? (balance.uiAmount * tokenPrice).toFixed(2)
+            : '0.00';
+          return { wallet, balance, tokenValueUsd };
+        })
+      );
+
+      // Find the wallet with the highest balance
+      const best = walletBalances.reduce((bestSoFar, current) =>
+        Number.parseFloat(current.tokenValueUsd) >
+        Number.parseFloat(bestSoFar.tokenValueUsd)
+          ? current
+          : bestSoFar
+      );
+
+      const qualifiesForBenefits =
+        Number.parseFloat(best.tokenValueUsd) >= TOKEN_HOLDER_THRESHOLD_USD;
+
+      if (!qualifiesForBenefits) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `You need at least $${TOKEN_HOLDER_THRESHOLD_USD} worth of tokens to claim the free month. Your best wallet has: $${best.tokenValueUsd}`,
+        });
+      }
+
+      // Grant free Pro via Autumn using the attach endpoint with reward
+      const autumnUrl = env.AUTUMN_API_URL || 'https://api.useautumn.com/v1';
+      const autumnKey = env.AUTUMN_SECRET_KEY;
+
+      // Build success URL that will mark the claim as complete
+      // Use client-provided origin for localhost development, fallback to env/default
+      const baseUrl =
+        input?.origin ||
+        process.env.NEXT_PUBLIC_BASE_URL ||
+        'https://bounty.new';
+      const successUrl = `${baseUrl}/dashboard?claim=sol-success`;
+
+      console.log('[Phantom] Calling Autumn attach with:', {
+        customer_id: ctx.session.user.id,
+        product_id: 'tier_2_pro',
+        reward: 'sol_holder_free_month',
+        success_url: successUrl,
       });
-    }
 
-    // Refresh balance before claiming
-    const tokenMint = getBountyTokenMint();
-    const balance = await getTokenBalance(wallet.walletAddress, tokenMint);
-    const tokenPrice = await getTokenPriceUsd();
-
-    const tokenValueUsd = balance
-      ? (balance.uiAmount * tokenPrice).toFixed(2)
-      : '0.00';
-
-    const qualifiesForBenefits = parseFloat(tokenValueUsd) >= TOKEN_HOLDER_THRESHOLD_USD;
-
-    if (!qualifiesForBenefits) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: `You need at least $${TOKEN_HOLDER_THRESHOLD_USD} worth of tokens to claim the free month. Current value: $${tokenValueUsd}`,
+      const autumnResponse = await fetch(`${autumnUrl}/attach`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${autumnKey}`,
+        },
+        body: JSON.stringify({
+          customer_id: ctx.session.user.id,
+          product_id: 'tier_2_pro',
+          reward: 'sol_holder_free_month',
+          success_url: successUrl,
+        }),
       });
-    }
 
-    // Update wallet record
-    await db
-      .update(phantomWallet)
-      .set({
-        lastTokenBalance: balance?.balance ?? null,
-        lastTokenValueUsd: tokenValueUsd,
-        qualifiesForBenefits: true,
-        freeMonthGrantedAt: new Date(),
-        lastVerifiedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(phantomWallet.userId, ctx.session.user.id));
+      const autumnData = (await autumnResponse.json().catch(() => ({}))) as {
+        message?: string;
+        success?: boolean;
+        checkout_url?: string;
+        code?: string;
+      };
 
-    // TODO: Integrate with Autumn to grant the trial
-    // This would call Autumn's API to start a trial period for the user
-    // Example: await autumn.customers.startTrial(ctx.session.user.id, 'tier_2_pro', { duration: 30 });
+      console.log(
+        '[Phantom] Autumn response:',
+        autumnResponse.status,
+        autumnData
+      );
 
-    return {
-      success: true,
-      message: 'Free month of Pro has been activated! Enjoy your token holder benefits.',
-    };
-  }),
+      if (!autumnResponse.ok) {
+        console.error(
+          '[Phantom] Autumn attach failed:',
+          autumnResponse.status,
+          autumnData
+        );
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message:
+            autumnData.message ||
+            'Failed to activate Pro subscription. Please try again.',
+        });
+      }
+
+      // If Autumn returns a checkout_url, even with 100% discount,
+      // Stripe still needs to collect payment method for future billing
+      // Return the URL so the frontend can redirect the user
+      // NOTE: We don't mark as claimed yet - that happens after successful checkout
+      if (autumnData.checkout_url) {
+        console.log(
+          '[Phantom] Autumn returned checkout_url:',
+          autumnData.checkout_url
+        );
+
+        return {
+          success: true,
+          checkoutUrl: autumnData.checkout_url,
+          message: 'Complete checkout to activate your free month.',
+        };
+      }
+
+      // Update the qualifying wallet record to mark the benefit as claimed
+      await db
+        .update(phantomWallet)
+        .set({
+          lastTokenBalance: best.balance?.balance ?? null,
+          lastTokenValueUsd: best.tokenValueUsd,
+          qualifiesForBenefits: true,
+          freeMonthGrantedAt: new Date(),
+          lastVerifiedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(phantomWallet.id, best.wallet.id));
+
+      return {
+        success: true,
+        message:
+          'Free month of Pro has been activated! Enjoy your token holder benefits.',
+      };
+    }),
 
   // Get a specific wallet's details
   getWallet: protectedProcedure
@@ -560,7 +662,8 @@ export const phantomRouter = router({
         ? (balance.uiAmount * tokenPrice).toFixed(2)
         : '0.00';
 
-      const qualifiesForBenefits = parseFloat(tokenValueUsd) >= TOKEN_HOLDER_THRESHOLD_USD;
+      const qualifiesForBenefits =
+        Number.parseFloat(tokenValueUsd) >= TOKEN_HOLDER_THRESHOLD_USD;
 
       // Store the human-readable uiAmount as the balance
       const displayBalance = balance?.uiAmount?.toString() ?? null;
@@ -587,6 +690,73 @@ export const phantomRouter = router({
       };
     }),
 
+  // Sync all wallets for the user
+  syncAllWallets: protectedProcedure.mutation(async ({ ctx }) => {
+    const wallets = await db.query.phantomWallet.findMany({
+      where: (w, { eq }) => eq(w.userId, ctx.session.user.id),
+    });
+
+    if (wallets.length === 0) {
+      return {
+        success: true,
+        data: {
+          wallets: [],
+          totalValueUsd: '0.00',
+        },
+      };
+    }
+
+    const tokenMint = getBountyTokenMint();
+    const tokenPrice = await getTokenPriceUsd();
+
+    // Sync all wallets in parallel
+    const syncedWallets = await Promise.all(
+      wallets.map(async (wallet) => {
+        const balance = await getTokenBalance(wallet.walletAddress, tokenMint);
+        const tokenValueUsd = balance
+          ? (balance.uiAmount * tokenPrice).toFixed(2)
+          : '0.00';
+        const qualifiesForBenefits =
+          Number.parseFloat(tokenValueUsd) >= TOKEN_HOLDER_THRESHOLD_USD;
+        const displayBalance = balance?.uiAmount?.toString() ?? null;
+
+        // Update wallet in DB
+        await db
+          .update(phantomWallet)
+          .set({
+            lastTokenBalance: displayBalance,
+            lastTokenValueUsd: tokenValueUsd,
+            qualifiesForBenefits,
+            lastVerifiedAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(phantomWallet.id, wallet.id));
+
+        return {
+          walletAddress: wallet.walletAddress,
+          displayName: wallet.displayName,
+          tokenBalance: displayBalance,
+          tokenBalanceFormatted: formatTokenBalance(displayBalance),
+          tokenValueUsd,
+          qualifiesForBenefits,
+        };
+      })
+    );
+
+    // Calculate total value across all wallets
+    const totalValueUsd = syncedWallets
+      .reduce((sum, w) => sum + Number.parseFloat(w.tokenValueUsd), 0)
+      .toFixed(2);
+
+    return {
+      success: true,
+      data: {
+        wallets: syncedWallets,
+        totalValueUsd,
+      },
+    };
+  }),
+
   // Disconnect a specific wallet
   disconnectSpecificWallet: protectedProcedure
     .input(z.object({ walletAddress: z.string() }))
@@ -606,9 +776,7 @@ export const phantomRouter = router({
         });
       }
 
-      await db
-        .delete(phantomWallet)
-        .where(eq(phantomWallet.id, wallet.id));
+      await db.delete(phantomWallet).where(eq(phantomWallet.id, wallet.id));
 
       return {
         success: true,
@@ -618,7 +786,12 @@ export const phantomRouter = router({
 
   // Update wallet display name
   updateDisplayName: protectedProcedure
-    .input(z.object({ walletAddress: z.string(), displayName: z.string().min(1).max(50) }))
+    .input(
+      z.object({
+        walletAddress: z.string(),
+        displayName: z.string().min(1).max(50),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const wallet = await db.query.phantomWallet.findFirst({
         where: (w, { eq, and }) =>
@@ -651,13 +824,73 @@ export const phantomRouter = router({
       };
     }),
 
-  // Check if user is eligible for free month
-  checkEligibility: protectedProcedure.query(async ({ ctx }) => {
+  // Mark the free month claim as complete (called after successful checkout)
+  markClaimComplete: protectedProcedure.mutation(async ({ ctx }) => {
+    // Find any wallet for this user that qualifies
     const wallet = await db.query.phantomWallet.findFirst({
       where: (w, { eq }) => eq(w.userId, ctx.session.user.id),
     });
 
     if (!wallet) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'No wallet found.',
+      });
+    }
+
+    // Mark the claim as complete
+    await db
+      .update(phantomWallet)
+      .set({
+        freeMonthGrantedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(phantomWallet.id, wallet.id));
+
+    return {
+      success: true,
+      message: 'Claim marked as complete.',
+    };
+  }),
+
+  // Reset free month claim (for testing/support purposes)
+  // This clears the freeMonthGrantedAt on all wallets for the user
+  resetFreeMonthClaim: protectedProcedure.mutation(async ({ ctx }) => {
+    // Only allow in development or for admin users
+    const isDev = process.env.NODE_ENV === 'development';
+    const isAdmin = ctx.session.user.role === 'admin';
+
+    if (!(isDev || isAdmin)) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message:
+          'This action is only available in development mode or for admins.',
+      });
+    }
+
+    await db
+      .update(phantomWallet)
+      .set({
+        freeMonthGrantedAt: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(phantomWallet.userId, ctx.session.user.id));
+
+    return {
+      success: true,
+      message: 'Free month claim has been reset. You can claim again.',
+    };
+  }),
+
+  // Check if user is eligible for free month
+  // This is a USER-level benefit - if ANY wallet claimed it, it's claimed for all
+  checkEligibility: protectedProcedure.query(async ({ ctx }) => {
+    // Get ALL wallets for this user
+    const wallets = await db.query.phantomWallet.findMany({
+      where: (w, { eq }) => eq(w.userId, ctx.session.user.id),
+    });
+
+    if (wallets.length === 0) {
       return {
         success: true,
         data: {
@@ -670,21 +903,32 @@ export const phantomRouter = router({
       };
     }
 
-    if (wallet.freeMonthGrantedAt) {
+    // Check if ANY wallet has already claimed - this is a user-level benefit
+    const claimedWallet = wallets.find((w) => w.freeMonthGrantedAt !== null);
+    if (claimedWallet) {
       return {
         success: true,
         data: {
           eligible: false,
           reason: 'already_claimed',
-          tokenValueUsd: wallet.lastTokenValueUsd,
+          tokenValueUsd: claimedWallet.lastTokenValueUsd,
           threshold: TOKEN_HOLDER_THRESHOLD_USD,
           alreadyClaimed: true,
-          claimedAt: wallet.freeMonthGrantedAt,
+          claimedAt: claimedWallet.freeMonthGrantedAt,
         },
       };
     }
 
-    const tokenValueUsd = parseFloat(wallet.lastTokenValueUsd ?? '0');
+    // Find the wallet with the highest token value to check eligibility
+    const bestWallet = wallets.reduce((best, current) => {
+      const bestValue = Number.parseFloat(best.lastTokenValueUsd ?? '0');
+      const currentValue = Number.parseFloat(current.lastTokenValueUsd ?? '0');
+      return currentValue > bestValue ? current : best;
+    });
+
+    const tokenValueUsd = Number.parseFloat(
+      bestWallet.lastTokenValueUsd ?? '0'
+    );
     const eligible = tokenValueUsd >= TOKEN_HOLDER_THRESHOLD_USD;
 
     return {
@@ -692,7 +936,7 @@ export const phantomRouter = router({
       data: {
         eligible,
         reason: eligible ? 'eligible' : 'insufficient_balance',
-        tokenValueUsd: wallet.lastTokenValueUsd,
+        tokenValueUsd: bestWallet.lastTokenValueUsd,
         threshold: TOKEN_HOLDER_THRESHOLD_USD,
         alreadyClaimed: false,
       },

@@ -6,6 +6,8 @@ import { GithubIcon, DiscordIcon, TwitterIcon, SlackIcon } from '@bounty/ui';
 import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear';
 import { PhantomIcon } from '@bounty/ui/components/icons/huge/phantom';
 import Link from 'next/link';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,8 +23,15 @@ interface IntegrationCardProps {
   status?: {
     type: 'installed' | 'coming-soon';
     count?: number;
-    accounts?: Array<{ id: number; accountLogin?: string | null; icon?: string; walletAddress?: string }>;
+    accounts?: Array<{
+      id: number;
+      accountLogin?: string | null;
+      icon?: string;
+      walletAddress?: string;
+      href?: string;
+    }>;
     onAccountSelect?: (id: number | string) => void;
+    manageAllHref?: string;
   };
   action?: {
     label: string;
@@ -32,7 +41,15 @@ interface IntegrationCardProps {
   href?: string;
 }
 
-function IntegrationCard({ icon, title, description, status, action, href }: IntegrationCardProps) {
+function IntegrationCard({
+  icon,
+  title,
+  description,
+  status,
+  action,
+  href,
+}: IntegrationCardProps) {
+  const router = useRouter();
   const content = (
     <div className="rounded-[15px] opacity-100 shrink-0 flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] grow basis-0 self-stretch bg-[#191919] border border-solid border-[#2E2E2E] antialiased size-full h-full">
       <div className="shrink-0 flex flex-col justify-center items-start gap-[9px] w-full self-stretch h-fit">
@@ -72,8 +89,12 @@ function IntegrationCard({ icon, title, description, status, action, href }: Int
                 className="bg-[#191919] border border-[#232323] min-w-[200px]"
               >
                 {status.accounts.map((account) => {
-                  const accountLabel = account.accountLogin || 'Unknown account';
-                  const AccountIcon = account.icon === 'phantom' ? PhantomIcon : GithubIcon;
+                  const accountLabel =
+                    account.accountLogin || 'Unknown account';
+                  // Check if icon is a URL (for Discord avatars) or a string identifier
+                  const isImageUrl = account.icon?.startsWith('http');
+                  const AccountIcon =
+                    account.icon === 'phantom' ? PhantomIcon : GithubIcon;
                   return (
                     <DropdownMenuItem
                       key={account.id}
@@ -81,14 +102,45 @@ function IntegrationCard({ icon, title, description, status, action, href }: Int
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        status.onAccountSelect?.(account.id);
+                        if (account.href) {
+                          router.push(account.href);
+                        } else {
+                          status.onAccountSelect?.(account.id);
+                        }
                       }}
                     >
-                      <AccountIcon className="size-4 opacity-60 text-white" />
+                      {isImageUrl ? (
+                        <Image
+                          src={account.icon ?? ''}
+                          alt=""
+                          width={16}
+                          height={16}
+                          className="rounded-full"
+                        />
+                      ) : (
+                        <AccountIcon className="size-4 opacity-60 text-white" />
+                      )}
                       {accountLabel}
                     </DropdownMenuItem>
                   );
                 })}
+                {status.manageAllHref && (
+                  <>
+                    <div className="h-px bg-[#232323] my-1" />
+                    <DropdownMenuItem
+                      className="focus:bg-[#232323] gap-2 text-[#929292]"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (status.manageAllHref) {
+                          router.push(status.manageAllHref);
+                        }
+                      }}
+                    >
+                      Manage all wallets
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             )}
           </DropdownMenu>
@@ -130,19 +182,52 @@ function IntegrationCard({ icon, title, description, status, action, href }: Int
 }
 
 type IntegrationItem =
-  | { type: 'github'; installations: Array<{ id: number; accountLogin?: string | null; accountType?: string | null; repositoryIds?: string[] | null }> }
+  | {
+      type: 'github';
+      installations: Array<{
+        id: number;
+        accountLogin?: string | null;
+        accountType?: string | null;
+        repositoryIds?: string[] | null;
+      }>;
+    }
   | {
       type: 'phantom';
-      connectionStatus: { connected: boolean; wallets?: Array<{ walletAddress: string; displayName?: string | null; tokenBalance?: string | null; tokenBalanceFormatted?: string | null; tokenValueUsd?: string | null }> } | null;
+      connectionStatus: {
+        connected: boolean;
+        wallets?: Array<{
+          walletAddress: string;
+          displayName?: string | null;
+          tokenBalance?: string | null;
+          tokenBalanceFormatted?: string | null;
+          tokenValueUsd?: string | null;
+        }>;
+      } | null;
       onConnect: () => void;
       isConnecting: boolean;
     }
-  | { type: 'discord' }
+  | {
+      type: 'discord';
+      account: {
+        discordId: string;
+        displayName: string;
+        avatar: string | null;
+        linkedAt: string | null;
+      } | null;
+      botInstallUrl?: string;
+      onAddBot: () => void;
+      onLinkAccount: () => void;
+    }
   | { type: 'twitter' }
   | { type: 'slack' };
 
 function renderGithubIntegrationCard(
-  installations: Array<{ id: number; accountLogin?: string | null; accountType?: string | null; repositoryIds?: string[] | null }>,
+  installations: Array<{
+    id: number;
+    accountLogin?: string | null;
+    accountType?: string | null;
+    repositoryIds?: string[] | null;
+  }>,
   filter: 'all' | 'installed',
   installUrl?: { url?: string }
 ) {
@@ -150,11 +235,12 @@ function renderGithubIntegrationCard(
   const installedCount = installations.length;
   if (filter === 'installed' && installedCount === 0) return null;
 
-  const description = installedCount === 0
-    ? 'Connect Bounty to your GitHub and access all of our tools from any repository, even your own'
-    : installedCount === 1 && primaryInstallation
-      ? `${primaryInstallation.accountLogin || 'GitHub'} • ${primaryInstallation.accountType === 'Organization' ? 'Organization' : 'User'} • ${primaryInstallation.repositoryIds?.length || 0} repositories`
-      : `${installedCount} accounts connected`;
+  const description =
+    installedCount === 0
+      ? 'Connect Bounty to your GitHub and access all of our tools from any repository, even your own'
+      : installedCount === 1 && primaryInstallation
+        ? `${primaryInstallation.accountLogin || 'GitHub'} • ${primaryInstallation.accountType === 'Organization' ? 'Organization' : 'User'} • ${primaryInstallation.repositoryIds?.length || 0} repositories`
+        : `${installedCount} accounts connected`;
 
   return (
     <IntegrationCard
@@ -170,21 +256,24 @@ function renderGithubIntegrationCard(
               accounts: installations.map((installation) => ({
                 id: installation.id,
                 accountLogin: installation.accountLogin,
+                href: `/integrations/github/${installation.id}`,
               })),
-              onAccountSelect: (installationId) => {
-                window.location.href = `/integrations/configure/${installationId}`;
-              },
             }
           : undefined
       }
       action={{
         label: 'Install',
         onClick: () => {
-          const fallbackUrl = 'https://github.com/apps/bountydotnew/installations/new';
+          const fallbackUrl =
+            'https://github.com/apps/bountydotnew/installations/new';
           window.location.href = installUrl?.url || fallbackUrl;
         },
       }}
-      href={primaryInstallation ? `/integrations/configure/${primaryInstallation.id}` : undefined}
+      href={
+        primaryInstallation
+          ? `/integrations/github/${primaryInstallation.id}`
+          : undefined
+      }
     />
   );
 }
@@ -194,7 +283,16 @@ function truncateAddress(address: string) {
 }
 
 function renderPhantomIntegrationCard(
-  connectionStatus: { connected: boolean; wallets?: Array<{ walletAddress: string; displayName?: string | null; tokenBalance?: string | null; tokenBalanceFormatted?: string | null; tokenValueUsd?: string | null }> } | null,
+  connectionStatus: {
+    connected: boolean;
+    wallets?: Array<{
+      walletAddress: string;
+      displayName?: string | null;
+      tokenBalance?: string | null;
+      tokenBalanceFormatted?: string | null;
+      tokenValueUsd?: string | null;
+    }>;
+  } | null,
   onConnect: () => void,
   isConnecting: boolean,
   filter: 'all' | 'installed'
@@ -205,11 +303,11 @@ function renderPhantomIntegrationCard(
   const wallets = connectionStatus?.wallets || [];
   const walletCount = wallets.length;
 
-  const description = !isConnected
-    ? 'Connect your Solana wallet to verify BOUNTY token holdings and unlock exclusive benefits'
-    : walletCount === 1 && wallets[0]
+  const description = isConnected
+    ? walletCount === 1 && wallets[0]
       ? `${wallets[0].tokenBalanceFormatted || wallets[0].tokenBalance || '0'} $BOUNTY • ${wallets[0].displayName || truncateAddress(wallets[0].walletAddress)}`
-      : `${walletCount} wallet${walletCount > 1 ? 's' : ''} connected`;
+      : `${walletCount} wallet${walletCount > 1 ? 's' : ''} connected`
+    : 'Connect your Solana wallet to verify BOUNTY token holdings and unlock exclusive benefits';
 
   return (
     <IntegrationCard
@@ -227,13 +325,9 @@ function renderPhantomIntegrationCard(
                 accountLogin: w.displayName || truncateAddress(w.walletAddress),
                 walletAddress: w.walletAddress,
                 icon: 'phantom',
+                href: `/integrations/phantom/${w.walletAddress}`,
               })),
-              onAccountSelect: (idx) => {
-                const wallet = wallets[idx as number];
-                if (wallet) {
-                  window.location.href = `/integrations/phantom/${wallet.walletAddress}`;
-                }
-              },
+              manageAllHref: '/integrations/phantom/all',
             }
           : undefined
       }
@@ -261,7 +355,11 @@ function renderIntegrationCard(
 
   switch (item.type) {
     case 'github':
-      return renderGithubIntegrationCard(item.installations, filter, installUrl);
+      return renderGithubIntegrationCard(
+        item.installations,
+        filter,
+        installUrl
+      );
     case 'phantom':
       return renderPhantomIntegrationCard(
         item.connectionStatus,
@@ -269,16 +367,51 @@ function renderIntegrationCard(
         item.isConnecting,
         filter
       );
-    case 'discord':
+    case 'discord': {
+      const isLinked = !!item.account;
+      const displayName =
+        item.account?.displayName || item.account?.discordId || 'your account';
+      const description = isLinked
+        ? `Linked as ${displayName}`
+        : 'Link your Discord account or add the Bounty bot to your server';
       return (
         <IntegrationCard
           key="discord"
           icon={<DiscordIcon className="size-7 text-white" />}
           title="Discord"
-          description="Connect Bounty to your Discord and access all of our tools from any server, even your own"
-          {...comingSoonProps}
+          description={description}
+          status={
+            isLinked
+              ? {
+                  type: 'installed',
+                  count: 1,
+                  accounts: [
+                    {
+                      id: 1,
+                      accountLogin: displayName,
+                      icon: item.account?.avatar ?? undefined,
+                      href: '/integrations/discord',
+                    },
+                  ],
+                }
+              : undefined
+          }
+          action={
+            isLinked
+              ? {
+                  label: 'Install',
+                  onClick: item.onAddBot,
+                  disabled: !item.botInstallUrl,
+                }
+              : {
+                  label: 'Link Account',
+                  onClick: item.onLinkAccount,
+                }
+          }
+          href={isLinked ? '/integrations/discord' : undefined}
         />
       );
+    }
     case 'twitter':
       return (
         <IntegrationCard
@@ -321,6 +454,11 @@ export function IntegrationsSettings() {
     githubInstallUrl,
     phantomWallets,
     connectPhantom,
+    discordAccount,
+    discordBotInstallUrl,
+    hasDiscord,
+    addDiscordBot,
+    linkDiscord,
     refreshAll,
     invalidateAll,
   } = useIntegrations();
@@ -351,7 +489,10 @@ export function IntegrationsSettings() {
     }
   }, [connectPhantom, refreshAll]);
 
-  const installedCount = githubInstallations.length + (phantomWallets.length > 0 ? 1 : 0);
+  const installedCount =
+    githubInstallations.length +
+    (phantomWallets.length > 0 ? 1 : 0) +
+    (hasDiscord ? 1 : 0);
 
   const allIntegrations = useMemo(
     () => [
@@ -364,23 +505,50 @@ export function IntegrationsSettings() {
         connectionStatus: {
           connected: phantomWallets.length > 0,
           wallets: phantomWallets,
-        } as { connected: boolean; wallets: Array<{ walletAddress: string; displayName?: string | null; tokenBalance?: string | null; tokenBalanceFormatted?: string | null; tokenValueUsd?: string | null }> },
+        } as {
+          connected: boolean;
+          wallets: Array<{
+            walletAddress: string;
+            displayName?: string | null;
+            tokenBalance?: string | null;
+            tokenBalanceFormatted?: string | null;
+            tokenValueUsd?: string | null;
+          }>;
+        },
         onConnect: handlePhantomConnect,
         isConnecting,
       },
-      { type: 'discord' as const },
+      {
+        type: 'discord' as const,
+        account: discordAccount,
+        botInstallUrl: discordBotInstallUrl,
+        onAddBot: addDiscordBot,
+        onLinkAccount: linkDiscord,
+      },
       { type: 'twitter' as const },
       { type: 'slack' as const },
     ],
-    [githubInstallations, phantomWallets, handlePhantomConnect, isConnecting]
+    [
+      githubInstallations,
+      phantomWallets,
+      handlePhantomConnect,
+      isConnecting,
+      discordAccount,
+      discordBotInstallUrl,
+      addDiscordBot,
+      linkDiscord,
+    ]
   );
 
-  const filteredIntegrations = filter === 'installed'
-    ? allIntegrations.filter((item) =>
-        (item.type === 'github' && item.installations.length > 0) ||
-        (item.type === 'phantom' && item.connectionStatus?.connected)
-      )
-    : allIntegrations;
+  const filteredIntegrations =
+    filter === 'installed'
+      ? allIntegrations.filter(
+          (item) =>
+            (item.type === 'github' && item.installations.length > 0) ||
+            (item.type === 'phantom' && item.connectionStatus?.connected) ||
+            (item.type === 'discord' && item.account)
+        )
+      : allIntegrations;
 
   if (isLoading) {
     return (
@@ -422,7 +590,9 @@ export function IntegrationsSettings() {
 
       {/* Integration Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filteredIntegrations.map((item) => renderIntegrationCard(item, filter, { url: githubInstallUrl }))}
+        {filteredIntegrations.map((item) =>
+          renderIntegrationCard(item, filter, { url: githubInstallUrl })
+        )}
       </div>
     </div>
   );
