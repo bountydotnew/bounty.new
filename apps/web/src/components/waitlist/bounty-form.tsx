@@ -1,16 +1,20 @@
 'use client';
 
-import { useState, useEffect, useRef } from "react";
-import { authClient } from "@bounty/auth/client";
-import { useRouter } from "next/navigation";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { TRPCClientError } from "@trpc/client";
-import { toast } from "sonner";
-import { trpc, trpcClient } from "@/utils/trpc";
-import { ChevronSortIcon } from "@bounty/ui/components/icons/huge/chevron-sort";
-import GitHub from "@/components/icons/github";
-import { Popover, PopoverContent, PopoverTrigger } from "@bounty/ui/components/popover";
-import { DeadlineChip } from "@/components/dashboard/task-form/components/DeadlineChip";
+import { useState, useEffect, useRef } from 'react';
+import { useSession } from '@/context/session-context';
+import { useRouter } from 'next/navigation';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { TRPCClientError } from '@trpc/client';
+import { toast } from 'sonner';
+import { trpc, trpcClient } from '@/utils/trpc';
+import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
+import GitHub from '@/components/icons/github';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@bounty/ui/components/popover';
+import { DeadlineChip } from '@/components/dashboard/task-form/components/DeadlineChip';
 
 const BOUNTY_DRAFT_STORAGE_KEY = 'bounty_draft';
 
@@ -45,7 +49,7 @@ export function BountyForm({
   onCancel,
 }: BountyFormProps) {
   const router = useRouter();
-  const { data: session } = authClient.useSession();
+  const { session } = useSession();
   const [title, setTitle] = useState(initialValues?.title || '');
   const [description, setDescription] = useState(
     initialValues?.description || ''
@@ -97,7 +101,7 @@ export function BountyForm({
     if (onSubmit) {
       return; // Skip if in edit mode
     }
-    
+
     const draft: BountyDraft = {
       title: title || undefined,
       description: description || undefined,
@@ -254,71 +258,77 @@ export function BountyForm({
   return (
     <div className="w-full max-w-[95vw] sm:max-w-[703px] mx-auto">
       <div className="w-full min-h-[140px] sm:min-h-[180px] rounded-[12px] sm:rounded-[21px] bg-[#191919] border border-[#232323] flex flex-col px-2 sm:px-0">
-      {/* Top row: Chips */}
-      <div className="flex items-center gap-1.5 sm:gap-2.5 px-1.5 sm:px-[14px] pt-2 sm:pt-3 pb-1.5 sm:pb-2 overflow-x-auto no-scrollbar">
-        {/* Title chip */}
-        <Popover open={titlePopoverOpen} onOpenChange={setTitlePopoverOpen}>
-          <PopoverTrigger asChild>
-            <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-[#141414] border border-solid border-[#232323] hover:border-[#333] transition-colors cursor-pointer">
-              <span className={`text-[16px] leading-5 font-sans ${title ? 'text-white' : 'text-[#7C7878]'}`}>
-                {title || "Title"}
-              </span>
-              <ChevronSortIcon className="size-2 text-[#7D7878] shrink-0" />
-            </div>
-          </PopoverTrigger>
-          <PopoverContent
-            className="w-64 p-3 bg-[#191919] border-[#232323] rounded-xl"
-            align="start"
-            sideOffset={8}
-          >
-            <input
-              ref={titleRef}
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter a title"
-              className="w-full bg-transparent text-white text-[16px] leading-5 outline-none placeholder:text-[#5A5A5A]"
-              autoFocus
-            />
-          </PopoverContent>
-        </Popover>
-
-        {/* Price chip */}
-        <Popover open={pricePopoverOpen} onOpenChange={setPricePopoverOpen}>
-          <PopoverTrigger asChild>
-            <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-[#141414] border border-solid border-[#232323] hover:border-[#333] transition-colors cursor-pointer">
-              <span className={`text-[16px] leading-5 font-sans ${price ? 'text-white' : 'text-[#7C7878]'}`}>
-                {price ? price.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : "Price"}
-              </span>
-              <ChevronSortIcon className="size-2 text-[#7D7878] shrink-0" />
-            </div>
-          </PopoverTrigger>
-          <PopoverContent
-            className="w-48 p-3 bg-[#191919] border-[#232323] rounded-xl"
-            align="start"
-            sideOffset={8}
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-[#5A5A5A] text-[16px]">$</span>
+        {/* Top row: Chips */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5 px-1.5 sm:px-[14px] pt-2 sm:pt-3 pb-1.5 sm:pb-2 overflow-x-auto no-scrollbar">
+          {/* Title chip */}
+          <Popover open={titlePopoverOpen} onOpenChange={setTitlePopoverOpen}>
+            <PopoverTrigger asChild>
+              <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-[#141414] border border-solid border-[#232323] hover:border-[#333] transition-colors cursor-pointer">
+                <span
+                  className={`text-[16px] leading-5 font-sans ${title ? 'text-white' : 'text-[#7C7878]'}`}
+                >
+                  {title || 'Title'}
+                </span>
+                <ChevronSortIcon className="size-2 text-[#7D7878] shrink-0" />
+              </div>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-64 p-3 bg-[#191919] border-[#232323] rounded-xl"
+              align="start"
+              sideOffset={8}
+            >
               <input
-                ref={priceRef}
+                ref={titleRef}
                 type="text"
-                value={price}
-                onChange={(e) => {
-                  // Remove non-numeric characters for storage
-                  const cleaned = e.target.value.replace(/[^0-9.]/g, "");
-                  setPrice(cleaned);
-                }}
-                placeholder="0.00"
-                className="flex-1 bg-transparent text-white text-[16px] leading-5 outline-none placeholder:text-[#5A5A5A]"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter a title"
+                className="w-full bg-transparent text-white text-[16px] leading-5 outline-none placeholder:text-[#5A5A5A]"
                 autoFocus
               />
-            </div>
-          </PopoverContent>
-        </Popover>
+            </PopoverContent>
+          </Popover>
 
-        {/* Deadline chip */}
-        <DeadlineChip value={deadline} onChange={setDeadline} />
+          {/* Price chip */}
+          <Popover open={pricePopoverOpen} onOpenChange={setPricePopoverOpen}>
+            <PopoverTrigger asChild>
+              <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-[#141414] border border-solid border-[#232323] hover:border-[#333] transition-colors cursor-pointer">
+                <span
+                  className={`text-[16px] leading-5 font-sans ${price ? 'text-white' : 'text-[#7C7878]'}`}
+                >
+                  {price
+                    ? price.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                    : 'Price'}
+                </span>
+                <ChevronSortIcon className="size-2 text-[#7D7878] shrink-0" />
+              </div>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-48 p-3 bg-[#191919] border-[#232323] rounded-xl"
+              align="start"
+              sideOffset={8}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-[#5A5A5A] text-[16px]">$</span>
+                <input
+                  ref={priceRef}
+                  type="text"
+                  value={price}
+                  onChange={(e) => {
+                    // Remove non-numeric characters for storage
+                    const cleaned = e.target.value.replace(/[^0-9.]/g, '');
+                    setPrice(cleaned);
+                  }}
+                  placeholder="0.00"
+                  className="flex-1 bg-transparent text-white text-[16px] leading-5 outline-none placeholder:text-[#5A5A5A]"
+                  autoFocus
+                />
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {/* Deadline chip */}
+          <DeadlineChip value={deadline} onChange={setDeadline} />
 
           {/* Divider */}
           {/* <span className="text-[#5A5A5A] text-base shrink-0">or</span> */}
@@ -356,15 +366,19 @@ export function BountyForm({
               Cancel
             </button>
           )}
-          {!onSubmit && !onCancel && (
+          {!(onSubmit || onCancel) && (
             <button
               type="button"
               onClick={handleSkipAndJoinWaitlist}
               disabled={isSubmitting}
               className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
             >
-              <span className="hidden sm:inline">{isSubmitting ? "Redirecting..." : "Skip & join waitlist"}</span>
-              <span className="sm:hidden">{isSubmitting ? "Redirecting..." : "Skip"}</span>
+              <span className="hidden sm:inline">
+                {isSubmitting ? 'Redirecting...' : 'Skip & join waitlist'}
+              </span>
+              <span className="sm:hidden">
+                {isSubmitting ? 'Redirecting...' : 'Skip'}
+              </span>
             </button>
           )}
           <button
@@ -374,8 +388,24 @@ export function BountyForm({
             className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-white text-black text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
           >
             <GitHub className="w-4 h-4 shrink-0" />
-            <span className="hidden sm:inline">{isSubmitting ? (onSubmit ? "Saving..." : "Creating...") : (onSubmit ? "Save" : "Create bounty")}</span>
-            <span className="sm:hidden">{isSubmitting ? (onSubmit ? "Saving..." : "Creating...") : (onSubmit ? "Save" : "Create")}</span>
+            <span className="hidden sm:inline">
+              {isSubmitting
+                ? onSubmit
+                  ? 'Saving...'
+                  : 'Creating...'
+                : onSubmit
+                  ? 'Save'
+                  : 'Create bounty'}
+            </span>
+            <span className="sm:hidden">
+              {isSubmitting
+                ? onSubmit
+                  ? 'Saving...'
+                  : 'Creating...'
+                : onSubmit
+                  ? 'Save'
+                  : 'Create'}
+            </span>
           </button>
         </div>
       </div>

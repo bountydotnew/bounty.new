@@ -24,7 +24,7 @@ import { SubmissionsMobileSidebar } from '@/components/bounty/submissions-mobile
 import type { BountyCommentCacheItem } from '@/types/comments';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { Header } from '../dual-sidebar/sidebar-header';
-import { authClient } from '@bounty/auth/client';
+import { useSession } from '@/context/session-context';
 import { Alert, AlertDescription } from '@bounty/ui/components/alert';
 import {
   Dialog,
@@ -84,17 +84,17 @@ export default function BountyDetailPage({
     useBountyModals();
   const queryClient = useQueryClient();
   const router = useRouter();
-  const { data: session } = authClient.useSession();
+  const { session } = useSession();
 
   // Fetch payment status if needed
   const paymentStatusQuery = useQuery({
     ...trpc.bounties.getBountyPaymentStatus.queryOptions({ bountyId: id }),
     enabled: Boolean(
       id &&
-      session?.user?.id &&
-      createdById &&
-      createdById === session.user.id &&
-      paymentStatus === 'pending'
+        session?.user?.id &&
+        createdById &&
+        createdById === session.user.id &&
+        paymentStatus === 'pending'
     ),
   });
 
@@ -102,6 +102,7 @@ export default function BountyDetailPage({
     mutationFn: async () => {
       return await trpcClient.bounties.createPaymentForBounty.mutate({
         bountyId: id,
+        origin: window.location.origin,
       });
     },
     onSuccess: (result) => {
@@ -131,7 +132,9 @@ export default function BountyDetailPage({
     },
     onSuccess: (result) => {
       if (result.success && result.paymentStatus === 'held') {
-        toast.success(result.message || 'Payment verified! Bounty is now live.');
+        toast.success(
+          result.message || 'Payment verified! Bounty is now live.'
+        );
         // Invalidate queries to refresh the page
         queryClient.invalidateQueries({
           queryKey: [['bounties', 'getBountyDetail']],
@@ -140,7 +143,9 @@ export default function BountyDetailPage({
           queryKey: [['bounties', 'getBountyPaymentStatus']],
         });
       } else {
-        toast.info(result.message || 'Payment status checked. No changes needed.');
+        toast.info(
+          result.message || 'Payment status checked. No changes needed.'
+        );
       }
     },
     onError: (error: Error) => {
@@ -253,13 +258,15 @@ export default function BountyDetailPage({
     enabled: isCreator && isFunded,
   });
 
-  const hasPendingCancellation = cancellationStatusQuery.data?.hasPendingRequest ?? false;
+  const hasPendingCancellation =
+    cancellationStatusQuery.data?.hasPendingRequest ?? false;
 
   // Owner can delete if:
   // 1. Bounty is not funded, OR
   // 2. Bounty has a pending cancellation request, OR
   // 3. Bounty is already cancelled/refunded
-  const canDelete = isCreator && (!isFunded || hasPendingCancellation || isCancelled);
+  const canDelete =
+    isCreator && (!isFunded || hasPendingCancellation || isCancelled);
 
   const requestCancellationMutation = useMutation({
     mutationFn: async (input: { bountyId: string; reason?: string }) => {
@@ -297,7 +304,9 @@ export default function BountyDetailPage({
 
   const handleRequestCancellation = () => {
     if (hasPendingCancellation) {
-      toast.error('You already have a pending cancellation request for this bounty.');
+      toast.error(
+        'You already have a pending cancellation request for this bounty.'
+      );
       return;
     }
     setShowCancellationDialog(true);
@@ -444,23 +453,34 @@ export default function BountyDetailPage({
                 <Alert className="mb-4 border-yellow-500/20 bg-yellow-500/10">
                   <AlertDescription className="flex items-center justify-between">
                     <span className="text-yellow-400">
-                      This bounty requires payment to become active. Complete payment to allow submissions.
+                      This bounty requires payment to become active. Complete
+                      payment to allow submissions.
                     </span>
                     <div className="flex items-center gap-2 ml-4">
                       <Button
                         onClick={handleRecheckPayment}
-                        disabled={recheckPaymentMutation.isPending || paymentStatusQuery.isLoading}
+                        disabled={
+                          recheckPaymentMutation.isPending ||
+                          paymentStatusQuery.isLoading
+                        }
                         size="sm"
                         variant="outline"
                       >
-                        {recheckPaymentMutation.isPending ? 'Syncing...' : 'Sync'}
+                        {recheckPaymentMutation.isPending
+                          ? 'Syncing...'
+                          : 'Sync'}
                       </Button>
                       <Button
                         onClick={handleCompletePayment}
-                        disabled={createPaymentMutation.isPending || paymentStatusQuery.isLoading}
+                        disabled={
+                          createPaymentMutation.isPending ||
+                          paymentStatusQuery.isLoading
+                        }
                         size="sm"
                       >
-                        {createPaymentMutation.isPending ? 'Preparing...' : 'Complete Payment'}
+                        {createPaymentMutation.isPending
+                          ? 'Preparing...'
+                          : 'Complete Payment'}
                       </Button>
                     </div>
                   </AlertDescription>
@@ -469,7 +489,8 @@ export default function BountyDetailPage({
               {!isCreator && isUnfunded && (
                 <Alert className="mb-4 border-[#232323] bg-[#191919]">
                   <AlertDescription className="text-[#FFFFFF99]">
-                    This bounty is not yet funded. Submissions may be restricted until payment is completed.
+                    This bounty is not yet funded. Submissions may be restricted
+                    until payment is completed.
                   </AlertDescription>
                 </Alert>
               )}
@@ -560,22 +581,30 @@ export default function BountyDetailPage({
                       canRequestCancellation && !isCancelled
                         ? [
                             hasPendingCancellation
-                              ? {
+                              ? ({
                                   key: 'cancel-cancellation-request',
                                   label: 'Cancel cancellation request',
-                                  onSelect: () => cancelCancellationRequestMutation.mutate({ bountyId: id }),
+                                  onSelect: () =>
+                                    cancelCancellationRequestMutation.mutate({
+                                      bountyId: id,
+                                    }),
                                   icon: <X className="h-3.5 w-3.5" />,
-                                  disabled: cancelCancellationRequestMutation.isPending,
-                                  className: 'text-green-500 hover:bg-green-500/10 focus:bg-green-500/10',
-                                } satisfies ActionItem
-                              : {
+                                  disabled:
+                                    cancelCancellationRequestMutation.isPending,
+                                  className:
+                                    'text-green-500 hover:bg-green-500/10 focus:bg-green-500/10',
+                                } satisfies ActionItem)
+                              : ({
                                   key: 'request-cancellation',
                                   label: 'Request cancellation',
                                   onSelect: handleRequestCancellation,
-                                  icon: <AlertTriangle className="h-3.5 w-3.5" />,
+                                  icon: (
+                                    <AlertTriangle className="h-3.5 w-3.5" />
+                                  ),
                                   disabled: cancellationStatusQuery.isLoading,
-                                  className: 'text-yellow-500 hover:bg-yellow-500/10 focus:bg-yellow-500/10',
-                                } satisfies ActionItem,
+                                  className:
+                                    'text-yellow-500 hover:bg-yellow-500/10 focus:bg-yellow-500/10',
+                                } satisfies ActionItem),
                           ]
                         : undefined
                     }
@@ -613,17 +642,21 @@ export default function BountyDetailPage({
             <div className="mb-8 rounded-lg p-6">
               <h3 className="mb-4 font-medium text-lg text-white">
                 Submissions
-                {submissionsQuery.data?.submissions && submissionsQuery.data.submissions.length > 0 && (
-                  <span className="ml-2 text-sm text-gray-400">
-                    ({submissionsQuery.data.submissions.length})
-                  </span>
-                )}
+                {submissionsQuery.data?.submissions &&
+                  submissionsQuery.data.submissions.length > 0 && (
+                    <span className="ml-2 text-sm text-gray-400">
+                      ({submissionsQuery.data.submissions.length})
+                    </span>
+                  )}
               </h3>
 
               <div className="space-y-4">
                 {submissionsQuery.isLoading ? (
-                  <div className="text-center text-gray-400 text-sm">Loading submissions...</div>
-                ) : submissionsQuery.data?.submissions && submissionsQuery.data.submissions.length > 0 ? (
+                  <div className="text-center text-gray-400 text-sm">
+                    Loading submissions...
+                  </div>
+                ) : submissionsQuery.data?.submissions &&
+                  submissionsQuery.data.submissions.length > 0 ? (
                   submissionsQuery.data.submissions.map((sub) => (
                     <SubmissionCard
                       key={sub.id}
@@ -652,7 +685,11 @@ export default function BountyDetailPage({
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 rounded-lg bg-[#2A2A28] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#383838]"
                       >
-                        <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                        <svg
+                          className="h-4 w-4"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
                           <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.09-.745.08-.73.08-.73 1.205.085 1.838 1.238 1.838 1.238 1.07 1.835 2.807 1.305 3.492.998.108-.775.418-1.305.762-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
                         </svg>
                         Submit on GitHub
@@ -673,15 +710,19 @@ export default function BountyDetailPage({
       />
 
       {/* Cancellation Request Dialog */}
-      <Dialog open={showCancellationDialog} onOpenChange={setShowCancellationDialog}>
+      <Dialog
+        open={showCancellationDialog}
+        onOpenChange={setShowCancellationDialog}
+      >
         <DialogContent className="border border-[#232323] bg-[#191919] text-[#CFCFCF]">
           <DialogHeader>
             <DialogTitle className="text-white mb-2">
               Request Cancellation
             </DialogTitle>
             <DialogDescription className="text-[#A0A0A0]">
-              Request to cancel this funded bounty. Our team will review your request
-              and process a refund. Note: The platform fee is non-refundable.
+              Request to cancel this funded bounty. Our team will review your
+              request and process a refund. Note: The platform fee is
+              non-refundable.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -693,7 +734,10 @@ export default function BountyDetailPage({
             />
           </div>
           <DialogFooter className="flex gap-2 sm:justify-end">
-            <Button variant="outline" onClick={() => setShowCancellationDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowCancellationDialog(false)}
+            >
               Cancel
             </Button>
             <Button
@@ -701,7 +745,9 @@ export default function BountyDetailPage({
               disabled={requestCancellationMutation.isPending}
               className="bg-yellow-600 hover:bg-yellow-700 text-white"
             >
-              {requestCancellationMutation.isPending ? 'Submitting...' : 'Submit Request'}
+              {requestCancellationMutation.isPending
+                ? 'Submitting...'
+                : 'Submit Request'}
             </Button>
           </DialogFooter>
         </DialogContent>

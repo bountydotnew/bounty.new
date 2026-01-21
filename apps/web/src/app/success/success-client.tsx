@@ -1,6 +1,6 @@
 'use client';
 
-import { authClient } from '@bounty/auth/client';
+import { useSession } from '@/context/session-context';
 import { Badge } from '@bounty/ui/components/badge';
 import { Button } from '@bounty/ui/components/button';
 import {
@@ -24,7 +24,7 @@ export function SuccessClient() {
   const router = useRouter();
   const checkoutId = searchParams.get('checkout_id');
   const { refetch, customer } = useBilling();
-  const { data: session } = authClient.useSession();
+  const { session } = useSession();
   const { celebrate } = useConfetti();
 
   useEffect(() => {

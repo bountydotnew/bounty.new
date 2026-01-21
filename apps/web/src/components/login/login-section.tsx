@@ -2,6 +2,7 @@
 
 import { authClient } from '@bounty/auth/client';
 import { Badge } from '@bounty/ui/components/badge';
+import { useSession } from '@/context/session-context';
 import { Button } from '@bounty/ui/components/button';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useEffect, useState } from 'react';
@@ -20,7 +21,7 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
   const [loading, setLoading] = useState(false);
   const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(null);
   const [addAccountParam] = useQueryState('addAccount', parseAsString);
-  const { data: session, isPending } = authClient.useSession();
+  const { session, isPending } = useSession();
   const isAddingAccount = addAccountParam === 'true';
 
   useEffect(() => {

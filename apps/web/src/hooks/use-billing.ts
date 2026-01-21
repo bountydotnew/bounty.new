@@ -63,7 +63,9 @@ const mapFeature = (feature?: {
   const isUnlimited = feature.unlimited ?? false;
   const includedUsage = feature.included_usage ?? 0;
   const usage = feature.usage ?? 0;
-  const remaining = isUnlimited ? Infinity : Math.max(0, includedUsage - usage);
+  const remaining = isUnlimited
+    ? Number.POSITIVE_INFINITY
+    : Math.max(0, includedUsage - usage);
 
   return {
     total: includedUsage,
@@ -101,14 +103,8 @@ const mapFeature = (feature?: {
  * ```
  */
 export const useBilling = (): BillingHookResult => {
-  const {
-    customer,
-    isLoading,
-    refetch,
-    attach,
-    openBillingPortal,
-    track,
-  } = useCustomer();
+  const { customer, isLoading, refetch, attach, openBillingPortal, track } =
+    useCustomer();
 
   // Helper to check if customer has pro status
   const checkProStatus = useCallback((): boolean => {
@@ -119,8 +115,17 @@ export const useBilling = (): BillingHookResult => {
     // Check if user has any active paid subscription (not free tier)
     const products = customer.products ?? [];
     const hasPaidSubscription = products.some(
-      (p) => p.status === 'active' || p.status === 'trialing'
+      (p) =>
+        (p.status === 'active' || p.status === 'trialing') && p.id !== 'free'
     );
+
+    // Debug logging - remove after fixing
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[useBilling] checkProStatus:', {
+        products: products.map((p) => ({ id: p.id, status: p.status })),
+        hasPaidSubscription,
+      });
+    }
 
     return Boolean(hasPaidSubscription);
   }, [customer]);
@@ -128,7 +133,9 @@ export const useBilling = (): BillingHookResult => {
   // Compute feature states and pro status
   const billingState = useMemo(() => {
     const isPro = checkProStatus();
-    const concurrentBounties = customer?.features?.[AUTUMN_FEATURE_IDS.CONCURRENT_BOUNTIES]
+    const concurrentBounties = customer?.features?.[
+      AUTUMN_FEATURE_IDS.CONCURRENT_BOUNTIES
+    ]
       ? mapFeature(customer.features[AUTUMN_FEATURE_IDS.CONCURRENT_BOUNTIES])
       : DEFAULT_FEATURES;
 
@@ -153,29 +160,33 @@ export const useBilling = (): BillingHookResult => {
   );
 
   // Start checkout - accepts Autumn product IDs (all except free)
-  const checkout = useCallback(async (slug: Exclude<BountyProPlan, 'free'>) => {
-    const baseUrl = typeof window !== 'undefined'
-      ? window.location.origin
-      : process.env.NEXT_PUBLIC_BASE_URL ?? 'https://bounty.new';
+  const checkout = useCallback(
+    async (slug: Exclude<BountyProPlan, 'free'>) => {
+      const baseUrl =
+        typeof window !== 'undefined'
+          ? window.location.origin
+          : (process.env.NEXT_PUBLIC_BASE_URL ?? 'https://bounty.new');
 
-    const result = await attach({
-      productId: slug,
-      successUrl: `${baseUrl}/settings/billing?checkout=success`,
-      checkoutSessionParams: {
-        cancel_url: `${baseUrl}/pricing`,
-      },
-      forceCheckout: true,
-    });
+      const result = await attach({
+        productId: slug,
+        successUrl: `${baseUrl}/settings/billing?checkout=success`,
+        checkoutSessionParams: {
+          cancel_url: `${baseUrl}/pricing`,
+        },
+        forceCheckout: true,
+      });
 
-    if (result.error) {
-      throw new Error(result.error.message ?? 'Checkout failed');
-    }
+      if (result.error) {
+        throw new Error(result.error.message ?? 'Checkout failed');
+      }
 
-    const data = result.data;
-    if (data && 'checkout_url' in data && data.checkout_url) {
-      window.location.href = data.checkout_url;
-    }
-  }, [attach]);
+      const data = result.data;
+      if (data && 'checkout_url' in data && data.checkout_url) {
+        window.location.href = data.checkout_url;
+      }
+    },
+    [attach]
+  );
 
   // Wrap openBillingPortal to return Promise<void> for backward compatibility
   const handleOpenBillingPortal = useCallback(async () => {

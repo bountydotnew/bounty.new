@@ -1,6 +1,6 @@
 'use client';
 
-import { authClient } from '@bounty/auth/client';
+import { useSession } from '@/context/session-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -21,7 +21,7 @@ export default function BountyComments({
   pageSize = 10,
   initialComments,
 }: BountyCommentsProps) {
-  const { data: session } = authClient.useSession();
+  const { session } = useSession();
   const queryClient = useQueryClient();
 
   const [page, setPage] = useState(1);

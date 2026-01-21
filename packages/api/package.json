@@ -20,7 +20,9 @@
     "zod": "catalog:",
     "@trpc/server": "catalog:",
     "@upstash/ratelimit": "catalog:",
-    "lru-cache": "catalog:"
+    "lru-cache": "catalog:",
+    "tweetnacl": "^1.0.3",
+    "bs58": "^6.0.0"
   },
   "devDependencies": {
     "typescript": "catalog:"

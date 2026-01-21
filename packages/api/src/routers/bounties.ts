@@ -13,7 +13,11 @@ import {
   transaction,
   user,
 } from '@bounty/db';
-import { FROM_ADDRESSES, sendEmail, BountyCancellationNotice } from '@bounty/email';
+import {
+  FROM_ADDRESSES,
+  sendEmail,
+  BountyCancellationNotice,
+} from '@bounty/email';
 import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
 import {
@@ -319,16 +323,18 @@ export const bountiesRouter = router({
         const payLater = input.payLater ?? false;
 
         // Parse GitHub issue URL to extract issue number and repo info
-        let githubIssueNumber: number | undefined = undefined;
-        let githubRepoOwner: string | undefined = undefined;
-        let githubRepoName: string | undefined = undefined;
+        let githubIssueNumber: number | undefined;
+        let githubRepoOwner: string | undefined;
+        let githubRepoName: string | undefined;
 
         if (issueUrl) {
-          const urlMatch = issueUrl.match(/github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/i);
+          const urlMatch = issueUrl.match(
+            /github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/i
+          );
           if (urlMatch) {
             githubRepoOwner = urlMatch[1] || undefined;
             githubRepoName = urlMatch[2] || undefined;
-            githubIssueNumber = parseInt(urlMatch[3] || '0', 10);
+            githubIssueNumber = Number.parseInt(urlMatch[3] || '0', 10);
           }
         }
 
@@ -359,8 +365,11 @@ export const bountiesRouter = router({
         }
 
         // Calculate fees
-        const bountyAmountInCents = Math.round(parseAmount(normalizedAmount) * 100);
-        const { total: totalWithFees, fees } = calculateTotalWithFees(bountyAmountInCents);
+        const bountyAmountInCents = Math.round(
+          parseAmount(normalizedAmount) * 100
+        );
+        const { total: totalWithFees, fees } =
+          calculateTotalWithFees(bountyAmountInCents);
 
         let checkoutSessionUrl = null;
 
@@ -424,7 +433,8 @@ export const bountiesRouter = router({
           newBounty.githubInstallationId
         ) {
           try {
-            const { getGithubAppManager, createUnfundedBountyComment } = await import('@bounty/api/driver/github-app');
+            const { getGithubAppManager, createUnfundedBountyComment } =
+              await import('@bounty/api/driver/github-app');
             const githubApp = getGithubAppManager();
 
             const commentBody = createUnfundedBountyComment(
@@ -462,7 +472,8 @@ export const bountiesRouter = router({
             ctx.session.user.name
           );
 
-          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+          const baseUrl =
+            process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
           const checkoutSession = await createBountyCheckoutSession({
             bountyId: newBounty.id,
             amount: bountyAmountInCents,
@@ -503,7 +514,8 @@ export const bountiesRouter = router({
 
         // Send Discord webhook notification for unfunded bounty (non-blocking, fire-and-forget)
         // At creation time, bounties are always unfunded (paymentStatus: 'pending')
-        const webhookUrl = env.BOUNTY_UNFUNDED_WEBHOOK_URL || env.BOUNTY_FEED_WEBHOOK_URL;
+        const webhookUrl =
+          env.BOUNTY_UNFUNDED_WEBHOOK_URL || env.BOUNTY_FEED_WEBHOOK_URL;
         if (webhookUrl) {
           // Fetch creator info for webhook
           const creator = await db
@@ -555,7 +567,8 @@ export const bountiesRouter = router({
         if (error instanceof TRPCError) {
           throw error;
         }
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to create bounty: ${errorMessage}`,
@@ -728,32 +741,32 @@ export const bountiesRouter = router({
 
   randomBounty: publicProcedure.query(async ({ ctx }) => {
     try {
-        const [result] = await ctx.db
-          .select({
-            id: bounty.id,
-            title: bounty.title,
-            description: bounty.description,
-            amount: bounty.amount,
-            currency: bounty.currency,
-            status: bounty.status,
-            deadline: bounty.deadline,
-            tags: bounty.tags,
-            repositoryUrl: bounty.repositoryUrl,
-            issueUrl: bounty.issueUrl,
-            paymentStatus: bounty.paymentStatus,
-            createdById: bounty.createdById,
-            createdAt: bounty.createdAt,
-            creator: {
-              id: user.id,
-              name: user.name,
-              image: user.image,
-            },
-          })
-          .from(bounty)
-          .innerJoin(user, eq(bounty.createdById, user.id))
-          .where(eq(bounty.status, 'open'))
-          .orderBy(sql`RANDOM()`)
-          .limit(1);
+      const [result] = await ctx.db
+        .select({
+          id: bounty.id,
+          title: bounty.title,
+          description: bounty.description,
+          amount: bounty.amount,
+          currency: bounty.currency,
+          status: bounty.status,
+          deadline: bounty.deadline,
+          tags: bounty.tags,
+          repositoryUrl: bounty.repositoryUrl,
+          issueUrl: bounty.issueUrl,
+          paymentStatus: bounty.paymentStatus,
+          createdById: bounty.createdById,
+          createdAt: bounty.createdAt,
+          creator: {
+            id: user.id,
+            name: user.name,
+            image: user.image,
+          },
+        })
+        .from(bounty)
+        .innerJoin(user, eq(bounty.createdById, user.id))
+        .where(eq(bounty.status, 'open'))
+        .orderBy(sql`RANDOM()`)
+        .limit(1);
 
       if (!result) {
         throw new TRPCError({
@@ -1051,7 +1064,8 @@ export const bountiesRouter = router({
         ) {
           throw new TRPCError({
             code: 'FORBIDDEN',
-            message: 'Cannot delete a funded bounty. Please contact support at support@bounty.new if you need assistance.',
+            message:
+              'Cannot delete a funded bounty. Please contact support at support@bounty.new if you need assistance.',
           });
         }
 
@@ -1247,7 +1261,9 @@ export const bountiesRouter = router({
                     AND ${bountyBookmark.userId} = ${userId}
                   ) as has_bookmarked
               `)
-            : Promise.resolve({ rows: [{ has_voted: false, has_bookmarked: false }] }),
+            : Promise.resolve({
+                rows: [{ has_voted: false, has_bookmarked: false }],
+              }),
 
           // Query 4: Get comments with user info
           db
@@ -1279,7 +1295,11 @@ export const bountiesRouter = router({
         }
 
         const voteCount = voteCountResult[0]?.count || 0;
-        const userInteraction = (userInteractionsResult as { rows: { has_voted: boolean; has_bookmarked: boolean }[] }).rows[0];
+        const userInteraction = (
+          userInteractionsResult as {
+            rows: { has_voted: boolean; has_bookmarked: boolean }[];
+          }
+        ).rows[0];
         const isVoted = userInteraction?.has_voted ?? false;
         const bookmarked = userInteraction?.has_bookmarked ?? false;
         const comments = commentsResult;
@@ -1321,7 +1341,9 @@ export const bountiesRouter = router({
         ]);
 
         // Build a map for O(1) lookup instead of O(n) find
-        const likeCountMap = new Map(likeCounts.map((lc) => [lc.commentId, lc.likeCount]));
+        const likeCountMap = new Map(
+          likeCounts.map((lc) => [lc.commentId, lc.likeCount])
+        );
         const userLikeSet = new Set(userLikes.map((ul) => ul.commentId));
 
         const commentsWithLikes = comments.map((c) => ({
@@ -1671,7 +1693,9 @@ export const bountiesRouter = router({
               commentId: inserted.id,
               userId: ctx.session.user.id,
               ...(ctx.session.user.name && { userName: ctx.session.user.name }),
-              ...(ctx.session.user.image && { userImage: ctx.session.user.image }),
+              ...(ctx.session.user.image && {
+                userImage: ctx.session.user.image,
+              }),
             };
 
             await createNotification({
@@ -2216,7 +2240,8 @@ export const bountiesRouter = router({
         if (error instanceof TRPCError) {
           throw error;
         }
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to confirm payment: ${errorMessage}`,
@@ -2226,7 +2251,9 @@ export const bountiesRouter = router({
     }),
 
   approveBountySubmission: protectedProcedure
-    .input(z.object({ bountyId: z.string().uuid(), submissionId: z.string().uuid() }))
+    .input(
+      z.object({ bountyId: z.string().uuid(), submissionId: z.string().uuid() })
+    )
     .mutation(async ({ ctx, input }) => {
       try {
         const [existingBounty] = await db
@@ -2252,9 +2279,10 @@ export const bountiesRouter = router({
         if (existingBounty.paymentStatus !== 'held') {
           throw new TRPCError({
             code: 'BAD_REQUEST',
-            message: existingBounty.paymentStatus === 'pending'
-              ? 'This bounty requires payment before you can approve submissions. Please complete payment first.'
-              : 'Payment must be held before approving submission',
+            message:
+              existingBounty.paymentStatus === 'pending'
+                ? 'This bounty requires payment before you can approve submissions. Please complete payment first.'
+                : 'Payment must be held before approving submission',
           });
         }
 
@@ -2284,7 +2312,8 @@ export const bountiesRouter = router({
           .select({
             id: user.id,
             stripeConnectAccountId: user.stripeConnectAccountId,
-            stripeConnectOnboardingComplete: user.stripeConnectOnboardingComplete,
+            stripeConnectOnboardingComplete:
+              user.stripeConnectOnboardingComplete,
           })
           .from(user)
           .where(eq(user.id, submissionData.contributorId))
@@ -2297,15 +2326,23 @@ export const bountiesRouter = router({
           });
         }
 
-        if (!solver.stripeConnectAccountId || !solver.stripeConnectOnboardingComplete) {
+        if (
+          !(
+            solver.stripeConnectAccountId &&
+            solver.stripeConnectOnboardingComplete
+          )
+        ) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
-            message: 'Solver must have a connected Stripe account to receive payment',
+            message:
+              'Solver must have a connected Stripe account to receive payment',
           });
         }
 
         // Convert amount to cents for Stripe
-        const amountInCents = Math.round(parseAmount(existingBounty.amount) * 100);
+        const amountInCents = Math.round(
+          parseAmount(existingBounty.amount) * 100
+        );
 
         // Create transfer to solver
         const transfer = await createTransfer({
@@ -2360,7 +2397,8 @@ export const bountiesRouter = router({
         if (error instanceof TRPCError) {
           throw error;
         }
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to approve submission: ${errorMessage}`,
@@ -2403,8 +2441,11 @@ export const bountiesRouter = router({
         }
 
         // Calculate fees
-        const bountyAmountInCents = Math.round(parseAmount(bountyData.amount) * 100);
-        const { fees, total: totalWithFees } = calculateTotalWithFees(bountyAmountInCents);
+        const bountyAmountInCents = Math.round(
+          parseAmount(bountyData.amount) * 100
+        );
+        const { fees, total: totalWithFees } =
+          calculateTotalWithFees(bountyAmountInCents);
 
         return {
           success: true,
@@ -2421,7 +2462,8 @@ export const bountiesRouter = router({
         if (error instanceof TRPCError) {
           throw error;
         }
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to get payment status: ${errorMessage}`,
@@ -2531,10 +2573,14 @@ export const bountiesRouter = router({
                     currentBounty.githubCommentId
                   ) {
                     try {
-                      const { getGithubAppManager, createFundedBountyComment } = await import('@bounty/api/driver/github-app');
+                      const { getGithubAppManager, createFundedBountyComment } =
+                        await import('@bounty/api/driver/github-app');
                       const githubApp = getGithubAppManager();
 
-                      const updatedCommentBody = createFundedBountyComment(bountyId, 0);
+                      const updatedCommentBody = createFundedBountyComment(
+                        bountyId,
+                        0
+                      );
 
                       await githubApp.editComment(
                         currentBounty.githubInstallationId,
@@ -2544,7 +2590,10 @@ export const bountiesRouter = router({
                         updatedCommentBody
                       );
                     } catch (error) {
-                      console.error('Failed to update GitHub comment to funded status:', error);
+                      console.error(
+                        'Failed to update GitHub comment to funded status:',
+                        error
+                      );
                       // Continue even if comment update fails
                     }
                   }
@@ -2557,7 +2606,10 @@ export const bountiesRouter = router({
                     paymentIntentId
                   );
                 }
-              } else if (currentBounty && !currentBounty.stripeCheckoutSessionId) {
+              } else if (
+                currentBounty &&
+                !currentBounty.stripeCheckoutSessionId
+              ) {
                 // Already processed, but ensure session ID is stored
                 await db
                   .update(bounty)
@@ -2628,17 +2680,23 @@ export const bountiesRouter = router({
         if (existingBounty.createdById !== ctx.session.user.id) {
           throw new TRPCError({
             code: 'FORBIDDEN',
-            message: 'You can only recheck payment status for your own bounties',
+            message:
+              'You can only recheck payment status for your own bounties',
           });
         }
 
         // If we have a payment intent ID, check its status directly
         if (existingBounty.stripePaymentIntentId) {
           const paymentIntent = await stripeCircuitBreaker.execute(() =>
-            stripeClient.paymentIntents.retrieve(existingBounty.stripePaymentIntentId!)
+            stripeClient.paymentIntents.retrieve(
+              existingBounty.stripePaymentIntentId!
+            )
           );
 
-          if (paymentIntent.status === 'succeeded' && existingBounty.paymentStatus !== 'held') {
+          if (
+            paymentIntent.status === 'succeeded' &&
+            existingBounty.paymentStatus !== 'held'
+          ) {
             // Payment succeeded but status wasn't updated - fix it
             await db
               .update(bounty)
@@ -2653,7 +2711,9 @@ export const bountiesRouter = router({
             const [existingTransaction] = await db
               .select()
               .from(transaction)
-              .where(eq(transaction.stripeId, existingBounty.stripePaymentIntentId))
+              .where(
+                eq(transaction.stripeId, existingBounty.stripePaymentIntentId)
+              )
               .limit(1);
 
             if (!existingTransaction) {
@@ -2674,10 +2734,14 @@ export const bountiesRouter = router({
               existingBounty.githubCommentId
             ) {
               try {
-                const { getGithubAppManager, createFundedBountyComment } = await import('@bounty/api/driver/github-app');
+                const { getGithubAppManager, createFundedBountyComment } =
+                  await import('@bounty/api/driver/github-app');
                 const githubApp = getGithubAppManager();
 
-                const updatedCommentBody = createFundedBountyComment(input.bountyId, 0);
+                const updatedCommentBody = createFundedBountyComment(
+                  input.bountyId,
+                  0
+                );
 
                 await githubApp.editComment(
                   existingBounty.githubInstallationId,
@@ -2687,7 +2751,10 @@ export const bountiesRouter = router({
                   updatedCommentBody
                 );
               } catch (error) {
-                console.error('Failed to update GitHub comment to funded status:', error);
+                console.error(
+                  'Failed to update GitHub comment to funded status:',
+                  error
+                );
                 // Continue even if comment update fails
               }
             }
@@ -2749,7 +2816,9 @@ export const bountiesRouter = router({
             };
           }
 
-          const sessionPaymentIntentId = latestSession.payment_intent as string | null;
+          const sessionPaymentIntentId = latestSession.payment_intent as
+            | string
+            | null;
 
           if (!sessionPaymentIntentId) {
             return {
@@ -2759,9 +2828,14 @@ export const bountiesRouter = router({
             };
           }
 
-          const paymentIntent = await stripeClient.paymentIntents.retrieve(sessionPaymentIntentId);
+          const paymentIntent = await stripeClient.paymentIntents.retrieve(
+            sessionPaymentIntentId
+          );
 
-          if (paymentIntent.status === 'succeeded' && existingBounty.paymentStatus !== 'held') {
+          if (
+            paymentIntent.status === 'succeeded' &&
+            existingBounty.paymentStatus !== 'held'
+          ) {
             await db
               .update(bounty)
               .set({
@@ -2796,10 +2870,14 @@ export const bountiesRouter = router({
               existingBounty.githubCommentId
             ) {
               try {
-                const { getGithubAppManager, createFundedBountyComment } = await import('@bounty/api/driver/github-app');
+                const { getGithubAppManager, createFundedBountyComment } =
+                  await import('@bounty/api/driver/github-app');
                 const githubApp = getGithubAppManager();
 
-                const updatedCommentBody = createFundedBountyComment(input.bountyId, 0);
+                const updatedCommentBody = createFundedBountyComment(
+                  input.bountyId,
+                  0
+                );
 
                 await githubApp.editComment(
                   existingBounty.githubInstallationId,
@@ -2809,7 +2887,10 @@ export const bountiesRouter = router({
                   updatedCommentBody
                 );
               } catch (error) {
-                console.error('Failed to update GitHub comment to funded status:', error);
+                console.error(
+                  'Failed to update GitHub comment to funded status:',
+                  error
+                );
                 // Continue even if comment update fails
               }
             }
@@ -2817,7 +2898,8 @@ export const bountiesRouter = router({
             return {
               success: true,
               paymentStatus: 'held',
-              message: 'Payment verified via checkout session! Bounty is now live.',
+              message:
+                'Payment verified via checkout session! Bounty is now live.',
             };
           }
 
@@ -2845,7 +2927,10 @@ export const bountiesRouter = router({
 
         const paymentIntentId = latestPaymentIntent.id;
 
-        if (latestPaymentIntent.status === 'succeeded' && existingBounty.paymentStatus !== 'held') {
+        if (
+          latestPaymentIntent.status === 'succeeded' &&
+          existingBounty.paymentStatus !== 'held'
+        ) {
           // Payment succeeded but status wasn't updated - fix it
           await db
             .update(bounty)
@@ -2882,10 +2967,14 @@ export const bountiesRouter = router({
             existingBounty.githubCommentId
           ) {
             try {
-              const { getGithubAppManager, createFundedBountyComment } = await import('@bounty/api/driver/github-app');
+              const { getGithubAppManager, createFundedBountyComment } =
+                await import('@bounty/api/driver/github-app');
               const githubApp = getGithubAppManager();
 
-              const updatedCommentBody = createFundedBountyComment(input.bountyId, 0);
+              const updatedCommentBody = createFundedBountyComment(
+                input.bountyId,
+                0
+              );
 
               await githubApp.editComment(
                 existingBounty.githubInstallationId,
@@ -2895,7 +2984,10 @@ export const bountiesRouter = router({
                 updatedCommentBody
               );
             } catch (error) {
-              console.error('Failed to update GitHub comment to funded status:', error);
+              console.error(
+                'Failed to update GitHub comment to funded status:',
+                error
+              );
               // Continue even if comment update fails
             }
           }
@@ -2911,14 +3003,15 @@ export const bountiesRouter = router({
           success: true,
           paymentStatus: existingBounty.paymentStatus,
           stripeStatus: latestPaymentIntent.status,
-          paymentIntentId: paymentIntentId,
+          paymentIntentId,
           message: `Payment Intent status: ${latestPaymentIntent.status}, Bounty status: ${existingBounty.paymentStatus}`,
         };
       } catch (error) {
         if (error instanceof TRPCError) {
           throw error;
         }
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to recheck payment status: ${errorMessage}`,
@@ -2928,7 +3021,12 @@ export const bountiesRouter = router({
     }),
 
   createPaymentForBounty: protectedProcedure
-    .input(z.object({ bountyId: z.string().uuid() }))
+    .input(
+      z.object({
+        bountyId: z.string().uuid(),
+        origin: z.string().url().optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       try {
         const [existingBounty] = await db
@@ -2974,10 +3072,15 @@ export const bountiesRouter = router({
         );
 
         // Calculate fees
-        const bountyAmountInCents = Math.round(parseAmount(existingBounty.amount) * 100);
+        const bountyAmountInCents = Math.round(
+          parseAmount(existingBounty.amount) * 100
+        );
         const { fees } = calculateTotalWithFees(bountyAmountInCents);
 
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const baseUrl =
+          input.origin ||
+          process.env.NEXT_PUBLIC_BASE_URL ||
+          'http://localhost:3000';
         const checkoutSession = await createBountyCheckoutSession({
           bountyId: input.bountyId,
           amount: bountyAmountInCents,
@@ -3004,7 +3107,8 @@ export const bountiesRouter = router({
         if (error instanceof TRPCError) {
           throw error;
         }
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to create payment: ${errorMessage}`,
@@ -3048,7 +3152,8 @@ export const bountiesRouter = router({
           submissions,
         };
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to get submissions: ${errorMessage}`,
@@ -3093,7 +3198,8 @@ export const bountiesRouter = router({
         if (bountyRecord.paymentStatus !== 'held') {
           throw new TRPCError({
             code: 'BAD_REQUEST',
-            message: 'Only funded bounties require cancellation requests. Unfunded bounties can be deleted directly.',
+            message:
+              'Only funded bounties require cancellation requests. Unfunded bounties can be deleted directly.',
           });
         }
 
@@ -3112,7 +3218,8 @@ export const bountiesRouter = router({
         if (approvedSubmission) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
-            message: 'Cannot cancel a bounty with an approved submission. The solver is owed payment.',
+            message:
+              'Cannot cancel a bounty with an approved submission. The solver is owed payment.',
           });
         }
 
@@ -3131,7 +3238,8 @@ export const bountiesRouter = router({
         if (existingRequest) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
-            message: 'A cancellation request is already pending for this bounty.',
+            message:
+              'A cancellation request is already pending for this bounty.',
           });
         }
 
@@ -3176,9 +3284,10 @@ export const bountiesRouter = router({
           .limit(1);
 
         // Send BountyCancellationNotice email to each submitter
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
+        const baseUrl =
+          process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
         const bountyAmountFormatted = `$${parseAmount(bountyRecord.amount).toLocaleString()}`;
-        
+
         for (const submitter of pendingSubmitters) {
           if (submitter.email) {
             try {
@@ -3194,7 +3303,10 @@ export const bountiesRouter = router({
                 }),
               });
             } catch (emailError) {
-              console.error(`[Cancellation] Failed to email submitter ${submitter.email}:`, emailError);
+              console.error(
+                `[Cancellation] Failed to email submitter ${submitter.email}:`,
+                emailError
+              );
             }
           }
         }
@@ -3232,19 +3344,23 @@ To process this request:
           `.trim(),
         });
 
-        console.log(`[Cancellation] Request created for bounty ${input.bountyId}, ${pendingSubmitters.length} submitters to notify`);
+        console.log(
+          `[Cancellation] Request created for bounty ${input.bountyId}, ${pendingSubmitters.length} submitters to notify`
+        );
 
         return {
           success: true,
           requestId: request.id,
           submittersNotified: pendingSubmitters.length,
-          message: 'Cancellation request submitted. Our team will review and process your refund.',
+          message:
+            'Cancellation request submitted. Our team will review and process your refund.',
         };
       } catch (error) {
         if (error instanceof TRPCError) {
           throw error;
         }
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to request cancellation: ${errorMessage}`,
@@ -3280,7 +3396,8 @@ To process this request:
         if (bountyRecord.createdById !== ctx.session.user.id) {
           throw new TRPCError({
             code: 'FORBIDDEN',
-            message: 'You can only cancel cancellation requests for your own bounties',
+            message:
+              'You can only cancel cancellation requests for your own bounties',
           });
         }
 
@@ -3321,7 +3438,9 @@ To process this request:
           });
         }
 
-        console.log(`[Cancellation] Request ${existingRequest.id} withdrawn by creator for bounty ${input.bountyId}`);
+        console.log(
+          `[Cancellation] Request ${existingRequest.id} withdrawn by creator for bounty ${input.bountyId}`
+        );
 
         return {
           success: true,
@@ -3332,7 +3451,8 @@ To process this request:
         if (error instanceof TRPCError) {
           throw error;
         }
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to cancel cancellation request: ${errorMessage}`,
@@ -3408,7 +3528,7 @@ To process this request:
           // Platform fee is typically around 5% - adjust as needed
           const platformFeePercent = 0.05;
           const platformFee = bountyAmount * platformFeePercent;
-          const refundAmount = input.refundAmount ?? (bountyAmount - platformFee);
+          const refundAmount = input.refundAmount ?? bountyAmount - platformFee;
 
           // Update bounty status
           await db
@@ -3446,7 +3566,9 @@ To process this request:
           //   });
           // }
 
-          console.log(`[Cancellation] Approved for bounty ${request.bountyId}, refund: $${refundAmount}`);
+          console.log(
+            `[Cancellation] Approved for bounty ${request.bountyId}, refund: $${refundAmount}`
+          );
 
           // Invalidate caches
           await invalidateBountyCaches();
@@ -3458,28 +3580,28 @@ To process this request:
             refundAmount,
             message: 'Cancellation approved. Refund will be processed.',
           };
-        } else {
-          // Rejected
-          await db
-            .update(cancellationRequest)
-            .set({
-              status: 'rejected',
-              processedById: ctx.session.user.id,
-              processedAt: new Date(),
-            })
-            .where(eq(cancellationRequest.id, input.requestId));
-
-          return {
-            success: true,
-            status: 'rejected',
-            message: 'Cancellation request rejected.',
-          };
         }
+        // Rejected
+        await db
+          .update(cancellationRequest)
+          .set({
+            status: 'rejected',
+            processedById: ctx.session.user.id,
+            processedAt: new Date(),
+          })
+          .where(eq(cancellationRequest.id, input.requestId));
+
+        return {
+          success: true,
+          status: 'rejected',
+          message: 'Cancellation request rejected.',
+        };
       } catch (error) {
         if (error instanceof TRPCError) {
           throw error;
         }
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to process cancellation: ${errorMessage}`,
@@ -3583,7 +3705,9 @@ To process this request:
             .where(eq(cancellationRequest.id, pendingRequest.id));
         }
 
-        console.log(`[Refund] Bounty ${input.bountyId} marked as refunded by ${ctx.session.user.id}`);
+        console.log(
+          `[Refund] Bounty ${input.bountyId} marked as refunded by ${ctx.session.user.id}`
+        );
 
         return {
           success: true,
@@ -3593,7 +3717,8 @@ To process this request:
         if (error instanceof TRPCError) {
           throw error;
         }
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to mark bounty as refunded: ${errorMessage}`,
@@ -3713,7 +3838,9 @@ To process this request:
               )
             );
 
-          console.log(`[Sync] Bounty ${input.bountyId} synced as refunded (${refundedAmount} of ${originalAmount})`);
+          console.log(
+            `[Sync] Bounty ${input.bountyId} synced as refunded (${refundedAmount} of ${originalAmount})`
+          );
 
           return {
             success: true,
@@ -3763,7 +3890,9 @@ To process this request:
             )
           );
 
-        console.log(`[Sync] Bounty ${input.bountyId} synced as refunded (${refundedAmount} of ${originalAmount})`);
+        console.log(
+          `[Sync] Bounty ${input.bountyId} synced as refunded (${refundedAmount} of ${originalAmount})`
+        );
 
         return {
           success: true,
@@ -3776,7 +3905,8 @@ To process this request:
         if (error instanceof TRPCError) {
           throw error;
         }
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to sync refund status: ${errorMessage}`,
@@ -3824,10 +3954,12 @@ To process this request:
 
         // Check if bounty is linked to a GitHub issue
         if (
-          !bountyRecord.githubIssueNumber ||
-          !bountyRecord.githubRepoOwner ||
-          !bountyRecord.githubRepoName ||
-          !bountyRecord.githubInstallationId
+          !(
+            bountyRecord.githubIssueNumber &&
+            bountyRecord.githubRepoOwner &&
+            bountyRecord.githubRepoName &&
+            bountyRecord.githubInstallationId
+          )
         ) {
           return {
             synced: false,
@@ -3848,7 +3980,11 @@ To process this request:
         }
 
         // Fetch the actual comment from GitHub
-        const { getGithubAppManager, createFundedBountyComment, createUnfundedBountyComment } = await import('@bounty/api/driver/github-app');
+        const {
+          getGithubAppManager,
+          createFundedBountyComment,
+          createUnfundedBountyComment,
+        } = await import('@bounty/api/driver/github-app');
         const githubApp = getGithubAppManager();
 
         const comment = await githubApp.getComment(
@@ -3908,7 +4044,8 @@ To process this request:
         if (error instanceof TRPCError) {
           throw error;
         }
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to check GitHub sync: ${errorMessage}`,
@@ -3959,7 +4096,8 @@ To process this request:
         if (!bountyRecord.issueUrl) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
-            message: 'This bounty has no GitHub issue URL. Please add an issue URL first.',
+            message:
+              'This bounty has no GitHub issue URL. Please add an issue URL first.',
           });
         }
 
@@ -3983,8 +4121,10 @@ To process this request:
         let githubRepoOwner = bountyRecord.githubRepoOwner ?? undefined;
         let githubRepoName = bountyRecord.githubRepoName ?? undefined;
 
-        if (!githubIssueNumber || !githubRepoOwner || !githubRepoName) {
-          const urlMatch = bountyRecord.issueUrl.match(/github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/i);
+        if (!(githubIssueNumber && githubRepoOwner && githubRepoName)) {
+          const urlMatch = bountyRecord.issueUrl.match(
+            /github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/i
+          );
           if (!urlMatch) {
             throw new TRPCError({
               code: 'BAD_REQUEST',
@@ -3993,7 +4133,7 @@ To process this request:
           }
           githubRepoOwner = urlMatch[1];
           githubRepoName = urlMatch[2];
-          githubIssueNumber = parseInt(urlMatch[3] || '0', 10);
+          githubIssueNumber = Number.parseInt(urlMatch[3] || '0', 10);
         }
 
         // At this point, we should have all the required values
@@ -4003,14 +4143,20 @@ To process this request:
         const issueNumber: number = githubIssueNumber!;
 
         // Get installation ID for the repo
-        const { getGithubAppManager } = await import('@bounty/api/driver/github-app');
+        const { getGithubAppManager } = await import(
+          '@bounty/api/driver/github-app'
+        );
         const githubApp = getGithubAppManager();
 
-        const installation = await githubApp.getInstallationForRepo(repoOwner, repoName);
+        const installation = await githubApp.getInstallationForRepo(
+          repoOwner,
+          repoName
+        );
         if (!installation) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
-            message: 'GitHub App is not installed on this repository. Please install the bounty.new GitHub App first.',
+            message:
+              'GitHub App is not installed on this repository. Please install the bounty.new GitHub App first.',
           });
         }
 
@@ -4018,7 +4164,8 @@ To process this request:
 
         // Create the bot comment
         const isFunded = bountyRecord.paymentStatus === 'held';
-        const { createFundedBountyComment, createUnfundedBountyComment } = await import('@bounty/api/driver/github-app');
+        const { createFundedBountyComment, createUnfundedBountyComment } =
+          await import('@bounty/api/driver/github-app');
         const commentBody = isFunded
           ? createFundedBountyComment(input.bountyId, 0)
           : createUnfundedBountyComment(
@@ -4049,7 +4196,9 @@ To process this request:
           })
           .where(eq(bounty.id, input.bountyId));
 
-        console.log(`[Sync] Bounty ${input.bountyId} synced to GitHub issue ${repoOwner}/${repoName}#${issueNumber}`);
+        console.log(
+          `[Sync] Bounty ${input.bountyId} synced to GitHub issue ${repoOwner}/${repoName}#${issueNumber}`
+        );
 
         return {
           success: true,
@@ -4061,7 +4210,8 @@ To process this request:
         if (error instanceof TRPCError) {
           throw error;
         }
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to sync to GitHub: ${errorMessage}`,
@@ -4122,27 +4272,36 @@ To process this request:
         if (!bountyRecord.repositoryUrl) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
-            message: 'This bounty has no repository URL. Please add a repository URL first.',
+            message:
+              'This bounty has no repository URL. Please add a repository URL first.',
           });
         }
 
         // Parse repository URL to get owner and repo name
-        const repoMatch = bountyRecord.repositoryUrl.match(/github\.com\/([^/]+)\/([^/\/]+)(?:\/.*)?/i);
-        if (!repoMatch || !repoMatch[1] || !repoMatch[2]) {
+        const repoMatch = bountyRecord.repositoryUrl.match(
+          /github\.com\/([^/]+)\/([^//]+)(?:\/.*)?/i
+        );
+        if (!(repoMatch && repoMatch[1] && repoMatch[2])) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
-            message: 'Invalid repository URL format. Expected: https://github.com/owner/repo',
+            message:
+              'Invalid repository URL format. Expected: https://github.com/owner/repo',
           });
         }
 
         const repoOwner = repoMatch[1];
         const repoName = repoMatch[2].replace(/\.git$/, '');
 
-        const { getGithubAppManager } = await import('@bounty/api/driver/github-app');
+        const { getGithubAppManager } = await import(
+          '@bounty/api/driver/github-app'
+        );
         const githubApp = getGithubAppManager();
 
         // Get installation for the repo
-        const installation = await githubApp.getInstallationForRepo(repoOwner, repoName);
+        const installation = await githubApp.getInstallationForRepo(
+          repoOwner,
+          repoName
+        );
         if (!installation) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
@@ -4170,7 +4329,8 @@ To process this request:
           .limit(1);
 
         const creatorName = creator?.name || 'Anonymous';
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
+        const baseUrl =
+          process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
         const buttonUrl = `${baseUrl}/bounty-button.svg`;
         const isFunded = bountyRecord.paymentStatus === 'held';
         const fundedBadgeUrl = `${baseUrl}/bounty-funded-button.svg`;
@@ -4216,7 +4376,9 @@ ${formattedAmount} ${isFunded ? `![Funded](${fundedBadgeUrl})` : ''}
           })
           .where(eq(bounty.id, input.bountyId));
 
-        console.log(`[Create Issue] GitHub issue created for bounty ${input.bountyId}: ${repoOwner}/${repoName}#${issue.number}`);
+        console.log(
+          `[Create Issue] GitHub issue created for bounty ${input.bountyId}: ${repoOwner}/${repoName}#${issue.number}`
+        );
 
         return {
           success: true,
@@ -4228,7 +4390,8 @@ ${formattedAmount} ${isFunded ? `![Funded](${fundedBadgeUrl})` : ''}
         if (error instanceof TRPCError) {
           throw error;
         }
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to create GitHub issue: ${errorMessage}`,

@@ -29,11 +29,16 @@ import {
 } from '@bounty/db';
 import { eq } from 'drizzle-orm';
 import { env } from '@bounty/env/server';
-import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { bearer, deviceAuthorization, openAPI, multiSession } from "better-auth/plugins";
-import { admin } from "better-auth/plugins";
-import { emailOTP } from "better-auth/plugins/email-otp";
+import { betterAuth } from 'better-auth';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import {
+  bearer,
+  deviceAuthorization,
+  openAPI,
+  multiSession,
+} from 'better-auth/plugins';
+import { admin } from 'better-auth/plugins';
+import { emailOTP } from 'better-auth/plugins/email-otp';
 import { Octokit } from '@octokit/core';
 import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods';
 import {
@@ -42,7 +47,7 @@ import {
   sendPasswordResetEmail,
   sendEmailVerificationEmail,
   sendOTPEmail,
-} from "./config";
+} from './config';
 
 // ============================================================================
 // Constants & Setup
@@ -87,9 +92,9 @@ interface GitHubSyncParams {
  */
 async function syncGitHubHandle({
   userId,
-  accessToken
+  accessToken,
 }: GitHubSyncParams): Promise<void> {
-  if (!userId || !accessToken) return;
+  if (!(userId && accessToken)) return;
 
   try {
     const octokit = new GitHubOctokit({ auth: accessToken });
@@ -153,6 +158,14 @@ export const auth = betterAuth({
     usePlural: false,
   }),
 
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ['github', 'discord'],
+      allowDifferentEmails: true,
+    },
+  },
+
   session: AUTH_CONFIG.session,
 
   databaseHooks: {
@@ -184,6 +197,11 @@ export const auth = betterAuth({
       mapProfileToUser: (profile) => ({
         handle: profile.login?.toLowerCase(),
       }),
+    },
+    discord: {
+      clientId: env.DISCORD_CLIENT_ID || '',
+      clientSecret: env.DISCORD_CLIENT_SECRET || '',
+      scope: ['identify', 'email', 'guilds'],
     },
   },
 

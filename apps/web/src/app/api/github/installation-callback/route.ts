@@ -103,10 +103,10 @@ export async function GET(request: NextRequest) {
   // After installation, redirect to configure page
   if (installationId && setupAction === 'install') {
     return NextResponse.redirect(
-      new URL(`/settings/integrations/configure/${installationId}?new=1`, request.url)
+      new URL(`/integrations/configure/${installationId}?new=1`, request.url)
     );
   }
 
   // Fallback to integrations list
-  return NextResponse.redirect(new URL('/settings/integrations', request.url));
+  return NextResponse.redirect(new URL('/integrations', request.url));
 }

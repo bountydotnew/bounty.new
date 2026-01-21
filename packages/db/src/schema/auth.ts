@@ -163,3 +163,19 @@ export const oauthState = pgTable('oauth_state', {
   used: boolean('used').notNull().default(false),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
 });
+
+/**
+ * Discord Guild (Server) - tracks where the bot is installed
+ */
+export const discordGuild = pgTable('discord_guild', {
+  id: text('id').primaryKey(), // Discord guild ID
+  name: text('name').notNull(),
+  icon: text('icon'), // Discord icon hash
+  ownerId: text('owner_id').notNull(), // Discord user ID of guild owner
+  memberCount: integer('member_count'),
+  installedAt: timestamp('installed_at').notNull().default(sql`now()`),
+  installedById: text('installed_by_id').references(() => user.id, {
+    onDelete: 'set null',
+  }), // Bounty user who installed (if known)
+  removedAt: timestamp('removed_at'), // Set when bot is removed, null if active
+});
