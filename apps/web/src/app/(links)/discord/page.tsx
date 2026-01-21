@@ -4,7 +4,8 @@ export const metadata = {
   title: 'bounty.new - Discord',
   description: 'Join our Discord server',
   icons: {
-    icon: '/icon.svg',
+    icon: '/favicon/favicon_dark.png',
+    apple: '/favicon/favicon_dark.png',
   },
 };
 const DISCORD_URL = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL;
