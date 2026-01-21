@@ -248,7 +248,7 @@ export function PhantomWalletConnect() {
               </div>
             </div>
             <Button
-              variant="ghost"
+              variant="link"
               size="sm"
               onClick={handleDisconnect}
               disabled={disconnectWallet.isPending}
@@ -263,7 +263,7 @@ export function PhantomWalletConnect() {
             <div className="flex items-center justify-between">
               <span className="text-sm text-[#929292]">BOUNTY Token Value</span>
               <Button
-                variant="ghost"
+                variant="link"
                 size="sm"
                 onClick={() => refreshBalance.mutate()}
                 disabled={refreshBalance.isPending}
