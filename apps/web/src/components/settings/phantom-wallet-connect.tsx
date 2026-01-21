@@ -38,7 +38,9 @@ const encodeBase58 = (bytes: Uint8Array): string => {
 export function PhantomWalletConnect() {
   const queryClient = useQueryClient();
   const [isConnecting, setIsConnecting] = useState(false);
-  const [phantomInstalled, setPhantomInstalled] = useState<boolean | null>(null);
+  const [phantomInstalled, setPhantomInstalled] = useState<boolean | null>(
+    null
+  );
 
   // Check if Phantom is installed
   useEffect(() => {
@@ -67,7 +69,7 @@ export function PhantomWalletConnect() {
 
   // Generate verification message mutation
   const generateMessage = useMutation({
-    mutationFn: async (walletAddress: string) => {
+    mutationFn: async () => (walletAddress: string) => {
       return trpcClient.phantom.generateVerificationMessage.mutate({
         walletAddress,
       });
@@ -76,13 +78,15 @@ export function PhantomWalletConnect() {
 
   // Connect wallet mutation
   const connectWallet = useMutation({
-    mutationFn: async (params: {
-      walletAddress: string;
-      signature: string;
-      message: string;
-    }) => {
-      return trpcClient.phantom.connectWallet.mutate(params);
-    },
+    mutationFn:
+      async () =>
+      (params: {
+        walletAddress: string;
+        signature: string;
+        message: string;
+      }) => {
+        return trpcClient.phantom.connectWallet.mutate(params);
+      },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['phantom.getConnectionStatus'],
@@ -99,16 +103,11 @@ export function PhantomWalletConnect() {
 
   // Disconnect wallet mutation
   const disconnectWallet = useMutation({
-    mutationFn: async () => {
+    mutationFn: async () => () => {
       return trpcClient.phantom.disconnectWallet.mutate();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['phantom.getConnectionStatus'],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['phantom.checkEligibility'],
-      });
+      queryClient.invalidateQueries({ queryKey: ['phantom'] });
       toast.success('Wallet disconnected');
     },
     onError: (error) => {
@@ -118,16 +117,11 @@ export function PhantomWalletConnect() {
 
   // Refresh balance mutation
   const refreshBalance = useMutation({
-    mutationFn: async () => {
+    mutationFn: async () => () => {
       return trpcClient.phantom.refreshBalance.mutate();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: ['phantom.getConnectionStatus'],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['phantom.checkEligibility'],
-      });
+      queryClient.invalidateQueries({ queryKey: ['phantom'] });
       toast.success(
         `Balance refreshed: $${data.data.tokenValueUsd} in BOUNTY tokens`
       );
@@ -139,16 +133,11 @@ export function PhantomWalletConnect() {
 
   // Claim free month mutation
   const claimFreeMonth = useMutation({
-    mutationFn: async () => {
+    mutationFn: async () => () => {
       return trpcClient.phantom.claimFreeMonth.mutate();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['phantom.getConnectionStatus'],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['phantom.checkEligibility'],
-      });
+      queryClient.invalidateQueries({ queryKey: ['phantom'] });
       toast.success('Free month of Pro activated!');
     },
     onError: (error) => {
@@ -222,8 +211,8 @@ export function PhantomWalletConnect() {
 
   const isLoading = isLoadingStatus || isLoadingEligibility;
   const isConnected = connectionStatus?.data?.connected;
-  const walletAddress = connectionStatus?.data?.walletAddress;
-  const tokenValueUsd = connectionStatus?.data?.tokenValueUsd;
+  const walletAddress = connectionStatus?.data?.wallets?.[0]?.walletAddress;
+  const tokenValueUsd = connectionStatus?.data?.wallets?.[0]?.tokenValueUsd;
   const qualifiesForBenefits = eligibility?.data?.eligible;
   const alreadyClaimed = eligibility?.data?.alreadyClaimed;
   const threshold = eligibility?.data?.threshold ?? 20;
