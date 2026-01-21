@@ -41,7 +41,6 @@
     "date-fns": "catalog:",
     "lucide-react": "catalog:",
     "next-themes": "catalog:",
-    "nuqs": "catalog:",
     "motion": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
@@ -83,6 +82,7 @@
   },
   "peerDependencies": {
     "next": "catalog:",
+    "nuqs": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
   }
