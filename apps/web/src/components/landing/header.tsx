@@ -45,22 +45,13 @@ export function Header() {
           {/* Desktop Actions */}
           <div className="flex items-center gap-3 col-start-3">
             {!isAuthenticated && !isPending && (
-              <>
-                <Link
-                  href="/login"
-                  className="inline-flex items-center justify-center bg-[#1a1a1a] text-white rounded-full text-sm font-medium hover:bg-[#252525] transition-colors border border-[#333] hidden sm:inline-flex"
-                  style={{ padding: '.4em .75em .42em' }}
-                >
-                  Sign in
-                </Link>
-                <Link
-                  href="/dashboard"
-                  className="inline-flex items-center justify-center bg-white text-[#0E0E0E] rounded-full text-sm font-medium hover:bg-[#e5e5e5] transition-colors"
-                  style={{ padding: '.4em .75em .42em' }}
-                >
-                  Browse Bounties
-                </Link>
-              </>
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center bg-white text-[#0E0E0E] rounded-full text-sm font-medium hover:bg-[#e5e5e5] transition-colors"
+                style={{ padding: '.4em .75em .42em' }}
+              >
+                Sign in
+              </Link>
             )}
 
             {/* Logged in: show user info with minimal nav */}
