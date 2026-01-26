@@ -181,7 +181,7 @@ export function AccountDropdown({
   const { startSelection } = useFeedback();
 
   const profileHref = currentUser?.handle
-    ? `/profile/${currentUser.handle}`
+    ? `/u/${currentUser.handle}`
     : null;
 
   const handleProfileNavigation = () => {

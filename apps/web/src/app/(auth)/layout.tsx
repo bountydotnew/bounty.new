@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { DeviceProvider } from '@/components/device-provider';
 import { Sidebar } from '@/components/dual-sidebar';
 import { AuthLayout } from '@/components/auth/auth-layout';
+import { EarlyAccessGuard } from '@/components/auth/early-access-guard';
 import { FeedbackProvider } from '@/components/feedback-context';
 import { FeedbackModal } from '@/components/feedback-modal';
 import { FeedbackOverlay } from '@/components/feedback-overlay';
@@ -61,7 +62,9 @@ export default async function RootLayout({
           >
             <FeedbackModal />
             <FeedbackOverlay />
-            <Sidebar admin={false}>{children}</Sidebar>
+            <EarlyAccessGuard>
+              <Sidebar admin={false}>{children}</Sidebar>
+            </EarlyAccessGuard>
           </FeedbackProvider>
         </NuqsAdapter>
       </AuthLayout>

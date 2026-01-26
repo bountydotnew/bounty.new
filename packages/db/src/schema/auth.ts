@@ -8,20 +8,6 @@ import {
   timestamp,
 } from 'drizzle-orm/pg-core';
 
-export const betaAccessStatusEnum = pgEnum('beta_access_status', [
-  'none',
-  'pending',
-  'approved',
-  'denied',
-]);
-
-export const accessStageEnum = pgEnum('access_stage', [
-  'none',
-  'alpha',
-  'beta',
-  'production',
-]);
-
 export const deviceCodeStatusEnum = pgEnum('device_code_status', [
   'pending',
   'approved',
@@ -36,11 +22,7 @@ export const user = pgTable('user', {
   image: text('image'),
   handle: text('handle').unique(),
   isProfilePrivate: boolean('is_profile_private').notNull().default(false),
-  hasAccess: boolean('has_access').notNull().default(false),
-  betaAccessStatus: betaAccessStatusEnum('beta_access_status')
-    .notNull()
-    .default('none'),
-  accessStage: accessStageEnum('access_stage').notNull().default('none'),
+  // Role: 'user' | 'admin' | 'early_access'
   role: text('role').notNull().default('user'),
   banned: boolean('banned').notNull().default(false),
   banReason: text('ban_reason'),
@@ -101,13 +83,15 @@ export const waitlist = pgTable('waitlist', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
   email: text('email').notNull(),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
-  hasAccess: boolean('has_access').notNull().default(false),
   ipAddress: text('ip_address'),
   // OTP verification fields
   otpCode: text('otp_code'),
   otpExpiresAt: timestamp('otp_expires_at'),
   otpAttempts: integer('otp_attempts').notNull().default(0),
   emailVerified: boolean('email_verified').notNull().default(false),
+  // Access grant fields
+  accessToken: text('access_token'), // one-time token for granting access
+  accessGrantedAt: timestamp('access_granted_at'), // when access was granted
   // Bounty draft fields
   bountyTitle: text('bounty_title'),
   bountyDescription: text('bounty_description'),

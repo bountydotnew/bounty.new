@@ -10,7 +10,17 @@ import {
   Text,
 } from '@react-email/components';
 
-const AlphaAccessGranted = (_props: { name?: string }) => {
+interface AlphaAccessGrantedProps {
+  name?: string;
+  token?: string;
+}
+
+const AlphaAccessGranted = ({ name, token }: AlphaAccessGrantedProps) => {
+  // If token is provided, use the accept-access endpoint, otherwise fallback to login
+  const href = token
+    ? `https://bounty.new/api/accept-access?token=${token}`
+    : 'https://bounty.new/login';
+
   return (
     <Html dir="ltr" lang="en">
       <Tailwind>
@@ -39,7 +49,7 @@ const AlphaAccessGranted = (_props: { name?: string }) => {
             {/* CTA Button */}
             <Button
               className="mb-[40px] box-border inline-block rounded-[22px] bg-[#fdfdfd] px-[48px] py-[16px] font-semibold text-[#000000] text-[16px] no-underline"
-              href="https://bounty.new/login"
+              href={href}
             >
               Start Testing
             </Button>

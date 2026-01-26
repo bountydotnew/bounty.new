@@ -81,7 +81,7 @@ function PrivateProfileMessage({
 
 export default function ProfilePageClient() {
   const params = useParams();
-  const handleOrUserId = params.userId as string;
+  const handleOrUserId = params.user as string;
 
   // Treat the param as a handle (since handles are what users will use in URLs)
   const profileData = useQuery({

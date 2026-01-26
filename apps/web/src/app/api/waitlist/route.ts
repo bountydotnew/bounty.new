@@ -66,7 +66,6 @@ export async function POST(_request: NextRequest) {
     await db.insert(waitlist).values({
       email: userEmail,
       userId,
-      hasAccess: false,
       createdAt: new Date(),
       position,
     });

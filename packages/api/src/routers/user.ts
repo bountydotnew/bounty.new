@@ -54,7 +54,7 @@ const currentUserCache = new LRUCache<{
       name: string | null;
       email: string;
       image: string | null;
-      hasAccess: boolean;
+      role: string;
       createdAt: Date;
       updatedAt: Date;
     };
@@ -77,8 +77,6 @@ export const userRouter = router({
           email: user.email,
           image: user.image,
           role: user.role,
-          hasAccess: user.hasAccess,
-          betaAccessStatus: user.betaAccessStatus,
           banned: user.banned,
           createdAt: user.createdAt,
         })
@@ -130,27 +128,6 @@ export const userRouter = router({
       }
       return updated;
     }),
-  hasAccess: protectedProcedure.query(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
-
-    const userRecord = await db
-      .select({ hasAccess: user.hasAccess })
-      .from(user)
-      .where(eq(user.id, userId))
-      .limit(1);
-
-    if (!userRecord[0]) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'User not found',
-      });
-    }
-
-    return {
-      success: true,
-      hasAccess: userRecord[0].hasAccess,
-    };
-  }),
 
   getCurrentUser: publicProcedure.query(async ({ ctx }) => {
     try {
@@ -178,7 +155,7 @@ export const userRouter = router({
             name: user.name,
             email: user.email,
             image: user.image,
-            hasAccess: user.hasAccess,
+            role: user.role,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
           },
@@ -320,53 +297,6 @@ export const userRouter = router({
     }
   }),
 
-  updateUserAccess: protectedProcedure
-    .input(
-      z.object({
-        userId: z.string().uuid(),
-        hasAccess: z.boolean(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      try {
-        const currentUser = await db
-          .select()
-          .from(user)
-          .where(eq(user.id, ctx.session.user.id))
-          .limit(1);
-
-        if (!currentUser[0]?.hasAccess) {
-          throw new TRPCError({
-            code: 'FORBIDDEN',
-            message: "You don't have permission to update user access",
-          });
-        }
-
-        await db
-          .update(user)
-          .set({
-            hasAccess: input.hasAccess,
-            updatedAt: new Date(),
-          })
-          .where(eq(user.id, input.userId));
-
-        return {
-          success: true,
-          message: 'User access updated successfully',
-        };
-      } catch (error) {
-        if (error instanceof TRPCError) {
-          throw error;
-        }
-
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to update user access',
-          cause: error,
-        });
-      }
-    }),
-
   getMe: protectedProcedure.query(async ({ ctx }) => {
     const userData = await ctx.db.query.user.findFirst({
       where: (user, { eq }) => eq(user.id, ctx.session.user.id),
@@ -416,8 +346,6 @@ export const userRouter = router({
             email: user.email,
             image: user.image,
             role: user.role,
-            hasAccess: user.hasAccess,
-            betaAccessStatus: user.betaAccessStatus,
             banned: user.banned,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
@@ -455,7 +383,7 @@ export const userRouter = router({
     .input(
       z.object({
         userId: z.string(),
-        role: z.enum(['user', 'admin']),
+        role: z.enum(['user', 'admin', 'early_access']),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -503,7 +431,7 @@ export const userRouter = router({
 
       await ctx.db
         .insert(invite)
-        .values({ email, accessStage: 'none', tokenHash, expiresAt });
+        .values({ email, tokenHash, expiresAt });
 
       const baseUrl =
         env.BETTER_AUTH_URL?.replace(TRAILING_SLASH_REGEX, '') ||

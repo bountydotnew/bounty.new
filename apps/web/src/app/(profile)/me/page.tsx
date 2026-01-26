@@ -23,10 +23,10 @@ export default function MyProfilePage() {
 
     if (userData?.handle) {
       // Redirect to handle-based profile URL
-      router.replace(`/profile/${userData.handle}`);
+      router.replace(`/u/${userData.handle}`);
     } else if (userData?.id) {
       // Fallback to userId if no handle (shouldn't happen after onboarding, but just in case)
-      router.replace(`/profile/${userData.id}`);
+      router.replace(`/u/${userData.id}`);
     }
   }, [session, isPending, userData, router]);
 

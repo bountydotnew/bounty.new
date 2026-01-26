@@ -91,6 +91,24 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   });
 });
 
+export const earlyAccessProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  const userRole = ctx.session.user.role ?? 'user';
+  if (!['early_access', 'admin'].includes(userRole)) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'Early access required',
+      cause: { reason: 'early_access_required' },
+    });
+  }
+
+  return next({
+    ctx: {
+      ...ctx,
+      session: ctx.session,
+    },
+  });
+});
+
 /**
  * Rate-limited middleware factory for public procedures
  */

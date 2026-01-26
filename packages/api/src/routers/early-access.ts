@@ -2,7 +2,7 @@ import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { randomInt } from 'node:crypto';
+import { randomInt, randomBytes } from 'node:crypto';
 
 const info = console.info.bind(console);
 const error = console.error.bind(console);
@@ -14,6 +14,11 @@ const generateOTP = (): string => {
   const code = randomInt(100_000, 1_000_000);
   // Convert to string and pad with zeros if necessary (shouldn't be needed but ensures 6 digits)
   return code.toString().padStart(6, '0');
+};
+
+// Generate secure random token for access grant
+const generateAccessToken = (): string => {
+  return randomBytes(32).toString('hex');
 };
 
 import {
@@ -202,10 +207,11 @@ export const earlyAccessRouter = router({
         const allEntries = await db.query.waitlist.findMany();
         const total = allEntries.length;
 
-        const entriesWithAccess = await db.query.waitlist.findMany({
-          where: (fields, { eq }) => eq(fields.hasAccess, true),
+        const entriesGrantedAccess = await db.query.waitlist.findMany({
+          where: (fields, { eq, and, isNotNull }) =>
+            and(isNotNull(fields.accessToken), isNotNull(fields.accessGrantedAt)),
         });
-        const totalWithAccess = entriesWithAccess.length;
+        const totalGrantedAccess = entriesGrantedAccess.length;
 
         return {
           entries,
@@ -215,8 +221,8 @@ export const earlyAccessRouter = router({
           totalPages: Math.ceil(total / limit),
           stats: {
             total,
-            withAccess: totalWithAccess,
-            pending: total - totalWithAccess,
+            grantedAccess: totalGrantedAccess,
+            pending: total - totalGrantedAccess,
           },
         };
       } catch (err) {
@@ -228,62 +234,8 @@ export const earlyAccessRouter = router({
       }
     }),
 
-  updateWaitlistAccess: adminProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        hasAccess: z.boolean(),
-      })
-    )
-    .mutation(async ({ input }) => {
-      try {
-        const { id, hasAccess } = input;
-
-        await db
-          .update(waitlist)
-          .set({ hasAccess })
-          .where(eq(waitlist.id as any, id) as any);
-
-        info(
-          '[updateWaitlistAccess] Updated access for ID:',
-          id,
-          'hasAccess:',
-          hasAccess
-        );
-
-        if (hasAccess) {
-          const entry = await db.query.waitlist.findFirst({
-            where: (fields, { eq }) => eq(fields.id, id),
-          });
-          if (entry?.email) {
-            const u = await db.query.user.findFirst({
-              columns: {
-                id: true,
-                name: true,
-                email: true,
-              },
-              where: (fields, { eq }) => eq(fields.email, entry.email),
-            });
-            const to = u?.email ?? entry.email;
-            await sendEmail({
-              to,
-              subject: 'Alpha access granted',
-              from: FROM_ADDRESSES.notifications,
-              react: AlphaAccessGranted({ name: u?.name ?? '' }),
-            });
-          }
-        }
-        return { success: true };
-      } catch (err) {
-        error('[updateWaitlistAccess] Error:', err);
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to update waitlist access',
-        });
-      }
-    }),
-
-  inviteToBeta: adminProcedure
+  // Grant waitlist access - generates token and sends email
+  grantWaitlistAccess: adminProcedure
     .input(
       z.object({
         id: z.string(),
@@ -291,8 +243,10 @@ export const earlyAccessRouter = router({
     )
     .mutation(async ({ input }) => {
       try {
+        const { id } = input;
+
         const entry = await db.query.waitlist.findFirst({
-          where: (fields, { eq }) => eq(fields.id, input.id),
+          where: (fields, { eq }) => eq(fields.id, id),
         });
 
         if (!entry) {
@@ -302,6 +256,21 @@ export const earlyAccessRouter = router({
           });
         }
 
+        // Generate access token
+        const token = generateAccessToken();
+
+        // Store token and set access granted timestamp
+        await db
+          .update(waitlist)
+          .set({
+            accessToken: token,
+            accessGrantedAt: new Date(),
+          })
+          .where(eq(waitlist.id as any, id) as any);
+
+        info('[grantWaitlistAccess] Granted access for ID:', id);
+
+        // Send email with access link
         const u = await db.query.user.findFirst({
           columns: {
             id: true,
@@ -311,34 +280,83 @@ export const earlyAccessRouter = router({
           where: (fields, { eq }) => eq(fields.email, entry.email),
         });
 
-        if (!u?.id) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: 'User not found for this email',
-          });
-        }
-
-        await db
-          .update(userTable)
-          .set({
-            betaAccessStatus: 'approved',
-            updatedAt: new Date(),
-          })
-          .where(eq(userTable.id as any, u.id) as any);
-
+        const to = u?.email ?? entry.email;
         await sendEmail({
-          to: u.email,
-          subject: 'Alpha access granted',
+          to,
+          subject: "You're in! Access bounty.new now",
           from: FROM_ADDRESSES.notifications,
-          react: AlphaAccessGranted({ name: u.name ?? '' }),
+          react: AlphaAccessGranted({
+            name: u?.name ?? '',
+            token,
+          }),
         });
 
         return { success: true };
       } catch (err) {
-        error('[inviteToBeta] Error:', err);
+        error('[grantWaitlistAccess] Error:', err);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to invite to beta',
+          message: 'Failed to grant waitlist access',
+        });
+      }
+    }),
+
+  // Accept access token - validates and grants early_access role
+  acceptAccessToken: protectedProcedure
+    .input(
+      z.object({
+        token: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const { token } = input;
+        const userId = ctx.session.user.id;
+        const userEmail = ctx.session.user.email;
+
+        // Find waitlist entry with this token
+        const entry = await db.query.waitlist.findFirst({
+          where: (fields, { eq }) => eq(fields.accessToken, token),
+        });
+
+        if (!entry) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Invalid or expired token',
+          });
+        }
+
+        // Verify the email matches
+        if (entry.email !== userEmail) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'This token was issued for a different email address',
+          });
+        }
+
+        // Grant early_access role
+        await db
+          .update(userTable)
+          .set({ role: 'early_access' })
+          .where(eq(userTable.id, userId));
+
+        // Clear the token (one-time use)
+        await db
+          .update(waitlist)
+          .set({ accessToken: null })
+          .where(eq(waitlist.id as any, entry.id) as any);
+
+        info('[acceptAccessToken] Granted early_access to user:', userId);
+
+        return { success: true };
+      } catch (err) {
+        error('[acceptAccessToken] Error:', err);
+        if (err instanceof TRPCError) {
+          throw err;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to accept access token',
         });
       }
     }),
