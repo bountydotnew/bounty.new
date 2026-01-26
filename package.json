@@ -32,7 +32,6 @@
     "db:generate": "dotenv -- turbo -F @bounty/db db:generate",
     "db:migrate": "dotenv -- turbo -F @bounty/db db:migrate",
     "db:dump": "dotenv -- bash scripts/dump-db.sh",
-    "ngrok:dev": "bash scripts/ngrok-dev.sh",
     "prettier": "npx ultracite format"
   },
   "workspaces": {

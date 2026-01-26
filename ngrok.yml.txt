@@ -1,0 +1,9 @@
+version: "3"
+agent:
+    authtoken: AUTH_TOKEN_HERE
+tunnels:
+  bounty:
+    addr: 3000
+    proto: http
+    domain: NGROK_DOMAIN_HERE
+    inspect: false

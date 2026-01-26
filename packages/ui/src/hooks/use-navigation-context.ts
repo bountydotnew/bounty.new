@@ -1,7 +1,6 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
-import { useQueryStates, parseAsString } from 'nuqs';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
 
 export type NavigationContext = {
@@ -21,10 +20,9 @@ export type NavigationContext = {
 
 export function useNavigationContext(): NavigationContext {
   const pathname = usePathname();
-  const [{ from, ref }] = useQueryStates({
-    from: parseAsString,
-    ref: parseAsString,
-  });
+  const searchParams = useSearchParams();
+  const from = searchParams.get('from') as NavigationContext['from'] | null;
+  const ref = searchParams.get('ref');
 
   return useMemo(() => {
     // Dashboard context
@@ -54,7 +52,7 @@ export function useNavigationContext(): NavigationContext {
           const owner = parts[githubIndex + 1];
           const repo = parts[githubIndex + 2];
           const issueNumber = parts[parts.indexOf('issues') + 1];
-          
+
           referrerInfo = {
             ...(owner !== undefined && { owner }),
             ...(repo !== undefined && { repo }),
