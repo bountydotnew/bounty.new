@@ -7,7 +7,6 @@ import { OTPVerification, ForgotPassword } from '@bounty/email';
  */
 export const AUTH_CONFIG = {
   baseURL: env.BETTER_AUTH_URL,
-  appURL: env.NODE_ENV === 'production' ? 'https://bounty.new' : 'http://localhost:3000',
   emailFrom: 'Bounty.new <noreply@mail.bounty.new>',
   trustedOrigins: [
     'https://bounty.new',
@@ -19,6 +18,10 @@ export const AUTH_CONFIG = {
           'http://localhost:3000',
           'http://localhost:3001',
           'https://preview.bounty.new',
+          'http://192.168.1.147:3000',
+          'http://100.*.*.*:3000',
+          'http://172.*.*.*:3000',
+          'https://isiah-unsonant-linn.ngrok-free.dev',
         ]),
   ] as const,
 
@@ -88,7 +91,7 @@ export async function sendPasswordResetEmail(params: {
   user: { email: string; name: string | null };
   url: string;
 }): Promise<void> {
-  return sendAuthEmail({
+  await sendAuthEmail({
     to: params.user.email,
     subject: 'Reset your password',
     react: ForgotPassword({
@@ -106,7 +109,7 @@ export async function sendEmailVerificationEmail(params: {
   user: { email: string };
   url: string;
 }): Promise<void> {
-  return sendAuthEmail({
+  await sendAuthEmail({
     to: params.user.email,
     subject: 'Verify your email address',
     react: OTPVerification({
@@ -129,7 +132,7 @@ export async function sendOTPEmail(params: {
   type: 'email-verification' | 'sign-in' | 'forget-password';
 }): Promise<void> {
   const { email, otp, type } = params;
-  const continueUrl = `${AUTH_CONFIG.appURL}/sign-up/verify-email-address?email=${encodeURIComponent(email)}`;
+  const continueUrl = `${AUTH_CONFIG.baseURL}/sign-up/verify-email-address?email=${encodeURIComponent(email)}`;
 
   const subject =
     type === 'email-verification'
@@ -138,7 +141,7 @@ export async function sendOTPEmail(params: {
         ? 'Sign in to Bounty.new'
         : 'Reset your password';
 
-  return sendAuthEmail({
+  await sendAuthEmail({
     to: email,
     subject,
     react: OTPVerification({

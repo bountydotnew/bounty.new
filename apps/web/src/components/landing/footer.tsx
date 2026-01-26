@@ -93,11 +93,6 @@ export function Footer() {
                   Blog
                 </Link>
               </li>
-              <li>
-                <Link href="/sol" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Solana
-                </Link>
-              </li>
             </ul>
           </div>
         </div>

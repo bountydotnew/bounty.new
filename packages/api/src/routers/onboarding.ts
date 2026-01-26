@@ -205,4 +205,16 @@ export const onboardingRouter = router({
         alreadyClaimed: false,
       };
     }),
+
+  /**
+   * Reset onboarding - allows user to go through onboarding again
+   */
+  resetOnboarding: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      await ctx.db
+        .delete(onboardingState)
+        .where(eq(onboardingState.userId, ctx.session.user.id));
+
+      return { success: true };
+    }),
 });

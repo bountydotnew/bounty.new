@@ -11,7 +11,7 @@ import {
 } from '@bounty/ui/components/dropdown-menu';
 import { useBilling } from '@/hooks/use-billing';
 import { cn } from '@bounty/ui';
-import { LogOut } from 'lucide-react';
+import { LogOut, RotateCcw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { toast } from 'sonner';
@@ -33,12 +33,15 @@ import { useFeedback } from '@/components/feedback-context';
 import { useUser } from '@/context/user-context';
 import { useState, useTransition } from 'react';
 import { PricingDialog } from '@/components/billing/pricing-dialog';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { trpcClient } from '@/utils/trpc';
 
 // Constants for better maintainability
 const MESSAGES = {
   BILLING_PORTAL_ERROR: 'Failed to open billing portal. Please try again.',
   BILLING_PORTAL_SUCCESS: 'Opening billing portal...',
   SIGN_IN_REQUIRED: 'Please sign in to access billing.',
+  ONBOARDING_RESET_SUCCESS: 'Onboarding reset! Redirecting...',
 } as const;
 
 const LOGIN_REDIRECT = '/login';
@@ -106,6 +109,37 @@ function useSignOut() {
   return { handleSignOut, pending };
 }
 
+// Custom hook for reset onboarding
+function useResetOnboarding() {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const [pending, startReset] = useTransition();
+
+  const mutation = useMutation({
+    mutationFn: () => trpcClient.onboarding.resetOnboarding.mutate(),
+    onSuccess: () => {
+      // Invalidate the onboarding state query
+      queryClient.invalidateQueries({
+        queryKey: [['onboarding', 'getState']],
+      });
+      toast.success(MESSAGES.ONBOARDING_RESET_SUCCESS);
+      // Redirect to onboarding
+      router.push('/onboarding/step/1');
+    },
+    onError: () => {
+      toast.error('Failed to reset onboarding. Please try again.');
+    },
+  });
+
+  const handleResetOnboarding = React.useCallback(() => {
+    startReset(() => {
+      mutation.mutate();
+    });
+  }, [mutation]);
+
+  return { handleResetOnboarding, pending: pending || mutation.isPending };
+}
+
 // Main component
 export function AccountDropdown({
   user,
@@ -143,6 +177,7 @@ export function AccountDropdown({
   const userDisplay = useUserDisplay(session?.user, user);
   const handleBillingPortal = useBillingPortal();
   const { handleSignOut, pending: signOutPending } = useSignOut();
+  const { handleResetOnboarding, pending: resetOnboardingPending } = useResetOnboarding();
   const { startSelection } = useFeedback();
 
   const profileHref = currentUser?.handle
@@ -284,6 +319,23 @@ export function AccountDropdown({
           </div>
 
           <DropdownMenuSeparator className="border-[#292828]" />
+
+          <DropdownMenuItem
+            className={cn(
+              'flex items-center gap-2 rounded-[10px] px-4 py-2 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg',
+              resetOnboardingPending && 'opacity-70'
+            )}
+            disabled={resetOnboardingPending}
+            onClick={() => {
+              setMenuOpen(false);
+              handleResetOnboarding();
+            }}
+          >
+            <RotateCcw className="h-[19px] w-[19px]" />
+            <span className="text-[16px] font-medium leading-[150%] tracking-[0.03em]">
+              Show onboarding
+            </span>
+          </DropdownMenuItem>
 
           <DropdownMenuItem
             className={cn(

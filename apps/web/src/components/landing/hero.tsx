@@ -5,11 +5,12 @@ import { ChevronDown, RotateCcw } from 'lucide-react';
 import { CreateBountyDemo } from './create-bounty-demo';
 import { SubmitSolutionDemo } from './submit-solution-demo';
 import { ApprovePayDemo } from './approve-pay-demo';
+import { WaitlistDemo } from './waitlist-demo';
 import { MacNotification } from './mac-notification';
 import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
 
 export function Hero() {
-  const [activeDemo, setActiveDemo] = useState('create');
+  const [activeDemo, setActiveDemo] = useState('waitlist');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [demoKey, setDemoKey] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -18,6 +19,7 @@ export function Hero() {
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   const demos = {
+    waitlist: 'Join Waitlist',
     create: 'Create Bounty',
     submit: 'Submit Solution',
     approve: 'Approve & Pay',
@@ -132,13 +134,15 @@ export function Hero() {
                       )}
                     </div>
 
-                    <button
-                      onClick={handleReset}
-                      className="absolute -bottom-10 right-0 z-20 w-10 h-10 rounded-full bg-[#191919] border border-[#2a2a2a] flex items-center justify-center text-[#989898] hover:text-white hover:border-[#3a3a3a] transition-all animate-in fade-in zoom-in duration-300"
-                      title="Reset demo"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                    </button>
+                    {activeDemo !== 'waitlist' && (
+                      <button
+                        onClick={handleReset}
+                        className="absolute -bottom-10 right-0 z-20 w-10 h-10 rounded-full bg-[#191919] border border-[#2a2a2a] flex items-center justify-center text-[#989898] hover:text-white hover:border-[#3a3a3a] transition-all animate-in fade-in zoom-in duration-300"
+                        title="Reset demo"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                      </button>
+                    )}
                   </>
                 )}
 
@@ -148,10 +152,13 @@ export function Hero() {
                     {/* Mobile: static demo content anchored top-left, compact sizing */}
                     {isMobile && (
                       <div className="h-full w-full origin-top-left">
-                        <CreateBountyDemo key={0} compact onShowNotifications={() => {}} />
+                        <WaitlistDemo key={0} />
                       </div>
                     )}
                     {/* Desktop: full interactive demo */}
+                    {!isMobile && activeDemo === 'waitlist' && (
+                      <WaitlistDemo key={demoKey} />
+                    )}
                     {!isMobile && activeDemo === 'create' && (
                       <CreateBountyDemo key={demoKey} onShowNotifications={() => setShowNotifications(true)} />
                     )}

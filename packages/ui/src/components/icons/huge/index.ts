@@ -31,4 +31,3 @@ export * from './book-open';
 export * from './calendar';
 export * from './clock';
 export * from './file';
-export * from './phantom';

@@ -1,74 +1,86 @@
+import { auth } from '@bounty/auth/server';
 import { db, waitlist } from '@bounty/db';
 import { track } from '@bounty/track';
-import { validateFingerprint } from '@bounty/ui/lib/fingerprint-validation';
-import { type NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
+import { headers } from 'next/headers';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { eq, or } from 'drizzle-orm';
 
-const requestSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  fingerprintData: z.object({
-    thumbmark: z.string(),
-    components: z.record(z.string(), z.any()),
-    info: z.record(z.string(), z.any()).optional(),
-    version: z.string().optional(),
-  }),
-});
-
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
-    const body = await request.json();
-    const validation = requestSchema.safeParse(body);
+    // Check for authenticated session
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
 
-    if (!validation.success) {
+    if (!session?.user) {
       return NextResponse.json(
         {
-          error: validation.error.issues[0]?.message || 'Invalid request data',
+          error: 'Must be logged in to join waitlist',
+          success: false,
+        },
+        { status: 401 }
+      );
+    }
+
+    const userId = session.user.id;
+    const userEmail = session.user.email;
+
+    if (!userEmail) {
+      return NextResponse.json(
+        {
+          error: 'User email is required',
           success: false,
         },
         { status: 400 }
       );
     }
 
-    const { email, fingerprintData } = validation.data;
+    // Check if user already has a waitlist entry (by userId or email)
+    const existingEntry = await db.query.waitlist.findFirst({
+      where: (fields, { eq, or }) =>
+        or(eq(fields.userId, userId), eq(fields.email, userEmail)),
+    });
 
-    const fingerprintValidation = validateFingerprint(fingerprintData);
-    if (!fingerprintValidation.isValid) {
-      return NextResponse.json(
-        {
-          error:
-            'Invalid device fingerprint: ' +
-            fingerprintValidation.errors.join(', '),
-          success: false,
-        },
-        { status: 400 }
-      );
-    }
+    if (existingEntry) {
+      // Update the entry with userId if not already set
+      if (!existingEntry.userId) {
+        await db
+          .update(waitlist)
+          .set({ userId })
+          .where(eq(waitlist.id, existingEntry.id));
+      }
 
-    try {
-      await db.insert(waitlist).values({
-        email,
-        hasAccess: false,
-        createdAt: new Date(),
-      });
-
-      await track('waitlist_joined', { source: 'api' });
       return NextResponse.json({
         success: true,
-        message: 'Successfully added to waitlist!',
+        message: "You're already on the waitlist!",
+        alreadyJoined: true,
       });
-    } catch (_error) {
-      return NextResponse.json(
-        {
-          error: 'Database temporarily unavailable',
-          success: false,
-        },
-        { status: 500 }
-      );
     }
-  } catch (error) {
+
+    // Calculate position
+    const allEntries = await db.query.waitlist.findMany();
+    const position = allEntries.length + 1;
+
+    // Create new waitlist entry linked to user
+    await db.insert(waitlist).values({
+      email: userEmail,
+      userId,
+      hasAccess: false,
+      createdAt: new Date(),
+      position,
+    });
+
+    await track('waitlist_joined', { source: 'api', userId });
+    return NextResponse.json({
+      success: true,
+      message: 'Successfully added to waitlist!',
+      position,
+    });
+  } catch (_error) {
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Database temporarily unavailable',
         success: false,
       },
       { status: 500 }

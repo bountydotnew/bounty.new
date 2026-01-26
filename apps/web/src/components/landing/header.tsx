@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, User } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@bounty/ui/components/sheet';
 import { Logo } from './logo';
+import { useSession } from '@/context/session-context';
 
 const NAV_LINKS = [
   { href: '/blog', label: 'Blog' },
@@ -15,6 +16,7 @@ const NAV_LINKS = [
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const { isAuthenticated, session, isPending } = useSession();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-[#0E0E0E] border-b border-[#2a2a2a]/40">
@@ -29,7 +31,8 @@ export function Header() {
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center justify-center gap-6 col-start-2">
-            {NAV_LINKS.map((link) => (
+            {/* Hide nav links when logged in */}
+            {!isAuthenticated && NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -42,20 +45,40 @@ export function Header() {
 
           {/* Desktop Actions */}
           <div className="flex items-center gap-3 col-start-3">
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center bg-[#1a1a1a] text-white rounded-full text-sm font-medium hover:bg-[#252525] transition-colors border border-[#333] hidden sm:inline-flex"
-              style={{ padding: '.4em .75em .42em' }}
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center justify-center bg-white text-[#0E0E0E] rounded-full text-sm font-medium hover:bg-[#e5e5e5] transition-colors"
-              style={{ padding: '.4em .75em .42em' }}
-            >
-              Browse Bounties
-            </Link>
+            {!isAuthenticated && !isPending && (
+              <>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center justify-center bg-[#1a1a1a] text-white rounded-full text-sm font-medium hover:bg-[#252525] transition-colors border border-[#333] hidden sm:inline-flex"
+                  style={{ padding: '.4em .75em .42em' }}
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center justify-center bg-white text-[#0E0E0E] rounded-full text-sm font-medium hover:bg-[#e5e5e5] transition-colors"
+                  style={{ padding: '.4em .75em .42em' }}
+                >
+                  Browse Bounties
+                </Link>
+              </>
+            )}
+
+            {/* Logged in: show user info with minimal nav */}
+            {isAuthenticated && (
+              <>
+                <span className="text-sm text-[#989898] hidden sm:inline-flex">
+                  {session?.user?.name || session?.user?.email?.split('@')[0]}
+                </span>
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center justify-center gap-2 bg-white text-[#0E0E0E] rounded-full text-sm font-medium hover:bg-[#e5e5e5] transition-colors px-4 py-2"
+                >
+                  <User className="h-4 w-4" />
+                  Dashboard
+                </Link>
+              </>
+            )}
 
             {/* Hamburger Menu - mobile only, shows nav links */}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -69,7 +92,8 @@ export function Header() {
               </SheetTrigger>
               <SheetContent side="right" className="w-64 bg-[#0E0E0E] border-l border-[#2a2a2a]/40 p-6">
                 <nav className="flex flex-col gap-6 mt-8">
-                  {NAV_LINKS.map((link) => (
+                  {/* Hide nav links when logged in */}
+                  {!isAuthenticated && NAV_LINKS.map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}
@@ -79,6 +103,16 @@ export function Header() {
                       {link.label}
                     </Link>
                   ))}
+                  {/* Show dashboard link when logged in */}
+                  {isAuthenticated && (
+                    <Link
+                      href="/dashboard"
+                      className="text-base text-[#989898] hover:text-white transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                  )}
                 </nav>
               </SheetContent>
             </Sheet>

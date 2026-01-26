@@ -1,10 +1,9 @@
 'use client';
 
-import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
 import { GithubIcon, DiscordIcon, TwitterIcon, SlackIcon } from '@bounty/ui';
 import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear';
-import { PhantomIcon } from '@bounty/ui/components/icons/huge/phantom';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -27,11 +26,9 @@ interface IntegrationCardProps {
       id: number;
       accountLogin?: string | null;
       icon?: string;
-      walletAddress?: string;
       href?: string;
     }>;
     onAccountSelect?: (id: number | string) => void;
-    manageAllHref?: string;
   };
   action?: {
     label: string;
@@ -91,10 +88,7 @@ function IntegrationCard({
                 {status.accounts.map((account) => {
                   const accountLabel =
                     account.accountLogin || 'Unknown account';
-                  // Check if icon is a URL (for Discord avatars) or a string identifier
                   const isImageUrl = account.icon?.startsWith('http');
-                  const AccountIcon =
-                    account.icon === 'phantom' ? PhantomIcon : GithubIcon;
                   return (
                     <DropdownMenuItem
                       key={account.id}
@@ -118,29 +112,12 @@ function IntegrationCard({
                           className="rounded-full"
                         />
                       ) : (
-                        <AccountIcon className="size-4 opacity-60 text-white" />
+                        <GithubIcon className="size-4 opacity-60 text-white" />
                       )}
                       {accountLabel}
                     </DropdownMenuItem>
                   );
                 })}
-                {status.manageAllHref && (
-                  <>
-                    <div className="h-px bg-[#232323] my-1" />
-                    <DropdownMenuItem
-                      className="focus:bg-[#232323] gap-2 text-[#929292]"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (status.manageAllHref) {
-                          router.push(status.manageAllHref);
-                        }
-                      }}
-                    >
-                      Manage all wallets
-                    </DropdownMenuItem>
-                  </>
-                )}
               </DropdownMenuContent>
             )}
           </DropdownMenu>
@@ -190,21 +167,6 @@ type IntegrationItem =
         accountType?: string | null;
         repositoryIds?: string[] | null;
       }>;
-    }
-  | {
-      type: 'phantom';
-      connectionStatus: {
-        connected: boolean;
-        wallets?: Array<{
-          walletAddress: string;
-          displayName?: string | null;
-          tokenBalance?: string | null;
-          tokenBalanceFormatted?: string | null;
-          tokenValueUsd?: string | null;
-        }>;
-      } | null;
-      onConnect: () => void;
-      isConnecting: boolean;
     }
   | {
       type: 'discord';
@@ -278,68 +240,6 @@ function renderGithubIntegrationCard(
   );
 }
 
-function truncateAddress(address: string) {
-  return `${address.slice(0, 3)}...${address.slice(-3)}`;
-}
-
-function renderPhantomIntegrationCard(
-  connectionStatus: {
-    connected: boolean;
-    wallets?: Array<{
-      walletAddress: string;
-      displayName?: string | null;
-      tokenBalance?: string | null;
-      tokenBalanceFormatted?: string | null;
-      tokenValueUsd?: string | null;
-    }>;
-  } | null,
-  onConnect: () => void,
-  isConnecting: boolean,
-  filter: 'all' | 'installed'
-) {
-  if (filter === 'installed' && !connectionStatus?.connected) return null;
-
-  const isConnected = connectionStatus?.connected;
-  const wallets = connectionStatus?.wallets || [];
-  const walletCount = wallets.length;
-
-  const description = isConnected
-    ? walletCount === 1 && wallets[0]
-      ? `${wallets[0].tokenBalanceFormatted || wallets[0].tokenBalance || '0'} $BOUNTY • ${wallets[0].displayName || truncateAddress(wallets[0].walletAddress)}`
-      : `${walletCount} wallet${walletCount > 1 ? 's' : ''} connected`
-    : 'Connect your Solana wallet to verify BOUNTY token holdings and unlock exclusive benefits';
-
-  return (
-    <IntegrationCard
-      key="phantom"
-      icon={<PhantomIcon className="size-7 text-white" />}
-      title="Phantom Wallet"
-      description={description}
-      status={
-        isConnected && walletCount > 0
-          ? {
-              type: 'installed',
-              count: walletCount,
-              accounts: wallets.map((w, idx) => ({
-                id: idx,
-                accountLogin: w.displayName || truncateAddress(w.walletAddress),
-                walletAddress: w.walletAddress,
-                icon: 'phantom',
-                href: `/integrations/phantom/${w.walletAddress}`,
-              })),
-              manageAllHref: '/integrations/phantom/all',
-            }
-          : undefined
-      }
-      action={{
-        label: isConnecting ? 'Connecting...' : 'Install',
-        onClick: onConnect,
-        disabled: isConnecting,
-      }}
-    />
-  );
-}
-
 function renderIntegrationCard(
   item: IntegrationItem,
   filter: 'all' | 'installed',
@@ -359,13 +259,6 @@ function renderIntegrationCard(
         item.installations,
         filter,
         installUrl
-      );
-    case 'phantom':
-      return renderPhantomIntegrationCard(
-        item.connectionStatus,
-        item.onConnect,
-        item.isConnecting,
-        filter
       );
     case 'discord': {
       const isLinked = !!item.account;
@@ -452,18 +345,14 @@ export function IntegrationsSettings() {
     isLoading,
     githubInstallations,
     githubInstallUrl,
-    phantomWallets,
-    connectPhantom,
     discordAccount,
     discordBotInstallUrl,
     hasDiscord,
     addDiscordBot,
     linkDiscord,
-    refreshAll,
     invalidateAll,
   } = useIntegrations();
 
-  const [isConnecting, setIsConnecting] = useState(false);
   const [filter, setFilter] = useState<'all' | 'installed'>('all');
 
   // Track if we've already handled this setup action to prevent infinite loops
@@ -479,19 +368,8 @@ export function IntegrationsSettings() {
     }
   }, [setupAction, installationId, invalidateAll]);
 
-  // Handle Phantom wallet connection
-  const handlePhantomConnect = useCallback(async () => {
-    setIsConnecting(true);
-    const success = await connectPhantom();
-    setIsConnecting(false);
-    if (success) {
-      refreshAll();
-    }
-  }, [connectPhantom, refreshAll]);
-
   const installedCount =
     githubInstallations.length +
-    (phantomWallets.length > 0 ? 1 : 0) +
     (hasDiscord ? 1 : 0);
 
   const allIntegrations = useMemo(
@@ -499,24 +377,6 @@ export function IntegrationsSettings() {
       {
         type: 'github' as const,
         installations: githubInstallations,
-      },
-      {
-        type: 'phantom' as const,
-        connectionStatus: {
-          connected: phantomWallets.length > 0,
-          wallets: phantomWallets,
-        } as {
-          connected: boolean;
-          wallets: Array<{
-            walletAddress: string;
-            displayName?: string | null;
-            tokenBalance?: string | null;
-            tokenBalanceFormatted?: string | null;
-            tokenValueUsd?: string | null;
-          }>;
-        },
-        onConnect: handlePhantomConnect,
-        isConnecting,
       },
       {
         type: 'discord' as const,
@@ -530,9 +390,6 @@ export function IntegrationsSettings() {
     ],
     [
       githubInstallations,
-      phantomWallets,
-      handlePhantomConnect,
-      isConnecting,
       discordAccount,
       discordBotInstallUrl,
       addDiscordBot,
@@ -545,7 +402,6 @@ export function IntegrationsSettings() {
       ? allIntegrations.filter(
           (item) =>
             (item.type === 'github' && item.installations.length > 0) ||
-            (item.type === 'phantom' && item.connectionStatus?.connected) ||
             (item.type === 'discord' && item.account)
         )
       : allIntegrations;
