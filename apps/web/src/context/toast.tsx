@@ -20,7 +20,7 @@ export const TOAST_ICONS = {
 
 const MESSAGE_BY_REASON: Record<ReasonCode, string> = {
   unauthenticated: 'Please sign in to continue.',
-  beta_required: 'Beta access required to use this area.',
+  early_access_required: 'Early access required to use this area.',
   email_unverified: 'Verify your email to continue.',
   banned: 'Your account is suspended. Contact support.',
   plan_required: 'An upgraded plan is required to use this feature.',
