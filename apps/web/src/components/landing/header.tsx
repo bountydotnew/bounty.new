@@ -2,10 +2,16 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Menu, User } from 'lucide-react';
+import { Menu, Star, User } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
 import { Sheet, SheetContent, SheetTrigger } from '@bounty/ui/components/sheet';
 import { Logo } from './logo';
 import { useSession } from '@/context/session-context';
+import { trpc } from '@/utils/trpc';
+import { LINKS } from '@/constants';
+
+const REPOSITORY = 'bountydotnew/bounty.new';
 
 const NAV_LINKS = [
   { href: '/blog', label: 'Blog' },
@@ -16,6 +22,9 @@ const NAV_LINKS = [
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated, session, isPending } = useSession();
+  const { data: repoStats } = useQuery(
+    trpc.repository.stats.queryOptions({ repo: REPOSITORY })
+  );
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-[#0E0E0E] border-b border-[#2a2a2a]/40">
@@ -46,11 +55,16 @@ export function Header() {
           <div className="flex items-center gap-3 col-start-3">
             {!isAuthenticated && !isPending && (
               <Link
-                href="/login"
-                className="inline-flex items-center justify-center bg-white text-[#0E0E0E] rounded-full text-sm font-medium hover:bg-[#e5e5e5] transition-colors"
-                style={{ padding: '.4em .75em .42em' }}
+                href={LINKS.SOCIALS.GITHUB}
+                target="_blank"
+                className="inline-flex items-center justify-center gap-1.5 bg-[#1a1a1a] text-white rounded-full text-sm font-medium hover:bg-[#252525] transition-colors border border-[#333]"
+                style={{ padding: '.4em .9em .42em' }}
               >
-                Sign in
+                <GithubIcon className="h-3.5 w-3.5" />
+                <Star className="h-3 w-3.5 fill-white" />
+                <span>
+                  {repoStats?.repo.stargazersCount?.toLocaleString() || '0'}
+                </span>
               </Link>
             )}
 

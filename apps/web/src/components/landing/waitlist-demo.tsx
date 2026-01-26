@@ -1,12 +1,13 @@
 "use client";
 
+import { authClient } from '@bounty/auth/client';
 import { Button } from '@bounty/ui/components/button';
 import { Input } from '@bounty/ui/components/input';
 import NumberFlow from '@bounty/ui/components/number-flow';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { getThumbmark } from '@thumbmarkjs/thumbmarkjs';
-import { ChevronRight } from 'lucide-react';
+import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -85,7 +86,12 @@ function useWaitlistSubmission(): WaitlistHookResult {
       toast.success("You're on the list! 🎉");
     },
     onError: (error: Error) => {
-      if (error.message.includes('Rate limit exceeded')) {
+      if (error.message.includes('Must be logged in to join waitlist')) {
+        authClient.signIn.social({
+          provider: 'github',
+          callbackURL: '/',
+        });
+      } else if (error.message.includes('Rate limit exceeded')) {
         toast.error("Too many attempts. Please try again later.");
       } else if (error.message.includes('Invalid device fingerprint')) {
         toast.error('Security validation failed. Please refresh and try again.');
@@ -222,7 +228,7 @@ function WaitlistPage() {
                       'Joining...'
                     ) : (
                       <>
-                        Join Waitlist <ChevronRight className="w-4 h-4 ml-1" />
+                        <GithubIcon className="w-4 h-4 mr-1" /> Join Waitlist
                       </>
                     )}
                   </Button>
