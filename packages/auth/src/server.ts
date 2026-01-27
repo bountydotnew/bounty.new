@@ -195,9 +195,7 @@ export const auth = betterAuth({
 
   trustedOrigins: [
     'https://bounty.new',
-    'https://www.bounty.new',
-    'https://local.bounty.new',
-    'https://preview.bounty.new',
+    'https://*.bounty.new', // Matches www.bounty.new, local.bounty.new, preview.bounty.new, etc.
     ...(env.NODE_ENV === 'production'
       ? []
       : [
