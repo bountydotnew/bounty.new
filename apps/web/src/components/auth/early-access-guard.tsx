@@ -7,7 +7,8 @@ import { useSession } from '@/context/session-context';
 /**
  * EarlyAccessGuard - Protects routes by checking for early_access or admin role
  *
- * Redirects users without early access to the early-access-required page.
+ * When NEXT_PUBLIC_EARLY_ACCESS_ENABLED is "false", bypasses all checks (public mode).
+ * Otherwise, redirects users without early access to the early-access-required page.
  * Shows nothing while loading.
  */
 export function EarlyAccessGuard({
@@ -20,11 +21,19 @@ export function EarlyAccessGuard({
   const router = useRouter();
   const { session, isPending } = useSession();
 
+  // Check if early access mode is enabled (default: true unless explicitly set to "false")
+  const isEarlyAccessEnabled = process.env.NEXT_PUBLIC_EARLY_ACCESS_ENABLED !== 'false';
+
   // Track the last checked session to avoid redundant checks
   const lastCheckedSessionRef = useRef<string | null>(null);
   const [hasRedirected, setHasRedirected] = useState(false);
 
   useEffect(() => {
+    // If early access is disabled, allow everyone
+    if (!isEarlyAccessEnabled) {
+      return;
+    }
+
     // Only redirect client-side to avoid hydration issues
     if (typeof window === 'undefined') {
       return;
@@ -64,7 +73,12 @@ export function EarlyAccessGuard({
 
     setHasRedirected(true);
     router.push('/early-access-required');
-  }, [session, isPending, router, hasRedirected]);
+  }, [session, isPending, router, hasRedirected, isEarlyAccessEnabled]);
+
+  // If early access is disabled, allow everyone
+  if (!isEarlyAccessEnabled) {
+    return <>{children}</>;
+  }
 
   // Show nothing while loading
   if (isPending) {
