@@ -105,8 +105,8 @@ export function SpendSlider({ value, onChange }: SpendSliderProps) {
                 —{' '}
                 {formatBillingCurrency(
                   PRICING_TIERS[recommendedPlan].feeFreeAllowance
-                )}{' '}
-                fee-free
+                )}
+                /mo platform fee-free
               </span>
             )}
           </>

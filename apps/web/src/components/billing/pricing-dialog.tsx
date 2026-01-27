@@ -24,8 +24,8 @@ const SPEND_PRESETS = [100, 500, 1000, 2500, 5000, 10_000, 25_000, 50_000];
 
 const ALL_FEATURES = [
   { key: 'concurrent', label: 'Concurrent Bounties' },
-  { key: 'allowance', label: 'Fee-Free Allowance' },
-  { key: 'fee', label: 'Platform Fee' },
+  { key: 'allowance', label: 'Platform Fee-Free' },
+  { key: 'fee', label: 'Platform Fee After' },
   { key: 'support', label: 'Priority Support' },
 ];
 
@@ -244,7 +244,7 @@ function SpendSlider({
 
       {/* Hint */}
       <p className="text-center text-xs text-gray-500">
-        Platform fees only apply on amounts exceeding your fee-free allowance
+        Platform fees only apply to spend exceeding your plan&apos;s fee-free limit
       </p>
     </div>
   );
