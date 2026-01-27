@@ -94,14 +94,18 @@ async function syncGitHubHandle({
   userId,
   accessToken,
 }: GitHubSyncParams): Promise<void> {
-  if (!(userId && accessToken)) return;
+  if (!(userId && accessToken)) {
+    return;
+  }
 
   try {
     const octokit = new GitHubOctokit({ auth: accessToken });
     const { data } = await octokit.rest.users.getAuthenticated();
 
     const githubHandle = data?.login?.toLowerCase();
-    if (!githubHandle) return;
+      if (!githubHandle) {
+        return;
+      }
 
     // Check if user already has a handle OR the same handle (avoid unnecessary updates)
     const existingUser = await db.query.user.findFirst({
@@ -109,7 +113,9 @@ async function syncGitHubHandle({
       columns: { id: true, handle: true },
     });
 
-    if (existingUser?.handle) return;
+    if (existingUser?.handle) {
+      return;
+    }
 
     // Update with GitHub handle
     await db
@@ -187,7 +193,22 @@ export const auth = betterAuth({
     errorURL: '/auth/error',
   },
 
-  trustedOrigins: [...AUTH_CONFIG.trustedOrigins],
+  trustedOrigins: [
+    'https://bounty.new',
+    'https://www.bounty.new',
+    'https://local.bounty.new',
+    'https://preview.bounty.new',
+    ...(env.NODE_ENV === 'production'
+      ? []
+      : [
+          'http://localhost:3000',
+          'http://localhost:3001',
+          'http://192.168.1.147:3000',
+          'http://100.*.*.*:3000',
+          'http://172.*.*.*:3000',
+          'https://isiah-unsonant-linn.ngrok-free.dev',
+        ]),
+  ],
 
   socialProviders: {
     github: {
