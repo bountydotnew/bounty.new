@@ -11,13 +11,13 @@ export const AUTH_CONFIG = {
   trustedOrigins: [
     'https://bounty.new',
     'https://www.bounty.new',
-    // Use specific domains instead of wildcard where possible
+    'https://local.bounty.new',
+    'https://preview.bounty.new',
     ...(env.NODE_ENV === 'production'
       ? []
       : [
           'http://localhost:3000',
           'http://localhost:3001',
-          'https://preview.bounty.new',
           'http://192.168.1.147:3000',
           'http://100.*.*.*:3000',
           'http://172.*.*.*:3000',
