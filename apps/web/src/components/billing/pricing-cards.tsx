@@ -7,6 +7,7 @@ import { cn } from '@bounty/ui';
 import { useSession } from '@/context/session-context';
 import { useCustomer } from 'autumn-js/react';
 import { toast } from 'sonner';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@bounty/ui/components/tooltip';
 
 const PLAN_ORDER: BountyProPlan[] = [
   'free',
@@ -71,10 +72,19 @@ function PricingCard({
   isYearly: boolean;
 }) {
   const router = useRouter();
-  const { isAuthenticated } = useSession();
+  const { session, isAuthenticated } = useSession();
   const { attach } = useCustomer();
   const pricing = PRICING_TIERS[plan];
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check if early access mode is enabled
+  const isEarlyAccessEnabled = process.env.NEXT_PUBLIC_EARLY_ACCESS_ENABLED !== 'false';
+
+  // Check if user has early access (early_access or admin role)
+  const hasEarlyAccess = session?.user?.role === 'early_access' || session?.user?.role === 'admin';
+
+  // Determine if user can purchase
+  const canPurchase = !isEarlyAccessEnabled || hasEarlyAccess;
 
   const displayPrice = isYearly ? YEARLY_PRICES[plan] : pricing.monthlyPrice;
   const checkoutSlug = plan === 'free'
@@ -84,6 +94,12 @@ function PricingCard({
       : plan;
 
   const handleCheckoutClick = () => {
+    // If early access is enabled and user doesn't have access, redirect to early access required
+    if (isEarlyAccessEnabled && !hasEarlyAccess) {
+      router.push('/early-access-required');
+      return;
+    }
+
     if (plan === 'free') {
       router.push('/dashboard');
       return;
@@ -201,25 +217,46 @@ function PricingCard({
 
       {/* CTA Button */}
       <div className="mt-6">
-        <button
-          type="button"
-          onClick={handleCheckoutClick}
-          disabled={isLoading}
-          className={cn(
-            'w-full rounded-full text-sm font-medium transition-colors',
-            isRecommended
-              ? 'bg-white text-[#0E0E0E] hover:bg-[#e5e5e5]'
-              : 'bg-[#1a1a1a] text-white hover:bg-[#252525] border border-[#333]',
-            isLoading && 'opacity-50 cursor-not-allowed'
-          )}
-          style={{ padding: '.5em 1em .52em' }}
-        >
-          {isLoading
-            ? 'Loading...'
-            : plan === 'free'
-              ? 'Get Started'
-              : `Get ${pricing.name}`}
-        </button>
+        {!canPurchase ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                className={cn(
+                  'inline-flex w-full items-center justify-center rounded-full text-sm font-medium transition-colors cursor-not-allowed opacity-70',
+                  isRecommended
+                    ? 'bg-white text-[#0E0E0E]'
+                    : 'bg-[#1a1a1a] text-white border border-[#333]'
+                )}
+                style={{ padding: '.5em 1em .52em' }}
+              >
+                {plan === 'free' ? 'Get Started' : `Get ${pricing.name}`}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Early Access Required - Join the waitlist to get access</p>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <button
+            type="button"
+            onClick={handleCheckoutClick}
+            disabled={isLoading}
+            className={cn(
+              'w-full rounded-full text-sm font-medium transition-colors',
+              isRecommended
+                ? 'bg-white text-[#0E0E0E] hover:bg-[#e5e5e5]'
+                : 'bg-[#1a1a1a] text-white hover:bg-[#252525] border border-[#333]',
+              isLoading && 'cursor-wait opacity-50'
+            )}
+            style={{ padding: '.5em 1em .52em' }}
+          >
+            {isLoading
+              ? 'Loading...'
+              : plan === 'free'
+                ? 'Get Started'
+                : `Get ${pricing.name}`}
+          </button>
+        )}
       </div>
     </div>
   );

@@ -22,11 +22,10 @@ export const featureVote = pgTable(
     createdAt: timestamp('created_at').notNull().default(sql`now()`),
   },
   (table) => [
-    // Each user can only vote once per feature
-    uniqueIndex('feature_vote_user_feature_idx').on(
+    // Each user can only vote once per feature type
+    uniqueIndex('feature_vote_user_feature_type_idx').on(
       table.userId,
-      table.featureType,
-      table.featureKey
+      table.featureType
     ),
   ]
 );
