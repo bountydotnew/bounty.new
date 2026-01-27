@@ -53,7 +53,7 @@ const maybeToastError = (err: unknown): void => {
       : false;
   if (
     isBackground &&
-    (reason === 'unauthenticated' || reason === 'beta_required')
+    (reason === 'unauthenticated' || reason === 'early_access_required')
   ) {
     return;
   }

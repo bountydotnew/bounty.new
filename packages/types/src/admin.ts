@@ -40,8 +40,6 @@ export interface AdminUserProfileResponse {
     email: string;
     image: string | null;
     role?: string | null;
-    hasAccess: boolean;
-    betaAccessStatus?: string | null;
     banned?: boolean | null;
     createdAt: string | Date;
   };
