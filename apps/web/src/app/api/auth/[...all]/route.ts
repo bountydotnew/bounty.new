@@ -9,7 +9,7 @@ export const allowedOrigins = [
 	"http://localhost:3000",
 ];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
 	const origin = request.headers.get("origin");
 
 	// Handle CORS preflight requests
