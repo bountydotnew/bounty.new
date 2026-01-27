@@ -4,6 +4,7 @@ import { connectRouter } from './connect';
 import { discordRouter } from './discord';
 import { earlyAccessRouter } from './early-access';
 import { emailsRouter } from './emails';
+import { featureVotesRouter } from './feature-votes';
 import { githubInstallationRouter } from './github-installation';
 import { newsRouter } from './news';
 import { notificationsRouter } from './notifications';
@@ -45,6 +46,7 @@ export const appRouter = router({
   connect: connectRouter,
   discord: discordRouter,
   onboarding: onboardingRouter,
+  featureVotes: featureVotesRouter,
 });
 
 export type AppRouter = typeof appRouter;

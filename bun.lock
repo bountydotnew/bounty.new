@@ -8,6 +8,7 @@
         "chrono-node": "^2.9.0",
         "cmdk": "^1.1.1",
         "html2canvas-pro": "^1.5.13",
+        "react-intersection-observer": "^10.0.2",
       },
       "devDependencies": {
         "@biomejs/biome": "2.1.2",
@@ -2736,6 +2737,8 @@
     "react-google-recaptcha": ["react-google-recaptcha@3.1.0", "", { "dependencies": { "prop-types": "^15.5.0", "react-async-script": "^1.2.0" }, "peerDependencies": { "react": ">=16.4.1" } }, "sha512-cYW2/DWas8nEKZGD7SCu9BSuVz8iOcOLHChHyi7upUuVhkpkhYG/6N3KDiTQ3XAiZ2UAZkfvYKMfAHOzBOcGEg=="],
 
     "react-hook-form": ["react-hook-form@7.71.1", "", { "peerDependencies": { "react": "^16.8.0 || ^17 || ^18 || ^19" } }, "sha512-9SUJKCGKo8HUSsCO+y0CtqkqI5nNuaDqTxyqPsZPqIwudpj4rCrAz/jZV+jn57bx5gtZKOh3neQu94DXMc+w5w=="],
+
+    "react-intersection-observer": ["react-intersection-observer@10.0.2", "", { "peerDependencies": { "react": "^17.0.0 || ^18.0.0 || ^19.0.0", "react-dom": "^17.0.0 || ^18.0.0 || ^19.0.0" }, "optionalPeers": ["react-dom"] }, "sha512-lAMzxVWrBko6SLd1jx6l84fVrzJu91hpxHlvD2as2Wec9mDCjdYXwc5xNOFBchpeBir0Y7AGBW+C/AYMa7CSFg=="],
 
     "react-is": ["react-is@16.13.1", "", {}, "sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ=="],
 

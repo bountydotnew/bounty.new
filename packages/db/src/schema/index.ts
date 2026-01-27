@@ -2,6 +2,7 @@ export * from './auth';
 export * from './beta-applications';
 export * from './bounties';
 export * from './device-code';
+export * from './feature-votes';
 export * from './github-installation';
 export * from './invites';
 export * from './notifications';

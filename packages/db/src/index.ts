@@ -3,6 +3,7 @@ import { Pool } from 'pg';
 import * as authSchema from './schema/auth';
 import * as betaApplicationsSchema from './schema/beta-applications';
 import * as bountiesSchema from './schema/bounties';
+import * as featureVotesSchema from './schema/feature-votes';
 import * as invitesSchema from './schema/invites';
 import * as notificationsSchema from './schema/notifications';
 import * as passkeySchema from './schema/passkey';
@@ -31,6 +32,7 @@ export const db = drizzle(pool, {
     ...notificationsSchema,
     ...invitesSchema,
     ...paymentsSchema,
+    ...featureVotesSchema,
   },
 });
 
@@ -38,6 +40,7 @@ export const db = drizzle(pool, {
 export * from './schema/auth';
 export * from './schema/beta-applications';
 export * from './schema/bounties';
+export * from './schema/feature-votes';
 export * from './schema/invites';
 export * from './schema/notifications';
 export * from './schema/passkey';

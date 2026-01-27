@@ -620,7 +620,7 @@ export class GithubAppManager {
    * Get app installation URL
    */
   getInstallationUrl(state?: string): string {
-    const baseUrl = 'https://github.com/apps/bountydotnew/installations/new';
+    const baseUrl = `https://github.com/apps/${process.env.GITHUB_APP_NAME}/installations/new`;
     if (state) {
       return `${baseUrl}?state=${encodeURIComponent(state)}`;
     }
