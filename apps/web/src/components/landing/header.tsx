@@ -57,17 +57,18 @@ export function Header() {
               <>
                 <Link
                   href="/login"
-                  className="inline-flex items-center justify-center bg-[#1a1a1a] text-white rounded-full text-sm font-medium hover:bg-[#252525] transition-colors border border-[#333] hidden sm:inline-flex"
+                  className="inline-flex items-center justify-center bg-[#1a1a1a] text-white rounded-full text-xs sm:text-sm font-medium hover:bg-[#252525] transition-colors border border-[#333] whitespace-nowrap"
                   style={{ padding: '.4em .75em .42em' }}
                 >
                   Sign in
                 </Link>
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center justify-center bg-white text-[#0E0E0E] rounded-full text-sm font-medium hover:bg-[#e5e5e5] transition-colors"
+                  className="inline-flex items-center justify-center bg-white text-[#0E0E0E] rounded-full text-xs sm:text-sm font-medium hover:bg-[#e5e5e5] transition-colors whitespace-nowrap"
                   style={{ padding: '.4em .75em .42em' }}
                 >
-                  Browse Bounties
+                  <span className="sm:hidden">Bounties</span>
+                  <span className="hidden sm:inline">Browse Bounties</span>
                 </Link>
               </>
             )}
@@ -88,7 +89,7 @@ export function Header() {
                 )}
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center justify-center bg-white text-[#0E0E0E] rounded-full text-sm font-medium hover:bg-[#e5e5e5] transition-colors"
+                  className="inline-flex items-center justify-center bg-white text-[#0E0E0E] rounded-full text-xs sm:text-sm font-medium hover:bg-[#e5e5e5] transition-colors whitespace-nowrap"
                   style={{ padding: '.4em .75em .42em' }}
                 >
                   Dashboard
