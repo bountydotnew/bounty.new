@@ -6,6 +6,8 @@ export interface ActionItem {
   onSelect: () => void;
   icon?: ReactNode;
   disabled?: boolean;
+  className?: string;
+  tooltip?: string;
 }
 
 export interface BountyActionsProps {
@@ -22,6 +24,8 @@ export interface BountyActionsProps {
   bookmarked?: boolean;
   onToggleBookmark?: () => void;
   actions?: ActionItem[];
+  repositoryUrl?: string | null;
+  issueUrl?: string | null;
 }
 
 export interface UpvoteButtonProps {

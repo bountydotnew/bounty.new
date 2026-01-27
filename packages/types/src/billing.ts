@@ -1,103 +1,128 @@
-import type { CustomerState as PolarCustomerState } from '@polar-sh/sdk/models/components/customerstate';
-import type { CustomerStateSubscription as PolarCustomerStateSubscription } from '@polar-sh/sdk/models/components/customerstatesubscription';
-import type { PolarError as BasePolarError } from './polar';
+/**
+ * Billing Types
+ *
+ * Application-layer billing types that integrate with Autumn.
+ * Re-exports common types from autumn.ts for convenience.
+ */
 
-export type PolarError = BasePolarError & Error;
+// Import Autumn types for re-export and legacy aliases
+import type {
+  AutumnCustomer,
+  AutumnCustomerCreateParams,
+  AutumnCustomerUpdateParams,
+  AutumnSubscription,
+  AutumnSubscriptionStatus,
+  AutumnProduct,
+  AutumnFeatureState,
+  AutumnFeatureInterval,
+  AutumnCheckoutParams,
+  AutumnCheckoutSession,
+  AutumnPortalSession,
+  AutumnUsageEvent,
+  AutumnUsageEventResponse,
+  AutumnError,
+  AutumnWebhookPayload,
+  CustomerState,
+  ExtendedCustomerState,
+  BillingSubscription,
+  BillingProduct,
+  BillingFeature,
+  BillingHookResult,
+  FeatureState,
+  Features,
+  UsageMetadata,
+  PendingAction,
+  BasePendingAction,
+  PortalPendingAction,
+  UsagePendingAction,
+  CheckoutPendingAction,
+} from './autumn';
 
-export interface FeatureState {
-  total: number;
-  remaining: number;
-  unlimited: boolean;
-  enabled: boolean;
-  usage: number;
-  nextResetAt: number | null;
-  interval: string;
-  included_usage: number;
-}
+// Re-export Autumn types as the primary billing types
+export type {
+  AutumnCustomer,
+  AutumnCustomerCreateParams,
+  AutumnCustomerUpdateParams,
+  AutumnSubscription,
+  AutumnSubscriptionStatus,
+  AutumnProduct,
+  AutumnFeatureState,
+  AutumnFeatureInterval,
+  AutumnCheckoutParams,
+  AutumnCheckoutSession,
+  AutumnPortalSession,
+  AutumnUsageEvent,
+  AutumnUsageEventResponse,
+  AutumnError,
+  AutumnWebhookPayload,
+  CustomerState,
+  ExtendedCustomerState,
+  BillingSubscription,
+  BillingProduct,
+  BillingFeature,
+  BillingHookResult,
+  FeatureState,
+  Features,
+  UsageMetadata,
+  PendingAction,
+  BasePendingAction,
+  PortalPendingAction,
+  UsagePendingAction,
+  CheckoutPendingAction,
+  BountyProPlan,
+  PricingPlan,
+} from './autumn';
 
-export interface Features {
-  lowerFees: FeatureState;
-  concurrentBounties: FeatureState;
-}
+// Re-export feature ID constants
+export { AUTUMN_FEATURE_IDS } from './autumn';
 
-export interface BillingProduct {
-  id?: string;
-  name?: string;
-  slug?: string;
-}
+// Re-export pricing utilities
+export {
+  PRICING_TIERS,
+  calculateBountyCost,
+  getRecommendedPlan,
+  formatFeePercent,
+} from './autumn';
 
-export type BillingSubscription = PolarCustomerStateSubscription & {
-  product?: BillingProduct;
-  productId?: string;
-  customerId?: string;
-};
+// ============================================================================
+// Legacy Type Aliases (for gradual migration)
+// ============================================================================
 
-export interface BillingFeature {
-  included_usage?: number;
-  balance?: number;
-  unlimited?: boolean;
-  usage?: number;
-  next_reset_at?: number;
-  interval?: string;
-}
+/**
+ * @deprecated Use AutumnCustomer instead
+ */
+export type PolarCustomer = AutumnCustomer;
 
-export type CustomerState = Partial<PolarCustomerState> & {
-  products?: BillingProduct[];
-  activeSubscriptions?: BillingSubscription[];
-  grantedBenefits?: unknown[];
-  features?: Record<string, BillingFeature>;
-};
+/**
+ * @deprecated Use AutumnCustomerCreateParams instead
+ */
+export type PolarCustomerCreateParams = AutumnCustomerCreateParams;
 
-export interface BasePendingAction {
-  type: 'portal' | 'usage' | 'checkout';
-}
+/**
+ * @deprecated Use AutumnError instead
+ */
+export type PolarError = AutumnError;
 
-export interface PortalPendingAction extends BasePendingAction {
-  type: 'portal';
-  params?: undefined;
-}
+/**
+ * @deprecated Use AutumnWebhookPayload instead
+ */
+export type PolarWebhookPayload = AutumnWebhookPayload;
 
-export interface UsagePendingAction extends BasePendingAction {
-  type: 'usage';
-  params: {
-    event: string;
-    metadata: Record<string, string | number | boolean>;
-  };
-}
+// ============================================================================
+// Checkout & Usage Params (Convenience Types)
+// ============================================================================
 
-export interface CheckoutPendingAction extends BasePendingAction {
-  type: 'checkout';
-  params: {
-    slug: 'pro-monthly' | 'pro-annual';
-  };
-}
-
-export type PendingAction =
-  | PortalPendingAction
-  | UsagePendingAction
-  | CheckoutPendingAction;
-
-export interface UsageMetadata {
-  [key: string]: string | number | boolean;
-}
-
+/**
+ * Checkout parameters for Bounty Pro plans
+ */
 export interface CheckoutParams {
-  slug: 'pro-monthly' | 'pro-annual';
+  slug: 'tier_1_basic' | 'tier_2_pro' | 'tier_3_pro_plus';
 }
 
+/**
+ * Usage tracking parameters
+ */
 export interface UsageParams {
   event: string;
   metadata: UsageMetadata;
-}
-
-export interface BillingHookResult {
-  isLoading: boolean;
-  customer: CustomerState | null | undefined;
-  refetch: () => Promise<unknown>;
-  openBillingPortal: () => Promise<void>;
-  trackUsage: (event: string, metadata?: UsageMetadata) => Promise<void>;
-  checkout: (slug: 'pro-monthly' | 'pro-annual') => Promise<void>;
-  isPro: boolean;
-  lowerFees: FeatureState;
-  concurrentBounties: FeatureState;
 }

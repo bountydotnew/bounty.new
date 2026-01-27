@@ -20,36 +20,25 @@ export function SubmissionsMobileSidebar({
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useMediaQuery('(max-width: 1024px)');
 
-  if (!isMobile) {
+  // When inline, don't show the sidebar/sheet on mobile
+  // Submissions are already displayed inline in the main content
+  if (!isMobile || inline) {
     return null;
   }
 
   return (
     <Sheet onOpenChange={setIsOpen} open={isOpen}>
       <SheetTrigger asChild>
-        {inline ? (
-          <button
-            aria-label="Open submissions"
-            className={cn(
-              'flex items-center gap-2 rounded-md border border-neutral-800 bg-neutral-900/70 px-2.5 py-1.5 text-neutral-300 text-xs hover:bg-neutral-800/80',
-              className
-            )}
-          >
-            <span>Submissions</span>
-            <PanelRightIcon className="h-4 w-4" />
-          </button>
-        ) : (
-          <button
-            aria-label="Open submissions"
-            className={cn(
-              'fixed right-4 bottom-20 z-40 flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-900/90 px-3.5 py-2 text-neutral-300 text-xs backdrop-blur transition-colors hover:bg-neutral-800/90',
-              className
-            )}
-          >
-            <span>Submissions</span>
-            <PanelRightIcon className="h-4 w-4" />
-          </button>
-        )}
+        <button
+          aria-label="Open submissions"
+          className={cn(
+            'fixed right-4 bottom-20 z-40 flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-900/90 px-3.5 py-2 text-neutral-300 text-xs backdrop-blur transition-colors hover:bg-neutral-800/90',
+            className
+          )}
+        >
+          <span>Submissions</span>
+          <PanelRightIcon className="h-4 w-4" />
+        </button>
       </SheetTrigger>
       <SheetContent
         className="w-[320px] rounded-l-2xl border-none bg-[#151515] p-0 shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)]"

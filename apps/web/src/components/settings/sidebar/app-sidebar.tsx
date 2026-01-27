@@ -18,13 +18,7 @@ import {
 import { usePathname, useRouter } from 'next/navigation';
 import Link from '@bounty/ui/components/link';
 import { LINKS } from '@/constants';
-import {
-  BellIcon,
-  UserIcon,
-  DollarBillIcon,
-  SecurityIcon,
-  CardIcon,
-} from '@bounty/ui';
+import { BellIcon, UserIcon, DollarBillIcon, SecurityIcon, CardIcon } from '@bounty/ui';
 import { ArrowLeftIcon } from 'lucide-react';
 
 const NAV_ITEMS = [

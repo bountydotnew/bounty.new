@@ -1,69 +1,62 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Controller, type Control } from 'react-hook-form';
 import type { CreateBountyForm } from '@bounty/ui/lib/forms';
-import { calculateWidth } from '@bounty/ui/lib/calculateWidth';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@bounty/ui/components/popover';
+import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
 
 interface TitleChipProps {
   control: Control<CreateBountyForm>;
 }
 
 export function TitleChip({ control }: TitleChipProps) {
-  const titleRef = useRef<HTMLInputElement>(null);
-  const [isTitleFocused, setIsTitleFocused] = useState(false);
+    const [open, setOpen] = useState(false);
 
-  const handleContainerClick = () => {
-    if (titleRef.current) {
-      titleRef.current.focus();
-    }
-  };
-
-  return (
-    <div
-      className="relative rounded-[7px] flex flex-row items-center px-1.5 py-[3px] bg-[#201F1F] gap-1 cursor-text"
-      onClick={handleContainerClick}
-    >
-      <Controller
-        control={control}
-        name="title"
-        render={({ field }) => {
-          const hasFieldValue = Boolean(field.value);
-          const isNotFocused = !isTitleFocused;
-          const showPlaceholder = !hasFieldValue && isNotFocused;
-          const shouldUseWiderWidth = isTitleFocused || hasFieldValue;
-          // Ensure minimum width covers the placeholder text
-          const minWidth = shouldUseWiderWidth ? 60 : 50;
-          const inputWidth = calculateWidth(field.value || 'Title', minWidth);
-
-          return (
-            <>
-              {showPlaceholder && (
-                <span className="text-[#5A5A5A] text-[16px] leading-5 font-normal pointer-events-none absolute left-1.5">
-                  Title
-                </span>
-              )}
-              <input
-                ref={(e) => {
-                  if (e) {
-                    titleRef.current = e;
-                    field.ref(e);
-                  }
-                }}
-                type="text"
-                value={field.value}
-                onChange={field.onChange}
-                onFocus={() => setIsTitleFocused(true)}
-                onBlur={() => {
-                  setTimeout(() => {
-                    setIsTitleFocused(false);
-                  }, 200);
-                }}
-                className="bg-transparent text-white text-[16px] leading-5 outline-none placeholder:text-[#5A5A5A]"
-                style={{ width: `${inputWidth}px` }}
-              />
-            </>
-          );
-        }}
-      />
-    </div>
-  );
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-[#141414] border border-solid border-[#232323] hover:border-[#333] transition-colors cursor-pointer">
+                    <Controller
+                        control={control}
+                        name="title"
+                        render={({ field }) => {
+                            const displayValue = field.value || 'Title';
+                            return (
+                                <span className={`text-[16px] leading-5 font-sans ${
+                                    field.value ? 'text-white' : 'text-[#7C7878]'
+                                }`}>
+                                    {displayValue}
+                                </span>
+                            );
+                        }}
+                    />
+                    <ChevronSortIcon className="size-2 text-[#7D7878] shrink-0" />
+                </div>
+            </PopoverTrigger>
+            <PopoverContent
+                className="w-64 p-3 bg-[#191919] border-[#232323] rounded-xl"
+                align="start"
+                sideOffset={8}
+            >
+                <Controller
+                    control={control}
+                    name="title"
+                    render={({ field }) => (
+                        <input
+                            ref={field.ref}
+                            type="text"
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Enter a title"
+                            className="w-full bg-transparent text-white text-[16px] leading-5 outline-none placeholder:text-[#5A5A5A]"
+                            autoFocus
+                        />
+                    )}
+                />
+            </PopoverContent>
+        </Popover>
+    );
 }

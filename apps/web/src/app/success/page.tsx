@@ -1,4 +1,3 @@
-import { getServerCustomerState } from '@bounty/auth/server-utils';
 import { Card, CardContent } from '@bounty/ui/components/card';
 import { Spinner } from '@bounty/ui/components/spinner';
 import { Suspense } from 'react';
@@ -8,8 +7,6 @@ import { SuccessClient } from './success-client';
 export const dynamic = 'force-dynamic';
 
 export default async function SuccessPage() {
-  const { data: customerState } = await getServerCustomerState();
-
   return (
     <Suspense
       fallback={
@@ -24,7 +21,7 @@ export default async function SuccessPage() {
         </Sidebar>
       }
     >
-      <SuccessClient initialCustomerState={customerState} />
+      <SuccessClient />
     </Suspense>
   );
 }

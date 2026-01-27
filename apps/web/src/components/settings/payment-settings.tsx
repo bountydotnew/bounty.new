@@ -8,326 +8,312 @@ import {
   CardHeader,
   CardTitle,
 } from '@bounty/ui/components/card';
-import { Input } from '@bounty/ui/components/input';
-import { Label } from '@bounty/ui/components/label';
-import { Switch } from '@bounty/ui/components/switch';
-import { Copy, ExternalLink, Plus, X } from 'lucide-react';
-import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { ExternalLink, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { PaymentButton } from '@/components/payment/payment-button';
+import { trpc, trpcClient } from '@/utils/trpc';
+import { ConnectOnboardingModal } from '@/components/payment/connect-onboarding-modal';
+import { IssuesBlock } from './payment/issues-block';
+import { AccountBalance } from './payment/account-balance';
+import { useState, useEffect } from 'react';
+import { useQueryState, parseAsString } from 'nuqs';
+
+type ConnectStatus = {
+  hasConnectAccount?: boolean;
+  onboardingComplete?: boolean;
+  cardPaymentsActive?: boolean;
+  accountDetails?: {
+    chargesEnabled?: boolean;
+    detailsSubmitted?: boolean;
+    payoutsEnabled?: boolean;
+    requirements?: unknown;
+  } | null;
+} | null | undefined;
+
+function getConnectStatusMessage(status: ConnectStatus, hasConnectAccount: boolean): string {
+  if (!hasConnectAccount) {
+    return 'Connect your Stripe account to receive bounty payouts directly to your bank account';
+  }
+  if (status?.onboardingComplete && status?.cardPaymentsActive) {
+    return 'Your account is set up and ready to receive payouts. Click "Open Stripe Express Dashboard" to manage your account, view payouts, and update bank details.';
+  }
+  return 'Complete the verification process to start receiving payouts';
+}
+
+function ConnectActionButtons({
+  hasConnectAccount,
+  onboardingComplete,
+  createAccountLinkPending,
+  getDashboardLinkPending,
+  onConnect,
+  onOpenDashboard,
+}: {
+  hasConnectAccount: boolean;
+  onboardingComplete?: boolean;
+  createAccountLinkPending: boolean;
+  getDashboardLinkPending: boolean;
+  onConnect: () => void;
+  onOpenDashboard: () => void;
+}) {
+  if (!hasConnectAccount) {
+    return (
+      <Button onClick={onConnect} disabled={createAccountLinkPending}>
+        {createAccountLinkPending ? 'Loading...' : 'Connect with Stripe'}
+      </Button>
+    );
+  }
+
+  return (
+    <div className="flex gap-2">
+      {!onboardingComplete && (
+        <Button onClick={onConnect} disabled={createAccountLinkPending}>
+          {createAccountLinkPending ? 'Loading...' : 'Complete Onboarding'}
+        </Button>
+      )}
+      {onboardingComplete && (
+        <Button
+          variant="outline"
+          onClick={onOpenDashboard}
+          disabled={getDashboardLinkPending}
+        >
+          <ExternalLink className="mr-2 h-4 w-4" />
+          {getDashboardLinkPending ? 'Loading...' : 'Open Stripe Dashboard'}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function useHandleConnectRedirect({
+  onboardingStatus,
+  refreshParam,
+  refetch,
+  setOnboardingStatus,
+  setRefreshParam,
+}: {
+  onboardingStatus: string;
+  refreshParam: string;
+  refetch: () => void;
+  setOnboardingStatus: (value: string | null) => void;
+  setRefreshParam: (value: string | null) => void;
+}) {
+  useEffect(() => {
+    if (onboardingStatus === 'success') {
+      toast.success('Stripe account connected successfully!');
+      refetch();
+      setOnboardingStatus(null);
+      return;
+    }
+    if (onboardingStatus === 'refresh') {
+      toast.info('Please complete the onboarding process');
+      refetch();
+      setOnboardingStatus(null);
+      return;
+    }
+    if (refreshParam === 'true') {
+      refetch();
+      setRefreshParam(null);
+    }
+  }, [onboardingStatus, refreshParam, refetch, setOnboardingStatus, setRefreshParam]);
+}
 
 export function PaymentSettings() {
-  const [paymentEnabled, setPaymentEnabled] = useState(false);
-  const [presetAmounts, setPresetAmounts] = useState([5, 10, 25, 50]);
-  const [newAmount, setNewAmount] = useState('');
-  const [allowCustomAmount, setAllowCustomAmount] = useState(true);
-  const [minAmount, setMinAmount] = useState(1);
-  const [maxAmount, setMaxAmount] = useState(1000);
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+  const [onboardingStatus, setOnboardingStatus] = useQueryState(
+    'onboarding',
+    parseAsString.withDefault('')
+  );
+  const [refreshParam, setRefreshParam] = useQueryState(
+    'refresh',
+    parseAsString.withDefault('')
+  );
 
-  // Mock user data - in real implementation this would come from API
-  const username = 'johndoe';
-  const apiKey = 'pk_test_123456789';
+  const { data: connectStatus, isLoading, refetch } = useQuery(
+    trpc.connect.getConnectStatus.queryOptions()
+  );
 
-  const handleAddPresetAmount = () => {
-    const amount = Number.parseFloat(newAmount);
-    if (Number.isNaN(amount) || amount <= 0) {
-      toast.error('Please enter a valid amount');
-      return;
+  useHandleConnectRedirect({
+    onboardingStatus,
+    refreshParam,
+    refetch,
+    setOnboardingStatus,
+    setRefreshParam,
+  });
+
+  const createAccountLink = useMutation({
+    mutationFn: async () => {
+      return await trpcClient.connect.createConnectAccountLink.mutate();
+    },
+    onSuccess: (result) => {
+      if (result?.data?.url) {
+        window.location.href = result.data.url;
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to start onboarding: ${error.message}`);
+    },
+  });
+
+  const getDashboardLink = useMutation({
+    mutationFn: async () => {
+      return await trpcClient.connect.getConnectDashboardLink.mutate();
+    },
+    onSuccess: (result) => {
+      if (result?.data?.url) {
+        if (result.data.isOnboarding) {
+          // Redirect to onboarding if Stripe requires it
+          window.location.href = result.data.url;
+        } else {
+          // Open dashboard in new tab if onboarding is complete
+          window.open(result.data.url, '_blank');
+        }
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to open dashboard: ${error.message}`);
+    },
+  });
+
+  const { data: payoutHistoryResponse } = useQuery(
+    trpc.connect.getPayoutHistory.queryOptions({ page: 1, limit: 10 })
+  );
+
+  const status = connectStatus?.data;
+
+  const getStatusBadge = () => {
+    if (!status?.hasConnectAccount) {
+      return <Badge variant="secondary">Not connected</Badge>;
     }
-
-    if (presetAmounts.includes(amount)) {
-      toast.error('This amount already exists');
-      return;
+    if (status.onboardingComplete && status.cardPaymentsActive) {
+      return <Badge variant="default" className="bg-green-600">Ready to receive payouts</Badge>;
     }
-
-    if (presetAmounts.length >= 6) {
-      toast.error('Maximum 6 preset amounts allowed');
-      return;
+    if (!status.onboardingComplete) {
+      return <Badge variant="outline">Pending verification</Badge>;
     }
-
-    setPresetAmounts([...presetAmounts, amount].sort((a, b) => a - b));
-    setNewAmount('');
-    toast.success('Preset amount added');
+    return <Badge variant="secondary">Setup incomplete</Badge>;
   };
 
-  const handleRemovePresetAmount = (amount: number) => {
-    setPresetAmounts(presetAmounts.filter((a) => a !== amount));
-    toast.success('Preset amount removed');
+  const handleConnect = () => {
+    createAccountLink.mutate();
   };
 
-  const generateHTMLSnippet = () => {
-    return `
-    <br>
-    <div style="display: flex; width: 100%; justify-content: flex-end;">
-      <a href="https://bounty.new/pay/${username}">
-        <img alt="Pay with Bounty.new" src="https://bounty.new/github/bounty.svg" />
-      </a>
-    </div>
-    <br>
-    `;
+  const handleOpenDashboard = () => {
+    getDashboardLink.mutate();
   };
 
-  const copyHTMLSnippet = () => {
-    navigator.clipboard.writeText(generateHTMLSnippet());
-    toast.success('HTML snippet copied to clipboard!');
-  };
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
 
-  const copyDirectLink = () => {
-    const link = `https://bounty.new/pay/${username}`;
-    navigator.clipboard.writeText(link);
-    toast.success('Direct link copied to clipboard!');
-  };
+  const hasConnectAccount = Boolean(status?.hasConnectAccount);
+  const statusMessage = getConnectStatusMessage(status, hasConnectAccount);
 
   return (
     <div className="space-y-6">
-      {/* Payment Toggle */}
+      {/* Stripe Connect Status */}
       <Card>
         <CardHeader>
-          <CardTitle>Payment Button</CardTitle>
+          <CardTitle>Payout Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <Label
-                className="font-medium text-base"
-                htmlFor="payment-enabled"
-              >
-                Enable Payment Button
-              </Label>
-              <p className="text-muted-foreground text-sm">
-                Allow others to send you payments via GitHub PRs and other
-                platforms
-              </p>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="font-medium text-base">Stripe Connect Status</span>
+                {getStatusBadge()}
+              </div>
+              <p className="text-muted-foreground text-sm">{statusMessage}</p>
             </div>
-            <Switch
-              checked={paymentEnabled}
-              id="payment-enabled"
-              onCheckedChange={setPaymentEnabled}
-            />
           </div>
 
-          {paymentEnabled && (
-            <div className="rounded-lg border border-border bg-background p-4">
-              <p className="text-muted-foreground text-sm">
-                Payment processing is not yet implemented. This is UI-only for
-                now.
-              </p>
-            </div>
+          <ConnectActionButtons
+            hasConnectAccount={hasConnectAccount}
+            onboardingComplete={status?.onboardingComplete}
+            createAccountLinkPending={createAccountLink.isPending}
+            getDashboardLinkPending={getDashboardLink.isPending}
+            onConnect={handleConnect}
+            onOpenDashboard={handleOpenDashboard}
+          />
+
+          {/* Account Balance - Only shows for bounty solvers with pending balance */}
+          {status?.hasConnectAccount && <AccountBalance />}
+
+          {/* Issues Block - Only shows when there are problems */}
+          {status?.hasConnectAccount && status.accountDetails && (
+            <IssuesBlock
+              chargesEnabled={status.accountDetails.chargesEnabled}
+              detailsSubmitted={status.accountDetails.detailsSubmitted}
+              payoutsEnabled={status.accountDetails.payoutsEnabled}
+              cardPaymentsActive={status.cardPaymentsActive}
+              requirements={status.accountDetails.requirements}
+              onCompleteOnboarding={handleConnect}
+            />
           )}
         </CardContent>
       </Card>
 
-      {paymentEnabled && (
-        <>
-          {/* Preset Amounts */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Preset Amounts</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label className="mb-2 block font-medium text-sm">
-                  Current presets
-                </Label>
-                <div className="flex flex-wrap gap-2">
-                  {presetAmounts.map((amount) => (
+      {/* Payout History */}
+      {status?.hasConnectAccount && status.onboardingComplete && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Payout History</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {payoutHistoryResponse?.data && payoutHistoryResponse.data.length > 0 ? (
+              <div className="space-y-2">
+                {payoutHistoryResponse.data.map((payout: {
+                  id: string;
+                  createdAt: string;
+                  updatedAt: string;
+                  userId: string;
+                  status: 'pending' | 'completed' | 'failed' | 'processing';
+                  amount: string;
+                  stripeTransferId: string | null;
+                  bountyId: string;
+                }) => (
+                  <div
+                    key={payout.id}
+                    className="flex items-center justify-between p-3 rounded-lg border border-border"
+                  >
+                    <div>
+                      <p className="font-medium">
+                        ${Number(payout.amount).toFixed(2)}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(payout.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
                     <Badge
-                      className="flex items-center gap-1"
-                      key={amount}
-                      variant="secondary"
+                      variant={
+                        payout.status === 'completed'
+                          ? 'default'
+                          : payout.status === 'failed'
+                            ? 'destructive'
+                            : 'secondary'
+                      }
                     >
-                      ${amount}
-                      <button
-                        className="ml-1 hover:text-red-600"
-                        onClick={() => handleRemovePresetAmount(amount)}
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
+                      {payout.status}
                     </Badge>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-
-              <div className="flex gap-2">
-                <Input
-                  className="w-24"
-                  max="10000"
-                  min="1"
-                  onChange={(e) => setNewAmount(e.target.value)}
-                  placeholder="25"
-                  type="number"
-                  value={newAmount}
-                />
-                <Button
-                  disabled={presetAmounts.length >= 6}
-                  onClick={handleAddPresetAmount}
-                  size="sm"
-                >
-                  <Plus className="mr-1 h-4 w-4" />
-                  Add
-                </Button>
-              </div>
-              <p className="text-muted-foreground text-xs">
-                Add up to 6 preset amounts that users can quickly select
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                No payouts yet. Complete a bounty to receive your first payout!
               </p>
-            </CardContent>
-          </Card>
-
-          {/* Payment Options */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Payment Options</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label
-                    className="font-medium text-base"
-                    htmlFor="allow-custom"
-                  >
-                    Allow Custom Amounts
-                  </Label>
-                  <p className="text-muted-foreground text-sm">
-                    Let users enter their own payment amount
-                  </p>
-                </div>
-                <Switch
-                  checked={allowCustomAmount}
-                  id="allow-custom"
-                  onCheckedChange={setAllowCustomAmount}
-                />
-              </div>
-
-              {allowCustomAmount && (
-                <div className="grid grid-cols-2 gap-4 rounded-lg bg-background p-4">
-                  <div>
-                    <Label className="font-medium text-sm" htmlFor="min-amount">
-                      Minimum Amount
-                    </Label>
-                    <Input
-                      disabled
-                      id="min-amount"
-                      max="100"
-                      min="1"
-                      onChange={(e) =>
-                        setMinAmount(Number.parseInt(e.target.value, 10) || 1)
-                      }
-                      type="number"
-                      value={minAmount}
-                    />
-                  </div>
-                  <div>
-                    <Label className="font-medium text-sm" htmlFor="max-amount">
-                      Maximum Amount
-                    </Label>
-                    <Input
-                      disabled
-                      id="max-amount"
-                      max="10000"
-                      min="1"
-                      onChange={(e) =>
-                        setMaxAmount(
-                          Number.parseInt(e.target.value, 10) || 1000
-                        )
-                      }
-                      type="number"
-                      value={maxAmount}
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-muted-foreground text-xs">
-                      Custom amount limits are not yet configurable
-                    </p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Preview */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Preview</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label className="mb-2 block font-medium text-sm">
-                  Button Preview
-                </Label>
-                <div className="rounded-lg border border-border bg-background p-4">
-                  <PaymentButton apiKey={apiKey} username={username} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* HTML Snippet */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Integration</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label className="mb-2 block font-medium text-sm">
-                  GitHub HTML Snippet
-                </Label>
-                <p className="mb-2 text-muted-foreground text-sm">
-                  Copy this HTML code to embed the payment button in GitHub PRs,
-                  issues, or README files
-                </p>
-                <div className="relative">
-                  <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg border border-border bg-background p-4 text-xs">
-                    <code>{generateHTMLSnippet()}</code>
-                  </pre>
-                  <Button
-                    className="absolute top-2 right-2"
-                    onClick={copyHTMLSnippet}
-                    size="sm"
-                    variant="outline"
-                  >
-                    <Copy className="mr-1 h-3 w-3" />
-                    Copy
-                  </Button>
-                </div>
-                <div className="mt-2 rounded-lg border border-border bg-background p-3">
-                  <p className="text-muted-foreground text-xs">
-                    💡 This creates a right-aligned payment button using the
-                    official Bounty.new badge image
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <Label className="mb-2 block font-medium text-sm">
-                  Direct Payment Link
-                </Label>
-                <p className="mb-2 text-muted-foreground text-sm">
-                  Share this direct link to your payment page
-                </p>
-                <div className="flex gap-2">
-                  <Input
-                    className="font-mono text-xs"
-                    readOnly
-                    value={`https://bounty.new/pay/${username}`}
-                  />
-                  <Button onClick={copyDirectLink} size="sm" variant="outline">
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  <Button asChild size="sm" variant="outline">
-                    <a
-                      href={`/pay/${username}`}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </>
+            )}
+          </CardContent>
+        </Card>
       )}
+
+      <ConnectOnboardingModal
+        open={showOnboardingModal}
+        onOpenChange={setShowOnboardingModal}
+      />
     </div>
   );
 }

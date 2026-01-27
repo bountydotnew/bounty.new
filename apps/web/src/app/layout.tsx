@@ -29,7 +29,8 @@ export const metadata: Metadata = {
   },
   description: 'Ship faster. Get paid instantly.',
   icons: {
-    icon: '/icon.svg',
+    icon: '/favicon/favicon_dark.png.png',
+    apple: '/favicon/favicon_dark.png.png',
   },
   openGraph: {
     title: {
@@ -41,7 +42,7 @@ export const metadata: Metadata = {
     siteName: 'bounty',
     images: [
       {
-        url: '/ogimage.png',
+        url: '/og-image.png',
         width: 1200,
         height: 630,
         alt: 'bounty.new - Ship faster. Get paid instantly.',
@@ -69,6 +70,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Favicon - using dark version for everything */}
+        <link
+          rel="icon"
+          type="image/png"
+          href="/favicon/favicon_dark.png"
+        />
+        <link rel="apple-touch-icon" href="/favicon/favicon_dark.png" />
         {process.env.NODE_ENV === 'development' && (
           <>
             <Script

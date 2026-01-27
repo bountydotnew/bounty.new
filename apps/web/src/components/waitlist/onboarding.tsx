@@ -5,6 +5,7 @@ import { Github, Code, Briefcase } from 'lucide-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { authClient } from '@bounty/auth/client';
+import { useSession } from '@/context/session-context';
 import { toast } from 'sonner';
 interface OnboardingProps {
   entryId: string;
@@ -17,7 +18,7 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
   const [step, setStep] = useState<OnboardingStep>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [role, setRole] = useState<'creator' | 'developer' | null>(null);
-  const { data: session } = authClient.useSession();
+  const { session } = useSession();
   const { data: githubAccount } = useQuery({
     ...trpc.user.getGithubAccount.queryOptions(),
     enabled: !!session?.user,

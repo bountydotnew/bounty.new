@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import {
+  bigint,
   boolean,
   decimal,
   index,
@@ -26,6 +27,20 @@ export const submissionStatusEnum = pgEnum('submission_status', [
   'rejected',
   'revision_requested',
 ]);
+export const paymentStatusEnum = pgEnum('payment_status', [
+  'pending',
+  'held',
+  'released',
+  'refunded',
+  'failed',
+]);
+
+export const cancellationRequestStatusEnum = pgEnum('cancellation_request_status', [
+  'pending',
+  'approved',
+  'rejected',
+  'withdrawn',
+]);
 
 export const bounty = pgTable('bounty', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
@@ -38,6 +53,13 @@ export const bounty = pgTable('bounty', {
   tags: text('tags').array(),
   repositoryUrl: text('repository_url'),
   issueUrl: text('issue_url'),
+  // GitHub App integration fields
+  githubIssueNumber: integer('github_issue_number'),
+  githubInstallationId: integer('github_installation_id'),
+  githubRepoOwner: text('github_repo_owner'),
+  githubRepoName: text('github_repo_name'),
+  githubCommentId: bigint('github_comment_id', { mode: 'number' }), // For editing bot comments
+  submissionKeyword: text('submission_keyword').default('@bountydotnew submit'),
   createdById: text('created_by_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
@@ -45,6 +67,11 @@ export const bounty = pgTable('bounty', {
     onDelete: 'set null',
   }),
   isFeatured: boolean('is_featured').default(false).notNull(),
+  // Stripe payment fields
+  stripePaymentIntentId: text('stripe_payment_intent_id'),
+  stripeCheckoutSessionId: text('stripe_checkout_session_id'),
+  stripeTransferId: text('stripe_transfer_id'),
+  paymentStatus: paymentStatusEnum('payment_status').default('pending'),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
 });
@@ -60,6 +87,12 @@ export const submission = pgTable('submission', {
   description: text('description').notNull(),
   deliverableUrl: text('deliverable_url').notNull(),
   pullRequestUrl: text('pull_request_url'),
+  // GitHub PR integration fields
+  githubPullRequestNumber: integer('github_pull_request_number'),
+  githubPullRequestId: bigint('github_pull_request_id', { mode: 'number' }),
+  githubCommentId: bigint('github_comment_id', { mode: 'number' }),
+  githubUsername: text('github_username'),
+  githubHeadSha: text('github_head_sha'), // For tracking the commit
   status: submissionStatusEnum('status').notNull().default('pending'),
   reviewNotes: text('review_notes'),
   submittedAt: timestamp('submitted_at').notNull().default(sql`now()`),
@@ -165,5 +198,30 @@ export const bountyBookmark = pgTable(
     uniqueIndex('bounty_bookmark_unique_idx').on(t.bountyId, t.userId),
     index('bounty_bookmark_bounty_id_idx').on(t.bountyId),
     index('bounty_bookmark_user_id_idx').on(t.userId),
+  ]
+);
+
+export const cancellationRequest = pgTable(
+  'cancellation_request',
+  {
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    bountyId: text('bounty_id')
+      .notNull()
+      .references(() => bounty.id, { onDelete: 'cascade' }),
+    requestedById: text('requested_by_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    reason: text('reason'),
+    status: cancellationRequestStatusEnum('status').notNull().default('pending'),
+    processedById: text('processed_by_id').references(() => user.id, {
+      onDelete: 'set null',
+    }),
+    processedAt: timestamp('processed_at'),
+    refundAmount: decimal('refund_amount', { precision: 15, scale: 2 }),
+    createdAt: timestamp('created_at').notNull().default(sql`now()`),
+  },
+  (t) => [
+    index('cancellation_request_bounty_id_idx').on(t.bountyId),
+    index('cancellation_request_status_idx').on(t.status),
   ]
 );

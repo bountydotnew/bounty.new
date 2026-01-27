@@ -113,19 +113,11 @@ export function Features() {
         title="Turn backlog issues into completed features"
         description="Stop letting important issues rot in your backlog. Post a bounty, set your price, and watch as the community delivers production-ready code."
       >
-        <div className="w-full max-w-md transform transition-transform hover:scale-105 duration-500">
-          <div className="pointer-events-none select-none">
-            <BountyCard
-              bounty={MOCK_BOUNTY}
-              stats={{
-                commentCount: 5,
-                voteCount: 12,
-                isVoted: false,
-                bookmarked: false,
-              }}
-            />
-          </div>
-        </div>
+         <div className="w-full max-w-md transform transition-transform hover:scale-105 duration-500">
+            <div className="pointer-events-none select-none">
+               <BountyCard bounty={MOCK_BOUNTY} stats={{ commentCount: 5, voteCount: 12, submissionCount: 3, isVoted: false, bookmarked: false }} />
+            </div>
+         </div>
       </FeatureSection>
 
       {/* Feature 2: Earn */}
@@ -185,10 +177,10 @@ export function Features() {
             title="Global Talent Pool"
             description="Access thousands of verified developers from around the world ready to tackle your issues."
           />
-          <GridFeature
-            icon={Shield}
-            title="Secure Payments"
-            description="Funds are held in escrow until the work is verified and merged. 100% safe."
+          <GridFeature 
+            icon={Shield} 
+            title="Secure Payments" 
+            description="Funds are held securely until the work is verified and merged. 100% safe." 
           />
           <GridFeature
             icon={Code2}

@@ -1,3 +1,10 @@
+/**
+ * Better Auth Server Configuration
+ *
+ * Centralized authentication setup for the Bounty platform.
+ * Handles email/password, GitHub OAuth, Polar payments, device auth, and multi-session support.
+ */
+
 import {
   account,
   betaApplication,
@@ -11,7 +18,6 @@ import {
   deviceCode,
   invite,
   notification,
-  passkey,
   session,
   submission,
   user as userTable,
@@ -23,30 +29,31 @@ import {
 } from '@bounty/db';
 import { eq } from 'drizzle-orm';
 import { env } from '@bounty/env/server';
-import type { PolarError } from '@bounty/types';
-import {
-  checkout,
-  polar,
-  portal,
-  usage,
-  webhooks,
-} from '@polar-sh/better-auth';
-import { Polar } from '@polar-sh/sdk';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import {
   bearer,
   deviceAuthorization,
-  lastLoginMethod,
   openAPI,
   multiSession,
 } from 'better-auth/plugins';
-import { admin } from 'better-auth/plugins/admin';
-import { passkey as passkeyPlugin } from 'better-auth/plugins/passkey';
+import { admin } from 'better-auth/plugins';
 import { emailOTP } from 'better-auth/plugins/email-otp';
-import { sendEmail } from '@bounty/email';
-import { OTPVerification, ForgotPassword } from '@bounty/email';
-import { GithubManager } from '@bounty/api/driver/github';
+import { Octokit } from '@octokit/core';
+import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods';
+import {
+  AUTH_CONFIG,
+  parseAllowedDeviceClientIds,
+  sendPasswordResetEmail,
+  sendEmailVerificationEmail,
+  sendOTPEmail,
+} from './config';
+
+// ============================================================================
+// Constants & Setup
+// ============================================================================
+
+const GitHubOctokit = Octokit.plugin(restEndpointMethods);
 
 const schema = {
   account,
@@ -60,7 +67,6 @@ const schema = {
   deviceCode,
   invite,
   notification,
-  passkey,
   session,
   submission,
   user: userTable,
@@ -71,255 +77,183 @@ const schema = {
   waitlist,
 };
 
-const polarEnv = env.NODE_ENV === 'production' ? 'production' : 'sandbox';
-const polarClient = new Polar({
-  accessToken: env.POLAR_ACCESS_TOKEN,
-  server: polarEnv,
-});
+// ============================================================================
+// GitHub Integration
+// ============================================================================
 
-const allowedDeviceClientIds = env.DEVICE_AUTH_ALLOWED_CLIENT_IDS?.split(',')
-  .map((clientId) => clientId.trim())
-  .filter(Boolean);
+interface GitHubSyncParams {
+  userId: string;
+  accessToken: string;
+}
 
-const deviceAuthorizationPlugin = deviceAuthorization({
-  expiresIn: '30m',
-  interval: '5s',
-  validateClient: (clientId) =>
-    allowedDeviceClientIds?.length
-      ? allowedDeviceClientIds.includes(clientId)
-      : true,
-  onDeviceAuthRequest: () => {
-    // Device authorization requested
-  },
-});
-
-async function syncGitHubHandle(
-  userId: string,
-  accessToken: string
-): Promise<void> {
-  if (!(userId && accessToken)) {
-    return;
-  }
-
-  const existingUser = await db.query.user.findFirst({
-    where: (fields, { eq }) => eq(fields.id, userId),
-  });
-
-  if (existingUser?.handle) {
-    return;
-  }
+/**
+ * Sync GitHub username as user handle.
+ * Only updates if handle is not already set.
+ */
+async function syncGitHubHandle({
+  userId,
+  accessToken,
+}: GitHubSyncParams): Promise<void> {
+  if (!(userId && accessToken)) return;
 
   try {
-    const github = new GithubManager({ token: accessToken });
-    const githubUser = await github.getAuthenticatedUser();
+    const octokit = new GitHubOctokit({ auth: accessToken });
+    const { data } = await octokit.rest.users.getAuthenticated();
 
-    if (githubUser?.login) {
-      await db
-        .update(userTable)
-        .set({
-          handle: githubUser.login.toLowerCase(),
-          updatedAt: new Date(),
-        })
-        .where(eq(userTable.id, userId));
-    }
-  } catch (_error) {
-    // Silently handle errors - don't block account creation/update
+    const githubHandle = data?.login?.toLowerCase();
+    if (!githubHandle) return;
+
+    // Check if user already has a handle OR the same handle (avoid unnecessary updates)
+    const existingUser = await db.query.user.findFirst({
+      where: (fields, { eq }) => eq(fields.id, userId),
+      columns: { id: true, handle: true },
+    });
+
+    if (existingUser?.handle) return;
+
+    // Update with GitHub handle
+    await db
+      .update(userTable)
+      .set({ handle: githubHandle, updatedAt: new Date() })
+      .where(eq(userTable.id, userId));
+
+    console.log(`✅ Synced GitHub handle for user ${userId}: ${githubHandle}`);
+  } catch {
+    // Silently fail - don't block account creation/update
   }
 }
 
+/**
+ * Unified handler for GitHub account linking (create and update)
+ */
+function handleGitHubAccountLinking() {
+  return async (account: {
+    providerId: string;
+    userId: string;
+    accessToken?: string | null | undefined;
+  }) => {
+    if (
+      account.providerId === 'github' &&
+      account.userId &&
+      account.accessToken
+    ) {
+      await syncGitHubHandle({
+        userId: account.userId,
+        accessToken: account.accessToken,
+      });
+    }
+  };
+}
+
+// ============================================================================
+// Better Auth Instance
+// ============================================================================
+
 export const auth = betterAuth({
+  baseURL: AUTH_CONFIG.baseURL,
+
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema,
     usePlural: false,
   }),
+
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ['github', 'discord'],
+      allowDifferentEmails: true,
+    },
+  },
+
+  session: AUTH_CONFIG.session,
+
   databaseHooks: {
     account: {
       create: {
-        after: async (accountData: any) => {
-          if (
-            accountData.providerId === 'github' &&
-            accountData.userId &&
-            accountData.accessToken
-          ) {
-            await syncGitHubHandle(accountData.userId, accountData.accessToken);
-          }
-        },
+        after: handleGitHubAccountLinking(),
       },
       update: {
-        after: async (accountData: any) => {
-          if (
-            accountData.providerId === 'github' &&
-            accountData.userId &&
-            accountData.accessToken
-          ) {
-            await syncGitHubHandle(accountData.userId, accountData.accessToken);
-          }
-        },
+        after: handleGitHubAccountLinking(),
       },
     },
   },
+
   onAPIError: {
     throw: true,
-    onError: () => {},
+    onError: (err) => {
+      console.error('Better Auth API Error:', err);
+    },
     errorURL: '/auth/error',
   },
-  trustedOrigins: [
-    'https://bounty.new',
-    'https://www.bounty.new',
-    'https://*.vercel.app',
-    'http://localhost:3001',
-    'http://localhost:3000',
-    'https://preview.bounty.new',
-  ].filter(Boolean),
+
+  trustedOrigins: [...AUTH_CONFIG.trustedOrigins],
+
   socialProviders: {
     github: {
       clientId: env.GITHUB_CLIENT_ID,
       clientSecret: env.GITHUB_CLIENT_SECRET,
       scope: ['read:user', 'repo', 'read:org'],
-      mapProfileToUser: (profile) => {
-        return {
-          handle: profile.login?.toLowerCase(),
-        };
-      },
+      mapProfileToUser: (profile) => ({
+        handle: profile.login?.toLowerCase(),
+      }),
+    },
+    discord: {
+      clientId: env.DISCORD_CLIENT_ID || '',
+      clientSecret: env.DISCORD_CLIENT_SECRET || '',
+      scope: ['identify', 'email', 'guilds'],
     },
   },
+
   emailAndPassword: {
     enabled: true,
-    sendResetPassword: async ({ user, url }) => {
-      try {
-        const result = await sendEmail({
-          from: 'Bounty.new <noreply@mail.bounty.new>',
-          to: user.email,
-          subject: 'Reset your password',
-          react: ForgotPassword({
-            userName: user.name,
-            resetUrl: url,
-          }),
-        });
-
-        if (result.error) {
-          console.error(
-            '❌ Failed to send password reset email:',
-            result.error
-          );
-          throw new Error(`Email send failed: ${result.error.message}`);
-        }
-
-        console.log(
-          '✅ Password reset email sent successfully:',
-          result.data?.id
-        );
-      } catch (error) {
-        console.error('❌ Error in sendResetPassword:', error);
-        throw error;
-      }
-    },
+    sendResetPassword: sendPasswordResetEmail,
   },
+
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    sendVerificationEmail: sendEmailVerificationEmail,
+  },
+
   plugins: [
-    polar({
-      client: polarClient,
-      createCustomerOnSignUp: false,
-      getCustomerCreateParams: async ({ user }) => {
-        await Promise.resolve();
-        return {
-          metadata: { userId: user.id || 'unknown' },
-        };
-      },
-      onCustomerCreateError: async ({ error }: { error: unknown }) => {
-        await Promise.resolve();
-        const e = error as PolarError;
-        const msg = String(e?.message || e?.body$ || e?.detail || '');
-        if (
-          e?.status === 409 ||
-          msg.includes('external ID cannot be updated') ||
-          msg.toLowerCase().includes('external_id cannot be updated') ||
-          msg.includes('"error":"PolarRequestValidationError"')
-        ) {
-          return;
-        }
-        throw error as Error;
-      },
-      use: [
-        checkout({
-          products: [
-            {
-              productId: env.BOUNTY_PRO_ANNUAL_ID,
-              slug: 'pro-annual',
-            },
-            {
-              productId: env.BOUNTY_PRO_MONTHLY_ID,
-              slug: 'pro-monthly',
-            },
-          ],
-          successUrl: env.POLAR_SUCCESS_URL,
-          authenticatedUsersOnly: true,
-        }),
-        portal(),
-        usage(),
-        webhooks({
-          secret: env.POLAR_WEBHOOK_SECRET,
-          onCustomerStateChanged: (_payload) => {
-            return Promise.resolve();
-          },
-          onOrderPaid: () => Promise.resolve(),
-          onSubscriptionActive: () => Promise.resolve(),
-          onPayload: (_payload) => {
-            return Promise.resolve();
-          },
-        }),
-      ],
-    }),
-    passkeyPlugin({
-      rpID: env.NODE_ENV === 'production' ? 'bounty.new' : 'localhost',
-      rpName: 'Bounty.new',
-      origin:
-        env.NODE_ENV === 'production'
-          ? 'https://bounty.new'
-          : 'http://localhost:3000',
-    }),
+    // ========================================================================
+    // Core Plugins
+    // ========================================================================
     admin(),
     bearer(),
     openAPI(),
-    lastLoginMethod({
-      storeInDatabase: true,
-    }),
+
+    // ========================================================================
+    // Email OTP (for passwordless sign-in)
+    // ========================================================================
     emailOTP({
-      async sendVerificationOTP({ email, otp, type }) {
-        try {
-          const result = await sendEmail({
-            from: 'Bounty.new <noreply@mail.bounty.new>',
-            to: email,
-            subject:
-              type === 'email-verification'
-                ? 'Verify your email address'
-                : type === 'sign-in'
-                  ? 'Sign in to Bounty.new'
-                  : 'Reset your password',
-            react: OTPVerification({
-              code: otp,
-              email,
-              type,
-              continueUrl: `${env.NODE_ENV === 'production' ? 'https://bounty.new' : 'http://localhost:3000'}/sign-up/verify-email-address?email=${encodeURIComponent(email)}`,
-            }),
-          });
+      sendVerificationOTP: sendOTPEmail,
+    }),
 
-          if (result.error) {
-            console.error('❌ Failed to send OTP email:', result.error);
-            throw new Error(`Email send failed: ${result.error.message}`);
-          }
-
-          console.log('✅ OTP email sent successfully:', result.data?.id);
-        } catch (error) {
-          console.error('❌ Error in sendVerificationOTP:', error);
-          throw error;
-        }
+    // ========================================================================
+    // Device Authorization (for CLI/mobile apps)
+    // ========================================================================
+    deviceAuthorization({
+      ...AUTH_CONFIG.deviceAuthorization,
+      validateClient: (clientId) => {
+        const allowedIds = parseAllowedDeviceClientIds();
+        return allowedIds.length === 0 || allowedIds.includes(clientId);
       },
     }),
-    deviceAuthorizationPlugin,
+
+    // ========================================================================
+    // Multi-Session Support
+    // ========================================================================
     multiSession({
-      maximumSessions: 5,
+      ...AUTH_CONFIG.multiSession,
     }),
   ],
-  secret: env.BETTER_AUTH_SECRET,
 });
+
+// ============================================================================
+// Type Exports
+// ============================================================================
+
+export type AuthSession = typeof auth.$Infer.Session;
+export type AuthUser = typeof auth.$Infer.Session.user;

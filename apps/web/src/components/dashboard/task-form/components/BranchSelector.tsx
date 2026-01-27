@@ -36,7 +36,6 @@ export function BranchSelector({
         className="flex flex-row items-center gap-1.5 text-[#5A5A5A] opacity-50 cursor-not-allowed"
       >
         <Spinner size="sm" className="w-3.5 h-3.5" />
-        <span className="text-[14px] text-[#888]">Finding branches...</span>
       </button>
     );
   }

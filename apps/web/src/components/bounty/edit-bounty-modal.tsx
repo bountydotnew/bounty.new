@@ -69,8 +69,9 @@ export function EditBountyModal({
       reset({
         title: bounty.title,
         description: bounty.description,
-        amount: bounty.amount.toString(),
-        currency: bounty.currency,
+        // Use actual values but mark as readonly in UI - needed for schema validation
+        amount: String(bounty.amount),
+        currency: bounty.currency || 'USD',
         deadline: bounty.deadline
           ? new Date(bounty.deadline).toISOString().slice(0, 16)
           : '',
@@ -82,7 +83,7 @@ export function EditBountyModal({
   }, [bountyQuery.data, open, reset]);
 
   const updateBounty = useMutation({
-    mutationFn: async (input: CreateBountyForm & { id: string }) => {
+    mutationFn: async (input: Partial<CreateBountyForm> & { id: string }) => {
       return await trpcClient.bounties.updateBounty.mutate(input);
     },
     onSuccess: () => {
@@ -110,7 +111,9 @@ export function EditBountyModal({
 
   const onSubmit = handleSubmit((data: CreateBountyForm) => {
     const formattedData = formatFormData.createBounty(data);
-    updateBounty.mutate({ id: bountyId, ...formattedData });
+    // Remove amount and currency - prices cannot be changed after creation
+    const { amount: _amount, currency: _currency, ...updateData } = formattedData;
+    updateBounty.mutate({ id: bountyId, ...updateData });
   });
 
   const handleClose = () => {
@@ -141,7 +144,7 @@ export function EditBountyModal({
       <Dialog onOpenChange={handleClose} open={open}>
         <DialogContent
           className="max-h-[75vh] w-[92vw] max-w-lg overflow-y-auto p-0 sm:rounded-lg md:max-w-lg lg:max-w-lg"
-          showOverlay
+          overlayVariant="default"
         >
           <div className="flex h-40 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-foreground border-b-2" />
@@ -178,7 +181,7 @@ export function EditBountyModal({
       <Dialog onOpenChange={handleClose} open={open}>
         <DialogContent
           className="w-[92vw] max-w-lg p-0 sm:rounded-lg md:max-w-lg lg:max-w-lg"
-          showOverlay
+          overlayVariant="default"
         >
           <DialogHeader className="px-6 pt-6">
             <DialogTitle className="text-xl">Error</DialogTitle>
@@ -258,26 +261,20 @@ export function EditBountyModal({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="amount">Amount *</Label>
+                <Label htmlFor="amount">Amount (cannot be changed)</Label>
                 <Controller
                   control={control}
                   name="amount"
                   render={({ field }) => (
                     <Input
                       {...field}
-                      className={
-                        errors.amount ? 'border-red-500' : 'border-border'
-                      }
+                      className="border-border bg-muted cursor-not-allowed opacity-60"
                       id="amount"
-                      placeholder="100.00"
+                      disabled
+                      readOnly
                     />
                   )}
                 />
-                {errors.amount && (
-                  <p className="mt-1 text-red-500 text-sm">
-                    {errors.amount.message}
-                  </p>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -288,8 +285,9 @@ export function EditBountyModal({
                   render={({ field }) => (
                     <select
                       {...field}
-                      className={`w-full rounded-md border px-3 py-2 ${errors.currency ? 'border-red-500' : 'border-border'}`}
+                      className="w-full rounded-md border px-3 py-2 border-border bg-muted cursor-not-allowed opacity-60"
                       id="currency"
+                      disabled
                     >
                       {currencyOptions.map((option) => (
                         <option key={option.value} value={option.value}>
@@ -299,11 +297,6 @@ export function EditBountyModal({
                     </select>
                   )}
                 />
-                {errors.currency && (
-                  <p className="mt-1 text-red-500 text-sm">
-                    {errors.currency.message}
-                  </p>
-                )}
               </div>
             </div>
 
@@ -381,7 +374,7 @@ export function EditBountyModal({
     <Dialog onOpenChange={handleClose} open={open}>
       <DialogContent
         className="max-h-[75vh] w-[92vw] max-w-lg overflow-y-auto p-0 sm:rounded-lg md:max-w-lg lg:max-w-lg"
-        showOverlay
+        overlayVariant="default"
       >
         <DialogHeader className="px-6 pt-6">
           <DialogTitle className="text-xl">Edit Bounty</DialogTitle>
@@ -435,56 +428,6 @@ export function EditBountyModal({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="amount">Amount *</Label>
-              <Controller
-                control={control}
-                name="amount"
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    className={
-                      errors.amount ? 'border-red-500' : 'border-border'
-                    }
-                    id="amount"
-                    placeholder="100.00"
-                  />
-                )}
-              />
-              {errors.amount && (
-                <p className="mt-1 text-red-500 text-sm">
-                  {errors.amount.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="currency">Currency</Label>
-              <Controller
-                control={control}
-                name="currency"
-                render={({ field }) => (
-                  <select
-                    {...field}
-                    className={`w-full rounded-md border px-3 py-2 ${errors.currency ? 'border-red-500' : 'border-border'}`}
-                    id="currency"
-                  >
-                    {currencyOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              />
-              {errors.currency && (
-                <p className="mt-1 text-red-500 text-sm">
-                  {errors.currency.message}
-                </p>
-              )}
-            </div>
-          </div>
 
           {/* <div className="space-y-2">
             <Label htmlFor="deadline">Deadline (Optional)</Label>

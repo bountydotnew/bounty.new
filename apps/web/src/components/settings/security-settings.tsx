@@ -8,18 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@bounty/ui/components/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@bounty/ui/components/dialog';
-import { Input } from '@bounty/ui/components/input';
-import { Label } from '@bounty/ui/components/label';
-import { Separator } from '@bounty/ui/components/separator';
-import { usePasskey } from '@bounty/ui/hooks/use-passkey';
 import { formatDate } from '@bounty/ui/lib/utils';
 import { Laptop, Loader2, Smartphone } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -29,14 +17,6 @@ import { UAParser } from 'ua-parser-js';
 
 export function SecuritySettings() {
   const router = useRouter();
-  const [newPasskeyName, setNewPasskeyName] = useState('');
-  const [editingPasskey, setEditingPasskey] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
-  const [editName, setEditName] = useState('');
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [terminatingSession, setTerminatingSession] = useState<string | null>(
     null
   );
@@ -62,16 +42,6 @@ export function SecuritySettings() {
       isCurrent: false,
     },
   ]);
-
-  const {
-    addPasskey,
-    listPasskeys,
-    deletePasskey,
-    updatePasskey,
-    isLoading: passkeyLoading,
-    error: passkeyError,
-    passkeys,
-  } = usePasskey();
 
   const removeActiveSession = (sessionId: string) => {
     setActiveSessions((sessions) =>
@@ -105,222 +75,8 @@ export function SecuritySettings() {
     }
   };
 
-  const handleAddPasskey = async (
-    authenticatorAttachment?: 'platform' | 'cross-platform'
-  ) => {
-    try {
-      await addPasskey({ authenticatorAttachment });
-      toast.success('Passkey added successfully');
-      listPasskeys();
-      setIsAddDialogOpen(false);
-      setNewPasskeyName('');
-    } catch (_error) {
-      toast.error('Failed to add passkey');
-    }
-  };
-
-  const handleDeletePasskey = async (id: string) => {
-    try {
-      await deletePasskey(id);
-      toast.success('Passkey deleted successfully');
-    } catch (_error) {
-      toast.error('Failed to delete passkey');
-    }
-  };
-
-  const handleUpdatePasskey = async () => {
-    if (!(editingPasskey && editName.trim())) {
-      return;
-    }
-
-    try {
-      await updatePasskey(editingPasskey.id, editName);
-      toast.success('Passkey updated successfully');
-      setEditingPasskey(null);
-      setEditName('');
-      setIsEditDialogOpen(false);
-    } catch (_error) {
-      toast.error('Failed to update passkey');
-    }
-  };
-
   return (
     <div className="space-y-6">
-      {/* Add Passkey */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Passkey Authentication</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium">Add New Passkey</h4>
-              <p className="text-muted-foreground text-sm">
-                Add a new passkey to your account for secure authentication
-              </p>
-            </div>
-            <Dialog onOpenChange={setIsAddDialogOpen} open={isAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={() => setIsAddDialogOpen(true)}>
-                  Add Passkey
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md gap-4" showOverlay>
-                <DialogHeader>
-                  <DialogTitle>Add New Passkey</DialogTitle>
-                  <DialogDescription>
-                    Choose the type of authenticator you want to register
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="gap-4 space-y-4">
-                  <div>
-                    <Label className="mt-4" htmlFor="passkey-name">
-                      Passkey Name (Optional)
-                    </Label>
-                    <Input
-                      className="mt-2"
-                      id="passkey-name"
-                      onChange={(e) => setNewPasskeyName(e.target.value)}
-                      placeholder="e.g., iPhone, MacBook, Security Key"
-                      value={newPasskeyName}
-                    />
-                  </div>
-                  <div className="mt-4 flex space-x-2">
-                    <Button
-                      className="flex-1"
-                      disabled={passkeyLoading}
-                      onClick={() => handleAddPasskey('platform')}
-                    >
-                      Platform (Fingerprint/Face ID)
-                    </Button>
-                    <Button
-                      className="flex-1"
-                      disabled={passkeyLoading}
-                      onClick={() => handleAddPasskey('cross-platform')}
-                      variant="outline"
-                    >
-                      Security Key
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-3">
-            <h4 className="font-medium">Your Passkeys ({passkeys.length})</h4>
-            {passkeyError && (
-              <p className="text-red-600 text-sm">{passkeyError}</p>
-            )}
-
-            {passkeys.length === 0 ? (
-              <div className="rounded-lg border border-dashed py-8 text-center">
-                <p className="mb-2 text-muted-foreground text-sm">
-                  No passkeys found
-                </p>
-                <p className="text-muted-foreground text-xs">
-                  Add your first passkey above for secure authentication
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {passkeys.map((passkey) => (
-                  <div
-                    className="flex items-center justify-between rounded-lg border p-3"
-                    key={passkey.id}
-                  >
-                    <div className="space-y-1">
-                      <p className="font-medium">
-                        {passkey.name || 'Unnamed Passkey'}
-                      </p>
-                      <div className="flex space-x-2 text-muted-foreground text-xs">
-                        <span>Device: {passkey.deviceType || 'Unknown'}</span>
-                        <span>•</span>
-                        <span>
-                          Backed up: {passkey.backedUp ? 'Yes' : 'No'}
-                        </span>
-                        <span>•</span>
-                        <span>Created: {formatDate(passkey.createdAt)}</span>
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Dialog
-                        onOpenChange={setIsEditDialogOpen}
-                        open={isEditDialogOpen}
-                      >
-                        <DialogTrigger asChild>
-                          <Button
-                            onClick={() => {
-                              setEditingPasskey({
-                                id: passkey.id,
-                                name: passkey.name || '',
-                              });
-                              setEditName(passkey.name || '');
-                              setIsEditDialogOpen(true);
-                            }}
-                            size="sm"
-                            variant="outline"
-                          >
-                            Edit
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Edit Passkey Name</DialogTitle>
-                            <DialogDescription>
-                              Update the name for your passkey
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="edit-name">Passkey Name</Label>
-                              <Input
-                                id="edit-name"
-                                onChange={(e) => setEditName(e.target.value)}
-                                placeholder="Enter passkey name"
-                                value={editName}
-                              />
-                            </div>
-                            <div className="flex space-x-2">
-                              <Button
-                                disabled={!editName.trim()}
-                                onClick={handleUpdatePasskey}
-                              >
-                                Update
-                              </Button>
-                              <Button
-                                onClick={() => {
-                                  setEditingPasskey(null);
-                                  setEditName('');
-                                  setIsEditDialogOpen(false);
-                                }}
-                                variant="outline"
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                      <Button
-                        disabled={passkeyLoading}
-                        onClick={() => handleDeletePasskey(passkey.id)}
-                        size="sm"
-                        variant="destructive"
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Active Sessions */}
       <Card>
         <CardHeader>

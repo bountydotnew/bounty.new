@@ -1,9 +1,9 @@
 'use client';
 
-import { authClient } from '@bounty/auth/client';
 import { track } from '@databuddy/sdk';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
 import GithubImportModal from '@/components/bounty/github-import-modal';
@@ -18,10 +18,42 @@ import {
 // Constants and types
 import { PAGINATION_DEFAULTS, PAGINATION_LIMITS } from '@/constants';
 import { trpc } from '@/utils/trpc';
+import { useSession } from '@/context/session-context';
 track('screen_view', { screen_name: 'dashboard' });
 
 export default function Dashboard() {
+  const router = useRouter();
   const taskInputRef = useRef<TaskInputFormRef>(null);
+
+  // Check onboarding state from database
+  const { data: onboardingState, isLoading: onboardingLoading } = useQuery({
+    ...trpc.onboarding.getState.queryOptions(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Redirect to onboarding if not complete
+  useEffect(() => {
+    if (!onboardingLoading && onboardingState) {
+      const isComplete =
+        onboardingState.completedStep1 &&
+        onboardingState.completedStep2 &&
+        onboardingState.completedStep3 &&
+        onboardingState.completedStep4;
+
+      if (!isComplete) {
+        // Find first incomplete step
+        if (!onboardingState.completedStep1) {
+          router.push('/onboarding/step/1');
+        } else if (!onboardingState.completedStep2) {
+          router.push('/onboarding/step/2');
+        } else if (!onboardingState.completedStep3) {
+          router.push('/onboarding/step/3');
+        } else if (!onboardingState.completedStep4) {
+          router.push('/onboarding/step/4');
+        }
+      }
+    }
+  }, [onboardingState, onboardingLoading, router]);
 
   // Focus textarea if hash is present (for navigation from other pages)
   useEffect(() => {
@@ -66,18 +98,18 @@ export default function Dashboard() {
     []
   );
 
-  const { data: session, isPending: isSessionPending } =
-    authClient.useSession();
-  const isAuthenticated = !!session?.user;
+  const { isAuthenticated, isPending: isSessionPending } = useSession();
 
-  // Queries - only run when authenticated
+  // Queries - only run when authenticated, with staleTime to prevent refetching
   const bounties = useQuery({
     ...bountiesQuery,
     enabled: isAuthenticated && !isSessionPending,
+    staleTime: 2 * 60 * 1000, // 2 minutes - bounties can change frequently
   });
   const myBounties = useQuery({
     ...myBountiesQuery,
     enabled: isAuthenticated && !isSessionPending,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
   const [importOpen, setImportOpen] = useState(false);
 

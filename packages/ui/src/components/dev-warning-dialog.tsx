@@ -30,7 +30,7 @@ export function DevWarningDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent
         className="max-w-md border border-[#383838]/40 bg-[#111214]/95 text-white shadow-xl backdrop-blur-md sm:rounded-xl"
-        showOverlay
+        overlayVariant="default"
       >
         <DialogHeader className="text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900">

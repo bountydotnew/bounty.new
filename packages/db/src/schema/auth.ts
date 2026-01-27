@@ -8,20 +8,6 @@ import {
   timestamp,
 } from 'drizzle-orm/pg-core';
 
-export const betaAccessStatusEnum = pgEnum('beta_access_status', [
-  'none',
-  'pending',
-  'approved',
-  'denied',
-]);
-
-export const accessStageEnum = pgEnum('access_stage', [
-  'none',
-  'alpha',
-  'beta',
-  'production',
-]);
-
 export const deviceCodeStatusEnum = pgEnum('device_code_status', [
   'pending',
   'approved',
@@ -36,16 +22,17 @@ export const user = pgTable('user', {
   image: text('image'),
   handle: text('handle').unique(),
   isProfilePrivate: boolean('is_profile_private').notNull().default(false),
-  hasAccess: boolean('has_access').notNull().default(false),
-  betaAccessStatus: betaAccessStatusEnum('beta_access_status')
-    .notNull()
-    .default('none'),
-  accessStage: accessStageEnum('access_stage').notNull().default('none'),
+  // Role: 'user' | 'admin' | 'early_access'
   role: text('role').notNull().default('user'),
   banned: boolean('banned').notNull().default(false),
   banReason: text('ban_reason'),
   banExpires: timestamp('ban_expires'),
-  lastLoginMethod: text('last_login_method'),
+  // Stripe fields
+  stripeCustomerId: text('stripe_customer_id'),
+  stripeConnectAccountId: text('stripe_connect_account_id'),
+  stripeConnectOnboardingComplete: boolean('stripe_connect_onboarding_complete')
+    .notNull()
+    .default(false),
   // Note: Consider using timestamptz for timezone-aware timestamps in production
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
@@ -96,13 +83,15 @@ export const waitlist = pgTable('waitlist', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
   email: text('email').notNull(),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
-  hasAccess: boolean('has_access').notNull().default(false),
   ipAddress: text('ip_address'),
   // OTP verification fields
   otpCode: text('otp_code'),
   otpExpiresAt: timestamp('otp_expires_at'),
   otpAttempts: integer('otp_attempts').notNull().default(0),
   emailVerified: boolean('email_verified').notNull().default(false),
+  // Access grant fields
+  accessToken: text('access_token'), // one-time token for granting access
+  accessGrantedAt: timestamp('access_granted_at'), // when access was granted
   // Bounty draft fields
   bountyTitle: text('bounty_title'),
   bountyDescription: text('bounty_description'),
@@ -143,4 +132,34 @@ export const emailOTP = pgTable('email_otp', {
   verified: boolean('verified').notNull().default(false),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
+});
+
+/**
+ * OAuth state tokens for CSRF protection during OAuth flows
+ * Used to validate that OAuth callbacks match initiated flows
+ */
+export const oauthState = pgTable('oauth_state', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  state: text('state').notNull().unique(),
+  provider: text('provider').notNull(), // 'discord', 'github', etc.
+  providerId: text('provider_id'), // The external provider's user ID (e.g., Discord user ID)
+  expiresAt: timestamp('expires_at').notNull(),
+  used: boolean('used').notNull().default(false),
+  createdAt: timestamp('created_at').notNull().default(sql`now()`),
+});
+
+/**
+ * Discord Guild (Server) - tracks where the bot is installed
+ */
+export const discordGuild = pgTable('discord_guild', {
+  id: text('id').primaryKey(), // Discord guild ID
+  name: text('name').notNull(),
+  icon: text('icon'), // Discord icon hash
+  ownerId: text('owner_id').notNull(), // Discord user ID of guild owner
+  memberCount: integer('member_count'),
+  installedAt: timestamp('installed_at').notNull().default(sql`now()`),
+  installedById: text('installed_by_id').references(() => user.id, {
+    onDelete: 'set null',
+  }), // Bounty user who installed (if known)
+  removedAt: timestamp('removed_at'), // Set when bot is removed, null if active
 });

@@ -36,7 +36,7 @@ export default function ResetPasswordForm() {
 
     startTransition(async () => {
       try {
-        await authClient.forgetPassword({
+        await authClient.requestPasswordReset({
           email,
           redirectTo: `${window.location.origin}/reset-password`,
         });

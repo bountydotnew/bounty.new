@@ -1,6 +1,5 @@
 'use client';
 
-import { authClient } from '@bounty/auth/client';
 import type { ExtendedAuthSession } from '@bounty/types';
 import { Button } from '@bounty/ui/components/button';
 import { useQueryClient } from '@tanstack/react-query';
@@ -8,11 +7,13 @@ import { ShieldAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ImpersonationUserPicker } from '@/components/admin/impersonation-user-picker';
+import { useSession } from '@/context/session-context';
+import { authClient } from '@bounty/auth/client';
 
 export default function ImpersonationBanner() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: session } = authClient.useSession();
+  const { session } = useSession();
   const [open, setOpen] = useState(false);
   const sessionData = session as ExtendedAuthSession;
   const impersonatedBy =
@@ -63,7 +64,9 @@ export default function ImpersonationBanner() {
                   window.dispatchEvent(new Event('visibilitychange'));
                   router.refresh();
                 })
-                .catch(() => {});
+                .catch((error) => {
+                  console.error('Failed to stop impersonating:', error);
+                });
             }}
             size="sm"
             variant="outline"
@@ -93,7 +96,9 @@ export default function ImpersonationBanner() {
               queryClient.invalidateQueries();
               window.dispatchEvent(new Event('visibilitychange'));
               router.refresh();
-            } catch {}
+            } catch (error) {
+              console.error('Failed to impersonate:', error);
+            }
           };
           go();
         }}

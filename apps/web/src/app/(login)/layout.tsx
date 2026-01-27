@@ -4,7 +4,8 @@ export const metadata: Metadata = {
   title: 'bounty.new - Login',
   description: 'Ship fast, get paid faster.',
   icons: {
-    icon: '/icon.svg',
+    icon: '/favicon/favicon_dark.png',
+    apple: '/favicon/favicon_dark.png',
   },
   openGraph: {
     title: 'bounty.new - Login',
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
     siteName: 'bounty.new - Login',
     images: [
       {
-        url: '/ogimage.png',
+        url: '/og-image.png',
         width: 1200,
         height: 630,
         alt: 'bounty.new - Ship fast, get paid faster.',

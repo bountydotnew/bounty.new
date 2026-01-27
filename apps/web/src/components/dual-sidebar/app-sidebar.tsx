@@ -10,6 +10,8 @@ import {
   SettingsGearIcon,
   SidebarToggleIcon,
   BellIcon,
+  FileIcon,
+  DiscordIcon,
 } from '@bounty/ui';
 import { cn } from '@bounty/ui/lib/utils';
 import {
@@ -29,11 +31,13 @@ import {
   AvatarFallback,
   AvatarImage,
 } from '@bounty/ui/components/avatar';
-import { authClient } from '@bounty/auth/client';
+import { useSession } from '@/context/session-context';
 import { usePathname, useRouter } from 'next/navigation';
 import { NavMain } from '@/components/dual-sidebar/nav-main';
+import { RecentBountiesGroup } from '@/components/dual-sidebar/recent-bounties';
 import { NotificationsDropdown } from '@/components/notifications/notifications-dropdown';
 import { AccountDropdown } from '@/components/billing/account-dropdown';
+import { FundBountyModal } from '@/components/payment/fund-bounty-modal';
 import { LINKS } from '@/constants';
 import { Clock, UsersIcon } from 'lucide-react';
 
@@ -41,6 +45,7 @@ const NAV_ITEMS = [
   { title: 'Home', url: LINKS.DASHBOARD, icon: HugeHomeIcon },
   { title: 'Bounties', url: LINKS.BOUNTIES, icon: BountiesIcon },
   { title: 'Bookmarks', url: LINKS.BOOKMARKS, icon: BookmarksIcon },
+  { title: 'Integrations', url: '/integrations', icon: SettingsGearIcon },
 ];
 
 const FALLBACK_USER = {
@@ -50,7 +55,7 @@ const FALLBACK_USER = {
 };
 
 const WorkspaceSwitcher = () => {
-  const { data: session } = authClient.useSession();
+  const { session } = useSession();
   const userName = session?.user?.name ?? 'grim';
   const userImage = session?.user?.image ?? null;
   const initials = userName.charAt(0).toLowerCase();
@@ -110,28 +115,67 @@ const WorkspaceSwitcher = () => {
 };
 
 const SidebarFooterActions = () => {
-  const router = useRouter();
-  const { data: session, isPending } = authClient.useSession();
+  const { session, isPending } = useSession();
   const isAuthenticated = !!session?.user;
+  const [showFundModal, setShowFundModal] = React.useState(false);
 
   return (
-    <div className="flex items-end justify-between gap-2 py-0">
-      <button
-        className="inline-flex items-center gap-2 rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
-        onClick={() => router.push(LINKS.SETTINGS)}
-        type="button"
-      >
-        <SettingsGearIcon className="h-[19px] w-[19px]" />
-        <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em] group-data-[collapsible=icon]:hidden">
-          Settings
-        </span>
-      </button>
-      {isAuthenticated && !isPending && (
-        <NotificationsDropdown triggerClassName="flex h-auto w-auto items-center justify-center rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]">
-          <NotificationsIcon className="h-[19px] w-[19px]" />
-        </NotificationsDropdown>
-      )}
-    </div>
+    <>
+      <div className="flex items-end justify-between gap-2 py-0">
+        {/* Links column: Docs, Discord */}
+        <div className="flex flex-col gap-2">
+          <button
+            className="inline-flex items-center gap-2 rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
+            onClick={() => window.open('https://docs.bounty.new', '_blank')}
+            type="button"
+          >
+            <FileIcon className="h-[19px] w-[19px]" />
+            <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em] group-data-[collapsible=icon]:hidden">
+              Docs
+            </span>
+          </button>
+          <div className="flex items-center gap-0">
+            <button
+              className="inline-flex items-center gap-2 rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
+              onClick={() =>
+                window.open('https://discord.gg/bountynew', '_blank')
+              }
+              type="button"
+            >
+              <DiscordIcon className="h-[19px] w-[19px]" />
+              <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em] group-data-[collapsible=icon]:hidden">
+                Discord
+              </span>
+            </button>
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 animate-pulse" />
+            </span>
+          </div>
+        </div>
+        {/* Notifications toggle */}
+        {isAuthenticated && !isPending && (
+          <NotificationsDropdown triggerClassName="flex h-auto w-auto items-center justify-center rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]">
+            <NotificationsIcon className="h-[19px] w-[19px]" />
+          </NotificationsDropdown>
+        )}
+      </div>
+      <FundBountyModal
+        open={showFundModal}
+        onOpenChange={setShowFundModal}
+        onSkip={() => {
+          console.log('Skipped payment');
+          setShowFundModal(false);
+        }}
+        onPayWithStripe={() => {
+          console.log('Pay with Stripe');
+          setShowFundModal(false);
+        }}
+        onPayWithBalance={() => {
+          console.log('Pay with balance');
+          setShowFundModal(false);
+        }}
+      />
+    </>
   );
 };
 
@@ -229,7 +273,7 @@ export const AppSidebar = ({
   ...props
 }: React.ComponentProps<typeof Sidebar>) => {
   const pathname = usePathname();
-  const { data: session, isPending } = authClient.useSession();
+  const { session, isPending } = useSession();
   const isAuthenticated = !!session?.user;
 
   const navItems = NAV_ITEMS.map((item) => ({
@@ -255,6 +299,7 @@ export const AppSidebar = ({
             </SidebarHeader>
             <SidebarContent className="flex-1 overflow-y-auto px-[15px] py-0 group-data-[collapsible=icon]:px-0">
               <NavMain items={navItems} />
+              <RecentBountiesGroup />
             </SidebarContent>
             <SidebarFooter className="px-0 py-0 group-data-[collapsible=icon]:px-0">
               <SidebarFooterActions />

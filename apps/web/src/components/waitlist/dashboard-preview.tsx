@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { trpc, trpcClient } from '@/utils/trpc';
-import { authClient } from '@bounty/auth/client';
+import { useSession } from '@/context/session-context';
 import { BountyForm } from './bounty-form';
+import { formatDateLong, formatPriceString } from '@bounty/ui/lib/utils';
 
 const BOUNTY_DRAFT_STORAGE_KEY = 'bounty_draft';
 
@@ -19,7 +20,7 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [hasAutoSaved, setHasAutoSaved] = useState(false);
   const queryClient = useQueryClient();
-  const { data: session } = authClient.useSession();
+  const { session } = useSession();
 
   const { data, isLoading } = useQuery({
     ...trpc.earlyAccess.getWaitlistEntry.queryOptions({ entryId }),
@@ -105,43 +106,6 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
     );
   }
 
-  // Helper to format price with commas
-  const formatPrice = (price: string | null | undefined): string => {
-    if (!price) {
-      return '';
-    }
-    const num = Number.parseFloat(price);
-    if (Number.isNaN(num)) {
-      return price;
-    }
-    return num.toLocaleString('en-US', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    });
-  };
-
-  // Helper to format deadline
-  const formatDeadline = (
-    deadline: string | Date | null | undefined
-  ): string => {
-    if (!deadline) {
-      return '';
-    }
-    try {
-      const date = typeof deadline === 'string' ? new Date(deadline) : deadline;
-      if (Number.isNaN(date.getTime())) {
-        return '';
-      }
-      return date.toLocaleDateString('en-US', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-      });
-    } catch {
-      return '';
-    }
-  };
-
   const bountyDraft = entry
     ? {
         title: entry.bountyTitle,
@@ -204,12 +168,12 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
                 </span>
                 {bountyDraft.price && (
                   <span className="px-2 py-0.5 rounded-full bg-[#1E3A2F] text-[#4ADE80] text-xs">
-                    ${formatPrice(bountyDraft.price)}
+                    ${formatPriceString(bountyDraft.price)}
                   </span>
                 )}
                 {bountyDraft.deadline && (
                   <span className="px-2 py-0.5 rounded-full bg-[#2A2A2A] text-[#929292] text-xs">
-                    Due: {formatDeadline(bountyDraft.deadline)}
+                    Due: {formatDateLong(bountyDraft.deadline)}
                   </span>
                 )}
               </div>

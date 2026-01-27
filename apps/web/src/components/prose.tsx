@@ -48,7 +48,7 @@ function Prose({ children, html, markdown, className }: ProseProps) {
   return (
     <article
       className={cn(
-        'prose prose-zinc dark:prose-invert mx-auto max-w-none prose-ol:list-decimal prose-ul:list-disc prose-img:rounded-xl prose-headings:font-semibold prose-a:text-blue-600 prose-h1:text-2xl prose-h2:text-xl prose-li:marker:text-muted-foreground hover:prose-a:text-blue-500',
+        'prose prose-zinc dark:prose-invert mx-auto max-w-none prose-ol:list-decimal prose-ul:list-disc prose-img:rounded-xl prose-headings:font-semibold prose-a:text-inherit prose-a:underline prose-h1:text-2xl prose-h2:text-xl prose-li:marker:text-muted-foreground',
         className
       )}
     >

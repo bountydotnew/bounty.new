@@ -1,9 +1,6 @@
-import { getServerCustomerState } from '@bounty/auth/server-utils';
 import { BillingSettings } from '@/components/settings/billing-settings';
 
 export default async function BillingSettingsPage() {
-  const { data: customerState } = await getServerCustomerState();
-
   return (
     <div className="space-y-6">
       <header>
@@ -12,7 +9,7 @@ export default async function BillingSettingsPage() {
           Manage your billing information and subscription.
         </p>
       </header>
-      <BillingSettings initialCustomerState={customerState} />
+      <BillingSettings />
     </div>
   );
 }

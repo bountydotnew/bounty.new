@@ -4,9 +4,7 @@ export interface BetterAuthUser {
   email: string;
   emailVerified: boolean;
   image?: string;
-  hasAccess: boolean;
-  betaAccessStatus: 'none' | 'pending' | 'approved' | 'denied';
-  accessStage: 'none' | 'alpha' | 'beta' | 'production';
+  // Role: 'user' | 'admin' | 'early_access'
   role: string;
   banned: boolean;
   banReason?: string;
@@ -42,7 +40,7 @@ export interface ExtendedAuthSession extends BetterAuthSession {
 // Reason codes used to classify auth/authorization client UX
 export const ReasonCode = {
   Unauthenticated: 'unauthenticated',
-  BetaRequired: 'beta_required',
+  EarlyAccessRequired: 'early_access_required',
   EmailUnverified: 'email_unverified',
   Banned: 'banned',
   PlanRequired: 'plan_required',

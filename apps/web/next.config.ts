@@ -76,6 +76,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'avatars.githubusercontent.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'cdn.discordapp.com',
+      },
     ],
   },
   rewrites() {
@@ -97,6 +101,7 @@ const nextConfig: NextConfig = {
   },
   // This is required to support PostHog trailing slash API requests
   skipTrailingSlashRedirect: true,
+  transpilePackages: ['@bounty/ui'],
   turbopack: {
     resolveExtensions: ['.ts', '.tsx', '.js', '.jsx', '.json', '.mjs', '.cjs'],
   },
@@ -125,12 +130,6 @@ export default withSentryConfig(nextConfig, {
   // side errors will fail.
   tunnelRoute: '/monitoring',
 
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
-
-  // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
-  // See the following for more information:
-  // https://docs.sentry.io/product/crons/
-  // https://vercel.com/docs/cron-jobs
+  // Automatically instrument Vercel Cron Monitors (must be at top level, not nested in webpack)
   automaticVercelMonitors: true,
 });

@@ -2,6 +2,7 @@
 
 import { authClient } from '@bounty/auth/client';
 import { Badge } from '@bounty/ui/components/badge';
+import { useSession } from '@/context/session-context';
 import { Button } from '@bounty/ui/components/button';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useEffect, useState } from 'react';
@@ -20,19 +21,8 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
   const [loading, setLoading] = useState(false);
   const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(null);
   const [addAccountParam] = useQueryState('addAccount', parseAsString);
-  const { data: session, isPending } = authClient.useSession();
+  const { session, isPending } = useSession();
   const isAddingAccount = addAccountParam === 'true';
-
-  useEffect(() => {
-    if (
-      typeof PublicKeyCredential === 'undefined' ||
-      !PublicKeyCredential.isConditionalMediationAvailable?.()
-    ) {
-      return;
-    }
-
-    authClient.signIn.passkey({ autoFill: true });
-  }, []);
 
   useEffect(() => {
     try {
@@ -78,10 +68,10 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
   };
 
   return (
-    <div className="flex flex-1 items-center justify-center p-8 md:p-12">
-      <div className="w-full max-w-md justify-center flex space-y-8">
+    <div className="flex w-full flex-col items-center justify-center text-[#f3f3f3]">
+      <div className="w-full max-w-sm space-y-8">
         {isPending && (
-          <div className="w-full max-w-96 space-y-8">
+          <div className="w-full space-y-8">
             <div className="animate-pulse space-y-4 text-center">
               <div className="mx-auto h-16 w-16 rounded-lg bg-[#383838]" />
               <div className="mx-auto h-7 w-48 rounded bg-[#383838]" />
@@ -106,7 +96,7 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
           ))}
 
         {!(isPending || session) && (
-          <div className="w-full max-w-96 space-y-8">
+          <div className="w-full space-y-8">
             <div className="space-y-4 text-center">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-lg">
                 <Bounty className="h-12 w-12 text-primary" />

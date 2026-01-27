@@ -1,8 +1,8 @@
-import { authClient } from '@bounty/auth/client';
 import { useQueries } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import type { CustomerState } from '@bounty/types/billing';
+import { authClient } from '@bounty/auth/client';
 import { trpc, queryClient } from '@/utils/trpc';
+import { useSession } from '@/context/session-context';
 
 /**
  * Hook to batch-fetch essential data on initial app load
@@ -16,8 +16,7 @@ import { trpc, queryClient } from '@/utils/trpc';
  * @param enabled - Whether to fetch data (should be true when user is authenticated)
  */
 export function useInitialData(enabled = true) {
-  const { data: session } = authClient.useSession();
-  const isAuthenticated = !!session?.user;
+  const { isAuthenticated } = useSession();
   const shouldFetch = enabled && isAuthenticated;
 
   // Fetch essential user data
@@ -47,32 +46,20 @@ export function useInitialData(enabled = true) {
  *
  * Prefetches:
  * - User profile (tRPC)
- * - Billing/subscription data (Better Auth - separate request)
  * - Device sessions (Better Auth - for account switcher)
+ *
+ * Note: Billing data is handled by autumn-js SDK which manages its own caching
  */
 export function usePrefetchInitialData() {
-  const { data: session } = authClient.useSession();
+  const { isAuthenticated } = useSession();
 
   useEffect(() => {
-    if (session?.user) {
+    if (isAuthenticated) {
       // Prefetch tRPC queries
       queryClient.prefetchQuery(trpc.user.getMe.queryOptions());
 
-      // Prefetch billing data (Better Auth) - runs in parallel with tRPC batch
-      queryClient.prefetchQuery({
-        queryKey: ['billing'],
-        queryFn: async (): Promise<CustomerState | null> => {
-          try {
-            const { data: customerState } = await authClient.customer.state();
-            return customerState as CustomerState | null;
-          } catch {
-            // Fail silently - billing might not be set up yet
-            return null;
-          }
-        },
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        retry: false,
-      });
+      // Note: Billing data is now handled by autumn-js SDK which manages its own caching
+      // The SDK's useCustomer hook will automatically fetch and cache customer data
 
       // Prefetch device sessions (Better Auth) - for account switcher
       queryClient.prefetchQuery({
@@ -95,5 +82,5 @@ export function usePrefetchInitialData() {
         retry: false,
       });
     }
-  }, [session?.user]);
+  }, [isAuthenticated]);
 }
