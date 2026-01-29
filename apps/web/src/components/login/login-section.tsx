@@ -7,7 +7,7 @@ import { Button } from '@bounty/ui/components/button';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import AuthForm from '@/components/auth/auth-form';
+import { SignInForm } from '@/components/auth/auth-form';
 import Bounty from '@/components/icons/bounty';
 import { GithubIcon } from '../icons';
 import { AddAccountView } from '@/components/login/add-account-view';
@@ -107,7 +107,7 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
             </div>
 
             <div className="space-y-6">
-              <AuthForm callbackUrl={callbackUrl} />
+              <SignInForm callbackUrl={callbackUrl} showHeader />
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">

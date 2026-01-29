@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Controller, type Control } from 'react-hook-form';
 import type { CreateBountyForm } from '@bounty/ui/lib/forms';
 import {
@@ -45,6 +45,7 @@ function DeadlinePicker({ value, onChange }: DeadlinePickerProps) {
   const [date, setDate] = useState<Date | undefined>(() =>
     parseFieldValue(value)
   );
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!value) {
@@ -66,17 +67,34 @@ function DeadlinePicker({ value, onChange }: DeadlinePickerProps) {
     const newValue = e.target.value;
     setInputValue(newValue);
 
-    // Parse natural language input
-    const parsed = parseDate(newValue);
-    if (parsed) {
-      setDate(parsed);
-      onChange(parsed.toISOString());
-    } else {
-      // If not a valid date, still update the form value
-      // This allows for partial input like "tomorr" that will be completed
-      onChange(newValue);
+    // Clear any pending timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
     }
+
+    // Debounce the onChange callback
+    debounceTimeoutRef.current = setTimeout(() => {
+      // Parse natural language input
+      const parsed = parseDate(newValue);
+      if (parsed) {
+        setDate(parsed);
+        onChange(parsed.toISOString());
+      } else {
+        // If not a valid date, still update the form value
+        // This allows for partial input like "tomorr" that will be completed
+        onChange(newValue);
+      }
+    }, 300);
   };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleCalendarSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {

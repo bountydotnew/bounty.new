@@ -1,11 +1,10 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
 import { trpc } from '@/utils/trpc';
 import { useSession } from '@/context/session-context';
 import { parseAsString, useQueryState } from 'nuqs';
-import { BountyListContext, type BountyListContextValue, type BountyListState, type BountyListActions, type BountyListMeta, type SortByOption, type SortOrderOption } from './context';
+import { BountyListContext, type BountyListContextValue, type SortByOption, type SortOrderOption } from './context';
 
 interface BountyListProviderProps {
   children: React.ReactNode;
@@ -19,27 +18,17 @@ const DEFAULT_SORT_ORDER: SortOrderOption = 'desc';
  *
  * Provider component that implements the BountyListContext interface.
  * Handles all data fetching and filter state management for the bounty list page.
- *
- * This provider enables dependency injection - the UI components consume
- * the interface, not the implementation.
  */
 export function BountyListProvider({ children }: BountyListProviderProps) {
   const { isAuthenticated, isPending: isSessionPending } = useSession();
 
-  // URL state for filters using nuqs
+  // URL state for filters using nuqs (stable references)
   const [search, setSearch] = useQueryState('search', parseAsString);
   const [creatorId, setCreatorId] = useQueryState('creatorId', parseAsString);
-  const [sortBy, setSortBy] = useQueryState(
-    'sortBy',
-    parseAsString.withDefault(DEFAULT_SORT_BY)
-  );
-  const [sortOrder, setSortOrder] = useQueryState(
-    'sortOrder',
-    parseAsString.withDefault(DEFAULT_SORT_ORDER)
-  );
+  const [sortBy, setSortBy] = useQueryState('sortBy', parseAsString.withDefault(DEFAULT_SORT_BY));
+  const [sortOrder, setSortOrder] = useQueryState('sortOrder', parseAsString.withDefault(DEFAULT_SORT_ORDER));
 
-  // ===== Query =====
-
+  // Query
   const {
     data: bounties,
     isLoading,
@@ -48,7 +37,7 @@ export function BountyListProvider({ children }: BountyListProviderProps) {
   } = useQuery({
     ...trpc.bounties.fetchAllBounties.queryOptions({
       page: 1,
-      limit: 100, // Higher limit for "view all" page
+      limit: 100,
       search: search || undefined,
       creatorId: creatorId || undefined,
       sortBy: (sortBy as SortByOption) || DEFAULT_SORT_BY,
@@ -58,10 +47,9 @@ export function BountyListProvider({ children }: BountyListProviderProps) {
     retry: false,
   });
 
-  // ===== State =====
-
-  const state: BountyListState = useMemo(
-    () => ({
+  // Context value
+  const contextValue: BountyListContextValue = {
+    state: {
       bounties: bounties?.data ?? [],
       isLoading,
       error: error instanceof Error ? error : null,
@@ -71,14 +59,8 @@ export function BountyListProvider({ children }: BountyListProviderProps) {
         sortBy: (sortBy as SortByOption) ?? DEFAULT_SORT_BY,
         sortOrder: (sortOrder as SortOrderOption) ?? DEFAULT_SORT_ORDER,
       },
-    }),
-    [bounties?.data, isLoading, error, search, creatorId, sortBy, sortOrder]
-  );
-
-  // ===== Actions =====
-
-  const actions: BountyListActions = useMemo(
-    () => ({
+    },
+    actions: {
       setSearch: (value) => setSearch(value ?? ''),
       setCreatorId: (value) => setCreatorId(value ?? ''),
       setSortBy: (value) => setSortBy(value),
@@ -90,29 +72,11 @@ export function BountyListProvider({ children }: BountyListProviderProps) {
         setSortOrder(DEFAULT_SORT_ORDER);
       },
       refetch: () => refetch(),
-    }),
-    [setSearch, setCreatorId, setSortBy, setSortOrder, refetch]
-  );
-
-  // ===== Meta =====
-
-  const meta: BountyListMeta = useMemo(
-    () => ({
+    },
+    meta: {
       totalCount: bounties?.data?.length ?? 0,
-    }),
-    [bounties?.data]
-  );
-
-  // ===== Context Value =====
-
-  const contextValue: BountyListContextValue = useMemo(
-    () => ({
-      state,
-      actions,
-      meta,
-    }),
-    [state, actions, meta]
-  );
+    },
+  };
 
   return (
     <BountyListContext value={contextValue}>

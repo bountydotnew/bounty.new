@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import AuthForm from '@/components/auth/auth-form';
+import { AddAccountForm } from '@/components/auth/auth-form';
 import Bounty from '@/components/icons/bounty';
 import { LINKS } from '@/constants';
 import { GithubIcon } from '../icons';
@@ -22,7 +22,7 @@ interface AddAccountViewProps {
   };
 }
 
-export function AddAccountView({ callbackUrl, session }: AddAccountViewProps) {
+export function AddAccountView({ session }: AddAccountViewProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -92,7 +92,7 @@ export function AddAccountView({ callbackUrl, session }: AddAccountViewProps) {
 
         <div className="space-y-4">
           <div className="space-y-3">
-            <AuthForm callbackUrl={callbackUrl} isAddingAccount={true} />
+            <AddAccountForm />
 
             <Button
               className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#2A2A28] py-3 font-medium text-gray-200 transition-colors hover:bg-[#383838]"

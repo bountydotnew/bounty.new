@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, ReactNode, useState, useCallback } from 'react';
+import { useMemo, type ReactNode, useState, useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '@/context/session-context';
 import { useRouter, usePathname } from 'next/navigation';
@@ -67,7 +67,8 @@ export function BountyCardProvider({
     : false;
 
   // Determine funding and cancellation status
-  const isFunded = bounty.paymentStatus === 'held' || bounty.paymentStatus === 'released';
+  const isFunded =
+    bounty.paymentStatus === 'held' || bounty.paymentStatus === 'released';
   const isCancelled = bounty.status === 'cancelled';
   const isRefunded = bounty.paymentStatus === 'refunded';
 
@@ -79,13 +80,18 @@ export function BountyCardProvider({
 
   // Query cancellation status
   const cancellationStatusQuery = useQuery({
-    ...trpc.bounties.getCancellationStatus.queryOptions({ bountyId: bounty.id }),
+    ...trpc.bounties.getCancellationStatus.queryOptions({
+      bountyId: bounty.id,
+    }),
     enabled: canRequestCancellation,
   });
 
-  const hasPendingCancellation = cancellationStatusQuery.data?.hasPendingRequest ?? false;
+  const hasPendingCancellation =
+    cancellationStatusQuery.data?.hasPendingRequest ?? false;
 
-  const canDelete = isOwner && (!isFunded || hasPendingCancellation || isCancelled || isRefunded);
+  const canDelete =
+    isOwner &&
+    (!isFunded || hasPendingCancellation || isCancelled || isRefunded);
 
   // Mutations
   const togglePinMutation = useMutation({
@@ -105,24 +111,118 @@ export function BountyCardProvider({
     },
   });
 
+  // Helper to check if a query key is bounty-related
+  const isBountyQuery = (query: { queryKey: unknown }) => {
+    const key = query.queryKey;
+    if (Array.isArray(key) && key.length > 0) {
+      const first = key[0];
+      // tRPC query keys are like [['bounties', 'fetchAllBounties'], {input}]
+      if (Array.isArray(first) && first.length > 0 && first[0] === 'bounties') {
+        return true;
+      }
+    }
+    return false;
+  };
+
   const deleteBountyMutation = useMutation({
     mutationFn: async () => {
       return await trpcClient.bounties.deleteBounty.mutate({ id: bounty.id });
     },
+    onMutate: async () => {
+      // Cancel any outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({ predicate: isBountyQuery });
+
+      // Snapshot current cache for rollback
+      const previousData = new Map<unknown, unknown>();
+
+      // Get all bounty queries and store their current data
+      const queries = queryClient.getQueriesData({ predicate: isBountyQuery });
+      for (const [queryKey, data] of queries) {
+        previousData.set(queryKey, data);
+      }
+
+      // Optimistically remove the bounty from all cached queries
+      queryClient.setQueriesData(
+        { predicate: isBountyQuery },
+        (oldData: unknown) => {
+          if (!oldData) return oldData;
+
+          // Handle paginated response: { success, data: [...], pagination: {...} }
+          if (
+            typeof oldData === 'object' &&
+            oldData !== null &&
+            'data' in oldData &&
+            Array.isArray((oldData as { data: unknown }).data)
+          ) {
+            const response = oldData as {
+              success?: boolean;
+              data: { id: string }[];
+              pagination?: { total?: number };
+            };
+            const filtered = response.data.filter((b) => b.id !== bounty.id);
+            return {
+              ...response,
+              data: filtered,
+              pagination: response.pagination
+                ? {
+                    ...response.pagination,
+                    total: Math.max(0, (response.pagination.total ?? 0) - 1),
+                  }
+                : undefined,
+            };
+          }
+
+          // Handle array of bounties directly
+          if (Array.isArray(oldData)) {
+            return oldData.filter((b: { id?: string }) => b?.id !== bounty.id);
+          }
+
+          // Handle single bounty query
+          if (
+            typeof oldData === 'object' &&
+            oldData !== null &&
+            'id' in oldData
+          ) {
+            const data = oldData as { id: string };
+            if (data.id === bounty.id) {
+              return null;
+            }
+          }
+
+          return oldData;
+        }
+      );
+
+      // Close dialog immediately for snappy feedback
+      setShowDeleteDialog(false);
+
+      return { previousData };
+    },
     onSuccess: () => {
       toast.success('Bounty deleted');
-      queryClient.invalidateQueries({
-        queryKey: [['bounties', 'getHighlights']],
-      });
-      queryClient.invalidateQueries({
-        queryKey: [['bounties', 'getBountiesByUserId']],
-      });
-      queryClient.invalidateQueries({
-        queryKey: [['bounties', 'getBounties']],
-      });
+
+      // If we're on the bounty detail page, redirect to dashboard
+      if (
+        typeof window !== 'undefined' &&
+        window.location.pathname.includes('/bounty/')
+      ) {
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 500);
+      }
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _variables, context) => {
       toast.error(`Failed to delete bounty: ${error.message}`);
+      // Rollback to previous data
+      if (context?.previousData) {
+        for (const [queryKey, data] of context.previousData) {
+          queryClient.setQueryData(queryKey as unknown[], data);
+        }
+      }
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure consistency
+      queryClient.invalidateQueries({ predicate: isBountyQuery });
     },
   });
 
@@ -187,10 +287,14 @@ export function BountyCardProvider({
       return;
     }
 
-    deleteBountyMutation.mutate(undefined, {
-      onSettled: () => setShowDeleteDialog(false),
-    });
-  }, [canDelete, deleteBountyMutation.isPending, deleteBountyMutation, onDelete]);
+    // Dialog is closed in onMutate for instant feedback
+    deleteBountyMutation.mutate();
+  }, [
+    canDelete,
+    deleteBountyMutation.isPending,
+    deleteBountyMutation,
+    onDelete,
+  ]);
 
   const cancelDelete = useCallback(() => {
     setShowDeleteDialog(false);
@@ -203,14 +307,25 @@ export function BountyCardProvider({
   }, [canRequestCancellation, hasPendingCancellation]);
 
   const confirmCancellation = useCallback(() => {
-    if (!canRequestCancellation || hasPendingCancellation || requestCancellationMutation.isPending) {
+    if (
+      !canRequestCancellation ||
+      hasPendingCancellation ||
+      requestCancellationMutation.isPending
+    ) {
       return;
     }
     requestCancellationMutation.mutate({
       bountyId: bounty.id,
       reason: cancellationReason || undefined,
     });
-  }, [canRequestCancellation, hasPendingCancellation, requestCancellationMutation.isPending, requestCancellationMutation, bounty.id, cancellationReason]);
+  }, [
+    canRequestCancellation,
+    hasPendingCancellation,
+    requestCancellationMutation.isPending,
+    requestCancellationMutation,
+    bounty.id,
+    cancellationReason,
+  ]);
 
   const cancelCancellationRequest = useCallback(() => {
     cancelCancellationRequestMutation.mutate({ bountyId: bounty.id });
@@ -221,24 +336,28 @@ export function BountyCardProvider({
     if (isCancelled || isRefunded) {
       return {
         label: 'Cancelled',
-        className: 'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#FF000015] text-[#FF6B6B] border border-[#FF000020]',
+        className:
+          'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#FF000015] text-[#FF6B6B] border border-[#FF000020]',
       };
     }
     if (hasPendingCancellation) {
       return {
         label: 'Cancelling',
-        className: 'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#FFB30015] text-[#FFB300] border border-[#FFB30020]',
+        className:
+          'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#FFB30015] text-[#FFB300] border border-[#FFB30020]',
       };
     }
     if (isFunded) {
       return {
         label: 'Funded',
-        className: 'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#6CFF0015] text-[#6CFF0099] border border-[#6CFF0020]',
+        className:
+          'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#6CFF0015] text-[#6CFF0099] border border-[#6CFF0020]',
       };
     }
     return {
       label: 'Unfunded',
-      className: 'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#FFFFFF08] text-[#FFFFFF66] border border-[#FFFFFF12]',
+      className:
+        'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#FFFFFF08] text-[#FFFFFF66] border border-[#FFFFFF12]',
     };
   }, [isCancelled, isRefunded, hasPendingCancellation, isFunded]);
 
@@ -268,7 +387,9 @@ export function BountyCardProvider({
     if (!bounty.issueUrl) {
       return null;
     }
-    const match = bounty.issueUrl.match(/github\.com\/[^/]+\/[^/]+\/issues\/(\d+)/i);
+    const match = bounty.issueUrl.match(
+      /github\.com\/[^/]+\/[^/]+\/issues\/(\d+)/i
+    );
     if (!match) {
       return null;
     }
@@ -307,7 +428,8 @@ export function BountyCardProvider({
       isTogglePinPending: togglePinMutation.isPending,
       isDeletePending: deleteBountyMutation.isPending,
       isRequestCancellationPending: requestCancellationMutation.isPending,
-      isCancelCancellationRequestPending: cancelCancellationRequestMutation.isPending,
+      isCancelCancellationRequestPending:
+        cancelCancellationRequestMutation.isPending,
     }),
     [
       bounty,
@@ -369,7 +491,15 @@ export function BountyCardProvider({
       cancellationReason,
       setCancellationReason,
     }),
-    [onDelete, showDeleteDialog, setShowDeleteDialog, showCancellationDialog, setShowCancellationDialog, cancellationReason, setCancellationReason]
+    [
+      onDelete,
+      showDeleteDialog,
+      setShowDeleteDialog,
+      showCancellationDialog,
+      setShowCancellationDialog,
+      cancellationReason,
+      setCancellationReason,
+    ]
   );
 
   const contextValue: BountyCardContextValue = useMemo(

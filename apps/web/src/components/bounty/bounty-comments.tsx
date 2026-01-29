@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import BountyComment from '@/components/bounty/bounty-comment';
-import BountyCommentForm from '@/components/bounty/bounty-comment-form';
+import { CommentForm } from '@/components/bounty/bounty-comment-form';
 import CommentEditDialog from '@/components/bounty/comment-edit-dialog';
 import type { BountyCommentCacheItem } from '@/types/comments';
 import { trpc, trpcClient } from '@/utils/trpc';
@@ -322,15 +322,19 @@ export default function BountyComments({
       </div>
 
       {!replyTo && (
-        <BountyCommentForm
+        <CommentForm.Provider
           error={formError}
           errorKey={formErrorKey}
           isSubmitting={addComment.isPending}
           maxChars={245}
-          onSubmit={(content) => postComment(content)}
+          onSubmit={(content: string) => postComment(content)}
           placeholder="Add a comment"
           submitLabel="Post"
-        />
+        >
+          <CommentForm.Textarea />
+          <CommentForm.Error />
+          <CommentForm.Buttons />
+        </CommentForm.Provider>
       )}
 
       <CommentEditDialog
@@ -403,7 +407,7 @@ export default function BountyComments({
                   />
                   {replyTo === root.id && (
                     <div className="mt-2 ml-4">
-                      <BountyCommentForm
+                      <CommentForm.Provider
                         autoFocus
                         error={formError}
                         errorKey={formErrorKey}
@@ -414,7 +418,7 @@ export default function BountyComments({
                           setFormError(null);
                           setFormErrorKey((k) => k + 1);
                         }}
-                        onSubmit={(content) => {
+                        onSubmit={(content: string) => {
                           postComment(content, root.id);
                           setReplyTo(null);
                           setFormError(null);
@@ -424,7 +428,11 @@ export default function BountyComments({
                         }}
                         placeholder={`Reply to ${root.user?.name || 'user'}`}
                         submitLabel="Reply"
-                      />
+                      >
+                        <CommentForm.Textarea />
+                        <CommentForm.Error />
+                        <CommentForm.Buttons />
+                      </CommentForm.Provider>
                     </div>
                   )}
                   {children.length > 0 && (

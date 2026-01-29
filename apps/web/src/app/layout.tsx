@@ -87,6 +87,11 @@ export default function RootLayout({
               src="//unpkg.com/@react-grab/cursor/dist/client.global.js"
               strategy="lazyOnload"
             />
+            <Script
+              async
+              crossOrigin="anonymous"
+              src="https://tweakcn.com/live-preview.min.js"
+            />
           </>
         )}
       </head>

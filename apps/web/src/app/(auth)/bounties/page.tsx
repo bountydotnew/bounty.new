@@ -64,14 +64,9 @@ function BountiesPageContent() {
       <div className="container mx-auto px-4 py-8">
         <AuthGuard>
           <BountyFilters />
-          <BountiesFeed
-            bounties={state.bounties}
-            error={state.error}
-            isError={Boolean(state.error)}
-            isLoading={state.isLoading}
-            layout="grid"
-            title=""
-          />
+          <BountiesFeed.Provider bounties={state.bounties} isLoading={state.isLoading}>
+            <BountiesFeed.GridView />
+          </BountiesFeed.Provider>
         </AuthGuard>
       </div>
 

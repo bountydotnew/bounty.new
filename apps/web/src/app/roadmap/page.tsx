@@ -574,6 +574,12 @@ function IntegrationVoteCard() {
   );
 }
 
+const sections = [
+  { id: 'integrations', label: 'Integrations' },
+  { id: 'changelog', label: 'Changelog' },
+  { id: 'contribute', label: 'Contribute' },
+];
+
 export default function RoadmapPage() {
   const [activeFilter, setActiveFilter] = useState<Category | 'all'>('all');
 
@@ -592,245 +598,250 @@ export default function RoadmapPage() {
     <div className="flex min-h-screen flex-col bg-[#0a0a0a]">
       <Header />
       <main className="flex-1">
-        {/* Hero Section - Changelog Style */}
+        {/* Hero Section */}
         <section className="px-8 pt-32 pb-12">
-          <div className="mx-auto max-w-3xl">
+          <div className="mx-auto max-w-5xl">
             <h1 className="mb-6 font-display text-5xl tracking-tight text-[#efefef] md:text-6xl">
               Roadmap
             </h1>
-
             <p className="text-lg text-[#888]">
               Updates to the bounty.new platform and service.
             </p>
           </div>
         </section>
 
-        {/* Filter Tabs */}
-        <section className="border-t border-[#222] px-8 pt-10 pb-4">
-          <div className="mx-auto max-w-3xl">
-            <div className="flex flex-wrap gap-2">
-              {filters.map((filter) => (
-                <button
-                  key={filter.value}
-                  type="button"
-                  onClick={() => setActiveFilter(filter.value)}
-                  className={`rounded-full px-4 py-2 text-[14px] font-medium transition-colors ${
-                    activeFilter === filter.value
-                      ? 'bg-[#efefef] text-[#0a0a0a]'
-                      : 'border border-[#333] text-[#888] hover:border-[#444] hover:text-[#efefef]'
-                  }`}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* Main content with sidebar */}
+        <section className="border-t border-[#222] px-8 py-12">
+          <div className="mx-auto max-w-5xl">
+            <div className="grid grid-cols-1 gap-12 xl:grid-cols-[180px_1fr]">
+              {/* Sidebar - sticky outline */}
+              <div className="hidden xl:block">
+                <nav className="sticky top-32">
+                  <ul className="space-y-3">
+                    {sections.map((section) => (
+                      <li key={section.id}>
+                        <a
+                          href={`#${section.id}`}
+                          className="text-[15px] text-[#666] transition-colors duration-150 hover:text-[#efefef]"
+                        >
+                          {section.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              </div>
 
-        {/* Timeline - Changelog Style */}
-        <section className="px-8 py-8">
-          <div className="mx-auto max-w-3xl">
-            <div className="space-y-0">
-              {filteredItems.map((item) => {
-                return (
-                  <div key={item.title} className="relative">
-                    {/* Date header - hidden for now */}
-                    {/* {showDate && (
-                      <div className="sticky top-0 z-10 -mx-8 bg-[#0a0a0a] px-8 py-4 md:static md:mx-0 md:bg-transparent md:px-0 md:py-0">
-                        <div className="flex items-center gap-8">
-                          <span className="w-24 shrink-0 text-[15px] text-[#666] md:text-right">
-                            {formatDate(item.date)}
-                          </span>
-                          <div className="h-px flex-1 bg-[#222]" />
+              {/* Main content */}
+              <div className="max-w-3xl space-y-16">
+                {/* Integrations Section */}
+                <section id="integrations" className="scroll-mt-24">
+                  <h2 className="mb-4 font-display text-2xl tracking-tight text-[#efefef]">
+                    Integrations
+                  </h2>
+                  <p className="mb-10 text-[15px] text-[#888]">
+                    Connect bounty.new with the tools you already use. Vote for
+                    the next integration we should build.
+                  </p>
+
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                    {/* Vote for Next Integration - Featured first */}
+                    <IntegrationVoteCard />
+
+                    {/* GitHub */}
+                    <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-[#191919] border border-solid border-[#2E2E2E]">
+                      <div className="flex flex-col justify-center items-start gap-[9px] w-full">
+                        <div className="size-7 flex items-center justify-center">
+                          <GithubIcon className="size-7 text-white" />
+                        </div>
+                        <div className="text-[14px] leading-[150%] text-white font-bold">
+                          GitHub
+                        </div>
+                        <div className="text-[11px] leading-[125%] text-[#B5B5B5] font-medium">
+                          Connect Bounty to your GitHub and access all of our
+                          tools from any repository
                         </div>
                       </div>
-                    )} */}
+                      <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-[#303030]">
+                        <span className="text-[13px] leading-[150%] text-[#CCCCCC66] font-medium">
+                          Live
+                        </span>
+                      </div>
+                    </div>
 
-                    {/* Entry */}
-                    <div className="py-6">
-                      {/* Date column - hidden for now */}
-                      {/* <div className="hidden w-24 shrink-0 md:block" /> */}
-
-                      {/* Content */}
-                      <div className="flex-1">
-                        {/* Title with status badge */}
-                        <div className="mb-2 flex flex-wrap items-center gap-2">
-                          <h3 className="text-xl font-semibold text-[#efefef]">
-                            {item.title}
-                          </h3>
-                          <span
-                            className={`px-2 py-0.5 text-[11px] font-medium rounded ${getStatusBadgeStyle(item.status)}`}
-                          >
-                            {getStatusLabel(item.status)}
-                          </span>
+                    {/* Discord */}
+                    <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-[#191919] border border-solid border-[#2E2E2E]">
+                      <div className="flex flex-col justify-center items-start gap-[9px] w-full">
+                        <div className="size-7 flex items-center justify-center">
+                          <DiscordIcon className="size-7 text-white" />
                         </div>
+                        <div className="text-[14px] leading-[150%] text-white font-bold">
+                          Discord
+                        </div>
+                        <div className="text-[11px] leading-[125%] text-[#B5B5B5] font-medium">
+                          Link your Discord account or add the Bounty bot to
+                          your server
+                        </div>
+                      </div>
+                      <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-[#303030]">
+                        <span className="text-[13px] leading-[150%] text-[#CCCCCC66] font-medium">
+                          Live
+                        </span>
+                      </div>
+                    </div>
 
-                        {/* Description */}
-                        <p className="text-[15px] leading-relaxed text-[#888]">
-                          {item.description}
-                        </p>
+                    {/* Slack */}
+                    <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-[#191919] border border-solid border-[#2E2E2E]">
+                      <div className="flex flex-col justify-center items-start gap-[9px] w-full">
+                        <div className="size-7 flex items-center justify-center">
+                          <SlackIcon className="size-7 text-white" />
+                        </div>
+                        <div className="text-[14px] leading-[150%] text-white font-bold">
+                          Slack
+                        </div>
+                        <div className="text-[11px] leading-[125%] text-[#B5B5B5] font-medium">
+                          Get notified about bounties in your workspace
+                        </div>
+                      </div>
+                      <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-[#232323]">
+                        <span className="text-[13px] leading-[150%] text-[#929292] font-medium">
+                          Coming soon
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* X/Twitter */}
+                    <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-[#191919] border border-solid border-[#2E2E2E]">
+                      <div className="flex flex-col justify-center items-start gap-[9px] w-full">
+                        <div className="size-7 flex items-center justify-center">
+                          <TwitterIcon className="size-7 text-white" />
+                        </div>
+                        <div className="text-[14px] leading-[150%] text-white font-bold">
+                          X (Twitter)
+                        </div>
+                        <div className="text-[11px] leading-[125%] text-[#B5B5B5] font-medium">
+                          Auto-post bounties and showcase completed work
+                        </div>
+                      </div>
+                      <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-[#232323]">
+                        <span className="text-[13px] leading-[150%] text-[#929292] font-medium">
+                          Coming soon
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Linear */}
+                    <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-[#191919] border border-solid border-[#2E2E2E]">
+                      <div className="flex flex-col justify-center items-start gap-[9px] w-full">
+                        <div className="size-7 flex items-center justify-center">
+                          <LinearIcon className="size-7" />
+                        </div>
+                        <div className="text-[14px] leading-[150%] text-white font-bold">
+                          Linear
+                        </div>
+                        <div className="text-[11px] leading-[125%] text-[#B5B5B5] font-medium">
+                          Sync issues and automatically update status
+                        </div>
+                      </div>
+                      <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-[#232323]">
+                        <span className="text-[13px] leading-[150%] text-[#929292] font-medium">
+                          Coming soon
+                        </span>
                       </div>
                     </div>
                   </div>
-                );
-              })}
+                </section>
+
+                {/* Changelog Section */}
+                <section id="changelog" className="scroll-mt-24">
+                  <h2 className="mb-4 font-display text-2xl tracking-tight text-[#efefef]">
+                    Changelog
+                  </h2>
+                  <p className="mb-6 text-[15px] text-[#888]">
+                    Track our progress and see what we're working on next.
+                  </p>
+
+                  {/* Filter Tabs */}
+                  <div className="mb-8">
+                    <div className="relative inline-flex rounded-full bg-[#191919] border border-[#232323] p-1">
+                      {filters.map((filter) => (
+                        <button
+                          key={filter.value}
+                          type="button"
+                          onClick={() => setActiveFilter(filter.value)}
+                          className={`relative px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                            activeFilter === filter.value
+                              ? 'bg-[#232323] text-white'
+                              : 'text-[#929292] hover:text-white'
+                          }`}
+                        >
+                          {filter.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Timeline */}
+                  <div className="space-y-0">
+                    {filteredItems.map((item) => (
+                      <div key={item.title} className="relative">
+                        <div className="py-6">
+                          <div className="flex-1">
+                            <div className="mb-2 flex flex-wrap items-center gap-2">
+                              <h3 className="text-xl font-semibold text-[#efefef]">
+                                {item.title}
+                              </h3>
+                              <span
+                                className={`px-2 py-0.5 text-[11px] font-medium rounded ${getStatusBadgeStyle(item.status)}`}
+                              >
+                                {getStatusLabel(item.status)}
+                              </span>
+                            </div>
+                            <p className="text-[15px] leading-relaxed text-[#888]">
+                              {item.description}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {/* Contribute Section */}
+                <section id="contribute" className="scroll-mt-24">
+                  <h2 className="mb-6 font-display text-2xl tracking-tight text-[#efefef]">
+                    Want to Help Build This?
+                  </h2>
+                  <p className="mb-10 text-[15px] leading-relaxed text-[#888]">
+                    bounty.new is open source and built by the community. Every
+                    contribution, no matter how small, helps us build something
+                    that doesn't suck.
+                  </p>
+
+                  <div className="flex flex-col items-start gap-4 sm:flex-row">
+                    <Link
+                      className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-[15px] font-medium text-[#0E0E0E] transition-colors hover:bg-[#e5e5e5]"
+                      href="https://github.com/bountydotnew/bounty.new"
+                      target="_blank"
+                    >
+                      <GithubIcon className="h-4 w-4" />
+                      View on GitHub
+                    </Link>
+                    <Link
+                      className="inline-flex items-center gap-2 rounded-full border border-[#333] bg-[#1a1a1a] px-6 py-3 text-[15px] text-[#efefef] transition-colors hover:bg-[#252525]"
+                      href="https://github.com/bountydotnew/bounty.new/issues"
+                      target="_blank"
+                    >
+                      Request a Feature
+                    </Link>
+                  </div>
+
+                  <p className="mt-8 text-[14px] text-[#666]">
+                    Every PR gets a response. Every contribution matters.
+                  </p>
+                </section>
+              </div>
             </div>
-          </div>
-        </section>
-
-        {/* Integrations Section */}
-        <section className="border-t border-[#1a1a1a] px-8 py-16">
-          <div className="mx-auto max-w-3xl">
-            <h2 className="mb-4 font-display text-2xl tracking-tight text-[#efefef]">
-              Integrations
-            </h2>
-            <p className="mb-10 text-[15px] text-[#888]">
-              Connect bounty.new with the tools you already use. More
-              integrations coming soon.
-            </p>
-
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-              {/* GitHub */}
-              <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-[#191919] border border-solid border-[#2E2E2E]">
-                <div className="flex flex-col justify-center items-start gap-[9px] w-full">
-                  <div className="size-7 flex items-center justify-center">
-                    <GithubIcon className="size-7 text-white" />
-                  </div>
-                  <div className="text-[14px] leading-[150%] text-white font-bold">
-                    GitHub
-                  </div>
-                  <div className="text-[11px] leading-[125%] text-[#B5B5B5] font-medium">
-                    Connect Bounty to your GitHub and access all of our tools
-                    from any repository
-                  </div>
-                </div>
-                <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-[#303030]">
-                  <span className="text-[13px] leading-[150%] text-[#CCCCCC66] font-medium">
-                    Live
-                  </span>
-                </div>
-              </div>
-
-              {/* Slack */}
-              <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-[#191919] border border-solid border-[#2E2E2E]">
-                <div className="flex flex-col justify-center items-start gap-[9px] w-full">
-                  <div className="size-7 flex items-center justify-center">
-                    <SlackIcon className="size-7 text-white" />
-                  </div>
-                  <div className="text-[14px] leading-[150%] text-white font-bold">
-                    Slack
-                  </div>
-                  <div className="text-[11px] leading-[125%] text-[#B5B5B5] font-medium">
-                    Get notified about bounties in your workspace
-                  </div>
-                </div>
-                <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-[#232323]">
-                  <span className="text-[13px] leading-[150%] text-[#929292] font-medium">
-                    Coming soon
-                  </span>
-                </div>
-              </div>
-
-              {/* X/Twitter */}
-              <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-[#191919] border border-solid border-[#2E2E2E]">
-                <div className="flex flex-col justify-center items-start gap-[9px] w-full">
-                  <div className="size-7 flex items-center justify-center">
-                    <TwitterIcon className="size-7 text-white" />
-                  </div>
-                  <div className="text-[14px] leading-[150%] text-white font-bold">
-                    X (Twitter)
-                  </div>
-                  <div className="text-[11px] leading-[125%] text-[#B5B5B5] font-medium">
-                    Auto-post bounties and showcase completed work
-                  </div>
-                </div>
-                <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-[#232323]">
-                  <span className="text-[13px] leading-[150%] text-[#929292] font-medium">
-                    Coming soon
-                  </span>
-                </div>
-              </div>
-
-              {/* Linear */}
-              <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-[#191919] border border-solid border-[#2E2E2E]">
-                <div className="flex flex-col justify-center items-start gap-[9px] w-full">
-                  <div className="size-7 flex items-center justify-center">
-                    <LinearIcon className="size-7" />
-                  </div>
-                  <div className="text-[14px] leading-[150%] text-white font-bold">
-                    Linear
-                  </div>
-                  <div className="text-[11px] leading-[125%] text-[#B5B5B5] font-medium">
-                    Sync issues and automatically update status
-                  </div>
-                </div>
-                <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-[#232323]">
-                  <span className="text-[13px] leading-[150%] text-[#929292] font-medium">
-                    Coming soon
-                  </span>
-                </div>
-              </div>
-
-              {/* Discord */}
-              <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-[#191919] border border-solid border-[#2E2E2E]">
-                <div className="flex flex-col justify-center items-start gap-[9px] w-full">
-                  <div className="size-7 flex items-center justify-center">
-                    <DiscordIcon className="size-7 text-white" />
-                  </div>
-                  <div className="text-[14px] leading-[150%] text-white font-bold">
-                    Discord
-                  </div>
-                  <div className="text-[11px] leading-[125%] text-[#B5B5B5] font-medium">
-                    Link your Discord account or add the Bounty bot to your
-                    server
-                  </div>
-                </div>
-                <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-[#303030]">
-                  <span className="text-[13px] leading-[150%] text-[#CCCCCC66] font-medium">
-                    Live
-                  </span>
-                </div>
-              </div>
-
-              {/* Vote for Next Integration */}
-              <IntegrationVoteCard />
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="border-t border-[#1a1a1a] px-8 py-16">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="mb-6 font-display text-3xl tracking-tight text-[#efefef]">
-              Want to Help Build This?
-            </h2>
-            <p className="mb-10 text-lg leading-relaxed text-[#888]">
-              bounty.new is open source and built by the community. Every
-              contribution, no matter how small, helps us build something that
-              doesn't suck.
-            </p>
-
-            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link
-                className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-[15px] font-medium text-[#0E0E0E] transition-colors hover:bg-[#e5e5e5]"
-                href="https://github.com/bountydotnew/bounty.new"
-                target="_blank"
-              >
-                <GithubIcon className="h-4 w-4" />
-                View on GitHub
-              </Link>
-              <Link
-                className="inline-flex items-center gap-2 rounded-full border border-[#333] bg-[#1a1a1a] px-6 py-3 text-[15px] text-[#efefef] transition-colors hover:bg-[#252525]"
-                href="https://github.com/bountydotnew/bounty.new/issues"
-                target="_blank"
-              >
-                Request a Feature
-              </Link>
-            </div>
-
-            <p className="mt-12 text-[14px] text-[#666]">
-              Every PR gets a response. Every contribution matters.
-            </p>
           </div>
         </section>
       </main>

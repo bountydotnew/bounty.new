@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import type { Bounty } from '@/types/dashboard';
 import { trpc, trpcClient } from '@/utils/trpc';
@@ -14,17 +14,11 @@ import {
 
 interface BountiesFeedProviderProps {
   children: ReactNode;
-  /** The list of bounties to display */
   bounties?: Bounty[];
-  /** Loading state */
-  isLoading: boolean;
-  /** Error state */
-  isError: boolean;
-  /** Error object if present */
+  isLoading?: boolean;
+  isError?: boolean;
   error?: Error | null;
-  /** Optional title to display */
   title?: string;
-  /** CSS class name to apply */
   className?: string;
 }
 
@@ -32,28 +26,14 @@ interface BountiesFeedProviderProps {
  * BountiesFeed Provider
  *
  * Wraps the feed with state and actions following Vercel composition patterns.
- * The provider is the ONLY place that knows how state is managed.
- * Child components only depend on the context interface.
- *
- * @example
- * ```tsx
- * <BountiesFeedProvider
- *   bounties={bounties}
- *   isLoading={isLoading}
- *   isError={isError}
- *   title="My Bounties"
- * >
- *   <BountiesFeed.ListView />
- * </BountiesFeedProvider>
- * ```
  */
 export function BountiesFeedProvider({
   bounties = [],
-  isLoading,
-  isError,
+  isLoading = false,
+  isError = false,
   error = null,
   title,
-  className = '',
+  className,
   children,
 }: BountiesFeedProviderProps) {
   const queryClient = useQueryClient();
@@ -66,16 +46,13 @@ export function BountiesFeedProvider({
   });
 
   const statsMap = useMemo(() => {
-    const m = new Map<
-      string,
-      {
-        commentCount: number;
-        voteCount: number;
-        submissionCount: number;
-        isVoted: boolean;
-        bookmarked: boolean;
-      }
-    >();
+    const m = new Map<string, {
+      commentCount: number;
+      voteCount: number;
+      submissionCount: number;
+      isVoted: boolean;
+      bookmarked: boolean;
+    }>();
     const stats = statsQuery.data?.stats ?? [];
     for (const stat of stats) {
       m.set(stat.bountyId, stat);
@@ -83,23 +60,22 @@ export function BountiesFeedProvider({
     return m;
   }, [statsQuery.data]);
 
-  // Delete bounty mutation
   const deleteBountyMutation = useMutation({
     mutationFn: async (input: { id: string }) => {
       return await trpcClient.bounties.deleteBounty.mutate(input);
     },
     onSuccess: () => {
       toast.success('Bounty deleted successfully');
-      // Invalidate all bounty-related queries to refresh the list
       queryClient.invalidateQueries({
         predicate: (query) => {
           const key = query.queryKey;
           if (Array.isArray(key) && key.length > 0) {
             const firstPart = key[0];
-            if (Array.isArray(firstPart) && firstPart[0] === 'bounties') {
+            // Match any query containing 'bounty'
+            if (Array.isArray(firstPart) && typeof firstPart[0] === 'string' && firstPart[0].includes('bounty')) {
               return true;
             }
-            if (typeof firstPart === 'string' && firstPart === 'bounties') {
+            if (typeof firstPart === 'string' && firstPart.includes('bounty')) {
               return true;
             }
           }
@@ -112,7 +88,6 @@ export function BountiesFeedProvider({
     },
   });
 
-  // Actions object
   const actions: BountiesFeedActions = useMemo(
     () => ({
       deleteBounty: (bountyId: string) => {
@@ -122,7 +97,6 @@ export function BountiesFeedProvider({
     [deleteBountyMutation]
   );
 
-  // State object
   const state = useMemo(
     () => ({
       bounties,
@@ -135,7 +109,6 @@ export function BountiesFeedProvider({
     [bounties, isLoading, isError, error, statsMap, title]
   );
 
-  // Meta object
   const meta: BountiesFeedMeta = useMemo(
     () => ({
       className,
@@ -158,3 +131,5 @@ export function BountiesFeedProvider({
     </BountiesFeedContext.Provider>
   );
 }
+
+export { BountiesFeedContext } from './context';

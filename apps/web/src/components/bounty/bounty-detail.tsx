@@ -1,16 +1,18 @@
+'use client';
+
 /**
  * BountyDetail Component
  *
- * Refactored to use Vercel composition patterns:
+ * Vercel composition patterns:
  * - Compound components with shared context
  * - State/actions/meta context interface
  * - Explicit components for each section
  *
  * @example
  * ```tsx
- * // New API with compound components (recommended)
  * import { BountyDetail } from '@/components/bounty/bounty-detail';
  *
+ * // Compound component API
  * <BountyDetail.Provider {...props}>
  *   <BountyDetail.Header />
  *   <BountyDetail.PaymentAlert />
@@ -18,20 +20,104 @@
  *   <BountyDetail.Submissions />
  * </BountyDetail.Provider>
  *
- * // Legacy API (backward compatible)
- * import { LegacyBountyDetailPage } from '@/components/bounty/bounty-detail';
- *
- * <LegacyBountyDetailPage {...props} />
+ * // Or use the default export for convenience
+ * import BountyDetailPage from '@/components/bounty/bounty-detail';
+ * <BountyDetailPage bountyId={id} bountyData={data} canEdit={canEdit} />
  * ```
  *
  * @module
  */
 
+import { BountyDetail as CompoundBountyDetail } from './bounty-detail/index';
+import type { BountyCommentCacheItem } from '@/types/comments';
+
+interface BountyData {
+  bounty: {
+    id: string;
+    title: string;
+    description: string;
+    amount: number;
+    paymentStatus: string | null;
+    status: string;
+    createdById: string;
+    githubRepoOwner: string | null;
+    githubRepoName: string | null;
+    githubIssueNumber: number | null;
+    repositoryUrl: string | null;
+    issueUrl: string | null;
+    creator: {
+      name: string | null;
+      image: string | null;
+    };
+  };
+  comments: BountyCommentCacheItem[];
+  votes: {
+    count: number;
+    isVoted: boolean;
+  };
+  bookmarked: boolean;
+}
+
+interface BountyDetailPageProps {
+  bountyId: string;
+  bountyData: BountyData;
+  canEdit?: boolean;
+}
+
+/**
+ * BountyDetailPage default export - convenience wrapper for the compound component.
+ * Renders all sections with proper state management.
+ *
+ * Takes a BountyData object and extracts what it needs internally.
+ */
+export default function BountyDetailPage({
+  bountyId,
+  bountyData,
+  canEdit = false,
+}: BountyDetailPageProps) {
+  const { bounty, comments, votes, bookmarked } = bountyData;
+
+  // Normalize comment data
+  const initialComments = comments.map((comment) => ({
+    ...comment,
+    likeCount: typeof comment.likeCount === 'number' ? comment.likeCount : 0,
+  }));
+
+  // Ensure amount is a valid number (default to 0 if undefined)
+  const amount = typeof bounty.amount === 'number' ? bounty.amount : 0;
+
+  return (
+    <CompoundBountyDetail.Provider
+      bountyId={bountyId}
+      initialBookmarked={bookmarked}
+      initialComments={initialComments}
+      title={bounty.title ?? 'Untitled Bounty'}
+      amount={amount}
+      description={bounty.description ?? ''}
+      user={bounty.creator.name ?? ''}
+      avatarSrc={bounty.creator.image ?? ''}
+      paymentStatus={bounty.paymentStatus}
+      createdById={bounty.createdById}
+      githubRepoOwner={bounty.githubRepoOwner}
+      githubRepoName={bounty.githubRepoName}
+      githubIssueNumber={bounty.githubIssueNumber}
+      repositoryUrl={bounty.repositoryUrl}
+      issueUrl={bounty.issueUrl}
+      initialVotes={votes}
+      canEditBounty={canEdit}
+    >
+      <CompoundBountyDetail.Header />
+      <CompoundBountyDetail.PaymentAlert />
+      <CompoundBountyDetail.Content />
+      <CompoundBountyDetail.Submissions />
+    </CompoundBountyDetail.Provider>
+  );
+}
+
 // Re-export everything from the index file
 export {
-  BountyDetail as BountyDetailCompound,
+  BountyDetail,
   BountyDetailProvider,
-  LegacyBountyDetailPage,
 } from './bounty-detail/index';
 
 export type {
@@ -43,5 +129,5 @@ export type {
   SubmissionsData,
 } from './bounty-detail/context';
 
-// Default export for backward compatibility
-export { LegacyBountyDetailPage as default } from './bounty-detail/index';
+// Export the BountyData type for consumers
+export type { BountyData };

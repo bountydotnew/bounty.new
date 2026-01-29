@@ -1,6 +1,5 @@
 'use client';
 
-import { memo } from 'react';
 import { DashboardSidebarProvider } from './provider';
 import { ActivityCard } from './activity-card';
 import { RecommendationsCard } from './recommendations-card';
@@ -58,46 +57,3 @@ export type {
   DashboardSidebarActions,
   DashboardSidebarMeta,
 } from './context';
-
-/**
- * Backward-compatible DashboardSidebar component
- *
- * Maintains the old API for gradual migration.
- * Use the new compound component API for new code.
- *
- * @deprecated Use DashboardSidebar.Provider with individual components instead
- */
-interface LegacyDashboardSidebarProps {
-  activities?: ActivityItem[];
-  recommendations?: RecommendedBounty[];
-  myBounties?: Bounty[];
-  isLoadingActivities?: boolean;
-  isLoadingMyBounties?: boolean;
-  onBountyClick?: (bounty: Bounty) => void;
-}
-
-export const LegacyDashboardSidebar = memo(function LegacyDashboardSidebar({
-  activities = [],
-  recommendations = [],
-  myBounties = [],
-  isLoadingActivities = false,
-  isLoadingMyBounties = false,
-  onBountyClick,
-}: LegacyDashboardSidebarProps) {
-  return (
-    <DashboardSidebarProvider
-      activities={activities}
-      recommendations={recommendations}
-      myBounties={myBounties}
-      isLoadingActivities={isLoadingActivities}
-      isLoadingMyBounties={isLoadingMyBounties}
-      onBountyClick={onBountyClick}
-    >
-      <div className="space-y-6 lg:pr-2">
-        <ActivityCard />
-        <RecommendationsCard />
-        <MyBountiesCard />
-      </div>
-    </DashboardSidebarProvider>
-  );
-});

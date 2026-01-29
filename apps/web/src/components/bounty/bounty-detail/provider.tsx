@@ -1,12 +1,29 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { useSession } from '@/context/session-context';
 import type { BountyCommentCacheItem } from '@/types/comments';
-import { BountyDetailContext, type BountyDetailContextValue, type BountyDetailState, type BountyDetailActions, type BountyDetailMeta } from './context';
+import {
+  BountyDetailContext,
+  type BountyDetailContextValue,
+  type BountyDetailState,
+  type BountyDetailActions,
+  type BountyDetailMeta,
+} from './context';
+import { AlertDialog } from '@bounty/ui/components/alert-dialog';
+import { Button } from '@bounty/ui/components/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@bounty/ui/components/dialog';
+import { Textarea } from '@bounty/ui/components/textarea';
 
 interface BountyDetailProviderProps {
   children: React.ReactNode;
@@ -28,7 +45,6 @@ interface BountyDetailProviderProps {
   repositoryUrl?: string | null;
   issueUrl?: string | null;
   onEdit?: () => void;
-  onDelete?: () => void;
 }
 
 /**
@@ -37,10 +53,6 @@ interface BountyDetailProviderProps {
  * Provider component that implements the BountyDetailContext interface.
  * Handles all data fetching, mutations, and state management for the
  * bounty detail page.
- *
- * This provider enables dependency injection - the UI components consume
- * the interface, not the implementation. This makes testing easier and
- * allows for different state implementations.
  */
 export function BountyDetailProvider({
   children,
@@ -62,18 +74,17 @@ export function BountyDetailProvider({
   repositoryUrl,
   issueUrl,
   onEdit,
-  onDelete,
 }: BountyDetailProviderProps) {
   const queryClient = useQueryClient();
   const { session } = useSession();
 
-  // Local state for cancellation dialog
+  // Local state for dialogs
   const [showCancellationDialog, setShowCancellationDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [cancellationReason, setCancellationReason] = useState('');
 
   // ===== Queries =====
 
-  // Fetch payment status if needed (for creator with pending payment)
   const paymentStatusQuery = useQuery({
     ...trpc.bounties.getBountyPaymentStatus.queryOptions({ bountyId }),
     enabled: Boolean(
@@ -85,60 +96,69 @@ export function BountyDetailProvider({
     ),
   });
 
-  // Fetch votes
   const votesQuery = useQuery({
     ...trpc.bounties.getBountyVotes.queryOptions({ bountyId }),
     initialData: initialVotes,
     staleTime: Number.POSITIVE_INFINITY,
   });
 
-  // Fetch comments
   const commentsQuery = useQuery({
     ...trpc.bounties.getBountyComments.queryOptions({ bountyId }),
     initialData: initialComments,
     staleTime: Number.POSITIVE_INFINITY,
   });
 
-  // Fetch submissions (exposed via context for compound components)
   const submissionsQuery = useQuery({
     ...trpc.bounties.getBountySubmissions.queryOptions({ bountyId }),
-    staleTime: 10_000, // Refetch every 10 seconds
+    staleTime: 10_000,
   });
 
-  // Check if there's a pending cancellation request
   const cancellationStatusQuery = useQuery({
     ...trpc.bounties.getCancellationStatus.queryOptions({ bountyId }),
-    enabled: Boolean(session?.user?.id === createdById && (paymentStatus === 'held' || paymentStatus === 'released')),
+    enabled: Boolean(
+      session?.user?.id === createdById &&
+        (paymentStatus === 'held' || paymentStatus === 'released')
+    ),
   });
 
   // ===== Mutations =====
 
-  // Vote mutation
   const voteMutation = useMutation({
     mutationFn: async (input: { bountyId: string; vote: boolean }) => {
       return await trpcClient.bounties.voteBounty.mutate(input);
     },
   });
 
-  // Delete mutation
   const deleteBountyMutation = useMutation({
     mutationFn: async (input: { id: string }) => {
       return await trpcClient.bounties.deleteBounty.mutate(input);
     },
     onSuccess: () => {
       toast.success('Bounty deleted successfully');
+      // Invalidate ALL bounty queries to remove from all feeds
       queryClient.invalidateQueries({
-        queryKey: ['bounties'],
-        type: 'all',
+        predicate: (query) => {
+          const key = query.queryKey;
+          // Match any query related to bounties
+          if (Array.isArray(key)) {
+            const first = key[0];
+            if (typeof first === 'string' && first.includes('bounty')) {
+              return true;
+            }
+          }
+          return false;
+        },
       });
-      onDelete?.();
+      // Redirect to dashboard after short delay for toast to be seen
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1000);
     },
     onError: (error: Error) => {
       toast.error(`Failed to delete bounty: ${error.message}`);
     },
   });
 
-  // Create payment mutation
   const createPaymentMutation = useMutation({
     mutationFn: async () => {
       return await trpcClient.bounties.createPaymentForBounty.mutate({
@@ -156,7 +176,6 @@ export function BountyDetailProvider({
     },
   });
 
-  // Recheck payment mutation
   const recheckPaymentMutation = useMutation({
     mutationFn: async () => {
       return await trpcClient.bounties.recheckPaymentStatus.mutate({
@@ -185,7 +204,6 @@ export function BountyDetailProvider({
     },
   });
 
-  // Request cancellation mutation
   const requestCancellationMutation = useMutation({
     mutationFn: async (input: { bountyId: string; reason?: string }) => {
       return await trpcClient.bounties.requestCancellation.mutate(input);
@@ -203,7 +221,6 @@ export function BountyDetailProvider({
     },
   });
 
-  // Cancel cancellation request mutation
   const cancelCancellationRequestMutation = useMutation({
     mutationFn: async (input: { bountyId: string }) => {
       return await trpcClient.bounties.cancelCancellationRequest.mutate(input);
@@ -229,7 +246,8 @@ export function BountyDetailProvider({
   const canRequestCancellation = isCreator && isFunded;
   const hasPendingCancellation =
     cancellationStatusQuery.data?.hasPendingRequest ?? false;
-  const canDelete = isCreator && (!isFunded || hasPendingCancellation || isCancelled);
+  const canDelete =
+    isCreator && (!isFunded || hasPendingCancellation || isCancelled);
 
   // ===== State =====
 
@@ -283,9 +301,9 @@ export function BountyDetailProvider({
       issueUrl,
       votesQuery.data,
       commentsQuery.data,
+      initialBookmarked,
       submissionsQuery.data?.submissions,
       submissionsQuery.isLoading,
-      initialBookmarked,
       paymentStatusQuery.isLoading,
       isCreator,
       canEditBounty,
@@ -331,15 +349,9 @@ export function BountyDetailProvider({
         );
       },
       delete: () => {
-        if (
-          confirm(
-            'Are you sure you want to delete this bounty? This action cannot be undone.'
-          )
-        ) {
-          deleteBountyMutation.mutate({ id: bountyId });
-        }
+        setShowDeleteDialog(true);
       },
-      requestCancellation: useCallback((reason?: string) => {
+      requestCancellation: (reason?: string) => {
         if (hasPendingCancellation) {
           toast.error(
             'You already have a pending cancellation request for this bounty.'
@@ -347,16 +359,11 @@ export function BountyDetailProvider({
           return;
         }
         if (reason !== undefined) {
-          // Direct call with reason
-          requestCancellationMutation.mutate({
-            bountyId,
-            reason,
-          });
+          requestCancellationMutation.mutate({ bountyId, reason });
         } else {
-          // Show dialog
           setShowCancellationDialog(true);
         }
-      }, [bountyId, hasPendingCancellation, requestCancellationMutation]),
+      },
       cancelCancellationRequest: () => {
         cancelCancellationRequestMutation.mutate({ bountyId });
       },
@@ -379,8 +386,6 @@ export function BountyDetailProvider({
     }),
     [
       bountyId,
-      title,
-      description,
       votesQuery.data,
       queryClient,
       voteMutation,
@@ -391,6 +396,8 @@ export function BountyDetailProvider({
       recheckPaymentMutation,
       createPaymentMutation,
       onEdit,
+      title,
+      description,
     ]
   );
 
@@ -401,7 +408,8 @@ export function BountyDetailProvider({
       bountyId,
       isDeleting: deleteBountyMutation.isPending,
       isRequestingCancellation: requestCancellationMutation.isPending,
-      isCancellingCancellationRequest: cancelCancellationRequestMutation.isPending,
+      isCancellingCancellationRequest:
+        cancelCancellationRequestMutation.isPending,
       isRecheckingPayment: recheckPaymentMutation.isPending,
       isCreatingPayment: createPaymentMutation.isPending,
     }),
@@ -415,28 +423,25 @@ export function BountyDetailProvider({
     ]
   );
 
-  // ===== Context Value =====
-
+  // Memoize only the context value to prevent unnecessary re-renders
   const contextValue: BountyDetailContextValue = useMemo(
-    () => ({
-      state,
-      actions,
-      meta,
-    }),
+    () => ({ state, actions, meta }),
     [state, actions, meta]
   );
 
   return (
     <BountyDetailContext value={contextValue}>
       {children}
-      {/* Cancellation dialog is rendered here but can be accessed via compound component */}
       <CancellationDialog
         open={showCancellationDialog}
         onOpenChange={setShowCancellationDialog}
         reason={cancellationReason}
         onReasonChange={setCancellationReason}
         onConfirm={() => {
-          if (!canRequestCancellation || requestCancellationMutation.isPending) {
+          if (
+            !canRequestCancellation ||
+            requestCancellationMutation.isPending
+          ) {
             return;
           }
           requestCancellationMutation.mutate({
@@ -446,6 +451,25 @@ export function BountyDetailProvider({
         }}
         isPending={requestCancellationMutation.isPending}
       />
+      <AlertDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={async () => {
+          await deleteBountyMutation.mutateAsync({ id: bountyId });
+        }}
+      >
+        <AlertDialog.Header>
+          <AlertDialog.Title>Delete Bounty</AlertDialog.Title>
+          <AlertDialog.Description>
+            Are you sure you want to delete this bounty? This action cannot be
+            undone.
+          </AlertDialog.Description>
+        </AlertDialog.Header>
+        <AlertDialog.Footer>
+          <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+          <AlertDialog.Confirm>Delete</AlertDialog.Confirm>
+        </AlertDialog.Footer>
+      </AlertDialog>
     </BountyDetailContext>
   );
 }
@@ -469,24 +493,26 @@ function CancellationDialog({
   onConfirm,
   isPending,
 }: CancellationDialogProps) {
-  const { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Textarea } =
-    require('@bounty/ui/components');
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="border border-[#232323] bg-[#191919] text-[#CFCFCF]">
         <DialogHeader>
-          <DialogTitle className="text-white mb-2">Request Cancellation</DialogTitle>
+          <DialogTitle className="text-white mb-2">
+            Request Cancellation
+          </DialogTitle>
           <DialogDescription className="text-[#A0A0A0]">
-            Request to cancel this funded bounty. Our team will review your request and
-            process a refund. Note: The platform fee is non-refundable.
+            Request to cancel this funded bounty. Our team will review your
+            request and process a refund. Note: The platform fee is
+            non-refundable.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
           <Textarea
             placeholder="Reason for cancellation (optional)"
             value={reason}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onReasonChange(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+              onReasonChange(e.target.value)
+            }
             className="min-h-[100px] border-[#333] bg-[#0a0a0a] text-white placeholder:text-[#666]"
           />
         </div>

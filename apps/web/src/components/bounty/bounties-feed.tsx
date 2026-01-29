@@ -8,29 +8,24 @@
  *
  * @example
  * ```tsx
- * // New API with explicit variants (recommended)
  * import { BountiesFeed } from '@/components/bounty/bounties-feed';
  *
+ * // List view variant
  * <BountiesFeed.Provider {...props}>
  *   <BountiesFeed.ListView />
  * </BountiesFeed.Provider>
  *
- * // Or use GridView variant
+ * // Grid view variant
  * <BountiesFeed.Provider {...props}>
  *   <BountiesFeed.GridView />
  * </BountiesFeed.Provider>
- *
- * // Legacy API (backward compatible)
- * import { BountiesFeed as LegacyFeed } from '@/components/bounty/bounties-feed';
- *
- * <LegacyFeed bounties={bounties} isLoading={isLoading} layout="grid" />
  * ```
  *
  * @module
  */
 
-// Re-export everything from the index file
-export { BountiesFeed as BountiesFeedCompound, LegacyBountiesFeed as BountiesFeed } from './bounties-feed/index';
+// Re-export the compound component
+export { BountiesFeed } from './bounties-feed/index';
 export type {
   BountiesFeedContextValue,
   BountiesFeedState,

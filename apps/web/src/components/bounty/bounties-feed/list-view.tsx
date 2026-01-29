@@ -2,7 +2,7 @@
 
 import { useContext } from 'react';
 import { BountiesFeedContext } from './context';
-import { BountyCard } from '@/components/bounty/bounty-card';
+import { StandardBountyCard } from '@/components/bounty/bounty-card';
 import { BountySkeleton } from '@/components/dashboard/skeletons/bounty-skeleton';
 import { LOADING_SKELETON_COUNTS } from '@/constants';
 import { useSession } from '@/context/session-context';
@@ -74,7 +74,7 @@ export function ListView() {
             ? bounty.creator.id === session.user.id
             : false;
           return (
-            <BountyCard
+            <StandardBountyCard
               bounty={bounty}
               key={bounty.id}
               onDelete={canDelete ? () => deleteBounty(bounty.id) : undefined}

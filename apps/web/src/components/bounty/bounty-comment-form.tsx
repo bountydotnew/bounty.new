@@ -1,14 +1,13 @@
 /**
  * BountyCommentForm Component
  *
- * Refactored to use Vercel composition patterns:
+ * Vercel composition patterns:
  * - Compound components with shared context
  * - Explicit components instead of props
  * - State/actions/meta context interface
  *
  * @example
  * ```tsx
- * // New API with compound components
  * import { CommentForm } from '@/components/bounty/comment-form';
  *
  * <CommentForm.Provider
@@ -25,7 +24,7 @@
  */
 
 // Re-export everything from the index file
-export { CommentForm, LegacyBountyCommentForm as default } from './comment-form/index';
+export { CommentForm } from './comment-form/index';
 export type {
   CommentFormContextValue,
   CommentFormState,

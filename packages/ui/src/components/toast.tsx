@@ -65,7 +65,7 @@ const BaseToast = (props: BaseToastProps) => {
       ) : (
         <>
           <props.icon
-            className={cn('size-4 flex-shrink-0 mt-0.5', props.iconClassName)}
+            className={cn('size-4 shrink-0 mt-0.5', props.iconClassName)}
           />
           <div className="flex-1 flex flex-col gap-1">
             <p className="text-sm font-medium text-white leading-relaxed">
@@ -79,7 +79,8 @@ const BaseToast = (props: BaseToastProps) => {
           </div>
           <button
             onClick={onDismiss}
-            className="flex-shrink-0 cursor-pointer text-zinc-400 hover:text-white transition-colors"
+            className="shrink-0 cursor-pointer text-zinc-400 hover:text-white transition-colors"
+            type="button"
             aria-label="Dismiss"
           >
             <X className="size-4" />

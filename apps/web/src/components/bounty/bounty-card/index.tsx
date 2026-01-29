@@ -78,31 +78,6 @@ export const BountyCard = {
   Standard: StandardBountyCard,
 };
 
-/**
- * Backward-compatible BountyCard component
- *
- * Maintains the old API for gradual migration.
- * Use the new explicit variants (CompactBountyCard/StandardBountyCard) for new code.
- *
- * @deprecated Use CompactBountyCard or StandardBountyCard instead
- */
-interface LegacyBountyCardProps extends BountyCardProps {
-  compact?: boolean;
-}
-
-export const LegacyBountyCard = memo(function LegacyBountyCard({
-  bounty,
-  stats,
-  onDelete,
-  compact = false,
-}: LegacyBountyCardProps) {
-  return (
-    <BountyCardProvider bounty={bounty} stats={stats} onDelete={onDelete}>
-      <BaseBountyCard compact={compact} />
-    </BountyCardProvider>
-  );
-});
-
 // Re-export types
 export type {
   BountyCardContextValue,

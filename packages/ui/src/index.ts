@@ -1,6 +1,7 @@
 // Components
 
 export * from './components/animated-group';
+export * from './components/alert-dialog';
 export * from './components/avatar';
 export * from './components/backed-by-badge';
 export * from './components/badge';
