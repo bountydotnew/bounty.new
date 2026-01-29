@@ -13,6 +13,8 @@ export * from './dropdown';
 export * from './github';
 export * from './home';
 export * from './linear';
+export * from './linear-issues';
+export * from './linear-projects';
 export * from './gmail';
 export * from './monero';
 export * from './notion';

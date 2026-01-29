@@ -23,7 +23,7 @@ import {
 } from '@bounty/ui/components/dialog';
 
 import { Textarea } from '@bounty/ui/components/textarea';
-import { SubmissionsPeopleIcon, GithubIcon } from '@bounty/ui';
+import { SubmissionsPeopleIcon, GithubIcon, LinearIcon } from '@bounty/ui';
 import { Pin, PinOff, Trash2, AlertTriangle, XCircle } from 'lucide-react';
 import { BountyCardContext } from './context';
 
@@ -58,6 +58,7 @@ export function BaseBountyCard({ compact }: BaseBountyCardProps) {
     avatarColor,
     repoDisplay,
     issueDisplay,
+    linearDisplay,
     isTogglePinPending,
     isDeletePending,
     isRequestCancellationPending,
@@ -174,8 +175,25 @@ export function BaseBountyCard({ compact }: BaseBountyCardProps) {
                 </span>
               </div>
 
-              {/* GitHub repo */}
-              {issueDisplay ? (
+              {/* Linear or GitHub repo/issue */}
+              {linearDisplay ? (
+                <a
+                  href={linearDisplay.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`flex h-fit items-center min-w-0 flex-1 sm:flex-initial hover:bg-[#2A2A28] rounded-md transition-colors ${compact ? 'gap-1 px-1' : 'gap-[5px] px-[3px]'}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex h-fit items-center opacity-30 shrink-0">
+                    <LinearIcon className={compact ? 'h-2 w-2' : 'h-3 w-3'} />
+                  </div>
+                  <span
+                    className={`flex items-center font-normal leading-[150%] text-[#FFFFFF99] truncate min-w-0 ${compact ? 'text-[9px]' : 'h-5 text-[11px] md:text-[13px] lg:text-[13px]'}`}
+                  >
+                    {linearDisplay.identifier}
+                  </span>
+                </a>
+              ) : issueDisplay ? (
                 <a
                   href={issueDisplay.url}
                   target="_blank"
@@ -209,8 +227,8 @@ export function BaseBountyCard({ compact }: BaseBountyCardProps) {
                 </div>
               )}
 
-              {/* GitHub issue link */}
-              {issueDisplay && (
+              {/* GitHub issue link (only if not Linear) */}
+              {!linearDisplay && issueDisplay && (
                 <a
                   href={issueDisplay.url}
                   target="_blank"

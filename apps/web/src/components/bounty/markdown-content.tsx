@@ -121,7 +121,7 @@ const markdownComponents: Components = {
         alt={alt || ''}
         src={srcString}
         {...props}
-        className="my-3 inline-block h-auto max-w-full border-neutral-800"
+        className="my-3 inline-block h-auto max-w-full max-h-[400px] object-contain border-neutral-800 rounded"
       />
     );
   },

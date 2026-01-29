@@ -164,6 +164,11 @@ const createBountySchema = z.object({
   githubIssueNumber: z.number().optional(),
   githubRepoOwner: z.string().optional(),
   githubRepoName: z.string().optional(),
+  // Linear integration fields
+  linearIssueId: z.string().optional(),
+  linearIssueIdentifier: z.string().optional(),
+  linearIssueUrl: z.string().url().optional(),
+  linearAccountId: z.string().optional(),
 });
 
 const updateBountySchema = z.object({
@@ -410,6 +415,11 @@ export const bountiesRouter = router({
             githubInstallationId: input.githubInstallationId,
             githubRepoOwner: input.githubRepoOwner ?? githubRepoOwner,
             githubRepoName: input.githubRepoName ?? githubRepoName,
+            // Linear fields
+            linearIssueId: input.linearIssueId,
+            linearIssueIdentifier: input.linearIssueIdentifier,
+            linearIssueUrl: input.linearIssueUrl,
+            linearAccountId: input.linearAccountId,
             createdById: ctx.session.user.id,
             status: 'draft', // Draft until payment confirmed
             stripePaymentIntentId: null, // Will be set via webhook

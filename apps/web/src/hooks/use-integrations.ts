@@ -21,11 +21,19 @@ export interface DiscordAccount {
   linkedAt: string | null;
 }
 
+export interface LinearWorkspace {
+  id: string;
+  name: string;
+  key: string;
+  url: string;
+}
+
 export interface IntegrationsState {
   // Loading states
   isLoading: boolean;
   isGitHubLoading: boolean;
   isDiscordLoading: boolean;
+  isLinearLoading: boolean;
 
   // GitHub installations
   githubInstallations: GitHubInstallation[];
@@ -36,6 +44,10 @@ export interface IntegrationsState {
   discordAccount: DiscordAccount | null;
   discordBotInstallUrl?: string;
   hasDiscord: boolean;
+
+  // Linear
+  linearWorkspace: LinearWorkspace | null;
+  hasLinear: boolean;
 
   // Combined
   totalCount: number;
@@ -51,6 +63,12 @@ export interface IntegrationsActions {
   linkDiscord: () => Promise<void>;
   unlinkDiscord: () => Promise<void>;
   refreshDiscord: () => void;
+
+  // Linear actions
+  linkLinear: () => Promise<void>;
+  unlinkLinear: (workspaceId: string) => Promise<void>;
+  refreshLinear: () => void;
+  syncLinearWorkspace: () => Promise<void>;
 
   // Global refresh
   refreshAll: () => void;
@@ -80,6 +98,13 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
     refetch: refetchDiscord,
   } = useQuery(trpc.discord.getLinkedAccount.queryOptions());
 
+  // Linear queries
+  const {
+    data: linearConnectionData,
+    isLoading: linearLoading,
+    refetch: refetchLinear,
+  } = useQuery(trpc.linear.getConnectionStatus.queryOptions());
+
   // Unlink Discord mutation
   const unlinkDiscordMutation = useMutation({
     mutationFn: () => trpcClient.discord.unlinkAccount.mutate(),
@@ -94,12 +119,42 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
     },
   });
 
+  // Unlink Linear mutation
+  const unlinkLinearMutation = useMutation({
+    mutationFn: (workspaceId: string) =>
+      trpcClient.linear.disconnect.mutate({ workspaceId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [['linear', 'getConnectionStatus']],
+      });
+      toast.success('Linear workspace disconnected');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to disconnect Linear');
+    },
+  });
+
+  // Sync Linear workspace mutation
+  const syncLinearWorkspaceMutation = useMutation({
+    mutationFn: () => trpcClient.linear.syncWorkspace.mutate(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [['linear', 'getConnectionStatus']],
+      });
+      toast.success('Linear workspace connected successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to connect Linear workspace');
+    },
+  });
+
   // Computed state
   const state: IntegrationsState = useMemo(
     () => ({
-      isLoading: githubLoading || discordLoading,
+      isLoading: githubLoading || discordLoading || linearLoading,
       isGitHubLoading: githubLoading,
       isDiscordLoading: discordLoading,
+      isLinearLoading: linearLoading,
 
       githubInstallations: githubData?.installations ?? [],
       githubInstallUrl: installUrlData?.url,
@@ -109,17 +164,23 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
       discordBotInstallUrl: discordBotInstallData?.url ?? undefined,
       hasDiscord: discordAccountData?.linked ?? false,
 
+      linearWorkspace: linearConnectionData?.workspace ?? null,
+      hasLinear: linearConnectionData?.connected ?? false,
+
       totalCount:
         (githubData?.installations?.length ?? 0) +
-        (discordAccountData?.linked ? 1 : 0),
+        (discordAccountData?.linked ? 1 : 0) +
+        (linearConnectionData?.connected ? 1 : 0),
     }),
     [
       githubData,
       installUrlData,
       discordAccountData,
       discordBotInstallData,
+      linearConnectionData,
       githubLoading,
       discordLoading,
+      linearLoading,
     ]
   );
 
@@ -152,10 +213,29 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
 
     refreshDiscord: useCallback(() => refetchDiscord(), [refetchDiscord]),
 
+    linkLinear: useCallback(async () => {
+      // Use Better Auth's linkSocial to link Linear to existing account
+      await authClient.linkSocial({
+        provider: 'linear',
+        callbackURL: '/integrations/linear',
+      });
+    }, []),
+
+    unlinkLinear: useCallback(async (workspaceId: string) => {
+      await unlinkLinearMutation.mutateAsync(workspaceId);
+    }, [unlinkLinearMutation]),
+
+    refreshLinear: useCallback(() => refetchLinear(), [refetchLinear]),
+
+    syncLinearWorkspace: useCallback(async () => {
+      await syncLinearWorkspaceMutation.mutateAsync();
+    }, [syncLinearWorkspaceMutation]),
+
     refreshAll: useCallback(() => {
       refetchGitHub();
       refetchDiscord();
-    }, [refetchGitHub, refetchDiscord]),
+      refetchLinear();
+    }, [refetchGitHub, refetchDiscord, refetchLinear]),
 
     invalidateAll: useCallback(() => {
       queryClient.invalidateQueries({
@@ -163,6 +243,9 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
       });
       queryClient.invalidateQueries({
         queryKey: [['discord', 'getLinkedAccount']],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [['linear', 'getConnectionStatus']],
       });
     }, [queryClient]),
   };

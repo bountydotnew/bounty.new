@@ -403,6 +403,16 @@ export function BountyCardProvider({
     };
   })();
 
+  const linearDisplay = (() => {
+    if (!bounty.linearIssueIdentifier || !bounty.linearIssueUrl) {
+      return null;
+    }
+    return {
+      identifier: bounty.linearIssueIdentifier,
+      url: bounty.linearIssueUrl,
+    };
+  })();
+
   const formattedAmount = `$${bounty.amount.toLocaleString()}`;
 
   // State object
@@ -425,6 +435,7 @@ export function BountyCardProvider({
       avatarColor,
       repoDisplay,
       issueDisplay,
+      linearDisplay,
       isTogglePinPending: togglePinMutation.isPending,
       isDeletePending: deleteBountyMutation.isPending,
       isRequestCancellationPending: requestCancellationMutation.isPending,
@@ -449,6 +460,7 @@ export function BountyCardProvider({
       avatarColor,
       repoDisplay,
       issueDisplay,
+      linearDisplay,
       togglePinMutation.isPending,
       deleteBountyMutation.isPending,
       requestCancellationMutation.isPending,

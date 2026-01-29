@@ -51,6 +51,10 @@ export const env = createEnv({
     // Discord OAuth
     DISCORD_CLIENT_ID: z.string().min(1).optional(),
     DISCORD_CLIENT_SECRET: z.string().min(1).optional(),
+    // Linear OAuth
+    LINEAR_CLIENT_ID: z.string().min(1).optional(),
+    LINEAR_CLIENT_SECRET: z.string().min(1).optional(),
+    LINEAR_REDIRECT_URI: z.string().url().optional(),
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
@@ -81,6 +85,10 @@ export const env = createEnv({
     // Discord
     DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,
     DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET,
+    // Linear
+    LINEAR_CLIENT_ID: process.env.LINEAR_CLIENT_ID,
+    LINEAR_CLIENT_SECRET: process.env.LINEAR_CLIENT_SECRET,
+    LINEAR_REDIRECT_URI: process.env.LINEAR_REDIRECT_URI,
   },
   skipValidation: process.env.NODE_ENV !== 'production',
 });

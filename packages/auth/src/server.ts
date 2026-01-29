@@ -167,7 +167,7 @@ export const auth = betterAuth({
   account: {
     accountLinking: {
       enabled: true,
-      trustedProviders: ['github', 'discord'],
+      trustedProviders: ['github', 'discord', 'linear'],
       allowDifferentEmails: true,
     },
   },
@@ -221,6 +221,12 @@ export const auth = betterAuth({
       clientId: env.DISCORD_CLIENT_ID || '',
       clientSecret: env.DISCORD_CLIENT_SECRET || '',
       scope: ['identify', 'email', 'guilds'],
+    },
+    linear: {
+      clientId: env.LINEAR_CLIENT_ID || '',
+      clientSecret: env.LINEAR_CLIENT_SECRET || '',
+      scope: ['read', 'write'],
+      redirectURI: env.LINEAR_REDIRECT_URI,
     },
   },
 

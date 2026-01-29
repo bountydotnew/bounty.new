@@ -59,6 +59,12 @@ export const bounty = pgTable('bounty', {
   githubRepoOwner: text('github_repo_owner'),
   githubRepoName: text('github_repo_name'),
   githubCommentId: bigint('github_comment_id', { mode: 'number' }), // For editing bot comments
+  // Linear integration fields
+  linearIssueId: text('linear_issue_id').unique(),
+  linearIssueIdentifier: text('linear_issue_identifier'), // e.g., "ENG-123"
+  linearIssueUrl: text('linear_issue_url'),
+  linearAccountId: text('linear_account_id'), // Reference to linear_account.id
+  linearCommentId: text('linear_comment_id'), // For editing bot comments
   submissionKeyword: text('submission_keyword').default('@bountydotnew submit'),
   createdById: text('created_by_id')
     .notNull()

@@ -3,6 +3,7 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
 import { GithubIcon, DiscordIcon, TwitterIcon, SlackIcon } from '@bounty/ui';
+import { LinearIcon } from '@bounty/ui/components/icons/huge/linear';
 import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -89,6 +90,8 @@ function IntegrationCard({
                   const accountLabel =
                     account.accountLogin || 'Unknown account';
                   const isImageUrl = account.icon?.startsWith('http');
+                  // Use LinearIcon for Linear accounts (no icon URL provided)
+                  const isLinearAccount = title === 'Linear' && !account.icon;
                   return (
                     <DropdownMenuItem
                       key={account.id}
@@ -111,6 +114,8 @@ function IntegrationCard({
                           height={16}
                           className="rounded-full"
                         />
+                      ) : isLinearAccount ? (
+                        <LinearIcon className="size-4 opacity-60 text-white" />
                       ) : (
                         <GithubIcon className="size-4 opacity-60 text-white" />
                       )}
@@ -178,6 +183,16 @@ type IntegrationItem =
       } | null;
       botInstallUrl?: string;
       onAddBot: () => void;
+      onLinkAccount: () => void;
+    }
+  | {
+      type: 'linear';
+      workspace: {
+        id: string;
+        name: string;
+        key: string;
+        url: string;
+      } | null;
       onLinkAccount: () => void;
     }
   | { type: 'twitter' }
@@ -325,6 +340,53 @@ function renderIntegrationCard(
           {...comingSoonProps}
         />
       );
+    case 'linear': {
+      const isConnected = !!item.workspace;
+      const displayName = item.workspace?.name || 'your Linear workspace';
+      const workspaceHref = item.workspace ? `/integrations/linear/${item.workspace.id}` : '/integrations/linear';
+      const description = isConnected
+        ? `Connected to ${displayName}`
+        : 'Connect your Linear workspace to create bounties from issues';
+
+      return (
+        <IntegrationCard
+          key="linear"
+          icon={<LinearIcon className="size-7 text-white" />}
+          title="Linear"
+          description={description}
+          status={
+            isConnected
+              ? {
+                  type: 'installed',
+                  count: 1,
+                  accounts: [
+                    {
+                      id: 1,
+                      accountLogin: item.workspace?.name ?? null,
+                      icon: undefined,
+                      href: workspaceHref,
+                    },
+                  ],
+                }
+              : undefined
+          }
+          action={
+            isConnected
+              ? {
+                  label: 'Manage',
+                  onClick: () => {},
+                  disabled: false,
+                }
+              : {
+                  label: 'Connect',
+                  onClick: item.onLinkAccount,
+                  disabled: false,
+                }
+          }
+          href={isConnected ? workspaceHref : undefined}
+        />
+      );
+    }
     default:
       return null;
   }
@@ -350,6 +412,9 @@ export function IntegrationsSettings() {
     hasDiscord,
     addDiscordBot,
     linkDiscord,
+    linearWorkspace,
+    hasLinear,
+    linkLinear,
     invalidateAll,
   } = useIntegrations();
 
@@ -370,7 +435,8 @@ export function IntegrationsSettings() {
 
   const installedCount =
     githubInstallations.length +
-    (hasDiscord ? 1 : 0);
+    (hasDiscord ? 1 : 0) +
+    (hasLinear ? 1 : 0);
 
   const allIntegrations = useMemo(
     () => [
@@ -385,6 +451,11 @@ export function IntegrationsSettings() {
         onAddBot: addDiscordBot,
         onLinkAccount: linkDiscord,
       },
+      {
+        type: 'linear' as const,
+        workspace: linearWorkspace,
+        onLinkAccount: linkLinear,
+      },
       { type: 'twitter' as const },
       { type: 'slack' as const },
     ],
@@ -394,6 +465,8 @@ export function IntegrationsSettings() {
       discordBotInstallUrl,
       addDiscordBot,
       linkDiscord,
+      linearWorkspace,
+      linkLinear,
     ]
   );
 
@@ -402,7 +475,8 @@ export function IntegrationsSettings() {
       ? allIntegrations.filter(
           (item) =>
             (item.type === 'github' && item.installations.length > 0) ||
-            (item.type === 'discord' && item.account)
+            (item.type === 'discord' && item.account) ||
+            (item.type === 'linear' && item.workspace)
         )
       : allIntegrations;
 
