@@ -63,7 +63,7 @@ export function MobileSidebar({
             <DashboardSidebar
               isLoadingMyBounties={isMyBountiesLoading}
               myBounties={myBounties}
-              onBountyClick={(_bounty) => {
+              onBountyClick={(_bounty: Bounty) => {
                 setIsOpen(false);
               }}
             />
