@@ -46,6 +46,7 @@ const emptyMediaVariants = cva(
 function EmptyMedia({
   className,
   variant = "default",
+  children,
   ...props
 }: React.ComponentProps<"div"> & VariantProps<typeof emptyMediaVariants>) {
   return (
@@ -60,23 +61,22 @@ function EmptyMedia({
           <div
             aria-hidden="true"
             className={cn(
-              emptyMediaVariants({ className, variant }),
+              emptyMediaVariants({ variant }),
               "-translate-x-0.5 -rotate-10 pointer-events-none absolute bottom-px origin-bottom-left scale-84 shadow-none",
             )}
           />
           <div
             aria-hidden="true"
             className={cn(
-              emptyMediaVariants({ className, variant }),
+              emptyMediaVariants({ variant }),
               "pointer-events-none absolute bottom-px origin-bottom-right translate-x-0.5 rotate-10 scale-84 shadow-none",
             )}
           />
         </>
       )}
-      <div
-        className={cn(emptyMediaVariants({ className, variant }))}
-        {...props}
-      />
+      <div className={cn(emptyMediaVariants({ variant }))}>
+        {children}
+      </div>
     </div>
   );
 }

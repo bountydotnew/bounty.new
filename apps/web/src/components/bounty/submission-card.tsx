@@ -57,9 +57,9 @@ export default function SubmissionCard({
   // Build PR URL if we have the PR number and repo info
   const prUrl =
     pullRequestUrl ||
-    (githubPullRequestNumber && githubRepoOwner && githubRepoName)
+    ((githubPullRequestNumber && githubRepoOwner && githubRepoName)
       ? `https://github.com/${githubRepoOwner}/${githubRepoName}/pull/${githubPullRequestNumber}`
-      : deliverableUrl;
+      : deliverableUrl);
 
   const statusColors: Record<string, string> = {
     pending: 'text-yellow-400',

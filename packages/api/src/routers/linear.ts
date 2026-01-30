@@ -463,25 +463,46 @@ export const linearRouter = router({
    */
   postComment: rateLimitedProtectedProcedure('linear:comment')
     .input(
-      z.object({
-        linearIssueId: z.string(),
-        commentType: z.enum([
-          'bountyCreated',
-          'bountyFunded',
-          'submissionReceived',
-          'bountyCompleted',
-        ]),
-        bountyData: z.object({
-          title: z.string(),
-          amount: z.string(),
-          currency: z.string().default('USD'),
-          deadline: z.string().optional(),
-          bountyUrl: z.string(),
-          submitter: z.string().optional(),
-          winner: z.string().optional(),
-          timestamp: z.string().optional(),
+      z.discriminatedUnion('commentType', [
+        z.object({
+          linearIssueId: z.string(),
+          commentType: z.literal('bountyCreated'),
+          bountyData: z.object({
+            title: z.string(),
+            amount: z.string(),
+            currency: z.string().default('USD'),
+            bountyUrl: z.string(),
+          }),
         }),
-      })
+        z.object({
+          linearIssueId: z.string(),
+          commentType: z.literal('bountyFunded'),
+          bountyData: z.object({
+            amount: z.string(),
+            currency: z.string().default('USD'),
+            bountyUrl: z.string(),
+            deadline: z.string().optional(),
+          }),
+        }),
+        z.object({
+          linearIssueId: z.string(),
+          commentType: z.literal('submissionReceived'),
+          bountyData: z.object({
+            bountyUrl: z.string(),
+            submitter: z.string(),
+            timestamp: z.string(),
+          }),
+        }),
+        z.object({
+          linearIssueId: z.string(),
+          commentType: z.literal('bountyCompleted'),
+          bountyData: z.object({
+            bountyUrl: z.string(),
+            winner: z.string(),
+            timestamp: z.string(),
+          }),
+        }),
+      ])
     )
     .mutation(async ({ input, ctx }) => {
       const linearOAuthAccount = await getLinearAccount(
@@ -532,15 +553,15 @@ export const linearRouter = router({
             break;
           case 'submissionReceived':
             commentBody = LINEAR_COMMENT_TEMPLATES.submissionReceived(
-              input.bountyData.submitter!,
-              input.bountyData.timestamp!,
+              input.bountyData.submitter,
+              input.bountyData.timestamp,
               input.bountyData.bountyUrl
             );
             break;
           case 'bountyCompleted':
             commentBody = LINEAR_COMMENT_TEMPLATES.bountyCompleted(
-              input.bountyData.winner!,
-              input.bountyData.timestamp!,
+              input.bountyData.winner,
+              input.bountyData.timestamp,
               input.bountyData.bountyUrl
             );
             break;

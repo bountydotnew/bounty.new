@@ -231,6 +231,14 @@ export class LinearDriver {
         ) {
           continue;
         }
+        // Filter by assignee
+        if (filters?.assigneeId && assignee?.id !== filters.assigneeId) {
+          continue;
+        }
+        // Filter by project
+        if (filters?.projectId && project?.id !== filters.projectId) {
+          continue;
+        }
 
         issues.push({
           id: issue.id,

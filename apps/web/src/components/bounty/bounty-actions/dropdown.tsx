@@ -80,6 +80,11 @@ export function Dropdown() {
       (a) =>
         !(a.className?.includes('destructive') || a.className?.includes('red'))
     ) || [];
+  const destructiveActions =
+    additionalActions?.filter(
+      (a) =>
+        a.className?.includes('destructive') || a.className?.includes('red')
+    ) || [];
 
   return (
     <DropdownMenu>
@@ -220,15 +225,53 @@ export function Dropdown() {
         )}
 
         {/* Destructive actions at the bottom */}
-        {canDelete && onDelete && (
+        {(destructiveActions.length > 0 || (canDelete && onDelete)) && (
           <div className="flex flex-col gap-0.5 mt-2 pt-2 border-t border-border-subtle">
-            <DropdownMenuItem
-              className="text-destructive hover:bg-destructive/10 focus:text-destructive focus:bg-destructive/10 rounded-md"
-              onClick={onDelete}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Delete bounty
-            </DropdownMenuItem>
+            {destructiveActions.map((action) => {
+              const menuItem = (
+                <DropdownMenuItem
+                  className={
+                    action.className ||
+                    'text-destructive hover:bg-destructive/10 focus:text-destructive focus:bg-destructive/10 rounded-md'
+                  }
+                  disabled={action.disabled}
+                  key={action.key}
+                  onClick={action.disabled ? undefined : action.onSelect}
+                >
+                  {action.icon}
+                  {action.label}
+                </DropdownMenuItem>
+              );
+
+              if (action.tooltip && action.disabled) {
+                return (
+                  <TooltipProvider key={action.key}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div>{menuItem}</div>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="left"
+                        className="max-w-[200px] text-center"
+                      >
+                        <p>{action.tooltip}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              }
+
+              return menuItem;
+            })}
+            {canDelete && onDelete && (
+              <DropdownMenuItem
+                className="text-destructive hover:bg-destructive/10 focus:text-destructive focus:bg-destructive/10 rounded-md"
+                onClick={onDelete}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete bounty
+              </DropdownMenuItem>
+            )}
           </div>
         )}
       </DropdownMenuContent>

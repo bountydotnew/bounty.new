@@ -209,7 +209,7 @@ function VoteButton({
             : 'rounded-[7px]'
         } ${
           canVote
-            ? 'bg-text-tertiary text-warning-foreground hover:bg-text-secondary cursor-pointer'
+            ? 'bg-surface-hover text-foreground hover:bg-surface-3 cursor-pointer'
             : 'bg-surface-3 text-text-tertiary cursor-not-allowed'
         }`}
       >
