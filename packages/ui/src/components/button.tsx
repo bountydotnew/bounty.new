@@ -81,12 +81,16 @@ function Button({
     finalChildren = childChildren;
   }
 
-  const defaultProps = {
+  const defaultProps: Record<string, unknown> = {
     className: cn(buttonVariants({ className, size, variant })),
     'data-slot': 'button',
-    type: typeValue,
     children: finalChildren,
   };
+
+  // Only set type when not using render/asChild to avoid overriding child's type
+  if (typeValue !== undefined) {
+    defaultProps.type = typeValue;
+  }
 
   return useRender({
     defaultTagName: 'button',

@@ -19,9 +19,11 @@ export const linearAccount = pgTable(
   'linear_account',
   {
     id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-    accountId: text('account_id').references(() => account.id, {
-      onDelete: 'cascade',
-    }),
+    accountId: text('account_id')
+      .notNull()
+      .references(() => account.id, {
+        onDelete: 'cascade',
+      }),
     // Linear user and workspace identifiers
     linearUserId: text('linear_user_id').notNull(),
     linearWorkspaceId: text('linear_workspace_id').notNull(),

@@ -90,10 +90,9 @@ export default function LinearProjectsPage() {
             >
               <div className="flex items-start justify-between mb-4">
                 {project.icon ? (
-                  <div
-                    className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-lg"
-                    dangerouslySetInnerHTML={{ __html: project.icon }}
-                  />
+                  <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-lg">
+                    {project.icon}
+                  </div>
                 ) : (
                   <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
                     <FolderKanban className="w-5 h-5 text-neutral-500" />

@@ -75,7 +75,7 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
         linearIssueUrl: issue.url,
       });
     },
-    onSuccess: (result) => {
+    onSuccess: (result, variables) => {
       toast.success('Bounty created!');
       queryClient.invalidateQueries({ queryKey: [['bounties']] });
 
@@ -84,9 +84,9 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
           linearIssueId: issue.id,
           commentType: 'bountyCreated',
           bountyData: {
-            title: issue.title,
-            amount: amount,
-            currency: 'USD',
+            title: variables.title,
+            amount: variables.amount,
+            currency: variables.currency ?? 'USD',
             bountyUrl: `${window.location.origin}/bounty/${result.data?.id ?? ''}`,
           },
         })

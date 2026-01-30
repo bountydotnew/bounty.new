@@ -17,15 +17,15 @@ export default function LinearIssueDetailPage() {
   const issueId = params.id as string;
   const [showCreateForm, setShowCreateForm] = useState(false);
 
-  const { data: issuesData, isLoading: issueLoading } = useQuery(
-    trpc.linear.getIssues.queryOptions(
+  const { data: issueData, isLoading: issueLoading } = useQuery(
+    trpc.linear.getIssue.queryOptions(
       hasLinear
-        ? {}
+        ? { issueId }
         : skipToken
     )
   );
 
-  const issue = issuesData?.issues?.find((i) => i.id === issueId);
+  const issue = issueData?.issue;
 
   if (!hasLinear) {
     return (
@@ -168,10 +168,9 @@ export default function LinearIssueDetailPage() {
         <div className="mb-6">
           <h2 className="text-sm font-medium text-foreground mb-3">Description</h2>
           <div className="p-5 rounded-xl border border-white/10">
-            <div
-              className="prose prose-invert prose-sm max-w-none"
-              dangerouslySetInnerHTML={{ __html: issue.description }}
-            />
+            <div className="prose prose-invert prose-sm max-w-none whitespace-pre-wrap">
+              {issue.description}
+            </div>
           </div>
         </div>
       )}

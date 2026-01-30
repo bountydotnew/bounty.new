@@ -18,7 +18,7 @@ export function TitleChip({ control }: TitleChipProps) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-surface-hover border border-solid border-border-subtle hover:border-border-default transition-colors cursor-pointer">
+        <button type="button" className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-surface-hover border border-solid border-border-subtle hover:border-border-default transition-colors cursor-pointer">
           <Controller
             control={control}
             name="title"
@@ -36,7 +36,7 @@ export function TitleChip({ control }: TitleChipProps) {
             }}
           />
           <ChevronSortIcon className="size-2 text-text-muted shrink-0" />
-        </div>
+        </button>
       </PopoverTrigger>
       <PopoverContent
         className="w-64 px-3 bg-surface-1 border-border-subtle rounded-xl"

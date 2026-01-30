@@ -92,8 +92,9 @@ export const Header = (_props: HeaderProps = {}) => {
             className="flex items-center gap-[7px] rounded-lg bg-surface-hover px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-3"
             onClick={handleCreateBounty}
             type="button"
+            aria-label="Create new bounty"
           >
-            {/* <Plus className="h-4 w-4 text-text-secondary" /> */}
+            <Plus className="h-4 w-4 text-text-secondary md:hidden" />
             <span className="hidden md:inline text-sm font-semibold leading-[150%] tracking-[0.01em] text-text-secondary">
               New bounty
             </span>
