@@ -117,7 +117,7 @@ export function BillingSettingsClient() {
                 <div className="flex items-center gap-3">
                   <Badge
                     variant={hasActiveSubscription ? 'default' : 'secondary'}
-                    className={hasActiveSubscription ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' : ''}
+                    className={hasActiveSubscription ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-foreground' : ''}
                   >
                     {activeProduct?.name ?? 'Free'}
                   </Badge>

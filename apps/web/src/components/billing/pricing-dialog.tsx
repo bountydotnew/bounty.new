@@ -86,18 +86,18 @@ function PricingCard({
     >
       {/* Recommended Badge */}
       {isRecommended && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 px-3 py-1 text-xs font-semibold text-white shadow-lg">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 px-3 py-1 text-xs font-semibold text-foreground shadow-lg">
           <Sparkles className="h-3 w-3" />
           Recommended
         </div>
       )}
 
       {/* Plan Name */}
-      <h3 className="text-xl font-bold text-white">{pricing.name}</h3>
+      <h3 className="text-xl font-bold text-foreground">{pricing.name}</h3>
 
       {/* Price */}
       <div className="flex flex-col items-center">
-        <span className="text-4xl font-bold text-white">
+        <span className="text-4xl font-bold text-foreground">
           ${pricing.monthlyPrice}
         </span>
         <span className="text-sm text-gray-400">/month</span>
@@ -108,10 +108,10 @@ function PricingCard({
         className={cn(
           'w-full rounded-xl py-2.5 text-sm font-semibold transition-all',
           isSelected
-            ? 'bg-blue-500 text-white'
+            ? 'bg-blue-500 text-foreground'
             : isRecommended
-              ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
-              : 'bg-white/10 text-white hover:bg-white/20'
+              ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-foreground'
+              : 'bg-white/10 text-foreground hover:bg-white/20'
         )}
       >
         {isSelected ? 'Selected' : plan === 'free' ? 'Current' : 'Upgrade'}
@@ -130,7 +130,7 @@ function PricingCard({
                 )}
               />
               <span className="flex-1 text-gray-400">{feature.label}</span>
-              <span className="font-semibold text-white">{value}</span>
+              <span className="font-semibold text-foreground">{value}</span>
             </div>
           );
         })}
@@ -141,15 +141,15 @@ function PricingCard({
         <div className="w-full rounded-xl bg-black/40 p-3">
           <div className="mb-2 flex justify-between text-xs text-gray-400">
             <span>Monthly fee</span>
-            <span className="text-white">${pricing.monthlyPrice}</span>
+            <span className="text-foreground">${pricing.monthlyPrice}</span>
           </div>
           <div className="mb-2 flex justify-between text-xs text-gray-400">
             <span>Platform fee</span>
-            <span className="text-white">${costs.platformFee.toFixed(2)}</span>
+            <span className="text-foreground">${costs.platformFee.toFixed(2)}</span>
           </div>
           <div className="flex justify-between border-t border-gray-700 pt-2 text-sm font-semibold">
             <span className="text-gray-300">Est. total</span>
-            <span className="text-white">${costs.total.toFixed(2)}/mo</span>
+            <span className="text-foreground">${costs.total.toFixed(2)}/mo</span>
           </div>
         </div>
       )}
@@ -185,7 +185,7 @@ function SpendSlider({
           <span>Expected monthly bounty spend</span>
         </div>
         <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-bold text-white">
+          <span className="text-2xl font-bold text-foreground">
             {formatBillingCurrency(value)}
           </span>
         </div>
@@ -233,8 +233,8 @@ function SpendSlider({
             className={cn(
               'rounded-full border px-4 py-1.5 text-sm font-medium transition-all',
               value === preset
-                ? 'border-blue-500 bg-blue-500 text-white shadow-lg shadow-blue-500/30'
-                : 'border-gray-700 bg-zinc-900/50 text-gray-400 hover:border-gray-600 hover:text-white'
+                ? 'border-blue-500 bg-blue-500 text-foreground shadow-lg shadow-blue-500/30'
+                : 'border-gray-700 bg-zinc-900/50 text-gray-400 hover:border-gray-600 hover:text-foreground'
             )}
           >
             {formatBillingCurrency(preset)}
@@ -300,7 +300,7 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
 
           <div className="absolute inset-0 flex items-end justify-center pb-6">
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-white">
+              <h2 className="text-3xl font-bold text-foreground">
                 Upgrade to Bounty Pro
               </h2>
               <p className="text-sm text-gray-300">

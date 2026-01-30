@@ -75,7 +75,7 @@ export default function BountyActions({
         type="button"
       >
         <svg
-          className={`h-4 w-4 ${isVoted ? 'text-white' : ''}`}
+          className={`h-4 w-4 ${isVoted ? 'text-foreground' : ''}`}
           fill="none"
           height="24"
           stroke="currentColor"

@@ -6,7 +6,7 @@ import Bounty from '@/components/icons/bounty';
 
 export default function VerifyEmailPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-[#111110] text-[#f3f3f3]">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       <div className="flex flex-1 items-center justify-center p-8">
         <div className="w-full max-w-md space-y-8 text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-lg">

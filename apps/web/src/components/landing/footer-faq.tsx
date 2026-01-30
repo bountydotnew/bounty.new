@@ -52,15 +52,15 @@ function FAQAccordionItem({
   onToggle: () => void;
 }) {
   return (
-    <div className="border-b border-[#2a2a2a]">
+    <div className="border-b border-border-default">
       <button
         onClick={onToggle}
         className="flex w-full items-center justify-between py-5 text-left hover:opacity-90 transition-opacity"
       >
-        <span className="text-[15px] text-[#efefef]">{item.question}</span>
+        <span className="text-[15px] text-foreground">{item.question}</span>
         <ChevronDown
           className={cn(
-            'h-5 w-5 text-[#888] transition-transform duration-200 shrink-0 ml-4',
+            'h-5 w-5 text-text-muted transition-transform duration-200 shrink-0 ml-4',
             isOpen && 'rotate-180'
           )}
         />
@@ -71,7 +71,7 @@ function FAQAccordionItem({
           isOpen ? 'max-h-96 pb-5' : 'max-h-0'
         )}
       >
-        <p className="text-[14px] leading-relaxed text-[#888]">{item.answer}</p>
+        <p className="text-[14px] leading-relaxed text-text-muted">{item.answer}</p>
       </div>
     </div>
   );
@@ -85,16 +85,16 @@ export function FooterFAQ() {
       <div className="grid gap-12 lg:grid-cols-2">
         {/* Left: Title */}
         <div>
-          <h2 className="text-3xl font-medium text-[#efefef] lg:text-4xl">
+          <h2 className="text-3xl font-medium text-foreground lg:text-4xl">
             Questions &amp; Answers
           </h2>
-          <p className="mt-4 text-[#888]">
+          <p className="mt-4 text-text-muted">
             Everything you need to know about bounty.new
           </p>
         </div>
 
         {/* Right: Accordion */}
-        <div className="border-t border-[#2a2a2a]">
+        <div className="border-t border-border-default">
           {FAQ_ITEMS.map((item, index) => (
             <FAQAccordionItem
               key={item.question}

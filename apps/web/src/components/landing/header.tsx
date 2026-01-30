@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Link from 'next/link';
 import { useState } from 'react';
@@ -19,13 +19,19 @@ export function Header() {
   const { isAuthenticated, session, isPending } = useSession();
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-[#0E0E0E] border-b border-[#2a2a2a]/40">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border-default/40">
       <div className="container mx-auto px-6 lg:px-8">
         <div className="grid grid-cols-[1fr_auto_auto] lg:grid-cols-[auto_1fr_auto] items-center h-16 gap-8">
           <div className="col-start-1">
-            <Link href="/" className="flex items-center gap-1 hover:opacity-80 transition-opacity" onClick={() => setIsOpen(false)}>
+            <Link
+              href="/"
+              className="flex items-center gap-1 hover:opacity-80 transition-opacity"
+              onClick={() => setIsOpen(false)}
+            >
               <Logo className="h-5 w-5" />
-              <span className="text-base font-medium text-white">bounty.new</span>
+              <span className="text-base font-medium text-foreground">
+                bounty.new
+              </span>
             </Link>
           </div>
 
@@ -35,7 +41,7 @@ export function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm text-[#989898] hover:text-white transition-colors"
+                className="text-sm text-text-muted hover:text-foreground transition-colors"
               >
                 {link.label}
               </Link>
@@ -47,24 +53,24 @@ export function Header() {
             {/* Loading state */}
             {isPending && (
               <div className="flex items-center gap-3">
-                <div className="h-8 w-20 bg-[#1a1a1a] animate-pulse rounded-full" />
-                <div className="h-9 w-28 bg-[#1a1a1a] animate-pulse rounded-full" />
+                <div className="h-8 w-20 bg-surface-1 animate-pulse rounded-full" />
+                <div className="h-9 w-28 bg-surface-1 animate-pulse rounded-full" />
               </div>
             )}
 
             {/* Not authenticated */}
-            {!isAuthenticated && !isPending && (
+            {!(isAuthenticated || isPending) && (
               <>
                 <Link
                   href="/login"
-                  className="inline-flex items-center justify-center bg-[#1a1a1a] text-white rounded-full text-xs sm:text-sm font-medium hover:bg-[#252525] transition-colors border border-[#333] whitespace-nowrap"
+                  className="inline-flex items-center justify-center bg-surface-1 text-foreground rounded-full text-xs sm:text-sm font-medium hover:bg-surface-2 transition-colors border border-border-default whitespace-nowrap"
                   style={{ padding: '.4em .75em .42em' }}
                 >
                   Sign in
                 </Link>
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center justify-center bg-white text-[#0E0E0E] rounded-full text-xs sm:text-sm font-medium hover:bg-[#e5e5e5] transition-colors whitespace-nowrap"
+                  className="inline-flex items-center justify-center bg-foreground text-background rounded-full text-xs sm:text-sm font-medium hover:bg-foreground/90 transition-colors whitespace-nowrap"
                   style={{ padding: '.4em .75em .42em' }}
                 >
                   <span className="sm:hidden">Bounties</span>
@@ -79,17 +85,19 @@ export function Header() {
                 {session?.user?.image ? (
                   <img
                     src={session.user.image}
-                    alt={session?.user?.name || session?.user?.email?.split('@')[0]}
+                    alt={
+                      session?.user?.name || session?.user?.email?.split('@')[0]
+                    }
                     className="h-7 w-7 rounded-full hidden sm:block"
                   />
                 ) : (
-                  <span className="text-sm text-[#989898] hidden sm:inline-flex">
+                  <span className="text-sm text-text-muted hidden sm:inline-flex">
                     {session?.user?.name || session?.user?.email?.split('@')[0]}
                   </span>
                 )}
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center justify-center bg-white text-[#0E0E0E] rounded-full text-xs sm:text-sm font-medium hover:bg-[#e5e5e5] transition-colors whitespace-nowrap"
+                  className="inline-flex items-center justify-center bg-foreground text-background rounded-full text-xs sm:text-sm font-medium hover:bg-foreground/90 transition-colors whitespace-nowrap"
                   style={{ padding: '.4em .75em .42em' }}
                 >
                   Dashboard
@@ -101,19 +109,23 @@ export function Header() {
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild className="lg:hidden">
                 <button
-                  className="inline-flex items-center justify-center rounded-md p-2 text-[#989898] hover:text-white transition-colors"
+                  type="button"
+                  className="inline-flex items-center justify-center rounded-md p-2 text-text-muted hover:text-foreground transition-colors"
                   aria-label="Open menu"
                 >
                   <Menu className="h-5 w-5" />
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-64 bg-[#0E0E0E] border-l border-[#2a2a2a]/40 p-6">
+              <SheetContent
+                side="right"
+                className="w-64 bg-background border-l border-border-default/40 p-6"
+              >
                 <nav className="flex flex-col gap-6 mt-8">
                   {NAV_LINKS.map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}
-                      className="text-base text-[#989898] hover:text-white transition-colors"
+                      className="text-base text-text-muted hover:text-foreground transition-colors"
                       onClick={() => setIsOpen(false)}
                     >
                       {link.label}
@@ -122,16 +134,45 @@ export function Header() {
                   {/* Loading state */}
                   {isPending && (
                     <>
-                      <div className="h-6 bg-[#1a1a1a] animate-pulse rounded" />
-                      <div className="h-6 bg-[#1a1a1a] animate-pulse rounded" />
+                      <div className="h-6 bg-surface-1 animate-pulse rounded" />
+                      <div className="h-6 bg-surface-1 animate-pulse rounded" />
                     </>
                   )}
                   {/* Not authenticated */}
-                  {!isAuthenticated && !isPending && (
+                  {!(isAuthenticated || isPending) && (
                     <>
                       <Link
                         href="/login"
-                        className="text-base text-[#989898] hover:text-white transition-colors"
+                        className="text-base text-text-muted hover:text-foreground transition-colors"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Sign in
+                      </Link>
+                      <Link
+                        href="/dashboard"
+                        className="text-base text-foreground hover:text-foreground transition-colors font-medium"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Browse Bounties
+                      </Link>
+                    </>
+                  )}
+                  {/* Show dashboard link when logged in */}
+                  {isAuthenticated && (
+                    <Link
+                      href="/dashboard"
+                      className="text-base text-text-muted hover:text-foreground transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                  )}
+                  {/* Not authenticated */}
+                  {!(isAuthenticated || isPending) && (
+                    <>
+                      <Link
+                        href="/login"
+                        className="text-base text-text-muted hover:text-white transition-colors"
                         onClick={() => setIsOpen(false)}
                       >
                         Sign in
@@ -149,7 +190,7 @@ export function Header() {
                   {isAuthenticated && (
                     <Link
                       href="/dashboard"
-                      className="text-base text-[#989898] hover:text-white transition-colors"
+                      className="text-base text-text-muted hover:text-white transition-colors"
                       onClick={() => setIsOpen(false)}
                     >
                       Dashboard

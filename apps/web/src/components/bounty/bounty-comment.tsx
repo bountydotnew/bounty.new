@@ -2,7 +2,7 @@
 
 import {
   Avatar,
-  AvatarFallback,
+  AvatarFacehash,
   AvatarImage,
 } from '@bounty/ui/components/avatar';
 import { Button } from '@bounty/ui/components/button';
@@ -55,12 +55,15 @@ export default function BountyComment({
   }, []);
   return (
     <div
-      className={`overflow-x-hidden rounded-md border border-neutral-800 bg-[#222222] p-3 transition-all duration-200 will-change-transform ${entered && !isRemoving ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'} ${isRemoving ? '-translate-y-1 opacity-0' : ''}`}
+      className={`overflow-x-hidden rounded-md border border-neutral-800 bg-surface-2 p-3 transition-all duration-200 will-change-transform ${entered && !isRemoving ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'} ${isRemoving ? '-translate-y-1 opacity-0' : ''}`}
     >
       <div className="mb-2 flex items-center gap-2">
         <Avatar className="h-6 w-6">
           <AvatarImage src={comment.user?.image || ''} />
-          <AvatarFallback>{comment.user?.name?.[0] || 'U'}</AvatarFallback>
+          <AvatarFacehash
+            name={comment.user?.name || comment.user?.id || 'anonymous'}
+            size={24}
+          />
         </Avatar>
         <span className="text-neutral-300 text-xs">
           {comment.user?.name || 'User'}
@@ -112,7 +115,7 @@ export default function BountyComment({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  className="h-6 rounded-lg border border-neutral-700 bg-[#222222] p-1 text-neutral-300 hover:bg-neutral-700/40"
+                  className="h-6 rounded-lg border border-neutral-700 bg-surface-2 p-1 text-neutral-300 hover:bg-neutral-700/40"
                   size="icon"
                   variant="outline"
                 >

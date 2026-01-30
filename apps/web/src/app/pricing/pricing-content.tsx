@@ -77,7 +77,7 @@ export function PricingPageContent() {
   return (
     <div className="mx-auto max-w-7xl px-8 pt-32 pb-24">
       {/* Header */}
-      <h1 className="text-center text-5xl font-medium tracking-tight text-[#efefef]">
+      <h1 className="text-center text-5xl font-medium tracking-tight text-foreground">
         Pricing
       </h1>
 

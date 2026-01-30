@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -29,7 +28,9 @@ export function FundBountyModal({
   onPayWithStripe,
   isLoading = false,
 }: FundBountyModalProps) {
-  const [selectedMethod, setSelectedMethod] = useState<'balance' | 'stripe' | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<
+    'balance' | 'stripe' | null
+  >(null);
 
   const handleContinue = () => {
     // Only Stripe payments are supported for now
@@ -55,29 +56,29 @@ export function FundBountyModal({
   }, [open]);
 
   return (
-    <Dialog open={open} onOpenChange={(newOpen) => {
-      // Prevent closing modal while processing
-      if (!isLoading) {
-        onOpenChange(newOpen);
-      }
-    }}>
-      <DialogContent
-        overlayVariant="solid"
-        className="flex flex-col items-center gap-8 border-none bg-transparent p-0 shadow-none max-w-none w-auto"
-      >
+    <Dialog
+      open={open}
+      onOpenChange={(newOpen) => {
+        // Prevent closing modal while processing
+        if (!isLoading) {
+          onOpenChange(newOpen);
+        }
+      }}
+    >
+      <DialogContent className="flex flex-col items-center gap-8 border-none bg-transparent p-0 shadow-none max-w-none w-auto">
         <DialogTitle className="sr-only">Fund your bounty</DialogTitle>
         {/* Header - Outside modal card */}
         <div className="flex flex-col justify-center items-start w-[403px]">
-          <h2 className="text-[28px] leading-[150%] text-white font-medium mb-2">
+          <h2 className="text-[28px] leading-[150%] text-foreground font-medium mb-2">
             Fund your bounty
           </h2>
-          <p className="text-[16px] leading-[150%] text-[#B5B5B5] font-medium">
+          <p className="text-[16px] leading-[150%] text-text-secondary font-medium">
             Select a payment method to proceed with creating your bounty
           </p>
         </div>
 
         {/* Modal Card */}
-        <div className="bg-[#191919] border border-solid border-[#232323] rounded-[17px] overflow-hidden w-[403px]">
+        <div className="bg-surface-1 border border-solid border-border-subtle rounded-[17px] overflow-hidden w-[403px]">
           <div className="flex flex-col items-center gap-8">
             {/* Payment Method Cards */}
             <div className="flex flex-col items-start gap-9 w-full py-12">
@@ -98,7 +99,9 @@ export function FundBountyModal({
                 <PaymentMethodCard
                   icon={<StripePaymentIcon />}
                   label="Fund with Stripe"
-                  selected={selectedMethod === 'stripe' || selectedMethod === null}
+                  selected={
+                    selectedMethod === 'stripe' || selectedMethod === null
+                  }
                   onClick={() => setSelectedMethod('stripe')}
                   overflowHidden
                 />
@@ -106,12 +109,12 @@ export function FundBountyModal({
             </div>
 
             {/* Footer Buttons */}
-            <div className="flex justify-end items-center gap-1 w-full px-3 pb-2">
+            <div className="flex justify-end items-center gap-2 w-full px-3 pb-3">
               <button
                 type="button"
                 onClick={handleSkip}
                 disabled={isLoading}
-                className="w-fit h-[29px] rounded-[17px] flex justify-center items-center px-4 py-0 bg-[#0E0E0E] border border-solid border-[#232323] text-[13px] leading-[150%] text-[#F2F2DD] font-medium hover:bg-[#151515] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-fit h-[29px] rounded-[17px] flex justify-center items-center px-4 py-0 bg-surface-hover border border-solid border-border-subtle text-[13px] leading-[150%] text-text-secondary font-medium hover:bg-surface-active hover:text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Skip
               </button>
@@ -119,10 +122,10 @@ export function FundBountyModal({
                 type="button"
                 onClick={handleContinue}
                 disabled={isLoading}
-                className="w-fit min-w-[80px] h-[29px] rounded-[17px] flex justify-center items-center px-4 py-0 bg-white border border-solid border-[#232323] text-[13px] leading-[150%] text-black font-medium hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-fit min-w-[80px] h-[29px] rounded-[17px] flex justify-center items-center px-4 py-0 bg-foreground border border-solid border-foreground text-[13px] leading-[150%] text-background font-medium hover:bg-foreground/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
-                  <Loader2 className="h-3 w-3 animate-spin text-black" />
+                  <Loader2 className="h-3 w-3 animate-spin text-background" />
                 ) : (
                   'Continue'
                 )}
@@ -132,8 +135,9 @@ export function FundBountyModal({
         </div>
 
         {/* Footer Note - Outside modal card */}
-        <p className="text-[11px] leading-[150%] w-[403px] h-[33px] text-[#222222] font-medium text-center">
-          While funding your bounty at this stage is optional, no one will be able to see or submit until it's funded.
+        <p className="text-[11px] leading-[150%] w-[403px] h-[33px] text-foreground font-medium text-center">
+          While funding your bounty at this stage is optional, no one will be
+          able to see or submit until it's funded.
         </p>
       </DialogContent>
     </Dialog>

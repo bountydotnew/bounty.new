@@ -70,7 +70,7 @@ export default function BookmarkButton({
       variant="outline"
     >
       <Bookmark
-        className={`h-4 w-4 ${bookmarked ? 'fill-white text-white' : ''}`}
+        className={`h-4 w-4 ${bookmarked ? 'fill-white text-foreground' : ''}`}
       />
     </Button>
   );

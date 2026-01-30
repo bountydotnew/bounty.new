@@ -1,4 +1,4 @@
-import { BountyCard } from '@/components/bounty/bounty-card';
+import { StandardBountyCard } from '@/components/bounty/bounty-card';
 import SubmissionCard from '@/components/bounty/submission-card';
 import { GithubIcon } from '@/components/icons';
 import { Zap, Shield, Globe, Code2, Users, ArrowRight } from 'lucide-react';
@@ -77,7 +77,7 @@ function FeatureSection({
             align === 'right' && 'lg:[direction:ltr]'
           )}
         >
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(40%_40%_at_50%_50%,rgba(255,255,255,0.05),transparent)]" />
+          <div className="absolute inset-0 -z-10 bg-[radial-gradient(40%_40%_at_50%_50%,var(--foreground)/5%,transparent)]" />
           {children}
         </div>
       </div>
@@ -107,17 +107,26 @@ function GridFeature({
 
 export function Features() {
   return (
-    <div className="flex flex-col gap-0 bg-[#0A0A0A]">
+    <div className="flex flex-col gap-0 bg-background">
       {/* Feature 1: Create Bounties */}
       <FeatureSection
         title="Turn backlog issues into completed features"
         description="Stop letting important issues rot in your backlog. Post a bounty, set your price, and watch as the community delivers production-ready code."
       >
-         <div className="w-full max-w-md transform transition-transform hover:scale-105 duration-500">
-            <div className="pointer-events-none select-none">
-               <BountyCard bounty={MOCK_BOUNTY} stats={{ commentCount: 5, voteCount: 12, submissionCount: 3, isVoted: false, bookmarked: false }} />
-            </div>
-         </div>
+        <div className="w-full max-w-md transform transition-transform hover:scale-105 duration-500">
+          <div className="pointer-events-none select-none">
+            <StandardBountyCard
+              bounty={MOCK_BOUNTY}
+              stats={{
+                commentCount: 5,
+                voteCount: 12,
+                submissionCount: 3,
+                isVoted: false,
+                bookmarked: false,
+              }}
+            />
+          </div>
+        </div>
       </FeatureSection>
 
       {/* Feature 2: Earn */}
@@ -139,7 +148,7 @@ export function Features() {
       {/* Seamless Integration Section */}
       <div className="mx-auto max-w-7xl px-6 py-32 lg:px-8 hidden lg:hidden md:hidden opacity-0">
         <div className="relative overflow-hidden rounded-[40px] bg-zinc-900/30 px-6 py-24 text-center ring-1 ring-white/10 sm:px-16">
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05),transparent_50%)]" />
+          <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,var(--foreground)/5%,transparent_50%)]" />
 
           <h2 className="mx-auto max-w-2xl font-display text-4xl font-bold tracking-tight text-white sm:text-5xl">
             Seamless Integration
@@ -150,7 +159,7 @@ export function Features() {
           </p>
 
           <div className="mt-16 flex items-center justify-center">
-            <div className="relative flex h-32 w-32 items-center justify-center rounded-3xl bg-[#0A0A0A] ring-1 ring-white/10 shadow-2xl">
+            <div className="relative flex h-32 w-32 items-center justify-center rounded-3xl bg-background ring-1 ring-white/10 shadow-2xl">
               <GithubIcon className="h-16 w-16 fill-white" />
               {/* Connection lines (decorative) */}
               <div className="absolute -left-24 top-1/2 h-px w-24 bg-gradient-to-r from-transparent to-white/20" />
@@ -177,10 +186,10 @@ export function Features() {
             title="Global Talent Pool"
             description="Access thousands of verified developers from around the world ready to tackle your issues."
           />
-          <GridFeature 
-            icon={Shield} 
-            title="Secure Payments" 
-            description="Funds are held securely until the work is verified and merged. 100% safe." 
+          <GridFeature
+            icon={Shield}
+            title="Secure Payments"
+            description="Funds are held securely until the work is verified and merged. 100% safe."
           />
           <GridFeature
             icon={Code2}

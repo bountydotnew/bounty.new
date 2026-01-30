@@ -138,11 +138,11 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-white">Create Bounty</h3>
+        <h3 className="text-sm font-medium text-foreground">Create Bounty</h3>
         <button
           type="button"
           onClick={onCancel}
-          className="text-neutral-500 hover:text-white transition-colors"
+          className="text-neutral-500 hover:text-foreground transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
@@ -156,7 +156,7 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
         <input
           {...register('title')}
           type="text"
-          className="w-full h-9 px-3 rounded-lg border border-white/10 bg-transparent text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors"
+          className="w-full h-9 px-3 rounded-lg border border-white/10 bg-transparent text-sm text-foreground placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors"
           placeholder="Enter bounty title"
         />
         {errors.title && (
@@ -172,7 +172,7 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
         <textarea
           {...register('description')}
           rows={4}
-          className="w-full px-3 py-2 rounded-lg border border-white/10 bg-transparent text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-white/20 resize-none transition-colors"
+          className="w-full px-3 py-2 rounded-lg border border-white/10 bg-transparent text-sm text-foreground placeholder:text-neutral-600 focus:outline-none focus:border-white/20 resize-none transition-colors"
           placeholder="Describe the bounty requirements"
         />
         {errors.description && (
@@ -192,13 +192,13 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
               {...register('amount')}
               type="text"
               inputMode="decimal"
-              className="w-full h-9 pl-9 pr-3 rounded-lg border border-white/10 bg-transparent text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors"
+              className="w-full h-9 pl-9 pr-3 rounded-lg border border-white/10 bg-transparent text-sm text-foreground placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors"
               placeholder="0.00"
             />
           </div>
           <select
             {...register('currency')}
-            className="h-9 px-3 rounded-lg border border-white/10 bg-transparent text-sm text-white focus:outline-none focus:border-white/20 transition-colors"
+            className="h-9 px-3 rounded-lg border border-white/10 bg-transparent text-sm text-foreground focus:outline-none focus:border-white/20 transition-colors"
           >
             <option value="USD">USD</option>
             <option value="EUR">EUR</option>
@@ -220,7 +220,7 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
           {...register('deadline')}
           type="date"
           min={new Date().toISOString().split('T')[0]}
-          className="w-full h-9 px-3 rounded-lg border border-white/10 bg-transparent text-sm text-white focus:outline-none focus:border-white/20 transition-colors"
+          className="w-full h-9 px-3 rounded-lg border border-white/10 bg-transparent text-sm text-foreground focus:outline-none focus:border-white/20 transition-colors"
         />
         {errors.deadline && (
           <p className="text-xs text-red-400 mt-1">{errors.deadline.message}</p>
@@ -239,13 +239,13 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1 h-9 px-3 rounded-lg border border-white/10 bg-transparent text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors"
+            className="flex-1 h-9 px-3 rounded-lg border border-white/10 bg-transparent text-sm text-foreground placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors"
             placeholder="Add a tag"
           />
           <button
             type="button"
             onClick={addTag}
-            className="h-9 px-4 rounded-lg border border-white/10 text-sm text-white hover:bg-white/5 transition-colors"
+            className="h-9 px-4 rounded-lg border border-white/10 text-sm text-foreground hover:bg-white/5 transition-colors"
           >
             Add
           </button>
@@ -255,7 +255,7 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-white/10 text-xs text-white"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-white/10 text-xs text-foreground"
               >
                 {tag}
                 <button
@@ -277,7 +277,7 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
           type="button"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="flex-1 h-10 rounded-lg border border-white/10 text-sm text-white hover:bg-white/5 transition-colors disabled:opacity-50"
+          className="flex-1 h-10 rounded-lg border border-white/10 text-sm text-foreground hover:bg-white/5 transition-colors disabled:opacity-50"
         >
           Cancel
         </button>

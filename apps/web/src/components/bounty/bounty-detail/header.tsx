@@ -2,8 +2,11 @@
 
 import { use } from 'react';
 import { formatLargeNumber } from '@bounty/ui/lib/utils';
-import { Check } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
+import {
+  Avatar,
+  AvatarFacehash,
+  AvatarImage,
+} from '@bounty/ui/components/avatar';
 import BountyActions from '@/components/bounty/bounty-actions';
 import { AlertTriangle, X } from 'lucide-react';
 import type { ActionItem } from '@/types/bounty-actions';
@@ -18,7 +21,9 @@ import { BountyDetailContext } from './context';
 export function BountyDetailHeader() {
   const context = use(BountyDetailContext);
   if (!context) {
-    throw new Error('BountyDetailHeader must be used within BountyDetailProvider');
+    throw new Error(
+      'BountyDetailHeader must be used within BountyDetailProvider'
+    );
   }
 
   const { state, actions, meta } = context;
@@ -61,37 +66,30 @@ export function BountyDetailHeader() {
       : [];
 
   return (
-    <div className="mb-6">
-      {/* Title and Amount */}
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="font-bold text-4xl text-white leading-[120%] tracking-tight">
-          {title}
-        </h1>
-        <span className="font-semibold text-2xl text-green-400">
-          ${formatLargeNumber(amount)}
+    <div className="mb-8">
+      {/* User Profile Row */}
+      <div className="flex items-center gap-2.5 mb-4">
+        <Avatar className="h-6 w-6">
+          <AvatarImage src={avatarSrc} />
+          <AvatarFacehash name={user} size={24} />
+        </Avatar>
+        <span className="font-medium text-base text-text-secondary">
+          {user}
         </span>
       </div>
 
-      {/* User Profile with Actions */}
-      <div className="flex w-full flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={avatarSrc} />
-            <AvatarFallback>{user.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col gap-0.5">
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-sm text-white whitespace-nowrap">
-                {user}
-              </span>
-              <div className="flex h-4 w-4 rotate-45 transform items-center justify-center rounded bg-blue-500">
-                <Check className="-rotate-45 h-2.5 w-2.5 transform text-white" />
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Title */}
+      <h1 className="font-bold text-3xl md:text-4xl text-foreground leading-[120%] tracking-tight mb-4">
+        {title}
+      </h1>
 
-        <div className="flex w-full items-center justify-end gap-2">
+      {/* Amount and Actions Row */}
+      <div className="flex w-full flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+        <span className="font-semibold text-2xl text-brand-accent">
+          ${formatLargeNumber(amount)}
+        </span>
+
+        <div className="flex items-center gap-2">
           <BountyActions
             bookmarked={bookmarked}
             bountyId={state.bounty.id}
@@ -105,7 +103,9 @@ export function BountyDetailHeader() {
             repositoryUrl={repositoryUrl}
             issueUrl={issueUrl}
             voteCount={votes?.count ?? 0}
-            actions={cancellationActions.length > 0 ? cancellationActions : undefined}
+            actions={
+              cancellationActions.length > 0 ? cancellationActions : undefined
+            }
           />
         </div>
       </div>

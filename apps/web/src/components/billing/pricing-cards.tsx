@@ -165,50 +165,50 @@ function PricingCard({
     <div
       className={cn(
         'group relative flex flex-col justify-between rounded-lg border p-6 transition-all duration-200',
-        'bg-[#1a1a1a]',
+        'bg-surface-1',
         // Recommended card gets highlighted styling
         isRecommended
-          ? 'border-white/30 bg-[#1f1f1f]'
-          : 'border-[#2a2a2a]'
+          ? 'border-white/30 bg-surface-1'
+          : 'border-border-default'
       )}
     >
       {/* Plan Header */}
       <div className="flex-1">
         <div className="flex items-baseline gap-2">
-          <h3 className="text-lg font-medium text-[#efefef]">
+          <h3 className="text-lg font-medium text-foreground">
             {pricing.name}
           </h3>
           {isRecommended && (
-            <span className="text-[#888] text-sm">Recommended</span>
+            <span className="text-text-muted text-sm">Recommended</span>
           )}
         </div>
 
         {/* Price */}
         <div className="mt-2 flex items-baseline gap-0.5">
-          <span className="text-2xl font-medium text-[#888]">
+          <span className="text-2xl font-medium text-text-muted">
             ${displayPrice}
           </span>
-          <span className="text-sm text-[#888]">
+          <span className="text-sm text-text-muted">
             /{isYearly ? 'yr.' : 'mo.'}
           </span>
         </div>
         {isYearly && displayPrice > 0 && (
-          <p className="mt-1 text-xs text-[#666]">
+          <p className="mt-1 text-xs text-text-muted">
             ${Math.round(displayPrice / 12)}/mo. billed annually
           </p>
         )}
 
         {/* Features */}
-        <p className="mt-4 text-sm text-[#888]">
+        <p className="mt-4 text-sm text-text-muted">
           {plan === 'free' ? 'Includes:' : 'Everything in Free, plus:'}
         </p>
         <ul className="mt-3 space-y-2">
           {PLAN_FEATURES[plan].map((feature) => (
             <li
               key={feature}
-              className="flex items-start gap-2 text-sm text-[#efefef]"
+              className="flex items-start gap-2 text-sm text-foreground"
             >
-              <span className="text-[#888]">✓</span>
+              <span className="text-text-muted">✓</span>
               <span>{feature}</span>
             </li>
           ))}
@@ -224,8 +224,8 @@ function PricingCard({
                 className={cn(
                   'inline-flex w-full items-center justify-center rounded-full text-sm font-medium transition-colors cursor-not-allowed opacity-70',
                   isRecommended
-                    ? 'bg-white text-[#0E0E0E]'
-                    : 'bg-[#1a1a1a] text-white border border-[#333]'
+                    ? 'bg-white text-foreground'
+                    : 'bg-surface-1 text-foreground border border-border-default'
                 )}
                 style={{ padding: '.5em 1em .52em' }}
               >
@@ -244,8 +244,8 @@ function PricingCard({
             className={cn(
               'w-full rounded-full text-sm font-medium transition-colors',
               isRecommended
-                ? 'bg-white text-[#0E0E0E] hover:bg-[#e5e5e5]'
-                : 'bg-[#1a1a1a] text-white hover:bg-[#252525] border border-[#333]',
+                ? 'bg-white text-foreground hover:bg-surface-2'
+                : 'bg-surface-1 text-foreground hover:bg-surface-2 border border-border-default',
               isLoading && 'cursor-wait opacity-50'
             )}
             style={{ padding: '.5em 1em .52em' }}

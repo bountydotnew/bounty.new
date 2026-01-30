@@ -32,8 +32,8 @@ const BackButton = () => {
         'w-fit text-sm font-medium',
         'inline-flex items-center justify-center gap-0.5 whitespace-nowrap',
         'relative focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
-        'text-[#929292] hover:text-white transition-colors',
-        'bg-transparent hover:bg-[#292828]',
+        'text-text-tertiary hover:text-foreground transition-colors',
+        'bg-transparent hover:bg-surface-2',
         'h-[28px] px-[6px] py-[4px] rounded-lg'
       )}
     >
@@ -54,17 +54,17 @@ const LinearAppSidebar = () => {
     {
       title: 'Overview',
       url: baseUrl,
-      icon: () => <HomeIcon className="h-5 w-5" />,
+      icon: () => <HomeIcon className="size-5" />,
     },
     {
       title: 'Issues',
       url: `${baseUrl}/issues`,
-      icon: () => <LinearIssuesIcon className="h-5 w-5" />,
+      icon: () => <LinearIssuesIcon className="size-5" />,
     },
     {
       title: 'Projects',
       url: `${baseUrl}/projects`,
-      icon: () => <LinearProjectsIcon className="h-5 w-5" />,
+      icon: () => <LinearProjectsIcon className="size-5" />,
     },
   ];
 
@@ -76,10 +76,10 @@ const LinearAppSidebar = () => {
         </SidebarHeader>
         <SidebarContent className="flex-1 overflow-y-auto px-[15px] py-0 group-data-[collapsible=icon]:px-0">
           <div className="flex items-center gap-3 mb-6 px-[2px]">
-            <div className="size-8 rounded-lg bg-[#191919] border border-[#2E2E2E] flex items-center justify-center">
-              <LinearIcon className="size-5 text-white" />
+            <div className="size-8 rounded-lg bg-surface-1 border border-border-default flex items-center justify-center">
+              <LinearIcon className="size-5 text-foreground" />
             </div>
-            <h1 className="text-lg font-semibold text-white">Linear</h1>
+            <h1 className="text-lg font-semibold text-foreground">Linear</h1>
           </div>
           <SidebarGroup>
             <SidebarMenu className="flex flex-col gap-[8px] w-full">

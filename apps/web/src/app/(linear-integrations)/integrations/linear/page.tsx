@@ -22,9 +22,9 @@ export default function LinearRootPage() {
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
         <div className="w-full max-w-md text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-6">
-            <LinearIcon className="w-8 h-8 text-white" />
+            <LinearIcon className="w-8 h-8 text-foreground" />
           </div>
-          <h1 className="text-2xl font-semibold text-white mb-2">
+          <h1 className="text-2xl font-semibold text-foreground mb-2">
             Connect Linear
           </h1>
           <p className="text-sm text-neutral-400 mb-8 max-w-sm mx-auto leading-relaxed">

@@ -24,10 +24,10 @@ export function BountyStatistic({
   return (
     <div className="relative min-w-[200px] bg-transparent p-8">
       {/* Corner brackets */}
-      <div className="absolute top-0 left-0 h-6 w-6 border-[#282828] border-t border-l" />
-      <div className="absolute top-0 right-0 h-6 w-6 border-[#282828] border-t border-r" />
-      <div className="absolute bottom-0 left-0 h-6 w-6 border-[#282828] border-b border-l" />
-      <div className="absolute right-0 bottom-0 h-6 w-6 border-[#282828] border-r border-b" />
+      <div className="absolute top-0 left-0 h-6 w-6 border-border-subtle border-t border-l" />
+      <div className="absolute top-0 right-0 h-6 w-6 border-border-subtle border-t border-r" />
+      <div className="absolute bottom-0 left-0 h-6 w-6 border-border-subtle border-b border-l" />
+      <div className="absolute right-0 bottom-0 h-6 w-6 border-border-subtle border-r border-b" />
 
       <div className={`mb-2 font-bold text-4xl ${color}`}>
         <NumberFlow

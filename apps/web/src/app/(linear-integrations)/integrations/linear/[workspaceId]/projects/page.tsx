@@ -24,9 +24,9 @@ export default function LinearProjectsPage() {
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
         <div className="w-full max-w-md text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-6">
-            <LinearIcon className="w-8 h-8 text-white" />
+            <LinearIcon className="w-8 h-8 text-foreground" />
           </div>
-          <h1 className="text-2xl font-semibold text-white mb-2">
+          <h1 className="text-2xl font-semibold text-foreground mb-2">
             Connect Linear
           </h1>
           <p className="text-sm text-neutral-400 mb-6">
@@ -48,7 +48,7 @@ export default function LinearProjectsPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-semibold text-white mb-1">Projects</h1>
+          <h1 className="text-2xl font-semibold text-foreground mb-1">Projects</h1>
           <p className="text-sm text-neutral-500">
             {linearWorkspace?.name} • {projects.length} {projects.length === 1 ? 'project' : 'projects'}
           </p>
@@ -58,7 +58,7 @@ export default function LinearProjectsPage() {
           href={linearWorkspace?.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="h-9 px-4 rounded-lg border border-white/10 text-sm text-white hover:bg-white/5 transition-colors flex items-center gap-2"
+          className="h-9 px-4 rounded-lg border border-white/10 text-sm text-foreground hover:bg-white/5 transition-colors flex items-center gap-2"
         >
           <ExternalLink className="w-4 h-4" />
           <span className="hidden sm:inline">Open in Linear</span>
@@ -75,7 +75,7 @@ export default function LinearProjectsPage() {
           <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-3">
             <Inbox className="w-5 h-5 text-neutral-500" />
           </div>
-          <p className="text-sm text-white">No projects yet</p>
+          <p className="text-sm text-foreground">No projects yet</p>
           <p className="text-xs text-neutral-500 mt-1">
             Projects from your workspace will appear here
           </p>
@@ -103,14 +103,14 @@ export default function LinearProjectsPage() {
                   href={project.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="h-8 w-8 rounded-lg border border-white/10 text-white hover:bg-white/5 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100"
+                  className="h-8 w-8 rounded-lg border border-white/10 text-foreground hover:bg-white/5 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>
 
-              <h3 className="text-sm font-medium text-white mb-2 truncate">
+              <h3 className="text-sm font-medium text-foreground mb-2 truncate">
                 {project.name}
               </h3>
 

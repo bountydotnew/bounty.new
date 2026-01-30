@@ -70,7 +70,7 @@ export default function OnboardingStep1Page() {
       skipLabel="Skip"
       onSkip={() => completeStepMutation.mutate()}
     >
-      <div className="w-full text-center text-sm text-[#929292]">
+      <div className="w-full text-center text-sm text-text-tertiary">
         We've added a 20% discount to your account for the Pro plan.
       </div>
     </OnboardingDialog>

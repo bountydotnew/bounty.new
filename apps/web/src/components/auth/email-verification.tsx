@@ -263,7 +263,7 @@ export function EmailVerification({
     if (showResendSuggestion) {
       return 'text-primary hover:text-primary/80 underline font-semibold animate-pulse';
     }
-    return 'text-white hover:text-gray-200 underline';
+    return 'text-foreground hover:text-gray-200 underline';
   };
 
   return (
@@ -273,13 +273,13 @@ export function EmailVerification({
           <Bounty className="w-8 h-8 text-primary" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-2xl font-semibold text-white">
+          <h2 className="text-2xl font-semibold text-foreground">
             Check your email
           </h2>
           <p className="text-gray-400 text-sm leading-relaxed">
             We sent a verification code to
             <br />
-            <span className="font-medium text-white">{email}</span>
+            <span className="font-medium text-foreground">{email}</span>
           </p>
         </div>
       </div>

@@ -108,12 +108,12 @@ export default function GitHubInstallationPage() {
       width: '1fr',
       render: (repo) => (
         <div className="flex items-center gap-2 min-w-0">
-          <GithubIcon className="h-4 w-4 text-[#888] shrink-0" />
+          <GithubIcon className="h-4 w-4 text-text-muted shrink-0" />
           <a
             href={repo.htmlUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="truncate hover:text-white transition-colors"
+            className="truncate hover:text-foreground transition-colors"
           >
             {repo.name}
           </a>
@@ -121,7 +121,7 @@ export default function GitHubInstallationPage() {
             href={repo.htmlUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#5A5A5A] hover:text-white shrink-0"
+            className="text-text-tertiary hover:text-foreground shrink-0"
           >
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
@@ -137,7 +137,7 @@ export default function GitHubInstallationPage() {
       errorMessage="Failed to load installation details. Please try again."
     >
       <IntegrationHeader
-        icon={<GithubIcon className="h-8 w-8 text-white" />}
+        icon={<GithubIcon className="h-8 w-8 text-foreground" />}
         title={installation?.installation?.account.login || 'GitHub'}
         description="Connect your repositories so that bounty.new can open Pull Requests for issues that it finds"
       />

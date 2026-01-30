@@ -32,17 +32,17 @@ export function ActivityCard() {
   const { activities, isLoadingActivities } = state;
 
   return (
-    <Card className="border border-[#383838]/20 bg-[#1D1D1D]">
+    <Card className="border border-border-strong/20 bg-surface-1">
       <CardHeader>
-        <CardTitle className="text-white">Recent Activity</CardTitle>
+        <CardTitle className="text-foreground">Recent Activity</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoadingActivities ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <div className="animate-pulse" key={i}>
-                <div className="mb-1 h-4 w-3/4 rounded bg-[#383838]" />
-                <div className="h-3 w-1/2 rounded bg-[#383838]" />
+                <div className="mb-1 h-4 w-3/4 rounded bg-surface-3" />
+                <div className="h-3 w-1/2 rounded bg-surface-3" />
               </div>
             ))}
           </div>
@@ -51,7 +51,7 @@ export function ActivityCard() {
             {activities.map((activity) => (
               <div className="flex items-start gap-3" key={activity.id}>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-sm text-white">
+                  <p className="font-medium text-sm text-foreground">
                     {activity.title}
                   </p>
                   <p

@@ -1,22 +1,18 @@
 import { CircleCheckIcon, CircleX, Info, TriangleAlert } from 'lucide-react';
-import type { ToasterProps } from 'sonner';
-import { toast } from '@bounty/ui/components/toast';
+import { toastManager } from '@bounty/ui/components/toast';
 import type { ReasonCode } from '@bounty/types';
 
+// Legacy toast options (kept for reference, but coss toast handles styling differently)
 export const TOAST_OPTIONS = {
-  unstyled: true,
-  classNames: {
-    toast:
-      'group toast flex flex-row gap-2 !items-start !bg-[#191919] !p-4 !rounded-xl !border !border-border/70 !min-w-[250px] !max-w-[600px]',
-  },
-} satisfies ToasterProps['toastOptions'];
+  // coss toast is styled through the ToastProvider component
+};
 
 export const TOAST_ICONS = {
   error: <CircleX className="size-4" />,
   success: <CircleCheckIcon className="size-4" />,
   warning: <TriangleAlert className="size-4" />,
   info: <Info className="size-4" />,
-} satisfies ToasterProps['icons'];
+};
 
 const MESSAGE_BY_REASON: Record<ReasonCode, string> = {
   unauthenticated: 'Please sign in to continue.',
@@ -43,5 +39,53 @@ export function showAppErrorToast(
 
   const message =
     opts?.messageOverride || (reason ? MESSAGE_BY_REASON[reason] : undefined);
-  toast.error(message || 'Something went wrong. Please try again.');
+  
+  toastManager.add({
+    title: message || 'Something went wrong. Please try again.',
+    type: 'error',
+  });
 }
+
+// Compatibility layer for the old sonner toast API
+export const toast = {
+  success: (message: string, opts?: { description?: string }) => {
+    toastManager.add({
+      title: message,
+      description: opts?.description,
+      type: 'success',
+    });
+  },
+  error: (message: string, opts?: { description?: string }) => {
+    toastManager.add({
+      title: message,
+      description: opts?.description,
+      type: 'error',
+    });
+  },
+  warning: (message: string, opts?: { description?: string }) => {
+    toastManager.add({
+      title: message,
+      description: opts?.description,
+      type: 'warning',
+    });
+  },
+  info: (message: string, opts?: { description?: string }) => {
+    toastManager.add({
+      title: message,
+      description: opts?.description,
+      type: 'info',
+    });
+  },
+  loading: (message: string, opts?: { description?: string }) => {
+    return toastManager.add({
+      title: message,
+      description: opts?.description,
+      type: 'loading',
+    });
+  },
+  dismiss: (id?: string) => {
+    if (id) {
+      toastManager.close(id);
+    }
+  },
+};

@@ -66,7 +66,12 @@ export interface LinearUser {
  * Bounty comment templates for Linear issues
  */
 export const LINEAR_COMMENT_TEMPLATES = {
-  bountyCreated: (bountyTitle: string, amount: string, currency: string, bountyUrl: string) =>
+  bountyCreated: (
+    bountyTitle: string,
+    amount: string,
+    currency: string,
+    bountyUrl: string
+  ) =>
     `🎯 **Bounty Created**
 
 A bounty has been created for this issue on [bounty.new](${bountyUrl}).
@@ -77,16 +82,30 @@ A bounty has been created for this issue on [bounty.new](${bountyUrl}).
 
 View details: ${bountyUrl}`,
 
-  bountyFunded: (amount: string, currency: string, deadline?: string, bountyUrl: string) =>
+  bountyFunded: (
+    amount: string,
+    currency: string,
+    bountyUrl: string,
+    deadline?: string
+  ) =>
     `💰 **Bounty Funded**
 
 This bounty is now live and accepting submissions!
 
-**Amount:** ${amount} ${currency}${deadline ? `\n**Deadline:** ${deadline}` : ''}
+**Amount:** ${amount} ${currency}${
+      deadline
+        ? `
+**Deadline:** ${deadline}`
+        : ''
+    }
 
 View and submit: ${bountyUrl}`,
 
-  submissionReceived: (submitter: string, timestamp: string, bountyUrl: string) =>
+  submissionReceived: (
+    submitter: string,
+    timestamp: string,
+    bountyUrl: string
+  ) =>
     `📥 **New Submission**
 
 A new submission has been received for this bounty.
@@ -149,7 +168,9 @@ export class LinearDriver {
       if (!org) return null;
 
       // Construct the workspace URL from the URL key
-      const workspaceUrl = org.urlKey ? `https://linear.app/${org.urlKey}` : 'https://linear.app';
+      const workspaceUrl = org.urlKey
+        ? `https://linear.app/${org.urlKey}`
+        : 'https://linear.app';
 
       return {
         id: org.id,
@@ -173,7 +194,11 @@ export class LinearDriver {
     projectId?: string;
     first?: number;
     after?: string;
-  }): Promise<{ issues: LinearIssue[]; hasNextPage: boolean; endCursor?: string }> {
+  }): Promise<{
+    issues: LinearIssue[];
+    hasNextPage: boolean;
+    endCursor?: string;
+  }> {
     try {
       // Build query params without undefined values
       const query: { first?: number; after?: string } = {
@@ -190,15 +215,20 @@ export class LinearDriver {
         if (!issue) continue;
 
         // Fetch related data
-        const status = issue.status ? await issue.status : null;
-        const assignee = issue.assignee ? await issue.assignee : null;
-        const project = issue.project ? await issue.project : null;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const issueAny = issue as any;
+        const status = issueAny.status ? await issueAny.status : null;
+        const assignee = issueAny.assignee ? await issueAny.assignee : null;
+        const project = issueAny.project ? await issueAny.project : null;
 
         // Filter by status and priority after fetching
         if (filters?.status && status && !filters.status.includes(status.id)) {
           continue;
         }
-        if (filters?.priority && !filters.priority.includes(issue.priority ?? 0)) {
+        if (
+          filters?.priority &&
+          !filters.priority.includes(issue.priority ?? 0)
+        ) {
           continue;
         }
 
@@ -239,7 +269,11 @@ export class LinearDriver {
       const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
       const endCursor = connection?.pageInfo?.endCursor ?? undefined;
 
-      const result: { issues: LinearIssue[]; hasNextPage: boolean; endCursor?: string } = {
+      const result: {
+        issues: LinearIssue[];
+        hasNextPage: boolean;
+        endCursor?: string;
+      } = {
         issues,
         hasNextPage,
       };
@@ -261,9 +295,11 @@ export class LinearDriver {
       const issue = await this.client.issue(issueId);
       if (!issue) return null;
 
-      const status = issue.status ? await issue.status : null;
-      const assignee = issue.assignee ? await issue.assignee : null;
-      const project = issue.project ? await issue.project : null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const issueAny = issue as any;
+      const status = issueAny.status ? await issueAny.status : null;
+      const assignee = issueAny.assignee ? await issueAny.assignee : null;
+      const project = issueAny.project ? await issueAny.project : null;
 
       return {
         id: issue.id,
@@ -316,13 +352,18 @@ export class LinearDriver {
       for (const project of nodes) {
         if (!project) continue;
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const projectAny = project as any;
         result.push({
           id: project.id,
           name: project.name,
           url: project.url ?? '',
           description: project.description ?? null,
-          status: (typeof project.status === 'string' ? project.status : project.status?.name) ?? 'Unknown',
-          icon: project.icon ?? null,
+          status:
+            (typeof projectAny.status === 'string'
+              ? projectAny.status
+              : projectAny.status?.name) ?? 'Unknown',
+          icon: projectAny.icon ?? null,
         });
       }
 
@@ -336,20 +377,25 @@ export class LinearDriver {
   /**
    * Create a comment on an issue
    */
-  async createComment(issueId: string, body: string): Promise<{ id: string; url: string } | null> {
+  async createComment(
+    issueId: string,
+    body: string
+  ): Promise<{ id: string; url: string } | null> {
     try {
       const commentPayload = await this.client.createComment({
         issueId,
         body,
       });
 
-      if (!commentPayload.success || !commentPayload.comment) {
+      if (!(commentPayload.success && commentPayload.comment)) {
         return null;
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const comment = commentPayload.comment as any;
       return {
-        id: commentPayload.comment.id,
-        url: commentPayload.comment.url ?? '',
+        id: comment.id,
+        url: comment.url ?? '',
       };
     } catch (error) {
       console.error('Failed to create Linear comment:', error);
@@ -360,7 +406,9 @@ export class LinearDriver {
   /**
    * Convert Linear priority number to label
    */
-  private getPriorityLabel(priority: number): 'Urgent' | 'High' | 'Medium' | 'Low' | 'No Priority' {
+  private getPriorityLabel(
+    priority: number
+  ): 'Urgent' | 'High' | 'Medium' | 'Low' | 'No Priority' {
     switch (priority) {
       case 4:
         return 'Urgent';
@@ -385,7 +433,9 @@ export class LinearDriver {
   > {
     try {
       const viewer = await this.client.viewer;
-      if (!viewer?.organizationId) return [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const viewerAny = viewer as any;
+      if (!viewerAny?.organizationId) return [];
 
       // For now, return empty as workflowStates may not be directly accessible
       // This can be enhanced later based on SDK capabilities
@@ -399,12 +449,19 @@ export class LinearDriver {
   /**
    * Get teams from the workspace
    */
-  async getTeams(): Promise<Array<{ id: string; name: string; key: string; description: string }>> {
+  async getTeams(): Promise<
+    Array<{ id: string; name: string; key: string; description: string }>
+  > {
     try {
       const teams = await this.client.teams({ first: 100 });
       const nodes = teams?.nodes ?? [];
 
-      const result: Array<{ id: string; name: string; key: string; description: string }> = [];
+      const result: Array<{
+        id: string;
+        name: string;
+        key: string;
+        description: string;
+      }> = [];
 
       for (const team of nodes) {
         if (!team) continue;

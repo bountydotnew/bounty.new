@@ -26,12 +26,12 @@ export function IntegrationDetailPage({
 
       {isLoading && (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-5 w-5 animate-spin text-[#5A5A5A]" />
+          <Loader2 className="h-5 w-5 animate-spin text-text-tertiary" />
         </div>
       )}
 
       {!isLoading && error && (
-        <p className="text-sm text-[#5A5A5A]">{errorMessage}</p>
+        <p className="text-sm text-text-tertiary">{errorMessage}</p>
       )}
 
       {!(isLoading || error) && children}

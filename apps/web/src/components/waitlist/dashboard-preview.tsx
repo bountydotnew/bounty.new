@@ -99,8 +99,8 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
     return (
       <div className="w-full max-w-[800px] mx-auto">
         <div className="animate-pulse">
-          <div className="h-8 bg-[#191919] rounded mb-4 w-2/3" />
-          <div className="h-4 bg-[#191919] rounded mb-8 w-1/2" />
+          <div className="h-8 bg-surface-1 rounded mb-4 w-2/3" />
+          <div className="h-4 bg-surface-1 rounded mb-8 w-1/2" />
         </div>
       </div>
     );
@@ -118,12 +118,12 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
   return (
     <div className="w-full max-w-[800px] mx-auto">
       <div className="mb-8">
-        <h2 className="text-[32px] font-medium text-white mb-2">
+        <h2 className="text-[32px] font-medium text-foreground mb-2">
           You're on the list!
         </h2>
-        <p className="text-[#929292] text-base">
+        <p className="text-text-tertiary text-base">
           Your bounty draft is saved. We'll notify you at{' '}
-          <span className="text-white">{email}</span> when bounty.new launches.
+          <span className="text-foreground">{email}</span> when bounty.new launches.
         </p>
       </div>
 
@@ -159,29 +159,29 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
           />
         </div>
       ) : bountyDraft ? (
-        <div className="rounded-xl bg-[#191919] border border-[#232323] overflow-hidden mb-6">
-          <div className="p-5 border-b border-[#232323]">
+        <div className="rounded-xl bg-surface-1 border border-border-subtle overflow-hidden mb-6">
+          <div className="p-5 border-b border-border-subtle">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-full bg-[#2A2A2A] text-[#929292] text-xs">
+                <span className="px-2 py-0.5 rounded-full bg-surface-hover text-text-tertiary text-xs">
                   Draft
                 </span>
                 {bountyDraft.price && (
-                  <span className="px-2 py-0.5 rounded-full bg-[#1E3A2F] text-[#4ADE80] text-xs">
+                  <span className="px-2 py-0.5 rounded-full bg-success-surface text-success text-xs">
                     ${formatPriceString(bountyDraft.price)}
                   </span>
                 )}
                 {bountyDraft.deadline && (
-                  <span className="px-2 py-0.5 rounded-full bg-[#2A2A2A] text-[#929292] text-xs">
+                  <span className="px-2 py-0.5 rounded-full bg-surface-hover text-text-tertiary text-xs">
                     Due: {formatDateLong(bountyDraft.deadline)}
                   </span>
                 )}
               </div>
             </div>
-            <h3 className="text-white text-xl font-medium mb-2">
+            <h3 className="text-foreground text-xl font-medium mb-2">
               {bountyDraft.title || 'Your first bounty'}
             </h3>
-            <p className="text-[#929292] text-sm">
+            <p className="text-text-tertiary text-sm">
               {bountyDraft.description ||
                 "This bounty will be published when bounty.new launches. You'll be notified via email."}
             </p>
@@ -197,17 +197,17 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
                   className="w-8 h-8 rounded-full"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-[#232323] flex items-center justify-center">
-                  <span className="text-[#929292] text-xs">
+                <div className="w-8 h-8 rounded-full bg-surface-3 flex items-center justify-center">
+                  <span className="text-text-tertiary text-xs">
                     {(session?.user?.name || 'Y').charAt(0).toUpperCase()}
                   </span>
                 </div>
               )}
-              <span className="text-[#929292] text-sm">You</span>
+              <span className="text-text-tertiary text-sm">You</span>
             </div>
             <button
               onClick={() => setIsEditing(true)}
-              className="text-sm text-[#5A5A5A] hover:text-white transition-colors"
+              className="text-sm text-text-tertiary hover:text-foreground transition-colors"
             >
               Edit draft
             </button>
@@ -216,10 +216,10 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
       ) : (
         <div className="mb-6">
           <div className="mb-4 text-center">
-            <h3 className="text-white text-xl font-medium mb-2">
+            <h3 className="text-foreground text-xl font-medium mb-2">
               Create your bounty draft
             </h3>
-            <p className="text-[#929292] text-sm">
+            <p className="text-text-tertiary text-sm">
               This is optional. You can skip and just join the waitlist.
             </p>
           </div>
@@ -240,31 +240,31 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
 
       {/* Stats preview */}
       <div className="mt-6 grid grid-cols-3 gap-4">
-        <div className="rounded-xl bg-[#191919] border border-[#232323] p-4">
-          <p className="text-[#5A5A5A] text-sm mb-1">Position</p>
-          <p className="text-white text-2xl font-medium">
+        <div className="rounded-xl bg-surface-1 border border-border-subtle p-4">
+          <p className="text-text-tertiary text-sm mb-1">Position</p>
+          <p className="text-foreground text-2xl font-medium">
             {entry.position ? `#${entry.position}` : '—'}
           </p>
         </div>
-        <div className="rounded-xl bg-[#191919] border border-[#232323] p-4">
-          <p className="text-[#5A5A5A] text-sm mb-1">Draft bounties</p>
-          <p className="text-white text-2xl font-medium">
+        <div className="rounded-xl bg-surface-1 border border-border-subtle p-4">
+          <p className="text-text-tertiary text-sm mb-1">Draft bounties</p>
+          <p className="text-foreground text-2xl font-medium">
             {bountyDraft ? 1 : 0}
           </p>
         </div>
-        <div className="rounded-xl bg-[#191919] border border-[#232323] p-4">
-          <p className="text-[#5A5A5A] text-sm mb-1">Est. launch</p>
-          <p className="text-white text-2xl font-medium">Q1 '25</p>
+        <div className="rounded-xl bg-surface-1 border border-border-subtle p-4">
+          <p className="text-text-tertiary text-sm mb-1">Est. launch</p>
+          <p className="text-foreground text-2xl font-medium">Q1 '25</p>
         </div>
       </div>
 
       {/* Share CTA */}
-      <div className="mt-8 rounded-xl bg-[#191919] border border-[#232323] p-5 flex items-center justify-between">
+      <div className="mt-8 rounded-xl bg-surface-1 border border-border-subtle p-5 flex items-center justify-between">
         <div>
-          <h4 className="text-white text-base font-medium mb-1">
+          <h4 className="text-foreground text-base font-medium mb-1">
             Skip the line
           </h4>
-          <p className="text-[#929292] text-sm">
+          <p className="text-text-tertiary text-sm">
             Share your referral link to move up the waitlist
           </p>
         </div>

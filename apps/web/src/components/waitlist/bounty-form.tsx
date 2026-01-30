@@ -257,23 +257,23 @@ export function BountyForm({
 
   return (
     <div className="w-full max-w-[95vw] sm:max-w-[703px] mx-auto">
-      <div className="w-full min-h-[140px] sm:min-h-[180px] rounded-[12px] sm:rounded-[21px] bg-[#191919] border border-[#232323] flex flex-col px-2 sm:px-0">
+      <div className="w-full min-h-[140px] sm:min-h-[180px] rounded-[12px] sm:rounded-[21px] bg-surface-1 border border-border-subtle flex flex-col px-2 sm:px-0">
         {/* Top row: Chips */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 px-1.5 sm:px-[14px] pt-2 sm:pt-3 pb-1.5 sm:pb-2 overflow-x-auto no-scrollbar">
           {/* Title chip */}
           <Popover open={titlePopoverOpen} onOpenChange={setTitlePopoverOpen}>
             <PopoverTrigger asChild>
-              <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-[#141414] border border-solid border-[#232323] hover:border-[#333] transition-colors cursor-pointer">
+              <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-surface-2 border border-solid border-border-subtle hover:border-border-default transition-colors cursor-pointer">
                 <span
-                  className={`text-[16px] leading-5 font-sans ${title ? 'text-white' : 'text-[#7C7878]'}`}
+                  className={`text-[16px] leading-5 font-sans ${title ? 'text-foreground' : 'text-text-muted'}`}
                 >
                   {title || 'Title'}
                 </span>
-                <ChevronSortIcon className="size-2 text-[#7D7878] shrink-0" />
+                <ChevronSortIcon className="size-2 text-text-muted shrink-0" />
               </div>
             </PopoverTrigger>
             <PopoverContent
-              className="w-64 p-3 bg-[#191919] border-[#232323] rounded-xl"
+              className="w-64 p-3 bg-surface-1 border-border-subtle rounded-xl"
               align="start"
               sideOffset={8}
             >
@@ -283,7 +283,7 @@ export function BountyForm({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Enter a title"
-                className="w-full bg-transparent text-white text-[16px] leading-5 outline-none placeholder:text-[#5A5A5A]"
+                className="w-full bg-transparent text-foreground text-[16px] leading-5 outline-none placeholder:text-text-tertiary"
                 autoFocus
               />
             </PopoverContent>
@@ -292,24 +292,24 @@ export function BountyForm({
           {/* Price chip */}
           <Popover open={pricePopoverOpen} onOpenChange={setPricePopoverOpen}>
             <PopoverTrigger asChild>
-              <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-[#141414] border border-solid border-[#232323] hover:border-[#333] transition-colors cursor-pointer">
+              <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-surface-2 border border-solid border-border-subtle hover:border-border-default transition-colors cursor-pointer">
                 <span
-                  className={`text-[16px] leading-5 font-sans ${price ? 'text-white' : 'text-[#7C7878]'}`}
+                  className={`text-[16px] leading-5 font-sans ${price ? 'text-foreground' : 'text-text-muted'}`}
                 >
                   {price
                     ? price.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                     : 'Price'}
                 </span>
-                <ChevronSortIcon className="size-2 text-[#7D7878] shrink-0" />
+                <ChevronSortIcon className="size-2 text-text-muted shrink-0" />
               </div>
             </PopoverTrigger>
             <PopoverContent
-              className="w-48 p-3 bg-[#191919] border-[#232323] rounded-xl"
+              className="w-48 p-3 bg-surface-1 border-border-subtle rounded-xl"
               align="start"
               sideOffset={8}
             >
               <div className="flex items-center gap-2">
-                <span className="text-[#5A5A5A] text-[16px]">$</span>
+                <span className="text-text-tertiary text-[16px]">$</span>
                 <input
                   ref={priceRef}
                   type="text"
@@ -320,7 +320,7 @@ export function BountyForm({
                     setPrice(cleaned);
                   }}
                   placeholder="0.00"
-                  className="flex-1 bg-transparent text-white text-[16px] leading-5 outline-none placeholder:text-[#5A5A5A]"
+                  className="flex-1 bg-transparent text-foreground text-[16px] leading-5 outline-none placeholder:text-text-tertiary"
                   autoFocus
                 />
               </div>
@@ -331,11 +331,11 @@ export function BountyForm({
           <DeadlineChip value={deadline} onChange={setDeadline} />
 
           {/* Divider */}
-          {/* <span className="text-[#5A5A5A] text-base shrink-0">or</span> */}
+          {/* <span className="text-text-tertiary text-base shrink-0">or</span> */}
 
           {/* GitHub import chip (placeholder) */}
           {/* <button 
-          className="rounded-[14px] px-[15px] py-1.5 bg-[#313030] text-base text-[#828181] transition-colors flex items-center gap-[5px] shrink-0 h-[31.9965px] opacity-50 cursor-not-allowed"
+          className="rounded-[14px] px-[15px] py-1.5 bg-surface-3 text-base text-text-muted transition-colors flex items-center gap-[5px] shrink-0 h-[31.9965px] opacity-50 cursor-not-allowed"
           disabled
         >
           <GitHub className="w-4 h-4 shrink-0" />
@@ -350,7 +350,7 @@ export function BountyForm({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Start typing your description..."
-            className="w-full bg-transparent text-[#5A5A5A] text-sm sm:text-base outline-none placeholder:text-[#5A5A5A] resize-none min-h-[80px] sm:min-h-[100px]"
+            className="w-full bg-transparent text-text-tertiary text-sm sm:text-base outline-none placeholder:text-text-tertiary resize-none min-h-[80px] sm:min-h-[100px]"
           />
         </div>
 
@@ -361,7 +361,7 @@ export function BountyForm({
               type="button"
               onClick={onCancel}
               disabled={isSubmitting}
-              className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+              className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-surface-3 text-foreground text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
             >
               Cancel
             </button>
@@ -371,7 +371,7 @@ export function BountyForm({
               type="button"
               onClick={handleSkipAndJoinWaitlist}
               disabled={isSubmitting}
-              className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+              className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-surface-3 text-foreground text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
             >
               <span className="hidden sm:inline">
                 {isSubmitting ? 'Redirecting...' : 'Skip & join waitlist'}
@@ -409,7 +409,7 @@ export function BountyForm({
           </button>
         </div>
       </div>
-      <div className="text-[#5A5A5A] text-[10px] sm:text-sm text-center pt-2 sm:pt-3 px-2 sm:px-0">
+      <div className="text-text-tertiary text-[10px] sm:text-sm text-center pt-2 sm:pt-3 px-2 sm:px-0">
         Creating a draft bounty is optional. This step is not required to sign
         up.
       </div>

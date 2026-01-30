@@ -67,33 +67,6 @@ export function Dropdown() {
   } = actions;
   const { additionalActions, onDelete, onShare } = meta;
 
-  // Build base actions from permissions - properly typed as ActionItem
-  const baseActions: ActionItem[] = [
-    ...(canEdit
-      ? [
-          {
-            key: 'edit',
-            label: 'Edit',
-            onSelect: edit,
-            icon: <Edit className="h-3.5 w-3.5" />,
-          },
-        ]
-      : []),
-    ...(canDelete && onDelete
-      ? [
-          {
-            key: 'delete',
-            label: 'Delete',
-            onSelect: onDelete,
-            icon: <Trash2 className="h-3.5 w-3.5" />,
-          },
-        ]
-      : []),
-  ];
-
-  // Merge with additional actions
-  const allActions = [...baseActions, ...(additionalActions || [])];
-
   const handleShare = () => {
     if (onShare) {
       return onShare();
@@ -101,12 +74,19 @@ export function Dropdown() {
     share();
   };
 
+  // Separate additional actions into non-destructive and destructive
+  const nonDestructiveActions =
+    additionalActions?.filter(
+      (a) =>
+        !(a.className?.includes('destructive') || a.className?.includes('red'))
+    ) || [];
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
           aria-label="Open actions"
-          className="rounded-md border border-neutral-700 bg-neutral-800/40 p-1 text-neutral-300 hover:bg-neutral-700/40"
+          className="rounded-lg border border-border-subtle bg-surface-1 p-1.5 text-text-tertiary hover:bg-surface-hover hover:text-foreground"
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
           size="icon"
@@ -116,114 +96,140 @@ export function Dropdown() {
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="z-10 w-48 rounded-md border border-neutral-800 bg-neutral-900 p-1 shadow">
-        {/* Additional actions (like cancellation options) */}
-        {allActions.map((action) => {
-          const menuItem = (
+      <DropdownMenuContent className="z-10 w-52 rounded-lg border border-border-subtle bg-surface-1 p-1.5 shadow-lg">
+        {/* Primary actions group */}
+        <div className="flex flex-col gap-0.5">
+          {/* Edit action */}
+          {canEdit && (
             <DropdownMenuItem
-              className={action.className || 'text-neutral-200 hover:bg-neutral-800'}
-              disabled={action.disabled}
-              key={action.key}
-              onClick={action.disabled ? undefined : action.onSelect}
+              className="text-foreground hover:bg-surface-hover rounded-md"
+              onClick={edit}
             >
-              {action.icon}
-              {action.label}
+              <Edit className="h-3.5 w-3.5" />
+              Edit bounty
             </DropdownMenuItem>
-          );
+          )}
 
-          if (action.tooltip && action.disabled) {
-            return (
-              <TooltipProvider key={action.key}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>{menuItem}</div>
-                  </TooltipTrigger>
-                  <TooltipContent side="left" className="max-w-[200px] text-center">
-                    <p>{action.tooltip}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            );
-          }
-
-          return menuItem;
-        })}
-
-        {/* Share action */}
-        <DropdownMenuItem
-          className="text-neutral-200 hover:bg-neutral-800"
-          onClick={handleShare}
-        >
-          <Share2 className="h-3.5 w-3.5" />
-          Share
-        </DropdownMenuItem>
-
-        {/* Bookmark action */}
-        <DropdownMenuItem
-          className="text-neutral-200 hover:bg-neutral-800"
-          onClick={toggleBookmark}
-        >
-          <Bookmark
-            className={`h-3.5 w-3.5 ${bookmarked ? 'fill-white' : ''}`}
-          />
-          {bookmarked ? 'Remove bookmark' : 'Bookmark'}
-        </DropdownMenuItem>
-
-        {/* GitHub sync actions */}
-        <DropdownMenuItem
-          className="text-neutral-200 hover:bg-neutral-800"
-          onClick={checkGithubSync}
-          disabled={isCheckGithubSyncPending}
-        >
-          <RefreshCw
-            className={`h-3.5 w-3.5 ${
-              isCheckGithubSyncPending ? 'animate-spin' : ''
-            }`}
-          />
-          Check GitHub sync
-        </DropdownMenuItem>
-
-        {/* Create issue or sync to GitHub */}
-        {repositoryUrl && !issueUrl ? (
+          {/* Share action */}
           <DropdownMenuItem
-            className="text-neutral-200 hover:bg-neutral-800"
-            onClick={createGithubIssue}
-            disabled={isCreateGithubIssuePending}
+            className="text-foreground hover:bg-surface-hover rounded-md"
+            onClick={handleShare}
           >
-            <GithubIcon
+            <Share2 className="h-3.5 w-3.5" />
+            Share
+          </DropdownMenuItem>
+
+          {/* Bookmark action */}
+          <DropdownMenuItem
+            className="text-foreground hover:bg-surface-hover rounded-md"
+            onClick={toggleBookmark}
+          >
+            <Bookmark
+              className={`h-3.5 w-3.5 ${bookmarked ? 'fill-foreground' : ''}`}
+            />
+            {bookmarked ? 'Remove bookmark' : 'Bookmark'}
+          </DropdownMenuItem>
+        </div>
+
+        {/* GitHub actions group */}
+        <div className="flex flex-col gap-0.5 mt-2 pt-2 border-t border-border-subtle">
+          <DropdownMenuItem
+            className="text-foreground hover:bg-surface-hover rounded-md"
+            onClick={checkGithubSync}
+            disabled={isCheckGithubSyncPending}
+          >
+            <RefreshCw
               className={`h-3.5 w-3.5 ${
-                isCreateGithubIssuePending ? 'animate-pulse' : ''
+                isCheckGithubSyncPending ? 'animate-spin' : ''
               }`}
             />
-            Create GitHub issue
+            Check GitHub sync
           </DropdownMenuItem>
-        ) : issueUrl ? (
-          <DropdownMenuItem
-            className="text-neutral-200 hover:bg-neutral-800"
-            onClick={syncToGithub}
-            disabled={isSyncToGithubPending}
-          >
-            <GithubIcon
-              className={`h-3.5 w-3.5 ${
-                isSyncToGithubPending ? 'animate-pulse' : ''
-              }`}
-            />
-            Sync to GitHub
-          </DropdownMenuItem>
-        ) : null}
 
-        {/* Delete action (if available) */}
-        {canDelete && onDelete && (
-          <>
-            <DropdownMenuSeparator className="bg-neutral-800" />
+          {repositoryUrl && !issueUrl && (
             <DropdownMenuItem
-              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+              className="text-foreground hover:bg-surface-hover rounded-md"
+              onClick={createGithubIssue}
+              disabled={isCreateGithubIssuePending}
+            >
+              <GithubIcon
+                className={`h-3.5 w-3.5 ${
+                  isCreateGithubIssuePending ? 'animate-pulse' : ''
+                }`}
+              />
+              Create GitHub issue
+            </DropdownMenuItem>
+          )}
+
+          {issueUrl && (
+            <DropdownMenuItem
+              className="text-foreground hover:bg-surface-hover rounded-md"
+              onClick={syncToGithub}
+              disabled={isSyncToGithubPending}
+            >
+              <GithubIcon
+                className={`h-3.5 w-3.5 ${
+                  isSyncToGithubPending ? 'animate-pulse' : ''
+                }`}
+              />
+              Sync to GitHub
+            </DropdownMenuItem>
+          )}
+        </div>
+
+        {/* Additional non-destructive actions (like cancellation request) */}
+        {nonDestructiveActions.length > 0 && (
+          <div className="flex flex-col gap-0.5 mt-2 pt-2 border-t border-border-subtle">
+            {nonDestructiveActions.map((action) => {
+              const menuItem = (
+                <DropdownMenuItem
+                  className={
+                    action.className ||
+                    'text-foreground hover:bg-surface-hover rounded-md'
+                  }
+                  disabled={action.disabled}
+                  key={action.key}
+                  onClick={action.disabled ? undefined : action.onSelect}
+                >
+                  {action.icon}
+                  {action.label}
+                </DropdownMenuItem>
+              );
+
+              if (action.tooltip && action.disabled) {
+                return (
+                  <TooltipProvider key={action.key}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div>{menuItem}</div>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="left"
+                        className="max-w-[200px] text-center"
+                      >
+                        <p>{action.tooltip}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              }
+
+              return menuItem;
+            })}
+          </div>
+        )}
+
+        {/* Destructive actions at the bottom */}
+        {canDelete && onDelete && (
+          <div className="flex flex-col gap-0.5 mt-2 pt-2 border-t border-border-subtle">
+            <DropdownMenuItem
+              className="text-destructive hover:bg-destructive/10 focus:text-destructive focus:bg-destructive/10 rounded-md"
               onClick={onDelete}
             >
               <Trash2 className="h-3.5 w-3.5" />
               Delete bounty
             </DropdownMenuItem>
-          </>
+          </div>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

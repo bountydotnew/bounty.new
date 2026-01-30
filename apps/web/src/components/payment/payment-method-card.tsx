@@ -34,10 +34,10 @@ export function PaymentMethodCard({
             'transition-all duration-200',
             overflowHidden && 'overflow-hidden',
             selected
-              ? 'bg-[#0B0B09] border border-solid border-[#12121266] outline outline-[#747474] outline-offset-2'
-              : 'bg-[#1F1F1F] border border-solid border-[#232323]',
+              ? 'bg-background border border-solid border-background/40 outline outline-text-muted outline-offset-2'
+              : 'bg-surface-1 border border-solid border-border-subtle',
             disabled && 'opacity-100 cursor-not-allowed',
-            !(disabled || selected ) && 'hover:bg-[#252525]'
+            !(disabled || selected ) && 'hover:bg-surface-2'
           )}
         >
           <div className="flex items-center justify-center shrink-0 relative">{icon}</div>
@@ -45,8 +45,8 @@ export function PaymentMethodCard({
         <div className="flex flex-col items-center gap-1 shrink-0">
           <span
             className={cn(
-              'text-[14px] leading-[18px] text-center text-white font-medium',
-              disabled && 'text-[#747474]'
+              'text-[14px] leading-[18px] text-center text-foreground font-medium',
+              disabled && 'text-text-muted'
             )}
           >
             {label}
@@ -55,7 +55,7 @@ export function PaymentMethodCard({
             <span
               className={cn(
                 'text-[12px] leading-[16px] text-center',
-                disabled ? 'text-[#747474]' : 'text-[#B5B5B5]'
+                disabled ? 'text-text-muted' : 'text-text-secondary'
               )}
             >
               {sublabel}

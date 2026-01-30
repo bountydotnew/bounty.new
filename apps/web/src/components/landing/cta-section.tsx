@@ -24,25 +24,25 @@ export function CTASection() {
   return (
     <section className="py-24 px-8">
       <div className="mx-auto max-w-3xl text-center">
-        <h2 className="text-4xl font-medium tracking-tight text-[#efefef] md:text-5xl">
+        <h2 className="text-4xl font-medium tracking-tight text-foreground md:text-5xl">
           Ship faster. Pay on completion.
         </h2>
-        <p className="mt-6 text-lg text-[#888] leading-relaxed">
-          Create bounties for your projects and only pay when work is done.
-          Let developers compete to solve your problems.
+        <p className="mt-6 text-lg text-text-muted leading-relaxed">
+          Create bounties for your projects and only pay when work is done. Let
+          developers compete to solve your problems.
         </p>
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
           <button
             type="button"
             onClick={handleCreateBounty}
-            className="inline-flex items-center justify-center bg-white text-[#0E0E0E] rounded-full text-sm font-medium hover:bg-[#e5e5e5] transition-colors"
+            className="inline-flex items-center justify-center bg-foreground text-background rounded-full text-sm font-medium hover:bg-foreground/90 transition-colors"
             style={{ padding: '.5em 1.25em .52em' }}
           >
             Create a Bounty
           </button>
           <Link
             href="/pricing"
-            className="inline-flex items-center justify-center bg-[#1a1a1a] text-white rounded-full text-sm font-medium hover:bg-[#252525] transition-colors border border-[#333]"
+            className="inline-flex items-center justify-center bg-surface-1 text-foreground rounded-full text-sm font-medium hover:bg-surface-2 transition-colors border border-border-default"
             style={{ padding: '.5em 1.25em .52em' }}
           >
             View Pricing

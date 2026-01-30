@@ -72,7 +72,7 @@ export default function OnboardingStep4Page() {
           <button
             key={action.id}
             onClick={() => handleActionClick(action)}
-            className="flex items-center justify-between gap-3 px-3 py-2 bg-[#0E0E0E] rounded-md text-sm text-[#929292] hover:text-white hover:bg-[#151515] transition-colors focus:outline-none focus-visible:outline-none"
+            className="flex items-center justify-between gap-3 px-3 py-2 bg-background rounded-md text-sm text-text-tertiary hover:text-foreground hover:bg-surface-1 transition-colors focus:outline-none focus-visible:outline-none"
           >
             {action.label}
             <ArrowRight className="h-3 w-3 shrink-0" />

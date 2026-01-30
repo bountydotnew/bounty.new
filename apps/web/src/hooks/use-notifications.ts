@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
-import { toast } from '@bounty/ui/components/toast';
+import { toast } from '@/context/toast';
 import type { NotificationItem } from '@/types/notifications';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { useRealtime } from '@upstash/realtime/client';

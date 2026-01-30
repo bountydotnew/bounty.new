@@ -91,7 +91,7 @@ export default function ResetPasswordForm() {
     return (
       <div className="w-full max-w-md space-y-6">
         <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-white">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Reset your password
           </h1>
           <p className="text-gray-400 text-sm">Enter your new password below</p>
@@ -134,7 +134,7 @@ export default function ResetPasswordForm() {
             variant="text"
             onClick={() => router.push('/login')}
             disabled={isPending}
-            className="text-sm text-gray-400 hover:text-white"
+            className="text-sm text-gray-400 hover:text-foreground"
           >
             Back to sign in
           </Button>
@@ -146,7 +146,7 @@ export default function ResetPasswordForm() {
   return (
     <div className="w-full max-w-md space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-white">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Forgot your password?
         </h1>
         <p className="text-gray-400 text-sm">
@@ -175,7 +175,7 @@ export default function ResetPasswordForm() {
 
       {emailSent && (
         <div className="space-y-3">
-          <div className="rounded-lg bg-[#1a1a1a] p-4 border border-[#383838]">
+          <div className="rounded-lg bg-surface-1 p-4 border border-border-strong">
             <p className="text-sm text-gray-400 text-center">
               Haven&apos;t received the email? Check your spam folder or resend
               it below.
@@ -198,7 +198,7 @@ export default function ResetPasswordForm() {
           variant="text"
           onClick={() => router.push('/login')}
           disabled={isPending}
-          className="text-sm text-gray-400 hover:text-white"
+          className="text-sm text-gray-400 hover:text-foreground"
         >
           Back to sign in
         </Button>

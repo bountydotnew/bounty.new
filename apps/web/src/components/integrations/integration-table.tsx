@@ -39,7 +39,7 @@ export function IntegrationTable<T>({
   emptyMessage = 'No items found.',
 }: IntegrationTableProps<T>) {
   if (data.length === 0) {
-    return <p className="text-sm text-[#888] py-4">{emptyMessage}</p>;
+    return <p className="text-sm text-text-muted py-4">{emptyMessage}</p>;
   }
 
   // Build grid template based on column widths + optional actions column
@@ -50,10 +50,10 @@ export function IntegrationTable<T>({
     .join(' ');
 
   return (
-    <div className="rounded-lg border border-[#2a2a2a] overflow-hidden">
+    <div className="rounded-lg border border-border-default overflow-hidden">
       {/* Header */}
       <div
-        className="grid gap-4 px-4 py-3 text-sm text-[#888]"
+        className="grid gap-4 px-4 py-3 text-sm text-text-muted"
         style={{ gridTemplateColumns: gridTemplate }}
       >
         {columns.map((col) => (
@@ -66,7 +66,7 @@ export function IntegrationTable<T>({
       {data.map((item) => (
         <div
           key={keyExtractor(item)}
-          className="grid gap-4 px-4 py-3 border-t border-[#2a2a2a] items-center text-sm"
+          className="grid gap-4 px-4 py-3 border-t border-border-default items-center text-sm"
           style={{ gridTemplateColumns: gridTemplate }}
         >
           {columns.map((col) => (
@@ -78,22 +78,22 @@ export function IntegrationTable<T>({
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="h-7 w-7 rounded text-[#555] hover:text-white transition-colors flex items-center justify-center"
+                    className="h-7 w-7 rounded text-text-muted hover:text-foreground transition-colors flex items-center justify-center"
                   >
                     <MoreVertical className="h-4 w-4" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="bg-[#191919] border-[#2a2a2a]"
+                  className="bg-surface-1 border-border-default"
                 >
                   {rowActions.map((action) => (
                     <DropdownMenuItem
                       key={action.label}
                       className={
                         action.variant === 'danger'
-                          ? 'text-red-400 focus:text-red-400 focus:bg-[#232323]'
-                          : 'focus:bg-[#232323]'
+                          ? 'text-red-400 focus:text-red-400 focus:bg-surface-3'
+                          : 'focus:bg-surface-3'
                       }
                       onClick={() => action.onClick(item)}
                       disabled={action.disabled}

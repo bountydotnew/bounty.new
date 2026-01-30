@@ -32,9 +32,9 @@ export default function LinearIssueDetailPage() {
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
         <div className="w-full max-w-md text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-6">
-            <LinearIcon className="w-8 h-8 text-white" />
+            <LinearIcon className="w-8 h-8 text-foreground" />
           </div>
-          <h1 className="text-2xl font-semibold text-white mb-2">
+          <h1 className="text-2xl font-semibold text-foreground mb-2">
             Connect Linear
           </h1>
           <p className="text-sm text-neutral-400 mb-6">
@@ -58,7 +58,7 @@ export default function LinearIssueDetailPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-6">
             <Inbox className="w-8 h-8 text-neutral-500" />
           </div>
-          <h1 className="text-2xl font-semibold text-white mb-2">
+          <h1 className="text-2xl font-semibold text-foreground mb-2">
             Issue Not Found
           </h1>
           <p className="text-sm text-neutral-400 mb-6">
@@ -82,7 +82,7 @@ export default function LinearIssueDetailPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push(`/integrations/linear/${workspaceId}/issues`)}
-            className="h-9 px-2.5 rounded-lg border border-white/10 text-white hover:bg-white/5 transition-colors"
+            className="h-9 px-2.5 rounded-lg border border-white/10 text-foreground hover:bg-white/5 transition-colors"
             title="Back to Issues"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -111,7 +111,7 @@ export default function LinearIssueDetailPage() {
           href={issue?.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="h-9 px-4 rounded-lg border border-white/10 text-sm text-white hover:bg-white/5 transition-colors flex items-center gap-2"
+          className="h-9 px-4 rounded-lg border border-white/10 text-sm text-foreground hover:bg-white/5 transition-colors flex items-center gap-2"
         >
           <ExternalLink className="w-4 h-4" />
           <span className="hidden sm:inline">Open in Linear</span>
@@ -119,7 +119,7 @@ export default function LinearIssueDetailPage() {
       </div>
 
       {/* Issue Title */}
-      <h1 className="text-xl font-semibold text-white mb-6">
+      <h1 className="text-xl font-semibold text-foreground mb-6">
         {issueLoading ? '...' : issue?.title}
       </h1>
 
@@ -128,13 +128,13 @@ export default function LinearIssueDetailPage() {
         {issue && issue.priority > 0 && (
           <div className="flex items-center gap-2 text-neutral-400">
             <span>Priority:</span>
-            <span className="text-white">{issue.priorityLabel}</span>
+            <span className="text-foreground">{issue.priorityLabel}</span>
           </div>
         )}
         {issue?.assignee && (
           <div className="flex items-center gap-2 text-neutral-400">
             <User className="w-4 h-4" />
-            <span className="text-white">{issue.assignee.displayName || issue.assignee.name}</span>
+            <span className="text-foreground">{issue.assignee.displayName || issue.assignee.name}</span>
           </div>
         )}
         {issue?.project && (
@@ -142,7 +142,7 @@ export default function LinearIssueDetailPage() {
             <span>Project:</span>
             <button
               onClick={() => router.push(`/integrations/linear/${workspaceId}/projects/${issue.project?.id}`)}
-              className="text-white hover:underline"
+              className="text-foreground hover:underline"
             >
               {issue.project.name}
             </button>
@@ -166,7 +166,7 @@ export default function LinearIssueDetailPage() {
       {/* Description */}
       {issue?.description && (
         <div className="mb-6">
-          <h2 className="text-sm font-medium text-white mb-3">Description</h2>
+          <h2 className="text-sm font-medium text-foreground mb-3">Description</h2>
           <div className="p-5 rounded-xl border border-white/10">
             <div
               className="prose prose-invert prose-sm max-w-none"
@@ -189,7 +189,7 @@ export default function LinearIssueDetailPage() {
         ) : (
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-medium text-white">Create Bounty</h2>
+              <h2 className="text-sm font-medium text-foreground">Create Bounty</h2>
               <p className="text-xs text-neutral-500 mt-1">
                 Turn this Linear issue into a bounty on bounty.new
               </p>

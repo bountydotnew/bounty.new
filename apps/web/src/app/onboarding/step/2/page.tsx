@@ -57,17 +57,17 @@ export default function OnboardingStep2Page() {
     >
       <div className="w-full">
         {hasInstallations ? (
-          <div className="flex items-center gap-2 text-sm text-[#929292]">
+          <div className="flex items-center gap-2 text-sm text-text-tertiary">
             <span className="text-green-500">✓</span>
             Connected to {installationsData?.installations?.[0]?.accountLogin || 'your account'}
           </div>
         ) : isChecking ? (
-          <div className="flex items-center gap-2 text-sm text-[#929292]">
+          <div className="flex items-center gap-2 text-sm text-text-tertiary">
             <div className="h-3 w-3 animate-spin rounded-full border border-[#929292] border-t-transparent" />
             Waiting for installation...
           </div>
         ) : (
-          <div className="flex items-center gap-2 text-sm text-[#929292]">
+          <div className="flex items-center gap-2 text-sm text-text-tertiary">
             <ExternalLink className="h-3 w-3" />
             Opens in a new tab
           </div>

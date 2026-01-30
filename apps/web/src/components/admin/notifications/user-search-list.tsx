@@ -37,7 +37,7 @@ export function UserSearchList({
         />
         {selectedIds.size > 0 && (
           <Button
-            className="h-8 border-neutral-800 bg-[#222222] px-2 text-xs hover:bg-neutral-700/40"
+            className="h-8 border-neutral-800 bg-surface-2 px-2 text-xs hover:bg-neutral-700/40"
             onClick={onClearSelection}
             variant="text"
           >
@@ -51,7 +51,7 @@ export function UserSearchList({
         ) : users.length ? (
           users.map((u) => (
             <button
-              className={`flex items-center justify-between rounded-md border p-3 text-left transition ${selectedIds.has(u.id) ? 'border-neutral-700 bg-neutral-800/60' : 'border-neutral-800 bg-[#222222] hover:bg-neutral-700/40'}`}
+              className={`flex items-center justify-between rounded-md border p-3 text-left transition ${selectedIds.has(u.id) ? 'border-neutral-700 bg-neutral-800/60' : 'border-neutral-800 bg-surface-2 hover:bg-neutral-700/40'}`}
               key={u.id}
               onClick={() => onToggle(u.id)}
             >

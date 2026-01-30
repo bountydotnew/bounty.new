@@ -150,7 +150,7 @@ export default function GithubImportModal({
       <Drawer onOpenChange={onOpenChange} open={open}>
         <DrawerContent className="border border-neutral-800 bg-neutral-900/90 backdrop-blur">
           <DrawerHeader className="px-6 pt-4">
-            <DrawerTitle className="text-white text-xl">
+            <DrawerTitle className="text-foreground text-xl">
               Import from GitHub
             </DrawerTitle>
           </DrawerHeader>
@@ -314,7 +314,7 @@ export default function GithubImportModal({
 
             <div className="space-y-2">
               <Label htmlFor="gh-body">Body</Label>
-              <div className="rounded-lg border border-neutral-800 bg-[#222222] p-3">
+              <div className="rounded-lg border border-neutral-800 bg-surface-2 p-3">
                 <MarkdownTextarea
                   id="gh-body"
                   onChange={setBody}
@@ -363,7 +363,7 @@ export default function GithubImportModal({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="w-[92vw] max-w-lg border border-neutral-800 bg-neutral-900/90 p-0 backdrop-blur sm:rounded-lg">
         <DialogHeader className="px-6 pt-6">
-          <DialogTitle className="text-white text-xl">
+          <DialogTitle className="text-foreground text-xl">
             Import from GitHub
           </DialogTitle>
         </DialogHeader>
@@ -527,7 +527,7 @@ export default function GithubImportModal({
 
           <div className="space-y-2">
             <Label htmlFor="gh-body">Body</Label>
-            <div className="rounded-lg border border-neutral-800 bg-[#222222] p-3">
+            <div className="rounded-lg border border-neutral-800 bg-surface-2 p-3">
               <MarkdownTextarea
                 id="gh-body"
                 onChange={setBody}

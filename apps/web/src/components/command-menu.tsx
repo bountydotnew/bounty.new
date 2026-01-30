@@ -60,21 +60,21 @@ function BountyCommandItem({
   return (
     <Command.Item key={bounty.id} value={bountyValue} onSelect={onSelect}>
       {isLoading ? (
-        <Spinner size="sm" className="mr-3 h-5 w-5 text-[#F2F2F2]" />
+        <Spinner size="sm" className="mr-3 h-5 w-5 text-foreground" />
       ) : bounty.creator?.image ? (
         <Avatar>
           <AvatarImage src={bounty.creator.image} />
         </Avatar>
       ) : (
-        <div className="flex items-center justify-center mr-3 h-5 w-5 rounded-full bg-[#232323]">
-          <BountiesIcon className="h-4 w-4 text-[#F2F2F2]" />
+        <div className="flex items-center justify-center mr-3 h-5 w-5 rounded-full bg-surface-3">
+          <BountiesIcon className="h-4 w-4 text-foreground" />
         </div>
       )}
       <div className="flex flex-col flex-1 min-w-0">
-        <span className="text-[15px] text-[#F2F2F2] truncate">
+        <span className="text-[15px] text-foreground truncate">
           {bounty.title}
         </span>
-        <div className="flex items-center gap-1.5 text-xs text-[#5A5A5A]">
+        <div className="flex items-center gap-1.5 text-xs text-text-tertiary">
           <CommentsIcon className="h-3.5 w-3.5" />
           <span>
             {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
@@ -260,7 +260,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
         open={open}
         onOpenChange={onOpenChange}
         label="Global Command Menu"
-        className={`${styles.dialog} fixed left-1/2 top-[20%] z-10000 w-[660px] max-w-[90vw] -translate-x-1/2 overflow-hidden rounded-[15px] border border-[#232323] bg-[#191919] shadow-lg`}
+        className={`${styles.dialog} fixed left-1/2 top-[20%] z-10000 w-[660px] max-w-[90vw] -translate-x-1/2 overflow-hidden rounded-[15px] border border-border-subtle bg-surface-1 shadow-lg`}
       >
         <Command
           className="flex flex-col h-full"
@@ -275,7 +275,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
                 ? 'Search all bounties...'
                 : 'Search for apps and commands...'
             }
-            className={`${styles.input} h-[54px] border-b border-[#232323] bg-transparent px-4 text-[15px] font-medium text-[#F2F2F2] placeholder:text-[#5A5A5A] outline-none`}
+            className={`${styles.input} h-[54px] border-b border-border-subtle bg-transparent px-4 text-[15px] font-medium text-foreground placeholder:text-text-tertiary outline-none`}
           />
 
           <Command.List
@@ -323,20 +323,20 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
                         {isLoading ? (
                           <Spinner
                             size="sm"
-                            className="mr-3 h-5 w-5 text-[#F2F2F2]"
+                            className="mr-3 h-5 w-5 text-foreground"
                           />
                         ) : (
-                          <IconComponent className="mr-3 h-5 w-5 text-[#F2F2F2]" />
+                          <IconComponent className="mr-3 h-5 w-5 text-foreground" />
                         )}
                         <div className="flex flex-col">
-                          <span className="text-[15px] text-[#F2F2F2]">
+                          <span className="text-[15px] text-foreground">
                             {item.label}
                           </span>
-                          <span className="text-xs text-[#5A5A5A]">
+                          <span className="text-xs text-text-tertiary">
                             {item.description}
                           </span>
                         </div>
-                        <span className="ml-auto text-xs text-[#5A5A5A]">
+                        <span className="ml-auto text-xs text-text-tertiary">
                           Application
                         </span>
                       </Command.Item>
@@ -349,20 +349,20 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
                     {loadingValue === 'create-bounty' ? (
                       <Spinner
                         size="sm"
-                        className="mr-3 h-5 w-5 text-[#F2F2F2]"
+                        className="mr-3 h-5 w-5 text-foreground"
                       />
                     ) : (
-                      <Plus className="mr-3 h-5 w-5 text-[#F2F2F2]" />
+                      <Plus className="mr-3 h-5 w-5 text-foreground" />
                     )}
                     <div className="flex flex-col">
-                      <span className="text-[15px] text-[#F2F2F2]">
+                      <span className="text-[15px] text-foreground">
                         Create Bounty
                       </span>
-                      <span className="text-xs text-[#5A5A5A]">
+                      <span className="text-xs text-text-tertiary">
                         Start a new bounty
                       </span>
                     </div>
-                    <span className="ml-auto text-xs text-[#5A5A5A]">
+                    <span className="ml-auto text-xs text-text-tertiary">
                       Command
                     </span>
                   </Command.Item>
@@ -373,20 +373,20 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
                     {loadingValue === 'settings' ? (
                       <Spinner
                         size="sm"
-                        className="mr-3 h-5 w-5 text-[#F2F2F2]"
+                        className="mr-3 h-5 w-5 text-foreground"
                       />
                     ) : (
-                      <SettingsGearIcon className="mr-3 h-5 w-5 text-[#F2F2F2]" />
+                      <SettingsGearIcon className="mr-3 h-5 w-5 text-foreground" />
                     )}
                     <div className="flex flex-col">
-                      <span className="text-[15px] text-[#F2F2F2]">
+                      <span className="text-[15px] text-foreground">
                         Settings
                       </span>
-                      <span className="text-xs text-[#5A5A5A]">
+                      <span className="text-xs text-text-tertiary">
                         Manage your workspace
                       </span>
                     </div>
-                    <span className="ml-auto text-xs text-[#5A5A5A]">
+                    <span className="ml-auto text-xs text-text-tertiary">
                       Command
                     </span>
                   </Command.Item>
@@ -395,9 +395,9 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
             )}
           </Command.List>
 
-          <div className="flex h-[44px] items-center gap-3 border-t border-[#232323] bg-[#141414] px-4 text-xs text-[#929292]">
+          <div className="flex h-[44px] items-center gap-3 border-t border-border-subtle bg-surface-2 px-4 text-xs text-text-tertiary">
             <div className="flex items-center gap-2">
-              <kbd className="rounded bg-[#1E1E1E] px-2 py-0.5 text-[#929292] text-[15px]">
+              <kbd className="rounded bg-surface-1 px-2 py-0.5 text-text-tertiary text-[15px]">
                 ↵
               </kbd>
               <span>{selectedLabel}</span>
@@ -410,15 +410,15 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
                   onClick={handleActionsClick}
                   className={`flex items-center gap-2 px-3 py-1 text-xs transition ${
                     hasActions
-                      ? 'cursor-pointer text-[#F2F2F2] hover:text-white'
-                      : 'cursor-not-allowed text-[#4A4A4A]'
+                      ? 'cursor-pointer text-foreground hover:text-foreground'
+                      : 'cursor-not-allowed text-text-muted'
                   }`}
                   disabled={!hasActions}
                 >
                   Actions
-                  <span className="flex items-center gap-1 text-[#5A5A5A]">
-                    <kbd className="rounded bg-[#1E1E1E] px-1 py-0.5">⌘</kbd>
-                    <kbd className="rounded bg-[#1E1E1E] px-1 py-0.5">↵</kbd>
+                  <span className="flex items-center gap-1 text-text-tertiary">
+                    <kbd className="rounded bg-surface-1 px-1 py-0.5">⌘</kbd>
+                    <kbd className="rounded bg-surface-1 px-1 py-0.5">↵</kbd>
                   </span>
                 </button>
               </div>

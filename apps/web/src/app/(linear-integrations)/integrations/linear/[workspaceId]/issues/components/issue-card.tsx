@@ -67,7 +67,7 @@ export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueC
             </div>
 
             {/* Title */}
-            <h3 className="text-sm font-medium text-white leading-snug">
+            <h3 className="text-sm font-medium text-foreground leading-snug">
               {issue.title}
             </h3>
 
@@ -91,7 +91,7 @@ export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueC
               href={issue.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="h-8 px-3 rounded-lg border border-white/10 text-xs text-white hover:bg-white/5 transition-colors flex items-center gap-1.5"
+              className="h-8 px-3 rounded-lg border border-white/10 text-xs text-foreground hover:bg-white/5 transition-colors flex items-center gap-1.5"
               onClick={(e) => e.stopPropagation()}
             >
               <ExternalLink className="w-3.5 h-3.5" />
@@ -99,7 +99,7 @@ export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueC
             </a>
             <button
               onClick={() => router.push(`/integrations/linear/${workspaceId}/issues/${issue.id}`)}
-              className="h-8 px-3 rounded-lg border border-white/10 text-xs text-white hover:bg-white/5 transition-colors"
+              className="h-8 px-3 rounded-lg border border-white/10 text-xs text-foreground hover:bg-white/5 transition-colors"
             >
               Details
             </button>

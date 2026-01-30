@@ -123,9 +123,9 @@ export default function LinearIssuesPage() {
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
         <div className="w-full max-w-md text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-6">
-            <LinearIcon className="w-8 h-8 text-white" />
+            <LinearIcon className="w-8 h-8 text-foreground" />
           </div>
-          <h1 className="text-2xl font-semibold text-white mb-2">
+          <h1 className="text-2xl font-semibold text-foreground mb-2">
             Connect Linear
           </h1>
           <p className="text-sm text-neutral-400 mb-6">
@@ -151,7 +151,7 @@ export default function LinearIssuesPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-white mb-1">Issues</h1>
+          <h1 className="text-xl font-semibold text-foreground mb-1">Issues</h1>
           <p className="text-sm text-neutral-500">
             {issuesLoading ? '...' : `${issues.length} issues`}
           </p>
@@ -162,7 +162,7 @@ export default function LinearIssuesPage() {
             href={linearWorkspace?.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="h-9 px-4 rounded-lg border border-white/10 text-sm text-white hover:bg-white/5 transition-colors flex items-center gap-2"
+            className="h-9 px-4 rounded-lg border border-white/10 text-sm text-foreground hover:bg-white/5 transition-colors flex items-center gap-2"
           >
             <ExternalLink className="w-4 h-4" />
             <span className="hidden sm:inline">Open in Linear</span>
@@ -171,7 +171,7 @@ export default function LinearIssuesPage() {
           <button
             onClick={handleRefresh}
             disabled={isLinearLoading}
-            className="h-9 px-4 rounded-lg border border-white/10 text-sm text-white hover:bg-white/5 transition-colors disabled:opacity-50"
+            className="h-9 px-4 rounded-lg border border-white/10 text-sm text-foreground hover:bg-white/5 transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${isLinearLoading ? 'animate-spin' : ''}`} />
           </button>
@@ -187,7 +187,7 @@ export default function LinearIssuesPage() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="h-8 px-3 rounded-lg border border-white/10 text-sm text-white hover:bg-white/5 transition-colors flex items-center gap-2">
+            <button className="h-8 px-3 rounded-lg border border-white/10 text-sm text-foreground hover:bg-white/5 transition-colors flex items-center gap-2">
               Status
               <ChevronDown className="w-3.5 h-3.5" />
               {filters.status.length > 0 && (
@@ -224,7 +224,7 @@ export default function LinearIssuesPage() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="h-8 px-3 rounded-lg border border-white/10 text-sm text-white hover:bg-white/5 transition-colors flex items-center gap-2">
+            <button className="h-8 px-3 rounded-lg border border-white/10 text-sm text-foreground hover:bg-white/5 transition-colors flex items-center gap-2">
               Priority
               <ChevronDown className="w-3.5 h-3.5" />
               {filters.priority.length > 0 && (
@@ -249,7 +249,7 @@ export default function LinearIssuesPage() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="h-8 px-3 rounded-lg border border-white/10 text-sm text-white hover:bg-white/5 transition-colors flex items-center gap-2">
+            <button className="h-8 px-3 rounded-lg border border-white/10 text-sm text-foreground hover:bg-white/5 transition-colors flex items-center gap-2">
               Project
               <ChevronDown className="w-3.5 h-3.5" />
               {filters.projectId && (
@@ -284,7 +284,7 @@ export default function LinearIssuesPage() {
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
-            className="h-8 px-3 rounded-lg border border-white/10 text-sm text-neutral-400 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-1.5"
+            className="h-8 px-3 rounded-lg border border-white/10 text-sm text-neutral-400 hover:text-foreground hover:bg-white/5 transition-colors flex items-center gap-1.5"
           >
             <X className="w-3.5 h-3.5" />
             Clear
@@ -302,7 +302,7 @@ export default function LinearIssuesPage() {
           <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-3">
             <Inbox className="w-5 h-5 text-neutral-500" />
           </div>
-          <p className="text-sm text-white">
+          <p className="text-sm text-foreground">
             {hasActiveFilters
               ? 'No issues match your filters'
               : 'No issues yet'}
@@ -315,7 +315,7 @@ export default function LinearIssuesPage() {
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
-              className="mt-3 text-sm text-neutral-400 hover:text-white transition-colors"
+              className="mt-3 text-sm text-neutral-400 hover:text-foreground transition-colors"
             >
               Clear filters
             </button>

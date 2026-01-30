@@ -289,7 +289,7 @@ export default function BountyComments({
   return (
     <div className="mb-8 rounded-lg border-none bg-none">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-medium text-white text-xl">
+        <h2 className="font-medium text-foreground text-xl">
           Comments{' '}
           <span className="text-neutral-400 text-sm">
             ({commentsQuery.data?.length ?? 0})

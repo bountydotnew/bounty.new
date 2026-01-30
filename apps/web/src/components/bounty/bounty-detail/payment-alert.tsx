@@ -57,8 +57,8 @@ export function BountyDetailPaymentAlert() {
   // Non-creators see that bounty is not funded
   if (!isCreator && isUnfunded) {
     return (
-      <Alert className="mb-4 border-[#232323] bg-[#191919]">
-        <AlertDescription className="text-[#FFFFFF99]">
+      <Alert className="mb-4 border-border-subtle bg-surface-1">
+        <AlertDescription className="text-foreground/60">
           This bounty is not yet funded. Submissions may be restricted until
           payment is completed.
         </AlertDescription>

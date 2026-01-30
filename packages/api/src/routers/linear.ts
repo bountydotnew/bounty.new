@@ -1,9 +1,16 @@
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
-import { protectedProcedure, router, rateLimitedProtectedProcedure } from '../trpc';
+import {
+  protectedProcedure,
+  router,
+  rateLimitedProtectedProcedure,
+} from '../trpc';
 import { linearAccount, account } from '@bounty/db';
 import { eq, and } from 'drizzle-orm';
-import { createLinearDriver, LINEAR_COMMENT_TEMPLATES } from '../../driver/linear-client';
+import {
+  createLinearDriver,
+  LINEAR_COMMENT_TEMPLATES,
+} from '../../driver/linear-client';
 
 /**
  * Helper function to get the user's Linear OAuth account
@@ -12,12 +19,7 @@ async function getLinearAccount(db: any, userId: string) {
   const [linearOAuthAccount] = await db
     .select()
     .from(account)
-    .where(
-      and(
-        eq(account.userId, userId),
-        eq(account.providerId, 'linear')
-      )
-    )
+    .where(and(eq(account.userId, userId), eq(account.providerId, 'linear')))
     .limit(1);
 
   return linearOAuthAccount;
@@ -46,7 +48,10 @@ export const linearRouter = router({
    * Check if user has Linear OAuth account (for sync detection)
    */
   getAccountStatus: protectedProcedure.query(async ({ ctx }) => {
-    const linearOAuthAccount = await getLinearAccount(ctx.db, ctx.session.user.id);
+    const linearOAuthAccount = await getLinearAccount(
+      ctx.db,
+      ctx.session.user.id
+    );
     return {
       success: true,
       hasOAuth: !!linearOAuthAccount,
@@ -58,14 +63,20 @@ export const linearRouter = router({
    */
   getWorkspaces: protectedProcedure.query(async ({ ctx }) => {
     // Get the user's Linear OAuth account
-    const linearOAuthAccount = await getLinearAccount(ctx.db, ctx.session.user.id);
+    const linearOAuthAccount = await getLinearAccount(
+      ctx.db,
+      ctx.session.user.id
+    );
 
-    if (!linearOAuthAccount || !linearOAuthAccount.accessToken) {
+    if (!(linearOAuthAccount && linearOAuthAccount.accessToken)) {
       return { success: true, workspaces: [] };
     }
 
     // Get the Linear workspace connection
-    const linearWorkspace = await getLinearWorkspace(ctx.db, linearOAuthAccount.id);
+    const linearWorkspace = await getLinearWorkspace(
+      ctx.db,
+      linearOAuthAccount.id
+    );
 
     if (!linearWorkspace) {
       return { success: true, workspaces: [] };
@@ -98,13 +109,19 @@ export const linearRouter = router({
    * Get connection status (whether user has connected Linear)
    */
   getConnectionStatus: protectedProcedure.query(async ({ ctx }) => {
-    const linearOAuthAccount = await getLinearAccount(ctx.db, ctx.session.user.id);
+    const linearOAuthAccount = await getLinearAccount(
+      ctx.db,
+      ctx.session.user.id
+    );
 
     if (!linearOAuthAccount) {
       return { success: true, connected: false, workspace: null };
     }
 
-    const linearWorkspace = await getLinearWorkspace(ctx.db, linearOAuthAccount.id);
+    const linearWorkspace = await getLinearWorkspace(
+      ctx.db,
+      linearOAuthAccount.id
+    );
 
     return {
       success: true,
@@ -143,16 +160,22 @@ export const linearRouter = router({
       })
     )
     .query(async ({ input, ctx }) => {
-      const linearOAuthAccount = await getLinearAccount(ctx.db, ctx.session.user.id);
+      const linearOAuthAccount = await getLinearAccount(
+        ctx.db,
+        ctx.session.user.id
+      );
 
-      if (!linearOAuthAccount || !linearOAuthAccount.accessToken) {
+      if (!(linearOAuthAccount && linearOAuthAccount.accessToken)) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Linear account not connected',
         });
       }
 
-      const linearWorkspace = await getLinearWorkspace(ctx.db, linearOAuthAccount.id);
+      const linearWorkspace = await getLinearWorkspace(
+        ctx.db,
+        linearOAuthAccount.id
+      );
 
       if (!linearWorkspace) {
         throw new TRPCError({
@@ -173,8 +196,10 @@ export const linearRouter = router({
         } = {};
         if (input.filters?.status) filters.status = input.filters.status;
         if (input.filters?.priority) filters.priority = input.filters.priority;
-        if (input.filters?.assigneeId) filters.assigneeId = input.filters.assigneeId;
-        if (input.filters?.projectId) filters.projectId = input.filters.projectId;
+        if (input.filters?.assigneeId)
+          filters.assigneeId = input.filters.assigneeId;
+        if (input.filters?.projectId)
+          filters.projectId = input.filters.projectId;
 
         // Build params object to avoid exactOptionalPropertyTypes issues
         const params: {
@@ -216,16 +241,22 @@ export const linearRouter = router({
   getIssue: rateLimitedProtectedProcedure('linear:read')
     .input(z.object({ issueId: z.string() }))
     .query(async ({ input, ctx }) => {
-      const linearOAuthAccount = await getLinearAccount(ctx.db, ctx.session.user.id);
+      const linearOAuthAccount = await getLinearAccount(
+        ctx.db,
+        ctx.session.user.id
+      );
 
-      if (!linearOAuthAccount || !linearOAuthAccount.accessToken) {
+      if (!(linearOAuthAccount && linearOAuthAccount.accessToken)) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Linear account not connected',
         });
       }
 
-      const linearWorkspace = await getLinearWorkspace(ctx.db, linearOAuthAccount.id);
+      const linearWorkspace = await getLinearWorkspace(
+        ctx.db,
+        linearOAuthAccount.id
+      );
 
       if (!linearWorkspace) {
         throw new TRPCError({
@@ -261,18 +292,24 @@ export const linearRouter = router({
   /**
    * Fetch projects from Linear
    */
-  getProjects: rateLimitedProtectedProcedure('linear:read')
-    .query(async ({ ctx }) => {
-      const linearOAuthAccount = await getLinearAccount(ctx.db, ctx.session.user.id);
+  getProjects: rateLimitedProtectedProcedure('linear:read').query(
+    async ({ ctx }) => {
+      const linearOAuthAccount = await getLinearAccount(
+        ctx.db,
+        ctx.session.user.id
+      );
 
-      if (!linearOAuthAccount || !linearOAuthAccount.accessToken) {
+      if (!(linearOAuthAccount && linearOAuthAccount.accessToken)) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Linear account not connected',
         });
       }
 
-      const linearWorkspace = await getLinearWorkspace(ctx.db, linearOAuthAccount.id);
+      const linearWorkspace = await getLinearWorkspace(
+        ctx.db,
+        linearOAuthAccount.id
+      );
 
       if (!linearWorkspace) {
         throw new TRPCError({
@@ -296,16 +333,20 @@ export const linearRouter = router({
           message: 'Failed to fetch projects from Linear',
         });
       }
-    }),
+    }
+  ),
 
   /**
    * Get workflow states (for filter dropdown)
    */
-  getWorkflowStates: rateLimitedProtectedProcedure('linear:read')
-    .query(async ({ ctx }) => {
-      const linearOAuthAccount = await getLinearAccount(ctx.db, ctx.session.user.id);
+  getWorkflowStates: rateLimitedProtectedProcedure('linear:read').query(
+    async ({ ctx }) => {
+      const linearOAuthAccount = await getLinearAccount(
+        ctx.db,
+        ctx.session.user.id
+      );
 
-      if (!linearOAuthAccount || !linearOAuthAccount.accessToken) {
+      if (!(linearOAuthAccount && linearOAuthAccount.accessToken)) {
         return { success: true, states: [] };
       }
 
@@ -321,16 +362,20 @@ export const linearRouter = router({
         console.error('Failed to fetch Linear workflow states:', error);
         return { success: true, states: [] };
       }
-    }),
+    }
+  ),
 
   /**
    * Get teams (for filter dropdown)
    */
-  getTeams: rateLimitedProtectedProcedure('linear:read')
-    .query(async ({ ctx }) => {
-      const linearOAuthAccount = await getLinearAccount(ctx.db, ctx.session.user.id);
+  getTeams: rateLimitedProtectedProcedure('linear:read').query(
+    async ({ ctx }) => {
+      const linearOAuthAccount = await getLinearAccount(
+        ctx.db,
+        ctx.session.user.id
+      );
 
-      if (!linearOAuthAccount || !linearOAuthAccount.accessToken) {
+      if (!(linearOAuthAccount && linearOAuthAccount.accessToken)) {
         return { success: true, teams: [] };
       }
 
@@ -346,7 +391,8 @@ export const linearRouter = router({
         console.error('Failed to fetch Linear teams:', error);
         return { success: true, teams: [] };
       }
-    }),
+    }
+  ),
 
   /**
    * Create a bounty from a Linear issue
@@ -357,16 +403,22 @@ export const linearRouter = router({
   getBountyDataFromIssue: rateLimitedProtectedProcedure('linear:create')
     .input(z.object({ linearIssueId: z.string() }))
     .query(async ({ input, ctx }) => {
-      const linearOAuthAccount = await getLinearAccount(ctx.db, ctx.session.user.id);
+      const linearOAuthAccount = await getLinearAccount(
+        ctx.db,
+        ctx.session.user.id
+      );
 
-      if (!linearOAuthAccount || !linearOAuthAccount.accessToken) {
+      if (!(linearOAuthAccount && linearOAuthAccount.accessToken)) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Linear account not connected',
         });
       }
 
-      const linearWorkspace = await getLinearWorkspace(ctx.db, linearOAuthAccount.id);
+      const linearWorkspace = await getLinearWorkspace(
+        ctx.db,
+        linearOAuthAccount.id
+      );
 
       if (!linearWorkspace) {
         throw new TRPCError({
@@ -432,16 +484,22 @@ export const linearRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const linearOAuthAccount = await getLinearAccount(ctx.db, ctx.session.user.id);
+      const linearOAuthAccount = await getLinearAccount(
+        ctx.db,
+        ctx.session.user.id
+      );
 
-      if (!linearOAuthAccount || !linearOAuthAccount.accessToken) {
+      if (!(linearOAuthAccount && linearOAuthAccount.accessToken)) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Linear account not connected',
         });
       }
 
-      const linearWorkspace = await getLinearWorkspace(ctx.db, linearOAuthAccount.id);
+      const linearWorkspace = await getLinearWorkspace(
+        ctx.db,
+        linearOAuthAccount.id
+      );
 
       if (!linearWorkspace) {
         throw new TRPCError({
@@ -468,8 +526,8 @@ export const linearRouter = router({
             commentBody = LINEAR_COMMENT_TEMPLATES.bountyFunded(
               input.bountyData.amount,
               input.bountyData.currency,
-              input.bountyData.deadline,
-              input.bountyData.bountyUrl
+              input.bountyData.bountyUrl,
+              input.bountyData.deadline
             );
             break;
           case 'submissionReceived':
@@ -488,7 +546,10 @@ export const linearRouter = router({
             break;
         }
 
-        const comment = await driver.createComment(input.linearIssueId, commentBody);
+        const comment = await driver.createComment(
+          input.linearIssueId,
+          commentBody
+        );
 
         return {
           success: true,
@@ -509,7 +570,10 @@ export const linearRouter = router({
   disconnect: protectedProcedure
     .input(z.object({ workspaceId: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      const linearOAuthAccount = await getLinearAccount(ctx.db, ctx.session.user.id);
+      const linearOAuthAccount = await getLinearAccount(
+        ctx.db,
+        ctx.session.user.id
+      );
 
       if (!linearOAuthAccount) {
         throw new TRPCError({
@@ -535,81 +599,60 @@ export const linearRouter = router({
    * Sync Linear workspace - called after OAuth to create the linear_account record
    * This fetches the workspace info from Linear and stores it in the database
    */
-  syncWorkspace: protectedProcedure
-    .mutation(async ({ ctx }) => {
-      const linearOAuthAccount = await getLinearAccount(ctx.db, ctx.session.user.id);
+  syncWorkspace: protectedProcedure.mutation(async ({ ctx }) => {
+    const linearOAuthAccount = await getLinearAccount(
+      ctx.db,
+      ctx.session.user.id
+    );
 
-      if (!linearOAuthAccount || !linearOAuthAccount.accessToken) {
+    if (!(linearOAuthAccount && linearOAuthAccount.accessToken)) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message:
+          'Linear account not connected. Please link your Linear account first.',
+      });
+    }
+
+    try {
+      const driver = createLinearDriver(linearOAuthAccount.accessToken);
+
+      // Fetch user info and workspace from Linear
+      const user = await driver.getCurrentUser();
+      const workspace = await driver.getCurrentWorkspace();
+
+      if (!(user && workspace)) {
         throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Linear account not connected. Please link your Linear account first.',
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch user or workspace info from Linear',
         });
       }
 
-      try {
-        const driver = createLinearDriver(linearOAuthAccount.accessToken);
-
-        // Fetch user info and workspace from Linear
-        const user = await driver.getCurrentUser();
-        const workspace = await driver.getCurrentWorkspace();
-
-        if (!user || !workspace) {
-          throw new TRPCError({
-            code: 'INTERNAL_SERVER_ERROR',
-            message: 'Failed to fetch user or workspace info from Linear',
-          });
-        }
-
-        // Check if a linear_account record already exists for this workspace
-        const [existingRecord] = await ctx.db
-          .select()
-          .from(linearAccount)
-          .where(
-            and(
-              eq(linearAccount.accountId, linearOAuthAccount.id),
-              eq(linearAccount.linearWorkspaceId, workspace.id)
-            )
+      // Check if a linear_account record already exists for this workspace
+      const [existingRecord] = await ctx.db
+        .select()
+        .from(linearAccount)
+        .where(
+          and(
+            eq(linearAccount.accountId, linearOAuthAccount.id),
+            eq(linearAccount.linearWorkspaceId, workspace.id)
           )
-          .limit(1);
+        )
+        .limit(1);
 
-        if (existingRecord) {
-          // Update existing record if it was inactive
-          if (!existingRecord.isActive) {
-            await ctx.db
-              .update(linearAccount)
-              .set({
-                isActive: true,
-                linearWorkspaceName: workspace.name,
-                linearWorkspaceUrl: workspace.url,
-                linearWorkspaceKey: workspace.key,
-                updatedAt: new Date(),
-              })
-              .where(eq(linearAccount.id, existingRecord.id));
-          }
-          return {
-            success: true,
-            workspace: {
-              id: workspace.id,
-              name: workspace.name,
-              key: workspace.key,
-              url: workspace.url,
-            },
-          };
+      if (existingRecord) {
+        // Update existing record if it was inactive
+        if (!existingRecord.isActive) {
+          await ctx.db
+            .update(linearAccount)
+            .set({
+              isActive: true,
+              linearWorkspaceName: workspace.name,
+              linearWorkspaceUrl: workspace.url,
+              linearWorkspaceKey: workspace.key,
+              updatedAt: new Date(),
+            })
+            .where(eq(linearAccount.id, existingRecord.id));
         }
-
-        // Create new linear_account record
-        await ctx.db
-          .insert(linearAccount)
-          .values({
-            accountId: linearOAuthAccount.id,
-            linearUserId: user.id,
-            linearWorkspaceId: workspace.id,
-            linearWorkspaceName: workspace.name,
-            linearWorkspaceUrl: workspace.url,
-            linearWorkspaceKey: workspace.key,
-            isActive: true,
-          });
-
         return {
           success: true,
           workspace: {
@@ -619,15 +662,37 @@ export const linearRouter = router({
             url: workspace.url,
           },
         };
-      } catch (error) {
-        console.error('Failed to sync Linear workspace:', error);
-        if (error instanceof TRPCError) {
-          throw error;
-        }
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to sync Linear workspace',
-        });
       }
-    }),
+
+      // Create new linear_account record
+      await ctx.db.insert(linearAccount).values({
+        accountId: linearOAuthAccount.id,
+        linearUserId: user.id,
+        linearWorkspaceId: workspace.id,
+        linearWorkspaceName: workspace.name,
+        linearWorkspaceUrl: workspace.url,
+        linearWorkspaceKey: workspace.key,
+        isActive: true,
+      });
+
+      return {
+        success: true,
+        workspace: {
+          id: workspace.id,
+          name: workspace.name,
+          key: workspace.key,
+          url: workspace.url,
+        },
+      };
+    } catch (error) {
+      console.error('Failed to sync Linear workspace:', error);
+      if (error instanceof TRPCError) {
+        throw error;
+      }
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to sync Linear workspace',
+      });
+    }
+  }),
 });

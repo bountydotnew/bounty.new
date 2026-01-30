@@ -60,7 +60,7 @@ export default function OnboardingStep3Page() {
               px-3 py-2 rounded-md text-sm text-left transition-all focus:outline-none focus-visible:outline-none
               ${selectedSource === source.id
                 ? 'bg-white text-black'
-                : 'bg-[#0E0E0E] text-[#929292] hover:text-white hover:bg-[#151515]'
+                : 'bg-background text-text-tertiary hover:text-foreground hover:bg-surface-1'
               }
             `}
           >

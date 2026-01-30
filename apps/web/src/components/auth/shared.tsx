@@ -196,7 +196,7 @@ export function PasswordField({
             variant="text"
             onClick={() => router.push('/reset-password')}
             disabled={disabled}
-            className="text-xs text-gray-400 hover:text-white p-0 h-auto"
+            className="text-xs text-gray-400 hover:text-foreground p-0 h-auto"
             type="button"
           >
             Forgot password?

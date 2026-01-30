@@ -38,9 +38,9 @@ export default function LinearProjectDetailPage() {
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
         <div className="w-full max-w-md text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-6">
-            <LinearIcon className="w-8 h-8 text-white" />
+            <LinearIcon className="w-8 h-8 text-foreground" />
           </div>
-          <h1 className="text-2xl font-semibold text-white mb-2">
+          <h1 className="text-2xl font-semibold text-foreground mb-2">
             Connect Linear
           </h1>
           <p className="text-sm text-neutral-400 mb-6">
@@ -64,7 +64,7 @@ export default function LinearProjectDetailPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-6">
             <Inbox className="w-8 h-8 text-neutral-500" />
           </div>
-          <h1 className="text-2xl font-semibold text-white mb-2">
+          <h1 className="text-2xl font-semibold text-foreground mb-2">
             Project Not Found
           </h1>
           <p className="text-sm text-neutral-400 mb-6">
@@ -88,7 +88,7 @@ export default function LinearProjectDetailPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push(`/integrations/linear/${workspaceId}/projects`)}
-            className="h-9 px-2.5 rounded-lg border border-white/10 text-white hover:bg-white/5 transition-colors"
+            className="h-9 px-2.5 rounded-lg border border-white/10 text-foreground hover:bg-white/5 transition-colors"
             title="Back to Projects"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -102,7 +102,7 @@ export default function LinearProjectDetailPage() {
           )}
 
           <div>
-            <h1 className="text-xl font-semibold text-white">
+            <h1 className="text-xl font-semibold text-foreground">
               {projectLoading ? '...' : project?.name}
             </h1>
             <p className="text-sm text-neutral-500">
@@ -115,7 +115,7 @@ export default function LinearProjectDetailPage() {
           href={project?.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="h-9 px-4 rounded-lg border border-white/10 text-sm text-white hover:bg-white/5 transition-colors flex items-center gap-2"
+          className="h-9 px-4 rounded-lg border border-white/10 text-sm text-foreground hover:bg-white/5 transition-colors flex items-center gap-2"
         >
           <ExternalLink className="w-4 h-4" />
           <span className="hidden sm:inline">Open in Linear</span>
@@ -140,7 +140,7 @@ export default function LinearProjectDetailPage() {
 
       {/* Issues */}
       <div>
-        <h2 className="text-sm font-medium text-white mb-4">Issues</h2>
+        <h2 className="text-sm font-medium text-foreground mb-4">Issues</h2>
 
         {issuesLoading ? (
           <div className="py-12 flex justify-center">
@@ -151,7 +151,7 @@ export default function LinearProjectDetailPage() {
             <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-3">
               <Inbox className="w-5 h-5 text-neutral-500" />
             </div>
-            <p className="text-sm text-white">No issues yet</p>
+            <p className="text-sm text-foreground">No issues yet</p>
             <p className="text-xs text-neutral-500 mt-1">
               Issues from this project will appear here
             </p>

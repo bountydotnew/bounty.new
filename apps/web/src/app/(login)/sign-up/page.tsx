@@ -165,7 +165,7 @@ function SignUpContent() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#111110] text-[#f3f3f3] md:flex-row">
+    <div className="flex min-h-screen flex-col bg-background text-foreground md:flex-row">
       {/* Left Column: Sign-Up Section */}
       <div className="flex flex-1 items-center justify-center p-8 md:p-12">
         <div className="w-full max-w-96 space-y-8">
@@ -240,7 +240,7 @@ function SignUpContent() {
                 <span className="w-full border-t border-gray-600" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-[#111110] px-2 text-gray-400">
+                <span className="bg-background px-2 text-gray-400">
                   Or continue with
                 </span>
               </div>
@@ -248,7 +248,7 @@ function SignUpContent() {
 
             <div className="relative">
               <Button
-                className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#2A2A28] py-3 font-medium text-gray-200 transition-colors hover:bg-[#383838]"
+                className="flex w-full items-center justify-center gap-3 rounded-lg bg-surface-hover py-3 font-medium text-gray-200 transition-colors hover:bg-surface-3"
                 onClick={handleGitHubSignIn}
               >
                 <GithubIcon className="h-5 w-5 fill-white" />
@@ -263,7 +263,7 @@ function SignUpContent() {
       <div className="hidden flex-1 items-center justify-center lg:flex">
         {/* decorative canvas */}
         <div
-          className="relative flex min-h-[95%] flex-1 cursor-pointer items-center justify-center overflow-hidden border border-[#383838] p-8 md:p-12"
+          className="relative flex min-h-[95%] flex-1 cursor-pointer items-center justify-center overflow-hidden border border-border-strong p-8 md:p-12"
           onMouseLeave={handleMouseLeave}
           onMouseMove={handleMouseMove}
           ref={containerRef}

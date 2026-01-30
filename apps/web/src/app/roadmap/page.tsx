@@ -154,9 +154,9 @@ function getStatusBadgeStyle(status: Status): string {
     case 'in-progress':
       return 'bg-yellow-500/10 text-yellow-500';
     case 'planned':
-      return 'bg-[#333] text-[#888]';
+      return 'bg-surface-3 text-text-muted';
     default:
-      return 'bg-[#333] text-[#888]';
+      return 'bg-surface-3 text-text-muted';
   }
 }
 
@@ -209,8 +209,8 @@ function VoteButton({
             : 'rounded-[7px]'
         } ${
           canVote
-            ? 'bg-[#929292] text-[#F2F2DD] hover:bg-[#A0A0A0] cursor-pointer'
-            : 'bg-[#232323] text-[#929292] cursor-not-allowed'
+            ? 'bg-text-tertiary text-warning-foreground hover:bg-text-secondary cursor-pointer'
+            : 'bg-surface-3 text-text-tertiary cursor-not-allowed'
         }`}
       >
         {/* Offset the text on desktop when trash button is shown to keep it visually centered across the full row */}
@@ -225,7 +225,7 @@ function VoteButton({
           type="button"
           onClick={onRemove}
           disabled={isRemoving}
-          className="hidden md:flex h-[29px] w-[29px] rounded-r-[7px] rounded-l-none items-center justify-center bg-[#232323] text-[#929292] hover:bg-[#2a2a2a] hover:text-[#aaa] transition-colors cursor-pointer"
+          className="hidden md:flex h-[29px] w-[29px] rounded-r-[7px] rounded-l-none items-center justify-center bg-surface-3 text-text-tertiary hover:bg-surface-hover hover:text-text-secondary transition-colors cursor-pointer"
           title="Remove vote"
         >
           {isRemoving ? (
@@ -464,7 +464,7 @@ function IntegrationVoteCard() {
   return (
     <div
       id="vote"
-      className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-[#191919] border border-dashed border-[#2E2E2E] scroll-mt-24"
+      className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-surface-1 border border-dashed border-border-default scroll-mt-24"
     >
       <div className="flex flex-col justify-center items-start gap-[9px] w-full">
         <div className="size-7 flex items-center justify-center">
@@ -473,16 +473,16 @@ function IntegrationVoteCard() {
             style={displayedIntegration ? undefined : { color: '#969696' }}
           />
         </div>
-        <div className="text-[14px] leading-[150%] text-white font-bold">
+        <div className="text-[14px] leading-[150%] text-foreground font-bold">
           {displayedIntegration?.label ?? "What's Next?"}
         </div>
-        <div className="text-[11px] leading-[125%] text-[#B5B5B5] font-medium">
+        <div className="text-[11px] leading-[125%] text-text-secondary font-medium">
           {displayedIntegration
             ? displayedIntegration.description
             : 'Vote for the next integration we should build.'}
         </div>
         {hasVoted && !hasSelection && (
-          <div className="text-[10px] text-[#666]">
+          <div className="text-[10px] text-text-muted">
             {totalVotes} total vote{totalVotes !== 1 ? 's' : ''}
           </div>
         )}
@@ -493,7 +493,7 @@ function IntegrationVoteCard() {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-[#303030] text-[#CCCCCC] hover:bg-[#3a3a3a] transition-colors cursor-pointer"
+              className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-surface-3 text-text-secondary hover:bg-surface-3 transition-colors cursor-pointer"
             >
               <span className="text-[13px] leading-[150%] font-medium">
                 {displayedIntegration ? 'Change Selection' : 'Select Option'}
@@ -504,7 +504,7 @@ function IntegrationVoteCard() {
             side="top"
             align="center"
             sideOffset={8}
-            className="bg-[#191919] border border-[#232323] min-w-[200px]"
+            className="bg-surface-1 border border-border-subtle min-w-[200px]"
           >
             {VOTABLE_INTEGRATIONS.map((integration) => {
               const voteData = votes?.find((v) => v.key === integration.key);
@@ -514,19 +514,19 @@ function IntegrationVoteCard() {
               return (
                 <DropdownMenuItem
                   key={integration.key}
-                  className={`focus:bg-[#232323] gap-2 cursor-pointer ${isCurrentSelection ? 'bg-[#232323]' : ''}`}
+                  className={`focus:bg-surface-3 gap-2 cursor-pointer ${isCurrentSelection ? 'bg-surface-3' : ''}`}
                   onClick={() => setSelectedKey(integration.key)}
                 >
                   <IconComponent className="size-4 shrink-0" />
                   <div className="flex-1">
-                    <span className="text-white">{integration.label}</span>
+                    <span className="text-foreground">{integration.label}</span>
                     {isUserVote && (
                       <span className="ml-1 text-green-500 text-xs">
                         (your vote)
                       </span>
                     )}
                   </div>
-                  <span className="text-[#666] text-xs">
+                  <span className="text-text-muted text-xs">
                     {voteData?.voteCount ?? 0}
                   </span>
                 </DropdownMenuItem>
@@ -535,7 +535,7 @@ function IntegrationVoteCard() {
             {/* Mobile-only remove vote option */}
             {hasVoted && isAuthenticated && (
               <DropdownMenuItem
-                className="md:hidden focus:bg-[#232323] gap-2 cursor-pointer text-red-400 hover:text-red-300"
+                className="md:hidden focus:bg-surface-3 gap-2 cursor-pointer text-red-400 hover:text-red-300"
                 onClick={handleRemoveVote}
               >
                 <svg
@@ -595,23 +595,23 @@ export default function RoadmapPage() {
   ];
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#0a0a0a]">
+    <div className="flex min-h-screen flex-col bg-background">
       <Header />
       <main className="flex-1">
         {/* Hero Section */}
         <section className="px-8 pt-32 pb-12">
           <div className="mx-auto max-w-5xl">
-            <h1 className="mb-6 font-display text-5xl tracking-tight text-[#efefef] md:text-6xl">
+            <h1 className="mb-6 font-display text-5xl tracking-tight text-foreground md:text-6xl">
               Roadmap
             </h1>
-            <p className="text-lg text-[#888]">
+            <p className="text-lg text-text-muted">
               Updates to the bounty.new platform and service.
             </p>
           </div>
         </section>
 
         {/* Main content with sidebar */}
-        <section className="border-t border-[#222] px-8 py-12">
+        <section className="border-t border-border-subtle px-8 py-12">
           <div className="mx-auto max-w-5xl">
             <div className="grid grid-cols-1 gap-12 xl:grid-cols-[180px_1fr]">
               {/* Sidebar - sticky outline */}
@@ -622,7 +622,7 @@ export default function RoadmapPage() {
                       <li key={section.id}>
                         <a
                           href={`#${section.id}`}
-                          className="text-[15px] text-[#666] transition-colors duration-150 hover:text-[#efefef]"
+                          className="text-[15px] text-text-muted transition-colors duration-150 hover:text-foreground"
                         >
                           {section.label}
                         </a>
@@ -636,10 +636,10 @@ export default function RoadmapPage() {
               <div className="max-w-3xl space-y-16">
                 {/* Integrations Section */}
                 <section id="integrations" className="scroll-mt-24">
-                  <h2 className="mb-4 font-display text-2xl tracking-tight text-[#efefef]">
+                  <h2 className="mb-4 font-display text-2xl tracking-tight text-foreground">
                     Integrations
                   </h2>
-                  <p className="mb-10 text-[15px] text-[#888]">
+                  <p className="mb-10 text-[15px] text-text-muted">
                     Connect bounty.new with the tools you already use. Vote for
                     the next integration we should build.
                   </p>
@@ -649,102 +649,102 @@ export default function RoadmapPage() {
                     <IntegrationVoteCard />
 
                     {/* GitHub */}
-                    <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-[#191919] border border-solid border-[#2E2E2E]">
+                    <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-surface-1 border border-solid border-border-default">
                       <div className="flex flex-col justify-center items-start gap-[9px] w-full">
                         <div className="size-7 flex items-center justify-center">
-                          <GithubIcon className="size-7 text-white" />
+                          <GithubIcon className="size-7 text-foreground" />
                         </div>
-                        <div className="text-[14px] leading-[150%] text-white font-bold">
+                        <div className="text-[14px] leading-[150%] text-foreground font-bold">
                           GitHub
                         </div>
-                        <div className="text-[11px] leading-[125%] text-[#B5B5B5] font-medium">
+                        <div className="text-[11px] leading-[125%] text-text-secondary font-medium">
                           Connect Bounty to your GitHub and access all of our
                           tools from any repository
                         </div>
                       </div>
-                      <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-[#303030]">
-                        <span className="text-[13px] leading-[150%] text-[#CCCCCC66] font-medium">
+                      <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-surface-3">
+                        <span className="text-[13px] leading-[150%] text-text-secondary/40 font-medium">
                           Live
                         </span>
                       </div>
                     </div>
 
                     {/* Discord */}
-                    <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-[#191919] border border-solid border-[#2E2E2E]">
+                    <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-surface-1 border border-solid border-border-default">
                       <div className="flex flex-col justify-center items-start gap-[9px] w-full">
                         <div className="size-7 flex items-center justify-center">
-                          <DiscordIcon className="size-7 text-white" />
+                          <DiscordIcon className="size-7 text-foreground" />
                         </div>
-                        <div className="text-[14px] leading-[150%] text-white font-bold">
+                        <div className="text-[14px] leading-[150%] text-foreground font-bold">
                           Discord
                         </div>
-                        <div className="text-[11px] leading-[125%] text-[#B5B5B5] font-medium">
+                        <div className="text-[11px] leading-[125%] text-text-secondary font-medium">
                           Link your Discord account or add the Bounty bot to
                           your server
                         </div>
                       </div>
-                      <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-[#303030]">
-                        <span className="text-[13px] leading-[150%] text-[#CCCCCC66] font-medium">
+                      <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-surface-3">
+                        <span className="text-[13px] leading-[150%] text-text-secondary/40 font-medium">
                           Live
                         </span>
                       </div>
                     </div>
 
                     {/* Slack */}
-                    <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-[#191919] border border-solid border-[#2E2E2E]">
+                    <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-surface-1 border border-solid border-border-default">
                       <div className="flex flex-col justify-center items-start gap-[9px] w-full">
                         <div className="size-7 flex items-center justify-center">
-                          <SlackIcon className="size-7 text-white" />
+                          <SlackIcon className="size-7 text-foreground" />
                         </div>
-                        <div className="text-[14px] leading-[150%] text-white font-bold">
+                        <div className="text-[14px] leading-[150%] text-foreground font-bold">
                           Slack
                         </div>
-                        <div className="text-[11px] leading-[125%] text-[#B5B5B5] font-medium">
+                        <div className="text-[11px] leading-[125%] text-text-secondary font-medium">
                           Get notified about bounties in your workspace
                         </div>
                       </div>
-                      <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-[#232323]">
-                        <span className="text-[13px] leading-[150%] text-[#929292] font-medium">
+                      <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-surface-3">
+                        <span className="text-[13px] leading-[150%] text-text-tertiary font-medium">
                           Coming soon
                         </span>
                       </div>
                     </div>
 
                     {/* X/Twitter */}
-                    <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-[#191919] border border-solid border-[#2E2E2E]">
+                    <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-surface-1 border border-solid border-border-default">
                       <div className="flex flex-col justify-center items-start gap-[9px] w-full">
                         <div className="size-7 flex items-center justify-center">
-                          <TwitterIcon className="size-7 text-white" />
+                          <TwitterIcon className="size-7 text-foreground" />
                         </div>
-                        <div className="text-[14px] leading-[150%] text-white font-bold">
+                        <div className="text-[14px] leading-[150%] text-foreground font-bold">
                           X (Twitter)
                         </div>
-                        <div className="text-[11px] leading-[125%] text-[#B5B5B5] font-medium">
+                        <div className="text-[11px] leading-[125%] text-text-secondary font-medium">
                           Auto-post bounties and showcase completed work
                         </div>
                       </div>
-                      <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-[#232323]">
-                        <span className="text-[13px] leading-[150%] text-[#929292] font-medium">
+                      <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-surface-3">
+                        <span className="text-[13px] leading-[150%] text-text-tertiary font-medium">
                           Coming soon
                         </span>
                       </div>
                     </div>
 
                     {/* Linear */}
-                    <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-[#191919] border border-solid border-[#2E2E2E]">
+                    <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-surface-1 border border-solid border-border-default">
                       <div className="flex flex-col justify-center items-start gap-[9px] w-full">
                         <div className="size-7 flex items-center justify-center">
                           <LinearIcon className="size-7" />
                         </div>
-                        <div className="text-[14px] leading-[150%] text-white font-bold">
+                        <div className="text-[14px] leading-[150%] text-foreground font-bold">
                           Linear
                         </div>
-                        <div className="text-[11px] leading-[125%] text-[#B5B5B5] font-medium">
+                        <div className="text-[11px] leading-[125%] text-text-secondary font-medium">
                           Sync issues and automatically update status
                         </div>
                       </div>
-                      <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-[#232323]">
-                        <span className="text-[13px] leading-[150%] text-[#929292] font-medium">
+                      <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-surface-3">
+                        <span className="text-[13px] leading-[150%] text-text-tertiary font-medium">
                           Coming soon
                         </span>
                       </div>
@@ -754,16 +754,16 @@ export default function RoadmapPage() {
 
                 {/* Changelog Section */}
                 <section id="changelog" className="scroll-mt-24">
-                  <h2 className="mb-4 font-display text-2xl tracking-tight text-[#efefef]">
+                  <h2 className="mb-4 font-display text-2xl tracking-tight text-foreground">
                     Changelog
                   </h2>
-                  <p className="mb-6 text-[15px] text-[#888]">
+                  <p className="mb-6 text-[15px] text-text-muted">
                     Track our progress and see what we're working on next.
                   </p>
 
                   {/* Filter Tabs */}
                   <div className="mb-8">
-                    <div className="relative inline-flex rounded-full bg-[#191919] border border-[#232323] p-1">
+                    <div className="relative inline-flex rounded-full bg-surface-1 border border-border-subtle p-1">
                       {filters.map((filter) => (
                         <button
                           key={filter.value}
@@ -771,8 +771,8 @@ export default function RoadmapPage() {
                           onClick={() => setActiveFilter(filter.value)}
                           className={`relative px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                             activeFilter === filter.value
-                              ? 'bg-[#232323] text-white'
-                              : 'text-[#929292] hover:text-white'
+                              ? 'bg-surface-3 text-foreground'
+                              : 'text-text-tertiary hover:text-foreground'
                           }`}
                         >
                           {filter.label}
@@ -788,7 +788,7 @@ export default function RoadmapPage() {
                         <div className="py-6">
                           <div className="flex-1">
                             <div className="mb-2 flex flex-wrap items-center gap-2">
-                              <h3 className="text-xl font-semibold text-[#efefef]">
+                              <h3 className="text-xl font-semibold text-foreground">
                                 {item.title}
                               </h3>
                               <span
@@ -797,7 +797,7 @@ export default function RoadmapPage() {
                                 {getStatusLabel(item.status)}
                               </span>
                             </div>
-                            <p className="text-[15px] leading-relaxed text-[#888]">
+                            <p className="text-[15px] leading-relaxed text-text-muted">
                               {item.description}
                             </p>
                           </div>
@@ -809,10 +809,10 @@ export default function RoadmapPage() {
 
                 {/* Contribute Section */}
                 <section id="contribute" className="scroll-mt-24">
-                  <h2 className="mb-6 font-display text-2xl tracking-tight text-[#efefef]">
+                  <h2 className="mb-6 font-display text-2xl tracking-tight text-foreground">
                     Want to Help Build This?
                   </h2>
-                  <p className="mb-10 text-[15px] leading-relaxed text-[#888]">
+                  <p className="mb-10 text-[15px] leading-relaxed text-text-muted">
                     bounty.new is open source and built by the community. Every
                     contribution, no matter how small, helps us build something
                     that doesn't suck.
@@ -820,7 +820,7 @@ export default function RoadmapPage() {
 
                   <div className="flex flex-col items-start gap-4 sm:flex-row">
                     <Link
-                      className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-[15px] font-medium text-[#0E0E0E] transition-colors hover:bg-[#e5e5e5]"
+                      className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-[15px] font-medium text-foreground transition-colors hover:bg-surface-2"
                       href="https://github.com/bountydotnew/bounty.new"
                       target="_blank"
                     >
@@ -828,7 +828,7 @@ export default function RoadmapPage() {
                       View on GitHub
                     </Link>
                     <Link
-                      className="inline-flex items-center gap-2 rounded-full border border-[#333] bg-[#1a1a1a] px-6 py-3 text-[15px] text-[#efefef] transition-colors hover:bg-[#252525]"
+                      className="inline-flex items-center gap-2 rounded-full border border-border-default bg-surface-1 px-6 py-3 text-[15px] text-foreground transition-colors hover:bg-surface-2"
                       href="https://github.com/bountydotnew/bounty.new/issues"
                       target="_blank"
                     >
@@ -836,7 +836,7 @@ export default function RoadmapPage() {
                     </Link>
                   </div>
 
-                  <p className="mt-8 text-[14px] text-[#666]">
+                  <p className="mt-8 text-[14px] text-text-muted">
                     Every PR gets a response. Every contribution matters.
                   </p>
                 </section>

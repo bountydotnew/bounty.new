@@ -495,25 +495,25 @@ function CancellationDialog({
 }: CancellationDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border border-[#232323] bg-[#191919] text-[#CFCFCF]">
+      <DialogContent className="border border-border-subtle bg-surface-1 text-text-secondary">
         <DialogHeader>
-          <DialogTitle className="text-white mb-2">
+          <DialogTitle className="text-foreground mb-2">
             Request Cancellation
           </DialogTitle>
-          <DialogDescription className="text-[#A0A0A0]">
+          <DialogDescription className="text-text-secondary">
             Request to cancel this funded bounty. Our team will review your
             request and process a refund. Note: The platform fee is
             non-refundable.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4">
+        <div className="py-4 px-4">
           <Textarea
             placeholder="Reason for cancellation (optional)"
             value={reason}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
               onReasonChange(e.target.value)
             }
-            className="min-h-[100px] border-[#333] bg-[#0a0a0a] text-white placeholder:text-[#666]"
+            className="min-h-[100px] border-border-default bg-background text-foreground placeholder:text-text-muted w-full"
           />
         </div>
         <DialogFooter className="flex gap-2 sm:justify-end">
@@ -523,7 +523,7 @@ function CancellationDialog({
           <Button
             onClick={onConfirm}
             disabled={isPending}
-            className="bg-yellow-600 hover:bg-yellow-700 text-white"
+            className="bg-destructive hover:bg-destructive/90 text-white border-none"
           >
             {isPending ? 'Submitting...' : 'Submit Request'}
           </Button>

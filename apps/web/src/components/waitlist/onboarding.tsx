@@ -108,7 +108,7 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
           <div
             key={s}
             className={`h-1 flex-1 rounded-full transition-colors ${
-              s <= step ? 'bg-white' : 'bg-[#232323]'
+              s <= step ? 'bg-white' : 'bg-surface-3'
             }`}
           />
         ))}
@@ -117,10 +117,10 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
       {/* Step 1: Role selection */}
       {step === 1 && (
         <div>
-          <h2 className="text-[32px] font-medium text-white mb-2">
+          <h2 className="text-[32px] font-medium text-foreground mb-2">
             How will you use bounty.new?
           </h2>
-          <p className="text-[#929292] text-base mb-8">
+          <p className="text-text-tertiary text-base mb-8">
             You can always do both later
           </p>
 
@@ -129,19 +129,19 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
               onClick={() => setRole('creator')}
               className={`w-full p-5 rounded-xl border text-left transition-colors ${
                 role === 'creator'
-                  ? 'bg-[#1E1E1E] border-white'
-                  : 'bg-[#191919] border-[#232323] hover:border-[#3A3A3A]'
+                  ? 'bg-surface-1 border-white'
+                  : 'bg-surface-1 border-border-subtle hover:border-border-strong'
               }`}
             >
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-lg bg-[#232323] flex items-center justify-center shrink-0">
-                  <Briefcase size={20} className="text-white" />
+                <div className="w-10 h-10 rounded-lg bg-surface-3 flex items-center justify-center shrink-0">
+                  <Briefcase size={20} className="text-foreground" />
                 </div>
                 <div>
-                  <h3 className="text-white text-lg font-medium mb-1">
+                  <h3 className="text-foreground text-lg font-medium mb-1">
                     Post bounties
                   </h3>
-                  <p className="text-[#929292] text-sm">
+                  <p className="text-text-tertiary text-sm">
                     I want to post challenges and pay developers to solve them
                   </p>
                 </div>
@@ -152,19 +152,19 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
               onClick={() => setRole('developer')}
               className={`w-full p-5 rounded-xl border text-left transition-colors ${
                 role === 'developer'
-                  ? 'bg-[#1E1E1E] border-white'
-                  : 'bg-[#191919] border-[#232323] hover:border-[#3A3A3A]'
+                  ? 'bg-surface-1 border-white'
+                  : 'bg-surface-1 border-border-subtle hover:border-border-strong'
               }`}
             >
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-lg bg-[#232323] flex items-center justify-center shrink-0">
-                  <Code size={20} className="text-white" />
+                <div className="w-10 h-10 rounded-lg bg-surface-3 flex items-center justify-center shrink-0">
+                  <Code size={20} className="text-foreground" />
                 </div>
                 <div>
-                  <h3 className="text-white text-lg font-medium mb-1">
+                  <h3 className="text-foreground text-lg font-medium mb-1">
                     Solve bounties
                   </h3>
-                  <p className="text-[#929292] text-sm">
+                  <p className="text-text-tertiary text-sm">
                     I want to find bounties, ship solutions, and get paid
                   </p>
                 </div>
@@ -177,25 +177,25 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
       {/* Step 2: GitHub connection */}
       {step === 2 && (
         <div>
-          <h2 className="text-[32px] font-medium text-white mb-2">
+          <h2 className="text-[32px] font-medium text-foreground mb-2">
             Connect GitHub
           </h2>
-          <p className="text-[#929292] text-base mb-8">
+          <p className="text-text-tertiary text-base mb-8">
             {role === 'creator'
               ? 'Import issues as bounties directly from your repos'
               : 'Showcase your work and submit PRs seamlessly'}
           </p>
 
           {session?.user ? (
-            <div className="w-full p-4 rounded-xl bg-[#191919] border border-[#232323] flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#232323] flex items-center justify-center">
-                <Github size={20} className="text-white" />
+            <div className="w-full p-4 rounded-xl bg-surface-1 border border-border-subtle flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-surface-3 flex items-center justify-center">
+                <Github size={20} className="text-foreground" />
               </div>
               <div className="flex-1">
-                <p className="text-white text-base">
+                <p className="text-foreground text-base">
                   @{githubAccount?.username || session.user.name || 'user'}
                 </p>
-                <p className="text-[#5A5A5A] text-sm">Connected</p>
+                <p className="text-text-tertiary text-sm">Connected</p>
               </div>
               <svg
                 className="w-5 h-5 text-green-400"
@@ -210,7 +210,7 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
           ) : (
             <button
               onClick={handleConnectGithub}
-              className="w-full h-14 rounded-xl bg-[#191919] border border-[#232323] text-white text-base flex items-center justify-center gap-3 hover:border-[#3A3A3A] transition-colors"
+              className="w-full h-14 rounded-xl bg-surface-1 border border-border-subtle text-foreground text-base flex items-center justify-center gap-3 hover:border-border-strong transition-colors"
             >
               <Github size={20} />
               <span>Connect GitHub</span>
@@ -219,7 +219,7 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
 
           <button
             onClick={handleNext}
-            className="text-[#5A5A5A] text-sm mt-4 hover:text-white transition-colors"
+            className="text-text-tertiary text-sm mt-4 hover:text-foreground transition-colors"
           >
             Skip for now
           </button>
@@ -230,7 +230,7 @@ export function Onboarding({ entryId, onComplete }: OnboardingProps) {
       <button
         onClick={handleNext}
         disabled={!canProceed() || isSubmitting}
-        className="mt-10 flex items-center justify-center gap-1.5 px-6 h-[40px] rounded-full text-white text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="mt-10 flex items-center justify-center gap-1.5 px-6 h-[40px] rounded-full text-foreground text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50"
         style={{
           backgroundImage: 'linear-gradient(180deg, #ccc 0%, #808080 100%)',
         }}

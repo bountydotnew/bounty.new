@@ -107,7 +107,7 @@ export default function DiscordDetailPage() {
           ) : (
             <DiscordIcon className="h-5 w-5 text-[#5865F2] shrink-0" />
           )}
-          <span className="truncate text-white">{row.displayName}</span>
+          <span className="truncate text-foreground">{row.displayName}</span>
         </div>
       ),
     },
@@ -116,7 +116,7 @@ export default function DiscordDetailPage() {
       header: 'Linked',
       width: '150px',
       render: (row) => (
-        <div className="text-[#888]">
+        <div className="text-text-muted">
           {row.linkedAt
             ? new Date(row.linkedAt).toLocaleDateString()
             : 'Unknown'}
@@ -142,12 +142,12 @@ export default function DiscordDetailPage() {
             />
           ) : (
             <div className="h-5 w-5 rounded-full bg-[#5865F2] flex items-center justify-center shrink-0">
-              <span className="text-[10px] text-white font-medium">
+              <span className="text-[10px] text-foreground font-medium">
                 {row.name.charAt(0).toUpperCase()}
               </span>
             </div>
           )}
-          <span className="truncate text-white">{row.name}</span>
+          <span className="truncate text-foreground">{row.name}</span>
         </div>
       ),
     },
@@ -156,7 +156,7 @@ export default function DiscordDetailPage() {
       header: 'Members',
       width: '100px',
       render: (row) => (
-        <div className="flex items-center gap-1 text-[#888]">
+        <div className="flex items-center gap-1 text-text-muted">
           <Users className="h-3.5 w-3.5" />
           <span>{row.memberCount?.toLocaleString() ?? '-'}</span>
         </div>
@@ -167,7 +167,7 @@ export default function DiscordDetailPage() {
       header: 'Added',
       width: '120px',
       render: (row) => (
-        <div className="text-[#888]">
+        <div className="text-text-muted">
           {new Date(row.installedAt).toLocaleDateString()}
         </div>
       ),
@@ -199,7 +199,7 @@ export default function DiscordDetailPage() {
     return (
       <IntegrationDetailPage isLoading={false} error={null} errorMessage="">
         <IntegrationHeader
-          icon={<DiscordIcon className="h-8 w-8 text-white" />}
+          icon={<DiscordIcon className="h-8 w-8 text-foreground" />}
           title="Discord"
           description="Connect your Discord account and add the Bounty bot to your server."
         />
@@ -207,7 +207,7 @@ export default function DiscordDetailPage() {
         <div className="pt-4 space-y-6">
           <div>
             <SectionHeader title="Step 1: Link your Discord account" />
-            <p className="text-sm text-[#888] mb-4">
+            <p className="text-sm text-text-muted mb-4">
               Link your Discord account to authenticate with the Bounty bot and
               use commands that require your identity.
             </p>
@@ -218,7 +218,7 @@ export default function DiscordDetailPage() {
 
           <div>
             <SectionHeader title="Step 2: Add bot to your server" />
-            <p className="text-sm text-[#888] mb-4">
+            <p className="text-sm text-text-muted mb-4">
               Add the Bounty bot to your Discord server to use slash commands.
             </p>
             <ActionButton
@@ -246,7 +246,7 @@ export default function DiscordDetailPage() {
 
           <div>
             <SectionHeader title="Available features" />
-            <ul className="text-sm text-[#888] list-disc list-inside space-y-1">
+            <ul className="text-sm text-text-muted list-disc list-inside space-y-1">
               <li>Create bounties directly from Discord</li>
               <li>Receive notifications about bounty updates</li>
               <li>Manage submissions and approvals</li>
@@ -267,7 +267,7 @@ export default function DiscordDetailPage() {
       {account && (
         <>
           <IntegrationHeader
-            icon={<DiscordIcon className="h-8 w-8 text-white" />}
+            icon={<DiscordIcon className="h-8 w-8 text-foreground" />}
             title="Discord"
             description="Your Discord account is linked to Bounty"
             badges={[{ label: 'Connected', variant: 'success' }]}
@@ -325,7 +325,7 @@ export default function DiscordDetailPage() {
 
           <div className="pt-2">
             <SectionHeader title="Available features" />
-            <ul className="text-sm text-[#888] list-disc list-inside space-y-1">
+            <ul className="text-sm text-text-muted list-disc list-inside space-y-1">
               <li>Create bounties directly from Discord</li>
               <li>Receive notifications about bounty updates</li>
               <li>Manage submissions and approvals</li>

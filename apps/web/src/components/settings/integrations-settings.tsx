@@ -14,6 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
+import { Button } from '@bounty/ui/components/button';
 import { useIntegrations } from '@/hooks/use-integrations';
 
 interface IntegrationCardProps {
@@ -49,15 +50,15 @@ function IntegrationCard({
 }: IntegrationCardProps) {
   const router = useRouter();
   const content = (
-    <div className="rounded-[15px] opacity-100 shrink-0 flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] grow basis-0 self-stretch bg-[#191919] border border-solid border-[#2E2E2E] antialiased size-full h-full">
+    <div className="rounded-[15px] opacity-100 shrink-0 flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] grow basis-0 self-stretch bg-surface-1 border border-solid border-border-default antialiased size-full h-full">
       <div className="shrink-0 flex flex-col justify-center items-start gap-[9px] w-full self-stretch h-fit">
         <div className="shrink-0 size-7 flex items-center justify-center">
           {icon}
         </div>
-        <div className="text-[14px] leading-[150%] shrink-0 text-white font-bold size-fit">
+        <div className="text-[14px] leading-[150%] shrink-0 text-foreground font-bold size-fit">
           {title}
         </div>
-        <div className="text-[11px] leading-[125%] w-full h-fit shrink-0 self-stretch text-[#B5B5B5] font-medium">
+        <div className="text-[11px] leading-[125%] w-full h-fit shrink-0 self-stretch text-text-secondary font-medium">
           {description}
         </div>
       </div>
@@ -65,26 +66,27 @@ function IntegrationCard({
         {status?.type === 'installed' && status.count !== undefined && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                 }}
-                className="w-full h-[29px] rounded-[7px] flex justify-center items-center self-stretch shrink-0 gap-1.5 bg-[#303030] p-0"
+                className="w-full h-[29px] rounded-[7px] flex justify-center items-center gap-1.5 bg-surface-3 hover:bg-surface-hover"
               >
-                <div className="text-[13px] leading-[150%] shrink-0 text-[#CCCCCC66] font-medium size-fit">
+                <span className="text-[13px] leading-[150%] text-text-secondary/40 font-medium">
                   {status.count} installed
-                </div>
-                <SettingsGearIcon className="shrink-0 opacity-40 size-4 text-[#CCCCCC66]" />
-              </button>
+                </span>
+                <SettingsGearIcon className="shrink-0 opacity-40 size-4 text-text-secondary/40" />
+              </Button>
             </DropdownMenuTrigger>
             {status.accounts && status.accounts.length > 0 && (
               <DropdownMenuContent
                 side="top"
                 align="center"
                 sideOffset={8}
-                className="bg-[#191919] border border-[#232323] min-w-[200px]"
+                className="bg-surface-1 border border-border-subtle min-w-[200px]"
               >
                 {status.accounts.map((account) => {
                   const accountLabel =
@@ -95,7 +97,7 @@ function IntegrationCard({
                   return (
                     <DropdownMenuItem
                       key={account.id}
-                      className="focus:bg-[#232323] gap-2"
+                      className="focus:bg-surface-3 gap-2"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -115,9 +117,9 @@ function IntegrationCard({
                           className="rounded-full"
                         />
                       ) : isLinearAccount ? (
-                        <LinearIcon className="size-4 opacity-60 text-white" />
+                        <LinearIcon className="size-4 opacity-60 text-foreground" />
                       ) : (
-                        <GithubIcon className="size-4 opacity-60 text-white" />
+                        <GithubIcon className="size-4 opacity-60 text-foreground" />
                       )}
                       {accountLabel}
                     </DropdownMenuItem>
@@ -129,8 +131,13 @@ function IntegrationCard({
         )}
 
         {action && (
-          <button
-            type="button"
+          <Button
+            variant={
+              status?.type === 'coming-soon' || action.disabled
+                ? 'ghost'
+                : 'secondary'
+            }
+            size="sm"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -139,14 +146,14 @@ function IntegrationCard({
               }
             }}
             disabled={action.disabled || status?.type === 'coming-soon'}
-            className={`w-full h-[29px] rounded-[7px] flex justify-center items-center shrink-0 self-stretch p-0 font-medium text-[13px] leading-[150%] ${
+            className={`w-full h-[29px] rounded-[7px] font-medium text-[13px] leading-[150%] ${
               status?.type === 'coming-soon' || action.disabled
-                ? 'bg-[#232323] text-[#929292] cursor-not-allowed'
-                : 'bg-[#929292] text-[#F2F2DD] hover:bg-[#A0A0A0] transition-colors cursor-pointer'
+                ? 'bg-surface-3 text-text-tertiary'
+                : 'bg-foreground text-background hover:bg-foreground/90'
             }`}
           >
             {action.label}
-          </button>
+          </Button>
         )}
       </div>
     </div>
@@ -222,7 +229,7 @@ function renderGithubIntegrationCard(
   return (
     <IntegrationCard
       key="github"
-      icon={<GithubIcon className="size-7 text-white" />}
+      icon={<GithubIcon className="size-7 text-foreground" />}
       title="GitHub"
       description={description}
       status={
@@ -285,7 +292,7 @@ function renderIntegrationCard(
       return (
         <IntegrationCard
           key="discord"
-          icon={<DiscordIcon className="size-7 text-white" />}
+          icon={<DiscordIcon className="size-7 text-foreground" />}
           title="Discord"
           description={description}
           status={
@@ -324,7 +331,7 @@ function renderIntegrationCard(
       return (
         <IntegrationCard
           key="twitter"
-          icon={<TwitterIcon className="size-7 text-white" />}
+          icon={<TwitterIcon className="size-7 text-foreground" />}
           title="X (Twitter)"
           description="Create bounties from any tweet or thread"
           {...comingSoonProps}
@@ -334,7 +341,7 @@ function renderIntegrationCard(
       return (
         <IntegrationCard
           key="slack"
-          icon={<SlackIcon className="size-7 text-white" />}
+          icon={<SlackIcon className="size-7 text-foreground" />}
           title="Slack"
           description="Create bounties directly from Slack"
           {...comingSoonProps}
@@ -343,7 +350,9 @@ function renderIntegrationCard(
     case 'linear': {
       const isConnected = !!item.workspace;
       const displayName = item.workspace?.name || 'your Linear workspace';
-      const workspaceHref = item.workspace ? `/integrations/linear/${item.workspace.id}` : '/integrations/linear';
+      const workspaceHref = item.workspace
+        ? `/integrations/linear/${item.workspace.id}`
+        : '/integrations/linear';
       const description = isConnected
         ? `Connected to ${displayName}`
         : 'Connect your Linear workspace to create bounties from issues';
@@ -351,7 +360,7 @@ function renderIntegrationCard(
       return (
         <IntegrationCard
           key="linear"
-          icon={<LinearIcon className="size-7 text-white" />}
+          icon={<LinearIcon className="size-7 text-foreground" />}
           title="Linear"
           description={description}
           status={
@@ -434,9 +443,7 @@ export function IntegrationsSettings() {
   }, [setupAction, installationId, invalidateAll]);
 
   const installedCount =
-    githubInstallations.length +
-    (hasDiscord ? 1 : 0) +
-    (hasLinear ? 1 : 0);
+    githubInstallations.length + (hasDiscord ? 1 : 0) + (hasLinear ? 1 : 0);
 
   const allIntegrations = useMemo(
     () => [
@@ -483,7 +490,7 @@ export function IntegrationsSettings() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#5A5A5A] border-t-transparent" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-border-default border-t-transparent" />
       </div>
     );
   }
@@ -492,29 +499,31 @@ export function IntegrationsSettings() {
     <div className="space-y-6">
       {/* Switcher */}
       {installedCount > 0 && (
-        <div className="relative inline-flex rounded-full bg-[#191919] border border-[#232323] p-1">
-          <button
-            type="button"
+        <div className="relative inline-flex rounded-full bg-surface-1 border border-border-subtle p-1">
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setFilter('all')}
             className={`relative px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
               filter === 'all'
-                ? 'bg-[#232323] text-white'
-                : 'text-[#929292] hover:text-white'
+                ? 'bg-surface-3 text-foreground'
+                : 'text-text-tertiary hover:text-foreground'
             }`}
           >
             All
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setFilter('installed')}
             className={`relative px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
               filter === 'installed'
-                ? 'bg-[#232323] text-white'
-                : 'text-[#929292] hover:text-white'
+                ? 'bg-surface-3 text-foreground'
+                : 'text-text-tertiary hover:text-foreground'
             }`}
           >
             Installed {installedCount}
-          </button>
+          </Button>
         </div>
       )}
 

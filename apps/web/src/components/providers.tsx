@@ -14,11 +14,8 @@ import ImpersonationBanner from '@/components/impersonation-banner';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ConfettiProvider } from '@/context/confetti-context';
 import { UserProvider } from '@/context/user-context';
-import {
-  SessionProvider,
-  useSessionHook,
-} from '@/context/session-context';
-import { TOAST_ICONS, TOAST_OPTIONS } from '@/context/toast';
+import { SessionProvider, useSessionHook } from '@/context/session-context';
+// Note: TOAST_ICONS and TOAST_OPTIONS are no longer used - coss toast has built-in styling
 import { queryClient } from '@/utils/trpc';
 import { FeedbackProvider } from '@/components/feedback-context';
 
@@ -81,13 +78,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           </ConfettiProvider>
         </RealtimeProvider>
         <ReactQueryDevtools />
-        <Toaster
-          //icons={TOAST_ICONS}
-          position="bottom-center"
-          richColors
-          toastOptions={TOAST_OPTIONS}
-          visibleToasts={4}
-        />
+        <Toaster position="bottom-center" />
       </QueryClientProvider>
     </ThemeProvider>
   );

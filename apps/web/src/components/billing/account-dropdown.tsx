@@ -177,7 +177,8 @@ export function AccountDropdown({
   const userDisplay = useUserDisplay(session?.user, user);
   const handleBillingPortal = useBillingPortal();
   const { handleSignOut, pending: signOutPending } = useSignOut();
-  const { handleResetOnboarding, pending: resetOnboardingPending } = useResetOnboarding();
+  const { handleResetOnboarding, pending: resetOnboardingPending } =
+    useResetOnboarding();
   const { startSelection } = useFeedback();
 
   const profileHref = currentUser?.handle
@@ -206,15 +207,15 @@ export function AccountDropdown({
           )}
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent className="rounded-[15px] w-74 bg-nav-active-bg border border-card-border-color">
+        <DropdownMenuContent className="rounded-[15px] w-74 bg-surface-1 border border-border-subtle">
           {/* User header section */}
-          <div className="flex flex-col gap-1.5 border-b border-[#292828] px-4 py-1.5">
+          <div className="flex flex-col gap-1.5 border-b border-border-subtle px-4 py-1.5">
             <div className="flex items-center justify-between">
               <div className="flex flex-col gap-0">
-                <div className="text-lg font-medium leading-[150%] text-text-workspace">
+                <div className="text-lg font-medium leading-[150%] text-foreground">
                   {userDisplay.name}
                 </div>
-                <div className="text-base font-medium leading-[150%] tracking-[0.03em] text-[#999999]">
+                <div className="text-base font-medium leading-[150%] tracking-[0.03em] text-text-muted">
                   {userDisplay.email}
                 </div>
               </div>
@@ -233,7 +234,7 @@ export function AccountDropdown({
               />
             </div>
             <button
-              className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleProfileNavigation}
               disabled={!profileHref}
               type="button"
@@ -244,7 +245,7 @@ export function AccountDropdown({
               </span>
             </button>
             <button
-              className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-white"
+              className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-foreground"
               onClick={() => {
                 setMenuOpen(false);
                 router.push(LINKS.SETTINGS);
@@ -259,9 +260,9 @@ export function AccountDropdown({
           </div>
 
           {/* Actions section */}
-          <div className="flex flex-col gap-2 border-b border-[#292828] px-0 py-2">
+          <div className="flex flex-col gap-2 border-b border-border-subtle px-0 py-2">
             <DropdownMenuItem
-              className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
+              className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"
               onClick={() => {
                 setMenuOpen(false);
                 handleUpgrade();
@@ -272,7 +273,7 @@ export function AccountDropdown({
               </span>
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="flex items-center justify-between rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
+              className="flex items-center justify-between rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"
               onClick={() => setMenuOpen(false)}
             >
               <div className="flex items-center gap-2.25">
@@ -284,7 +285,7 @@ export function AccountDropdown({
               <DropdownIcon className="h-[19px] w-[19px] -rotate-90" />
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
+              className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"
               onClick={() => setMenuOpen(false)}
             >
               <ManageUsersWorkspaceIcon className="h-[19px] w-[19px]" />
@@ -293,7 +294,7 @@ export function AccountDropdown({
               </span>
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
+              className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"
               onClick={() => {
                 setMenuOpen(false);
                 handleBillingPortal();
@@ -305,7 +306,7 @@ export function AccountDropdown({
               </span>
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
+              className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"
               onClick={() => {
                 setMenuOpen(false);
                 setTimeout(() => startSelection(), 100);
@@ -318,11 +319,11 @@ export function AccountDropdown({
             </DropdownMenuItem>
           </div>
 
-          <DropdownMenuSeparator className="border-[#292828]" />
+          <DropdownMenuSeparator className="border-border-subtle" />
 
           <DropdownMenuItem
             className={cn(
-              'flex items-center gap-2 rounded-[10px] px-4 py-2 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg',
+              'flex items-center gap-2 rounded-[10px] px-4 py-2 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover',
               resetOnboardingPending && 'opacity-70'
             )}
             disabled={resetOnboardingPending}
@@ -339,7 +340,7 @@ export function AccountDropdown({
 
           <DropdownMenuItem
             className={cn(
-              'flex items-center gap-2 rounded-[10px] px-4 py-2 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg',
+              'flex items-center gap-2 rounded-[10px] px-4 py-2 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover',
               signOutPending && 'opacity-70'
             )}
             disabled={signOutPending}

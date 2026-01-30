@@ -47,7 +47,7 @@ function AuthErrorContent() {
 
   return (
     <div
-      className="flex min-h-screen flex-col items-center justify-center p-4 text-white"
+      className="flex min-h-screen flex-col items-center justify-center p-4 text-foreground"
       style={{
         background:
           'linear-gradient(180deg, rgba(22, 22, 22, 1) 0%, rgba(12, 12, 12, 1) 100%)',
@@ -58,7 +58,7 @@ function AuthErrorContent() {
         <div className="overflow-x-hidden rounded-md p-6">
           <div className="space-y-6 text-center">
             <Link className="inline-block" href="/">
-              <Bounty className="mx-auto h-12 w-12 text-white" />
+              <Bounty className="mx-auto h-12 w-12 text-foreground" />
             </Link>
 
             <div className="space-y-2">
@@ -95,8 +95,8 @@ export default function AuthErrorPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen flex-col items-center justify-center p-4 text-white">
-          <Bounty className="mx-auto h-12 w-12 text-white" />
+        <div className="flex min-h-screen flex-col items-center justify-center p-4 text-foreground">
+          <Bounty className="mx-auto h-12 w-12 text-foreground" />
         </div>
       }
     >

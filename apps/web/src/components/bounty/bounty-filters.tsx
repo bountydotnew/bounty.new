@@ -1,6 +1,10 @@
 'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
+import {
+  Avatar,
+  AvatarFacehash,
+  AvatarImage,
+} from '@bounty/ui/components/avatar';
 import { AutocompleteDropdown } from '@bounty/ui/components/autocomplete';
 import { Input } from '@bounty/ui/components/input';
 import {
@@ -27,8 +31,14 @@ interface Creator {
 export function BountyFilters() {
   const [searchQuery, setSearchQuery] = useQueryState('search', parseAsString);
   const [creatorId, setCreatorId] = useQueryState('creatorId', parseAsString);
-  const [sortBy, setSortBy] = useQueryState('sortBy', parseAsString.withDefault('created_at'));
-  const [sortOrder, setSortOrder] = useQueryState('sortOrder', parseAsString.withDefault('desc'));
+  const [sortBy, setSortBy] = useQueryState(
+    'sortBy',
+    parseAsString.withDefault('created_at')
+  );
+  const [sortOrder, setSortOrder] = useQueryState(
+    'sortOrder',
+    parseAsString.withDefault('desc')
+  );
 
   const [creatorSearchQuery, setCreatorSearchQuery] = useState('');
   const [creatorDropdownOpen, setCreatorDropdownOpen] = useState(false);
@@ -110,9 +120,9 @@ export function BountyFilters() {
       <div className="flex flex-wrap items-center gap-3">
         {/* Title Search */}
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#666]" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
           <Input
-            className="pl-9 border-[#232323] bg-[#191919] text-white placeholder:text-[#666]"
+            className="pl-9 border-border-subtle bg-surface-1 text-foreground placeholder:text-text-muted"
             onChange={(e) => setLocalSearchQuery(e.target.value)}
             placeholder="Search bounties..."
             value={localSearchQuery}
@@ -124,7 +134,7 @@ export function BountyFilters() {
           <div className="relative">
             <Input
               ref={creatorInputRef}
-              className="pr-8 border-[#232323] bg-[#191919] text-white placeholder:text-[#666]"
+              className="pr-8 border-border-subtle bg-surface-1 text-foreground placeholder:text-text-muted"
               onChange={(e) => {
                 setCreatorSearchQuery(e.target.value);
                 setCreatorDropdownOpen(true);
@@ -134,35 +144,47 @@ export function BountyFilters() {
                   setCreatorDropdownOpen(true);
                 }
               }}
-              placeholder={selectedCreator ? selectedCreator.name || selectedCreator.handle || 'Creator' : 'Creator: All'}
+              placeholder={
+                selectedCreator
+                  ? selectedCreator.name || selectedCreator.handle || 'Creator'
+                  : 'Creator: All'
+              }
               value={creatorSearchQuery}
             />
             {selectedCreator && !creatorSearchQuery && (
               <div className="absolute right-8 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
                 <Avatar className="h-4 w-4">
                   {selectedCreator.image && (
-                    <AvatarImage src={selectedCreator.image} alt={selectedCreator.name || ''} />
+                    <AvatarImage
+                      src={selectedCreator.image}
+                      alt={selectedCreator.name || ''}
+                    />
                   )}
-                  <AvatarFallback className="h-4 w-4 text-[8px]">
-                    {(selectedCreator.name || selectedCreator.handle || 'U').charAt(0).toUpperCase()}
-                  </AvatarFallback>
+                  <AvatarFacehash
+                    name={
+                      selectedCreator.name ||
+                      selectedCreator.handle ||
+                      selectedCreator.id
+                    }
+                    size={16}
+                  />
                 </Avatar>
               </div>
             )}
             {selectedCreator && !creatorSearchQuery && (
               <Button
-                className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 p-0 hover:bg-[#232323]"
+                className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 p-0 hover:bg-surface-3"
                 onClick={handleClearCreator}
                 size="sm"
                 type="button"
                 variant="link"
               >
-                <X className="h-3 w-3 text-[#666]" />
+                <X className="h-3 w-3 text-text-muted" />
               </Button>
             )}
           </div>
           <AutocompleteDropdown
-            className="border-[#232323] bg-[#191919]"
+            className="border-border-subtle bg-surface-1"
             getKey={(c) => c.id}
             items={creators}
             loading={creatorsQuery.isLoading}
@@ -174,16 +196,19 @@ export function BountyFilters() {
                   {creator.image && (
                     <AvatarImage src={creator.image} alt={creator.name || ''} />
                   )}
-                  <AvatarFallback className="h-4 w-4 text-[8px]">
-                    {(creator.name || creator.handle || 'U').charAt(0).toUpperCase()}
-                  </AvatarFallback>
+                  <AvatarFacehash
+                    name={creator.name || creator.handle || creator.id}
+                    size={16}
+                  />
                 </Avatar>
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate text-sm text-white">
+                  <span className="truncate text-sm text-foreground">
                     {creator.name || creator.handle || 'Unknown'}
                   </span>
                   {creator.handle && creator.name && (
-                    <span className="text-xs text-[#666]">{creator.handle}</span>
+                    <span className="text-xs text-text-muted">
+                      {creator.handle}
+                    </span>
                   )}
                 </div>
               </div>
@@ -193,11 +218,14 @@ export function BountyFilters() {
         </div>
 
         {/* Sort Dropdown */}
-        <Select onValueChange={handleSortChange} value={sortValue}>
-          <SelectTrigger className="w-[180px] border-[#232323] bg-[#191919] text-white">
+        <Select
+          onValueChange={(v) => v && handleSortChange(v)}
+          value={sortValue}
+        >
+          <SelectTrigger className="w-[180px] border-border-subtle bg-surface-1 text-foreground">
             <SelectValue placeholder="Sort by..." />
           </SelectTrigger>
-          <SelectContent className="border-[#232323] bg-[#191919]">
+          <SelectContent className="border-border-subtle bg-surface-1">
             <SelectItem value="created_at::desc">Newest</SelectItem>
             <SelectItem value="created_at::asc">Oldest</SelectItem>
             <SelectItem value="amount::desc">Price: High to Low</SelectItem>

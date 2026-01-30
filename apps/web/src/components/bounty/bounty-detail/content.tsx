@@ -14,7 +14,9 @@ import { BountyDetailContext } from './context';
 export function BountyDetailContent() {
   const context = use(BountyDetailContext);
   if (!context) {
-    throw new Error('BountyDetailContent must be used within BountyDetailProvider');
+    throw new Error(
+      'BountyDetailContent must be used within BountyDetailProvider'
+    );
   }
 
   const { bounty } = context.state;
@@ -24,8 +26,8 @@ export function BountyDetailContent() {
   }
 
   return (
-    <div className="mb-8 rounded-lg border border-[#383838]/20 bg-[#1D1D1D] p-6">
-      <h2 className="mb-4 font-medium text-white text-xl">About</h2>
+    <div className="mb-8 rounded-lg border border-border-subtle bg-surface-1 p-6">
+      <h2 className="mb-4 font-medium text-foreground text-xl">About</h2>
       <CollapsibleText>
         <MarkdownContent content={bounty.description} />
       </CollapsibleText>

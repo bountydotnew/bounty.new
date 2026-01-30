@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from 'react';
 
@@ -35,12 +35,19 @@ export function MacNotification({
   if (!visible) return null;
 
   const GmailIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="52 42 88 66" className="w-5 h-5">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="52 42 88 66"
+      className="w-5 h-5"
+    >
       <path fill="#4285f4" d="M58 108h14V74L52 59v43c0 3.32 2.69 6 6 6" />
       <path fill="#34a853" d="M120 108h14c3.32 0 6-2.69 6-6V59l-20 15" />
       <path fill="#fbbc04" d="M120 48v26l20-15v-8c0-7.42-8.47-11.65-14.4-7.2" />
       <path fill="#ea4335" d="M72 74V48l24 18 24-18v26L96 92" />
-      <path fill="#c5221f" d="M52 51v8l20 15V48l-5.6-4.2c-5.94-4.45-14.4-.22-14.4 7.2" />
+      <path
+        fill="#c5221f"
+        d="M52 51v8l20 15V48l-5.6-4.2c-5.94-4.45-14.4-.22-14.4 7.2"
+      />
     </svg>
   );
 
@@ -59,14 +66,17 @@ export function MacNotification({
   return (
     <div
       className={`w-[340px] rounded-[18px] p-3 shadow-2xl transition-all duration-500 ${
-        hiding ? 'opacity-0 translate-x-8' : 'animate-in slide-in-from-right-8 fade-in'
+        hiding
+          ? 'opacity-0 translate-x-8'
+          : 'animate-in slide-in-from-right-8 fade-in'
       }`}
       style={{
-        background: 'linear-gradient(to bottom, rgba(58, 58, 60, 0.95), rgba(44, 44, 46, 0.95))',
+        background:
+          'linear-gradient(to bottom, var(--surface-3), var(--surface-2))',
         backdropFilter: 'blur(40px)',
         WebkitBackdropFilter: 'blur(40px)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
+        border: '1px solid var(--border-subtle)',
+        boxShadow: 'var(--shadow-lg)',
       }}
     >
       <div className="flex items-start gap-3">
@@ -76,24 +86,34 @@ export function MacNotification({
               <GmailIcon />
             </div>
           ) : appIcon === 'stripe' ? (
-            <div className="w-10 h-10 rounded-[10px] bg-[#635BFF] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-[10px] bg-info flex items-center justify-center">
               <StripeIcon />
             </div>
           ) : appIcon === 'github' ? (
-            <div className="w-10 h-10 rounded-[10px] bg-[#24292f] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-[10px] bg-gh-surface flex items-center justify-center">
               <GitHubIcon />
             </div>
           ) : (
-            <img src={appIcon || '/placeholder.svg'} alt={appName} className="w-10 h-10 rounded-[10px]" />
+            <img
+              src={appIcon || '/placeholder.svg'}
+              alt={appName}
+              className="w-10 h-10 rounded-[10px]"
+            />
           )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-0.5">
-            <span className="text-[13px] font-semibold text-white/90">{appName}</span>
+            <span className="text-[13px] font-semibold text-white/90">
+              {appName}
+            </span>
             <span className="text-[11px] text-white/50">{time}</span>
           </div>
-          <p className="text-[13px] font-medium text-white truncate mb-0.5">{title}</p>
-          <p className="text-[12px] text-white/70 line-clamp-2 leading-snug">{message}</p>
+          <p className="text-[13px] font-medium text-white truncate mb-0.5">
+            {title}
+          </p>
+          <p className="text-[12px] text-white/70 line-clamp-2 leading-snug">
+            {message}
+          </p>
         </div>
       </div>
     </div>

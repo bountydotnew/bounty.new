@@ -337,27 +337,27 @@ export function BountyCardProvider({
       return {
         label: 'Cancelled',
         className:
-          'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#FF000015] text-[#FF6B6B] border border-[#FF000020]',
+          'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-destructive/10 text-destructive border border-destructive/15',
       };
     }
     if (hasPendingCancellation) {
       return {
         label: 'Cancelling',
         className:
-          'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#FFB30015] text-[#FFB300] border border-[#FFB30020]',
+          'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/15',
       };
     }
     if (isFunded) {
       return {
         label: 'Funded',
         className:
-          'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#6CFF0015] text-[#6CFF0099] border border-[#6CFF0020]',
+          'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-brand-accent/10 text-brand-accent-muted border border-brand-accent/15',
       };
     }
     return {
       label: 'Unfunded',
       className:
-        'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-[#FFFFFF08] text-[#FFFFFF66] border border-[#FFFFFF12]',
+        'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-foreground/5 text-foreground/40 border border-foreground/8',
     };
   }, [isCancelled, isRefunded, hasPendingCancellation, isFunded]);
 
