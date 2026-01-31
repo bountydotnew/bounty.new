@@ -5,17 +5,27 @@ import {
   router,
   rateLimitedProtectedProcedure,
 } from '../trpc';
-import { linearAccount, account } from '@bounty/db';
+import { linearAccount, account, type db as database } from '@bounty/db';
 import { eq, and } from 'drizzle-orm';
 import {
   createLinearDriver,
   LINEAR_COMMENT_TEMPLATES,
 } from '../../driver/linear-client';
+import { env } from '@bounty/env/server';
+
+type Database = typeof database;
+
+interface LinearOAuthAccount {
+  id: string;
+  accessToken: string | null;
+  refreshToken: string | null;
+  accessTokenExpiresAt: Date | null;
+}
 
 /**
  * Helper function to get the user's Linear OAuth account
  */
-async function getLinearAccount(db: any, userId: string) {
+async function getLinearAccount(db: Database, userId: string) {
   const [linearOAuthAccount] = await db
     .select()
     .from(account)
@@ -28,8 +38,8 @@ async function getLinearAccount(db: any, userId: string) {
 /**
  * Helper function to get the Linear workspace connection for a user
  */
-async function getLinearWorkspace(db: any, oauthAccountId: string) {
-  const [linearWorkspace] = await db
+async function getLinearWorkspace(db: Database, oauthAccountId: string) {
+  const [workspace] = await db
     .select()
     .from(linearAccount)
     .where(
@@ -40,9 +50,119 @@ async function getLinearWorkspace(db: any, oauthAccountId: string) {
     )
     .limit(1);
 
-  return linearWorkspace;
+  return workspace;
 }
 
+/**
+ * Refresh Linear OAuth access token using the refresh token
+ * Returns the new access token or throws an error if refresh fails
+ */
+async function refreshLinearToken(
+  db: Database,
+  linearOAuthAccount: LinearOAuthAccount
+): Promise<string> {
+  if (!linearOAuthAccount.refreshToken) {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message:
+        'No refresh token available. Please reconnect your Linear account.',
+    });
+  }
+
+  console.log('[Linear] Refreshing access token...');
+
+  try {
+    const response = await fetch('https://api.linear.app/oauth/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: linearOAuthAccount.refreshToken,
+        client_id: env.LINEAR_CLIENT_ID ?? '',
+        client_secret: env.LINEAR_CLIENT_SECRET ?? '',
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[Linear] Token refresh failed:', errorText);
+      throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message:
+          'Failed to refresh Linear token. Please reconnect your Linear account.',
+      });
+    }
+
+    const tokenData = (await response.json()) as {
+      access_token: string;
+      refresh_token?: string;
+      expires_in: number;
+    };
+
+    // Calculate new expiration time
+    const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000);
+
+    // Update the account with new tokens
+    await db
+      .update(account)
+      .set({
+        accessToken: tokenData.access_token,
+        refreshToken:
+          tokenData.refresh_token ?? linearOAuthAccount.refreshToken,
+        accessTokenExpiresAt: expiresAt,
+        updatedAt: new Date(),
+      })
+      .where(eq(account.id, linearOAuthAccount.id));
+
+    console.log(
+      '[Linear] Token refreshed successfully, expires at:',
+      expiresAt
+    );
+    return tokenData.access_token;
+  } catch (error) {
+    if (error instanceof TRPCError) {
+      throw error;
+    }
+    console.error('[Linear] Error refreshing token:', error);
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Failed to refresh Linear token',
+    });
+  }
+}
+
+/**
+ * Get a valid access token, refreshing if necessary
+ */
+async function getValidAccessToken(
+  db: Database,
+  linearOAuthAccount: LinearOAuthAccount
+): Promise<string> {
+  if (!linearOAuthAccount.accessToken) {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message:
+        'No access token available. Please reconnect your Linear account.',
+    });
+  }
+
+  // Check if token is expired or will expire in the next 5 minutes
+  const expiresAt = linearOAuthAccount.accessTokenExpiresAt;
+  const bufferTime = 5 * 60 * 1000; // 5 minutes in milliseconds
+  const isExpired =
+    expiresAt && new Date(expiresAt).getTime() < Date.now() + bufferTime;
+
+  if (isExpired) {
+    console.log(
+      '[Linear] Access token expired or expiring soon, refreshing...'
+    );
+    return await refreshLinearToken(db, linearOAuthAccount);
+  }
+
+  return linearOAuthAccount.accessToken;
+}
 export const linearRouter = router({
   /**
    * Check if user has Linear OAuth account (for sync detection)
@@ -68,7 +188,7 @@ export const linearRouter = router({
       ctx.session.user.id
     );
 
-    if (!(linearOAuthAccount && linearOAuthAccount.accessToken)) {
+    if (!linearOAuthAccount?.accessToken) {
       return { success: true, workspaces: [] };
     }
 
@@ -83,7 +203,8 @@ export const linearRouter = router({
     }
 
     try {
-      const driver = createLinearDriver(linearOAuthAccount.accessToken);
+      const accessToken = await getValidAccessToken(ctx.db, linearOAuthAccount);
+      const driver = createLinearDriver(accessToken);
       const workspace = await driver.getCurrentWorkspace();
 
       return {
@@ -165,7 +286,7 @@ export const linearRouter = router({
         ctx.session.user.id
       );
 
-      if (!(linearOAuthAccount && linearOAuthAccount.accessToken)) {
+      if (!linearOAuthAccount?.accessToken) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Linear account not connected',
@@ -185,7 +306,12 @@ export const linearRouter = router({
       }
 
       try {
-        const driver = createLinearDriver(linearOAuthAccount.accessToken);
+        // Get a valid access token, refreshing if necessary
+        const accessToken = await getValidAccessToken(
+          ctx.db,
+          linearOAuthAccount
+        );
+        const driver = createLinearDriver(accessToken);
 
         // Build filters object without undefined values
         const filters: {
@@ -194,12 +320,18 @@ export const linearRouter = router({
           assigneeId?: string;
           projectId?: string;
         } = {};
-        if (input.filters?.status) filters.status = input.filters.status;
-        if (input.filters?.priority) filters.priority = input.filters.priority;
-        if (input.filters?.assigneeId)
+        if (input.filters?.status) {
+          filters.status = input.filters.status;
+        }
+        if (input.filters?.priority) {
+          filters.priority = input.filters.priority;
+        }
+        if (input.filters?.assigneeId) {
           filters.assigneeId = input.filters.assigneeId;
-        if (input.filters?.projectId)
+        }
+        if (input.filters?.projectId) {
           filters.projectId = input.filters.projectId;
+        }
 
         // Build params object to avoid exactOptionalPropertyTypes issues
         const params: {
@@ -212,11 +344,21 @@ export const linearRouter = router({
         } = {
           first: input.pagination?.first ?? 50,
         };
-        if (filters.status) params.status = filters.status;
-        if (filters.priority) params.priority = filters.priority;
-        if (filters.assigneeId) params.assigneeId = filters.assigneeId;
-        if (filters.projectId) params.projectId = filters.projectId;
-        if (input.pagination?.after) params.after = input.pagination.after;
+        if (filters.status) {
+          params.status = filters.status;
+        }
+        if (filters.priority) {
+          params.priority = filters.priority;
+        }
+        if (filters.assigneeId) {
+          params.assigneeId = filters.assigneeId;
+        }
+        if (filters.projectId) {
+          params.projectId = filters.projectId;
+        }
+        if (input.pagination?.after) {
+          params.after = input.pagination.after;
+        }
 
         const result = await driver.getIssues(params);
 
@@ -246,7 +388,7 @@ export const linearRouter = router({
         ctx.session.user.id
       );
 
-      if (!(linearOAuthAccount && linearOAuthAccount.accessToken)) {
+      if (!linearOAuthAccount?.accessToken) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Linear account not connected',
@@ -266,7 +408,11 @@ export const linearRouter = router({
       }
 
       try {
-        const driver = createLinearDriver(linearOAuthAccount.accessToken);
+        const accessToken = await getValidAccessToken(
+          ctx.db,
+          linearOAuthAccount
+        );
+        const driver = createLinearDriver(accessToken);
         const issue = await driver.getIssue(input.issueId);
 
         if (!issue) {
@@ -299,7 +445,7 @@ export const linearRouter = router({
         ctx.session.user.id
       );
 
-      if (!(linearOAuthAccount && linearOAuthAccount.accessToken)) {
+      if (!linearOAuthAccount?.accessToken) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Linear account not connected',
@@ -319,7 +465,12 @@ export const linearRouter = router({
       }
 
       try {
-        const driver = createLinearDriver(linearOAuthAccount.accessToken);
+        // Get a valid access token, refreshing if necessary
+        const accessToken = await getValidAccessToken(
+          ctx.db,
+          linearOAuthAccount
+        );
+        const driver = createLinearDriver(accessToken);
         const projects = await driver.getProjects();
 
         return {
@@ -346,12 +497,16 @@ export const linearRouter = router({
         ctx.session.user.id
       );
 
-      if (!(linearOAuthAccount && linearOAuthAccount.accessToken)) {
+      if (!linearOAuthAccount?.accessToken) {
         return { success: true, states: [] };
       }
 
       try {
-        const driver = createLinearDriver(linearOAuthAccount.accessToken);
+        const accessToken = await getValidAccessToken(
+          ctx.db,
+          linearOAuthAccount
+        );
+        const driver = createLinearDriver(accessToken);
         const states = await driver.getWorkflowStates();
 
         return {
@@ -375,12 +530,16 @@ export const linearRouter = router({
         ctx.session.user.id
       );
 
-      if (!(linearOAuthAccount && linearOAuthAccount.accessToken)) {
+      if (!linearOAuthAccount?.accessToken) {
         return { success: true, teams: [] };
       }
 
       try {
-        const driver = createLinearDriver(linearOAuthAccount.accessToken);
+        const accessToken = await getValidAccessToken(
+          ctx.db,
+          linearOAuthAccount
+        );
+        const driver = createLinearDriver(accessToken);
         const teams = await driver.getTeams();
 
         return {
@@ -408,7 +567,7 @@ export const linearRouter = router({
         ctx.session.user.id
       );
 
-      if (!(linearOAuthAccount && linearOAuthAccount.accessToken)) {
+      if (!linearOAuthAccount?.accessToken) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Linear account not connected',
@@ -428,7 +587,11 @@ export const linearRouter = router({
       }
 
       try {
-        const driver = createLinearDriver(linearOAuthAccount.accessToken);
+        const accessToken = await getValidAccessToken(
+          ctx.db,
+          linearOAuthAccount
+        );
+        const driver = createLinearDriver(accessToken);
         const issue = await driver.getIssue(input.linearIssueId);
 
         if (!issue) {
@@ -510,7 +673,7 @@ export const linearRouter = router({
         ctx.session.user.id
       );
 
-      if (!(linearOAuthAccount && linearOAuthAccount.accessToken)) {
+      if (!linearOAuthAccount?.accessToken) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Linear account not connected',
@@ -530,7 +693,11 @@ export const linearRouter = router({
       }
 
       try {
-        const driver = createLinearDriver(linearOAuthAccount.accessToken);
+        const accessToken = await getValidAccessToken(
+          ctx.db,
+          linearOAuthAccount
+        );
+        const driver = createLinearDriver(accessToken);
 
         // Generate comment body based on type
         let commentBody: string;
@@ -565,6 +732,11 @@ export const linearRouter = router({
               input.bountyData.bountyUrl
             );
             break;
+          default: {
+            // Exhaustive check - TypeScript will error if a case is missing
+            const _exhaustiveCheck: never = input;
+            throw new Error(`Unhandled comment type: ${_exhaustiveCheck}`);
+          }
         }
 
         const comment = await driver.createComment(
@@ -626,7 +798,7 @@ export const linearRouter = router({
       ctx.session.user.id
     );
 
-    if (!(linearOAuthAccount && linearOAuthAccount.accessToken)) {
+    if (!linearOAuthAccount?.accessToken) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message:
@@ -635,7 +807,10 @@ export const linearRouter = router({
     }
 
     try {
-      const driver = createLinearDriver(linearOAuthAccount.accessToken);
+      // For sync, we need to use the token as-is since it was just obtained during OAuth
+      // The token should be fresh at this point
+      const accessToken = linearOAuthAccount.accessToken;
+      const driver = createLinearDriver(accessToken);
 
       // Fetch user info and workspace from Linear
       const user = await driver.getCurrentUser();

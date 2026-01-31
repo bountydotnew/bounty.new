@@ -144,15 +144,24 @@ export class LinearDriver {
   async getCurrentUser(): Promise<LinearUser | null> {
     try {
       const viewer = await this.client.viewer;
-      if (!viewer) return null;
+      if (!viewer) {
+        return null;
+      }
 
-      return {
+      const user: LinearUser = {
         id: viewer.id,
         name: viewer.name ?? '',
-        displayName: viewer.displayName ?? '',
-        avatarUrl: viewer.avatarUrl ?? undefined,
-        email: viewer.email ?? undefined,
+        displayName: viewer.displayName,
       };
+      const avatarUrl = viewer.avatarUrl;
+      if (avatarUrl) {
+        user.avatarUrl = avatarUrl;
+      }
+      const email = viewer.email;
+      if (email) {
+        user.email = email;
+      }
+      return user;
     } catch (error) {
       console.error('Failed to fetch Linear user:', error);
       return null;
@@ -165,7 +174,9 @@ export class LinearDriver {
   async getCurrentWorkspace(): Promise<LinearWorkspace | null> {
     try {
       const org = await this.client.organization;
-      if (!org) return null;
+      if (!org) {
+        return null;
+      }
 
       // Construct the workspace URL from the URL key
       const workspaceUrl = org.urlKey
@@ -206,23 +217,26 @@ export class LinearDriver {
       };
       if (filters?.after) query.after = filters.after;
 
-      const connection = await this.client.issues(query);
+      const issuesConnection = await this.client.issues(query);
+      if (!issuesConnection) {
+        return { issues: [], hasNextPage: false };
+      }
 
       const issues: LinearIssue[] = [];
-      const nodes = connection?.nodes ?? [];
+      const nodes = issuesConnection.nodes ?? [];
 
       for (const issue of nodes) {
-        if (!issue) continue;
+        if (!issue) {
+          continue;
+        }
 
-        // Fetch related data
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const issueAny = issue as any;
-        const status = issueAny.status ? await issueAny.status : null;
-        const assignee = issueAny.assignee ? await issueAny.assignee : null;
-        const project = issueAny.project ? await issueAny.project : null;
+        // Fetch related data using Linear SDK method calls
+        const state = await issue.state;
+        const assignee = await issue.assignee;
+        const project = await issue.project;
 
         // Filter by status and priority after fetching
-        if (filters?.status && status && !filters.status.includes(status.id)) {
+        if (filters?.status && state && !filters.status.includes(state.id)) {
           continue;
         }
         if (
@@ -246,10 +260,10 @@ export class LinearDriver {
           title: issue.title,
           description: issue.description ?? null,
           status: {
-            id: status?.id ?? '',
-            name: status?.name ?? 'Unknown',
-            color: status?.color ?? '',
-            type: status?.type ?? 'backlog',
+            id: state?.id ?? '',
+            name: state?.name ?? 'Unknown',
+            color: state?.color ?? '',
+            type: state?.type ?? 'backlog',
           },
           priority: issue.priority ?? 0,
           priorityLabel: this.getPriorityLabel(issue.priority ?? 0),
@@ -258,7 +272,9 @@ export class LinearDriver {
                 id: assignee.id,
                 name: assignee.name ?? '',
                 displayName: assignee.displayName ?? '',
-                avatarUrl: assignee.avatarUrl ?? undefined,
+                ...(assignee.avatarUrl
+                  ? { avatarUrl: assignee.avatarUrl }
+                  : {}),
               }
             : null,
           project: project
@@ -274,8 +290,8 @@ export class LinearDriver {
         });
       }
 
-      const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
-      const endCursor = connection?.pageInfo?.endCursor ?? undefined;
+      const hasNextPage = issuesConnection.pageInfo?.hasNextPage ?? false;
+      const endCursor = issuesConnection.pageInfo?.endCursor ?? undefined;
 
       const result: {
         issues: LinearIssue[];
@@ -290,8 +306,9 @@ export class LinearDriver {
       }
       return result;
     } catch (error) {
-      console.error('Failed to fetch Linear issues:', error);
-      return { issues: [], hasNextPage: false };
+      console.error('[Linear] Failed to fetch issues:', error);
+      // Re-throw the error so the router can handle it properly
+      throw error;
     }
   }
 
@@ -301,13 +318,14 @@ export class LinearDriver {
   async getIssue(issueId: string): Promise<LinearIssue | null> {
     try {
       const issue = await this.client.issue(issueId);
-      if (!issue) return null;
+      if (!issue) {
+        return null;
+      }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const issueAny = issue as any;
-      const status = issueAny.status ? await issueAny.status : null;
-      const assignee = issueAny.assignee ? await issueAny.assignee : null;
-      const project = issueAny.project ? await issueAny.project : null;
+      // Fetch related data using Linear SDK await pattern
+      const state = await issue.state;
+      const assignee = await issue.assignee;
+      const project = await issue.project;
 
       return {
         id: issue.id,
@@ -315,10 +333,10 @@ export class LinearDriver {
         title: issue.title,
         description: issue.description ?? null,
         status: {
-          id: status?.id ?? '',
-          name: status?.name ?? 'Unknown',
-          color: status?.color ?? '',
-          type: status?.type ?? 'backlog',
+          id: state?.id ?? '',
+          name: state?.name ?? 'Unknown',
+          color: state?.color ?? '',
+          type: state?.type ?? 'backlog',
         },
         priority: issue.priority ?? 0,
         priorityLabel: this.getPriorityLabel(issue.priority ?? 0),
@@ -327,7 +345,7 @@ export class LinearDriver {
               id: assignee.id,
               name: assignee.name ?? '',
               displayName: assignee.displayName ?? '',
-              avatarUrl: assignee.avatarUrl ?? undefined,
+              ...(assignee.avatarUrl ? { avatarUrl: assignee.avatarUrl } : {}),
             }
           : null,
         project: project
@@ -352,33 +370,36 @@ export class LinearDriver {
    */
   async getProjects(): Promise<LinearProject[]> {
     try {
-      const projects = await this.client.projects({ first: 100 });
-      const nodes = projects?.nodes ?? [];
+      const projectsConnection = await this.client.projects({ first: 100 });
+      if (!projectsConnection) {
+        return [];
+      }
 
+      const nodes = projectsConnection.nodes ?? [];
       const result: LinearProject[] = [];
 
       for (const project of nodes) {
-        if (!project) continue;
+        if (!project) {
+          continue;
+        }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const projectAny = project as any;
+        // Get the status - Linear SDK projects have a status property
+        const status = await project.status;
+
         result.push({
           id: project.id,
           name: project.name,
           url: project.url ?? '',
           description: project.description ?? null,
-          status:
-            (typeof projectAny.status === 'string'
-              ? projectAny.status
-              : projectAny.status?.name) ?? 'Unknown',
-          icon: projectAny.icon ?? null,
+          status: status?.name ?? 'Unknown',
+          icon: project.icon ?? null,
         });
       }
 
       return result;
     } catch (error) {
-      console.error('Failed to fetch Linear projects:', error);
-      return [];
+      console.error('[Linear] Failed to fetch projects:', error);
+      throw error;
     }
   }
 
@@ -395,12 +416,15 @@ export class LinearDriver {
         body,
       });
 
-      if (!(commentPayload.success && commentPayload.comment)) {
+      if (!commentPayload.success) {
         return null;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const comment = commentPayload.comment as any;
+      const comment = await commentPayload.comment;
+      if (!comment) {
+        return null;
+      }
+
       return {
         id: comment.id,
         url: comment.url ?? '',
@@ -427,6 +451,7 @@ export class LinearDriver {
       case 1:
         return 'Low';
       case 0:
+        return 'No Priority';
       default:
         return 'No Priority';
     }
@@ -434,19 +459,15 @@ export class LinearDriver {
 
   /**
    * Get workflow states (for filter dropdown)
-   * Note: This may not be available in all Linear SDK versions
+   * Note: This can be enhanced by fetching states via GraphQL query
    */
   async getWorkflowStates(): Promise<
     Array<{ id: string; name: string; color: string; type: string }>
   > {
     try {
-      const viewer = await this.client.viewer;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const viewerAny = viewer as any;
-      if (!viewerAny?.organizationId) return [];
-
-      // For now, return empty as workflowStates may not be directly accessible
-      // This can be enhanced later based on SDK capabilities
+      // Workflow states are team-specific in Linear
+      // For now, return empty - this can be enhanced later
+      // by fetching teams first, then their workflow states
       return [];
     } catch (error) {
       console.error('Failed to fetch Linear workflow states:', error);
@@ -461,8 +482,12 @@ export class LinearDriver {
     Array<{ id: string; name: string; key: string; description: string }>
   > {
     try {
-      const teams = await this.client.teams({ first: 100 });
-      const nodes = teams?.nodes ?? [];
+      const teamsConnection = await this.client.teams({ first: 100 });
+      if (!teamsConnection) {
+        return [];
+      }
+
+      const nodes = teamsConnection.nodes ?? [];
 
       const result: Array<{
         id: string;
