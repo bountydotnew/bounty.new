@@ -88,7 +88,7 @@ export function Dropdown() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild nativeButton>
         <Button
           aria-label="Open actions"
           className="rounded-lg border border-border-subtle bg-surface-1 p-1.5 text-text-tertiary hover:bg-surface-hover hover:text-foreground"

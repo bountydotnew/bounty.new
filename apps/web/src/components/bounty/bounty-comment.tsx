@@ -113,7 +113,7 @@ export default function BountyComment({
           )}
           {isOwner && (
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              <DropdownMenuTrigger asChild nativeButton>
                 <Button
                   className="h-6 rounded-lg border border-neutral-700 bg-surface-2 p-1 text-neutral-300 hover:bg-neutral-700/40"
                   size="icon"

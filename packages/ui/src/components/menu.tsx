@@ -16,7 +16,7 @@ function MenuTrigger({
   children,
   nativeButton,
   ...props
-}: MenuPrimitive.Trigger.Props & { asChild?: boolean }) {
+}: MenuPrimitive.Trigger.Props & { asChild?: boolean; nativeButton?: boolean }) {
   // Legacy asChild support
   let finalRender = props.render;
   let finalChildren = children;

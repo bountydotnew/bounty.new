@@ -49,6 +49,17 @@ type AvatarFacehashProps = Omit<AvatarPrimitive.Fallback.Props, 'children'> & {
   size?: number;
 };
 
+const FACEHASH_COLOR_CLASSES = [
+  'bg-pink-400 dark:bg-pink-500',
+  'bg-blue-400 dark:bg-blue-500',
+  'bg-purple-400 dark:bg-purple-500',
+  'bg-teal-400 dark:bg-teal-500',
+  'bg-orange-400 dark:bg-orange-500',
+  'bg-indigo-400 dark:bg-indigo-500',
+  'bg-emerald-400 dark:bg-emerald-500',
+  'bg-rose-400 dark:bg-rose-500',
+];
+
 function AvatarFacehash({
   className,
   name,
@@ -69,6 +80,7 @@ function AvatarFacehash({
         size={size}
         variant="gradient"
         intensity3d="subtle"
+        colorClasses={FACEHASH_COLOR_CLASSES}
       />
     </AvatarPrimitive.Fallback>
   );

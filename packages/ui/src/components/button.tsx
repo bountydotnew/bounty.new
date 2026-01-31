@@ -64,14 +64,14 @@ function Button({
   children,
   ...props
 }: ButtonProps) {
-  const typeValue: React.ButtonHTMLAttributes<HTMLButtonElement>['type'] =
-    render || asChild ? undefined : 'button';
-
   // Legacy asChild support: convert first child element to render prop
+  // Only treat asChild as active if children is a valid React element
+  const isAsChildActive = asChild && !render && React.isValidElement(children);
+
   let finalRender = render;
   let finalChildren = children;
 
-  if (asChild && !render && React.isValidElement(children)) {
+  if (isAsChildActive) {
     // When asChild is true, use the child element as the render target
     // and use the child's children as our children
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -81,13 +81,17 @@ function Button({
     finalChildren = childChildren;
   }
 
+  // Only set type to 'button' when rendering a native button (no render prop or asChild)
+  const typeValue: React.ButtonHTMLAttributes<HTMLButtonElement>['type'] =
+    render || isAsChildActive ? undefined : 'button';
+
   const defaultProps: Record<string, unknown> = {
     className: cn(buttonVariants({ className, size, variant })),
     'data-slot': 'button',
     children: finalChildren,
   };
 
-  // Only set type when not using render/asChild to avoid overriding child's type
+  // Only include type in defaultProps when defined to avoid overriding child's explicit type
   if (typeValue !== undefined) {
     defaultProps.type = typeValue;
   }

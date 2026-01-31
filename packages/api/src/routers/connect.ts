@@ -1,6 +1,6 @@
 import { db, payout, user } from '@bounty/db';
 import { TRPCError } from '@trpc/server';
-import { eq, desc, sql, or, and } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { protectedProcedure, router } from '../trpc';
 import {
@@ -390,4 +390,99 @@ export const connectRouter = router({
       });
     }
   }),
+
+  getActivity: protectedProcedure
+    .input(
+      z.object({
+        page: z.number().int().positive().default(1),
+        limit: z.number().int().positive().max(100).default(20),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      try {
+        const offset = (input.page - 1) * input.limit;
+        const { bounty } = await import('@bounty/db');
+
+        // Use raw SQL with UNION ALL for efficient pagination at database level
+        const activities = await db.execute(
+          sql`
+            SELECT * FROM (
+              SELECT
+                p.id,
+                p.bounty_id as "bountyId",
+                p.amount,
+                p.status,
+                p.stripe_transfer_id as "stripeTransferId",
+                p.created_at as "createdAt",
+                'payout' as type
+              FROM payout p
+              WHERE p.user_id = ${ctx.session.user.id}
+              UNION ALL
+              SELECT
+                b.id,
+                b.id as "bountyId",
+                b.amount,
+                b.payment_status as status,
+                b.stripe_transfer_id as "stripeTransferId",
+                b.created_at as "createdAt",
+                'created' as type
+              FROM bounty b
+              WHERE b.created_by_id = ${ctx.session.user.id}
+            ) activity
+            ORDER BY "createdAt" DESC
+            LIMIT ${input.limit}
+            OFFSET ${offset}
+          `
+        );
+
+        // Get bounty details only for the paginated results
+        const bountyIds = activities.rows.map((a: any) => a.bountyId);
+        const bountyDetails = bountyIds.length > 0
+          ? await db
+              .select({
+                id: bounty.id,
+                githubRepoOwner: bounty.githubRepoOwner,
+                githubRepoName: bounty.githubRepoName,
+                title: bounty.title,
+              })
+              .from(bounty)
+              .where(sql`${bounty.id} = ANY(${bountyIds})`)
+          : [];
+
+        const bountyMap = new Map(bountyDetails.map((b) => [b.id, b]));
+
+        // Enrich activity with bounty details
+        const enrichedActivity = activities.rows.map((activity: any) => {
+          const details = bountyMap.get(activity.bountyId);
+          return {
+            ...activity,
+            bounty: details
+              ? {
+                  id: details.id,
+                  githubRepoOwner: details.githubRepoOwner,
+                  githubRepoName: details.githubRepoName,
+                  title: details.title,
+                }
+              : null,
+          };
+        });
+
+        return {
+          success: true,
+          data: enrichedActivity,
+          pagination: {
+            page: input.page,
+            limit: input.limit,
+            total: -1, // Unknown total without separate count query
+            totalPages: -1,
+          },
+        };
+      } catch (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to get activity',
+          cause: error,
+        });
+      }
+    }),
 });

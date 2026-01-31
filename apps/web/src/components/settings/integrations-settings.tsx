@@ -65,7 +65,7 @@ function IntegrationCard({
       <div className="shrink-0 flex flex-col items-start gap-[9px] w-full self-stretch h-fit">
         {status?.type === 'installed' && status.count !== undefined && (
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild nativeButton>
               <Button
                 variant="ghost"
                 size="sm"

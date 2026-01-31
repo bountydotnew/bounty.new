@@ -86,7 +86,7 @@ function Pagination({
         type="button"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="p-1 rounded hover:bg-surface-2 disabled:opacity-30 disabled:hover:bg-transparent text-text-secondary"
+        className="p-1 rounded hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent text-text-secondary"
       >
         <ChevronLeft className="w-4 h-4" />
       </button>
@@ -97,7 +97,7 @@ function Pagination({
         type="button"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="p-1 rounded hover:bg-surface-2 disabled:opacity-30 disabled:hover:bg-transparent text-text-secondary"
+        className="p-1 rounded hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent text-text-secondary"
       >
         <ChevronRight className="w-4 h-4" />
       </button>
@@ -148,7 +148,7 @@ function AccountsSelectorContent({
             <button
               type="button"
               onClick={() => setSelectedAccount(null)}
-              className="p-1 -ml-1 rounded hover:bg-surface-2 text-text-secondary"
+              className="p-1 -ml-1 rounded hover:bg-white/10 text-text-secondary"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -179,7 +179,7 @@ function AccountsSelectorContent({
                     key={account.id}
                     type="button"
                     onClick={() => setSelectedAccount(account)}
-                    className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-surface-2 transition-colors"
+                    className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-white/10 transition-colors"
                   >
                     <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
                     <span className="flex-1 text-sm text-text-secondary truncate">
@@ -206,7 +206,7 @@ function AccountsSelectorContent({
                         onSelectRepo(repo);
                         onClose();
                       }}
-                      className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-surface-2 transition-colors"
+                      className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-white/10 transition-colors"
                     >
                       <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
                       <span className="flex-1 text-sm text-text-secondary truncate">{repo}</span>
@@ -282,7 +282,7 @@ function BranchesSelectorContent({
                 onSelectBranch(branch);
                 onClose();
               }}
-              className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-surface-2 transition-colors"
+              className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-white/10 transition-colors"
             >
               <BranchIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
               <span className="flex-1 text-sm text-text-secondary truncate">{branch}</span>
@@ -357,8 +357,8 @@ function IssuesSelectorContent({
               }}
               className={cn(
                 "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors",
-                "hover:bg-surface-2",
-                selectedIssue?.number === issue.number && "bg-surface-2"
+                "hover:bg-white/10",
+                selectedIssue?.number === issue.number && "bg-white/5"
               )}
             >
               <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
@@ -467,7 +467,7 @@ function MobileSelectorContent({
               if (step === 'issues') setStep('branches');
               else if (step === 'branches') setStep('repos');
             }}
-            className="p-1 -ml-1 rounded hover:bg-surface-2 text-text-secondary"
+            className="p-1 -ml-1 rounded hover:bg-white/10 text-text-secondary"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -497,7 +497,7 @@ function MobileSelectorContent({
             <button
               type="button"
               onClick={() => setSelectedAccount(null)}
-              className="p-1 -ml-1 rounded hover:bg-surface-2 text-text-secondary"
+              className="p-1 -ml-1 rounded hover:bg-white/10 text-text-secondary"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -566,8 +566,8 @@ function MobileSelectorContent({
                   }}
                   className={cn(
                     "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors",
-                    "hover:bg-surface-2",
-                    selectedRepository === repo && "bg-surface-2"
+                    "hover:bg-white/10",
+                    selectedRepository === repo && "bg-white/5"
                   )}
                 >
                   <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
@@ -605,7 +605,7 @@ function MobileSelectorContent({
                   key={account.id}
                   type="button"
                   onClick={() => setSelectedAccount(account)}
-                  className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-surface-2 transition-colors"
+                  className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-white/10 transition-colors"
                 >
                   <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
                   <span className="flex-1 text-sm text-text-secondary truncate">
@@ -645,8 +645,8 @@ function MobileSelectorContent({
                 }}
                 className={cn(
                   "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors",
-                  "hover:bg-surface-2",
-                  selectedBranch === branch && "bg-surface-2"
+                  "hover:bg-white/10",
+                  selectedBranch === branch && "bg-white/5"
                 )}
               >
                 <BranchIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
@@ -685,8 +685,8 @@ function MobileSelectorContent({
                 onClick={() => onSelectIssue(issue)}
                 className={cn(
                   "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors",
-                  "hover:bg-surface-2",
-                  selectedIssue?.number === issue.number && "bg-surface-2"
+                  "hover:bg-white/10",
+                  selectedIssue?.number === issue.number && "bg-white/5"
                 )}
               >
                 <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
@@ -852,7 +852,11 @@ export function RepoBranchIssueSelector({
                 setMobileOpen(true);
                 setMobileAccountsPage(1);
               }}
-              className="flex items-center gap-2 text-text-tertiary transition-colors"
+              className={cn(
+                "flex items-center gap-2 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5",
+                "hover:bg-white/10",
+                mobileOpen && mobileStep === 'repos' && "bg-white/10"
+              )}
             >
               <GithubIcon className="w-4 h-4" />
               {selectedRepository ? (
@@ -874,7 +878,11 @@ export function RepoBranchIssueSelector({
                     setMobileOpen(true);
                     setMobileBranchesPage(1);
                   }}
-                  className="flex items-center gap-1.5 text-text-tertiary transition-colors"
+                  className={cn(
+                    "flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5",
+                    "hover:bg-white/10",
+                    mobileOpen && mobileStep === 'branches' && "bg-white/10"
+                  )}
                 >
                   <BranchIcon className="w-3.5 h-3.5" />
                   <span className="text-[14px] text-text-muted">{selectedBranch}</span>
@@ -894,7 +902,11 @@ export function RepoBranchIssueSelector({
                     setMobileOpen(true);
                     setMobileIssuesPage(1);
                   }}
-                  className="flex items-center gap-1.5 text-text-tertiary transition-colors"
+                  className={cn(
+                    "flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5",
+                    "hover:bg-white/10",
+                    mobileOpen && mobileStep === 'issues' && "bg-white/10"
+                  )}
                 >
                   <GithubIcon className="w-3.5 h-3.5" />
                   <span className="text-[14px] text-text-muted">
@@ -952,7 +964,11 @@ export function RepoBranchIssueSelector({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex items-center gap-2 text-text-tertiary transition-colors hover:bg-white/10 rounded-full py-0.5 px-1.5"
+          className={cn(
+            "flex items-center gap-2 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5",
+            "hover:bg-white/10",
+            accountsOpen && "bg-white/10"
+          )}
         >
           <GithubIcon className="w-4 h-4" />
           {selectedRepository ? (
@@ -986,7 +1002,11 @@ export function RepoBranchIssueSelector({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex items-center gap-1.5 text-text-tertiary transition-colors hover:bg-white/10 rounded-full py-0.5 px-1.5"
+          className={cn(
+            "flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5",
+            "hover:bg-white/10",
+            branchesOpen && "bg-white/10"
+          )}
         >
           <BranchIcon className="w-3.5 h-3.5" />
           <span className="text-[14px] text-text-muted">{selectedBranch}</span>
@@ -1016,7 +1036,11 @@ export function RepoBranchIssueSelector({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex items-center gap-1.5 text-text-tertiary transition-colors hover:bg-white/10 rounded-full py-0.5 px-1.5"
+          className={cn(
+            "flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5",
+            "hover:bg-white/10",
+            issuesOpen && "bg-white/10"
+          )}
         >
           <GithubIcon className="w-3.5 h-3.5" />
           <span className="text-[14px] text-text-muted">

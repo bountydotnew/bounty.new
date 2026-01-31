@@ -67,6 +67,11 @@ export function BountyDetailHeader() {
 
   return (
     <div className="mb-8">
+      {/* Title */}
+      <h1 className="font-bold text-3xl md:text-4xl text-foreground leading-[120%] tracking-tight mb-4">
+        {title}
+      </h1>
+
       {/* User Profile Row */}
       <div className="flex items-center gap-2.5 mb-4">
         <Avatar className="h-6 w-6">
@@ -77,11 +82,6 @@ export function BountyDetailHeader() {
           {user}
         </span>
       </div>
-
-      {/* Title */}
-      <h1 className="font-bold text-3xl md:text-4xl text-foreground leading-[120%] tracking-tight mb-4">
-        {title}
-      </h1>
 
       {/* Amount and Actions Row */}
       <div className="flex w-full flex-col items-start justify-between gap-4 md:flex-row md:items-center">
