@@ -241,6 +241,7 @@ function VoteButton({
               strokeLinejoin="round"
               className="size-3.5"
             >
+              <title>Remove vote</title>
               <path d="M3 6h18" />
               <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
               <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
@@ -261,6 +262,7 @@ function VSCodeIcon(props: React.SVGProps<SVGSVGElement>) {
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
+      <title>VS Code</title>
       <mask
         id="vscode-mask"
         maskUnits="userSpaceOnUse"
@@ -548,6 +550,7 @@ function IntegrationVoteCard() {
                   strokeLinejoin="round"
                   className="size-4 shrink-0"
                 >
+                  <title>Remove vote</title>
                   <path d="M3 6h18" />
                   <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
                   <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
@@ -820,7 +823,7 @@ export default function RoadmapPage() {
 
                   <div className="flex flex-col items-start gap-4 sm:flex-row">
                     <Link
-                      className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-[15px] font-medium text-foreground transition-colors hover:bg-surface-2"
+                      className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-[15px] font-medium text-background transition-colors hover:opacity-90"
                       href="https://github.com/bountydotnew/bounty.new"
                       target="_blank"
                     >

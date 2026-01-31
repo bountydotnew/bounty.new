@@ -151,6 +151,8 @@
     }
   },
   "dependencies": {
+    "@cossistant/next": "^0.0.29",
+    "@cossistant/react": "^0.0.29",
     "@radix-ui/react-checkbox": "^1.3.3",
     "chrono-node": "^2.9.0",
     "cmdk": "^1.1.1",

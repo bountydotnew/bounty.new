@@ -1,4 +1,5 @@
 @import "@bounty/ui/styles/index.css";
+@import "@cossistant/react/tailwind.css";
 
 @keyframes waitlist-wiggle {
   0%,

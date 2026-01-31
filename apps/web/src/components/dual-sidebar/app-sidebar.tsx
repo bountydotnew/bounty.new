@@ -12,6 +12,7 @@ import {
   FileIcon,
   DiscordIcon,
   DashboardSquareIcon,
+  QuestionMarkIcon,
 } from '@bounty/ui';
 import { cn } from '@bounty/ui/lib/utils';
 import {
@@ -39,7 +40,21 @@ import { NotificationsDropdown } from '@/components/notifications/notifications-
 import { AccountDropdown } from '@/components/billing/account-dropdown';
 import { FundBountyModal } from '@/components/payment/fund-bounty-modal';
 import { LINKS } from '@/constants';
-import { Clock, UsersIcon } from 'lucide-react';
+import {
+  Clock,
+  UsersIcon,
+  Bug,
+  Lightbulb,
+  BookOpen,
+  MessageCircle,
+  ArrowUpRight,
+} from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@bounty/ui/components/popover';
+import { useSupport } from '@cossistant/react';
 
 const NAV_ITEMS = [
   { title: 'Home', url: LINKS.DASHBOARD, icon: HugeHomeIcon },
@@ -115,6 +130,68 @@ const WorkspaceSwitcher = () => {
   );
 };
 
+const SupportPopoverContent = ({
+  onOpenSupport,
+}: {
+  onOpenSupport: () => void;
+}) => {
+  const linkClass =
+    'flex items-center gap-3 px-4 py-2 text-[14px] text-text-secondary hover:text-foreground transition-colors';
+
+  return (
+    <div className="flex flex-col">
+      <a
+        href="https://discord.gg/bountynew"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={linkClass}
+      >
+        <DiscordIcon className="size-4" />
+        <span className="flex-1">Discord</span>
+        <ArrowUpRight className="size-3.5 text-text-tertiary" />
+      </a>
+      <a
+        href="https://docs.bounty.new"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={linkClass}
+      >
+        <BookOpen className="size-4" />
+        <span className="flex-1">Docs</span>
+        <ArrowUpRight className="size-3.5 text-text-tertiary" />
+      </a>
+      <a
+        href="https://github.com/bountydotnew/bounty.new/issues/new?template=bug_report.md"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={linkClass}
+      >
+        <Bug className="size-4" />
+        <span className="flex-1">Report a bug</span>
+        <ArrowUpRight className="size-3.5 text-text-tertiary" />
+      </a>
+      <a
+        href="https://github.com/bountydotnew/bounty.new/issues/new?template=feature_request.md"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={linkClass}
+      >
+        <Lightbulb className="size-4" />
+        <span className="flex-1">Suggest a feature</span>
+        <ArrowUpRight className="size-3.5 text-text-tertiary" />
+      </a>
+      <button
+        type="button"
+        onClick={onOpenSupport}
+        className={`${linkClass} w-full text-left`}
+      >
+        <MessageCircle className="size-4" />
+        <span className="flex-1">Help & support</span>
+      </button>
+    </div>
+  );
+};
+
 const SidebarFooterActions = () => {
   const { session, isPending } = useSession();
   const isAuthenticated = !!session?.user;
@@ -123,7 +200,7 @@ const SidebarFooterActions = () => {
   return (
     <>
       <div className="flex items-end justify-between gap-2 py-0">
-        {/* Links column: Docs, Discord */}
+        {/* Links column: Docs, Support */}
         <div className="flex flex-col gap-2">
           <button
             className="inline-flex items-center gap-2 rounded-[10px] bg-surface-1 px-3.5 py-1.5 text-text-tertiary transition-colors hover:text-foreground group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
@@ -135,23 +212,27 @@ const SidebarFooterActions = () => {
               Docs
             </span>
           </button>
-          <div className="flex items-center gap-0">
-            <button
-              className="inline-flex items-center gap-2 rounded-[10px] bg-surface-1 px-3.5 py-1.5 text-text-tertiary transition-colors hover:text-foreground group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
-              onClick={() =>
-                window.open('https://discord.gg/bountynew', '_blank')
-              }
-              type="button"
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className="inline-flex items-center gap-2 rounded-[10px] bg-surface-1 px-3.5 py-1.5 text-text-tertiary transition-colors hover:text-foreground group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
+                type="button"
+              >
+                <QuestionMarkIcon className="h-[19px] w-[19px]" />
+                <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em] group-data-[collapsible=icon]:hidden">
+                  Support
+                </span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              side="top"
+              align="start"
+              sideOffset={8}
+              className="w-56 p-0"
             >
-              <DiscordIcon className="h-[19px] w-[19px]" />
-              <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em] group-data-[collapsible=icon]:hidden">
-                Discord
-              </span>
-            </button>
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 animate-pulse" />
-            </span>
-          </div>
+              <SupportPopoverContent />
+            </PopoverContent>
+          </Popover>
         </div>
         {/* Notifications toggle */}
         {isAuthenticated && !isPending && (

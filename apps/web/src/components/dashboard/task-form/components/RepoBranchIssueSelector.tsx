@@ -164,7 +164,35 @@ function AccountsSelectorContent({
 
       {/* Content */}
       <div className="min-h-[250px] max-h-[250px] overflow-y-auto p-1">
-        {!selectedAccount ? (
+        {selectedAccount ? (
+          // Repos list for selected account
+          (() => {
+            const accountRepos = installationRepos.find((r) => r.installationId === selectedAccount.id);
+            return (
+              <>
+                {accountRepos?.repositories && accountRepos.repositories.length > 0 ? (
+                  accountRepos.repositories.map((repo: string) => (
+                    <button
+                      key={repo}
+                      type="button"
+                      onClick={() => {
+                        onSelectRepo(repo);
+                        onClose();
+                      }}
+                      className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-white/10 transition-colors"
+                    >
+                      <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
+                      <span className="flex-1 text-sm text-text-secondary truncate">{repo}</span>
+                      <ChevronRight className="w-3 h-3 text-text-tertiary shrink-0" />
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-3 py-2 text-sm text-text-tertiary">No repositories</div>
+                )}
+              </>
+            );
+          })()
+        ) : (
           // Accounts list
           installations.length === 0 ? (
             <div className="px-3 py-2 text-sm text-text-tertiary">
@@ -193,34 +221,6 @@ function AccountsSelectorContent({
                 );
               })
           )
-        ) : (
-          // Repos list for selected account
-          (() => {
-            const accountRepos = installationRepos.find((r) => r.installationId === selectedAccount.id);
-            return (
-              <>
-                {accountRepos?.repositories && accountRepos.repositories.length > 0 ? (
-                  accountRepos.repositories.map((repo: string) => (
-                    <button
-                      key={repo}
-                      type="button"
-                      onClick={() => {
-                        onSelectRepo(repo);
-                        onClose();
-                      }}
-                      className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-white/10 transition-colors"
-                    >
-                      <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
-                      <span className="flex-1 text-sm text-text-secondary truncate">{repo}</span>
-                      <ChevronRight className="w-3 h-3 text-text-tertiary shrink-0" />
-                    </button>
-                  ))
-                ) : (
-                  <div className="px-3 py-2 text-sm text-text-tertiary">No repositories</div>
-                )}
-              </>
-            );
-          })()
         )}
       </div>
 
@@ -466,8 +466,11 @@ function MobileSelectorContent({
           <button
             type="button"
             onClick={() => {
-              if (step === 'issues') setStep('branches');
-              else if (step === 'branches') setStep('repos');
+              if (step === 'issues') {
+                setStep('branches');
+              } else if (step === 'branches') {
+                setStep('repos');
+              }
             }}
             className="p-1 -ml-1 rounded hover:bg-white/10 text-text-secondary"
           >

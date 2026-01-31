@@ -34,6 +34,7 @@ import {
   count,
   desc,
   eq,
+  gte,
   ilike,
   inArray,
   isNotNull,
@@ -302,6 +303,79 @@ export const bountiesRouter = router({
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Failed to fetch bounty statistics',
+        cause: error,
+      });
+    }
+  }),
+
+  /**
+   * Get monthly spending stats for the current user
+   * Includes total spend and platform fees paid this month
+   */
+  getMonthlySpend: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      // Calculate start of current month (UTC)
+      const now = new Date();
+      const startOfMonth = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
+      );
+      const endOfMonth = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)
+      );
+
+      // Query: Sum bounty amounts where user funded this month
+      // Join with transaction table to get accurate funding timestamp
+      const spendResult = await db
+        .select({
+          totalSpend: sql<string>`coalesce(sum(cast(${bounty.amount} as decimal)), 0)`,
+          bountyCount: sql<number>`count(distinct ${bounty.id})::int`,
+        })
+        .from(bounty)
+        .innerJoin(transaction, eq(transaction.bountyId, bounty.id))
+        .where(
+          and(
+            eq(bounty.createdById, ctx.session.user.id),
+            eq(transaction.type, 'payment_intent'),
+            gte(transaction.createdAt, startOfMonth)
+          )
+        );
+
+      // Query: Get all-time spending for accumulated fees calculation
+      const allTimeResult = await db
+        .select({
+          totalSpend: sql<string>`coalesce(sum(cast(${bounty.amount} as decimal)), 0)`,
+          bountyCount: sql<number>`count(distinct ${bounty.id})::int`,
+        })
+        .from(bounty)
+        .innerJoin(transaction, eq(transaction.bountyId, bounty.id))
+        .where(
+          and(
+            eq(bounty.createdById, ctx.session.user.id),
+            eq(transaction.type, 'payment_intent')
+          )
+        );
+
+      const totalSpend = Number(spendResult[0]?.totalSpend) || 0;
+      const allTimeSpend = Number(allTimeResult[0]?.totalSpend) || 0;
+      const allTimeBountyCount = allTimeResult[0]?.bountyCount || 0;
+
+      return {
+        success: true,
+        data: {
+          monthlySpend: totalSpend,
+          bountyCount: spendResult[0]?.bountyCount || 0,
+          allTimeSpend,
+          allTimeBountyCount,
+          periodStart: startOfMonth.toISOString(),
+          periodEnd: endOfMonth.toISOString(),
+          nextResetDate: endOfMonth.toISOString(),
+        },
+      };
+    } catch (error) {
+      console.error('Failed to get monthly spend:', error);
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to get monthly spending data',
         cause: error,
       });
     }

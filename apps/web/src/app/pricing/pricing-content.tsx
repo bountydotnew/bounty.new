@@ -11,7 +11,9 @@ import { toast } from 'sonner';
 import { getRecommendedPlan } from '@bounty/types';
 
 export function PricingPageContent() {
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>(
+    'monthly'
+  );
   const [monthlySpend, setMonthlySpend] = useState(300); // Default to $300
   const searchParams = useSearchParams();
   const { isAuthenticated, isPending } = useSession();
@@ -40,9 +42,10 @@ export function PricingPageContent() {
 
     const startCheckout = async () => {
       try {
-        const baseUrl = typeof window !== 'undefined'
-          ? window.location.origin
-          : process.env.NEXT_PUBLIC_BASE_URL ?? 'https://bounty.new';
+        const baseUrl =
+          typeof window !== 'undefined'
+            ? window.location.origin
+            : (process.env.NEXT_PUBLIC_BASE_URL ?? 'https://bounty.new');
 
         const result = await attach({
           productId: checkoutPlan,
@@ -66,7 +69,8 @@ export function PricingPageContent() {
           toast.error('Invalid checkout response. Please try again.');
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
         console.error('[Checkout Error]', error);
         toast.error(`Checkout failed: ${message}`);
       }
@@ -93,7 +97,11 @@ export function PricingPageContent() {
 
       {/* Plans Section */}
       <section className="mt-8">
-        <PricingCards isYearly={billingPeriod === 'yearly'} recommendedPlan={recommendedPlan} />
+        <PricingCards
+          isYearly={billingPeriod === 'yearly'}
+          recommendedPlan={recommendedPlan}
+          estimatedMonthlySpend={monthlySpend}
+        />
       </section>
     </div>
   );
