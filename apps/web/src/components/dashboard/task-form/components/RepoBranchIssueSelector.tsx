@@ -78,7 +78,9 @@ function Pagination({
   totalPages: number;
   onPageChange: (page: number) => void;
 }) {
-  if (totalPages <= 1) return null;
+  if (totalPages <= 1) {
+    return null;
+  }
 
   return (
     <div className="flex items-center justify-center gap-4 px-3 py-2 border-t border-border-subtle">
@@ -131,19 +133,7 @@ function AccountsSelectorContent({
     <div className="flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border-subtle">
-        {!selectedAccount ? (
-          <>
-            <GithubIcon className="w-4 h-4 text-text-tertiary" />
-            <input
-              className="flex-1 bg-transparent text-sm text-text-secondary placeholder:text-text-tertiary outline-none"
-              placeholder={installations.length === 1
-                ? installations[0]?.accountLogin ?? 'Search accounts...'
-                : 'Search accounts...'}
-              autoComplete="off"
-              spellCheck={false}
-            />
-          </>
-        ) : (
+        {selectedAccount ? (
           <>
             <button
               type="button"
@@ -156,6 +146,18 @@ function AccountsSelectorContent({
             <span className="text-sm text-text-secondary">
               {selectedAccount.accountLogin ?? 'Unknown Account'}
             </span>
+          </>
+        ) : (
+          <>
+            <GithubIcon className="w-4 h-4 text-text-tertiary" />
+            <input
+              className="flex-1 bg-transparent text-sm text-text-secondary placeholder:text-text-tertiary outline-none"
+              placeholder={installations.length === 1
+                ? installations[0]?.accountLogin ?? 'Search accounts...'
+                : 'Search accounts...'}
+              autoComplete="off"
+              spellCheck={false}
+            />
           </>
         )}
       </div>
