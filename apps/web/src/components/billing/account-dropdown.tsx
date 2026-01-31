@@ -23,10 +23,13 @@ import type {
 import { AccountSwitcher } from '@/components/auth/account-switcher';
 import { SwitchUsersIcon } from '@bounty/ui/components/icons/huge/switch-users';
 import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear';
-import { SwitchWorkspaceIcon } from '@bounty/ui/components/icons/huge/switch-workspace';
-import { ManageUsersWorkspaceIcon } from '@bounty/ui/components/icons/huge/manage-users-workspace';
+// TODO: Re-enable when workspace switching is implemented
+// import { SwitchWorkspaceIcon } from '@bounty/ui/components/icons/huge/switch-workspace';
+// TODO: Re-enable when member management is implemented
+// import { ManageUsersWorkspaceIcon } from '@bounty/ui/components/icons/huge/manage-users-workspace';
 import { BillingSettingsIcon } from '@bounty/ui/components/icons/huge/billing-settings';
-import { DropdownIcon } from '@bounty/ui';
+// TODO: Re-enable when workspace switching is implemented
+// import { DropdownIcon } from '@bounty/ui';
 import { Feedback } from '@bounty/ui';
 import { UserIcon } from '@bounty/ui';
 import { useFeedback } from '@/components/feedback-context';
@@ -272,6 +275,7 @@ export function AccountDropdown({
                 Upgrade
               </span>
             </DropdownMenuItem>
+            {/* TODO: Implement workspace switching
             <DropdownMenuItem
               className="flex items-center justify-between rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"
               onClick={() => setMenuOpen(false)}
@@ -284,6 +288,8 @@ export function AccountDropdown({
               </div>
               <DropdownIcon className="h-[19px] w-[19px] -rotate-90" />
             </DropdownMenuItem>
+            */}
+            {/* TODO: Implement member management
             <DropdownMenuItem
               className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"
               onClick={() => setMenuOpen(false)}
@@ -293,6 +299,7 @@ export function AccountDropdown({
                 Manage members
               </span>
             </DropdownMenuItem>
+            */}
             <DropdownMenuItem
               className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"
               onClick={() => {
@@ -318,8 +325,6 @@ export function AccountDropdown({
               </span>
             </DropdownMenuItem>
           </div>
-
-          <DropdownMenuSeparator className="border-border-subtle" />
 
           <DropdownMenuItem
             className={cn(

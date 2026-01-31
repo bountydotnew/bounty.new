@@ -9,6 +9,7 @@ export * from './chevron-double';
 export * from './chevron-sort';
 export * from './comments';
 export * from './discord';
+export * from './dashboard-square';
 export * from './dropdown';
 export * from './github';
 export * from './home';

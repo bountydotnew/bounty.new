@@ -3,7 +3,6 @@
 import * as React from 'react';
 import {
   ArrowDownIcon,
-  BountiesIcon,
   BookmarksIcon,
   HomeIcon as HugeHomeIcon,
   NotificationsIcon,
@@ -12,6 +11,7 @@ import {
   BellIcon,
   FileIcon,
   DiscordIcon,
+  DashboardSquareIcon,
 } from '@bounty/ui';
 import { cn } from '@bounty/ui/lib/utils';
 import {
@@ -43,7 +43,7 @@ import { Clock, UsersIcon } from 'lucide-react';
 
 const NAV_ITEMS = [
   { title: 'Home', url: LINKS.DASHBOARD, icon: HugeHomeIcon },
-  { title: 'Bounties', url: LINKS.BOUNTIES, icon: BountiesIcon },
+  { title: 'Bounties', url: LINKS.BOUNTIES, icon: DashboardSquareIcon },
   { title: 'Bookmarks', url: LINKS.BOOKMARKS, icon: BookmarksIcon },
   { title: 'Integrations', url: '/integrations', icon: SettingsGearIcon },
 ];

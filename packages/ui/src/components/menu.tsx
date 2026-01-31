@@ -14,11 +14,13 @@ const MenuPortal = MenuPrimitive.Portal;
 function MenuTrigger({
   asChild,
   children,
+  nativeButton,
   ...props
 }: MenuPrimitive.Trigger.Props & { asChild?: boolean }) {
   // Legacy asChild support
   let finalRender = props.render;
   let finalChildren = children;
+  let finalNativeButton = nativeButton;
 
   if (asChild && !props.render && React.isValidElement(children)) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,10 +28,18 @@ function MenuTrigger({
     const { children: childChildren, ...childProps } = childElement.props;
     finalRender = React.cloneElement(childElement, childProps);
     finalChildren = childChildren;
+
+    // If nativeButton is not explicitly set, check if the child is a button
+    // Default to false for asChild since we can't guarantee the rendered element is a <button>
+    if (finalNativeButton === undefined) {
+      const isNativeButton = childElement.type === 'button';
+      finalNativeButton = isNativeButton;
+    }
   }
   return (
     <MenuPrimitive.Trigger
       data-slot="menu-trigger"
+      nativeButton={finalNativeButton}
       {...props}
       render={finalRender}
     >
