@@ -46,7 +46,6 @@ import {
   Bug,
   Lightbulb,
   BookOpen,
-  MessageCircle,
   ArrowUpRight,
 } from 'lucide-react';
 import {
@@ -54,7 +53,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@bounty/ui/components/popover';
-import { useSupport } from '@cossistant/react';
+// import { useSupport } from '@cossistant/next';
 
 const NAV_ITEMS = [
   { title: 'Home', url: LINKS.DASHBOARD, icon: HugeHomeIcon },
@@ -130,11 +129,7 @@ const WorkspaceSwitcher = () => {
   );
 };
 
-const SupportPopoverContent = ({
-  onOpenSupport,
-}: {
-  onOpenSupport: () => void;
-}) => {
+const SupportPopoverContent = () => {
   const linkClass =
     'flex items-center gap-3 px-4 py-2 text-[14px] text-text-secondary hover:text-foreground transition-colors';
 
@@ -180,14 +175,6 @@ const SupportPopoverContent = ({
         <span className="flex-1">Suggest a feature</span>
         <ArrowUpRight className="size-3.5 text-text-tertiary" />
       </a>
-      <button
-        type="button"
-        onClick={onOpenSupport}
-        className={`${linkClass} w-full text-left`}
-      >
-        <MessageCircle className="size-4" />
-        <span className="flex-1">Help & support</span>
-      </button>
     </div>
   );
 };
@@ -212,7 +199,8 @@ const SidebarFooterActions = () => {
               Docs
             </span>
           </button>
-          <Popover>
+          {/* TODO: Re-enable when Cossistant support widget is fixed */}
+          {/* <Popover>
             <PopoverTrigger asChild>
               <button
                 className="inline-flex items-center gap-2 rounded-[10px] bg-surface-1 px-3.5 py-1.5 text-text-tertiary transition-colors hover:text-foreground group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
@@ -232,7 +220,7 @@ const SidebarFooterActions = () => {
             >
               <SupportPopoverContent />
             </PopoverContent>
-          </Popover>
+          </Popover> */}
         </div>
         {/* Notifications toggle */}
         {isAuthenticated && !isPending && (

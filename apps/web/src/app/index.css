@@ -1,6 +1,18 @@
 @import "@bounty/ui/styles/index.css";
 @import "@cossistant/react/tailwind.css";
 
+/* Cossistant Support Widget Fixes */
+[data-cossistant-support] {
+  z-index: 9999 !important;
+}
+
+[data-cossistant-support-content] {
+  z-index: 9999 !important;
+  width: 400px !important;
+  height: 600px !important;
+  max-height: 80vh !important;
+}
+
 @keyframes waitlist-wiggle {
   0%,
   100% {
