@@ -6,6 +6,7 @@ import { LinearIssue } from '@bounty/api/driver/linear-client';
 import { ChevronDown, ChevronUp, User, ExternalLink } from 'lucide-react';
 import { CreateBountyForm } from './create-bounty-form';
 import { MarkdownContent } from '@/components/bounty/markdown-content';
+import { cn } from '@bounty/ui/lib/utils';
 
 interface LinearIssueCardProps {
   issue: LinearIssue;
@@ -13,13 +14,18 @@ interface LinearIssueCardProps {
   workspaceId: string;
 }
 
-function getPriorityColor(priority: number): string {
+function getPriorityStyles(priority: number): { bg: string; text: string; border: string } {
   switch (priority) {
-    case 4: return 'bg-red-500/10 text-red-400 border-red-500/20';
-    case 3: return 'bg-orange-500/10 text-orange-400 border-orange-500/20';
-    case 2: return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
-    case 1: return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-    default: return 'bg-neutral-500/10 text-neutral-400 border-neutral-500/20';
+    case 4:
+      return { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/20' };
+    case 3:
+      return { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/20' };
+    case 2:
+      return { bg: 'bg-yellow-500/10', text: 'text-yellow-400', border: 'border-yellow-500/20' };
+    case 1:
+      return { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20' };
+    default:
+      return { bg: 'bg-surface-2', text: 'text-text-tertiary', border: 'border-border-default' };
   }
 }
 
@@ -38,49 +44,65 @@ export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueC
     router.push(url.pathname + url.search, { scroll: false });
   };
 
+  const priorityStyles = getPriorityStyles(issue.priority);
+  const statusBg = `${issue.status.color}15`;
+  const statusBorder = `${issue.status.color}30`;
+
   return (
-    <div className="border border-white/10 rounded-xl overflow-hidden hover:border-white/15 transition-colors">
+    <div className="group border border-border-subtle rounded-xl overflow-hidden hover:border-border-default transition-all bg-surface-1">
       {/* Summary */}
-      <div className="p-4">
+      <div className="p-4 sm:p-5">
         <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex-1 min-w-0 space-y-3">
             {/* Tags */}
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-neutral-500 font-mono">
+              <span className="text-xs text-text-muted font-mono">
                 {issue.identifier}
               </span>
               <span
-                className="text-xs px-1.5 py-0.5 rounded-md border"
+                className="text-xs px-2 py-0.5 rounded-md border font-medium"
                 style={{
-                  backgroundColor: `${issue.status.color}15`,
+                  backgroundColor: statusBg,
                   color: issue.status.color,
-                  borderColor: `${issue.status.color}30`,
+                  borderColor: statusBorder,
                 }}
               >
                 {issue.status.name}
               </span>
               {issue.priority > 0 && (
-                <span className={`text-xs px-1.5 py-0.5 rounded-md border ${getPriorityColor(issue.priority)}`}>
+                <span className={cn(
+                  'text-xs px-2 py-0.5 rounded-md border font-medium',
+                  priorityStyles.bg, priorityStyles.text, priorityStyles.border
+                )}>
                   {issue.priorityLabel}
                 </span>
               )}
             </div>
 
             {/* Title */}
-            <h3 className="text-sm font-medium text-foreground leading-snug">
+            <h3 className="text-sm font-medium text-text-primary leading-snug">
               {issue.title}
             </h3>
 
             {/* Metadata */}
-            <div className="flex items-center gap-4 text-xs text-neutral-500">
-              <div className="flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5" />
-                <span>{issue.assignee?.displayName || issue.assignee?.name || 'Unassigned'}</span>
-              </div>
-              {issue.project && (
+            <div className="flex items-center gap-4 text-xs text-text-muted">
+              {issue.assignee && (
                 <div className="flex items-center gap-1.5">
-                  <span>{issue.project.name}</span>
+                  <User className="w-3.5 h-3.5" />
+                  <span>{issue.assignee.displayName || issue.assignee.name}</span>
                 </div>
+              )}
+              {!issue.assignee && (
+                <div className="flex items-center gap-1.5 text-text-tertiary">
+                  <User className="w-3.5 h-3.5" />
+                  <span>Unassigned</span>
+                </div>
+              )}
+              {issue.project && (
+                <>
+                  <span className="text-border-default">•</span>
+                  <span>{issue.project.name}</span>
+                </>
               )}
             </div>
           </div>
@@ -91,7 +113,7 @@ export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueC
               href={issue.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="h-8 px-3 rounded-lg border border-white/10 text-xs text-foreground hover:bg-white/5 transition-colors flex items-center gap-1.5"
+              className="h-8 px-3 rounded-lg border border-border-subtle text-xs text-text-secondary hover:bg-surface-2 transition-colors flex items-center gap-1.5"
               onClick={(e) => e.stopPropagation()}
             >
               <ExternalLink className="w-3.5 h-3.5" />
@@ -99,13 +121,18 @@ export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueC
             </a>
             <button
               onClick={() => router.push(`/integrations/linear/${workspaceId}/issues/${issue.id}`)}
-              className="h-8 px-3 rounded-lg border border-white/10 text-xs text-foreground hover:bg-white/5 transition-colors"
+              className="h-8 px-3 rounded-lg border border-border-subtle text-xs text-text-secondary hover:bg-surface-2 transition-colors hidden sm:block"
             >
               Details
             </button>
             <button
               onClick={toggleExpand}
-              className="h-8 px-3 rounded-lg bg-white text-black text-xs font-medium hover:bg-neutral-200 transition-colors flex items-center gap-1.5"
+              className={cn(
+                'h-8 px-3 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5',
+                expanded
+                  ? 'bg-surface-2 text-text-secondary hover:bg-surface-3'
+                  : 'bg-surface-1 text-text-primary border border-border-subtle hover:border-border-default'
+              )}
             >
               {expanded ? (
                 <>
@@ -125,21 +152,21 @@ export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueC
 
       {/* Expanded Content */}
       {expanded && (
-        <div className="border-t border-white/5 bg-white/[0.02]">
+        <div className="border-t border-border-subtle bg-surface-2">
           {/* Description */}
           {issue.description && (
-            <div className="p-4 border-b border-white/5">
-              <h4 className="text-xs font-medium text-neutral-400 uppercase tracking-wider mb-3">
+            <div className="p-4 sm:p-5 border-b border-border-subtle">
+              <h4 className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-3">
                 Description
               </h4>
-              <div className="text-sm text-neutral-300">
+              <div className="text-sm text-text-secondary prose prose-invert prose-sm max-w-none">
                 <MarkdownContent content={issue.description} />
               </div>
             </div>
           )}
 
           {/* Create Bounty Form */}
-          <div className="p-4">
+          <div className="p-4 sm:p-5">
             <CreateBountyForm
               issue={issue}
               onCancel={() => setExpanded(false)}
