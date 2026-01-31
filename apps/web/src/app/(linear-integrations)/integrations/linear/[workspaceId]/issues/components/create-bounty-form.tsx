@@ -10,6 +10,7 @@ import { trpcClient } from '@/utils/trpc';
 import { LinearIssue } from '@bounty/api/driver/linear-client';
 import { z } from 'zod';
 import { Loader2, X, DollarSign, Calendar, Tag } from 'lucide-react';
+import { cn } from '@bounty/ui/lib/utils';
 
 const bountyFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
@@ -137,12 +138,12 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-foreground">Create Bounty</h3>
+      <div className="flex items-center justify-between pb-2 border-b border-border-subtle">
+        <h3 className="text-sm font-medium text-text-primary">Create Bounty</h3>
         <button
           type="button"
           onClick={onCancel}
-          className="text-neutral-500 hover:text-foreground transition-colors"
+          className="text-text-muted hover:text-text-secondary transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
@@ -150,13 +151,13 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
 
       {/* Title */}
       <div>
-        <label className="block text-xs font-medium text-neutral-400 mb-1.5">
+        <label className="block text-xs font-medium text-text-tertiary mb-1.5">
           Title <span className="text-red-400">*</span>
         </label>
         <input
           {...register('title')}
           type="text"
-          className="w-full h-9 px-3 rounded-lg border border-white/10 bg-transparent text-sm text-foreground placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors"
+          className="w-full h-9 px-3 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-default transition-colors"
           placeholder="Enter bounty title"
         />
         {errors.title && (
@@ -166,13 +167,13 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
 
       {/* Description */}
       <div>
-        <label className="block text-xs font-medium text-neutral-400 mb-1.5">
+        <label className="block text-xs font-medium text-text-tertiary mb-1.5">
           Description <span className="text-red-400">*</span>
         </label>
         <textarea
           {...register('description')}
           rows={4}
-          className="w-full px-3 py-2 rounded-lg border border-white/10 bg-transparent text-sm text-foreground placeholder:text-neutral-600 focus:outline-none focus:border-white/20 resize-none transition-colors"
+          className="w-full px-3 py-2 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-default resize-none transition-colors"
           placeholder="Describe the bounty requirements"
         />
         {errors.description && (
@@ -182,23 +183,23 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
 
       {/* Amount */}
       <div>
-        <label className="block text-xs font-medium text-neutral-400 mb-1.5">
+        <label className="block text-xs font-medium text-text-tertiary mb-1.5">
           Amount <span className="text-red-400">*</span>
         </label>
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
+            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
             <input
               {...register('amount')}
               type="text"
               inputMode="decimal"
-              className="w-full h-9 pl-9 pr-3 rounded-lg border border-white/10 bg-transparent text-sm text-foreground placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors"
+              className="w-full h-9 pl-9 pr-3 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-default transition-colors"
               placeholder="0.00"
             />
           </div>
           <select
             {...register('currency')}
-            className="h-9 px-3 rounded-lg border border-white/10 bg-transparent text-sm text-foreground focus:outline-none focus:border-white/20 transition-colors"
+            className="h-9 px-3 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-primary focus:outline-none focus:border-border-default transition-colors"
           >
             <option value="USD">USD</option>
             <option value="EUR">EUR</option>
@@ -212,15 +213,15 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
 
       {/* Deadline */}
       <div>
-        <label className="block text-xs font-medium text-neutral-400 mb-1.5 flex items-center gap-1.5">
+        <label className="block text-xs font-medium text-text-tertiary mb-1.5 flex items-center gap-1.5">
           <Calendar className="w-3 h-3" />
-          Deadline (optional)
+          Deadline <span className="text-text-muted font-normal">(optional)</span>
         </label>
         <input
           {...register('deadline')}
           type="date"
           min={new Date().toISOString().split('T')[0]}
-          className="w-full h-9 px-3 rounded-lg border border-white/10 bg-transparent text-sm text-foreground focus:outline-none focus:border-white/20 transition-colors"
+          className="w-full h-9 px-3 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-primary focus:outline-none focus:border-border-default transition-colors"
         />
         {errors.deadline && (
           <p className="text-xs text-red-400 mt-1">{errors.deadline.message}</p>
@@ -229,9 +230,9 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
 
       {/* Tags */}
       <div>
-        <label className="block text-xs font-medium text-neutral-400 mb-1.5 flex items-center gap-1.5">
+        <label className="block text-xs font-medium text-text-tertiary mb-1.5 flex items-center gap-1.5">
           <Tag className="w-3 h-3" />
-          Tags (optional)
+          Tags <span className="text-text-muted font-normal">(optional)</span>
         </label>
         <div className="flex gap-2 mb-2">
           <input
@@ -239,13 +240,13 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1 h-9 px-3 rounded-lg border border-white/10 bg-transparent text-sm text-foreground placeholder:text-neutral-600 focus:outline-none focus:border-white/20 transition-colors"
+            className="flex-1 h-9 px-3 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-default transition-colors"
             placeholder="Add a tag"
           />
           <button
             type="button"
             onClick={addTag}
-            className="h-9 px-4 rounded-lg border border-white/10 text-sm text-foreground hover:bg-white/5 transition-colors"
+            className="h-9 px-4 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-secondary hover:bg-surface-2 transition-colors"
           >
             Add
           </button>
@@ -255,7 +256,7 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-white/10 text-xs text-foreground"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border-subtle bg-surface-1 text-xs text-text-secondary"
               >
                 {tag}
                 <button
@@ -277,14 +278,19 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
           type="button"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="flex-1 h-10 rounded-lg border border-white/10 text-sm text-foreground hover:bg-white/5 transition-colors disabled:opacity-50"
+          className="flex-1 h-10 rounded-lg border border-border-subtle text-sm text-text-secondary hover:bg-surface-2 transition-colors disabled:opacity-50"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isSubmitting || !amount}
-          className="flex-1 h-10 rounded-lg bg-white text-sm font-medium text-black hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className={cn(
+            'flex-1 h-10 rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2',
+            amount && !isSubmitting
+              ? 'bg-surface-1 text-text-primary border border-border-default hover:bg-surface-2'
+              : 'bg-surface-2 text-text-muted border border-border-subtle'
+          )}
         >
           {isSubmitting ? (
             <>
@@ -297,7 +303,7 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
         </button>
       </div>
 
-      <p className="text-xs text-neutral-600 text-center">
+      <p className="text-xs text-text-muted text-center">
         Bounty will be created in draft status. You can fund it later.
       </p>
     </form>
