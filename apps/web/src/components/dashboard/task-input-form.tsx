@@ -34,7 +34,9 @@ import { DescriptionTextarea } from './task-form/components/DescriptionTextarea'
 import { RepoBranchIssueSelector } from './task-form/components/RepoBranchIssueSelector';
 import { FundBountyModal } from '@/components/payment/fund-bounty-modal';
 
-type TaskInputFormProps = {};
+type TaskInputFormProps = {
+  onSubmit: (data: CreateBountyForm) => void;
+};
 
 export interface TaskInputFormRef {
   focus: () => void;
@@ -69,7 +71,6 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
       control,
       handleSubmit: formHandleSubmit,
       formState: { errors },
-      setValue,
       watch,
       reset,
     } = form;
@@ -82,11 +83,8 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
       installationRepos,
       filteredInstallations,
       installationsLoading,
-      reposLoading,
       accountSearchQuery,
       setAccountSearchQuery,
-      repoSearchQuery,
-      setRepoSearchQuery,
       selectedRepository,
       setSelectedRepository,
     } = useGitHubInstallationRepositories();
@@ -124,17 +122,6 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
     } | null>(null);
 
     // Autofill prompt state (for issues)
-    const [showAutofillPrompt, setShowAutofillPrompt] = useState(false);
-    const [pendingAutofillIssue, setPendingAutofillIssue] = useState<{
-      number: number;
-      title: string;
-      url: string;
-    } | null>(null);
-    const [pendingIssueData, setPendingIssueData] = useState<{
-      title?: string;
-      body?: string;
-    } | null>(null);
-    const isOpeningPromptRef = useRef(false);
 
     // Fund bounty modal state
     const [showFundModal, setShowFundModal] = useState(false);
@@ -219,14 +206,18 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
     );
 
     const handleSkip = () => {
-      if (!pendingFormData) return;
+      if (!pendingFormData) {
+        return;
+      }
       setShowFundModal(false);
       createBounty.mutate({ ...pendingFormData, payLater: true });
       setPendingFormData(null);
     };
 
     const handlePayWithStripe = () => {
-      if (!pendingFormData) return;
+      if (!pendingFormData) {
+        return;
+      }
       // Don't close modal yet - let it stay open until redirect happens
       createBounty.mutate({ ...pendingFormData, payLater: false });
       // Modal will close automatically when redirect happens
@@ -240,58 +231,12 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
 
     const handleRepositorySelect = (repo: string) => {
       setSelectedRepository(repo);
-      setRepoSearchQuery('');
       setSelectedIssue(null);
       setIssueQuery('');
     };
 
-    const handleAutofill = (shouldAutofill: boolean) => {
-      if (shouldAutofill && pendingAutofillIssue && pendingIssueData) {
-        // Autofill with actual issue data
-        if (pendingIssueData.title) {
-          setValue('title', pendingIssueData.title);
-        }
-        if (pendingIssueData.body) {
-          setValue('description', pendingIssueData.body);
-        }
-      }
-      // Set the issue regardless
-      if (pendingAutofillIssue) {
-        setSelectedIssue(pendingAutofillIssue);
-      }
-      setShowAutofillPrompt(false);
-      setPendingAutofillIssue(null);
-      setPendingIssueData(null);
-    };
 
-    const handlePopoverOpenChange = (open: boolean) => {
-      // Prevent auto-closing when issue is selected - only close on explicit user action
-      if (open) {
-        // Opening - ensure state is synced
-        if (pendingAutofillIssue) {
-          setShowAutofillPrompt(true);
-        }
-        return;
-      }
 
-      // If we're in the process of opening the prompt, ignore close events
-      if (isOpeningPromptRef.current) {
-        return;
-      }
-
-      // Closing - only close if we're currently showing the prompt
-      if (!showAutofillPrompt) {
-        return;
-      }
-
-      setShowAutofillPrompt(false);
-      // If we have a pending issue and user dismissed, select it without autofill
-      if (pendingAutofillIssue && !selectedIssue) {
-        setSelectedIssue(pendingAutofillIssue);
-      }
-      setPendingAutofillIssue(null);
-      setPendingIssueData(null);
-    };
 
     const handleBranchSelect = (branch: string) => {
       setSelectedBranch(branch);
@@ -317,15 +262,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
         });
         if (result?.data && (result.data.title || result.data.body)) {
           // There's actual data to autofill - show prompt
-          setPendingAutofillIssue(issueWithUrl);
-          setPendingIssueData(result.data);
-          isOpeningPromptRef.current = true;
-          setTimeout(() => {
-            setShowAutofillPrompt(true);
-            setTimeout(() => {
-              isOpeningPromptRef.current = false;
-            }, 200);
-          }, 150);
+          setSelectedIssue(issueWithUrl);
         } else {
           // No data to autofill - just select the issue
           setSelectedIssue(issueWithUrl);

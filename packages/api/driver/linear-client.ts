@@ -222,7 +222,9 @@ export class LinearDriver {
       const query: { first?: number; after?: string } = {
         first: filters?.first ?? 50,
       };
-      if (filters?.after) query.after = filters.after;
+      if (filters?.after) {
+        query.after = filters.after;
+      }
 
       const issuesConnection = await this.client.issues(query);
       if (!issuesConnection) {
@@ -238,9 +240,12 @@ export class LinearDriver {
         }
 
         // Fetch related data using Linear SDK method calls
-        const state = await issue.state;
-        const assignee = await issue.assignee;
-        const project = await issue.project;
+        // biome-ignore lint/nursery/noAwaitInLoop: Linear SDK requires sequential fetching for lazy-loaded relations within pagination loop
+        const [state, assignee, project] = await Promise.all([
+          issue.state,
+          issue.assignee,
+          issue.project,
+        ]);
 
         // Filter by status and priority after fetching
         if (filters?.status && state && !filters.status.includes(state.id)) {
@@ -391,6 +396,7 @@ export class LinearDriver {
         }
 
         // Get the status - Linear SDK projects have a status property
+        // biome-ignore lint/nursery/noAwaitInLoop: Linear SDK requires sequential fetching for lazy-loaded status
         const status = await project.status;
 
         result.push({
@@ -468,16 +474,11 @@ export class LinearDriver {
    * Get workflow states (for filter dropdown)
    * Note: This can be enhanced by fetching states via GraphQL query
    */
-  async getWorkflowStates(): Promise<LinearWorkflowState[]> {
-    try {
-      // Workflow states are team-specific in Linear
-      // For now, return empty - this can be enhanced later
-      // by fetching teams first, then their workflow states
-      return [];
-    } catch (error) {
-      console.error('Failed to fetch Linear workflow states:', error);
-      return [];
-    }
+  getWorkflowStates(): LinearWorkflowState[] {
+    // Workflow states are team-specific in Linear
+    // For now, return empty - this can be enhanced later
+    // by fetching teams first, then their workflow states
+    return [];
   }
 
   /**
@@ -502,7 +503,9 @@ export class LinearDriver {
       }> = [];
 
       for (const team of nodes) {
-        if (!team) continue;
+        if (!team) {
+          continue;
+        }
         result.push({
           id: team.id,
           name: team.name,

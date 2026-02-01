@@ -50,10 +50,10 @@ export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueC
   const toggleExpand = () => {
     setExpanded(!expanded);
     const url = new URL(window.location.href);
-    if (!expanded) {
-      url.searchParams.set('issue', issue.id);
-    } else {
+    if (expanded) {
       url.searchParams.delete('issue');
+    } else {
+      url.searchParams.set('issue', issue.id);
     }
     router.push(url.pathname + url.search, { scroll: false });
   };
@@ -65,7 +65,6 @@ export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueC
   return (
     <div
       className="group border border-border-subtle rounded-xl overflow-hidden hover:border-border-default transition-all bg-surface-1"
-      onMouseEnter={prefetchIssueDetail}
     >
       {/* Summary */}
       <div className="p-4 sm:p-5">

@@ -76,7 +76,7 @@ export default function LinearIssueDetailPage() {
             Connect your workspace to view issues
           </p>
           <Button
-          variant="primary"
+            variant="default"
             onClick={() => router.push('/integrations/linear')}
             className="h-11 px-6 rounded-xl bg-white text-sm font-medium text-black hover:bg-neutral-200 transition-colors"
           >
@@ -87,7 +87,7 @@ export default function LinearIssueDetailPage() {
     );
   }
 
-  if (!issueLoading && !issue) {
+  if (issue === undefined && !issueLoading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
         <div className="w-full max-w-md text-center">
@@ -100,12 +100,12 @@ export default function LinearIssueDetailPage() {
           <p className="text-sm text-neutral-400 mb-6">
             The issue you're looking for doesn't exist.
           </p>
-          <button
+          <Button
             onClick={() => router.push(`/integrations/linear/${workspaceId}/issues`)}
-            className="h-11 px-6 rounded-xl bg-white text-sm font-medium text-black hover:bg-neutral-200 transition-colors"
+            size="lg"
           >
             Back to Issues
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -116,13 +116,14 @@ export default function LinearIssueDetailPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-3">
-          <button
+          <Button
             onClick={() => router.push(`/integrations/linear/${workspaceId}/issues`)}
-            className="h-9 px-2.5 rounded-lg border border-white/10 text-foreground hover:bg-white/5 transition-colors"
+            variant="outline"
+            size="icon"
             title="Back to Issues"
           >
             <ArrowLeft className="w-4 h-4" />
-          </button>
+          </Button>
 
           <div className="flex items-center gap-2">
             <span className="text-sm text-neutral-500 font-mono">
@@ -211,11 +212,11 @@ export default function LinearIssueDetailPage() {
       )}
 
       {/* Create Bounty Section */}
-      <div className="mt-8 pt-6 border-t border-white/10">
-        {showCreateForm ? (
-          <div className="p-5 rounded-xl border border-white/10 bg-white/[0.02]">
+      <div className="mt-8 pt-6 border-t border-border-subtle">
+        {showCreateForm && issue ? (
+          <div className="p-5 rounded-xl border border-border-subtle bg-surface-1">
             <CreateBountyForm
-              issue={issue!}
+              issue={issue}
               onCancel={() => setShowCreateForm(false)}
               onSuccess={() => router.push(`/integrations/linear/${workspaceId}/issues`)}
             />

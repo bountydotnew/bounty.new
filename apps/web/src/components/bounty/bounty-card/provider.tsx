@@ -16,6 +16,10 @@ import {
 import type { Bounty } from '@/types/dashboard';
 import { addNavigationContext } from '@bounty/ui/hooks/use-navigation-context';
 
+// Regex patterns for parsing GitHub URLs - defined at module scope for performance
+const GITHUB_REPO_REGEX = /github\.com\/([^/]+\/[^/]+)/i;
+const GITHUB_ISSUE_REGEX = /github\.com\/[^/]+\/[^/]+\/issues\/(\d+)/i;
+
 interface BountyCardProviderProps {
   children: ReactNode;
   /** The bounty data */
@@ -145,7 +149,9 @@ export function BountyCardProvider({
       queryClient.setQueriesData(
         { predicate: isBountyQuery },
         (oldData: unknown) => {
-          if (!oldData) return oldData;
+          if (!oldData) {
+            return oldData;
+          }
 
           // Handle paginated response: { success, data: [...], pagination: {...} }
           if (
@@ -390,7 +396,7 @@ export function BountyCardProvider({
     if (!urlCandidate) {
       return 'Unknown repo';
     }
-    const match = urlCandidate.match(/github\.com\/([^/]+\/[^/]+)/i);
+    const match = urlCandidate.match(GITHUB_REPO_REGEX);
     return match?.[1] || 'Unknown repo';
   })();
 
@@ -398,14 +404,12 @@ export function BountyCardProvider({
     if (!bounty.issueUrl) {
       return null;
     }
-    const match = bounty.issueUrl.match(
-      /github\.com\/[^/]+\/[^/]+\/issues\/(\d+)/i
-    );
+    const match = bounty.issueUrl.match(GITHUB_ISSUE_REGEX);
     if (!match) {
       return null;
     }
     const issueNumber = match[1];
-    const repoMatch = bounty.issueUrl.match(/github\.com\/([^/]+\/[^/]+)/i);
+    const repoMatch = bounty.issueUrl.match(GITHUB_REPO_REGEX);
     const repoSlug = repoMatch?.[1] || 'unknown';
     return {
       number: issueNumber,
@@ -415,13 +419,13 @@ export function BountyCardProvider({
   })();
 
   const linearDisplay = (() => {
-    if (!bounty.linearIssueIdentifier || !bounty.linearIssueUrl) {
-      return null;
+    if (bounty.linearIssueIdentifier && bounty.linearIssueUrl) {
+      return {
+        identifier: bounty.linearIssueIdentifier,
+        url: bounty.linearIssueUrl,
+      };
     }
-    return {
-      identifier: bounty.linearIssueIdentifier,
-      url: bounty.linearIssueUrl,
-    };
+    return null;
   })();
 
   const formattedAmount = `$${bounty.amount.toLocaleString()}`;
@@ -506,6 +510,7 @@ export function BountyCardProvider({
   );
 
   // Meta object
+  // Note: React setters are stable and don't need to be in deps
   const meta: BountyCardMeta = useMemo(
     () => ({
       onDelete,
@@ -519,11 +524,8 @@ export function BountyCardProvider({
     [
       onDelete,
       showDeleteDialog,
-      setShowDeleteDialog,
       showCancellationDialog,
-      setShowCancellationDialog,
       cancellationReason,
-      setCancellationReason,
     ]
   );
 
