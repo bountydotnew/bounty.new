@@ -33,6 +33,7 @@ export default function BountyComments({
     initialData: initialComments?.map((c) => ({
       ...c,
       originalContent: c.originalContent ?? null,
+      createdAt: typeof c.createdAt === 'string' ? c.createdAt : c.createdAt.toISOString(),
     })),
     staleTime: Number.POSITIVE_INFINITY,
   });

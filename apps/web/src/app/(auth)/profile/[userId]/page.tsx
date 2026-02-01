@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { baseUrl } from '@bounty/ui/lib/constants';
 import { createServerCaller } from '@bounty/api/src/server-caller';
 import ProfilePageClient from './page.client';
+import type { ProfileData } from './hooks/use-profile-data';
 
 export async function generateMetadata({
   params,
@@ -82,10 +83,28 @@ export default async function ProfilePage({
   const { userId } = await params;
 
   // Prefetch profile data on server to avoid client-side waterfall
-  let initialData: Awaited<ReturnType<Awaited<ReturnType<typeof createServerCaller>>['profiles']['getProfile']>> | null = null;
+  let initialData: ProfileData | null = null;
   try {
     const caller = await createServerCaller();
-    initialData = await caller.profiles.getProfile({ handle: userId });
+    const apiResponse = await caller.profiles.getProfile({ handle: userId });
+    
+    // Transform API response to ProfileData format
+    if (apiResponse) {
+      initialData = {
+        user: {
+          id: apiResponse.data.user.id,
+          name: apiResponse.data.user.name,
+          handle: apiResponse.data.user.handle ?? null,
+          email: apiResponse.data.user.email ?? null,
+          image: apiResponse.data.user.image,
+          createdAt: String(apiResponse.data.user.createdAt),
+          isProfilePrivate: apiResponse.data.user.isProfilePrivate ?? false,
+        },
+        profile: apiResponse.data.profile as ProfileData['profile'],
+        reputation: apiResponse.data.reputation as ProfileData['reputation'],
+        isPrivate: apiResponse.isPrivate ?? false,
+      };
+    }
   } catch {
     // If prefetch fails, client will fetch - no big deal
   }
