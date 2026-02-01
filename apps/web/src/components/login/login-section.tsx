@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { SignInForm } from '@/components/auth/auth-form';
 import Bounty from '@/components/icons/bounty';
 import { GithubIcon } from '../icons';
+import GoogleIcon from '../icons/google';
 import { AddAccountView } from '@/components/login/add-account-view';
 import { SignedInView } from '@/components/login/signed-in-view';
 
@@ -43,6 +44,37 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
       await authClient.signIn.social(
         {
           provider: 'github',
+          callbackURL: isAddingAccount ? '/dashboard' : callbackUrl,
+        },
+        {
+          onSuccess: () => {
+            toast.success('Sign in successful');
+            if (isAddingAccount) {
+              // Refresh the page to show updated sessions list
+              setTimeout(() => {
+                window.location.href = '/dashboard';
+              }, 1000);
+            }
+          },
+          onError: (error) => {
+            toast.error(error.error.message || 'Sign in failed');
+            setLoading(false);
+          },
+        }
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Sign in failed');
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setLoading(true);
+
+      await authClient.signIn.social(
+        {
+          provider: 'google',
           callbackURL: isAddingAccount ? '/dashboard' : callbackUrl,
         },
         {
@@ -132,6 +164,26 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
                   {loading ? 'Signing in…' : 'Continue with GitHub'}
                 </Button>
                 {lastUsedMethod === 'github' && (
+                  <Badge className="-top-2 -right-2 absolute bg-primary px-1 py-0.5 text-primary-foreground text-xs">
+                    Last used
+                  </Badge>
+                )}
+              </div>
+
+              <div className="relative">
+                <Button
+                  className="flex w-full items-center justify-center gap-3 rounded-lg bg-foreground text-background py-3 font-medium hover:bg-black/80 dark:hover:bg-white/80"
+                  disabled={loading}
+                  onClick={handleGoogleSignIn}
+                >
+                  {loading ? (
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-black/30 border-t-foreground dark:border-white/30 dark:border-t-white" />
+                  ) : (
+                    <GoogleIcon className="h-5 w-5" />
+                  )}
+                  {loading ? 'Signing in…' : 'Continue with Google'}
+                </Button>
+                {lastUsedMethod === 'google' && (
                   <Badge className="-top-2 -right-2 absolute bg-primary px-1 py-0.5 text-primary-foreground text-xs">
                     Last used
                   </Badge>

@@ -48,16 +48,17 @@ export function useEmailPasswordForm(callbackUrl?: string) {
     }
 
     startTransition(async () => {
-      await authClient.signIn.email({
-        email,
-        password,
-        rememberMe: true,
-        callbackURL: safeCallbackUrl,
-        fetchOptions: {
-          onError: (ctx: {
-            error: { message?: string; status?: number };
-          }) => {
-            if (ctx.error.status === 403) {
+      await authClient.signIn.email(
+        {
+          email,
+          password,
+          rememberMe: true,
+          callbackURL: safeCallbackUrl,
+        },
+        {
+          onError: (ctx) => {
+            const error = ctx.error as any;
+            if (error?.status === 403) {
               toast.error(
                 'Please verify your email address before signing in'
               );
@@ -65,11 +66,28 @@ export function useEmailPasswordForm(callbackUrl?: string) {
                 `/sign-up/verify-email-address?email=${encodeURIComponent(email)}`
               );
             } else {
-              toast.error(ctx.error.message || 'Sign in failed');
+              toast.error(error?.message || 'Sign in failed');
             }
           },
-          onSuccess: () => {
+          onSuccess: async () => {
             toast.success('Sign in successful');
+
+            // Check if user needs to migrate (link OAuth account)
+            if (!isAddingAccount) {
+              try {
+                const response = await fetch('/api/auth/check-migration');
+                if (response.ok) {
+                  const data = await response.json();
+                  if (data.needsMigration) {
+                    window.location.href = `/migrate-account?redirect=${encodeURIComponent(safeCallbackUrl)}`;
+                    return;
+                  }
+                }
+              } catch {
+                // If check fails, proceed normally
+              }
+            }
+
             if (isAddingAccount) {
               setTimeout(() => {
                 window.location.href = '/dashboard';
@@ -78,8 +96,8 @@ export function useEmailPasswordForm(callbackUrl?: string) {
               window.location.href = safeCallbackUrl;
             }
           },
-        },
-      });
+        }
+      );
     });
   };
 
@@ -96,14 +114,14 @@ export function useEmailPasswordForm(callbackUrl?: string) {
     }
 
     startTransition(async () => {
-      await authClient.signUp.email({
-        email,
-        password,
-        name: email.split('@')[0],
-        fetchOptions: {
-          onError: (ctx: {
-            error: { message?: string; status?: number };
-          }) => {
+      await authClient.signUp.email(
+        {
+          email,
+          password,
+          name: email.split('@')[0],
+        },
+        {
+          onError: (ctx) => {
             toast.error(ctx.error.message || 'Sign up failed');
           },
           onSuccess: async () => {
@@ -126,8 +144,8 @@ export function useEmailPasswordForm(callbackUrl?: string) {
               console.error('OTP send error:', error);
             }
           },
-        },
-      });
+        }
+      );
     });
   };
 

@@ -13,6 +13,7 @@ import {
 import { createAuthClient } from 'better-auth/react';
 import { multiSessionClient } from 'better-auth/client/plugins';
 import { env } from '@bounty/env/client';
+import { toast } from 'sonner';
 
 /**
  * Better Auth client instance
@@ -21,6 +22,7 @@ import { env } from '@bounty/env/client';
  * - Authentication methods (signIn, signOut, signUp)
  * - React hooks (useSession, useUser)
  * - Plugin methods (admin, device auth, email OTP, multi-session)
+ * - Global error handling with toast notifications
  */
 export const authClient = createAuthClient({
   baseURL: env.NEXT_PUBLIC_BASE_URL,
@@ -30,6 +32,26 @@ export const authClient = createAuthClient({
     emailOTPClient(),
     multiSessionClient(),
   ],
+  // Global error handling for all Better Auth requests
+  fetchOptions: {
+    onError: (ctx) => {
+      const { error, response } = ctx;
+
+      // Skip rate limit errors (429) - they're handled elsewhere
+      if (response?.status === 429) {
+        return;
+      }
+
+      // Extract error message
+      const errorMessage =
+        error?.message ||
+        response?.statusText ||
+        'An error occurred. Please try again.';
+
+      // Show toast notification for errors
+      toast.error(errorMessage);
+    },
+  },
 });
 
 // ============================================================================

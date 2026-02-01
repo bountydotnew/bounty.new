@@ -9,16 +9,19 @@ import {
   AvatarImage,
 } from '@bounty/ui/components/avatar';
 import { Button } from '@bounty/ui/components/button';
+import { Badge } from '@bounty/ui/components/badge';
 import { Switch } from '@bounty/ui/components/switch';
-import { Loader2, Check, Lock, LogOut } from 'lucide-react';
+import { Loader2, Check, Lock, LogOut, Link as LinkIcon, Unlink } from 'lucide-react';
 import { cn } from '@bounty/ui/lib/utils';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { trpc } from '@/utils/trpc';
 import { authClient } from '@bounty/auth/client';
+import { GithubIcon } from '../icons';
+import GoogleIcon from '../icons/google';
 
 // Section wrapper component
 function SettingsSection({ children }: { children: React.ReactNode }) {
@@ -75,6 +78,214 @@ function UserProfileRow() {
         <span className="text-sm text-text-secondary">{userEmail}</span>
       </div>
     </div>
+  );
+}
+
+// Linked accounts section
+function LinkedAccountsSection() {
+  const queryClient = useQueryClient();
+  const [isLinking, setIsLinking] = useState<string | null>(null);
+  const [isUnlinking, setIsUnlinking] = useState<string | null>(null);
+
+  // Use tRPC to fetch linked accounts
+  const { data: accountsData } = useQuery(trpc.user.getLinkedAccounts.queryOptions());
+
+  const hasGitHub = accountsData?.accounts?.some((a: { providerId: string }) => a.providerId === 'github');
+  const hasGoogle = accountsData?.accounts?.some((a: { providerId: string }) => a.providerId === 'google');
+  const hasEmail = accountsData?.accounts?.some((a: { providerId: string }) => a.providerId === 'email');
+
+  // Count total OAuth providers (excluding email)
+  const oauthCount = (hasGitHub ? 1 : 0) + (hasGoogle ? 1 : 0);
+
+  const handleLinkProvider = async (provider: 'github' | 'google') => {
+    // Prevent double-clicks
+    if (isLinking !== null || isUnlinking !== null) {
+      return;
+    }
+
+    setIsLinking(provider);
+    try {
+      // Use Better Auth's built-in linkSocial method with error handling
+      await authClient.linkSocial(
+        {
+          provider,
+          callbackURL: '/settings/account',
+        },
+        {
+          onError: (ctx) => {
+            const errorMessage = ctx.error?.message || `Failed to link ${provider === 'github' ? 'GitHub' : 'Google'}`;
+            toast.error(errorMessage);
+            setIsLinking(null);
+          },
+        }
+      );
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : `Failed to link ${provider === 'github' ? 'GitHub' : 'Google'}`;
+      toast.error(errorMessage);
+      setIsLinking(null);
+    }
+  };
+
+  const handleUnlinkProvider = async (provider: 'github' | 'google') => {
+    // Don't allow unlinking if it's the only OAuth provider
+    // Users must have at least one social connection (GitHub or Google)
+    if (oauthCount <= 1) {
+      toast.error('You must have at least one social connection (GitHub or Google) to access your account');
+      return;
+    }
+
+    setIsUnlinking(provider);
+    try {
+      // Use Better Auth's built-in unlinkAccount method with error handling
+      await authClient.unlinkAccount(
+        {
+          providerId: provider,
+        },
+        {
+          onSuccess: () => {
+            toast.success(`${provider === 'github' ? 'GitHub' : 'Google'} unlinked`);
+            // Refetch accounts
+            queryClient.invalidateQueries({ queryKey: trpc.user.getLinkedAccounts.queryKey() });
+          },
+          onError: (ctx) => {
+            const errorMessage = ctx.error?.message || `Failed to unlink ${provider === 'github' ? 'GitHub' : 'Google'}`;
+            toast.error(errorMessage);
+          },
+        }
+      );
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : `Failed to unlink ${provider === 'github' ? 'GitHub' : 'Google'}`;
+      toast.error(errorMessage);
+    } finally {
+      setIsUnlinking(null);
+    }
+  };
+
+  return (
+    <SettingsSection>
+      <SectionTitle>Linked accounts</SectionTitle>
+      <p className="text-sm text-text-secondary">
+        Link your GitHub and Google accounts for easier sign-in. You can use either to sign in.
+      </p>
+
+      <div className="flex flex-col gap-3 mt-2">
+        {/* GitHub */}
+        <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-surface-2">
+          <div className="flex items-center gap-3">
+            <GithubIcon className="h-5 w-5 fill-foreground" />
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-foreground">GitHub</span>
+              {hasGitHub && (
+                <span className="text-xs text-text-tertiary">Connected</span>
+              )}
+            </div>
+          </div>
+          {hasGitHub ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleUnlinkProvider('github')}
+              disabled={isUnlinking !== null || isLinking !== null}
+            >
+              {isUnlinking === 'github' ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <>
+                  <Unlink className="size-4" />
+                  Unlink
+                </>
+              )}
+            </Button>
+          ) : (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => handleLinkProvider('github')}
+              disabled={isLinking !== null}
+            >
+              {isLinking === 'github' ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <>
+                  <LinkIcon className="size-4" />
+                  Link
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+
+        {/* Google */}
+        <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-surface-2">
+          <div className="flex items-center gap-3">
+            <GoogleIcon className="h-5 w-5" />
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-foreground">Google</span>
+              {hasGoogle && (
+                <span className="text-xs text-text-tertiary">Connected</span>
+              )}
+            </div>
+          </div>
+          {hasGoogle ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleUnlinkProvider('google')}
+              disabled={isUnlinking !== null || isLinking !== null}
+            >
+              {isUnlinking === 'google' ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <>
+                  <Unlink className="size-4" />
+                  Unlink
+                </>
+              )}
+            </Button>
+          ) : (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => handleLinkProvider('google')}
+              disabled={isLinking !== null}
+            >
+              {isLinking === 'google' ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <>
+                  <LinkIcon className="size-4" />
+                  Link
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+
+        {/* Email (read-only) */}
+        {hasEmail && (
+          <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-surface-2 opacity-60">
+            <div className="flex items-center gap-3">
+              <div className="h-5 w-5 rounded-full bg-surface-3 flex items-center justify-center">
+                <span className="text-xs">@</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-foreground">Email</span>
+                <span className="text-xs text-text-tertiary">Password sign-in (deprecated)</span>
+              </div>
+            </div>
+            <Badge variant="secondary" className="text-xs">
+              Legacy
+            </Badge>
+          </div>
+        )}
+      </div>
+
+      {hasEmail && !hasGitHub && !hasGoogle && (
+        <p className="text-xs text-amber-500 mt-2">
+          ⚠️ Password sign-in is deprecated. Please link a GitHub or Google account.
+        </p>
+      )}
+    </SettingsSection>
   );
 }
 
@@ -295,6 +506,7 @@ export function AccountSettings() {
   return (
     <div className="flex flex-col w-full">
       <UserProfileRow />
+      <LinkedAccountsSection />
       <PrivacySection />
       <AppearanceSection />
       <AccountActionsSection />

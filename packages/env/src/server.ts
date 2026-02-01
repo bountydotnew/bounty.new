@@ -19,8 +19,8 @@ export const env = createEnv({
     GITHUB_CLIENT_ID: z.string().min(1),
     GITHUB_CLIENT_SECRET: z.string().min(1),
     // Google OAuth
-    // GOOGLE_CLIENT_ID: z.string().min(1),
-    // GOOGLE_CLIENT_SECRET: z.string().min(1),
+    GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+    GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
     // Rate limiting
     // Discord webhook
     DISCORD_WEBHOOK_URL: z.string().url().optional(),
@@ -63,8 +63,8 @@ export const env = createEnv({
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
     GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
     GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
-    // GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
-    // GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL,
     BOUNTY_FEED_WEBHOOK_URL: process.env.BOUNTY_FEED_WEBHOOK_URL,
     BOUNTY_FUNDED_WEBHOOK_URL: process.env.BOUNTY_FUNDED_WEBHOOK_URL,

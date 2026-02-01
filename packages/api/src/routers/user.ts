@@ -3,6 +3,7 @@ import type {
   AdminUserStatsResponse,
 } from '@bounty/types';
 import {
+  account,
   bounty,
   bountyComment,
   db,
@@ -717,4 +718,19 @@ export const userRouter = router({
 
       return activity;
     }),
+
+  getLinkedAccounts: protectedProcedure.query(async ({ ctx }) => {
+    const accounts = await ctx.db.query.account.findMany({
+      where: (account, { eq }) => eq(account.userId, ctx.session.user.id),
+      columns: {
+        providerId: true,
+        accountId: true,
+      },
+    });
+
+    return {
+      success: true,
+      accounts,
+    };
+  }),
 });

@@ -1,12 +1,11 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   getRecommendedPlan,
   PRICING_TIERS,
-  type BountyProPlan,
 } from '@bounty/types';
-import { formatBillingCurrency } from '@bounty/ui/lib/utils';
+import { formatBillingCurrency, parseInputValue, stringifyValue } from '@bounty/ui/lib/utils';
 
 // Slider stops for better UX (non-linear scale for large values)
 const SLIDER_STOPS = [
@@ -25,6 +24,9 @@ interface SpendSliderProps {
 }
 
 export function SpendSlider({ value, onChange }: SpendSliderProps) {
+  const [inputValue, setInputValue] = useState(stringifyValue(value));
+  const [isFocused, setIsFocused] = useState(false);
+
   const sliderPosition = useMemo(() => {
     const index = SLIDER_STOPS.findIndex((stop) => stop >= value);
     if (index === -1) return 100;
@@ -33,7 +35,30 @@ export function SpendSlider({ value, onChange }: SpendSliderProps) {
   }, [value]);
 
   const handleSliderChange = (position: number) => {
-    onChange(getValueFromSliderPosition(position));
+    const newValue = getValueFromSliderPosition(position);
+    onChange(newValue);
+    setInputValue(stringifyValue(newValue));
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+  };
+
+  const handleInputBlur = () => {
+    setIsFocused(false);
+    const parsed = parseInputValue(inputValue);
+    if (!isNaN(parsed) && parsed >= 0) {
+      onChange(parsed);
+      setInputValue(stringifyValue(parsed));
+    } else {
+      setInputValue(stringifyValue(value));
+    }
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.currentTarget.blur();
+    }
   };
 
   const recommendedPlan = getRecommendedPlan(value);
@@ -44,7 +69,7 @@ export function SpendSlider({ value, onChange }: SpendSliderProps) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-text-muted">Estimated monthly spend</p>
 
-        <div className="flex items-center gap-4 flex-1 sm:max-w-md">
+        <div className="flex items-center gap-3 flex-1 sm:max-w-md">
           <input
             type="range"
             min="0"
@@ -53,8 +78,8 @@ export function SpendSlider({ value, onChange }: SpendSliderProps) {
             value={sliderPosition}
             onChange={(e) => handleSliderChange(Number(e.target.value))}
             className="flex-1 cursor-pointer appearance-none bg-transparent
-              [&::-webkit-slider-runnable-track]:h-1 
-              [&::-webkit-slider-runnable-track]:rounded-full 
+              [&::-webkit-slider-runnable-track]:h-1
+              [&::-webkit-slider-runnable-track]:rounded-full
               [&::-webkit-slider-runnable-track]:bg-surface-hover
               [&::-webkit-slider-thumb]:mt-[-6px]
               [&::-webkit-slider-thumb]:h-3.5
@@ -75,9 +100,21 @@ export function SpendSlider({ value, onChange }: SpendSliderProps) {
               [&::-moz-range-thumb]:border-0
               [&::-moz-range-thumb]:bg-white"
           />
-          <span className="text-sm font-medium text-foreground w-16 text-right">
-            {formatBillingCurrency(value)}
-          </span>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-foreground">
+              $
+            </span>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={isFocused ? inputValue : formatBillingCurrency(value).replace('$', '')}
+              onChange={handleInputChange}
+              onBlur={handleInputBlur}
+              onFocus={() => setIsFocused(true)}
+              onKeyDown={handleInputKeyDown}
+              className="w-24 h-8 pl-6 pr-2 text-sm font-medium text-foreground text-right bg-surface-1 border border-border-subtle rounded-md focus:outline-none focus:ring-2 focus:ring-border-default focus:border-transparent"
+            />
+          </div>
         </div>
       </div>
 

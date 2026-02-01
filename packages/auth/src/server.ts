@@ -167,7 +167,7 @@ export const auth = betterAuth({
   account: {
     accountLinking: {
       enabled: true,
-      trustedProviders: ['github', 'discord', 'linear'],
+      trustedProviders: ['github', 'google', 'discord', 'linear'],
       allowDifferentEmails: true,
     },
   },
@@ -216,6 +216,11 @@ export const auth = betterAuth({
       mapProfileToUser: (profile) => ({
         handle: profile.login?.toLowerCase(),
       }),
+    },
+    google: {
+      clientId: env.GOOGLE_CLIENT_ID || '',
+      clientSecret: env.GOOGLE_CLIENT_SECRET || '',
+      scope: ['openid', 'email', 'profile'],
     },
     discord: {
       clientId: env.DISCORD_CLIENT_ID || '',
