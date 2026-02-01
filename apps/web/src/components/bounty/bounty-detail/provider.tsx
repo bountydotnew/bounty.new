@@ -65,7 +65,6 @@ export function BountyDetailProvider({
   avatarSrc,
   canEditBounty,
   initialVotes,
-  initialComments,
   initialBookmarked,
   paymentStatus,
   createdById,
@@ -109,7 +108,7 @@ export function BountyDetailProvider({
   //   initialData: initialComments,
   //   staleTime: Number.POSITIVE_INFINITY,
   // });
-  const commentsQuery = { data: undefined };
+  // const commentsQuery = { data: undefined };
 
   const submissionsQuery = useQuery({
     ...trpc.bounties.getBountySubmissions.queryOptions({ bountyId }),
