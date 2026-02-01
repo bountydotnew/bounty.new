@@ -73,7 +73,7 @@ function IntegrationCard({
                   e.preventDefault();
                   e.stopPropagation();
                 }}
-                className="w-full h-[29px] rounded-[7px] flex justify-center items-center gap-1.5 bg-surface-3 hover:bg-surface-hover"
+                className="w-full h-[29px] rounded-[7px] flex justify-center items-center gap-1.5 bg-surface-3 hover:bg-black/5 dark:hover:bg-black/20"
               >
                 <span className="text-[13px] leading-[150%] text-text-secondary/40 font-medium">
                   {status.count} installed
@@ -149,7 +149,7 @@ function IntegrationCard({
             className={`w-full h-[29px] rounded-[7px] font-medium text-[13px] leading-[150%] ${
               status?.type === 'coming-soon' || action.disabled
                 ? 'bg-surface-3 text-text-tertiary'
-                : 'bg-foreground text-background hover:bg-foreground/90'
+                : 'bg-foreground text-background hover:bg-black/80 dark:hover:bg-white/80'
             }`}
           >
             {action.label}
@@ -205,18 +205,23 @@ type IntegrationItem =
   | { type: 'twitter' }
   | { type: 'slack' };
 
-function renderGithubIntegrationCard(
+function GitHubIntegrationCard({
+  installations,
+  filter,
+  installUrl,
+}: {
   installations: Array<{
     id: number;
     accountLogin?: string | null;
     accountType?: string | null;
     repositoryIds?: string[] | null;
-  }>,
-  filter: 'all' | 'installed',
-  installUrl?: { url?: string }
-) {
+  }>;
+  filter: 'all' | 'installed';
+  installUrl?: { url?: string };
+}) {
   const primaryInstallation = installations[0];
   const installedCount = installations.length;
+
   if (filter === 'installed' && installedCount === 0) return null;
 
   const description =
@@ -248,8 +253,7 @@ function renderGithubIntegrationCard(
       action={{
         label: 'Install',
         onClick: () => {
-          const fallbackUrl =
-            'https://github.com/apps/bountydotnew/installations/new';
+          const fallbackUrl = 'https://github.com/apps/bountydotnew/installations/new';
           window.location.href = installUrl?.url || fallbackUrl;
         },
       }}
@@ -277,10 +281,13 @@ function renderIntegrationCard(
 
   switch (item.type) {
     case 'github':
-      return renderGithubIntegrationCard(
-        item.installations,
-        filter,
-        installUrl
+      return (
+        <GitHubIntegrationCard
+          key="github"
+          installations={item.installations}
+          filter={filter}
+          installUrl={installUrl}
+        />
       );
     case 'discord': {
       const isLinked = !!item.account;

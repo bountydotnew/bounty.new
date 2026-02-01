@@ -120,14 +120,14 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
 
               <div className="relative">
                 <Button
-                  className="flex w-full items-center justify-center gap-3 rounded-lg bg-surface-hover py-3 font-medium text-gray-200 transition-colors hover:bg-surface-3"
+                  className="flex w-full items-center justify-center gap-3 rounded-lg bg-foreground text-background py-3 font-medium hover:bg-black/80 dark:hover:bg-white/80"
                   disabled={loading}
                   onClick={handleGitHubSignIn}
                 >
                   {loading ? (
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-black/30 border-t-foreground dark:border-white/30 dark:border-t-white" />
                   ) : (
-                    <GithubIcon className="h-5 w-5 fill-white" />
+                    <GithubIcon className="h-5 w-5 fill-background" />
                   )}
                   {loading ? 'Signing in…' : 'Continue with GitHub'}
                 </Button>

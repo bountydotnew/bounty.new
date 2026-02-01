@@ -61,7 +61,7 @@ export function SignedInView({ callbackUrl, session }: SignedInViewProps) {
 
         <div className="space-y-3">
           <Button
-            className="w-full rounded-lg bg-surface-hover py-3 font-medium text-gray-200 transition-colors hover:bg-surface-3"
+            className="w-full rounded-lg bg-foreground text-background py-3 font-medium hover:bg-black/80 dark:hover:bg-white/80"
             onClick={handleGoToDashboard}
           >
             Continue

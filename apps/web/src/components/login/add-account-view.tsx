@@ -102,7 +102,7 @@ export function AddAccountView({ session }: AddAccountViewProps) {
               {loading ? (
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
               ) : (
-                <GithubIcon className="h-5 w-5 fill-white" />
+                <GithubIcon className="h-5 w-5 fill-background" />
               )}
               {loading ? 'Signing in…' : 'Continue with GitHub'}
             </Button>

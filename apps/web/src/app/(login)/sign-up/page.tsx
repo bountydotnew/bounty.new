@@ -251,7 +251,7 @@ function SignUpContent() {
                 className="flex w-full items-center justify-center gap-3 rounded-lg bg-surface-hover py-3 font-medium text-gray-200 transition-colors hover:bg-surface-3"
                 onClick={handleGitHubSignIn}
               >
-                <GithubIcon className="h-5 w-5 fill-white" />
+                <GithubIcon className="h-5 w-5 fill-background" />
                 Continue with GitHub
               </Button>
             </div>

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
 import GithubImportModal from '@/components/bounty/github-import-modal';
 import { Header } from '@/components/dual-sidebar/sidebar-header';
-import { Onboarding } from '@/components/onboarding';
+// import { Onboarding } from '@/components/onboarding';
 import {
   TaskInputForm,
   type TaskInputFormRef,
@@ -78,7 +78,7 @@ export function DashboardContent({ onImportOpenChange }: DashboardContentProps) 
 
   return (
     <>
-      <Onboarding />
+      {/* <Onboarding /> */}
       <Header
         isMyBountiesLoading={state.isMyBountiesLoading}
         myBounties={state.myBounties}

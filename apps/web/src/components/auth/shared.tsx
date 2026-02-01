@@ -226,7 +226,11 @@ export interface SubmitButtonProps {
 
 export function SubmitButton({ isPending, children }: SubmitButtonProps) {
   return (
-    <Button type="submit" className="w-full" disabled={isPending}>
+    <Button
+      type="submit"
+      className="w-full bg-foreground text-background hover:bg-black/80 dark:hover:bg-white/80"
+      disabled={isPending}
+    >
       {isPending ? children : children}
     </Button>
   );

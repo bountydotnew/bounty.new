@@ -37,12 +37,12 @@ const buttonVariants = cva(
         'destructive-outline':
           'border-input bg-transparent not-dark:bg-clip-padding text-destructive-foreground shadow-xs/5 not-disabled:not-active:not-data-pressed:before:shadow-[0_1px_--theme(--color-black/6%)] dark:bg-input/32 dark:not-disabled:before:shadow-[0_-1px_--theme(--color-white/2%)] dark:not-disabled:not-active:not-data-pressed:before:shadow-[0_-1px_--theme(--color-white/6%)] [:disabled,:active,[data-pressed]]:shadow-none [:hover,[data-pressed]]:border-destructive/32 [:hover,[data-pressed]]:bg-destructive/4',
         ghost:
-          'border-transparent text-foreground data-pressed:bg-surface-hover [:hover,[data-pressed]]:bg-surface-hover',
-        link: 'border-transparent underline-offset-4 [:hover,[data-pressed]]:underline',
+          'border-transparent text-foreground data-pressed:bg-surface-hover hover:bg-surface-hover',
+        link: 'border-transparent underline-offset-4 hover:underline',
         outline:
-          'border-input bg-background not-dark:bg-clip-padding text-foreground shadow-xs/5 not-disabled:not-active:not-data-pressed:before:shadow-[0_1px_--theme(--color-black/6%)] dark:bg-input/32 dark:not-disabled:before:shadow-[0_-1px_--theme(--color-white/2%)] dark:not-disabled:not-active:not-data-pressed:before:shadow-[0_-1px_--theme(--color-white/6%)] [:disabled,:active,[data-pressed]]:shadow-none [:hover,[data-pressed]]:bg-accent/50 dark:[:hover,[data-pressed]]:bg-input/64',
+          'border-input bg-background not-dark:bg-clip-padding text-foreground shadow-xs/5 not-disabled:not-active:not-data-pressed:before:shadow-[0_1px_--theme(--color-black/6%)] dark:bg-input/32 dark:not-disabled:before:shadow-[0_-1px_--theme(--color-white/2%)] dark:not-disabled:not-active:not-data-pressed:before:shadow-[0_-1px_--theme(--color-white/6%)] [:disabled,:active,[data-pressed]]:shadow-none hover:bg-accent/50 dark:hover:bg-input/64',
         secondary:
-          'border-transparent bg-secondary text-secondary-foreground [:active,[data-pressed]]:bg-secondary/80 [:hover,[data-pressed]]:bg-secondary/90',
+          'border-transparent bg-secondary text-secondary-foreground [:active,[data-pressed]]:bg-secondary/80 hover:bg-secondary/90',
         text: 'border-transparent rounded-none bg-transparent p-0 hover:text-muted-foreground',
       },
     },
