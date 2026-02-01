@@ -17,10 +17,6 @@ import {
   useTutorial,
 } from './mockup';
 import {
-  HomeIcon,
-  BountiesIcon,
-  BookmarksIcon,
-  SettingsGearIcon,
   GithubIcon,
 } from '@bounty/ui';
 import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
@@ -148,100 +144,31 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
   };
 
   return (
-    <div className="bg-background h-full flex">
-      {/* Sidebar */}
-      <aside
-        className={`${compact ? 'w-12' : 'w-64'} bg-background border-r border-border-subtle flex flex-col`}
+    <div className="bg-background h-full flex flex-col">
+      {/* Header (match app header style more closely) */}
+      <header
+        className={`flex items-center justify-between bg-background border-b border-border-subtle ${compact ? 'h-10 px-2' : 'h-[72px] px-4 sm:px-6'}`}
       >
-        {/* Workspace header */}
-        <div className={`${compact ? 'px-2 py-3' : 'px-[15px] py-4'}`}>
-          <div
-            className={`${compact ? ' justify-center flex items-center gap-2' : 'flex items-center gap-2'}`}
-          >
-            <div
-              className={`${compact ? 'h-5 w-5 text-xs' : 'h-[27px] w-[27px]'} rounded-[6px] bg-brand-primary flex items-center justify-center text-white font-semibold shrink-0`}
-            >
-              g
-            </div>
-            {!compact && (
-              <span className="text-[18px] font-semibold leading-[150%] text-foreground">
-                grim
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav
-          className={`${compact ? 'gap-1 px-1' : 'flex flex-col gap-[8px] px-[15px]'} flex-1`}
-        >
+        <div className="flex items-center gap-2" />
+        <div className="flex min-w-0 items-center">
           <button
+            className={`flex items-center gap-[7px] rounded-lg bg-surface-hover px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-3`}
+            onClick={handleCreateBounty}
             type="button"
-            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] border border-border-subtle bg-surface-1 px-[12px] py-[8px] text-[16px]'} font-medium text-foreground w-full`}
+            aria-label="Create new bounty"
           >
-            <HomeIcon
-              className={`${compact ? 'size-4' : 'size-4'} text-text-secondary shrink-0`}
-            />
-            {!compact && <span>Home</span>}
-          </button>
-          <button
-            type="button"
-            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} font-medium text-text-tertiary hover:text-white hover:bg-surface-1 transition-colors w-full`}
-          >
-            <BountiesIcon
-              className={compact ? 'size-4' : 'size-4'}
-              shrink-0
-            />
-            {!compact && <span>Bounties</span>}
-          </button>
-          <button
-            type="button"
-            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} font-medium text-text-tertiary hover:text-white hover:bg-surface-1 transition-colors w-full`}
-          >
-            <BookmarksIcon
-              className={compact ? 'size-4' : 'size-4'}
-              shrink-0
-            />
-            {!compact && <span>Bookmarks</span>}
-          </button>
-        </nav>
-
-        {/* Footer */}
-        <div className={`${compact ? 'px-1 py-2' : 'px-[15px] py-4'}`}>
-          <button
-            type="button"
-            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} text-text-tertiary transition-colors hover:text-white hover:bg-surface-1 w-full`}
-          >
-            <SettingsGearIcon
-              className={compact ? 'size-4' : 'size-4'}
-            />
+            <Plus className="h-4 w-4 text-text-secondary md:hidden" />
+            <span className="hidden md:inline text-sm font-semibold leading-[150%] tracking-[0.01em] text-text-secondary">
+              New bounty
+            </span>
           </button>
         </div>
-      </aside>
+      </header>
 
       {/* Main content */}
       <div className="flex-1 overflow-auto" ref={scrollRef}>
-        {/* Header */}
-        <div
-          className={`flex items-center justify-between bg-background border-b border-border-subtle ${compact ? 'h-10 px-2' : 'h-[72px] px-4 sm:px-6'} sticky top-0 z-10`}
-        >
-          <div className="flex flex-1 items-center justify-center gap-6" />
-          <div className="flex items-center gap-2">
-            <button
-              className={`flex items-center gap-[7px] rounded-[12px] border border-border-subtle bg-surface-1 transition-colors hover:bg-surface-2 ${compact ? 'px-1.5 py-1' : 'py-[5px] px-[10px]'}`}
-              type="button"
-            >
-              <Plus
-                className={`${compact ? 'h-3 w-3' : 'h-4 w-4'} text-text-secondary`}
-              />
-              <span
-                className={`${compact ? 'text-[10px]' : 'text-[16px]'} font-semibold leading-[150%] tracking-[0.01em] text-text-secondary`}
-              >
-                Create Bounty
-              </span>
-            </button>
-          </div>
-        </div>
+        {/* Horizontal border line above textarea/form (matches dashboard) */}
+        <div className="h-px w-full shrink-0 bg-surface-3" />
 
         {/* Create bounty form */}
         <div
