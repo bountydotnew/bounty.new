@@ -75,13 +75,14 @@ export default function BountyDetailPage({
   bountyData,
   canEdit = false,
 }: BountyDetailPageProps) {
-  const { bounty, comments, votes, bookmarked } = bountyData;
+  const { bounty, votes, bookmarked } = bountyData;
 
-  // Normalize comment data
-  const initialComments = comments.map((comment) => ({
-    ...comment,
-    likeCount: typeof comment.likeCount === 'number' ? comment.likeCount : 0,
-  }));
+  // Comments are not currently used
+  // const { comments } = bountyData;
+  // const initialComments = comments.map((comment) => ({
+  //   ...comment,
+  //   likeCount: typeof comment.likeCount === 'number' ? comment.likeCount : 0,
+  // }));
 
   // Ensure amount is a valid number (default to 0 if undefined)
   const amount = typeof bounty.amount === 'number' ? bounty.amount : 0;
@@ -90,7 +91,6 @@ export default function BountyDetailPage({
     <CompoundBountyDetail.Provider
       bountyId={bountyId}
       initialBookmarked={bookmarked}
-      initialComments={initialComments}
       title={bounty.title ?? 'Untitled Bounty'}
       amount={amount}
       description={bounty.description ?? ''}
