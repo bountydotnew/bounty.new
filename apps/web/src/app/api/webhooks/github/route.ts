@@ -424,6 +424,54 @@ async function findUserByGithubLogin(login: string) {
   return linkedUser;
 }
 
+// Check if user has early access when early access mode is enabled
+async function checkEarlyAccessForUser(
+  ctx: ValidationContext,
+  githubUsername: string
+): Promise<{ allowed: boolean; errorMessage?: string }> {
+  // Early access mode is disabled, allow everyone
+  const isEarlyAccessEnabled = process.env.NEXT_PUBLIC_EARLY_ACCESS_ENABLED !== 'false';
+  if (!isEarlyAccessEnabled) {
+    return { allowed: true };
+  }
+
+  // Look up the user by their GitHub username
+  const userRecord = await db.query.user.findFirst({
+    where: or(
+      eq(user.handle, githubUsername),
+      eq(userProfile.githubUsername, githubUsername)
+    ),
+    with: {
+      profile: true,
+    },
+  });
+
+  // If no user found, they don't have early access
+  if (!userRecord) {
+    return {
+      allowed: false,
+      errorMessage: `@${githubUsername} bounty.new is currently in early access mode. You need an early access account to use the bot.
+
+Join the waitlist at https://bounty.new to get early access.`,
+    };
+  }
+
+  const userRole = userRecord.role ?? 'user';
+
+  // Allow early_access and admin roles
+  if (userRole === 'early_access' || userRole === 'admin') {
+    return { allowed: true };
+  }
+
+  // User doesn't have early access
+  return {
+    allowed: false,
+    errorMessage: `@${githubUsername} bounty.new is currently in early access mode. Your account doesn't have early access yet.
+
+Join the waitlist at https://bounty.new to get early access.`,
+  };
+}
+
 async function handleIssueComment(event: IssueCommentEvent) {
   const { issue, comment, repository, installation } = event;
 
@@ -464,6 +512,25 @@ async function handleIssueComment(event: IssueCommentEvent) {
   } catch (error) {
     // Don't fail if reaction fails
     console.warn('[GitHub Webhook] Failed to add reaction:', error);
+  }
+
+  // Check early access before processing any command
+  const ctx: ValidationContext = {
+    installationId: installation.id,
+    owner: repository.owner.login,
+    repo: repository.name,
+    issueNumber: issue.number,
+  };
+  const earlyAccessCheck = await checkEarlyAccessForUser(ctx, comment.user.login);
+  if (!earlyAccessCheck.allowed) {
+    await githubApp.createIssueComment(
+      ctx.installationId,
+      ctx.owner,
+      ctx.repo,
+      ctx.issueNumber,
+      earlyAccessCheck.errorMessage || 'Early access required.'
+    );
+    return;
   }
 
   if (command.action === 'create') {
@@ -2369,6 +2436,19 @@ async function handlePullRequestOpened(
   const installationId = installation?.id;
   if (!installationId) {
     console.warn('[GitHub Webhook] No installation ID, skipping');
+    return;
+  }
+
+  // Check early access for auto-submission
+  const ctx: ValidationContext = {
+    installationId,
+    owner: repository.owner.login,
+    repo: repository.name,
+    issueNumber: bountyRecord.githubIssueNumber!, // Bounty was found by this issue number, so it's non-null
+  };
+  const earlyAccessCheck = await checkEarlyAccessForUser(ctx, pull_request.user.login);
+  if (!earlyAccessCheck.allowed) {
+    console.log(`[GitHub Webhook] User ${pull_request.user.login} does not have early access, skipping auto-submit`);
     return;
   }
 

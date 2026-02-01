@@ -57,6 +57,8 @@ Submit your solution by adding \`@bountydotnew submit\` to your PR description, 
 
 **For Bounty Creator:**
 Review submissions and approve with \`/approve #PR_NUMBER\` on this issue. After merging the PR, confirm with \`/merge #PR_NUMBER\` to release payment.
+
+> **Payout timing:** Once a PR is merged, payouts are released within 2-3 business days while funds clear from the original payment.
 `;
 }
 
@@ -78,7 +80,7 @@ export function submissionReceivedComment(
 
 @${prAuthor} Your PR #${prNumber} has been submitted for this bounty. The bounty creator will review it shortly.
 
-You'll be notified here when your submission is approved. Once approved and merged, payment will be released automatically.
+You'll be notified here when your submission is approved. Once approved and merged, payment will be released within 2-3 business days while funds clear.
 `;
   }
 
@@ -128,7 +130,7 @@ export function submissionApprovedComment(
   return `
 **Submission Approved**
 
-@${solverUsername} Your submission (PR #${targetPrNumber}) has been approved. Once the PR is merged, payment will be released automatically.
+@${solverUsername} Your submission (PR #${targetPrNumber}) has been approved. Once the PR is merged, payment will be released within 2-3 business days while funds clear.
 
 @${approver} To complete the payout:
 1. Merge PR #${targetPrNumber}
@@ -188,6 +190,8 @@ export function bountyCompletedComment(
   return `
 
 Bounty completed! Payment of ${formattedAmount} released.
+
+The solver will receive funds in their Stripe account within 2-3 business days.
 
 `;
 }

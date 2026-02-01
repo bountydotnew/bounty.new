@@ -1,6 +1,6 @@
 import { db, payout, user } from '@bounty/db';
 import { TRPCError } from '@trpc/server';
-import { eq, desc, sql } from 'drizzle-orm';
+import { eq, desc, sql, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { protectedProcedure, router } from '../trpc';
 import {
@@ -400,72 +400,76 @@ export const connectRouter = router({
     )
     .query(async ({ ctx, input }) => {
       try {
-        const offset = (input.page - 1) * input.limit;
-        const { bounty } = await import('@bounty/db');
+        const { payout, bounty: bountyTable } = await import('@bounty/db');
 
-        // Use raw SQL with UNION ALL for efficient pagination at database level
-        const activities = await db.execute(
-          sql`
-            SELECT * FROM (
-              SELECT
-                p.id,
-                p.bounty_id as "bountyId",
-                p.amount,
-                p.status,
-                p.stripe_transfer_id as "stripeTransferId",
-                p.created_at as "createdAt",
-                'payout' as type
-              FROM payout p
-              WHERE p.user_id = ${ctx.session.user.id}
-              UNION ALL
-              SELECT
-                b.id,
-                b.id as "bountyId",
-                b.amount,
-                b.payment_status as status,
-                b.stripe_transfer_id as "stripeTransferId",
-                b.created_at as "createdAt",
-                'created' as type
-              FROM bounty b
-              WHERE b.created_by_id = ${ctx.session.user.id}
-            ) activity
-            ORDER BY "createdAt" DESC
-            LIMIT ${input.limit}
-            OFFSET ${offset}
-          `
+        // Fetch payouts for this user
+        const userPayouts = await db
+          .select({
+            id: payout.id,
+            bountyId: payout.bountyId,
+            amount: payout.amount,
+            status: payout.status,
+            stripeTransferId: payout.stripeTransferId,
+            createdAt: payout.createdAt,
+          })
+          .from(payout)
+          .where(eq(payout.userId, ctx.session.user.id));
+
+        // Fetch bounties created by this user
+        const createdBounties = await db
+          .select({
+            id: bountyTable.id,
+            bountyId: bountyTable.id,
+            amount: bountyTable.amount,
+            status: bountyTable.paymentStatus,
+            stripeTransferId: bountyTable.stripeTransferId,
+            createdAt: bountyTable.createdAt,
+          })
+          .from(bountyTable)
+          .where(eq(bountyTable.createdById, ctx.session.user.id));
+
+        // Combine and format activities
+        const payouts = userPayouts.map((p) => ({ ...p, type: 'payout' as const }));
+        const created = createdBounties.map((b) => ({
+          ...b,
+          type: 'created' as const,
+          status: b.status as string, // payment_status enum to string
+        }));
+
+        // Merge and sort by createdAt desc
+        const allActivities = [...payouts, ...created].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
 
-        // Get bounty details only for the paginated results
-        const bountyIds = activities.rows.map((a: any) => a.bountyId);
+        // Get bounty details for all unique bounty IDs
+        const bountyIds = Array.from(
+          new Set(allActivities.map((a) => a.bountyId).filter(Boolean))
+        );
+
         const bountyDetails = bountyIds.length > 0
           ? await db
               .select({
-                id: bounty.id,
-                githubRepoOwner: bounty.githubRepoOwner,
-                githubRepoName: bounty.githubRepoName,
-                title: bounty.title,
+                id: bountyTable.id,
+                githubRepoOwner: bountyTable.githubRepoOwner,
+                githubRepoName: bountyTable.githubRepoName,
+                title: bountyTable.title,
               })
-              .from(bounty)
-              .where(sql`${bounty.id} = ANY(${bountyIds})`)
+              .from(bountyTable)
+              .where(inArray(bountyTable.id, bountyIds))
           : [];
 
+        // Build bounty map
         const bountyMap = new Map(bountyDetails.map((b) => [b.id, b]));
 
-        // Enrich activity with bounty details
-        const enrichedActivity = activities.rows.map((activity: any) => {
-          const details = bountyMap.get(activity.bountyId);
-          return {
-            ...activity,
-            bounty: details
-              ? {
-                  id: details.id,
-                  githubRepoOwner: details.githubRepoOwner,
-                  githubRepoName: details.githubRepoName,
-                  title: details.title,
-                }
-              : null,
-          };
-        });
+        // Paginate in memory (simpler than complex SQL UNION)
+        const offset = (input.page - 1) * input.limit;
+        const paginatedActivities = allActivities.slice(offset, offset + input.limit);
+
+        // Enrich with bounty details
+        const enrichedActivity = paginatedActivities.map((activity) => ({
+          ...activity,
+          bounty: bountyMap.get(activity.bountyId) || null,
+        }));
 
         return {
           success: true,
@@ -473,11 +477,12 @@ export const connectRouter = router({
           pagination: {
             page: input.page,
             limit: input.limit,
-            total: -1, // Unknown total without separate count query
-            totalPages: -1,
+            total: allActivities.length,
+            totalPages: Math.ceil(allActivities.length / input.limit),
           },
         };
       } catch (error) {
+        console.error('[getActivity] Error:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to get activity',

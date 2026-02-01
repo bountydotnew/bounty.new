@@ -298,6 +298,7 @@ export interface PricingPlan {
   name: string;
   description: string;
   monthlyPrice: number;
+  yearlyPrice: number; // Yearly price (10 months = 2 months free)
   feeFreeAllowance: number; // Monthly fee-free allowance in dollars
   platformFeePercent: number; // Platform fee percentage over allowance
   concurrentBounties: number; // Number of concurrent bounties (null = unlimited)
@@ -314,6 +315,7 @@ export const PRICING_TIERS: Record<BountyProPlan, PricingPlan> = {
     name: 'Free',
     description: 'For individuals getting started',
     monthlyPrice: 0,
+    yearlyPrice: 0,
     feeFreeAllowance: 0,
     platformFeePercent: 5,
     concurrentBounties: 1,
@@ -323,6 +325,7 @@ export const PRICING_TIERS: Record<BountyProPlan, PricingPlan> = {
     name: 'Basic',
     description: 'For developers and small teams',
     monthlyPrice: 10,
+    yearlyPrice: 100, // $10/mo * 10 months
     feeFreeAllowance: 500,
     platformFeePercent: 4,
     concurrentBounties: -1, // unlimited
@@ -332,6 +335,7 @@ export const PRICING_TIERS: Record<BountyProPlan, PricingPlan> = {
     name: 'Pro',
     description: 'For growing teams',
     monthlyPrice: 25,
+    yearlyPrice: 250, // $25/mo * 10 months
     feeFreeAllowance: 5000,
     platformFeePercent: 3,
     concurrentBounties: -1, // unlimited
@@ -343,6 +347,7 @@ export const PRICING_TIERS: Record<BountyProPlan, PricingPlan> = {
     name: 'Pro+',
     description: 'For scaling organizations',
     monthlyPrice: 150,
+    yearlyPrice: 1500, // $150/mo * 10 months
     feeFreeAllowance: 12_000,
     platformFeePercent: 2,
     concurrentBounties: -1, // unlimited

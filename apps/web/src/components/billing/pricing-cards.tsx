@@ -25,14 +25,6 @@ const PLAN_ORDER: BountyProPlan[] = [
   'tier_3_pro_plus',
 ];
 
-// Yearly pricing (typically ~2 months free)
-const YEARLY_PRICES: Record<BountyProPlan, number> = {
-  free: 0,
-  tier_1_basic: 100, // $10/mo * 10 months
-  tier_2_pro: 250, // $25/mo * 10 months
-  tier_3_pro_plus: 1500, // $150/mo * 10 months
-};
-
 // Get the base URL for success/redirects
 const getBaseUrl = () => {
   if (typeof window !== 'undefined') {
@@ -69,7 +61,7 @@ function PricingCard({
   // Determine if user can purchase
   const canPurchase = !isEarlyAccessEnabled || hasEarlyAccess;
 
-  const displayPrice = isYearly ? YEARLY_PRICES[plan] : pricing.monthlyPrice;
+  const displayPrice = isYearly ? pricing.yearlyPrice : pricing.monthlyPrice;
   const checkoutSlug =
     plan === 'free' ? 'free' : isYearly ? `${plan}_yearly` : plan;
 

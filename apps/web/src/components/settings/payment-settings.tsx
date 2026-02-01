@@ -1,12 +1,7 @@
 'use client';
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@bounty/ui/components/card';
-import { Tabs, TabsList, TabsTab, TabsPanel } from '@bounty/ui/components/tabs';
+import { Tabs, TabsPanel } from '@bounty/ui/components/tabs';
+import { BillingToggle } from '@/components/billing/billing-toggle';
 import { Badge } from '@bounty/ui/components/badge';
 import {
   Tooltip,
@@ -19,6 +14,7 @@ import { toast } from 'sonner';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { ConnectOnboardingModal } from '@/components/payment/connect-onboarding-modal';
 import { IssuesBlock } from './payment/issues-block';
+import { PaymentActivity } from './payment-activity';
 import { BalanceCard } from './payment/balance-card';
 import { StripeDashIcon } from '@bounty/ui/components/icons/huge/stripe';
 import { useState, useEffect } from 'react';
@@ -26,6 +22,7 @@ import { useQueryState, parseAsString } from 'nuqs';
 import Image from 'next/image';
 import { cn } from '@bounty/ui/lib/utils';
 import { ChevronDown } from 'lucide-react';
+import { PAYMENTS_FAQ_ITEMS } from '@bounty/ui/lib/faqs';
 import { useCustomer } from 'autumn-js/react';
 import {
   PRICING_TIERS,
@@ -33,21 +30,6 @@ import {
   type BountyProPlan,
 } from '@bounty/types';
 import Link from 'next/link';
-
-type ConnectStatus =
-  | {
-      hasConnectAccount?: boolean;
-      onboardingComplete?: boolean;
-      cardPaymentsActive?: boolean;
-      accountDetails?: {
-        chargesEnabled?: boolean;
-        detailsSubmitted?: boolean;
-        payoutsEnabled?: boolean;
-        requirements?: unknown;
-      } | null;
-    }
-  | null
-  | undefined;
 
 // Available card background options
 const CARD_BACKGROUNDS = [
@@ -209,35 +191,6 @@ function useHandleConnectRedirect({
   ]);
 }
 
-// FAQ Items for Stripe Connect
-const PAYMENTS_FAQ_ITEMS = [
-  {
-    question: 'What is Stripe Connect?',
-    answer:
-      'Stripe Connect is a secure payment platform that allows you to receive bounty payouts directly to your bank account. It handles all the payment processing, tax reporting, and compliance requirements so you can focus on solving bounties.',
-  },
-  {
-    question: 'Why do I need Stripe Connect?',
-    answer:
-      'To receive payouts as a bounty solver, you need a connected Stripe account. This ensures secure, direct transfers to your bank account when your solutions are approved. Without it, we have no way to send you your earnings.',
-  },
-  {
-    question: 'Why is my SSN or Tax ID required?',
-    answer:
-      'Stripe requires identity verification to comply with financial regulations and prevent fraud. Your SSN or Tax ID is used to verify your identity and for tax reporting purposes (1099 forms in the US). This information is securely handled by Stripe and never stored on our servers.',
-  },
-  {
-    question: 'Is my information secure?',
-    answer:
-      'Yes. All sensitive information is handled directly by Stripe, a PCI-compliant payment processor trusted by millions of businesses. We never see or store your SSN, bank account details, or other sensitive financial information.',
-  },
-  {
-    question: 'How long do payouts take?',
-    answer:
-      'Once your solution is approved, payouts typically arrive in your bank account within 2-3 business days. The exact timing depends on your bank and country.',
-  },
-];
-
 function FAQAccordionItem({
   item,
   isOpen,
@@ -315,10 +268,13 @@ function FeesTabContent({
   allTimeBountyCount: number;
 }) {
   const { attach, openBillingPortal } = useCustomer();
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const [isCheckoutLoading, setIsCheckoutLoading] = useState<string | null>(
     null
   );
   const [isPortalLoading, setIsPortalLoading] = useState(false);
+
+  const isYearly = billingPeriod === 'yearly';
 
   if (isLoading) {
     return (
@@ -376,8 +332,10 @@ function FeesTabContent({
 
     setIsCheckoutLoading(planSlug);
     try {
+      // Use yearly suffix when yearly billing is selected
+      const productId = isYearly ? `${planSlug}_yearly` : planSlug;
       const result = await attach({
-        productId: planSlug,
+        productId,
         successUrl: `${window.location.origin}/settings/payments?tab=fees&checkout=success`,
         forceCheckout: true,
       });
@@ -521,7 +479,10 @@ function FeesTabContent({
 
       {/* All Plans Grid - matching pricing page style */}
       <div>
-        <h4 className="text-sm font-medium text-text-muted mb-4">All plans</h4>
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-sm font-medium text-text-muted">All plans</h4>
+          <BillingToggle value={billingPeriod} onChange={setBillingPeriod} />
+        </div>
         <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
           {allPlans
             .filter((slug) => slug !== currentPlanSlug)
@@ -531,6 +492,8 @@ function FeesTabContent({
               const isCurrent = false; // Never current since we filter out current plan
               const isUpgrade = plan.monthlyPrice > currentPlan.monthlyPrice;
               const isLoading = isCheckoutLoading === slug;
+
+              const displayPrice = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
 
               return (
                 <div
@@ -552,10 +515,17 @@ function FeesTabContent({
 
                     <div className="mt-2 flex items-baseline gap-0.5">
                       <span className="text-2xl font-medium text-text-muted">
-                        ${plan.monthlyPrice}
+                        ${displayPrice}
                       </span>
-                      <span className="text-sm text-text-muted">/mo.</span>
+                      <span className="text-sm text-text-muted">
+                        /{isYearly ? 'yr.' : 'mo.'}
+                      </span>
                     </div>
+                    {isYearly && displayPrice > 0 && (
+                      <p className="mt-1 text-xs text-text-muted">
+                        ${Math.round(displayPrice / 12)}/mo. billed annually
+                      </p>
+                    )}
 
                     <p className="mt-4 text-sm text-text-muted">
                       {slug === 'free'
@@ -857,15 +827,13 @@ export function PaymentSettings() {
         </div>
 
         {/* Activity Tab */}
-        <TabsPanel value="activity" className="space-y-4">
+        <TabsPanel value="activity" className="space-y-6">
           <div className="shrink-0 flex flex-col justify-center items-start gap-0 w-full h-fit self-stretch p-0">
             <div className="text-[28px] leading-[150%] shrink-0 text-foreground font-['Inter',system-ui,sans-serif] font-medium size-fit">
               Recent activity
             </div>
           </div>
-          <p className="text-muted-foreground text-sm">
-            Activity tab coming soon...
-          </p>
+          <PaymentActivity />
         </TabsPanel>
 
         {/* Fees Tab */}
