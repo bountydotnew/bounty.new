@@ -35,7 +35,7 @@ import { RepoBranchIssueSelector } from './task-form/components/RepoBranchIssueS
 import { FundBountyModal } from '@/components/payment/fund-bounty-modal';
 
 type TaskInputFormProps = {
-  onSubmit: (data: CreateBountyForm) => void;
+  onSubmit?: (data: CreateBountyForm) => void;
 };
 
 export interface TaskInputFormRef {
