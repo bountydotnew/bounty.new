@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, skipToken } from '@tanstack/react-query';
+import { useQuery, skipToken, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useParams } from 'next/navigation';
 import { LinearIcon } from '@bounty/ui';
 import { ExternalLink, ArrowRight, Inbox, Layers, FolderKanban, LogOut, RefreshCw } from 'lucide-react';
@@ -13,6 +13,7 @@ import { cn } from '@bounty/ui/lib/utils';
 export default function LinearWorkspacePage() {
   const router = useRouter();
   const params = useParams();
+  const queryClient = useQueryClient();
   const workspaceIdFromUrl = params.workspaceId as string;
 
   const {
@@ -75,7 +76,9 @@ export default function LinearWorkspacePage() {
   const handleDisconnect = async () => {
     if (linearWorkspace) {
       await unlinkLinear(linearWorkspace.id);
-      router.push('/integrations/linear');
+      // Clear all Linear queries to prevent any API calls after disconnect
+      queryClient.removeQueries({ queryKey: [['linear']] });
+      router.push('/integrations');
     }
   };
 

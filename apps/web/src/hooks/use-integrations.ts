@@ -48,6 +48,7 @@ export interface IntegrationsState {
   // Linear
   linearWorkspace: LinearWorkspace | null;
   hasLinear: boolean;
+  hasLinearOAuth: boolean;
 
   // Combined
   totalCount: number;
@@ -104,6 +105,9 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
     isLoading: linearLoading,
     refetch: refetchLinear,
   } = useQuery(trpc.linear.getConnectionStatus.queryOptions());
+  const { data: linearAccountStatusData } = useQuery(
+    trpc.linear.getAccountStatus.queryOptions()
+  );
 
   // Unlink Discord mutation
   const unlinkDiscordMutation = useMutation({
@@ -124,8 +128,12 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
     mutationFn: (workspaceId: string) =>
       trpcClient.linear.disconnect.mutate({ workspaceId }),
     onSuccess: () => {
+      // Invalidate all Linear queries to immediately update UI state
       queryClient.invalidateQueries({
         queryKey: [['linear', 'getConnectionStatus']],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [['linear', 'getAccountStatus']],
       });
       toast.success('Linear workspace disconnected');
     },
@@ -137,11 +145,17 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
   // Sync Linear workspace mutation
   const syncLinearWorkspaceMutation = useMutation({
     mutationFn: () => trpcClient.linear.syncWorkspace.mutate(),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({
         queryKey: [['linear', 'getConnectionStatus']],
       });
-      toast.success('Linear workspace connected successfully');
+      queryClient.invalidateQueries({
+        queryKey: [['linear', 'getAccountStatus']],
+      });
+      // Only show success toast if sync actually succeeded
+      if (data?.success) {
+        toast.success('Linear workspace connected successfully');
+      }
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to connect Linear workspace');
@@ -173,6 +187,7 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
           }
         : null,
       hasLinear: linearConnectionData?.connected ?? false,
+      hasLinearOAuth: linearAccountStatusData?.hasOAuth ?? false,
 
       totalCount:
         (githubData?.installations?.length ?? 0) +
@@ -185,6 +200,7 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
       discordAccountData,
       discordBotInstallData,
       linearConnectionData,
+      linearAccountStatusData,
       githubLoading,
       discordLoading,
       linearLoading,

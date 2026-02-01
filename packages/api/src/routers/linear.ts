@@ -501,6 +501,15 @@ export const linearRouter = router({
         return { success: true, states: [] };
       }
 
+      // Check for active workspace connection
+      const linearWorkspace = await getLinearWorkspace(
+        ctx.db,
+        linearOAuthAccount.id
+      );
+      if (!linearWorkspace) {
+        return { success: true, states: [] };
+      }
+
       try {
         const accessToken = await getValidAccessToken(
           ctx.db,
@@ -531,6 +540,15 @@ export const linearRouter = router({
       );
 
       if (!linearOAuthAccount?.accessToken) {
+        return { success: true, teams: [] };
+      }
+
+      // Check for active workspace connection
+      const linearWorkspace = await getLinearWorkspace(
+        ctx.db,
+        linearOAuthAccount.id
+      );
+      if (!linearWorkspace) {
         return { success: true, teams: [] };
       }
 
@@ -759,6 +777,7 @@ export const linearRouter = router({
 
   /**
    * Disconnect Linear workspace
+   * Deletes both the linear_account record and the OAuth account record
    */
   disconnect: protectedProcedure
     .input(z.object({ workspaceId: z.string() }))
@@ -775,15 +794,20 @@ export const linearRouter = router({
         });
       }
 
+      // Delete the linear_account record
       await ctx.db
-        .update(linearAccount)
-        .set({ isActive: false, updatedAt: new Date() })
+        .delete(linearAccount)
         .where(
           and(
             eq(linearAccount.linearWorkspaceId, input.workspaceId),
             eq(linearAccount.accountId, linearOAuthAccount.id)
           )
         );
+
+      // Delete the OAuth account record (removes access/refresh tokens)
+      await ctx.db
+        .delete(account)
+        .where(eq(account.id, linearOAuthAccount.id));
 
       return { success: true };
     }),
@@ -799,11 +823,12 @@ export const linearRouter = router({
     );
 
     if (!linearOAuthAccount?.accessToken) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message:
-          'Linear account not connected. Please link your Linear account first.',
-      });
+      // Return early without throwing - this can happen if the user disconnected
+      // before the sync effect ran (race condition after OAuth callback)
+      return {
+        success: false,
+        workspace: null,
+      };
     }
 
     try {

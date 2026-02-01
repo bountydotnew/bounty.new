@@ -1,13 +1,21 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LinearIcon } from '@bounty/ui';
 import { useIntegrations } from '@/hooks/use-integrations';
 
 export default function LinearRootPage() {
   const router = useRouter();
-  const { hasLinear, linearWorkspace, linkLinear, isLinearLoading } = useIntegrations();
+  const {
+    hasLinear,
+    hasLinearOAuth,
+    linearWorkspace,
+    linkLinear,
+    syncLinearWorkspace,
+    isLinearLoading,
+  } = useIntegrations();
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Redirect to workspace-specific route if connected
   useEffect(() => {
@@ -15,6 +23,25 @@ export default function LinearRootPage() {
       router.replace(`/integrations/linear/${linearWorkspace.id}`);
     }
   }, [hasLinear, linearWorkspace, router]);
+
+  // Auto-sync workspace if user has OAuth but no connected workspace
+  useEffect(() => {
+    if (hasLinearOAuth && !hasLinear && !isLinearLoading && !isSyncing) {
+      setIsSyncing(true);
+      syncLinearWorkspace().finally(() => {
+        setIsSyncing(false);
+      });
+    }
+  }, [hasLinearOAuth, hasLinear, isLinearLoading, syncLinearWorkspace, isSyncing]);
+
+  // Show loading state while syncing or loading initial data
+  if (isLinearLoading || isSyncing) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+        <div className="w-6 h-6 border-2 border-neutral-700 border-t-white rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   // Show connection UI if not connected
   if (!hasLinear) {
