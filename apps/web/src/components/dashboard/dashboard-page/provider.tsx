@@ -1,7 +1,7 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRef, useEffect } from 'react';
 import { trpc } from '@/utils/trpc';
 import { useSession } from '@/context/session-context';
 import { PAGINATION_DEFAULTS, PAGINATION_LIMITS } from '@/constants';
@@ -23,6 +23,7 @@ interface DashboardPageProviderProps {
 export function DashboardPageProvider({ children }: DashboardPageProviderProps) {
   const { isAuthenticated, isPending: isSessionPending } = useSession();
   const taskInputRef = useRef<{ focus: () => void } | null>(null);
+  const queryClient = useQueryClient();
 
   // Queries - only run when authenticated
   const bounties = useQuery({
@@ -42,6 +43,26 @@ export function DashboardPageProvider({ children }: DashboardPageProviderProps) 
     enabled: isAuthenticated && !isSessionPending,
     staleTime: 2 * 60 * 1000,
   });
+
+  // Prefetch stats for all bounties as soon as they arrive (flatten waterfall)
+  useEffect(() => {
+    if (bounties.data?.data && bounties.data.data.length > 0) {
+      const bountyIds = bounties.data.data.map((b) => b.id);
+      queryClient.prefetchQuery(
+        trpc.bounties.getBountyStatsMany.queryOptions({ bountyIds })
+      );
+    }
+  }, [bounties.data?.data, queryClient]);
+
+  // Also prefetch stats for myBounties
+  useEffect(() => {
+    if (myBounties.data?.data && myBounties.data.data.length > 0) {
+      const bountyIds = myBounties.data.data.map((b) => b.id);
+      queryClient.prefetchQuery(
+        trpc.bounties.getBountyStatsMany.queryOptions({ bountyIds })
+      );
+    }
+  }, [myBounties.data?.data, queryClient]);
 
   // TODO: Re-enable onboarding when needed
   // const onboardingQuery = useQuery({

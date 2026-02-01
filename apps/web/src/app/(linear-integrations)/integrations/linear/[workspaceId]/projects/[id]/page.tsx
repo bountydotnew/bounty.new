@@ -1,12 +1,14 @@
 'use client';
 
-import { useQuery, skipToken } from '@tanstack/react-query';
+import { useQueries, skipToken } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { LinearIcon } from '@bounty/ui';
+import { Button } from '@bounty/ui/components/button';
 import { ArrowLeft, ExternalLink, Inbox, FolderKanban } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
 import { LinearIssueCard } from '../../issues/components/issue-card';
+import type { LinearProject } from '@bounty/api/driver/linear-client';
 
 export default function LinearProjectDetailPage() {
   const params = useParams();
@@ -15,22 +17,27 @@ export default function LinearProjectDetailPage() {
   const workspaceId = params.workspaceId as string;
   const projectId = params.id as string;
 
-  const { data: projectsData, isLoading: projectLoading } = useQuery(
-    trpc.linear.getProjects.queryOptions(hasLinear ? undefined : skipToken)
-  );
+  // Fetch projects and issues in parallel using useQueries
+  const [projectsQuery, issuesQuery] = useQueries({
+    queries: [
+      trpc.linear.getProjects.queryOptions(hasLinear ? undefined : skipToken),
+      trpc.linear.getIssues.queryOptions(
+        hasLinear
+          ? {
+              filters: { projectId },
+              pagination: { first: 50 },
+            }
+          : skipToken
+      ),
+    ],
+  });
 
-  const { data: issuesData, isLoading: issuesLoading } = useQuery(
-    trpc.linear.getIssues.queryOptions(
-      hasLinear
-        ? {
-            filters: { projectId },
-            pagination: { first: 50 },
-          }
-        : skipToken
-    )
-  );
+  const projectsData = projectsQuery.data;
+  const issuesData = issuesQuery.data;
+  const projectLoading = projectsQuery.isLoading;
+  const issuesLoading = issuesQuery.isLoading;
 
-  const project = projectsData?.projects?.find((p) => p.id === projectId);
+  const project = projectsData?.projects?.find((p: LinearProject) => p.id === projectId);
   const issues = issuesData?.issues ?? [];
 
   // Show skeleton while loading
@@ -42,8 +49,8 @@ export default function LinearProjectDetailPage() {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
         <div className="w-full max-w-md text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-6">
-            <LinearIcon className="w-8 h-8 text-foreground" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-2 mb-6">
+            <LinearIcon className="w-8 h-8 text-text-primary" />
           </div>
           <h1 className="text-2xl font-semibold text-foreground mb-2">
             Connect Linear
@@ -51,12 +58,12 @@ export default function LinearProjectDetailPage() {
           <p className="text-sm text-neutral-400 mb-6">
             Connect your workspace to view projects
           </p>
-          <button
+          <Button
             onClick={() => router.push('/integrations/linear')}
-            className="h-11 px-6 rounded-xl bg-white text-sm font-medium text-black hover:bg-neutral-200 transition-colors"
+            size="lg"
           >
             Go to Linear integration
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -66,8 +73,8 @@ export default function LinearProjectDetailPage() {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
         <div className="w-full max-w-md text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-6">
-            <Inbox className="w-8 h-8 text-neutral-500" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-2 mb-6">
+            <Inbox className="w-8 h-8 text-text-muted" />
           </div>
           <h1 className="text-2xl font-semibold text-foreground mb-2">
             Project Not Found
@@ -75,12 +82,12 @@ export default function LinearProjectDetailPage() {
           <p className="text-sm text-neutral-400 mb-6">
             The project you're looking for doesn't exist.
           </p>
-          <button
+          <Button
             onClick={() => router.push(`/integrations/linear/${workspaceId}/projects`)}
-            className="h-11 px-6 rounded-xl bg-white text-sm font-medium text-black hover:bg-neutral-200 transition-colors"
+            size="lg"
           >
             Back to Projects
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -91,13 +98,14 @@ export default function LinearProjectDetailPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div className="flex items-center gap-4">
-          <button
+          <Button
             onClick={() => router.push(`/integrations/linear/${workspaceId}/projects`)}
-            className="h-9 px-2.5 rounded-lg border border-white/10 text-foreground hover:bg-white/5 transition-colors"
+            variant="outline"
+            size="icon"
             title="Back to Projects"
           >
             <ArrowLeft className="w-4 h-4" />
-          </button>
+          </Button>
 
           <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-xl">
             {project?.icon || <FolderKanban className="w-6 h-6 text-neutral-500" />}
@@ -146,8 +154,8 @@ export default function LinearProjectDetailPage() {
 
         {issues.length === 0 ? (
           <div className="py-16 flex flex-col items-center justify-center text-center">
-            <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-3">
-              <Inbox className="w-5 h-5 text-neutral-500" />
+            <div className="w-12 h-12 rounded-xl bg-surface-2 flex items-center justify-center mb-3">
+              <Inbox className="w-5 h-5 text-text-muted" />
             </div>
             <p className="text-sm text-foreground">No issues yet</p>
             <p className="text-xs text-neutral-500 mt-1">

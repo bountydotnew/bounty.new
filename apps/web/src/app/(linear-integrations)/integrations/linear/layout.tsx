@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useIntegrations } from '@/hooks/use-integrations';
 import type React from 'react';
 import { LinearSidebar } from '@/components/integrations/linear';
 import { Header } from '@/components/dual-sidebar/sidebar-header';
+import { LinearSkeleton } from '@/app/(linear-integrations)/components/linear-skeleton';
 
 export default function LinearLayout({
   children,
@@ -34,7 +35,9 @@ export default function LinearLayout({
         <div className="flex flex-1 shrink-0 flex-col w-full overflow-hidden lg:max-w-[805px] xl:px-0 xl:border-x border-border-subtle mx-auto py-4 min-w-0">
           <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
             <div className="relative flex flex-col pb-10 px-4 w-full min-w-0">
-              {children}
+              <Suspense fallback={<LinearSkeleton />}>
+                {children}
+              </Suspense>
             </div>
           </div>
         </div>

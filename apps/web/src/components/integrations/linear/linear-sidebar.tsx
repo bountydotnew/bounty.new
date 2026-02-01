@@ -76,8 +76,8 @@ const LinearAppSidebar = () => {
         </SidebarHeader>
         <SidebarContent className="flex-1 overflow-y-auto px-[15px] py-0 group-data-[collapsible=icon]:px-0">
           <div className="flex items-center gap-3 mb-6 px-[2px]">
-            <div className="size-8 rounded-lg bg-surface-1 border border-border-default flex items-center justify-center">
-              <LinearIcon className="size-5 text-foreground" />
+            <div className="size-8 rounded-lg bg-surface-2 flex items-center justify-center">
+              <LinearIcon className="size-5 text-text-primary" />
             </div>
             <h1 className="text-lg font-semibold text-foreground">Linear</h1>
           </div>

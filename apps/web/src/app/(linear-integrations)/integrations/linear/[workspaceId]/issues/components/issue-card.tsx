@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { LinearIssue } from '@bounty/api/driver/linear-client';
+import { useQueryClient } from '@tanstack/react-query';
+import type { LinearIssue } from '@bounty/api/driver/linear-client';
+import { Button } from '@bounty/ui/components/button';
 import { ChevronDown, ChevronUp, User, ExternalLink } from 'lucide-react';
 import { CreateBountyForm } from './create-bounty-form';
 import { MarkdownContent } from '@/components/bounty/markdown-content';
 import { cn } from '@bounty/ui/lib/utils';
+import { trpc } from '@/utils/trpc';
 
 interface LinearIssueCardProps {
   issue: LinearIssue;
@@ -31,7 +34,18 @@ function getPriorityStyles(priority: number): { bg: string; text: string; border
 
 export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueCardProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(isExpanded);
+
+  // Prefetch issue detail on hover for faster navigation
+  const prefetchIssueDetail = useCallback(() => {
+    queryClient.prefetchQuery(
+      trpc.linear.getIssue.queryOptions({ issueId: issue.id })
+    );
+    queryClient.prefetchQuery(
+      trpc.linear.getBountyDataFromIssue.queryOptions({ linearIssueId: issue.id })
+    );
+  }, [issue.id, queryClient]);
 
   const toggleExpand = () => {
     setExpanded(!expanded);
@@ -49,7 +63,10 @@ export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueC
   const statusBorder = `${issue.status.color}30`;
 
   return (
-    <div className="group border border-border-subtle rounded-xl overflow-hidden hover:border-border-default transition-all bg-surface-1">
+    <div
+      className="group border border-border-subtle rounded-xl overflow-hidden hover:border-border-default transition-all bg-surface-1"
+      onMouseEnter={prefetchIssueDetail}
+    >
       {/* Summary */}
       <div className="p-4 sm:p-5">
         <div className="flex items-start justify-between gap-4">
@@ -109,30 +126,35 @@ export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueC
 
           {/* Actions */}
           <div className="flex items-center gap-2 shrink-0">
-            <a
-              href={issue.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="h-8 px-3 rounded-lg border border-border-subtle text-xs text-text-secondary hover:bg-surface-2 transition-colors flex items-center gap-1.5"
-              onClick={(e) => e.stopPropagation()}
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
             >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">View</span>
-            </a>
-            <button
+              <a
+                href={issue.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">View</span>
+              </a>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => router.push(`/integrations/linear/${workspaceId}/issues/${issue.id}`)}
-              className="h-8 px-3 rounded-lg border border-border-subtle text-xs text-text-secondary hover:bg-surface-2 transition-colors hidden sm:block"
+              onMouseEnter={prefetchIssueDetail}
+              onFocus={prefetchIssueDetail}
+              className="hidden sm:flex"
             >
               Details
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={toggleExpand}
-              className={cn(
-                'h-8 px-3 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5',
-                expanded
-                  ? 'bg-surface-2 text-text-secondary hover:bg-surface-3'
-                  : 'bg-surface-1 text-text-primary border border-border-subtle hover:border-border-default'
-              )}
+              variant={expanded ? 'secondary' : 'outline'}
+              size="sm"
             >
               {expanded ? (
                 <>
@@ -145,7 +167,7 @@ export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueC
                   <ChevronDown className="w-4 h-4" />
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

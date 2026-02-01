@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery, skipToken } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { LinearIcon } from '@bounty/ui';
+import { Button } from '@bounty/ui/components/button';
 import { ArrowLeft, ExternalLink, Inbox, User, Calendar } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
@@ -65,8 +66,8 @@ export default function LinearIssueDetailPage() {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
         <div className="w-full max-w-md text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-6">
-            <LinearIcon className="w-8 h-8 text-foreground" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-2 mb-6">
+            <LinearIcon className="w-8 h-8 text-text-primary" />
           </div>
           <h1 className="text-2xl font-semibold text-foreground mb-2">
             Connect Linear
@@ -74,12 +75,13 @@ export default function LinearIssueDetailPage() {
           <p className="text-sm text-neutral-400 mb-6">
             Connect your workspace to view issues
           </p>
-          <button
+          <Button
+          variant="primary"
             onClick={() => router.push('/integrations/linear')}
             className="h-11 px-6 rounded-xl bg-white text-sm font-medium text-black hover:bg-neutral-200 transition-colors"
           >
             Go to Linear integration
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -89,8 +91,8 @@ export default function LinearIssueDetailPage() {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
         <div className="w-full max-w-md text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-6">
-            <Inbox className="w-8 h-8 text-neutral-500" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-2 mb-6">
+            <Inbox className="w-8 h-8 text-text-muted" />
           </div>
           <h1 className="text-2xl font-semibold text-foreground mb-2">
             Issue Not Found
@@ -175,6 +177,7 @@ export default function LinearIssueDetailPage() {
           <div className="flex items-center gap-2 text-neutral-400">
             <span>Project:</span>
             <button
+              type="button"
               onClick={() => router.push(`/integrations/linear/${workspaceId}/projects/${issue.project?.id}`)}
               className="text-foreground hover:underline"
             >
@@ -225,12 +228,13 @@ export default function LinearIssueDetailPage() {
                 Turn this Linear issue into a bounty on bounty.new
               </p>
             </div>
-            <button
+            <Button
+              variant="default"
               onClick={() => setShowCreateForm(true)}
-              className="h-10 px-6 rounded-lg bg-white text-sm font-medium text-black hover:bg-neutral-200 transition-colors"
+              className="h-10 px-6 rounded-lg "
             >
               Create bounty
-            </button>
+            </Button>
           </div>
         )}
       </div>

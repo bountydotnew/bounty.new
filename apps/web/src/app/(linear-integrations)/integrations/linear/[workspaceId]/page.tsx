@@ -1,14 +1,17 @@
 'use client';
 
-import { useQuery, skipToken, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueries, skipToken, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
 import { LinearIcon } from '@bounty/ui';
+import { Button } from '@bounty/ui/components/button';
 import { ExternalLink, ArrowRight, Inbox, Layers, FolderKanban, LogOut, RefreshCw } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { cn } from '@bounty/ui/lib/utils';
+import type { LinearIssue } from '@bounty/api/driver/linear-client';
 
 export default function LinearWorkspacePage() {
   const router = useRouter();
@@ -29,19 +32,22 @@ export default function LinearWorkspacePage() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const {
-    data: issuesData,
-    isLoading: issuesLoading,
-  } = useQuery(
-    trpc.linear.getIssues.queryOptions(
-      hasLinear ? { pagination: { first: 5 } } : skipToken
-    )
-  );
+  // Fetch issues and projects in parallel using useQueries
+  const [issuesQuery, projectsQuery] = useQueries({
+    queries: [
+      trpc.linear.getIssues.queryOptions(
+        hasLinear ? { pagination: { first: 5 } } : skipToken
+      ),
+      trpc.linear.getProjects.queryOptions(hasLinear ? undefined : skipToken),
+    ],
+  });
 
-  const { data: projectsData, isLoading: projectsLoading } = useQuery(
-    trpc.linear.getProjects.queryOptions(hasLinear ? undefined : skipToken)
-  );
+  const issuesData = issuesQuery.data;
+  const issuesLoading = issuesQuery.isLoading;
+  const projectsData = projectsQuery.data;
+  const projectsLoading = projectsQuery.isLoading;
 
+  // Account status is separate as it's always needed (even when not connected)
   const { data: accountData } = useQuery(
     trpc.linear.getAccountStatus.queryOptions()
   );
@@ -89,7 +95,7 @@ export default function LinearWorkspacePage() {
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
         <div className="w-full max-w-md">
           <div className="text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-2 border border-border-subtle mb-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-2 mb-6">
               <LinearIcon className="w-8 h-8 text-text-primary" />
             </div>
             <h1 className="text-2xl font-semibold text-text-primary mb-2">
@@ -99,21 +105,24 @@ export default function LinearWorkspacePage() {
               Link your Linear workspace to create bounties from issues and track progress across teams.
             </p>
             <div className="space-y-3">
-              <button
+              <Button
                 onClick={handleLinkAccount}
                 disabled={isConnecting || isLinearLoading}
-                className="w-full h-11 px-6 rounded-xl bg-surface-1 text-sm font-medium text-text-primary border border-border-subtle hover:bg-surface-2 transition-colors disabled:opacity-50"
+                size="lg"
+                className="w-full"
               >
                 {isConnecting ? 'Connecting...' : 'Connect Linear'}
-              </button>
+              </Button>
               {needsSync && (
-                <button
+                <Button
                   onClick={handleSyncWorkspace}
                   disabled={isSyncing || isLinearLoading}
-                  className="w-full h-11 px-6 rounded-xl bg-surface-2 border border-border-subtle text-sm font-medium text-text-secondary hover:bg-surface-3 transition-colors disabled:opacity-50"
+                  variant="outline"
+                  size="lg"
+                  className="w-full"
                 >
                   {isSyncing ? 'Syncing...' : 'Sync workspace'}
-                </button>
+                </Button>
               )}
             </div>
             <p className="text-xs text-text-muted mt-6">
@@ -132,7 +141,7 @@ export default function LinearWorkspacePage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-surface-2 border border-border-subtle flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-surface-2 flex items-center justify-center">
             <LinearIcon className="w-5 h-5 text-text-primary" />
           </div>
           <div>
@@ -154,33 +163,34 @@ export default function LinearWorkspacePage() {
             <span className="hidden sm:inline">Open workspace</span>
           </a>
 
-          <button
+          <Button
             onClick={() => {
               refreshLinear();
               toast.success('Refreshed');
             }}
             disabled={isLinearLoading}
-            className="h-9 px-3 rounded-lg border border-border-subtle text-sm text-text-secondary hover:bg-surface-2 transition-colors disabled:opacity-50"
+            variant="outline"
+            size="icon"
             aria-label="Refresh"
           >
             <RefreshCw className={cn('w-4 h-4', isLinearLoading && 'animate-spin')} />
-          </button>
+          </Button>
 
-          <button
+          <Button
             onClick={handleDisconnect}
-            className="h-9 px-4 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400 hover:bg-red-500/20 transition-colors flex items-center gap-2"
+            variant="destructive"
           >
             <LogOut className="w-4 h-4" />
             <span className="hidden sm:inline">Disconnect</span>
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Quick Links */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-        <button
-          onClick={() => router.push(`/integrations/linear/${currentWorkspaceId}/issues`)}
-          className="group p-5 rounded-xl border border-border-subtle hover:border-border-default bg-surface-1 hover:bg-surface-2 transition-all text-left"
+        <Link
+          href={`/integrations/linear/${currentWorkspaceId}/issues`}
+          className="group p-5 rounded-xl border border-border-subtle hover:border-border-default bg-surface-1 hover:bg-surface-2 transition-all"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-lg bg-surface-2 border border-border-subtle flex items-center justify-center">
@@ -192,11 +202,11 @@ export default function LinearWorkspacePage() {
           <p className="text-xs text-text-muted">
             {issuesLoading ? '...' : `${issuesData?.issues?.length ?? 0} issue${(issuesData?.issues?.length ?? 0) !== 1 ? 's' : ''}`}
           </p>
-        </button>
+        </Link>
 
-        <button
-          onClick={() => router.push(`/integrations/linear/${currentWorkspaceId}/projects`)}
-          className="group p-5 rounded-xl border border-border-subtle hover:border-border-default bg-surface-1 hover:bg-surface-2 transition-all text-left"
+        <Link
+          href={`/integrations/linear/${currentWorkspaceId}/projects`}
+          className="group p-5 rounded-xl border border-border-subtle hover:border-border-default bg-surface-1 hover:bg-surface-2 transition-all"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-lg bg-surface-2 border border-border-subtle flex items-center justify-center">
@@ -208,20 +218,21 @@ export default function LinearWorkspacePage() {
           <p className="text-xs text-text-muted">
             {projectsLoading ? '...' : `${projectsData?.projects?.length ?? 0} project${(projectsData?.projects?.length ?? 0) !== 1 ? 's' : ''}`}
           </p>
-        </button>
+        </Link>
       </div>
 
       {/* Recent Issues */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-medium text-text-primary">Recent Issues</h2>
-          <button
+          <Button
+            variant="ghost"
+            size="xs"
             onClick={() => router.push(`/integrations/linear/${currentWorkspaceId}/issues`)}
-            className="text-xs text-text-muted hover:text-text-secondary transition-colors flex items-center gap-1"
           >
             View all
             <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          </Button>
         </div>
 
         {issuesLoading ? (
@@ -240,10 +251,10 @@ export default function LinearWorkspacePage() {
           </div>
         ) : (
           <div className="divide-y divide-border-subtle border border-border-subtle rounded-xl overflow-hidden bg-surface-1">
-            {recentIssues.map((issue: any) => (
+            {recentIssues.map((issue: LinearIssue) => (
               <div
                 key={issue.id}
-                className="px-5 py-4 flex items-center justify-between gap-4 hover:bg-surface-2 transition-colors"
+                className="px-5 py-4 flex items-center justify-between gap-4"
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
@@ -265,12 +276,14 @@ export default function LinearWorkspacePage() {
                     {issue.title}
                   </h3>
                 </div>
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => router.push(`/integrations/linear/${currentWorkspaceId}/issues?issue=${issue.id}`)}
-                  className="h-8 px-4 rounded-lg bg-surface-1 text-text-primary border border-border-subtle text-xs font-medium hover:bg-surface-2 transition-colors shrink-0"
+                  className="shrink-0"
                 >
                   Create bounty
-                </button>
+                </Button>
               </div>
             ))}
           </div>

@@ -47,6 +47,13 @@ export interface LinearProject {
   icon: string | null;
 }
 
+export interface LinearWorkflowState {
+  id: string;
+  name: string;
+  color: string;
+  type: string;
+}
+
 export interface LinearWorkspace {
   id: string;
   name: string;
@@ -461,9 +468,7 @@ export class LinearDriver {
    * Get workflow states (for filter dropdown)
    * Note: This can be enhanced by fetching states via GraphQL query
    */
-  async getWorkflowStates(): Promise<
-    Array<{ id: string; name: string; color: string; type: string }>
-  > {
+  async getWorkflowStates(): Promise<LinearWorkflowState[]> {
     try {
       // Workflow states are team-specific in Linear
       // For now, return empty - this can be enhanced later

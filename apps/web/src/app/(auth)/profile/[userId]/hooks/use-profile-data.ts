@@ -31,6 +31,7 @@ export interface ProfileData {
 export interface UseProfileDataProps {
   handle: string;
   enabled: boolean;
+  initialData?: ProfileData;
 }
 
 export interface UseProfileDataReturn {
@@ -42,14 +43,28 @@ export interface UseProfileDataReturn {
 export function useProfileData({
   handle,
   enabled,
+  initialData,
 }: UseProfileDataProps): UseProfileDataReturn {
+  const queryOptions = trpc.profiles.getProfile.queryOptions({ handle });
+
   const query = useQuery({
-    ...trpc.profiles.getProfile.queryOptions({ handle }),
+    ...queryOptions,
     enabled,
   });
 
+  // Transform API response to ProfileData format
+  // API returns { success, data: { user, profile, reputation }, isPrivate }
+  const transformedData: ProfileData | null = query.data
+    ? {
+        user: query.data.data.user,
+        profile: query.data.data.profile,
+        reputation: query.data.data.reputation,
+        isPrivate: query.data.isPrivate,
+      }
+    : initialData ?? null;
+
   return {
-    data: query.data as unknown as ProfileData | null,
+    data: transformedData,
     isLoading: query.isLoading,
     isError: query.isError,
   };

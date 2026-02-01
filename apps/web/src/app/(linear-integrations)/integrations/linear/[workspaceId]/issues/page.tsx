@@ -1,8 +1,9 @@
 'use client';
 
-import { useQuery, skipToken } from '@tanstack/react-query';
+import { useQuery, useQueries, skipToken } from '@tanstack/react-query';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { LinearIcon } from '@bounty/ui';
+import { Button } from '@bounty/ui/components/button';
 import { ExternalLink, RefreshCw, Filter, ChevronDown, X, Inbox } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
@@ -18,6 +19,7 @@ import {
 } from '@bounty/ui/components/dropdown-menu';
 import { LinearIssueCard } from './components/issue-card';
 import { cn } from '@bounty/ui/lib/utils';
+import type { LinearWorkflowState, LinearProject } from '@bounty/api/driver/linear-client';
 
 interface FilterState {
   status: string[];
@@ -57,16 +59,20 @@ export default function LinearIssuesPage() {
     projectId: null,
   });
 
-  const { data: workflowStatesData } = useQuery(
-    trpc.linear.getWorkflowStates.queryOptions(
-      hasLinear ? undefined : skipToken
-    )
-  );
+  // Fetch workflow states and projects in parallel for filter dropdowns
+  const [workflowStatesQuery, projectsQuery] = useQueries({
+    queries: [
+      trpc.linear.getWorkflowStates.queryOptions(
+        hasLinear ? undefined : skipToken
+      ),
+      trpc.linear.getProjects.queryOptions(hasLinear ? undefined : skipToken),
+    ],
+  });
 
-  const { data: projectsData } = useQuery(
-    trpc.linear.getProjects.queryOptions(hasLinear ? undefined : skipToken)
-  );
+  const workflowStatesData = workflowStatesQuery.data;
+  const projectsData = projectsQuery.data;
 
+  // Issues query is separate as it depends on filter state
   const {
     data: issuesData,
     isLoading: issuesLoading,
@@ -131,7 +137,7 @@ export default function LinearIssuesPage() {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
         <div className="w-full max-w-md text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-2 border border-border-subtle mb-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-2 mb-6">
             <LinearIcon className="w-8 h-8 text-text-primary" />
           </div>
           <h1 className="text-2xl font-semibold text-text-primary mb-2">
@@ -140,12 +146,12 @@ export default function LinearIssuesPage() {
           <p className="text-sm text-text-muted mb-6">
             Connect your workspace to view issues
           </p>
-          <button
+          <Button
             onClick={() => router.push('/integrations/linear')}
-            className="h-11 px-6 rounded-xl bg-surface-1 text-sm font-medium text-text-primary border border-border-subtle hover:bg-surface-2 transition-colors"
+            size="lg"
           >
             Go to Linear integration
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -180,14 +186,15 @@ export default function LinearIssuesPage() {
             <span className="hidden sm:inline">Open in Linear</span>
           </a>
 
-          <button
+          <Button
             onClick={handleRefresh}
             disabled={isLinearLoading}
-            className="h-9 px-3 rounded-lg border border-border-subtle text-sm text-text-secondary hover:bg-surface-2 transition-colors disabled:opacity-50"
+            variant="outline"
+            size="icon"
             aria-label="Refresh"
           >
             <RefreshCw className={cn('w-4 h-4', isLinearLoading && 'animate-spin')} />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -200,12 +207,10 @@ export default function LinearIssuesPage() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className={cn(
-              'h-8 px-3 rounded-lg border text-sm flex items-center gap-2 transition-colors',
-              filters.status.length > 0
-                ? 'bg-surface-1 border-border-default text-text-primary'
-                : 'border-border-subtle text-text-secondary hover:bg-surface-2'
-            )}>
+            <Button
+              variant={filters.status.length > 0 ? 'secondary' : 'outline'}
+              size="sm"
+            >
               Status
               <ChevronDown className="w-3.5 h-3.5 opacity-50" />
               {filters.status.length > 0 && (
@@ -213,11 +218,11 @@ export default function LinearIssuesPage() {
                   {filters.status.length}
                 </span>
               )}
-            </button>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[180px]">
             {workflowStates.length > 0 ? (
-              workflowStates.map((state: any) => (
+              workflowStates.map((state: LinearWorkflowState) => (
                 <DropdownMenuCheckboxItem
                   key={state.id}
                   checked={filters.status.includes(state.id)}
@@ -242,12 +247,10 @@ export default function LinearIssuesPage() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className={cn(
-              'h-8 px-3 rounded-lg border text-sm flex items-center gap-2 transition-colors',
-              filters.priority.length > 0
-                ? 'bg-surface-1 border-border-default text-text-primary'
-                : 'border-border-subtle text-text-secondary hover:bg-surface-2'
-            )}>
+            <Button
+              variant={filters.priority.length > 0 ? 'secondary' : 'outline'}
+              size="sm"
+            >
               Priority
               <ChevronDown className="w-3.5 h-3.5 opacity-50" />
               {filters.priority.length > 0 && (
@@ -255,7 +258,7 @@ export default function LinearIssuesPage() {
                   {filters.priority.length}
                 </span>
               )}
-            </button>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[140px]">
             {([0, 1, 2, 3, 4] as const).map((priority) => (
@@ -275,12 +278,10 @@ export default function LinearIssuesPage() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className={cn(
-              'h-8 px-3 rounded-lg border text-sm flex items-center gap-2 transition-colors',
-              filters.projectId
-                ? 'bg-surface-1 border-border-default text-text-primary'
-                : 'border-border-subtle text-text-secondary hover:bg-surface-2'
-            )}>
+            <Button
+              variant={filters.projectId ? 'secondary' : 'outline'}
+              size="sm"
+            >
               Project
               <ChevronDown className="w-3.5 h-3.5 opacity-50" />
               {filters.projectId && (
@@ -288,7 +289,7 @@ export default function LinearIssuesPage() {
                   1
                 </span>
               )}
-            </button>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[180px]">
             <DropdownMenuItem onClick={() => setProjectFilter(null)}>
@@ -296,7 +297,7 @@ export default function LinearIssuesPage() {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {projects.length > 0 ? (
-              projects.map((project: any) => (
+              projects.map((project: LinearProject) => (
                 <DropdownMenuItem
                   key={project.id}
                   onClick={() => setProjectFilter(project.id)}
@@ -313,14 +314,15 @@ export default function LinearIssuesPage() {
         </DropdownMenu>
 
         {hasActiveFilters && (
-          <button
+          <Button
             onClick={clearFilters}
-            className="h-8 px-3 rounded-lg border border-border-subtle text-sm text-text-muted hover:text-text-secondary hover:bg-surface-2 transition-colors flex items-center gap-1.5"
+            variant="ghost"
+            size="sm"
           >
             <X className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Clear all</span>
             <span className="sm:hidden">{activeFilterCount}</span>
-          </button>
+          </Button>
         )}
       </div>
 
@@ -345,12 +347,14 @@ export default function LinearIssuesPage() {
               : 'Issues from your workspace will appear here'}
           </p>
           {hasActiveFilters && (
-            <button
+            <Button
               onClick={clearFilters}
-              className="mt-3 text-sm text-text-muted hover:text-text-secondary transition-colors"
+              variant="ghost"
+              size="sm"
+              className="mt-3"
             >
               Clear filters
-            </button>
+            </Button>
           )}
         </div>
       ) : (

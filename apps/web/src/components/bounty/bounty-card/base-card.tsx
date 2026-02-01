@@ -36,7 +36,7 @@ export function BaseBountyCard({ compact }: BaseBountyCardProps) {
     issueDisplay,
     linearDisplay,
   } = state;
-  const { handleClick } = actions;
+  const { handleClick, prefetchBountyDetail } = actions;
 
   const submissionCount = stats?.submissionCount ?? 0;
 
@@ -45,6 +45,8 @@ export function BaseBountyCard({ compact }: BaseBountyCardProps) {
       aria-label={`View bounty: ${bounty.title}`}
       className={`flex w-full cursor-pointer flex-col rounded-xl border border-border-subtle bg-surface-1 transition duration-100 ease-out active:scale-[.98] min-w-0 text-left ${compact ? 'gap-1.5 p-2' : 'gap-2.5 p-4 sm:p-5'}`}
       onClick={handleClick}
+      onMouseEnter={prefetchBountyDetail}
+      onFocus={prefetchBountyDetail}
       type="button"
     >
       {/* Top row: Creator + Amount */}

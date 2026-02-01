@@ -212,7 +212,7 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
     refreshGitHub: useCallback(() => refetchGitHub(), [refetchGitHub]),
     invalidateGitHub: useCallback(() => {
       queryClient.invalidateQueries({
-        queryKey: ['githubInstallation.getInstallations'],
+        queryKey: [['githubInstallation', 'getInstallations']],
       });
     }, [queryClient]),
 
@@ -262,7 +262,7 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
 
     invalidateAll: useCallback(() => {
       queryClient.invalidateQueries({
-        queryKey: ['githubInstallation.getInstallations'],
+        queryKey: [['githubInstallation', 'getInstallations']],
       });
       queryClient.invalidateQueries({
         queryKey: [['discord', 'getLinkedAccount']],

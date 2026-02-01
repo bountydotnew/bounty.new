@@ -89,10 +89,15 @@ export function EditBountyModal({
     onSuccess: () => {
       toast.success('Bounty updated successfully!');
 
-      // Invalidate all bounty-related queries to trigger refetch
+      // Invalidate specific bounty queries rather than all bounty queries
       queryClient.invalidateQueries({
-        queryKey: ['bounties'],
-        type: 'all',
+        queryKey: [['bounties', 'fetchAllBounties']],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [['bounties', 'fetchMyBounties']],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [['bounties', 'getBountyDetail']],
       });
       // Invalidate and refetch the specific bounty detail query
       const detailKey = trpc.bounties.fetchBountyById.queryOptions({

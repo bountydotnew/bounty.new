@@ -68,7 +68,7 @@ export function GridView() {
   return (
     <div className={className}>
       {title && <h1 className="mb-4 font-semibold text-2xl">{title}</h1>}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {bounties.map((bounty) => {
           const canDelete = session?.user?.id
             ? bounty.creator.id === session.user.id

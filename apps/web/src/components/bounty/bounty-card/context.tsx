@@ -73,6 +73,8 @@ export interface BountyCardState {
 export interface BountyCardActions {
   /** Handle card click (navigate) */
   handleClick: () => void;
+  /** Prefetch bounty detail for faster navigation */
+  prefetchBountyDetail: () => void;
   /** Toggle pin */
   togglePin: () => void;
   /** Show delete dialog */

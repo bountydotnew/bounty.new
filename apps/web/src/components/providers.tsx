@@ -9,7 +9,6 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { RealtimeProvider } from '@upstash/realtime/client';
 import { AutumnProvider } from 'autumn-js/react';
-// import { SupportProvider, Support } from '@cossistant/next';
 import { useRouter } from 'next/navigation';
 import ImpersonationBanner from '@/components/impersonation-banner';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -57,7 +56,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <RealtimeProvider>
           <ConfettiProvider>
-            <AutumnProvider includeCredentials>
+            <AutumnProvider includeCredentials backendUrl=''>
               <SessionProvider>
                 <ProvidersInner>{children}</ProvidersInner>
               </SessionProvider>

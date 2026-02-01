@@ -1,15 +1,20 @@
 'use client';
 
-import { useQuery, skipToken } from '@tanstack/react-query';
+import { useQuery, skipToken, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
+import { useCallback } from 'react';
 import { LinearIcon } from '@bounty/ui';
+import { Button } from '@bounty/ui/components/button';
 import { ExternalLink, Inbox, FolderKanban, ChevronRight } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
+import type { LinearProject } from '@bounty/api/driver/linear-client';
 
 export default function LinearProjectsPage() {
   const router = useRouter();
   const params = useParams();
+  const queryClient = useQueryClient();
   const workspaceId = params.workspaceId as string;
   const { hasLinear, linearWorkspace } = useIntegrations();
 
@@ -19,12 +24,22 @@ export default function LinearProjectsPage() {
 
   const projects = projectsData?.projects ?? [];
 
+  // Prefetch project issues on hover for faster navigation
+  const prefetchProjectIssues = useCallback((projectId: string) => {
+    queryClient.prefetchQuery(
+      trpc.linear.getIssues.queryOptions({
+        filters: { projectId },
+        pagination: { first: 20 },
+      })
+    );
+  }, [queryClient]);
+
   if (!hasLinear) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
         <div className="w-full max-w-md text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-6">
-            <LinearIcon className="w-8 h-8 text-foreground" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-2 mb-6">
+            <LinearIcon className="w-8 h-8 text-text-primary" />
           </div>
           <h1 className="text-2xl font-semibold text-foreground mb-2">
             Connect Linear
@@ -32,12 +47,12 @@ export default function LinearProjectsPage() {
           <p className="text-sm text-neutral-400 mb-6">
             Connect your workspace to view projects
           </p>
-          <button
+          <Button
             onClick={() => router.push('/integrations/linear')}
-            className="h-11 px-6 rounded-xl bg-white text-sm font-medium text-black hover:bg-neutral-200 transition-colors"
+            size="lg"
           >
             Go to Linear integration
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -50,8 +65,8 @@ export default function LinearProjectsPage() {
   if (projects.length === 0) {
     return (
       <div className="py-16 flex flex-col items-center justify-center text-center">
-        <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-3">
-          <Inbox className="w-5 h-5 text-neutral-500" />
+        <div className="w-12 h-12 rounded-xl bg-surface-2 flex items-center justify-center mb-3">
+          <Inbox className="w-5 h-5 text-text-muted" />
         </div>
         <p className="text-sm text-foreground">No projects yet</p>
         <p className="text-xs text-neutral-500 mt-1">
@@ -84,25 +99,27 @@ export default function LinearProjectsPage() {
       </div>
 
       {/* Projects List */}
-      <div className="space-y-1">
-        {projects.map((project: any) => (
-          <button
+      <div className="space-y-3">
+        {projects.map((project: LinearProject) => (
+          <Link
             key={project.id}
-            onClick={() => router.push(`/integrations/linear/${workspaceId}/projects/${project.id}`)}
-            className="group w-full flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors text-left"
+            href={`/integrations/linear/${workspaceId}/projects/${project.id}`}
+            onMouseEnter={() => prefetchProjectIssues(project.id)}
+            onFocus={() => prefetchProjectIssues(project.id)}
+            className="group flex items-center gap-4 px-4 py-4 rounded-xl border border-border-subtle hover:border-border-default bg-surface-1 hover:bg-surface-2 transition-all"
           >
             {/* Icon */}
-            <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-lg shrink-0">
-              {project.icon || <FolderKanban className="w-5 h-5 text-neutral-500" />}
+            <div className="w-10 h-10 rounded-lg bg-surface-2 border border-border-subtle flex items-center justify-center text-lg shrink-0">
+              {project.icon || <FolderKanban className="w-5 h-5 text-text-muted" />}
             </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-medium text-foreground truncate">
+              <h3 className="text-sm font-medium text-text-primary truncate">
                 {project.name}
               </h3>
               {project.description && (
-                <p className="text-sm text-neutral-500 truncate">{project.description}</p>
+                <p className="text-sm text-text-muted truncate">{project.description}</p>
               )}
             </div>
 
@@ -112,14 +129,14 @@ export default function LinearProjectsPage() {
                 href={project.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="h-8 w-8 rounded-lg text-neutral-500 hover:text-foreground hover:bg-white/5 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100"
+                className="h-8 w-8 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-3 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100"
                 onClick={(e) => e.stopPropagation()}
               >
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
-              <ChevronRight className="w-4 h-4 text-neutral-600 group-hover:text-neutral-400 transition-colors" />
+              <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-text-secondary transition-colors" />
             </div>
-          </button>
+          </Link>
         ))}
       </div>
     </div>

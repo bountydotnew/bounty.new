@@ -48,8 +48,8 @@ export default function LinearRootPage() {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
         <div className="w-full max-w-md text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-6">
-            <LinearIcon className="w-8 h-8 text-foreground" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-2 mb-6">
+            <LinearIcon className="w-8 h-8 text-text-primary" />
           </div>
           <h1 className="text-2xl font-semibold text-foreground mb-2">
             Connect Linear

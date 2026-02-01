@@ -11,11 +11,16 @@ import {
 } from './components/bounty-error-states';
 import { BountyContent } from './components/bounty-content';
 import { BountyDetailSkeleton } from '@/components/dashboard/skeletons/bounty-detail-skeleton';
+import type { BountyData } from '@/components/bounty/bounty-detail';
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-export default function BountyPage() {
+interface BountyPageProps {
+  initialData?: BountyData | null;
+}
+
+export default function BountyPage({ initialData }: BountyPageProps) {
   const { id } = useParams<{ id: string }>();
   const [payment] = useQueryState('payment', parseAsString);
   const [sessionId] = useQueryState('session_id', parseAsString);
@@ -31,10 +36,11 @@ export default function BountyPage() {
     bountyId: id ?? null,
   });
 
-  // Fetch bounty data
+  // Fetch bounty data (uses initialData from server if available)
   const { data, isLoading, isError, isNotFound } = useBountyDetail({
     id: id ?? '',
     enabled: validId,
+    initialData: initialData ?? undefined,
   });
 
   // Invalid UUID
@@ -42,8 +48,8 @@ export default function BountyPage() {
     return <InvalidIdState />;
   }
 
-  // Loading state - show skeleton for better UX
-  if (isLoading) {
+  // Loading state - show skeleton for better UX (skip if we have initialData)
+  if (isLoading && !initialData) {
     return <BountyDetailSkeleton />;
   }
 

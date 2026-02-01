@@ -151,9 +151,12 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
         });
       },
       onSuccess: (result) => {
+        // Invalidate specific bounty queries rather than all bounty queries
         queryClient.invalidateQueries({
-          queryKey: ['bounties'],
-          type: 'all',
+          queryKey: [['bounties', 'fetchAllBounties']],
+        });
+        queryClient.invalidateQueries({
+          queryKey: [['bounties', 'fetchMyBounties']],
         });
 
         if (result?.data?.id) {

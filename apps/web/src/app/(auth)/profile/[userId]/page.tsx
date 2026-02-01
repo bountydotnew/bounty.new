@@ -1,6 +1,7 @@
 import { db } from '@bounty/db';
 import type { Metadata } from 'next';
 import { baseUrl } from '@bounty/ui/lib/constants';
+import { createServerCaller } from '@bounty/api/src/server-caller';
 import ProfilePageClient from './page.client';
 
 export async function generateMetadata({
@@ -73,6 +74,21 @@ export async function generateMetadata({
   };
 }
 
-export default function ProfilePage() {
-  return <ProfilePageClient />;
+export default async function ProfilePage({
+  params,
+}: {
+  params: Promise<{ userId: string }>;
+}) {
+  const { userId } = await params;
+
+  // Prefetch profile data on server to avoid client-side waterfall
+  let initialData: Awaited<ReturnType<Awaited<ReturnType<typeof createServerCaller>>['profiles']['getProfile']>> | null = null;
+  try {
+    const caller = await createServerCaller();
+    initialData = await caller.profiles.getProfile({ handle: userId });
+  } catch {
+    // If prefetch fails, client will fetch - no big deal
+  }
+
+  return <ProfilePageClient initialData={initialData} />;
 }

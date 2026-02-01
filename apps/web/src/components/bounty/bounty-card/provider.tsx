@@ -264,6 +264,17 @@ export function BountyCardProvider({
     router.push(url);
   }, [bounty.id, pathname, router]);
 
+  // Prefetch bounty detail on hover/focus for faster navigation
+  const prefetchBountyDetail = useCallback(() => {
+    queryClient.prefetchQuery(
+      trpc.bounties.getBountyDetail.queryOptions({ id: bounty.id })
+    );
+    // Also prefetch related data
+    queryClient.prefetchQuery(
+      trpc.bounties.getBountyVotes.queryOptions({ bountyId: bounty.id })
+    );
+  }, [bounty.id, queryClient]);
+
   const togglePin = useCallback(() => {
     if (canPin && !togglePinMutation.isPending) {
       togglePinMutation.mutate({ bountyId: bounty.id });
@@ -472,6 +483,7 @@ export function BountyCardProvider({
   const actions: BountyCardActions = useMemo(
     () => ({
       handleClick,
+      prefetchBountyDetail,
       togglePin,
       openDeleteDialog,
       confirmDelete,
@@ -482,6 +494,7 @@ export function BountyCardProvider({
     }),
     [
       handleClick,
+      prefetchBountyDetail,
       togglePin,
       openDeleteDialog,
       confirmDelete,
