@@ -33,6 +33,8 @@ export const user = pgTable('user', {
   stripeConnectOnboardingComplete: boolean('stripe_connect_onboarding_complete')
     .notNull()
     .default(false),
+  // Payment card background (e.g., 'mountain', 'autumn', etc.)
+  cardBackground: text('card_background'),
   // Note: Consider using timestamptz for timezone-aware timestamps in production
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),

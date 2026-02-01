@@ -73,7 +73,7 @@ function RepoSelectorContent({
   return (
     <div className="flex flex-col">
       {/* Header with search or back button */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-[#232323]">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-border-subtle">
         {selectedAccount ? (
           <>
             <button
@@ -82,18 +82,18 @@ function RepoSelectorContent({
                 setSelectedAccount(null);
                 setAccountSearchQuery('');
               }}
-              className="p-1 -ml-1 rounded hover:bg-[#141414] text-[#CFCFCF]"
+              className="p-1 -ml-1 rounded hover:bg-surface-2 text-text-secondary"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <GithubIcon className="w-4 h-4 text-[#5A5A5A]" />
-            <span className="text-sm text-[#CFCFCF]">
+            <GithubIcon className="w-4 h-4 text-text-tertiary" />
+            <span className="text-sm text-text-secondary">
               {selectedAccount.accountLogin ?? 'Unknown Account'}
             </span>
           </>
         ) : (
           <input
-            className="flex-1 bg-transparent text-sm text-[#CFCFCF] placeholder:text-[#5A5A5A] outline-none"
+            className="flex-1 bg-transparent text-sm text-text-secondary placeholder:text-text-tertiary outline-none"
             placeholder={installations.length === 1
               ? installations[0]?.accountLogin ?? 'Search...'
               : 'Search accounts...'}
@@ -109,7 +109,7 @@ function RepoSelectorContent({
       <div className="min-h-[250px] overflow-y-auto p-1">
         {reposLoading && !selectedAccount ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-4 h-4 animate-spin text-[#5A5A5A]" />
+            <Loader2 className="w-4 h-4 animate-spin text-text-tertiary" />
           </div>
         ) : selectedAccount ? (
           // Repos
@@ -124,12 +124,12 @@ function RepoSelectorContent({
                 }}
                 className={cn(
                   "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors",
-                  "hover:bg-[#141414]",
-                  selectedRepository === repo && "bg-[#141414]"
+                  "hover:bg-surface-2",
+                  selectedRepository === repo && "bg-surface-2"
                 )}
               >
-                <GithubIcon className="w-3.5 h-3.5 text-[#5A5A5A] shrink-0" />
-                <span className="flex-1 text-sm text-[#CFCFCF] truncate">
+                <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
+                <span className="flex-1 text-sm text-text-secondary truncate">
                   {repo}
                 </span>
                 {selectedRepository === repo && (
@@ -138,7 +138,7 @@ function RepoSelectorContent({
               </button>
             ))
           ) : (
-            <div className="px-3 py-2 text-sm text-[#5A5A5A]">
+            <div className="px-3 py-2 text-sm text-text-tertiary">
               No repositories
             </div>
           )
@@ -151,14 +151,14 @@ function RepoSelectorContent({
                 key={account.id}
                 type="button"
                 onClick={() => setSelectedAccount(account)}
-                className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-[#141414] transition-colors"
+                className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-surface-2 transition-colors"
               >
-                <GithubIcon className="w-3.5 h-3.5 text-[#5A5A5A] shrink-0" />
-                <span className="flex-1 text-sm text-[#CFCFCF] truncate">
+                <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
+                <span className="flex-1 text-sm text-text-secondary truncate">
                   {account.accountLogin ?? 'Unknown Account'}
                 </span>
-                <span className="text-xs text-[#5A5A5A]">{count}</span>
-                <ChevronRight className="w-3 h-3 text-[#5A5A5A] shrink-0" />
+                <span className="text-xs text-text-tertiary">{count}</span>
+                <ChevronRight className="w-3 h-3 text-text-tertiary shrink-0" />
               </button>
             );
           })
@@ -204,11 +204,11 @@ export function RepoSelector({
     <button
       type="button"
       onClick={() => setOpen(true)}
-      className="flex items-center gap-2 text-[#5A5A5A] hover:text-[#888] transition-colors"
+      className="flex items-center gap-2 text-text-tertiary hover:text-text-muted transition-colors"
     >
       <GithubIcon className="w-4 h-4" />
       {selectedRepository ? (
-        <span className="text-sm text-white">{selectedRepository}</span>
+        <span className="text-sm text-foreground">{selectedRepository}</span>
       ) : (
         <span className="text-sm">Select repository</span>
       )}
@@ -221,7 +221,7 @@ export function RepoSelector({
     return (
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerTrigger asChild>{TriggerButton}</DrawerTrigger>
-        <DrawerContent className="border-[#232323] bg-[#191919] rounded-t-xl">
+        <DrawerContent className="border-border-subtle bg-surface-1 rounded-t-xl">
           <RepoSelectorContent
             installations={installations}
             installationRepos={installationRepos}
@@ -246,7 +246,7 @@ export function RepoSelector({
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>{TriggerButton}</DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-72 p-0 border-[#232323] bg-[#191919] text-[#CFCFCF] rounded-xl"
+        className="w-72 p-0 border-border-subtle bg-surface-1 text-text-secondary rounded-xl"
         align="start"
         sideOffset={4}
       >

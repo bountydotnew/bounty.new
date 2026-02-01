@@ -12,7 +12,7 @@ interface MockupNavigateProps {
 export function MockupNavigate({ route, header, children }: MockupNavigateProps) {
   return (
     <MockupTransition transitionKey={route}>
-      <div className="absolute inset-0 bg-[#0E0E0E]">
+      <div className="absolute inset-0 bg-background">
         {header ? <div className="sticky top-0 z-10">{header}</div> : null}
         <div className="h-full overflow-auto">{children}</div>
       </div>

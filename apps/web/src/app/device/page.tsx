@@ -9,7 +9,7 @@ function DevicePageContent() {
   const [userCode] = useQueryState('user_code', parseAsString);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#050505] px-4 py-16 text-white">
+    <main className="flex min-h-screen items-center justify-center bg-[#050505] px-4 py-16 text-foreground">
       <DeviceCodeEntry initialCode={userCode ?? ''} />
     </main>
   );

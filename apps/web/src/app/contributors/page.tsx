@@ -2,7 +2,7 @@
 
 import {
   Avatar,
-  AvatarFallback,
+  AvatarFacehash,
   AvatarImage,
 } from '@bounty/ui/components/avatar';
 import Link from '@bounty/ui/components/link';
@@ -96,18 +96,18 @@ export default function ContributorsPage() {
   ];
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#0a0a0a] text-white">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       <Header />
 
       <section className="flex-1 px-8 pt-32 pb-24">
         <div className="mx-auto max-w-6xl">
           {/* Hero Section */}
           <div className="mb-20 max-w-3xl">
-            <h1 className="mb-8 font-display text-5xl tracking-tight text-[#efefef]">
+            <h1 className="mb-8 font-display text-5xl tracking-tight text-foreground">
               Contributors
             </h1>
 
-            <p className="mb-10 max-w-2xl text-lg leading-relaxed text-[#888]">
+            <p className="mb-10 max-w-2xl text-lg leading-relaxed text-text-muted">
               Meet the developers building bounty.new in public. Open-source
               contributions, transparent development, community-driven
               innovation.
@@ -116,31 +116,33 @@ export default function ContributorsPage() {
             {/* Repository Stats */}
             <div className="mb-8 flex flex-wrap gap-8">
               <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-[#666]" />
-                <span className="font-display text-2xl font-medium text-[#efefef]">
+                <Star className="h-4 w-4 text-text-muted" />
+                <span className="font-display text-2xl font-medium text-foreground">
                   {repoStatsServer?.repo.stargazersCount?.toLocaleString() ||
                     '0'}
                 </span>
-                <span className="text-[15px] text-[#666]">stars</span>
+                <span className="text-[15px] text-text-muted">stars</span>
               </div>
               <div className="flex items-center gap-2">
-                <GitFork className="h-4 w-4 text-[#666]" />
-                <span className="font-display text-2xl font-medium text-[#efefef]">
+                <GitFork className="h-4 w-4 text-text-muted" />
+                <span className="font-display text-2xl font-medium text-foreground">
                   {repoStatsServer?.repo.forksCount?.toLocaleString() || '0'}
                 </span>
-                <span className="text-[15px] text-[#666]">forks</span>
+                <span className="text-[15px] text-text-muted">forks</span>
               </div>
               <div className="flex items-center gap-2">
-                <GitGraph className="h-4 w-4 text-[#666]" />
-                <span className="font-display text-2xl font-medium text-[#efefef]">
+                <GitGraph className="h-4 w-4 text-text-muted" />
+                <span className="font-display text-2xl font-medium text-foreground">
                   {allContributors.length}
                 </span>
-                <span className="text-[15px] text-[#666]">contributors</span>
+                <span className="text-[15px] text-text-muted">
+                  contributors
+                </span>
               </div>
             </div>
 
             <Link
-              className="inline-flex items-center gap-2 rounded-lg border border-transparent px-5 py-3 text-[15px] text-[#888] transition-all duration-200 hover:border-[#222] hover:bg-[#111] hover:text-[#efefef]"
+              className="inline-flex items-center gap-2 rounded-lg border border-transparent px-5 py-3 text-[15px] text-text-muted transition-all duration-200 hover:border-border-subtle hover:bg-background hover:text-foreground"
               href={LINKS.SOCIALS.GITHUB}
               target="_blank"
             >
@@ -153,35 +155,33 @@ export default function ContributorsPage() {
           {/* Core Team Section */}
           {core.length > 0 && (
             <section className="mb-16">
-              <h2 className="mb-8 font-display text-2xl tracking-tight text-[#efefef]">
+              <h2 className="mb-8 font-display text-2xl tracking-tight text-foreground">
                 Core Team
               </h2>
               <div className="grid gap-4">
                 {core.map((contributor) => (
                   <Link
-                    className="group flex items-center gap-5 rounded-xl border border-transparent px-6 py-5 transition-all duration-200 hover:border-[#222] hover:bg-[#111]"
+                    className="group flex items-center gap-5 rounded-xl border border-transparent px-6 py-5 transition-all duration-200 hover:border-border-subtle hover:bg-background"
                     href={contributor.html_url}
                     key={contributor.login}
                     target="_blank"
                   >
                     <Avatar className="h-12 w-12 ring-1 ring-[#222]">
                       <AvatarImage src={contributor.avatar_url} />
-                      <AvatarFallback className="bg-[#111] text-[#666]">
-                        {contributor.login.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
+                      <AvatarFacehash name={contributor.login} size={48} />
                     </Avatar>
                     <div className="flex-1">
                       <div className="mb-1 flex items-center gap-3">
-                        <h3 className="font-medium text-[#efefef] transition-colors duration-200 group-hover:text-white">
+                        <h3 className="font-medium text-foreground transition-colors duration-200 group-hover:text-foreground">
                           {contributor.login}
                         </h3>
                         {contributor.login === 'ripgrim' && (
-                          <span className="rounded-full border border-[#222] px-2.5 py-0.5 text-[13px] text-[#666]">
+                          <span className="rounded-full border border-border-subtle px-2.5 py-0.5 text-[13px] text-text-muted">
                             Founder
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1.5 text-[14px] text-[#666]">
+                      <div className="flex items-center gap-1.5 text-[14px] text-text-muted">
                         <GitGraph className="h-3.5 w-3.5" />
                         <span>
                           {contributor.contributions.toLocaleString()}{' '}
@@ -189,7 +189,7 @@ export default function ContributorsPage() {
                         </span>
                       </div>
                     </div>
-                    <ArrowUpRight className="h-4 w-4 text-[#444] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                    <ArrowUpRight className="h-4 w-4 text-text-muted opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
                   </Link>
                 ))}
               </div>
@@ -198,27 +198,25 @@ export default function ContributorsPage() {
 
           {/* Top Contributors Grid */}
           <section className="mb-16">
-            <h2 className="mb-8 font-display text-2xl tracking-tight text-[#efefef]">
+            <h2 className="mb-8 font-display text-2xl tracking-tight text-foreground">
               Top Contributors
             </h2>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {community.map((contributor) => (
                 <Link
-                  className="group rounded-xl border border-transparent px-5 py-5 text-center transition-all duration-200 hover:border-[#222] hover:bg-[#111]"
+                  className="group rounded-xl border border-transparent px-5 py-5 text-center transition-all duration-200 hover:border-border-subtle hover:bg-background"
                   href={contributor.html_url}
                   key={contributor.login}
                   target="_blank"
                 >
                   <Avatar className="mx-auto mb-3 h-12 w-12 ring-1 ring-[#222] transition-transform duration-200 group-hover:scale-105">
                     <AvatarImage src={contributor.avatar_url} />
-                    <AvatarFallback className="bg-[#111] text-[#666]">
-                      {contributor.login.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
+                    <AvatarFacehash name={contributor.login} size={48} />
                   </Avatar>
-                  <h3 className="mb-1 truncate text-[15px] font-medium text-[#efefef] transition-colors duration-200 group-hover:text-white">
+                  <h3 className="mb-1 truncate text-[15px] font-medium text-foreground transition-colors duration-200 group-hover:text-foreground">
                     {contributor.login}
                   </h3>
-                  <div className="flex items-center justify-center gap-1.5 text-[14px] text-[#666]">
+                  <div className="flex items-center justify-center gap-1.5 text-[14px] text-text-muted">
                     <GitGraph className="h-3.5 w-3.5" />
                     <span>{contributor.contributions}</span>
                   </div>
@@ -229,37 +227,37 @@ export default function ContributorsPage() {
 
           {/* External Tools */}
           <section>
-            <h2 className="mb-4 font-display text-2xl tracking-tight text-[#efefef]">
+            <h2 className="mb-4 font-display text-2xl tracking-tight text-foreground">
               External Tools
             </h2>
-            <p className="mb-8 max-w-xl text-[15px] text-[#666]">
+            <p className="mb-8 max-w-xl text-[15px] text-text-muted">
               The tools and platforms that power our development workflow.
             </p>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {externalTools.map((tool) => (
                 <Link
-                  className="group rounded-xl border border-transparent px-6 py-5 transition-all duration-200 hover:border-[#222] hover:bg-[#111]"
+                  className="group rounded-xl border border-transparent px-6 py-5 transition-all duration-200 hover:border-border-subtle hover:bg-background"
                   href={tool.url}
                   key={tool.id}
                   target="_blank"
                 >
                   <div className="flex items-start gap-5">
                     <div className="flex h-12 w-12 items-center justify-center">
-                      <tool.icon className="text-white" size={48} />
+                      <tool.icon className="text-foreground" size={48} />
                     </div>
                     <div className="flex-1">
                       <div className="mb-2 flex items-center justify-between">
-                        <h3 className="font-medium text-[#efefef] transition-colors duration-200 group-hover:text-white">
+                        <h3 className="font-medium text-foreground transition-colors duration-200 group-hover:text-foreground">
                           {tool.name}
                         </h3>
-                        <span className="rounded-full border border-[#222] px-2.5 py-0.5 text-[13px] text-[#666]">
+                        <span className="rounded-full border border-border-subtle px-2.5 py-0.5 text-[13px] text-text-muted">
                           {tool.category}
                         </span>
                       </div>
-                      <p className="mb-3 text-[15px] text-[#666]">
+                      <p className="mb-3 text-[15px] text-text-muted">
                         {tool.description}
                       </p>
-                      <div className="flex items-center gap-1.5 text-[14px] text-[#444] transition-colors duration-200 group-hover:text-[#666]">
+                      <div className="flex items-center gap-1.5 text-[14px] text-text-muted transition-colors duration-200 group-hover:text-text-muted">
                         <ArrowUpRight className="h-3.5 w-3.5" />
                         <span>Visit tool</span>
                       </div>

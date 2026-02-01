@@ -10,7 +10,7 @@ export function MockLoadingBar() {
     <AnimatePresence>
       {isNavigating && (
         <motion.div
-          className="absolute top-0 left-0 right-0 h-[3px] z-50 overflow-hidden bg-[#1a1a1a]"
+          className="absolute top-0 left-0 right-0 h-[3px] z-50 overflow-hidden bg-surface-1"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -18,7 +18,7 @@ export function MockLoadingBar() {
         >
           {/* Main progress bar */}
           <motion.div
-            className="h-full bg-[#3b82f6] relative"
+            className="h-full bg-info relative"
             initial={{ width: '0%' }}
             animate={{ width: `${loadingProgress}%` }}
             transition={{
@@ -37,7 +37,7 @@ export function MockLoadingBar() {
               }}
             />
             {/* Glow effect at the end */}
-            <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-r from-transparent to-[#60a5fa] blur-sm" />
+            <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-r from-transparent to-info blur-sm" />
           </motion.div>
         </motion.div>
       )}

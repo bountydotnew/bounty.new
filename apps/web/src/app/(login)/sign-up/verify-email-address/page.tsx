@@ -37,9 +37,9 @@ function VerifyEmailAddressContent() {
 
   if (!email) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#111110]">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="w-full max-w-md space-y-6 p-8 text-center">
-          <h1 className="text-2xl font-bold text-white">Email Required</h1>
+          <h1 className="text-2xl font-bold text-foreground">Email Required</h1>
           <p className="text-gray-400">
             Please provide an email address to verify.
           </p>
@@ -49,7 +49,7 @@ function VerifyEmailAddressContent() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#111110]">
+    <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="w-full max-w-md p-8">
         <EmailVerification
           email={email}
@@ -66,9 +66,9 @@ export default function VerifyEmailAddressPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-[#111110]">
+        <div className="flex min-h-screen items-center justify-center bg-background">
           <div className="w-full max-w-md space-y-6 p-8 text-center">
-            <h1 className="text-2xl font-bold text-white">Loading...</h1>
+            <h1 className="text-2xl font-bold text-foreground">Loading...</h1>
             <p className="text-gray-400">
               Please wait while we load the verification page.
             </p>

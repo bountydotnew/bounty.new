@@ -35,7 +35,7 @@ export function MobileSidebar({
         {trigger || (
           <Button
             className={cn(
-              'h-8 w-8 p-0 text-white hover:bg-[#383838] hover:text-white',
+              'h-8 w-8 p-0 text-foreground hover:bg-surface-3 hover:text-foreground',
               className
             )}
             size="sm"
@@ -47,13 +47,13 @@ export function MobileSidebar({
         )}
       </SheetTrigger>
       <SheetContent
-        className="w-[320px] rounded-l-2xl border-none bg-[#151515] p-0 shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)] pt-4"
+        className="w-[320px] rounded-l-2xl border-none bg-surface-1 p-0 shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)] pt-4"
         side="right"
       >
         <div className="flex h-full flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between border-[#383838]/20 border-b p-4">
-            <h2 className="font-medium text-lg text-white">
+          <div className="flex items-center justify-between border-border-strong/20 border-b p-4">
+            <h2 className="font-medium text-lg text-foreground">
               Activity & Bounties
             </h2>
           </div>
@@ -67,6 +67,8 @@ export function MobileSidebar({
                 setIsOpen(false);
               }}
             >
+              <DashboardSidebar.ActivityCard />
+              <DashboardSidebar.RecommendationsCard />
               <DashboardSidebar.MyBountiesCard />
             </DashboardSidebar.Provider>
           </div>

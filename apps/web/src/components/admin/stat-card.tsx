@@ -10,7 +10,7 @@ import type { StatCardProps } from '@/types/admin';
 
 export function StatCard({ title, value, hint, icon, href }: StatCardProps) {
   return (
-    <Card className="border border-neutral-800 bg-[#222222]">
+    <Card className="border border-neutral-800 bg-surface-2">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="flex items-center gap-2 font-medium text-neutral-300 text-sm">
           {icon}

@@ -18,7 +18,7 @@ export default async function TopicPage({ params }: TopicPageProps) {
 
   if (!postsData?.posts || !categoriesData?.categories) {
     return (
-      <div className="mx-auto max-w-3xl px-6 py-24 text-center text-white">
+      <div className="mx-auto max-w-3xl px-6 py-24 text-center text-foreground">
         Error loading blog posts. Please try again later.
       </div>
     );

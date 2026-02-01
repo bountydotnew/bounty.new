@@ -14,8 +14,9 @@
     "isolatedModules": true,
     "noEmit": true,
     "strictNullChecks": true,
+    "exactOptionalPropertyTypes": false,
     "types": []
   },
   "include": ["src/**/*", "../../apps/web/src/context"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "src/components/_radix-backup"]
 }

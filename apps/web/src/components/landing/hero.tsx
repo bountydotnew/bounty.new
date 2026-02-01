@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState } from 'react';
 import { ChevronDown, RotateCcw } from 'lucide-react';
@@ -32,16 +32,16 @@ export function Hero() {
 
   // Desktop - full interactive demo
   return (
-    <section className="relative min-h-screen bg-[#0E0E0E] pt-16">
+    <section className="relative min-h-screen bg-background pt-16">
       <div className="container mx-auto px-6 lg:px-8 py-16 lg:py-24">
         <div className="text-left max-w-prose mb-8 lg:mb-12">
-          <h1 className="text-4xl lg:text-4xl xl:text-4xl font-medium leading-tight text-balance mb-8 text-white">
+          <h1 className="text-4xl lg:text-4xl xl:text-4xl font-medium leading-tight text-balance mb-8 text-foreground">
             Get paid to help your favorite founders build the apps you love
           </h1>
           <div className="flex items-center gap-4">
             <a
               href="/dashboard"
-              className="inline-flex items-center justify-center gap-2 bg-white text-black px-6 py-3 rounded-full font-medium hover:bg-white/90 transition-colors"
+              className="inline-flex items-center justify-center gap-2 bg-foreground text-background px-6 py-3 rounded-full font-medium hover:bg-foreground/90 transition-colors"
             >
               Create your first bounty
             </a>
@@ -91,7 +91,7 @@ export function Hero() {
             </div>
           )}
 
-          <div className="relative rounded-2xl overflow-hidden bg-[#1a1a1a]">
+          <div className="relative rounded-2xl overflow-hidden bg-surface-1">
             <div className="absolute inset-0">
               <img
                 src="/images/asset-cc24ca462279ca23250c.webp"
@@ -108,24 +108,26 @@ export function Hero() {
                   <>
                     <div className="absolute -top-10 left-0 z-20">
                       <button
+                        type="button"
                         onClick={() => setDropdownOpen(!dropdownOpen)}
-                        className="flex items-center gap-2 text-sm text-[#989898] hover:text-white transition-colors"
+                        className="flex items-center gap-2 text-sm text-text-muted hover:text-foreground transition-colors"
                       >
                         <span>{demos[activeDemo as keyof typeof demos]}</span>
                         <ChevronDown className="w-4 h-4" />
                       </button>
 
                       {dropdownOpen && (
-                        <div className="absolute top-8 left-0 bg-[#191919] border border-[#2a2a2a] rounded-lg py-2 min-w-[200px] shadow-xl">
+                        <div className="absolute top-8 left-0 bg-surface-1 border border-border-default rounded-lg py-2 min-w-[200px] shadow-xl">
                           {Object.entries(demos).map(([key, label]) => (
                             <button
+                              type="button"
                               key={key}
                               onClick={() => {
                                 setActiveDemo(key);
                                 setDropdownOpen(false);
                                 handleReset();
                               }}
-                              className="w-full px-4 py-2 text-left text-sm hover:bg-[#2a2a2a] text-white transition-colors"
+                              className="w-full px-4 py-2 text-left text-sm hover:bg-surface-hover text-foreground transition-colors"
                             >
                               {label}
                             </button>
@@ -136,8 +138,9 @@ export function Hero() {
 
                     {activeDemo !== 'waitlist' && (
                       <button
+                        type="button"
                         onClick={handleReset}
-                        className="absolute -bottom-10 right-0 z-20 w-10 h-10 rounded-full bg-[#191919] border border-[#2a2a2a] flex items-center justify-center text-[#989898] hover:text-white hover:border-[#3a3a3a] transition-all animate-in fade-in zoom-in duration-300"
+                        className="absolute -bottom-10 right-0 z-20 w-10 h-10 rounded-full bg-surface-1 border border-border-default flex items-center justify-center text-text-muted hover:text-foreground hover:border-border-strong transition-all animate-in fade-in zoom-in duration-300"
                         title="Reset demo"
                       >
                         <RotateCcw className="w-4 h-4" />
@@ -160,11 +163,19 @@ export function Hero() {
                       <WaitlistDemo key={demoKey} />
                     )}
                     {!isMobile && activeDemo === 'create' && (
-                      <CreateBountyDemo key={demoKey} onShowNotifications={() => setShowNotifications(true)} />
+                      <CreateBountyDemo
+                        key={demoKey}
+                        onShowNotifications={() => setShowNotifications(true)}
+                      />
                     )}
-                    {!isMobile && activeDemo === 'submit' && <SubmitSolutionDemo key={demoKey} />}
+                    {!isMobile && activeDemo === 'submit' && (
+                      <SubmitSolutionDemo key={demoKey} />
+                    )}
                     {!isMobile && activeDemo === 'approve' && (
-                      <ApprovePayDemo key={demoKey} onShowNotifications={() => setShowNotifications(true)} />
+                      <ApprovePayDemo
+                        key={demoKey}
+                        onShowNotifications={() => setShowNotifications(true)}
+                      />
                     )}
                   </div>
                 </div>

@@ -76,7 +76,7 @@ export function SuccessClient() {
             </CardHeader>
 
             <CardContent className="space-y-6">
-              <Card className="border-border bg-[#191919]">
+              <Card className="border-border bg-surface-1">
                 <CardHeader>
                   <CardTitle className="font-semibold text-xl">
                     Purchase Summary

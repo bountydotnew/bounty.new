@@ -25,7 +25,7 @@ export default function ProfilePageClient() {
   }
 
   // Error or not found state
-  if (isError || !data) {
+  if (isError || !data || !data.user) {
     return <ProfileNotFoundState />;
   }
 

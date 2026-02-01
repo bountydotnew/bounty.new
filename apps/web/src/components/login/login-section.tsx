@@ -68,21 +68,21 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
   };
 
   return (
-    <div className="flex w-full flex-col items-center justify-center text-[#f3f3f3]">
+    <div className="flex w-full flex-col items-center justify-center text-foreground">
       <div className="w-full max-w-sm space-y-8">
         {isPending && (
           <div className="w-full space-y-8">
             <div className="animate-pulse space-y-4 text-center">
-              <div className="mx-auto h-16 w-16 rounded-lg bg-[#383838]" />
-              <div className="mx-auto h-7 w-48 rounded bg-[#383838]" />
+              <div className="mx-auto h-16 w-16 rounded-lg bg-surface-3" />
+              <div className="mx-auto h-7 w-48 rounded bg-surface-3" />
             </div>
 
             <div className="animate-pulse space-y-3">
-              <div className="h-12 w-full rounded-lg bg-[#383838]" />
+              <div className="h-12 w-full rounded-lg bg-surface-3" />
             </div>
 
             <div className="animate-pulse text-center">
-              <div className="mx-auto h-4 w-64 rounded bg-[#383838]" />
+              <div className="mx-auto h-4 w-64 rounded bg-surface-3" />
             </div>
           </div>
         )}
@@ -114,13 +114,13 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
                   <span className="w-full border-t border-gray-600" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-[#111110] px-2 text-gray-400">Or</span>
+                  <span className="bg-background px-2 text-gray-400">Or</span>
                 </div>
               </div>
 
               <div className="relative">
                 <Button
-                  className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#2A2A28] py-3 font-medium text-gray-200 transition-colors hover:bg-[#383838]"
+                  className="flex w-full items-center justify-center gap-3 rounded-lg bg-surface-hover py-3 font-medium text-gray-200 transition-colors hover:bg-surface-3"
                   disabled={loading}
                   onClick={handleGitHubSignIn}
                 >

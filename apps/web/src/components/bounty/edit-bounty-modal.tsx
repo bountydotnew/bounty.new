@@ -112,7 +112,11 @@ export function EditBountyModal({
   const onSubmit = handleSubmit((data: CreateBountyForm) => {
     const formattedData = formatFormData.createBounty(data);
     // Remove amount and currency - prices cannot be changed after creation
-    const { amount: _amount, currency: _currency, ...updateData } = formattedData;
+    const {
+      amount: _amount,
+      currency: _currency,
+      ...updateData
+    } = formattedData;
     updateBounty.mutate({ id: bountyId, ...updateData });
   });
 
@@ -142,10 +146,7 @@ export function EditBountyModal({
     }
     return (
       <Dialog onOpenChange={handleClose} open={open}>
-        <DialogContent
-          className="max-h-[75vh] w-[92vw] max-w-lg overflow-y-auto p-0 sm:rounded-lg md:max-w-lg lg:max-w-lg"
-          overlayVariant="default"
-        >
+        <DialogContent className="max-h-[75vh] w-[92vw] max-w-lg overflow-y-auto p-0 sm:rounded-lg md:max-w-lg lg:max-w-lg">
           <div className="flex h-40 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-foreground border-b-2" />
           </div>
@@ -179,10 +180,7 @@ export function EditBountyModal({
     }
     return (
       <Dialog onOpenChange={handleClose} open={open}>
-        <DialogContent
-          className="w-[92vw] max-w-lg p-0 sm:rounded-lg md:max-w-lg lg:max-w-lg"
-          overlayVariant="default"
-        >
+        <DialogContent className="w-[92vw] max-w-lg p-0 sm:rounded-lg md:max-w-lg lg:max-w-lg">
           <DialogHeader className="px-6 pt-6">
             <DialogTitle className="text-xl">Error</DialogTitle>
           </DialogHeader>
@@ -372,10 +370,7 @@ export function EditBountyModal({
 
   return (
     <Dialog onOpenChange={handleClose} open={open}>
-      <DialogContent
-        className="max-h-[75vh] w-[92vw] max-w-lg overflow-y-auto p-0 sm:rounded-lg md:max-w-lg lg:max-w-lg"
-        overlayVariant="default"
-      >
+      <DialogContent className="max-h-[75vh] w-[92vw] max-w-lg overflow-y-auto p-0 sm:rounded-lg md:max-w-lg lg:max-w-lg">
         <DialogHeader className="px-6 pt-6">
           <DialogTitle className="text-xl">Edit Bounty</DialogTitle>
         </DialogHeader>
@@ -427,7 +422,6 @@ export function EditBountyModal({
               </p>
             )}
           </div>
-
 
           {/* <div className="space-y-2">
             <Label htmlFor="deadline">Deadline (Optional)</Label>

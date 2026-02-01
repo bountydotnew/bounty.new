@@ -54,6 +54,11 @@ export interface BountyCardState {
     repo: string;
     url: string;
   } | null;
+  /** Linear display */
+  linearDisplay: {
+    identifier: string;
+    url: string;
+  } | null;
   /** Mutation states */
   isTogglePinPending: boolean;
   isDeletePending: boolean;

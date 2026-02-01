@@ -41,6 +41,12 @@ const RATE_LIMIT_CONFIGS = {
   // Waitlist operations
   'waitlist': { requests: 5, window: '1 m' },
 
+  // Linear integration operations
+  'linear:read': { requests: 60, window: '1 m' },
+  'linear:create': { requests: 10, window: '1 m' },
+  'linear:sync': { requests: 20, window: '1 m' },
+  'linear:comment': { requests: 15, window: '1 m' },
+
   // Global fallback (for unspecified operations)
   'global': { requests: 60, window: '1 m' },
 } as const;

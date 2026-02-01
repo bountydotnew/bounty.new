@@ -78,26 +78,28 @@ function Pagination({
   totalPages: number;
   onPageChange: (page: number) => void;
 }) {
-  if (totalPages <= 1) return null;
+  if (totalPages <= 1) {
+    return null;
+  }
 
   return (
-    <div className="flex items-center justify-center gap-4 px-3 py-2 border-t border-[#232323]">
+    <div className="flex items-center justify-center gap-4 px-3 py-2 border-t border-border-subtle">
       <button
         type="button"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="p-1 rounded hover:bg-[#141414] disabled:opacity-30 disabled:hover:bg-transparent text-[#CFCFCF]"
+        className="p-1 rounded hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent text-text-secondary"
       >
         <ChevronLeft className="w-4 h-4" />
       </button>
-      <span className="text-xs text-[#5A5A5A]">
+      <span className="text-xs text-text-tertiary">
         {currentPage} / {totalPages}
       </span>
       <button
         type="button"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="p-1 rounded hover:bg-[#141414] disabled:opacity-30 disabled:hover:bg-transparent text-[#CFCFCF]"
+        className="p-1 rounded hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent text-text-secondary"
       >
         <ChevronRight className="w-4 h-4" />
       </button>
@@ -130,12 +132,26 @@ function AccountsSelectorContent({
   return (
     <div className="flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-[#232323]">
-        {!selectedAccount ? (
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-border-subtle">
+        {selectedAccount ? (
           <>
-            <GithubIcon className="w-4 h-4 text-[#5A5A5A]" />
+            <button
+              type="button"
+              onClick={() => setSelectedAccount(null)}
+              className="p-1 -ml-1 rounded hover:bg-white/10 text-text-secondary"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <GithubIcon className="w-4 h-4 text-text-tertiary" />
+            <span className="text-sm text-text-secondary">
+              {selectedAccount.accountLogin ?? 'Unknown Account'}
+            </span>
+          </>
+        ) : (
+          <>
+            <GithubIcon className="w-4 h-4 text-text-tertiary" />
             <input
-              className="flex-1 bg-transparent text-sm text-[#CFCFCF] placeholder:text-[#5A5A5A] outline-none"
+              className="flex-1 bg-transparent text-sm text-text-secondary placeholder:text-text-tertiary outline-none"
               placeholder={installations.length === 1
                 ? installations[0]?.accountLogin ?? 'Search accounts...'
                 : 'Search accounts...'}
@@ -143,55 +159,12 @@ function AccountsSelectorContent({
               spellCheck={false}
             />
           </>
-        ) : (
-          <>
-            <button
-              type="button"
-              onClick={() => setSelectedAccount(null)}
-              className="p-1 -ml-1 rounded hover:bg-[#141414] text-[#CFCFCF]"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <GithubIcon className="w-4 h-4 text-[#5A5A5A]" />
-            <span className="text-sm text-[#CFCFCF]">
-              {selectedAccount.accountLogin ?? 'Unknown Account'}
-            </span>
-          </>
         )}
       </div>
 
       {/* Content */}
       <div className="min-h-[250px] max-h-[250px] overflow-y-auto p-1">
-        {!selectedAccount ? (
-          // Accounts list
-          installations.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-[#5A5A5A]">
-              No accounts found
-            </div>
-          ) : (
-            installations
-              .slice((accountsPage - 1) * ACCOUNTS_PER_PAGE, accountsPage * ACCOUNTS_PER_PAGE)
-              .map((account) => {
-                const accountRepos = installationRepos.find((r) => r.installationId === account.id);
-                const count = accountRepos?.repositories.length ?? 0;
-                return (
-                  <button
-                    key={account.id}
-                    type="button"
-                    onClick={() => setSelectedAccount(account)}
-                    className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-[#141414] transition-colors"
-                  >
-                    <GithubIcon className="w-3.5 h-3.5 text-[#5A5A5A] shrink-0" />
-                    <span className="flex-1 text-sm text-[#CFCFCF] truncate">
-                      {account.accountLogin ?? 'Unknown Account'}
-                    </span>
-                    <span className="text-xs text-[#5A5A5A]">{count}</span>
-                    <ChevronRight className="w-3 h-3 text-[#5A5A5A] shrink-0" />
-                  </button>
-                );
-              })
-          )
-        ) : (
+        {selectedAccount ? (
           // Repos list for selected account
           (() => {
             const accountRepos = installationRepos.find((r) => r.installationId === selectedAccount.id);
@@ -206,19 +179,48 @@ function AccountsSelectorContent({
                         onSelectRepo(repo);
                         onClose();
                       }}
-                      className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-[#141414] transition-colors"
+                      className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-white/10 transition-colors"
                     >
-                      <GithubIcon className="w-3.5 h-3.5 text-[#5A5A5A] shrink-0" />
-                      <span className="flex-1 text-sm text-[#CFCFCF] truncate">{repo}</span>
-                      <ChevronRight className="w-3 h-3 text-[#5A5A5A] shrink-0" />
+                      <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
+                      <span className="flex-1 text-sm text-text-secondary truncate">{repo}</span>
+                      <ChevronRight className="w-3 h-3 text-text-tertiary shrink-0" />
                     </button>
                   ))
                 ) : (
-                  <div className="px-3 py-2 text-sm text-[#5A5A5A]">No repositories</div>
+                  <div className="px-3 py-2 text-sm text-text-tertiary">No repositories</div>
                 )}
               </>
             );
           })()
+        ) : (
+          // Accounts list
+          installations.length === 0 ? (
+            <div className="px-3 py-2 text-sm text-text-tertiary">
+              No accounts found
+            </div>
+          ) : (
+            installations
+              .slice((accountsPage - 1) * ACCOUNTS_PER_PAGE, accountsPage * ACCOUNTS_PER_PAGE)
+              .map((account) => {
+                const accountRepos = installationRepos.find((r) => r.installationId === account.id);
+                const count = accountRepos?.repositories.length ?? 0;
+                return (
+                  <button
+                    key={account.id}
+                    type="button"
+                    onClick={() => setSelectedAccount(account)}
+                    className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-white/10 transition-colors"
+                  >
+                    <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
+                    <span className="flex-1 text-sm text-text-secondary truncate">
+                      {account.accountLogin ?? 'Unknown Account'}
+                    </span>
+                    <span className="text-xs text-text-tertiary">{count}</span>
+                    <ChevronRight className="w-3 h-3 text-text-tertiary shrink-0" />
+                  </button>
+                );
+              })
+          )
         )}
       </div>
 
@@ -262,16 +264,16 @@ function BranchesSelectorContent({
   return (
     <div className="flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-[#232323]">
-        <BranchIcon className="w-4 h-4 text-[#5A5A5A]" />
-        <span className="text-sm text-[#CFCFCF]">Select branch</span>
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-border-subtle">
+        <BranchIcon className="w-4 h-4 text-text-tertiary" />
+        <span className="text-sm text-text-secondary">Select branch</span>
       </div>
 
       {/* Content */}
       <div className="min-h-[250px] max-h-[250px] overflow-y-auto p-1">
         {branchesLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-4 h-4 animate-spin text-[#5A5A5A]" />
+            <Loader2 className="w-4 h-4 animate-spin text-text-tertiary" />
           </div>
         ) : paginatedBranches.length > 0 ? (
           paginatedBranches.map((branch: string) => (
@@ -282,14 +284,14 @@ function BranchesSelectorContent({
                 onSelectBranch(branch);
                 onClose();
               }}
-              className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-[#141414] transition-colors"
+              className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-white/10 transition-colors"
             >
-              <BranchIcon className="w-3.5 h-3.5 text-[#5A5A5A] shrink-0" />
-              <span className="flex-1 text-sm text-[#CFCFCF] truncate">{branch}</span>
+              <BranchIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
+              <span className="flex-1 text-sm text-text-secondary truncate">{branch}</span>
             </button>
           ))
         ) : (
-          <div className="px-3 py-2 text-sm text-[#5A5A5A]">No branches found</div>
+          <div className="px-3 py-2 text-sm text-text-tertiary">No branches found</div>
         )}
       </div>
 
@@ -335,16 +337,16 @@ function IssuesSelectorContent({
   return (
     <div className="flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-[#232323]">
-        <GithubIcon className="w-4 h-4 text-[#5A5A5A]" />
-        <span className="text-sm text-[#CFCFCF]">Select issue</span>
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-border-subtle">
+        <GithubIcon className="w-4 h-4 text-text-tertiary" />
+        <span className="text-sm text-text-secondary">Select issue</span>
       </div>
 
       {/* Content */}
       <div className="min-h-[250px] max-h-[250px] overflow-y-auto p-1">
         {issuesList.isLoading || issuesList.isFetching ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-4 h-4 animate-spin text-[#5A5A5A]" />
+            <Loader2 className="w-4 h-4 animate-spin text-text-tertiary" />
           </div>
         ) : paginatedIssues.length > 0 ? (
           paginatedIssues.map((issue: Issue) => (
@@ -357,12 +359,12 @@ function IssuesSelectorContent({
               }}
               className={cn(
                 "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors",
-                "hover:bg-[#141414]",
-                selectedIssue?.number === issue.number && "bg-[#141414]"
+                "hover:bg-white/10",
+                selectedIssue?.number === issue.number && "bg-white/5"
               )}
             >
-              <GithubIcon className="w-3.5 h-3.5 text-[#5A5A5A] shrink-0" />
-              <span className="flex-1 text-sm text-[#CFCFCF] truncate">
+              <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
+              <span className="flex-1 text-sm text-text-secondary truncate">
                 #{issue.number}: {issue.title}
               </span>
               {selectedIssue?.number === issue.number && (
@@ -371,7 +373,7 @@ function IssuesSelectorContent({
             </button>
           ))
         ) : (
-          <div className="px-3 py-2 text-sm text-[#5A5A5A]">No open issues</div>
+          <div className="px-3 py-2 text-sm text-text-tertiary">No open issues</div>
         )}
       </div>
 
@@ -459,15 +461,18 @@ function MobileSelectorContent({
   // Header based on current step
   const renderHeader = () => {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-[#232323]">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-border-subtle">
         {step !== 'repos' && (
           <button
             type="button"
             onClick={() => {
-              if (step === 'issues') setStep('branches');
-              else if (step === 'branches') setStep('repos');
+              if (step === 'issues') {
+                setStep('branches');
+              } else if (step === 'branches') {
+                setStep('repos');
+              }
             }}
-            className="p-1 -ml-1 rounded hover:bg-[#141414] text-[#CFCFCF]"
+            className="p-1 -ml-1 rounded hover:bg-white/10 text-text-secondary"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -475,9 +480,9 @@ function MobileSelectorContent({
 
         {step === 'repos' && !selectedAccount && (
           <>
-            <GithubIcon className="w-4 h-4 text-[#5A5A5A]" />
+            <GithubIcon className="w-4 h-4 text-text-tertiary" />
             <input
-              className="flex-1 bg-transparent text-sm text-[#CFCFCF] placeholder:text-[#5A5A5A] outline-none"
+              className="flex-1 bg-transparent text-sm text-text-secondary placeholder:text-text-tertiary outline-none"
               placeholder={installations.length === 1
                 ? installations[0]?.accountLogin ?? 'Search accounts...'
                 : 'Search accounts...'}
@@ -497,12 +502,12 @@ function MobileSelectorContent({
             <button
               type="button"
               onClick={() => setSelectedAccount(null)}
-              className="p-1 -ml-1 rounded hover:bg-[#141414] text-[#CFCFCF]"
+              className="p-1 -ml-1 rounded hover:bg-white/10 text-text-secondary"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <GithubIcon className="w-4 h-4 text-[#5A5A5A]" />
-            <span className="text-sm text-[#CFCFCF]">
+            <GithubIcon className="w-4 h-4 text-text-tertiary" />
+            <span className="text-sm text-text-secondary">
               {selectedAccount.accountLogin ?? 'Unknown Account'}
             </span>
           </>
@@ -510,10 +515,10 @@ function MobileSelectorContent({
 
         {step === 'branches' && (
           <>
-            <BranchIcon className="w-4 h-4 text-[#5A5A5A]" />
-            <span className="text-sm text-[#CFCFCF]">Select branch</span>
+            <BranchIcon className="w-4 h-4 text-text-tertiary" />
+            <span className="text-sm text-text-secondary">Select branch</span>
             <input
-              className="flex-1 bg-transparent text-sm text-[#CFCFCF] placeholder:text-[#5A5A5A] outline-none"
+              className="flex-1 bg-transparent text-sm text-text-secondary placeholder:text-text-tertiary outline-none"
               placeholder="Search branches..."
               value={branchSearchQuery}
               onChange={(e) => {
@@ -528,10 +533,10 @@ function MobileSelectorContent({
 
         {step === 'issues' && (
           <>
-            <GithubIcon className="w-4 h-4 text-[#5A5A5A]" />
-            <span className="text-sm text-[#CFCFCF]">Select issue</span>
+            <GithubIcon className="w-4 h-4 text-text-tertiary" />
+            <span className="text-sm text-text-secondary">Select issue</span>
             <input
-              className="flex-1 bg-transparent text-sm text-[#CFCFCF] placeholder:text-[#5A5A5A] outline-none"
+              className="flex-1 bg-transparent text-sm text-text-secondary placeholder:text-text-tertiary outline-none"
               placeholder="Search issues..."
               value={issueQuery}
               onChange={(e) => {
@@ -566,20 +571,20 @@ function MobileSelectorContent({
                   }}
                   className={cn(
                     "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors",
-                    "hover:bg-[#141414]",
-                    selectedRepository === repo && "bg-[#141414]"
+                    "hover:bg-white/10",
+                    selectedRepository === repo && "bg-white/5"
                   )}
                 >
-                  <GithubIcon className="w-3.5 h-3.5 text-[#5A5A5A] shrink-0" />
-                  <span className="flex-1 text-sm text-[#CFCFCF] truncate">{repo}</span>
+                  <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
+                  <span className="flex-1 text-sm text-text-secondary truncate">{repo}</span>
                   {selectedRepository === repo && (
                     <Check className="w-3.5 h-3.5 text-green-500 shrink-0" />
                   )}
-                  <ChevronRight className="w-3 h-3 text-[#5A5A5A] shrink-0" />
+                  <ChevronRight className="w-3 h-3 text-text-tertiary shrink-0" />
                 </button>
               ))
             ) : (
-              <div className="px-3 py-2 text-sm text-[#5A5A5A]">No repositories</div>
+              <div className="px-3 py-2 text-sm text-text-tertiary">No repositories</div>
             )}
           </>
         );
@@ -594,7 +599,7 @@ function MobileSelectorContent({
         <>
           {branchesLoading && !installationRepos.some((r) => r.repositories.length > 0) ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-4 h-4 animate-spin text-[#5A5A5A]" />
+              <Loader2 className="w-4 h-4 animate-spin text-text-tertiary" />
             </div>
           ) : (
             paginatedInstallations.map((account) => {
@@ -605,14 +610,14 @@ function MobileSelectorContent({
                   key={account.id}
                   type="button"
                   onClick={() => setSelectedAccount(account)}
-                  className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-[#141414] transition-colors"
+                  className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-white/10 transition-colors"
                 >
-                  <GithubIcon className="w-3.5 h-3.5 text-[#5A5A5A] shrink-0" />
-                  <span className="flex-1 text-sm text-[#CFCFCF] truncate">
+                  <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
+                  <span className="flex-1 text-sm text-text-secondary truncate">
                     {account.accountLogin ?? 'Unknown Account'}
                   </span>
-                  <span className="text-xs text-[#5A5A5A]">{count}</span>
-                  <ChevronRight className="w-3 h-3 text-[#5A5A5A] shrink-0" />
+                  <span className="text-xs text-text-tertiary">{count}</span>
+                  <ChevronRight className="w-3 h-3 text-text-tertiary shrink-0" />
                 </button>
               );
             })
@@ -632,7 +637,7 @@ function MobileSelectorContent({
         <>
           {branchesLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-4 h-4 animate-spin text-[#5A5A5A]" />
+              <Loader2 className="w-4 h-4 animate-spin text-text-tertiary" />
             </div>
           ) : paginatedBranches.length > 0 ? (
             paginatedBranches.map((branch: string) => (
@@ -645,20 +650,20 @@ function MobileSelectorContent({
                 }}
                 className={cn(
                   "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors",
-                  "hover:bg-[#141414]",
-                  selectedBranch === branch && "bg-[#141414]"
+                  "hover:bg-white/10",
+                  selectedBranch === branch && "bg-white/5"
                 )}
               >
-                <BranchIcon className="w-3.5 h-3.5 text-[#5A5A5A] shrink-0" />
-                <span className="flex-1 text-sm text-[#CFCFCF] truncate">{branch}</span>
+                <BranchIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
+                <span className="flex-1 text-sm text-text-secondary truncate">{branch}</span>
                 {selectedBranch === branch && (
                   <Check className="w-3.5 h-3.5 text-green-500 shrink-0" />
                 )}
-                <ChevronRight className="w-3 h-3 text-[#5A5A5A] shrink-0" />
+                <ChevronRight className="w-3 h-3 text-text-tertiary shrink-0" />
               </button>
             ))
           ) : (
-            <div className="px-3 py-2 text-sm text-[#5A5A5A]">No branches found</div>
+            <div className="px-3 py-2 text-sm text-text-tertiary">No branches found</div>
           )}
         </>
       );
@@ -675,7 +680,7 @@ function MobileSelectorContent({
         <>
           {issuesList.isLoading || issuesList.isFetching ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-4 h-4 animate-spin text-[#5A5A5A]" />
+              <Loader2 className="w-4 h-4 animate-spin text-text-tertiary" />
             </div>
           ) : paginatedIssues.length > 0 ? (
             paginatedIssues.map((issue: Issue) => (
@@ -685,12 +690,12 @@ function MobileSelectorContent({
                 onClick={() => onSelectIssue(issue)}
                 className={cn(
                   "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors",
-                  "hover:bg-[#141414]",
-                  selectedIssue?.number === issue.number && "bg-[#141414]"
+                  "hover:bg-white/10",
+                  selectedIssue?.number === issue.number && "bg-white/5"
                 )}
               >
-                <GithubIcon className="w-3.5 h-3.5 text-[#5A5A5A] shrink-0" />
-                <span className="flex-1 text-sm text-[#CFCFCF] truncate">
+                <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
+                <span className="flex-1 text-sm text-text-secondary truncate">
                   #{issue.number}: {issue.title}
                 </span>
                 {selectedIssue?.number === issue.number && (
@@ -699,7 +704,7 @@ function MobileSelectorContent({
               </button>
             ))
           ) : (
-            <div className="px-3 py-2 text-sm text-[#5A5A5A]">No open issues</div>
+            <div className="px-3 py-2 text-sm text-text-tertiary">No open issues</div>
           )}
         </>
       );
@@ -852,11 +857,15 @@ export function RepoBranchIssueSelector({
                 setMobileOpen(true);
                 setMobileAccountsPage(1);
               }}
-              className="flex items-center gap-2 text-[#5A5A5A] hover:text-[#888] transition-colors"
+              className={cn(
+                "flex items-center gap-2 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5",
+                "hover:bg-white/10",
+                mobileOpen && mobileStep === 'repos' && "bg-white/10"
+              )}
             >
               <GithubIcon className="w-4 h-4" />
               {selectedRepository ? (
-                <span className="text-sm text-white">{selectedRepository}</span>
+                <span className="text-sm text-foreground">{selectedRepository}</span>
               ) : (
                 <span className="text-sm">Select repository</span>
               )}
@@ -866,7 +875,7 @@ export function RepoBranchIssueSelector({
             {/* Branch trigger */}
             {selectedRepository && (
               <>
-                <div className="w-px h-4 bg-[#333] shrink-0" />
+                <div className="w-px h-4 bg-surface-3 shrink-0" />
                 <button
                   type="button"
                   onClick={() => {
@@ -874,10 +883,14 @@ export function RepoBranchIssueSelector({
                     setMobileOpen(true);
                     setMobileBranchesPage(1);
                   }}
-                  className="flex items-center gap-1.5 text-[#5A5A5A] hover:text-[#888] transition-colors"
+                  className={cn(
+                    "flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5",
+                    "hover:bg-white/10",
+                    mobileOpen && mobileStep === 'branches' && "bg-white/10"
+                  )}
                 >
                   <BranchIcon className="w-3.5 h-3.5" />
-                  <span className="text-[14px] text-[#888]">{selectedBranch}</span>
+                  <span className="text-[14px] text-text-muted">{selectedBranch}</span>
                   <ChevronSortIcon className="size-2" />
                 </button>
               </>
@@ -886,7 +899,7 @@ export function RepoBranchIssueSelector({
             {/* Issue trigger */}
             {selectedBranch && (
               <>
-                <div className="w-px h-4 bg-[#333] shrink-0" />
+                <div className="w-px h-4 bg-surface-3 shrink-0" />
                 <button
                   type="button"
                   onClick={() => {
@@ -894,10 +907,14 @@ export function RepoBranchIssueSelector({
                     setMobileOpen(true);
                     setMobileIssuesPage(1);
                   }}
-                  className="flex items-center gap-1.5 text-[#5A5A5A] hover:text-[#888] transition-colors"
+                  className={cn(
+                    "flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5",
+                    "hover:bg-white/10",
+                    mobileOpen && mobileStep === 'issues' && "bg-white/10"
+                  )}
                 >
                   <GithubIcon className="w-3.5 h-3.5" />
-                  <span className="text-[14px] text-[#888]">
+                  <span className="text-[14px] text-text-muted">
                     {selectedIssue ? `#${selectedIssue.number}` : 'Issue'}
                   </span>
                   <ChevronSortIcon className="size-2" />
@@ -906,8 +923,8 @@ export function RepoBranchIssueSelector({
             )}
           </div>
         </DrawerTrigger>
-        <DrawerContent className="border-[#232323] bg-[#191919] rounded-t-xl">
-          <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-[#333] shrink-0" />
+        <DrawerContent className="border-border-subtle bg-surface-1 rounded-t-xl">
+          <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-surface-3 shrink-0" />
           <MobileSelectorContent
             step={mobileStep}
             selectedRepository={selectedRepository}
@@ -952,11 +969,15 @@ export function RepoBranchIssueSelector({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex items-center gap-2 text-[#5A5A5A] hover:text-[#888] transition-colors"
+          className={cn(
+            "flex items-center gap-2 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5",
+            "hover:bg-white/10",
+            accountsOpen && "bg-white/10"
+          )}
         >
           <GithubIcon className="w-4 h-4" />
           {selectedRepository ? (
-            <span className="text-sm text-white">{selectedRepository}</span>
+            <span className="text-sm text-foreground">{selectedRepository}</span>
           ) : (
             <span className="text-sm">Select repository</span>
           )}
@@ -964,7 +985,7 @@ export function RepoBranchIssueSelector({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-80 p-0 border-[#232323] bg-[#191919] text-[#CFCFCF] rounded-xl"
+        className="w-80 p-0 border-border-subtle bg-surface-1 text-text-secondary rounded-xl"
         align="start"
         sideOffset={4}
       >
@@ -986,15 +1007,19 @@ export function RepoBranchIssueSelector({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex items-center gap-1.5 text-[#5A5A5A] hover:text-[#888] transition-colors"
+          className={cn(
+            "flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5",
+            "hover:bg-white/10",
+            branchesOpen && "bg-white/10"
+          )}
         >
           <BranchIcon className="w-3.5 h-3.5" />
-          <span className="text-[14px] text-[#888]">{selectedBranch}</span>
+          <span className="text-[14px] text-text-muted">{selectedBranch}</span>
           <ChevronSortIcon className="size-2" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-80 p-0 border-[#232323] bg-[#191919] text-[#CFCFCF] rounded-xl"
+        className="w-80 p-0 border-border-subtle bg-surface-1 text-text-secondary rounded-xl"
         align="start"
         sideOffset={4}
       >
@@ -1016,17 +1041,21 @@ export function RepoBranchIssueSelector({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex items-center gap-1.5 text-[#5A5A5A] hover:text-[#888] transition-colors"
+          className={cn(
+            "flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5",
+            "hover:bg-white/10",
+            issuesOpen && "bg-white/10"
+          )}
         >
           <GithubIcon className="w-3.5 h-3.5" />
-          <span className="text-[14px] text-[#888]">
+          <span className="text-[14px] text-text-muted">
             {selectedIssue ? `#${selectedIssue.number}` : 'Issue'}
           </span>
           <ChevronSortIcon className="size-2" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-80 p-0 border-[#232323] bg-[#191919] text-[#CFCFCF] rounded-xl"
+        className="w-80 p-0 border-border-subtle bg-surface-1 text-text-secondary rounded-xl"
         align="start"
         sideOffset={4}
       >

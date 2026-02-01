@@ -17,7 +17,7 @@ export function BountyErrorState({ title, message }: BountyErrorStateProps) {
     <div className="flex min-h-screen items-center justify-center">
       <div className="mx-auto max-w-lg px-6 py-5 text-center">
         <Bounty className="mx-auto mb-10 h-10 w-10" />
-        <h1 className="font-semibold text-white text-xl">{title}</h1>
+        <h1 className="font-semibold text-foreground text-xl">{title}</h1>
         <p className="mt-1 text-neutral-400 text-sm">{message}</p>
         <Button
           className="mt-6"

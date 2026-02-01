@@ -300,6 +300,18 @@ export const userRouter = router({
   getMe: protectedProcedure.query(async ({ ctx }) => {
     const userData = await ctx.db.query.user.findFirst({
       where: (user, { eq }) => eq(user.id, ctx.session.user.id),
+      columns: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        handle: true,
+        isProfilePrivate: true,
+        role: true,
+        cardBackground: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     if (!userData) {
@@ -592,6 +604,38 @@ export const userRouter = router({
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to update profile privacy',
+          cause: error,
+        });
+      }
+    }),
+
+  updateCardBackground: protectedProcedure
+    .input(
+      z.object({
+        cardBackground: z.string().optional(), // undefined/null resets to default
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await ctx.db
+          .update(user)
+          .set({
+            cardBackground: input.cardBackground ?? null,
+            updatedAt: new Date(),
+          })
+          .where(eq(user.id, ctx.session.user.id));
+
+        // Invalidate user cache
+        currentUserCache.delete(ctx.session.user.id);
+
+        return {
+          success: true,
+          cardBackground: input.cardBackground ?? null,
+        };
+      } catch (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to update card background',
           cause: error,
         });
       }

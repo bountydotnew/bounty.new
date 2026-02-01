@@ -38,12 +38,16 @@ export function UpvoteButton({ className = '' }: UpvoteButtonProps) {
     <button
       aria-label="Upvote bounty"
       aria-pressed={isVoted}
-      className={`flex items-center gap-1 rounded-md border border-neutral-700 bg-neutral-800/40 px-2 py-1 text-neutral-300 text-xs hover:bg-neutral-700/40 ${
-        isVoted ? 'border-neutral-700/40 bg-[#343333] text-white' : ''
+      className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-all ${
+        isVoted
+          ? 'border-brand-accent/30 bg-brand-accent/10 text-brand-accent'
+          : 'border-border-subtle bg-surface-1 text-text-tertiary hover:border-border-default hover:text-foreground'
       } ${className}`}
       type="button"
     >
-      <ArrowUpIcon className={`h-4 w-4 ${isVoted ? 'text-white' : ''}`} />
+      <ArrowUpIcon
+        className={`h-4 w-4 ${isVoted ? 'text-brand-accent' : ''}`}
+      />
       <span>{voteCount}</span>
     </button>
   );

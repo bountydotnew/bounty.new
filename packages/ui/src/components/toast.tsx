@@ -1,238 +1,269 @@
-'use client';
+"use client";
 
-/**
- * Composable toast system built on top of Sonner
- *
- * @example
- * // Simple toast
- * toast.success('Bounty created successfully!');
- *
- * // Toast with description
- * toast.info('New notification', 'You have a new comment on your bounty');
- *
- * // Toast with options
- * toast.error('Payment failed', { duration: 10000 });
- *
- * // Custom toast
- * toast.custom(({ onDismiss }) => (
- *   <div>
- *     <p>Custom content</p>
- *     <button onClick={onDismiss}>Close</button>
- *   </div>
- * ));
- */
+import { Toast } from "@base-ui/react/toast";
+import {
+  CircleAlertIcon,
+  CircleCheckIcon,
+  InfoIcon,
+  LoaderCircleIcon,
+  TriangleAlertIcon,
+} from "lucide-react";
 
-import { CircleCheckIcon, CircleX, Info, TriangleAlert, X } from 'lucide-react';
-import type { ExternalToast } from 'sonner';
-import { toast as sonnerToast } from 'sonner';
-import { cn } from '../lib/utils';
-import type { JSX } from 'react';
+import { cn } from "@bounty/ui/lib/utils";
+import { buttonVariants } from "@bounty/ui/components/button";
 
-type RenderContentProps = {
-  onDismiss: () => void;
-};
+const toastManager = Toast.createToastManager();
+const anchoredToastManager = Toast.createToastManager();
 
-type WithRenderContent = {
-  renderContent: (props: RenderContentProps) => JSX.Element;
-  text?: never;
-  description?: never;
-  icon?: never;
-};
-
-type WithTextAndIcon = {
-  text: string;
-  description?: string;
-  icon: React.ComponentType<{ className?: string }>;
-  iconClassName?: string;
-  renderContent?: never;
-};
-
-type BaseToastProps = (WithRenderContent | WithTextAndIcon) & {
-  id: string | number;
-};
-
-const BaseToast = (props: BaseToastProps) => {
-  const onDismiss = () => sonnerToast.dismiss(props.id);
-
-  return (
-    <div
-      className={cn(
-        'group toast flex flex-row gap-2 items-start bg-[#191919] p-4 rounded-xl border border-border/70 min-w-[280px] max-w-[840px]'
-      )}
-    >
-      {props.renderContent ? (
-        props.renderContent({ onDismiss })
-      ) : (
-        <>
-          <props.icon
-            className={cn('size-4 shrink-0 mt-0.5', props.iconClassName)}
-          />
-          <div className="flex-1 flex flex-col gap-1">
-            <p className="text-sm font-medium text-white leading-relaxed">
-              {props.text}
-            </p>
-            {props.description && (
-              <p className="text-sm text-zinc-400 leading-relaxed">
-                {props.description}
-              </p>
-            )}
-          </div>
-          <button
-            onClick={onDismiss}
-            className="shrink-0 cursor-pointer text-zinc-400 hover:text-white transition-colors"
-            type="button"
-            aria-label="Dismiss"
-          >
-            <X className="size-4" />
-          </button>
-        </>
-      )}
-    </div>
-  );
-};
-
-const toastStyles = {
-  error: {
-    icon: CircleX,
-    iconClassName: 'text-red-500',
-  },
-  success: {
-    icon: CircleCheckIcon,
-    iconClassName: 'text-green-500',
-  },
-  warning: {
-    icon: TriangleAlert,
-    iconClassName: 'text-yellow-500',
-  },
-  info: {
-    icon: Info,
-    iconClassName: 'text-blue-500',
-  },
+const TOAST_ICONS = {
+  error: CircleAlertIcon,
+  info: InfoIcon,
+  loading: LoaderCircleIcon,
+  success: CircleCheckIcon,
+  warning: TriangleAlertIcon,
 } as const;
 
-export const toast = {
-  error: (
-    text: string,
-    descriptionOrProps?: string | ExternalToast,
-    props?: ExternalToast
-  ) => {
-    const styles = toastStyles.error;
-    // Handle both: toast.error('text', 'description', props) and toast.error('text', props)
-    const description =
-      typeof descriptionOrProps === 'string' ? descriptionOrProps : undefined;
-    const toastProps =
-      typeof descriptionOrProps === 'object' ? descriptionOrProps : props;
+type ToastPosition =
+  | "top-left"
+  | "top-center"
+  | "top-right"
+  | "bottom-left"
+  | "bottom-center"
+  | "bottom-right";
 
-    const baseProps = {
-      id: 0 as string | number,
-      icon: styles.icon,
-      iconClassName: styles.iconClassName,
-      text,
-    };
-    const toastComponentProps = description
-      ? { ...baseProps, description }
-      : baseProps;
+interface ToastProviderProps extends Toast.Provider.Props {
+  position?: ToastPosition;
+}
 
-    return sonnerToast.custom(
-      (id) => <BaseToast {...toastComponentProps} id={id} />,
-      toastProps
-    );
-  },
+function ToastProvider({
+  children,
+  position = "bottom-right",
+  ...props
+}: ToastProviderProps) {
+  return (
+    <Toast.Provider toastManager={toastManager} {...props}>
+      {children}
+      <Toasts position={position} />
+    </Toast.Provider>
+  );
+}
 
-  success: (
-    text: string,
-    descriptionOrProps?: string | ExternalToast,
-    props?: ExternalToast
-  ) => {
-    const styles = toastStyles.success;
-    const description =
-      typeof descriptionOrProps === 'string' ? descriptionOrProps : undefined;
-    const toastProps =
-      typeof descriptionOrProps === 'object' ? descriptionOrProps : props;
+function Toasts({ position = "bottom-right" }: { position: ToastPosition }) {
+  const { toasts } = Toast.useToastManager();
+  const isTop = position.startsWith("top");
 
-    const baseProps = {
-      id: 0 as string | number,
-      icon: styles.icon,
-      iconClassName: styles.iconClassName,
-      text,
-    };
-    const toastComponentProps = description
-      ? { ...baseProps, description }
-      : baseProps;
+  return (
+    <Toast.Portal data-slot="toast-portal">
+      <Toast.Viewport
+        className={cn(
+          "fixed z-50 mx-auto flex w-[calc(100%-var(--toast-inset)*2)] max-w-90 [--toast-inset:--spacing(4)] sm:[--toast-inset:--spacing(8)]",
+          // Vertical positioning
+          "data-[position*=top]:top-(--toast-inset)",
+          "data-[position*=bottom]:bottom-(--toast-inset)",
+          // Horizontal positioning
+          "data-[position*=left]:left-(--toast-inset)",
+          "data-[position*=right]:right-(--toast-inset)",
+          "data-[position*=center]:-translate-x-1/2 data-[position*=center]:left-1/2",
+        )}
+        data-position={position}
+        data-slot="toast-viewport"
+      >
+        {toasts.map((toast) => {
+          const Icon = toast.type
+            ? TOAST_ICONS[toast.type as keyof typeof TOAST_ICONS]
+            : null;
 
-    return sonnerToast.custom(
-      (id) => <BaseToast {...toastComponentProps} id={id} />,
-      toastProps
-    );
-  },
+          return (
+            <Toast.Root
+              className={cn(
+                "absolute z-[calc(9999-var(--toast-index))] h-(--toast-calc-height) w-full select-none rounded-lg border bg-popover not-dark:bg-clip-padding text-popover-foreground shadow-lg/5 [transition:transform_.5s_cubic-bezier(.22,1,.36,1),opacity_.5s,height_.15s] before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] before:shadow-[0_1px_--theme(--color-black/6%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]",
+                // Base positioning using data-position
+                "data-[position*=right]:right-0 data-[position*=right]:left-auto",
+                "data-[position*=left]:right-auto data-[position*=left]:left-0",
+                "data-[position*=center]:right-0 data-[position*=center]:left-0",
+                "data-[position*=top]:top-0 data-[position*=top]:bottom-auto data-[position*=top]:origin-top",
+                "data-[position*=bottom]:top-auto data-[position*=bottom]:bottom-0 data-[position*=bottom]:origin-bottom",
+                // Gap fill for hover
+                "after:absolute after:left-0 after:h-[calc(var(--toast-gap)+1px)] after:w-full",
+                "data-[position*=top]:after:top-full",
+                "data-[position*=bottom]:after:bottom-full",
+                // Define some variables
+                "[--toast-calc-height:var(--toast-frontmost-height,var(--toast-height))] [--toast-gap:--spacing(3)] [--toast-peek:--spacing(3)] [--toast-scale:calc(max(0,1-(var(--toast-index)*.1)))] [--toast-shrink:calc(1-var(--toast-scale))]",
+                // Define offset-y variable
+                "data-[position*=top]:[--toast-calc-offset-y:calc(var(--toast-offset-y)+var(--toast-index)*var(--toast-gap)+var(--toast-swipe-movement-y))]",
+                "data-[position*=bottom]:[--toast-calc-offset-y:calc(var(--toast-offset-y)*-1+var(--toast-index)*var(--toast-gap)*-1+var(--toast-swipe-movement-y))]",
+                // Default state transform
+                "data-[position*=top]:transform-[translateX(var(--toast-swipe-movement-x))_translateY(calc(var(--toast-swipe-movement-y)+(var(--toast-index)*var(--toast-peek))+(var(--toast-shrink)*var(--toast-calc-height))))_scale(var(--toast-scale))]",
+                "data-[position*=bottom]:transform-[translateX(var(--toast-swipe-movement-x))_translateY(calc(var(--toast-swipe-movement-y)-(var(--toast-index)*var(--toast-peek))-(var(--toast-shrink)*var(--toast-calc-height))))_scale(var(--toast-scale))]",
+                // Limited state
+                "data-limited:opacity-0",
+                // Expanded state
+                "data-expanded:h-(--toast-height)",
+                "data-position:data-expanded:transform-[translateX(var(--toast-swipe-movement-x))_translateY(var(--toast-calc-offset-y))]",
+                // Starting and ending animations
+                "data-[position*=top]:data-starting-style:transform-[translateY(calc(-100%-var(--toast-inset)))]",
+                "data-[position*=bottom]:data-starting-style:transform-[translateY(calc(100%+var(--toast-inset)))]",
+                "data-ending-style:opacity-0",
+                // Ending animations (direction-aware)
+                "data-ending-style:not-data-limited:not-data-swipe-direction:transform-[translateY(calc(100%+var(--toast-inset)))]",
+                "data-ending-style:data-[swipe-direction=left]:transform-[translateX(calc(var(--toast-swipe-movement-x)-100%-var(--toast-inset)))_translateY(var(--toast-calc-offset-y))]",
+                "data-ending-style:data-[swipe-direction=right]:transform-[translateX(calc(var(--toast-swipe-movement-x)+100%+var(--toast-inset)))_translateY(var(--toast-calc-offset-y))]",
+                "data-ending-style:data-[swipe-direction=up]:transform-[translateY(calc(var(--toast-swipe-movement-y)-100%-var(--toast-inset)))]",
+                "data-ending-style:data-[swipe-direction=down]:transform-[translateY(calc(var(--toast-swipe-movement-y)+100%+var(--toast-inset)))]",
+                // Ending animations (expanded)
+                "data-expanded:data-ending-style:data-[swipe-direction=left]:transform-[translateX(calc(var(--toast-swipe-movement-x)-100%-var(--toast-inset)))_translateY(var(--toast-calc-offset-y))]",
+                "data-expanded:data-ending-style:data-[swipe-direction=right]:transform-[translateX(calc(var(--toast-swipe-movement-x)+100%+var(--toast-inset)))_translateY(var(--toast-calc-offset-y))]",
+                "data-expanded:data-ending-style:data-[swipe-direction=up]:transform-[translateY(calc(var(--toast-swipe-movement-y)-100%-var(--toast-inset)))]",
+                "data-expanded:data-ending-style:data-[swipe-direction=down]:transform-[translateY(calc(var(--toast-swipe-movement-y)+100%+var(--toast-inset)))]",
+              )}
+              data-position={position}
+              key={toast.id}
+              swipeDirection={
+                position.includes("center")
+                  ? [isTop ? "up" : "down"]
+                  : position.includes("left")
+                    ? ["left", isTop ? "up" : "down"]
+                    : ["right", isTop ? "up" : "down"]
+              }
+              toast={toast}
+            >
+              <Toast.Content className="pointer-events-auto flex items-center justify-between gap-1.5 overflow-hidden px-3.5 py-3 text-sm transition-opacity duration-250 data-behind:not-data-expanded:pointer-events-none data-behind:opacity-0 data-expanded:opacity-100">
+                <div className="flex gap-2">
+                  {Icon && (
+                    <div
+                      className="[&>svg]:h-lh [&>svg]:w-4 [&_svg]:pointer-events-none [&_svg]:shrink-0"
+                      data-slot="toast-icon"
+                    >
+                      <Icon className="in-data-[type=loading]:animate-spin in-data-[type=error]:text-destructive in-data-[type=info]:text-info in-data-[type=success]:text-success in-data-[type=warning]:text-warning in-data-[type=loading]:opacity-80" />
+                    </div>
+                  )}
 
-  warning: (
-    text: string,
-    descriptionOrProps?: string | ExternalToast,
-    props?: ExternalToast
-  ) => {
-    const styles = toastStyles.warning;
-    const description =
-      typeof descriptionOrProps === 'string' ? descriptionOrProps : undefined;
-    const toastProps =
-      typeof descriptionOrProps === 'object' ? descriptionOrProps : props;
+                  <div className="flex flex-col gap-0.5">
+                    <Toast.Title
+                      className="font-medium"
+                      data-slot="toast-title"
+                    />
+                    <Toast.Description
+                      className="text-muted-foreground"
+                      data-slot="toast-description"
+                    />
+                  </div>
+                </div>
+                {toast.actionProps && (
+                  <Toast.Action
+                    className={buttonVariants({ size: "xs" })}
+                    data-slot="toast-action"
+                  >
+                    {toast.actionProps.children}
+                  </Toast.Action>
+                )}
+              </Toast.Content>
+            </Toast.Root>
+          );
+        })}
+      </Toast.Viewport>
+    </Toast.Portal>
+  );
+}
 
-    const baseProps = {
-      id: 0 as string | number,
-      icon: styles.icon,
-      iconClassName: styles.iconClassName,
-      text,
-    };
-    const toastComponentProps = description
-      ? { ...baseProps, description }
-      : baseProps;
+function AnchoredToastProvider({ children, ...props }: Toast.Provider.Props) {
+  return (
+    <Toast.Provider toastManager={anchoredToastManager} {...props}>
+      {children}
+      <AnchoredToasts />
+    </Toast.Provider>
+  );
+}
 
-    return sonnerToast.custom(
-      (id) => <BaseToast {...toastComponentProps} id={id} />,
-      toastProps
-    );
-  },
+function AnchoredToasts() {
+  const { toasts } = Toast.useToastManager();
 
-  info: (
-    text: string,
-    descriptionOrProps?: string | ExternalToast,
-    props?: ExternalToast
-  ) => {
-    const styles = toastStyles.info;
-    const description =
-      typeof descriptionOrProps === 'string' ? descriptionOrProps : undefined;
-    const toastProps =
-      typeof descriptionOrProps === 'object' ? descriptionOrProps : props;
+  return (
+    <Toast.Portal data-slot="toast-portal-anchored">
+      <Toast.Viewport
+        className="outline-none"
+        data-slot="toast-viewport-anchored"
+      >
+        {toasts.map((toast) => {
+          const Icon = toast.type
+            ? TOAST_ICONS[toast.type as keyof typeof TOAST_ICONS]
+            : null;
+          const tooltipStyle =
+            (toast.data as { tooltipStyle?: boolean })?.tooltipStyle ?? false;
+          const positionerProps = toast.positionerProps;
 
-    const baseProps = {
-      id: 0 as string | number,
-      icon: styles.icon,
-      iconClassName: styles.iconClassName,
-      text,
-    };
-    const toastComponentProps = description
-      ? { ...baseProps, description }
-      : baseProps;
+          if (!positionerProps?.anchor) {
+            return null;
+          }
 
-    return sonnerToast.custom(
-      (id) => <BaseToast {...toastComponentProps} id={id} />,
-      toastProps
-    );
-  },
+          return (
+            <Toast.Positioner
+              className="z-50 max-w-[min(--spacing(64),var(--available-width))]"
+              data-slot="toast-positioner"
+              key={toast.id}
+              sideOffset={positionerProps.sideOffset ?? 4}
+              toast={toast}
+            >
+              <Toast.Root
+                className={cn(
+                  "relative text-balance border bg-popover not-dark:bg-clip-padding text-popover-foreground text-xs transition-[scale,opacity] before:pointer-events-none before:absolute before:inset-0 before:shadow-[0_1px_--theme(--color-black/6%)] data-ending-style:scale-98 data-starting-style:scale-98 data-ending-style:opacity-0 data-starting-style:opacity-0 dark:before:shadow-[0_-1px_--theme(--color-white/6%)]",
+                  tooltipStyle
+                    ? "rounded-md shadow-md/5 before:rounded-[calc(var(--radius-md)-1px)]"
+                    : "rounded-lg shadow-lg/5 before:rounded-[calc(var(--radius-lg)-1px)]",
+                )}
+                data-slot="toast-popup"
+                toast={toast}
+              >
+                {tooltipStyle ? (
+                  <Toast.Content className="pointer-events-auto px-2 py-1">
+                    <Toast.Title data-slot="toast-title" />
+                  </Toast.Content>
+                ) : (
+                  <Toast.Content className="pointer-events-auto flex items-center justify-between gap-1.5 overflow-hidden px-3.5 py-3 text-sm">
+                    <div className="flex gap-2">
+                      {Icon && (
+                        <div
+                          className="[&>svg]:h-lh [&>svg]:w-4 [&_svg]:pointer-events-none [&_svg]:shrink-0"
+                          data-slot="toast-icon"
+                        >
+                          <Icon className="in-data-[type=loading]:animate-spin in-data-[type=error]:text-destructive in-data-[type=info]:text-info in-data-[type=success]:text-success in-data-[type=warning]:text-warning in-data-[type=loading]:opacity-80" />
+                        </div>
+                      )}
 
-  custom: (
-    renderContent: WithRenderContent['renderContent'],
-    props?: ExternalToast
-  ) => {
-    return sonnerToast.custom(
-      (id) => <BaseToast id={id} renderContent={renderContent} />,
-      props
-    );
-  },
+                      <div className="flex flex-col gap-0.5">
+                        <Toast.Title
+                          className="font-medium"
+                          data-slot="toast-title"
+                        />
+                        <Toast.Description
+                          className="text-muted-foreground"
+                          data-slot="toast-description"
+                        />
+                      </div>
+                    </div>
+                    {toast.actionProps && (
+                      <Toast.Action
+                        className={buttonVariants({ size: "xs" })}
+                        data-slot="toast-action"
+                      >
+                        {toast.actionProps.children}
+                      </Toast.Action>
+                    )}
+                  </Toast.Content>
+                )}
+              </Toast.Root>
+            </Toast.Positioner>
+          );
+        })}
+      </Toast.Viewport>
+    </Toast.Portal>
+  );
+}
 
-  // Re-export sonner methods for compatibility
-  dismiss: sonnerToast.dismiss,
-  promise: sonnerToast.promise,
-  loading: sonnerToast.loading,
-  message: sonnerToast.message,
+export {
+  ToastProvider,
+  type ToastPosition,
+  toastManager,
+  AnchoredToastProvider,
+  anchoredToastManager,
 };

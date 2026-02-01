@@ -20,6 +20,10 @@ export interface Bounty {
   votes?: number;
   isFeatured?: boolean;
   paymentStatus?: 'pending' | 'held' | 'released' | 'refunded' | 'failed' | null;
+  // Linear integration fields
+  linearIssueId?: string | null;
+  linearIssueIdentifier?: string | null; // e.g., "ENG-123"
+  linearIssueUrl?: string | null;
 }
 
 export interface UserData {

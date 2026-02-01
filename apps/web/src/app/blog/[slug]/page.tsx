@@ -16,7 +16,7 @@ interface BlogPostPageProps {
 
 function BlogPostSkeleton() {
   return (
-    <div className="flex min-h-screen flex-col bg-[#0a0a0a] text-white">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       <div className="mx-auto w-full max-w-6xl flex-1 px-6 pt-24 pb-20">
         <div className="animate-pulse space-y-8">
           <div className="h-4 w-32 rounded bg-white/10" />

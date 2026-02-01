@@ -18,7 +18,7 @@ interface ProfileTabsProps {
 export function ProfileTabs({ userId }: ProfileTabsProps) {
   return (
     <Tabs defaultValue="bounties" className="w-full">
-      <TabsList className="bg-[#191919] border border-[#232323]">
+      <TabsList className="bg-surface-1 border border-border-subtle">
         <TabsTrigger value="bounties">Bounties</TabsTrigger>
         <TabsTrigger value="activity">Activity</TabsTrigger>
         <TabsTrigger value="highlights">Highlights</TabsTrigger>

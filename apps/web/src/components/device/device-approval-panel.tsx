@@ -183,7 +183,7 @@ export const DeviceApprovalPanel = ({ userCode }: DeviceApprovalPanelProps) => {
 
   return (
     <div className="mx-auto w-full max-w-3xl">
-      <Card className="border border-muted bg-[#111111] text-white">
+      <Card className="border border-muted bg-background text-foreground">
         <CardHeader className="gap-3">
           <CardTitle className="font-semibold text-2xl">
             Device authorization request

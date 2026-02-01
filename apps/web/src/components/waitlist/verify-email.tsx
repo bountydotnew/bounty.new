@@ -106,7 +106,7 @@ export function VerifyEmail({
       {/* Back button */}
       <button
         onClick={onBack}
-        className="absolute top-6 left-6 flex items-center gap-2 text-[#5A5A5A] hover:text-white transition-colors"
+        className="absolute top-6 left-6 flex items-center gap-2 text-text-tertiary hover:text-foreground transition-colors"
       >
         <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
           <path
@@ -121,9 +121,9 @@ export function VerifyEmail({
       </button>
 
       {/* Email icon */}
-      <div className="mb-6 mx-auto w-16 h-16 rounded-full bg-[#191919] border border-[#232323] flex items-center justify-center">
+      <div className="mb-6 mx-auto w-16 h-16 rounded-full bg-surface-1 border border-border-subtle flex items-center justify-center">
         <svg
-          className="w-7 h-7 text-white"
+          className="w-7 h-7 text-foreground"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -134,13 +134,13 @@ export function VerifyEmail({
         </svg>
       </div>
 
-      <h2 className="text-[32px] font-medium text-white mb-2">
+      <h2 className="text-[32px] font-medium text-foreground mb-2">
         Check your email
       </h2>
-      <p className="text-[#929292] text-base mb-8">
+      <p className="text-text-tertiary text-base mb-8">
         We sent a verification code to
         <br />
-        <span className="text-white">{email}</span>
+        <span className="text-foreground">{email}</span>
       </p>
 
       {/* Code input */}
@@ -157,7 +157,7 @@ export function VerifyEmail({
             value={digit}
             onChange={(e) => handleChange(index, e.target.value)}
             onKeyDown={(e) => handleKeyDown(index, e)}
-            className="w-12 h-14 rounded-xl bg-[#191919] border border-[#232323] text-white text-2xl text-center outline-none focus:border-[#3A3A3A] transition-colors"
+            className="w-12 h-14 rounded-xl bg-surface-1 border border-border-subtle text-foreground text-2xl text-center outline-none focus:border-border-strong transition-colors"
           />
         ))}
       </div>
@@ -167,7 +167,7 @@ export function VerifyEmail({
       <button
         onClick={() => handleVerify()}
         disabled={isVerifying || code.some((d) => !d)}
-        className="flex items-center justify-center gap-1.5 px-6 h-[40px] rounded-full text-white text-base font-normal mx-auto transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="flex items-center justify-center gap-1.5 px-6 h-[40px] rounded-full text-foreground text-base font-normal mx-auto transition-opacity hover:opacity-90 disabled:opacity-50"
         style={{
           backgroundImage: 'linear-gradient(180deg, #ccc 0%, #808080 100%)',
         }}
@@ -184,12 +184,12 @@ export function VerifyEmail({
         </svg>
       </button>
 
-      <p className="text-[#5A5A5A] text-sm mt-6">
+      <p className="text-text-tertiary text-sm mt-6">
         Didn't receive the code?{' '}
         <button
           onClick={handleResend}
           disabled={resendMutation.isPending}
-          className="text-white hover:underline disabled:opacity-50"
+          className="text-foreground hover:underline disabled:opacity-50"
         >
           {resendMutation.isPending ? 'Sending...' : 'Resend'}
         </button>

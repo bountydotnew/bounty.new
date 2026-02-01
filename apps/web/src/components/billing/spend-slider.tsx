@@ -42,7 +42,7 @@ export function SpendSlider({ value, onChange }: SpendSliderProps) {
   return (
     <div className="py-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-[#888]">Estimated monthly spend</p>
+        <p className="text-sm text-text-muted">Estimated monthly spend</p>
 
         <div className="flex items-center gap-4 flex-1 sm:max-w-md">
           <input
@@ -55,7 +55,7 @@ export function SpendSlider({ value, onChange }: SpendSliderProps) {
             className="flex-1 cursor-pointer appearance-none bg-transparent
               [&::-webkit-slider-runnable-track]:h-1 
               [&::-webkit-slider-runnable-track]:rounded-full 
-              [&::-webkit-slider-runnable-track]:bg-[#2a2a2a]
+              [&::-webkit-slider-runnable-track]:bg-surface-hover
               [&::-webkit-slider-thumb]:mt-[-6px]
               [&::-webkit-slider-thumb]:h-3.5
               [&::-webkit-slider-thumb]:w-3.5
@@ -67,7 +67,7 @@ export function SpendSlider({ value, onChange }: SpendSliderProps) {
               [&::-webkit-slider-thumb]:hover:scale-110
               [&::-moz-range-track]:h-1
               [&::-moz-range-track]:rounded-full
-              [&::-moz-range-track]:bg-[#2a2a2a]
+              [&::-moz-range-track]:bg-surface-hover
               [&::-moz-range-thumb]:h-3.5
               [&::-moz-range-thumb]:w-3.5
               [&::-moz-range-thumb]:appearance-none
@@ -75,20 +75,20 @@ export function SpendSlider({ value, onChange }: SpendSliderProps) {
               [&::-moz-range-thumb]:border-0
               [&::-moz-range-thumb]:bg-white"
           />
-          <span className="text-sm font-medium text-[#efefef] w-16 text-right">
+          <span className="text-sm font-medium text-foreground w-16 text-right">
             {formatBillingCurrency(value)}
           </span>
         </div>
       </div>
 
       {/* Recommendation text */}
-      <p className="mt-3 text-sm text-[#666]">
+      <p className="mt-3 text-sm text-text-muted">
         {needsEnterprise ? (
           <>
             Enterprise plans coming soon.{' '}
             <a
               href="mailto:support@bounty.new?subject=Enterprise%20Plan%20Interest"
-              className="underline hover:text-[#888] transition-colors"
+              className="underline hover:text-text-muted transition-colors"
             >
               Contact us
             </a>
@@ -96,11 +96,11 @@ export function SpendSlider({ value, onChange }: SpendSliderProps) {
         ) : (
           <>
             Recommended:{' '}
-            <span className="text-[#888]">
+            <span className="text-text-muted">
               {PRICING_TIERS[recommendedPlan].name}
             </span>
             {recommendedPlan !== 'free' && (
-              <span className="text-[#666]">
+              <span className="text-text-muted">
                 {' '}
                 —{' '}
                 {formatBillingCurrency(

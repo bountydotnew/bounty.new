@@ -26,7 +26,7 @@ export function BookmarksContent() {
   return (
     <div className="p-6">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="font-medium text-white text-xl">Bookmarks</h1>
+        <h1 className="font-medium text-foreground text-xl">Bookmarks</h1>
         {totalPages > 1 && (
           <div className="text-neutral-400 text-xs">
             Page {page} / {totalPages}

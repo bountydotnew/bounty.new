@@ -34,7 +34,7 @@ function DashboardContent() {
   if (!session?.user) {
     return (
       <div
-        className="relative min-h-screen text-white"
+        className="relative min-h-screen text-foreground"
         style={{
           background:
             'linear-gradient(180deg, rgba(22, 22, 22, 1) 0%, rgba(12, 12, 12, 1) 100%)',
@@ -42,16 +42,16 @@ function DashboardContent() {
       >
         <div className="flex min-h-screen items-center justify-center px-6 py-20">
           <div className="w-full max-w-md text-center">
-            <h2 className="text-2xl font-medium text-white mb-4">
+            <h2 className="text-2xl font-medium text-foreground mb-4">
               Join the waitlist
             </h2>
-            <p className="text-[#929292] text-base mb-6">
+            <p className="text-text-tertiary text-base mb-6">
               Sign in with GitHub to join the waitlist and create your bounty
               draft.
             </p>
             <button
               onClick={handleLogin}
-              className="flex items-center justify-center gap-2 rounded-full px-6 py-3 text-base font-medium text-white transition-opacity hover:opacity-90 mx-auto"
+              className="flex items-center justify-center gap-2 rounded-full px-6 py-3 text-base font-medium text-foreground transition-opacity hover:opacity-90 mx-auto"
               style={{
                 backgroundImage:
                   'linear-gradient(180deg, #ccc 0%, #808080 100%)',
@@ -76,7 +76,7 @@ function DashboardContent() {
 
   return (
     <div
-      className="relative min-h-screen text-white"
+      className="relative min-h-screen text-foreground"
       style={{
         background:
           'linear-gradient(180deg, rgba(22, 22, 22, 1) 0%, rgba(12, 12, 12, 1) 100%)',
@@ -94,7 +94,7 @@ export default function DashboardPage() {
     <Suspense
       fallback={
         <div
-          className="relative min-h-screen text-white flex items-center justify-center"
+          className="relative min-h-screen text-foreground flex items-center justify-center"
           style={{
             background:
               'linear-gradient(180deg, rgba(22, 22, 22, 1) 0%, rgba(12, 12, 12, 1) 100%)',

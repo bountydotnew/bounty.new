@@ -9,7 +9,7 @@ export default async function BlogPage() {
 
   if (!postsData?.posts) {
     return (
-      <div className="mx-auto max-w-3xl px-6 py-24 text-center text-white">
+      <div className="mx-auto max-w-3xl px-6 py-24 text-center text-foreground">
         Error loading blog posts. Please try again later.
       </div>
     );

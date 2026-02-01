@@ -6,6 +6,7 @@ import { earlyAccessRouter } from './early-access';
 import { emailsRouter } from './emails';
 import { featureVotesRouter } from './feature-votes';
 import { githubInstallationRouter } from './github-installation';
+import { linearRouter } from './linear';
 import { newsRouter } from './news';
 import { notificationsRouter } from './notifications';
 import { onboardingRouter } from './onboarding';
@@ -43,6 +44,7 @@ export const appRouter = router({
   emails: emailsRouter,
   repository: repositoryRouter,
   githubInstallation: githubInstallationRouter,
+  linear: linearRouter,
   connect: connectRouter,
   discord: discordRouter,
   onboarding: onboardingRouter,

@@ -324,7 +324,7 @@ export const PRICING_TIERS: Record<BountyProPlan, PricingPlan> = {
     description: 'For developers and small teams',
     monthlyPrice: 10,
     feeFreeAllowance: 500,
-    platformFeePercent: 0,
+    platformFeePercent: 4,
     concurrentBounties: -1, // unlimited
   },
   tier_2_pro: {
@@ -333,7 +333,7 @@ export const PRICING_TIERS: Record<BountyProPlan, PricingPlan> = {
     description: 'For growing teams',
     monthlyPrice: 25,
     feeFreeAllowance: 5000,
-    platformFeePercent: 2,
+    platformFeePercent: 3,
     concurrentBounties: -1, // unlimited
     popular: true,
     badge: 'Most Popular',
@@ -344,10 +344,67 @@ export const PRICING_TIERS: Record<BountyProPlan, PricingPlan> = {
     description: 'For scaling organizations',
     monthlyPrice: 150,
     feeFreeAllowance: 12_000,
-    platformFeePercent: 4,
+    platformFeePercent: 2,
     concurrentBounties: -1, // unlimited
   },
 } as const;
+
+/**
+ * Generate feature list for a pricing plan dynamically from config
+ * @param plan - The plan to get features for
+ * @param options.minimal - If true, only show core fee-related features (for settings page)
+ */
+export function getPlanFeatures(
+  plan: BountyProPlan,
+  options?: { minimal?: boolean }
+): string[] {
+  const tier = PRICING_TIERS[plan];
+  const features: string[] = [];
+  const minimal = options?.minimal ?? false;
+
+  // Concurrent bounties
+  if (tier.concurrentBounties === -1) {
+    features.push('Unlimited concurrent bounties');
+  } else {
+    features.push(
+      `${tier.concurrentBounties} concurrent bounty${tier.concurrentBounties !== 1 ? 's' : ''}`
+    );
+  }
+
+  // Fee structure
+  if (tier.feeFreeAllowance > 0) {
+    features.push(
+      `$${tier.feeFreeAllowance.toLocaleString()}/mo platform fee-free`
+    );
+    features.push(`${tier.platformFeePercent}% platform fee after`);
+  } else {
+    features.push(`${tier.platformFeePercent}% platform fee`);
+  }
+
+  // Skip extra features for minimal mode
+  if (minimal) {
+    return features;
+  }
+
+  // Plan-specific features
+  features.push('Full platform access');
+
+  // if (plan === 'free') {
+  //   features.push('Standard support');
+  // } else {
+  //   features.push('Priority support');
+  // }
+
+  // if (plan === 'tier_2_pro' || plan === 'tier_3_pro_plus') {
+  //   features.push('Advanced analytics');
+  // }
+
+  // if (plan === 'tier_3_pro_plus') {
+  //   features.push('Custom integrations');
+  // }
+
+  return features;
+}
 
 /**
  * Calculate total cost for a given bounty amount under a pricing plan
@@ -374,7 +431,7 @@ export const calculateBountyCost = (
 
 /**
  * Get recommended pricing plan based on monthly bounty spend
- * 
+ *
  * Logic: Recommend the plan where the user benefits most from the fee-free allowance
  * - Free: $0-$200 (5% fee is acceptable for small amounts)
  * - Basic ($10/mo): $201-$500 (0% fee, $500 allowance covers it)

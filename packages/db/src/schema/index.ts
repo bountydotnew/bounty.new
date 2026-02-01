@@ -5,6 +5,7 @@ export * from './device-code';
 export * from './feature-votes';
 export * from './github-installation';
 export * from './invites';
+export * from './linear-account';
 export * from './notifications';
 export * from './onboarding';
 export * from './passkey';

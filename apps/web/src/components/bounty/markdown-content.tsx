@@ -40,7 +40,7 @@ function CopyButton({ text }: CopyButtonProps) {
   return (
     <button
       aria-label={copied ? 'Copied!' : 'Copy to clipboard'}
-      className="rounded bg-neutral-800 p-1.5 text-neutral-400 transition-colors hover:bg-neutral-700 hover:text-white"
+      className="rounded bg-neutral-800 p-1.5 text-neutral-400 transition-colors hover:bg-neutral-700 hover:text-foreground"
       onClick={handleCopy}
       title={copied ? 'Copied!' : 'Copy to clipboard'}
       type="button"
@@ -52,16 +52,16 @@ function CopyButton({ text }: CopyButtonProps) {
 
 const markdownComponents: Components = {
   h1: ({ children }) => (
-    <h1 className="mt-0 mb-4 font-bold text-2xl text-white">{children}</h1>
+    <h1 className="mt-0 mb-4 font-bold text-2xl text-foreground">{children}</h1>
   ),
   h2: ({ children }) => (
-    <h2 className="mt-6 mb-3 font-semibold text-white text-xl">{children}</h2>
+    <h2 className="mt-6 mb-3 font-semibold text-foreground text-xl">{children}</h2>
   ),
   h3: ({ children }) => (
-    <h3 className="mt-5 mb-2 font-medium text-lg text-white">{children}</h3>
+    <h3 className="mt-5 mb-2 font-medium text-lg text-foreground">{children}</h3>
   ),
   h4: ({ children }) => (
-    <h4 className="mt-4 mb-2 font-medium text-base text-white">{children}</h4>
+    <h4 className="mt-4 mb-2 font-medium text-base text-foreground">{children}</h4>
   ),
   p: ({ children }) => {
     const containsOnlyImages = React.Children.toArray(children).every(
@@ -121,7 +121,7 @@ const markdownComponents: Components = {
         alt={alt || ''}
         src={srcString}
         {...props}
-        className="my-3 inline-block h-auto max-w-full border-neutral-800"
+        className="my-3 inline-block h-auto max-w-full max-h-[400px] object-contain border-neutral-800 rounded"
       />
     );
   },
@@ -182,7 +182,7 @@ const markdownComponents: Components = {
     </table>
   ),
   th: ({ children }) => (
-    <th className="border border-neutral-800 bg-neutral-900 px-4 py-2 text-left font-medium text-white">
+    <th className="border border-neutral-800 bg-neutral-900 px-4 py-2 text-left font-medium text-foreground">
       {children}
     </th>
   ),

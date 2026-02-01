@@ -148,10 +148,10 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
   };
 
   return (
-    <div className="bg-[#0E0E0E] h-full flex">
+    <div className="bg-background h-full flex">
       {/* Sidebar */}
       <aside
-        className={`${compact ? 'w-12' : 'w-64'} bg-[#0E0E0E] border-r border-[#232323] flex flex-col`}
+        className={`${compact ? 'w-12' : 'w-64'} bg-background border-r border-border-subtle flex flex-col`}
       >
         {/* Workspace header */}
         <div className={`${compact ? 'px-2 py-3' : 'px-[15px] py-4'}`}>
@@ -159,12 +159,12 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
             className={`${compact ? ' justify-center flex items-center gap-2' : 'flex items-center gap-2'}`}
           >
             <div
-              className={`${compact ? 'h-5 w-5 text-xs' : 'h-[27px] w-[27px]'} rounded-[6px] bg-[#E66700] flex items-center justify-center text-white font-semibold shrink-0`}
+              className={`${compact ? 'h-5 w-5 text-xs' : 'h-[27px] w-[27px]'} rounded-[6px] bg-brand-primary flex items-center justify-center text-white font-semibold shrink-0`}
             >
               g
             </div>
             {!compact && (
-              <span className="text-[18px] font-semibold leading-[150%] text-[#F2F2F2]">
+              <span className="text-[18px] font-semibold leading-[150%] text-foreground">
                 grim
               </span>
             )}
@@ -177,29 +177,29 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
         >
           <button
             type="button"
-            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] border border-[#232323] bg-[#191919] px-[12px] py-[8px] text-[16px]'} font-medium text-[#F2F2F2] w-full`}
+            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] border border-border-subtle bg-surface-1 px-[12px] py-[8px] text-[16px]'} font-medium text-foreground w-full`}
           >
             <HomeIcon
-              className={`${compact ? 'h-4 w-4' : 'h-4 w-4'} text-[#CFCFCF] shrink-0`}
+              className={`${compact ? 'size-4' : 'size-4'} text-text-secondary shrink-0`}
             />
             {!compact && <span>Home</span>}
           </button>
           <button
             type="button"
-            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} font-medium text-[#929292] hover:text-white hover:bg-[#191919] transition-colors w-full`}
+            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} font-medium text-text-tertiary hover:text-white hover:bg-surface-1 transition-colors w-full`}
           >
             <BountiesIcon
-              className={compact ? 'h-4 w-4' : 'h-4 w-4'}
+              className={compact ? 'size-4' : 'size-4'}
               shrink-0
             />
             {!compact && <span>Bounties</span>}
           </button>
           <button
             type="button"
-            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} font-medium text-[#929292] hover:text-white hover:bg-[#191919] transition-colors w-full`}
+            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} font-medium text-text-tertiary hover:text-white hover:bg-surface-1 transition-colors w-full`}
           >
             <BookmarksIcon
-              className={compact ? 'h-4 w-4' : 'h-4 w-4'}
+              className={compact ? 'size-4' : 'size-4'}
               shrink-0
             />
             {!compact && <span>Bookmarks</span>}
@@ -210,10 +210,10 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
         <div className={`${compact ? 'px-1 py-2' : 'px-[15px] py-4'}`}>
           <button
             type="button"
-            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} text-[#929292] transition-colors hover:text-white hover:bg-[#191919] w-full`}
+            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} text-text-tertiary transition-colors hover:text-white hover:bg-surface-1 w-full`}
           >
             <SettingsGearIcon
-              className={compact ? 'h-4 w-4' : 'h-[18px] w-[18px]'}
+              className={compact ? 'size-4' : 'size-4'}
             />
           </button>
         </div>
@@ -223,19 +223,19 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
       <div className="flex-1 overflow-auto" ref={scrollRef}>
         {/* Header */}
         <div
-          className={`flex items-center justify-between bg-[#0E0E0E] border-b border-[#232323] ${compact ? 'h-10 px-2' : 'h-[72px] px-4 sm:px-6'} sticky top-0 z-10`}
+          className={`flex items-center justify-between bg-background border-b border-border-subtle ${compact ? 'h-10 px-2' : 'h-[72px] px-4 sm:px-6'} sticky top-0 z-10`}
         >
           <div className="flex flex-1 items-center justify-center gap-6" />
           <div className="flex items-center gap-2">
             <button
-              className={`flex items-center gap-[7px] rounded-[12px] border border-[#232323] bg-[#191919] transition-colors hover:bg-[#141414] ${compact ? 'px-1.5 py-1' : 'py-[5px] px-[10px]'}`}
+              className={`flex items-center gap-[7px] rounded-[12px] border border-border-subtle bg-surface-1 transition-colors hover:bg-surface-2 ${compact ? 'px-1.5 py-1' : 'py-[5px] px-[10px]'}`}
               type="button"
             >
               <Plus
-                className={`${compact ? 'h-3 w-3' : 'h-4 w-4'} text-[#CFCFCF]`}
+                className={`${compact ? 'h-3 w-3' : 'h-4 w-4'} text-text-secondary`}
               />
               <span
-                className={`${compact ? 'text-[10px]' : 'text-[16px]'} font-semibold leading-[150%] tracking-[0.01em] text-[#CFCFCF]`}
+                className={`${compact ? 'text-[10px]' : 'text-[16px]'} font-semibold leading-[150%] tracking-[0.01em] text-text-secondary`}
               >
                 Create Bounty
               </span>
@@ -251,14 +251,14 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
             className={`w-full flex flex-col ${compact ? 'my-2' : 'mt-8 mb-6'} min-w-0`}
           >
             <div
-              className={`bg-[#191919] text-[#5A5A5A] border border-[#232323] ${compact ? 'rounded-xl' : 'rounded-[24px]'} relative overflow-hidden w-full min-w-0 flex flex-col ${compact ? 'p-3 gap-2' : 'p-5 gap-4'}`}
+              className={`bg-surface-1 text-text-tertiary border border-border-subtle ${compact ? 'rounded-xl' : 'rounded-[24px]'} relative overflow-hidden w-full min-w-0 flex flex-col ${compact ? 'p-3 gap-2' : 'p-5 gap-4'}`}
             >
               <div className={`flex flex-col ${compact ? 'gap-1.5' : 'gap-2'}`}>
                 <div
                   className={`flex flex-row flex-wrap items-center ${compact ? 'gap-1.5' : 'gap-[6px]'}`}
                 >
                   <div
-                    className={`rounded-full flex justify-center items-center shrink-0 gap-1.5 bg-[#141414] border border-solid border-[#232323] ${compact ? 'px-2 py-1' : 'px-[11px] py-[6px]'}`}
+                    className={`rounded-full flex justify-center items-center shrink-0 gap-1.5 bg-surface-2 border border-solid border-border-subtle ${compact ? 'px-2 py-1' : 'px-[11px] py-[6px]'}`}
                   >
                     <span
                       className={`${compact ? 'text-[11px]' : 'text-[16px]'} leading-5 font-sans text-white truncate`}
@@ -266,11 +266,11 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
                       Add OAuth integration
                     </span>
                     <ChevronSortIcon
-                      className={`${compact ? 'size-1.5' : 'size-2'} text-[#7D7878] shrink-0`}
+                      className={`${compact ? 'size-1.5' : 'size-2'} text-text-muted shrink-0`}
                     />
                   </div>
                   <div
-                    className={`rounded-full flex justify-center items-center shrink-0 gap-1.5 bg-[#141414] border border-solid border-[#232323] ${compact ? 'px-2 py-1' : 'px-[11px] py-[6px]'}`}
+                    className={`rounded-full flex justify-center items-center shrink-0 gap-1.5 bg-surface-2 border border-solid border-border-subtle ${compact ? 'px-2 py-1' : 'px-[11px] py-[6px]'}`}
                   >
                     <span
                       className={`${compact ? 'text-[11px]' : 'text-[16px]'} leading-5 font-sans text-white`}
@@ -278,18 +278,18 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
                       $500
                     </span>
                     <ChevronSortIcon
-                      className={`${compact ? 'size-1.5' : 'size-2'} text-[#7D7878] shrink-0`}
+                      className={`${compact ? 'size-1.5' : 'size-2'} text-text-muted shrink-0`}
                     />
                   </div>
                   <div className={`relative flex ${compact ? '' : ''}`}>
                     <div
-                      className={`rounded-full flex justify-center items-center bg-[#141414] border border-solid border-[#232323] ${compact ? 'text-[11px] px-2 py-1 pr-6' : 'text-[16px] leading-5 px-[11px] py-[6px] pr-8 min-w-[150px]'} font-sans text-white`}
+                      className={`rounded-full flex justify-center items-center bg-surface-2 border border-solid border-border-subtle ${compact ? 'text-[11px] px-2 py-1 pr-6' : 'text-[16px] leading-5 px-[11px] py-[6px] pr-8 min-w-[150px]'} font-sans text-white`}
                     >
                       Deadline
                     </div>
                     <button
                       type="button"
-                      className="absolute top-1/2 right-2 -translate-y-1/2 text-[#7C7878] hover:text-white transition-colors"
+                      className="absolute top-1/2 right-2 -translate-y-1/2 text-text-muted hover:text-white transition-colors"
                     >
                       <CalendarIcon
                         className={compact ? 'size-2.5' : 'size-3.5'}
@@ -314,7 +314,7 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
               >
                 <div className="relative flex items-center gap-2">
                   <div
-                    className={`flex flex-row items-center gap-1.5 text-[#5A5A5A] ${compact ? '' : ''}`}
+                    className={`flex flex-row items-center gap-1.5 text-text-tertiary ${compact ? '' : ''}`}
                   >
                     <GithubIcon className={compact ? 'w-3 h-3' : 'w-4 h-4'} />
                     <span
@@ -334,7 +334,7 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
                     <button
                       type="button"
                       onClick={handleCreateBounty}
-                      className="flex items-center justify-center gap-1.5 px-[16px] h-[34px] rounded-full text-[15px] font-medium bg-white text-black shadow-[0_6px_16px_rgba(255,255,255,0.18)] hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-center gap-1.5 px-[16px] h-[34px] rounded-full text-[15px] font-medium bg-foreground text-background shadow-lg shadow-foreground/20 hover:bg-foreground/90 transition-colors"
                     >
                       Create bounty
                     </button>
@@ -355,7 +355,7 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
         </div>
 
         {/* Feed divider */}
-        <div className="h-px w-full shrink-0 bg-[#232323]" />
+        <div className="h-px w-full shrink-0 bg-surface-3" />
 
         {/* Bounty feed */}
         <div
@@ -419,10 +419,10 @@ function StripeCheckoutPage() {
     <div className="h-full bg-white overflow-auto">
       <div className="min-h-full flex flex-col">
         {/* Stripe header */}
-        <div className="flex items-center gap-3 px-6 py-4 border-b border-[#E6E6E6]">
+        <div className="flex items-center gap-3 px-6 py-4 border-b border-border-default">
           <button
             type="button"
-            className="text-[#666] hover:text-[#333] transition-colors"
+            className="text-text-muted hover:text-foreground transition-colors"
           >
             ←
           </button>
@@ -437,7 +437,7 @@ function StripeCheckoutPage() {
               fill="#635BFF"
             />
           </svg>
-          <span className="px-2 py-0.5 text-xs font-medium bg-[#F0F0F0] text-[#666] rounded">
+          <span className="px-2 py-0.5 text-xs font-medium bg-surface-1 text-text-muted rounded">
             Sandbox
           </span>
         </div>
@@ -445,33 +445,35 @@ function StripeCheckoutPage() {
         {/* Checkout content */}
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2">
           {/* Left: Order summary */}
-          <div className="bg-[#FAFAFA] p-8 lg:p-12 border-r border-[#E6E6E6]">
+          <div className="bg-surface-1 p-8 lg:p-12 border-r border-border-default">
             <div className="max-w-md">
-              <p className="text-sm text-[#666] mb-1">Pay Bounty sandbox</p>
-              <h1 className="text-[42px] font-semibold tracking-tight text-[#111] mb-8">
+              <p className="text-sm text-text-muted mb-1">Pay Bounty sandbox</p>
+              <h1 className="text-[42px] font-semibold tracking-tight text-foreground mb-8">
                 $1,029.30
               </h1>
 
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-medium text-[#111]">
+                    <p className="font-medium text-foreground">
                       Bounty creation deposit
                     </p>
-                    <p className="text-sm text-[#666]">
+                    <p className="text-sm text-text-muted">
                       Upfront bounty creation deposit
                     </p>
                   </div>
-                  <span className="text-[#111]">$1,000.00</span>
+                  <span className="text-foreground">$1,000.00</span>
                 </div>
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-medium text-[#111]">Processing Fees</p>
-                    <p className="text-sm text-[#666]">
+                    <p className="font-medium text-foreground">
+                      Processing Fees
+                    </p>
+                    <p className="text-sm text-text-muted">
                       Stripe processing fees (2.9% + $0.30)
                     </p>
                   </div>
-                  <span className="text-[#111]">$29.30</span>
+                  <span className="text-foreground">$29.30</span>
                 </div>
               </div>
             </div>
@@ -484,79 +486,81 @@ function StripeCheckoutPage() {
               <div className="flex gap-2 mb-6">
                 <button
                   type="button"
-                  className="flex-1 h-12 rounded-md bg-[#00D775] text-white font-semibold flex items-center justify-center gap-2"
+                  className="flex-1 h-12 rounded-md bg-success text-white font-semibold flex items-center justify-center gap-2"
                 >
                   <span className="text-lg">⚡</span> Link
                 </button>
                 <button
                   type="button"
-                  className="flex-1 h-12 rounded-md bg-[#FFB3C7] text-[#111] font-semibold"
+                  className="flex-1 h-12 rounded-md bg-destructive-surface text-foreground font-semibold"
                 >
                   Klarna
                 </button>
                 <button
                   type="button"
-                  className="flex-1 h-12 rounded-md bg-[#FFD814] text-[#111] font-semibold text-sm"
+                  className="flex-1 h-12 rounded-md bg-warning text-foreground font-semibold text-sm"
                 >
                   amazon pay
                 </button>
               </div>
 
               <div className="flex items-center gap-4 my-6">
-                <div className="flex-1 h-px bg-[#E6E6E6]" />
-                <span className="text-sm text-[#666]">OR</span>
-                <div className="flex-1 h-px bg-[#E6E6E6]" />
+                <div className="flex-1 h-px bg-surface-2" />
+                <span className="text-sm text-text-muted">OR</span>
+                <div className="flex-1 h-px bg-surface-2" />
               </div>
 
               {/* Contact info */}
               <div className="mb-6">
-                <p className="text-sm font-medium text-[#111] mb-2">
+                <p className="text-sm font-medium text-foreground mb-2">
                   Contact information
                 </p>
-                <div className="rounded-md border border-[#E6E6E6] px-4 py-3 text-[#444]">
+                <div className="rounded-md border border-border-default px-4 py-3 text-text-muted">
                   grim@bounty.new
                 </div>
               </div>
 
               {/* Payment methods */}
               <div className="mb-6">
-                <p className="text-sm font-medium text-[#111] mb-2">
+                <p className="text-sm font-medium text-foreground mb-2">
                   Payment method
                 </p>
-                <div className="rounded-md border border-[#E6E6E6] divide-y divide-[#E6E6E6]">
-                  <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-[#FAFAFA]">
+                <div className="rounded-md border border-border-default divide-y divide-border-default">
+                  <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-1">
                     <input
                       type="radio"
                       name="payment"
                       defaultChecked
-                      className="w-4 h-4 accent-[#635BFF]"
+                      className="w-4 h-4 accent-info"
                     />
-                    <span className="flex-1 text-[#111]">Card</span>
-                    <span className="text-xs text-[#888]">VISA MC AMEX</span>
+                    <span className="flex-1 text-foreground">Card</span>
+                    <span className="text-xs text-text-muted">
+                      VISA MC AMEX
+                    </span>
                   </label>
-                  <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-[#FAFAFA]">
+                  <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-1">
                     <input
                       type="radio"
                       name="payment"
-                      className="w-4 h-4 accent-[#635BFF]"
+                      className="w-4 h-4 accent-info"
                     />
-                    <span className="flex-1 text-[#111]">Affirm</span>
+                    <span className="flex-1 text-foreground">Affirm</span>
                   </label>
-                  <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-[#FAFAFA]">
+                  <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-1">
                     <input
                       type="radio"
                       name="payment"
-                      className="w-4 h-4 accent-[#635BFF]"
+                      className="w-4 h-4 accent-info"
                     />
-                    <span className="flex-1 text-[#111]">Cash App Pay</span>
+                    <span className="flex-1 text-foreground">Cash App Pay</span>
                   </label>
-                  <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-[#FAFAFA]">
+                  <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-1">
                     <input
                       type="radio"
                       name="payment"
-                      className="w-4 h-4 accent-[#635BFF]"
+                      className="w-4 h-4 accent-info"
                     />
-                    <span className="flex-1 text-[#111]">Klarna</span>
+                    <span className="flex-1 text-foreground">Klarna</span>
                   </label>
                 </div>
               </div>
@@ -566,13 +570,13 @@ function StripeCheckoutPage() {
                 <input
                   type="checkbox"
                   defaultChecked
-                  className="w-4 h-4 mt-0.5 accent-[#635BFF]"
+                  className="w-4 h-4 mt-0.5 accent-info"
                 />
                 <div>
-                  <p className="text-sm text-[#111]">
+                  <p className="text-sm text-foreground">
                     Save my information for faster checkout
                   </p>
-                  <p className="text-xs text-[#666]">
+                  <p className="text-xs text-text-muted">
                     Pay securely at Bounty sandbox and everywhere Link is
                     accepted.
                   </p>
@@ -590,19 +594,19 @@ function StripeCheckoutPage() {
                 <button
                   type="button"
                   onClick={handlePay}
-                  className="w-full h-12 rounded-md bg-[#111] text-white font-semibold hover:bg-[#333] transition-colors"
+                  className="w-full h-12 rounded-md bg-background text-white font-semibold hover:bg-surface-3 transition-colors"
                 >
                   Pay
                 </button>
               </TutorialHighlight>
 
-              <p className="text-xs text-[#666] text-center mt-4">
+              <p className="text-xs text-text-muted text-center mt-4">
                 By paying, you agree to Link&apos;s Terms and Privacy.
               </p>
 
-              <div className="flex items-center justify-center gap-2 mt-6 text-xs text-[#888]">
+              <div className="flex items-center justify-center gap-2 mt-6 text-xs text-text-muted">
                 <span>Powered by</span>
-                <span className="font-semibold text-[#635BFF]">stripe</span>
+                <span className="font-semibold text-info">stripe</span>
               </div>
             </div>
           </div>
@@ -653,9 +657,9 @@ function GitHubIssuePage({
   }, [botCommentVisible, botReacted, showSuccess]);
 
   return (
-    <div className="h-full bg-[#0d1117] overflow-auto" ref={scrollRef}>
+    <div className="h-full bg-gh-bg overflow-auto" ref={scrollRef}>
       {/* GitHub header */}
-      <div className="bg-[#010409] border-b border-[#30363d] px-6 py-4">
+      <div className="bg-gh-bg border-b border-gh-border px-6 py-4">
         <div className="flex items-center gap-4">
           <svg
             className="h-8 w-8 text-white"
@@ -673,38 +677,38 @@ function GitHubIssuePage({
       <div className="max-w-4xl mx-auto px-6 py-8">
         {/* Issue header */}
         <div className="mb-6">
-          <h1 className="text-[26px] font-semibold text-[#e6edf3] mb-2">
+          <h1 className="text-[26px] font-semibold text-gh-text mb-2">
             Add OAuth integration for Google + GitHub
-            <span className="text-[#7d8590] font-normal ml-2">#42</span>
+            <span className="text-gh-text-secondary font-normal ml-2">#42</span>
           </h1>
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 text-sm font-medium rounded-full bg-[#238636] text-white">
+            <span className="px-3 py-1 text-sm font-medium rounded-full bg-gh-success text-white">
               Open
             </span>
-            <span className="text-sm text-[#7d8590]">
-              <span className="text-[#e6edf3]">grim</span> opened this issue 2
+            <span className="text-sm text-gh-text-secondary">
+              <span className="text-gh-text">grim</span> opened this issue 2
               minutes ago
             </span>
           </div>
         </div>
 
         {/* Issue body */}
-        <div className="border border-[#30363d] rounded-md mb-6">
-          <div className="bg-[#161b22] px-4 py-3 border-b border-[#30363d] flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-[#E66700] flex items-center justify-center text-white text-sm font-semibold">
+        <div className="border border-gh-border rounded-md mb-6">
+          <div className="bg-gh-surface px-4 py-3 border-b border-gh-border flex items-center gap-3">
+            <div className="h-8 w-8 rounded-full bg-brand-primary flex items-center justify-center text-white text-sm font-semibold">
               g
             </div>
-            <span className="text-sm text-[#e6edf3] font-semibold">grim</span>
-            <span className="text-sm text-[#7d8590]">
+            <span className="text-sm text-gh-text font-semibold">grim</span>
+            <span className="text-sm text-gh-text-secondary">
               commented 2 minutes ago
             </span>
           </div>
-          <div className="p-4 text-sm text-[#e6edf3]">
+          <div className="p-4 text-sm text-gh-text">
             <p className="mb-4">
               Need Google & GitHub OAuth integration with proper error handling
               and session management.
             </p>
-            <p className="text-[#7d8590]">
+            <p className="text-gh-text-secondary">
               This bounty was created via bounty.new
             </p>
           </div>
@@ -712,8 +716,8 @@ function GitHubIssuePage({
 
         {/* Bot comment - Bounty created (animated) */}
         {botCommentVisible && (
-          <div className="border border-[#30363d] rounded-md mb-6 animate-in fade-in slide-in-from-top-2 duration-500">
-            <div className="bg-[#161b22] px-4 py-3 border-b border-[#30363d] flex items-center gap-3">
+          <div className="border border-gh-border rounded-md mb-6 animate-in fade-in slide-in-from-top-2 duration-500">
+            <div className="bg-gh-surface px-4 py-3 border-b border-gh-border flex items-center gap-3">
               <Image
                 src="/images/ruo10xfk-400x400.jpg"
                 alt="bountydotnew"
@@ -721,18 +725,20 @@ function GitHubIssuePage({
                 height={32}
                 className="rounded-full"
               />
-              <span className="text-sm text-[#58a6ff] font-semibold">
+              <span className="text-sm text-gh-link font-semibold">
                 bountydotnew
               </span>
-              <span className="inline-flex items-center gap-1 bg-[#30363d] text-[#8b949e] px-1.5 py-0.5 rounded text-xs border border-[#30363d]">
+              <span className="inline-flex items-center gap-1 bg-gh-border text-gh-text-muted px-1.5 py-0.5 rounded text-xs border border-gh-border">
                 bot
               </span>
-              <span className="text-sm text-[#7d8590]">commented just now</span>
+              <span className="text-sm text-gh-text-secondary">
+                commented just now
+              </span>
             </div>
-            <div className="p-4 text-sm text-[#e6edf3]">
+            <div className="p-4 text-sm text-gh-text">
               <div className="flex items-center gap-2 mb-3">
                 <span
-                  className={`px-2 py-1 text-xs font-medium rounded bg-[#238636]/20 text-[#3fb950] border border-[#238636]/40 transition-all duration-500 ${showSuccess ? 'shadow-[0_0_12px_rgba(63,185,80,0.5)]' : ''}`}
+                  className={`px-2 py-1 text-xs font-medium rounded bg-gh-success/20 text-gh-success-text border border-gh-success/40 transition-all duration-500 ${showSuccess ? 'shadow-md shadow-success/50' : ''}`}
                 >
                   💰 Bounty Active
                 </span>
@@ -740,9 +746,9 @@ function GitHubIssuePage({
               <p className="mb-3">
                 This issue has a <strong>$500.00 USD</strong> bounty attached!
               </p>
-              <div className="bg-[#161b22] border border-[#30363d] rounded-md p-3 text-[#7d8590] text-xs">
+              <div className="bg-gh-surface border border-gh-border rounded-md p-3 text-gh-text-secondary text-xs">
                 <p>
-                  <strong className="text-[#e6edf3]">
+                  <strong className="text-gh-text">
                     To claim this bounty:
                   </strong>
                 </p>
@@ -750,7 +756,7 @@ function GitHubIssuePage({
                   <li>Submit a pull request that fixes this issue</li>
                   <li>
                     Comment{' '}
-                    <code className="px-1.5 py-0.5 bg-[#30363d] rounded">
+                    <code className="px-1.5 py-0.5 bg-gh-border rounded">
                       /submit #PR_NUMBER
                     </code>{' '}
                     on this issue
@@ -763,7 +769,7 @@ function GitHubIssuePage({
             <div className="px-4 pb-3 flex items-center gap-2">
               <button
                 type="button"
-                className="w-7 h-7 rounded-full border border-[#30363d] flex items-center justify-center text-[#8b949e] hover:border-[#58a6ff] hover:text-[#58a6ff] transition-colors"
+                className="w-7 h-7 rounded-full border border-gh-border flex items-center justify-center text-gh-text-muted hover:border-gh-link hover:text-gh-link transition-colors"
               >
                 <svg
                   className="w-4 h-4"
@@ -781,15 +787,15 @@ function GitHubIssuePage({
                 </svg>
               </button>
               {botReacted && (
-                <span className="inline-flex items-center gap-1 bg-[#30363d] px-2 py-0.5 rounded-full text-xs animate-in fade-in zoom-in duration-300">
+                <span className="inline-flex items-center gap-1 bg-gh-border px-2 py-0.5 rounded-full text-xs animate-in fade-in zoom-in duration-300">
                   <span>👀</span>
-                  <span className="text-[#8b949e]">1</span>
+                  <span className="text-gh-text-muted">1</span>
                 </span>
               )}
               {showSuccess && (
-                <span className="inline-flex items-center gap-1 bg-[#238636]/20 px-2 py-0.5 rounded-full text-xs animate-in fade-in zoom-in duration-300">
+                <span className="inline-flex items-center gap-1 bg-gh-success/20 px-2 py-0.5 rounded-full text-xs animate-in fade-in zoom-in duration-300">
                   <span>🎉</span>
-                  <span className="text-[#3fb950]">1</span>
+                  <span className="text-gh-success-text">1</span>
                 </span>
               )}
             </div>
@@ -797,18 +803,18 @@ function GitHubIssuePage({
         )}
 
         {/* Labels sidebar simulation */}
-        <div className="border border-[#30363d] rounded-md p-4 bg-[#161b22]">
-          <p className="text-xs font-semibold text-[#7d8590] uppercase tracking-wide mb-3">
+        <div className="border border-gh-border rounded-md p-4 bg-gh-surface">
+          <p className="text-xs font-semibold text-gh-text-secondary uppercase tracking-wide mb-3">
             Labels
           </p>
           <div className="flex flex-wrap gap-2">
-            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-[#238636] text-white">
+            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-gh-success text-white">
               bounty: $500
             </span>
-            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-[#1f6feb] text-white">
+            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-info text-white">
               enhancement
             </span>
-            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-[#8957e5] text-white">
+            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-info text-white">
               auth
             </span>
           </div>

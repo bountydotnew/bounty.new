@@ -25,17 +25,17 @@ export function Footer() {
   };
 
   return (
-    <footer className="border-t border-[#1a1a1a]">
+    <footer className="border-t border-border-subtle">
       {/* CTA Section */}
       <CTASection />
       
       {/* FAQ Section */}
-      <div className="border-t border-[#1a1a1a]">
+      <div className="border-t border-border-subtle">
         <FooterFAQ />
       </div>
       
       {/* Footer Links */}
-      <div className="border-t border-[#1a1a1a] py-12 px-4 sm:px-6 lg:px-8">
+      <div className="border-t border-border-subtle py-12 px-4 sm:px-6 lg:px-8">
       <div className="container mx-auto max-w-7xl">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-8 mb-12">
           <div>

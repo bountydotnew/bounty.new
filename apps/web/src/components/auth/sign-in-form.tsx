@@ -40,7 +40,7 @@ export function SignInForm({
     <div className="w-full max-w-md space-y-6">
       {showHeader && !isAddingAccount && (
         <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-white">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Welcome back
           </h1>
           <p className="text-gray-400 text-sm">

@@ -150,7 +150,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
             className="font-display-book text-black hover:bg-gray-100"
             disabled
             style={{
-              background: 'rgba(255, 255, 255, 1)',
+              background: 'var(--foreground)',
               borderRadius: '14px',
               padding: '12px 16px',
               height: '44px',
@@ -187,48 +187,19 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
         <div className="flex flex-col gap-4">
           <p
             className="font-display-book font-semibold text-xl"
-            style={{ color: 'rgba(239, 239, 239, 1)' }}
+            style={{ color: 'var(--foreground)' }}
           >
             You&apos;re on the waitlist!
           </p>
           <p
             className="mb-4 max-w-2xl font-display-book text-base leading-relaxed"
-            style={{ color: 'rgba(146, 146, 146, 1)' }}
+            style={{ color: 'var(--text-secondary)' }}
           >
             We&apos;ll let you know when we&apos;re ready to show you what
             we&apos;ve been working on.
           </p>
         </div>
-      ) : !isAuthenticated ? (
-        <div
-          className={cn(
-            'relative w-full max-w-lg transition-transform duration-700',
-            isAttentionActive && 'waitlist-attention'
-          )}
-        >
-          <div
-            className={cn(
-              'mb-8 flex max-w-md gap-3',
-              isAttentionActive && 'waitlist-wiggle waitlist-pulse'
-            )}
-          >
-            <Button
-              asChild
-              className="font-display-book text-black hover:bg-gray-100"
-              style={{
-                background: 'rgba(255, 255, 255, 1)',
-                borderRadius: '14px',
-                padding: '12px 16px',
-                height: '44px',
-              }}
-            >
-              <a href="/login?callbackUrl=/">
-                Sign in to join waitlist <ChevronRight className="h-5 w-5" />
-              </a>
-            </Button>
-          </div>
-        </div>
-      ) : (
+      ) : isAuthenticated ? (
         <div
           className={cn(
             'relative w-full max-w-lg transition-transform duration-700',
@@ -246,7 +217,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
               className="font-display-book text-black hover:bg-gray-100"
               disabled={isPending}
               style={{
-                background: 'rgba(255, 255, 255, 1)',
+                background: 'var(--foreground)',
                 borderRadius: '14px',
                 padding: '12px 16px',
                 height: '44px',
@@ -259,6 +230,35 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
                   Join Waitlist <ChevronRight className="h-5 w-5" />
                 </>
               )}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div
+          className={cn(
+            'relative w-full max-w-lg transition-transform duration-700',
+            isAttentionActive && 'waitlist-attention'
+          )}
+        >
+          <div
+            className={cn(
+              'mb-8 flex max-w-md gap-3',
+              isAttentionActive && 'waitlist-wiggle waitlist-pulse'
+            )}
+          >
+            <Button
+              asChild
+              className="font-display-book text-black hover:bg-gray-100"
+              style={{
+                background: 'var(--foreground)',
+                borderRadius: '14px',
+                padding: '12px 16px',
+                height: '44px',
+              }}
+            >
+              <a href="/login?callbackUrl=/">
+                Sign in to join waitlist <ChevronRight className="h-5 w-5" />
+              </a>
             </Button>
           </div>
         </div>

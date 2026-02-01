@@ -342,7 +342,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
           <fieldset className="w-full [all:unset] min-w-0">
             <div
               role="presentation"
-              className="bg-[#191919] text-[#5A5A5A] border border-[#232323] rounded-[21px] relative transition-colors cursor-text overflow-hidden w-full min-w-0 p-4 flex flex-col gap-3 focus-within:shadow-[0_0_0_2px_rgba(59,130,246,0.5)] focus-within:outline-none"
+              className="bg-surface-1 text-text-tertiary border border-border-subtle rounded-[21px] relative transition-colors cursor-text overflow-hidden w-full min-w-0 p-4 flex flex-col gap-3 focus-within:shadow-[0_0_0_2px_rgba(59,130,246,0.5)] focus-within:outline-none"
             >
               {/* Inline input chips row */}
               <div className="flex flex-col gap-1">
@@ -449,7 +449,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
                 {!installationsLoading && installations.length === 0 ? (
                   <Link
                     href="/integrations"
-                    className="flex items-center justify-center gap-2 px-4 h-[34px] rounded-full text-[15px] font-medium bg-[#232323] hover:bg-[#2a2a2a] border border-[#333] hover:border-[#444] text-white transition-colors shrink-0"
+                    className="flex items-center justify-center gap-2 px-4 h-[34px] rounded-full text-[15px] font-medium bg-surface-3 hover:bg-surface-hover border border-border-default hover:border-border-strong text-foreground transition-colors shrink-0"
                   >
                     <GithubIcon className="size-4" />
                     <span className="hidden sm:inline">Connect GitHub</span>
@@ -459,10 +459,10 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
                   <button
                     type="submit"
                     disabled={createBounty.isPending || !title || !amount}
-                    className="flex items-center justify-center gap-1.5 px-4 h-[34px] rounded-full text-[15px] font-medium bg-white text-black hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                    className="flex items-center justify-center gap-1.5 px-4 h-[34px] rounded-full text-[15px] font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                   >
                     {createBounty.isPending ? (
-                      <Spinner className="h-4 w-4" />
+                      <Spinner className="h-4 w-4 text-background" />
                     ) : (
                       <>
                         <span className="hidden sm:inline">Create bounty</span>

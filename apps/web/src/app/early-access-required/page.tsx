@@ -12,23 +12,23 @@ export const metadata: Metadata = {
 
 export default function EarlyAccessRequiredPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-[#0a0a0a]">
+    <div className="flex min-h-screen flex-col bg-background">
       <Header />
       <main className="flex-1">
         <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-6 py-12 sm:px-8">
           <div className="w-full max-w-md text-center">
             {/* Logo */}
             <div className="mb-10 flex justify-center">
-              <Logo className="h-16 w-16 text-white" />
+              <Logo className="h-16 w-16 text-foreground" />
             </div>
 
             {/* Heading */}
-            <h1 className="mb-5 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            <h1 className="mb-5 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
               Early Access Required
             </h1>
 
             {/* Description */}
-            <p className="mb-10 text-base leading-relaxed text-[#888] sm:text-lg">
+            <p className="mb-10 text-base leading-relaxed text-text-muted sm:text-lg">
               We&apos;re gradually rolling out access to bounty.new. Join the
               waitlist to be among the first to use Bounty!
             </p>

@@ -18,11 +18,11 @@ export const metadata: Metadata = {
 function PricingLoader() {
   return (
     <div className="mx-auto max-w-7xl px-8 pt-32 pb-24">
-      <h1 className="text-center text-5xl font-bold tracking-tight text-[#efefef]">
+      <h1 className="text-center text-5xl font-bold tracking-tight text-foreground">
         Pricing
       </h1>
       <div className="mt-16 flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#333] border-t-white" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-border-default border-t-white" />
       </div>
     </div>
   );
@@ -30,7 +30,7 @@ function PricingLoader() {
 
 export default function PricingPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-[#0a0a0a]">
+    <div className="flex min-h-screen flex-col bg-background">
       <Header />
       <main className="flex-1">
         <Suspense fallback={<PricingLoader />}>

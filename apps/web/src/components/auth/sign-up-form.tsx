@@ -44,7 +44,7 @@ export function SignUpForm({
     <div className="w-full max-w-md space-y-6">
       {showHeader && (
         <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-white">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Create account
           </h1>
           <p className="text-gray-400 text-sm">
@@ -78,7 +78,7 @@ export function SignUpForm({
             variant="text"
             onClick={() => router.push('/login')}
             disabled={isPending}
-            className="text-sm text-gray-400 hover:text-white"
+            className="text-sm text-gray-400 hover:text-foreground"
             type="button"
           >
             Already have an account? Sign in

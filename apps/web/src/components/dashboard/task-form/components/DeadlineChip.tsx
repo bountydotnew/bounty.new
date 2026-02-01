@@ -117,20 +117,20 @@ function DeadlinePicker({ value, onChange }: DeadlinePickerProps) {
         value={inputValue}
         onChange={handleInputChange}
         placeholder="Deadline, e.g. tomorrow"
-        className="rounded-full flex justify-center items-center px-[11px] py-[6px] bg-[#141414] border border-solid border-[#232323] hover:border-[#333] transition-colors text-[16px] leading-5 font-sans placeholder:text-[#7C7878] text-white focus:outline-none focus:border-[#444] pr-8 min-w-[100px]"
+        className="rounded-full flex justify-center items-center px-[11px] py-[6px] bg-surface-hover border border-solid border-border-subtle hover:border-border-default transition-colors text-[16px] leading-5 font-sans placeholder:text-text-muted text-foreground focus:outline-none focus:border-border-strong pr-8 min-w-[100px]"
       />
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="absolute top-1/2 right-2 -translate-y-1/2 text-[#7C7878] hover:text-white transition-colors"
+            className="absolute top-1/2 right-2 -translate-y-1/2 text-text-muted hover:text-foreground transition-colors"
           >
             <CalendarIcon className="size-3.5" />
             <span className="sr-only">Select date</span>
           </button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-auto p-0 bg-[#191919] border-[#232323]"
+          className="w-auto p-0 bg-surface-1 border-border-subtle"
           align="start"
           sideOffset={8}
         >

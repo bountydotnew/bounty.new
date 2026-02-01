@@ -34,18 +34,18 @@ export function RecommendationsCard() {
   const { recommendations } = state;
 
   return (
-    <Card className="border border-[#383838]/20 bg-[#1D1D1D]">
+    <Card className="border border-border-strong/20 bg-surface-1">
       <CardHeader>
-        <CardTitle className="text-white">Recommended</CardTitle>
+        <CardTitle className="text-foreground">Recommended</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
           {recommendations.map((bounty) => (
             <div
-              className="cursor-pointer rounded-lg border border-[#383838]/20 p-3 transition-colors hover:bg-[#2A2A28]"
+              className="cursor-pointer rounded-lg border border-border-strong/20 p-3 transition-colors hover:bg-surface-hover"
               key={bounty.id}
             >
-              <h4 className="mb-1 font-medium text-sm text-white">
+              <h4 className="mb-1 font-medium text-sm text-foreground">
                 {bounty.title}
               </h4>
               <p
@@ -56,7 +56,7 @@ export function RecommendationsCard() {
               </p>
               <div className="flex items-center justify-between">
                 <Badge
-                  className="border-[#383838] text-gray-400 text-xs"
+                  className="border-border-strong text-gray-400 text-xs"
                   variant="outline"
                 >
                   {bounty.technology}

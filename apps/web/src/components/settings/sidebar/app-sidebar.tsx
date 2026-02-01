@@ -18,11 +18,17 @@ import {
 import { usePathname, useRouter } from 'next/navigation';
 import Link from '@bounty/ui/components/link';
 import { LINKS } from '@/constants';
-import { BellIcon, UserIcon, DollarBillIcon, SecurityIcon, CardIcon } from '@bounty/ui';
+import {
+  BellIcon,
+  UserIcon,
+  DollarBillIcon,
+  SecurityIcon,
+  CardIcon,
+} from '@bounty/ui';
 import { ArrowLeftIcon } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { title: 'Profile', url: '/settings/profile', icon: UserIcon },
+  { title: 'Account', url: '/settings/account', icon: UserIcon },
   { title: 'Billing', url: '/settings/billing', icon: CardIcon },
   { title: 'Payments', url: '/settings/payments', icon: DollarBillIcon },
   { title: 'Security', url: '/settings/security', icon: SecurityIcon },
@@ -46,8 +52,8 @@ const BackButton = () => {
           'w-fit text-sm font-medium',
           'inline-flex items-center justify-center gap-0.5 whitespace-nowrap',
           'relative focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
-          'text-[#929292] hover:text-white transition-colors',
-          'bg-transparent hover:bg-[#292828]',
+          'text-text-tertiary hover:text-foreground transition-colors',
+          'bg-transparent hover:bg-surface-2',
           'h-[28px] px-[6px] py-[4px] rounded-lg'
         )}
       >
@@ -58,7 +64,7 @@ const BackButton = () => {
         aria-label="Toggle sidebar layout"
         className="flex h-5 w-5 items-center justify-center p-0 hover:bg-transparent"
       >
-        <SidebarToggleIcon className="h-5 w-5 text-[#929292]" />
+        <SidebarToggleIcon className="h-5 w-5 text-text-tertiary" />
       </SidebarTrigger>
     </div>
   );
@@ -111,9 +117,9 @@ export const AppSidebar = ({
         <div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:px-[5px] group-data-[collapsible=icon]:py-[15px]">
           <SidebarTrigger
             aria-label="Toggle sidebar layout"
-            className="flex size-[26px] items-center justify-center rounded-[10px] bg-[#191919] p-[3px] hover:bg-[#141414] hover:text-white"
+            className="flex size-[26px] items-center justify-center rounded-[10px] bg-surface-1 p-[3px] hover:bg-surface-2 hover:text-foreground"
           >
-            <SidebarToggleIcon className="h-5 w-5 text-[#929292]" />
+            <SidebarToggleIcon className="h-5 w-5 text-text-tertiary" />
           </SidebarTrigger>
         </div>
         <SidebarHeader className="px-[15px] py-0 group-data-[collapsible=icon]:px-0">

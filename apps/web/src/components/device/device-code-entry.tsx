@@ -91,7 +91,7 @@ export function DeviceCodeEntry({ initialCode = '' }: DeviceCodeEntryProps) {
 
   return (
     <div className="mx-auto w-full max-w-lg">
-      <Card className="border border-muted bg-[#111111] text-white">
+      <Card className="border border-muted bg-background text-foreground">
         <CardHeader>
           <CardTitle className="font-semibold text-2xl">
             Authorize a device

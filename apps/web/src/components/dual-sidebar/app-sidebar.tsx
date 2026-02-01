@@ -3,7 +3,6 @@
 import * as React from 'react';
 import {
   ArrowDownIcon,
-  BountiesIcon,
   BookmarksIcon,
   HomeIcon as HugeHomeIcon,
   NotificationsIcon,
@@ -12,6 +11,8 @@ import {
   BellIcon,
   FileIcon,
   DiscordIcon,
+  DashboardSquareIcon,
+  QuestionMarkIcon,
 } from '@bounty/ui';
 import { cn } from '@bounty/ui/lib/utils';
 import {
@@ -28,7 +29,7 @@ import {
 } from '@bounty/ui/components/sidebar';
 import {
   Avatar,
-  AvatarFallback,
+  AvatarFacehash,
   AvatarImage,
 } from '@bounty/ui/components/avatar';
 import { useSession } from '@/context/session-context';
@@ -39,11 +40,24 @@ import { NotificationsDropdown } from '@/components/notifications/notifications-
 import { AccountDropdown } from '@/components/billing/account-dropdown';
 import { FundBountyModal } from '@/components/payment/fund-bounty-modal';
 import { LINKS } from '@/constants';
-import { Clock, UsersIcon } from 'lucide-react';
+import {
+  Clock,
+  UsersIcon,
+  Bug,
+  Lightbulb,
+  BookOpen,
+  ArrowUpRight,
+} from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@bounty/ui/components/popover';
+// import { useSupport } from '@cossistant/next';
 
 const NAV_ITEMS = [
   { title: 'Home', url: LINKS.DASHBOARD, icon: HugeHomeIcon },
-  { title: 'Bounties', url: LINKS.BOUNTIES, icon: BountiesIcon },
+  { title: 'Bounties', url: LINKS.BOUNTIES, icon: DashboardSquareIcon },
   { title: 'Bookmarks', url: LINKS.BOOKMARKS, icon: BookmarksIcon },
   { title: 'Integrations', url: '/integrations', icon: SettingsGearIcon },
 ];
@@ -58,7 +72,6 @@ const WorkspaceSwitcher = () => {
   const { session } = useSession();
   const userName = session?.user?.name ?? 'grim';
   const userImage = session?.user?.image ?? null;
-  const initials = userName.charAt(0).toLowerCase();
   const workspaceLabel = userName.split(' ')[0] || 'grim';
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
 
@@ -79,12 +92,12 @@ const WorkspaceSwitcher = () => {
           className={cn(
             'group inline-flex items-center gap-[10px] rounded-[11px] px-[5px] py-[5px] text-left transition-colors group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]',
             isDropdownOpen
-              ? 'bg-[#292828] hover:bg-[#2f2e2e]'
-              : 'bg-transparent hover:bg-[#292828]'
+              ? 'bg-surface-2 hover:bg-surface-hover'
+              : 'bg-transparent hover:bg-surface-2'
           )}
           type="button"
         >
-          <Avatar className="h-[27px] w-[27px] rounded-[6px] border-2 border-[#C95900] shadow-[inset_0_2px_3px_rgba(0,0,0,0.2)] group-data-[collapsible=icon]:size-5 group-data-[collapsible=icon]:h-5 group-data-[collapsible=icon]:w-5">
+          <Avatar className="h-[27px] w-[27px] rounded-[6px] border-2 border-brand-primary shadow-[inset_0_2px_3px_rgba(0,0,0,0.2)] group-data-[collapsible=icon]:size-5 group-data-[collapsible=icon]:h-5 group-data-[collapsible=icon]:w-5">
             {userImage && (
               <AvatarImage
                 alt={userName}
@@ -92,15 +105,17 @@ const WorkspaceSwitcher = () => {
                 className="rounded-[6px]"
               />
             )}
-            <AvatarFallback className="rounded-[6px] bg-[#E66700] text-base font-normal text-white">
-              <span className="pb-1.5">{initials}</span>
-            </AvatarFallback>
+            <AvatarFacehash
+              name={userName}
+              size={27}
+              className="rounded-[6px]"
+            />
           </Avatar>
           <div className="flex items-center gap-[7px] group-data-[collapsible=icon]:hidden">
-            <span className="text-[18px] font-semibold leading-[150%] text-[#F2F2F2]">
+            <span className="text-[18px] font-semibold leading-[150%] text-foreground">
               {workspaceLabel}
             </span>
-            <ArrowDownIcon className="h-4 w-4 text-[#929292] transition-colors group-hover:text-white" />
+            <ArrowDownIcon className="h-4 w-4 text-text-tertiary transition-colors group-hover:text-foreground" />
           </div>
         </button>
       </AccountDropdown>
@@ -108,8 +123,58 @@ const WorkspaceSwitcher = () => {
         aria-label="Toggle sidebar layout"
         className="flex h-5 w-5 items-center justify-center p-0 hover:bg-transparent"
       >
-        <SidebarToggleIcon className="h-5 w-5 text-[#929292]" />
+        <SidebarToggleIcon className="h-5 w-5 text-text-tertiary" />
       </SidebarTrigger>
+    </div>
+  );
+};
+
+const SupportPopoverContent = () => {
+  const linkClass =
+    'flex items-center gap-3 px-4 py-2 text-[14px] text-text-secondary hover:text-foreground transition-colors';
+
+  return (
+    <div className="flex flex-col">
+      <a
+        href="https://discord.gg/bountynew"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={linkClass}
+      >
+        <DiscordIcon className="size-4" />
+        <span className="flex-1">Discord</span>
+        <ArrowUpRight className="size-3.5 text-text-tertiary" />
+      </a>
+      <a
+        href="https://docs.bounty.new"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={linkClass}
+      >
+        <BookOpen className="size-4" />
+        <span className="flex-1">Docs</span>
+        <ArrowUpRight className="size-3.5 text-text-tertiary" />
+      </a>
+      <a
+        href="https://github.com/bountydotnew/bounty.new/issues/new?template=bug_report.md"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={linkClass}
+      >
+        <Bug className="size-4" />
+        <span className="flex-1">Report a bug</span>
+        <ArrowUpRight className="size-3.5 text-text-tertiary" />
+      </a>
+      <a
+        href="https://github.com/bountydotnew/bounty.new/issues/new?template=feature_request.md"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={linkClass}
+      >
+        <Lightbulb className="size-4" />
+        <span className="flex-1">Suggest a feature</span>
+        <ArrowUpRight className="size-3.5 text-text-tertiary" />
+      </a>
     </div>
   );
 };
@@ -122,10 +187,10 @@ const SidebarFooterActions = () => {
   return (
     <>
       <div className="flex items-end justify-between gap-2 py-0">
-        {/* Links column: Docs, Discord */}
+        {/* Links column: Docs, Support */}
         <div className="flex flex-col gap-2">
           <button
-            className="inline-flex items-center gap-2 rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
+            className="inline-flex items-center gap-2 rounded-[10px] bg-surface-1 px-3.5 py-1.5 text-text-tertiary transition-colors hover:text-foreground group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
             onClick={() => window.open('https://docs.bounty.new', '_blank')}
             type="button"
           >
@@ -134,27 +199,32 @@ const SidebarFooterActions = () => {
               Docs
             </span>
           </button>
-          <div className="flex items-center gap-0">
-            <button
-              className="inline-flex items-center gap-2 rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
-              onClick={() =>
-                window.open('https://discord.gg/bountynew', '_blank')
-              }
-              type="button"
+          {/* TODO: Re-enable when Cossistant support widget is fixed */}
+          {/* <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className="inline-flex items-center gap-2 rounded-[10px] bg-surface-1 px-3.5 py-1.5 text-text-tertiary transition-colors hover:text-foreground group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
+                type="button"
+              >
+                <QuestionMarkIcon className="h-[19px] w-[19px]" />
+                <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em] group-data-[collapsible=icon]:hidden">
+                  Support
+                </span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              side="top"
+              align="start"
+              sideOffset={8}
+              className="w-56 p-0"
             >
-              <DiscordIcon className="h-[19px] w-[19px]" />
-              <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em] group-data-[collapsible=icon]:hidden">
-                Discord
-              </span>
-            </button>
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 animate-pulse" />
-            </span>
-          </div>
+              <SupportPopoverContent />
+            </PopoverContent>
+          </Popover> */}
         </div>
         {/* Notifications toggle */}
         {isAuthenticated && !isPending && (
-          <NotificationsDropdown triggerClassName="flex h-auto w-auto items-center justify-center rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] transition-colors hover:text-white group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]">
+          <NotificationsDropdown triggerClassName="flex h-auto w-auto items-center justify-center rounded-[10px] bg-surface-1 px-3.5 py-1.5 text-text-tertiary transition-colors hover:text-foreground group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]">
             <NotificationsIcon className="h-[19px] w-[19px]" />
           </NotificationsDropdown>
         )}
@@ -185,27 +255,25 @@ const UnauthenticatedWorkspaceSwitcher = () => {
   return (
     <div className="flex items-center justify-between py-0 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:hidden">
       <button
-        className="group inline-flex items-center gap-[10px] rounded-[11px] px-[5px] py-[5px] text-left transition-colors bg-transparent hover:bg-[#292828] group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
+        className="group inline-flex items-center gap-[10px] rounded-[11px] px-[5px] py-[5px] text-left transition-colors bg-transparent hover:bg-surface-2 group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
         onClick={() => router.push('/login')}
         type="button"
       >
-        <Avatar className="h-[27px] w-[27px] rounded-[6px] border-2 border-[#232323] shadow-[inset_0_2px_3px_rgba(0,0,0,0.2)] group-data-[collapsible=icon]:size-5 group-data-[collapsible=icon]:h-5 group-data-[collapsible=icon]:w-5">
-          <AvatarFallback className="flex items-center justify-center rounded-[6px] bg-[#292828] text-base font-normal text-[#929292]">
-            <span>?</span>
-          </AvatarFallback>
+        <Avatar className="h-[27px] w-[27px] rounded-[6px] border-2 border-border-subtle shadow-[inset_0_2px_3px_rgba(0,0,0,0.2)] group-data-[collapsible=icon]:size-5 group-data-[collapsible=icon]:h-5 group-data-[collapsible=icon]:w-5">
+          <AvatarFacehash name="guest" size={27} className="rounded-[6px]" />
         </Avatar>
         <div className="flex items-center gap-[7px] group-data-[collapsible=icon]:hidden">
-          <span className="text-[18px] font-semibold leading-[150%] text-[#929292]">
+          <span className="text-[18px] font-semibold leading-[150%] text-text-tertiary">
             Sign in
           </span>
-          <ArrowDownIcon className="h-4 w-4 text-[#929292] transition-colors group-hover:text-white" />
+          <ArrowDownIcon className="h-4 w-4 text-text-tertiary transition-colors group-hover:text-foreground" />
         </div>
       </button>
       <SidebarTrigger
         aria-label="Toggle sidebar layout"
         className="flex h-5 w-5 items-center justify-center p-0 hover:bg-transparent"
       >
-        <SidebarToggleIcon className="h-5 w-5 text-[#929292]" />
+        <SidebarToggleIcon className="h-5 w-5 text-text-tertiary" />
       </SidebarTrigger>
     </div>
   );
@@ -236,8 +304,8 @@ const UnauthenticatedNavItems = () => {
           </SidebarMenuItem>
         ))}
       </SidebarMenu>
-      <div className="mt-4 rounded-[10px] bg-[#191919] p-4 group-data-[collapsible=icon]:hidden">
-        <p className="mb-3 text-[13px] font-medium leading-[150%] text-[#929292]">
+      <div className="mt-4 rounded-[10px] bg-surface-1 p-4 group-data-[collapsible=icon]:hidden">
+        <p className="mb-3 text-[13px] font-medium leading-[150%] text-text-tertiary">
           Sign in to access your dashboard, bounties, and more
         </p>
         <button
@@ -256,7 +324,7 @@ const UnauthenticatedFooterActions = () => {
   return (
     <div className="flex items-end justify-between gap-2 py-0">
       <button
-        className="inline-flex items-center gap-2 rounded-[10px] bg-[#191919] px-3.5 py-1.5 text-[#929292] opacity-50 transition-colors group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
+        className="inline-flex items-center gap-2 rounded-[10px] bg-surface-1 px-3.5 py-1.5 text-text-tertiary opacity-50 transition-colors group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
         disabled
         type="button"
       >
@@ -287,9 +355,9 @@ export const AppSidebar = ({
         <div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:px-[5px] group-data-[collapsible=icon]:py-[15px]">
           <SidebarTrigger
             aria-label="Toggle sidebar layout"
-            className="flex size-[26px] items-center justify-center rounded-[10px] bg-[#191919] p-[3px] hover:bg-[#141414] hover:text-white"
+            className="flex size-[26px] items-center justify-center rounded-[10px] bg-surface-1 p-[3px] hover:bg-surface-2 hover:text-foreground"
           >
-            <SidebarToggleIcon className="h-5 w-5 text-[#929292]" />
+            <SidebarToggleIcon className="h-5 w-5 text-text-tertiary" />
           </SidebarTrigger>
         </div>
         {isAuthenticated && !isPending ? (
@@ -368,9 +436,9 @@ export const AdminAppSidebar = ({
         <div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-[15px]">
           <SidebarTrigger
             aria-label="Toggle sidebar layout"
-            className="flex size-[26px] items-center justify-center rounded-[10px] bg-[#191919] p-[3px] hover:bg-[#141414] hover:text-white"
+            className="flex size-[26px] items-center justify-center rounded-[10px] bg-surface-1 p-[3px] hover:bg-surface-2 hover:text-foreground"
           >
-            <SidebarToggleIcon className="h-5 w-5 text-[#929292]" />
+            <SidebarToggleIcon className="h-5 w-5 text-text-tertiary" />
           </SidebarTrigger>
         </div>
         <SidebarHeader className="px-[15px] py-0 group-data-[collapsible=icon]:px-0">

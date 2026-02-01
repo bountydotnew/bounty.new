@@ -57,7 +57,7 @@ export const Header = ({}: HeaderProps = {}) => {
     <>
       <header
         className={cn(
-          'flex h-[72px] items-center justify-between bg-[#0E0E0E] border-b border-[#232323]',
+          'flex h-[72px] items-center justify-between bg-background border-b border-border-subtle',
           'px-4 sm:px-6'
         )}
       >
@@ -65,17 +65,17 @@ export const Header = ({}: HeaderProps = {}) => {
           {isMobile && <SidebarTrigger />}
           {/* Search Bar Trigger */}
           <button
-            className="relative flex w-[270px] items-center rounded-lg border cursor-pointer border-[#232323] bg-[#191919] py-[5px] pl-[10px] pr-[53px] text-left transition-colors hover:bg-[#141414]"
+            className="relative flex w-[270px] items-center rounded-lg border cursor-pointer border-border-subtle bg-surface-1 py-[5px] pl-[10px] pr-[53px] text-left transition-colors hover:bg-surface-2"
             onClick={() => setCommandMenuOpen(true)}
             type="button"
           >
-            <span className="flex-1 bg-transparent text-[16px] font-medium leading-[150%] tracking-[-0.03em] text-[#5A5A5A] flex items-center">
+            <span className="flex-1 bg-transparent text-[16px] font-medium leading-[150%] tracking-[-0.03em] text-text-tertiary flex items-center">
               Search for anything...
             </span>
             {/* Keyboard Shortcut Badge */}
             <div className="absolute right-[10px] top-1/2 flex -translate-y-1/2 items-center">
-              <div className="flex h-[23px] w-[43px] items-center justify-center rounded-full bg-[#232323]">
-                <span className="text-[16px] font-medium leading-[150%] text-[#5A5A5A]">
+              <div className="flex h-[23px] w-[43px] items-center justify-center rounded-full bg-surface-3">
+                <span className="text-[16px] font-medium leading-[150%] text-text-tertiary">
                   ⌘K
                 </span>
               </div>
@@ -86,12 +86,12 @@ export const Header = ({}: HeaderProps = {}) => {
         <div className="flex items-center gap-2">
           {/* Create Bounty Button */}
           <button
-            className="hidden md:flex lg:flex items-center gap-[7px] rounded-[12px] border border-[#232323] bg-[#191919] py-[5px] px-[10px] transition-colors hover:bg-[#141414]"
+            className="hidden md:flex lg:flex items-center gap-[7px] rounded-[12px] border border-border-subtle bg-surface-1 py-[5px] px-[10px] transition-colors hover:bg-surface-2"
             onClick={handleCreateBounty}
             type="button"
           >
-            <Plus className="h-4 w-4 text-[#CFCFCF]" />
-            <span className="text-[16px] font-semibold leading-[150%] tracking-[0.01em] text-[#CFCFCF]">
+            <Plus className="h-4 w-4 text-text-secondary" />
+            <span className="text-[16px] font-semibold leading-[150%] tracking-[0.01em] text-text-secondary">
               Create Bounty
             </span>
           </button>

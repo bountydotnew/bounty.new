@@ -55,7 +55,7 @@ export const Header = (_props: HeaderProps = {}) => {
     <>
       <header
         className={cn(
-          'flex h-[72px] items-center justify-between bg-[#0E0E0E] border-b border-[#232323]',
+          'flex h-[72px] items-center justify-between bg-background border-b border-border-subtle',
           'px-4 sm:px-6'
         )}
       >
@@ -68,16 +68,16 @@ export const Header = (_props: HeaderProps = {}) => {
         <div className="flex h-7 flex-1 justify-center px-4">
           {/* Search Bar Trigger - hidden on mobile */}
           <button
-            className="hidden sm:relative sm:flex w-[270px] h-9 items-center rounded-lg border cursor-pointer border-[#232323] bg-[#191919] py-[10px] pl-[10px] pr-[53px] text-left transition-colors hover:bg-[#141414]"
+            className="hidden sm:relative sm:flex w-[270px] h-9 items-center rounded-lg border cursor-pointer border-border-subtle bg-surface-1 py-[10px] pl-[10px] pr-[53px] text-left transition-colors hover:bg-surface-2"
             onClick={() => setCommandMenuOpen(true)}
             type="button"
           >
-            <span className="flex-1 bg-transparent text-[16px] font-medium leading-[150%] tracking-[-0.03em] text-[#5A5A5A] flex items-center">
+            <span className="flex-1 bg-transparent text-[16px] font-medium leading-[150%] tracking-[-0.03em] text-text-tertiary flex items-center">
               Search for anything...
             </span>
             <div className="absolute right-[10px] top-1/2 flex -translate-y-1/2 items-center">
-              <div className="flex h-[23px] w-[43px] items-center justify-center rounded-full bg-[#232323]">
-                <span className="text-[16px] font-medium leading-[150%] text-[#5A5A5A]">
+              <div className="flex h-[23px] w-[43px] items-center justify-center rounded-full bg-surface-3">
+                <span className="text-[16px] font-medium leading-[150%] text-text-tertiary">
                   ⌘K
                 </span>
               </div>
@@ -89,12 +89,13 @@ export const Header = (_props: HeaderProps = {}) => {
         <div className="flex min-w-0 items-center">
           {/* Create Bounty Button - icon only on mobile */}
           <button
-            className="flex items-center gap-[7px] rounded-lg bg-[#2A2A28] px-2 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#383838]"
+            className="flex items-center gap-[7px] rounded-lg bg-surface-hover px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-3"
             onClick={handleCreateBounty}
             type="button"
+            aria-label="Create new bounty"
           >
-            {/* <Plus className="h-4 w-4 text-[#CFCFCF]" /> */}
-            <span className="hidden md:inline text-sm font-semibold leading-[150%] tracking-[0.01em] text-[#CFCFCF]">
+            <Plus className="h-4 w-4 text-text-secondary md:hidden" />
+            <span className="hidden md:inline text-sm font-semibold leading-[150%] tracking-[0.01em] text-text-secondary">
               New bounty
             </span>
           </button>

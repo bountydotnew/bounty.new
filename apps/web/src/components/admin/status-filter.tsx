@@ -20,7 +20,7 @@ export function StatusFilter({
   className,
 }: StatusFilterProps) {
   return (
-    <Select onValueChange={onValueChange} value={value}>
+    <Select onValueChange={(v) => v && onValueChange(v)} value={value}>
       <SelectTrigger className={className || 'w-[180px]'}>
         <SelectValue placeholder="Filter by status" />
       </SelectTrigger>

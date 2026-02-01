@@ -41,12 +41,12 @@ export function SubmissionsMobileSidebar({
         </button>
       </SheetTrigger>
       <SheetContent
-        className="w-[320px] rounded-l-2xl border-none bg-[#151515] p-0 shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)]"
+        className="w-[320px] rounded-l-2xl border-none bg-surface-1 p-0 shadow-[inset_0_-1px_1px_0_rgba(30,30,30,0.2),inset_0_1px_1px_0_rgba(255,255,255,0.2)]"
         side="right"
       >
         <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between border-[#383838]/20 border-b p-4">
-            <h2 className="font-medium text-lg text-white">Submissions</h2>
+          <div className="flex items-center justify-between border-border-strong/20 border-b p-4">
+            <h2 className="font-medium text-lg text-foreground">Submissions</h2>
             <Button className="rounded-lg bg-primary px-3 py-2 text-primary-foreground">
               Add submission
             </Button>
