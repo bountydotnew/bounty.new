@@ -7,10 +7,25 @@ import { FeedbackModal } from '@/components/feedback-modal';
 import { FeedbackOverlay } from '@/components/feedback-overlay';
 
 export const metadata: Metadata = {
-  title: 'Settings | bounty',
+  title: 'bounty.new - settings',
   description: 'Manage your account settings',
   icons: {
-    icon: '/icon.svg',
+    icon: '/favicon/favicon_dark.png',
+    apple: '/favicon/favicon_dark.png',
+  },
+  openGraph: {
+    title: 'bounty.new - settings',
+    description: 'Manage your account settings',
+    url: 'https://bounty.new/settings',
+    siteName: 'bounty.new - settings',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'bounty.new - Manage your account settings',
+      },
+    ],
   },
 };
 

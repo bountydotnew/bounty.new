@@ -18,7 +18,7 @@ export const Header = (_props: HeaderProps = {}) => {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const router = useRouter();
   const pathname = usePathname();
-  const [commandMenuOpen, setCommandMenuOpen] = useState(false);
+  //const [commandMenuOpen, setCommandMenuOpen] = useState(false);
 
   const handleCreateBounty = () => {
     const isOnDashboard = pathname === '/dashboard';
@@ -39,17 +39,17 @@ export const Header = (_props: HeaderProps = {}) => {
   };
 
   // Toggle the menu when ⌘K is pressed
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setCommandMenuOpen((open) => !open);
-      }
-    };
+  // useEffect(() => {
+  //   const down = (e: KeyboardEvent) => {
+  //     if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+  //       e.preventDefault();
+  //       setCommandMenuOpen((open) => !open);
+  //     }
+  //   };
 
-    document.addEventListener('keydown', down);
-    return () => document.removeEventListener('keydown', down);
-  }, []);
+  //   document.addEventListener('keydown', down);
+  //   return () => document.removeEventListener('keydown', down);
+  // }, []);
 
   return (
     <>
@@ -65,8 +65,7 @@ export const Header = (_props: HeaderProps = {}) => {
         </div>
 
         {/* Center - Search bar */}
-        <div className="flex h-7 flex-1 justify-center px-4">
-          {/* Search Bar Trigger - hidden on mobile */}
+        {/* <div className="flex h-7 flex-1 justify-center px-4">
           <button
             className="hidden sm:relative sm:flex w-[270px] h-9 items-center rounded-lg border cursor-pointer border-border-subtle bg-surface-1 py-[10px] pl-[10px] pr-[53px] text-left transition-colors hover:bg-surface-2"
             onClick={() => setCommandMenuOpen(true)}
@@ -83,7 +82,7 @@ export const Header = (_props: HeaderProps = {}) => {
               </div>
             </div>
           </button>
-        </div>
+        </div> */}
 
         {/* Right side - Create Bounty button */}
         <div className="flex min-w-0 items-center">
@@ -101,7 +100,7 @@ export const Header = (_props: HeaderProps = {}) => {
           </button>
         </div>
       </header>
-      <CommandMenu onOpenChange={setCommandMenuOpen} open={commandMenuOpen} />
+      {/* <CommandMenu onOpenChange={setCommandMenuOpen} open={commandMenuOpen} /> */}
     </>
   );
 };
