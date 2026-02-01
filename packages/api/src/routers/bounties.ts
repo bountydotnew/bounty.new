@@ -509,6 +509,47 @@ export const bountiesRouter = router({
           });
         }
 
+        // Create GitHub issue for Linear bounties (mirror feature)
+        // When creating from Linear, create a new GitHub issue that invokes the bot
+        if (
+          newBounty.linearIssueId &&
+          !newBounty.githubIssueNumber && // No existing GitHub issue linked
+          newBounty.githubInstallationId &&
+          newBounty.githubRepoOwner &&
+          newBounty.githubRepoName
+        ) {
+          try {
+            const { getGithubAppManager } = await import('@bounty/api/driver/github-app');
+            const githubApp = getGithubAppManager();
+
+            // Create issue with bot mention in body to trigger bounty creation
+            const issueBody = `${input.description}\n\n@bountydotnew ${normalizedAmount} ${input.currency}`;
+
+            const githubIssue = await githubApp.createIssue(
+              newBounty.githubInstallationId,
+              newBounty.githubRepoOwner,
+              newBounty.githubRepoName,
+              newBounty.title,
+              issueBody
+            );
+
+            // Update bounty with GitHub issue details
+            await db
+              .update(bounty)
+              .set({
+                githubIssueNumber: githubIssue.number,
+                updatedAt: new Date(),
+              })
+              .where(eq(bounty.id, newBounty.id));
+
+            // Update newBounty to reflect the changes
+            newBounty.githubIssueNumber = githubIssue.number;
+          } catch (error) {
+            console.error('Failed to create GitHub mirror issue:', error);
+            // Continue even if GitHub issue creation fails
+          }
+        }
+
         // Post bot comment on GitHub issue if bounty is linked to an issue
         if (
           newBounty.githubIssueNumber &&

@@ -3,7 +3,6 @@
 import { useEffect, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
-import GithubImportModal from '@/components/bounty/github-import-modal';
 import { Header } from '@/components/dual-sidebar/sidebar-header';
 // import { Onboarding } from '@/components/onboarding';
 import {
@@ -12,11 +11,7 @@ import {
 } from '@/components/dashboard/task-input-form';
 import { DashboardPageContext } from '@/components/dashboard/dashboard-page';
 
-interface DashboardContentProps {
-  onImportOpenChange: (open: boolean) => void;
-}
-
-export function DashboardContent({ onImportOpenChange }: DashboardContentProps) {
+export function DashboardContent() {
   const router = useRouter();
   const taskInputRef = useRef<TaskInputFormRef>(null);
 
@@ -104,7 +99,6 @@ export function DashboardContent({ onImportOpenChange }: DashboardContentProps) 
           </div>
         </div>
       </div>
-      <GithubImportModal onOpenChange={onImportOpenChange} open={false} />
     </>
   );
 }

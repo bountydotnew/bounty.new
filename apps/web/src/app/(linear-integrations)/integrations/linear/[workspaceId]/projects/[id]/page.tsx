@@ -3,7 +3,7 @@
 import { useQuery, skipToken } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { LinearIcon } from '@bounty/ui';
-import { ArrowLeft, ExternalLink, Inbox } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Inbox, FolderKanban } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
 import { LinearIssueCard } from '../../issues/components/issue-card';
@@ -32,6 +32,11 @@ export default function LinearProjectDetailPage() {
 
   const project = projectsData?.projects?.find((p) => p.id === projectId);
   const issues = issuesData?.issues ?? [];
+
+  // Show skeleton while loading
+  if (hasLinear && (projectLoading || issuesLoading)) {
+    return <ProjectDetailSkeleton />;
+  }
 
   if (!hasLinear) {
     return (
@@ -84,8 +89,8 @@ export default function LinearProjectDetailPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex items-center gap-3">
+      <div className="flex items-start justify-between mb-8">
+        <div className="flex items-center gap-4">
           <button
             onClick={() => router.push(`/integrations/linear/${workspaceId}/projects`)}
             className="h-9 px-2.5 rounded-lg border border-white/10 text-foreground hover:bg-white/5 transition-colors"
@@ -94,15 +99,13 @@ export default function LinearProjectDetailPage() {
             <ArrowLeft className="w-4 h-4" />
           </button>
 
-          {project?.icon && (
-            <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-lg">
-              {project.icon}
-            </div>
-          )}
+          <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-xl">
+            {project?.icon || <FolderKanban className="w-6 h-6 text-neutral-500" />}
+          </div>
 
           <div>
             <h1 className="text-xl font-semibold text-foreground">
-              {projectLoading ? '...' : project?.name}
+              {project?.name}
             </h1>
             <p className="text-sm text-neutral-500">
               {issues.length} {issues.length === 1 ? 'issue' : 'issues'}
@@ -121,18 +124,18 @@ export default function LinearProjectDetailPage() {
         </a>
       </div>
 
-      {/* Project Info */}
+      {/* Description */}
       {project?.description && (
-        <div className="p-5 rounded-xl border border-white/10 mb-6">
+        <div className="mb-8">
           <p className="text-sm text-neutral-400 leading-relaxed">{project.description}</p>
         </div>
       )}
 
-      {/* Status Badge */}
+      {/* Status */}
       {project?.status && (
-        <div className="mb-6">
-          <span className="text-xs px-2 py-1 rounded-lg border border-white/10 text-neutral-400">
-            Status: {project.status}
+        <div className="mb-8">
+          <span className="text-xs px-2 py-1 rounded-md bg-white/5 border border-white/10 text-neutral-500">
+            {project.status}
           </span>
         </div>
       )}
@@ -141,12 +144,8 @@ export default function LinearProjectDetailPage() {
       <div>
         <h2 className="text-sm font-medium text-foreground mb-4">Issues</h2>
 
-        {issuesLoading ? (
-          <div className="py-12 flex justify-center">
-            <div className="w-6 h-6 border-2 border-neutral-700 border-t-white rounded-full animate-spin" />
-          </div>
-        ) : issues.length === 0 ? (
-          <div className="py-12 flex flex-col items-center justify-center text-center">
+        {issues.length === 0 ? (
+          <div className="py-16 flex flex-col items-center justify-center text-center">
             <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-3">
               <Inbox className="w-5 h-5 text-neutral-500" />
             </div>
@@ -162,6 +161,47 @@ export default function LinearProjectDetailPage() {
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function ProjectDetailSkeleton() {
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="h-9 w-9 rounded bg-white/5 animate-pulse" />
+          <div className="w-12 h-12 rounded bg-white/5 animate-pulse" />
+          <div>
+            <div className="h-6 w-40 rounded bg-white/5 mb-1 animate-pulse" />
+            <div className="h-4 w-20 rounded bg-white/5 animate-pulse" />
+          </div>
+        </div>
+        <div className="h-9 w-28 rounded bg-white/5 animate-pulse" />
+      </div>
+
+      {/* Description */}
+      <div className="mb-8 space-y-2">
+        <div className="h-4 w-full rounded bg-white/5 animate-pulse" />
+        <div className="h-4 w-2/3 rounded bg-white/5 animate-pulse" />
+      </div>
+
+      {/* Issues */}
+      <div>
+        <div className="h-4 w-16 rounded bg-white/5 mb-4 animate-pulse" />
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="animate-pulse">
+              <div className="flex items-center gap-3 px-4 py-3 rounded-lg">
+                <div className="w-16 h-5 rounded bg-white/5 shrink-0" />
+                <div className="flex-1 h-4 rounded bg-white/5" />
+                <div className="w-20 h-5 rounded bg-white/5 shrink-0" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,20 +9,29 @@ import { useRouter } from 'next/navigation';
 import { trpcClient } from '@/utils/trpc';
 import { LinearIssue } from '@bounty/api/driver/linear-client';
 import { z } from 'zod';
-import { Loader2, X, DollarSign, Calendar, Tag } from 'lucide-react';
-import { cn } from '@bounty/ui/lib/utils';
+import { Loader2, X, ChevronDown, ChevronUp, RefreshCw, DollarSign } from 'lucide-react';
+import { Button } from '@bounty/ui/components/button';
+import { GithubIcon } from '@bounty/ui';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+} from '@bounty/ui/components/dropdown-menu';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTrigger,
+} from '@bounty/ui/components/drawer';
+import { useGitHubInstallationRepositories } from '@/hooks/use-github-installation-repos';
+import { MarkdownContent } from '@/components/bounty/markdown-content';
 
 const bountyFormSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, 'Invalid amount'),
-  currency: z.string().optional(),
-  deadline: z
-    .string()
-    .optional()
-    .refine((val) => !val || !Number.isNaN(Date.parse(val)), {
-      message: 'Invalid date',
-    }),
+  deadline: z.string().optional().refine((val) => !val || !Number.isNaN(Date.parse(val)), {
+    message: 'Invalid date',
+  }),
   tags: z.array(z.string()).optional(),
 });
 
@@ -34,11 +43,154 @@ interface CreateBountyFormProps {
   onSuccess: () => void;
 }
 
+// GitHub Repo Selector Component
+function GitHubRepoSelector({
+  selectedRepository,
+  onSelect,
+}: {
+  selectedRepository: string;
+  onSelect: (repo: string, installationId: number, owner: string, repoName: string) => void;
+}) {
+  const [isMobile, setIsMobile] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<{ id: number; accountLogin: string | null } | null>(null);
+  const [accountSearchQuery, setAccountSearchQuery] = useState('');
+
+  const { installationRepos, installations, reposLoading } = useGitHubInstallationRepositories();
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Pre-select default installation's first repo
+  useEffect(() => {
+    if (!selectedRepository && installationRepos.length > 0 && !reposLoading) {
+      const defaultInstall = installationRepos.find((i) => i.isDefault) || installationRepos[0];
+      if (defaultInstall.repositories.length > 0) {
+        const [owner, repoName] = defaultInstall.repositories[0].split('/');
+        onSelect(defaultInstall.repositories[0], defaultInstall.installationId, owner, repoName);
+      }
+    }
+  }, [installationRepos, reposLoading, selectedRepository, onSelect]);
+
+  const selectedAccountRepos = selectedAccount
+    ? installationRepos.find((r) => r.installationId === selectedAccount.id)
+    : null;
+
+  const TriggerButton = (
+    <button
+      type="button"
+      onClick={() => setOpen(true)}
+      className="flex items-center gap-2 text-text-tertiary hover:text-text-secondary transition-colors"
+    >
+      <GithubIcon className="w-4 h-4" />
+      <span className="text-sm">{selectedRepository || 'Select repository'}</span>
+      <ChevronDown className="w-3 h-3" />
+    </button>
+  );
+
+  const content = (
+    <div className="flex flex-col">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-border-subtle">
+        {selectedAccount ? (
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedAccount(null);
+                setAccountSearchQuery('');
+              }}
+              className="p-1 -ml-1 rounded hover:bg-surface-2 text-text-secondary"
+            >
+              <ChevronUp className="w-4 h-4" />
+            </button>
+            <GithubIcon className="w-4 h-4 text-text-tertiary" />
+            <span className="text-sm text-text-secondary">{selectedAccount.accountLogin ?? 'Unknown'}</span>
+          </>
+        ) : (
+          <input
+            className="flex-1 bg-transparent text-sm text-text-secondary placeholder:text-text-tertiary outline-none"
+            placeholder="Search..."
+            value={accountSearchQuery}
+            onChange={(e) => setAccountSearchQuery(e.target.value)}
+            autoComplete="off"
+          />
+        )}
+      </div>
+      <div className="min-h-[200px] overflow-y-auto p-1">
+        {selectedAccount ? (
+          selectedAccountRepos?.repositories?.map((repo: string) => (
+            <button
+              key={repo}
+              type="button"
+              onClick={() => {
+                const [owner, repoName] = repo.split('/');
+                onSelect(repo, selectedAccount.id, owner, repoName);
+                setSelectedAccount(null);
+                setOpen(false);
+              }}
+              className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-surface-2 text-text-secondary"
+            >
+              <GithubIcon className="w-3.5 h-3.5 text-text-tertiary" />
+              <span className="text-sm truncate">{repo}</span>
+            </button>
+          ))
+        ) : (
+          installations.map((account) => {
+            const count = installationRepos.find((r) => r.installationId === account.id)?.repositories.length ?? 0;
+            return (
+              <button
+                key={account.id}
+                type="button"
+                onClick={() => setSelectedAccount(account)}
+                className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-surface-2 text-text-secondary"
+              >
+                <GithubIcon className="w-3.5 h-3.5 text-text-tertiary" />
+                <span className="flex-1 text-sm truncate">{account.accountLogin ?? 'Unknown'}</span>
+                <span className="text-xs text-text-tertiary">{count}</span>
+              </button>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={setOpen}>
+        <DrawerTrigger asChild>{TriggerButton}</DrawerTrigger>
+        <DrawerContent className="border-border-subtle bg-surface-1 rounded-t-xl">
+          {content}
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>{TriggerButton}</DropdownMenuTrigger>
+      <DropdownMenuContent className="w-72 p-0 border-border-subtle bg-surface-1 rounded-xl" align="start" sideOffset={4}>
+        {content}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tagInput, setTagInput] = useState('');
+  const [selectedGithubRepo, setSelectedGithubRepo] = useState('');
+  const [githubInstallationId, setGithubInstallationId] = useState<number | null>(null);
+  const [githubRepoOwner, setGithubRepoOwner] = useState<string | null>(null);
+  const [githubRepoName, setGithubRepoName] = useState<string | null>(null);
+  const [showOptional, setShowOptional] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const {
     register,
@@ -50,9 +202,8 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
     resolver: zodResolver(bountyFormSchema),
     defaultValues: {
       title: issue.title,
-      description: issue.description ?? '',
+      description: '',
       amount: '',
-      currency: 'USD',
       deadline: '',
       tags: [],
     },
@@ -60,6 +211,7 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
 
   const tags = watch('tags') ?? [];
   const amount = watch('amount');
+  const description = watch('description');
 
   const createBountyMutation = useMutation({
     mutationFn: async (data: BountyForm) => {
@@ -67,19 +219,21 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
         title: data.title,
         description: data.description,
         amount: data.amount,
-        currency: (data.currency ?? 'USD') as 'USD' | 'EUR' | 'GBP',
+        currency: 'USD',
         deadline: data.deadline ? new Date(data.deadline).toISOString() : undefined,
         tags: data.tags && data.tags.length > 0 ? data.tags : undefined,
         payLater: true,
         linearIssueId: issue.id,
         linearIssueIdentifier: issue.identifier,
         linearIssueUrl: issue.url,
+        githubInstallationId: githubInstallationId ?? undefined,
+        githubRepoOwner: githubRepoOwner ?? undefined,
+        githubRepoName: githubRepoName ?? undefined,
       });
     },
     onSuccess: (result, variables) => {
       toast.success('Bounty created!');
       queryClient.invalidateQueries({ queryKey: [['bounties']] });
-
       trpcClient.linear.postComment
         .mutate({
           linearIssueId: issue.id,
@@ -87,27 +241,19 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
           bountyData: {
             title: variables.title,
             amount: variables.amount,
-            currency: variables.currency ?? 'USD',
+            currency: 'USD',
             bountyUrl: `${window.location.origin}/bounty/${result.data?.id ?? ''}`,
           },
         })
-        .catch((commentError) => {
-          console.error('Failed to post comment to Linear:', commentError);
-        });
-
+        .catch(console.error);
       onSuccess();
-
-      if (result.data?.id) {
-        router.push(`/bounty/${result.data.id}`);
-      }
+      if (result.data?.id) router.push(`/bounty/${result.data.id}`);
     },
     onError: (error: Error) => {
       console.error('Failed to create bounty:', error);
       toast.error(error.message || 'Failed to create bounty');
     },
-    onSettled: () => {
-      setIsSubmitting(false);
-    },
+    onSettled: () => setIsSubmitting(false),
   });
 
   const onSubmit = (data: BountyForm) => {
@@ -122,12 +268,7 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
     }
   };
 
-  const removeTag = (tagToRemove: string) => {
-    setValue(
-      'tags',
-      tags.filter((t) => t !== tagToRemove)
-    );
-  };
+  const removeTag = (tag: string) => setValue('tags', tags.filter((t) => t !== tag));
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -136,176 +277,181 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
     }
   };
 
+  const isReady = amount && selectedGithubRepo && !isSubmitting;
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="flex items-center justify-between pb-2 border-b border-border-subtle">
-        <h3 className="text-sm font-medium text-text-primary">Create Bounty</h3>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="text-text-muted hover:text-text-secondary transition-colors"
-        >
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
+        <h2 className="text-sm font-medium">Create bounty</h2>
+        <button type="button" onClick={onCancel} className="text-text-tertiary hover:text-text-secondary">
           <X className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Title */}
-      <div>
-        <label className="block text-xs font-medium text-text-tertiary mb-1.5">
-          Title <span className="text-red-400">*</span>
-        </label>
-        <input
-          {...register('title')}
-          type="text"
-          className="w-full h-9 px-3 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-default transition-colors"
-          placeholder="Enter bounty title"
-        />
-        {errors.title && (
-          <p className="text-xs text-red-400 mt-1">{errors.title.message}</p>
-        )}
-      </div>
-
-      {/* Description */}
-      <div>
-        <label className="block text-xs font-medium text-text-tertiary mb-1.5">
-          Description <span className="text-red-400">*</span>
-        </label>
-        <textarea
-          {...register('description')}
-          rows={4}
-          className="w-full px-3 py-2 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-default resize-none transition-colors"
-          placeholder="Describe the bounty requirements"
-        />
-        {errors.description && (
-          <p className="text-xs text-red-400 mt-1">{errors.description.message}</p>
-        )}
-      </div>
-
-      {/* Amount */}
-      <div>
-        <label className="block text-xs font-medium text-text-tertiary mb-1.5">
-          Amount <span className="text-red-400">*</span>
-        </label>
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
-            <input
-              {...register('amount')}
-              type="text"
-              inputMode="decimal"
-              className="w-full h-9 pl-9 pr-3 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-default transition-colors"
-              placeholder="0.00"
-            />
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-6">
+          {/* Amount + GitHub - One row */}
+          <div className="flex items-stretch gap-3">
+            <div className="flex-1">
+              <label className="block text-xs text-text-tertiary mb-1.5">Amount</label>
+              <div className="relative">
+                <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary pointer-events-none" />
+                <input
+                  {...register('amount')}
+                  type="text"
+                  inputMode="decimal"
+                  className="w-full h-9 pl-8 pr-3 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-default"
+                  placeholder="0"
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="flex-1">
+              <label className="block text-xs text-text-tertiary mb-1.5">GitHub</label>
+              <div className="h-9 px-3 rounded-lg border border-border-subtle bg-surface-1 flex items-center">
+                <GitHubRepoSelector
+                  selectedRepository={selectedGithubRepo}
+                  onSelect={(repo, installationId, owner, repoName) => {
+                    setSelectedGithubRepo(repo);
+                    setGithubInstallationId(installationId);
+                    setGithubRepoOwner(owner);
+                    setGithubRepoName(repoName);
+                  }}
+                />
+              </div>
+            </div>
           </div>
-          <select
-            {...register('currency')}
-            className="h-9 px-3 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-primary focus:outline-none focus:border-border-default transition-colors"
-          >
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-            <option value="GBP">GBP</option>
-          </select>
-        </div>
-        {errors.amount && (
-          <p className="text-xs text-red-400 mt-1">{errors.amount.message}</p>
-        )}
-      </div>
 
-      {/* Deadline */}
-      <div>
-        <label className="block text-xs font-medium text-text-tertiary mb-1.5 flex items-center gap-1.5">
-          <Calendar className="w-3 h-3" />
-          Deadline <span className="text-text-muted font-normal">(optional)</span>
-        </label>
-        <input
-          {...register('deadline')}
-          type="date"
-          min={new Date().toISOString().split('T')[0]}
-          className="w-full h-9 px-3 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-primary focus:outline-none focus:border-border-default transition-colors"
-        />
-        {errors.deadline && (
-          <p className="text-xs text-red-400 mt-1">{errors.deadline.message}</p>
-        )}
-      </div>
+          {/* Title */}
+          <div>
+            <input
+              {...register('title')}
+              type="text"
+              className="w-full px-0 py-2 bg-transparent text-sm font-medium text-text-primary placeholder:text-text-muted focus:outline-none border-b border-border-subtle focus:border-border-default transition-colors"
+              placeholder="Title"
+            />
+            {errors.title && <p className="text-xs text-red-400 mt-1">{errors.title.message}</p>}
+          </div>
 
-      {/* Tags */}
-      <div>
-        <label className="block text-xs font-medium text-text-tertiary mb-1.5 flex items-center gap-1.5">
-          <Tag className="w-3 h-3" />
-          Tags <span className="text-text-muted font-normal">(optional)</span>
-        </label>
-        <div className="flex gap-2 mb-2">
-          <input
-            type="text"
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="flex-1 h-9 px-3 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-default transition-colors"
-            placeholder="Add a tag"
-          />
-          <button
-            type="button"
-            onClick={addTag}
-            className="h-9 px-4 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-secondary hover:bg-surface-2 transition-colors"
-          >
-            Add
-          </button>
-        </div>
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border-subtle bg-surface-1 text-xs text-text-secondary"
-              >
-                {tag}
+          {/* Description */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs text-text-tertiary">Description</label>
+              {issue.description && description !== issue.description && (
                 <button
                   type="button"
-                  onClick={() => removeTag(tag)}
-                  className="hover:text-red-400 transition-colors"
+                  onClick={() => setValue('description', issue.description ?? '')}
+                  className="text-xs flex items-center gap-1 text-text-tertiary hover:text-text-secondary"
                 >
-                  <X className="w-3 h-3" />
+                  <RefreshCw className="w-3 h-3" />
+                  Sync from Linear
                 </button>
-              </span>
-            ))}
+              )}
+            </div>
+            <textarea
+              {...register('description')}
+              rows={3}
+              className="w-full px-3 py-2 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-secondary placeholder:text-text-muted focus:outline-none focus:border-border-default resize-none"
+              placeholder="Describe the bounty requirements..."
+            />
+            {errors.description && <p className="text-xs text-red-400 mt-1">{errors.description.message}</p>}
+            {description && (
+              <details className="mt-2">
+                <summary
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowPreview(!showPreview);
+                  }}
+                  className="text-xs text-text-tertiary hover:text-text-secondary cursor-pointer"
+                >
+                  {showPreview ? 'Hide' : 'Show'} preview
+                </summary>
+                {showPreview && (
+                  <div className="mt-2 p-3 rounded-lg bg-surface-1 border border-border-subtle">
+                    <MarkdownContent content={description} />
+                  </div>
+                )}
+              </details>
+            )}
           </div>
-        )}
+
+          {/* Optional */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowOptional(!showOptional)}
+              className="text-xs text-text-tertiary hover:text-text-secondary flex items-center gap-1"
+            >
+              {showOptional ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              Optional
+            </button>
+            {showOptional && (
+              <div className="mt-3 space-y-4">
+                <div>
+                  <label className="block text-xs text-text-tertiary mb-1.5">Deadline</label>
+                  <input
+                    {...register('deadline')}
+                    type="date"
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full h-9 px-3 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-secondary focus:outline-none focus:border-border-default"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-text-tertiary mb-1.5">Tags</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      className="flex-1 h-9 px-3 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-secondary placeholder:text-text-muted focus:outline-none focus:border-border-default"
+                      placeholder="Add tag..."
+                    />
+                    <button
+                      type="button"
+                      onClick={addTag}
+                      className="h-9 px-3 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-secondary hover:bg-surface-2"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  {tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {tags.map((tag) => (
+                        <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-1 border border-border-subtle text-xs text-text-secondary">
+                          {tag}
+                          <button type="button" onClick={() => removeTag(tag)} className="hover:text-red-400">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </form>
       </div>
 
-      {/* Submit */}
-      <div className="flex gap-2 pt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={isSubmitting}
-          className="flex-1 h-10 rounded-lg border border-border-subtle text-sm text-text-secondary hover:bg-surface-2 transition-colors disabled:opacity-50"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={isSubmitting || !amount}
-          className={cn(
-            'flex-1 h-10 rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2',
-            amount && !isSubmitting
-              ? 'bg-surface-1 text-text-primary border border-border-default hover:bg-surface-2'
-              : 'bg-surface-2 text-text-muted border border-border-subtle'
-          )}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Creating...
-            </>
-          ) : (
-            'Create bounty'
-          )}
-        </button>
+      {/* Footer */}
+      <div className="border-t border-border-subtle p-4">
+        <div className="flex gap-2">
+          <Button type="button" onClick={onCancel} disabled={isSubmitting} variant="outline" className="flex-1 h-9">
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSubmit(onSubmit)}
+            disabled={!isReady}
+            className="flex-1 h-9"
+          >
+            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create'}
+          </Button>
+        </div>
       </div>
-
-      <p className="text-xs text-text-muted text-center">
-        Bounty will be created in draft status. You can fund it later.
-      </p>
-    </form>
+    </div>
   );
 }

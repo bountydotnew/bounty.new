@@ -8,6 +8,35 @@ import { ArrowLeft, ExternalLink, Inbox, User, Calendar } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
 import { CreateBountyForm } from '../components/create-bounty-form';
+import { MarkdownContent } from '@/components/bounty/markdown-content';
+
+function IssueSkeleton() {
+  return (
+    <div className="animate-pulse">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="h-5 w-32 rounded bg-white/5" />
+        <div className="h-9 w-24 rounded bg-white/5" />
+      </div>
+
+      {/* Title */}
+      <div className="h-7 w-1/2 rounded bg-white/5 mb-6" />
+
+      {/* Description */}
+      <div className="space-y-2 mb-8">
+        <div className="h-4 w-full rounded bg-white/5" />
+        <div className="h-4 w-full rounded bg-white/5" />
+        <div className="h-4 w-3/4 rounded bg-white/5" />
+      </div>
+
+      {/* Create Bounty */}
+      <div className="pt-6 border-t border-white/5 flex items-center justify-between">
+        <div className="h-4 w-28 rounded bg-white/5" />
+        <div className="h-10 w-24 rounded bg-white/5" />
+      </div>
+    </div>
+  );
+}
 
 export default function LinearIssueDetailPage() {
   const params = useParams();
@@ -26,6 +55,11 @@ export default function LinearIssueDetailPage() {
   );
 
   const issue = issueData?.issue;
+
+  // Show skeleton while loading
+  if (hasLinear && issueLoading) {
+    return <IssueSkeleton />;
+  }
 
   if (!hasLinear) {
     return (
@@ -120,7 +154,7 @@ export default function LinearIssueDetailPage() {
 
       {/* Issue Title */}
       <h1 className="text-xl font-semibold text-foreground mb-6">
-        {issueLoading ? '...' : issue?.title}
+        {issue?.title}
       </h1>
 
       {/* Issue Metadata */}
@@ -168,9 +202,7 @@ export default function LinearIssueDetailPage() {
         <div className="mb-6">
           <h2 className="text-sm font-medium text-foreground mb-3">Description</h2>
           <div className="p-5 rounded-xl border border-white/10">
-            <div className="prose prose-invert prose-sm max-w-none whitespace-pre-wrap">
-              {issue.description}
-            </div>
+            <MarkdownContent content={issue.description} />
           </div>
         </div>
       )}

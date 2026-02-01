@@ -11,7 +11,7 @@ function DashboardPage() {
     <ErrorBoundary>
       <AuthGuard>
         <DashboardPageProvider>
-          <DashboardContent onImportOpenChange={() => {}} />
+          <DashboardContent />
         </DashboardPageProvider>
       </AuthGuard>
     </ErrorBoundary>

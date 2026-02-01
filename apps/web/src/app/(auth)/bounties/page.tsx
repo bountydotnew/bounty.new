@@ -5,15 +5,12 @@ import React, { useEffect, use } from 'react';
 import { Button } from '@bounty/ui/components/button';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
 import { BountyFilters } from '@/components/bounty/bounty-filters';
-import GithubImportModal from '@/components/bounty/github-import-modal';
 import { Header } from '@/components/dual-sidebar/sidebar-header';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { BountyListProvider, BountyListContext } from '@/components/bounty/bounty-list';
 import { toast } from 'sonner';
 
 function BountiesPageContent() {
-  const [importOpen, setImportOpen] = React.useState(false);
-
   // Access the bounty list state from context
   const context = use(BountyListContext);
   if (!context) {
@@ -69,8 +66,6 @@ function BountiesPageContent() {
           </BountiesFeed.Provider>
         </AuthGuard>
       </div>
-
-      <GithubImportModal onOpenChange={setImportOpen} open={importOpen} />
     </>
   );
 }
