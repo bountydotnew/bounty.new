@@ -18,6 +18,11 @@ import {
   sendEmail,
   BountyCancellationNotice,
 } from '@bounty/email';
+import { getGithubAppManager } from '@bounty/api/driver/github-app';
+import {
+  unfundedBountyComment,
+  fundedBountyComment,
+} from '@bounty/api/src/lib/bot-comments';
 import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
 import {
@@ -519,7 +524,6 @@ export const bountiesRouter = router({
           newBounty.githubRepoName
         ) {
           try {
-            const { getGithubAppManager } = await import('@bounty/api/driver/github-app');
             const githubApp = getGithubAppManager();
 
             // Create issue with bot mention in body to trigger bounty creation
@@ -558,11 +562,9 @@ export const bountiesRouter = router({
           newBounty.githubInstallationId
         ) {
           try {
-            const { getGithubAppManager, createUnfundedBountyComment } =
-              await import('@bounty/api/driver/github-app');
             const githubApp = getGithubAppManager();
 
-            const commentBody = createUnfundedBountyComment(
+            const commentBody = unfundedBountyComment(
               parseAmount(normalizedAmount),
               newBounty.id,
               input.currency,
@@ -2698,11 +2700,9 @@ export const bountiesRouter = router({
                     currentBounty.githubCommentId
                   ) {
                     try {
-                      const { getGithubAppManager, createFundedBountyComment } =
-                        await import('@bounty/api/driver/github-app');
                       const githubApp = getGithubAppManager();
 
-                      const updatedCommentBody = createFundedBountyComment(
+                      const updatedCommentBody = fundedBountyComment(
                         bountyId,
                         0
                       );
@@ -2859,11 +2859,9 @@ export const bountiesRouter = router({
               existingBounty.githubCommentId
             ) {
               try {
-                const { getGithubAppManager, createFundedBountyComment } =
-                  await import('@bounty/api/driver/github-app');
                 const githubApp = getGithubAppManager();
 
-                const updatedCommentBody = createFundedBountyComment(
+                const updatedCommentBody = fundedBountyComment(
                   input.bountyId,
                   0
                 );
@@ -2995,11 +2993,9 @@ export const bountiesRouter = router({
               existingBounty.githubCommentId
             ) {
               try {
-                const { getGithubAppManager, createFundedBountyComment } =
-                  await import('@bounty/api/driver/github-app');
                 const githubApp = getGithubAppManager();
 
-                const updatedCommentBody = createFundedBountyComment(
+                const updatedCommentBody = fundedBountyComment(
                   input.bountyId,
                   0
                 );
@@ -3092,11 +3088,9 @@ export const bountiesRouter = router({
             existingBounty.githubCommentId
           ) {
             try {
-              const { getGithubAppManager, createFundedBountyComment } =
-                await import('@bounty/api/driver/github-app');
               const githubApp = getGithubAppManager();
 
-              const updatedCommentBody = createFundedBountyComment(
+              const updatedCommentBody = fundedBountyComment(
                 input.bountyId,
                 0
               );
@@ -4105,11 +4099,6 @@ To process this request:
         }
 
         // Fetch the actual comment from GitHub
-        const {
-          getGithubAppManager,
-          createFundedBountyComment,
-          createUnfundedBountyComment,
-        } = await import('@bounty/api/driver/github-app');
         const githubApp = getGithubAppManager();
 
         const comment = await githubApp.getComment(
@@ -4131,8 +4120,8 @@ To process this request:
         // Generate expected comment based on payment status
         const isFunded = bountyRecord.paymentStatus === 'held';
         const expectedComment = isFunded
-          ? createFundedBountyComment(input.bountyId, 0)
-          : createUnfundedBountyComment(
+          ? fundedBountyComment(input.bountyId, 0)
+          : unfundedBountyComment(
               parseAmount(bountyRecord.amount),
               input.bountyId,
               'USD',
@@ -4289,11 +4278,9 @@ To process this request:
 
         // Create the bot comment
         const isFunded = bountyRecord.paymentStatus === 'held';
-        const { createFundedBountyComment, createUnfundedBountyComment } =
-          await import('@bounty/api/driver/github-app');
         const commentBody = isFunded
-          ? createFundedBountyComment(input.bountyId, 0)
-          : createUnfundedBountyComment(
+          ? fundedBountyComment(input.bountyId, 0)
+          : unfundedBountyComment(
               parseAmount(bountyRecord.amount),
               input.bountyId,
               'USD',
@@ -4470,11 +4457,16 @@ ${formattedAmount} ${isFunded ? `![Funded](${fundedBadgeUrl})` : ''}
 
 **Bounty by:** ${creatorName}
 
-### How to Submit
+### For Contributors
+To submit a solution:
 1. Create a pull request that addresses this issue
-2. Include \`@bountydotnew submit\` in your PR description
-3. Wait for the bounty creator to review and approve your submission
-4. After merge, confirm with \`@bountydotnew merge\` to receive payment
+2. Add \`@bountydotnew submit\` to your PR description, or comment \`/submit #PR_NUMBER\` on this issue
+3. Wait for review — you'll be notified when your submission is approved
+
+### For Bounty Creator
+To approve and pay:
+1. Review submissions and approve with \`/approve #PR_NUMBER\` on this issue
+2. After merging the PR, confirm with \`/merge #PR_NUMBER\` to release payment
 `.trim();
 
         const issue = await githubApp.createIssue(

@@ -3,12 +3,14 @@ import { githubInstallation } from '@bounty/db/src/schema/github-installation';
 import { account } from '@bounty/db';
 import {
   getGithubAppManager,
-  createUnfundedBountyComment,
-  createFundedBountyComment,
-  createSubmissionReceivedComment,
-  createSubmissionWithdrawnComment,
-  createBountyCompletedComment,
 } from '@bounty/api/driver/github-app';
+import {
+  unfundedBountyComment,
+  fundedBountyComment,
+  submissionReceivedComment,
+  submissionWithdrawnComment,
+  bountyCompletedComment,
+} from '@bounty/api/src/lib/bot-comments';
 import {
   parseBotCommand,
   containsSubmissionKeyword,
@@ -586,7 +588,7 @@ This submission can’t be unsubmitted because it’s already ${submissionRecord
         repository.owner.login,
         repository.name,
         submissionRecord.githubCommentId,
-        createSubmissionWithdrawnComment()
+        submissionWithdrawnComment()
       );
     } catch (error) {
       console.warn('[GitHub Webhook] Failed to update submission comment:', error);
@@ -603,11 +605,11 @@ This submission can’t be unsubmitted because it’s already ${submissionRecord
     const isFunded = bountyRecord.paymentStatus === 'held';
 
     const newComment = isFunded
-      ? createFundedBountyComment(
+      ? fundedBountyComment(
           bountyRecord.id,
           submissionCount[0]?.count || 0
         )
-      : createUnfundedBountyComment(
+      : unfundedBountyComment(
           amount,
           bountyRecord.id,
           bountyRecord.currency,
@@ -783,7 +785,7 @@ Please visit https://bounty.new/integrations to link your GitHub account, then t
   console.log(`[GitHub Webhook] Created bounty ${newBounty.id}`);
 
   // Post the bot comment with link to bounty detail page
-  const commentBody = createUnfundedBountyComment(command.amount, newBounty.id, command.currency, 0);
+  const commentBody = unfundedBountyComment(command.amount, newBounty.id, command.currency, 0);
   const botComment = await githubApp.createIssueComment(
     installation.id,
     repository.owner.login,
@@ -890,7 +892,24 @@ async function createSubmissionFromPullRequest(params: {
     repository.owner.login,
     repository.name,
     bountyRecord.githubIssueNumber,
-    createSubmissionReceivedComment(bountyRecord.paymentStatus === 'held')
+    submissionReceivedComment(
+      bountyRecord.paymentStatus === 'held',
+      pullRequest.user.login,
+      pullRequest.number
+    )
+  );
+
+  // Also post on the PR itself
+  await githubApp.createIssueComment(
+    installationId,
+    repository.owner.login,
+    repository.name,
+    pullRequest.number,
+    submissionReceivedComment(
+      bountyRecord.paymentStatus === 'held',
+      pullRequest.user.login,
+      pullRequest.number
+    )
   );
   if (newSubmission?.id) {
     await db
@@ -912,11 +931,11 @@ async function createSubmissionFromPullRequest(params: {
     const isFunded = bountyRecord.paymentStatus === 'held';
 
     const newComment = isFunded
-      ? createFundedBountyComment(
+      ? fundedBountyComment(
           bountyRecord.id,
           submissionCount[0]?.count || 0
         )
-      : createUnfundedBountyComment(
+      : unfundedBountyComment(
           amount,
           bountyRecord.id,
           bountyRecord.currency,
@@ -957,13 +976,8 @@ async function handleBountySubmitCommand(
   const isPrComment = Boolean(issue.pull_request);
   const targetPrNumber = isPrComment ? issue.number : command.prNumber;
 
-  // Check maintainer permission upfront
-  const isMaintainer = await checkMaintainerPermission(ctx, comment.user.login);
-  if (!isMaintainer) {
-    await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
-      '\nSorry, you don\'t have permission to approve submissions on this repository. Only repo admins, maintainers, or collaborators with write access can do this.\n');
-    return;
-  }
+  // Permission check happens after PR validation - PR authors can submit their own PRs,
+  // maintainers can submit on behalf of others. See check below after PR validation.
 
   if (!targetPrNumber) {
     await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
@@ -999,13 +1013,24 @@ async function handleBountySubmitCommand(
 
   if (!isBountyAcceptingSubmissions(bountyRecord)) {
     await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
-      `\nThis bounty already has an approved submission. New submissions are closed. If you need to switch winners, use \`/unapprove ${targetPrNumber}\` or \`/reapprove <PR#>\`.\n`);
+      `
+@${comment.user.login} This bounty already has an approved submission — new submissions are closed.
+
+**If you're the bounty creator** and want to switch winners:
+- Use \`/unapprove #PR_NUMBER\` to unapprove the current winner
+- Then \`/approve #PR_NUMBER\` to approve a different submission
+`
+    );
     return;
   }
 
   if (!isPrOpen(pullRequest)) {
     await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
-      `\nPR #${targetPrNumber} isn't open. Please open it before submitting.\n`
+      `
+@${comment.user.login} PR #${targetPrNumber} isn't open.
+
+Please reopen the PR first, then try submitting again with \`/submit ${targetPrNumber}\`.
+`
     );
     return;
   }
@@ -1024,7 +1049,9 @@ async function handleBountySubmitCommand(
         repository.name,
         issue.number,
         `
-Only the PR author (or a repo maintainer) can submit this PR.
+@${comment.user.login} You can't submit someone else's PR.
+
+Only **@${pullRequest.user.login}** (the PR author) or a repo maintainer can submit this PR.
 `
       );
       return;
@@ -1049,11 +1076,14 @@ Only the PR author (or a repo maintainer) can submit this PR.
   });
 
   if (submissionResult.status === 'skipped') {
-    const skipMessage = submissionResult.reason === 'already_submitted'
-      ? 'That PR is already submitted for this bounty.'
-      : submissionResult.reason === 'too_many_pending'
-        ? 'You already have 2 pending submissions for this bounty.'
-        : 'Could not submit this PR. Please try again.';
+    let skipMessage: string;
+    if (submissionResult.reason === 'already_submitted') {
+      skipMessage = `@${pullRequest.user.login} PR #${targetPrNumber} is already submitted for this bounty. No action needed — just wait for the bounty creator to review it.`;
+    } else if (submissionResult.reason === 'too_many_pending') {
+      skipMessage = `@${pullRequest.user.login} You already have 2 pending submissions for this bounty. Wait for one to be reviewed before submitting again.`;
+    } else {
+      skipMessage = `@${pullRequest.user.login} Could not submit this PR. Please try again or check that the PR is open and linked to this issue.`;
+    }
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
@@ -1091,13 +1121,24 @@ async function handleBountyApproveCommand(
   const isMaintainer = await checkMaintainerPermission(ctx, comment.user.login);
   if (!isMaintainer) {
     await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
-      '\nSorry, you don\'t have permission to approve submissions on this repository. Only repo admins, maintainers, or writers can do this.\n');
+      `
+@${comment.user.login} You don't have permission to approve submissions on this repository.
+
+Only repo **admins**, **maintainers**, or **collaborators with write access** can approve submissions.
+`
+    );
     return;
   }
 
   if (!targetPrNumber) {
     await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
-      '\nPlease include a PR number, like `/approve 123`.\n');
+      `
+@${comment.user.login} Please include a PR number to approve.
+
+**Usage:** \`/approve #PR_NUMBER\`
+**Example:** \`/approve 123\`
+`
+    );
     return;
   }
 
@@ -1124,7 +1165,14 @@ async function handleBountyApproveCommand(
   if (!isBountyFunded(bountyRecord)) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
     await githubApp.createIssueComment(ctx.installationId, ctx.owner, ctx.repo, ctx.issueNumber,
-      `\nThis bounty isn't funded yet. Fund it at ${baseUrl}/bounty/${bountyRecord.id} before approving submissions.\n`);
+      `
+@${comment.user.login} This bounty isn't funded yet.
+
+**To approve submissions**, first fund the bounty at [bounty.new](${baseUrl}/bounty/${bountyRecord.id}).
+
+After funding, run \`/approve ${targetPrNumber}\` again.
+`
+    );
     return;
   }
 
@@ -1146,7 +1194,11 @@ async function handleBountyApproveCommand(
       repository.name,
       issue.number,
       `
-I couldn’t find a submission for PR #${targetPrNumber}. Ask the contributor to submit first with \`/submit ${targetPrNumber}\`.
+@${comment.user.login} No submission found for PR #${targetPrNumber}.
+
+The PR author needs to submit first. Ask **@${pullRequest.user.login}** to:
+- Add \`@bountydotnew submit\` to their PR description, or
+- Comment \`/submit ${targetPrNumber}\` on this issue
 `
     );
     return;
@@ -1231,17 +1283,33 @@ This submission is already approved. When you're ready, merge the PR and confirm
   }
 
   const approver = comment.user.login;
-  const followup = `@${approver} Approved. When you're ready, merge the PR and confirm here with \`/merge ${targetPrNumber}\` (or comment \`@bountydotnew merge\` on the PR). Merging releases the payout.`;
+  const solverUsername = pullRequest.user.login;
+  const followup = `
+**Submission Approved**
 
-  const followupIssueNumber = issue.number;
+@${solverUsername} Your submission (PR #${targetPrNumber}) has been approved. Once the PR is merged, payment will be released automatically.
+
+@${approver} To complete the payout:
+1. Merge PR #${targetPrNumber}
+2. Confirm with \`/merge ${targetPrNumber}\` on this issue (or \`@bountydotnew merge\` on the PR)
+`;
+
+  // Post on the bounty issue
   await githubApp.createIssueComment(
     installation.id,
     repository.owner.login,
     repository.name,
-    followupIssueNumber,
-    `
-${followup}
-`
+    issue.number,
+    followup
+  );
+
+  // Also post on the PR itself
+  await githubApp.createIssueComment(
+    installation.id,
+    repository.owner.login,
+    repository.name,
+    targetPrNumber,
+    followup
   );
 }
 
@@ -1387,11 +1455,11 @@ PR #${targetPrNumber} isn’t approved, so there’s nothing to unapprove.
     const isFunded = bountyRecord.paymentStatus === 'held';
 
     const newComment = isFunded
-      ? createFundedBountyComment(
+      ? fundedBountyComment(
           bountyRecord.id,
           submissionCount[0]?.count || 0
         )
-      : createUnfundedBountyComment(
+      : unfundedBountyComment(
           amount,
           bountyRecord.id,
           bountyRecord.currency,
@@ -2069,7 +2137,7 @@ Something went wrong releasing the payout. Please try again or contact support.
     return;
   }
 
-  const completionMessage = createBountyCompletedComment(Number.parseFloat(bountyRecord.amount), bountyRecord.currency);
+  const completionMessage = bountyCompletedComment(Number.parseFloat(bountyRecord.amount), bountyRecord.currency);
 
   await githubApp.createIssueComment(
     installation.id,
@@ -2237,11 +2305,11 @@ Failed to validate target issue #${command.targetIssueNumber}. Please ensure it 
     .where(eq(submission.bountyId, bountyRecord.id));
 
     const newComment = isFunded
-      ? createFundedBountyComment(
+      ? fundedBountyComment(
           bountyRecord.id,
           submissionCount[0]?.count || 0
         )
-    : createUnfundedBountyComment(
+    : unfundedBountyComment(
         amount,
         bountyRecord.id,
         bountyRecord.currency,

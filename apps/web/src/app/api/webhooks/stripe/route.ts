@@ -7,9 +7,11 @@ import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import {
   getGithubAppManager,
-  createFundedBountyComment,
-  createSubmissionReceivedComment,
 } from '@bounty/api/driver/github-app';
+import {
+  fundedBountyComment,
+  submissionReceivedComment,
+} from '@bounty/api/src/lib/bot-comments';
 import { count } from 'drizzle-orm';
 import { FROM_ADDRESSES, sendEmail, BountyCancellationConfirm } from '@bounty/email';
 import { sendBountyCreatedWebhook } from '@bounty/api/src/lib/use-discord-webhook';
@@ -122,7 +124,7 @@ async function updateGitHubBotCommentOnFunding(bountyId: string) {
       .where(eq(submission.bountyId, bountyId));
 
     // Create the funded comment
-    const newComment = createFundedBountyComment(
+    const newComment = fundedBountyComment(
       bountyRecord.id,
       submissionCount?.count || 0
     );
@@ -171,7 +173,11 @@ async function updateSubmissionReceivedCommentsOnFunding(bountyId: string) {
     }
 
     const submissionComments = await db
-      .select({ githubCommentId: submission.githubCommentId })
+      .select({
+        githubCommentId: submission.githubCommentId,
+        githubUsername: submission.githubUsername,
+        githubPullRequestNumber: submission.githubPullRequestNumber,
+      })
       .from(submission)
       .where(
         and(
@@ -185,18 +191,22 @@ async function updateSubmissionReceivedCommentsOnFunding(bountyId: string) {
     }
 
     const githubApp = getGithubAppManager();
-    const updatedBody = createSubmissionReceivedComment(true);
 
     await Promise.all(
-      submissionComments.map((record) =>
-        githubApp.editComment(
+      submissionComments.map((record) => {
+        const updatedBody = submissionReceivedComment(
+          true,
+          record.githubUsername || 'contributor',
+          record.githubPullRequestNumber || 0
+        );
+        return githubApp.editComment(
           bountyRecord.githubInstallationId!,
           bountyRecord.githubRepoOwner!,
           bountyRecord.githubRepoName!,
           record.githubCommentId!,
           updatedBody
-        )
-      )
+        );
+      })
     );
 
     console.log(`[Stripe Webhook] Updated ${submissionComments.length} submission comments for bounty ${bountyId}`);

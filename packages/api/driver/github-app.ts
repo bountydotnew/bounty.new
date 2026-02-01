@@ -3,7 +3,8 @@ import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods';
 import { createAppAuth } from '@octokit/auth-app';
 import { sign } from '@octokit/webhooks-methods';
 import crypto from 'node:crypto';
-import { formatCurrency } from '@bounty/ui/lib/utils';
+// Bot comments are now centralized in bot-comments.ts
+export * from '@bounty/api/src/lib/bot-comments';
 
 const MyOctokit = Octokit.plugin(restEndpointMethods);
 
@@ -66,75 +67,6 @@ function convertPkcs1ToPkcs8(pkcs1Key: string): string {
         'Ensure GITHUB_APP_PRIVATE_KEY is a valid base64-encoded PEM key.'
     );
   }
-}
-
-export function createUnfundedBountyComment(
-  amount: number,
-  bountyId: string,
-  currency = 'USD',
-  submissionCount = 0
-): string {
-  const formattedAmount = formatCurrency(amount, currency);
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
-  const buttonUrl = `${baseUrl}/bounty-button.svg`;
-  return `
-
-[![bounty.new](${buttonUrl})](${baseUrl}/bounty/${bountyId})
-
-${formattedAmount} • ${submissionCount} submissions
-
-Submit with \`@bountydotnew submit\` in the PR description or \`/submit <PR#>\` on the issue.
-Approve with \`/approve <PR#>\` on the issue or \`@bountydotnew approve\` on the PR.
-After merge, confirm with \`/merge <PR#>\` or \`@bountydotnew merge\` to release payout.
-
-> **Note:** Funding is required before approvals and payouts.
-`;
-}
-
-export function createFundedBountyComment(
-  bountyId: string,
-  _submissionCount = 0
-): string {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
-  const buttonUrl = `${baseUrl}/bounty-button.svg`;
-  return `
-
-[![bounty.new](${buttonUrl})](${baseUrl}/bounty/${bountyId})
-
-Funded
-
-Submit with \`@bountydotnew submit\` in the PR description or \`/submit <PR#>\` on the issue.
-Approve with \`/approve <PR#>\` on the issue or \`@bountydotnew approve\` on the PR.
-After merge, confirm with \`/merge <PR#>\` or \`@bountydotnew merge\` to release payout.
-`;
-}
-
-export function createSubmissionReceivedComment(isFunded: boolean): string {
-  return `
-
-Submission received. ${isFunded ? 'The bounty is funded and ready for review.' : "This bounty isn't funded yet; submissions stay pending until funded."}
-
-`;
-}
-
-export function createSubmissionWithdrawnComment(): string {
-  return `
-
-Submission withdrawn.
-
-`;
-}
-
-export function createBountyCompletedComment(
-  amount: number,
-  currency = 'USD'
-): string {
-  const formattedAmount = formatCurrency(amount, currency);
-  return `
-
-Bounty completed! Payment of ${formattedAmount} released.
-
-`;
 }
 
 export interface GitHubAppConfig {
