@@ -24,8 +24,8 @@ export interface DiscordAccount {
 export interface LinearWorkspace {
   id: string;
   name: string;
-  key: string;
-  url: string;
+  key: string | null;
+  url: string | null;
 }
 
 export interface IntegrationsState {
