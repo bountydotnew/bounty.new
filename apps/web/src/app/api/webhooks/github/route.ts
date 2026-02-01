@@ -195,17 +195,8 @@ async function validatePullRequest(
     return { success: false, handled: true };
   }
 
-  if (pullRequest.head.repoFullName && 
-      pullRequest.head.repoFullName.toLowerCase() !== `${ctx.owner}/${ctx.repo}`.toLowerCase()) {
-    await githubApp.createIssueComment(
-      ctx.installationId,
-      ctx.owner,
-      ctx.repo,
-      ctx.issueNumber,
-      `\nPR #${prNumber} is from a different repository. Please open the PR from this repo.\n`
-    );
-    return { success: false, handled: true };
-  }
+  // Note: We allow PRs from forks - that's how open source contributions work!
+  // The PR already targets this repository (verified by fetching it via our installation)
 
   return { success: true, data: pullRequest };
 }
@@ -1556,22 +1547,7 @@ I couldn't find PR #${targetPrNumber}. Double‑check the number and try again.
     return;
   }
 
-  if (
-    pullRequest.head.repoFullName &&
-    pullRequest.head.repoFullName.toLowerCase() !==
-      `${repository.owner.login}/${repository.name}`.toLowerCase()
-  ) {
-    await githubApp.createIssueComment(
-      installation.id,
-      repository.owner.login,
-      repository.name,
-      issue.number,
-      `
-PR #${targetPrNumber} is from a different repository. Please open the PR from this repo before approving.
-`
-    );
-    return;
-  }
+  // Note: We allow PRs from forks - that's how open source contributions work!
 
   const bountyIssueNumber = isPrComment
     ? getIssueNumberFromPrBody(pullRequest.body || '')
