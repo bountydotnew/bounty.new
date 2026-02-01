@@ -232,15 +232,6 @@ I couldn't find PR #${prNumber}. Double-check the number and try again.
 }
 
 /**
- * Error: PR is from a different repository
- */
-export function prFromDifferentRepoComment(prNumber: number): string {
-  return `
-PR #${prNumber} is from a different repository. Please open the PR from this repo.
-`;
-}
-
-/**
  * Error: No bounty found for this issue
  */
 export const noBountyFoundComment = `
