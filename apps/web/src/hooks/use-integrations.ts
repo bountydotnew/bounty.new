@@ -24,8 +24,8 @@ export interface DiscordAccount {
 export interface LinearWorkspace {
   id: string;
   name: string;
-  key: string | null;
-  url: string | null;
+  key?: string;
+  url?: string;
 }
 
 export interface IntegrationsState {
@@ -164,7 +164,14 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
       discordBotInstallUrl: discordBotInstallData?.url ?? undefined,
       hasDiscord: discordAccountData?.linked ?? false,
 
-      linearWorkspace: linearConnectionData?.workspace ?? null,
+      linearWorkspace: linearConnectionData?.workspace
+        ? {
+            id: linearConnectionData.workspace.id,
+            name: linearConnectionData.workspace.name,
+            key: linearConnectionData.workspace.key ?? undefined,
+            url: linearConnectionData.workspace.url ?? undefined,
+          }
+        : null,
       hasLinear: linearConnectionData?.connected ?? false,
 
       totalCount:

@@ -197,10 +197,10 @@ type IntegrationItem =
       workspace: {
         id: string;
         name: string;
-        key: string;
-        url: string;
+        key?: string;
+        url?: string;
       } | null;
-      onLinkAccount: () => void;
+      onLinkAccount: () => Promise<void>;
     }
   | { type: 'twitter' }
   | { type: 'slack' };
