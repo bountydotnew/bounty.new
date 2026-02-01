@@ -56,10 +56,18 @@ export function useProfileData({
   // API returns { success, data: { user, profile, reputation }, isPrivate }
   const transformedData: ProfileData | null = query.data
     ? {
-        user: query.data.data.user,
-        profile: query.data.data.profile,
-        reputation: query.data.data.reputation,
-        isPrivate: query.data.isPrivate,
+        user: {
+          id: query.data.data.user.id,
+          name: query.data.data.user.name,
+          handle: (query.data.data.user as { handle?: string | null }).handle ?? null,
+          email: query.data.data.user.email ?? null,
+          image: query.data.data.user.image,
+          createdAt: String(query.data.data.user.createdAt),
+          isProfilePrivate: (query.data.data.user as { isProfilePrivate?: boolean }).isProfilePrivate ?? false,
+        },
+        profile: query.data.data.profile as ProfileData['profile'],
+        reputation: query.data.data.reputation as ProfileData['reputation'],
+        isPrivate: query.data.isPrivate ?? false,
       }
     : initialData ?? null;
 
