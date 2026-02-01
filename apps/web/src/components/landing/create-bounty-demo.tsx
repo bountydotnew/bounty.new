@@ -28,6 +28,7 @@ import { CalendarIcon } from '@bounty/ui/components/icons/huge/calendar';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Bounty Dashboard Page (Create Bounty form + feed)
+// Improved to closely match the real app dashboard
 // ─────────────────────────────────────────────────────────────────────────────
 interface BountyDashboardPageProps {
   compact?: boolean;
@@ -92,7 +93,9 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
       const createdAt = new Date(
         Date.now() - index * 1000 * 60 * 45
       ).toISOString();
-      const amount = 120 + (index % 6) * 80;
+      // More realistic bounty amounts matching real app patterns
+      const amounts = [150, 250, 500, 750, 1000, 200, 350, 450, 600, 800, 300, 400];
+      const amount = amounts[index % amounts.length];
       return {
         id: `demo-bounty-${index}`,
         title: titles[index % titles.length],
@@ -111,9 +114,9 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
           name: author,
           image: `https://github.com/${author}.png`,
         },
-        votes: 0,
-        isFeatured: false,
-        paymentStatus: index % 2 === 0 ? 'held' : 'pending',
+        votes: Math.floor(Math.random() * 10),
+        isFeatured: index === 0,
+        paymentStatus: 'held', // Real app shows funded bounties as 'held'
       } satisfies Bounty;
     });
   }, []);
@@ -149,181 +152,214 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
 
   return (
     <div className="bg-background h-full flex">
-      {/* Sidebar */}
+      {/* Sidebar - styled to match real app exactly */}
       <aside
-        className={`${compact ? 'w-12' : 'w-64'} bg-background border-r border-border-subtle flex flex-col`}
+        className={`${compact ? 'w-12' : 'w-[240px]'} bg-background border-r border-border-subtle flex flex-col shrink-0`}
       >
-        {/* Workspace header */}
-        <div className={`${compact ? 'px-2 py-3' : 'px-[15px] py-4'}`}>
+        {/* Workspace header - matches real app styling */}
+        <div className={`${compact ? 'px-2 py-3' : 'px-4 py-5 border-b border-border-subtle'}`}>
           <div
-            className={`${compact ? ' justify-center flex items-center gap-2' : 'flex items-center gap-2'}`}
+            className={`${compact ? 'justify-center flex items-center gap-2' : 'flex items-center gap-3'}`}
           >
             <div
-              className={`${compact ? 'h-5 w-5 text-xs' : 'h-[27px] w-[27px]'} rounded-[6px] bg-brand-primary flex items-center justify-center text-white font-semibold shrink-0`}
+              className={`${compact ? 'h-5 w-5 text-xs' : 'h-8 w-8'} rounded-lg bg-brand-primary flex items-center justify-center text-white font-semibold shrink-0 shadow-sm`}
             >
               g
             </div>
             {!compact && (
-              <span className="text-[18px] font-semibold leading-[150%] text-foreground">
-                grim
-              </span>
+              <div className="flex flex-col">
+                <span className="text-[15px] font-semibold leading-tight text-foreground">
+                  grim
+                </span>
+                <span className="text-[12px] text-text-muted">Pro Plan</span>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Navigation */}
+        {/* Navigation - improved styling */}
         <nav
-          className={`${compact ? 'gap-1 px-1' : 'flex flex-col gap-[8px] px-[15px]'} flex-1`}
+          className={`${compact ? 'gap-1 px-1 py-2' : 'flex flex-col gap-1 px-3 py-4'} flex-1`}
         >
           <button
             type="button"
-            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] border border-border-subtle bg-surface-1 px-[12px] py-[8px] text-[16px]'} font-medium text-foreground w-full`}
+            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-3 rounded-lg border border-border-subtle bg-surface-1 px-3 py-2.5 text-[14px]'} font-medium text-foreground w-full transition-all`}
           >
             <HomeIcon
-              className={`${compact ? 'size-4' : 'size-4'} text-text-secondary shrink-0`}
+              className={`${compact ? 'size-4' : 'size-[18px]'} text-foreground shrink-0`}
             />
             {!compact && <span>Home</span>}
           </button>
           <button
             type="button"
-            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} font-medium text-text-tertiary hover:text-white hover:bg-surface-1 transition-colors w-full`}
+            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-[14px]'} font-medium text-text-secondary hover:text-foreground hover:bg-surface-1 transition-all w-full`}
           >
             <BountiesIcon
-              className={compact ? 'size-4' : 'size-4'}
-              shrink-0
+              className={compact ? 'size-4' : 'size-[18px]'}
             />
             {!compact && <span>Bounties</span>}
           </button>
           <button
             type="button"
-            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} font-medium text-text-tertiary hover:text-white hover:bg-surface-1 transition-colors w-full`}
+            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-[14px]'} font-medium text-text-secondary hover:text-foreground hover:bg-surface-1 transition-all w-full`}
           >
             <BookmarksIcon
-              className={compact ? 'size-4' : 'size-4'}
-              shrink-0
+              className={compact ? 'size-4' : 'size-[18px]'}
             />
             {!compact && <span>Bookmarks</span>}
           </button>
         </nav>
 
-        {/* Footer */}
-        <div className={`${compact ? 'px-1 py-2' : 'px-[15px] py-4'}`}>
+        {/* Footer - with settings */}
+        <div className={`${compact ? 'px-1 py-2' : 'px-3 py-4 border-t border-border-subtle'}`}>
           <button
             type="button"
-            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} text-text-tertiary transition-colors hover:text-white hover:bg-surface-1 w-full`}
+            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-[14px]'} text-text-secondary transition-all hover:text-foreground hover:bg-surface-1 w-full font-medium`}
           >
             <SettingsGearIcon
-              className={compact ? 'size-4' : 'size-4'}
+              className={compact ? 'size-4' : 'size-[18px]'}
             />
+            {!compact && <span>Settings</span>}
           </button>
         </div>
       </aside>
 
       {/* Main content */}
       <div className="flex-1 overflow-auto" ref={scrollRef}>
-        {/* Header */}
+        {/* Header - matches real app header exactly */}
         <div
-          className={`flex items-center justify-between bg-background border-b border-border-subtle ${compact ? 'h-10 px-2' : 'h-[72px] px-4 sm:px-6'} sticky top-0 z-10`}
+          className={`flex items-center justify-between bg-background border-b border-border-subtle ${compact ? 'h-10 px-2' : 'h-[72px] px-6'} sticky top-0 z-10`}
         >
-          <div className="flex flex-1 items-center justify-center gap-6" />
-          <div className="flex items-center gap-2">
+          {/* Left spacer */}
+          <div className="flex items-center gap-2 w-[100px]" />
+          
+          {/* Center - Search bar (like real app) */}
+          {!compact && (
+            <div className="flex flex-1 justify-center">
+              <button
+                type="button"
+                className="relative flex w-[270px] h-9 items-center rounded-lg border border-border-subtle bg-surface-1 py-2 pl-3 pr-12 text-left transition-colors hover:bg-surface-2"
+              >
+                <span className="flex-1 text-[14px] font-medium text-text-tertiary">
+                  Search for anything...
+                </span>
+                <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center">
+                  <div className="flex h-[22px] px-2 items-center justify-center rounded-full bg-surface-3">
+                    <span className="text-[12px] font-medium text-text-tertiary">⌘K</span>
+                  </div>
+                </div>
+              </button>
+            </div>
+          )}
+          
+          {/* Right - Create button */}
+          <div className="flex items-center gap-2 w-[100px] justify-end">
             <button
-              className={`flex items-center gap-[7px] rounded-[12px] border border-border-subtle bg-surface-1 transition-colors hover:bg-surface-2 ${compact ? 'px-1.5 py-1' : 'py-[5px] px-[10px]'}`}
+              className={`flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-1 transition-colors hover:bg-surface-2 ${compact ? 'px-1.5 py-1' : 'py-2 px-3'}`}
               type="button"
             >
               <Plus
                 className={`${compact ? 'h-3 w-3' : 'h-4 w-4'} text-text-secondary`}
               />
               <span
-                className={`${compact ? 'text-[10px]' : 'text-[16px]'} font-semibold leading-[150%] tracking-[0.01em] text-text-secondary`}
+                className={`${compact ? 'text-[10px]' : 'text-[14px]'} font-medium text-text-secondary`}
               >
-                Create Bounty
+                Create
               </span>
             </button>
           </div>
         </div>
 
-        {/* Create bounty form */}
+        {/* Create bounty form - styled to match real TaskInputForm */}
         <div
-          className={`flex w-full shrink-0 flex-col ${compact ? 'px-3 py-2' : 'px-6 lg:px-8'} max-w-[880px] mx-auto min-w-0`}
+          className={`flex w-full shrink-0 flex-col ${compact ? 'px-3 py-2' : 'px-6'} max-w-[805px] mx-auto min-w-0`}
         >
           <div
-            className={`w-full flex flex-col ${compact ? 'my-2' : 'mt-8 mb-6'} min-w-0`}
+            className={`w-full flex flex-col ${compact ? 'my-2' : 'mt-6 mb-4'} min-w-0`}
           >
             <div
-              className={`bg-surface-1 text-text-tertiary border border-border-subtle ${compact ? 'rounded-xl' : 'rounded-[24px]'} relative overflow-hidden w-full min-w-0 flex flex-col ${compact ? 'p-3 gap-2' : 'p-5 gap-4'}`}
+              className={`bg-surface-1 text-text-tertiary border border-border-subtle ${compact ? 'rounded-xl' : 'rounded-3xl'} relative overflow-hidden w-full min-w-0 flex flex-col ${compact ? 'p-3 gap-2' : 'p-5 gap-4'}`}
             >
-              <div className={`flex flex-col ${compact ? 'gap-1.5' : 'gap-2'}`}>
+              {/* Chip row - matches real app chip styling */}
+              <div className={`flex flex-col ${compact ? 'gap-1.5' : 'gap-3'}`}>
                 <div
-                  className={`flex flex-row flex-wrap items-center ${compact ? 'gap-1.5' : 'gap-[6px]'}`}
+                  className={`flex flex-row flex-wrap items-center ${compact ? 'gap-1.5' : 'gap-2'}`}
                 >
+                  {/* Title chip */}
                   <div
-                    className={`rounded-full flex justify-center items-center shrink-0 gap-1.5 bg-surface-2 border border-solid border-border-subtle ${compact ? 'px-2 py-1' : 'px-[11px] py-[6px]'}`}
+                    className={`rounded-full flex justify-center items-center shrink-0 gap-2 bg-surface-hover border border-solid border-border-subtle hover:border-border-default cursor-pointer transition-colors ${compact ? 'px-2 py-1' : 'px-3 py-1.5'}`}
                   >
                     <span
-                      className={`${compact ? 'text-[11px]' : 'text-[16px]'} leading-5 font-sans text-white truncate`}
+                      className={`${compact ? 'text-[11px]' : 'text-[14px]'} leading-5 font-medium text-foreground truncate`}
                     >
                       Add OAuth integration
                     </span>
                     <ChevronSortIcon
-                      className={`${compact ? 'size-1.5' : 'size-2'} text-text-muted shrink-0`}
+                      className={`${compact ? 'size-2' : 'size-2.5'} text-text-muted shrink-0`}
                     />
                   </div>
+                  
+                  {/* Price chip */}
                   <div
-                    className={`rounded-full flex justify-center items-center shrink-0 gap-1.5 bg-surface-2 border border-solid border-border-subtle ${compact ? 'px-2 py-1' : 'px-[11px] py-[6px]'}`}
+                    className={`rounded-full flex justify-center items-center shrink-0 gap-2 bg-surface-hover border border-solid border-border-subtle hover:border-border-default cursor-pointer transition-colors ${compact ? 'px-2 py-1' : 'px-3 py-1.5'}`}
                   >
                     <span
-                      className={`${compact ? 'text-[11px]' : 'text-[16px]'} leading-5 font-sans text-white`}
+                      className={`${compact ? 'text-[11px]' : 'text-[14px]'} leading-5 font-medium text-foreground`}
                     >
                       $500
                     </span>
                     <ChevronSortIcon
-                      className={`${compact ? 'size-1.5' : 'size-2'} text-text-muted shrink-0`}
+                      className={`${compact ? 'size-2' : 'size-2.5'} text-text-muted shrink-0`}
                     />
                   </div>
+                  
+                  {/* Deadline chip */}
                   <div className={`relative flex ${compact ? '' : ''}`}>
                     <div
-                      className={`rounded-full flex justify-center items-center bg-surface-2 border border-solid border-border-subtle ${compact ? 'text-[11px] px-2 py-1 pr-6' : 'text-[16px] leading-5 px-[11px] py-[6px] pr-8 min-w-[150px]'} font-sans text-white`}
+                      className={`rounded-full flex justify-center items-center gap-2 bg-surface-hover border border-solid border-border-subtle hover:border-border-default cursor-pointer transition-colors ${compact ? 'text-[11px] px-2 py-1 pr-6' : 'text-[14px] leading-5 px-3 py-1.5 pr-8'} font-medium text-text-muted`}
                     >
                       Deadline
                     </div>
                     <button
                       type="button"
-                      className="absolute top-1/2 right-2 -translate-y-1/2 text-text-muted hover:text-white transition-colors"
+                      className="absolute top-1/2 right-2.5 -translate-y-1/2 text-text-muted hover:text-foreground transition-colors"
                     >
                       <CalendarIcon
-                        className={compact ? 'size-2.5' : 'size-3.5'}
+                        className={compact ? 'size-3' : 'size-4'}
                       />
                     </button>
                   </div>
                 </div>
               </div>
 
+              {/* Description textarea */}
               <textarea
                 readOnly
                 value={
                   compact
-                    ? 'Need Google & GitHub OAuth integration...'
-                    : 'Need Google & GitHub OAuth integration with proper error handling and session management.'
+                    ? 'Need Google & GitHub OAuth integration with proper error handling...'
+                    : 'Need Google & GitHub OAuth integration with proper error handling and session management.\n\nRequirements:\n- Support for Google OAuth 2.0\n- GitHub OAuth with organization access\n- Proper session refresh and token management\n- Error handling for network failures'
                 }
-                className={`flex-1 bg-transparent text-white outline-none resize-none ${compact ? 'min-h-[60px] text-[11px] leading-tight' : 'min-h-[160px] text-[15px] leading-6'}`}
+                className={`flex-1 bg-transparent text-foreground outline-none resize-none placeholder:text-text-tertiary ${compact ? 'min-h-[60px] text-[11px] leading-tight' : 'min-h-[140px] text-[15px] leading-relaxed'}`}
               />
 
+              {/* Footer - repo selector and create button */}
               <div
-                className={`flex flex-row justify-between items-center ${compact ? 'pt-0' : 'pt-1'}`}
+                className={`flex flex-row justify-between items-center ${compact ? 'pt-0' : 'pt-2 border-t border-border-subtle'}`}
               >
                 <div className="relative flex items-center gap-2">
-                  <div
-                    className={`flex flex-row items-center gap-1.5 text-text-tertiary ${compact ? '' : ''}`}
+                  <button
+                    type="button"
+                    className={`flex flex-row items-center gap-2 text-text-secondary hover:text-foreground transition-colors cursor-pointer ${compact ? '' : ''}`}
                   >
-                    <GithubIcon className={compact ? 'w-3 h-3' : 'w-4 h-4'} />
+                    <GithubIcon className={compact ? 'w-3 h-3' : 'w-5 h-5'} />
                     <span
-                      className={`${compact ? 'text-[11px]' : 'text-[14px]'} leading-[150%] tracking-[-0.02em] font-medium text-white truncate`}
+                      className={`${compact ? 'text-[11px]' : 'text-[14px]'} font-medium truncate`}
                     >
                       bountydotnew/bounty.new
                     </span>
-                    <ChevronDown className={compact ? 'w-2 h-2' : 'w-3 h-3'} />
-                  </div>
+                    <ChevronDown className={compact ? 'w-2 h-2' : 'w-4 h-4'} />
+                  </button>
                 </div>
                 {!compact && (
                   <TutorialHighlight
@@ -334,7 +370,7 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
                     <button
                       type="button"
                       onClick={handleCreateBounty}
-                      className="flex items-center justify-center gap-1.5 px-[16px] h-[34px] rounded-full text-[15px] font-medium bg-foreground text-background shadow-lg shadow-foreground/20 hover:bg-foreground/90 transition-colors"
+                      className="flex items-center justify-center gap-2 px-5 h-9 rounded-full text-[14px] font-semibold bg-foreground text-background shadow-lg shadow-foreground/10 hover:bg-foreground/90 transition-all active:scale-[0.98]"
                     >
                       Create bounty
                     </button>
@@ -344,7 +380,7 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
                   <button
                     type="button"
                     onClick={handleCreateBounty}
-                    className="flex items-center justify-center gap-1 px-3 h-7 rounded-full text-[11px] font-medium bg-white text-black hover:bg-gray-100 transition-colors"
+                    className="flex items-center justify-center gap-1 px-3 h-7 rounded-full text-[11px] font-semibold bg-foreground text-background hover:bg-foreground/90 transition-all"
                   >
                     Create
                   </button>
@@ -354,15 +390,30 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
           </div>
         </div>
 
-        {/* Feed divider */}
-        <div className="h-px w-full shrink-0 bg-surface-3" />
+        {/* Feed divider - matches real app styling */}
+        <div className="h-px w-full shrink-0 bg-border-subtle" />
 
-        {/* Bounty feed */}
+        {/* Bounty feed - styled to match real BountiesFeed */}
         <div
-          className={`flex w-full shrink-0 flex-col ${compact ? 'px-3 py-2' : 'px-6 lg:px-8'} max-w-[880px] mx-auto min-w-0 ${compact ? '' : 'pb-10'}`}
+          className={`flex w-full shrink-0 flex-col ${compact ? 'px-3 py-2' : 'px-6'} max-w-[805px] mx-auto min-w-0 ${compact ? '' : 'pb-16'}`}
         >
+          {/* Feed header */}
+          {!compact && (
+            <div className="flex items-center justify-between py-4">
+              <span className="text-[13px] font-medium text-text-muted uppercase tracking-wide">
+                Recent Bounties
+              </span>
+              <button
+                type="button"
+                className="text-[13px] font-medium text-text-secondary hover:text-foreground transition-colors"
+              >
+                View all →
+              </button>
+            </div>
+          )}
+          
           <div
-            className={`flex flex-col ${compact ? 'gap-2' : 'gap-3'} ${compact ? 'py-1' : 'pt-4'} pointer-events-none`}
+            className={`flex flex-col ${compact ? 'gap-2' : 'gap-3'} ${compact ? 'py-1' : ''} pointer-events-none`}
           >
             {feedBounties
               .slice(0, compact ? 3 : visibleCount)
@@ -370,16 +421,17 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
                 <div
                   key={bounty.id}
                   className="animate-in fade-in slide-in-from-bottom-2 duration-500"
+                  style={{ animationDelay: `${index * 100}ms` }}
                 >
                   {compact ? (
                     <CompactBountyCard
                       bounty={bounty}
                       stats={{
                         commentCount: 3 + index,
-                        voteCount: 2,
+                        voteCount: bounty.votes || 2,
                         submissionCount: 1 + (index % 2),
-                        isVoted: false,
-                        bookmarked: false,
+                        isVoted: index % 3 === 0,
+                        bookmarked: index % 4 === 0,
                       }}
                     />
                   ) : (
@@ -387,10 +439,10 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
                       bounty={bounty}
                       stats={{
                         commentCount: 3 + index,
-                        voteCount: 2,
+                        voteCount: bounty.votes || 2,
                         submissionCount: 1 + (index % 2),
-                        isVoted: false,
-                        bookmarked: false,
+                        isVoted: index % 3 === 0,
+                        bookmarked: index % 4 === 0,
                       }}
                     />
                   )}
