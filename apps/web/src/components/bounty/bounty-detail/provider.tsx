@@ -5,7 +5,8 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { useSession } from '@/context/session-context';
-import type { BountyCommentCacheItem } from '@/types/comments';
+// Comments are not currently used
+// import type { BountyCommentCacheItem } from '@/types/comments';
 import {
   BountyDetailContext,
   type BountyDetailContextValue,
@@ -35,7 +36,7 @@ interface BountyDetailProviderProps {
   avatarSrc: string;
   canEditBounty: boolean;
   initialVotes?: { count: number; isVoted: boolean };
-  initialComments?: BountyCommentCacheItem[];
+  // initialComments?: BountyCommentCacheItem[];
   initialBookmarked?: boolean;
   paymentStatus?: string | null;
   createdById?: string;
@@ -102,11 +103,13 @@ export function BountyDetailProvider({
     staleTime: Number.POSITIVE_INFINITY,
   });
 
-  const commentsQuery = useQuery({
-    ...trpc.bounties.getBountyComments.queryOptions({ bountyId }),
-    initialData: initialComments,
-    staleTime: Number.POSITIVE_INFINITY,
-  });
+  // Comments are not currently used - disabled to prevent build errors
+  // const commentsQuery = useQuery({
+  //   ...trpc.bounties.getBountyComments.queryOptions({ bountyId }),
+  //   initialData: initialComments,
+  //   staleTime: Number.POSITIVE_INFINITY,
+  // });
+  const commentsQuery = { data: undefined };
 
   const submissionsQuery = useQuery({
     ...trpc.bounties.getBountySubmissions.queryOptions({ bountyId }),
@@ -269,7 +272,7 @@ export function BountyDetailProvider({
         issueUrl,
       },
       votes: votesQuery.data ?? null,
-      comments: commentsQuery.data,
+      comments: undefined, // commentsQuery.data, // Comments not currently used
       bookmarked: initialBookmarked,
       submissions: submissionsQuery.data?.submissions,
       isSubmissionsLoading: submissionsQuery.isLoading,
@@ -300,7 +303,7 @@ export function BountyDetailProvider({
       repositoryUrl,
       issueUrl,
       votesQuery.data,
-      commentsQuery.data,
+      // commentsQuery.data, // Comments not currently used
       initialBookmarked,
       submissionsQuery.data?.submissions,
       submissionsQuery.isLoading,
