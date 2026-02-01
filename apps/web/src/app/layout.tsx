@@ -24,8 +24,8 @@ const interDisplay = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL('https://bounty.new'),
   title: {
-    default: 'bounty',
-    template: '%s | bounty',
+    default: 'bounty.new',
+    template: '%s | bounty.new',
   },
   description: 'Ship faster. Get paid instantly.',
   icons: {
@@ -34,8 +34,8 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: {
-      default: 'bounty',
-      template: '%s | bounty',
+      default: 'bounty.new',
+      template: '%s | bounty.new',
     },
     description: 'Ship faster. Get paid instantly.',
     url: 'https://bounty.new',

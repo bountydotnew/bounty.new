@@ -8,10 +8,11 @@ import { FeedbackOverlay } from '@/components/feedback-overlay';
 import { EarlyAccessGuard } from '@/components/auth/early-access-guard';
 
 export const metadata: Metadata = {
-  title: 'Linear Integration | bounty',
+  title: 'bounty.new - linear integrations',
   description: 'Connect your Linear workspace to create bounties',
   icons: {
-    icon: '/icon.svg',
+    icon: '/favicon/favicon_dark.png',
+    apple: '/favicon/favicon_dark.png',
   },
 };
 

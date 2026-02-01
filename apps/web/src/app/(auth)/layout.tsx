@@ -10,14 +10,14 @@ import { FeedbackOverlay } from '@/components/feedback-overlay';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 
 export const metadata: Metadata = {
-  title: 'bounty',
+  title: 'bounty.new',
   description: 'bounty',
   icons: {
     icon: '/favicon/favicon_dark.png',
     apple: '/favicon/favicon_dark.png',
   },
   openGraph: {
-    title: 'bounty - App',
+    title: 'bounty.new',
     description: 'Ship fast, get paid faster.',
     url: 'https://bounty.new',
     siteName: 'bounty',
