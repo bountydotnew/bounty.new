@@ -4,8 +4,30 @@ import { Check, Copy } from 'lucide-react';
 import React, { useState } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
+import Image from 'next/image';
+
+// Custom sanitize schema that allows images from external sources
+const sanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    img: [
+      ...(defaultSchema.attributes?.img || []),
+      'src',
+      'alt',
+      'title',
+      'width',
+      'height',
+      'className',
+    ],
+  },
+  tagNames: [
+    ...(defaultSchema.tagNames || []),
+    'img',
+  ],
+};
 
 interface MarkdownContentProps {
   content: string;
@@ -112,16 +134,36 @@ const markdownComponents: Components = {
         ? src
         : src instanceof Blob
           ? URL.createObjectURL(src)
-          : undefined;
+          : '';
 
+    // Check if this is an external image (from Linear, GitHub, etc.)
+    const isExternalImage = typeof srcString === 'string' && (
+      srcString.startsWith('http://') ||
+      srcString.startsWith('https://')
+    );
+
+    // For external images, use regular img tag to avoid Next.js optimization issues
+    if (isExternalImage) {
+      return (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          alt={alt || ''}
+          src={srcString}
+          {...props}
+          className="my-3 inline-block h-auto max-w-full max-h-[400px] object-contain border-neutral-800 dark:border-neutral-700 rounded"
+        />
+      );
+    }
+
+    // For data URLs and other sources, use Next.js Image
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      // biome-ignore lint/performance/noImgElement: Markdown content may contain external images that can't use Next.js Image
-      <img
+      <Image
         alt={alt || ''}
         src={srcString}
-        {...props}
-        className="my-3 inline-block h-auto max-w-full max-h-[400px] object-contain border-neutral-800 rounded"
+        width={800}
+        height={400}
+        className="my-3 inline-block h-auto max-w-full max-h-[400px] object-contain border-neutral-800 dark:border-neutral-700 rounded"
+        unoptimized
       />
     );
   },
@@ -253,7 +295,7 @@ export function MarkdownContent({ content, encoding }: MarkdownContentProps) {
       />
       <ReactMarkdown
         components={markdownComponents}
-        rehypePlugins={[rehypeRaw, rehypeSanitize]}
+        rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}
         remarkPlugins={[remarkGfm]}
       >
         {decodedContent}

@@ -43,20 +43,21 @@ export function DashboardPageProvider({ children }: DashboardPageProviderProps) 
     staleTime: 2 * 60 * 1000,
   });
 
-  const onboardingQuery = useQuery({
-    ...trpc.onboarding.getState.queryOptions(),
-    staleTime: 5 * 60 * 1000,
-  });
+  // TODO: Re-enable onboarding when needed
+  // const onboardingQuery = useQuery({
+  //   ...trpc.onboarding.getState.queryOptions(),
+  //   staleTime: 5 * 60 * 1000,
+  // });
 
   // Context value - memoized to prevent unnecessary re-renders
   const contextValue: DashboardPageContextValue = {
     state: {
       bounties: bounties.data?.data ?? [],
       myBounties: myBounties.data?.data ?? [],
-      onboardingState: onboardingQuery.data ?? null,
+      onboardingState: null, // onboardingQuery.data ?? null,
       isBountiesLoading: bounties.isLoading,
       isMyBountiesLoading: myBounties.isLoading,
-      isOnboardingLoading: onboardingQuery.isLoading,
+      isOnboardingLoading: false, // onboardingQuery.isLoading,
       bountiesError: bounties.error instanceof Error ? bounties.error : null,
       myBountiesError: myBounties.error instanceof Error ? myBounties.error : null,
     },

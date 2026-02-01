@@ -26,13 +26,13 @@ export function BountyDetailPaymentAlert() {
   // Creator sees payment completion prompt
   if (needsPayment) {
     return (
-      <Alert className="mb-4 border-yellow-500/20 bg-yellow-500/10">
-        <AlertDescription className="flex items-center justify-between">
-          <span className="text-yellow-400">
+      <Alert className="mb-4 border-0 bg-surface-2">
+        <AlertDescription className="flex items-start justify-between">
+          <span className="text-foreground">
             This bounty requires payment to become active. Complete payment to
             allow submissions.
           </span>
-          <div className="flex items-center gap-2 ml-4">
+          <div className="flex items-center gap-2">
             <Button
               onClick={actions.recheckPayment}
               disabled={meta.isRecheckingPayment || state.isPaymentStatusLoading}
