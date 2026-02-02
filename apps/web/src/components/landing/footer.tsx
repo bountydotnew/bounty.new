@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -28,115 +28,146 @@ export function Footer() {
     <footer className="border-t border-border-subtle">
       {/* CTA Section */}
       <CTASection />
-      
+
       {/* FAQ Section */}
       <div className="border-t border-border-subtle">
         <FooterFAQ />
       </div>
-      
+
       {/* Footer Links */}
       <div className="border-t border-border-subtle py-12 px-4 sm:px-6 lg:px-8">
-      <div className="container mx-auto max-w-7xl">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-8 mb-12">
-          <div>
-            <h4 className="font-semibold mb-4">Product</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/bounties" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Browse Bounties
-                </Link>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={handleCreateBounty}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Create Bounty
-                </button>
-              </li>
-              <li>
-                <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link href="/roadmap" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Roadmap
-                </Link>
-              </li>
-            </ul>
+        <div className="container mx-auto max-w-7xl">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-8 mb-12">
+            <div>
+              <h4 className="font-semibold mb-4">Product</h4>
+              <ul className="space-y-2">
+                <li>
+                  <Link
+                    href="/bounties"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Browse Bounties
+                  </Link>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={handleCreateBounty}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Create Bounty
+                  </button>
+                </li>
+                <li>
+                  <Link
+                    href="/pricing"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Pricing
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/roadmap"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Roadmap
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Developers</h4>
+              <ul className="space-y-2">
+                <li>
+                  <Link
+                    href="/contributors"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    For Devs
+                  </Link>
+                </li>
+                <li>
+                  <a
+                    href="https://docs.bounty.new"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Docs
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Company</h4>
+              <ul className="space-y-2">
+                <li>
+                  <Link
+                    href="/blog"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Blog
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/terms"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Terms
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/privacy"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Privacy
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </div>
-          <div>
-            <h4 className="font-semibold mb-4">Developers</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/contributors"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  For Devs
-                </Link>
-              </li>
-              <li>
-                <a
-                  href="https://docs.bounty.new"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Docs
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-4">Company</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Blog
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-border">
-          <div className="flex items-center gap-2">
-            <Logo className="h-6 w-6" />
-            <span className="text-sm text-muted-foreground" suppressHydrationWarning>
-              © {new Date().getFullYear()} bounty.new. All rights reserved.
-            </span>
-          </div>
-          <div className="flex items-center gap-6">
-            <a
-              href="https://github.com/bountydotnew/bounty.new"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              target="_blank"
-              rel="noreferrer"
-            >
-              GitHub
-            </a>
-            <a
-              href="https://twitter.com/bountydotnew"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Twitter
-            </a>
-            <a
-              href="https://discord.gg/bounty"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Discord
-            </a>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-border">
+            <div className="flex items-center gap-2">
+              <Logo className="h-6 w-6" />
+              <span
+                className="text-sm text-muted-foreground"
+                suppressHydrationWarning
+              >
+                © {new Date().getFullYear()} bounty.new. All rights reserved.
+              </span>
+            </div>
+            <div className="flex items-center gap-6">
+              <a
+                href="https://github.com/bountydotnew/bounty.new"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                target="_blank"
+                rel="noreferrer"
+              >
+                GitHub
+              </a>
+              <a
+                href="https://twitter.com/bountydotnew"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Twitter
+              </a>
+              <a
+                href="https://discord.gg/bounty"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Discord
+              </a>
+            </div>
           </div>
         </div>
       </div>
-    </div>
     </footer>
   );
 }
