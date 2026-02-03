@@ -153,9 +153,9 @@ function GitHubIssuePage() {
               <p className="text-gh-text-muted text-xs mt-2">
                 Submit your solution with{' '}
                 <code className="bg-gh-surface px-1.5 py-0.5 rounded">
-                  @bountydotnew /submit
+                  @bountydotnew submit
                 </code>{' '}
-                in your PR
+                in your PR description
               </p>
             </div>
             <div className="px-4 pb-3 flex items-center gap-2">
@@ -227,7 +227,7 @@ function GitHubIssuePage() {
           <div className="flex-1">
             <div className="border border-gh-border rounded-md">
               <textarea
-                value="@bountydotnew /submit #47"
+                value="@bountydotnew submit #47"
                 readOnly
                 rows={2}
                 className="w-full bg-gh-bg px-4 py-3 text-gh-text focus:outline-none font-mono text-sm resize-none"

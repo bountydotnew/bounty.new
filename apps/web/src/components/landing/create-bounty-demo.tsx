@@ -748,20 +748,24 @@ function GitHubIssuePage({
               </p>
               <div className="bg-gh-surface border border-gh-border rounded-md p-3 text-gh-text-secondary text-xs">
                 <p>
-                  <strong className="text-gh-text">
-                    To claim this bounty:
-                  </strong>
+                  <strong className="text-gh-text">To claim this bounty:</strong>
                 </p>
                 <ol className="list-decimal list-inside mt-2 space-y-1">
                   <li>Submit a pull request that fixes this issue</li>
                   <li>
-                    Comment{' '}
+                    Include{' '}
                     <code className="px-1.5 py-0.5 bg-gh-border rounded">
-                      /submit #PR_NUMBER
+                      @bountydotnew submit
                     </code>{' '}
-                    on this issue
+                    in your PR description
                   </li>
-                  <li>Wait for the maintainer to approve your solution</li>
+                  <li>Wait for the maintainer to review + merge your PR</li>
+                  <li>
+                    After merge, confirm payout with{' '}
+                    <code className="px-1.5 py-0.5 bg-gh-border rounded">
+                      @bountydotnew merge
+                    </code>
+                  </li>
                 </ol>
               </div>
             </div>

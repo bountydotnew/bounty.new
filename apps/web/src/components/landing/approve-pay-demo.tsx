@@ -317,7 +317,7 @@ function PRCommentsPage({
                   <a href="#" className="text-gh-error-text hover:underline">
                     @bountydotnew
                   </a>{' '}
-                  /approve
+                  approve
                 </p>
               </div>
               <div className="px-4 pb-3 flex items-center gap-2">
@@ -383,9 +383,9 @@ function PRCommentsPage({
                   Approved. When you're ready, merge the PR and confirm here
                   with{' '}
                   <code className="bg-gh-surface px-1.5 py-0.5 rounded text-xs">
-                    /merge 47
+                    @bountydotnew merge
                   </code>{' '}
-                  (or comment{' '}
+                  (after merge, confirm payout by commenting{' '}
                   <a href="#" className="text-gh-error-text hover:underline">
                     @bountydotnew
                   </a>{' '}
