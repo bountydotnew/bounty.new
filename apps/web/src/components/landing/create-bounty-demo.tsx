@@ -243,59 +243,58 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
           </div>
         </div>
 
-        {/* Create bounty form */}
+        {/* Horizontal border line above textarea - matches real app */}
+        <div className="h-px w-full shrink-0 bg-surface-3" />
+
+        {/* Create bounty form - updated to match real TaskInputForm */}
         <div
-          className={`flex w-full shrink-0 flex-col ${compact ? 'px-3 py-2' : 'px-6 lg:px-8'} max-w-[880px] mx-auto min-w-0`}
+          className={`flex w-full shrink-0 flex-col ${compact ? 'px-3 py-2' : 'px-4 lg:max-w-[805px] xl:px-0'} mx-auto min-w-0`}
         >
           <div
-            className={`w-full flex flex-col ${compact ? 'my-2' : 'mt-8 mb-6'} min-w-0`}
+            className={`w-full flex flex-col ${compact ? 'my-2' : 'mt-3 mb-3 md:mt-10 md:mb-6'} min-w-0`}
           >
             <div
-              className={`bg-surface-1 text-text-tertiary border border-border-subtle ${compact ? 'rounded-xl' : 'rounded-[24px]'} relative overflow-hidden w-full min-w-0 flex flex-col ${compact ? 'p-3 gap-2' : 'p-5 gap-4'}`}
+              className={`bg-surface-1 text-text-tertiary border border-border-subtle ${compact ? 'rounded-xl' : 'rounded-[21px]'} relative overflow-hidden w-full min-w-0 flex flex-col ${compact ? 'p-3 gap-2' : 'p-4 gap-3'} transition-colors cursor-text focus-within:shadow-[0_0_0_2px_rgba(59,130,246,0.5)] focus-within:outline-none`}
             >
               <div className={`flex flex-col ${compact ? 'gap-1.5' : 'gap-2'}`}>
                 <div
                   className={`flex flex-row flex-wrap items-center ${compact ? 'gap-1.5' : 'gap-[6px]'}`}
                 >
-                  <div
-                    className={`rounded-full flex justify-center items-center shrink-0 gap-1.5 bg-surface-2 border border-solid border-border-subtle ${compact ? 'px-2 py-1' : 'px-[11px] py-[6px]'}`}
+                  <button
+                    type="button"
+                    className={`rounded-full flex justify-center items-center shrink-0 gap-2 bg-surface-2 border border-solid border-border-subtle hover:border-border-default transition-colors cursor-pointer ${compact ? 'px-2 py-1' : 'px-[11px] py-[6px]'}`}
                   >
                     <span
-                      className={`${compact ? 'text-[11px]' : 'text-[16px]'} leading-5 font-sans text-white truncate`}
+                      className={`${compact ? 'text-[11px]' : 'text-[16px]'} leading-5 font-sans text-foreground truncate`}
                     >
                       Add OAuth integration
                     </span>
                     <ChevronSortIcon
                       className={`${compact ? 'size-1.5' : 'size-2'} text-text-muted shrink-0`}
                     />
-                  </div>
-                  <div
-                    className={`rounded-full flex justify-center items-center shrink-0 gap-1.5 bg-surface-2 border border-solid border-border-subtle ${compact ? 'px-2 py-1' : 'px-[11px] py-[6px]'}`}
+                  </button>
+                  <button
+                    type="button"
+                    className={`rounded-full flex justify-center items-center shrink-0 gap-2 bg-surface-2 border border-solid border-border-subtle hover:border-border-default transition-colors cursor-pointer ${compact ? 'px-2 py-1' : 'px-[11px] py-[6px]'}`}
                   >
                     <span
-                      className={`${compact ? 'text-[11px]' : 'text-[16px]'} leading-5 font-sans text-white`}
+                      className={`${compact ? 'text-[11px]' : 'text-[16px]'} leading-5 font-sans text-foreground`}
                     >
                       $500
                     </span>
                     <ChevronSortIcon
                       className={`${compact ? 'size-1.5' : 'size-2'} text-text-muted shrink-0`}
                     />
-                  </div>
-                  <div className={`relative flex ${compact ? '' : ''}`}>
-                    <div
-                      className={`rounded-full flex justify-center items-center bg-surface-2 border border-solid border-border-subtle ${compact ? 'text-[11px] px-2 py-1 pr-6' : 'text-[16px] leading-5 px-[11px] py-[6px] pr-8 min-w-[150px]'} font-sans text-white`}
-                    >
-                      Deadline
-                    </div>
-                    <button
-                      type="button"
-                      className="absolute top-1/2 right-2 -translate-y-1/2 text-text-muted hover:text-white transition-colors"
-                    >
-                      <CalendarIcon
-                        className={compact ? 'size-2.5' : 'size-3.5'}
-                      />
-                    </button>
-                  </div>
+                  </button>
+                  <button
+                    type="button"
+                    className={`relative rounded-full flex justify-center items-center bg-surface-2 border border-solid border-border-subtle hover:border-border-default transition-colors cursor-pointer ${compact ? 'text-[11px] px-2 py-1 pr-6' : 'text-[16px] leading-5 px-[11px] py-[6px] pr-8 min-w-[100px]'} font-sans text-text-muted`}
+                  >
+                    <span>Deadline</span>
+                    <CalendarIcon
+                      className={`absolute top-1/2 right-2 -translate-y-1/2 text-text-muted ${compact ? 'size-2.5' : 'size-3.5'}`}
+                    />
+                  </button>
                 </div>
               </div>
 
@@ -306,7 +305,7 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
                     ? 'Need Google & GitHub OAuth integration...'
                     : 'Need Google & GitHub OAuth integration with proper error handling and session management.'
                 }
-                className={`flex-1 bg-transparent text-white outline-none resize-none ${compact ? 'min-h-[60px] text-[11px] leading-tight' : 'min-h-[160px] text-[15px] leading-6'}`}
+                className={`w-full bg-transparent outline-none resize-none ${compact ? 'min-h-[60px] text-[11px] leading-tight' : 'min-h-[100px] text-base'} text-text-tertiary`}
               />
 
               <div
@@ -334,7 +333,7 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
                     <button
                       type="button"
                       onClick={handleCreateBounty}
-                      className="flex items-center justify-center gap-1.5 px-[16px] h-[34px] rounded-full text-[15px] font-medium bg-foreground text-background shadow-lg shadow-foreground/20 hover:bg-foreground/90 transition-colors"
+                      className="flex items-center justify-center gap-1.5 px-4 h-[34px] rounded-full text-[15px] font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Create bounty
                     </button>
@@ -344,7 +343,7 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
                   <button
                     type="button"
                     onClick={handleCreateBounty}
-                    className="flex items-center justify-center gap-1 px-3 h-7 rounded-full text-[11px] font-medium bg-white text-black hover:bg-gray-100 transition-colors"
+                    className="flex items-center justify-center gap-1 px-3 h-7 rounded-full text-[11px] font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors"
                   >
                     Create
                   </button>
@@ -354,48 +353,52 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
           </div>
         </div>
 
-        {/* Feed divider */}
+        {/* Horizontal border line below textarea - matches real app */}
         <div className="h-px w-full shrink-0 bg-surface-3" />
 
-        {/* Bounty feed */}
+        {/* Bounty feed - updated to match real dashboard layout */}
         <div
-          className={`flex w-full shrink-0 flex-col ${compact ? 'px-3 py-2' : 'px-6 lg:px-8'} max-w-[880px] mx-auto min-w-0 ${compact ? '' : 'pb-10'}`}
+          className={`flex flex-1 shrink-0 flex-col w-full overflow-hidden ${compact ? '' : 'lg:max-w-[805px] xl:px-0 xl:border-x border-border-subtle mx-auto py-4'} min-w-0`}
         >
-          <div
-            className={`flex flex-col ${compact ? 'gap-2' : 'gap-3'} ${compact ? 'py-1' : 'pt-4'} pointer-events-none`}
-          >
-            {feedBounties
-              .slice(0, compact ? 3 : visibleCount)
-              .map((bounty, index) => (
-                <div
-                  key={bounty.id}
-                  className="animate-in fade-in slide-in-from-bottom-2 duration-500"
-                >
-                  {compact ? (
-                    <CompactBountyCard
-                      bounty={bounty}
-                      stats={{
-                        commentCount: 3 + index,
-                        voteCount: 2,
-                        submissionCount: 1 + (index % 2),
-                        isVoted: false,
-                        bookmarked: false,
-                      }}
-                    />
-                  ) : (
-                    <StandardBountyCard
-                      bounty={bounty}
-                      stats={{
-                        commentCount: 3 + index,
-                        voteCount: 2,
-                        submissionCount: 1 + (index % 2),
-                        isVoted: false,
-                        bookmarked: false,
-                      }}
-                    />
-                  )}
-                </div>
-              ))}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
+            <div className={`relative flex flex-col pb-10 ${compact ? 'px-3' : 'px-4'} w-full min-w-0`}>
+              <div
+                className={`flex flex-col ${compact ? 'gap-2' : 'gap-3'}`}
+              >
+                {feedBounties
+                  .slice(0, compact ? 3 : visibleCount)
+                  .map((bounty, index) => (
+                    <div
+                      key={bounty.id}
+                      className="animate-in fade-in slide-in-from-bottom-2 duration-500"
+                    >
+                      {compact ? (
+                        <CompactBountyCard
+                          bounty={bounty}
+                          stats={{
+                            commentCount: 3 + index,
+                            voteCount: 2,
+                            submissionCount: 1 + (index % 2),
+                            isVoted: false,
+                            bookmarked: false,
+                          }}
+                        />
+                      ) : (
+                        <StandardBountyCard
+                          bounty={bounty}
+                          stats={{
+                            commentCount: 3 + index,
+                            voteCount: 2,
+                            submissionCount: 1 + (index % 2),
+                            isVoted: false,
+                            bookmarked: false,
+                          }}
+                        />
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
