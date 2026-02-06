@@ -1,16 +1,31 @@
-import type { Metadata } from 'next';
+'use client';
 import Link from '@bounty/ui/components/link';
 import { Button } from '@bounty/ui/components/button';
 import { Logo } from '@/components/landing/logo';
 import { Header } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
-
-export const metadata: Metadata = {
-  title: 'Early Access Required - Bounty',
-  description: 'Join the waitlist to get early access to bounty.new',
-};
+import { useSessionHook } from '@/context/session-context';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function EarlyAccessRequiredPage() {
+  const sessionHook = useSessionHook();
+  const router = useRouter();
+  const { data: session, isPending, refetch } = sessionHook;
+
+  // If user gains access, redirect to dashboard
+  useEffect(() => {
+    const userRole = session?.user?.role ?? 'user';
+    if (userRole === 'early_access' || userRole === 'admin') {
+      router.push('/dashboard');
+    }
+  }, [session, router]);
+
+  const handleCheckStatus = async () => {
+    await refetch();
+    // After refetch, the useEffect will handle redirect if role changed
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
@@ -35,10 +50,12 @@ export default function EarlyAccessRequiredPage() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <Button asChild className="rounded-full px-6">
-                <Link href="/#waitlist">
-                  Join Waitlist
-                </Link>
+              <Button
+                onClick={handleCheckStatus}
+                disabled={isPending}
+                className="rounded-full px-6"
+              >
+                {isPending ? 'Checking...' : 'Check Status'}
               </Button>
               <Button
                 asChild
@@ -48,6 +65,10 @@ export default function EarlyAccessRequiredPage() {
                 <Link href="/">Back Home</Link>
               </Button>
             </div>
+
+            <p className="mt-4 text-sm text-text-muted">
+              Already joined the waitlist? Click &quot;Check Status&quot; to see if you have access.
+            </p>
 
           </div>
         </div>
