@@ -26,13 +26,19 @@ import {
   TooltipTrigger,
 } from '@bounty/ui/components/tooltip';
 import { SidebarToggleIcon } from './icons/huge';
+import {
+  SIDEBAR_COOKIE_NAME,
+  SIDEBAR_COOKIE_MAX_AGE,
+  SIDEBAR_WIDTH as SIDEBAR_WIDTH_CONSTANT,
+  SIDEBAR_WIDTH_MOBILE as SIDEBAR_WIDTH_MOBILE_CONSTANT,
+  SIDEBAR_WIDTH_ICON as SIDEBAR_WIDTH_ICON_CONSTANT,
+  SIDEBAR_KEYBOARD_SHORTCUT as SIDEBAR_KEYBOARD_SHORTCUT_CONSTANT,
+} from '../lib/constants';
 
-const SIDEBAR_COOKIE_NAME = 'sidebar_state';
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-const SIDEBAR_WIDTH = '16rem';
-const SIDEBAR_WIDTH_MOBILE = '18rem';
-const SIDEBAR_WIDTH_ICON = '3rem';
-const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
+const SIDEBAR_WIDTH = SIDEBAR_WIDTH_CONSTANT;
+const SIDEBAR_WIDTH_MOBILE = SIDEBAR_WIDTH_MOBILE_CONSTANT;
+const SIDEBAR_WIDTH_ICON = SIDEBAR_WIDTH_ICON_CONSTANT;
+const SIDEBAR_KEYBOARD_SHORTCUT = SIDEBAR_KEYBOARD_SHORTCUT_CONSTANT;
 
 type SidebarContextProps = {
   state: 'expanded' | 'collapsed';
@@ -300,6 +306,13 @@ function SidebarRail({ className, ...props }: React.ComponentProps<'button'>) {
         'group-data-[collapsible=offcanvas]:translate-x-0 hover:group-data-[collapsible=offcanvas]:bg-sidebar group-data-[collapsible=offcanvas]:after:left-full',
         '[[data-side=left][data-collapsible=offcanvas]_&]:-right-2',
         '[[data-side=right][data-collapsible=offcanvas]_&]:-left-2',
+        // In icon mode, position rail outside the sidebar edge to avoid overlapping icons
+        'group-data-[collapsible=icon]:group-data-[side=left]:right-0 group-data-[collapsible=icon]:group-data-[side=left]:translate-x-full',
+        'group-data-[collapsible=icon]:group-data-[side=left]:w-2',
+        'group-data-[collapsible=icon]:group-data-[side=left]:after:left-0',
+        'group-data-[collapsible=icon]:group-data-[side=right]:left-0 group-data-[collapsible=icon]:group-data-[side=right]:translate-x-[-100%]',
+        'group-data-[collapsible=icon]:group-data-[side=right]:w-2',
+        'group-data-[collapsible=icon]:group-data-[side=right]:after:right-0',
         className
       )}
       data-sidebar="rail"

@@ -130,8 +130,12 @@ export function setupBountyCommands(client: Client) {
   const runtime = Runtime.defaultRuntime;
 
   client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
-    if (interaction.commandName !== 'bounty') return;
+    if (!interaction.isChatInputCommand()) {
+      return;
+    }
+    if (interaction.commandName !== 'bounty') {
+      return;
+    }
 
     const subcommand = interaction.options.getSubcommand();
 

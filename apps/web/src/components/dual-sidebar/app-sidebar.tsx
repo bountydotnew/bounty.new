@@ -186,9 +186,9 @@ const SidebarFooterActions = () => {
 
   return (
     <>
-      <div className="flex items-end justify-between gap-2 py-0">
+      <div className="flex items-end justify-between gap-2 py-0 group-data-[collapsible=icon]:justify-center">
         {/* Links column: Docs, Support */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 group-data-[collapsible=icon]:hidden">
           <button
             className="inline-flex items-center gap-2 rounded-[10px] bg-surface-1 px-3.5 py-1.5 text-text-tertiary transition-colors hover:text-foreground group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
             onClick={() => window.open('https://docs.bounty.new', '_blank')}
