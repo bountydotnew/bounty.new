@@ -21,19 +21,17 @@ import type {
   UserDisplayData,
 } from '@/types/billing-components';
 import { AccountSwitcher } from '@/components/auth/account-switcher';
+import { OrgSwitcher } from '@/components/org/org-switcher';
+import { CreateOrgDialog } from '@/components/org/create-org-dialog';
 import { SwitchUsersIcon } from '@bounty/ui/components/icons/huge/switch-users';
+import { SwitchWorkspaceIcon } from '@bounty/ui/components/icons/huge/switch-workspace';
 import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear';
-// TODO: Re-enable when workspace switching is implemented
-// import { SwitchWorkspaceIcon } from '@bounty/ui/components/icons/huge/switch-workspace';
-// TODO: Re-enable when member management is implemented
-// import { ManageUsersWorkspaceIcon } from '@bounty/ui/components/icons/huge/manage-users-workspace';
 import { BillingSettingsIcon } from '@bounty/ui/components/icons/huge/billing-settings';
-// TODO: Re-enable when workspace switching is implemented
-// import { DropdownIcon } from '@bounty/ui';
 import { Feedback } from '@bounty/ui';
 import { UserIcon } from '@bounty/ui';
 import { useFeedback } from '@/components/feedback-context';
 import { useUser } from '@/context/user-context';
+import { useOrganization } from '@/context/organization-context';
 import { useState, useTransition } from 'react';
 import { PricingDialog } from '@/components/billing/pricing-dialog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -48,6 +46,7 @@ const MESSAGES = {
 } as const;
 
 const LOGIN_REDIRECT = '/login';
+
 // Custom hook for user display logic
 function useUserDisplay(
   sessionUser?: { name?: string; email?: string; image?: string | null } | null,
@@ -121,12 +120,10 @@ function useResetOnboarding() {
   const mutation = useMutation({
     mutationFn: () => trpcClient.onboarding.resetOnboarding.mutate(),
     onSuccess: () => {
-      // Invalidate the onboarding state query
       queryClient.invalidateQueries({
         queryKey: [['onboarding', 'getState']],
       });
       toast.success(MESSAGES.ONBOARDING_RESET_SUCCESS);
-      // Redirect to onboarding
       router.push('/onboarding/step/1');
     },
     onError: () => {
@@ -156,6 +153,7 @@ export function AccountDropdown({
   const router = useRouter();
   const { session } = useSession();
   const { user: currentUser } = useUser();
+  const { activeOrganization } = useOrganization();
   const [menuOpen, setMenuOpen] = React.useState(false);
 
   const handleOpenChange = React.useCallback(
@@ -167,6 +165,8 @@ export function AccountDropdown({
   );
 
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
+  const [createOrgDialogOpen, setCreateOrgDialogOpen] = useState(false);
+
   const handleUpgrade = async () => {
     if (!session?.user) {
       toast.error('Please sign in to upgrade your account.');
@@ -211,6 +211,35 @@ export function AccountDropdown({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent className="rounded-[15px] w-74 bg-surface-1 border border-border-subtle">
+          {/* Workspace section */}
+          {activeOrganization && (
+            <div className="flex items-center justify-between border-b border-border-subtle px-4 py-2">
+              <div className="flex flex-col gap-0 min-w-0">
+                <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
+                  Workspace
+                </span>
+                <span className="text-base font-medium leading-[150%] text-foreground truncate">
+                  {activeOrganization.name}
+                </span>
+              </div>
+              <OrgSwitcher
+                onCreateOrg={() => {
+                  setMenuOpen(false);
+                  setCreateOrgDialogOpen(true);
+                }}
+                trigger={
+                  <button
+                    className="cursor-pointer transition-opacity hover:opacity-70"
+                    type="button"
+                    aria-label="Switch workspace"
+                  >
+                    <SwitchWorkspaceIcon className="h-[19px] w-[19px] text-text-secondary" />
+                  </button>
+                }
+              />
+            </div>
+          )}
+
           {/* User header section */}
           <div className="flex flex-col gap-1.5 border-b border-border-subtle px-4 py-1.5">
             <div className="flex items-center justify-between">
@@ -275,31 +304,6 @@ export function AccountDropdown({
                 Upgrade
               </span>
             </DropdownMenuItem>
-            {/* TODO: Implement workspace switching
-            <DropdownMenuItem
-              className="flex items-center justify-between rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"
-              onClick={() => setMenuOpen(false)}
-            >
-              <div className="flex items-center gap-2.25">
-                <SwitchWorkspaceIcon className="h-[19px] w-[19px]" />
-                <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
-                  Switch workspace
-                </span>
-              </div>
-              <DropdownIcon className="h-[19px] w-[19px] -rotate-90" />
-            </DropdownMenuItem>
-            */}
-            {/* TODO: Implement member management
-            <DropdownMenuItem
-              className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"
-              onClick={() => setMenuOpen(false)}
-            >
-              <ManageUsersWorkspaceIcon className="h-[19px] w-[19px]" />
-              <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
-                Manage members
-              </span>
-            </DropdownMenuItem>
-            */}
             <DropdownMenuItem
               className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"
               onClick={() => {
@@ -364,6 +368,10 @@ export function AccountDropdown({
       <PricingDialog
         onOpenChange={setPricingDialogOpen}
         open={pricingDialogOpen}
+      />
+      <CreateOrgDialog
+        open={createOrgDialogOpen}
+        onOpenChange={setCreateOrgDialogOpen}
       />
     </>
   );

@@ -18,6 +18,7 @@ import { SessionProvider, useSessionHook } from '@/context/session-context';
 // Note: TOAST_ICONS and TOAST_OPTIONS are no longer used - coss toast has built-in styling
 import { queryClient } from '@/utils/trpc';
 import { FeedbackProvider } from '@/components/feedback-context';
+import { OrganizationProvider } from '@/context/organization-context';
 
 function ProvidersInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -28,19 +29,21 @@ function ProvidersInner({ children }: { children: React.ReactNode }) {
 
   return (
     <UserProvider>
-      <AuthUIProvider
-        authClient={authClient}
-        hooks={{ useSession: customUseSession }}
-        Link={Link}
-        navigate={router.push}
-        onSessionChange={() => {
-          // No-op: handled via SessionProvider above
-        }}
-        replace={router.replace}
-      >
-        <ImpersonationBanner />
-        <FeedbackProvider>{children}</FeedbackProvider>
-      </AuthUIProvider>
+      <OrganizationProvider>
+        <AuthUIProvider
+          authClient={authClient}
+          hooks={{ useSession: customUseSession }}
+          Link={Link}
+          navigate={router.push}
+          onSessionChange={() => {
+            // No-op: handled via SessionProvider above
+          }}
+          replace={router.replace}
+        >
+          <ImpersonationBanner />
+          <FeedbackProvider>{children}</FeedbackProvider>
+        </AuthUIProvider>
+      </OrganizationProvider>
     </UserProvider>
   );
 }

@@ -52,6 +52,7 @@ export const session = pgTable('session', {
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
   impersonatedBy: text('impersonated_by'),
+  activeOrganizationId: text('active_organization_id'),
 });
 
 export const account = pgTable('account', {
@@ -147,6 +148,46 @@ export const oauthState = pgTable('oauth_state', {
   providerId: text('provider_id'), // The external provider's user ID (e.g., Discord user ID)
   expiresAt: timestamp('expires_at').notNull(),
   used: boolean('used').notNull().default(false),
+  createdAt: timestamp('created_at').notNull().default(sql`now()`),
+});
+
+// ============================================================================
+// Organization Tables (Better Auth organization plugin)
+// ============================================================================
+
+export const organization = pgTable('organization', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  slug: text('slug').unique(),
+  logo: text('logo'),
+  metadata: text('metadata'),
+  createdAt: timestamp('created_at').notNull().default(sql`now()`),
+});
+
+export const member = pgTable('member', {
+  id: text('id').primaryKey(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  role: text('role').notNull().default('member'),
+  createdAt: timestamp('created_at').notNull().default(sql`now()`),
+});
+
+export const orgInvitation = pgTable('invitation', {
+  id: text('id').primaryKey(),
+  email: text('email').notNull(),
+  inviterId: text('inviter_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  role: text('role').notNull().default('member'),
+  status: text('status').notNull().default('pending'),
+  expiresAt: timestamp('expires_at').notNull(),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
 });
 

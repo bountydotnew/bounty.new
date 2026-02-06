@@ -9,6 +9,7 @@ import {
   adminClient,
   deviceAuthorizationClient,
   emailOTPClient,
+  organizationClient,
 } from 'better-auth/client/plugins';
 import { createAuthClient } from 'better-auth/react';
 import { multiSessionClient } from 'better-auth/client/plugins';
@@ -21,7 +22,7 @@ import { toast } from 'sonner';
  * Provides:
  * - Authentication methods (signIn, signOut, signUp)
  * - React hooks (useSession, useUser)
- * - Plugin methods (admin, device auth, email OTP, multi-session)
+ * - Plugin methods (admin, device auth, email OTP, multi-session, organization)
  * - Global error handling with toast notifications
  */
 export const authClient = createAuthClient({
@@ -31,6 +32,7 @@ export const authClient = createAuthClient({
     deviceAuthorizationClient(),
     emailOTPClient(),
     multiSessionClient(),
+    organizationClient(),
   ],
   // Global error handling for all Better Auth requests
   fetchOptions: {

@@ -2,7 +2,8 @@
  * Better Auth Server Configuration
  *
  * Centralized authentication setup for the Bounty platform.
- * Handles email/password, GitHub OAuth, Polar payments, device auth, and multi-session support.
+ * Handles email/password, GitHub OAuth, device auth, multi-session,
+ * and organization-first experience.
  */
 
 import {
@@ -17,7 +18,10 @@ import {
   db,
   deviceCode,
   invite,
+  member,
   notification,
+  organization as organizationTable,
+  orgInvitation,
   session,
   submission,
   user as userTable,
@@ -36,6 +40,7 @@ import {
   deviceAuthorization,
   openAPI,
   multiSession,
+  organization,
 } from 'better-auth/plugins';
 import { admin } from 'better-auth/plugins';
 import { emailOTP } from 'better-auth/plugins/email-otp';
@@ -66,7 +71,10 @@ const schema = {
   bountyVote,
   deviceCode,
   invite,
+  member,
   notification,
+  organization: organizationTable,
+  invitation: orgInvitation,
   session,
   submission,
   user: userTable,
@@ -123,7 +131,7 @@ async function syncGitHubHandle({
       .set({ handle: githubHandle, updatedAt: new Date() })
       .where(eq(userTable.id, userId));
 
-    console.log(`✅ Synced GitHub handle for user ${userId}: ${githubHandle}`);
+    console.log(`Synced GitHub handle for user ${userId}: ${githubHandle}`);
   } catch {
     // Silently fail - don't block account creation/update
   }
@@ -149,6 +157,63 @@ function handleGitHubAccountLinking() {
       });
     }
   };
+}
+
+// ============================================================================
+// Organization Helpers
+// ============================================================================
+
+/**
+ * Generate a slug from user email for default "Personal" org.
+ */
+function generateOrgSlug(email: string): string {
+  const raw = email.split('@')[0] || '';
+  const base = raw
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+    .slice(0, 20);
+  const suffix = Math.random().toString(36).slice(2, 8);
+  return `${base || 'bounty'}-${suffix}`;
+}
+
+/**
+ * Check if a user is on the waitlist only (not yet granted early access).
+ * Waitlist users have role='user' and exist in the waitlist table.
+ * Users with role='early_access' or 'admin' have been granted full access.
+ */
+async function isWaitlistOnlyUser(userId: string): Promise<boolean> {
+  const existingUser = await db.query.user.findFirst({
+    where: (fields, { eq }) => eq(fields.id, userId),
+    columns: { role: true },
+  });
+
+  // If user has early_access or admin role, they're not waitlist-only
+  if (existingUser?.role === 'early_access' || existingUser?.role === 'admin') {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Get the active organization for a user when creating a session.
+ * Returns the most recently joined org or the first one found.
+ */
+async function getActiveOrganizationId(
+  userId: string
+): Promise<string | undefined> {
+  try {
+    const membership = await db.query.member.findFirst({
+      where: (fields, { eq }) => eq(fields.userId, userId),
+      columns: { organizationId: true },
+      orderBy: (m, { desc }) => [desc(m.createdAt)],
+    });
+
+    return membership?.organizationId;
+  } catch (error) {
+    console.error('Error getting active organization ID:', error);
+    return undefined;
+  }
 }
 
 // ============================================================================
@@ -181,6 +246,49 @@ export const auth = betterAuth({
       },
       update: {
         after: handleGitHubAccountLinking(),
+      },
+    },
+    user: {
+      create: {
+        after: async (user) => {
+          // Auto-create a "Personal" organization for every new user.
+          // This establishes the org-first experience from day one.
+          try {
+            const slug = generateOrgSlug(user.email);
+
+            await auth.api.createOrganization({
+              body: {
+                name: 'Personal',
+                slug,
+                userId: user.id,
+              },
+            });
+
+            console.log(
+              `Created Personal org for user ${user.id}: ${slug}`
+            );
+          } catch (error) {
+            console.error(
+              `Failed to create Personal org for user ${user.id}:`,
+              error
+            );
+          }
+        },
+      },
+    },
+    session: {
+      create: {
+        before: async (session) => {
+          // Auto-set the active organization when a session is created.
+          const activeOrgId = await getActiveOrganizationId(session.userId);
+
+          return {
+            data: {
+              ...session,
+              ...(activeOrgId ? { activeOrganizationId: activeOrgId } : {}),
+            },
+          };
+        },
       },
     },
   },
@@ -277,6 +385,23 @@ export const auth = betterAuth({
     // ========================================================================
     multiSession({
       ...AUTH_CONFIG.multiSession,
+    }),
+
+    // ========================================================================
+    // Organization Plugin (org-first experience)
+    // ========================================================================
+    organization({
+      // The creator of an org is the owner
+      creatorRole: 'owner',
+      // Every user can create organizations
+      allowUserToCreateOrganization: true,
+      // Send invitation emails for org invites
+      async sendInvitationEmail(data) {
+        // TODO: Implement org invitation email template
+        console.log(
+          `Organization invitation for ${data.email} to ${data.organization.name} (${data.id})`
+        );
+      },
     }),
   ],
 });
