@@ -6,9 +6,10 @@ import {
   useContext,
   useCallback,
   useMemo,
+  useState,
+  useEffect,
   type ReactNode,
 } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { useSession } from '@/context/session-context';
 import { toast } from 'sonner';
 
@@ -21,18 +22,12 @@ type OrganizationList = ReturnType<
 >['data'];
 
 interface OrganizationContextType {
-  /** The currently active organization */
   activeOrganization: ActiveOrganization;
-  /** Whether the active organization is loading */
   isLoadingActive: boolean;
-  /** All organizations the user belongs to */
   organizations: OrganizationList;
-  /** Whether the organizations list is loading */
   isLoadingOrgs: boolean;
-  /** Switch to a different organization */
   switchOrganization: (orgId: string) => Promise<void>;
-  /** Create a new organization */
-  createOrganization: (name: string, slug: string) => Promise<void>;
+  createOrganization: (name: string, slug: string) => Promise<boolean>;
 }
 
 const OrganizationContext = createContext<OrganizationContextType | null>(null);
@@ -41,20 +36,90 @@ interface OrganizationProviderProps {
   children: ReactNode;
 }
 
+/**
+ * Provides organization state to the app. Only fetches org data when the user
+ * is authenticated to avoid unnecessary 401 requests and potential memory issues.
+ */
 export function OrganizationProvider({ children }: OrganizationProviderProps) {
   const { isAuthenticated } = useSession();
-  const queryClient = useQueryClient();
 
-  // Use Better Auth's built-in hooks for organization state
-  const {
-    data: activeOrganization,
-    isPending: isLoadingActive,
-  } = authClient.useActiveOrganization();
+  // Local state for manually fetched org data (avoids unconditional hook API calls)
+  const [activeOrganization, setActiveOrganization] =
+    useState<ActiveOrganization>(null);
+  const [organizations, setOrganizations] =
+    useState<OrganizationList>(null);
+  const [isLoadingActive, setIsLoadingActive] = useState(false);
+  const [isLoadingOrgs, setIsLoadingOrgs] = useState(false);
 
-  const {
-    data: organizations,
-    isPending: isLoadingOrgs,
-  } = authClient.useListOrganizations();
+  // Fetch org data only when authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setActiveOrganization(null);
+      setOrganizations(null);
+      setIsLoadingActive(false);
+      setIsLoadingOrgs(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function fetchOrgData() {
+      setIsLoadingActive(true);
+      setIsLoadingOrgs(true);
+
+      try {
+        const [activeRes, listRes] = await Promise.all([
+          authClient.organization.getFullOrganization(),
+          authClient.organization.list(),
+        ]);
+
+        if (cancelled) return;
+
+        setActiveOrganization(
+          activeRes.error ? null : (activeRes.data ?? null)
+        );
+        setOrganizations(
+          listRes.error ? null : (listRes.data ?? null)
+        );
+      } catch {
+        if (!cancelled) {
+          setActiveOrganization(null);
+          setOrganizations(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingActive(false);
+          setIsLoadingOrgs(false);
+        }
+      }
+    }
+
+    fetchOrgData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated]);
+
+  const refetchOrgData = useCallback(async () => {
+    if (!isAuthenticated) return;
+
+    try {
+      const [activeRes, listRes] = await Promise.all([
+        authClient.organization.getFullOrganization(),
+        authClient.organization.list(),
+      ]);
+
+      setActiveOrganization(
+        activeRes.error ? null : (activeRes.data ?? null)
+      );
+      setOrganizations(
+        listRes.error ? null : (listRes.data ?? null)
+      );
+    } catch {
+      // Silently fail on refetch
+    }
+  }, [isAuthenticated]);
 
   const switchOrganization = useCallback(
     async (orgId: string) => {
@@ -69,20 +134,19 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
           return;
         }
 
-        // Invalidate all queries to refresh org-dependent data
-        queryClient.invalidateQueries();
+        await refetchOrgData();
       } catch (error) {
         toast.error('Failed to switch workspace.');
         console.error('Failed to switch organization:', error);
       }
     },
-    [queryClient]
+    [refetchOrgData]
   );
 
   const createOrganization = useCallback(
-    async (name: string, slug: string) => {
+    async (name: string, slug: string): Promise<boolean> => {
       try {
-        const { error } = await authClient.organization.create({
+        const { data, error } = await authClient.organization.create({
           name,
           slug,
         });
@@ -90,26 +154,35 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
         if (error) {
           toast.error('Failed to create workspace.');
           console.error('Failed to create organization:', error);
-          return;
+          return false;
         }
 
         toast.success('Workspace created successfully.');
-        // Invalidate to refresh the org list
-        queryClient.invalidateQueries();
+
+        // Auto-switch to the newly created organization
+        if (data?.id) {
+          await authClient.organization.setActive({
+            organizationId: data.id,
+          });
+        }
+
+        await refetchOrgData();
+        return true;
       } catch (error) {
         toast.error('Failed to create workspace.');
         console.error('Failed to create organization:', error);
+        return false;
       }
     },
-    [queryClient]
+    [refetchOrgData]
   );
 
   const value = useMemo(
     () => ({
       activeOrganization: activeOrganization ?? null,
-      isLoadingActive: isAuthenticated ? isLoadingActive : false,
+      isLoadingActive,
       organizations: organizations ?? null,
-      isLoadingOrgs: isAuthenticated ? isLoadingOrgs : false,
+      isLoadingOrgs,
       switchOrganization,
       createOrganization,
     }),
@@ -118,7 +191,6 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
       isLoadingActive,
       organizations,
       isLoadingOrgs,
-      isAuthenticated,
       switchOrganization,
       createOrganization,
     ]

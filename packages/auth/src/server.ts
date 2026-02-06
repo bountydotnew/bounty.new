@@ -172,27 +172,8 @@ function generateOrgSlug(email: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '')
     .slice(0, 20);
-  const suffix = Math.random().toString(36).slice(2, 8);
+  const suffix = crypto.randomUUID().replace(/-/g, '').slice(0, 8);
   return `${base || 'bounty'}-${suffix}`;
-}
-
-/**
- * Check if a user is on the waitlist only (not yet granted early access).
- * Waitlist users have role='user' and exist in the waitlist table.
- * Users with role='early_access' or 'admin' have been granted full access.
- */
-async function isWaitlistOnlyUser(userId: string): Promise<boolean> {
-  const existingUser = await db.query.user.findFirst({
-    where: (fields, { eq }) => eq(fields.id, userId),
-    columns: { role: true },
-  });
-
-  // If user has early_access or admin role, they're not waitlist-only
-  if (existingUser?.role === 'early_access' || existingUser?.role === 'admin') {
-    return false;
-  }
-
-  return true;
 }
 
 /**
@@ -252,16 +233,23 @@ export const auth = betterAuth({
       create: {
         after: async (user) => {
           // Auto-create a "Personal" organization for every new user.
-          // This establishes the org-first experience from day one.
+          // Uses direct DB inserts to avoid hook reentrancy through auth.api.
           try {
             const slug = generateOrgSlug(user.email);
+            const orgId = crypto.randomUUID();
+            const memberId = crypto.randomUUID();
 
-            await auth.api.createOrganization({
-              body: {
-                name: 'Personal',
-                slug,
-                userId: user.id,
-              },
+            await db.insert(organizationTable).values({
+              id: orgId,
+              name: 'Personal',
+              slug,
+            });
+
+            await db.insert(member).values({
+              id: memberId,
+              userId: user.id,
+              organizationId: orgId,
+              role: 'owner',
             });
 
             console.log(

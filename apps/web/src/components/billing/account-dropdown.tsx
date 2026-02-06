@@ -213,7 +213,10 @@ export function AccountDropdown({
         <DropdownMenuContent className="rounded-[15px] w-74 bg-surface-1 border border-border-subtle">
           {/* Workspace section */}
           {activeOrganization && (
-            <div className="flex items-center justify-between border-b border-border-subtle px-4 py-2">
+            <DropdownMenuItem
+              className="flex items-center justify-between border-b border-border-subtle px-4 py-2 focus:bg-surface-hover"
+              onSelect={(e) => e.preventDefault()}
+            >
               <div className="flex flex-col gap-0 min-w-0">
                 <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
                   Workspace
@@ -232,12 +235,13 @@ export function AccountDropdown({
                     className="cursor-pointer transition-opacity hover:opacity-70"
                     type="button"
                     aria-label="Switch workspace"
+                    tabIndex={0}
                   >
                     <SwitchWorkspaceIcon className="h-[19px] w-[19px] text-text-secondary" />
                   </button>
                 }
               />
-            </div>
+            </DropdownMenuItem>
           )}
 
           {/* User header section */}

@@ -42,11 +42,13 @@ export function CreateOrgDialog({ open, onOpenChange }: CreateOrgDialogProps) {
 
     setIsCreating(true);
     try {
-      await createOrganization(name.trim(), slug.trim());
-      setName('');
-      setSlug('');
-      setIsSlugManual(false);
-      onOpenChange(false);
+      const success = await createOrganization(name.trim(), slug.trim());
+      if (success) {
+        setName('');
+        setSlug('');
+        setIsSlugManual(false);
+        onOpenChange(false);
+      }
     } finally {
       setIsCreating(false);
     }
