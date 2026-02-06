@@ -21,6 +21,8 @@ interface BountyActionsProviderProps {
   canEdit?: boolean;
   /** Whether the user can delete this bounty */
   canDelete?: boolean;
+  /** Whether the current user owns this bounty */
+  isOwner?: boolean;
   /** Current vote count */
   voteCount?: number;
   /** Whether the user has upvoted this bounty */
@@ -69,6 +71,7 @@ export function BountyActionsProvider({
   bountyId,
   canEdit = false,
   canDelete = false,
+  isOwner = false,
   voteCount = 0,
   isVoted = false,
   bookmarked: controlledBookmarked,
@@ -247,6 +250,7 @@ export function BountyActionsProvider({
       bookmarked: bookmarked ?? false,
       canEdit,
       canDelete,
+      isOwner,
       isBookmarkPending: toggleBookmarkMutation.isPending,
       isCreateGithubIssuePending: createGithubIssueMutation.isPending,
       isCheckGithubSyncPending: checkGithubSyncMutation.isPending,
@@ -260,6 +264,7 @@ export function BountyActionsProvider({
       bookmarked,
       canEdit,
       canDelete,
+      isOwner,
       toggleBookmarkMutation.isPending,
       createGithubIssueMutation.isPending,
       checkGithubSyncMutation.isPending,
