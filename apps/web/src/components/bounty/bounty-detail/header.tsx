@@ -32,6 +32,7 @@ export function BountyDetailHeader() {
     bounty: { title, amount, user, avatarSrc, repositoryUrl, issueUrl },
     votes,
     bookmarked,
+    isCreator,
     canEdit,
     canDelete,
     canRequestCancellation,
@@ -95,6 +96,7 @@ export function BountyDetailHeader() {
             bountyId={state.bounty.id}
             canDelete={canDelete}
             canEdit={canEdit}
+            isOwner={isCreator}
             isVoted={Boolean(votes?.isVoted)}
             onDelete={canDelete ? actions.delete : undefined}
             onEdit={actions.openEditModal}

@@ -31,6 +31,7 @@ interface BountyActionsProps {
   bountyId: string;
   canDelete?: boolean;
   canEdit?: boolean;
+  isOwner?: boolean;
   isVoted?: boolean;
   voteCount?: number;
   onDelete?: () => void;
@@ -51,6 +52,7 @@ export default function BountyActions({
   bountyId,
   canDelete = false,
   canEdit = false,
+  isOwner = false,
   isVoted = false,
   voteCount = 0,
   onDelete,
@@ -96,6 +98,7 @@ export default function BountyActions({
         bountyId={bountyId}
         canDelete={canDelete}
         canEdit={canEdit}
+        isOwner={isOwner}
         bookmarked={bookmarked}
         isVoted={isVoted}
         voteCount={voteCount}
