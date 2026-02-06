@@ -16,6 +16,8 @@ export interface BountyActionsState {
   canEdit: boolean;
   /** Whether the user can delete this bounty */
   canDelete: boolean;
+  /** Whether the current user owns this bounty */
+  isOwner: boolean;
   /** Whether mutations are in progress */
   isBookmarkPending: boolean;
   isCreateGithubIssuePending: boolean;

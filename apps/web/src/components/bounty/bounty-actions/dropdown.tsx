@@ -51,6 +51,7 @@ export function Dropdown() {
     bookmarked,
     canEdit,
     canDelete,
+    isOwner,
     isCreateGithubIssuePending,
     isCheckGithubSyncPending,
     isSyncToGithubPending,
@@ -136,51 +137,53 @@ export function Dropdown() {
           </DropdownMenuItem>
         </div>
 
-        {/* GitHub actions group */}
-        <div className="flex flex-col gap-0.5 mt-2 pt-2 border-t border-border-subtle">
-          <DropdownMenuItem
-            className="text-foreground hover:bg-surface-hover rounded-md"
-            onClick={checkGithubSync}
-            disabled={isCheckGithubSyncPending}
-          >
-            <RefreshCw
-              className={`h-3.5 w-3.5 ${
-                isCheckGithubSyncPending ? 'animate-spin' : ''
-              }`}
-            />
-            Check GitHub sync
-          </DropdownMenuItem>
-
-          {repositoryUrl && !issueUrl && (
+        {/* GitHub actions group - only visible to bounty owner */}
+        {isOwner && (
+          <div className="flex flex-col gap-0.5 mt-2 pt-2 border-t border-border-subtle">
             <DropdownMenuItem
               className="text-foreground hover:bg-surface-hover rounded-md"
-              onClick={createGithubIssue}
-              disabled={isCreateGithubIssuePending}
+              onClick={checkGithubSync}
+              disabled={isCheckGithubSyncPending}
             >
-              <GithubIcon
+              <RefreshCw
                 className={`h-3.5 w-3.5 ${
-                  isCreateGithubIssuePending ? 'animate-pulse' : ''
+                  isCheckGithubSyncPending ? 'animate-spin' : ''
                 }`}
               />
-              Create GitHub issue
+              Check GitHub sync
             </DropdownMenuItem>
-          )}
 
-          {issueUrl && (
-            <DropdownMenuItem
-              className="text-foreground hover:bg-surface-hover rounded-md"
-              onClick={syncToGithub}
-              disabled={isSyncToGithubPending}
-            >
-              <GithubIcon
-                className={`h-3.5 w-3.5 ${
-                  isSyncToGithubPending ? 'animate-pulse' : ''
-                }`}
-              />
-              Sync to GitHub
-            </DropdownMenuItem>
-          )}
-        </div>
+            {repositoryUrl && !issueUrl && (
+              <DropdownMenuItem
+                className="text-foreground hover:bg-surface-hover rounded-md"
+                onClick={createGithubIssue}
+                disabled={isCreateGithubIssuePending}
+              >
+                <GithubIcon
+                  className={`h-3.5 w-3.5 ${
+                    isCreateGithubIssuePending ? 'animate-pulse' : ''
+                  }`}
+                />
+                Create GitHub issue
+              </DropdownMenuItem>
+            )}
+
+            {issueUrl && (
+              <DropdownMenuItem
+                className="text-foreground hover:bg-surface-hover rounded-md"
+                onClick={syncToGithub}
+                disabled={isSyncToGithubPending}
+              >
+                <GithubIcon
+                  className={`h-3.5 w-3.5 ${
+                    isSyncToGithubPending ? 'animate-pulse' : ''
+                  }`}
+                />
+                Sync to GitHub
+              </DropdownMenuItem>
+            )}
+          </div>
+        )}
 
         {/* Additional non-destructive actions (like cancellation request) */}
         {nonDestructiveActions.length > 0 && (
