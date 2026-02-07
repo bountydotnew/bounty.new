@@ -44,6 +44,8 @@ export const env = createEnv({
     RESEND_API_KEY: z.string().min(1),
     RESEND_WEBHOOK_SECRET: z.string().min(1).optional(),
     DEVICE_AUTH_ALLOWED_CLIENT_IDS: z.string().optional().default(''),
+    // Additional trusted origins for Better Auth (comma-separated, dev only)
+    ADDITIONAL_TRUSTED_ORIGINS: z.string().optional().default(''),
     // Upstash Redis
     UPSTASH_REDIS_REST_URL: z.string().url(),
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
@@ -81,6 +83,7 @@ export const env = createEnv({
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     RESEND_WEBHOOK_SECRET: process.env.RESEND_WEBHOOK_SECRET,
     DEVICE_AUTH_ALLOWED_CLIENT_IDS: process.env.DEVICE_AUTH_ALLOWED_CLIENT_IDS,
+    ADDITIONAL_TRUSTED_ORIGINS: process.env.ADDITIONAL_TRUSTED_ORIGINS,
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     CRON_SECRET: process.env.CRON_SECRET,
@@ -92,5 +95,7 @@ export const env = createEnv({
     LINEAR_CLIENT_SECRET: process.env.LINEAR_CLIENT_SECRET,
     LINEAR_REDIRECT_URI: process.env.LINEAR_REDIRECT_URI,
   },
-  skipValidation: process.env.NODE_ENV !== 'production',
+  // Always validate environment variables, even in development
+  // This catches missing critical secrets early
+  skipValidation: false,
 });

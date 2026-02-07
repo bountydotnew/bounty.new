@@ -9,6 +9,7 @@ import { useSession } from '@/context/session-context';
 import { useCustomer } from 'autumn-js/react';
 import { toast } from 'sonner';
 import { getRecommendedPlan } from '@bounty/types';
+import { useActiveOrg } from '@/hooks/use-active-org';
 
 export function PricingPageContent() {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>(
@@ -18,6 +19,7 @@ export function PricingPageContent() {
   const searchParams = useSearchParams();
   const { isAuthenticated, isPending } = useSession();
   const { attach } = useCustomer();
+  const { activeOrgSlug } = useActiveOrg();
 
   const recommendedPlan = getRecommendedPlan(monthlySpend);
 
@@ -49,7 +51,9 @@ export function PricingPageContent() {
 
         const result = await attach({
           productId: checkoutPlan,
-          successUrl: `${baseUrl}/settings/billing?checkout=success`,
+          successUrl: activeOrgSlug
+            ? `${baseUrl}/${activeOrgSlug}/settings/billing?checkout=success`
+            : `${baseUrl}/settings/billing?checkout=success`,
           checkoutSessionParams: {
             cancel_url: `${baseUrl}/pricing`,
           },

@@ -16,6 +16,7 @@ import {
 } from '@bounty/ui/components/dropdown-menu';
 import { Button } from '@bounty/ui/components/button';
 import { useIntegrations } from '@/hooks/use-integrations';
+import { useOrgSlug } from '@/context/org-slug-context';
 
 interface IntegrationCardProps {
   icon: React.ReactNode;
@@ -209,6 +210,7 @@ function GitHubIntegrationCard({
   installations,
   filter,
   installUrl,
+  pathPrefix = '',
 }: {
   installations: Array<{
     id: number;
@@ -218,6 +220,7 @@ function GitHubIntegrationCard({
   }>;
   filter: 'all' | 'installed';
   installUrl?: { url?: string };
+  pathPrefix?: string;
 }) {
   const primaryInstallation = installations[0];
   const installedCount = installations.length;
@@ -245,7 +248,7 @@ function GitHubIntegrationCard({
               accounts: installations.map((installation) => ({
                 id: installation.id,
                 accountLogin: installation.accountLogin,
-                href: `/integrations/github/${installation.id}`,
+                href: `${pathPrefix}/integrations/github/${installation.id}`,
               })),
             }
           : undefined
@@ -253,13 +256,14 @@ function GitHubIntegrationCard({
       action={{
         label: 'Install',
         onClick: () => {
-          const fallbackUrl = 'https://github.com/apps/bountydotnew/installations/new';
+          const fallbackUrl =
+            'https://github.com/apps/bountydotnew/installations/new';
           window.location.href = installUrl?.url || fallbackUrl;
         },
       }}
       href={
         primaryInstallation
-          ? `/integrations/github/${primaryInstallation.id}`
+          ? `${pathPrefix}/integrations/github/${primaryInstallation.id}`
           : undefined
       }
     />
@@ -269,7 +273,8 @@ function GitHubIntegrationCard({
 function renderIntegrationCard(
   item: IntegrationItem,
   filter: 'all' | 'installed',
-  installUrl?: { url?: string }
+  installUrl?: { url?: string },
+  pathPrefix = ''
 ) {
   const comingSoonProps = {
     action: {
@@ -287,6 +292,7 @@ function renderIntegrationCard(
           installations={item.installations}
           filter={filter}
           installUrl={installUrl}
+          pathPrefix={pathPrefix}
         />
       );
     case 'discord': {
@@ -312,7 +318,7 @@ function renderIntegrationCard(
                       id: 1,
                       accountLogin: displayName,
                       icon: item.account?.avatar ?? undefined,
-                      href: '/integrations/discord',
+                      href: `${pathPrefix}/integrations/discord`,
                     },
                   ],
                 }
@@ -330,7 +336,7 @@ function renderIntegrationCard(
                   onClick: item.onLinkAccount,
                 }
           }
-          href={isLinked ? '/integrations/discord' : undefined}
+          href={isLinked ? `${pathPrefix}/integrations/discord` : undefined}
         />
       );
     }
@@ -358,8 +364,8 @@ function renderIntegrationCard(
       const isConnected = !!item.workspace;
       const displayName = item.workspace?.name || 'your Linear workspace';
       const workspaceHref = item.workspace
-        ? `/integrations/linear/${item.workspace.id}`
-        : '/integrations/linear';
+        ? `${pathPrefix}/integrations/linear/${item.workspace.id}`
+        : `${pathPrefix}/integrations/linear`;
       const description = isConnected
         ? `Connected to ${displayName}`
         : 'Connect your Linear workspace to create bounties from issues';
@@ -409,6 +415,9 @@ function renderIntegrationCard(
 }
 
 export function IntegrationsSettings() {
+  const orgSlug = useOrgSlug();
+  const pathPrefix = orgSlug ? `/${orgSlug}` : '';
+
   const [setupAction, setSetupAction] = useQueryState(
     'setup_action',
     parseAsString.withDefault('')
@@ -465,7 +474,13 @@ export function IntegrationsSettings() {
         invalidateAll();
       });
     }
-  }, [hasLinearOAuth, hasLinear, isLoading, syncLinearWorkspace, invalidateAll]);
+  }, [
+    hasLinearOAuth,
+    hasLinear,
+    isLoading,
+    syncLinearWorkspace,
+    invalidateAll,
+  ]);
 
   const installedCount =
     githubInstallations.length + (hasDiscord ? 1 : 0) + (hasLinear ? 1 : 0);
@@ -555,7 +570,12 @@ export function IntegrationsSettings() {
       {/* Integration Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filteredIntegrations.map((item) =>
-          renderIntegrationCard(item, filter, { url: githubInstallUrl })
+          renderIntegrationCard(
+            item,
+            filter,
+            { url: githubInstallUrl },
+            pathPrefix
+          )
         )}
       </div>
     </div>

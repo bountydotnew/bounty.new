@@ -4,9 +4,17 @@ import { useQuery, useQueries, skipToken } from '@tanstack/react-query';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { LinearIcon } from '@bounty/ui';
 import { Button } from '@bounty/ui/components/button';
-import { ExternalLink, RefreshCw, Filter, ChevronDown, X, Inbox } from 'lucide-react';
+import {
+  ExternalLink,
+  RefreshCw,
+  Filter,
+  ChevronDown,
+  X,
+  Inbox,
+} from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
+import { useOrgPath } from '@/hooks/use-org-path';
 import { toast } from 'sonner';
 import { useState, useCallback } from 'react';
 import {
@@ -19,7 +27,10 @@ import {
 } from '@bounty/ui/components/dropdown-menu';
 import { LinearIssueCard } from './components/issue-card';
 import { cn } from '@bounty/ui/lib/utils';
-import type { LinearWorkflowState, LinearProject } from '@bounty/api/driver/linear-client';
+import type {
+  LinearWorkflowState,
+  LinearProject,
+} from '@bounty/api/driver/linear-client';
 
 interface FilterState {
   status: string[];
@@ -48,6 +59,7 @@ export default function LinearIssuesPage() {
   const searchParams = useSearchParams();
   const params = useParams();
   const workspaceId = params.workspaceId as string;
+  const orgPath = useOrgPath();
   const { linearWorkspace, hasLinear, refreshLinear, isLinearLoading } =
     useIntegrations();
 
@@ -83,7 +95,8 @@ export default function LinearIssuesPage() {
         ? {
             filters: {
               status: filters.status.length > 0 ? filters.status : undefined,
-              priority: filters.priority.length > 0 ? filters.priority : undefined,
+              priority:
+                filters.priority.length > 0 ? filters.priority : undefined,
               projectId: filters.projectId || undefined,
             },
             pagination: { first: 50 },
@@ -147,7 +160,7 @@ export default function LinearIssuesPage() {
             Connect your workspace to view issues
           </p>
           <Button
-            onClick={() => router.push('/integrations/linear')}
+            onClick={() => router.push(orgPath('/integrations/linear'))}
             size="lg"
           >
             Go to Linear integration
@@ -162,16 +175,22 @@ export default function LinearIssuesPage() {
   const issues = issuesData?.issues ?? [];
 
   const activeFilterCount =
-    filters.status.length + filters.priority.length + (filters.projectId ? 1 : 0);
+    filters.status.length +
+    filters.priority.length +
+    (filters.projectId ? 1 : 0);
 
   return (
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-text-primary mb-1">Issues</h1>
+          <h1 className="text-xl font-semibold text-text-primary mb-1">
+            Issues
+          </h1>
           <p className="text-sm text-text-secondary">
-            {issuesLoading ? '...' : `${issues.length} issue${issues.length !== 1 ? 's' : ''}`}
+            {issuesLoading
+              ? '...'
+              : `${issues.length} issue${issues.length !== 1 ? 's' : ''}`}
           </p>
         </div>
 
@@ -193,7 +212,9 @@ export default function LinearIssuesPage() {
             size="icon"
             aria-label="Refresh"
           >
-            <RefreshCw className={cn('w-4 h-4', isLinearLoading && 'animate-spin')} />
+            <RefreshCw
+              className={cn('w-4 h-4', isLinearLoading && 'animate-spin')}
+            />
           </Button>
         </div>
       </div>
@@ -268,7 +289,12 @@ export default function LinearIssuesPage() {
                 onCheckedChange={() => togglePriorityFilter(priority)}
               >
                 <div className="flex items-center gap-2">
-                  <div className={cn('w-2 h-2 rounded-full', PRIORITY_COLORS[priority])} />
+                  <div
+                    className={cn(
+                      'w-2 h-2 rounded-full',
+                      PRIORITY_COLORS[priority]
+                    )}
+                  />
                   {PRIORITY_LABELS[priority]}
                 </div>
               </DropdownMenuCheckboxItem>
@@ -314,11 +340,7 @@ export default function LinearIssuesPage() {
         </DropdownMenu>
 
         {hasActiveFilters && (
-          <Button
-            onClick={clearFilters}
-            variant="ghost"
-            size="sm"
-          >
+          <Button onClick={clearFilters} variant="ghost" size="sm">
             <X className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Clear all</span>
             <span className="sm:hidden">{activeFilterCount}</span>

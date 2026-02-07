@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
             `[Installation Callback] No active org and no personal team found for user ${session.user.id}`
           );
           return NextResponse.redirect(
-            new URL('/integrations?error=no_team', request.url)
+            new URL('/dashboard?error=no_team', request.url)
           );
         }
 
@@ -147,13 +147,28 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // Resolve org slug for redirect URLs
+  let orgSlug: string | null = null;
+  const activeOrgIdForRedirect = session.session?.activeOrganizationId;
+  if (activeOrgIdForRedirect) {
+    const [activeOrg] = await db
+      .select({ slug: organization.slug })
+      .from(organization)
+      .where(eq(organization.id, activeOrgIdForRedirect))
+      .limit(1);
+    orgSlug = activeOrg?.slug ?? null;
+  }
+  const integrationsBase = orgSlug
+    ? `/${orgSlug}/integrations`
+    : '/integrations';
+
   // After installation, redirect to configure page
   if (installationId && setupAction === 'install') {
     return NextResponse.redirect(
-      new URL(`/integrations/configure/${installationId}?new=1`, request.url)
+      new URL(`${integrationsBase}/github/${installationId}?new=1`, request.url)
     );
   }
 
   // Fallback to integrations list
-  return NextResponse.redirect(new URL('/integrations', request.url));
+  return NextResponse.redirect(new URL(integrationsBase, request.url));
 }

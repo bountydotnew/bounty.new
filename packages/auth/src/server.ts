@@ -284,7 +284,7 @@ export const auth = betterAuth({
     accountLinking: {
       enabled: true,
       trustedProviders: ['github', 'google', 'discord', 'linear'],
-      allowDifferentEmails: true,
+      allowDifferentEmails: false, // Require same email for account linking (security)
     },
   },
 
@@ -311,7 +311,7 @@ export const auth = betterAuth({
                   embeds: [
                     {
                       title: 'New User Registered',
-                      description: `**${user.name ?? 'Unknown'}** (${user.email}) joined bounty.new`,
+                      description: `**${user.name ?? 'Unknown'}** (@${(user as { handle?: string | null }).handle ?? 'unknown'}) joined bounty.new`,
                       color: 0x00_ff_00,
                       timestamp: new Date().toISOString(),
                     },
@@ -440,10 +440,10 @@ export const auth = betterAuth({
       : [
           'http://localhost:3000',
           'http://localhost:3001',
-          'http://192.168.1.147:3000',
-          'http://100.*.*.*:3000',
-          'http://172.*.*.*:3000',
-          'https://isiah-unsonant-linn.ngrok-free.dev',
+          // Additional origins from env (comma-separated)
+          ...(env.ADDITIONAL_TRUSTED_ORIGINS
+            ? env.ADDITIONAL_TRUSTED_ORIGINS.split(',').map((o) => o.trim())
+            : []),
         ]),
   ],
 
@@ -562,7 +562,16 @@ export const auth = betterAuth({
       ...AUTH_CONFIG.deviceAuthorization,
       validateClient: (clientId) => {
         const allowedIds = parseAllowedDeviceClientIds();
-        return allowedIds.length === 0 || allowedIds.includes(clientId);
+        // SECURITY: Fail closed - if no allowed IDs configured, reject all clients
+        // This prevents unauthorized device auth when misconfigured
+        if (allowedIds.length === 0) {
+          console.warn(
+            '[Device Auth] No allowed client IDs configured, rejecting client:',
+            clientId
+          );
+          return false;
+        }
+        return allowedIds.includes(clientId);
       },
     }),
 

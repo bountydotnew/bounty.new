@@ -7,12 +7,14 @@ import { Button } from '@bounty/ui/components/button';
 import { ArrowLeft, ExternalLink, Inbox, FolderKanban } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
+import { useOrgPath } from '@/hooks/use-org-path';
 import { LinearIssueCard } from '../../issues/components/issue-card';
 import type { LinearProject } from '@bounty/api/driver/linear-client';
 
 export default function LinearProjectDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const orgPath = useOrgPath();
   const { hasLinear } = useIntegrations();
   const workspaceId = params.workspaceId as string;
   const projectId = params.id as string;
@@ -37,7 +39,9 @@ export default function LinearProjectDetailPage() {
   const projectLoading = projectsQuery.isLoading;
   const issuesLoading = issuesQuery.isLoading;
 
-  const project = projectsData?.projects?.find((p: LinearProject) => p.id === projectId);
+  const project = projectsData?.projects?.find(
+    (p: LinearProject) => p.id === projectId
+  );
   const issues = issuesData?.issues ?? [];
 
   // Show skeleton while loading
@@ -59,7 +63,7 @@ export default function LinearProjectDetailPage() {
             Connect your workspace to view projects
           </p>
           <Button
-            onClick={() => router.push('/integrations/linear')}
+            onClick={() => router.push(orgPath('/integrations/linear'))}
             size="lg"
           >
             Go to Linear integration
@@ -69,7 +73,7 @@ export default function LinearProjectDetailPage() {
     );
   }
 
-  if (!projectLoading && !project) {
+  if (!(projectLoading || project)) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
         <div className="w-full max-w-md text-center">
@@ -83,7 +87,11 @@ export default function LinearProjectDetailPage() {
             The project you're looking for doesn't exist.
           </p>
           <Button
-            onClick={() => router.push(`/integrations/linear/${workspaceId}/projects`)}
+            onClick={() =>
+              router.push(
+                orgPath(`/integrations/linear/${workspaceId}/projects`)
+              )
+            }
             size="lg"
           >
             Back to Projects
@@ -99,7 +107,11 @@ export default function LinearProjectDetailPage() {
       <div className="flex items-start justify-between mb-8">
         <div className="flex items-center gap-4">
           <Button
-            onClick={() => router.push(`/integrations/linear/${workspaceId}/projects`)}
+            onClick={() =>
+              router.push(
+                orgPath(`/integrations/linear/${workspaceId}/projects`)
+              )
+            }
             variant="outline"
             size="icon"
             title="Back to Projects"
@@ -108,7 +120,9 @@ export default function LinearProjectDetailPage() {
           </Button>
 
           <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-xl">
-            {project?.icon || <FolderKanban className="w-6 h-6 text-neutral-500" />}
+            {project?.icon || (
+              <FolderKanban className="w-6 h-6 text-neutral-500" />
+            )}
           </div>
 
           <div>
@@ -135,7 +149,9 @@ export default function LinearProjectDetailPage() {
       {/* Description */}
       {project?.description && (
         <div className="mb-8">
-          <p className="text-sm text-neutral-400 leading-relaxed">{project.description}</p>
+          <p className="text-sm text-neutral-400 leading-relaxed">
+            {project.description}
+          </p>
         </div>
       )}
 
@@ -165,7 +181,12 @@ export default function LinearProjectDetailPage() {
         ) : (
           <div className="space-y-3">
             {issues.map((issue) => (
-              <LinearIssueCard key={issue.id} issue={issue} isExpanded={false} workspaceId={workspaceId} />
+              <LinearIssueCard
+                key={issue.id}
+                issue={issue}
+                isExpanded={false}
+                workspaceId={workspaceId}
+              />
             ))}
           </div>
         )}

@@ -17,6 +17,7 @@ import type {
   BountyProPlan,
 } from '@bounty/types';
 import { useCallback, useMemo } from 'react';
+import { useActiveOrg } from '@/hooks/use-active-org';
 
 // Feature IDs matching Autumn configuration
 const AUTUMN_FEATURE_IDS = {
@@ -109,6 +110,7 @@ const mapFeature = (feature?: {
 export const useBilling = (): BillingHookResult => {
   const { customer, isLoading, refetch, attach, openBillingPortal, track } =
     useCustomer();
+  const { activeOrgSlug } = useActiveOrg();
 
   // Helper to check if customer has pro status
   const checkProStatus = useCallback((): boolean => {
@@ -173,7 +175,9 @@ export const useBilling = (): BillingHookResult => {
 
       const result = await attach({
         productId: slug,
-        successUrl: `${baseUrl}/settings/billing?checkout=success`,
+        successUrl: activeOrgSlug
+          ? `${baseUrl}/${activeOrgSlug}/settings/billing?checkout=success`
+          : `${baseUrl}/settings/billing?checkout=success`,
         checkoutSessionParams: {
           cancel_url: `${baseUrl}/pricing`,
         },

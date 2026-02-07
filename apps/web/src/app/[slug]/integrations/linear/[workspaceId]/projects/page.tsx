@@ -9,6 +9,7 @@ import { Button } from '@bounty/ui/components/button';
 import { ExternalLink, Inbox, FolderKanban, ChevronRight } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
+import { useOrgPath } from '@/hooks/use-org-path';
 import type { LinearProject } from '@bounty/api/driver/linear-client';
 
 export default function LinearProjectsPage() {
@@ -16,6 +17,7 @@ export default function LinearProjectsPage() {
   const params = useParams();
   const queryClient = useQueryClient();
   const workspaceId = params.workspaceId as string;
+  const orgPath = useOrgPath();
   const { hasLinear, linearWorkspace } = useIntegrations();
 
   const { data: projectsData, isLoading: projectsLoading } = useQuery(
@@ -25,14 +27,17 @@ export default function LinearProjectsPage() {
   const projects = projectsData?.projects ?? [];
 
   // Prefetch project issues on hover for faster navigation
-  const prefetchProjectIssues = useCallback((projectId: string) => {
-    queryClient.prefetchQuery(
-      trpc.linear.getIssues.queryOptions({
-        filters: { projectId },
-        pagination: { first: 20 },
-      })
-    );
-  }, [queryClient]);
+  const prefetchProjectIssues = useCallback(
+    (projectId: string) => {
+      queryClient.prefetchQuery(
+        trpc.linear.getIssues.queryOptions({
+          filters: { projectId },
+          pagination: { first: 20 },
+        })
+      );
+    },
+    [queryClient]
+  );
 
   if (!hasLinear) {
     return (
@@ -48,7 +53,7 @@ export default function LinearProjectsPage() {
             Connect your workspace to view projects
           </p>
           <Button
-            onClick={() => router.push('/integrations/linear')}
+            onClick={() => router.push(orgPath('/integrations/linear'))}
             size="lg"
           >
             Go to Linear integration
@@ -81,9 +86,12 @@ export default function LinearProjectsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground mb-1">Projects</h1>
+          <h1 className="text-2xl font-semibold text-foreground mb-1">
+            Projects
+          </h1>
           <p className="text-sm text-neutral-500">
-            {linearWorkspace?.name} • {projects.length} {projects.length === 1 ? 'project' : 'projects'}
+            {linearWorkspace?.name} • {projects.length}{' '}
+            {projects.length === 1 ? 'project' : 'projects'}
           </p>
         </div>
 
@@ -103,14 +111,18 @@ export default function LinearProjectsPage() {
         {projects.map((project: LinearProject) => (
           <Link
             key={project.id}
-            href={`/integrations/linear/${workspaceId}/projects/${project.id}`}
+            href={orgPath(
+              `/integrations/linear/${workspaceId}/projects/${project.id}`
+            )}
             onMouseEnter={() => prefetchProjectIssues(project.id)}
             onFocus={() => prefetchProjectIssues(project.id)}
             className="group flex items-center gap-4 px-4 py-4 rounded-xl border border-border-subtle hover:border-border-default bg-surface-1 hover:bg-surface-2 transition-all"
           >
             {/* Icon */}
             <div className="w-10 h-10 rounded-lg bg-surface-2 border border-border-subtle flex items-center justify-center text-lg shrink-0">
-              {project.icon || <FolderKanban className="w-5 h-5 text-text-muted" />}
+              {project.icon || (
+                <FolderKanban className="w-5 h-5 text-text-muted" />
+              )}
             </div>
 
             {/* Content */}
@@ -119,7 +131,9 @@ export default function LinearProjectsPage() {
                 {project.name}
               </h3>
               {project.description && (
-                <p className="text-sm text-text-muted truncate">{project.description}</p>
+                <p className="text-sm text-text-muted truncate">
+                  {project.description}
+                </p>
               )}
             </div>
 
@@ -158,7 +172,10 @@ function ProjectsSkeleton() {
       {/* Projects List */}
       <div className="space-y-1">
         {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="flex items-center gap-4 px-4 py-3 animate-pulse">
+          <div
+            key={i}
+            className="flex items-center gap-4 px-4 py-3 animate-pulse"
+          >
             <div className="w-10 h-10 rounded-lg bg-white/5 shrink-0" />
             <div className="flex-1 space-y-2">
               <div className="h-4 w-40 rounded bg-white/5" />

@@ -1,40 +1,81 @@
-# Phase 5 Bugs: Frontend (Team Switcher, Sidebar, Hooks)
+# Phase 5 Bugs: Frontend Routing & UI
 
-## BUGS
+## Route Migration
 
-### P5-B1: `useActiveOrg` session refresh after `switchOrg` — LIKELY OK
-**File:** `apps/web/src/hooks/use-active-org.ts`
-**Severity:** Low (downgraded from High)
-**Description:** After calling `authClient.organization.setActive()`, the hook calls `queryClient.invalidateQueries()` with no arguments, which invalidates ALL queries including Better Auth's internal session query (which uses React Query under the hood). This should trigger a session refetch, updating `activeOrganizationId`. Additionally, Better Auth's `setActive()` may internally refetch the session.
-**Resolution:** Likely works correctly. If testing reveals the UI doesn't update after switching, add an explicit `sessionHook.refetch()` call. Monitor during testing.
+### B5-01: Old Linear deep routes still have hardcoded paths
+**Status:** ⚠️ ACCEPTED (Low priority)  
+**Files:** `apps/web/src/app/(linear-integrations)/integrations/linear/[workspaceId]/**`  
+**Severity:** Low  
+**Description:** The old `(linear-integrations)` route group's workspace/issues/projects pages still have hardcoded `/integrations/linear/...` paths. The root `/integrations/linear` redirects to `/{slug}/integrations/linear`.  
+**Impact:** Bookmarked deep links work but show old URLs.  
+**Fix:** Can be removed once migration is confirmed complete.
 
-### P5-B2: Team create uses `window.prompt` — poor UX, no validation
-**File:** `apps/web/src/components/billing/account-dropdown.tsx` (line ~178)
-**Severity:** Medium
-**Description:** The "Create team" flow uses `window.prompt()` for the team name. This is functional but provides no validation feedback, no slug preview, no error handling for empty/duplicate names, and looks jarring. The slug derivation (lowercasing, replacing non-alphanumeric chars) is duplicated from the backend and could diverge.
-**Fix:** Replace with a proper modal/dialog component. For now, the `window.prompt` works but should be a follow-up ticket.
+### B5-02: OAuth callback URLs don't include org slug
+**Status:** ⚠️ ACCEPTED (Extra redirect acceptable)  
+**Files:** `apps/web/src/hooks/use-integrations.ts`  
+**Severity:** Low  
+**Description:** OAuth callbacks use `/integrations/discord` and `/integrations/linear`. Users land on old paths then get redirected.  
+**Fix:** Acceptable — extra 200ms redirect hop after OAuth.
 
-### P5-B3: Personal team display name truncation logic is fragile
-**File:** `apps/web/src/components/billing/account-dropdown.tsx` (line ~252), `apps/web/src/components/dual-sidebar/app-sidebar.tsx` (line ~80)
-**Severity:** Low
-**Description:** Both the team switcher submenu and the sidebar use `org.name.split("'s team")[0]` to display personal teams without the "'s team" suffix. This breaks if:
-- The user's handle contains "'s team" (unlikely but possible)
-- The team name format changes in the future
-- The split returns empty string (handled with `|| org.name` in submenu but not sidebar)
-**Fix:** The sidebar has `displayName.split("'s team")[0] || displayName` which partially handles it. Consider adding a utility function or using `isPersonal` flag to just show the handle directly (which is available as `org.slug` for personal teams).
+### B5-03: GitHub installation callback redirect resolves slug per-request
+**Status:** ✅ ACCEPTED (Performance acceptable)  
+**Files:** `apps/web/src/app/api/github/installation-callback/route.ts`  
+**Severity:** Low  
+**Description:** Extra DB query to resolve org slug. Negligible performance impact.
 
-### P5-B4: `useActiveOrg` uses raw `trpcClient` instead of `trpc.useQuery`
-**File:** `apps/web/src/hooks/use-active-org.ts` (line ~55)
-**Severity:** Low
-**Description:** The hook uses `useQuery` from `@tanstack/react-query` with a manual `queryFn` calling `trpcClient.organization.listMyOrgs.query()` instead of using tRPC's React Query integration (e.g., `trpc.organization.listMyOrgs.useQuery()`). This works but bypasses tRPC's automatic query key generation and cache management, meaning `queryClient.invalidateQueries()` with tRPC-generated keys won't hit this query unless the manual key `['organization', 'listMyOrgs']` happens to match.
-**Fix:** Either switch to the tRPC React hooks or ensure the manual query key matches what the rest of the app uses for invalidation. Since `switchOrg` calls `queryClient.invalidateQueries()` with no arguments (invalidates everything), this works in practice. Low priority.
+## Members Page
 
-## NITPICKS
+### B5-04: Create team uses window.prompt
+**Status:** ⚠️ OPEN  
+**Files:** `apps/web/src/components/billing/account-dropdown.tsx`  
+**Severity:** Medium  
+**Fix:** Replace with a proper modal/dialog component.
 
-### P5-N1: Missing loading/error states in `WorkspaceSwitcher`
-**File:** `apps/web/src/components/dual-sidebar/app-sidebar.tsx`
-**Description:** The `WorkspaceSwitcher` uses `useActiveOrg()` but doesn't handle the loading state. If orgs are loading, `activeOrg` will be undefined and the display falls back to session user name. Not a bug, but the transition could be smoother.
+### B5-05: Invite role mapping uses 'admin' instead of 'owner'
+**Status:** ⚠️ OPEN  
+**Files:** `apps/web/src/app/[slug]/settings/members/page.tsx`  
+**Severity:** Medium  
+**Fix:** Verify Better Auth's role names or add a mapping layer.
 
-### P5-N2: `TeamSwitcherSubmenu` doesn't sort personal team first
-**File:** `apps/web/src/components/billing/account-dropdown.tsx`
-**Description:** The team list is ordered by `createdAt` (from the tRPC query). The personal team should ideally appear first in the list for quick access, regardless of creation order.
+### B5-06: No pending invitations UI
+**Status:** ⚠️ OPEN  
+**Files:** `apps/web/src/app/[slug]/settings/members/page.tsx`  
+**Severity:** Low  
+**Fix:** Add invitations section using `authClient.organization.getInvitations()`.
+
+## Settings Split
+
+### B5-07: `/settings/billing` redirect requires client-side JS
+**Status:** ✅ ACCEPTED  
+**Files:** `apps/web/src/app/(settings)/settings/billing/page.tsx`  
+**Severity:** Low  
+**Description:** Old billing page is now a client-side redirect.  
+**Fix:** Could use Next.js middleware for server-side redirect instead.
+
+### B5-08: Org settings sidebar is only visible on desktop (lg breakpoint)
+**Status:** ⚠️ OPEN  
+**Files:** `apps/web/src/components/settings/org-settings-sidebar.tsx`  
+**Severity:** Medium  
+**Fix:** Add mobile-friendly tab bar or breadcrumb navigation.
+
+## Navigation
+
+### B5-09: Integrations nav item active state is broad
+**Status:** ⚠️ ACCEPTED  
+**Files:** `apps/web/src/components/dual-sidebar/app-sidebar.tsx`  
+**Severity:** Low  
+**Description:** Uses `pathname.includes('/integrations')` for active detection.  
+**Fix:** Could be more specific but works for current routes.
+
+### B5-10: [slug] route could match static routes
+**Status:** ⚠️ ACCEPTED (Edge case)  
+**Files:** `apps/web/src/app/[slug]/layout.tsx`  
+**Severity:** Low  
+**Description:** If user creates org with slug like "pricing", static route takes priority.  
+**Note:** OrgSyncGuard redirects to /dashboard if slug doesn't match user's orgs.
+
+### B5-11: OrgSyncGuard flashes spinner on every page navigation within same org
+**Status:** ✅ FIXED  
+**Files:** `apps/web/src/components/auth/org-sync-guard.tsx`  
+**Severity:** Medium  
+**Fix:** Initialize `synced` to `true` when `activeOrg?.slug === slug` already true.

@@ -10,6 +10,7 @@ import { CreateBountyForm } from './create-bounty-form';
 import { MarkdownContent } from '@/components/bounty/markdown-content';
 import { cn } from '@bounty/ui/lib/utils';
 import { trpc } from '@/utils/trpc';
+import { useOrgPath } from '@/hooks/use-org-path';
 
 interface LinearIssueCardProps {
   issue: LinearIssue;
@@ -17,24 +18,53 @@ interface LinearIssueCardProps {
   workspaceId: string;
 }
 
-function getPriorityStyles(priority: number): { bg: string; text: string; border: string } {
+function getPriorityStyles(priority: number): {
+  bg: string;
+  text: string;
+  border: string;
+} {
   switch (priority) {
     case 4:
-      return { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/20' };
+      return {
+        bg: 'bg-red-500/10',
+        text: 'text-red-400',
+        border: 'border-red-500/20',
+      };
     case 3:
-      return { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/20' };
+      return {
+        bg: 'bg-orange-500/10',
+        text: 'text-orange-400',
+        border: 'border-orange-500/20',
+      };
     case 2:
-      return { bg: 'bg-yellow-500/10', text: 'text-yellow-400', border: 'border-yellow-500/20' };
+      return {
+        bg: 'bg-yellow-500/10',
+        text: 'text-yellow-400',
+        border: 'border-yellow-500/20',
+      };
     case 1:
-      return { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20' };
+      return {
+        bg: 'bg-blue-500/10',
+        text: 'text-blue-400',
+        border: 'border-blue-500/20',
+      };
     default:
-      return { bg: 'bg-surface-2', text: 'text-text-tertiary', border: 'border-border-default' };
+      return {
+        bg: 'bg-surface-2',
+        text: 'text-text-tertiary',
+        border: 'border-border-default',
+      };
   }
 }
 
-export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueCardProps) {
+export function LinearIssueCard({
+  issue,
+  isExpanded,
+  workspaceId,
+}: LinearIssueCardProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const orgPath = useOrgPath();
   const [expanded, setExpanded] = useState(isExpanded);
 
   // Prefetch issue detail on hover for faster navigation
@@ -43,7 +73,9 @@ export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueC
       trpc.linear.getIssue.queryOptions({ issueId: issue.id })
     );
     queryClient.prefetchQuery(
-      trpc.linear.getBountyDataFromIssue.queryOptions({ linearIssueId: issue.id })
+      trpc.linear.getBountyDataFromIssue.queryOptions({
+        linearIssueId: issue.id,
+      })
     );
   }, [issue.id, queryClient]);
 
@@ -63,9 +95,7 @@ export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueC
   const statusBorder = `${issue.status.color}30`;
 
   return (
-    <div
-      className="group border border-border-subtle rounded-xl overflow-hidden hover:border-border-default transition-all bg-surface-1"
-    >
+    <div className="group border border-border-subtle rounded-xl overflow-hidden hover:border-border-default transition-all bg-surface-1">
       {/* Summary */}
       <div className="p-4 sm:p-5">
         <div className="flex items-start justify-between gap-4">
@@ -86,10 +116,14 @@ export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueC
                 {issue.status.name}
               </span>
               {issue.priority > 0 && (
-                <span className={cn(
-                  'text-xs px-2 py-0.5 rounded-md border font-medium',
-                  priorityStyles.bg, priorityStyles.text, priorityStyles.border
-                )}>
+                <span
+                  className={cn(
+                    'text-xs px-2 py-0.5 rounded-md border font-medium',
+                    priorityStyles.bg,
+                    priorityStyles.text,
+                    priorityStyles.border
+                  )}
+                >
                   {issue.priorityLabel}
                 </span>
               )}
@@ -105,7 +139,9 @@ export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueC
               {issue.assignee && (
                 <div className="flex items-center gap-1.5">
                   <User className="w-3.5 h-3.5" />
-                  <span>{issue.assignee.displayName || issue.assignee.name}</span>
+                  <span>
+                    {issue.assignee.displayName || issue.assignee.name}
+                  </span>
                 </div>
               )}
               {!issue.assignee && (
@@ -125,11 +161,7 @@ export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueC
 
           {/* Actions */}
           <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-            >
+            <Button variant="outline" size="sm" asChild>
               <a
                 href={issue.url}
                 target="_blank"
@@ -143,7 +175,13 @@ export function LinearIssueCard({ issue, isExpanded, workspaceId }: LinearIssueC
             <Button
               variant="outline"
               size="sm"
-              onClick={() => router.push(`/integrations/linear/${workspaceId}/issues/${issue.id}`)}
+              onClick={() =>
+                router.push(
+                  orgPath(
+                    `/integrations/linear/${workspaceId}/issues/${issue.id}`
+                  )
+                )
+              }
               onMouseEnter={prefetchIssueDetail}
               onFocus={prefetchIssueDetail}
               className="hidden sm:flex"

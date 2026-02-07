@@ -8,6 +8,7 @@ import { Button } from '@bounty/ui/components/button';
 import { ArrowLeft, ExternalLink, Inbox, User, Calendar } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
+import { useOrgPath } from '@/hooks/use-org-path';
 import { CreateBountyForm } from '../components/create-bounty-form';
 import { MarkdownContent } from '@/components/bounty/markdown-content';
 
@@ -42,17 +43,14 @@ function IssueSkeleton() {
 export default function LinearIssueDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const orgPath = useOrgPath();
   const { hasLinear } = useIntegrations();
   const workspaceId = params.workspaceId as string;
   const issueId = params.id as string;
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   const { data: issueData, isLoading: issueLoading } = useQuery(
-    trpc.linear.getIssue.queryOptions(
-      hasLinear
-        ? { issueId }
-        : skipToken
-    )
+    trpc.linear.getIssue.queryOptions(hasLinear ? { issueId } : skipToken)
   );
 
   const issue = issueData?.issue;
@@ -77,7 +75,7 @@ export default function LinearIssueDetailPage() {
           </p>
           <Button
             variant="default"
-            onClick={() => router.push('/integrations/linear')}
+            onClick={() => router.push(orgPath('/integrations/linear'))}
             className="h-11 px-6 rounded-xl bg-white text-sm font-medium text-black hover:bg-neutral-200 transition-colors"
           >
             Go to Linear integration
@@ -101,7 +99,9 @@ export default function LinearIssueDetailPage() {
             The issue you're looking for doesn't exist.
           </p>
           <Button
-            onClick={() => router.push(`/integrations/linear/${workspaceId}/issues`)}
+            onClick={() =>
+              router.push(orgPath(`/integrations/linear/${workspaceId}/issues`))
+            }
             size="lg"
           >
             Back to Issues
@@ -117,7 +117,9 @@ export default function LinearIssueDetailPage() {
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-3">
           <Button
-            onClick={() => router.push(`/integrations/linear/${workspaceId}/issues`)}
+            onClick={() =>
+              router.push(orgPath(`/integrations/linear/${workspaceId}/issues`))
+            }
             variant="outline"
             size="icon"
             title="Back to Issues"
@@ -171,7 +173,9 @@ export default function LinearIssueDetailPage() {
         {issue?.assignee && (
           <div className="flex items-center gap-2 text-neutral-400">
             <User className="w-4 h-4" />
-            <span className="text-foreground">{issue.assignee.displayName || issue.assignee.name}</span>
+            <span className="text-foreground">
+              {issue.assignee.displayName || issue.assignee.name}
+            </span>
           </div>
         )}
         {issue?.project && (
@@ -179,7 +183,13 @@ export default function LinearIssueDetailPage() {
             <span>Project:</span>
             <button
               type="button"
-              onClick={() => router.push(`/integrations/linear/${workspaceId}/projects/${issue.project?.id}`)}
+              onClick={() =>
+                router.push(
+                  orgPath(
+                    `/integrations/linear/${workspaceId}/projects/${issue.project?.id}`
+                  )
+                )
+              }
               className="text-foreground hover:underline"
             >
               {issue.project.name}
@@ -193,10 +203,14 @@ export default function LinearIssueDetailPage() {
         <div className="flex items-center gap-6 mb-6 pb-6 border-b border-white/10 text-sm text-neutral-500">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
-            <span>Created {new Date(issue.createdAt).toLocaleDateString()}</span>
+            <span>
+              Created {new Date(issue.createdAt).toLocaleDateString()}
+            </span>
           </div>
           {issue.updatedAt !== issue.createdAt && (
-            <span>Updated {new Date(issue.updatedAt).toLocaleDateString()}</span>
+            <span>
+              Updated {new Date(issue.updatedAt).toLocaleDateString()}
+            </span>
           )}
         </div>
       )}
@@ -204,7 +218,9 @@ export default function LinearIssueDetailPage() {
       {/* Description */}
       {issue?.description && (
         <div className="mb-6">
-          <h2 className="text-sm font-medium text-foreground mb-3">Description</h2>
+          <h2 className="text-sm font-medium text-foreground mb-3">
+            Description
+          </h2>
           <div className="p-5 rounded-xl border border-white/10">
             <MarkdownContent content={issue.description} />
           </div>
@@ -218,13 +234,19 @@ export default function LinearIssueDetailPage() {
             <CreateBountyForm
               issue={issue}
               onCancel={() => setShowCreateForm(false)}
-              onSuccess={() => router.push(`/integrations/linear/${workspaceId}/issues`)}
+              onSuccess={() =>
+                router.push(
+                  orgPath(`/integrations/linear/${workspaceId}/issues`)
+                )
+              }
             />
           </div>
         ) : (
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-medium text-foreground">Create Bounty</h2>
+              <h2 className="text-sm font-medium text-foreground">
+                Create Bounty
+              </h2>
               <p className="text-xs text-neutral-500 mt-1">
                 Turn this Linear issue into a bounty on bounty.new
               </p>

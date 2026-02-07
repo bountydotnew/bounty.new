@@ -1,13 +1,27 @@
 'use client';
 
-import { useQuery, useQueries, skipToken, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  useQueries,
+  skipToken,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { LinearIcon } from '@bounty/ui';
 import { Button } from '@bounty/ui/components/button';
-import { ExternalLink, ArrowRight, Inbox, Layers, FolderKanban, LogOut, RefreshCw } from 'lucide-react';
+import {
+  ExternalLink,
+  ArrowRight,
+  Inbox,
+  Layers,
+  FolderKanban,
+  LogOut,
+  RefreshCw,
+} from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
+import { useOrgPath } from '@/hooks/use-org-path';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { cn } from '@bounty/ui/lib/utils';
@@ -17,6 +31,7 @@ export default function LinearWorkspacePage() {
   const router = useRouter();
   const params = useParams();
   const queryClient = useQueryClient();
+  const orgPath = useOrgPath();
   const workspaceIdFromUrl = params.workspaceId as string;
 
   const {
@@ -57,7 +72,7 @@ export default function LinearWorkspacePage() {
   // Redirect to correct workspace URL if workspaceId doesn't match
   useEffect(() => {
     if (linearWorkspace && linearWorkspace.id !== workspaceIdFromUrl) {
-      router.replace(`/integrations/linear/${linearWorkspace.id}`);
+      router.replace(orgPath(`/integrations/linear/${linearWorkspace.id}`));
     }
   }, [linearWorkspace, workspaceIdFromUrl, router]);
 
@@ -84,7 +99,7 @@ export default function LinearWorkspacePage() {
       await unlinkLinear(linearWorkspace.id);
       // Clear all Linear queries to prevent any API calls after disconnect
       queryClient.removeQueries({ queryKey: [['linear']] });
-      router.push('/integrations');
+      router.push(orgPath('/integrations'));
     }
   };
 
@@ -102,7 +117,8 @@ export default function LinearWorkspacePage() {
               Connect Linear
             </h1>
             <p className="text-sm text-text-muted mb-8 max-w-sm mx-auto leading-relaxed">
-              Link your Linear workspace to create bounties from issues and track progress across teams.
+              Link your Linear workspace to create bounties from issues and
+              track progress across teams.
             </p>
             <div className="space-y-3">
               <Button
@@ -173,13 +189,12 @@ export default function LinearWorkspacePage() {
             size="icon"
             aria-label="Refresh"
           >
-            <RefreshCw className={cn('w-4 h-4', isLinearLoading && 'animate-spin')} />
+            <RefreshCw
+              className={cn('w-4 h-4', isLinearLoading && 'animate-spin')}
+            />
           </Button>
 
-          <Button
-            onClick={handleDisconnect}
-            variant="destructive"
-          >
+          <Button onClick={handleDisconnect} variant="destructive">
             <LogOut className="w-4 h-4" />
             <span className="hidden sm:inline">Disconnect</span>
           </Button>
@@ -189,7 +204,7 @@ export default function LinearWorkspacePage() {
       {/* Quick Links */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
         <Link
-          href={`/integrations/linear/${currentWorkspaceId}/issues`}
+          href={orgPath(`/integrations/linear/${currentWorkspaceId}/issues`)}
           className="group p-5 rounded-xl border border-border-subtle hover:border-border-default bg-surface-1 hover:bg-surface-2 transition-all"
         >
           <div className="flex items-center justify-between mb-3">
@@ -200,12 +215,14 @@ export default function LinearWorkspacePage() {
           </div>
           <h3 className="text-sm font-medium text-text-primary mb-1">Issues</h3>
           <p className="text-xs text-text-muted">
-            {issuesLoading ? '...' : `${issuesData?.issues?.length ?? 0} issue${(issuesData?.issues?.length ?? 0) !== 1 ? 's' : ''}`}
+            {issuesLoading
+              ? '...'
+              : `${issuesData?.issues?.length ?? 0} issue${(issuesData?.issues?.length ?? 0) !== 1 ? 's' : ''}`}
           </p>
         </Link>
 
         <Link
-          href={`/integrations/linear/${currentWorkspaceId}/projects`}
+          href={orgPath(`/integrations/linear/${currentWorkspaceId}/projects`)}
           className="group p-5 rounded-xl border border-border-subtle hover:border-border-default bg-surface-1 hover:bg-surface-2 transition-all"
         >
           <div className="flex items-center justify-between mb-3">
@@ -214,9 +231,13 @@ export default function LinearWorkspacePage() {
             </div>
             <ArrowRight className="w-4 h-4 text-text-muted group-hover:text-text-primary group-hover:translate-x-0.5 transition-all" />
           </div>
-          <h3 className="text-sm font-medium text-text-primary mb-1">Projects</h3>
+          <h3 className="text-sm font-medium text-text-primary mb-1">
+            Projects
+          </h3>
           <p className="text-xs text-text-muted">
-            {projectsLoading ? '...' : `${projectsData?.projects?.length ?? 0} project${(projectsData?.projects?.length ?? 0) !== 1 ? 's' : ''}`}
+            {projectsLoading
+              ? '...'
+              : `${projectsData?.projects?.length ?? 0} project${(projectsData?.projects?.length ?? 0) !== 1 ? 's' : ''}`}
           </p>
         </Link>
       </div>
@@ -224,11 +245,17 @@ export default function LinearWorkspacePage() {
       {/* Recent Issues */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-medium text-text-primary">Recent Issues</h2>
+          <h2 className="text-sm font-medium text-text-primary">
+            Recent Issues
+          </h2>
           <Button
             variant="ghost"
             size="xs"
-            onClick={() => router.push(`/integrations/linear/${currentWorkspaceId}/issues`)}
+            onClick={() =>
+              router.push(
+                orgPath(`/integrations/linear/${currentWorkspaceId}/issues`)
+              )
+            }
           >
             View all
             <ArrowRight className="w-3.5 h-3.5" />
@@ -279,7 +306,13 @@ export default function LinearWorkspacePage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => router.push(`/integrations/linear/${currentWorkspaceId}/issues?issue=${issue.id}`)}
+                  onClick={() =>
+                    router.push(
+                      orgPath(
+                        `/integrations/linear/${currentWorkspaceId}/issues?issue=${issue.id}`
+                      )
+                    )
+                  }
                   className="shrink-0"
                 >
                   Create bounty

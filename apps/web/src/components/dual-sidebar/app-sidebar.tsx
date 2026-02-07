@@ -56,12 +56,18 @@ import {
 } from '@bounty/ui/components/popover';
 // import { useSupport } from '@cossistant/next';
 
-const NAV_ITEMS = [
-  { title: 'Home', url: LINKS.DASHBOARD, icon: HugeHomeIcon },
-  { title: 'Bounties', url: LINKS.BOUNTIES, icon: DashboardSquareIcon },
-  { title: 'Bookmarks', url: LINKS.BOOKMARKS, icon: BookmarksIcon },
-  { title: 'Integrations', url: '/integrations', icon: SettingsGearIcon },
-];
+function getNavItems(orgSlug?: string) {
+  return [
+    { title: 'Home', url: LINKS.DASHBOARD, icon: HugeHomeIcon },
+    { title: 'Bounties', url: LINKS.BOUNTIES, icon: DashboardSquareIcon },
+    { title: 'Bookmarks', url: LINKS.BOOKMARKS, icon: BookmarksIcon },
+    {
+      title: 'Integrations',
+      url: orgSlug ? `/${orgSlug}/integrations` : '/integrations',
+      icon: SettingsGearIcon,
+    },
+  ];
+}
 
 const FALLBACK_USER = {
   name: 'Guest',
@@ -289,7 +295,7 @@ const UnauthenticatedWorkspaceSwitcher = () => {
 const UnauthenticatedNavItems = () => {
   const router = useRouter();
 
-  const navItems = NAV_ITEMS.map((item) => ({
+  const navItems = getNavItems().map((item) => ({
     ...item,
     isActive: false, // Never active when unauthenticated
   }));
@@ -349,11 +355,15 @@ export const AppSidebar = ({
 }: React.ComponentProps<typeof Sidebar>) => {
   const pathname = usePathname();
   const { session, isPending } = useSession();
+  const { activeOrgSlug } = useActiveOrg();
   const isAuthenticated = !!session?.user;
 
-  const navItems = NAV_ITEMS.map((item) => ({
+  const navItems = getNavItems(activeOrgSlug || undefined).map((item) => ({
     ...item,
-    isActive: pathname === item.url,
+    isActive:
+      item.title === 'Integrations'
+        ? pathname.includes('/integrations')
+        : pathname === item.url,
   }));
 
   return (

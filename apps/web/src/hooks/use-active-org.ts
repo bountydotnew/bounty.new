@@ -41,6 +41,10 @@ interface UseActiveOrgResult {
   activeOrg: OrgListItem | undefined;
   /** Whether the active org is a personal team */
   isPersonalTeam: boolean;
+  /** The active org's slug (for URL generation). Falls back to empty string. */
+  activeOrgSlug: string;
+  /** Generate an org-scoped URL path, e.g. orgUrl('/integrations') => '/{slug}/integrations' */
+  orgUrl: (path: string) => string;
 }
 
 export function useActiveOrg(): UseActiveOrgResult {
@@ -65,6 +69,19 @@ export function useActiveOrg(): UseActiveOrgResult {
   );
 
   const isPersonalTeam = activeOrg?.isPersonal ?? true;
+  const activeOrgSlug = activeOrg?.slug ?? '';
+
+  /**
+   * Generate an org-scoped URL path.
+   * e.g. orgUrl('/integrations') => '/{slug}/integrations'
+   */
+  const orgUrl = useCallback(
+    (path: string) => {
+      if (!activeOrgSlug) return path;
+      return `/${activeOrgSlug}${path.startsWith('/') ? path : `/${path}`}`;
+    },
+    [activeOrgSlug]
+  );
 
   /**
    * Switch the active organization via Better Auth.
@@ -93,5 +110,7 @@ export function useActiveOrg(): UseActiveOrgResult {
     switchOrg,
     activeOrg,
     isPersonalTeam,
+    activeOrgSlug,
+    orgUrl,
   };
 }

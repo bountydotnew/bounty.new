@@ -8,6 +8,7 @@ import { ExternalLink, Plus, Users } from 'lucide-react';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { authClient } from '@bounty/auth/client';
 import { toast } from 'sonner';
+import { useOrgPath } from '@/hooks/use-org-path';
 import {
   IntegrationDetailPage,
   IntegrationHeader,
@@ -36,6 +37,7 @@ interface GuildRow {
 export default function DiscordDetailPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const orgPath = useOrgPath();
 
   const {
     data: accountData,
@@ -58,7 +60,7 @@ export default function DiscordDetailPage() {
         queryKey: [['discord', 'getLinkedAccount']],
       });
       toast.success('Discord account unlinked');
-      router.push('/integrations');
+      router.push(orgPath('/integrations'));
     },
     onError: (err: Error) => {
       toast.error(err.message || 'Failed to unlink Discord');
@@ -78,10 +80,9 @@ export default function DiscordDetailPage() {
   };
 
   const handleLinkAccount = async () => {
-    // Use Better Auth's linkSocial to link Discord to existing account
     await authClient.linkSocial({
       provider: 'discord',
-      callbackURL: '/integrations/discord',
+      callbackURL: orgPath('/integrations/discord'),
     });
   };
 
@@ -194,7 +195,6 @@ export default function DiscordDetailPage() {
     installedAt: g.installedAt as unknown as string,
   }));
 
-  // If not linked, show setup view
   if (!(isLoading || isLinked)) {
     return (
       <IntegrationDetailPage isLoading={false} error={null} errorMessage="">

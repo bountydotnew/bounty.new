@@ -3,6 +3,7 @@
 import { IntegrationsSettings } from '@/components/settings/integrations-settings';
 
 export default function IntegrationsPage() {
+  console.log('IntegrationsPage rendered');
   return (
     <>
       <header>

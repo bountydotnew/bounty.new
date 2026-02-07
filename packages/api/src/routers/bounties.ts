@@ -1089,7 +1089,7 @@ export const bountiesRouter = router({
       }
     }),
 
-  toggleBountyPin: protectedProcedure
+  toggleBountyPin: orgProcedure
     .input(z.object({ bountyId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       try {
@@ -1110,6 +1110,18 @@ export const bountiesRouter = router({
           });
         }
 
+        // Check if bounty's org matches active org
+        if (
+          existingBounty.organizationId &&
+          existingBounty.organizationId !== ctx.org.id
+        ) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'This bounty belongs to a different organization.',
+          });
+        }
+
+        // Check org membership (or creator for legacy bounties)
         const canPin = await isUserBountyOrgMember(
           ctx.session.user.id,
           existingBounty
@@ -1147,7 +1159,7 @@ export const bountiesRouter = router({
       }
     }),
 
-  updateBounty: protectedProcedure
+  updateBounty: orgProcedure
     .input(updateBountySchema)
     .mutation(async ({ ctx, input }) => {
       try {
@@ -1162,6 +1174,17 @@ export const bountiesRouter = router({
           throw new TRPCError({
             code: 'NOT_FOUND',
             message: 'Bounty not found',
+          });
+        }
+
+        // Check if bounty's org matches active org
+        if (
+          existingBounty.organizationId &&
+          existingBounty.organizationId !== ctx.org.id
+        ) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'This bounty belongs to a different organization.',
           });
         }
 
@@ -1232,7 +1255,7 @@ export const bountiesRouter = router({
       }
     }),
 
-  deleteBounty: protectedProcedure
+  deleteBounty: orgProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       try {
@@ -1245,6 +1268,17 @@ export const bountiesRouter = router({
           throw new TRPCError({
             code: 'NOT_FOUND',
             message: 'Bounty not found',
+          });
+        }
+
+        // Check if bounty's org matches active org
+        if (
+          existingBounty.organizationId &&
+          existingBounty.organizationId !== ctx.org.id
+        ) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'This bounty belongs to a different organization.',
           });
         }
 

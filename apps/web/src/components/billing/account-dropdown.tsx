@@ -15,7 +15,7 @@ import {
 import { useBilling } from '@/hooks/use-billing';
 import { cn } from '@bounty/ui';
 import { Check, LogOut, Plus, RotateCcw } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import * as React from 'react';
 import { toast } from 'sonner';
 import { LINKS } from '@/constants';
@@ -151,6 +151,8 @@ function useResetOnboarding() {
 // Team switcher submenu (inside the account dropdown)
 function TeamSwitcherSubmenu({ onClose }: { onClose: () => void }) {
   const { activeOrg, orgs, switchOrg, isLoading } = useActiveOrg();
+  const router = useRouter();
+  const pathname = usePathname();
   const [isSwitching, setSwitching] = React.useState(false);
 
   const handleSwitch = React.useCallback(
@@ -162,6 +164,23 @@ function TeamSwitcherSubmenu({ onClose }: { onClose: () => void }) {
       setSwitching(true);
       try {
         await switchOrg(orgId);
+        const targetOrg = orgs.find((o) => o.id === orgId);
+        if (targetOrg) {
+          // Preserve the current route path when switching workspaces
+          // If on /{currentSlug}/integrations, go to /{newSlug}/integrations
+          // If on /{currentSlug}/settings/billing, go to /{newSlug}/settings/billing
+          const currentSlug = activeOrg?.slug;
+          if (currentSlug && pathname?.startsWith(`/${currentSlug}`)) {
+            const newPath = pathname.replace(
+              `/${currentSlug}`,
+              `/${targetOrg.slug}`
+            );
+            router.push(newPath);
+          } else {
+            // Default to integrations if not on a workspace-specific route
+            router.push(`/${targetOrg.slug}/integrations`);
+          }
+        }
         onClose();
       } catch (err) {
         console.error('Failed to switch team:', err);
@@ -170,7 +189,7 @@ function TeamSwitcherSubmenu({ onClose }: { onClose: () => void }) {
         setSwitching(false);
       }
     },
-    [activeOrg?.id, switchOrg, onClose]
+    [activeOrg?.id, activeOrg?.slug, orgs, switchOrg, onClose, router, pathname]
   );
 
   const handleCreateTeam = React.useCallback(async () => {
@@ -178,15 +197,17 @@ function TeamSwitcherSubmenu({ onClose }: { onClose: () => void }) {
     const name = window.prompt('Team name:');
     if (!name?.trim()) return;
 
+    const slug = name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
     try {
       const result = await authClient.organization.create({
         name: name.trim(),
-        slug: name
-          .trim()
-          .toLowerCase()
-          .replace(/[^a-z0-9-]/g, '-')
-          .replace(/-+/g, '-')
-          .replace(/^-|-$/g, ''),
+        slug,
       });
 
       if (result.error) {
@@ -196,13 +217,14 @@ function TeamSwitcherSubmenu({ onClose }: { onClose: () => void }) {
 
       if (result.data?.id) {
         await switchOrg(result.data.id);
+        router.push(`/${slug}/integrations`);
         toast.success(`Team "${name.trim()}" created`);
       }
     } catch (err) {
       console.error('Failed to create team:', err);
       toast.error('Failed to create team');
     }
-  }, [switchOrg, onClose]);
+  }, [switchOrg, onClose, router]);
 
   return (
     <DropdownMenuSub>
@@ -296,6 +318,7 @@ export function AccountDropdown({
   const router = useRouter();
   const { session } = useSession();
   const { user: currentUser } = useUser();
+  const { activeOrgSlug } = useActiveOrg();
   const [menuOpen, setMenuOpen] = React.useState(false);
 
   const handleOpenChange = React.useCallback(
@@ -420,7 +443,11 @@ export function AccountDropdown({
               className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"
               onClick={() => {
                 setMenuOpen(false);
-                handleBillingPortal();
+                if (activeOrgSlug) {
+                  router.push(`/${activeOrgSlug}/settings/billing`);
+                } else {
+                  handleBillingPortal();
+                }
               }}
             >
               <BillingSettingsIcon className="h-[19px] w-[19px]" />

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LinearIcon } from '@bounty/ui';
 import { useIntegrations } from '@/hooks/use-integrations';
+import { useOrgPath } from '@/hooks/use-org-path';
 
 export default function LinearRootPage() {
   const router = useRouter();
@@ -16,13 +17,14 @@ export default function LinearRootPage() {
     isLinearLoading,
   } = useIntegrations();
   const [isSyncing, setIsSyncing] = useState(false);
+  const orgPath = useOrgPath();
 
   // Redirect to workspace-specific route if connected
   useEffect(() => {
     if (hasLinear && linearWorkspace) {
-      router.replace(`/integrations/linear/${linearWorkspace.id}`);
+      router.replace(orgPath(`/integrations/linear/${linearWorkspace.id}`));
     }
-  }, [hasLinear, linearWorkspace, router]);
+  }, [hasLinear, linearWorkspace, router, orgPath]);
 
   // Auto-sync workspace if user has OAuth but no connected workspace
   useEffect(() => {
@@ -32,7 +34,13 @@ export default function LinearRootPage() {
         setIsSyncing(false);
       });
     }
-  }, [hasLinearOAuth, hasLinear, isLinearLoading, syncLinearWorkspace, isSyncing]);
+  }, [
+    hasLinearOAuth,
+    hasLinear,
+    isLinearLoading,
+    syncLinearWorkspace,
+    isSyncing,
+  ]);
 
   // Show loading state while syncing or loading initial data
   if (isLinearLoading || isSyncing) {
@@ -55,7 +63,8 @@ export default function LinearRootPage() {
             Connect Linear
           </h1>
           <p className="text-sm text-neutral-400 mb-8 max-w-sm mx-auto leading-relaxed">
-            Link your Linear workspace to create bounties from issues and track progress across teams.
+            Link your Linear workspace to create bounties from issues and track
+            progress across teams.
           </p>
           <button
             onClick={linkLinear}

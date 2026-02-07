@@ -20,14 +20,19 @@ import Link from '@bounty/ui/components/link';
 import { LinearIcon, LinearIssuesIcon, LinearProjectsIcon } from '@bounty/ui';
 import { ArrowLeftIcon, HomeIcon } from 'lucide-react';
 import { useIntegrations } from '@/hooks/use-integrations';
+import { useOrgSlug } from '@/context/org-slug-context';
 
 const BackButton = () => {
   const router = useRouter();
+  const orgSlug = useOrgSlug();
+  const integrationsPath = orgSlug
+    ? `/${orgSlug}/integrations`
+    : '/integrations';
 
   return (
     <button
       type="button"
-      onClick={() => router.push('/integrations')}
+      onClick={() => router.push(integrationsPath)}
       className={cn(
         'w-fit text-sm font-medium',
         'inline-flex items-center justify-center gap-0.5 whitespace-nowrap',
@@ -46,9 +51,13 @@ const BackButton = () => {
 const LinearAppSidebar = () => {
   const pathname = usePathname();
   const { linearWorkspace } = useIntegrations();
+  const orgSlug = useOrgSlug();
+  const prefix = orgSlug ? `/${orgSlug}` : '';
 
   const workspaceId = linearWorkspace?.id;
-  const baseUrl = workspaceId ? `/integrations/linear/${workspaceId}` : '/integrations/linear';
+  const baseUrl = workspaceId
+    ? `${prefix}/integrations/linear/${workspaceId}`
+    : `${prefix}/integrations/linear`;
 
   const navItems = [
     {
@@ -111,11 +120,7 @@ const LinearAppSidebar = () => {
   );
 };
 
-export const LinearSidebar = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+export const LinearSidebar = ({ children }: { children: React.ReactNode }) => {
   return (
     <SidebarProvider variant="sidebar">
       <LinearAppSidebar />
