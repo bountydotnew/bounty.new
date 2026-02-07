@@ -49,12 +49,10 @@ export const notification = pgTable(
     updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
   },
   (t) => [
-    index('notification_user_id_idx').on(t.userId),
     // Composite: covers getNotificationsForUser (unread) and getUnreadNotificationCount
     // WHERE user_id = ? AND read = false ORDER BY created_at DESC
+    // Also satisfies user_id-only queries since userId is the leading column
     index('notification_user_unread_idx').on(t.userId, t.read, t.createdAt),
-    // notification_read_idx, notification_type_idx, notification_created_at_idx removed:
-    // low-cardinality single-column indexes with 0 scans; replaced by composite above
   ]
 );
 

@@ -153,9 +153,8 @@ export const bountyApplication = pgTable(
     updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
   },
   (t) => [
-    // Speeds up listing applications per bounty
-    index('bounty_application_bounty_id_idx').on(t.bountyId),
     // Speeds up duplicate application check (WHERE bounty_id = ? AND applicant_id = ?)
+    // Also satisfies bountyId-only queries since it is the leading column
     uniqueIndex('bounty_application_unique_idx').on(t.bountyId, t.applicantId),
   ]
 );

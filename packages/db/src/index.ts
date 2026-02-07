@@ -22,7 +22,10 @@ const pool = new Pool({
       ? { rejectUnauthorized: false }
       : false,
   // Pool tuning: default pg max is 10, which can bottleneck under concurrent load
-  max: parseInt(process.env.DATABASE_POOL_MAX || '20', 10),
+  max: (() => {
+    const parsed = parseInt(process.env.DATABASE_POOL_MAX || '20', 10);
+    return Number.isNaN(parsed) ? 20 : parsed;
+  })(),
   // Return idle connections after 30s to avoid holding stale connections
   idleTimeoutMillis: 30_000,
   // Fail fast if pool is exhausted rather than queuing indefinitely

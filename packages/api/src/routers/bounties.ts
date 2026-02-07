@@ -763,17 +763,14 @@ export const bountiesRouter = router({
             .innerJoin(user, eq(bounty.createdById, user.id))
             .where(whereClause)
             .orderBy(
-              input.sortBy === 'amount'
-                ? input.sortOrder === 'asc'
-                  ? asc(bounty.amount)
-                  : desc(bounty.amount)
-                : input.sortBy === 'created_at'
-                  ? input.sortOrder === 'asc'
-                    ? asc(bounty.createdAt)
-                    : desc(bounty.createdAt)
-                  : input.sortOrder === 'asc'
-                    ? asc(bounty.createdAt)
-                    : desc(bounty.createdAt)
+              (() => {
+                const col =
+                  input.sortBy === 'amount' ? bounty.amount
+                  : input.sortBy === 'deadline' ? bounty.deadline
+                  : input.sortBy === 'title' ? bounty.title
+                  : bounty.createdAt;
+                return input.sortOrder === 'asc' ? asc(col) : desc(col);
+              })()
             )
             .limit(input.limit)
             .offset(offset),

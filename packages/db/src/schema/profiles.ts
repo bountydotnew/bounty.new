@@ -2,7 +2,6 @@ import { sql } from 'drizzle-orm';
 import {
   boolean,
   decimal,
-  index,
   integer,
   pgTable,
   text,
@@ -80,9 +79,8 @@ export const userRating = pgTable(
     updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
   },
   (t) => [
-    // Speeds up rating lookups for a user's profile
-    index('user_rating_rated_user_id_idx').on(t.ratedUserId),
     // Prevents duplicate ratings per user+bounty pair
+    // Also satisfies ratedUserId-only queries since it is the leading column
     uniqueIndex('user_rating_unique_idx').on(t.ratedUserId, t.raterUserId, t.bountyId),
   ]
 );
