@@ -23,6 +23,7 @@ export interface BetterAuthSessionData {
   userAgent?: string;
   userId: string;
   impersonatedBy?: string;
+  activeOrganizationId?: string | null;
 }
 
 export interface BetterAuthSession {
@@ -45,5 +46,6 @@ export const ReasonCode = {
   Banned: 'banned',
   PlanRequired: 'plan_required',
   Forbidden: 'forbidden',
+  NoActiveOrg: 'no_active_org',
 } as const;
 export type ReasonCode = (typeof ReasonCode)[keyof typeof ReasonCode];

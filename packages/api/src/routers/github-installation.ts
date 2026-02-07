@@ -1,37 +1,28 @@
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { getGithubAppManager } from '../../driver/github-app';
-import { protectedProcedure, router } from '../trpc';
+import {
+  protectedProcedure,
+  orgProcedure,
+  orgOwnerProcedure,
+  router,
+} from '../trpc';
 import { githubInstallation } from '@bounty/db/src/schema/github-installation';
 import { account } from '@bounty/db';
 import { eq, and } from 'drizzle-orm';
 
 export const githubInstallationRouter = router({
   /**
-   * Get all GitHub App installations for the current user
+   * Get all GitHub App installations for the active organization.
+   * Falls back to user-scoped lookup if no installations found for the org
+   * (backward compat during migration).
    */
-  getInstallations: protectedProcedure.query(async ({ ctx }) => {
-    // Get the user's GitHub account to find installations
-    const [githubAccount] = await ctx.db
-      .select()
-      .from(account)
-      .where(
-        and(
-          eq(account.userId, ctx.session.user.id),
-          eq(account.providerId, 'github')
-        )
-      )
-      .limit(1);
-
-    if (!githubAccount) {
-      return { success: true, installations: [] };
-    }
-
-    // Get installations linked to this account
+  getInstallations: orgProcedure.query(async ({ ctx }) => {
+    // Get installations scoped to the active organization
     const installations = await ctx.db
       .select()
       .from(githubInstallation)
-      .where(eq(githubInstallation.githubAccountId, githubAccount.id));
+      .where(eq(githubInstallation.organizationId, ctx.org.id));
 
     return {
       success: true,
@@ -50,15 +41,37 @@ export const githubInstallationRouter = router({
   }),
 
   /**
-   * Get repositories for a specific installation
+   * Get repositories for a specific installation.
+   * Verifies the installation belongs to the active org.
    */
-  getRepositories: protectedProcedure
+  getRepositories: orgProcedure
     .input(z.object({ installationId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      // Verify the installation belongs to this org
+      const [inst] = await ctx.db
+        .select({ id: githubInstallation.id })
+        .from(githubInstallation)
+        .where(
+          and(
+            eq(githubInstallation.githubInstallationId, input.installationId),
+            eq(githubInstallation.organizationId, ctx.org.id)
+          )
+        )
+        .limit(1);
+
+      if (!inst) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Installation not found for this team',
+        });
+      }
+
       const githubApp = getGithubAppManager();
 
       try {
-        const result = await githubApp.getInstallationRepositories(input.installationId);
+        const result = await githubApp.getInstallationRepositories(
+          input.installationId
+        );
 
         return {
           success: true,
@@ -81,15 +94,37 @@ export const githubInstallationRouter = router({
     }),
 
   /**
-   * Get installation details
+   * Get installation details.
+   * Verifies the installation belongs to the active org.
    */
-  getInstallation: protectedProcedure
+  getInstallation: orgProcedure
     .input(z.object({ installationId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      // Verify the installation belongs to this org
+      const [inst] = await ctx.db
+        .select({ id: githubInstallation.id })
+        .from(githubInstallation)
+        .where(
+          and(
+            eq(githubInstallation.githubInstallationId, input.installationId),
+            eq(githubInstallation.organizationId, ctx.org.id)
+          )
+        )
+        .limit(1);
+
+      if (!inst) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Installation not found for this team',
+        });
+      }
+
       const githubApp = getGithubAppManager();
 
       try {
-        const installation = await githubApp.getInstallation(input.installationId);
+        const installation = await githubApp.getInstallation(
+          input.installationId
+        );
 
         return {
           success: true,
@@ -127,9 +162,9 @@ export const githubInstallationRouter = router({
 
   /**
    * Sync installations from GitHub webhook callback
-   * This is called after the user installs the app
+   * This is called after the user installs the app — scoped to active org
    */
-  syncInstallation: protectedProcedure
+  syncInstallation: orgProcedure
     .input(
       z.object({
         installationId: z.number(),
@@ -159,12 +194,16 @@ export const githubInstallationRouter = router({
 
       try {
         // Get installation details from GitHub
-        const installation = await githubApp.getInstallation(input.installationId);
+        const installation = await githubApp.getInstallation(
+          input.installationId
+        );
 
         // Get repositories from the installation
-        const repos = await githubApp.getInstallationRepositories(input.installationId);
+        const repos = await githubApp.getInstallationRepositories(
+          input.installationId
+        );
 
-        // Upsert the installation record
+        // Upsert the installation record — scoped to active org
         await ctx.db
           .insert(githubInstallation)
           .values({
@@ -174,6 +213,7 @@ export const githubInstallationRouter = router({
             accountType: installation.account.type,
             accountAvatarUrl: installation.account.avatar_url,
             repositoryIds: repos.repositories.map((r) => String(r.id)),
+            organizationId: ctx.org.id,
           })
           .onConflictDoUpdate({
             target: githubInstallation.githubInstallationId,
@@ -182,6 +222,7 @@ export const githubInstallationRouter = router({
               accountType: installation.account.type,
               accountAvatarUrl: installation.account.avatar_url,
               repositoryIds: repos.repositories.map((r) => String(r.id)),
+              organizationId: ctx.org.id,
               updatedAt: new Date(),
             },
           });
@@ -206,51 +247,38 @@ export const githubInstallationRouter = router({
 
   /**
    * Remove an installation (delete from our database)
-   * Note: The GitHub App webhook handles this automatically
+   * Only org owners can remove installations.
    */
-  removeInstallation: protectedProcedure
+  removeInstallation: orgOwnerProcedure
     .input(z.object({ installationId: z.number() }))
     .mutation(async ({ input, ctx }) => {
       await ctx.db
         .delete(githubInstallation)
-        .where(eq(githubInstallation.githubInstallationId, input.installationId));
+        .where(
+          and(
+            eq(githubInstallation.githubInstallationId, input.installationId),
+            eq(githubInstallation.organizationId, ctx.org.id)
+          )
+        );
 
       return { success: true };
     }),
 
   /**
-   * Set an installation as the default for the current user
+   * Set an installation as the default for the active organization.
+   * Only org owners can change the default installation.
    */
-  setDefaultInstallation: protectedProcedure
+  setDefaultInstallation: orgOwnerProcedure
     .input(z.object({ installationId: z.number() }))
     .mutation(async ({ input, ctx }) => {
-      // Get the user's GitHub account
-      const [githubAccount] = await ctx.db
-        .select()
-        .from(account)
-        .where(
-          and(
-            eq(account.userId, ctx.session.user.id),
-            eq(account.providerId, 'github')
-          )
-        )
-        .limit(1);
-
-      if (!githubAccount) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'GitHub account not connected',
-        });
-      }
-
-      // Verify the installation belongs to this user
+      // Verify the installation belongs to this org
       const [installation] = await ctx.db
         .select()
         .from(githubInstallation)
         .where(
           and(
             eq(githubInstallation.githubInstallationId, input.installationId),
-            eq(githubInstallation.githubAccountId, githubAccount.id)
+            eq(githubInstallation.organizationId, ctx.org.id)
           )
         )
         .limit(1);
@@ -258,17 +286,17 @@ export const githubInstallationRouter = router({
       if (!installation) {
         throw new TRPCError({
           code: 'NOT_FOUND',
-          message: 'Installation not found',
+          message: 'Installation not found for this team',
         });
       }
 
-      // Unset all other defaults for this user
+      // Unset all other defaults for this org
       await ctx.db
         .update(githubInstallation)
         .set({ isDefault: false })
         .where(
           and(
-            eq(githubInstallation.githubAccountId, githubAccount.id),
+            eq(githubInstallation.organizationId, ctx.org.id),
             eq(githubInstallation.isDefault, true)
           )
         );
@@ -283,32 +311,16 @@ export const githubInstallationRouter = router({
     }),
 
   /**
-   * Get the default installation for the current user
+   * Get the default installation for the active organization
    */
-  getDefaultInstallation: protectedProcedure.query(async ({ ctx }) => {
-    // Get the user's GitHub account
-    const [githubAccount] = await ctx.db
-      .select()
-      .from(account)
-      .where(
-        and(
-          eq(account.userId, ctx.session.user.id),
-          eq(account.providerId, 'github')
-        )
-      )
-      .limit(1);
-
-    if (!githubAccount) {
-      return null;
-    }
-
-    // Get the default installation
+  getDefaultInstallation: orgProcedure.query(async ({ ctx }) => {
+    // Get the default installation for this org
     const [installation] = await ctx.db
       .select()
       .from(githubInstallation)
       .where(
         and(
-          eq(githubInstallation.githubAccountId, githubAccount.id),
+          eq(githubInstallation.organizationId, ctx.org.id),
           eq(githubInstallation.isDefault, true)
         )
       )

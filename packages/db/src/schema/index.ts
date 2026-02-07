@@ -8,6 +8,7 @@ export * from './invites';
 export * from './linear-account';
 export * from './notifications';
 export * from './onboarding';
+export * from './organization';
 export * from './passkey';
 export * from './payments';
 export * from './profiles';

@@ -1,7 +1,7 @@
 import { env } from '@bounty/env/server';
 import { db, account, discordGuild } from '@bounty/db';
 import { eq, and, isNull, inArray } from 'drizzle-orm';
-import { protectedProcedure, router } from '../trpc';
+import { protectedProcedure, orgProcedure, router } from '../trpc';
 
 // Discord bot permissions - basic permissions for reading messages and sending embeds
 // https://discord.com/developers/docs/topics/permissions
@@ -118,9 +118,9 @@ export const discordRouter = router({
   }),
 
   /**
-   * Get servers where the bot is installed that the user is a member of
+   * Get servers where the bot is installed that the user is a member of (scoped to active org)
    */
-  getGuilds: protectedProcedure.query(async ({ ctx }) => {
+  getGuilds: orgProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 
     // Get user's Discord account with access token
@@ -155,7 +155,7 @@ export const discordRouter = router({
       return { guilds: [], userGuildIds: [] };
     }
 
-    // Get guilds where bot is installed AND user is a member
+    // Get guilds where bot is installed AND user is a member AND belongs to active org
     const guilds = await db
       .select({
         id: discordGuild.id,
@@ -168,7 +168,8 @@ export const discordRouter = router({
       .where(
         and(
           isNull(discordGuild.removedAt),
-          inArray(discordGuild.id, userGuildIds)
+          inArray(discordGuild.id, userGuildIds),
+          eq(discordGuild.organizationId, ctx.org.id)
         )
       )
       .orderBy(discordGuild.name);

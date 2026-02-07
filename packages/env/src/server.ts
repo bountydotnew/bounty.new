@@ -42,6 +42,7 @@ export const env = createEnv({
     STRIPE_PUBLISHABLE_KEY: z.string().min(1),
     STRIPE_CONNECT_WEBHOOK_SECRET: z.string().min(1),
     RESEND_API_KEY: z.string().min(1),
+    RESEND_WEBHOOK_SECRET: z.string().min(1).optional(),
     DEVICE_AUTH_ALLOWED_CLIENT_IDS: z.string().optional().default(''),
     // Upstash Redis
     UPSTASH_REDIS_REST_URL: z.string().url(),
@@ -78,6 +79,7 @@ export const env = createEnv({
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
     STRIPE_CONNECT_WEBHOOK_SECRET: process.env.STRIPE_CONNECT_WEBHOOK_SECRET,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
+    RESEND_WEBHOOK_SECRET: process.env.RESEND_WEBHOOK_SECRET,
     DEVICE_AUTH_ALLOWED_CLIENT_IDS: process.env.DEVICE_AUTH_ALLOWED_CLIENT_IDS,
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,

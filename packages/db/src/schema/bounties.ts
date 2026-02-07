@@ -66,6 +66,8 @@ export const bounty = pgTable('bounty', {
   linearAccountId: text('linear_account_id'), // Reference to linear_account.id
   linearCommentId: text('linear_comment_id'), // For editing bot comments
   submissionKeyword: text('submission_keyword').default('@bountydotnew submit'),
+  // Organization scoping — which team owns this bounty
+  organizationId: text('organization_id'),
   createdById: text('created_by_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),

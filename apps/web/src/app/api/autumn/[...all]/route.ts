@@ -1,11 +1,16 @@
 import { auth } from '@bounty/auth/server';
+import { db, organization } from '@bounty/db';
+import { eq } from 'drizzle-orm';
 import { autumnHandler } from 'autumn-js/next';
 import { env } from '@bounty/env/server';
 
 export const { GET, POST } = autumnHandler({
   /**
-   * Identify the authenticated customer from the request
-   * Returns customer ID (user.id) and customer data (name, email)
+   * Identify the authenticated customer from the request.
+   *
+   * Billing is org-scoped: the customerId is the active organization ID.
+   * This means each org has its own Autumn customer, plan, and usage.
+   * The user's email is passed for Stripe receipt purposes.
    */
   async identify(request) {
     // Get the session from better-auth using the request headers
@@ -18,11 +23,24 @@ export const { GET, POST } = autumnHandler({
       return null;
     }
 
-    // Return customer ID and data for Autumn
+    const activeOrgId = session.session?.activeOrganizationId;
+    if (!activeOrgId) {
+      // No active org — can't identify a billing customer
+      return null;
+    }
+
+    // Look up org name for Autumn customer data
+    const [org] = await db
+      .select({ name: organization.name })
+      .from(organization)
+      .where(eq(organization.id, activeOrgId))
+      .limit(1);
+
+    // Return org-scoped customer ID and data for Autumn
     return {
-      customerId: session.user.id,
+      customerId: activeOrgId,
       customerData: {
-        name: session.user.name ?? undefined,
+        name: org?.name ?? session.user.name ?? undefined,
         email: session.user.email ?? undefined,
       },
     };

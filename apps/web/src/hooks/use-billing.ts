@@ -3,6 +3,10 @@
  *
  * Client-side billing hook using autumn-js SDK.
  * This hook provides the billing functionality for the web app.
+ *
+ * Billing is org-scoped: the Autumn customer ID is the active organization ID.
+ * When the user switches teams, call `refetch()` to reload the new org's
+ * billing data from the backend.
  */
 
 import { useCustomer } from 'autumn-js/react';

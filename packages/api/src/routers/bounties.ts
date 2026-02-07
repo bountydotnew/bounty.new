@@ -8,6 +8,8 @@ import {
   cancellationRequest,
   createNotification,
   db,
+  member,
+  organization,
   payout,
   submission,
   transaction,
@@ -44,6 +46,7 @@ import {
   inArray,
   isNotNull,
   isNull,
+  lte,
   or,
   sql,
 } from 'drizzle-orm';
@@ -68,6 +71,8 @@ import {
   publicProcedure,
   router,
   rateLimitedProtectedProcedure,
+  orgProcedure,
+  rateLimitedOrgProcedure,
 } from '../trpc';
 import { realtime } from '@bounty/realtime';
 
@@ -78,6 +83,36 @@ const parseAmount = (amount: string | number | null): number => {
   const parsed = Number(amount);
   return Number.isNaN(parsed) ? 0 : parsed;
 };
+
+/**
+ * Check if a user is a member of the organization that owns a bounty.
+ * Used for permission checks on bounty mutations (update, delete, cancel).
+ * Returns true if:
+ * - The bounty has an organizationId and the user is a member of that org, OR
+ * - The bounty has no organizationId (legacy) and the user is the creator
+ */
+async function isUserBountyOrgMember(
+  userId: string,
+  bountyRecord: { createdById: string; organizationId: string | null }
+): Promise<boolean> {
+  // Legacy bounties without org: fall back to creator check
+  if (!bountyRecord.organizationId) {
+    return bountyRecord.createdById === userId;
+  }
+
+  const [membership] = await db
+    .select({ id: member.id })
+    .from(member)
+    .where(
+      and(
+        eq(member.userId, userId),
+        eq(member.organizationId, bountyRecord.organizationId)
+      )
+    )
+    .limit(1);
+
+  return !!membership;
+}
 
 /**
  * Ensure a Stripe customer exists for a user
@@ -122,6 +157,52 @@ async function ensureStripeCustomer(
     .update(user)
     .set({ stripeCustomerId: customer.id })
     .where(eq(user.id, userId));
+
+  return customer.id;
+}
+
+/**
+ * Ensure a Stripe customer exists for an organization.
+ * Uses `organization.stripeCustomerId`. Falls back to creating a new Stripe customer
+ * with the org name and the acting user's email.
+ */
+async function ensureOrgStripeCustomer(
+  orgId: string,
+  orgName: string,
+  userEmail: string,
+  userName: string | null
+): Promise<string> {
+  // Check if org already has a Stripe customer ID
+  const [existingOrg] = await db
+    .select({ stripeCustomerId: organization.stripeCustomerId })
+    .from(organization)
+    .where(eq(organization.id, orgId))
+    .limit(1);
+
+  if (existingOrg?.stripeCustomerId) {
+    // Verify the customer exists in Stripe
+    try {
+      await stripeClient.customers.retrieve(existingOrg.stripeCustomerId);
+      return existingOrg.stripeCustomerId;
+    } catch {
+      console.warn(
+        `Stripe customer ${existingOrg.stripeCustomerId} not found for org ${orgId}, creating new customer`
+      );
+    }
+  }
+
+  // Create new Stripe customer for the org
+  const customer = await stripeClient.customers.create({
+    email: userEmail,
+    name: orgName,
+    metadata: { organizationId: orgId },
+  });
+
+  // Update organization record with Stripe customer ID
+  await db
+    .update(organization)
+    .set({ stripeCustomerId: customer.id })
+    .where(eq(organization.id, orgId));
 
   return customer.id;
 }
@@ -314,10 +395,10 @@ export const bountiesRouter = router({
   }),
 
   /**
-   * Get monthly spending stats for the current user
+   * Get monthly spending stats for the active organization
    * Includes total spend and platform fees paid this month
    */
-  getMonthlySpend: protectedProcedure.query(async ({ ctx }) => {
+  getMonthlySpend: orgProcedure.query(async ({ ctx }) => {
     try {
       // Calculate start of current month (UTC)
       const now = new Date();
@@ -328,7 +409,7 @@ export const bountiesRouter = router({
         Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)
       );
 
-      // Query: Sum bounty amounts where user funded this month
+      // Query: Sum bounty amounts for this org funded this month
       // Join with transaction table to get accurate funding timestamp
       const spendResult = await db
         .select({
@@ -339,9 +420,10 @@ export const bountiesRouter = router({
         .innerJoin(transaction, eq(transaction.bountyId, bounty.id))
         .where(
           and(
-            eq(bounty.createdById, ctx.session.user.id),
+            eq(bounty.organizationId, ctx.org.id),
             eq(transaction.type, 'payment_intent'),
-            gte(transaction.createdAt, startOfMonth)
+            gte(transaction.createdAt, startOfMonth),
+            lte(transaction.createdAt, endOfMonth)
           )
         );
 
@@ -355,7 +437,7 @@ export const bountiesRouter = router({
         .innerJoin(transaction, eq(transaction.bountyId, bounty.id))
         .where(
           and(
-            eq(bounty.createdById, ctx.session.user.id),
+            eq(bounty.organizationId, ctx.org.id),
             eq(transaction.type, 'payment_intent')
           )
         );
@@ -386,7 +468,7 @@ export const bountiesRouter = router({
     }
   }),
 
-  createBounty: rateLimitedProtectedProcedure('bounty:create')
+  createBounty: rateLimitedOrgProcedure('bounty:create')
     .input(createBountySchema)
     .mutation(async ({ ctx, input }) => {
       try {
@@ -457,9 +539,8 @@ export const bountiesRouter = router({
 
         let checkoutSessionUrl = null;
 
-        // If not paying later, require payment upfront
+        // If not paying later, validate email upfront (payment created after bounty insert)
         if (!payLater) {
-          // Ensure user has Stripe customer ID
           const userEmail = ctx.session.user.email;
           if (!userEmail) {
             throw new TRPCError({
@@ -467,15 +548,6 @@ export const bountiesRouter = router({
               message: 'User email is required to create a bounty with payment',
             });
           }
-
-          const stripeCustomerId = await ensureStripeCustomer(
-            ctx.session.user.id,
-            userEmail,
-            ctx.session.user.name
-          );
-
-          // Create Checkout Session - will be created after bounty is saved
-          // We'll update this after bounty creation
         }
 
         const newBountyResult = await db
@@ -499,6 +571,7 @@ export const bountiesRouter = router({
             linearIssueIdentifier: input.linearIssueIdentifier,
             linearIssueUrl: input.linearIssueUrl,
             linearAccountId: input.linearAccountId,
+            organizationId: ctx.org.id,
             createdById: ctx.session.user.id,
             status: 'draft', // Draft until payment confirmed
             stripePaymentIntentId: null, // Will be set via webhook
@@ -593,8 +666,9 @@ export const bountiesRouter = router({
         // Create Checkout Session if not paying later
         if (!payLater) {
           const userEmail = ctx.session.user.email!;
-          const stripeCustomerId = await ensureStripeCustomer(
-            ctx.session.user.id,
+          const stripeCustomerId = await ensureOrgStripeCustomer(
+            ctx.org.id,
+            ctx.org.name,
             userEmail,
             ctx.session.user.name
           );
@@ -1022,6 +1096,7 @@ export const bountiesRouter = router({
         const [existingBounty] = await db
           .select({
             createdById: bounty.createdById,
+            organizationId: bounty.organizationId,
             isFeatured: bounty.isFeatured,
           })
           .from(bounty)
@@ -1035,10 +1110,14 @@ export const bountiesRouter = router({
           });
         }
 
-        if (existingBounty.createdById !== ctx.session.user.id) {
+        const canPin = await isUserBountyOrgMember(
+          ctx.session.user.id,
+          existingBounty
+        );
+        if (!canPin) {
           throw new TRPCError({
             code: 'FORBIDDEN',
-            message: 'You can only pin your own bounties',
+            message: 'You do not have permission to pin this bounty',
           });
         }
 
@@ -1086,10 +1165,15 @@ export const bountiesRouter = router({
           });
         }
 
-        if (existingBounty.createdById !== ctx.session.user.id) {
+        // Check org membership (or creator for legacy bounties)
+        const canUpdate = await isUserBountyOrgMember(
+          ctx.session.user.id,
+          existingBounty
+        );
+        if (!canUpdate) {
           throw new TRPCError({
             code: 'FORBIDDEN',
-            message: 'You can only update your own bounties',
+            message: 'You do not have permission to update this bounty',
           });
         }
 
@@ -1164,10 +1248,15 @@ export const bountiesRouter = router({
           });
         }
 
-        if (existingBounty.createdById !== ctx.session.user.id) {
+        // Check org membership (or creator for legacy bounties)
+        const canDelete = await isUserBountyOrgMember(
+          ctx.session.user.id,
+          existingBounty
+        );
+        if (!canDelete) {
           throw new TRPCError({
             code: 'FORBIDDEN',
-            message: 'You can only delete your own bounties',
+            message: 'You do not have permission to delete this bounty',
           });
         }
 
@@ -2225,7 +2314,7 @@ export const bountiesRouter = router({
       }
     }),
 
-  fetchMyBounties: protectedProcedure
+  fetchMyBounties: orgProcedure
     .input(
       z.object({
         page: z.number().int().positive().default(1),
@@ -2239,7 +2328,8 @@ export const bountiesRouter = router({
       try {
         const offset = (input.page - 1) * input.limit;
 
-        const conditions = [eq(bounty.createdById, ctx.session.user.id)];
+        // Scope to the active organization's bounties
+        const conditions = [eq(bounty.organizationId, ctx.org.id)];
 
         if (input.status) {
           conditions.push(eq(bounty.status, input.status));
@@ -2279,7 +2369,7 @@ export const bountiesRouter = router({
         const countResult = await db
           .select({ count: sql<number>`count(*)` })
           .from(bounty)
-          .where(eq(bounty.createdById, ctx.session.user.id));
+          .where(eq(bounty.organizationId, ctx.org.id));
 
         const count = countResult[0]?.count ?? 0;
 
@@ -2324,10 +2414,15 @@ export const bountiesRouter = router({
           });
         }
 
-        if (existingBounty.createdById !== ctx.session.user.id) {
+        const canConfirm = await isUserBountyOrgMember(
+          ctx.session.user.id,
+          existingBounty
+        );
+        if (!canConfirm) {
           throw new TRPCError({
             code: 'FORBIDDEN',
-            message: 'You can only confirm payment for your own bounties',
+            message:
+              'You do not have permission to confirm payment for this bounty',
           });
         }
 
@@ -2396,10 +2491,15 @@ export const bountiesRouter = router({
           });
         }
 
-        if (existingBounty.createdById !== ctx.session.user.id) {
+        const canApprove = await isUserBountyOrgMember(
+          ctx.session.user.id,
+          existingBounty
+        );
+        if (!canApprove) {
           throw new TRPCError({
             code: 'FORBIDDEN',
-            message: 'You can only approve submissions for your own bounties',
+            message:
+              'You do not have permission to approve submissions for this bounty',
           });
         }
 
@@ -2547,6 +2647,7 @@ export const bountiesRouter = router({
             stripePaymentIntentId: bounty.stripePaymentIntentId,
             stripeTransferId: bounty.stripeTransferId,
             createdById: bounty.createdById,
+            organizationId: bounty.organizationId,
           })
           .from(bounty)
           .where(eq(bounty.id, input.bountyId))
@@ -2559,11 +2660,16 @@ export const bountiesRouter = router({
           });
         }
 
-        // Only creator can check payment status
-        if (bountyData.createdById !== ctx.session.user.id) {
+        // Only org members (or creator for legacy bounties) can check payment status
+        const canView = await isUserBountyOrgMember(
+          ctx.session.user.id,
+          bountyData
+        );
+        if (!canView) {
           throw new TRPCError({
             code: 'FORBIDDEN',
-            message: 'You can only check payment status for your own bounties',
+            message:
+              'You do not have permission to view payment status for this bounty',
           });
         }
 
@@ -2631,10 +2737,15 @@ export const bountiesRouter = router({
           });
         }
 
-        if (existingBounty.createdById !== ctx.session.user.id) {
+        const canVerify = await isUserBountyOrgMember(
+          ctx.session.user.id,
+          existingBounty
+        );
+        if (!canVerify) {
           throw new TRPCError({
             code: 'FORBIDDEN',
-            message: 'You can only verify payment for your own bounties',
+            message:
+              'You do not have permission to verify payment for this bounty',
           });
         }
 
@@ -2801,12 +2912,16 @@ export const bountiesRouter = router({
           });
         }
 
-        // Verify user owns this bounty
-        if (existingBounty.createdById !== ctx.session.user.id) {
+        // Verify org membership
+        const canRecheck = await isUserBountyOrgMember(
+          ctx.session.user.id,
+          existingBounty
+        );
+        if (!canRecheck) {
           throw new TRPCError({
             code: 'FORBIDDEN',
             message:
-              'You can only recheck payment status for your own bounties',
+              'You do not have permission to recheck payment status for this bounty',
           });
         }
 
@@ -3090,10 +3205,7 @@ export const bountiesRouter = router({
             try {
               const githubApp = getGithubAppManager();
 
-              const updatedCommentBody = fundedBountyComment(
-                input.bountyId,
-                0
-              );
+              const updatedCommentBody = fundedBountyComment(input.bountyId, 0);
 
               await githubApp.editComment(
                 existingBounty.githubInstallationId,
@@ -3161,10 +3273,15 @@ export const bountiesRouter = router({
           });
         }
 
-        if (existingBounty.createdById !== ctx.session.user.id) {
+        const canPay = await isUserBountyOrgMember(
+          ctx.session.user.id,
+          existingBounty
+        );
+        if (!canPay) {
           throw new TRPCError({
             code: 'FORBIDDEN',
-            message: 'You can only create payment for your own bounties',
+            message:
+              'You do not have permission to create payment for this bounty',
           });
         }
 
@@ -3175,7 +3292,7 @@ export const bountiesRouter = router({
           });
         }
 
-        // Ensure user has Stripe customer ID
+        // Ensure Stripe customer — org-scoped if bounty has an org, user-scoped otherwise
         const userEmail = ctx.session.user.email;
         if (!userEmail) {
           throw new TRPCError({
@@ -3184,11 +3301,28 @@ export const bountiesRouter = router({
           });
         }
 
-        const stripeCustomerId = await ensureStripeCustomer(
-          ctx.session.user.id,
-          userEmail,
-          ctx.session.user.name
-        );
+        let stripeCustomerId: string;
+        if (existingBounty.organizationId) {
+          // Org-scoped: use org's Stripe customer
+          const [org] = await db
+            .select({ name: organization.name })
+            .from(organization)
+            .where(eq(organization.id, existingBounty.organizationId))
+            .limit(1);
+          stripeCustomerId = await ensureOrgStripeCustomer(
+            existingBounty.organizationId,
+            org?.name ?? 'Team',
+            userEmail,
+            ctx.session.user.name
+          );
+        } else {
+          // Legacy: user-scoped
+          stripeCustomerId = await ensureStripeCustomer(
+            ctx.session.user.id,
+            userEmail,
+            ctx.session.user.name
+          );
+        }
 
         // Calculate fees
         const bountyAmountInCents = Math.round(
@@ -3305,11 +3439,15 @@ export const bountiesRouter = router({
           });
         }
 
-        // Verify ownership
-        if (bountyRecord.createdById !== ctx.session.user.id) {
+        // Verify org membership (or creator for legacy bounties)
+        const canCancel = await isUserBountyOrgMember(
+          ctx.session.user.id,
+          bountyRecord
+        );
+        if (!canCancel) {
           throw new TRPCError({
             code: 'FORBIDDEN',
-            message: 'You can only request cancellation for your own bounties',
+            message: 'You do not have permission to cancel this bounty',
           });
         }
 
@@ -3511,12 +3649,15 @@ To process this request:
           });
         }
 
-        // Verify ownership
-        if (bountyRecord.createdById !== ctx.session.user.id) {
+        // Verify org membership (or creator for legacy bounties)
+        const canWithdraw = await isUserBountyOrgMember(
+          ctx.session.user.id,
+          bountyRecord
+        );
+        if (!canWithdraw) {
           throw new TRPCError({
             code: 'FORBIDDEN',
-            message:
-              'You can only cancel cancellation requests for your own bounties',
+            message: 'You do not have permission to manage this bounty',
           });
         }
 
@@ -4051,6 +4192,7 @@ To process this request:
             githubInstallationId: bounty.githubInstallationId,
             githubCommentId: bounty.githubCommentId,
             createdById: bounty.createdById,
+            organizationId: bounty.organizationId,
           })
           .from(bounty)
           .where(eq(bounty.id, input.bountyId))
@@ -4063,11 +4205,16 @@ To process this request:
           });
         }
 
-        // Only creator can check sync status
-        if (bountyRecord.createdById !== ctx.session.user.id) {
+        // Verify org membership
+        const canCheck = await isUserBountyOrgMember(
+          ctx.session.user.id,
+          bountyRecord
+        );
+        if (!canCheck) {
           throw new TRPCError({
             code: 'FORBIDDEN',
-            message: 'You can only check sync status for your own bounties',
+            message:
+              'You do not have permission to check sync status for this bounty',
           });
         }
 
@@ -4186,6 +4333,7 @@ To process this request:
             githubInstallationId: bounty.githubInstallationId,
             githubCommentId: bounty.githubCommentId,
             createdById: bounty.createdById,
+            organizationId: bounty.organizationId,
           })
           .from(bounty)
           .where(eq(bounty.id, input.bountyId))
@@ -4198,11 +4346,15 @@ To process this request:
           });
         }
 
-        // Only creator can sync
-        if (bountyRecord.createdById !== ctx.session.user.id) {
+        // Verify org membership
+        const canSync = await isUserBountyOrgMember(
+          ctx.session.user.id,
+          bountyRecord
+        );
+        if (!canSync) {
           throw new TRPCError({
             code: 'FORBIDDEN',
-            message: 'You can only sync your own bounties',
+            message: 'You do not have permission to sync this bounty',
           });
         }
 
@@ -4352,6 +4504,7 @@ To process this request:
             githubInstallationId: bounty.githubInstallationId,
             githubCommentId: bounty.githubCommentId,
             createdById: bounty.createdById,
+            organizationId: bounty.organizationId,
           })
           .from(bounty)
           .where(eq(bounty.id, input.bountyId))
@@ -4364,11 +4517,16 @@ To process this request:
           });
         }
 
-        // Only creator can create GitHub issue
-        if (bountyRecord.createdById !== ctx.session.user.id) {
+        // Verify org membership
+        const canCreateIssue = await isUserBountyOrgMember(
+          ctx.session.user.id,
+          bountyRecord
+        );
+        if (!canCreateIssue) {
           throw new TRPCError({
             code: 'FORBIDDEN',
-            message: 'You can only create GitHub issues for your own bounties',
+            message:
+              'You do not have permission to create GitHub issues for this bounty',
           });
         }
 

@@ -10,6 +10,7 @@ import { linearRouter } from './linear';
 import { newsRouter } from './news';
 import { notificationsRouter } from './notifications';
 import { onboardingRouter } from './onboarding';
+import { organizationRouter } from './organization';
 import { profilesRouter } from './profiles';
 import { repositoryRouter } from './repository';
 import { userRouter } from './user';
@@ -49,6 +50,7 @@ export const appRouter = router({
   discord: discordRouter,
   onboarding: onboardingRouter,
   featureVotes: featureVotesRouter,
+  organization: organizationRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -38,6 +38,7 @@ import { NavMain } from '@/components/dual-sidebar/nav-main';
 import { RecentBountiesGroup } from '@/components/dual-sidebar/recent-bounties';
 import { NotificationsDropdown } from '@/components/notifications/notifications-dropdown';
 import { AccountDropdown } from '@/components/billing/account-dropdown';
+import { useActiveOrg } from '@/hooks/use-active-org';
 import { FundBountyModal } from '@/components/payment/fund-bounty-modal';
 import { LINKS } from '@/constants';
 import {
@@ -70,10 +71,16 @@ const FALLBACK_USER = {
 
 const WorkspaceSwitcher = () => {
   const { session } = useSession();
-  const userName = session?.user?.name ?? 'grim';
-  const userImage = session?.user?.image ?? null;
-  const workspaceLabel = userName.split(' ')[0] || 'grim';
+  const { activeOrg } = useActiveOrg();
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
+
+  // Show active org name, falling back to user name
+  const displayName = activeOrg?.name ?? session?.user?.name ?? 'My Team';
+  const displayLabel = activeOrg?.isPersonal
+    ? displayName.split("'s team")[0] || displayName
+    : displayName;
+  const displayLogo = activeOrg?.logo ?? null;
+  const avatarSeed = activeOrg?.slug ?? session?.user?.name ?? 'team';
 
   return (
     <div className="flex items-center justify-between py-0 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:hidden">
@@ -83,7 +90,7 @@ const WorkspaceSwitcher = () => {
         }}
         onOpenChange={setIsDropdownOpen}
         user={{
-          name: userName,
+          name: session?.user?.name ?? FALLBACK_USER.name,
           email: session?.user?.email ?? FALLBACK_USER.email,
           image: session?.user?.image ?? FALLBACK_USER.image,
         }}
@@ -98,24 +105,24 @@ const WorkspaceSwitcher = () => {
           type="button"
         >
           <Avatar className="h-[27px] w-[27px] rounded-[6px] border-2 border-brand-primary shadow-[inset_0_2px_3px_rgba(0,0,0,0.2)] group-data-[collapsible=icon]:size-5 group-data-[collapsible=icon]:h-5 group-data-[collapsible=icon]:w-5">
-            {userImage && (
+            {displayLogo && (
               <AvatarImage
-                alt={userName}
-                src={userImage}
+                alt={displayName}
+                src={displayLogo}
                 className="rounded-[6px]"
               />
             )}
             <AvatarFacehash
-              name={userName}
+              name={avatarSeed}
               size={27}
               className="rounded-[6px]"
             />
           </Avatar>
           <div className="flex items-center gap-[7px] group-data-[collapsible=icon]:hidden">
-            <span className="text-[18px] font-semibold leading-[150%] text-foreground">
-              {workspaceLabel}
+            <span className="text-[18px] font-semibold leading-[150%] text-foreground truncate max-w-[140px]">
+              {displayLabel}
             </span>
-            <ArrowDownIcon className="h-4 w-4 text-text-tertiary transition-colors group-hover:text-foreground" />
+            <ArrowDownIcon className="h-4 w-4 shrink-0 text-text-tertiary transition-colors group-hover:text-foreground" />
           </div>
         </button>
       </AccountDropdown>

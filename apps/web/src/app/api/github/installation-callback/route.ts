@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { auth } from '@bounty/auth/server';
-import { db, account } from '@bounty/db';
+import { db, account, member, organization } from '@bounty/db';
 import { githubInstallation } from '@bounty/db/src/schema/github-installation';
 import { getGithubAppManager } from '@bounty/api/driver/github-app';
 import { eq, and } from 'drizzle-orm';
@@ -23,7 +23,9 @@ export async function GET(request: NextRequest) {
     // Validate installationId is numeric
     const parsedInstallationId = Number(installationId);
     if (!Number.isFinite(parsedInstallationId) || parsedInstallationId <= 0) {
-      console.error(`[Installation Callback] Invalid installation_id: ${installationId}`);
+      console.error(
+        `[Installation Callback] Invalid installation_id: ${installationId}`
+      );
       return NextResponse.json(
         { error: 'Invalid installation_id parameter' },
         { status: 400 }
@@ -45,10 +47,37 @@ export async function GET(request: NextRequest) {
 
       if (githubAccount) {
         const githubApp = getGithubAppManager();
-        
+        // Use session's active org for installation scoping.
+        // Fall back to user's personal team if no active org is set.
+        let activeOrgId = session.session?.activeOrganizationId ?? undefined;
+        if (!activeOrgId) {
+          const [personalTeam] = await db
+            .select({ organizationId: member.organizationId })
+            .from(member)
+            .innerJoin(organization, eq(organization.id, member.organizationId))
+            .where(
+              and(
+                eq(member.userId, session.user.id),
+                eq(organization.isPersonal, true)
+              )
+            )
+            .limit(1);
+          activeOrgId = personalTeam?.organizationId;
+        }
+
+        if (!activeOrgId) {
+          console.error(
+            `[Installation Callback] No active org and no personal team found for user ${session.user.id}`
+          );
+          return NextResponse.redirect(
+            new URL('/integrations?error=no_team', request.url)
+          );
+        }
+
         // Fetch installation details from GitHub to verify ownership
-        const installation = await githubApp.getInstallation(parsedInstallationId);
-        
+        const installation =
+          await githubApp.getInstallation(parsedInstallationId);
+
         // Verify that the installation account matches the user's GitHub account
         // For user installations, account.login should match the user's GitHub username
         // For org installations, we verify the user has access via the webhook (already linked)
@@ -56,7 +85,9 @@ export async function GET(request: NextRequest) {
         const [existingInstallation] = await db
           .select()
           .from(githubInstallation)
-          .where(eq(githubInstallation.githubInstallationId, parsedInstallationId))
+          .where(
+            eq(githubInstallation.githubInstallationId, parsedInstallationId)
+          )
           .limit(1);
 
         // Only link if:
@@ -64,39 +95,55 @@ export async function GET(request: NextRequest) {
         // 2. Installation exists but isn't linked to any user, OR
         // 3. Installation exists and is already linked to this user (update metadata)
         // We don't re-link installations that belong to other users
-        if (!existingInstallation || !existingInstallation.githubAccountId || existingInstallation.githubAccountId === githubAccount.id) {
-          const repos = await githubApp.getInstallationRepositories(parsedInstallationId);
+        if (
+          !(existingInstallation && existingInstallation.githubAccountId) ||
+          existingInstallation.githubAccountId === githubAccount.id
+        ) {
+          const repos =
+            await githubApp.getInstallationRepositories(parsedInstallationId);
 
-          await db.insert(githubInstallation).values({
-            githubInstallationId: parsedInstallationId,
-            githubAccountId: githubAccount.id,
-            accountLogin: installation.account.login,
-            accountType: installation.account.type,
-            accountAvatarUrl: installation.account.avatar_url,
-            repositoryIds: repos.repositories.map((r) => String(r.id)),
-          }).onConflictDoUpdate({
-            target: githubInstallation.githubInstallationId,
-            set: {
-              // Only update githubAccountId if it's null or matches current user
-              githubAccountId: existingInstallation?.githubAccountId === githubAccount.id || !existingInstallation?.githubAccountId 
-                ? githubAccount.id 
-                : existingInstallation.githubAccountId,
+          await db
+            .insert(githubInstallation)
+            .values({
+              githubInstallationId: parsedInstallationId,
+              githubAccountId: githubAccount.id,
               accountLogin: installation.account.login,
               accountType: installation.account.type,
               accountAvatarUrl: installation.account.avatar_url,
               repositoryIds: repos.repositories.map((r) => String(r.id)),
-              updatedAt: new Date(),
-            },
-          });
+              organizationId: activeOrgId,
+            })
+            .onConflictDoUpdate({
+              target: githubInstallation.githubInstallationId,
+              set: {
+                // Only update githubAccountId if it's null or matches current user
+                githubAccountId:
+                  existingInstallation?.githubAccountId === githubAccount.id ||
+                  !existingInstallation?.githubAccountId
+                    ? githubAccount.id
+                    : existingInstallation.githubAccountId,
+                accountLogin: installation.account.login,
+                accountType: installation.account.type,
+                accountAvatarUrl: installation.account.avatar_url,
+                repositoryIds: repos.repositories.map((r) => String(r.id)),
+                organizationId: activeOrgId,
+                updatedAt: new Date(),
+              },
+            });
         } else {
           // Installation exists and is linked to a different user
           // This shouldn't happen in normal flow, but log it for debugging
-          console.warn(`[Installation Callback] Installation ${installationId} is already linked to a different account`);
+          console.warn(
+            `[Installation Callback] Installation ${installationId} is already linked to a different account`
+          );
         }
       }
     } catch (error) {
       // Log error but don't fail the redirect
-      console.error('[Installation Callback] Failed to link installation:', error);
+      console.error(
+        '[Installation Callback] Failed to link installation:',
+        error
+      );
     }
   }
 

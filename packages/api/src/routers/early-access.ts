@@ -1,6 +1,6 @@
 import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
 import { randomInt, randomBytes } from 'node:crypto';
 
@@ -27,6 +27,8 @@ import {
   waitlist,
   bounty,
   userProfile,
+  organization,
+  member,
 } from '@bounty/db';
 import {
   AlphaAccessGranted,
@@ -209,7 +211,10 @@ export const earlyAccessRouter = router({
 
         const entriesGrantedAccess = await db.query.waitlist.findMany({
           where: (fields, { eq, and, isNotNull }) =>
-            and(isNotNull(fields.accessToken), isNotNull(fields.accessGrantedAt)),
+            and(
+              isNotNull(fields.accessToken),
+              isNotNull(fields.accessGrantedAt)
+            ),
         });
         const totalGrantedAccess = entriesGrantedAccess.length;
 
@@ -890,6 +895,31 @@ export const earlyAccessRouter = router({
         let bountyId: string | null = null;
         if (entry.bountyTitle && entry.bountyAmount) {
           try {
+            // Look up the user's personal team to scope the bounty
+            const personalTeam = await db
+              .select({ organizationId: member.organizationId })
+              .from(member)
+              .innerJoin(
+                organization,
+                eq(organization.id, member.organizationId)
+              )
+              .where(
+                and(
+                  eq(member.userId, userId),
+                  eq(organization.isPersonal, true)
+                )
+              )
+              .limit(1);
+
+            const organizationId = personalTeam[0]?.organizationId;
+            if (!organizationId) {
+              warn(
+                '[linkUserToWaitlist] No personal team found for user:',
+                userId,
+                '— bounty will be created without organizationId'
+              );
+            }
+
             const [newBounty] = await db
               .insert(bounty)
               .values({
@@ -900,6 +930,7 @@ export const earlyAccessRouter = router({
                 status: 'draft',
                 issueUrl: entry.bountyGithubIssueUrl ?? undefined,
                 createdById: userId,
+                organizationId: organizationId ?? undefined,
                 createdAt: new Date(),
                 updatedAt: new Date(),
               })

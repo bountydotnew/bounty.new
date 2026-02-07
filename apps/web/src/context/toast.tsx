@@ -21,6 +21,7 @@ const MESSAGE_BY_REASON: Record<ReasonCode, string> = {
   banned: 'Your account is suspended. Contact support.',
   plan_required: 'An upgraded plan is required to use this feature.',
   forbidden: "You don't have permission to perform this action.",
+  no_active_org: 'Please select a team to continue.',
 };
 
 const dedupe = new Map<string, number>();
@@ -39,7 +40,7 @@ export function showAppErrorToast(
 
   const message =
     opts?.messageOverride || (reason ? MESSAGE_BY_REASON[reason] : undefined);
-  
+
   toastManager.add({
     title: message || 'Something went wrong. Please try again.',
     type: 'error',

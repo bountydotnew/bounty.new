@@ -7,11 +7,14 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
 import { useBilling } from '@/hooks/use-billing';
 import { cn } from '@bounty/ui';
-import { LogOut, RotateCcw } from 'lucide-react';
+import { Check, LogOut, Plus, RotateCcw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { toast } from 'sonner';
@@ -23,16 +26,18 @@ import type {
 import { AccountSwitcher } from '@/components/auth/account-switcher';
 import { SwitchUsersIcon } from '@bounty/ui/components/icons/huge/switch-users';
 import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear';
-// TODO: Re-enable when workspace switching is implemented
-// import { SwitchWorkspaceIcon } from '@bounty/ui/components/icons/huge/switch-workspace';
-// TODO: Re-enable when member management is implemented
-// import { ManageUsersWorkspaceIcon } from '@bounty/ui/components/icons/huge/manage-users-workspace';
+import { SwitchWorkspaceIcon } from '@bounty/ui/components/icons/huge/switch-workspace';
 import { BillingSettingsIcon } from '@bounty/ui/components/icons/huge/billing-settings';
-// TODO: Re-enable when workspace switching is implemented
-// import { DropdownIcon } from '@bounty/ui';
+import { DropdownIcon } from '@bounty/ui';
 import { Feedback } from '@bounty/ui';
 import { UserIcon } from '@bounty/ui';
 import { useFeedback } from '@/components/feedback-context';
+import { useActiveOrg } from '@/hooks/use-active-org';
+import {
+  Avatar,
+  AvatarFacehash,
+  AvatarImage,
+} from '@bounty/ui/components/avatar';
 import { useUser } from '@/context/user-context';
 import { useState, useTransition } from 'react';
 import { PricingDialog } from '@/components/billing/pricing-dialog';
@@ -141,6 +146,141 @@ function useResetOnboarding() {
   }, [mutation]);
 
   return { handleResetOnboarding, pending: pending || mutation.isPending };
+}
+
+// Team switcher submenu (inside the account dropdown)
+function TeamSwitcherSubmenu({ onClose }: { onClose: () => void }) {
+  const { activeOrg, orgs, switchOrg, isLoading } = useActiveOrg();
+  const [isSwitching, setSwitching] = React.useState(false);
+
+  const handleSwitch = React.useCallback(
+    async (orgId: string) => {
+      if (orgId === activeOrg?.id) {
+        onClose();
+        return;
+      }
+      setSwitching(true);
+      try {
+        await switchOrg(orgId);
+        onClose();
+      } catch (err) {
+        console.error('Failed to switch team:', err);
+        toast.error('Failed to switch team');
+      } finally {
+        setSwitching(false);
+      }
+    },
+    [activeOrg?.id, switchOrg, onClose]
+  );
+
+  const handleCreateTeam = React.useCallback(async () => {
+    onClose();
+    const name = window.prompt('Team name:');
+    if (!name?.trim()) return;
+
+    try {
+      const result = await authClient.organization.create({
+        name: name.trim(),
+        slug: name
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, ''),
+      });
+
+      if (result.error) {
+        toast.error(result.error.message ?? 'Failed to create team');
+        return;
+      }
+
+      if (result.data?.id) {
+        await switchOrg(result.data.id);
+        toast.success(`Team "${name.trim()}" created`);
+      }
+    } catch (err) {
+      console.error('Failed to create team:', err);
+      toast.error('Failed to create team');
+    }
+  }, [switchOrg, onClose]);
+
+  return (
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger className="flex items-center justify-between rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover">
+        <div className="flex items-center gap-2.25">
+          <SwitchWorkspaceIcon className="h-[19px] w-[19px]" />
+          <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
+            Switch workspace
+          </span>
+        </div>
+      </DropdownMenuSubTrigger>
+      <DropdownMenuSubContent className="w-64 rounded-[15px] bg-surface-1 border border-border-subtle">
+        <div className="px-1 py-1">
+          <div className="px-3 py-1.5 text-xs font-medium text-text-tertiary uppercase tracking-wider">
+            Teams
+          </div>
+          {isLoading ? (
+            <div className="px-3 py-2 text-[14px] text-text-tertiary">
+              Loading...
+            </div>
+          ) : (
+            orgs.map((org) => (
+              <DropdownMenuItem
+                key={org.id}
+                className={cn(
+                  'flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover cursor-pointer',
+                  isSwitching && 'opacity-50 pointer-events-none'
+                )}
+                onClick={() => handleSwitch(org.id)}
+              >
+                <Avatar className="h-6 w-6 rounded-[5px] shrink-0">
+                  {org.logo && (
+                    <AvatarImage
+                      alt={org.name}
+                      src={org.logo}
+                      className="rounded-[5px]"
+                    />
+                  )}
+                  <AvatarFacehash
+                    name={org.slug}
+                    size={24}
+                    className="rounded-[5px]"
+                  />
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[15px] font-medium leading-tight truncate">
+                    {org.isPersonal
+                      ? org.name.split("'s team")[0] || org.name
+                      : org.name}
+                  </div>
+                  <div className="text-[12px] text-text-tertiary">
+                    {org.isPersonal
+                      ? 'Personal'
+                      : `${org.memberCount} ${org.memberCount === 1 ? 'member' : 'members'}`}
+                  </div>
+                </div>
+                {org.id === activeOrg?.id && (
+                  <Check className="h-4 w-4 shrink-0 text-brand-primary" />
+                )}
+              </DropdownMenuItem>
+            ))
+          )}
+        </div>
+        <DropdownMenuSeparator />
+        <div className="px-1 py-1">
+          <DropdownMenuItem
+            className="flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-text-tertiary transition-colors hover:text-foreground focus:bg-surface-hover cursor-pointer"
+            onClick={handleCreateTeam}
+          >
+            <div className="flex h-6 w-6 items-center justify-center rounded-[5px] border border-border-subtle border-dashed">
+              <Plus className="h-3.5 w-3.5" />
+            </div>
+            <span className="text-[15px] font-medium">Create team</span>
+          </DropdownMenuItem>
+        </div>
+      </DropdownMenuSubContent>
+    </DropdownMenuSub>
+  );
 }
 
 // Main component
@@ -275,31 +415,7 @@ export function AccountDropdown({
                 Upgrade
               </span>
             </DropdownMenuItem>
-            {/* TODO: Implement workspace switching
-            <DropdownMenuItem
-              className="flex items-center justify-between rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"
-              onClick={() => setMenuOpen(false)}
-            >
-              <div className="flex items-center gap-2.25">
-                <SwitchWorkspaceIcon className="h-[19px] w-[19px]" />
-                <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
-                  Switch workspace
-                </span>
-              </div>
-              <DropdownIcon className="h-[19px] w-[19px] -rotate-90" />
-            </DropdownMenuItem>
-            */}
-            {/* TODO: Implement member management
-            <DropdownMenuItem
-              className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"
-              onClick={() => setMenuOpen(false)}
-            >
-              <ManageUsersWorkspaceIcon className="h-[19px] w-[19px]" />
-              <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
-                Manage members
-              </span>
-            </DropdownMenuItem>
-            */}
+            <TeamSwitcherSubmenu onClose={() => setMenuOpen(false)} />
             <DropdownMenuItem
               className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"
               onClick={() => {
