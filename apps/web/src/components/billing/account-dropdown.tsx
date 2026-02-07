@@ -148,7 +148,6 @@ export function AccountDropdown({
   user,
   children,
   onOpenChange: externalOnOpenChange,
-  onUpgradeClick,
 }: AccountDropdownProps & {
   children?: React.ReactNode;
   onOpenChange?: (open: boolean) => void;
@@ -167,7 +166,7 @@ export function AccountDropdown({
   );
 
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
-  const handleUpgrade = async () => {
+  const handleUpgrade = () => {
     if (!session?.user) {
       toast.error('Please sign in to upgrade your account.');
       return;
