@@ -42,86 +42,123 @@ export const cancellationRequestStatusEnum = pgEnum('cancellation_request_status
   'withdrawn',
 ]);
 
-export const bounty = pgTable('bounty', {
-  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-  title: text('title').notNull(),
-  description: text('description').notNull(),
-  amount: decimal('amount', { precision: 15, scale: 2 }).notNull(),
-  currency: text('currency').notNull().default('USD'),
-  status: bountyStatusEnum('status').notNull().default('draft'),
-  deadline: timestamp('deadline'),
-  tags: text('tags').array(),
-  repositoryUrl: text('repository_url'),
-  issueUrl: text('issue_url'),
-  // GitHub App integration fields
-  githubIssueNumber: integer('github_issue_number'),
-  githubInstallationId: integer('github_installation_id'),
-  githubRepoOwner: text('github_repo_owner'),
-  githubRepoName: text('github_repo_name'),
-  githubCommentId: bigint('github_comment_id', { mode: 'number' }), // For editing bot comments
-  // Linear integration fields
-  linearIssueId: text('linear_issue_id').unique(),
-  linearIssueIdentifier: text('linear_issue_identifier'), // e.g., "ENG-123"
-  linearIssueUrl: text('linear_issue_url'),
-  linearAccountId: text('linear_account_id'), // Reference to linear_account.id
-  linearCommentId: text('linear_comment_id'), // For editing bot comments
-  submissionKeyword: text('submission_keyword').default('@bountydotnew submit'),
-  createdById: text('created_by_id')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  assignedToId: text('assigned_to_id').references(() => user.id, {
-    onDelete: 'set null',
-  }),
-  isFeatured: boolean('is_featured').default(false).notNull(),
-  // Stripe payment fields
-  stripePaymentIntentId: text('stripe_payment_intent_id'),
-  stripeCheckoutSessionId: text('stripe_checkout_session_id'),
-  stripeTransferId: text('stripe_transfer_id'),
-  paymentStatus: paymentStatusEnum('payment_status').default('pending'),
-  createdAt: timestamp('created_at').notNull().default(sql`now()`),
-  updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
-});
+export const bounty = pgTable(
+  'bounty',
+  {
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    title: text('title').notNull(),
+    description: text('description').notNull(),
+    amount: decimal('amount', { precision: 15, scale: 2 }).notNull(),
+    currency: text('currency').notNull().default('USD'),
+    status: bountyStatusEnum('status').notNull().default('draft'),
+    deadline: timestamp('deadline'),
+    tags: text('tags').array(),
+    repositoryUrl: text('repository_url'),
+    issueUrl: text('issue_url'),
+    // GitHub App integration fields
+    githubIssueNumber: integer('github_issue_number'),
+    githubInstallationId: integer('github_installation_id'),
+    githubRepoOwner: text('github_repo_owner'),
+    githubRepoName: text('github_repo_name'),
+    githubCommentId: bigint('github_comment_id', { mode: 'number' }), // For editing bot comments
+    // Linear integration fields
+    linearIssueId: text('linear_issue_id').unique(),
+    linearIssueIdentifier: text('linear_issue_identifier'), // e.g., "ENG-123"
+    linearIssueUrl: text('linear_issue_url'),
+    linearAccountId: text('linear_account_id'), // Reference to linear_account.id
+    linearCommentId: text('linear_comment_id'), // For editing bot comments
+    submissionKeyword: text('submission_keyword').default('@bountydotnew submit'),
+    createdById: text('created_by_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    assignedToId: text('assigned_to_id').references(() => user.id, {
+      onDelete: 'set null',
+    }),
+    isFeatured: boolean('is_featured').default(false).notNull(),
+    // Stripe payment fields
+    stripePaymentIntentId: text('stripe_payment_intent_id'),
+    stripeCheckoutSessionId: text('stripe_checkout_session_id'),
+    stripeTransferId: text('stripe_transfer_id'),
+    paymentStatus: paymentStatusEnum('payment_status').default('pending'),
+    createdAt: timestamp('created_at').notNull().default(sql`now()`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
+  },
+  (t) => [
+    // Speeds up filtering by status (fetchAllBounties, getBountyStats, duplicate checks)
+    index('bounty_status_idx').on(t.status),
+    // Speeds up "my bounties" queries (getBountiesByUserId, getHighlights, getMonthlySpend)
+    index('bounty_created_by_id_idx').on(t.createdById),
+    // Speeds up ORDER BY created_at DESC which is used in nearly all listing queries
+    index('bounty_created_at_idx').on(t.createdAt),
+    // Composite: status filter + date sort (the most common listing query pattern)
+    index('bounty_status_created_at_idx').on(t.status, t.createdAt),
+    // Composite: user's bounties sorted by date (getBountiesByUserId, getHighlights)
+    index('bounty_created_by_id_created_at_idx').on(t.createdById, t.createdAt),
+    // GIN index for array overlap queries on tags (fetchAllBounties tag filtering)
+    index('bounty_tags_idx').using('gin', t.tags),
+  ]
+);
 
-export const submission = pgTable('submission', {
-  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-  bountyId: text('bounty_id')
-    .notNull()
-    .references(() => bounty.id, { onDelete: 'cascade' }),
-  contributorId: text('contributor_id')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  description: text('description').notNull(),
-  deliverableUrl: text('deliverable_url').notNull(),
-  pullRequestUrl: text('pull_request_url'),
-  // GitHub PR integration fields
-  githubPullRequestNumber: integer('github_pull_request_number'),
-  githubPullRequestId: bigint('github_pull_request_id', { mode: 'number' }),
-  githubCommentId: bigint('github_comment_id', { mode: 'number' }),
-  githubUsername: text('github_username'),
-  githubHeadSha: text('github_head_sha'), // For tracking the commit
-  status: submissionStatusEnum('status').notNull().default('pending'),
-  reviewNotes: text('review_notes'),
-  submittedAt: timestamp('submitted_at').notNull().default(sql`now()`),
-  reviewedAt: timestamp('reviewed_at'),
-  createdAt: timestamp('created_at').notNull().default(sql`now()`),
-  updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
-});
+export const submission = pgTable(
+  'submission',
+  {
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    bountyId: text('bounty_id')
+      .notNull()
+      .references(() => bounty.id, { onDelete: 'cascade' }),
+    contributorId: text('contributor_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    description: text('description').notNull(),
+    deliverableUrl: text('deliverable_url').notNull(),
+    pullRequestUrl: text('pull_request_url'),
+    // GitHub PR integration fields
+    githubPullRequestNumber: integer('github_pull_request_number'),
+    githubPullRequestId: bigint('github_pull_request_id', { mode: 'number' }),
+    githubCommentId: bigint('github_comment_id', { mode: 'number' }),
+    githubUsername: text('github_username'),
+    githubHeadSha: text('github_head_sha'), // For tracking the commit
+    status: submissionStatusEnum('status').notNull().default('pending'),
+    reviewNotes: text('review_notes'),
+    submittedAt: timestamp('submitted_at').notNull().default(sql`now()`),
+    reviewedAt: timestamp('reviewed_at'),
+    createdAt: timestamp('created_at').notNull().default(sql`now()`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
+  },
+  (t) => [
+    // Speeds up getBountyStatsMany count queries and submission lookups per bounty
+    index('submission_bounty_id_idx').on(t.bountyId),
+    // Speeds up lookups by contributor (user's submissions)
+    index('submission_contributor_id_idx').on(t.contributorId),
+    // Speeds up filtering submissions by status
+    index('submission_status_idx').on(t.status),
+  ]
+);
 
-export const bountyApplication = pgTable('bounty_application', {
-  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-  bountyId: text('bounty_id')
-    .notNull()
-    .references(() => bounty.id, { onDelete: 'cascade' }),
-  applicantId: text('applicant_id')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  message: text('message').notNull(),
-  isAccepted: boolean('is_accepted').default(false),
-  appliedAt: timestamp('applied_at').notNull().default(sql`now()`),
-  respondedAt: timestamp('responded_at'),
-  createdAt: timestamp('created_at').notNull().default(sql`now()`),
-  updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
-});
+export const bountyApplication = pgTable(
+  'bounty_application',
+  {
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    bountyId: text('bounty_id')
+      .notNull()
+      .references(() => bounty.id, { onDelete: 'cascade' }),
+    applicantId: text('applicant_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    message: text('message').notNull(),
+    isAccepted: boolean('is_accepted').default(false),
+    appliedAt: timestamp('applied_at').notNull().default(sql`now()`),
+    respondedAt: timestamp('responded_at'),
+    createdAt: timestamp('created_at').notNull().default(sql`now()`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
+  },
+  (t) => [
+    // Speeds up listing applications per bounty
+    index('bounty_application_bounty_id_idx').on(t.bountyId),
+    // Speeds up duplicate application check (WHERE bounty_id = ? AND applicant_id = ?)
+    uniqueIndex('bounty_application_unique_idx').on(t.bountyId, t.applicantId),
+  ]
+);
 
 export const bountyVote = pgTable(
   'bounty_vote',
@@ -137,7 +174,7 @@ export const bountyVote = pgTable(
   },
   (t) => [
     uniqueIndex('bounty_vote_unique_idx').on(t.bountyId, t.userId),
-    index('bounty_vote_bounty_id_idx').on(t.bountyId),
+    // bounty_vote_bounty_id_idx removed: redundant with bounty_vote_unique_idx (leading column)
     index('bounty_vote_user_id_idx').on(t.userId),
   ]
 );
@@ -183,7 +220,7 @@ export const bountyCommentLike = pgTable(
   },
   (t) => [
     uniqueIndex('bounty_comment_like_unique_idx').on(t.commentId, t.userId),
-    index('bounty_comment_like_comment_id_idx').on(t.commentId),
+    // bounty_comment_like_comment_id_idx removed: redundant with unique_idx (leading column)
     index('bounty_comment_like_user_id_idx').on(t.userId),
   ]
 );
@@ -202,7 +239,7 @@ export const bountyBookmark = pgTable(
   },
   (t) => [
     uniqueIndex('bounty_bookmark_unique_idx').on(t.bountyId, t.userId),
-    index('bounty_bookmark_bounty_id_idx').on(t.bountyId),
+    // bounty_bookmark_bounty_id_idx removed: redundant with unique_idx (leading column)
     index('bounty_bookmark_user_id_idx').on(t.userId),
   ]
 );

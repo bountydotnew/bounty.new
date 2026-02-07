@@ -2,10 +2,12 @@ import { sql } from 'drizzle-orm';
 import {
   boolean,
   decimal,
+  index,
   integer,
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { user } from './auth';
 import { bounty } from './bounties';
@@ -59,19 +61,28 @@ export const userReputation = pgTable('user_reputation', {
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
 });
 
-export const userRating = pgTable('user_rating', {
-  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-  ratedUserId: text('rated_user_id')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  raterUserId: text('rater_user_id')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  bountyId: text('bounty_id')
-    .notNull()
-    .references(() => bounty.id, { onDelete: 'cascade' }),
-  rating: integer('rating').notNull(),
-  comment: text('comment'),
-  createdAt: timestamp('created_at').notNull().default(sql`now()`),
-  updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
-});
+export const userRating = pgTable(
+  'user_rating',
+  {
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    ratedUserId: text('rated_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    raterUserId: text('rater_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    bountyId: text('bounty_id')
+      .notNull()
+      .references(() => bounty.id, { onDelete: 'cascade' }),
+    rating: integer('rating').notNull(),
+    comment: text('comment'),
+    createdAt: timestamp('created_at').notNull().default(sql`now()`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
+  },
+  (t) => [
+    // Speeds up rating lookups for a user's profile
+    index('user_rating_rated_user_id_idx').on(t.ratedUserId),
+    // Prevents duplicate ratings per user+bounty pair
+    uniqueIndex('user_rating_unique_idx').on(t.ratedUserId, t.raterUserId, t.bountyId),
+  ]
+);

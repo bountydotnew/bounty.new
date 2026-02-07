@@ -50,9 +50,11 @@ export const notification = pgTable(
   },
   (t) => [
     index('notification_user_id_idx').on(t.userId),
-    index('notification_read_idx').on(t.read),
-    index('notification_type_idx').on(t.type),
-    index('notification_created_at_idx').on(t.createdAt),
+    // Composite: covers getNotificationsForUser (unread) and getUnreadNotificationCount
+    // WHERE user_id = ? AND read = false ORDER BY created_at DESC
+    index('notification_user_unread_idx').on(t.userId, t.read, t.createdAt),
+    // notification_read_idx, notification_type_idx, notification_created_at_idx removed:
+    // low-cardinality single-column indexes with 0 scans; replaced by composite above
   ]
 );
 

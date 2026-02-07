@@ -733,51 +733,55 @@ export const bountiesRouter = router({
           conditions.push(eq(bounty.createdById, input.creatorId));
         }
 
-        const results = await db
-          .select({
-            id: bounty.id,
-            title: bounty.title,
-            description: bounty.description,
-            amount: bounty.amount,
-            currency: bounty.currency,
-            status: bounty.status,
-            deadline: bounty.deadline,
-            tags: bounty.tags,
-            repositoryUrl: bounty.repositoryUrl,
-            issueUrl: bounty.issueUrl,
-            isFeatured: bounty.isFeatured,
-            paymentStatus: bounty.paymentStatus,
-            createdAt: bounty.createdAt,
-            updatedAt: bounty.updatedAt,
-            creator: {
-              id: user.id,
-              name: user.name,
-              image: user.image,
-            },
-          })
-          .from(bounty)
-          .innerJoin(user, eq(bounty.createdById, user.id))
-          .where(conditions.length > 0 ? and(...conditions) : undefined)
-          .orderBy(
-            input.sortBy === 'amount'
-              ? input.sortOrder === 'asc'
-                ? asc(bounty.amount)
-                : desc(bounty.amount)
-              : input.sortBy === 'created_at'
-                ? input.sortOrder === 'asc'
-                  ? asc(bounty.createdAt)
-                  : desc(bounty.createdAt)
-                : input.sortOrder === 'asc'
-                  ? asc(bounty.createdAt)
-                  : desc(bounty.createdAt)
-          )
-          .limit(input.limit)
-          .offset(offset);
+        const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-        const countResult = await db
-          .select({ count: sql<number>`count(*)` })
-          .from(bounty)
-          .where(conditions.length > 0 ? and(...conditions) : undefined);
+        // Run data query and count query in parallel (independent queries)
+        const [results, countResult] = await Promise.all([
+          db
+            .select({
+              id: bounty.id,
+              title: bounty.title,
+              description: bounty.description,
+              amount: bounty.amount,
+              currency: bounty.currency,
+              status: bounty.status,
+              deadline: bounty.deadline,
+              tags: bounty.tags,
+              repositoryUrl: bounty.repositoryUrl,
+              issueUrl: bounty.issueUrl,
+              isFeatured: bounty.isFeatured,
+              paymentStatus: bounty.paymentStatus,
+              createdAt: bounty.createdAt,
+              updatedAt: bounty.updatedAt,
+              creator: {
+                id: user.id,
+                name: user.name,
+                image: user.image,
+              },
+            })
+            .from(bounty)
+            .innerJoin(user, eq(bounty.createdById, user.id))
+            .where(whereClause)
+            .orderBy(
+              input.sortBy === 'amount'
+                ? input.sortOrder === 'asc'
+                  ? asc(bounty.amount)
+                  : desc(bounty.amount)
+                : input.sortBy === 'created_at'
+                  ? input.sortOrder === 'asc'
+                    ? asc(bounty.createdAt)
+                    : desc(bounty.createdAt)
+                  : input.sortOrder === 'asc'
+                    ? asc(bounty.createdAt)
+                    : desc(bounty.createdAt)
+            )
+            .limit(input.limit)
+            .offset(offset),
+          db
+            .select({ count: sql<number>`count(*)` })
+            .from(bounty)
+            .where(whereClause),
+        ]);
 
         const count = countResult[0]?.count ?? 0;
 
@@ -1577,73 +1581,77 @@ export const bountiesRouter = router({
     .query(async ({ ctx, input }) => {
       try {
         const ids = input.bountyIds;
-        const commentRows = await db
-          .select({
-            bountyId: bountyComment.bountyId,
-            count: sql<number>`count(*)::int`,
-          })
-          .from(bountyComment)
-          .where(inArray(bountyComment.bountyId, ids))
-          .groupBy(bountyComment.bountyId);
 
-        const voteRows = await db
-          .select({
-            bountyId: bountyVote.bountyId,
-            count: sql<number>`count(*)::int`,
-          })
-          .from(bountyVote)
-          .where(inArray(bountyVote.bountyId, ids))
-          .groupBy(bountyVote.bountyId);
-
-        const submissionRows = await db
-          .select({
-            bountyId: submission.bountyId,
-            count: sql<number>`count(*)::int`,
-          })
-          .from(submission)
-          .where(inArray(submission.bountyId, ids))
-          .groupBy(submission.bountyId);
+        // Run all independent count queries in parallel (3 queries -> 1 round-trip)
+        const [commentRows, voteRows, submissionRows] = await Promise.all([
+          db
+            .select({
+              bountyId: bountyComment.bountyId,
+              count: sql<number>`count(*)::int`,
+            })
+            .from(bountyComment)
+            .where(inArray(bountyComment.bountyId, ids))
+            .groupBy(bountyComment.bountyId),
+          db
+            .select({
+              bountyId: bountyVote.bountyId,
+              count: sql<number>`count(*)::int`,
+            })
+            .from(bountyVote)
+            .where(inArray(bountyVote.bountyId, ids))
+            .groupBy(bountyVote.bountyId),
+          db
+            .select({
+              bountyId: submission.bountyId,
+              count: sql<number>`count(*)::int`,
+            })
+            .from(submission)
+            .where(inArray(submission.bountyId, ids))
+            .groupBy(submission.bountyId),
+        ]);
 
         let userVotes: { bountyId: string }[] = [];
         let userBookmarks: { bountyId: string }[] = [];
 
         if (ctx.session?.user?.id) {
-          userVotes = await db
-            .select({ bountyId: bountyVote.bountyId })
-            .from(bountyVote)
-            .where(
-              and(
-                eq(bountyVote.userId, ctx.session.user.id),
-                inArray(bountyVote.bountyId, ids)
-              )
-            );
-
-          userBookmarks = await db
-            .select({ bountyId: bountyBookmark.bountyId })
-            .from(bountyBookmark)
-            .where(
-              and(
-                eq(bountyBookmark.userId, ctx.session.user.id),
-                inArray(bountyBookmark.bountyId, ids)
-              )
-            );
+          // Run both user-specific queries in parallel (2 queries -> 1 round-trip)
+          [userVotes, userBookmarks] = await Promise.all([
+            db
+              .select({ bountyId: bountyVote.bountyId })
+              .from(bountyVote)
+              .where(
+                and(
+                  eq(bountyVote.userId, ctx.session.user.id),
+                  inArray(bountyVote.bountyId, ids)
+                )
+              ),
+            db
+              .select({ bountyId: bountyBookmark.bountyId })
+              .from(bountyBookmark)
+              .where(
+                and(
+                  eq(bountyBookmark.userId, ctx.session.user.id),
+                  inArray(bountyBookmark.bountyId, ids)
+                )
+              ),
+          ]);
         }
 
-        const out = ids.map((id) => {
-          const c = commentRows.find((r) => r.bountyId === id)?.count ?? 0;
-          const v = voteRows.find((r) => r.bountyId === id)?.count ?? 0;
-          const s = submissionRows.find((r) => r.bountyId === id)?.count ?? 0;
-          const isVoted = userVotes.some((r) => r.bountyId === id);
-          const bookmarked = userBookmarks.some((r) => r.bountyId === id);
-          return {
-            bountyId: id,
-            commentCount: c,
-            voteCount: v,
-            submissionCount: s,
-            isVoted,
-            bookmarked,
-          };
-        });
+        // Build lookup maps for O(1) access instead of O(n) .find() per bounty
+        const commentMap = new Map(commentRows.map((r) => [r.bountyId, r.count]));
+        const voteMap = new Map(voteRows.map((r) => [r.bountyId, r.count]));
+        const submissionMap = new Map(submissionRows.map((r) => [r.bountyId, r.count]));
+        const votedSet = new Set(userVotes.map((r) => r.bountyId));
+        const bookmarkedSet = new Set(userBookmarks.map((r) => r.bountyId));
+
+        const out = ids.map((id) => ({
+          bountyId: id,
+          commentCount: commentMap.get(id) ?? 0,
+          voteCount: voteMap.get(id) ?? 0,
+          submissionCount: submissionMap.get(id) ?? 0,
+          isVoted: votedSet.has(id),
+          bookmarked: bookmarkedSet.has(id),
+        }));
 
         return { stats: out };
       } catch (error) {
