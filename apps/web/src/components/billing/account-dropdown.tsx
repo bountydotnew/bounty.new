@@ -18,7 +18,6 @@ import { Check, LogOut, Plus, RotateCcw } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import * as React from 'react';
 import { toast } from 'sonner';
-import { LINKS } from '@/constants';
 import type {
   AccountDropdownProps,
   UserDisplayData,
@@ -28,7 +27,6 @@ import { SwitchUsersIcon } from '@bounty/ui/components/icons/huge/switch-users';
 import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear';
 import { SwitchWorkspaceIcon } from '@bounty/ui/components/icons/huge/switch-workspace';
 import { BillingSettingsIcon } from '@bounty/ui/components/icons/huge/billing-settings';
-import { DropdownIcon } from '@bounty/ui';
 import { Feedback } from '@bounty/ui';
 import { UserIcon } from '@bounty/ui';
 
@@ -494,7 +492,6 @@ export function AccountDropdown({
   user,
   children,
   onOpenChange: externalOnOpenChange,
-  onUpgradeClick,
 }: AccountDropdownProps & {
   children?: React.ReactNode;
   onOpenChange?: (open: boolean) => void;
@@ -515,14 +512,6 @@ export function AccountDropdown({
   );
 
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
-  const handleUpgrade = async () => {
-    if (!session?.user) {
-      toast.error('Please sign in to upgrade your account.');
-      return;
-    }
-
-    setPricingDialogOpen(true);
-  };
 
   // Custom hooks for better separation of concerns
   const userDisplay = useUserDisplay(session?.user, user);
@@ -599,7 +588,11 @@ export function AccountDropdown({
               className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-foreground"
               onClick={() => {
                 setMenuOpen(false);
-                router.push(LINKS.SETTINGS);
+                if (activeOrgSlug) {
+                  router.push(`/${activeOrgSlug}/settings/account`);
+                } else {
+                  router.push('/dashboard');
+                }
               }}
               type="button"
             >

@@ -74,10 +74,7 @@ export function DashboardContent() {
   return (
     <>
       {/* <Onboarding /> */}
-      <Header
-        isMyBountiesLoading={state.isMyBountiesLoading}
-        myBounties={state.myBounties}
-      />
+      
 
       <div className="flex min-h-[calc(100vh-72px)] flex-col bg-background min-w-0 overflow-x-hidden">
         {/* Horizontal border line above textarea */}

@@ -19,7 +19,8 @@ import {
   router,
 } from '../trpc';
 import { member, organization } from '@bounty/db';
-import { eq, and, sql, count } from 'drizzle-orm';
+import { eq, and, sql, count, ne } from 'drizzle-orm';
+import { isReservedSlug } from '@bounty/types/auth';
 
 export const organizationRouter = router({
   /**
@@ -119,5 +120,102 @@ export const organizationRouter = router({
         },
       })),
     };
+  }),
+
+  /**
+   * Update organization slug.
+   * Only owners can update the slug.
+   */
+  updateSlug: orgOwnerProcedure
+    .input(
+      z.object({
+        slug: z
+          .string()
+          .min(2, 'Slug must be at least 2 characters')
+          .max(32, 'Slug must be at most 32 characters')
+          .regex(
+            /^[a-z0-9-]+$/,
+            'Slug can only contain lowercase letters, numbers, and hyphens'
+          )
+          .refine((val) => !val.startsWith('-'), 'Slug cannot start with a hyphen')
+          .refine((val) => !val.endsWith('-'), 'Slug cannot end with a hyphen')
+          .refine(
+            (val) => !/--/.test(val),
+            'Slug cannot contain consecutive hyphens'
+          ),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { slug } = input;
+
+      // Check if slug is reserved
+      if (isReservedSlug(slug)) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'This slug is reserved and cannot be used.',
+        });
+      }
+
+      // Check if slug is already taken by another org
+      const existing = await ctx.db
+        .select({ id: organization.id })
+        .from(organization)
+        .where(
+          and(
+            eq(organization.slug, slug),
+            ne(organization.id, ctx.org.id)
+          )
+        )
+        .then((rows) => rows[0]);
+
+      if (existing) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: 'This slug is already taken.',
+        });
+      }
+
+      // Update the slug
+      await ctx.db
+        .update(organization)
+        .set({ slug })
+        .where(eq(organization.id, ctx.org.id));
+
+      return { success: true, slug };
+    }),
+
+  /**
+   * Delete organization.
+   * Only owners can delete the organization.
+   * Personal teams cannot be deleted.
+   */
+  deleteOrg: orgOwnerProcedure.mutation(async ({ ctx }) => {
+    // Prevent deletion of personal teams
+    if (ctx.org.isPersonal) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Personal teams cannot be deleted.',
+      });
+    }
+
+    // Check member count - require confirmation for orgs with multiple members
+    const memberCount = await ctx.db
+      .select({ count: count() })
+      .from(member)
+      .where(eq(member.organizationId, ctx.org.id));
+
+    if ((memberCount[0]?.count ?? 0) > 1) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Cannot delete organization with multiple members. Remove all members first.',
+      });
+    }
+
+    // Delete the organization (cascade will handle members and invitations)
+    await ctx.db
+      .delete(organization)
+      .where(eq(organization.id, ctx.org.id));
+
+    return { success: true };
   }),
 });

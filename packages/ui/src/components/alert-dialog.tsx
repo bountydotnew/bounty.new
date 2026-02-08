@@ -26,8 +26,12 @@ function AlertDialogTrigger({
   if (asChild && !props.render && React.isValidElement(children)) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const childElement = children as React.ReactElement<any>;
-    finalRender = React.cloneElement(childElement, { children: undefined });
-    finalChildren = childElement.props.children;
+    // Apply trigger props (onClick, ref, etc.) to the child element, but preserve its children
+    finalRender = (triggerProps: any) => {
+      const { children: _ignoredChildren, ...propsToMerge } = triggerProps;
+      return React.cloneElement(childElement, propsToMerge);
+    };
+    finalChildren = undefined;
   }
   return (
     <AlertDialogPrimitive.Trigger
@@ -179,8 +183,12 @@ function AlertDialogClose({
   if (asChild && !props.render && React.isValidElement(children)) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const childElement = children as React.ReactElement<any>;
-    finalRender = React.cloneElement(childElement, { children: undefined });
-    finalChildren = childElement.props.children;
+    // Apply close props (onClick, ref, etc.) to the child element, but preserve its children
+    finalRender = (closeProps: any) => {
+      const { children: _ignoredChildren, ...propsToMerge } = closeProps;
+      return React.cloneElement(childElement, propsToMerge);
+    };
+    finalChildren = undefined;
   }
   return (
     <AlertDialogPrimitive.Close

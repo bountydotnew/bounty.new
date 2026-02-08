@@ -2,8 +2,8 @@ import type React from 'react';
 import { SidebarInset, SidebarProvider } from '@bounty/ui/components/sidebar';
 import {
   AdminAppSidebar,
-  AppSidebar,
 } from '@/components/dual-sidebar/app-sidebar';
+import { AppSidebar } from '@/components/dual-sidebar/sidebar';
 
 const Sidebar = ({
   children,

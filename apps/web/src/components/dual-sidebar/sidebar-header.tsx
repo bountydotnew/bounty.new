@@ -8,6 +8,7 @@ import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
 import { cn } from '@bounty/ui/lib/utils';
 import { CommandMenu } from '@/components/command-menu';
 import type { Bounty } from '@/types/dashboard';
+import { Button } from "@bounty/ui"
 
 interface HeaderProps {
   myBounties?: Bounty[];
@@ -87,17 +88,13 @@ export const Header = (_props: HeaderProps = {}) => {
         {/* Right side - Create Bounty button */}
         <div className="flex min-w-0 items-center">
           {/* Create Bounty Button - icon only on mobile */}
-          <button
-            className="flex items-center gap-[7px] rounded-lg bg-surface-hover px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-3"
+          <Button
+            variant="secondary"
             onClick={handleCreateBounty}
-            type="button"
             aria-label="Create new bounty"
           >
-            <Plus className="h-4 w-4 text-text-secondary md:hidden" />
-            <span className="hidden md:inline text-sm font-semibold leading-[150%] tracking-[0.01em] text-text-secondary">
-              New bounty
-            </span>
-          </button>
+            New bounty
+          </Button>
         </div>
       </header>
       {/* <CommandMenu onOpenChange={setCommandMenuOpen} open={commandMenuOpen} /> */}

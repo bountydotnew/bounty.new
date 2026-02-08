@@ -10,6 +10,7 @@ import { FeedbackOverlay } from '@/components/feedback-overlay';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { OrgSlugProvider } from '@/context/org-slug-context';
 import { OrgSyncGuard } from '@/components/auth/org-sync-guard';
+import { Header } from '@/components/dual-sidebar/sidebar-header';
 
 export const metadata: Metadata = {
   title: 'bounty.new',
@@ -55,6 +56,7 @@ export default async function OrgScopedLayout({
             <FeedbackOverlay />
             <EarlyAccessGuard>
               <Sidebar admin={false}>
+                <Header />
                 <OrgSlugProvider slug={slug}>
                   <OrgSyncGuard slug={slug}>{children}</OrgSyncGuard>
                 </OrgSlugProvider>

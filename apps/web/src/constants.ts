@@ -102,8 +102,8 @@ export const LINKS = {
   SOCIALS,
   HOME: '/',
   DASHBOARD: '/dashboard',
-  ACCOUNT: '/settings',
-  SETTINGS: '/settings/account',
+  ACCOUNT: '/settings', // NOTE: Deprecated - use org-scoped settings instead
+  SETTINGS: '/settings', // NOTE: Deprecated - use /{slug}/settings/account instead
   LOGIN: '/login',
   BOOKMARKS: '/bookmarks',
   CONTRIBUTORS: '/contributors',
