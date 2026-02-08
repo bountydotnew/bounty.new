@@ -390,7 +390,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
                     href={
                       activeOrgSlug
                         ? `/${activeOrgSlug}/integrations`
-                        : '/integrations'
+                        : '/dashboard'
                     }
                     className="flex items-center justify-center gap-2 px-4 h-[34px] rounded-full text-[15px] font-medium bg-surface-3 hover:bg-surface-hover border border-border-default hover:border-border-strong text-foreground transition-colors shrink-0"
                   >

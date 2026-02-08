@@ -31,6 +31,7 @@ import { BillingSettingsIcon } from '@bounty/ui/components/icons/huge/billing-se
 import { DropdownIcon } from '@bounty/ui';
 import { Feedback } from '@bounty/ui';
 import { UserIcon } from '@bounty/ui';
+import { DollarBillIcon } from '@bounty/ui';
 import { useFeedback } from '@/components/feedback-context';
 import { useActiveOrg } from '@/hooks/use-active-org';
 import {
@@ -427,17 +428,6 @@ export function AccountDropdown({
 
           {/* Actions section */}
           <div className="flex flex-col gap-2 border-b border-border-subtle px-0 py-2">
-            <DropdownMenuItem
-              className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"
-              onClick={() => {
-                setMenuOpen(false);
-                handleUpgrade();
-              }}
-            >
-              <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
-                Upgrade
-              </span>
-            </DropdownMenuItem>
             <TeamSwitcherSubmenu onClose={() => setMenuOpen(false)} />
             <DropdownMenuItem
               className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"

@@ -1,5 +1,6 @@
 'use client';
 
+import type * as React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -195,145 +196,159 @@ export default function DiscordDetailPage() {
     installedAt: g.installedAt as unknown as string,
   }));
 
+  const CenteredWrapper = ({ children }: { children: React.ReactNode }) => (
+    <div className="flex flex-1 shrink-0 flex-col w-full overflow-hidden lg:max-w-[805px] xl:px-0 xl:border-x border-border-subtle mx-auto py-4 min-w-0">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
+        <div className="relative flex flex-col pb-10 px-4 w-full min-w-0 space-y-6">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+
   if (!(isLoading || isLinked)) {
     return (
-      <IntegrationDetailPage isLoading={false} error={null} errorMessage="">
-        <IntegrationHeader
-          icon={<DiscordIcon className="h-8 w-8 text-foreground" />}
-          title="Discord"
-          description="Connect your Discord account and add the Bounty bot to your server."
-        />
+      <CenteredWrapper>
+        <IntegrationDetailPage isLoading={false} error={null} errorMessage="">
+          <IntegrationHeader
+            icon={<DiscordIcon className="h-8 w-8 text-foreground" />}
+            title="Discord"
+            description="Connect your Discord account and add the Bounty bot to your server."
+          />
 
-        <div className="pt-4 space-y-6">
-          <div>
-            <SectionHeader title="Step 1: Link your Discord account" />
-            <p className="text-sm text-text-muted mb-4">
-              Link your Discord account to authenticate with the Bounty bot and
-              use commands that require your identity.
-            </p>
-            <ActionButton onClick={handleLinkAccount}>
-              Link Discord Account
-            </ActionButton>
-          </div>
-
-          <div>
-            <SectionHeader title="Step 2: Add bot to your server" />
-            <p className="text-sm text-text-muted mb-4">
-              Add the Bounty bot to your Discord server to use slash commands.
-            </p>
-            <ActionButton
-              onClick={handleAddBot}
-              disabled={!botInstallData?.url}
-              icon={<Plus className="h-4 w-4" />}
-            >
-              Add Bounty Bot
-            </ActionButton>
-          </div>
-
-          {guilds.length > 0 && (
+          <div className="pt-4 space-y-6">
             <div>
-              <SectionHeader
-                title="Servers with Bounty Bot"
-                badge={{ label: String(guilds.length), variant: 'default' }}
-              />
-              <IntegrationTable
-                columns={guildColumns}
-                data={guildRows}
-                keyExtractor={(row) => row.id}
-              />
+              <SectionHeader title="Step 1: Link your Discord account" />
+              <p className="text-sm text-text-muted mb-4">
+                Link your Discord account to authenticate with the Bounty bot
+                and use commands that require your identity.
+              </p>
+              <ActionButton onClick={handleLinkAccount}>
+                Link Discord Account
+              </ActionButton>
             </div>
-          )}
 
-          <div>
-            <SectionHeader title="Available features" />
-            <ul className="text-sm text-text-muted list-disc list-inside space-y-1">
-              <li>Create bounties directly from Discord</li>
-              <li>Receive notifications about bounty updates</li>
-              <li>Manage submissions and approvals</li>
-              <li>Use /login to authenticate bot commands</li>
-            </ul>
+            <div>
+              <SectionHeader title="Step 2: Add bot to your server" />
+              <p className="text-sm text-text-muted mb-4">
+                Add the Bounty bot to your Discord server to use slash commands.
+              </p>
+              <ActionButton
+                onClick={handleAddBot}
+                disabled={!botInstallData?.url}
+                icon={<Plus className="h-4 w-4" />}
+              >
+                Add Bounty Bot
+              </ActionButton>
+            </div>
+
+            {guilds.length > 0 && (
+              <div>
+                <SectionHeader
+                  title="Servers with Bounty Bot"
+                  badge={{ label: String(guilds.length), variant: 'default' }}
+                />
+                <IntegrationTable
+                  columns={guildColumns}
+                  data={guildRows}
+                  keyExtractor={(row) => row.id}
+                />
+              </div>
+            )}
+
+            <div>
+              <SectionHeader title="Available features" />
+              <ul className="text-sm text-text-muted list-disc list-inside space-y-1">
+                <li>Create bounties directly from Discord</li>
+                <li>Receive notifications about bounty updates</li>
+                <li>Manage submissions and approvals</li>
+                <li>Use /login to authenticate bot commands</li>
+              </ul>
+            </div>
           </div>
-        </div>
-      </IntegrationDetailPage>
+        </IntegrationDetailPage>
+      </CenteredWrapper>
     );
   }
 
   return (
-    <IntegrationDetailPage
-      isLoading={isLoading || guildsLoading}
-      error={error as Error | null}
-      errorMessage="Failed to load Discord account."
-    >
-      {account && (
-        <>
-          <IntegrationHeader
-            icon={<DiscordIcon className="h-8 w-8 text-foreground" />}
-            title="Discord"
-            description="Your Discord account is linked to Bounty"
-            badges={[{ label: 'Connected', variant: 'success' }]}
-          />
-
-          <ActionButtonGroup
-            dropdownActions={[
-              {
-                label: 'Unlink Discord',
-                variant: 'danger',
-                onClick: handleUnlink,
-                disabled: unlinkMutation.isPending,
-              },
-            ]}
-          >
-            <ActionButton
-              onClick={handleAddBot}
-              disabled={!botInstallData?.url}
-              icon={<Plus className="h-4 w-4" />}
-            >
-              Add Bot to Server
-            </ActionButton>
-            <ActionButton
-              onClick={() =>
-                window.open('https://discord.com/channels/@me', '_blank')
-              }
-              icon={<ExternalLink className="h-4 w-4" />}
-            >
-              Open Discord
-            </ActionButton>
-          </ActionButtonGroup>
-
-          <div className="pt-4">
-            <SectionHeader title="Linked account" />
-            <IntegrationTable
-              columns={accountColumns}
-              data={accountRows}
-              keyExtractor={(row) => row.discordId}
+    <CenteredWrapper>
+      <IntegrationDetailPage
+        isLoading={isLoading || guildsLoading}
+        error={error as Error | null}
+        errorMessage="Failed to load Discord account."
+      >
+        {account && (
+          <>
+            <IntegrationHeader
+              icon={<DiscordIcon className="h-8 w-8 text-foreground" />}
+              title="Discord"
+              description="Your Discord account is linked to Bounty"
+              badges={[{ label: 'Connected', variant: 'success' }]}
             />
-          </div>
 
-          {guilds.length > 0 && (
-            <div className="pt-2">
-              <SectionHeader
-                title="Servers with Bounty Bot"
-                badge={{ label: String(guilds.length), variant: 'default' }}
-              />
+            <ActionButtonGroup
+              dropdownActions={[
+                {
+                  label: 'Unlink Discord',
+                  variant: 'danger',
+                  onClick: handleUnlink,
+                  disabled: unlinkMutation.isPending,
+                },
+              ]}
+            >
+              <ActionButton
+                onClick={handleAddBot}
+                disabled={!botInstallData?.url}
+                icon={<Plus className="h-4 w-4" />}
+              >
+                Add Bot to Server
+              </ActionButton>
+              <ActionButton
+                onClick={() =>
+                  window.open('https://discord.com/channels/@me', '_blank')
+                }
+                icon={<ExternalLink className="h-4 w-4" />}
+              >
+                Open Discord
+              </ActionButton>
+            </ActionButtonGroup>
+
+            <div className="pt-4">
+              <SectionHeader title="Linked account" />
               <IntegrationTable
-                columns={guildColumns}
-                data={guildRows}
-                keyExtractor={(row) => row.id}
+                columns={accountColumns}
+                data={accountRows}
+                keyExtractor={(row) => row.discordId}
               />
             </div>
-          )}
 
-          <div className="pt-2">
-            <SectionHeader title="Available features" />
-            <ul className="text-sm text-text-muted list-disc list-inside space-y-1">
-              <li>Create bounties directly from Discord</li>
-              <li>Receive notifications about bounty updates</li>
-              <li>Manage submissions and approvals</li>
-              <li>Use /login to authenticate bot commands</li>
-            </ul>
-          </div>
-        </>
-      )}
-    </IntegrationDetailPage>
+            {guilds.length > 0 && (
+              <div className="pt-2">
+                <SectionHeader
+                  title="Servers with Bounty Bot"
+                  badge={{ label: String(guilds.length), variant: 'default' }}
+                />
+                <IntegrationTable
+                  columns={guildColumns}
+                  data={guildRows}
+                  keyExtractor={(row) => row.id}
+                />
+              </div>
+            )}
+
+            <div className="pt-2">
+              <SectionHeader title="Available features" />
+              <ul className="text-sm text-text-muted list-disc list-inside space-y-1">
+                <li>Create bounties directly from Discord</li>
+                <li>Receive notifications about bounty updates</li>
+                <li>Manage submissions and approvals</li>
+                <li>Use /login to authenticate bot commands</li>
+              </ul>
+            </div>
+          </>
+        )}
+      </IntegrationDetailPage>
+    </CenteredWrapper>
   );
 }

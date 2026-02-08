@@ -15,6 +15,8 @@ interface OrgInvitationProps {
   orgName: string;
   role: string;
   inviteUrl: string;
+  /** Human-readable expiration text, e.g. "48 hours". Defaults to "48 hours". */
+  expiresIn?: string;
 }
 
 const OrgInvitation = ({
@@ -22,6 +24,7 @@ const OrgInvitation = ({
   orgName,
   role,
   inviteUrl,
+  expiresIn = '48 hours',
 }: OrgInvitationProps) => {
   return (
     <Html dir="ltr" lang="en">
@@ -52,7 +55,7 @@ const OrgInvitation = ({
               Accept Invitation
             </Button>
             <Text className="m-0 mt-[24px] text-[#848484] text-[14px] leading-[22px]">
-              This invitation expires in 48 hours.
+              This invitation expires in {expiresIn}.
             </Text>
           </Container>
         </Body>

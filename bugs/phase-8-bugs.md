@@ -9,22 +9,26 @@
 **Fix:** Verify Better Auth's expected invitation acceptance flow. If it expects the user to hit an API endpoint directly, the URL should point there. If a frontend page is needed to accept, create one at `apps/web/src/app/org/invite/[id]/page.tsx` that calls the accept API. Or use Better Auth's built-in `invitationURL` if the plugin supports it.
 
 ### P8-B2: `user.update.after` hook syncs slug without checking for collisions
-**File:** `packages/auth/src/server.ts` (line ~347)
+**File:** `packages/auth/src/server.ts`
 **Severity:** Medium
-**Description:** When a user's handle changes, the hook updates the personal team's slug to match. If another org already has that slug, the DB update will fail with a unique constraint violation. The error is caught and logged, but the personal team's slug will be out of sync with the user's handle.
-**Fix:** The catch block already handles this gracefully (logs error, doesn't break the update). Could be improved by trying a suffixed slug on collision, similar to `createPersonalTeam()`. Low urgency since slug collisions between personal teams and non-personal teams are unlikely.
+**Status:** ✅ FIXED
+**Description:** When a user's handle changes, the hook updates the personal team's slug to match. If another org already has that slug, the DB update will fail with a unique constraint violation.
+**Fix:** Added retry loop (same pattern as `createPersonalTeam()`): tries exact handle first, then `{handle}-{random6}` on collision. The outer catch still handles gracefully — logs error, doesn't break the update.
 
 ### P8-B3: `OrgInvitation` email template hardcodes 48-hour expiration text
-**File:** `packages/email/src/templates/OrgInvitation.tsx` (line ~55)
+**File:** `packages/email/src/templates/OrgInvitation.tsx`
 **Severity:** Low
-**Description:** The template says "This invitation expires in 48 hours" but the actual expiration is controlled by Better Auth's organization plugin config (which may default to something different). The template text should match the actual expiration or be passed as a prop.
-**Fix:** Either pass the expiration duration as a prop to the template, or verify Better Auth's default expiration matches 48 hours. If it does, this is fine.
+**Status:** ✅ FIXED
+**Description:** The template said "This invitation expires in 48 hours" but was hardcoded.
+**Fix:** Verified Better Auth's default `invitationExpiresIn` is `3600 * 48` seconds (48 hours), so the default was correct. Made `expiresIn` a prop (defaults to "48 hours") for future configurability.
 
 ## NITPICKS
 
 ### P8-N1: Excessive `console.warn` logging in session hook
-**File:** `packages/auth/src/server.ts` (lines ~373-417)
-**Description:** The `session.create.before` hook has 6 `console.warn` calls for debugging. These are useful during development but should be removed or gated behind `NODE_ENV === 'development'` before shipping to production, as they'll fire on every session creation.
+**File:** `packages/auth/src/server.ts`
+**Status:** ✅ FIXED
+**Description:** Debug logging was firing on every session creation and user signup in production.
+**Fix:** Removed ungated `console.warn` from `user.create.after`. Gated `createPersonalTeam` and `user.update.after` logs behind `NODE_ENV !== 'production'`. The `session.create.before` hook was already gated (unchanged).
 
 ### P8-N2: Discord signup webhook embed color uses hex literal
 **File:** `packages/auth/src/server.ts` (line ~316)

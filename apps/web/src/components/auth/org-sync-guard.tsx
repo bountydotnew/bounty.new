@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { authClient } from '@bounty/auth/client';
 import { useActiveOrg } from '@/hooks/use-active-org';
 
 interface OrgSyncGuardProps {
@@ -16,6 +15,11 @@ interface OrgSyncGuardProps {
  * On mount (and when slug changes), checks if the active org matches
  * the URL slug. If not, calls setActive() to switch. If the slug
  * doesn't match any of the user's orgs, redirects to /dashboard.
+ *
+ * Handles race conditions:
+ * - Waits for orgs to finish loading before deciding (no redirect while loading)
+ * - Uses a ref to prevent concurrent switchOrg calls
+ * - Resets synced state when slug changes
  */
 export function OrgSyncGuard({ slug, children }: OrgSyncGuardProps) {
   const { activeOrg, orgs, isLoading, switchOrg } = useActiveOrg();
@@ -23,9 +27,31 @@ export function OrgSyncGuard({ slug, children }: OrgSyncGuardProps) {
   // Start synced if the active org already matches the slug (avoids spinner flash)
   const [synced, setSynced] = useState(() => activeOrg?.slug === slug);
   const syncingRef = useRef(false);
+  const lastSlugRef = useRef(slug);
+
+  // Reset synced state when slug changes (navigating between orgs)
+  useEffect(() => {
+    if (lastSlugRef.current !== slug) {
+      lastSlugRef.current = slug;
+      // Only reset if the new slug doesn't already match
+      if (activeOrg?.slug !== slug) {
+        setSynced(false);
+        syncingRef.current = false;
+      }
+    }
+  }, [slug, activeOrg?.slug]);
 
   useEffect(() => {
-    if (isLoading || syncingRef.current) return;
+    if (syncingRef.current) return;
+
+    // Don't make any decisions while orgs are still loading.
+    // This prevents premature redirects when the orgs list is temporarily
+    // empty (e.g. after invalidateQueries during an org switch).
+    if (isLoading) return;
+
+    // Orgs loaded but list is empty — should not happen for authenticated
+    // users (they always have a personal team), but guard against it.
+    if (orgs.length === 0) return;
 
     // Find the org matching the URL slug
     const targetOrg = orgs.find((o) => o.slug === slug);
@@ -38,7 +64,7 @@ export function OrgSyncGuard({ slug, children }: OrgSyncGuardProps) {
 
     if (activeOrg?.slug === slug) {
       // Already synced
-      setSynced(true);
+      if (!synced) setSynced(true);
       return;
     }
 
@@ -55,7 +81,7 @@ export function OrgSyncGuard({ slug, children }: OrgSyncGuardProps) {
       .finally(() => {
         syncingRef.current = false;
       });
-  }, [slug, activeOrg?.slug, orgs, isLoading, switchOrg, router]);
+  }, [slug, activeOrg?.slug, orgs, isLoading, switchOrg, router, synced]);
 
   if (!synced) {
     return (

@@ -63,7 +63,10 @@ function getNavItems(orgSlug?: string) {
     { title: 'Bookmarks', url: LINKS.BOOKMARKS, icon: BookmarksIcon },
     {
       title: 'Integrations',
-      url: orgSlug ? `/${orgSlug}/integrations` : '/integrations',
+      // Integrations are org-scoped, so the link requires an org slug.
+      // Falls back to /dashboard if no org is active yet (should not happen
+      // in practice since every user has a personal team).
+      url: orgSlug ? `/${orgSlug}/integrations` : '/dashboard',
       icon: SettingsGearIcon,
     },
   ];

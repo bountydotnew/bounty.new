@@ -26,22 +26,22 @@
 ## Members Page
 
 ### B5-04: Create team uses window.prompt
-**Status:** ⚠️ OPEN  
+**Status:** ✅ FIXED  
 **Files:** `apps/web/src/components/billing/account-dropdown.tsx`  
 **Severity:** Medium  
-**Fix:** Replace with a proper modal/dialog component.
+**Fix:** Replaced with a proper `CreateTeamDialog` using `@bounty/ui/components/dialog`. Shows team name input, auto-generates slug with preview, and has proper create/cancel buttons.
 
 ### B5-05: Invite role mapping uses 'admin' instead of 'owner'
-**Status:** ⚠️ OPEN  
+**Status:** ✅ FIXED  
 **Files:** `apps/web/src/app/[slug]/settings/members/page.tsx`  
 **Severity:** Medium  
-**Fix:** Verify Better Auth's role names or add a mapping layer.
+**Fix:** Better Auth accepts 'owner' as a valid role (it's one of three defaultRoles: admin, owner, member). Removed incorrect `as 'member' | 'admin'` type casts. Added `toApiRole()` helper for clarity and forward-compatibility.
 
 ### B5-06: No pending invitations UI
-**Status:** ⚠️ OPEN  
+**Status:** ✅ FIXED  
 **Files:** `apps/web/src/app/[slug]/settings/members/page.tsx`  
 **Severity:** Low  
-**Fix:** Add invitations section using `authClient.organization.getInvitations()`.
+**Fix:** Added pending invitations section using `authClient.organization.listInvitations()`. Shows invite email, role, expiry date, and a cancel button for each. Only visible to org owners on non-personal teams.
 
 ## Settings Split
 
@@ -53,10 +53,10 @@
 **Fix:** Could use Next.js middleware for server-side redirect instead.
 
 ### B5-08: Org settings sidebar is only visible on desktop (lg breakpoint)
-**Status:** ⚠️ OPEN  
-**Files:** `apps/web/src/components/settings/org-settings-sidebar.tsx`  
+**Status:** ✅ FIXED  
+**Files:** `apps/web/src/components/settings/org-settings-sidebar.tsx`, `apps/web/src/app/[slug]/settings/layout.tsx`  
 **Severity:** Medium  
-**Fix:** Add mobile-friendly tab bar or breadcrumb navigation.
+**Fix:** Added `OrgSettingsTabBar` component — horizontal tab bar with underline style, visible on mobile (< lg). Desktop sidebar remains unchanged. Settings layout now renders both: tab bar at top (mobile only) and sidebar in flex row (desktop only).
 
 ## Navigation
 

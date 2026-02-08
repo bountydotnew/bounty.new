@@ -1,5 +1,6 @@
 'use client';
 
+import type * as React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
@@ -130,77 +131,92 @@ export default function GitHubInstallationPage() {
     },
   ];
 
-  return (
-    <IntegrationDetailPage
-      isLoading={isLoading}
-      error={error as Error | null}
-      errorMessage="Failed to load installation details. Please try again."
-    >
-      <IntegrationHeader
-        icon={<GithubIcon className="h-8 w-8 text-foreground" />}
-        title={installation?.installation?.account.login || 'GitHub'}
-        description="Connect your repositories so that bounty.new can open Pull Requests for issues that it finds"
-      />
-
-      <ActionButtonGroup
-        dropdownActions={[
-          {
-            label: 'Make default',
-            icon: <Star className="h-4 w-4" />,
-            onClick: () => setDefaultMutation.mutate(),
-            disabled: setDefaultMutation.isPending,
-          },
-          {
-            label: 'Uninstall',
-            variant: 'danger',
-            onClick: () => console.log('Uninstall clicked'),
-          },
-        ]}
-      >
-        <ActionButton
-          onClick={() => syncMutation.mutate()}
-          disabled={syncMutation.isPending}
-          loading={syncMutation.isPending}
-          icon={<RefreshCw className="h-4 w-4" />}
-        >
-          Sync
-        </ActionButton>
-        <ActionButton
-          onClick={handleViewInGitHub}
-          icon={<ExternalLink className="h-4 w-4" />}
-        >
-          View in GitHub
-        </ActionButton>
-        <ActionButton
-          onClick={() =>
-            window.open('https://docs.bounty.new/integrations/github', '_blank')
-          }
-          icon={<ExternalLink className="h-4 w-4" />}
-        >
-          View docs
-        </ActionButton>
-      </ActionButtonGroup>
-
-      <div className="pt-4">
-        <SectionHeader title="Active repositories" count={repoCount} />
-        <IntegrationTable
-          columns={columns}
-          data={repoList}
-          keyExtractor={(repo) => repo.id}
-          rowActions={[
-            { label: 'Configure', onClick: () => console.log('Configure') },
-          ]}
-          emptyMessage="No repositories connected."
-        />
+  const CenteredWrapper = ({ children }: { children: React.ReactNode }) => (
+    <div className="flex flex-1 shrink-0 flex-col w-full overflow-hidden lg:max-w-[805px] xl:px-0 xl:border-x border-border-subtle mx-auto py-4 min-w-0">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
+        <div className="relative flex flex-col pb-10 px-4 w-full min-w-0 space-y-6">
+          {children}
+        </div>
       </div>
+    </div>
+  );
 
-      <ActionButton
-        className="w-fit"
-        onClick={handleViewInGitHub}
-        icon={<Plus className="h-4 w-4" />}
+  return (
+    <CenteredWrapper>
+      <IntegrationDetailPage
+        isLoading={isLoading}
+        error={error as Error | null}
+        errorMessage="Failed to load installation details. Please try again."
       >
-        Add another repository
-      </ActionButton>
-    </IntegrationDetailPage>
+        <IntegrationHeader
+          icon={<GithubIcon className="h-8 w-8 text-foreground" />}
+          title={installation?.installation?.account.login || 'GitHub'}
+          description="Connect your repositories so that bounty.new can open Pull Requests for issues that it finds"
+        />
+
+        <ActionButtonGroup
+          dropdownActions={[
+            {
+              label: 'Make default',
+              icon: <Star className="h-4 w-4" />,
+              onClick: () => setDefaultMutation.mutate(),
+              disabled: setDefaultMutation.isPending,
+            },
+            {
+              label: 'Uninstall',
+              variant: 'danger',
+              onClick: () => console.log('Uninstall clicked'),
+            },
+          ]}
+        >
+          <ActionButton
+            onClick={() => syncMutation.mutate()}
+            disabled={syncMutation.isPending}
+            loading={syncMutation.isPending}
+            icon={<RefreshCw className="h-4 w-4" />}
+          >
+            Sync
+          </ActionButton>
+          <ActionButton
+            onClick={handleViewInGitHub}
+            icon={<ExternalLink className="h-4 w-4" />}
+          >
+            View in GitHub
+          </ActionButton>
+          <ActionButton
+            onClick={() =>
+              window.open(
+                'https://docs.bounty.new/integrations/github',
+                '_blank'
+              )
+            }
+            icon={<ExternalLink className="h-4 w-4" />}
+          >
+            View docs
+          </ActionButton>
+        </ActionButtonGroup>
+
+        <div className="pt-4">
+          <SectionHeader title="Active repositories" count={repoCount} />
+          <IntegrationTable
+            columns={columns}
+            data={repoList}
+            keyExtractor={(repo) => repo.id}
+            rowActions={[
+              { label: 'Configure', onClick: () => console.log('Configure') },
+            ]}
+            emptyMessage="No repositories connected."
+          />
+        </div>
+
+        <ActionButton
+          className="w-fit"
+          onClick={handleViewInGitHub}
+          icon={<Plus className="h-4 w-4" />}
+        >
+          Add another repository
+        </ActionButton>
+      </IntegrationDetailPage>
+    </CenteredWrapper>
   );
 }

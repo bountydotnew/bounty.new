@@ -4,14 +4,19 @@ import { db, account, member, organization } from '@bounty/db';
 import { githubInstallation } from '@bounty/db/src/schema/github-installation';
 import { getGithubAppManager } from '@bounty/api/driver/github-app';
 import { eq, and } from 'drizzle-orm';
+import { env } from '@bounty/env/server';
 
 export async function GET(request: NextRequest) {
+  // Use BETTER_AUTH_URL as the base for redirects so we stay on the
+  // correct host (e.g. local.bounty.new instead of localhost:3000).
+  const baseUrl = env.BETTER_AUTH_URL || request.url;
+
   const session = await auth.api.getSession({
     headers: request.headers,
   });
 
   if (!session) {
-    return NextResponse.redirect(new URL('/sign-in', request.url));
+    return NextResponse.redirect(new URL('/sign-in', baseUrl));
   }
 
   const searchParams = request.nextUrl.searchParams;
@@ -70,7 +75,7 @@ export async function GET(request: NextRequest) {
             `[Installation Callback] No active org and no personal team found for user ${session.user.id}`
           );
           return NextResponse.redirect(
-            new URL('/dashboard?error=no_team', request.url)
+            new URL('/dashboard?error=no_team', baseUrl)
           );
         }
 
@@ -158,17 +163,15 @@ export async function GET(request: NextRequest) {
       .limit(1);
     orgSlug = activeOrg?.slug ?? null;
   }
-  const integrationsBase = orgSlug
-    ? `/${orgSlug}/integrations`
-    : '/integrations';
+  const integrationsBase = orgSlug ? `/${orgSlug}/integrations` : '/dashboard';
 
   // After installation, redirect to configure page
   if (installationId && setupAction === 'install') {
     return NextResponse.redirect(
-      new URL(`${integrationsBase}/github/${installationId}?new=1`, request.url)
+      new URL(`${integrationsBase}/github/${installationId}?new=1`, baseUrl)
     );
   }
 
   // Fallback to integrations list
-  return NextResponse.redirect(new URL(integrationsBase, request.url));
+  return NextResponse.redirect(new URL(integrationsBase, baseUrl));
 }

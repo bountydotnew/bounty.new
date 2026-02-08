@@ -54,6 +54,7 @@ import {
   sendEmailVerificationEmail,
   sendOTPEmail,
 } from './config';
+import { isReservedSlug } from '@bounty/types/auth';
 
 // ============================================================================
 // Constants & Setup
@@ -189,7 +190,14 @@ async function createPersonalTeam(user: {
       ?.toLowerCase()
       .replace(/[^a-z0-9-]/g, '-');
 
-  const baseSlug = handle || user.id;
+  // If the handle is a reserved slug (collides with static routes like /bounty, /dashboard),
+  // suffix it immediately to avoid routing conflicts.
+  const baseSlug =
+    handle && !isReservedSlug(handle)
+      ? handle
+      : handle
+        ? `${handle}-${crypto.randomUUID().slice(0, 6)}`
+        : user.id;
   const teamName = handle ? `${handle}'s team` : `${user.name ?? 'My'}'s team`;
 
   // Retry up to 2 times for slug collisions
@@ -221,9 +229,11 @@ async function createPersonalTeam(user: {
         });
       });
 
-      console.warn(
-        `✅ Created personal team "${teamName}" (${slug}) for user ${user.id}${attempt > 0 ? ' (slug collision retry)' : ''}`
-      );
+      if (env.NODE_ENV !== 'production') {
+        console.warn(
+          `[createPersonalTeam] Created "${teamName}" (${slug}) for user ${user.id}${attempt > 0 ? ' (slug collision retry)' : ''}`
+        );
+      }
       return; // Success — exit the retry loop
     } catch (error) {
       const isSlugCollision =
@@ -284,7 +294,7 @@ export const auth = betterAuth({
     accountLinking: {
       enabled: true,
       trustedProviders: ['github', 'google', 'discord', 'linear'],
-      allowDifferentEmails: false, // Require same email for account linking (security)
+      allowDifferentEmails: true,
     },
   },
 
@@ -294,9 +304,6 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (user) => {
-          console.warn(
-            `[user.create.after] userId=${user.id} email=${user.email} handle=${(user as any).handle ?? 'null'}`
-          );
           // Auto-create a personal team for every new user
           await createPersonalTeam(user);
 
@@ -345,20 +352,47 @@ export const auth = betterAuth({
 
             const org = personalOrg[0];
             if (org && org.slug !== handle) {
-              await db
-                .update(organization)
-                .set({
-                  slug: handle,
-                  name: `${handle}'s team`,
-                })
-                .where(eq(organization.id, org.id));
+              // If the new handle is a reserved slug, suffix it immediately
+              const targetSlug = isReservedSlug(handle)
+                ? `${handle}-${crypto.randomUUID().slice(0, 6)}`
+                : handle;
 
-              console.warn(
-                `[user.update.after] Synced personal team slug: ${org.slug} -> ${handle}`
-              );
+              // Try the target slug first, then a suffixed slug on collision
+              for (let attempt = 0; attempt < 2; attempt++) {
+                const slug =
+                  attempt === 0
+                    ? targetSlug
+                    : `${handle}-${crypto.randomUUID().slice(0, 6)}`;
+                try {
+                  await db
+                    .update(organization)
+                    .set({
+                      slug,
+                      name: `${handle}'s team`,
+                    })
+                    .where(eq(organization.id, org.id));
+
+                  if (env.NODE_ENV !== 'production') {
+                    console.warn(
+                      `[user.update.after] Synced personal team slug: ${org.slug} -> ${slug}${attempt > 0 ? ' (collision retry)' : ''}`
+                    );
+                  }
+                  break; // Success
+                } catch (updateErr) {
+                  const isSlugCollision =
+                    updateErr instanceof Error &&
+                    updateErr.message.includes('unique');
+
+                  if (isSlugCollision && attempt === 0) {
+                    // Retry with a suffixed slug
+                    continue;
+                  }
+                  throw updateErr; // Re-throw to the outer catch
+                }
+              }
             }
           } catch (err) {
-            // Slug collision or other error — don't break the update
+            // Slug collision or other error — don't break the user update
             console.error(
               '[user.update.after] Failed to sync personal team slug:',
               err

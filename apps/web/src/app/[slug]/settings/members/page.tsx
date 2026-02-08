@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { trpc, trpcClient } from '@/utils/trpc';
+import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { trpc } from '@/utils/trpc';
 import { authClient } from '@bounty/auth/client';
 import { useActiveOrg } from '@/hooks/use-active-org';
 import { toast } from 'sonner';
-import Image from 'next/image';
 import {
   Avatar,
   AvatarFacehash,
@@ -19,7 +18,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
-import { MoreHorizontal, UserPlus, Crown, UserMinus, Mail } from 'lucide-react';
+import {
+  MoreHorizontal,
+  UserPlus,
+  Crown,
+  UserMinus,
+  Mail,
+  X,
+  Clock,
+} from 'lucide-react';
 import { useSession } from '@/context/session-context';
 
 interface MemberRow {
@@ -35,6 +42,25 @@ interface MemberRow {
   };
 }
 
+interface InvitationRow {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+  expiresAt: Date | string;
+  organizationId: string;
+}
+
+/**
+ * Maps our UI role names to Better Auth API role names.
+ * Better Auth's organization plugin uses 'admin' for elevated roles,
+ * but we display and store 'owner' (via creatorRole: 'owner' config).
+ * The API accepts both 'owner' and 'admin' since both are in defaultRoles.
+ */
+function toApiRole(uiRole: 'owner' | 'member'): 'owner' | 'member' {
+  return uiRole;
+}
+
 export default function MembersPage() {
   const { session } = useSession();
   const { activeOrg, isPersonalTeam } = useActiveOrg();
@@ -43,14 +69,48 @@ export default function MembersPage() {
   const [inviteRole, setInviteRole] = useState<'member' | 'owner'>('member');
   const [isInviting, setIsInviting] = useState(false);
 
+  // Members query
   const { data: membersData, isLoading } = useQuery(
     trpc.organization.getMembers.queryOptions()
+  );
+
+  // Pending invitations query (via Better Auth client)
+  const {
+    data: invitationsData,
+    isLoading: invitationsLoading,
+    refetch: refetchInvitations,
+  } = useQuery({
+    queryKey: ['organization', 'invitations', activeOrg?.id],
+    queryFn: async () => {
+      if (!activeOrg?.id) return [];
+      const result = await authClient.organization.listInvitations({
+        query: { organizationId: activeOrg.id },
+      });
+      if (result.error) {
+        console.error('Failed to fetch invitations:', result.error);
+        return [];
+      }
+      return (result.data ?? []) as InvitationRow[];
+    },
+    enabled: !!activeOrg?.id,
+    staleTime: 30_000,
+  });
+
+  const pendingInvitations = (invitationsData ?? []).filter(
+    (inv) => inv.status === 'pending'
   );
 
   const members = (membersData?.members ?? []) as MemberRow[];
   const currentUserId = session?.user?.id;
   const isOwner =
     members.find((m) => m.userId === currentUserId)?.role === 'owner';
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({
+      queryKey: [['organization', 'getMembers']],
+    });
+    refetchInvitations();
+  };
 
   const handleInvite = async () => {
     if (!(inviteEmail.trim() && activeOrg)) return;
@@ -59,7 +119,7 @@ export default function MembersPage() {
     try {
       const result = await authClient.organization.inviteMember({
         email: inviteEmail.trim(),
-        role: inviteRole as 'member' | 'admin',
+        role: toApiRole(inviteRole),
         organizationId: activeOrg.id,
       });
 
@@ -70,14 +130,31 @@ export default function MembersPage() {
 
       toast.success(`Invitation sent to ${inviteEmail.trim()}`);
       setInviteEmail('');
-      queryClient.invalidateQueries({
-        queryKey: [['organization', 'getMembers']],
-      });
+      invalidateAll();
     } catch (err) {
       console.error('Failed to invite:', err);
       toast.error('Failed to send invitation');
     } finally {
       setIsInviting(false);
+    }
+  };
+
+  const handleCancelInvitation = async (invitationId: string) => {
+    try {
+      const result = await authClient.organization.cancelInvitation({
+        invitationId,
+      });
+
+      if (result.error) {
+        toast.error(result.error.message ?? 'Failed to cancel invitation');
+        return;
+      }
+
+      toast.success('Invitation cancelled');
+      invalidateAll();
+    } catch (err) {
+      console.error('Failed to cancel invitation:', err);
+      toast.error('Failed to cancel invitation');
     }
   };
 
@@ -95,9 +172,7 @@ export default function MembersPage() {
         organizationId: activeOrg!.id,
       });
       toast.success('Member removed');
-      queryClient.invalidateQueries({
-        queryKey: [['organization', 'getMembers']],
-      });
+      invalidateAll();
     } catch (err) {
       console.error('Failed to remove member:', err);
       toast.error('Failed to remove member');
@@ -111,13 +186,11 @@ export default function MembersPage() {
     try {
       await authClient.organization.updateMemberRole({
         memberId,
-        role: newRole as 'admin' | 'member',
+        role: toApiRole(newRole),
         organizationId: activeOrg!.id,
       });
       toast.success('Role updated');
-      queryClient.invalidateQueries({
-        queryKey: [['organization', 'getMembers']],
-      });
+      invalidateAll();
     } catch (err) {
       console.error('Failed to update role:', err);
       toast.error('Failed to update role');
@@ -182,6 +255,56 @@ export default function MembersPage() {
             This is your personal team. To collaborate with others, create a new
             team from the workspace switcher.
           </p>
+        </div>
+      )}
+
+      {/* Pending invitations — only for owners of non-personal teams */}
+      {isOwner && !isPersonalTeam && pendingInvitations.length > 0 && (
+        <div className="rounded-xl border border-border-subtle overflow-hidden">
+          <div className="bg-surface-1 px-4 py-3 border-b border-border-subtle flex items-center gap-2">
+            <Clock className="h-3.5 w-3.5 text-text-tertiary" />
+            <span className="text-sm font-medium text-text-secondary">
+              {pendingInvitations.length} pending{' '}
+              {pendingInvitations.length === 1 ? 'invitation' : 'invitations'}
+            </span>
+          </div>
+          <div className="divide-y divide-border-subtle">
+            {pendingInvitations.map((inv) => (
+              <div
+                key={inv.id}
+                className="flex items-center justify-between px-4 py-3 hover:bg-surface-hover transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <Avatar className="h-8 w-8 rounded-full shrink-0">
+                    <AvatarFacehash name={inv.email} size={32} />
+                  </Avatar>
+                  <div className="min-w-0">
+                    <span className="text-sm font-medium text-foreground truncate block">
+                      {inv.email}
+                    </span>
+                    <span className="text-xs text-text-muted">
+                      Invited as {inv.role === 'owner' ? 'owner' : 'member'}
+                      {inv.expiresAt && (
+                        <>
+                          {' '}
+                          &middot; expires{' '}
+                          {new Date(inv.expiresAt).toLocaleDateString()}
+                        </>
+                      )}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleCancelInvitation(inv.id)}
+                  className="p-1.5 rounded-md text-text-tertiary hover:text-red-500 hover:bg-surface-hover transition-colors"
+                  title="Cancel invitation"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
