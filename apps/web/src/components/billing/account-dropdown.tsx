@@ -31,7 +31,7 @@ import { BillingSettingsIcon } from '@bounty/ui/components/icons/huge/billing-se
 import { DropdownIcon } from '@bounty/ui';
 import { Feedback } from '@bounty/ui';
 import { UserIcon } from '@bounty/ui';
-import { DollarBillIcon } from '@bounty/ui';
+
 import { useFeedback } from '@/components/feedback-context';
 import { useActiveOrg } from '@/hooks/use-active-org';
 import {
@@ -40,7 +40,7 @@ import {
   AvatarImage,
 } from '@bounty/ui/components/avatar';
 import { useUser } from '@/context/user-context';
-import { useState, useTransition, useRef, useEffect } from 'react';
+import { useState, useTransition } from 'react';
 import { PricingDialog } from '@/components/billing/pricing-dialog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { trpcClient } from '@/utils/trpc';
@@ -52,7 +52,11 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@bounty/ui/components/dialog';
-import { isReservedSlug } from '@bounty/types/auth';
+import { Input } from '@bounty/ui/components/input';
+import { Label } from '@bounty/ui/components/label';
+import { Button } from '@bounty/ui/components/button';
+import { createTeamSchema } from '@bounty/ui/lib/forms';
+import { isReservedSlug } from '@/constants';
 
 // Constants for better maintainability
 const MESSAGES = {
@@ -158,6 +162,16 @@ function useResetOnboarding() {
   return { handleResetOnboarding, pending: pending || mutation.isPending };
 }
 
+// Slugify helper: converts a team name into a URL-safe slug
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
 // Create Team Dialog component
 function CreateTeamDialog({
   open,
@@ -169,32 +183,73 @@ function CreateTeamDialog({
   onCreated: (orgId: string, slug: string, name: string) => void;
 }) {
   const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
+  const [slugTouched, setSlugTouched] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [errors, setErrors] = useState<{ name?: string; slug?: string }>({});
 
-  // Auto-generate slug from name
-  const slug = name
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-
-  const slugReserved = slug ? isReservedSlug(slug) : false;
-
-  // Focus input when dialog opens
-  useEffect(() => {
-    if (open) {
-      const timer = setTimeout(() => inputRef.current?.focus(), 100);
-      return () => clearTimeout(timer);
+  // Reset form when dialog opens/closes
+  React.useEffect(() => {
+    if (!open) {
+      setName('');
+      setSlug('');
+      setSlugTouched(false);
+      setErrors({});
     }
-    // Reset state when dialog closes
-    setName('');
   }, [open]);
+
+  const validate = (fields: { name: string; slug: string }) => {
+    const result = createTeamSchema.safeParse(fields);
+    const fieldErrors: { name?: string; slug?: string } = {};
+
+    if (!result.success) {
+      for (const issue of result.error.issues) {
+        const field = issue.path[0] as 'name' | 'slug';
+        if (!fieldErrors[field]) {
+          fieldErrors[field] = issue.message;
+        }
+      }
+    }
+
+    // Reserved slug check (not in the zod schema since it lives in apps/web)
+    if (fields.slug && isReservedSlug(fields.slug)) {
+      fieldErrors.slug = 'This slug is reserved and cannot be used for a team';
+    }
+
+    return fieldErrors;
+  };
+
+  const handleNameChange = (value: string) => {
+    setName(value);
+    const newSlug = slugTouched ? slug : slugify(value);
+    if (!slugTouched) setSlug(newSlug);
+
+    // Clear errors on change, validate on next blur
+    if (errors.name) {
+      setErrors((prev) => ({ ...prev, name: undefined }));
+    }
+  };
+
+  const handleSlugChange = (value: string) => {
+    setSlugTouched(true);
+    setSlug(value);
+    if (errors.slug) {
+      setErrors((prev) => ({ ...prev, slug: undefined }));
+    }
+  };
+
+  const handleBlur = (field: 'name' | 'slug') => {
+    const fieldErrors = validate({ name, slug });
+    setErrors((prev) => ({ ...prev, [field]: fieldErrors[field] }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!(name.trim() && slug) || slugReserved) return;
+    e.stopPropagation();
+
+    const fieldErrors = validate({ name, slug });
+    setErrors(fieldErrors);
+    if (fieldErrors.name || fieldErrors.slug) return;
 
     setIsCreating(true);
     try {
@@ -222,63 +277,76 @@ function CreateTeamDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px] rounded-[16px] bg-surface-1 border border-border-subtle">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-foreground">
-            Create team
-          </DialogTitle>
-          <DialogDescription className="text-sm text-text-muted">
-            Teams let you collaborate with others on bounties and integrations.
+          <DialogTitle>Create Team</DialogTitle>
+          <DialogDescription>
+            Create a new team to collaborate with others on bounties and
+            integrations.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 px-6 pb-6">
-          <div className="space-y-2">
-            <label
-              htmlFor="team-name"
-              className="text-sm font-medium text-foreground"
-            >
-              Team name
-            </label>
-            <input
-              ref={inputRef}
-              id="team-name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="My Team"
-              className="w-full rounded-lg border border-border-subtle bg-background px-3 py-2 text-sm text-foreground placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
-              maxLength={64}
-              disabled={isCreating}
-            />
-            {slug &&
-              (slugReserved ? (
-                <p className="text-xs text-red-500">
-                  &ldquo;{slug}&rdquo; is reserved and can&apos;t be used as a
-                  team URL.
-                </p>
+
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2 px-2">
+              <Label htmlFor="team-name">
+                Team Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="team-name"
+                aria-invalid={!!errors.name}
+                className="focus-within:border-ring focus-within:ring-ring/50"
+                disabled={isCreating}
+                onBlur={() => handleBlur('name')}
+                onChange={(e) => handleNameChange(e.target.value)}
+                placeholder="Acme Inc"
+                type="text"
+                value={name}
+                maxLength={64}
+              />
+              {errors.name && (
+                <p className="text-destructive text-sm">{errors.name}</p>
+              )}
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="team-slug">
+                Team Slug <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="team-slug"
+                aria-invalid={!!errors.slug}
+                className="focus-within:border-ring focus-within:ring-ring/50"
+                disabled={isCreating}
+                onBlur={() => handleBlur('slug')}
+                onChange={(e) => handleSlugChange(e.target.value)}
+                placeholder="acme-inc"
+                type="text"
+                value={slug}
+                maxLength={63}
+              />
+              {errors.slug ? (
+                <p className="text-destructive text-sm">{errors.slug}</p>
               ) : (
-                <p className="text-xs text-text-tertiary">
-                  URL: bounty.new/
-                  <span className="text-text-secondary">{slug}</span>
+                <p className="text-muted-foreground text-xs">
+                  Used in URLs: bounty.new/{slug || 'your-slug'}
                 </p>
-              ))}
+              )}
+            </div>
           </div>
+
           <DialogFooter>
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-hover"
+            <Button
               disabled={isCreating}
+              onClick={() => onOpenChange(false)}
+              type="button"
+              variant="outline"
             >
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!(name.trim() && slug) || slugReserved || isCreating}
-              className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-50"
-            >
-              {isCreating ? 'Creating...' : 'Create team'}
-            </button>
+            </Button>
+            <Button disabled={isCreating} type="submit">
+              {isCreating ? 'Creating...' : 'Create Team'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

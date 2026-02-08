@@ -328,4 +328,27 @@ export const waitlistBountySchema = z.object({
 export type WaitlistEmailForm = z.infer<typeof waitlistEmailSchema>;
 export type WaitlistBountyForm = z.infer<typeof waitlistBountySchema>;
 
-// Add more form schemas as needed...
+// =====================
+// ORGANIZATION (TEAM) CREATION
+// =====================
+
+export const teamNameSchema = z
+  .string()
+  .min(2, 'Team name must be at least 2 characters')
+  .max(64, 'Team name must be at most 64 characters');
+
+export const teamSlugSchema = z
+  .string()
+  .min(3, 'Team slug must be at least 3 characters')
+  .max(63, 'Team slug must be at most 63 characters')
+  .regex(
+    /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/,
+    'Slug can only contain lowercase letters, numbers, and hyphens (cannot start or end with a hyphen)'
+  );
+
+export const createTeamSchema = z.object({
+  name: teamNameSchema,
+  slug: teamSlugSchema,
+});
+
+export type CreateTeamForm = z.infer<typeof createTeamSchema>;
