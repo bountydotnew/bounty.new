@@ -71,7 +71,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
               trackExitIntent={true}
               trackHashChanges={true}
               trackInteractions={true}
-              trackOutgoingLinks={true}
+              trackOutgoingLinks={process.env.NODE_ENV !== 'development'}
               trackScrollDepth={true}
               trackWebVitals={true}
             />

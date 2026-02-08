@@ -54,7 +54,7 @@ export default function EarlyAccessRequiredPage() {
               <Button
                 onClick={handleCheckStatus}
                 disabled={checking}
-                className="rounded-full px-6"
+                variant="default"
               >
                 {checking ? (
                   <>
@@ -65,7 +65,7 @@ export default function EarlyAccessRequiredPage() {
                   'Check Status'
                 )}
               </Button>
-              <Button asChild variant="outline" className="rounded-full">
+              <Button asChild variant="outline">
                 <Link href="/">Back Home</Link>
               </Button>
             </div>
