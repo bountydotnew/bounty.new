@@ -34,7 +34,8 @@
     "db:migrate": "dotenv -- turbo -F @bounty/db db:migrate",
     "db:dump": "dotenv -- bash scripts/dump-db.sh",
     "db:backfill-orgs": "dotenv -- bun scripts/backfill-orgs.ts",
-    "prettier": "npx ultracite format"
+    "prettier": "npx ultracite format",
+    "email": "bun scripts/email-preview.ts"
   },
   "workspaces": {
     "packages": [

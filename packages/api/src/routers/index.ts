@@ -7,7 +7,6 @@ import { emailsRouter } from './emails';
 import { featureVotesRouter } from './feature-votes';
 import { githubInstallationRouter } from './github-installation';
 import { linearRouter } from './linear';
-import { newsRouter } from './news';
 import { notificationsRouter } from './notifications';
 import { onboardingRouter } from './onboarding';
 import { organizationRouter } from './organization';
@@ -40,7 +39,6 @@ export const appRouter = router({
   user: userRouter,
   bounties: bountiesRouter,
   profiles: profilesRouter,
-  news: newsRouter,
   notifications: notificationsRouter,
   emails: emailsRouter,
   repository: repositoryRouter,

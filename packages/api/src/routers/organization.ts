@@ -88,7 +88,6 @@ export const organizationRouter = router({
       role: string;
       created_at: Date;
       user_name: string | null;
-      user_email: string;
       user_image: string | null;
       user_handle: string | null;
     }>(sql`
@@ -98,7 +97,6 @@ export const organizationRouter = router({
         m.role,
         m.created_at,
         u.name as user_name,
-        u.email as user_email,
         u.image as user_image,
         u.handle as user_handle
       FROM ${member} m
@@ -116,7 +114,6 @@ export const organizationRouter = router({
         createdAt: m.created_at,
         user: {
           name: m.user_name,
-          email: m.user_email,
           image: m.user_image,
           handle: m.user_handle,
         },

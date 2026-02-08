@@ -203,6 +203,25 @@ export const githubInstallationRouter = router({
           input.installationId
         );
 
+        // Check for existing installation to prevent cross-org reassignment
+        const [existingInstallation] = await ctx.db
+          .select()
+          .from(githubInstallation)
+          .where(eq(githubInstallation.githubInstallationId, installation.id))
+          .limit(1);
+
+        // Reject if installation belongs to a different org
+        if (
+          existingInstallation?.organizationId &&
+          existingInstallation.organizationId !== ctx.org.id
+        ) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message:
+              'This GitHub installation is already connected to a different team',
+          });
+        }
+
         // Upsert the installation record — scoped to active org
         await ctx.db
           .insert(githubInstallation)
@@ -222,7 +241,10 @@ export const githubInstallationRouter = router({
               accountType: installation.account.type,
               accountAvatarUrl: installation.account.avatar_url,
               repositoryIds: repos.repositories.map((r) => String(r.id)),
-              organizationId: ctx.org.id,
+              // Only set organizationId if null or already belongs to this org
+              organizationId: existingInstallation?.organizationId
+                ? existingInstallation.organizationId
+                : ctx.org.id,
               updatedAt: new Date(),
             },
           });
@@ -290,22 +312,25 @@ export const githubInstallationRouter = router({
         });
       }
 
-      // Unset all other defaults for this org
-      await ctx.db
-        .update(githubInstallation)
-        .set({ isDefault: false })
-        .where(
-          and(
-            eq(githubInstallation.organizationId, ctx.org.id),
-            eq(githubInstallation.isDefault, true)
-          )
-        );
+      // Use a transaction to ensure atomicity — both updates must succeed together
+      await ctx.db.transaction(async (tx) => {
+        // Unset all other defaults for this org
+        await tx
+          .update(githubInstallation)
+          .set({ isDefault: false })
+          .where(
+            and(
+              eq(githubInstallation.organizationId, ctx.org.id),
+              eq(githubInstallation.isDefault, true)
+            )
+          );
 
-      // Set this installation as default
-      await ctx.db
-        .update(githubInstallation)
-        .set({ isDefault: true })
-        .where(eq(githubInstallation.id, installation.id));
+        // Set this installation as default
+        await tx
+          .update(githubInstallation)
+          .set({ isDefault: true })
+          .where(eq(githubInstallation.id, installation.id));
+      });
 
       return { success: true };
     }),
