@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useActiveOrg } from '@/hooks/use-active-org';
+import { useSession } from '@/context/session-context';
 
 /**
  * Redirect from legacy /settings/billing to /{slug}/settings/billing.
@@ -11,15 +12,17 @@ import { useActiveOrg } from '@/hooks/use-active-org';
 export default function BillingSettingsRedirect() {
   const router = useRouter();
   const { activeOrgSlug, isLoading } = useActiveOrg();
+  const { isPending: isSessionLoading } = useSession();
 
   useEffect(() => {
-    if (isLoading) return;
+    // Wait for both session and org data to load before redirecting
+    if (isLoading || isSessionLoading) return;
     if (activeOrgSlug) {
       router.replace(`/${activeOrgSlug}/settings/billing`);
     } else {
       router.replace('/dashboard');
     }
-  }, [activeOrgSlug, isLoading, router]);
+  }, [activeOrgSlug, isLoading, isSessionLoading, router]);
 
   return (
     <div className="flex h-[calc(100vh-200px)] items-center justify-center">

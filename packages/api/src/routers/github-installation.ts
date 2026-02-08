@@ -290,22 +290,23 @@ export const githubInstallationRouter = router({
         });
       }
 
-      // Unset all other defaults for this org
-      await ctx.db
-        .update(githubInstallation)
-        .set({ isDefault: false })
-        .where(
-          and(
-            eq(githubInstallation.organizationId, ctx.org.id),
-            eq(githubInstallation.isDefault, true)
-          )
-        );
+      // Atomically unset all defaults and set the new one
+      await ctx.db.transaction(async (tx) => {
+        await tx
+          .update(githubInstallation)
+          .set({ isDefault: false })
+          .where(
+            and(
+              eq(githubInstallation.organizationId, ctx.org.id),
+              eq(githubInstallation.isDefault, true)
+            )
+          );
 
-      // Set this installation as default
-      await ctx.db
-        .update(githubInstallation)
-        .set({ isDefault: true })
-        .where(eq(githubInstallation.id, installation.id));
+        await tx
+          .update(githubInstallation)
+          .set({ isDefault: true })
+          .where(eq(githubInstallation.id, installation.id));
+      });
 
       return { success: true };
     }),

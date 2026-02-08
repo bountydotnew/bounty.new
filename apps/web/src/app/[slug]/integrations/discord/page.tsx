@@ -20,6 +20,16 @@ import {
   type Column,
 } from '@/components/integrations';
 
+const CenteredWrapper = ({ children }: { children: React.ReactNode }) => (
+  <div className="flex flex-1 shrink-0 flex-col w-full overflow-hidden lg:max-w-[805px] xl:px-0 xl:border-x border-border-subtle mx-auto py-4 min-w-0">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
+      <div className="relative flex flex-col pb-10 px-4 w-full min-w-0 space-y-6">
+        {children}
+      </div>
+    </div>
+  </div>
+);
+
 interface DiscordRow {
   discordId: string;
   displayName: string;
@@ -193,18 +203,26 @@ export default function DiscordDetailPage() {
     name: g.name,
     icon: g.icon,
     memberCount: g.memberCount,
-    installedAt: g.installedAt as unknown as string,
+    installedAt: typeof g.installedAt === 'string' ? g.installedAt : new Date(g.installedAt).toISOString(),
   }));
 
-  const CenteredWrapper = ({ children }: { children: React.ReactNode }) => (
-    <div className="flex flex-1 shrink-0 flex-col w-full overflow-hidden lg:max-w-[805px] xl:px-0 xl:border-x border-border-subtle mx-auto py-4 min-w-0">
-      <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
-        <div className="relative flex flex-col pb-10 px-4 w-full min-w-0 space-y-6">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
+  if (error) {
+    return (
+      <CenteredWrapper>
+        <IntegrationDetailPage
+          isLoading={false}
+          error={error as Error}
+          errorMessage="Failed to load Discord account."
+        >
+          <IntegrationHeader
+            icon={<DiscordIcon className="h-8 w-8 text-foreground" />}
+            title="Discord"
+            description="Connect your Discord account and add the Bounty bot to your server."
+          />
+        </IntegrationDetailPage>
+      </CenteredWrapper>
+    );
+  }
 
   if (!(isLoading || isLinked)) {
     return (

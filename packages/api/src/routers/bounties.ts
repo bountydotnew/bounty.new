@@ -46,6 +46,7 @@ import {
   inArray,
   isNotNull,
   isNull,
+  lt,
   lte,
   or,
   sql,
@@ -423,7 +424,7 @@ export const bountiesRouter = router({
             eq(bounty.organizationId, ctx.org.id),
             eq(transaction.type, 'payment_intent'),
             gte(transaction.createdAt, startOfMonth),
-            lte(transaction.createdAt, endOfMonth)
+            lt(transaction.createdAt, endOfMonth)
           )
         );
 
@@ -2403,7 +2404,7 @@ export const bountiesRouter = router({
         const countResult = await db
           .select({ count: sql<number>`count(*)` })
           .from(bounty)
-          .where(eq(bounty.organizationId, ctx.org.id));
+          .where(and(...conditions));
 
         const count = countResult[0]?.count ?? 0;
 
@@ -3604,8 +3605,8 @@ export const bountiesRouter = router({
 
         // Send notification to support team
         const bountyAmount = parseAmount(bountyRecord.amount);
-        const creatorEmail = ctx.session.user.email || 'Unknown';
-        const creatorName = ctx.session.user.name || 'Unknown';
+        const requesterEmail = ctx.session.user.email || 'Unknown';
+        const requesterName = ctx.session.user.name || 'Unknown';
 
         await sendEmail({
           from: FROM_ADDRESSES.support,
@@ -3619,9 +3620,9 @@ Amount: $${bountyAmount.toLocaleString()}
 Bounty ID: ${bountyRecord.id}
 Request ID: ${request.id}
 
-Creator: ${creatorName}
-Creator Email: ${creatorEmail}
-Creator ID: ${ctx.session.user.id}
+Requester: ${requesterName}
+Requester Email: ${requesterEmail}
+Requester ID: ${ctx.session.user.id}
 
 Reason: ${input.reason || 'No reason provided'}
 

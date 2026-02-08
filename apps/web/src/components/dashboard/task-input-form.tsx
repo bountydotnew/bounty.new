@@ -48,7 +48,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
     const router = useRouter();
     const queryClient = useQueryClient();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const { activeOrgSlug } = useActiveOrg();
+    const { orgUrl } = useActiveOrg();
 
     useImperativeHandle(ref, () => ({
       focus: () => {
@@ -387,11 +387,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
                 {/* Connect GitHub button (when no installations) or Submit button */}
                 {!installationsLoading && installations.length === 0 ? (
                   <Link
-                    href={
-                      activeOrgSlug
-                        ? `/${activeOrgSlug}/integrations`
-                        : '/dashboard'
-                    }
+                    href={orgUrl('/integrations')}
                     className="flex items-center justify-center gap-2 px-4 h-[34px] rounded-full text-[15px] font-medium bg-surface-3 hover:bg-surface-hover border border-border-default hover:border-border-strong text-foreground transition-colors shrink-0"
                   >
                     <GithubIcon className="size-4" />

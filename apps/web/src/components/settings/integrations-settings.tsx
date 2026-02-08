@@ -416,7 +416,9 @@ function renderIntegrationCard(
 
 export function IntegrationsSettings() {
   const orgSlug = useOrgSlug();
-  // orgSlug is always available since this component renders inside [slug] routes
+  if (!orgSlug) {
+    throw new Error('IntegrationsSettings must be rendered inside a [slug] route');
+  }
   const pathPrefix = `/${orgSlug}`;
 
   const [setupAction, setSetupAction] = useQueryState(

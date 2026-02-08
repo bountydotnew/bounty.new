@@ -10,12 +10,9 @@
  * - Get org members
  */
 
-import { TRPCError } from '@trpc/server';
-import { z } from 'zod';
 import {
   protectedProcedure,
   orgProcedure,
-  orgOwnerProcedure,
   router,
 } from '../trpc';
 import { member, organization } from '@bounty/db';

@@ -28,8 +28,8 @@ const OrgInvitation = ({
 }: OrgInvitationProps) => {
   return (
     <Html dir="ltr" lang="en">
+      <Head />
       <Tailwind>
-        <Head />
         <Preview>
           {inviterName} invited you to join {orgName} on bounty.new
         </Preview>

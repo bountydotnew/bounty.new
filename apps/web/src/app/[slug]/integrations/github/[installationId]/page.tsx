@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { GithubIcon } from '@bounty/ui';
 import { ExternalLink, RefreshCw, Plus, Star } from 'lucide-react';
-import { trpcClient, queryClient } from '@/utils/trpc';
+import { trpcClient } from '@/utils/trpc';
 import { useQueryState, parseAsString } from 'nuqs';
 import {
   IntegrationDetailPage,
@@ -17,6 +17,16 @@ import {
   SectionHeader,
   type Column,
 } from '@/components/integrations';
+
+const CenteredWrapper = ({ children }: { children: React.ReactNode }) => (
+  <div className="flex flex-1 shrink-0 flex-col w-full overflow-hidden lg:max-w-[805px] xl:px-0 xl:border-x border-border-subtle mx-auto py-4 min-w-0">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
+      <div className="relative flex flex-col pb-10 px-4 w-full min-w-0 space-y-6">
+        {children}
+      </div>
+    </div>
+  </div>
+);
 
 interface Repository {
   id: number;
@@ -53,13 +63,13 @@ export default function GitHubInstallationPage() {
     mutationFn: () =>
       trpcClient.githubInstallation.syncInstallation.mutate({ installationId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      queryClientLocal.invalidateQueries({
         queryKey: ['githubInstallation.getRepositories', installationId],
       });
-      queryClient.invalidateQueries({
+      queryClientLocal.invalidateQueries({
         queryKey: ['githubInstallation.getInstallation', installationId],
       });
-      queryClient.invalidateQueries({
+      queryClientLocal.invalidateQueries({
         queryKey: ['githubInstallation.getInstallations'],
       });
     },
@@ -71,7 +81,7 @@ export default function GitHubInstallationPage() {
         installationId,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      queryClientLocal.invalidateQueries({
         queryKey: ['githubInstallation.getInstallations'],
       });
     },
@@ -131,16 +141,6 @@ export default function GitHubInstallationPage() {
     },
   ];
 
-  const CenteredWrapper = ({ children }: { children: React.ReactNode }) => (
-    <div className="flex flex-1 shrink-0 flex-col w-full overflow-hidden lg:max-w-[805px] xl:px-0 xl:border-x border-border-subtle mx-auto py-4 min-w-0">
-      <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
-        <div className="relative flex flex-col pb-10 px-4 w-full min-w-0 space-y-6">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <CenteredWrapper>
       <IntegrationDetailPage
@@ -165,7 +165,8 @@ export default function GitHubInstallationPage() {
             {
               label: 'Uninstall',
               variant: 'danger',
-              onClick: () => console.log('Uninstall clicked'),
+              onClick: () => handleViewInGitHub(),
+              disabled: false,
             },
           ]}
         >
@@ -203,7 +204,7 @@ export default function GitHubInstallationPage() {
             data={repoList}
             keyExtractor={(repo) => repo.id}
             rowActions={[
-              { label: 'Configure', onClick: () => console.log('Configure') },
+              { label: 'Configure', onClick: () => handleViewInGitHub() },
             ]}
             emptyMessage="No repositories connected."
           />

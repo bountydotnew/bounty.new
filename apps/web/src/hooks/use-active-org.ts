@@ -68,7 +68,7 @@ export function useActiveOrg(): UseActiveOrgResult {
     [orgs, activeOrgId]
   );
 
-  const isPersonalTeam = activeOrg?.isPersonal ?? true;
+  const isPersonalTeam = activeOrg?.isPersonal ?? false;
   const activeOrgSlug = activeOrg?.slug ?? '';
 
   /**

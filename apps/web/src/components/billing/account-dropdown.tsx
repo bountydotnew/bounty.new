@@ -28,7 +28,7 @@ import { SwitchUsersIcon } from '@bounty/ui/components/icons/huge/switch-users';
 import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear';
 import { SwitchWorkspaceIcon } from '@bounty/ui/components/icons/huge/switch-workspace';
 import { BillingSettingsIcon } from '@bounty/ui/components/icons/huge/billing-settings';
-import { DropdownIcon } from '@bounty/ui';
+
 import { Feedback } from '@bounty/ui';
 import { UserIcon } from '@bounty/ui';
 import { DollarBillIcon } from '@bounty/ui';
@@ -171,7 +171,7 @@ function TeamSwitcherSubmenu({ onClose }: { onClose: () => void }) {
           // If on /{currentSlug}/integrations, go to /{newSlug}/integrations
           // If on /{currentSlug}/settings/billing, go to /{newSlug}/settings/billing
           const currentSlug = activeOrg?.slug;
-          if (currentSlug && pathname?.startsWith(`/${currentSlug}`)) {
+          if (currentSlug && (pathname === `/${currentSlug}` || pathname?.startsWith(`/${currentSlug}/`))) {
             const newPath = pathname.replace(
               `/${currentSlug}`,
               `/${targetOrg.slug}`
@@ -205,6 +205,11 @@ function TeamSwitcherSubmenu({ onClose }: { onClose: () => void }) {
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
 
+    if (!slug) {
+      toast.error('Invalid team name — must contain at least one letter or number');
+      return;
+    }
+
     try {
       const result = await authClient.organization.create({
         name: name.trim(),
@@ -218,7 +223,8 @@ function TeamSwitcherSubmenu({ onClose }: { onClose: () => void }) {
 
       if (result.data?.id) {
         await switchOrg(result.data.id);
-        router.push(`/${slug}/integrations`);
+        const serverSlug = result.data.slug ?? slug;
+        router.push(`/${serverSlug}/integrations`);
         toast.success(`Team "${name.trim()}" created`);
       }
     } catch (err) {

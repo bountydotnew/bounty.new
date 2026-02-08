@@ -18,7 +18,6 @@
  */
 
 import { env } from '@bounty/env/server';
-import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import {
   verifyResendWebhook,
@@ -42,10 +41,9 @@ export async function POST(request: Request) {
 
     // Read raw body for signature verification
     const payload = await request.text();
-    const headerStore = await headers();
-    const svixId = headerStore.get('svix-id');
-    const svixTimestamp = headerStore.get('svix-timestamp');
-    const svixSignature = headerStore.get('svix-signature');
+    const svixId = request.headers.get('svix-id');
+    const svixTimestamp = request.headers.get('svix-timestamp');
+    const svixSignature = request.headers.get('svix-signature');
 
     if (!(svixId && svixTimestamp && svixSignature)) {
       return NextResponse.json(

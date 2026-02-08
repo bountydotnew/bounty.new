@@ -164,12 +164,13 @@ export default function MembersPage() {
       return;
     }
 
+    if (!activeOrg) return;
     if (!confirm('Remove this member from the team?')) return;
 
     try {
       await authClient.organization.removeMember({
         memberIdOrEmail: memberId,
-        organizationId: activeOrg!.id,
+        organizationId: activeOrg.id,
       });
       toast.success('Member removed');
       invalidateAll();
@@ -183,11 +184,12 @@ export default function MembersPage() {
     memberId: string,
     newRole: 'owner' | 'member'
   ) => {
+    if (!activeOrg) return;
     try {
       await authClient.organization.updateMemberRole({
         memberId,
         role: toApiRole(newRole),
-        organizationId: activeOrg!.id,
+        organizationId: activeOrg.id,
       });
       toast.success('Role updated');
       invalidateAll();

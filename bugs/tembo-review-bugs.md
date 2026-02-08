@@ -17,7 +17,7 @@
 **Fix:** Migrated critical mutations (`toggleBountyPin`, `updateBounty`, `deleteBounty`) to `orgProcedure` with explicit org validation:
 - Verifies bounty belongs to active org before allowing mutations
 - Maintains `isUserBountyOrgMember` check for fine-grained permission control
-- Legacy bounties without org still supported
+- Legacy bounties (without org) still supported
 
 ## High Priority Issues
 
@@ -56,7 +56,7 @@
 **File:** `packages/api/src/routers/organization.ts`  
 **Severity:** Medium  
 **Issue:** All member emails visible to any org member.  
-**Note:** This is intentional for team collaboration. Can be restricted to owners only if needed.
+**Note:** This is intentional for team collaboration. This can be restricted to owners only if needed.
 
 ### Medium #3: No foreign key constraint on `session.activeOrganizationId`
 **Status:** ⚠️ ACCEPTED (By design)  
@@ -111,9 +111,9 @@
 | Priority | Fixed | Open | Total |
 |----------|-------|------|-------|
 | Critical | 2 | 0 | 2 |
-| High | 0 | 3 | 3 |
-| Medium | 1 | 3 | 4 |
+| High | 3 | 0 | 3 |
+| Medium | 3 | 1 | 4 |
 | Low/Redundancy | 2 | 3 | 5 |
-| **TOTAL** | **5** | **9** | **14** |
+| **TOTAL** | **10** | **4** | **14** |
 
-**Status**: Both critical security issues have been fixed. The remaining open issues are lower priority and can be addressed in follow-up PRs.
+**Status**: All critical and high-priority security issues have been fixed. The remaining open issues are lower priority and can be addressed in follow-up PRs.

@@ -80,7 +80,7 @@ export function PricingPageContent() {
       }
     };
     startCheckout();
-  }, [searchParams, isAuthenticated, isPending, attach]);
+  }, [searchParams, isAuthenticated, isPending, attach, activeOrgSlug]);
 
   return (
     <div className="mx-auto max-w-7xl px-8 pt-32 pb-24">

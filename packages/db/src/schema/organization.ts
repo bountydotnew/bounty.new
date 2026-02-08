@@ -49,10 +49,8 @@ export const organization = pgTable(
     isPersonal: boolean('is_personal').notNull().default(false),
     stripeCustomerId: text('stripe_customer_id'),
     createdAt: timestamp('created_at').notNull().default(sql`now()`),
-  },
-  (t) => [
-    index('organization_slug_idx').on(t.slug),
-  ]
+  }
+  // slug already has a unique constraint which implicitly creates an index
 );
 
 // ============================================================================
@@ -80,7 +78,7 @@ export const member = pgTable(
   (t) => [
     uniqueIndex('member_org_user_idx').on(t.organizationId, t.userId),
     index('member_user_id_idx').on(t.userId),
-    index('member_org_id_idx').on(t.organizationId),
+    // member_org_id_idx removed: covered by the leading column of member_org_user_idx
   ]
 );
 

@@ -11,7 +11,7 @@ interface BackLinkProps {
 
 export function BackLink({ href, label = 'Integrations' }: BackLinkProps) {
   const orgSlug = useOrgSlug();
-  const resolvedHref = href ?? `/${orgSlug}/integrations`;
+  const resolvedHref = href ?? (orgSlug ? `/${orgSlug}/integrations` : '/integrations');
 
   return (
     <Link

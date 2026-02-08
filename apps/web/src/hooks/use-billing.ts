@@ -125,14 +125,6 @@ export const useBilling = (): BillingHookResult => {
         (p.status === 'active' || p.status === 'trialing') && p.id !== 'free'
     );
 
-    // Debug logging - remove after fixing
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[useBilling] checkProStatus:', {
-        products: products.map((p) => ({ id: p.id, status: p.status })),
-        hasPaidSubscription,
-      });
-    }
-
     return Boolean(hasPaidSubscription);
   }, [customer]);
 

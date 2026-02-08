@@ -133,7 +133,7 @@ async function syncGitHubHandle({
       .set({ handle: githubHandle, updatedAt: new Date() })
       .where(eq(userTable.id, userId));
 
-    console.warn(`✅ Synced GitHub handle for user ${userId}: ${githubHandle}`);
+    console.log(`Synced GitHub handle for user ${userId}: ${githubHandle}`);
   } catch {
     // Silently fail - don't block account creation/update
   }
@@ -184,7 +184,7 @@ async function createPersonalTeam(user: {
   handle?: string | null;
 }) {
   const handle =
-    (user as { handle?: string | null }).handle ??
+    user.handle ??
     user.email
       .split('@')[0]
       ?.toLowerCase()
@@ -230,14 +230,17 @@ async function createPersonalTeam(user: {
       });
 
       if (env.NODE_ENV !== 'production') {
-        console.warn(
+        console.log(
           `[createPersonalTeam] Created "${teamName}" (${slug}) for user ${user.id}${attempt > 0 ? ' (slug collision retry)' : ''}`
         );
       }
       return; // Success — exit the retry loop
     } catch (error) {
       const isSlugCollision =
-        error instanceof Error && error.message.includes('unique');
+        error instanceof Error &&
+        ('code' in error
+          ? (error as Error & { code?: string }).code === '23505'
+          : error.message.includes('unique'));
 
       if (isSlugCollision && attempt === 0) {
         // Transaction rolled back automatically — retry with a suffixed slug
@@ -318,7 +321,7 @@ export const auth = betterAuth({
                   embeds: [
                     {
                       title: 'New User Registered',
-                      description: `**${user.name ?? 'Unknown'}** (@${(user as { handle?: string | null }).handle ?? 'unknown'}) joined bounty.new`,
+                      description: 'A new user joined bounty.new',
                       color: 0x00_ff_00,
                       timestamp: new Date().toISOString(),
                     },
@@ -373,7 +376,7 @@ export const auth = betterAuth({
                     .where(eq(organization.id, org.id));
 
                   if (env.NODE_ENV !== 'production') {
-                    console.warn(
+                    console.log(
                       `[user.update.after] Synced personal team slug: ${org.slug} -> ${slug}${attempt > 0 ? ' (collision retry)' : ''}`
                     );
                   }
@@ -381,7 +384,9 @@ export const auth = betterAuth({
                 } catch (updateErr) {
                   const isSlugCollision =
                     updateErr instanceof Error &&
-                    updateErr.message.includes('unique');
+                    ('code' in updateErr
+                      ? (updateErr as Error & { code?: string }).code === '23505'
+                      : updateErr.message.includes('unique'));
 
                   if (isSlugCollision && attempt === 0) {
                     // Retry with a suffixed slug
@@ -407,7 +412,7 @@ export const auth = betterAuth({
           const isDev = env.NODE_ENV !== 'production';
 
           if (isDev) {
-            console.warn(
+            console.log(
               `[session.create.before] userId=${session.userId} activeOrganizationId=${session.activeOrganizationId ?? 'null'}`
             );
           }
@@ -426,7 +431,7 @@ export const auth = betterAuth({
               });
 
               if (isDev) {
-                console.warn(
+                console.log(
                   `[session.create.before] self-healing: creating personal team for user ${sessionUser?.id ?? session.userId}`
                 );
               }
@@ -555,8 +560,8 @@ export const auth = betterAuth({
         const orgName = data.organization.name;
         const role = data.role ?? 'member';
 
-        console.warn(
-          `[sendInvitationEmail] ${data.email} invited to ${orgName} by ${inviterName} as ${role}`
+        console.log(
+          `[sendInvitationEmail] Invitation sent to ${orgName} as ${role}`
         );
 
         try {
@@ -577,9 +582,9 @@ export const auth = betterAuth({
           console.error('[sendInvitationEmail] Error:', err);
         }
       },
-      // Organization hooks — slug uniqueness enforced by DB unique constraint.
-      // Static Next.js routes always resolve before dynamic [slug] routes,
-      // so no reserved slugs list is needed.
+      // Slug uniqueness enforced by DB unique constraint.
+      // Reserved slugs (e.g., /dashboard, /bounty) are checked via isReservedSlug()
+      // in createPersonalTeam() and user.update.after hook.
     }),
 
     // ========================================================================

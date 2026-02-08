@@ -225,6 +225,7 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
     }, [discordBotInstallData]),
 
     linkDiscord: useCallback(async () => {
+      if (!orgSlug) return;
       // Use Better Auth's linkSocial to link Discord to existing account
       await authClient.linkSocial({
         provider: 'discord',
@@ -239,6 +240,7 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
     refreshDiscord: useCallback(() => refetchDiscord(), [refetchDiscord]),
 
     linkLinear: useCallback(async () => {
+      if (!orgSlug) return;
       // Use Better Auth's linkSocial to link Linear to existing account
       await authClient.linkSocial({
         provider: 'linear',

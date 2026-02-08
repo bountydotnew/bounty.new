@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 
 interface OrgSlugContextValue {
   /** The org slug from the URL parameter */
@@ -16,8 +16,9 @@ export function OrgSlugProvider({
   slug: string;
   children: React.ReactNode;
 }) {
+  const value = useMemo(() => ({ slug }), [slug]);
   return (
-    <OrgSlugContext.Provider value={{ slug }}>
+    <OrgSlugContext.Provider value={value}>
       {children}
     </OrgSlugContext.Provider>
   );
