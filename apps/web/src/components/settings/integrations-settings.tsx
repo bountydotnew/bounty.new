@@ -418,6 +418,11 @@ export function IntegrationsSettings() {
   const orgSlug = useOrgSlug();
   if (!orgSlug) {
     throw new Error('IntegrationsSettings must be rendered inside a [slug] route');
+  if (!orgSlug) {
+    if (process.env.NODE_ENV !== 'production') {
+      throw new Error('IntegrationsSettings must be rendered inside a [slug] route');
+    }
+    return null;
   }
   const pathPrefix = `/${orgSlug}`;
 
