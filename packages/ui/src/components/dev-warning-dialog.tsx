@@ -34,7 +34,7 @@ export function DevWarningDialog({
             <Image
               alt="Bounty.new"
               height={32}
-              src="/bdn-b-w-trans.png"
+              src="/logo-black.png"
               width={32}
             />
           </div>

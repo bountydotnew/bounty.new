@@ -2,8 +2,10 @@ import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import {
   protectedProcedure,
+  orgProcedure,
+  orgOwnerProcedure,
   router,
-  rateLimitedProtectedProcedure,
+  rateLimitedOrgProcedure,
 } from '../trpc';
 import { linearAccount, account, type db as database } from '@bounty/db';
 import { eq, and } from 'drizzle-orm';
@@ -36,18 +38,27 @@ async function getLinearAccount(db: Database, userId: string) {
 }
 
 /**
- * Helper function to get the Linear workspace connection for a user
+ * Helper function to get the Linear workspace connection for a user.
+ * When orgId is provided, filters to workspaces belonging to that org.
  */
-async function getLinearWorkspace(db: Database, oauthAccountId: string) {
+async function getLinearWorkspace(
+  db: Database,
+  oauthAccountId: string,
+  orgId?: string
+) {
+  const conditions = [
+    eq(linearAccount.accountId, oauthAccountId),
+    eq(linearAccount.isActive, true),
+  ];
+
+  if (orgId) {
+    conditions.push(eq(linearAccount.organizationId, orgId));
+  }
+
   const [workspace] = await db
     .select()
     .from(linearAccount)
-    .where(
-      and(
-        eq(linearAccount.accountId, oauthAccountId),
-        eq(linearAccount.isActive, true)
-      )
-    )
+    .where(and(...conditions))
     .limit(1);
 
   return workspace;
@@ -179,9 +190,9 @@ export const linearRouter = router({
   }),
 
   /**
-   * Get all Linear workspaces for the current user
+   * Get all Linear workspaces for the current user (scoped to active org)
    */
-  getWorkspaces: protectedProcedure.query(async ({ ctx }) => {
+  getWorkspaces: orgProcedure.query(async ({ ctx }) => {
     // Get the user's Linear OAuth account
     const linearOAuthAccount = await getLinearAccount(
       ctx.db,
@@ -192,10 +203,11 @@ export const linearRouter = router({
       return { success: true, workspaces: [] };
     }
 
-    // Get the Linear workspace connection
+    // Get the Linear workspace connection scoped to the active org
     const linearWorkspace = await getLinearWorkspace(
       ctx.db,
-      linearOAuthAccount.id
+      linearOAuthAccount.id,
+      ctx.org.id
     );
 
     if (!linearWorkspace) {
@@ -227,9 +239,9 @@ export const linearRouter = router({
   }),
 
   /**
-   * Get connection status (whether user has connected Linear)
+   * Get connection status (whether user has connected Linear for the active org)
    */
-  getConnectionStatus: protectedProcedure.query(async ({ ctx }) => {
+  getConnectionStatus: orgProcedure.query(async ({ ctx }) => {
     const linearOAuthAccount = await getLinearAccount(
       ctx.db,
       ctx.session.user.id
@@ -241,7 +253,8 @@ export const linearRouter = router({
 
     const linearWorkspace = await getLinearWorkspace(
       ctx.db,
-      linearOAuthAccount.id
+      linearOAuthAccount.id,
+      ctx.org.id
     );
 
     return {
@@ -261,7 +274,7 @@ export const linearRouter = router({
   /**
    * Fetch issues from Linear with optional filters
    */
-  getIssues: rateLimitedProtectedProcedure('linear:read')
+  getIssues: rateLimitedOrgProcedure('linear:read')
     .input(
       z.object({
         filters: z
@@ -295,7 +308,8 @@ export const linearRouter = router({
 
       const linearWorkspace = await getLinearWorkspace(
         ctx.db,
-        linearOAuthAccount.id
+        linearOAuthAccount.id,
+        ctx.org.id
       );
 
       if (!linearWorkspace) {
@@ -380,7 +394,7 @@ export const linearRouter = router({
   /**
    * Get a single issue by ID
    */
-  getIssue: rateLimitedProtectedProcedure('linear:read')
+  getIssue: rateLimitedOrgProcedure('linear:read')
     .input(z.object({ issueId: z.string() }))
     .query(async ({ input, ctx }) => {
       const linearOAuthAccount = await getLinearAccount(
@@ -397,7 +411,8 @@ export const linearRouter = router({
 
       const linearWorkspace = await getLinearWorkspace(
         ctx.db,
-        linearOAuthAccount.id
+        linearOAuthAccount.id,
+        ctx.org.id
       );
 
       if (!linearWorkspace) {
@@ -438,59 +453,55 @@ export const linearRouter = router({
   /**
    * Fetch projects from Linear
    */
-  getProjects: rateLimitedProtectedProcedure('linear:read').query(
-    async ({ ctx }) => {
-      const linearOAuthAccount = await getLinearAccount(
-        ctx.db,
-        ctx.session.user.id
-      );
+  getProjects: rateLimitedOrgProcedure('linear:read').query(async ({ ctx }) => {
+    const linearOAuthAccount = await getLinearAccount(
+      ctx.db,
+      ctx.session.user.id
+    );
 
-      if (!linearOAuthAccount?.accessToken) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Linear account not connected',
-        });
-      }
-
-      const linearWorkspace = await getLinearWorkspace(
-        ctx.db,
-        linearOAuthAccount.id
-      );
-
-      if (!linearWorkspace) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Linear workspace not connected',
-        });
-      }
-
-      try {
-        // Get a valid access token, refreshing if necessary
-        const accessToken = await getValidAccessToken(
-          ctx.db,
-          linearOAuthAccount
-        );
-        const driver = createLinearDriver(accessToken);
-        const projects = await driver.getProjects();
-
-        return {
-          success: true,
-          projects,
-        };
-      } catch (error) {
-        console.error('Failed to fetch Linear projects:', error);
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to fetch projects from Linear',
-        });
-      }
+    if (!linearOAuthAccount?.accessToken) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Linear account not connected',
+      });
     }
-  ),
+
+    const linearWorkspace = await getLinearWorkspace(
+      ctx.db,
+      linearOAuthAccount.id,
+      ctx.org.id
+    );
+
+    if (!linearWorkspace) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Linear workspace not connected',
+      });
+    }
+
+    try {
+      // Get a valid access token, refreshing if necessary
+      const accessToken = await getValidAccessToken(ctx.db, linearOAuthAccount);
+      const driver = createLinearDriver(accessToken);
+      const projects = await driver.getProjects();
+
+      return {
+        success: true,
+        projects,
+      };
+    } catch (error) {
+      console.error('Failed to fetch Linear projects:', error);
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch projects from Linear',
+      });
+    }
+  }),
 
   /**
    * Get workflow states (for filter dropdown)
    */
-  getWorkflowStates: rateLimitedProtectedProcedure('linear:read').query(
+  getWorkflowStates: rateLimitedOrgProcedure('linear:read').query(
     async ({ ctx }) => {
       const linearOAuthAccount = await getLinearAccount(
         ctx.db,
@@ -501,10 +512,11 @@ export const linearRouter = router({
         return { success: true, states: [] };
       }
 
-      // Check for active workspace connection
+      // Check for active workspace connection scoped to active org
       const linearWorkspace = await getLinearWorkspace(
         ctx.db,
-        linearOAuthAccount.id
+        linearOAuthAccount.id,
+        ctx.org.id
       );
       if (!linearWorkspace) {
         return { success: true, states: [] };
@@ -532,44 +544,40 @@ export const linearRouter = router({
   /**
    * Get teams (for filter dropdown)
    */
-  getTeams: rateLimitedProtectedProcedure('linear:read').query(
-    async ({ ctx }) => {
-      const linearOAuthAccount = await getLinearAccount(
-        ctx.db,
-        ctx.session.user.id
-      );
+  getTeams: rateLimitedOrgProcedure('linear:read').query(async ({ ctx }) => {
+    const linearOAuthAccount = await getLinearAccount(
+      ctx.db,
+      ctx.session.user.id
+    );
 
-      if (!linearOAuthAccount?.accessToken) {
-        return { success: true, teams: [] };
-      }
-
-      // Check for active workspace connection
-      const linearWorkspace = await getLinearWorkspace(
-        ctx.db,
-        linearOAuthAccount.id
-      );
-      if (!linearWorkspace) {
-        return { success: true, teams: [] };
-      }
-
-      try {
-        const accessToken = await getValidAccessToken(
-          ctx.db,
-          linearOAuthAccount
-        );
-        const driver = createLinearDriver(accessToken);
-        const teams = await driver.getTeams();
-
-        return {
-          success: true,
-          teams,
-        };
-      } catch (error) {
-        console.error('Failed to fetch Linear teams:', error);
-        return { success: true, teams: [] };
-      }
+    if (!linearOAuthAccount?.accessToken) {
+      return { success: true, teams: [] };
     }
-  ),
+
+    // Check for active workspace connection scoped to active org
+    const linearWorkspace = await getLinearWorkspace(
+      ctx.db,
+      linearOAuthAccount.id,
+      ctx.org.id
+    );
+    if (!linearWorkspace) {
+      return { success: true, teams: [] };
+    }
+
+    try {
+      const accessToken = await getValidAccessToken(ctx.db, linearOAuthAccount);
+      const driver = createLinearDriver(accessToken);
+      const teams = await driver.getTeams();
+
+      return {
+        success: true,
+        teams,
+      };
+    } catch (error) {
+      console.error('Failed to fetch Linear teams:', error);
+      return { success: true, teams: [] };
+    }
+  }),
 
   /**
    * Create a bounty from a Linear issue
@@ -577,7 +585,7 @@ export const linearRouter = router({
    * The actual bounty creation is handled by the bounties router
    * This endpoint validates access and pre-fills data from Linear
    */
-  getBountyDataFromIssue: rateLimitedProtectedProcedure('linear:create')
+  getBountyDataFromIssue: rateLimitedOrgProcedure('linear:create')
     .input(z.object({ linearIssueId: z.string() }))
     .query(async ({ input, ctx }) => {
       const linearOAuthAccount = await getLinearAccount(
@@ -594,7 +602,8 @@ export const linearRouter = router({
 
       const linearWorkspace = await getLinearWorkspace(
         ctx.db,
-        linearOAuthAccount.id
+        linearOAuthAccount.id,
+        ctx.org.id
       );
 
       if (!linearWorkspace) {
@@ -642,7 +651,7 @@ export const linearRouter = router({
   /**
    * Post a comment to a Linear issue (called after bounty events)
    */
-  postComment: rateLimitedProtectedProcedure('linear:comment')
+  postComment: rateLimitedOrgProcedure('linear:comment')
     .input(
       z.discriminatedUnion('commentType', [
         z.object({
@@ -700,7 +709,8 @@ export const linearRouter = router({
 
       const linearWorkspace = await getLinearWorkspace(
         ctx.db,
-        linearOAuthAccount.id
+        linearOAuthAccount.id,
+        ctx.org.id
       );
 
       if (!linearWorkspace) {
@@ -779,7 +789,7 @@ export const linearRouter = router({
    * Disconnect Linear workspace
    * Deletes both the linear_account record and the OAuth account record
    */
-  disconnect: protectedProcedure
+  disconnect: orgOwnerProcedure
     .input(z.object({ workspaceId: z.string() }))
     .mutation(async ({ input, ctx }) => {
       const linearOAuthAccount = await getLinearAccount(
@@ -794,20 +804,39 @@ export const linearRouter = router({
         });
       }
 
+      // Verify the workspace belongs to the active org before disconnecting
+      const [workspace] = await ctx.db
+        .select({ id: linearAccount.id })
+        .from(linearAccount)
+        .where(
+          and(
+            eq(linearAccount.linearWorkspaceId, input.workspaceId),
+            eq(linearAccount.accountId, linearOAuthAccount.id),
+            eq(linearAccount.organizationId, ctx.org.id)
+          )
+        )
+        .limit(1);
+
+      if (!workspace) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Linear workspace not found for this team',
+        });
+      }
+
       // Delete the linear_account record
       await ctx.db
         .delete(linearAccount)
         .where(
           and(
             eq(linearAccount.linearWorkspaceId, input.workspaceId),
-            eq(linearAccount.accountId, linearOAuthAccount.id)
+            eq(linearAccount.accountId, linearOAuthAccount.id),
+            eq(linearAccount.organizationId, ctx.org.id)
           )
         );
 
       // Delete the OAuth account record (removes access/refresh tokens)
-      await ctx.db
-        .delete(account)
-        .where(eq(account.id, linearOAuthAccount.id));
+      await ctx.db.delete(account).where(eq(account.id, linearOAuthAccount.id));
 
       return { success: true };
     }),
@@ -816,7 +845,7 @@ export const linearRouter = router({
    * Sync Linear workspace - called after OAuth to create the linear_account record
    * This fetches the workspace info from Linear and stores it in the database
    */
-  syncWorkspace: protectedProcedure.mutation(async ({ ctx }) => {
+  syncWorkspace: orgProcedure.mutation(async ({ ctx }) => {
     const linearOAuthAccount = await getLinearAccount(
       ctx.db,
       ctx.session.user.id
@@ -885,7 +914,7 @@ export const linearRouter = router({
         };
       }
 
-      // Create new linear_account record
+      // Create new linear_account record — scoped to active org
       await ctx.db.insert(linearAccount).values({
         accountId: linearOAuthAccount.id,
         linearUserId: user.id,
@@ -894,6 +923,7 @@ export const linearRouter = router({
         linearWorkspaceUrl: workspace.url,
         linearWorkspaceKey: workspace.key,
         isActive: true,
+        organizationId: ctx.org.id,
       });
 
       return {

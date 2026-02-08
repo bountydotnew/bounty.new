@@ -27,9 +27,9 @@ import {
 } from '@bounty/ui';
 import { ArrowLeftIcon } from 'lucide-react';
 
+// User-scoped settings only. Billing is now org-scoped at /{slug}/settings/billing.
 const NAV_ITEMS = [
   { title: 'Account', url: '/settings/account', icon: UserIcon },
-  { title: 'Billing', url: '/settings/billing', icon: CardIcon },
   { title: 'Payments', url: '/settings/payments', icon: DollarBillIcon },
   { title: 'Security', url: '/settings/security', icon: SecurityIcon },
   {

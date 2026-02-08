@@ -17,6 +17,12 @@
     "src",
     "README.md"
   ],
+  "bin": {
+    "email": "./src/cli.ts"
+  },
+  "scripts": {
+    "preview": "bun ./src/cli.ts"
+  },
   "dependencies": {
     "@react-email/components": "^0.0.25",
     "react": "catalog:",

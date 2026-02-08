@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { authClient } from '@bounty/auth/client';
 import { toast } from 'sonner';
+import { useOrgSlug } from '@/context/org-slug-context';
 
 export interface GitHubInstallation {
   id: number;
@@ -78,6 +79,7 @@ export interface IntegrationsActions {
 
 export function useIntegrations(): IntegrationsState & IntegrationsActions {
   const queryClient = useQueryClient();
+  const orgSlug = useOrgSlug();
 
   // GitHub installations queries
   const {
@@ -226,9 +228,9 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
       // Use Better Auth's linkSocial to link Discord to existing account
       await authClient.linkSocial({
         provider: 'discord',
-        callbackURL: '/integrations/discord',
+        callbackURL: `/${orgSlug}/integrations/discord`,
       });
-    }, []),
+    }, [orgSlug]),
 
     unlinkDiscord: useCallback(async () => {
       await unlinkDiscordMutation.mutateAsync();
@@ -240,13 +242,16 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
       // Use Better Auth's linkSocial to link Linear to existing account
       await authClient.linkSocial({
         provider: 'linear',
-        callbackURL: '/integrations/linear',
+        callbackURL: `/${orgSlug}/integrations/linear`,
       });
-    }, []),
+    }, [orgSlug]),
 
-    unlinkLinear: useCallback(async (workspaceId: string) => {
-      await unlinkLinearMutation.mutateAsync(workspaceId);
-    }, [unlinkLinearMutation]),
+    unlinkLinear: useCallback(
+      async (workspaceId: string) => {
+        await unlinkLinearMutation.mutateAsync(workspaceId);
+      },
+      [unlinkLinearMutation]
+    ),
 
     refreshLinear: useCallback(() => refetchLinear(), [refetchLinear]),
 

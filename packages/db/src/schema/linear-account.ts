@@ -32,6 +32,8 @@ export const linearAccount = pgTable(
     linearWorkspaceKey: text('linear_workspace_key'), // e.g., "acme-corp"
     // Active status - allows users to disconnect without deleting
     isActive: boolean('is_active').notNull().default(true),
+    // Organization scoping
+    organizationId: text('organization_id'),
     createdAt: timestamp('created_at').notNull().default(sql`now()`),
     updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
   },

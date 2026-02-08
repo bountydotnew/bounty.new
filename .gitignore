@@ -27,3 +27,4 @@ docs/STRIPE_WEBHOOK_SETUP.md
 *.pem
 /.cursor
 /.opencode
+/tasks

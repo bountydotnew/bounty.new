@@ -52,6 +52,8 @@ export const session = pgTable('session', {
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
   impersonatedBy: text('impersonated_by'),
+  // Organization plugin: tracks the user's active organization
+  activeOrganizationId: text('active_organization_id'),
 });
 
 export const account = pgTable('account', {
@@ -164,4 +166,6 @@ export const discordGuild = pgTable('discord_guild', {
     onDelete: 'set null',
   }), // Bounty user who installed (if known)
   removedAt: timestamp('removed_at'), // Set when bot is removed, null if active
+  // Organization scoping
+  organizationId: text('organization_id'),
 });

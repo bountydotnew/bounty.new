@@ -1,1 +1,1 @@
-export { LinearSidebar } from './linear-sidebar';
+export { LinearTabBar } from './linear-sidebar';
