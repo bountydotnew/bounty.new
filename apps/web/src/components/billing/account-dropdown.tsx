@@ -288,7 +288,7 @@ function CreateTeamDialog({
 
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2 px-2">
+            <div className="grid gap-2 px-4">
               <Label htmlFor="team-name">
                 Team Name <span className="text-destructive">*</span>
               </Label>
@@ -309,7 +309,7 @@ function CreateTeamDialog({
               )}
             </div>
 
-            <div className="grid gap-2">
+            <div className="grid gap-2 px-4">
               <Label htmlFor="team-slug">
                 Team Slug <span className="text-destructive">*</span>
               </Label>
