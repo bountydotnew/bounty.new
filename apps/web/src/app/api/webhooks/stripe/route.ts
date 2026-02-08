@@ -707,7 +707,7 @@ export async function POST(request: Request) {
               react: BountyCancellationConfirm({
                 bountyTitle: bountyRecord.title,
                 bountyUrl: `${baseUrl}/bounty/${bountyRecord.id}`,
-                creatorName: creator.name || 'there',
+                userName: creator.name || 'there',
                 originalAmount: `$${originalAmount.toLocaleString()}`,
                 refundAmount: `$${refundedAmount.toLocaleString()}`,
                 platformFee: `$${platformFee.toLocaleString()}`,
