@@ -240,7 +240,13 @@ async function createPersonalTeam(user: {
         error instanceof Error &&
         ('code' in error
           ? (error as Error & { code?: string }).code === '23505'
-          : error.message.includes('unique'));
+      const code =
+        (error as { code?: string; cause?: unknown }).code ??
+        ((error as { cause?: { code?: string } }).cause?.code);
+
+      const isSlugCollision =
+        error instanceof Error &&
+        (code === '23505' || error.message.includes('unique'));
 
       if (isSlugCollision && attempt === 0) {
         // Transaction rolled back automatically — retry with a suffixed slug
