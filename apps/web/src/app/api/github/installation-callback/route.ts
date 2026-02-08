@@ -96,14 +96,16 @@ export async function GET(request: NextRequest) {
           .limit(1);
 
         // Only link if:
-        // 1. Installation doesn't exist yet (webhook hasn't processed), OR
-        // 2. Installation exists but isn't linked to any user, OR
-        // 3. Installation exists and is already linked to this user (update metadata)
-        // We don't re-link installations that belong to other users
-        if (
-          !(existingInstallation && existingInstallation.githubAccountId) ||
-          existingInstallation.githubAccountId === githubAccount.id
-        ) {
+        // 1. Installation doesn't exist yet, OR
+        // 2. Installation is already owned by the same GitHub account, OR
+        // 3. Installation already belongs to the same organization
+        // This prevents a different org from hijacking an existing installation.
+        const canProceed =
+          !existingInstallation ||
+          existingInstallation.githubAccountId === githubAccount.id ||
+          existingInstallation.organizationId === activeOrgId;
+
+        if (canProceed) {
           const repos =
             await githubApp.getInstallationRepositories(parsedInstallationId);
 
@@ -121,25 +123,25 @@ export async function GET(request: NextRequest) {
             .onConflictDoUpdate({
               target: githubInstallation.githubInstallationId,
               set: {
-                // Only update githubAccountId if it's null or matches current user
-                githubAccountId:
-                  existingInstallation?.githubAccountId === githubAccount.id ||
-                  !existingInstallation?.githubAccountId
-                    ? githubAccount.id
-                    : existingInstallation.githubAccountId,
+                githubAccountId: githubAccount.id,
                 accountLogin: installation.account.login,
                 accountType: installation.account.type,
                 accountAvatarUrl: installation.account.avatar_url,
                 repositoryIds: repos.repositories.map((r) => String(r.id)),
-                organizationId: activeOrgId,
+                // Only update organizationId if the installation isn't already
+                // owned by a different org (i.e. it's new or belongs to us)
+                organizationId:
+                  !existingInstallation?.organizationId ||
+                  existingInstallation.organizationId === activeOrgId
+                    ? activeOrgId
+                    : existingInstallation.organizationId,
                 updatedAt: new Date(),
               },
             });
         } else {
-          // Installation exists and is linked to a different user
-          // This shouldn't happen in normal flow, but log it for debugging
+          // Installation exists and belongs to a different account/org
           console.warn(
-            `[Installation Callback] Installation ${installationId} is already linked to a different account`
+            `[Installation Callback] Installation ${installationId} belongs to a different account/org — skipping`
           );
         }
       }

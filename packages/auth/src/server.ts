@@ -190,14 +190,11 @@ async function createPersonalTeam(user: {
       ?.toLowerCase()
       .replace(/[^a-z0-9-]/g, '-');
 
-  // If the handle is a reserved slug (collides with static routes like /bounty, /dashboard),
-  // suffix it immediately to avoid routing conflicts.
-  const baseSlug =
-    handle && !isReservedSlug(handle)
-      ? handle
-      : handle
-        ? `${handle}-${crypto.randomUUID().slice(0, 6)}`
-        : user.id;
+  // Always suffix the slug with a random string so personal team slugs
+  // never collide with each other or with reserved routes.
+  // e.g. handle "ripgrim" -> slug "ripgrim-a1b2c3d4"
+  const suffix = crypto.randomUUID().replace(/-/g, '').slice(0, 8);
+  const baseSlug = handle ? `${handle}-${suffix}` : user.id;
   const teamName = handle ? `${handle}'s team` : `${user.name ?? 'My'}'s team`;
 
   // Retry up to 2 times for slug collisions
@@ -306,36 +303,15 @@ export const auth = betterAuth({
         after: async (user) => {
           // Auto-create a personal team for every new user
           await createPersonalTeam(user);
-
-          // Send Discord webhook for new signup
-          try {
-            const webhookUrl = env.DISCORD_WEBHOOK_URL;
-            if (webhookUrl) {
-              await fetch(webhookUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  embeds: [
-                    {
-                      title: 'New User Registered',
-                      description: `**${user.name ?? 'Unknown'}** (@${(user as { handle?: string | null }).handle ?? 'unknown'}) joined bounty.new`,
-                      color: 0x00_ff_00,
-                      timestamp: new Date().toISOString(),
-                    },
-                  ],
-                }),
-              });
-            }
-          } catch {
-            // Silently fail — don't block signup
-          }
         },
       },
       update: {
         after: async (user) => {
           // If handle changed, sync the personal team slug + name to match
           const handle = (user as { handle?: string | null }).handle;
-          if (!handle) return;
+          if (!handle) {
+            return;
+          }
 
           try {
             const personalOrg = await db
@@ -351,18 +327,17 @@ export const auth = betterAuth({
               .limit(1);
 
             const org = personalOrg[0];
-            if (org && org.slug !== handle) {
-              // If the new handle is a reserved slug, suffix it immediately
-              const targetSlug = isReservedSlug(handle)
-                ? `${handle}-${crypto.randomUUID().slice(0, 6)}`
-                : handle;
-
-              // Try the target slug first, then a suffixed slug on collision
+            // Only re-sync if the slug doesn't already start with the handle
+            // (e.g. slug is "oldhandle-abc123" and handle changed to "newhandle")
+            if (org && !org.slug.startsWith(`${handle}-`)) {
+              // Always suffix with random string to avoid collisions
+              // Try up to 2 times in case of extremely unlikely collision
               for (let attempt = 0; attempt < 2; attempt++) {
-                const slug =
-                  attempt === 0
-                    ? targetSlug
-                    : `${handle}-${crypto.randomUUID().slice(0, 6)}`;
+                const suffix = crypto
+                  .randomUUID()
+                  .replace(/-/g, '')
+                  .slice(0, 8);
+                const slug = `${handle}-${suffix}`;
                 try {
                   await db
                     .update(organization)

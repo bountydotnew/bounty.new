@@ -40,10 +40,19 @@ import {
   AvatarImage,
 } from '@bounty/ui/components/avatar';
 import { useUser } from '@/context/user-context';
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useRef, useEffect } from 'react';
 import { PricingDialog } from '@/components/billing/pricing-dialog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { trpcClient } from '@/utils/trpc';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@bounty/ui/components/dialog';
+import { isReservedSlug } from '@bounty/types/auth';
 
 // Constants for better maintainability
 const MESSAGES = {
@@ -149,8 +158,142 @@ function useResetOnboarding() {
   return { handleResetOnboarding, pending: pending || mutation.isPending };
 }
 
+// Create Team Dialog component
+function CreateTeamDialog({
+  open,
+  onOpenChange,
+  onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreated: (orgId: string, slug: string, name: string) => void;
+}) {
+  const [name, setName] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-generate slug from name
+  const slug = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  const slugReserved = slug ? isReservedSlug(slug) : false;
+
+  // Focus input when dialog opens
+  useEffect(() => {
+    if (open) {
+      const timer = setTimeout(() => inputRef.current?.focus(), 100);
+      return () => clearTimeout(timer);
+    }
+    // Reset state when dialog closes
+    setName('');
+  }, [open]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!(name.trim() && slug) || slugReserved) return;
+
+    setIsCreating(true);
+    try {
+      const result = await authClient.organization.create({
+        name: name.trim(),
+        slug,
+      });
+
+      if (result.error) {
+        toast.error(result.error.message ?? 'Failed to create team');
+        return;
+      }
+
+      if (result.data?.id) {
+        onCreated(result.data.id, slug, name.trim());
+        onOpenChange(false);
+      }
+    } catch (err) {
+      console.error('Failed to create team:', err);
+      toast.error('Failed to create team');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[400px] rounded-[16px] bg-surface-1 border border-border-subtle">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold text-foreground">
+            Create team
+          </DialogTitle>
+          <DialogDescription className="text-sm text-text-muted">
+            Teams let you collaborate with others on bounties and integrations.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 px-6 pb-6">
+          <div className="space-y-2">
+            <label
+              htmlFor="team-name"
+              className="text-sm font-medium text-foreground"
+            >
+              Team name
+            </label>
+            <input
+              ref={inputRef}
+              id="team-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="My Team"
+              className="w-full rounded-lg border border-border-subtle bg-background px-3 py-2 text-sm text-foreground placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
+              maxLength={64}
+              disabled={isCreating}
+            />
+            {slug &&
+              (slugReserved ? (
+                <p className="text-xs text-red-500">
+                  &ldquo;{slug}&rdquo; is reserved and can&apos;t be used as a
+                  team URL.
+                </p>
+              ) : (
+                <p className="text-xs text-text-tertiary">
+                  URL: bounty.new/
+                  <span className="text-text-secondary">{slug}</span>
+                </p>
+              ))}
+          </div>
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-hover"
+              disabled={isCreating}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!(name.trim() && slug) || slugReserved || isCreating}
+              className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-50"
+            >
+              {isCreating ? 'Creating...' : 'Create team'}
+            </button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // Team switcher submenu (inside the account dropdown)
-function TeamSwitcherSubmenu({ onClose }: { onClose: () => void }) {
+function TeamSwitcherSubmenu({
+  onClose,
+  onCreateTeam,
+}: {
+  onClose: () => void;
+  onCreateTeam: () => void;
+}) {
   const { activeOrg, orgs, switchOrg, isLoading } = useActiveOrg();
   const router = useRouter();
   const pathname = usePathname();
@@ -193,39 +336,11 @@ function TeamSwitcherSubmenu({ onClose }: { onClose: () => void }) {
     [activeOrg?.id, activeOrg?.slug, orgs, switchOrg, onClose, router, pathname]
   );
 
-  const handleCreateTeam = React.useCallback(async () => {
+  const handleCreateTeam = React.useCallback(() => {
     onClose();
-    const name = window.prompt('Team name:');
-    if (!name?.trim()) return;
-
-    const slug = name
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9-]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
-
-    try {
-      const result = await authClient.organization.create({
-        name: name.trim(),
-        slug,
-      });
-
-      if (result.error) {
-        toast.error(result.error.message ?? 'Failed to create team');
-        return;
-      }
-
-      if (result.data?.id) {
-        await switchOrg(result.data.id);
-        router.push(`/${slug}/integrations`);
-        toast.success(`Team "${name.trim()}" created`);
-      }
-    } catch (err) {
-      console.error('Failed to create team:', err);
-      toast.error('Failed to create team');
-    }
-  }, [switchOrg, onClose, router]);
+    // Small delay to let the dropdown close before opening the dialog
+    setTimeout(() => onCreateTeam(), 150);
+  }, [onClose, onCreateTeam]);
 
   return (
     <DropdownMenuSub>
@@ -319,8 +434,9 @@ export function AccountDropdown({
   const router = useRouter();
   const { session } = useSession();
   const { user: currentUser } = useUser();
-  const { activeOrgSlug } = useActiveOrg();
+  const { activeOrgSlug, switchOrg } = useActiveOrg();
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const [createTeamOpen, setCreateTeamOpen] = React.useState(false);
 
   const handleOpenChange = React.useCallback(
     (open: boolean) => {
@@ -428,7 +544,10 @@ export function AccountDropdown({
 
           {/* Actions section */}
           <div className="flex flex-col gap-2 border-b border-border-subtle px-0 py-2">
-            <TeamSwitcherSubmenu onClose={() => setMenuOpen(false)} />
+            <TeamSwitcherSubmenu
+              onClose={() => setMenuOpen(false)}
+              onCreateTeam={() => setCreateTeamOpen(true)}
+            />
             <DropdownMenuItem
               className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"
               onClick={() => {
@@ -497,6 +616,20 @@ export function AccountDropdown({
       <PricingDialog
         onOpenChange={setPricingDialogOpen}
         open={pricingDialogOpen}
+      />
+      <CreateTeamDialog
+        open={createTeamOpen}
+        onOpenChange={setCreateTeamOpen}
+        onCreated={async (orgId, slug, name) => {
+          try {
+            await switchOrg(orgId);
+            router.push(`/${slug}/integrations`);
+            toast.success(`Team "${name}" created`);
+          } catch (err) {
+            console.error('Failed to switch to new team:', err);
+            toast.error('Team created but failed to switch');
+          }
+        }}
       />
     </>
   );
