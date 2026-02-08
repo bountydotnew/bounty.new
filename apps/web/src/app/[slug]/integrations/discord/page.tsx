@@ -215,7 +215,7 @@ export default function DiscordDetailPage() {
       <CenteredWrapper>
         <IntegrationDetailPage
           isLoading={false}
-          error={error as Error}
+          error={error as unknown as Error}
           errorMessage="Failed to load Discord account."
         >
           <IntegrationHeader
