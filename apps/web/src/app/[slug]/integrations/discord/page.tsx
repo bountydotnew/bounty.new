@@ -203,7 +203,11 @@ export default function DiscordDetailPage() {
     name: g.name,
     icon: g.icon,
     memberCount: g.memberCount,
-    installedAt: typeof g.installedAt === 'string' ? g.installedAt : new Date(g.installedAt).toISOString(),
+    installedAt: (() => {
+      if (typeof g.installedAt === 'string') return g.installedAt;
+      const date = new Date(g.installedAt);
+      return Number.isNaN(date.getTime()) ? '' : date.toISOString();
+    })(),
   }));
 
   if (error) {
