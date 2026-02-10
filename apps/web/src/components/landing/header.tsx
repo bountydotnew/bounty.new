@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useState, useTransition } from 'react';
+import { useCallback, useState } from 'react';
 import { LogOut, Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@bounty/ui/components/sheet';
 import {
@@ -12,7 +12,6 @@ import {
 import { Button } from '@bounty/ui/components/button';
 import { authClient } from '@bounty/auth/client';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
 import { Logo } from './logo';
 import { useSession } from '@/context/session-context';
 
@@ -27,23 +26,18 @@ export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated, session, isPending } = useSession();
   const router = useRouter();
-  const [signOutPending, startSignOut] = useTransition();
+  const [signOutPending, setSignOutPending] = useState(false);
 
-  const handleSignOut = useCallback(() => {
-    startSignOut(() => {
-      authClient
-        .signOut({
-          fetchOptions: {
-            onSuccess: () => {
-              router.push('/login');
-            },
-          },
-        })
-        .catch((error) => {
-          console.error('Sign out failed', error);
-          toast.error('Failed to sign out. Please try again.');
-        });
-    });
+  const handleSignOut = useCallback(async () => {
+    setSignOutPending(true);
+    try {
+      await authClient.signOut();
+      router.refresh();
+    } catch (error) {
+      console.error('Sign out failed', error);
+    } finally {
+      setSignOutPending(false);
+    }
   }, [router]);
 
   return (
@@ -192,35 +186,6 @@ export function Header() {
                       <div className="h-6 bg-surface-1 animate-pulse rounded" />
                       <div className="h-6 bg-surface-1 animate-pulse rounded" />
                     </>
-                  )}
-                  {/* Not authenticated */}
-                  {!(isAuthenticated || isPending) && (
-                    <>
-                      <Link
-                        href="/login"
-                        className="text-base text-text-muted hover:text-foreground transition-colors"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Sign in
-                      </Link>
-                      <Link
-                        href="/dashboard"
-                        className="text-base text-foreground hover:text-foreground transition-colors font-medium"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Browse Bounties
-                      </Link>
-                    </>
-                  )}
-                  {/* Show dashboard link when logged in */}
-                  {isAuthenticated && (
-                    <Link
-                      href="/dashboard"
-                      className="text-base text-text-muted hover:text-foreground transition-colors"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      Dashboard
-                    </Link>
                   )}
                   {/* Not authenticated */}
                   {!(isAuthenticated || isPending) && (
