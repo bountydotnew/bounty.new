@@ -1,9 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
-import { Menu } from 'lucide-react';
+import { useCallback, useState } from 'react';
+import { LogOut, Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@bounty/ui/components/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@bounty/ui/components/dropdown-menu';
+import { Button } from '@bounty/ui/components/button';
+import { authClient } from '@bounty/auth/client';
+import { useRouter } from 'next/navigation';
 import { Logo } from './logo';
 import { useSession } from '@/context/session-context';
 
@@ -17,6 +25,20 @@ const NAV_LINKS = [
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated, session, isPending } = useSession();
+  const router = useRouter();
+  const [signOutPending, setSignOutPending] = useState(false);
+
+  const handleSignOut = useCallback(async () => {
+    setSignOutPending(true);
+    try {
+      await authClient.signOut();
+      router.refresh();
+    } catch (error) {
+      console.error('Sign out failed', error);
+    } finally {
+      setSignOutPending(false);
+    }
+  }, [router]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border-default/40">
@@ -82,19 +104,46 @@ export function Header() {
             {/* Logged in: show user info with minimal nav */}
             {isAuthenticated && (
               <>
-                {session?.user?.image ? (
-                  <img
-                    src={session.user.image}
-                    alt={
-                      session?.user?.name || session?.user?.email?.split('@')[0]
-                    }
-                    className="h-7 w-7 rounded-full hidden sm:block"
-                  />
-                ) : (
-                  <span className="text-sm text-text-muted hidden sm:inline-flex">
-                    {session?.user?.name || session?.user?.email?.split('@')[0]}
-                  </span>
-                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="hidden sm:flex items-center cursor-pointer rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      aria-label="Account menu"
+                    >
+                      {session?.user?.image ? (
+                        <img
+                          src={session.user.image}
+                          alt={
+                            session?.user?.name ||
+                            session?.user?.email?.split('@')[0]
+                          }
+                          className="h-7 w-7 rounded-full"
+                        />
+                      ) : (
+                        <span className="text-sm text-text-muted">
+                          {session?.user?.name ||
+                            session?.user?.email?.split('@')[0]}
+                        </span>
+                      )}
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-40"
+                    sideOffset={8}
+                  >
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-2 text-red-500 hover:text-red-500"
+                      disabled={signOutPending}
+                      onClick={handleSignOut}
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sign out
+                    </Button>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Link
                   href="/dashboard"
                   className="inline-flex items-center justify-center bg-foreground text-background rounded-full text-xs sm:text-sm font-medium hover:bg-foreground/90 transition-colors whitespace-nowrap"
@@ -143,35 +192,6 @@ export function Header() {
                     <>
                       <Link
                         href="/login"
-                        className="text-base text-text-muted hover:text-foreground transition-colors"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Sign in
-                      </Link>
-                      <Link
-                        href="/dashboard"
-                        className="text-base text-foreground hover:text-foreground transition-colors font-medium"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Browse Bounties
-                      </Link>
-                    </>
-                  )}
-                  {/* Show dashboard link when logged in */}
-                  {isAuthenticated && (
-                    <Link
-                      href="/dashboard"
-                      className="text-base text-text-muted hover:text-foreground transition-colors"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      Dashboard
-                    </Link>
-                  )}
-                  {/* Not authenticated */}
-                  {!(isAuthenticated || isPending) && (
-                    <>
-                      <Link
-                        href="/login"
                         className="text-base text-text-muted hover:text-white transition-colors"
                         onClick={() => setIsOpen(false)}
                       >
@@ -188,13 +208,27 @@ export function Header() {
                   )}
                   {/* Show dashboard link when logged in */}
                   {isAuthenticated && (
-                    <Link
-                      href="/dashboard"
-                      className="text-base text-text-muted hover:text-white transition-colors"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      Dashboard
-                    </Link>
+                    <>
+                      <Link
+                        href="/dashboard"
+                        className="text-base text-text-muted hover:text-white transition-colors"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Dashboard
+                      </Link>
+                      <Button
+                        variant="ghost"
+                        className="justify-start gap-2 text-red-500 hover:text-red-500 px-0"
+                        disabled={signOutPending}
+                        onClick={() => {
+                          setIsOpen(false);
+                          handleSignOut();
+                        }}
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Sign out
+                      </Button>
+                    </>
                   )}
                 </nav>
               </SheetContent>
