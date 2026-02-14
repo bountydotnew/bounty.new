@@ -334,8 +334,8 @@ function VSCodeIcon(props: React.SVGProps<SVGSVGElement>) {
           id="filter1_d"
           x="60.4167"
           y="-8.07558"
-          width="googletag.cmd.pushasync47.9167"
-          height="googletag.cmd.pushasync116.151"
+          width="47.9167"
+          height="116.151"
           filterUnits="userSpaceOnUse"
           colorInterpolationFilters="sRGB"
         >
