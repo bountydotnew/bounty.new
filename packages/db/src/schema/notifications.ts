@@ -53,6 +53,8 @@ export const notification = pgTable(
     // WHERE user_id = ? AND read = false ORDER BY created_at DESC
     // Also satisfies user_id-only queries since userId is the leading column
     index('notification_user_unread_idx').on(t.userId, t.read, t.createdAt),
+    // Covers cleanupOldNotifications: WHERE read = true AND created_at < cutoff (no userId filter)
+    index('notification_read_created_at_idx').on(t.read, t.createdAt),
   ]
 );
 

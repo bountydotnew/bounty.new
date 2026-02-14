@@ -84,15 +84,13 @@ export const bounty = pgTable(
     updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
   },
   (t) => [
-    // Speeds up filtering by status (fetchAllBounties, getBountyStats, duplicate checks)
-    index('bounty_status_idx').on(t.status),
-    // Speeds up "my bounties" queries (getBountiesByUserId, getHighlights, getMonthlySpend)
-    index('bounty_created_by_id_idx').on(t.createdById),
     // Speeds up ORDER BY created_at DESC which is used in nearly all listing queries
     index('bounty_created_at_idx').on(t.createdAt),
     // Composite: status filter + date sort (the most common listing query pattern)
+    // Also satisfies status-only queries since status is the leading column
     index('bounty_status_created_at_idx').on(t.status, t.createdAt),
     // Composite: user's bounties sorted by date (getBountiesByUserId, getHighlights)
+    // Also satisfies createdById-only queries since createdById is the leading column
     index('bounty_created_by_id_created_at_idx').on(t.createdById, t.createdAt),
     // GIN index for array overlap queries on tags (fetchAllBounties tag filtering)
     index('bounty_tags_idx').using('gin', t.tags),
