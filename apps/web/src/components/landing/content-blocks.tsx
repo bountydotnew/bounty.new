@@ -426,7 +426,7 @@ function ContentBlockRow({
             href={block.ctaHref}
             target={block.ctaHref.startsWith('http') ? '_blank' : undefined}
             rel={
-              block.ctaHref.startsWith('http') ? 'noreferrer' : undefined
+            rel={block.ctaHref.startsWith('http') ? 'noopener noreferrer' : undefined}
             }
             className="inline-flex items-center gap-2 text-sm font-medium text-brand-primary hover:text-brand-primary-hover transition-colors group w-fit"
           >
