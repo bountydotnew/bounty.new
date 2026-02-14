@@ -194,50 +194,99 @@ function LinearBountyVisual() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ProcessStepsVisual() {
-  const steps = [
-    {
-      number: '01',
-      title: 'Post a bounty',
-      description: 'Describe the work, set a price, and pick a repo.',
-    },
-    {
-      number: '02',
-      title: 'Devs compete',
-      description: 'Developers submit PRs. Review solutions at your pace.',
-    },
-    {
-      number: '03',
-      title: 'Approve & pay',
-      description: 'Merge the PR and the developer gets paid instantly.',
-    },
-  ];
-
   return (
-    <div className="relative w-full rounded-xl overflow-hidden bg-surface-1 border border-border-subtle p-4 sm:p-6 flex flex-col justify-center">
-      <div className="space-y-4">
-        {steps.map((step, i) => (
-          <div
-            key={step.number}
-            className="flex items-start gap-4 p-4 rounded-xl border border-border-subtle bg-background/50"
-          >
-            <div className="flex flex-col items-center gap-1 flex-shrink-0">
-              <span className="text-2xl font-display font-medium text-foreground">
-                {step.number}
-              </span>
-              {i < steps.length - 1 && (
-                <div className="w-px h-4 bg-border-subtle" />
-              )}
+    <div className="relative w-full rounded-xl overflow-hidden border border-border-subtle bg-[#0a0a0a]">
+      <div className="p-4 sm:p-6">
+        {/* Step 1 */}
+        <div className="relative flex gap-4">
+          <div className="flex flex-col items-center">
+            <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center flex-shrink-0">
+              <span className="text-xs font-semibold text-background">1</span>
             </div>
-            <div>
-              <h4 className="text-sm font-medium text-foreground mb-1">
-                {step.title}
-              </h4>
-              <p className="text-xs text-text-secondary leading-relaxed">
-                {step.description}
-              </p>
+            <div className="w-px flex-1 bg-border-subtle my-2" />
+          </div>
+          <div className="pb-6 flex-1 min-w-0">
+            <h4 className="text-sm font-medium text-foreground mb-1.5">Post a bounty</h4>
+            <p className="text-xs text-text-secondary leading-relaxed mb-3">
+              Describe the work, set a price, and pick a repo.
+            </p>
+            {/* Mini bounty card mockup */}
+            <div className="rounded-lg border border-border-subtle bg-[#111] p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] text-text-secondary">New bounty</span>
+                <span className="text-[11px] font-medium text-[#4ade00] bg-[#4ade00]/10 px-2 py-0.5 rounded-full">$500</span>
+              </div>
+              <div className="text-[12px] text-foreground truncate">Add OAuth integration for Google + GitHub</div>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="h-1 flex-1 rounded-full bg-border-subtle overflow-hidden">
+                  <div className="h-full w-full bg-foreground rounded-full" />
+                </div>
+                <span className="text-[10px] text-text-muted">Posted</span>
+              </div>
             </div>
           </div>
-        ))}
+        </div>
+
+        {/* Step 2 */}
+        <div className="relative flex gap-4">
+          <div className="flex flex-col items-center">
+            <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center flex-shrink-0">
+              <span className="text-xs font-semibold text-background">2</span>
+            </div>
+            <div className="w-px flex-1 bg-border-subtle my-2" />
+          </div>
+          <div className="pb-6 flex-1 min-w-0">
+            <h4 className="text-sm font-medium text-foreground mb-1.5">Devs compete</h4>
+            <p className="text-xs text-text-secondary leading-relaxed mb-3">
+              Developers submit PRs. Review solutions at your pace.
+            </p>
+            {/* PR submissions mockup */}
+            <div className="space-y-2">
+              <div className="rounded-lg border border-border-subtle bg-[#111] px-3 py-2.5 flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full bg-[#238636] flex items-center justify-center flex-shrink-0">
+                  <svg className="w-3 h-3 text-white" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 3.25a2.25 2.25 0 113 2.122v5.256a2.251 2.251 0 11-1.5 0V5.372A2.25 2.25 0 011.5 3.25zm5.677-.177L9.573.677A.25.25 0 0110 .854V2.5h1A2.5 2.5 0 0113.5 5v5.628a2.251 2.251 0 11-1.5 0V5a1 1 0 00-1-1h-1v1.646a.25.25 0 01-.427.177L7.177 3.427a.25.25 0 010-.354z" /></svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-[12px] text-foreground truncate block">feat: add google oauth provider</span>
+                  <span className="text-[10px] text-text-muted">dev-sarah opened 2h ago</span>
+                </div>
+                <span className="text-[10px] text-[#F2C94C] bg-[#F2C94C]/10 px-1.5 py-0.5 rounded flex-shrink-0">Review</span>
+              </div>
+              <div className="rounded-lg border border-border-subtle bg-[#111] px-3 py-2.5 flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full bg-[#238636] flex items-center justify-center flex-shrink-0">
+                  <svg className="w-3 h-3 text-white" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 3.25a2.25 2.25 0 113 2.122v5.256a2.251 2.251 0 11-1.5 0V5.372A2.25 2.25 0 011.5 3.25zm5.677-.177L9.573.677A.25.25 0 0110 .854V2.5h1A2.5 2.5 0 0113.5 5v5.628a2.251 2.251 0 11-1.5 0V5a1 1 0 00-1-1h-1v1.646a.25.25 0 01-.427.177L7.177 3.427a.25.25 0 010-.354z" /></svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-[12px] text-foreground truncate block">feat: github + google oauth with sessions</span>
+                  <span className="text-[10px] text-text-muted">alex-dev opened 45m ago</span>
+                </div>
+                <span className="text-[10px] text-[#F2C94C] bg-[#F2C94C]/10 px-1.5 py-0.5 rounded flex-shrink-0">Review</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Step 3 */}
+        <div className="relative flex gap-4">
+          <div className="flex flex-col items-center">
+            <div className="w-8 h-8 rounded-full bg-[#4ade00] flex items-center justify-center flex-shrink-0">
+              <svg className="w-4 h-4 text-black" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" /></svg>
+            </div>
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className="text-sm font-medium text-foreground mb-1.5">Approve & pay</h4>
+            <p className="text-xs text-text-secondary leading-relaxed mb-3">
+              Merge the PR and the developer gets paid instantly.
+            </p>
+            {/* Merged + paid state */}
+            <div className="rounded-lg border border-[#4ade00]/20 bg-[#4ade00]/5 px-3 py-2.5 flex items-center gap-3">
+              <svg className="w-4 h-4 text-[#4ade00] flex-shrink-0" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M5.45 5.154A4.25 4.25 0 009.25 7.5h1.378a2.251 2.251 0 110 1.5H9.25A5.734 5.734 0 015 13.233V13.5a2.25 2.25 0 11-1.5 0v-.267A5.734 5.734 0 011 9.5a.75.75 0 011.5 0 4.25 4.25 0 002.95 4.047A2.25 2.25 0 018.534 10H9.25a2.75 2.75 0 002.652-2H9.25A5.75 5.75 0 012.677 4.357.75.75 0 013.875 3.3 4.25 4.25 0 005.45 5.154z" /></svg>
+              <div className="flex-1 min-w-0">
+                <span className="text-[12px] text-[#4ade00] font-medium">PR merged — $475.00 paid to dev-sarah</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -478,13 +527,11 @@ function ContentBlockRow({
   return (
     <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24">
       <div
-        className={`grid gap-8 sm:gap-10 lg:gap-16 lg:grid-cols-2 lg:items-center ${
-          reversed ? 'lg:[direction:rtl]' : ''
-        }`}
+        className="grid gap-8 sm:gap-10 lg:gap-16 lg:grid-cols-2 lg:items-center"
       >
         {/* Text content */}
         <div
-          className={`flex flex-col gap-4 sm:gap-5 ${reversed ? 'lg:[direction:ltr]' : ''}`}
+          className={`flex flex-col gap-4 sm:gap-5 ${reversed ? 'lg:order-2' : ''}`}
         >
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-medium leading-tight text-foreground">
             {block.title}
@@ -504,7 +551,7 @@ function ContentBlockRow({
         </div>
 
         {/* Visual content */}
-        <div className={reversed ? 'lg:[direction:ltr]' : ''}>
+        <div className={reversed ? 'lg:order-1' : ''}>
           {block.visual}
         </div>
       </div>
@@ -522,7 +569,7 @@ const CONTENT_BLOCKS: ContentBlock[] = [
     description:
       'Connect your Linear workspace and turn issues into funded bounties without leaving your project management flow. Sync statuses, priorities, and labels automatically.',
     ctaText: 'Learn about integrations',
-    ctaHref: 'https://docs.bounty.new/integrations',
+    ctaHref: 'https://docs.bounty.new/integrations/linear',
     visual: <LinearBountyVisual />,
   },
   {
@@ -530,7 +577,7 @@ const CONTENT_BLOCKS: ContentBlock[] = [
     description:
       'Post a bounty describing the work you need done. Developers from around the world compete to build the best solution. Approve the PR and they get paid instantly.',
     ctaText: 'Read the getting started guide',
-    ctaHref: 'https://docs.bounty.new/getting-started',
+    ctaHref: 'https://docs.bounty.new/guides/creating-bounties',
     visual: <ProcessStepsVisual />,
   },
   {
@@ -538,7 +585,7 @@ const CONTENT_BLOCKS: ContentBlock[] = [
     description:
       'Define your bounty with a title, description, budget, and target repo. We create a GitHub issue, hold funds securely via Stripe, and notify eligible developers.',
     ctaText: 'See how bounties work',
-    ctaHref: 'https://docs.bounty.new/bounties',
+    ctaHref: 'https://docs.bounty.new/guides/creating-bounties',
     visual: <CreateBountyFlowVisual />,
   },
   {
@@ -554,7 +601,7 @@ const CONTENT_BLOCKS: ContentBlock[] = [
     description:
       'Funds are held on our platform account via Stripe until work is approved and merged. Developers receive their payout immediately — no net-30 invoicing, no chasing payments.',
     ctaText: 'View pricing details',
-    ctaHref: '/pricing',
+    ctaHref: 'https://docs.bounty.new/guides/payments',
     visual: <PaymentFlowVisual />,
   },
 ];
