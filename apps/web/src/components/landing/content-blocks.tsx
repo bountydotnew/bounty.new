@@ -194,99 +194,36 @@ function LinearBountyVisual() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ProcessStepsVisual() {
+  const steps = [
+    {
+      number: '01',
+      title: 'Post a bounty',
+      description: 'Describe the work, set a price, and pick a repo.',
+    },
+    {
+      number: '02',
+      title: 'Devs compete',
+      description: 'Developers submit PRs. Review solutions at your pace.',
+    },
+    {
+      number: '03',
+      title: 'Approve & pay',
+      description: 'Merge the PR and the developer gets paid instantly.',
+    },
+  ];
+
   return (
-    <div className="relative w-full rounded-xl overflow-hidden border border-border-subtle bg-[#0a0a0a]">
-      <div className="p-4 sm:p-6">
-        {/* Step 1 */}
-        <div className="relative flex gap-4">
-          <div className="flex flex-col items-center">
-            <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center flex-shrink-0">
-              <span className="text-xs font-semibold text-background">1</span>
-            </div>
-            <div className="w-px flex-1 bg-border-subtle my-2" />
-          </div>
-          <div className="pb-6 flex-1 min-w-0">
-            <h4 className="text-sm font-medium text-foreground mb-1.5">Post a bounty</h4>
-            <p className="text-xs text-text-secondary leading-relaxed mb-3">
-              Describe the work, set a price, and pick a repo.
-            </p>
-            {/* Mini bounty card mockup */}
-            <div className="rounded-lg border border-border-subtle bg-[#111] p-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] text-text-secondary">New bounty</span>
-                <span className="text-[11px] font-medium text-[#4ade00] bg-[#4ade00]/10 px-2 py-0.5 rounded-full">$500</span>
-              </div>
-              <div className="text-[12px] text-foreground truncate">Add OAuth integration for Google + GitHub</div>
-              <div className="flex items-center gap-2 mt-2">
-                <div className="h-1 flex-1 rounded-full bg-border-subtle overflow-hidden">
-                  <div className="h-full w-full bg-foreground rounded-full" />
-                </div>
-                <span className="text-[10px] text-text-muted">Posted</span>
-              </div>
+    <div className="relative w-full rounded-xl overflow-hidden border border-border-subtle bg-surface-1">
+      <div className="divide-y divide-border-subtle">
+        {steps.map((step) => (
+          <div key={step.number} className="flex items-baseline gap-4 sm:gap-6 px-5 sm:px-6 py-5 sm:py-6">
+            <span className="text-xs font-medium text-text-muted tabular-nums">{step.number}</span>
+            <div>
+              <h4 className="text-sm font-medium text-foreground">{step.title}</h4>
+              <p className="text-xs text-text-secondary leading-relaxed mt-1">{step.description}</p>
             </div>
           </div>
-        </div>
-
-        {/* Step 2 */}
-        <div className="relative flex gap-4">
-          <div className="flex flex-col items-center">
-            <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center flex-shrink-0">
-              <span className="text-xs font-semibold text-background">2</span>
-            </div>
-            <div className="w-px flex-1 bg-border-subtle my-2" />
-          </div>
-          <div className="pb-6 flex-1 min-w-0">
-            <h4 className="text-sm font-medium text-foreground mb-1.5">Devs compete</h4>
-            <p className="text-xs text-text-secondary leading-relaxed mb-3">
-              Developers submit PRs. Review solutions at your pace.
-            </p>
-            {/* PR submissions mockup */}
-            <div className="space-y-2">
-              <div className="rounded-lg border border-border-subtle bg-[#111] px-3 py-2.5 flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-[#238636] flex items-center justify-center flex-shrink-0">
-                  <svg className="w-3 h-3 text-white" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 3.25a2.25 2.25 0 113 2.122v5.256a2.251 2.251 0 11-1.5 0V5.372A2.25 2.25 0 011.5 3.25zm5.677-.177L9.573.677A.25.25 0 0110 .854V2.5h1A2.5 2.5 0 0113.5 5v5.628a2.251 2.251 0 11-1.5 0V5a1 1 0 00-1-1h-1v1.646a.25.25 0 01-.427.177L7.177 3.427a.25.25 0 010-.354z" /></svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-[12px] text-foreground truncate block">feat: add google oauth provider</span>
-                  <span className="text-[10px] text-text-muted">dev-sarah opened 2h ago</span>
-                </div>
-                <span className="text-[10px] text-[#F2C94C] bg-[#F2C94C]/10 px-1.5 py-0.5 rounded flex-shrink-0">Review</span>
-              </div>
-              <div className="rounded-lg border border-border-subtle bg-[#111] px-3 py-2.5 flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-[#238636] flex items-center justify-center flex-shrink-0">
-                  <svg className="w-3 h-3 text-white" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 3.25a2.25 2.25 0 113 2.122v5.256a2.251 2.251 0 11-1.5 0V5.372A2.25 2.25 0 011.5 3.25zm5.677-.177L9.573.677A.25.25 0 0110 .854V2.5h1A2.5 2.5 0 0113.5 5v5.628a2.251 2.251 0 11-1.5 0V5a1 1 0 00-1-1h-1v1.646a.25.25 0 01-.427.177L7.177 3.427a.25.25 0 010-.354z" /></svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-[12px] text-foreground truncate block">feat: github + google oauth with sessions</span>
-                  <span className="text-[10px] text-text-muted">alex-dev opened 45m ago</span>
-                </div>
-                <span className="text-[10px] text-[#F2C94C] bg-[#F2C94C]/10 px-1.5 py-0.5 rounded flex-shrink-0">Review</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Step 3 */}
-        <div className="relative flex gap-4">
-          <div className="flex flex-col items-center">
-            <div className="w-8 h-8 rounded-full bg-[#4ade00] flex items-center justify-center flex-shrink-0">
-              <svg className="w-4 h-4 text-black" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" /></svg>
-            </div>
-          </div>
-          <div className="flex-1 min-w-0">
-            <h4 className="text-sm font-medium text-foreground mb-1.5">Approve & pay</h4>
-            <p className="text-xs text-text-secondary leading-relaxed mb-3">
-              Merge the PR and the developer gets paid instantly.
-            </p>
-            {/* Merged + paid state */}
-            <div className="rounded-lg border border-[#4ade00]/20 bg-[#4ade00]/5 px-3 py-2.5 flex items-center gap-3">
-              <svg className="w-4 h-4 text-[#4ade00] flex-shrink-0" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M5.45 5.154A4.25 4.25 0 009.25 7.5h1.378a2.251 2.251 0 110 1.5H9.25A5.734 5.734 0 015 13.233V13.5a2.25 2.25 0 11-1.5 0v-.267A5.734 5.734 0 011 9.5a.75.75 0 011.5 0 4.25 4.25 0 002.95 4.047A2.25 2.25 0 018.534 10H9.25a2.75 2.75 0 002.652-2H9.25A5.75 5.75 0 012.677 4.357.75.75 0 013.875 3.3 4.25 4.25 0 005.45 5.154z" /></svg>
-              <div className="flex-1 min-w-0">
-                <span className="text-[12px] text-[#4ade00] font-medium">PR merged — $475.00 paid to dev-sarah</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );
@@ -303,7 +240,7 @@ function CreateBountyFlowVisual() {
     <div className="relative w-full rounded-xl overflow-hidden bg-surface-1 border border-border-subtle">
       <div className="p-4 sm:p-5">
         {/* Form card matching real create bounty form */}
-        <div className="bg-surface-1 border border-border-subtle rounded-xl p-3 sm:p-4 flex flex-col gap-3">
+        <div className="flex flex-col gap-3">
           {/* Tag chips row */}
           <div className="flex flex-row flex-wrap items-center gap-1.5">
             <div className="rounded-full flex items-center gap-1.5 bg-surface-2 border border-border-subtle px-2.5 py-1">
@@ -334,7 +271,7 @@ function CreateBountyFlowVisual() {
           </div>
 
           {/* Footer: repo selector + create button */}
-          <div className="flex flex-row justify-between items-center pt-1 border-t border-border-subtle">
+          <div className="flex flex-row justify-between items-center pt-4 border-t border-border-subtle">
             <div className="flex items-center gap-1.5 text-text-tertiary">
               <GithubIcon className="w-3.5 h-3.5 text-foreground" />
               <span className="text-[12px] sm:text-[13px] font-medium text-white truncate">
@@ -363,10 +300,8 @@ function GitHubIntegrationVisual() {
   return (
     <div className="relative w-full rounded-xl overflow-hidden border border-[#30363d] bg-[#0d1117]">
       {/* GitHub header bar */}
-      <div className="flex items-center gap-3 px-3 sm:px-4 py-2.5 border-b border-[#30363d] bg-[#161b22]">
-        <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
-        </svg>
+      <div className="flex items-center gap-3 px-3 sm:px-4 py-2.5 border-b border-[#30363d]">
+        <GithubIcon className="h-5 w-5 text-white" aria-hidden="true" />
         <span className="text-[13px] text-[#c9d1d9]">
           <span className="text-[#58a6ff]">bountydotnew</span>
           <span className="text-[#8b949e] mx-1">/</span>
@@ -392,48 +327,21 @@ function GitHubIntegrationVisual() {
           </div>
         </div>
 
-        {/* Comment thread */}
+        {/* Bot comment — bounty notice */}
         <div className="border border-[#30363d] rounded-md overflow-hidden mb-3">
-          {/* Original comment */}
-          <div className="bg-[#161b22] px-3 py-2 border-b border-[#30363d] flex items-center gap-2">
-            <div className="h-5 w-5 rounded-full bg-[#e66700] flex items-center justify-center text-white text-[9px] font-semibold">
-              g
-            </div>
-            <span className="text-[11px] text-[#c9d1d9] font-semibold">grim</span>
-            <span className="text-[11px] text-[#8b949e]">commented</span>
-          </div>
-          <div className="px-3 py-2.5 text-[12px] text-[#c9d1d9]">
-            Need Google &amp; GitHub OAuth integration with proper error handling and session management.
-          </div>
-        </div>
-
-        {/* Bot comment */}
-        <div className="border border-[#30363d] rounded-md overflow-hidden mb-3">
-          <div className="bg-[#161b22] px-3 py-2 border-b border-[#30363d] flex items-center gap-2">
-            <div className="h-5 w-5 rounded-full bg-[#333] overflow-hidden flex items-center justify-center">
+          <div className="px-3 py-2 border-b border-[#30363d] flex items-center gap-2">
+            <div className="h-5 w-5 rounded-full bg-[#333] overflow-hidden flex items-center justify-center flex-shrink-0">
               <span className="text-[8px] text-[#999]">B</span>
             </div>
             <span className="text-[11px] text-[#58a6ff] font-semibold">bountydotnew</span>
-            <span className="inline-flex items-center bg-[#30363d] text-[#8b949e] px-1 py-0.5 rounded text-[9px] border border-[#30363d]">
+            <span className="inline-flex items-center bg-[#30363d] text-[#8b949e] px-1 py-0.5 rounded text-[9px]">
               bot
             </span>
           </div>
           <div className="px-3 py-2.5">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-[#238636]/20 text-[#3fb950] border border-[#238636]/40">
-                Bounty Active
-              </span>
-            </div>
-            <p className="text-[12px] text-[#c9d1d9] mb-2">
-              This issue has a <strong>$500.00 USD</strong> bounty attached!
+            <p className="text-[12px] text-[#c9d1d9]">
+              This issue has a <strong>$500.00 USD</strong> bounty attached.
             </p>
-            <div className="bg-[#161b22] border border-[#30363d] rounded-md px-2.5 py-2 text-[11px] text-[#8b949e]">
-              <p className="text-[#c9d1d9] font-medium text-[10px] mb-1">To claim this bounty:</p>
-              <ol className="list-decimal list-inside space-y-0.5 text-[10px]">
-                <li>Submit a pull request that fixes this issue</li>
-                <li>Wait for the maintainer to approve your solution</li>
-              </ol>
-            </div>
           </div>
         </div>
 
@@ -444,9 +352,6 @@ function GitHubIntegrationVisual() {
           </span>
           <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-[#1f6feb] text-white">
             enhancement
-          </span>
-          <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-[#1f6feb] text-white">
-            auth
           </span>
         </div>
       </div>
@@ -504,8 +409,14 @@ function PaymentFlowVisual() {
         {/* Stripe branding with real Stripe wordmark */}
         <div className="flex items-center justify-center gap-1.5 mt-2">
           <span className="text-[10px] text-text-muted">Powered by</span>
-          <svg className="h-[14px] w-auto" viewBox="0 0 60 25" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Stripe">
-            <path d="M59.64 14.28h-8.06c.19 1.93 1.6 2.55 3.2 2.55 1.64 0 2.96-.37 4.05-.95v3.32a10.6 10.6 0 01-4.56.95c-4.01 0-6.83-2.5-6.83-7.14 0-4.08 2.38-7.15 6.17-7.15 3.79 0 6.04 3.07 6.04 7.15 0 .42-.01 1.09-.01 1.27zm-5.92-5.62c-1.21 0-2.19 1.14-2.26 2.93h4.39c0-1.8-.83-2.93-2.13-2.93zM40.95 20.2c-1.55 0-2.66-.54-3.37-1.16l-.05 5.08-4.13.88V6.22h3.56l.18 1.08a4.63 4.63 0 013.4-1.38c3 0 5.14 2.7 5.14 7.14 0 5.04-2.22 7.14-4.73 7.14zm-.8-10.76c-.94 0-1.67.43-2.12 1.08l.02 5.54c.44.63 1.16 1.04 2.1 1.04 1.62 0 2.73-1.79 2.73-3.86 0-2.04-1.13-3.8-2.73-3.8zM28.24 5.57c-1.37 0-2.47-1.12-2.47-2.47 0-1.38 1.1-2.48 2.47-2.48a2.47 2.47 0 010 4.95zm-2.06 14.43V6.22h4.13V20h-4.13zM19.45 6.22l.26 1.37c.73-1.05 1.86-1.67 3.3-1.67.46 0 .96.06 1.34.17l-.64 3.87a5.64 5.64 0 00-1.18-.12c-1.09 0-2.16.47-2.65 1.58l.02 8.58h-4.13V6.22h3.68zM6.24 16.95c1.1 0 2.28-.36 3.3-.95v3.5a10.03 10.03 0 01-3.82.7C2.3 20.2 0 18 0 14.74c0-5.35 5.23-6.2 6.03-6.22l.17-.01V5.01c0-.7-.27-1.4-1.81-1.4-1.23 0-2.85.46-4 1.07V1.16A11.4 11.4 0 014.65 0C7.8 0 10.3 1.64 10.3 5.3v5.8c0 .89.37 1.12.82 1.12.15 0 .3-.02.43-.06v3.3a3.85 3.85 0 01-1.69.37c-1.62 0-2.76-.65-3.23-1.77-1 .57-2.06.89-3.14.89-.01 0 2.75 0 2.75-3v.01c0-1.88-1.2-2.73-2.69-2.73V5.56c0 .15 0 .29.02.42.08.52.5 1.37 2.67 1.37zM14.11 20V6.22h4.13V20h-4.13z" fill="#635BFF" />
+          <svg className="h-[14px] w-auto" viewBox="54 36 360.02 149.84" xmlns="http://www.w3.org/2000/svg" aria-label="Stripe">
+            <path fillRule="evenodd" clipRule="evenodd" fill="#635BFF" d="M414,113.4c0-25.6-12.4-45.8-36.1-45.8c-23.8,0-38.2,20.2-38.2,45.6c0,30.1,17,45.3,41.4,45.3   c11.9,0,20.9-2.7,27.7-6.5v-20c-6.8,3.4-14.6,5.5-24.5,5.5c-9.7,0-18.3-3.4-19.4-15.2h48.9C413.8,121,414,115.8,414,113.4z    M364.6,103.9c0-11.3,6.9-16,13.2-16c6.1,0,12.6,4.7,12.6,16H364.6z" />
+            <path fillRule="evenodd" clipRule="evenodd" fill="#635BFF" d="M301.1,67.6c-9.8,0-16.1,4.6-19.6,7.8l-1.3-6.2h-22v116.6l25-5.3l0.1-28.3c3.6,2.6,8.9,6.3,17.7,6.3   c17.9,0,34.2-14.4,34.2-46.1C335.1,83.4,318.6,67.6,301.1,67.6z M295.1,136.5c-5.9,0-9.4-2.1-11.8-4.7l-0.1-37.1   c2.6-2.9,6.2-4.9,11.9-4.9c9.1,0,15.4,10.2,15.4,23.3C310.5,126.5,304.3,136.5,295.1,136.5z" />
+            <polygon fillRule="evenodd" clipRule="evenodd" fill="#635BFF" points="223.8,61.7 248.9,56.3 248.9,36 223.8,41.3" />
+            <rect x="223.8" y="69.3" fillRule="evenodd" clipRule="evenodd" fill="#635BFF" width="25.1" height="87.5" />
+            <path fillRule="evenodd" clipRule="evenodd" fill="#635BFF" d="M196.9,76.7l-1.6-7.4h-21.6v87.5h25V97.5c5.9-7.7,15.9-6.3,19-5.2v-23C214.5,68.1,202.8,65.9,196.9,76.7z" />
+            <path fillRule="evenodd" clipRule="evenodd" fill="#635BFF" d="M146.9,47.6l-24.4,5.2l-0.1,80.1c0,14.8,11.1,25.7,25.9,25.7c8.2,0,14.2-1.5,17.5-3.3V135   c-3.2,1.3-19,5.9-19-8.9V90.6h19V69.3h-19L146.9,47.6z" />
+            <path fillRule="evenodd" clipRule="evenodd" fill="#635BFF" d="M79.3,94.7c0-3.9,3.2-5.4,8.5-5.4c7.6,0,17.2,2.3,24.8,6.4V72.2c-8.3-3.3-16.5-4.6-24.8-4.6   C67.5,67.6,54,78.2,54,95.9c0,27.6,38,23.2,38,35.1c0,4.6-4,6.1-9.6,6.1c-8.3,0-18.9-3.4-27.3-8v23.8c9.3,4,18.7,5.7,27.3,5.7   c20.8,0,35.1-10.3,35.1-28.2C117.4,100.6,79.3,105.9,79.3,94.7z" />
           </svg>
         </div>
       </div>
