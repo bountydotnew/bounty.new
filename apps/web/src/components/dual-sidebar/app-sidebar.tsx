@@ -360,7 +360,7 @@ export const AdminAppSidebar = ({
     {
       title: 'Notifications',
       url: '/admin/notifications',
-      icon: BellIcon,
+      icon: NotificationsIcon,
       isActive: isActive('/admin/notifications'),
     },
   ];
