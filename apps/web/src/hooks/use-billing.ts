@@ -3,6 +3,10 @@
  *
  * Client-side billing hook using autumn-js SDK.
  * This hook provides the billing functionality for the web app.
+ *
+ * Billing is org-scoped: the Autumn customer ID is the active organization ID.
+ * When the user switches teams, call `refetch()` to reload the new org's
+ * billing data from the backend.
  */
 
 import { useCustomer } from 'autumn-js/react';
@@ -13,6 +17,7 @@ import type {
   BountyProPlan,
 } from '@bounty/types';
 import { useCallback, useMemo } from 'react';
+import { useActiveOrg } from '@/hooks/use-active-org';
 
 // Feature IDs matching Autumn configuration
 const AUTUMN_FEATURE_IDS = {
@@ -105,6 +110,7 @@ const mapFeature = (feature?: {
 export const useBilling = (): BillingHookResult => {
   const { customer, isLoading, refetch, attach, openBillingPortal, track } =
     useCustomer();
+  const { activeOrgSlug } = useActiveOrg();
 
   // Helper to check if customer has pro status
   const checkProStatus = useCallback((): boolean => {
@@ -169,7 +175,9 @@ export const useBilling = (): BillingHookResult => {
 
       const result = await attach({
         productId: slug,
-        successUrl: `${baseUrl}/settings/billing?checkout=success`,
+        successUrl: activeOrgSlug
+          ? `${baseUrl}/${activeOrgSlug}/settings/billing?checkout=success`
+          : `${baseUrl}/dashboard?checkout=success`,
         checkoutSessionParams: {
           cancel_url: `${baseUrl}/pricing`,
         },
@@ -185,7 +193,7 @@ export const useBilling = (): BillingHookResult => {
         window.location.href = data.checkout_url;
       }
     },
-    [attach]
+    [attach, activeOrgSlug]
   );
 
   // Wrap openBillingPortal to return Promise<void> for backward compatibility

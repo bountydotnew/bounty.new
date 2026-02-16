@@ -47,38 +47,36 @@ function GitHubIssuePage() {
   return (
     <div className="bg-gh-bg h-full overflow-auto" ref={scrollRef}>
       <div className="border-b border-gh-border px-6 py-4">
-        <div className="flex items-start gap-3">
-          <div className="shrink-0 mt-1">
-            <svg
-              className="w-5 h-5 text-gh-success-text"
-              fill="currentColor"
-              viewBox="0 0 16 16"
-              aria-hidden="true"
-            >
-              <path d="M8 9.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-              <path
-                fillRule="evenodd"
-                d="M8 0a8 8 0 100 16A8 8 0 008 0zM1.5 8a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0z"
-              />
-            </svg>
-          </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-semibold text-gh-text mb-2">
-              Add OAuth integration for Google and GitHub
-              <span className="text-gh-text-muted font-normal ml-2">#42</span>
-            </h1>
-            <div className="flex items-center gap-2 text-sm text-gh-text-muted">
-              <span className="inline-flex items-center gap-1 bg-info text-white px-2 py-0.5 rounded-full text-xs font-medium">
-                $500 Bounty
-              </span>
-              <span>opened by</span>
-              <a href="/contributors" className="text-gh-link hover:underline">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-semibold text-gh-text">
+            Add OAuth integration for Google and GitHub
+            <span className="text-gh-text-muted font-normal ml-2">#42</span>
+          </h1>
+          <div className="flex items-center gap-2 text-sm text-gh-text-muted">
+            <span className="inline-flex items-center gap-1.5 bg-gh-success text-white px-2.5 py-1 rounded-full text-xs font-medium">
+              <svg
+                className="w-4 h-4"
+                fill="currentColor"
+                viewBox="0 0 16 16"
+                aria-hidden="true"
+              >
+                <path d="M8 9.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+                <path
+                  fillRule="evenodd"
+                  d="M8 0a8 8 0 100 16A8 8 0 008 0zM1.5 8a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0z"
+                />
+              </svg>
+              Open
+            </span>
+            <span>
+              <a
+                href="/contributors"
+                className="text-gh-link hover:underline font-semibold"
+              >
                 ripgrim
-              </a>
-              <span>2 days ago</span>
-              <span>·</span>
-              <span>{commentSent ? '4' : '3'} comments</span>
-            </div>
+              </a>{' '}
+              opened this issue 2 days ago · {commentSent ? '4' : '3'} comments
+            </span>
           </div>
         </div>
       </div>
@@ -134,7 +132,7 @@ function GitHubIssuePage() {
                 >
                   bountydotnew
                 </a>
-                <span className="inline-flex items-center gap-1 bg-gh-border text-gh-text-muted px-1.5 py-0.5 rounded text-xs ml-1.5 border border-gh-border">
+                <span className="inline-flex items-center gap-1 bg-gh-link/10 text-gh-link px-1.5 py-0.5 rounded text-xs ml-1.5 border border-gh-link/20">
                   bot
                 </span>
                 <span className="text-gh-text-muted ml-1.5">
@@ -279,7 +277,7 @@ function GitHubIssuePage() {
                   >
                     bountydotnew
                   </a>
-                  <span className="inline-flex items-center gap-1 bg-gh-border text-gh-text-muted px-1.5 py-0.5 rounded text-xs ml-1.5 border border-gh-border">
+                  <span className="inline-flex items-center gap-1 bg-gh-link/10 text-gh-link px-1.5 py-0.5 rounded text-xs ml-1.5 border border-gh-link/20">
                     bot
                   </span>
                   <span className="text-gh-text-muted ml-1.5">
@@ -298,7 +296,7 @@ function GitHubIssuePage() {
                   Submission received from{' '}
                   <a
                     href="/contributors"
-                    className="text-gh-error-text hover:underline"
+                    className="text-gh-link hover:underline"
                   >
                     @{randomDev}
                   </a>

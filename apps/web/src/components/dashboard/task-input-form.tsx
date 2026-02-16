@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { Spinner, GithubIcon } from '@bounty/ui';
 import { trpc, trpcClient } from '@/utils/trpc';
 import Link from 'next/link';
+import { useActiveOrg } from '@/hooks/use-active-org';
 import {
   type CreateBountyForm,
   createBountyDefaults,
@@ -47,6 +48,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
     const router = useRouter();
     const queryClient = useQueryClient();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const { activeOrgSlug } = useActiveOrg();
 
     useImperativeHandle(ref, () => ({
       focus: () => {
@@ -235,9 +237,6 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
       setIssueQuery('');
     };
 
-
-
-
     const handleBranchSelect = (branch: string) => {
       setSelectedBranch(branch);
       setBranchSearchQuery('');
@@ -388,7 +387,11 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
                 {/* Connect GitHub button (when no installations) or Submit button */}
                 {!installationsLoading && installations.length === 0 ? (
                   <Link
-                    href="/integrations"
+                    href={
+                      activeOrgSlug
+                        ? `/${activeOrgSlug}/integrations`
+                        : '/dashboard'
+                    }
                     className="flex items-center justify-center gap-2 px-4 h-[34px] rounded-full text-[15px] font-medium bg-surface-3 hover:bg-surface-hover border border-border-default hover:border-border-strong text-foreground transition-colors shrink-0"
                   >
                     <GithubIcon className="size-4" />

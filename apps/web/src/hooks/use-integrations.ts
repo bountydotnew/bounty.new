@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { authClient } from '@bounty/auth/client';
 import { toast } from 'sonner';
+import { useOrgSlug } from '@/context/org-slug-context';
 
 export interface GitHubInstallation {
   id: number;
@@ -78,6 +79,7 @@ export interface IntegrationsActions {
 
 export function useIntegrations(): IntegrationsState & IntegrationsActions {
   const queryClient = useQueryClient();
+  const orgSlug = useOrgSlug();
 
   // GitHub installations queries
   const {
@@ -207,71 +209,102 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
     ]
   );
 
-  // Actions
-  const actions: IntegrationsActions = {
-    refreshGitHub: useCallback(() => refetchGitHub(), [refetchGitHub]),
-    invalidateGitHub: useCallback(() => {
-      queryClient.invalidateQueries({
-        queryKey: [['githubInstallation', 'getInstallations']],
-      });
-    }, [queryClient]),
+  // Actions — individual useCallbacks so the final useMemo has stable deps
+  const refreshGitHub = useCallback(() => refetchGitHub(), [refetchGitHub]);
+  const invalidateGitHub = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: [['githubInstallation', 'getInstallations']],
+    });
+  }, [queryClient]);
 
-    addDiscordBot: useCallback(() => {
-      if (discordBotInstallData?.url) {
-        window.open(discordBotInstallData.url, '_blank');
-      }
-    }, [discordBotInstallData]),
+  const addDiscordBot = useCallback(() => {
+    if (discordBotInstallData?.url) {
+      window.open(discordBotInstallData.url, '_blank');
+    }
+  }, [discordBotInstallData]);
 
-    linkDiscord: useCallback(async () => {
-      // Use Better Auth's linkSocial to link Discord to existing account
-      await authClient.linkSocial({
-        provider: 'discord',
-        callbackURL: '/integrations/discord',
-      });
-    }, []),
+  const linkDiscord = useCallback(async () => {
+    await authClient.linkSocial({
+      provider: 'discord',
+      callbackURL: `/${orgSlug}/integrations/discord`,
+    });
+  }, [orgSlug]);
 
-    unlinkDiscord: useCallback(async () => {
-      await unlinkDiscordMutation.mutateAsync();
-    }, [unlinkDiscordMutation]),
+  const unlinkDiscord = useCallback(async () => {
+    await unlinkDiscordMutation.mutateAsync();
+  }, [unlinkDiscordMutation]);
 
-    refreshDiscord: useCallback(() => refetchDiscord(), [refetchDiscord]),
+  const refreshDiscord = useCallback(() => refetchDiscord(), [refetchDiscord]);
 
-    linkLinear: useCallback(async () => {
-      // Use Better Auth's linkSocial to link Linear to existing account
-      await authClient.linkSocial({
-        provider: 'linear',
-        callbackURL: '/integrations/linear',
-      });
-    }, []),
+  const linkLinear = useCallback(async () => {
+    await authClient.linkSocial({
+      provider: 'linear',
+      callbackURL: `/${orgSlug}/integrations/linear`,
+    });
+  }, [orgSlug]);
 
-    unlinkLinear: useCallback(async (workspaceId: string) => {
+  const unlinkLinear = useCallback(
+    async (workspaceId: string) => {
       await unlinkLinearMutation.mutateAsync(workspaceId);
-    }, [unlinkLinearMutation]),
+    },
+    [unlinkLinearMutation]
+  );
 
-    refreshLinear: useCallback(() => refetchLinear(), [refetchLinear]),
+  const refreshLinear = useCallback(() => refetchLinear(), [refetchLinear]);
 
-    syncLinearWorkspace: useCallback(async () => {
-      await syncLinearWorkspaceMutation.mutateAsync();
-    }, [syncLinearWorkspaceMutation]),
+  const syncLinearWorkspace = useCallback(async () => {
+    await syncLinearWorkspaceMutation.mutateAsync();
+  }, [syncLinearWorkspaceMutation]);
 
-    refreshAll: useCallback(() => {
-      refetchGitHub();
-      refetchDiscord();
-      refetchLinear();
-    }, [refetchGitHub, refetchDiscord, refetchLinear]),
+  const refreshAll = useCallback(() => {
+    refetchGitHub();
+    refetchDiscord();
+    refetchLinear();
+  }, [refetchGitHub, refetchDiscord, refetchLinear]);
 
-    invalidateAll: useCallback(() => {
-      queryClient.invalidateQueries({
-        queryKey: [['githubInstallation', 'getInstallations']],
-      });
-      queryClient.invalidateQueries({
-        queryKey: [['discord', 'getLinkedAccount']],
-      });
-      queryClient.invalidateQueries({
-        queryKey: [['linear', 'getConnectionStatus']],
-      });
-    }, [queryClient]),
-  };
+  const invalidateAll = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: [['githubInstallation', 'getInstallations']],
+    });
+    queryClient.invalidateQueries({
+      queryKey: [['discord', 'getLinkedAccount']],
+    });
+    queryClient.invalidateQueries({
+      queryKey: [['linear', 'getConnectionStatus']],
+    });
+  }, [queryClient]);
 
-  return { ...state, ...actions };
+  // Memoize the combined return value to maintain referential stability
+  return useMemo(
+    () => ({
+      ...state,
+      refreshGitHub,
+      invalidateGitHub,
+      addDiscordBot,
+      linkDiscord,
+      unlinkDiscord,
+      refreshDiscord,
+      linkLinear,
+      unlinkLinear,
+      refreshLinear,
+      syncLinearWorkspace,
+      refreshAll,
+      invalidateAll,
+    }),
+    [
+      state,
+      refreshGitHub,
+      invalidateGitHub,
+      addDiscordBot,
+      linkDiscord,
+      unlinkDiscord,
+      refreshDiscord,
+      linkLinear,
+      unlinkLinear,
+      refreshLinear,
+      syncLinearWorkspace,
+      refreshAll,
+      invalidateAll,
+    ]
+  );
 }

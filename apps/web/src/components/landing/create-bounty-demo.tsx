@@ -186,22 +186,16 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
           </button>
           <button
             type="button"
-            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} font-medium text-text-tertiary hover:text-white hover:bg-surface-1 transition-colors w-full`}
+            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} font-medium text-text-tertiary hover:text-foreground hover:bg-surface-1 transition-colors w-full`}
           >
-            <BountiesIcon
-              className={compact ? 'size-4' : 'size-4'}
-              shrink-0
-            />
+            <BountiesIcon className={compact ? 'size-4' : 'size-4'} shrink-0 />
             {!compact && <span>Bounties</span>}
           </button>
           <button
             type="button"
-            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} font-medium text-text-tertiary hover:text-white hover:bg-surface-1 transition-colors w-full`}
+            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} font-medium text-text-tertiary hover:text-foreground hover:bg-surface-1 transition-colors w-full`}
           >
-            <BookmarksIcon
-              className={compact ? 'size-4' : 'size-4'}
-              shrink-0
-            />
+            <BookmarksIcon className={compact ? 'size-4' : 'size-4'} shrink-0 />
             {!compact && <span>Bookmarks</span>}
           </button>
         </nav>
@@ -210,11 +204,9 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
         <div className={`${compact ? 'px-1 py-2' : 'px-[15px] py-4'}`}>
           <button
             type="button"
-            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} text-text-tertiary transition-colors hover:text-white hover:bg-surface-1 w-full`}
+            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} text-text-tertiary transition-colors hover:text-foreground hover:bg-surface-1 w-full`}
           >
-            <SettingsGearIcon
-              className={compact ? 'size-4' : 'size-4'}
-            />
+            <SettingsGearIcon className={compact ? 'size-4' : 'size-4'} />
           </button>
         </div>
       </aside>
@@ -261,7 +253,7 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
                     className={`rounded-full flex justify-center items-center shrink-0 gap-1.5 bg-surface-2 border border-solid border-border-subtle ${compact ? 'px-2 py-1' : 'px-[11px] py-[6px]'}`}
                   >
                     <span
-                      className={`${compact ? 'text-[11px]' : 'text-[16px]'} leading-5 font-sans text-white truncate`}
+                      className={`${compact ? 'text-[11px]' : 'text-[16px]'} leading-5 font-sans text-foreground truncate`}
                     >
                       Add OAuth integration
                     </span>
@@ -273,7 +265,7 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
                     className={`rounded-full flex justify-center items-center shrink-0 gap-1.5 bg-surface-2 border border-solid border-border-subtle ${compact ? 'px-2 py-1' : 'px-[11px] py-[6px]'}`}
                   >
                     <span
-                      className={`${compact ? 'text-[11px]' : 'text-[16px]'} leading-5 font-sans text-white`}
+                      className={`${compact ? 'text-[11px]' : 'text-[16px]'} leading-5 font-sans text-foreground`}
                     >
                       $500
                     </span>
@@ -283,13 +275,13 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
                   </div>
                   <div className={`relative flex ${compact ? '' : ''}`}>
                     <div
-                      className={`rounded-full flex justify-center items-center bg-surface-2 border border-solid border-border-subtle ${compact ? 'text-[11px] px-2 py-1 pr-6' : 'text-[16px] leading-5 px-[11px] py-[6px] pr-8 min-w-[150px]'} font-sans text-white`}
+                      className={`rounded-full flex justify-center items-center bg-surface-2 border border-solid border-border-subtle ${compact ? 'text-[11px] px-2 py-1 pr-6' : 'text-[16px] leading-5 px-[11px] py-[6px] pr-8 min-w-[150px]'} font-sans text-foreground`}
                     >
                       Deadline
                     </div>
                     <button
                       type="button"
-                      className="absolute top-1/2 right-2 -translate-y-1/2 text-text-muted hover:text-white transition-colors"
+                      className="absolute top-1/2 right-2 -translate-y-1/2 text-text-muted hover:text-foreground transition-colors"
                     >
                       <CalendarIcon
                         className={compact ? 'size-2.5' : 'size-3.5'}
@@ -306,7 +298,7 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
                     ? 'Need Google & GitHub OAuth integration...'
                     : 'Need Google & GitHub OAuth integration with proper error handling and session management.'
                 }
-                className={`flex-1 bg-transparent text-white outline-none resize-none ${compact ? 'min-h-[60px] text-[11px] leading-tight' : 'min-h-[160px] text-[15px] leading-6'}`}
+                className={`flex-1 bg-transparent text-foreground outline-none resize-none ${compact ? 'min-h-[60px] text-[11px] leading-tight' : 'min-h-[160px] text-[15px] leading-6'}`}
               />
 
               <div
@@ -318,7 +310,7 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
                   >
                     <GithubIcon className={compact ? 'w-3 h-3' : 'w-4 h-4'} />
                     <span
-                      className={`${compact ? 'text-[11px]' : 'text-[14px]'} leading-[150%] tracking-[-0.02em] font-medium text-white truncate`}
+                      className={`${compact ? 'text-[11px]' : 'text-[14px]'} leading-[150%] tracking-[-0.02em] font-medium text-foreground truncate`}
                     >
                       bountydotnew/bounty.new
                     </span>
@@ -344,7 +336,7 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
                   <button
                     type="button"
                     onClick={handleCreateBounty}
-                    className="flex items-center justify-center gap-1 px-3 h-7 rounded-full text-[11px] font-medium bg-white text-black hover:bg-gray-100 transition-colors"
+                    className="flex items-center justify-center gap-1 px-3 h-7 rounded-full text-[11px] font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors"
                   >
                     Create
                   </button>
@@ -416,7 +408,7 @@ function StripeCheckoutPage() {
   };
 
   return (
-    <div className="h-full bg-white overflow-auto">
+    <div className="h-full bg-background overflow-auto">
       <div className="min-h-full flex flex-col">
         {/* Stripe header */}
         <div className="flex items-center gap-3 px-6 py-4 border-b border-border-default">
@@ -594,7 +586,7 @@ function StripeCheckoutPage() {
                 <button
                   type="button"
                   onClick={handlePay}
-                  className="w-full h-12 rounded-md bg-background text-white font-semibold hover:bg-surface-3 transition-colors"
+                  className="w-full h-12 rounded-md bg-foreground text-background font-semibold hover:bg-foreground/90 transition-colors"
                 >
                   Pay
                 </button>
@@ -662,14 +654,16 @@ function GitHubIssuePage({
       <div className="bg-gh-bg border-b border-gh-border px-6 py-4">
         <div className="flex items-center gap-4">
           <svg
-            className="h-8 w-8 text-white"
+            className="h-8 w-8 text-gh-text"
             fill="currentColor"
             viewBox="0 0 16 16"
             aria-hidden="true"
           >
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
           </svg>
-          <span className="text-white text-sm">bountydotnew / bounty.new</span>
+          <span className="text-gh-text text-sm">
+            bountydotnew / bounty.new
+          </span>
         </div>
       </div>
 
@@ -681,13 +675,25 @@ function GitHubIssuePage({
             Add OAuth integration for Google + GitHub
             <span className="text-gh-text-secondary font-normal ml-2">#42</span>
           </h1>
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 text-sm font-medium rounded-full bg-gh-success text-white">
+          <div className="flex items-center gap-2 text-sm text-gh-text-secondary">
+            <span className="inline-flex items-center gap-1.5 bg-gh-success text-white px-2.5 py-1 rounded-full text-xs font-medium">
+              <svg
+                className="w-4 h-4"
+                fill="currentColor"
+                viewBox="0 0 16 16"
+                aria-hidden="true"
+              >
+                <path d="M8 9.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+                <path
+                  fillRule="evenodd"
+                  d="M8 0a8 8 0 100 16A8 8 0 008 0zM1.5 8a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0z"
+                />
+              </svg>
               Open
             </span>
-            <span className="text-sm text-gh-text-secondary">
-              <span className="text-gh-text">grim</span> opened this issue 2
-              minutes ago
+            <span>
+              <span className="font-semibold text-gh-text">grim</span> opened
+              this issue 2 minutes ago
             </span>
           </div>
         </div>
@@ -728,7 +734,7 @@ function GitHubIssuePage({
               <span className="text-sm text-gh-link font-semibold">
                 bountydotnew
               </span>
-              <span className="inline-flex items-center gap-1 bg-gh-border text-gh-text-muted px-1.5 py-0.5 rounded text-xs border border-gh-border">
+              <span className="inline-flex items-center gap-1 bg-gh-link/10 text-gh-link px-1.5 py-0.5 rounded text-xs border border-gh-link/20">
                 bot
               </span>
               <span className="text-sm text-gh-text-secondary">

@@ -7,6 +7,7 @@ import * as featureVotesSchema from './schema/feature-votes';
 import * as invitesSchema from './schema/invites';
 import * as linearAccountSchema from './schema/linear-account';
 import * as notificationsSchema from './schema/notifications';
+import * as organizationSchema from './schema/organization';
 import * as passkeySchema from './schema/passkey';
 import * as profilesSchema from './schema/profiles';
 import * as paymentsSchema from './schema/payments';
@@ -32,6 +33,7 @@ export const db = drizzle(pool, {
     ...passkeySchema,
     ...notificationsSchema,
     ...invitesSchema,
+    ...organizationSchema,
     ...paymentsSchema,
     ...featureVotesSchema,
     ...linearAccountSchema,
@@ -46,6 +48,7 @@ export * from './schema/feature-votes';
 export * from './schema/invites';
 export * from './schema/linear-account';
 export * from './schema/notifications';
+export * from './schema/organization';
 export * from './schema/passkey';
 export * from './schema/profiles';
 export * from './services';

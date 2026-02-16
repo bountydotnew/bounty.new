@@ -26,8 +26,12 @@ function AlertDialogTrigger({
   if (asChild && !props.render && React.isValidElement(children)) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const childElement = children as React.ReactElement<any>;
-    finalRender = React.cloneElement(childElement, { children: undefined });
-    finalChildren = childElement.props.children;
+    // Apply trigger props (onClick, ref, etc.) to the child element, but preserve its children
+    finalRender = (triggerProps: any) => {
+      const { children: _ignoredChildren, ...propsToMerge } = triggerProps;
+      return React.cloneElement(childElement, propsToMerge);
+    };
+    finalChildren = undefined;
   }
   return (
     <AlertDialogPrimitive.Trigger
@@ -179,8 +183,12 @@ function AlertDialogClose({
   if (asChild && !props.render && React.isValidElement(children)) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const childElement = children as React.ReactElement<any>;
-    finalRender = React.cloneElement(childElement, { children: undefined });
-    finalChildren = childElement.props.children;
+    // Apply close props (onClick, ref, etc.) to the child element, but preserve its children
+    finalRender = (closeProps: any) => {
+      const { children: _ignoredChildren, ...propsToMerge } = closeProps;
+      return React.cloneElement(childElement, propsToMerge);
+    };
+    finalChildren = undefined;
   }
   return (
     <AlertDialogPrimitive.Close
@@ -373,6 +381,167 @@ const AlertDialog = Object.assign(LegacyAlertDialogProvider, {
 });
 
 // ============================================================================
+// Confirm Alert Dialog (type-to-confirm pattern)
+// ============================================================================
+
+interface ConfirmAlertDialogProps {
+  /** Whether the dialog is open */
+  open: boolean;
+  /** Callback when open state changes */
+  onOpenChange: (open: boolean) => void;
+  /** Title of the dialog */
+  title: string;
+  /** Description shown below the title. Supports ReactNode for inline formatting. */
+  description: ReactNode;
+  /** The value the user must type to confirm (e.g. org name, account login) */
+  confirmValue: string;
+  /** Placeholder text for the input field */
+  inputPlaceholder?: string;
+  /** Label for the confirm button */
+  confirmLabel?: string;
+  /** Label shown while the action is pending */
+  pendingLabel?: string;
+  /** Whether the action is currently pending */
+  isPending?: boolean;
+  /** Callback when the user confirms */
+  onConfirm: () => void | Promise<void>;
+}
+
+function ConfirmAlertDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  confirmValue,
+  inputPlaceholder,
+  confirmLabel = 'Confirm',
+  pendingLabel = 'Please wait...',
+  isPending = false,
+  onConfirm,
+}: ConfirmAlertDialogProps) {
+  const [inputValue, setInputValue] = React.useState('');
+  const [copied, setCopied] = React.useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const canConfirm = inputValue === confirmValue && !isPending;
+
+  const handleOpenChange = React.useCallback(
+    (nextOpen: boolean) => {
+      onOpenChange(nextOpen);
+      if (!nextOpen) {
+        setInputValue('');
+        setCopied(false);
+      }
+    },
+    [onOpenChange]
+  );
+
+  const handleCopy = React.useCallback(() => {
+    setInputValue(confirmValue);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    // Re-focus the input after clicking copy
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
+  }, [confirmValue]);
+
+  const handleConfirm = React.useCallback(async () => {
+    if (!canConfirm) return;
+    await onConfirm();
+    handleOpenChange(false);
+  }, [canConfirm, onConfirm, handleOpenChange]);
+
+  return (
+    <AlertDialogRoot open={open} onOpenChange={handleOpenChange}>
+      <AlertDialogPopup>
+        <div className="p-6">
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription className="mt-2">
+            {description}
+          </AlertDialogDescription>
+
+          <div className="mt-4 space-y-3">
+            <div className="text-sm text-text-secondary">
+              Type{' '}
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={handleCopy}
+                className="inline-flex items-center gap-1.5 font-mono text-foreground bg-white/[0.06] border border-white/[0.08] px-2 py-0.5 rounded-md hover:bg-white/[0.1] transition-colors cursor-pointer"
+              >
+                {confirmValue}
+                {copied ? (
+                  <svg
+                    className="h-3 w-3 text-text-muted"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : (
+                  <svg
+                    className="h-3 w-3 text-text-muted"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                  </svg>
+                )}
+              </button>{' '}
+              to confirm.
+            </div>
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && canConfirm) {
+                  handleConfirm();
+                }
+              }}
+              placeholder={inputPlaceholder || confirmValue}
+              className="w-full rounded-lg border border-border-subtle bg-background px-3 py-2 text-sm text-foreground placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-red-500/50"
+            />
+          </div>
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogClose asChild>
+            <button
+              type="button"
+              disabled={isPending}
+              className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-foreground border border-border-subtle rounded-lg transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </AlertDialogClose>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={!canConfirm}
+            className="px-4 py-2 text-sm font-medium text-white bg-destructive hover:bg-destructive/90 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isPending ? pendingLabel : confirmLabel}
+          </button>
+        </AlertDialogFooter>
+      </AlertDialogPopup>
+    </AlertDialogRoot>
+  );
+}
+
+// ============================================================================
 // Exports
 // ============================================================================
 
@@ -394,6 +563,11 @@ export {
   AlertDialogDescription,
   AlertDialogClose,
   AlertDialogViewport,
+  // Type-to-confirm variant
+  ConfirmAlertDialog,
 };
 
-export type { LegacyAlertDialogContextValue as AlertDialogContextValue };
+export type {
+  LegacyAlertDialogContextValue as AlertDialogContextValue,
+  ConfirmAlertDialogProps,
+};

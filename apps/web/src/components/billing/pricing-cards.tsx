@@ -12,6 +12,7 @@ import { cn } from '@bounty/ui';
 import { useSession } from '@/context/session-context';
 import { useCustomer } from 'autumn-js/react';
 import { toast } from 'sonner';
+import { useActiveOrg } from '@/hooks/use-active-org';
 import {
   Tooltip,
   TooltipContent,
@@ -47,6 +48,7 @@ function PricingCard({
   const router = useRouter();
   const { session, isAuthenticated } = useSession();
   const { attach } = useCustomer();
+  const { activeOrgSlug } = useActiveOrg();
   const pricing = PRICING_TIERS[plan];
   const [isLoading, setIsLoading] = useState(false);
 
@@ -96,7 +98,9 @@ function PricingCard({
       // forceCheckout: true ensures users always go through the checkout page
       const result = await attach({
         productId: checkoutSlug,
-        successUrl: `${getBaseUrl()}/settings/billing?checkout=success`,
+        successUrl: activeOrgSlug
+          ? `${getBaseUrl()}/${activeOrgSlug}/settings/billing?checkout=success`
+          : `${getBaseUrl()}/dashboard?checkout=success`,
         checkoutSessionParams: {
           cancel_url: `${getBaseUrl()}/pricing`,
         },

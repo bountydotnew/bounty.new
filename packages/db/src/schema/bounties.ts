@@ -13,6 +13,7 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { user } from './auth';
+import { organization } from './organization';
 
 export const bountyStatusEnum = pgEnum('bounty_status', [
   'draft',
@@ -42,45 +43,56 @@ export const cancellationRequestStatusEnum = pgEnum('cancellation_request_status
   'withdrawn',
 ]);
 
-export const bounty = pgTable('bounty', {
-  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-  title: text('title').notNull(),
-  description: text('description').notNull(),
-  amount: decimal('amount', { precision: 15, scale: 2 }).notNull(),
-  currency: text('currency').notNull().default('USD'),
-  status: bountyStatusEnum('status').notNull().default('draft'),
-  deadline: timestamp('deadline'),
-  tags: text('tags').array(),
-  repositoryUrl: text('repository_url'),
-  issueUrl: text('issue_url'),
-  // GitHub App integration fields
-  githubIssueNumber: integer('github_issue_number'),
-  githubInstallationId: integer('github_installation_id'),
-  githubRepoOwner: text('github_repo_owner'),
-  githubRepoName: text('github_repo_name'),
-  githubCommentId: bigint('github_comment_id', { mode: 'number' }), // For editing bot comments
-  // Linear integration fields
-  linearIssueId: text('linear_issue_id').unique(),
-  linearIssueIdentifier: text('linear_issue_identifier'), // e.g., "ENG-123"
-  linearIssueUrl: text('linear_issue_url'),
-  linearAccountId: text('linear_account_id'), // Reference to linear_account.id
-  linearCommentId: text('linear_comment_id'), // For editing bot comments
-  submissionKeyword: text('submission_keyword').default('@bountydotnew submit'),
-  createdById: text('created_by_id')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  assignedToId: text('assigned_to_id').references(() => user.id, {
-    onDelete: 'set null',
-  }),
-  isFeatured: boolean('is_featured').default(false).notNull(),
-  // Stripe payment fields
-  stripePaymentIntentId: text('stripe_payment_intent_id'),
-  stripeCheckoutSessionId: text('stripe_checkout_session_id'),
-  stripeTransferId: text('stripe_transfer_id'),
-  paymentStatus: paymentStatusEnum('payment_status').default('pending'),
-  createdAt: timestamp('created_at').notNull().default(sql`now()`),
-  updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
-});
+export const bounty = pgTable(
+  'bounty',
+  {
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    title: text('title').notNull(),
+    description: text('description').notNull(),
+    amount: decimal('amount', { precision: 15, scale: 2 }).notNull(),
+    currency: text('currency').notNull().default('USD'),
+    status: bountyStatusEnum('status').notNull().default('draft'),
+    deadline: timestamp('deadline'),
+    tags: text('tags').array(),
+    repositoryUrl: text('repository_url'),
+    issueUrl: text('issue_url'),
+    // GitHub App integration fields
+    githubIssueNumber: integer('github_issue_number'),
+    githubInstallationId: integer('github_installation_id'),
+    githubRepoOwner: text('github_repo_owner'),
+    githubRepoName: text('github_repo_name'),
+    githubCommentId: bigint('github_comment_id', { mode: 'number' }), // For editing bot comments
+    // Linear integration fields
+    linearIssueId: text('linear_issue_id').unique(),
+    linearIssueIdentifier: text('linear_issue_identifier'), // e.g., "ENG-123"
+    linearIssueUrl: text('linear_issue_url'),
+    linearAccountId: text('linear_account_id'), // Reference to linear_account.id
+    linearCommentId: text('linear_comment_id'), // For editing bot comments
+    submissionKeyword: text('submission_keyword').default('@bountydotnew submit'),
+    // Organization scoping — which team owns this bounty
+    organizationId: text('organization_id').references(
+      () => organization.id,
+      { onDelete: 'cascade' }
+    ),
+    createdById: text('created_by_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    assignedToId: text('assigned_to_id').references(() => user.id, {
+      onDelete: 'set null',
+    }),
+    isFeatured: boolean('is_featured').default(false).notNull(),
+    // Stripe payment fields
+    stripePaymentIntentId: text('stripe_payment_intent_id'),
+    stripeCheckoutSessionId: text('stripe_checkout_session_id'),
+    stripeTransferId: text('stripe_transfer_id'),
+    paymentStatus: paymentStatusEnum('payment_status').default('pending'),
+    createdAt: timestamp('created_at').notNull().default(sql`now()`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
+  },
+  (t) => [
+    index('bounty_organization_id_idx').on(t.organizationId),
+  ]
+);
 
 export const submission = pgTable('submission', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),

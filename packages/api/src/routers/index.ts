@@ -7,9 +7,9 @@ import { emailsRouter } from './emails';
 import { featureVotesRouter } from './feature-votes';
 import { githubInstallationRouter } from './github-installation';
 import { linearRouter } from './linear';
-import { newsRouter } from './news';
 import { notificationsRouter } from './notifications';
 import { onboardingRouter } from './onboarding';
+import { organizationRouter } from './organization';
 import { profilesRouter } from './profiles';
 import { repositoryRouter } from './repository';
 import { userRouter } from './user';
@@ -29,17 +29,15 @@ export const appRouter = router({
       status: 'healthy',
     };
   }),
-  privateData: protectedProcedure.query(({ ctx }) => {
+  privateData: protectedProcedure.query(() => {
     return {
       message: 'This is private',
-      user: ctx.session?.user,
     };
   }),
   earlyAccess: earlyAccessRouter,
   user: userRouter,
   bounties: bountiesRouter,
   profiles: profilesRouter,
-  news: newsRouter,
   notifications: notificationsRouter,
   emails: emailsRouter,
   repository: repositoryRouter,
@@ -49,6 +47,7 @@ export const appRouter = router({
   discord: discordRouter,
   onboarding: onboardingRouter,
   featureVotes: featureVotesRouter,
+  organization: organizationRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -1,13 +1,60 @@
-const _baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001';
+// =====================
+// RESERVED TEAM SLUGS
+// =====================
 
-// sidebar
-const _SIDEBAR_COOKIE_NAME = 'sidebar_state';
-const _SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-const _SIDEBAR_WIDTH = '16rem';
-// const SIDEBAR_WIDTH_MOBILE = "18rem"
-const _SIDEBAR_WIDTH_ICON = '4rem';
-const _SIDEBAR_WIDTH_ICON_HOVER = '4.3rem';
-const _SIDEBAR_KEYBOARD_SHORTCUT = 'b';
+/**
+ * Slugs that cannot be used as team (organization) slugs because they
+ * conflict with top-level static routes in the Next.js app.
+ */
+export const RESERVED_TEAM_SLUGS = [
+  // (auth) group routes
+  'bookmarks',
+  'bounties',
+  'bounty',
+  'dashboard',
+  'device',
+  'profile',
+  // (login) group routes
+  'login',
+  'sign-up',
+  'reset-password',
+  'migrate-account',
+  // (settings) group routes
+  'settings',
+  // Top-level static routes
+  'api',
+  'auth',
+  'blog',
+  'contributors',
+  'early-access-required',
+  'onboarding',
+  'org',
+  'ping',
+  'pricing',
+  'privacy',
+  'roadmap',
+  'success',
+  'terms',
+  'test',
+  'topic',
+  'waitlist',
+  // Common reserved words
+  'admin',
+  'app',
+  'www',
+  'help',
+  'support',
+  'about',
+  'new',
+] as const;
+
+/** Check if a slug is reserved (case-insensitive). */
+export function isReservedSlug(slug: string): boolean {
+  return (RESERVED_TEAM_SLUGS as readonly string[]).includes(
+    slug.toLowerCase()
+  );
+}
+
 // Dashboard constants
 export const PAGINATION_LIMITS = {
   ALL_BOUNTIES: 10,
@@ -45,8 +92,6 @@ export const LINKS = {
   SOCIALS,
   HOME: '/',
   DASHBOARD: '/dashboard',
-  ACCOUNT: '/settings',
-  SETTINGS: '/settings/account',
   LOGIN: '/login',
   BOOKMARKS: '/bookmarks',
   CONTRIBUTORS: '/contributors',

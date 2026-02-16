@@ -7,6 +7,7 @@ import { Plus } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { LINKS } from '@/constants';
 import { trpc } from '@/utils/trpc';
+import { useActiveOrg } from '@/hooks/use-active-org';
 import styles from './command-menu.module.css';
 import {
   Avatar,
@@ -92,6 +93,7 @@ function BountyCommandItem({
 
 export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
   const router = useRouter();
+  const { activeOrgSlug } = useActiveOrg();
 
   const [search, setSearch] = useState('');
   const [selectedValue, setSelectedValue] = useState<string>('');
@@ -227,7 +229,11 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
         router.push(LINKS.BOOKMARKS);
         break;
       case 'settings':
-        router.push(LINKS.SETTINGS);
+        if (activeOrgSlug) {
+          router.push(`/${activeOrgSlug}/settings/account`);
+        } else {
+          router.push(LINKS.DASHBOARD);
+        }
         break;
       case 'create-bounty':
         router.push('/dashboard#focus-textarea');

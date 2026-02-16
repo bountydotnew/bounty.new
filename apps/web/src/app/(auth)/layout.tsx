@@ -8,6 +8,7 @@ import { FeedbackProvider } from '@/components/feedback-context';
 import { FeedbackModal } from '@/components/feedback-modal';
 import { FeedbackOverlay } from '@/components/feedback-overlay';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
+import { Header } from '@/components/dual-sidebar/sidebar-header';
 
 export const metadata: Metadata = {
   title: 'bounty.new',
@@ -63,7 +64,10 @@ export default async function RootLayout({
             <FeedbackModal />
             <FeedbackOverlay />
             <EarlyAccessGuard>
-              <Sidebar admin={false}>{children}</Sidebar>
+              <Sidebar admin={false}>
+                <Header />
+                {children}
+              </Sidebar>
             </EarlyAccessGuard>
           </FeedbackProvider>
         </NuqsAdapter>
