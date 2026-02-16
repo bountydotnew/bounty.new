@@ -27,6 +27,16 @@ interface Repository {
   htmlUrl: string;
 }
 
+const CenteredWrapper = ({ children }: { children: React.ReactNode }) => (
+  <div className="flex flex-1 shrink-0 flex-col w-full overflow-hidden lg:max-w-[805px] xl:px-0 xl:border-x border-border-subtle mx-auto py-4 min-w-0">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
+      <div className="relative flex flex-col pb-10 px-4 w-full min-w-0 space-y-6">
+        {children}
+      </div>
+    </div>
+  </div>
+);
+
 export default function GitHubInstallationPage() {
   const params = useParams();
   const rawInstallationId = Number(params.installationId);
@@ -34,12 +44,17 @@ export default function GitHubInstallationPage() {
   const installationId = isValidId ? rawInstallationId : 0;
   const router = useRouter();
   const orgPath = useOrgPath();
-  const queryClientLocal = useQueryClient();
+  const queryClient = useQueryClient();
   const [showUninstallDialog, setShowUninstallDialog] = useState(false);
   const [newFlag, setNewFlag] = useQueryState(
     'new',
     parseAsString.withDefault('')
   );
+
+  if (Number.isNaN(installationId)) {
+    router.push(orgPath('/integrations'));
+    return null;
+  }
 
   const {
     data: repositories,
@@ -106,18 +121,18 @@ export default function GitHubInstallationPage() {
 
   useEffect(() => {
     if (newFlag) {
-      queryClientLocal.invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: ['githubInstallation.getInstallations'],
       });
-      queryClientLocal.invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: ['githubInstallation.getRepositories', installationId],
       });
-      queryClientLocal.invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: ['githubInstallation.getInstallation', installationId],
       });
       setNewFlag(null);
     }
-  }, [newFlag, installationId, queryClientLocal, setNewFlag]);
+  }, [newFlag, installationId, queryClient, setNewFlag]);
 
   const accountLogin = installation?.installation?.account.login || '';
   const accountType = installation?.installation?.account.type;
@@ -172,16 +187,6 @@ export default function GitHubInstallationPage() {
       ),
     },
   ];
-
-  const CenteredWrapper = ({ children }: { children: React.ReactNode }) => (
-    <div className="flex flex-1 shrink-0 flex-col w-full overflow-hidden lg:max-w-[805px] xl:px-0 xl:border-x border-border-subtle mx-auto py-4 min-w-0">
-      <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
-        <div className="relative flex flex-col pb-10 px-4 w-full min-w-0 space-y-6">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <CenteredWrapper>

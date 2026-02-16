@@ -80,7 +80,7 @@ type InstallationEvent = {
   action: 'created' | 'deleted';
   installation: {
     id: number;
-    account: { login: string; avatar_url?: string };
+    account: { login: string; avatar_url?: string; type: string };
     repository_selection: string;
     repositories: Array<{ id: number; name: string; full_name: string }>;
   };
@@ -2814,8 +2814,7 @@ async function handleInstallationEvent(event: InstallationEvent) {
         githubInstallationId: installation.id,
         githubAccountId: githubAccount?.id || null,
         accountLogin: installation.account.login,
-        accountType:
-          installation.repository_selection === 'all' ? 'Organization' : 'User',
+        accountType: installation.account.type === 'Organization' ? 'Organization' : 'User',
         accountAvatarUrl: installation.account.avatar_url || null,
         repositoryIds: repos.repositories.map((r) => String(r.id)),
         organizationId: installerOrgId ?? null,
@@ -2824,10 +2823,7 @@ async function handleInstallationEvent(event: InstallationEvent) {
         target: githubInstallation.githubInstallationId,
         set: {
           accountLogin: installation.account.login,
-          accountType:
-            installation.repository_selection === 'all'
-              ? 'Organization'
-              : 'User',
+          accountType: installation.account.type === 'Organization' ? 'Organization' : 'User',
           accountAvatarUrl: installation.account.avatar_url || null,
           repositoryIds: repos.repositories.map((r) => String(r.id)),
           // Don't overwrite organizationId if already set (may have been explicitly assigned)
