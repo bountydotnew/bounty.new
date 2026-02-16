@@ -442,6 +442,8 @@ export const auth = betterAuth({
   },
 
   trustedOrigins: [
+    'https://basket.databuddy.cc',
+    'https://*.databuddy.cc',
     'https://bounty.new',
     'https://*.bounty.new', // Matches www.bounty.new, local.bounty.new, preview.bounty.new, etc.
     ...(env.NODE_ENV === 'production'

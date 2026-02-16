@@ -1,16 +1,32 @@
-import type { Metadata } from 'next';
+'use client';
 import Link from '@bounty/ui/components/link';
+import { authClient } from '@bounty/auth/client';
 import { Button } from '@bounty/ui/components/button';
+import { Spinner } from '@bounty/ui/components/spinner';
 import { Logo } from '@/components/landing/logo';
 import { Header } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
-
-export const metadata: Metadata = {
-  title: 'Early Access Required - Bounty',
-  description: 'Join the waitlist to get early access to bounty.new',
-};
+import { useState } from 'react';
 
 export default function EarlyAccessRequiredPage() {
+  const [checking, setChecking] = useState(false);
+
+  const handleCheckStatus = async () => {
+    setChecking(true);
+    try {
+      const { data } = await authClient.getSession({
+        query: { disableCookieCache: true },
+      });
+      const role = data?.user?.role ?? 'user';
+      if (role === 'early_access' || role === 'admin') {
+        // Hard navigate to bust the cookie-cached session
+        window.location.href = '/dashboard';
+      }
+    } finally {
+      setChecking(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
@@ -35,20 +51,29 @@ export default function EarlyAccessRequiredPage() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <Button asChild className="rounded-full px-6">
-                <Link href="/#waitlist">
-                  Join Waitlist
-                </Link>
-              </Button>
               <Button
-                asChild
-                variant="outline"
-                className="rounded-full"
+                onClick={handleCheckStatus}
+                disabled={checking}
+                variant="default"
               >
+                {checking ? (
+                  <>
+                    <Spinner className="h-4 w-4" size="sm" />
+                    Checking...
+                  </>
+                ) : (
+                  'Check Status'
+                )}
+              </Button>
+              <Button asChild variant="outline">
                 <Link href="/">Back Home</Link>
               </Button>
             </div>
 
+            <p className="mt-4 text-sm text-text-muted">
+              Already joined the waitlist? Click &quot;Check Status&quot; to see
+              if you have access.
+            </p>
           </div>
         </div>
       </main>

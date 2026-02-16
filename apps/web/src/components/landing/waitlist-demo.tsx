@@ -240,7 +240,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                 className={compact ? 'mb-3' : 'mb-6'}
                 onSubmit={handleSubmit(joinWaitlist)}
               >
-                <div className={`flex ${compact ? 'flex-col gap-2' : 'gap-3'}`}>
+                <div className={`flex ${compact ? 'flex-col gap-2' : 'flex-col sm:flex-row gap-3'}`}>
                   <div className="flex-1">
                     <Input
                       className="flex-1 border border-border-default text-foreground placeholder:text-text-muted"
@@ -263,14 +263,14 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                     )}
                   </div>
                   <Button
-                    className={`text-background hover:opacity-90 font-medium ${compact ? 'text-xs' : ''}`}
+                    className={`text-background hover:opacity-90 font-medium ${compact ? 'text-xs' : 'w-full sm:w-auto'}`}
                     disabled={isFormDisabled}
                     style={{
                       background: 'var(--foreground)',
                       borderRadius: compact ? '10px' : '14px',
                       padding: compact ? '8px 12px' : '12px 20px',
                       height: compact ? '36px' : '44px',
-                      width: compact ? '100%' : '138px',
+                      minWidth: compact ? undefined : '138px',
                     }}
                     type="submit"
                   >

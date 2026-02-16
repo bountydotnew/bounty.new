@@ -512,6 +512,14 @@ export function AccountDropdown({
   );
 
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
+  const handleUpgrade = () => {
+    if (!session?.user) {
+      toast.error('Please sign in to upgrade your account.');
+      return;
+    }
+
+    setPricingDialogOpen(true);
+  };
 
   // Custom hooks for better separation of concerns
   const userDisplay = useUserDisplay(session?.user, user);

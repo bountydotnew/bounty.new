@@ -152,14 +152,15 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
 
               <div className="relative">
                 <Button
-                  className="flex w-full items-center justify-center gap-3 rounded-lg bg-foreground text-background py-3 font-medium hover:bg-black/80 dark:hover:bg-white/80"
+                  variant="outline"
+                  className="flex w-full items-center justify-center gap-3"
                   disabled={loading}
                   onClick={handleGitHubSignIn}
                 >
                   {loading ? (
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-black/30 border-t-foreground dark:border-white/30 dark:border-t-white" />
                   ) : (
-                    <GithubIcon className="h-5 w-5 fill-background" />
+                    <GithubIcon className="h-5 w-5 fill-foreground" />
                   )}
                   {loading ? 'Signing in…' : 'Continue with GitHub'}
                 </Button>
@@ -172,7 +173,8 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
 
               <div className="relative">
                 <Button
-                  className="flex w-full items-center justify-center gap-3 rounded-lg bg-foreground text-background py-3 font-medium hover:bg-black/80 dark:hover:bg-white/80"
+                  variant="outline"
+                  className="flex w-full items-center justify-center gap-3"
                   disabled={loading}
                   onClick={handleGoogleSignIn}
                 >
