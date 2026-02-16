@@ -38,10 +38,7 @@ import { AccountDropdown } from '@/components/billing/account-dropdown';
 import { useActiveOrg } from '@/hooks/use-active-org';
 import { FundBountyModal } from '@/components/payment/fund-bounty-modal';
 import { LINKS } from '@/constants';
-import {
-  Clock,
-  UsersIcon,
-} from 'lucide-react';
+import { Clock, UsersIcon } from 'lucide-react';
 
 function getNavItems(orgSlug?: string) {
   return [
@@ -67,7 +64,7 @@ const FALLBACK_USER = {
 
 const WorkspaceSwitcher = () => {
   const { session } = useSession();
-  const { activeOrg } = useActiveOrg();
+  const { activeOrg, isLoading: isOrgLoading } = useActiveOrg();
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
 
   // Show active org name, falling back to user name
@@ -77,6 +74,25 @@ const WorkspaceSwitcher = () => {
     : displayName;
   const displayLogo = activeOrg?.logo ?? null;
   const avatarSeed = activeOrg?.slug ?? session?.user?.name ?? 'team';
+
+  if (isOrgLoading) {
+    return (
+      <div className="flex items-center justify-between py-0 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:hidden">
+        <div className="inline-flex items-center gap-[10px] px-[5px] py-[5px]">
+          <div className="h-[27px] w-[27px] rounded-[6px] bg-surface-2 animate-pulse" />
+          <div className="flex items-center gap-[7px] group-data-[collapsible=icon]:hidden">
+            <div className="h-5 w-24 rounded-md bg-surface-2 animate-pulse" />
+          </div>
+        </div>
+        <SidebarTrigger
+          aria-label="Toggle sidebar layout"
+          className="flex h-5 w-5 items-center justify-center p-0 hover:bg-transparent"
+        >
+          <SidebarToggleIcon className="h-5 w-5 text-text-tertiary" />
+        </SidebarTrigger>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-between py-0 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:hidden">

@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useFeedback } from '@/components/feedback-context';
 import { X, Loader2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from "@bounty/ui"
 
 /**
  * Modal component that displays the feedback form.
@@ -272,11 +273,10 @@ export function FeedbackModal() {
               >
                 {ui.cancelLabel}
               </button>
-              <button
+              <Button
                 type="submit"
+                variant="default"
                 disabled={status === 'sending' || !comment.trim()}
-                className="px-4 py-2 text-foreground text-sm font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: ui.primaryColor }}
               >
                 {status === 'sending' && (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -284,7 +284,7 @@ export function FeedbackModal() {
                 {status === 'sending'
                   ? 'Sending...'
                   : (ui.submitLabel as string)}
-              </button>
+              </Button>
             </div>
           </form>
         )}

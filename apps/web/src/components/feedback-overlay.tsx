@@ -117,7 +117,7 @@ export function FeedbackOverlay() {
       className="fixed inset-0 cursor-crosshair bg-black/10"
       style={{ zIndex }}
     >
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black text-foreground px-4 py-2 rounded-full shadow-lg font-medium text-sm animate-in fade-in slide-in-from-top-4">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-background text-foreground px-4 py-2 rounded-full font-medium text-sm animate-in fade-in slide-in-from-top-4">
         Hover to select an element • Press Esc to cancel
       </div>
 
@@ -134,7 +134,7 @@ export function FeedbackOverlay() {
           }}
         >
           <div
-            className="absolute -top-6 left-0 text-foreground text-xs px-2 py-0.5 rounded-sm"
+            className="absolute -top-6 left-0 text-background text-xs px-2 py-0.5 rounded-sm"
             style={{ backgroundColor: primaryColor }}
           >
             {hoveredElement.tagName}
