@@ -712,7 +712,7 @@ export async function POST(request: Request) {
 
         if (creator?.email) {
           try {
-            const baseUrl = process.process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
             await sendEmail({
               from: FROM_ADDRESSES.notifications,
               to: creator.email,
