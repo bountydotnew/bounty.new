@@ -312,7 +312,7 @@ function LinearBountyVisual() {
                 </span>
 
                 {/* Bounty badge */}
-                <span className="shrink-0 text-[11px] font-medium text-brand-accent bg-brand-accent/10 px-2 py-0.5 rounded-full">
+                <span className="shrink-0 text-[11px] font-medium text-text-secondary bg-surface-3 px-2 py-0.5 rounded-full">
                   {issue.bounty}
                 </span>
 

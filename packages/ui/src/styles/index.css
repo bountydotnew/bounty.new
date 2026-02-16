@@ -171,17 +171,17 @@ body {
      External Theme Colors (for landing page demos)
      ========================================================================== */
 
-  /* GitHub Theme (stays dark for demo purposes) */
-  --gh-bg: #0d1117;
-  --gh-surface: #161b22;
-  --gh-border: #30363d;
-  --gh-text: #c9d1d9;
-  --gh-text-muted: #8b949e;
-  --gh-text-secondary: #7d8590;
-  --gh-link: #58a6ff;
-  --gh-success: #238636;
-  --gh-success-text: #3fb950;
-  --gh-error-text: #f78166;
+  /* GitHub Theme (Light Mode) */
+  --gh-bg: #ffffff;
+  --gh-surface: #f6f8fa;
+  --gh-border: #d1d9e0;
+  --gh-text: #1f2328;
+  --gh-text-muted: #656d76;
+  --gh-text-secondary: #656d76;
+  --gh-link: #0969da;
+  --gh-success: #1a7f37;
+  --gh-success-text: #1a7f37;
+  --gh-error-text: #cf222e;
 
   /* ==========================================================================
      Sidebar Colors (Light Mode)
@@ -359,6 +359,18 @@ body {
     hsl(var(--shadow-color) / 15%);
   --shadow-card: 0 2px 3px hsl(var(--shadow-color) / 40%);
   --shadow-inset: inset 0 1px 2px hsl(var(--shadow-color) / 30%);
+
+  /* GitHub Theme (Dark Mode) */
+  --gh-bg: #0d1117;
+  --gh-surface: #161b22;
+  --gh-border: #30363d;
+  --gh-text: #c9d1d9;
+  --gh-text-muted: #8b949e;
+  --gh-text-secondary: #7d8590;
+  --gh-link: #58a6ff;
+  --gh-success: #238636;
+  --gh-success-text: #3fb950;
+  --gh-error-text: #f78166;
 
   /* External integrations */
   --sf-color-primary: var(--primary);

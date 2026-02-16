@@ -206,36 +206,39 @@ function PRCommentsPage({
   return (
     <div className="bg-gh-bg h-full overflow-auto relative" ref={scrollRef}>
       <div className="border-b border-gh-border px-6 py-4">
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 mt-1">
-            <svg
-              className="w-5 h-5 text-info"
-              fill="currentColor"
-              viewBox="0 0 16 16"
-              aria-hidden="true"
-            >
-              <path
-                fillRule="evenodd"
-                d="M7.177 3.073L9.573.677A.25.25 0 0110 .854v4.792a.25.25 0 01-.427.177L7.177 3.427a.25.25 0 010-.354zM3.75 2.5a.75.75 0 100 1.5.75.75 0 000-1.5zm-2.25.75a2.25 2.25 0 113 2.122v5.256a2.251 2.251 0 11-1.5 0V5.372A2.25 2.25 0 011.5 3.25zM11 2.5h-1V4h1a1 1 0 011 1v5.628a2.251 2.251 0 101.5 0V5A2.5 2.5 0 0011 2.5zm1 10.25a.75.75 0 111.5 0 .75.75 0 01-1.5 0zM3.75 12a.75.75 0 100 1.5.75.75 0 000-1.5z"
-              />
-            </svg>
-          </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-semibold text-gh-text mb-2">
-              Tembo/code review optimize discord bot
-              <span className="text-gh-text-muted font-normal ml-2">#47</span>
-            </h1>
-            <div className="flex items-center gap-2 text-sm text-gh-text-muted">
-              <span className="inline-flex items-center gap-1 bg-info text-white px-2 py-0.5 rounded-full text-xs font-medium">
-                Open
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-semibold text-gh-text">
+            Tembo/code review optimize discord bot
+            <span className="text-gh-text-muted font-normal ml-2">#47</span>
+          </h1>
+          <div className="flex items-center flex-wrap gap-2 text-sm text-gh-text-muted">
+            <span className="inline-flex items-center gap-1.5 bg-gh-success text-white px-2.5 py-1 rounded-full text-xs font-medium">
+              <svg
+                className="w-4 h-4"
+                fill="currentColor"
+                viewBox="0 0 16 16"
+                aria-hidden="true"
+              >
+                <path d="M7.177 3.073L9.573.677A.25.25 0 0110 .854v4.792a.25.25 0 01-.427.177L7.177 3.427a.25.25 0 010-.354zM3.75 2.5a.75.75 0 100 1.5.75.75 0 000-1.5zm-2.25.75a2.25 2.25 0 113 2.122v5.256a2.251 2.251 0 11-1.5 0V5.372A2.25 2.25 0 011.5 3.25zM11 2.5h-1V4h1a1 1 0 011 1v5.628a2.251 2.251 0 101.5 0V5A2.5 2.5 0 0011 2.5zm1 10.25a.75.75 0 111.5 0 .75.75 0 01-1.5 0zM3.75 12a.75.75 0 100 1.5.75.75 0 000-1.5z" />
+              </svg>
+              Open
+            </span>
+            <span>
+              <a
+                href="#"
+                className="text-gh-link hover:underline font-semibold"
+              >
+                {randomDev}
+              </a>{' '}
+              wants to merge 2 commits into{' '}
+              <span className="px-1.5 py-0.5 rounded-md bg-gh-link/15 text-gh-link text-xs font-mono">
+                main
+              </span>{' '}
+              from{' '}
+              <span className="px-1.5 py-0.5 rounded-md bg-gh-link/15 text-gh-link text-xs font-mono">
+                tembo/optimize-discord-bot
               </span>
-              <span>
-                <a href="#" className="text-gh-link hover:underline">
-                  {randomDev}
-                </a>{' '}
-                wants to merge 2 commits
-              </span>
-            </div>
+            </span>
           </div>
         </div>
       </div>
@@ -314,7 +317,7 @@ function PRCommentsPage({
               </div>
               <div className="p-4 text-sm">
                 <p className="text-gh-text">
-                  <a href="#" className="text-gh-error-text hover:underline">
+                  <a href="#" className="text-gh-link hover:underline">
                     @bountydotnew
                   </a>{' '}
                   /approve
@@ -364,7 +367,7 @@ function PRCommentsPage({
                   <a href="#" className="font-semibold hover:text-gh-link">
                     bountydotnew
                   </a>
-                  <span className="inline-flex items-center gap-1 bg-gh-border text-gh-text-muted px-1.5 py-0.5 rounded text-xs ml-1.5 border border-gh-border">
+                  <span className="inline-flex items-center gap-1 bg-gh-link/10 text-gh-link px-1.5 py-0.5 rounded text-xs ml-1.5 border border-gh-link/20">
                     bot
                   </span>
                   <span className="text-gh-text-muted ml-1.5">
@@ -377,7 +380,7 @@ function PRCommentsPage({
               </div>
               <div className="p-4 text-sm text-gh-text">
                 <p>
-                  <a href="#" className="text-gh-error-text hover:underline">
+                  <a href="#" className="text-gh-link hover:underline">
                     @ripgrim
                   </a>{' '}
                   Approved. When you're ready, merge the PR and confirm here
@@ -386,7 +389,7 @@ function PRCommentsPage({
                     /merge 47
                   </code>{' '}
                   (or comment{' '}
-                  <a href="#" className="text-gh-error-text hover:underline">
+                  <a href="#" className="text-gh-link hover:underline">
                     @bountydotnew
                   </a>{' '}
                   merge on the PR). Merging releases the payout.
