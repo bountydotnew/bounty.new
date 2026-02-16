@@ -5,9 +5,8 @@
 ### P8-B1: `sendInvitationEmail` invite URL format may not match Better Auth's acceptance endpoint
 **File:** `packages/auth/src/server.ts` (line ~524)
 **Severity:** High
-**Status:** ✅ FIXED
 **Description:** The invite URL is constructed as `${AUTH_CONFIG.baseURL}/org/invite/${data.id}`. However, Better Auth's organization plugin typically handles invitation acceptance at `/api/auth/organization/accept-invitation` with query parameters (or a token-based flow). The URL `/org/invite/${data.id}` would need a corresponding frontend page that calls `authClient.organization.acceptInvitation()` with the invitation ID.
-**Fix:** The frontend acceptance page now exists at `apps/web/src/app/org/invite/[id]/page.tsx` which calls `authClient.organization.acceptInvitation()` with the invitation ID and redirects to the team on success.
+**Fix:** Verify Better Auth's expected invitation acceptance flow. If it expects the user to hit an API endpoint directly, the URL should point there. If a frontend page is needed to accept, create one at `apps/web/src/app/org/invite/[id]/page.tsx` that calls the accept API. Or use Better Auth's built-in `invitationURL` if the plugin supports it.
 
 ### P8-B2: `user.update.after` hook syncs slug without checking for collisions
 **File:** `packages/auth/src/server.ts`

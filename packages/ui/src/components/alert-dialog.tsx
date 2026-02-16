@@ -448,12 +448,8 @@ function ConfirmAlertDialog({
 
   const handleConfirm = React.useCallback(async () => {
     if (!canConfirm) return;
-    try {
-      await onConfirm();
-      handleOpenChange(false);
-    } catch {
-      // Let the parent handle the error; don't close the dialog on failure.
-    }
+    await onConfirm();
+    handleOpenChange(false);
   }, [canConfirm, onConfirm, handleOpenChange]);
 
   return (
