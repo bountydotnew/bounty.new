@@ -23,7 +23,7 @@ import { Copy, AlertTriangle, Check } from 'lucide-react';
 
 export default function OrgGeneralSettingsPage() {
   const router = useRouter();
-  const { activeOrg, isPersonalTeam } = useActiveOrg();
+  const { activeOrg, isPersonalTeam, orgs, switchOrg } = useActiveOrg();
   const [slugInput, setSlugInput] = useState('');
   const [isSlugDialogOpen, setIsSlugDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -54,10 +54,17 @@ export default function OrgGeneralSettingsPage() {
   // Delete org mutation
   const deleteOrgMutation = useMutation(
     trpc.organization.deleteOrg.mutationOptions({
-      onSuccess: () => {
+      onSuccess: async () => {
         toast.success('Organization deleted');
         setIsDeleteDialogOpen(false);
-        // Redirect to dashboard
+
+        // Switch session to personal org before navigating, so stale queries
+        // don't fire against the deleted org's activeOrganizationId
+        const personalOrg = orgs.find((o) => o.isPersonal);
+        if (personalOrg) {
+          await switchOrg(personalOrg.id);
+        }
+
         router.push('/dashboard');
       },
       onError: (error) => {
