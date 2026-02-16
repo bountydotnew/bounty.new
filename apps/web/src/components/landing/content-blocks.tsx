@@ -88,17 +88,20 @@ function LinearBountyVisual() {
 
           {/* Nav items */}
           <div className="space-y-0.5">
-            <div className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[#a0a0a0] text-[12px]">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M2.5 2A1.5 1.5 0 001 3.5v3A1.5 1.5 0 002.5 8h3A1.5 1.5 0 007 6.5v-3A1.5 1.5 0 005.5 2h-3zm0 8A1.5 1.5 0 001 11.5v1A1.5 1.5 0 002.5 14h3A1.5 1.5 0 007 12.5v-1A1.5 1.5 0 005.5 10h-3zm8-8A1.5 1.5 0 009 3.5v1A1.5 1.5 0 0010.5 6h3A1.5 1.5 0 0015 4.5v-1A1.5 1.5 0 0013.5 2h-3zm0 6A1.5 1.5 0 009 9.5v3A1.5 1.5 0 0010.5 14h3A1.5 1.5 0 0015 12.5v-3A1.5 1.5 0 0013.5 8h-3z" /></svg>
-              My Issues
-            </div>
+            {/* Issues - real Linear icon */}
             <div className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-[#252525] text-white text-[12px]">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8z" /></svg>
-              All Issues
+              <svg className="w-3.5 h-3.5" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" clipRule="evenodd" d="M13.25 5.25C14.2165 5.25 15 6.0335 15 7V11.75C15 13.5449 13.5449 15 11.75 15H6.75C5.7835 15 5 14.2165 5 13.25C5 12.8358 5.33579 12.5 5.75 12.5C6.16421 12.5 6.5 12.8358 6.5 13.25C6.5 13.3881 6.61193 13.5 6.75 13.5H11.75C12.7165 13.5 13.5 12.7165 13.5 11.75V7C13.5 6.86193 13.3881 6.75 13.25 6.75C12.8358 6.75 12.5 6.41421 12.5 6C12.5 5.58579 12.8358 5.25 13.25 5.25Z" /><path fillRule="evenodd" clipRule="evenodd" d="M8.1543 1.00391C9.73945 1.08421 11 2.39489 11 4V8L10.9961 8.1543C10.9184 9.68834 9.68834 10.9184 8.1543 10.9961L8 11H4L3.8457 10.9961C2.31166 10.9184 1.08163 9.68834 1.00391 8.1543L1 8V4C1 2.39489 2.26055 1.08421 3.8457 1.00391L4 1H8L8.1543 1.00391ZM4 2.5C3.17157 2.5 2.5 3.17157 2.5 4V8C2.5 8.82843 3.17157 9.5 4 9.5H8C8.82843 9.5 9.5 8.82843 9.5 8V4C9.5 3.17157 8.82843 2.5 8 2.5H4Z" /></svg>
+              Issues
             </div>
+            {/* Projects - Linear project icon (hexagon) */}
             <div className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[#a0a0a0] text-[12px]">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 1.75V13.5h13.75a.75.75 0 010 1.5H.75a.75.75 0 01-.75-.75V1.75a.75.75 0 011.5 0zm14.28 2.53l-5.25 5.25a.75.75 0 01-1.06 0L7 7.06 4.28 9.78a.75.75 0 01-1.06-1.06l3.5-3.5a.75.75 0 011.06 0L10.25 7.69l4.72-4.72a.75.75 0 111.06 1.06z" /></svg>
+              <svg className="w-3.5 h-3.5" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" clipRule="evenodd" d="M8.54 1.26a1.1 1.1 0 0 0-1.08 0l-5.5 3.14A1.1 1.1 0 0 0 1.4 5.4v5.2a1.1 1.1 0 0 0 .56 1l5.5 3.14a1.1 1.1 0 0 0 1.08 0l5.5-3.14a1.1 1.1 0 0 0 .56-1V5.4a1.1 1.1 0 0 0-.56-1L8.54 1.26ZM8 2.56 12.94 5.4v5.2L8 13.44 3.06 10.6V5.4L8 2.56Z" /></svg>
               Projects
+            </div>
+            {/* Views - real Linear views icon */}
+            <div className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[#a0a0a0] text-[12px]">
+              <svg className="w-3.5 h-3.5" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" clipRule="evenodd" d="M13.25 5.25C14.2165 5.25 15 6.0335 15 7V11.75C15 13.5449 13.5449 15 11.75 15H6.75C5.7835 15 5 14.2165 5 13.25C5 12.8358 5.33579 12.5 5.75 12.5C6.16421 12.5 6.5 12.8358 6.5 13.25C6.5 13.3881 6.61193 13.5 6.75 13.5H11.75C12.7165 13.5 13.5 12.7165 13.5 11.75V7C13.5 6.86193 13.3881 6.75 13.25 6.75C12.8358 6.75 12.5 6.41421 12.5 6C12.5 5.58579 12.8358 5.25 13.25 5.25Z" /><path fillRule="evenodd" clipRule="evenodd" d="M8.1543 1.00391C9.73945 1.08421 11 2.39489 11 4V8L10.9961 8.1543C10.9184 9.68834 9.68834 10.9184 8.1543 10.9961L8 11H4L3.8457 10.9961C2.31166 10.9184 1.08163 9.68834 1.00391 8.1543L1 8V4C1 2.39489 2.26055 1.08421 3.8457 1.00391L4 1H8L8.1543 1.00391ZM4 2.5C3.17157 2.5 2.5 3.17157 2.5 4V8C2.5 8.82843 3.17157 9.5 4 9.5H8C8.82843 9.5 9.5 8.82843 9.5 8V4C9.5 3.17157 8.82843 2.5 8 2.5H4Z" /></svg>
+              Views
             </div>
           </div>
         </div>
@@ -108,7 +111,7 @@ function LinearBountyVisual() {
           {/* Header bar */}
           <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-b border-[#2a2a2a]">
             <div className="flex items-center gap-2">
-              <span className="text-[13px] font-medium text-white">All Issues</span>
+              <span className="text-[13px] font-medium text-white">Issues</span>
               <span className="text-[11px] text-[#666] bg-[#252525] px-1.5 py-0.5 rounded">{issues.length}</span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -247,15 +250,11 @@ function CreateBountyFlowVisual() {
               <span className="text-[12px] sm:text-[13px] leading-5 text-white truncate">
                 Add OAuth integration
               </span>
-              <svg className="w-2 h-2 text-text-muted shrink-0" viewBox="0 0 8 8" fill="currentColor">
-                <path d="M4 0L4.9 3.1H8L5.5 5L6.4 8L4 6.2L1.6 8L2.5 5L0 3.1H3.1L4 0Z" />
-              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 6 10" fill="none" className="w-2 h-2 text-text-muted shrink-0"><path d="M2.6 9.46667L0.3 6.4C0.176393 6.23519 0.293989 6 0.5 6H5.5C5.70601 6 5.82361 6.23519 5.7 6.4L3.4 9.46667C3.2 9.73333 2.8 9.73333 2.6 9.46667Z" fill="currentColor" /><path d="M2.6 0.533333L0.3 3.6C0.176393 3.76481 0.293989 4 0.5 4H5.5C5.70601 4 5.82361 3.76481 5.7 3.6L3.4 0.533333C3.2 0.266667 2.8 0.266667 2.6 0.533333Z" fill="currentColor" /></svg>
             </div>
             <div className="rounded-full flex items-center gap-1.5 bg-surface-2 border border-border-subtle px-2.5 py-1">
               <span className="text-[12px] sm:text-[13px] leading-5 text-white">$500</span>
-              <svg className="w-2 h-2 text-text-muted shrink-0" viewBox="0 0 8 8" fill="currentColor">
-                <path d="M4 0L4.9 3.1H8L5.5 5L6.4 8L4 6.2L1.6 8L2.5 5L0 3.1H3.1L4 0Z" />
-              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 6 10" fill="none" className="w-2 h-2 text-text-muted shrink-0"><path d="M2.6 9.46667L0.3 6.4C0.176393 6.23519 0.293989 6 0.5 6H5.5C5.70601 6 5.82361 6.23519 5.7 6.4L3.4 9.46667C3.2 9.73333 2.8 9.73333 2.6 9.46667Z" fill="currentColor" /><path d="M2.6 0.533333L0.3 3.6C0.176393 3.76481 0.293989 4 0.5 4H5.5C5.70601 4 5.82361 3.76481 5.7 3.6L3.4 0.533333C3.2 0.266667 2.8 0.266667 2.6 0.533333Z" fill="currentColor" /></svg>
             </div>
             <div className="rounded-full flex items-center bg-surface-2 border border-border-subtle px-2.5 py-1 pr-6 relative">
               <span className="text-[12px] sm:text-[13px] leading-5 text-white">Deadline</span>
@@ -298,14 +297,14 @@ function CreateBountyFlowVisual() {
 
 function GitHubIntegrationVisual() {
   return (
-    <div className="relative w-full rounded-xl overflow-hidden border border-[#30363d] bg-[#0d1117]">
+    <div className="relative w-full rounded-xl overflow-hidden border border-border-subtle bg-surface-1">
       {/* GitHub header bar */}
-      <div className="flex items-center gap-3 px-3 sm:px-4 py-2.5 border-b border-[#30363d]">
-        <GithubIcon className="h-5 w-5 text-white" aria-hidden="true" />
-        <span className="text-[13px] text-[#c9d1d9]">
-          <span className="text-[#58a6ff]">bountydotnew</span>
-          <span className="text-[#8b949e] mx-1">/</span>
-          <span className="text-[#58a6ff]">bounty.new</span>
+      <div className="flex items-center gap-3 px-3 sm:px-4 py-2.5 border-b border-border-subtle">
+        <GithubIcon className="h-5 w-5 text-foreground" aria-hidden="true" />
+        <span className="text-[13px] text-text-secondary">
+          <span className="text-foreground">bountydotnew</span>
+          <span className="text-text-muted mx-1">/</span>
+          <span className="text-foreground">bounty.new</span>
         </span>
       </div>
 
@@ -313,44 +312,44 @@ function GitHubIntegrationVisual() {
       <div className="px-3 sm:px-5 py-4">
         {/* Issue title */}
         <div className="mb-4">
-          <h3 className="text-[15px] sm:text-[17px] font-semibold text-[#c9d1d9] mb-1.5">
+          <h3 className="text-[15px] sm:text-[17px] font-semibold text-foreground mb-1.5">
             Add OAuth integration for Google + GitHub
-            <span className="text-[#8b949e] font-normal ml-1.5">#42</span>
+            <span className="text-text-muted font-normal ml-1.5">#42</span>
           </h3>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 text-[11px] font-medium rounded-full bg-[#238636] text-white">
+            <span className="px-2.5 py-0.5 text-[11px] font-medium rounded-full bg-brand-accent/20 text-brand-accent">
               Open
             </span>
-            <span className="text-[11px] text-[#8b949e]">
-              <span className="text-[#c9d1d9]">grim</span> opened this issue
+            <span className="text-[11px] text-text-muted">
+              <span className="text-text-secondary">grim</span> opened this issue
             </span>
           </div>
         </div>
 
         {/* Bot comment — bounty notice */}
-        <div className="border border-[#30363d] rounded-md overflow-hidden mb-3">
-          <div className="px-3 py-2 border-b border-[#30363d] flex items-center gap-2">
-            <div className="h-5 w-5 rounded-full bg-[#333] overflow-hidden flex items-center justify-center flex-shrink-0">
-              <span className="text-[8px] text-[#999]">B</span>
+        <div className="border border-border-subtle rounded-md overflow-hidden mb-3">
+          <div className="px-3 py-2 border-b border-border-subtle flex items-center gap-2">
+            <div className="h-5 w-5 rounded-full bg-surface-2 overflow-hidden flex items-center justify-center flex-shrink-0">
+              <span className="text-[8px] text-text-muted">B</span>
             </div>
-            <span className="text-[11px] text-[#58a6ff] font-semibold">bountydotnew</span>
-            <span className="inline-flex items-center bg-[#30363d] text-[#8b949e] px-1 py-0.5 rounded text-[9px]">
+            <span className="text-[11px] text-foreground font-semibold">bountydotnew</span>
+            <span className="inline-flex items-center bg-surface-2 text-text-muted px-1 py-0.5 rounded text-[9px]">
               bot
             </span>
           </div>
           <div className="px-3 py-2.5">
-            <p className="text-[12px] text-[#c9d1d9]">
-              This issue has a <strong>$500.00 USD</strong> bounty attached.
+            <p className="text-[12px] text-text-secondary">
+              This issue has a <strong className="text-foreground">$500.00 USD</strong> bounty attached.
             </p>
           </div>
         </div>
 
         {/* Labels */}
         <div className="flex flex-wrap gap-1.5">
-          <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-[#238636] text-white">
+          <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-brand-accent/15 text-brand-accent">
             bounty: $500
           </span>
-          <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-[#1f6feb] text-white">
+          <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-surface-2 text-text-secondary">
             enhancement
           </span>
         </div>
