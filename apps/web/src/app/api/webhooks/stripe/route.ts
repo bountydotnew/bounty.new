@@ -1,7 +1,7 @@
 import { db, bounty, transaction, payout, submission, cancellationRequest, user } from '@bounty/db';
 import { env } from '@bounty/env/server';
 import { constructEvent, stripeClient } from '@bounty/stripe';
-import { and, eq, isNotNull } from 'drizzle-orm';
+import { and, eq, isNotNull, sql } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
@@ -58,7 +58,7 @@ async function sendFundedBountyWebhook(bountyId: string) {
       .where(eq(user.id, bountyRecord.createdById))
       .limit(1);
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
 
     // Fire-and-forget: don't await, don't let webhook failures affect payment processing
     sendBountyCreatedWebhook({
@@ -365,8 +365,10 @@ export async function POST(request: Request) {
             break;
           }
 
-          // Update bounty payment status to held
-          await db
+          // Atomic conditional update — only update if not already held.
+          // This prevents race conditions when checkout.session.completed and
+          // payment_intent.succeeded fire concurrently.
+          const updatedRows = await db
             .update(bounty)
             .set({
               paymentStatus: 'held',
@@ -374,7 +376,18 @@ export async function POST(request: Request) {
               stripePaymentIntentId: paymentIntent.id,
               updatedAt: new Date(),
             })
-            .where(eq(bounty.id, bountyId));
+            .where(
+              and(
+                eq(bounty.id, bountyId),
+                sql`${bounty.paymentStatus} != 'held'`
+              )
+            )
+            .returning({ id: bounty.id });
+
+          if (updatedRows.length === 0) {
+            console.log(`[Stripe Webhook] Bounty ${bountyId} was already updated by a concurrent handler, skipping`);
+            break;
+          }
 
           // Check if transaction already exists (idempotency)
           const [existingTransaction] = await db
@@ -699,7 +712,7 @@ export async function POST(request: Request) {
 
         if (creator?.email) {
           try {
-            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
+            const baseUrl = process.process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
             await sendEmail({
               from: FROM_ADDRESSES.notifications,
               to: creator.email,

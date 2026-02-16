@@ -29,10 +29,9 @@ export const appRouter = router({
       status: 'healthy',
     };
   }),
-  privateData: protectedProcedure.query(({ ctx }) => {
+  privateData: protectedProcedure.query(() => {
     return {
       message: 'This is private',
-      user: ctx.session?.user,
     };
   }),
   earlyAccess: earlyAccessRouter,

@@ -1,5 +1,5 @@
 import { env } from '@bounty/env/server';
-import { db, account, discordGuild } from '@bounty/db';
+import { account, discordGuild } from '@bounty/db';
 import { eq, and, isNull, inArray } from 'drizzle-orm';
 import { protectedProcedure, orgProcedure, router } from '../trpc';
 
@@ -49,7 +49,7 @@ export const discordRouter = router({
   getLinkedAccount: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 
-    const [discordAccount] = await db
+    const [discordAccount] = await ctx.db
       .select()
       .from(account)
       .where(and(eq(account.userId, userId), eq(account.providerId, 'discord')))
@@ -108,7 +108,7 @@ export const discordRouter = router({
   unlinkAccount: protectedProcedure.mutation(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 
-    await db
+    await ctx.db
       .delete(account)
       .where(
         and(eq(account.userId, userId), eq(account.providerId, 'discord'))
@@ -124,7 +124,7 @@ export const discordRouter = router({
     const userId = ctx.session.user.id;
 
     // Get user's Discord account with access token
-    const [discordAccount] = await db
+    const [discordAccount] = await ctx.db
       .select()
       .from(account)
       .where(and(eq(account.userId, userId), eq(account.providerId, 'discord')))
@@ -156,7 +156,7 @@ export const discordRouter = router({
     }
 
     // Get guilds where bot is installed AND user is a member AND belongs to active org
-    const guilds = await db
+    const guilds = await ctx.db
       .select({
         id: discordGuild.id,
         name: discordGuild.name,

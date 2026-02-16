@@ -100,7 +100,7 @@ function PricingCard({
         productId: checkoutSlug,
         successUrl: activeOrgSlug
           ? `${getBaseUrl()}/${activeOrgSlug}/settings/billing?checkout=success`
-          : `${getBaseUrl()}/settings/billing?checkout=success`,
+          : `${getBaseUrl()}/dashboard?checkout=success`,
         checkoutSessionParams: {
           cancel_url: `${getBaseUrl()}/pricing`,
         },

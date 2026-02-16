@@ -8,11 +8,8 @@ import {
   NotificationsIcon,
   SettingsGearIcon,
   SidebarToggleIcon,
-  BellIcon,
   FileIcon,
-  DiscordIcon,
   DashboardSquareIcon,
-  QuestionMarkIcon,
 } from '@bounty/ui';
 import { cn } from '@bounty/ui/lib/utils';
 import {
@@ -44,17 +41,7 @@ import { LINKS } from '@/constants';
 import {
   Clock,
   UsersIcon,
-  Bug,
-  Lightbulb,
-  BookOpen,
-  ArrowUpRight,
 } from 'lucide-react';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@bounty/ui/components/popover';
-// import { useSupport } from '@cossistant/next';
 
 function getNavItems(orgSlug?: string) {
   return [
@@ -145,56 +132,6 @@ const WorkspaceSwitcher = () => {
   );
 };
 
-const SupportPopoverContent = () => {
-  const linkClass =
-    'flex items-center gap-3 px-4 py-2 text-[14px] text-text-secondary hover:text-foreground transition-colors';
-
-  return (
-    <div className="flex flex-col">
-      <a
-        href="https://discord.gg/bountynew"
-        target="_blank"
-        rel="noopener noreferrer"
-        className={linkClass}
-      >
-        <DiscordIcon className="size-4" />
-        <span className="flex-1">Discord</span>
-        <ArrowUpRight className="size-3.5 text-text-tertiary" />
-      </a>
-      <a
-        href="https://docs.bounty.new"
-        target="_blank"
-        rel="noopener noreferrer"
-        className={linkClass}
-      >
-        <BookOpen className="size-4" />
-        <span className="flex-1">Docs</span>
-        <ArrowUpRight className="size-3.5 text-text-tertiary" />
-      </a>
-      <a
-        href="https://github.com/bountydotnew/bounty.new/issues/new?template=bug_report.md"
-        target="_blank"
-        rel="noopener noreferrer"
-        className={linkClass}
-      >
-        <Bug className="size-4" />
-        <span className="flex-1">Report a bug</span>
-        <ArrowUpRight className="size-3.5 text-text-tertiary" />
-      </a>
-      <a
-        href="https://github.com/bountydotnew/bounty.new/issues/new?template=feature_request.md"
-        target="_blank"
-        rel="noopener noreferrer"
-        className={linkClass}
-      >
-        <Lightbulb className="size-4" />
-        <span className="flex-1">Suggest a feature</span>
-        <ArrowUpRight className="size-3.5 text-text-tertiary" />
-      </a>
-    </div>
-  );
-};
-
 const SidebarFooterActions = () => {
   const { session, isPending } = useSession();
   const isAuthenticated = !!session?.user;
@@ -215,28 +152,6 @@ const SidebarFooterActions = () => {
               Docs
             </span>
           </button>
-          {/* TODO: Re-enable when Cossistant support widget is fixed */}
-          {/* <Popover>
-            <PopoverTrigger asChild>
-              <button
-                className="inline-flex items-center gap-2 rounded-[10px] bg-surface-1 px-3.5 py-1.5 text-text-tertiary transition-colors hover:text-foreground group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
-                type="button"
-              >
-                <QuestionMarkIcon className="h-[19px] w-[19px]" />
-                <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em] group-data-[collapsible=icon]:hidden">
-                  Support
-                </span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent
-              side="top"
-              align="start"
-              sideOffset={8}
-              className="w-56 p-0"
-            >
-              <SupportPopoverContent />
-            </PopoverContent>
-          </Popover> */}
         </div>
         {/* Notifications toggle */}
         {isAuthenticated && !isPending && (

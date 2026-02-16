@@ -177,7 +177,7 @@ export const useBilling = (): BillingHookResult => {
         productId: slug,
         successUrl: activeOrgSlug
           ? `${baseUrl}/${activeOrgSlug}/settings/billing?checkout=success`
-          : `${baseUrl}/settings/billing?checkout=success`,
+          : `${baseUrl}/dashboard?checkout=success`,
         checkoutSessionParams: {
           cancel_url: `${baseUrl}/pricing`,
         },
@@ -193,7 +193,7 @@ export const useBilling = (): BillingHookResult => {
         window.location.href = data.checkout_url;
       }
     },
-    [attach]
+    [attach, activeOrgSlug]
   );
 
   // Wrap openBillingPortal to return Promise<void> for backward compatibility
