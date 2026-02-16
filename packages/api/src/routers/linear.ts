@@ -835,8 +835,17 @@ export const linearRouter = router({
           )
         );
 
-      // Delete the OAuth account record (removes access/refresh tokens)
-      await ctx.db.delete(account).where(eq(account.id, linearOAuthAccount.id));
+      // Only delete the OAuth account record if no other linearAccount rows
+      // still reference it (e.g. other teams/workspaces using the same tokens)
+      const [remainingLinearAccount] = await ctx.db
+        .select({ id: linearAccount.id })
+        .from(linearAccount)
+        .where(eq(linearAccount.accountId, linearOAuthAccount.id))
+        .limit(1);
+
+      if (!remainingLinearAccount) {
+        await ctx.db.delete(account).where(eq(account.id, linearOAuthAccount.id));
+      }
 
       return { success: true };
     }),
@@ -877,14 +886,15 @@ export const linearRouter = router({
         });
       }
 
-      // Check if a linear_account record already exists for this workspace
+      // Check if a linear_account record already exists for this workspace + org
       const [existingRecord] = await ctx.db
         .select()
         .from(linearAccount)
         .where(
           and(
             eq(linearAccount.accountId, linearOAuthAccount.id),
-            eq(linearAccount.linearWorkspaceId, workspace.id)
+            eq(linearAccount.linearWorkspaceId, workspace.id),
+            eq(linearAccount.organizationId, ctx.org.id)
           )
         )
         .limit(1);
