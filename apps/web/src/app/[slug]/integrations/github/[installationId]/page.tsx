@@ -8,7 +8,7 @@ import { GithubIcon } from '@bounty/ui';
 import { ConfirmAlertDialog } from '@bounty/ui/components/alert-dialog';
 import { ExternalLink, RefreshCw, Plus, Star } from 'lucide-react';
 import { toast } from 'sonner';
-import { trpcClient, queryClient } from '@/utils/trpc';
+import { trpcClient } from '@/utils/trpc';
 import { useQueryState, parseAsString } from 'nuqs';
 import { useOrgPath } from '@/hooks/use-org-path';
 import {
@@ -29,7 +29,9 @@ interface Repository {
 
 export default function GitHubInstallationPage() {
   const params = useParams();
-  const installationId = Number(params.installationId);
+  const rawInstallationId = Number(params.installationId);
+  const isValidId = !Number.isNaN(rawInstallationId) && rawInstallationId > 0;
+  const installationId = isValidId ? rawInstallationId : 0;
   const router = useRouter();
   const orgPath = useOrgPath();
   const queryClientLocal = useQueryClient();
@@ -47,25 +49,27 @@ export default function GitHubInstallationPage() {
     queryKey: ['githubInstallation.getRepositories', installationId],
     queryFn: () =>
       trpcClient.githubInstallation.getRepositories.query({ installationId }),
+    enabled: isValidId,
   });
 
   const { data: installation } = useQuery({
     queryKey: ['githubInstallation.getInstallation', installationId],
     queryFn: () =>
       trpcClient.githubInstallation.getInstallation.query({ installationId }),
+    enabled: isValidId,
   });
 
   const syncMutation = useMutation({
     mutationFn: () =>
       trpcClient.githubInstallation.syncInstallation.mutate({ installationId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      queryClientLocal.invalidateQueries({
         queryKey: ['githubInstallation.getRepositories', installationId],
       });
-      queryClient.invalidateQueries({
+      queryClientLocal.invalidateQueries({
         queryKey: ['githubInstallation.getInstallation', installationId],
       });
-      queryClient.invalidateQueries({
+      queryClientLocal.invalidateQueries({
         queryKey: ['githubInstallation.getInstallations'],
       });
     },
@@ -77,7 +81,7 @@ export default function GitHubInstallationPage() {
         installationId,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      queryClientLocal.invalidateQueries({
         queryKey: ['githubInstallation.getInstallations'],
       });
     },
@@ -90,7 +94,7 @@ export default function GitHubInstallationPage() {
       }),
     onSuccess: () => {
       toast.success('GitHub installation removed');
-      queryClient.invalidateQueries({
+      queryClientLocal.invalidateQueries({
         queryKey: ['githubInstallation.getInstallations'],
       });
       router.push(orgPath('/integrations'));
@@ -128,6 +132,14 @@ export default function GitHubInstallationPage() {
 
     window.open(githubUrl, '_blank');
   };
+
+  if (!isValidId) {
+    return (
+      <div className="flex flex-1 items-center justify-center py-12">
+        <p className="text-sm text-text-muted">Invalid installation ID.</p>
+      </div>
+    );
+  }
 
   const repoCount = repositories?.repositories?.length || 0;
   const repoList = (repositories?.repositories || []) as Repository[];
