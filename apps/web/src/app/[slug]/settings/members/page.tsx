@@ -167,10 +167,14 @@ export default function MembersPage() {
     if (!confirm('Remove this member from the team?')) return;
 
     try {
-      await authClient.organization.removeMember({
+      const result = await authClient.organization.removeMember({
         memberIdOrEmail: memberId,
         organizationId: activeOrg!.id,
       });
+      if (result.error) {
+        toast.error(result.error.message ?? 'Failed to remove member');
+        return;
+      }
       toast.success('Member removed');
       invalidateAll();
     } catch (err) {
@@ -184,11 +188,15 @@ export default function MembersPage() {
     newRole: 'owner' | 'member'
   ) => {
     try {
-      await authClient.organization.updateMemberRole({
+      const result = await authClient.organization.updateMemberRole({
         memberId,
         role: toApiRole(newRole),
         organizationId: activeOrg!.id,
       });
+      if (result.error) {
+        toast.error(result.error.message ?? 'Failed to update role');
+        return;
+      }
       toast.success('Role updated');
       invalidateAll();
     } catch (err) {

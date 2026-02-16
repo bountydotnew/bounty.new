@@ -15,7 +15,8 @@ export default function OrgInvitationAcceptPage() {
   const invitationId = params.id as string;
 
   useEffect(() => {
-    // Auto-accept invitation on page load
+    let cancelled = false;
+
     const acceptInvitation = async () => {
       if (!invitationId) {
         setError('Invalid invitation link');
@@ -28,6 +29,8 @@ export default function OrgInvitationAcceptPage() {
           invitationId,
         });
 
+        if (cancelled) return;
+
         if (result.error) {
           console.error('Failed to accept invitation:', result.error);
           setError(result.error.message ?? 'Failed to accept invitation');
@@ -39,6 +42,7 @@ export default function OrgInvitationAcceptPage() {
           if (orgId) {
             // Fetch org slug for redirect
             const orgs = await authClient.organization.list();
+            if (cancelled) return;
             const org = orgs.data?.find((o: { id: string }) => o.id === orgId);
             if (org?.slug) {
               router.push(`/${org.slug}/integrations`);
@@ -50,15 +54,17 @@ export default function OrgInvitationAcceptPage() {
           }
         }
       } catch (err) {
+        if (cancelled) return;
         console.error('Error accepting invitation:', err);
         setError('An unexpected error occurred');
         toast.error('An unexpected error occurred');
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
 
     acceptInvitation();
+    return () => { cancelled = true; };
   }, [invitationId, router]);
 
   if (isLoading) {

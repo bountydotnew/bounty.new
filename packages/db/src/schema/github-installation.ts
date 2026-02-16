@@ -9,6 +9,7 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { account } from './auth';
+import { organization } from './organization';
 
 export const githubInstallation = pgTable(
   'github_installation',
@@ -26,7 +27,9 @@ export const githubInstallation = pgTable(
     isDefault: boolean('is_default').notNull().default(false),
     suspendedAt: timestamp('suspended_at'),
     // Organization scoping
-    organizationId: text('organization_id'),
+    organizationId: text('organization_id').references(() => organization.id, {
+      onDelete: 'cascade',
+    }),
     createdAt: timestamp('created_at').notNull().default(sql`now()`),
     updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
   },
@@ -35,6 +38,7 @@ export const githubInstallation = pgTable(
       t.githubInstallationId
     ),
     index('github_installation_account_id_idx').on(t.githubAccountId),
+    index('github_installation_org_id_idx').on(t.organizationId),
   ]
 );
 

@@ -835,8 +835,16 @@ export const linearRouter = router({
           )
         );
 
-      // Delete the OAuth account record (removes access/refresh tokens)
-      await ctx.db.delete(account).where(eq(account.id, linearOAuthAccount.id));
+      // Only delete the OAuth account if no other org-scoped workspaces reference it
+      const [remainingWorkspace] = await ctx.db
+        .select({ id: linearAccount.id })
+        .from(linearAccount)
+        .where(eq(linearAccount.accountId, linearOAuthAccount.id))
+        .limit(1);
+
+      if (!remainingWorkspace) {
+        await ctx.db.delete(account).where(eq(account.id, linearOAuthAccount.id));
+      }
 
       return { success: true };
     }),

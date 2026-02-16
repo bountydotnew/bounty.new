@@ -101,7 +101,7 @@ async function isUserBountyOrgMember(
   }
 
   const [membership] = await db
-    .select({ id: member.id })
+    .select({ id: member.id, role: member.role })
     .from(member)
     .where(
       and(
@@ -111,7 +111,7 @@ async function isUserBountyOrgMember(
     )
     .limit(1);
 
-  return !!membership;
+  return membership?.role === 'owner';
 }
 
 /**

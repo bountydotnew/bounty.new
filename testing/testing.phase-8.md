@@ -42,7 +42,6 @@
 - [ ] Sign up with a new account
 - [ ] Check the Discord channel — should see a "New User Registered" embed with:
   - User's name
-  - User's email
   - Green color (0x00ff00)
   - Timestamp
 
