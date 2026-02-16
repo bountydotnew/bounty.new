@@ -2817,7 +2817,7 @@ async function handleInstallationEvent(event: InstallationEvent) {
         accountType: installation.account.type === 'Organization' ? 'Organization' : 'User',
         accountAvatarUrl: installation.account.avatar_url || null,
         repositoryIds: repos.repositories.map((r) => String(r.id)),
-        organizationId: installerOrgId,
+        organizationId: installerOrgId ?? null,
       })
       .onConflictDoUpdate({
         target: githubInstallation.githubInstallationId,

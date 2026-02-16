@@ -113,16 +113,16 @@ const WorkspaceSwitcher = () => {
 
 /**
  * Tracks the most recent pathname that is NOT under a settings route.
- * When the user clicks "Back" from settings, they jump straight to that
- * path instead of cycling through settings sub-pages in history.
+ * Uses a ref to avoid sharing state across component instances or
+ * persisting stale values across server requests.
  */
-let lastNonSettingsPath = '/dashboard';
+const lastNonSettingsPathRef = { current: '/dashboard' };
 
 function useTrackNonSettingsPath() {
   const pathname = usePathname();
   React.useEffect(() => {
     if (pathname && !pathname.includes('/settings')) {
-      lastNonSettingsPath = pathname;
+      lastNonSettingsPathRef.current = pathname;
     }
   }, [pathname]);
 }
@@ -134,7 +134,7 @@ const BackToMainButton = (_props: { slug: string }) => {
   return (
     <button
       type="button"
-      onClick={() => router.push(lastNonSettingsPath)}
+      onClick={() => router.push(lastNonSettingsPathRef.current)}
       className={cn(
         'w-fit text-sm font-medium',
         'inline-flex items-center justify-center gap-0.5 whitespace-nowrap',

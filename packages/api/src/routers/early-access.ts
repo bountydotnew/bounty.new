@@ -1,8 +1,8 @@
 import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { randomInt, randomBytes } from 'node:crypto';
+import { randomInt, randomBytes, timingSafeEqual } from 'node:crypto';
 
 const info = console.info.bind(console);
 const error = console.error.bind(console);
@@ -48,8 +48,10 @@ export const earlyAccessRouter = router({
   getWaitlistCount: publicProcedure.query(async () => {
     try {
       info('[getWaitlistCount] called');
-      const allEntries = await db.query.waitlist.findMany();
-      const count = allEntries.length;
+      const [result] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(waitlist);
+      const count = result?.count ?? 0;
       info('[getWaitlistCount] db result:', count);
 
       return {
@@ -103,7 +105,7 @@ export const earlyAccessRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        info('[addToWaitlist] Processing email:', input.email);
+        info('[addToWaitlist] Processing new entry');
 
         const userAlreadyInWaitlist = await db.query.waitlist.findFirst({
           where: (fields, { eq }) => eq(fields.email, input.email),
@@ -206,17 +208,21 @@ export const earlyAccessRouter = router({
           });
         }
 
-        const allEntries = await db.query.waitlist.findMany();
-        const total = allEntries.length;
+        const [totalResult] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(waitlist);
+        const total = totalResult?.count ?? 0;
 
-        const entriesGrantedAccess = await db.query.waitlist.findMany({
-          where: (fields, { eq, and, isNotNull }) =>
+        const [grantedResult] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(waitlist)
+          .where(
             and(
-              isNotNull(fields.accessToken),
-              isNotNull(fields.accessGrantedAt)
-            ),
-        });
-        const totalGrantedAccess = entriesGrantedAccess.length;
+              sql`${waitlist.accessToken} IS NOT NULL`,
+              sql`${waitlist.accessGrantedAt} IS NOT NULL`
+            )
+          );
+        const totalGrantedAccess = grantedResult?.count ?? 0;
 
         return {
           entries,
@@ -396,11 +402,11 @@ export const earlyAccessRouter = router({
           entryId = existingEntry.id;
 
           // Get position before update
-          const allEntries = await db.query.waitlist.findMany({
-            where: (fields, { lt }) =>
-              lt(fields.createdAt, existingEntry.createdAt),
-          });
-          position = allEntries.length + 1;
+          const [posResult] = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(waitlist)
+            .where(sql`${waitlist.createdAt} < ${existingEntry.createdAt}`);
+          position = (posResult?.count ?? 0) + 1;
 
           await db
             .update(waitlist)
@@ -421,8 +427,10 @@ export const earlyAccessRouter = router({
         } else {
           // Create new entry
           // Get position (count of existing entries)
-          const allEntries = await db.query.waitlist.findMany();
-          position = allEntries.length + 1;
+          const [countResult] = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(waitlist);
+          position = (countResult?.count ?? 0) + 1;
 
           const [newEntry] = await db
             .insert(waitlist)
@@ -525,8 +533,15 @@ export const earlyAccessRouter = router({
           });
         }
 
-        // Verify OTP
-        if (entry.otpCode !== input.code) {
+        // Verify OTP using constant-time comparison to prevent timing attacks
+        const otpMatch =
+          entry.otpCode != null &&
+          entry.otpCode.length === input.code.length &&
+          timingSafeEqual(
+            Buffer.from(entry.otpCode),
+            Buffer.from(input.code)
+          );
+        if (!otpMatch) {
           await db
             .update(waitlist)
             .set({ otpAttempts: (entry.otpAttempts ?? 0) + 1 })
@@ -559,7 +574,7 @@ export const earlyAccessRouter = router({
       }
     }),
 
-  resendOTP: publicProcedure
+  resendOTP: rateLimitedPublicProcedure('waitlist')
     .input(
       z.object({
         entryId: z.string(),
@@ -581,12 +596,12 @@ export const earlyAccessRouter = router({
         const otpCode = generateOTP();
         const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
+        // Generate new OTP but do NOT reset otpAttempts to prevent bypass
         await db
           .update(waitlist)
           .set({
             otpCode,
             otpExpiresAt,
-            otpAttempts: 0,
           })
           .where(eq(waitlist.id as any, entry.id) as any);
 
@@ -647,10 +662,11 @@ export const earlyAccessRouter = router({
         // Calculate position if not set
         let position = entry.position;
         if (!position) {
-          const allEntries = await db.query.waitlist.findMany({
-            where: (fields, { lt }) => lt(fields.createdAt, entry.createdAt),
-          });
-          position = allEntries.length + 1;
+          const entriesBefore = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(waitlist)
+            .where(sql`${waitlist.createdAt} < ${entry.createdAt}`);
+          position = (entriesBefore[0]?.count ?? 0) + 1;
 
           // Update position in database for future queries
           await db
@@ -659,19 +675,13 @@ export const earlyAccessRouter = router({
             .where(eq(waitlist.id as any, entry.id) as any);
         }
 
+        // Only return non-sensitive fields — no email, userId, or bounty details
         return {
           success: true,
           data: {
             id: entry.id,
-            email: entry.email,
             emailVerified: entry.emailVerified,
             position,
-            bountyTitle: entry.bountyTitle,
-            bountyDescription: entry.bountyDescription,
-            bountyAmount: entry.bountyAmount,
-            bountyDeadline: entry.bountyDeadline,
-            bountyGithubIssueUrl: entry.bountyGithubIssueUrl,
-            userId: entry.userId,
             createdAt: entry.createdAt,
           },
         };
@@ -719,8 +729,10 @@ export const earlyAccessRouter = router({
       // If no entry exists, create one using the user's email
       if (!entry && userEmail) {
         // Calculate position (count of existing entries)
-        const allEntries = await db.query.waitlist.findMany();
-        const position = allEntries.length + 1;
+        const [countRes] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(waitlist);
+        const position = (countRes?.count ?? 0) + 1;
 
         const [newEntry] = await db
           .insert(waitlist)
@@ -752,10 +764,11 @@ export const earlyAccessRouter = router({
       // Calculate position if not set
       let position = entry.position;
       if (!position) {
-        const allEntries = await db.query.waitlist.findMany({
-          where: (fields, { lt }) => lt(fields.createdAt, entry.createdAt),
-        });
-        position = allEntries.length + 1;
+        const [posRes] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(waitlist)
+          .where(sql`${waitlist.createdAt} < ${entry.createdAt}`);
+        position = (posRes?.count ?? 0) + 1;
 
         // Update position in database for future queries
         await db
@@ -802,6 +815,7 @@ export const earlyAccessRouter = router({
     .mutation(async ({ ctx, input }) => {
       try {
         const userId = ctx.session.user.id;
+        const userEmail = ctx.session.user.email;
 
         // Find waitlist entry by ID (more reliable than email matching)
         const entry = await db.query.waitlist.findFirst({
@@ -830,6 +844,15 @@ export const earlyAccessRouter = router({
           throw new TRPCError({
             code: 'CONFLICT',
             message: 'This waitlist entry is already linked to another account',
+          });
+        }
+
+        // Verify the entry's email matches the authenticated user's email
+        // to prevent hijacking of other users' waitlist entries
+        if (entry.email !== userEmail) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You can only link your own waitlist entry',
           });
         }
 

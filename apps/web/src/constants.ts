@@ -1,5 +1,3 @@
-const _baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001';
-
 // =====================
 // RESERVED TEAM SLUGS
 // =====================
@@ -57,14 +55,6 @@ export function isReservedSlug(slug: string): boolean {
   );
 }
 
-// sidebar
-const _SIDEBAR_COOKIE_NAME = 'sidebar_state';
-const _SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-const _SIDEBAR_WIDTH = '16rem';
-// const SIDEBAR_WIDTH_MOBILE = "18rem"
-const _SIDEBAR_WIDTH_ICON = '4rem';
-const _SIDEBAR_WIDTH_ICON_HOVER = '4.3rem';
-const _SIDEBAR_KEYBOARD_SHORTCUT = 'b';
 // Dashboard constants
 export const PAGINATION_LIMITS = {
   ALL_BOUNTIES: 10,
@@ -102,8 +92,6 @@ export const LINKS = {
   SOCIALS,
   HOME: '/',
   DASHBOARD: '/dashboard',
-  ACCOUNT: '/settings', // NOTE: Deprecated - use org-scoped settings instead
-  SETTINGS: '/settings', // NOTE: Deprecated - use /{slug}/settings/account instead
   LOGIN: '/login',
   BOOKMARKS: '/bookmarks',
   CONTRIBUTORS: '/contributors',

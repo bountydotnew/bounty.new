@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { trpc } from '@/utils/trpc';
 import { authClient } from '@bounty/auth/client';
@@ -49,16 +49,6 @@ interface InvitationRow {
   status: string;
   expiresAt: Date | string;
   organizationId: string;
-}
-
-/**
- * Maps our UI role names to Better Auth API role names.
- * Better Auth's organization plugin uses 'admin' for elevated roles,
- * but we display and store 'owner' (via creatorRole: 'owner' config).
- * The API accepts both 'owner' and 'admin' since both are in defaultRoles.
- */
-function toApiRole(uiRole: 'owner' | 'member'): 'owner' | 'member' {
-  return uiRole;
 }
 
 export default function MembersPage() {
@@ -119,7 +109,7 @@ export default function MembersPage() {
     try {
       const result = await authClient.organization.inviteMember({
         email: inviteEmail.trim(),
-        role: toApiRole(inviteRole),
+        role: inviteRole,
         organizationId: activeOrg.id,
       });
 
@@ -190,7 +180,7 @@ export default function MembersPage() {
     try {
       const result = await authClient.organization.updateMemberRole({
         memberId,
-        role: toApiRole(newRole),
+        role: newRole,
         organizationId: activeOrg!.id,
       });
       if (result.error) {

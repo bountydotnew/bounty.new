@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState, useRef } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { authClient } from '@bounty/auth/client';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -9,12 +9,18 @@ import Link from 'next/link';
 export default function OrgInvitationAcceptPage() {
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const invitationId = params.id as string;
+  const hasAccepted = useRef(false);
 
   useEffect(() => {
+<<<<<<< tembo/fix/coderabbit-review-changes
+=======
+    // Prevent duplicate calls on StrictMode double-mount
+    if (hasAccepted.current) return;
+
+>>>>>>> grim/add-orgs
     let cancelled = false;
 
     const acceptInvitation = async () => {
@@ -23,6 +29,8 @@ export default function OrgInvitationAcceptPage() {
         setIsLoading(false);
         return;
       }
+
+      hasAccepted.current = true;
 
       try {
         const result = await authClient.organization.acceptInvitation({
@@ -37,10 +45,8 @@ export default function OrgInvitationAcceptPage() {
           toast.error(result.error.message ?? 'Failed to accept invitation');
         } else {
           toast.success('Invitation accepted! Welcome to the team.');
-          // Redirect to the new org's integrations page
           const orgId = result.data?.invitation?.organizationId;
           if (orgId) {
-            // Fetch org slug for redirect
             const orgs = await authClient.organization.list();
             if (cancelled) return;
             const org = orgs.data?.find((o: { id: string }) => o.id === orgId);
@@ -59,12 +65,17 @@ export default function OrgInvitationAcceptPage() {
         setError('An unexpected error occurred');
         toast.error('An unexpected error occurred');
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     };
 
     acceptInvitation();
-    return () => { cancelled = true; };
+
+    return () => {
+      cancelled = true;
+    };
   }, [invitationId, router]);
 
   if (isLoading) {

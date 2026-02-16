@@ -1,19 +1,19 @@
-import { TRPCError } from '@trpc/server';
-import { z } from 'zod';
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 import {
   protectedProcedure,
   orgProcedure,
   orgOwnerProcedure,
   router,
   rateLimitedOrgProcedure,
-} from '../trpc';
-import { linearAccount, account, type db as database } from '@bounty/db';
-import { eq, and } from 'drizzle-orm';
+} from "../trpc";
+import { linearAccount, account, type db as database } from "@bounty/db";
+import { eq, and } from "drizzle-orm";
 import {
   createLinearDriver,
   LINEAR_COMMENT_TEMPLATES,
-} from '../../driver/linear-client';
-import { env } from '@bounty/env/server';
+} from "../../driver/linear-client";
+import { env } from "@bounty/env/server";
 
 type Database = typeof database;
 
@@ -31,7 +31,7 @@ async function getLinearAccount(db: Database, userId: string) {
   const [linearOAuthAccount] = await db
     .select()
     .from(account)
-    .where(and(eq(account.userId, userId), eq(account.providerId, 'linear')))
+    .where(and(eq(account.userId, userId), eq(account.providerId, "linear")))
     .limit(1);
 
   return linearOAuthAccount;
@@ -44,7 +44,7 @@ async function getLinearAccount(db: Database, userId: string) {
 async function getLinearWorkspace(
   db: Database,
   oauthAccountId: string,
-  orgId?: string
+  orgId?: string,
 ) {
   const conditions = [
     eq(linearAccount.accountId, oauthAccountId),
@@ -70,39 +70,39 @@ async function getLinearWorkspace(
  */
 async function refreshLinearToken(
   db: Database,
-  linearOAuthAccount: LinearOAuthAccount
+  linearOAuthAccount: LinearOAuthAccount,
 ): Promise<string> {
   if (!linearOAuthAccount.refreshToken) {
     throw new TRPCError({
-      code: 'BAD_REQUEST',
+      code: "BAD_REQUEST",
       message:
-        'No refresh token available. Please reconnect your Linear account.',
+        "No refresh token available. Please reconnect your Linear account.",
     });
   }
 
-  console.log('[Linear] Refreshing access token...');
+  console.log("[Linear] Refreshing access token...");
 
   try {
-    const response = await fetch('https://api.linear.app/oauth/token', {
-      method: 'POST',
+    const response = await fetch("https://api.linear.app/oauth/token", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({
-        grant_type: 'refresh_token',
+        grant_type: "refresh_token",
         refresh_token: linearOAuthAccount.refreshToken,
-        client_id: env.LINEAR_CLIENT_ID ?? '',
-        client_secret: env.LINEAR_CLIENT_SECRET ?? '',
+        client_id: env.LINEAR_CLIENT_ID ?? "",
+        client_secret: env.LINEAR_CLIENT_SECRET ?? "",
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[Linear] Token refresh failed:', errorText);
+      console.error("[Linear] Token refresh failed:", errorText);
       throw new TRPCError({
-        code: 'UNAUTHORIZED',
+        code: "UNAUTHORIZED",
         message:
-          'Failed to refresh Linear token. Please reconnect your Linear account.',
+          "Failed to refresh Linear token. Please reconnect your Linear account.",
       });
     }
 
@@ -128,18 +128,18 @@ async function refreshLinearToken(
       .where(eq(account.id, linearOAuthAccount.id));
 
     console.log(
-      '[Linear] Token refreshed successfully, expires at:',
-      expiresAt
+      "[Linear] Token refreshed successfully, expires at:",
+      expiresAt,
     );
     return tokenData.access_token;
   } catch (error) {
     if (error instanceof TRPCError) {
       throw error;
     }
-    console.error('[Linear] Error refreshing token:', error);
+    console.error("[Linear] Error refreshing token:", error);
     throw new TRPCError({
-      code: 'INTERNAL_SERVER_ERROR',
-      message: 'Failed to refresh Linear token',
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Failed to refresh Linear token",
     });
   }
 }
@@ -149,13 +149,13 @@ async function refreshLinearToken(
  */
 async function getValidAccessToken(
   db: Database,
-  linearOAuthAccount: LinearOAuthAccount
+  linearOAuthAccount: LinearOAuthAccount,
 ): Promise<string> {
   if (!linearOAuthAccount.accessToken) {
     throw new TRPCError({
-      code: 'BAD_REQUEST',
+      code: "BAD_REQUEST",
       message:
-        'No access token available. Please reconnect your Linear account.',
+        "No access token available. Please reconnect your Linear account.",
     });
   }
 
@@ -167,7 +167,7 @@ async function getValidAccessToken(
 
   if (isExpired) {
     console.log(
-      '[Linear] Access token expired or expiring soon, refreshing...'
+      "[Linear] Access token expired or expiring soon, refreshing...",
     );
     return await refreshLinearToken(db, linearOAuthAccount);
   }
@@ -181,7 +181,7 @@ export const linearRouter = router({
   getAccountStatus: protectedProcedure.query(async ({ ctx }) => {
     const linearOAuthAccount = await getLinearAccount(
       ctx.db,
-      ctx.session.user.id
+      ctx.session.user.id,
     );
     return {
       success: true,
@@ -196,7 +196,7 @@ export const linearRouter = router({
     // Get the user's Linear OAuth account
     const linearOAuthAccount = await getLinearAccount(
       ctx.db,
-      ctx.session.user.id
+      ctx.session.user.id,
     );
 
     if (!linearOAuthAccount?.accessToken) {
@@ -207,7 +207,7 @@ export const linearRouter = router({
     const linearWorkspace = await getLinearWorkspace(
       ctx.db,
       linearOAuthAccount.id,
-      ctx.org.id
+      ctx.org.id,
     );
 
     if (!linearWorkspace) {
@@ -233,7 +233,7 @@ export const linearRouter = router({
           : [],
       };
     } catch (error) {
-      console.error('Failed to fetch Linear workspaces:', error);
+      console.error("Failed to fetch Linear workspaces:", error);
       return { success: true, workspaces: [] };
     }
   }),
@@ -244,7 +244,7 @@ export const linearRouter = router({
   getConnectionStatus: orgProcedure.query(async ({ ctx }) => {
     const linearOAuthAccount = await getLinearAccount(
       ctx.db,
-      ctx.session.user.id
+      ctx.session.user.id,
     );
 
     if (!linearOAuthAccount) {
@@ -254,7 +254,7 @@ export const linearRouter = router({
     const linearWorkspace = await getLinearWorkspace(
       ctx.db,
       linearOAuthAccount.id,
-      ctx.org.id
+      ctx.org.id,
     );
 
     return {
@@ -274,7 +274,7 @@ export const linearRouter = router({
   /**
    * Fetch issues from Linear with optional filters
    */
-  getIssues: rateLimitedOrgProcedure('linear:read')
+  getIssues: rateLimitedOrgProcedure("linear:read")
     .input(
       z.object({
         filters: z
@@ -291,31 +291,31 @@ export const linearRouter = router({
             after: z.string().optional(),
           })
           .optional(),
-      })
+      }),
     )
     .query(async ({ input, ctx }) => {
       const linearOAuthAccount = await getLinearAccount(
         ctx.db,
-        ctx.session.user.id
+        ctx.session.user.id,
       );
 
       if (!linearOAuthAccount?.accessToken) {
         throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Linear account not connected',
+          code: "BAD_REQUEST",
+          message: "Linear account not connected",
         });
       }
 
       const linearWorkspace = await getLinearWorkspace(
         ctx.db,
         linearOAuthAccount.id,
-        ctx.org.id
+        ctx.org.id,
       );
 
       if (!linearWorkspace) {
         throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Linear workspace not connected',
+          code: "BAD_REQUEST",
+          message: "Linear workspace not connected",
         });
       }
 
@@ -323,7 +323,7 @@ export const linearRouter = router({
         // Get a valid access token, refreshing if necessary
         const accessToken = await getValidAccessToken(
           ctx.db,
-          linearOAuthAccount
+          linearOAuthAccount,
         );
         const driver = createLinearDriver(accessToken);
 
@@ -383,10 +383,10 @@ export const linearRouter = router({
           endCursor: result.endCursor,
         };
       } catch (error) {
-        console.error('Failed to fetch Linear issues:', error);
+        console.error("Failed to fetch Linear issues:", error);
         throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to fetch issues from Linear',
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch issues from Linear",
         });
       }
     }),
@@ -394,46 +394,46 @@ export const linearRouter = router({
   /**
    * Get a single issue by ID
    */
-  getIssue: rateLimitedOrgProcedure('linear:read')
+  getIssue: rateLimitedOrgProcedure("linear:read")
     .input(z.object({ issueId: z.string() }))
     .query(async ({ input, ctx }) => {
       const linearOAuthAccount = await getLinearAccount(
         ctx.db,
-        ctx.session.user.id
+        ctx.session.user.id,
       );
 
       if (!linearOAuthAccount?.accessToken) {
         throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Linear account not connected',
+          code: "BAD_REQUEST",
+          message: "Linear account not connected",
         });
       }
 
       const linearWorkspace = await getLinearWorkspace(
         ctx.db,
         linearOAuthAccount.id,
-        ctx.org.id
+        ctx.org.id,
       );
 
       if (!linearWorkspace) {
         throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Linear workspace not connected',
+          code: "BAD_REQUEST",
+          message: "Linear workspace not connected",
         });
       }
 
       try {
         const accessToken = await getValidAccessToken(
           ctx.db,
-          linearOAuthAccount
+          linearOAuthAccount,
         );
         const driver = createLinearDriver(accessToken);
         const issue = await driver.getIssue(input.issueId);
 
         if (!issue) {
           throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: 'Issue not found',
+            code: "NOT_FOUND",
+            message: "Issue not found",
           });
         }
 
@@ -442,10 +442,10 @@ export const linearRouter = router({
           issue,
         };
       } catch (error) {
-        console.error('Failed to fetch Linear issue:', error);
+        console.error("Failed to fetch Linear issue:", error);
         throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to fetch issue from Linear',
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch issue from Linear",
         });
       }
     }),
@@ -453,29 +453,29 @@ export const linearRouter = router({
   /**
    * Fetch projects from Linear
    */
-  getProjects: rateLimitedOrgProcedure('linear:read').query(async ({ ctx }) => {
+  getProjects: rateLimitedOrgProcedure("linear:read").query(async ({ ctx }) => {
     const linearOAuthAccount = await getLinearAccount(
       ctx.db,
-      ctx.session.user.id
+      ctx.session.user.id,
     );
 
     if (!linearOAuthAccount?.accessToken) {
       throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Linear account not connected',
+        code: "BAD_REQUEST",
+        message: "Linear account not connected",
       });
     }
 
     const linearWorkspace = await getLinearWorkspace(
       ctx.db,
       linearOAuthAccount.id,
-      ctx.org.id
+      ctx.org.id,
     );
 
     if (!linearWorkspace) {
       throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Linear workspace not connected',
+        code: "BAD_REQUEST",
+        message: "Linear workspace not connected",
       });
     }
 
@@ -490,10 +490,10 @@ export const linearRouter = router({
         projects,
       };
     } catch (error) {
-      console.error('Failed to fetch Linear projects:', error);
+      console.error("Failed to fetch Linear projects:", error);
       throw new TRPCError({
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to fetch projects from Linear',
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to fetch projects from Linear",
       });
     }
   }),
@@ -501,11 +501,11 @@ export const linearRouter = router({
   /**
    * Get workflow states (for filter dropdown)
    */
-  getWorkflowStates: rateLimitedOrgProcedure('linear:read').query(
+  getWorkflowStates: rateLimitedOrgProcedure("linear:read").query(
     async ({ ctx }) => {
       const linearOAuthAccount = await getLinearAccount(
         ctx.db,
-        ctx.session.user.id
+        ctx.session.user.id,
       );
 
       if (!linearOAuthAccount?.accessToken) {
@@ -516,7 +516,7 @@ export const linearRouter = router({
       const linearWorkspace = await getLinearWorkspace(
         ctx.db,
         linearOAuthAccount.id,
-        ctx.org.id
+        ctx.org.id,
       );
       if (!linearWorkspace) {
         return { success: true, states: [] };
@@ -525,7 +525,7 @@ export const linearRouter = router({
       try {
         const accessToken = await getValidAccessToken(
           ctx.db,
-          linearOAuthAccount
+          linearOAuthAccount,
         );
         const driver = createLinearDriver(accessToken);
         const states = await driver.getWorkflowStates();
@@ -535,19 +535,19 @@ export const linearRouter = router({
           states,
         };
       } catch (error) {
-        console.error('Failed to fetch Linear workflow states:', error);
+        console.error("Failed to fetch Linear workflow states:", error);
         return { success: true, states: [] };
       }
-    }
+    },
   ),
 
   /**
    * Get teams (for filter dropdown)
    */
-  getTeams: rateLimitedOrgProcedure('linear:read').query(async ({ ctx }) => {
+  getTeams: rateLimitedOrgProcedure("linear:read").query(async ({ ctx }) => {
     const linearOAuthAccount = await getLinearAccount(
       ctx.db,
-      ctx.session.user.id
+      ctx.session.user.id,
     );
 
     if (!linearOAuthAccount?.accessToken) {
@@ -558,7 +558,7 @@ export const linearRouter = router({
     const linearWorkspace = await getLinearWorkspace(
       ctx.db,
       linearOAuthAccount.id,
-      ctx.org.id
+      ctx.org.id,
     );
     if (!linearWorkspace) {
       return { success: true, teams: [] };
@@ -574,7 +574,7 @@ export const linearRouter = router({
         teams,
       };
     } catch (error) {
-      console.error('Failed to fetch Linear teams:', error);
+      console.error("Failed to fetch Linear teams:", error);
       return { success: true, teams: [] };
     }
   }),
@@ -585,46 +585,46 @@ export const linearRouter = router({
    * The actual bounty creation is handled by the bounties router
    * This endpoint validates access and pre-fills data from Linear
    */
-  getBountyDataFromIssue: rateLimitedOrgProcedure('linear:create')
+  getBountyDataFromIssue: rateLimitedOrgProcedure("linear:create")
     .input(z.object({ linearIssueId: z.string() }))
     .query(async ({ input, ctx }) => {
       const linearOAuthAccount = await getLinearAccount(
         ctx.db,
-        ctx.session.user.id
+        ctx.session.user.id,
       );
 
       if (!linearOAuthAccount?.accessToken) {
         throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Linear account not connected',
+          code: "BAD_REQUEST",
+          message: "Linear account not connected",
         });
       }
 
       const linearWorkspace = await getLinearWorkspace(
         ctx.db,
         linearOAuthAccount.id,
-        ctx.org.id
+        ctx.org.id,
       );
 
       if (!linearWorkspace) {
         throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Linear workspace not connected',
+          code: "BAD_REQUEST",
+          message: "Linear workspace not connected",
         });
       }
 
       try {
         const accessToken = await getValidAccessToken(
           ctx.db,
-          linearOAuthAccount
+          linearOAuthAccount,
         );
         const driver = createLinearDriver(accessToken);
         const issue = await driver.getIssue(input.linearIssueId);
 
         if (!issue) {
           throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: 'Issue not found',
+            code: "NOT_FOUND",
+            message: "Issue not found",
           });
         }
 
@@ -632,7 +632,7 @@ export const linearRouter = router({
           success: true,
           data: {
             title: issue.title,
-            description: issue.description ?? '',
+            description: issue.description ?? "",
             linearIssueId: issue.id,
             linearIssueIdentifier: issue.identifier,
             linearIssueUrl: issue.url,
@@ -640,10 +640,10 @@ export const linearRouter = router({
           },
         };
       } catch (error) {
-        console.error('Failed to fetch Linear issue for bounty:', error);
+        console.error("Failed to fetch Linear issue for bounty:", error);
         throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to fetch issue from Linear',
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch issue from Linear",
         });
       }
     }),
@@ -651,32 +651,32 @@ export const linearRouter = router({
   /**
    * Post a comment to a Linear issue (called after bounty events)
    */
-  postComment: rateLimitedOrgProcedure('linear:comment')
+  postComment: rateLimitedOrgProcedure("linear:comment")
     .input(
-      z.discriminatedUnion('commentType', [
+      z.discriminatedUnion("commentType", [
         z.object({
           linearIssueId: z.string(),
-          commentType: z.literal('bountyCreated'),
+          commentType: z.literal("bountyCreated"),
           bountyData: z.object({
             title: z.string(),
             amount: z.string(),
-            currency: z.string().default('USD'),
+            currency: z.string().default("USD"),
             bountyUrl: z.string(),
           }),
         }),
         z.object({
           linearIssueId: z.string(),
-          commentType: z.literal('bountyFunded'),
+          commentType: z.literal("bountyFunded"),
           bountyData: z.object({
             amount: z.string(),
-            currency: z.string().default('USD'),
+            currency: z.string().default("USD"),
             bountyUrl: z.string(),
             deadline: z.string().optional(),
           }),
         }),
         z.object({
           linearIssueId: z.string(),
-          commentType: z.literal('submissionReceived'),
+          commentType: z.literal("submissionReceived"),
           bountyData: z.object({
             bountyUrl: z.string(),
             submitter: z.string(),
@@ -685,79 +685,79 @@ export const linearRouter = router({
         }),
         z.object({
           linearIssueId: z.string(),
-          commentType: z.literal('bountyCompleted'),
+          commentType: z.literal("bountyCompleted"),
           bountyData: z.object({
             bountyUrl: z.string(),
             winner: z.string(),
             timestamp: z.string(),
           }),
         }),
-      ])
+      ]),
     )
     .mutation(async ({ input, ctx }) => {
       const linearOAuthAccount = await getLinearAccount(
         ctx.db,
-        ctx.session.user.id
+        ctx.session.user.id,
       );
 
       if (!linearOAuthAccount?.accessToken) {
         throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Linear account not connected',
+          code: "BAD_REQUEST",
+          message: "Linear account not connected",
         });
       }
 
       const linearWorkspace = await getLinearWorkspace(
         ctx.db,
         linearOAuthAccount.id,
-        ctx.org.id
+        ctx.org.id,
       );
 
       if (!linearWorkspace) {
         throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Linear workspace not connected',
+          code: "BAD_REQUEST",
+          message: "Linear workspace not connected",
         });
       }
 
       try {
         const accessToken = await getValidAccessToken(
           ctx.db,
-          linearOAuthAccount
+          linearOAuthAccount,
         );
         const driver = createLinearDriver(accessToken);
 
         // Generate comment body based on type
         let commentBody: string;
         switch (input.commentType) {
-          case 'bountyCreated':
+          case "bountyCreated":
             commentBody = LINEAR_COMMENT_TEMPLATES.bountyCreated(
               input.bountyData.title,
               input.bountyData.amount,
               input.bountyData.currency,
-              input.bountyData.bountyUrl
+              input.bountyData.bountyUrl,
             );
             break;
-          case 'bountyFunded':
+          case "bountyFunded":
             commentBody = LINEAR_COMMENT_TEMPLATES.bountyFunded(
               input.bountyData.amount,
               input.bountyData.currency,
               input.bountyData.bountyUrl,
-              input.bountyData.deadline
+              input.bountyData.deadline,
             );
             break;
-          case 'submissionReceived':
+          case "submissionReceived":
             commentBody = LINEAR_COMMENT_TEMPLATES.submissionReceived(
               input.bountyData.submitter,
               input.bountyData.timestamp,
-              input.bountyData.bountyUrl
+              input.bountyData.bountyUrl,
             );
             break;
-          case 'bountyCompleted':
+          case "bountyCompleted":
             commentBody = LINEAR_COMMENT_TEMPLATES.bountyCompleted(
               input.bountyData.winner,
               input.bountyData.timestamp,
-              input.bountyData.bountyUrl
+              input.bountyData.bountyUrl,
             );
             break;
           default: {
@@ -769,7 +769,7 @@ export const linearRouter = router({
 
         const comment = await driver.createComment(
           input.linearIssueId,
-          commentBody
+          commentBody,
         );
 
         return {
@@ -777,10 +777,10 @@ export const linearRouter = router({
           commentId: comment?.id ?? null,
         };
       } catch (error) {
-        console.error('Failed to post comment to Linear:', error);
+        console.error("Failed to post comment to Linear:", error);
         throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to post comment to Linear',
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to post comment to Linear",
         });
       }
     }),
@@ -794,13 +794,13 @@ export const linearRouter = router({
     .mutation(async ({ input, ctx }) => {
       const linearOAuthAccount = await getLinearAccount(
         ctx.db,
-        ctx.session.user.id
+        ctx.session.user.id,
       );
 
       if (!linearOAuthAccount) {
         throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Linear account not connected',
+          code: "BAD_REQUEST",
+          message: "Linear account not connected",
         });
       }
 
@@ -812,15 +812,15 @@ export const linearRouter = router({
           and(
             eq(linearAccount.linearWorkspaceId, input.workspaceId),
             eq(linearAccount.accountId, linearOAuthAccount.id),
-            eq(linearAccount.organizationId, ctx.org.id)
-          )
+            eq(linearAccount.organizationId, ctx.org.id),
+          ),
         )
         .limit(1);
 
       if (!workspace) {
         throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Linear workspace not found for this team',
+          code: "NOT_FOUND",
+          message: "Linear workspace not found for this team",
         });
       }
 
@@ -831,19 +831,27 @@ export const linearRouter = router({
           and(
             eq(linearAccount.linearWorkspaceId, input.workspaceId),
             eq(linearAccount.accountId, linearOAuthAccount.id),
-            eq(linearAccount.organizationId, ctx.org.id)
-          )
+            eq(linearAccount.organizationId, ctx.org.id),
+          ),
         );
 
-      // Only delete the OAuth account if no other org-scoped workspaces reference it
-      const [remainingWorkspace] = await ctx.db
+      // Only delete the OAuth account record if no other linearAccount rows
+      // still reference it (e.g. other teams/workspaces using the same tokens)
+      const [remainingLinearAccount] = await ctx.db
         .select({ id: linearAccount.id })
         .from(linearAccount)
-        .where(eq(linearAccount.accountId, linearOAuthAccount.id))
+        .where(
+          and(
+            eq(linearAccount.accountId, linearOAuthAccount.id),
+            eq(linearAccount.isActive, true),
+          ),
+        )
         .limit(1);
 
-      if (!remainingWorkspace) {
-        await ctx.db.delete(account).where(eq(account.id, linearOAuthAccount.id));
+      if (!remainingLinearAccount) {
+        await ctx.db
+          .delete(account)
+          .where(eq(account.id, linearOAuthAccount.id));
       }
 
       return { success: true };
@@ -856,7 +864,7 @@ export const linearRouter = router({
   syncWorkspace: orgProcedure.mutation(async ({ ctx }) => {
     const linearOAuthAccount = await getLinearAccount(
       ctx.db,
-      ctx.session.user.id
+      ctx.session.user.id,
     );
 
     if (!linearOAuthAccount?.accessToken) {
@@ -880,20 +888,21 @@ export const linearRouter = router({
 
       if (!(user && workspace)) {
         throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to fetch user or workspace info from Linear',
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch user or workspace info from Linear",
         });
       }
 
-      // Check if a linear_account record already exists for this workspace
+      // Check if a linear_account record already exists for this workspace + org
       const [existingRecord] = await ctx.db
         .select()
         .from(linearAccount)
         .where(
           and(
             eq(linearAccount.accountId, linearOAuthAccount.id),
-            eq(linearAccount.linearWorkspaceId, workspace.id)
-          )
+            eq(linearAccount.linearWorkspaceId, workspace.id),
+            eq(linearAccount.organizationId, ctx.org.id),
+          ),
         )
         .limit(1);
 
@@ -944,13 +953,13 @@ export const linearRouter = router({
         },
       };
     } catch (error) {
-      console.error('Failed to sync Linear workspace:', error);
+      console.error("Failed to sync Linear workspace:", error);
       if (error instanceof TRPCError) {
         throw error;
       }
       throw new TRPCError({
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to sync Linear workspace',
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to sync Linear workspace",
       });
     }
   }),

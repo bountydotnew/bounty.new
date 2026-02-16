@@ -8,7 +8,6 @@ import {
   CardIcon,
 } from '@bounty/ui';
 import { Users } from 'lucide-react';
-import type { ReactElement, ReactNode } from 'react';
 
 export type NavItem = {
   title: string;
@@ -21,12 +20,6 @@ export type NavItem = {
 export type SettingsSection = {
   title: string;
   items: NavItem[];
-};
-
-export type FooterCardConfig = {
-  id: string;
-  component: React.ElementType;
-  when?: 'main-nav-only' | 'always' | 'settings-only';
 };
 
 // ============================================================================
@@ -70,12 +63,6 @@ export const settingsNavSections = (slug: string): SettingsSection[] => [
         url: `/${slug}/settings/account`,
         icon: UserIcon,
       },
-      // Security - commented out per user request
-      // {
-      //   title: 'Security',
-      //   url: `/${slug}/settings/security`,
-      //   icon: SecurityIcon,
-      // },
       {
         title: 'Payments',
         url: `/${slug}/settings/payments`,
@@ -103,29 +90,4 @@ export const settingsNavSections = (slug: string): SettingsSection[] => [
       },
     ],
   },
-];
-
-// ============================================================================
-// Footer Card Registry
-// ============================================================================
-
-export const footerCardRegistry: FooterCardConfig[] = [
-  {
-    id: 'getting-started',
-    component: () => {
-      // Dynamic import to avoid circular dependencies
-      const GettingStartedCard = require('@/components/dual-sidebar/getting-started-card').GettingStartedCard;
-      return GettingStartedCard;
-    },
-    when: 'main-nav-only',
-  },
-  {
-    id: 'changelog',
-    component: () => {
-      const ChangelogCard = require('@/components/dual-sidebar/changelog-card').ChangelogCard;
-      return ChangelogCard;
-    },
-    when: 'main-nav-only',
-  },
-  // Recent Bounties is already in the sidebar, just needs to be placed correctly
 ];

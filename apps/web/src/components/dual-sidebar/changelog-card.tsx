@@ -6,8 +6,8 @@ import { Button } from '@bounty/ui/components/button';
 
 // Changelog config - update this when new releases go out
 export const changelogConfig = {
-  date: 'February 2025',
-  label: 'Feb 2025',
+  date: 'February 2026',
+  label: 'Feb 2026',
   title: 'Organization settings, unified sidebar refactor, and more.',
   url: 'https://docs.bounty.new/changelog',
 };
