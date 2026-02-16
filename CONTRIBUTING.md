@@ -17,6 +17,18 @@ Use this flow when a GitHub issue includes bounty instructions (example: issue #
 - Include one short test or verification note
 - Keep the scope small and directly tied to the issue
 
+## Maintainer Acceptance Packet (Issue #188)
+
+Use this exact packet to reduce back-and-forth before `/approve`:
+
+1. PR link
+2. Last commit link
+3. Scope note: one-sentence statement of what changed
+4. Verification note: one short expected outcome
+5. Submit command confirmation (`@bountydotnew submit` or `/submit #PR_NUMBER`)
+
+Template file: `ISSUE_188_MINIMAL_EVIDENCE_PACKET.md`
+
 ## Why this file exists
 
 Issue #188 is a test bounty. This guide gives contributors a repeatable submit/claim path so first submissions do not get stuck on process.
