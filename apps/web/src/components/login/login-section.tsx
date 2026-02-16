@@ -152,7 +152,8 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
 
               <div className="relative">
                 <Button
-                  className="flex w-full items-center justify-center gap-3 rounded-lg bg-foreground text-background py-3 font-medium hover:bg-black/80 dark:hover:bg-white/80"
+                  variant="outline"
+                  className="flex w-full items-center justify-center gap-3"
                   disabled={loading}
                   onClick={handleGitHubSignIn}
                 >
@@ -172,7 +173,8 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
 
               <div className="relative">
                 <Button
-                  className="flex w-full items-center justify-center gap-3 rounded-lg bg-foreground text-background py-3 font-medium hover:bg-black/80 dark:hover:bg-white/80"
+                  variant="outline"
+                  className="flex w-full items-center justify-center gap-3"
                   disabled={loading}
                   onClick={handleGoogleSignIn}
                 >
