@@ -476,6 +476,18 @@ export class GithubAppManager {
   }
 
   /**
+   * Delete (uninstall) a GitHub App installation.
+   * This revokes the app's access to the account/org on GitHub's side.
+   */
+  async deleteInstallation(installationId: number): Promise<void> {
+    const octokit = await this.getAppOctokit();
+
+    await octokit.rest.apps.deleteInstallation({
+      installation_id: installationId,
+    });
+  }
+
+  /**
    * Get installation for a specific repository
    * Returns the installation object if the app is installed on the repo
    */

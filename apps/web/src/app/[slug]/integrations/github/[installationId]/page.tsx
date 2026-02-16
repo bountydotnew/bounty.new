@@ -2,12 +2,15 @@
 
 import type * as React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { GithubIcon } from '@bounty/ui';
+import { ConfirmAlertDialog } from '@bounty/ui/components/alert-dialog';
 import { ExternalLink, RefreshCw, Plus, Star } from 'lucide-react';
+import { toast } from 'sonner';
 import { trpcClient, queryClient } from '@/utils/trpc';
 import { useQueryState, parseAsString } from 'nuqs';
+import { useOrgPath } from '@/hooks/use-org-path';
 import {
   IntegrationDetailPage,
   IntegrationHeader,
@@ -27,7 +30,10 @@ interface Repository {
 export default function GitHubInstallationPage() {
   const params = useParams();
   const installationId = Number(params.installationId);
+  const router = useRouter();
+  const orgPath = useOrgPath();
   const queryClientLocal = useQueryClient();
+  const [showUninstallDialog, setShowUninstallDialog] = useState(false);
   const [newFlag, setNewFlag] = useQueryState(
     'new',
     parseAsString.withDefault('')
@@ -77,6 +83,23 @@ export default function GitHubInstallationPage() {
     },
   });
 
+  const uninstallMutation = useMutation({
+    mutationFn: () =>
+      trpcClient.githubInstallation.removeInstallation.mutate({
+        installationId,
+      }),
+    onSuccess: () => {
+      toast.success('GitHub installation removed');
+      queryClient.invalidateQueries({
+        queryKey: ['githubInstallation.getInstallations'],
+      });
+      router.push(orgPath('/integrations'));
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to uninstall');
+    },
+  });
+
   useEffect(() => {
     if (newFlag) {
       queryClientLocal.invalidateQueries({
@@ -92,11 +115,18 @@ export default function GitHubInstallationPage() {
     }
   }, [newFlag, installationId, queryClientLocal, setNewFlag]);
 
+  const accountLogin = installation?.installation?.account.login || '';
+  const accountType = installation?.installation?.account.type;
+
   const handleViewInGitHub = () => {
-    window.open(
-      `https://github.com/apps/bountydotnew/installations/${installationId}`,
-      '_blank'
-    );
+    let githubUrl: string;
+    if (accountType === 'Organization' && accountLogin) {
+      githubUrl = `https://github.com/organizations/${accountLogin}/settings/installations/${installationId}`;
+    } else {
+      githubUrl = `https://github.com/settings/installations/${installationId}`;
+    }
+
+    window.open(githubUrl, '_blank');
   };
 
   const repoCount = repositories?.repositories?.length || 0;
@@ -165,7 +195,7 @@ export default function GitHubInstallationPage() {
             {
               label: 'Uninstall',
               variant: 'danger',
-              onClick: () => console.log('Uninstall clicked'),
+              onClick: () => setShowUninstallDialog(true),
             },
           ]}
         >
@@ -217,6 +247,29 @@ export default function GitHubInstallationPage() {
           Add another repository
         </ActionButton>
       </IntegrationDetailPage>
+
+      <ConfirmAlertDialog
+        open={showUninstallDialog}
+        onOpenChange={setShowUninstallDialog}
+        title="Uninstall GitHub App"
+        description={
+          <>
+            This will revoke bounty.new&apos;s access to{' '}
+            <span className="font-semibold text-foreground">
+              {accountLogin}
+            </span>
+            .{' '}
+            <span className="font-semibold text-red-400">
+              This can not be undone.
+            </span>
+          </>
+        }
+        confirmValue={accountLogin}
+        confirmLabel="Uninstall"
+        pendingLabel="Uninstalling..."
+        isPending={uninstallMutation.isPending}
+        onConfirm={() => uninstallMutation.mutateAsync()}
+      />
     </CenteredWrapper>
   );
 }

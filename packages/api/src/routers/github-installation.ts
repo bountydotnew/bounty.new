@@ -268,12 +268,52 @@ export const githubInstallationRouter = router({
     }),
 
   /**
-   * Remove an installation (delete from our database)
+   * Remove an installation — uninstalls the GitHub App on GitHub's side
+   * and deletes the record from our database.
    * Only org owners can remove installations.
    */
   removeInstallation: orgOwnerProcedure
     .input(z.object({ installationId: z.number() }))
     .mutation(async ({ input, ctx }) => {
+      // Verify the installation belongs to this org before doing anything
+      const [inst] = await ctx.db
+        .select({ id: githubInstallation.id })
+        .from(githubInstallation)
+        .where(
+          and(
+            eq(githubInstallation.githubInstallationId, input.installationId),
+            eq(githubInstallation.organizationId, ctx.org.id)
+          )
+        )
+        .limit(1);
+
+      if (!inst) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Installation not found for this team',
+        });
+      }
+
+      // Delete on GitHub's side (revokes the app's access)
+      const githubApp = getGithubAppManager();
+      try {
+        await githubApp.deleteInstallation(input.installationId);
+      } catch (error: unknown) {
+        // If the installation is already gone on GitHub (404), proceed to clean up our DB
+        const isNotFound =
+          error instanceof Error &&
+          'status' in error &&
+          (error as { status: number }).status === 404;
+        if (!isNotFound) {
+          console.error('Failed to delete installation on GitHub:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to uninstall the GitHub App. Please try again.',
+          });
+        }
+      }
+
+      // Remove from our database
       await ctx.db
         .delete(githubInstallation)
         .where(

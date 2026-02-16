@@ -18,6 +18,7 @@ import {
   Input,
 } from '@bounty/ui';
 import { Button } from '@bounty/ui';
+import { ConfirmAlertDialog } from '@bounty/ui/components/alert-dialog';
 import { Copy, AlertTriangle, Check } from 'lucide-react';
 
 export default function OrgGeneralSettingsPage() {
@@ -26,7 +27,6 @@ export default function OrgGeneralSettingsPage() {
   const [slugInput, setSlugInput] = useState('');
   const [isSlugDialogOpen, setIsSlugDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
   const [copiedSlug, setCopiedSlug] = useState(false);
 
   // Get active org data
@@ -57,7 +57,6 @@ export default function OrgGeneralSettingsPage() {
       onSuccess: () => {
         toast.success('Organization deleted');
         setIsDeleteDialogOpen(false);
-        setDeleteConfirmInput('');
         // Redirect to dashboard
         router.push('/dashboard');
       },
@@ -84,10 +83,6 @@ export default function OrgGeneralSettingsPage() {
       setTimeout(() => setCopiedSlug(false), 2000);
     }
   };
-
-  const canDelete =
-    deleteConfirmInput === activeOrg?.name &&
-    !deleteOrgMutation.isPending;
 
   if (!orgData) {
     return (
@@ -152,7 +147,10 @@ export default function OrgGeneralSettingsPage() {
               disabled={!isOwner || isPersonalTeam}
             />
             <p className="text-[11px] text-text-muted mt-1.5">
-              Current: <span className="font-mono text-text-secondary">{activeOrg?.slug}</span>
+              Current:{' '}
+              <span className="font-mono text-text-secondary">
+                {activeOrg?.slug}
+              </span>
             </p>
           </div>
           <AlertDialogRoot
@@ -161,7 +159,7 @@ export default function OrgGeneralSettingsPage() {
           >
             <AlertDialogTrigger asChild>
               <Button
-                disabled={!slugInput.trim() || !isOwner || isPersonalTeam}
+                disabled={!(slugInput.trim() && isOwner) || isPersonalTeam}
                 onClick={() => setIsSlugDialogOpen(true)}
               >
                 Change Slug
@@ -214,91 +212,42 @@ export default function OrgGeneralSettingsPage() {
                 Delete Organization
               </h2>
               <p className="text-xs text-text-muted mt-1">
-                Permanently delete this organization and all its data. This action cannot be undone.
+                Permanently delete this organization and all its data. This
+                action cannot be undone.
               </p>
 
               {isOwner ? (
-                <AlertDialogRoot
-                  open={isDeleteDialogOpen}
-                  onOpenChange={setIsDeleteDialogOpen}
-                >
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="destructive"
-                      className="mt-4"
-                      disabled={!isOwner}
-                    >
-                      Delete Organization
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogPopup>
-                    <div className="p-6">
-                      <AlertDialogTitle>Delete Organization</AlertDialogTitle>
-                      <AlertDialogDescription className="mt-2">
+                <>
+                  <Button
+                    variant="destructive"
+                    className="mt-4"
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                  >
+                    Delete Organization
+                  </Button>
+                  <ConfirmAlertDialog
+                    open={isDeleteDialogOpen}
+                    onOpenChange={setIsDeleteDialogOpen}
+                    title="Delete Organization"
+                    description={
+                      <>
                         This will permanently delete{' '}
                         <span className="font-semibold text-foreground">
                           {activeOrg?.name}
                         </span>
-                        . All bounties, members, and data will be lost.
-                      </AlertDialogDescription>
-
-                      <div className="mt-4 space-y-3">
-                        <label className="text-sm font-medium text-foreground">
-                          Type <span className="font-mono bg-surface-2 px-1.5 py-0.5 rounded">
-                            {activeOrg?.name}
-                          </span>{' '}
-                          to confirm:
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (activeOrg?.name) {
-                                setDeleteConfirmInput(activeOrg.name);
-                                setCopiedSlug(true);
-                                setTimeout(() => setCopiedSlug(false), 2000);
-                              }
-                            }}
-                            className="ml-2 text-xs text-text-secondary hover:text-foreground transition-colors"
-                          >
-                            {copiedSlug ? (
-                              <>
-                                <Check className="inline h-3 w-3 mr-0.5" />
-                                Copied
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="inline h-3 w-3 mr-0.5" />
-                                Copy
-                              </>
-                            )}
-                          </button>
-                        </label>
-                        <input
-                          type="text"
-                          value={deleteConfirmInput}
-                          onChange={(e) =>
-                            setDeleteConfirmInput(e.target.value)
-                          }
-                          placeholder={activeOrg?.name}
-                          className="w-full rounded-lg border border-border-subtle bg-background px-3 py-2 text-sm text-foreground placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-red-500/50"
-                        />
-                      </div>
-                    </div>
-                    <AlertDialogFooter>
-                      <AlertDialogClose asChild>
-                        <Button variant="outline">Cancel</Button>
-                      </AlertDialogClose>
-                      <Button
-                        variant="destructive"
-                        onClick={handleDeleteOrg}
-                        disabled={!canDelete}
-                      >
-                        {deleteOrgMutation.isPending
-                          ? 'Deleting...'
-                          : 'Delete Organization'}
-                      </Button>
-                    </AlertDialogFooter>
-                  </AlertDialogPopup>
-                </AlertDialogRoot>
+                        . All bounties, members, and data will be lost.{' '}
+                        <span className="font-semibold text-red-400">
+                          This can not be undone.
+                        </span>
+                      </>
+                    }
+                    confirmValue={activeOrg?.name || ''}
+                    confirmLabel="Delete Organization"
+                    pendingLabel="Deleting..."
+                    isPending={deleteOrgMutation.isPending}
+                    onConfirm={handleDeleteOrg}
+                  />
+                </>
               ) : (
                 <p className="text-xs text-text-muted mt-3">
                   Only organization owners can delete the organization.
@@ -309,7 +258,7 @@ export default function OrgGeneralSettingsPage() {
         </Card>
       )}
 
-      {!isOwner && !isPersonalTeam && (
+      {!(isOwner || isPersonalTeam) && (
         <div className="rounded-xl border border-border-subtle bg-surface-1 p-5">
           <p className="text-sm text-text-muted">
             Only organization owners can change the slug or delete the

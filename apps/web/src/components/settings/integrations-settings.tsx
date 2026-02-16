@@ -440,9 +440,7 @@ export function IntegrationsSettings() {
     linkDiscord,
     linearWorkspace,
     hasLinear,
-    hasLinearOAuth,
     linkLinear,
-    syncLinearWorkspace,
     invalidateAll,
   } = useIntegrations();
 
@@ -450,8 +448,6 @@ export function IntegrationsSettings() {
 
   // Track if we've already handled this setup action to prevent infinite loops
   const handledSetupRef = useRef<string>(`${setupAction}-${installationId}`);
-  const handledLinearSyncRef = useRef<boolean>(false);
-
   useEffect(() => {
     const key = `${setupAction}-${installationId}`;
     if (setupAction && installationId && key !== handledSetupRef.current) {
@@ -462,26 +458,9 @@ export function IntegrationsSettings() {
     }
   }, [setupAction, installationId, invalidateAll]);
 
-  // Auto-sync Linear workspace if user has OAuth but no connected workspace
-  useEffect(() => {
-    if (
-      hasLinearOAuth &&
-      !hasLinear &&
-      !handledLinearSyncRef.current &&
-      !isLoading
-    ) {
-      handledLinearSyncRef.current = true;
-      syncLinearWorkspace().then(() => {
-        invalidateAll();
-      });
-    }
-  }, [
-    hasLinearOAuth,
-    hasLinear,
-    isLoading,
-    syncLinearWorkspace,
-    invalidateAll,
-  ]);
+  // NOTE: Auto-sync of Linear workspace removed from main integrations page.
+  // The sync is handled on the Linear-specific page (/integrations/linear)
+  // after the user completes the OAuth flow — not here on every visit.
 
   const installedCount =
     githubInstallations.length + (hasDiscord ? 1 : 0) + (hasLinear ? 1 : 0);

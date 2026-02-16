@@ -110,13 +110,30 @@ const WorkspaceSwitcher = () => {
   );
 };
 
-const BackToMainButton = ({ slug }: { slug: string }) => {
+/**
+ * Tracks the most recent pathname that is NOT under a settings route.
+ * When the user clicks "Back" from settings, they jump straight to that
+ * path instead of cycling through settings sub-pages in history.
+ */
+let lastNonSettingsPath = '/dashboard';
+
+function useTrackNonSettingsPath() {
+  const pathname = usePathname();
+  React.useEffect(() => {
+    if (pathname && !pathname.includes('/settings')) {
+      lastNonSettingsPath = pathname;
+    }
+  }, [pathname]);
+}
+
+const BackToMainButton = (_props: { slug: string }) => {
   const router = useRouter();
+  useTrackNonSettingsPath();
 
   return (
     <button
       type="button"
-      onClick={() => router.push(`/${slug}`)}
+      onClick={() => router.push(lastNonSettingsPath)}
       className={cn(
         'w-fit text-sm font-medium',
         'inline-flex items-center justify-center gap-0.5 whitespace-nowrap',
@@ -142,11 +159,7 @@ const renderNavItems = (
         const IconComponent = item.icon;
         return (
           <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton
-              asChild
-              isActive={isActive}
-              tooltip={item.title}
-            >
+            <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
               <a href={item.url}>
                 {IconComponent && <IconComponent className="h-5 w-5" />}
                 <span>{item.title}</span>
@@ -262,9 +275,7 @@ export const AppSidebar = ({
               {renderSettingsNav(settingsNav, pathname)}
             </SidebarGroup>
           ) : (
-            <SidebarGroup>
-              {renderNavItems(mainNav, pathname)}
-            </SidebarGroup>
+            <SidebarGroup>{renderNavItems(mainNav, pathname)}</SidebarGroup>
           )}
         </SidebarContent>
 
@@ -288,13 +299,13 @@ export const AppSidebar = ({
                 {/* Docs link */}
                 <button
                   className="inline-flex items-center gap-1.5 rounded-lg bg-surface-1 px-2.5 py-1.5 text-xs text-text-tertiary transition-colors hover:text-foreground group-data-[collapsible=icon]:hidden"
-                  onClick={() => window.open('https://docs.bounty.new', '_blank')}
+                  onClick={() =>
+                    window.open('https://docs.bounty.new', '_blank')
+                  }
                   type="button"
                 >
                   <FileIcon className="h-3.5 w-3.5" />
-                  <span className="text-xs font-medium">
-                    Docs
-                  </span>
+                  <span className="text-xs font-medium">Docs</span>
                 </button>
                 {/* Notifications */}
                 {isAuthenticated && !isPending && (
