@@ -232,9 +232,7 @@ export default function GitHubInstallationPage() {
             columns={columns}
             data={repoList}
             keyExtractor={(repo) => repo.id}
-            rowActions={[
-              { label: 'Configure', onClick: () => console.log('Configure') },
-            ]}
+            rowActions={[]}
             emptyMessage="No repositories connected."
           />
         </div>
