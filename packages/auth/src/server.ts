@@ -183,12 +183,15 @@ async function createPersonalTeam(user: {
   email: string;
   handle?: string | null;
 }) {
-  const handle =
+  const derivedHandle =
     (user as { handle?: string | null }).handle ??
     user.email
       .split('@')[0]
       ?.toLowerCase()
       .replace(/[^a-z0-9-]/g, '-');
+
+  const handle =
+    derivedHandle && !isReservedSlug(derivedHandle) ? derivedHandle : null;
 
   // Always suffix the slug with a random string so personal team slugs
   // never collide with each other or with reserved routes.

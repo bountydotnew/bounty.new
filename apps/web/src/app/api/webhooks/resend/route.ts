@@ -111,7 +111,7 @@ async function handleEmailReceived(event: EmailReceivedEvent) {
     from,
     to,
     subject,
-    attachmentCount: attachments.length,
+    attachmentCount: attachments?.length ?? 0,
   });
 
   // Fetch full email content (body, headers)
