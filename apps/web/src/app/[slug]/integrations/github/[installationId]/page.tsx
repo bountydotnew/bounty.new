@@ -268,7 +268,9 @@ export default function GitHubInstallationPage() {
         confirmLabel="Uninstall"
         pendingLabel="Uninstalling..."
         isPending={uninstallMutation.isPending}
-        onConfirm={() => uninstallMutation.mutateAsync()}
+        onConfirm={async () => {
+          await uninstallMutation.mutateAsync();
+        }}
       />
     </CenteredWrapper>
   );
