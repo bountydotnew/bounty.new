@@ -74,7 +74,7 @@ export default function LinearWorkspacePage() {
     if (linearWorkspace && linearWorkspace.id !== workspaceIdFromUrl) {
       router.replace(orgPath(`/integrations/linear/${linearWorkspace.id}`));
     }
-  }, [linearWorkspace, workspaceIdFromUrl, router]);
+  }, [linearWorkspace, workspaceIdFromUrl, router, orgPath]);
 
   const handleLinkAccount = async () => {
     setIsConnecting(true);

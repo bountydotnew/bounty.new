@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { LinearIcon } from '@bounty/ui';
 import { useIntegrations } from '@/hooks/use-integrations';
@@ -16,6 +16,9 @@ export default function LinearRootPage() {
     syncLinearWorkspace,
     isLinearLoading,
   } = useIntegrations();
+  // Use a ref to gate the sync — avoids the infinite loop caused by
+  // isSyncing being both read/written inside the effect AND in its deps.
+  const isSyncingRef = useRef(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const orgPath = useOrgPath();
 
@@ -28,19 +31,15 @@ export default function LinearRootPage() {
 
   // Auto-sync workspace if user has OAuth but no connected workspace
   useEffect(() => {
-    if (hasLinearOAuth && !hasLinear && !isLinearLoading && !isSyncing) {
+    if (hasLinearOAuth && !hasLinear && !isLinearLoading && !isSyncingRef.current) {
+      isSyncingRef.current = true;
       setIsSyncing(true);
       syncLinearWorkspace().finally(() => {
+        isSyncingRef.current = false;
         setIsSyncing(false);
       });
     }
-  }, [
-    hasLinearOAuth,
-    hasLinear,
-    isLinearLoading,
-    syncLinearWorkspace,
-    isSyncing,
-  ]);
+  }, [hasLinearOAuth, hasLinear, isLinearLoading, syncLinearWorkspace]);
 
   // Show loading state while syncing or loading initial data
   if (isLinearLoading || isSyncing) {

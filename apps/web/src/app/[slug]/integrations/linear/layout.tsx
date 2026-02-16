@@ -1,35 +1,17 @@
 'use client';
 
-import { useEffect, Suspense } from 'react';
-import { useRouter, usePathname, useParams } from 'next/navigation';
-import { useIntegrations } from '@/hooks/use-integrations';
+import { Suspense } from 'react';
 import type React from 'react';
 import { LinearTabBar } from '@/components/integrations/linear';
 import { LinearSkeleton } from '@/app/[slug]/components/linear-skeleton';
-import { useOrgPath } from '@/hooks/use-org-path';
 
 export default function LinearLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useParams();
-  const slug = params.slug as string;
-  const orgPath = useOrgPath();
-  const { linearWorkspace, hasLinear } = useIntegrations();
-
-  useEffect(() => {
-    // If we're at the root /{slug}/integrations/linear and have a workspace, redirect to workspace-specific route
-    if (
-      pathname === `/${slug}/integrations/linear` &&
-      hasLinear &&
-      linearWorkspace
-    ) {
-      router.replace(orgPath(`/integrations/linear/${linearWorkspace.id}`));
-    }
-  }, [pathname, slug, hasLinear, linearWorkspace, router, orgPath]);
+  // Redirect logic is handled by the page component (page.tsx) to
+  // avoid duplicate navigations when both layout and page fire simultaneously.
 
   return (
     <>

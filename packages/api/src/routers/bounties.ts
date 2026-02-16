@@ -780,21 +780,31 @@ export const bountiesRouter = router({
 
   fetchAllBounties: protectedProcedure
     .input(getBountiesSchema)
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       try {
         const offset = (input.page - 1) * input.limit;
 
         const conditions = [];
 
+        // Exclude draft bounties unless the caller is explicitly filtering
+        // by status or by their own creatorId (users can see their own drafts).
         if (input.status) {
           conditions.push(eq(bounty.status, input.status));
+        } else {
+          // By default, hide drafts from cross-org listing
+          conditions.push(sql`${bounty.status} != 'draft'`);
         }
 
         if (input.search) {
+          // Escape LIKE metacharacters to prevent pattern injection
+          const escapedSearch = input.search
+            .replace(/\\/g, '\\\\')
+            .replace(/%/g, '\\%')
+            .replace(/_/g, '\\_');
           conditions.push(
             or(
-              ilike(bounty.title, `%${input.search}%`),
-              ilike(bounty.description, `%${input.search}%`)
+              ilike(bounty.title, `%${escapedSearch}%`),
+              ilike(bounty.description, `%${escapedSearch}%`)
             )
           );
         }

@@ -57,8 +57,14 @@ export function OrgSyncGuard({ slug, children }: OrgSyncGuardProps) {
     const targetOrg = orgs.find((o) => o.slug === slug);
 
     if (!targetOrg) {
-      // Slug doesn't match any user org — redirect to dashboard
-      router.replace('/dashboard');
+      // Slug doesn't match any user org — redirect to the first org's dashboard
+      // or fallback to /dashboard if somehow no orgs exist
+      const fallbackOrg = orgs[0];
+      if (fallbackOrg?.slug) {
+        router.replace(`/${fallbackOrg.slug}/integrations`);
+      } else {
+        router.replace('/dashboard');
+      }
       return;
     }
 
