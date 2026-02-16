@@ -33,9 +33,9 @@ export function Hero() {
   // Desktop - full interactive demo
   return (
     <section className="relative min-h-screen bg-background pt-16">
-      <div className="container mx-auto px-6 lg:px-8 py-16 lg:py-24">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
         <div className="text-left max-w-prose mb-8 lg:mb-12">
-          <h1 className="text-4xl lg:text-4xl xl:text-4xl font-medium leading-tight text-balance mb-8 text-foreground">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-medium leading-tight text-balance mb-8 text-foreground">
             Get paid to help your favorite founders build the apps you love
           </h1>
           <div className="flex items-center gap-4">
@@ -48,7 +48,7 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="relative rounded-2xl overflow-hidden">
+        <div className="relative rounded-2xl overflow-hidden min-w-0">
           {/* Notifications - desktop only */}
           {!isMobile && showNotifications && activeDemo === 'create' && (
             <div className="absolute top-4 right-4 z-50 space-y-3">
@@ -101,7 +101,7 @@ export function Hero() {
               <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
             </div>
 
-            <div className="relative z-10 p-8 lg:p-16">
+            <div className="relative z-10 p-4 sm:p-8 lg:p-16">
               <div className="relative max-w-5xl mx-auto">
                 {/* Demo controls - desktop only */}
                 {!isMobile && (
@@ -150,12 +150,12 @@ export function Hero() {
                 )}
 
                 {/* Demo container - same size on both, inner content positioned */}
-                <div className="h-[500px] lg:h-[600px] overflow-hidden">
+                <div className="h-[380px] sm:h-[500px] lg:h-[600px] overflow-hidden">
                   <div className="h-full w-full">
                     {/* Mobile: static demo content anchored top-left, compact sizing */}
                     {isMobile && (
                       <div className="h-full w-full origin-top-left">
-                        <WaitlistDemo key={0} />
+                        <WaitlistDemo key={0} compact />
                       </div>
                     )}
                     {/* Desktop: full interactive demo */}
