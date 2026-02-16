@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { SidebarTrigger } from '@bounty/ui/components/sidebar';
 import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
 import { cn } from '@bounty/ui/lib/utils';
+import { Button } from '@bounty/ui/components/button';
 import { CommandMenu } from '@/components/command-menu';
 import type { Bounty } from '@/types/dashboard';
 
@@ -87,9 +88,10 @@ export const Header = (_props: HeaderProps = {}) => {
         {/* Right side - Create Bounty button */}
         <div className="flex min-w-0 items-center">
           {/* Create Bounty Button - icon only on mobile */}
-          <button
+          <Button
             className="flex items-center gap-[7px] rounded-lg bg-surface-hover px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-3"
             onClick={handleCreateBounty}
+            variant="outline"
             type="button"
             aria-label="Create new bounty"
           >
@@ -97,7 +99,7 @@ export const Header = (_props: HeaderProps = {}) => {
             <span className="hidden md:inline text-sm font-semibold leading-[150%] tracking-[0.01em] text-text-secondary">
               New bounty
             </span>
-          </button>
+          </Button>
         </div>
       </header>
       {/* <CommandMenu onOpenChange={setCommandMenuOpen} open={commandMenuOpen} /> */}
