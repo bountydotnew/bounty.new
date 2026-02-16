@@ -160,7 +160,7 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
                   {loading ? (
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-black/30 border-t-foreground dark:border-white/30 dark:border-t-white" />
                   ) : (
-                    <GithubIcon className="h-5 w-5 fill-background" />
+                    <GithubIcon className="h-5 w-5 fill-foreground" />
                   )}
                   {loading ? 'Signing in…' : 'Continue with GitHub'}
                 </Button>
