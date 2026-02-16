@@ -270,9 +270,9 @@ function CreateBountyFlowVisual() {
           </div>
 
           {/* Footer: repo selector + create button */}
-          <div className="flex flex-row justify-between items-center pt-4 border-t border-border-subtle">
-            <div className="flex items-center gap-1.5 text-text-tertiary">
-              <GithubIcon className="w-3.5 h-3.5 text-foreground" />
+          <div className="flex flex-row flex-wrap justify-between items-center gap-2 pt-4 border-t border-border-subtle">
+            <div className="flex items-center gap-1.5 text-text-tertiary min-w-0">
+              <GithubIcon className="w-3.5 h-3.5 text-foreground shrink-0" />
               <span className="text-[12px] sm:text-[13px] font-medium text-white truncate">
                 bountydotnew/bounty.new
               </span>
@@ -280,7 +280,7 @@ function CreateBountyFlowVisual() {
                 <path d="M4.427 7.427l3.396 3.396a.25.25 0 00.354 0l3.396-3.396A.25.25 0 0011.396 7H4.604a.25.25 0 00-.177.427z" />
               </svg>
             </div>
-            <div className="flex items-center justify-center gap-1.5 px-3 sm:px-4 h-[30px] sm:h-[34px] rounded-full text-[12px] sm:text-[13px] font-medium bg-foreground text-background">
+            <div className="flex items-center justify-center gap-1.5 px-3 sm:px-4 h-[30px] sm:h-[34px] rounded-full text-[12px] sm:text-[13px] font-medium bg-foreground text-background whitespace-nowrap shrink-0">
               Create bounty
             </div>
           </div>
@@ -370,9 +370,9 @@ function ContentBlockRow({
   reversed: boolean;
 }) {
   return (
-    <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24">
       <div
-        className="grid gap-8 sm:gap-10 lg:gap-16 lg:grid-cols-2 lg:items-center"
+        className="grid gap-8 sm:gap-10 lg:gap-16 lg:grid-cols-2 lg:items-center min-w-0"
       >
         {/* Text content */}
         <div
@@ -396,7 +396,7 @@ function ContentBlockRow({
         </div>
 
         {/* Visual content */}
-        <div className={reversed ? 'lg:order-1' : ''}>
+        <div className={`min-w-0 overflow-hidden ${reversed ? 'lg:order-1' : ''}`}>
           {block.visual}
         </div>
       </div>

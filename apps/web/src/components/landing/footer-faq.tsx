@@ -61,7 +61,7 @@ export function FooterFAQ() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-8 py-24">
+    <div className="mx-auto max-w-7xl px-4 sm:px-8 py-16 sm:py-24">
       <div className="grid gap-12 lg:grid-cols-2">
         {/* Left: Title + Category Selector */}
         <div>

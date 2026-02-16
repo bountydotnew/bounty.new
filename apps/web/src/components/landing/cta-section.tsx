@@ -22,9 +22,9 @@ export function CTASection() {
   };
 
   return (
-    <section className="py-24 px-8">
+    <section className="py-16 sm:py-24 px-4 sm:px-8">
       <div className="mx-auto max-w-3xl text-center">
-        <h2 className="text-4xl font-medium tracking-tight text-foreground md:text-5xl">
+        <h2 className="text-3xl font-medium tracking-tight text-foreground sm:text-4xl md:text-5xl">
           Ship faster. Pay on completion.
         </h2>
         <p className="mt-6 text-lg text-text-muted leading-relaxed">
