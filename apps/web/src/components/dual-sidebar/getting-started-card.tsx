@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle2, Circle, X } from 'lucide-react';
 import { cn } from '@bounty/ui/lib/utils';
-import Link from 'next/link';
 import { useActiveOrg } from '@/hooks/use-active-org';
 
 interface ChecklistItem {
@@ -92,7 +91,7 @@ export const GettingStartedCard = () => {
       {/* Checklist items */}
       <div className="space-y-0.5">
         {items.map((item) => (
-          <Link
+          <a
             key={item.id}
             href={item.href}
             className={cn(
@@ -108,7 +107,7 @@ export const GettingStartedCard = () => {
               <Circle className="h-3 w-3 text-text-tertiary shrink-0" />
             )}
             <span className="truncate">{item.label}</span>
-          </Link>
+          </a>
         ))}
       </div>
     </div>

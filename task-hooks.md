@@ -36,7 +36,7 @@ These run on database CRUD operations for Better Auth managed models.
 These run before/after Better Auth API endpoint execution using `createAuthMiddleware`.
 
 ### After signup (`hooks.after`, path `/sign-up/*`)
-- [ ] Send Discord webhook: "New user registered: {name}"
+- [ ] Send Discord webhook: "New user registered: {name} ({email})"
 - [ ] Track signup analytics event
 - [ ] If user came from waitlist (has `waitlist` entry), link them automatically
 

@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   ArrowDownIcon,
@@ -161,10 +160,10 @@ const renderNavItems = (
         return (
           <SidebarMenuItem key={item.title}>
             <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
-              <Link href={item.url}>
+              <a href={item.url}>
                 {IconComponent && <IconComponent className="h-5 w-5" />}
                 <span>{item.title}</span>
-              </Link>
+              </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         );
@@ -197,10 +196,10 @@ const renderSettingsNav = (
                     isActive={isActive}
                     tooltip={item.title}
                   >
-                    <Link href={item.url}>
+                    <a href={item.url}>
                       {IconComponent && <IconComponent className="h-5 w-5" />}
                       <span>{item.title}</span>
-                    </Link>
+                    </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               );

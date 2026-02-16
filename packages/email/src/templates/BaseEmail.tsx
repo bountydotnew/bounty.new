@@ -56,9 +56,8 @@ export const BaseEmail = ({
   ctaText,
   footerNote,
   hideSignature = false,
-  baseUrl,
+  baseUrl = env.NEXT_PUBLIC_BASE_URL || "https://bounty.new",
 }: BaseEmailProps) => {
-  const resolvedBaseUrl = baseUrl ?? env.NEXT_PUBLIC_BASE_URL ?? "https://bounty.new";
   return (
     <Html lang="en" dir="ltr">
       <Head />
@@ -77,7 +76,7 @@ export const BaseEmail = ({
                 />
               ) : (
                 <Img
-                  src={`${resolvedBaseUrl}/bounty.png`}
+                  src={`${baseUrl}/bounty.png`}
                   alt="bounty icon"
                   width="32"
                   height="32"
@@ -132,7 +131,7 @@ export const BaseEmail = ({
                   <Row>
                     <Column className="w-[44px]">
                       <Img
-                        src={`${resolvedBaseUrl}/images/grim.jpg`}
+                        src={`${baseUrl}/images/grim.jpg`}
                         alt="grim"
                         width="44"
                         height="44"

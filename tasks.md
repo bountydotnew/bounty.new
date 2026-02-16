@@ -260,7 +260,7 @@ We use Better Auth's built-in `organization` plugin instead of hand-rolling org/
 
 ## Separate tasks (not org-related)
 
-- [ ] **[SECURITY]** Server-side `concurrent_bounties` enforcement in `createBounty` mutation (currently client-side only — can be bypassed via direct API calls, prioritize before merge)
+- [ ] Server-side `concurrent_bounties` enforcement in `createBounty` mutation (currently client-side only — can be bypassed)
 - [ ] Add `EarlyAccessGuard` to `(settings)` route group layout
 
 ## Post-org tasks

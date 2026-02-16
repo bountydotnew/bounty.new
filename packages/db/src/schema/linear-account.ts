@@ -8,7 +8,6 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { account } from './auth';
-import { organization } from './organization';
 
 /**
  * Linear Account - stores Linear workspace connections per user account
@@ -34,9 +33,7 @@ export const linearAccount = pgTable(
     // Active status - allows users to disconnect without deleting
     isActive: boolean('is_active').notNull().default(true),
     // Organization scoping
-    organizationId: text('organization_id').references(() => organization.id, {
-      onDelete: 'cascade',
-    }),
+    organizationId: text('organization_id'),
     createdAt: timestamp('created_at').notNull().default(sql`now()`),
     updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
   },
@@ -50,7 +47,6 @@ export const linearAccount = pgTable(
     index('linear_account_user_idx').on(t.linearUserId),
     // Index for workspace lookups
     index('linear_account_workspace_id_idx').on(t.linearWorkspaceId),
-    index('linear_account_organization_id_idx').on(t.organizationId),
   ]
 );
 

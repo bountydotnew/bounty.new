@@ -15,12 +15,9 @@ export default function OrgInvitationAcceptPage() {
   const hasAccepted = useRef(false);
 
   useEffect(() => {
-<<<<<<< tembo/fix/coderabbit-review-changes
-=======
     // Prevent duplicate calls on StrictMode double-mount
     if (hasAccepted.current) return;
 
->>>>>>> grim/add-orgs
     let cancelled = false;
 
     const acceptInvitation = async () => {
