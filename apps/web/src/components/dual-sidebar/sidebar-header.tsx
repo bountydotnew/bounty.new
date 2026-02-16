@@ -9,7 +9,6 @@ import { cn } from '@bounty/ui/lib/utils';
 import { Button } from '@bounty/ui/components/button';
 import { CommandMenu } from '@/components/command-menu';
 import type { Bounty } from '@/types/dashboard';
-import { Button } from "@bounty/ui"
 
 interface HeaderProps {
   myBounties?: Bounty[];

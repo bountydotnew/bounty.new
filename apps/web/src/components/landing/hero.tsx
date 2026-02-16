@@ -96,9 +96,8 @@ export function Hero() {
               <img
                 src="/images/asset-cc24ca462279ca23250c.webp"
                 alt=""
-                className="w-full h-full object-cover opacity-40"
+                className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
             </div>
 
             <div className="relative z-10 p-4 sm:p-8 lg:p-16">
