@@ -32,7 +32,7 @@ export function Hero() {
 
   // Desktop - full interactive demo
   return (
-    <section className="relative min-h-screen bg-background pt-16">
+    <section className="relative bg-background pt-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
         <div className="text-left max-w-prose mb-8 lg:mb-12">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-medium leading-tight text-balance mb-8 text-foreground">
@@ -150,7 +150,7 @@ export function Hero() {
                 )}
 
                 {/* Demo container - same size on both, inner content positioned */}
-                <div className="h-[380px] sm:h-[500px] lg:h-[600px] overflow-hidden">
+                <div className="h-fit overflow-hidden">
                   <div className="h-full w-full">
                     {/* Mobile: static demo content anchored top-left, compact sizing */}
                     {isMobile && (
