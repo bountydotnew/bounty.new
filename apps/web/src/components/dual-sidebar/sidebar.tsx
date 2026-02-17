@@ -294,9 +294,12 @@ export const AppSidebar = ({
               {renderSettingsNav(settingsNav, pathname)}
             </SidebarGroup>
           ) : (
-            <SidebarGroup>{renderNavItems(mainNav, pathname)}</SidebarGroup>
+            <div>
+              <SidebarGroup>{renderNavItems(mainNav, pathname)}</SidebarGroup>
+              <RecentBountiesGroup />
+            </div>
           )}
-          <RecentBountiesGroup />
+
         </SidebarContent>
 
         {/* Footer - cards on main nav, minimal on settings */}
