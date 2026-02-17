@@ -25,6 +25,8 @@ function MigrateAccountContent() {
         throw new Error('unauthorized');
       }
       if (!response.ok) {
+        throw new Error(`check-migration failed: ${response.status}`);
+      }
         return null;
       }
       return response.json() as Promise<{ hasOAuth: boolean }>;
