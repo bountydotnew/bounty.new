@@ -6,24 +6,24 @@ interface ChartTheme {
   dark: string;
 }
 
-export interface ChartConfigItem {
+interface ChartConfigItem {
   label?: React.ReactNode;
   icon?: React.ComponentType;
 }
 
-export interface ChartConfigWithColor extends ChartConfigItem {
+interface ChartConfigWithColor extends ChartConfigItem {
   color?: string;
   theme?: never;
 }
 
-export interface ChartConfigWithTheme extends ChartConfigItem {
+interface ChartConfigWithTheme extends ChartConfigItem {
   color?: never;
   theme: Record<string, string>;
 }
 
-export type ChartConfigValue = ChartConfigWithColor | ChartConfigWithTheme;
+type ChartConfigValue = ChartConfigWithColor | ChartConfigWithTheme;
 
-export interface ChartConfig {
+interface ChartConfig {
   [k: string]: ChartConfigValue;
 }
 

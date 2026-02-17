@@ -907,21 +907,27 @@ export function RepoBranchIssueSelector({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Reset pagination when search queries change
-  useEffect(() => {
+  const prevAccountQueryRef = useRef(accountSearchQuery);
+  const prevBranchQueryRef = useRef(branchSearchQuery);
+  const prevIssueQRef = useRef(issueQuery);
+
+  if (accountSearchQuery !== prevAccountQueryRef.current) {
+    prevAccountQueryRef.current = accountSearchQuery;
     setAccountsPage(1);
     setMobileAccountsPage(1);
-  }, [accountSearchQuery]);
+  }
 
-  useEffect(() => {
+  if (branchSearchQuery !== prevBranchQueryRef.current) {
+    prevBranchQueryRef.current = branchSearchQuery;
     setBranchesPage(1);
     setMobileBranchesPage(1);
-  }, [branchSearchQuery]);
+  }
 
-  useEffect(() => {
+  if (issueQuery !== prevIssueQRef.current) {
+    prevIssueQRef.current = issueQuery;
     setIssuesPage(1);
     setMobileIssuesPage(1);
-  }, [issueQuery]);
+  }
 
   const handleSelectRepo = (repo: string) => {
     onSelectRepo(repo);

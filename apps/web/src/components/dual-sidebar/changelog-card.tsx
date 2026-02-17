@@ -5,7 +5,7 @@ import { X, ArrowUpRight } from 'lucide-react';
 import { Button } from '@bounty/ui/components/button';
 
 // Changelog config - update this when new releases go out
-export const changelogConfig = {
+const changelogConfig = {
   date: 'February 2026',
   label: 'Feb 2026',
   title: 'Organization settings, unified sidebar refactor, and more.',

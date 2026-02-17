@@ -99,10 +99,11 @@ export function BountyFilters() {
     return () => clearTimeout(timer);
   }, [localSearchQuery, searchQuery, setSearchQuery]);
 
-  // Sync local state when URL changes externally
-  useEffect(() => {
+  const prevSearchQueryRef = useRef(searchQuery);
+  if (searchQuery !== prevSearchQueryRef.current) {
+    prevSearchQueryRef.current = searchQuery;
     setLocalSearchQuery(searchQuery || '');
-  }, [searchQuery]);
+  }
 
   const handleSortChange = useCallback(
     (value: string) => {

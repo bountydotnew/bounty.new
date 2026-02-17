@@ -24,15 +24,6 @@
 
 // Re-export everything from the index file
 export {
-  BountyCard,
   CompactBountyCard,
   StandardBountyCard,
-  BountyCardProvider,
 } from './bounty-card/index';
-
-export type {
-  BountyCardContextValue,
-  BountyCardState,
-  BountyCardActions,
-  BountyCardMeta,
-} from './bounty-card/context';

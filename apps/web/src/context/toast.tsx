@@ -1,18 +1,5 @@
-import { CircleCheckIcon, CircleX, Info, TriangleAlert } from 'lucide-react';
 import { toastManager } from '@bounty/ui/components/toast';
 import type { ReasonCode } from '@bounty/types';
-
-// Legacy toast options (kept for reference, but coss toast handles styling differently)
-export const TOAST_OPTIONS = {
-  // coss toast is styled through the ToastProvider component
-};
-
-export const TOAST_ICONS = {
-  error: <CircleX className="size-4" />,
-  success: <CircleCheckIcon className="size-4" />,
-  warning: <TriangleAlert className="size-4" />,
-  info: <Info className="size-4" />,
-};
 
 const MESSAGE_BY_REASON: Record<ReasonCode, string> = {
   unauthenticated: 'Please sign in to continue.',

@@ -285,67 +285,6 @@ const UnauthenticatedFooterActions = () => {
   );
 };
 
-export const AppSidebar = ({
-  ...props
-}: React.ComponentProps<typeof Sidebar>) => {
-  const pathname = usePathname();
-  const { session, isPending } = useSession();
-  const { activeOrgSlug } = useActiveOrg();
-  const isAuthenticated = !!session?.user;
-
-  const navItems = getNavItems(activeOrgSlug || undefined).map((item) => ({
-    ...item,
-    isActive:
-      item.title === 'Integrations'
-        ? pathname.includes('/integrations')
-        : pathname === item.url,
-  }));
-
-  return (
-    <Sidebar collapsible="icon" {...props}>
-      <div className="flex h-full flex-col gap-[15px] px-0 group-data-[collapsible=icon]:px-[9px] py-4 md:py-0 lg:py-0">
-        <div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:px-[5px] group-data-[collapsible=icon]:py-[15px]">
-          <SidebarTrigger
-            aria-label="Toggle sidebar layout"
-            className="flex size-[26px] items-center justify-center rounded-[10px] bg-surface-1 p-[3px] hover:bg-surface-2 hover:text-foreground"
-          >
-            <SidebarToggleIcon className="h-5 w-5 text-text-tertiary" />
-          </SidebarTrigger>
-        </div>
-        {isAuthenticated && !isPending ? (
-          <>
-            <SidebarHeader className="px-[15px] py-0 group-data-[collapsible=icon]:px-0">
-              <WorkspaceSwitcher />
-            </SidebarHeader>
-            <SidebarContent className="flex-1 overflow-y-auto px-[15px] py-0 group-data-[collapsible=icon]:px-0">
-              <NavMain items={navItems} />
-              <RecentBountiesGroup />
-            </SidebarContent>
-            <SidebarFooter className="px-0 py-0 group-data-[collapsible=icon]:px-0">
-              <SidebarFooterActions />
-            </SidebarFooter>
-          </>
-        ) : (
-          !isPending && (
-            <>
-              <SidebarHeader className="px-[15px] py-0 group-data-[collapsible=icon]:px-0">
-                <UnauthenticatedWorkspaceSwitcher />
-              </SidebarHeader>
-              <SidebarContent className="flex-1 overflow-y-auto px-[15px] py-0 group-data-[collapsible=icon]:px-0">
-                <UnauthenticatedNavItems />
-              </SidebarContent>
-              <SidebarFooter className="px-0 py-0 group-data-[collapsible=icon]:px-0">
-                <UnauthenticatedFooterActions />
-              </SidebarFooter>
-            </>
-          )
-        )}
-      </div>
-      <SidebarRail />
-    </Sidebar>
-  );
-};
-
 export const AdminAppSidebar = ({
   ...props
 }: React.ComponentProps<typeof Sidebar>) => {

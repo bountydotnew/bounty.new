@@ -26,9 +26,3 @@
 
 // Re-export the compound component
 export { BountiesFeed } from './bounties-feed/index';
-export type {
-  BountiesFeedContextValue,
-  BountiesFeedState,
-  BountiesFeedActions,
-  BountiesFeedMeta,
-} from './bounties-feed/index';

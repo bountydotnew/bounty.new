@@ -9,7 +9,7 @@ import {
 } from '@bounty/ui';
 import { Users } from 'lucide-react';
 
-export type NavItem = {
+type NavItem = {
   title: string;
   url: string;
   icon?: React.ElementType;
@@ -17,7 +17,7 @@ export type NavItem = {
   disabled?: boolean;
 };
 
-export type SettingsSection = {
+type SettingsSection = {
   title: string;
   items: NavItem[];
 };

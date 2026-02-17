@@ -19,13 +19,6 @@ export interface SubmissionData {
 }
 
 /**
- * Submissions query response type
- */
-export interface SubmissionsData {
-  submissions: SubmissionData[];
-}
-
-/**
  * Bounty Detail State
  *
  * Contains all the state data for the bounty detail page.

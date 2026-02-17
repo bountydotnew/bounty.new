@@ -8,7 +8,7 @@ import { cn } from '@bounty/ui/lib/utils';
 import { ExternalLink, Github } from 'lucide-react';
 import { Badge } from '@/components/bounty/badge';
 
-export interface SubmissionCardProps {
+interface SubmissionCardProps {
   // User info
   user?: string;
   username?: string; // GitHub username

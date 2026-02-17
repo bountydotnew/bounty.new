@@ -132,4 +132,3 @@ export function BountiesFeedProvider({
   );
 }
 
-export { BountiesFeedContext } from './context';

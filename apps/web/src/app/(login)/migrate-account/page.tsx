@@ -3,6 +3,7 @@
 import { authClient } from '@bounty/auth/client';
 import { Button } from '@bounty/ui/components/button';
 import { Spinner } from '@bounty/ui/components/spinner';
+import { useQuery } from '@tanstack/react-query';
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
@@ -15,40 +16,33 @@ function MigrateAccountContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, setIsPending] = useState(false);
-  const [hasChecked, setHasChecked] = useState(false);
-  const [needsMigration, setNeedsMigration] = useState(false);
 
-  // Check if user needs migration (has password auth but no OAuth)
-  useEffect(() => {
-    const checkMigrationStatus = async () => {
-      try {
-        const response = await fetch('/api/auth/check-migration');
-        if (!response.ok) {
-          if (response.status === 401) {
-            router.push('/login');
-          }
-          return;
-        }
-
-        const data = await response.json();
-
-        if (data.hasOAuth) {
-          // User already has OAuth linked, redirect to dashboard
-          router.push(searchParams.get('redirect') || '/dashboard');
-        } else {
-          // User needs to migrate
-          setNeedsMigration(true);
-        }
-      } catch {
-        // Error checking status, redirect to login
-        router.push('/login');
-      } finally {
-        setHasChecked(true);
+  const { data: migrationData, isPending: isCheckingMigration, isError } = useQuery({
+    queryKey: ['check-migration'],
+    queryFn: async () => {
+      const response = await fetch('/api/auth/check-migration');
+      if (response.status === 401) {
+        throw new Error('unauthorized');
       }
-    };
+      if (!response.ok) {
+        return null;
+      }
+      return response.json() as Promise<{ hasOAuth: boolean }>;
+    },
+    retry: false,
+  });
 
-    checkMigrationStatus();
-  }, [router, searchParams]);
+  useEffect(() => {
+    if (isError) {
+      router.push('/login');
+      return;
+    }
+    if (migrationData?.hasOAuth) {
+      router.push(searchParams.get('redirect') || '/dashboard');
+    }
+  }, [migrationData, isError, router, searchParams]);
+
+  const needsMigration = migrationData != null && !migrationData.hasOAuth;
 
   const handleGitHubLink = async () => {
     setIsPending(true);
@@ -80,7 +74,7 @@ function MigrateAccountContent() {
     }
   };
 
-  if (!hasChecked) {
+  if (isCheckingMigration) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Spinner />
@@ -89,7 +83,7 @@ function MigrateAccountContent() {
   }
 
   if (!needsMigration) {
-    return null; // Will redirect in useEffect
+    return null;
   }
 
   return (

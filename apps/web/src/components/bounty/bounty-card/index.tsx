@@ -67,24 +67,3 @@ export const StandardBountyCard = memo(function StandardBountyCard({
     </BountyCardProvider>
   );
 });
-
-/**
- * BountyCard compound component exports
- */
-export const BountyCard = {
-  Provider: BountyCardProvider,
-  Base: BaseBountyCard,
-  Compact: CompactBountyCard,
-  Standard: StandardBountyCard,
-};
-
-// Re-export types
-export type {
-  BountyCardContextValue,
-  BountyCardState,
-  BountyCardActions,
-  BountyCardMeta,
-} from './context';
-
-// Named export for the provider (used by compound component pattern)
-export { BountyCardProvider } from './provider';

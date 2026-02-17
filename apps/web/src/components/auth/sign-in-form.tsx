@@ -2,7 +2,7 @@
 
 import { useEmailPasswordForm, EmailField, PasswordField, SubmitButton } from './shared';
 
-export interface SignInFormProps {
+interface SignInFormProps {
   callbackUrl?: string;
   isAddingAccount?: boolean;
   /**

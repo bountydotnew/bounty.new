@@ -113,13 +113,3 @@ export default function BountyActions({
     </div>
   );
 }
-
-// Re-export everything from the index file
-export { BountyActions } from './bounty-actions/index';
-export type {
-  BountyActionsContextValue,
-  BountyActionsState,
-  BountyActionsActions,
-  BountyActionsMeta,
-  UpvoteButtonProps,
-} from './bounty-actions/index';

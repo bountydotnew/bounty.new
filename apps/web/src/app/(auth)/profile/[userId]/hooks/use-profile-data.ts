@@ -28,13 +28,13 @@ export interface ProfileData {
   isPrivate: boolean;
 }
 
-export interface UseProfileDataProps {
+interface UseProfileDataProps {
   handle: string;
   enabled: boolean;
   initialData?: ProfileData;
 }
 
-export interface UseProfileDataReturn {
+interface UseProfileDataReturn {
   data: ProfileData | null;
   isLoading: boolean;
   isError: boolean;

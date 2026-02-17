@@ -114,20 +114,4 @@ export default function BountyDetailPage({
   );
 }
 
-// Re-export everything from the index file
-export {
-  BountyDetail,
-  BountyDetailProvider,
-} from './bounty-detail/index';
-
-export type {
-  BountyDetailContextValue,
-  BountyDetailState,
-  BountyDetailActions,
-  BountyDetailMeta,
-  SubmissionData,
-  SubmissionsData,
-} from './bounty-detail/context';
-
-// Export the BountyData type for consumers
 export type { BountyData };

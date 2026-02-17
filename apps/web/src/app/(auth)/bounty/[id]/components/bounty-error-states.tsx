@@ -10,7 +10,7 @@ interface BountyErrorStateProps {
   message: string;
 }
 
-export function BountyErrorState({ title, message }: BountyErrorStateProps) {
+function BountyErrorState({ title, message }: BountyErrorStateProps) {
   const router = useRouter();
 
   return (
@@ -37,15 +37,6 @@ export function InvalidIdState() {
     <BountyErrorState
       title="You got us scratching our heads... 😅"
       message="Either you typed out the entire url and still got it wrong, someone is trolling you, or you arrived too late!"
-    />
-  );
-}
-
-export function LoadingState() {
-  return (
-    <BountyErrorState
-      title="Loading bounty..."
-      message="Please wait while we fetch the bounty details."
     />
   );
 }

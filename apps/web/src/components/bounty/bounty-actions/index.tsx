@@ -52,17 +52,3 @@ export const BountyActions = {
 
 // Add BookmarkButton to the compound component
 (BountyActions as any).BookmarkButton = BookmarkButtonComponent;
-
-// Re-export types
-export type { BountyActionsContextValue, BountyActionsState, BountyActionsActions, BountyActionsMeta } from './context';
-export type { UpvoteButtonProps } from './upvote-button';
-
-/**
- * UpvoteButton standalone export
- */
-export { UpvoteButton };
-
-/**
- * BookmarkButton re-export for convenience
- */
-export { default as BookmarkButton } from '@/components/bounty/bookmark-button';
