@@ -323,13 +323,13 @@ export const AppSidebar = ({
                   }
                   type="button"
                 >
-                  <FileIcon className="h-3.5 w-3.5" />
+                  <FileIcon className="h-[19px] w-[19px]" />
                   <span className="text-xs font-medium">Docs</span>
                 </button>
                 {/* Notifications */}
                 {isAuthenticated && !isPending && (
                   <NotificationsDropdown triggerClassName="flex h-auto w-auto items-center justify-center rounded-lg bg-surface-1 px-2.5 py-1.5 text-text-tertiary transition-colors hover:text-foreground">
-                    <NotificationsIcon className="h-3.5 w-3.5" />
+                    <NotificationsIcon className="h-[19px] w-[19px]" />
                   </NotificationsDropdown>
                 )}
               </div>
