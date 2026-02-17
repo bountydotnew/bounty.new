@@ -4,7 +4,7 @@ import { useContext } from 'react';
 import { ArrowUpIcon } from 'lucide-react';
 import { BountyActionsContext } from './context';
 
-export interface UpvoteButtonProps {
+interface UpvoteButtonProps {
   /** Additional CSS classes */
   className?: string;
 }

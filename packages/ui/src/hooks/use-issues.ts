@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { trpcClient } from '@/utils/trpc';
-import { parseRepo } from '@/utils/utils';
+import { parseRepo } from '../lib/utils';
 
 export function useIssues(selectedRepository: string) {
   const repoInfo = parseRepo(selectedRepository);

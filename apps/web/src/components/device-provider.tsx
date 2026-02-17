@@ -1,7 +1,7 @@
 'use client';
 
 import { getDeviceType } from '@bounty/ui/lib/device-detection';
-import { createContext, type ReactNode, useContext } from 'react';
+import { createContext, type ReactNode } from 'react';
 
 interface DeviceContextType {
   isMobile: boolean;
@@ -9,14 +9,6 @@ interface DeviceContextType {
 }
 
 const DeviceContext = createContext<DeviceContextType | null>(null);
-
-export function useDevice() {
-  const context = useContext(DeviceContext);
-  if (!context) {
-    throw new Error('useDevice must be used within DeviceProvider');
-  }
-  return context;
-}
 
 interface DeviceProviderProps {
   userAgent: string;

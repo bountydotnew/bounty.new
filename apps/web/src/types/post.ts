@@ -28,25 +28,7 @@ export type Post = {
   } | null;
 };
 
-export type Pagination = {
-  limit: number;
-  currpage: number;
-  nextPage: number | null;
-  prevPage: number | null;
-  totalItems: number;
-  totalPages: number;
-};
-
-export type MarblePostList = {
-  posts: Post[];
-  pagination: Pagination;
-};
-
-export type MarblePost = {
-  post: Post;
-};
-
-export type Tag = {
+type Tag = {
   id: string;
   name: string;
   slug: string;
@@ -54,11 +36,6 @@ export type Tag = {
 
 type MarbleTag = {
   tag: Tag;
-};
-
-export type MarbleTagList = {
-  tags: Tag[];
-  pagination: Pagination;
 };
 
 export type Category = {
@@ -71,12 +48,7 @@ type MarbleCategory = {
   category: Category;
 };
 
-export type MarbleCategoryList = {
-  categories: Category[];
-  pagination: Pagination;
-};
-
-export type Author = {
+type Author = {
   id: string;
   name: string;
   image: string;
@@ -84,9 +56,4 @@ export type Author = {
 
 type MarbleAuthor = {
   author: Author;
-};
-
-export type MarbleAuthorList = {
-  authors: Author[];
-  pagination: Pagination;
 };

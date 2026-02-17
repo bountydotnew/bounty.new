@@ -8,7 +8,7 @@ import {
 import { Loader2 } from 'lucide-react';
 import type * as React from 'react';
 
-export interface OnboardingDialogProps {
+interface OnboardingDialogProps {
   open: boolean;
   title: string;
   subtitle: string;

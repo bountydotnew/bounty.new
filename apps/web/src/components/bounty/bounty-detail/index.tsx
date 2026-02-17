@@ -53,16 +53,3 @@ export const BountyDetail = {
    */
   PaymentAlert,
 };
-
-// Re-export types
-export type {
-  BountyDetailContextValue,
-  BountyDetailState,
-  BountyDetailActions,
-  BountyDetailMeta,
-  SubmissionData,
-  SubmissionsData,
-} from './context';
-
-// Re-export provider for direct usage
-export { BountyDetailProvider } from './provider';

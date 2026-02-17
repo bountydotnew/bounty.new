@@ -5,16 +5,6 @@ export interface User {
   image?: string | null;
 }
 
-export interface SessionUser {
-  id: string;
-  email: string;
-  emailVerified: boolean;
-  name: string;
-  createdAt: Date;
-  updatedAt: Date;
-  image?: string | null;
-}
-
 export interface AccountDropdownProps {
   user: User;
   onUpgradeClick?: () => void;
@@ -25,13 +15,4 @@ export interface UserDisplayData {
   email: string;
   image: string | null;
   initials: string;
-}
-
-// Payment button types
-export interface PaymentButtonProps {
-  username: string;
-  apiKey?: string;
-  size?: 'sm' | 'md' | 'lg';
-  variant?: 'default' | 'outline';
-  className?: string;
 }

@@ -6,7 +6,7 @@ import { createContext, useContext, useState, useCallback } from 'react';
 /**
  * Configuration options for the Feedback system.
  */
-export interface FeedbackConfig {
+interface FeedbackConfig {
   /**
    * The API endpoint to submit feedback to.
    * @default "/api/feedback"

@@ -1,32 +1,3 @@
-export interface RepoOption {
-  name: string;
-  full_name: string;
-  private: boolean;
-}
-
-export interface UserProfile {
-  githubUsername?: string;
-}
-
-export interface CurrentUserData {
-  profile?: UserProfile;
-}
-
-export interface CurrentUser {
-  data?: CurrentUserData;
-}
-
-export interface GithubParseResult {
-  owner: string;
-  repo: string;
-  number?: string;
-}
-
-export interface GithubImportModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
 interface GithubRepository {
   id: number;
   name: string;

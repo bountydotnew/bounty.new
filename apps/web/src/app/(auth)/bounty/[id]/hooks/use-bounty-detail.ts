@@ -5,13 +5,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { trpc } from '@/utils/trpc';
 import type { BountyData } from '@/components/bounty/bounty-detail';
 
-export interface UseBountyDetailProps {
+interface UseBountyDetailProps {
   id: string;
   enabled: boolean;
   initialData?: BountyData;
 }
 
-export interface UseBountyDetailReturn {
+interface UseBountyDetailReturn {
   data: BountyData | undefined;
   isLoading: boolean;
   isError: boolean;
