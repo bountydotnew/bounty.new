@@ -174,7 +174,7 @@ export function AccountSwitcher({
 
   if (trigger) {
     return (
-      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+      <Popover className="p-0" open={popoverOpen} onOpenChange={setPopoverOpen}>
         <PopoverTrigger asChild>{trigger}</PopoverTrigger>
         {content}
       </Popover>

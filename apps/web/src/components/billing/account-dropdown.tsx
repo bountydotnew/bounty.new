@@ -25,7 +25,7 @@ import type {
 import { AccountSwitcher } from '@/components/auth/account-switcher';
 import { SwitchUsersIcon } from '@bounty/ui/components/icons/huge/switch-users';
 import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear';
-import { SwitchWorkspaceIcon } from '@bounty/ui/components/icons/huge/switch-workspace';
+import { SwitchArrowsIcon } from '@bounty/ui/components/icons/huge/switch-arrows';
 import { BillingSettingsIcon } from '@bounty/ui/components/icons/huge/billing-settings';
 import { Feedback } from '@bounty/ui';
 import { UserIcon } from '@bounty/ui';
@@ -412,15 +412,15 @@ function TeamSwitcherSubmenu({
     <DropdownMenuSub>
       <DropdownMenuSubTrigger className="flex items-center justify-between rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover">
         <div className="flex items-center gap-2.25">
-          <SwitchWorkspaceIcon className="h-[19px] w-[19px]" />
+          <SwitchArrowsIcon className="h-[19px] w-[19px]" />
           <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
-            Switch workspace
+            Switch team
           </span>
         </div>
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent className="w-64 rounded-[15px] bg-surface-1 border border-border-subtle">
         <div className="px-1 py-1">
-          <div className="px-3 py-1.5 text-xs font-medium text-text-tertiary uppercase tracking-wider">
+          <div className="px-1.5 py-1.5 text-xs font-medium text-text-tertiary uppercase tracking-wider">
             Teams
           </div>
           {isLoading ? (
@@ -432,7 +432,7 @@ function TeamSwitcherSubmenu({
               <DropdownMenuItem
                 key={org.id}
                 className={cn(
-                  'flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover cursor-pointer',
+                  'flex items-center gap-2.5 rounded-[10px] px-1 py-2 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover cursor-pointer',
                   isSwitching && 'opacity-50 pointer-events-none'
                 )}
                 onClick={() => handleSwitch(org.id)}
@@ -473,7 +473,7 @@ function TeamSwitcherSubmenu({
         <DropdownMenuSeparator />
         <div className="px-1 py-1">
           <DropdownMenuItem
-            className="flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-text-tertiary transition-colors hover:text-foreground focus:bg-surface-hover cursor-pointer"
+            className="flex items-center gap-2.5 rounded-[10px] px-1 py-0 text-text-tertiary transition-colors hover:text-foreground focus:bg-surface-hover cursor-pointer"
             onClick={handleCreateTeam}
           >
             <div className="flex h-6 w-6 items-center justify-center rounded-[5px] border border-border-subtle border-dashed">
@@ -646,23 +646,6 @@ export function AccountDropdown({
               </span>
             </DropdownMenuItem>
           </div>
-
-          <DropdownMenuItem
-            className={cn(
-              'flex items-center gap-2 rounded-[10px] px-4 py-2 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover',
-              resetOnboardingPending && 'opacity-70'
-            )}
-            disabled={resetOnboardingPending}
-            onClick={() => {
-              setMenuOpen(false);
-              handleResetOnboarding();
-            }}
-          >
-            <RotateCcw className="h-[19px] w-[19px]" />
-            <span className="text-[16px] font-medium leading-[150%] tracking-[0.03em]">
-              Show onboarding
-            </span>
-          </DropdownMenuItem>
 
           <DropdownMenuItem
             className={cn(
