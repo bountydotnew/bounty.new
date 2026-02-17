@@ -295,8 +295,8 @@ export const AppSidebar = ({
             </SidebarGroup>
           ) : (
             <SidebarGroup>{renderNavItems(mainNav, pathname)}</SidebarGroup>
-            <RecentBountiesGroup />
           )}
+          <RecentBountiesGroup />
         </SidebarContent>
 
         {/* Footer - cards on main nav, minimal on settings */}
