@@ -295,6 +295,7 @@ export const AppSidebar = ({
             </SidebarGroup>
           ) : (
             <SidebarGroup>{renderNavItems(mainNav, pathname)}</SidebarGroup>
+            <RecentBountiesGroup />
           )}
         </SidebarContent>
 
@@ -312,7 +313,6 @@ export const AppSidebar = ({
                 <GettingStartedCard />
                 <ChangelogCard />
               </div> */}
-              <RecentBountiesGroup />
               {/* Bottom actions row */}
               <div className="flex items-center justify-between gap-2 pt-3 mt-3 border-t border-border-subtle group-data-[collapsible=icon]:justify-center">
                 {/* Docs link */}
