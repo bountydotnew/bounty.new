@@ -95,11 +95,15 @@ export async function GET(request: NextRequest) {
           )
           .limit(1);
 
-        // Only link if:
+        // The callback is the authoritative source for org assignment since
+        // it runs in the context of the user's active session/org.
+        // Allow linking if:
         // 1. Installation doesn't exist yet, OR
         // 2. Installation is already owned by the same GitHub account, OR
         // 3. Installation already belongs to the same organization
-        // This prevents a different org from hijacking an existing installation.
+        // This prevents a completely different account from hijacking an
+        // existing installation that was explicitly assigned to another org
+        // by a different user.
         const canProceed =
           !existingInstallation ||
           existingInstallation.githubAccountId === githubAccount.id ||
@@ -128,13 +132,11 @@ export async function GET(request: NextRequest) {
                 accountType: installation.account.type,
                 accountAvatarUrl: installation.account.avatar_url,
                 repositoryIds: repos.repositories.map((r) => String(r.id)),
-                // Only update organizationId if the installation isn't already
-                // owned by a different org (i.e. it's new or belongs to us)
-                organizationId:
-                  !existingInstallation?.organizationId ||
-                  existingInstallation.organizationId === activeOrgId
-                    ? activeOrgId
-                    : existingInstallation.organizationId,
+                // The callback always wins for organizationId assignment
+                // because the user is explicitly installing from their active
+                // org context. The webhook may have raced and set this to the
+                // user's personal team, but the callback knows the true intent.
+                organizationId: activeOrgId,
                 updatedAt: new Date(),
               },
             });

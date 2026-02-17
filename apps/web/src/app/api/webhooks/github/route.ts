@@ -2807,7 +2807,13 @@ async function handleInstallationEvent(event: InstallationEvent) {
       installerOrgId = personalTeam?.organizationId;
     }
 
-    // Store installation in database, linked to user if found
+    // Store installation in database, linked to user if found.
+    // The webhook races with the installation callback — the callback is the
+    // authoritative source for organizationId because it has the user's
+    // active session context.  The webhook only sets organizationId as a
+    // fallback (personal team) when inserting a brand-new record.  On
+    // conflict (record already exists, likely written by the callback) we
+    // never overwrite organizationId so the callback's value is preserved.
     await db
       .insert(githubInstallation)
       .values({
@@ -2830,8 +2836,10 @@ async function handleInstallationEvent(event: InstallationEvent) {
               : 'User',
           accountAvatarUrl: installation.account.avatar_url || null,
           repositoryIds: repos.repositories.map((r) => String(r.id)),
-          // Don't overwrite organizationId if already set (may have been explicitly assigned)
-          ...(installerOrgId ? { organizationId: installerOrgId } : {}),
+          // Never overwrite organizationId on conflict — the installation
+          // callback (which runs with the user's session) is the authority
+          // for org assignment.  If the callback hasn't run yet the INSERT
+          // path sets the fallback; if it already ran we preserve its value.
           updatedAt: new Date(),
         },
       });
