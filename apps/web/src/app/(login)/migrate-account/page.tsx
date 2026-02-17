@@ -35,7 +35,12 @@ function MigrateAccountContent() {
       return;
     }
     if (migrationData?.hasOAuth) {
-      router.push(searchParams.get('redirect') || '/dashboard');
+      const redirect = searchParams.get('redirect');
+      const safeRedirect =
+        redirect && redirect.startsWith('/') && !redirect.startsWith('//')
+          ? redirect
+          : '/dashboard';
+      router.push(safeRedirect);
     }
   }, [migrationData, isError, router, searchParams]);
 
