@@ -23,10 +23,7 @@ const sanitizeSchema = {
       'className',
     ],
   },
-  tagNames: [
-    ...(defaultSchema.tagNames || []),
-    'img',
-  ],
+  tagNames: [...(defaultSchema.tagNames || []), 'img'],
 };
 
 interface MarkdownContentProps {
@@ -77,13 +74,19 @@ const markdownComponents: Components = {
     <h1 className="mt-0 mb-4 font-bold text-2xl text-foreground">{children}</h1>
   ),
   h2: ({ children }) => (
-    <h2 className="mt-6 mb-3 font-semibold text-foreground text-xl">{children}</h2>
+    <h2 className="mt-6 mb-3 font-semibold text-foreground text-xl">
+      {children}
+    </h2>
   ),
   h3: ({ children }) => (
-    <h3 className="mt-5 mb-2 font-medium text-lg text-foreground">{children}</h3>
+    <h3 className="mt-5 mb-2 font-medium text-lg text-foreground">
+      {children}
+    </h3>
   ),
   h4: ({ children }) => (
-    <h4 className="mt-4 mb-2 font-medium text-base text-foreground">{children}</h4>
+    <h4 className="mt-4 mb-2 font-medium text-base text-foreground">
+      {children}
+    </h4>
   ),
   p: ({ children }) => {
     const containsOnlyImages = React.Children.toArray(children).every(
@@ -127,7 +130,7 @@ const markdownComponents: Components = {
       {children}
     </Link>
   ),
-  img: ({ src, alt, ...props }) => {
+  img: ({ src, alt, width, height, ...props }) => {
     // Convert Blob to data URL if needed, otherwise use string
     const srcString =
       typeof src === 'string'
@@ -137,19 +140,17 @@ const markdownComponents: Components = {
           : '';
 
     // Check if this is an external image (from Linear, GitHub, etc.)
-    const isExternalImage = typeof srcString === 'string' && (
-      srcString.startsWith('http://') ||
-      srcString.startsWith('https://')
-    );
+    const isExternalImage =
+      typeof srcString === 'string' &&
+      (srcString.startsWith('http://') || srcString.startsWith('https://'));
 
     // For external images, use regular img tag to avoid Next.js optimization issues
     if (isExternalImage) {
       return (
-        
-        <Image
+        // biome-ignore lint/performance/noImgElement: Required for external images
+        <img
           alt={alt || ''}
           src={srcString}
-          {...props}
           className="my-3 inline-block h-auto max-w-full max-h-[400px] object-contain border-neutral-800 dark:border-neutral-700 rounded"
         />
       );
