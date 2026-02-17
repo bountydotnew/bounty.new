@@ -284,7 +284,6 @@ export function BountyForm({
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Enter a title"
                 className="w-full bg-transparent text-foreground text-[16px] leading-5 outline-none placeholder:text-text-tertiary"
-                autoFocus
               />
             </PopoverContent>
           </Popover>
@@ -321,7 +320,6 @@ export function BountyForm({
                   }}
                   placeholder="0.00"
                   className="flex-1 bg-transparent text-foreground text-[16px] leading-5 outline-none placeholder:text-text-tertiary"
-                  autoFocus
                 />
               </div>
             </PopoverContent>

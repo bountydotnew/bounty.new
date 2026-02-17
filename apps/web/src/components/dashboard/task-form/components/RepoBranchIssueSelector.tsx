@@ -15,7 +15,7 @@ import {
   DrawerTrigger,
 } from '@bounty/ui/components/drawer';
 import { cn } from '@bounty/ui/lib/utils';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, m, useReducedMotion } from 'motion/react';
 
 interface Account {
   id: number;
@@ -175,7 +175,7 @@ function AccountsSelectorContent({
       {/* Content */}
       <div className="min-h-[250px] max-h-[250px] overflow-hidden relative">
         <AnimatePresence initial={false}>
-          <motion.div
+          <m.div
             key={paneKey}
             initial={
               prefersReducedMotion
@@ -263,7 +263,7 @@ function AccountsSelectorContent({
                   );
                 })
             )}
-          </motion.div>
+          </m.div>
         </AnimatePresence>
       </div>
 
@@ -810,7 +810,7 @@ function MobileSelectorContent({
       {renderHeader()}
       <div className="min-h-[250px] max-h-[250px] overflow-hidden relative">
         <AnimatePresence initial={false}>
-          <motion.div
+          <m.div
             key={stepKey}
             initial={
               prefersReducedMotion
@@ -826,7 +826,7 @@ function MobileSelectorContent({
             className="overflow-y-auto p-1 h-[250px]"
           >
             {renderContent()}
-          </motion.div>
+          </m.div>
         </AnimatePresence>
       </div>
       {(showPagination || showBranchesPagination || showIssuesPagination) && (
@@ -894,6 +894,11 @@ export function RepoBranchIssueSelector({
   // Mobile: unified drawer state
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileStep, setMobileStep] = useState<Step>(openStep);
+  const prevOpenStepRef = useRef(openStep);
+  if (prevOpenStepRef.current !== openStep) {
+    prevOpenStepRef.current = openStep;
+    setMobileStep(openStep);
+  }
   const [mobileAccountsPage, setMobileAccountsPage] = useState(1);
   const [mobileBranchesPage, setMobileBranchesPage] = useState(1);
   const [mobileIssuesPage, setMobileIssuesPage] = useState(1);

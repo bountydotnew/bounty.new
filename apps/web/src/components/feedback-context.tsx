@@ -100,9 +100,11 @@ const FeedbackContext = createContext<FeedbackContextType | undefined>(
  * Provider component for the Feedback system.
  * Wrap your application root with this to enable feedback functionality.
  */
+const EMPTY_CONFIG: FeedbackConfig = {};
+
 export function FeedbackProvider({
   children,
-  config = {},
+  config = EMPTY_CONFIG,
 }: {
   children: React.ReactNode;
   /** Optional configuration settings */

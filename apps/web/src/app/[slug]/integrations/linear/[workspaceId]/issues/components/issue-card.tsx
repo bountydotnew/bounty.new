@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import type { LinearIssue } from '@bounty/api/driver/linear-client';
@@ -66,8 +66,12 @@ export function LinearIssueCard({
   const queryClient = useQueryClient();
   const orgPath = useOrgPath();
   const [expanded, setExpanded] = useState(isExpanded);
+  const prevIsExpandedRef = useRef(isExpanded);
+  if (prevIsExpandedRef.current !== isExpanded) {
+    prevIsExpandedRef.current = isExpanded;
+    setExpanded(isExpanded);
+  }
 
-  // Prefetch issue detail on hover for faster navigation
   const prefetchIssueDetail = useCallback(() => {
     queryClient.prefetchQuery(
       trpc.linear.getIssue.queryOptions({ issueId: issue.id })

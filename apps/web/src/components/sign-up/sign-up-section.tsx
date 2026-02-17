@@ -6,6 +6,7 @@ import { Button } from '@bounty/ui/components/button';
 import { LINKS } from '@/constants';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import Link from 'next/link';
 import Bounty from '@/components/icons/bounty';
 import { GithubIcon } from '../icons';
 import GoogleIcon from '../icons/google';
@@ -129,12 +130,12 @@ export function SignUpSection() {
         </div>
 
         <div className="text-center">
-          <a
+          <Link
             href="/login"
             className="text-sm text-gray-400 hover:text-foreground transition-colors"
           >
             Already have an account? Sign in
-          </a>
+          </Link>
         </div>
       </div>
     </div>

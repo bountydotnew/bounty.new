@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, m } from 'motion/react';
 import { useMockBrowser } from './mock-browser-context';
 
 export function MockLoadingBar() {
@@ -9,7 +9,7 @@ export function MockLoadingBar() {
   return (
     <AnimatePresence>
       {isNavigating && (
-        <motion.div
+        <m.div
           className="absolute top-0 left-0 right-0 h-[3px] z-50 overflow-hidden bg-surface-1"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -17,7 +17,7 @@ export function MockLoadingBar() {
           transition={{ duration: 0.15 }}
         >
           {/* Main progress bar */}
-          <motion.div
+          <m.div
             className="h-full bg-info relative"
             initial={{ width: '0%' }}
             animate={{ width: `${loadingProgress}%` }}
@@ -27,7 +27,7 @@ export function MockLoadingBar() {
             }}
           >
             {/* Shimmer effect */}
-            <motion.div
+            <m.div
               className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
               animate={{ x: ['-100%', '200%'] }}
               transition={{
@@ -38,8 +38,8 @@ export function MockLoadingBar() {
             />
             {/* Glow effect at the end */}
             <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-r from-transparent to-info blur-sm" />
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

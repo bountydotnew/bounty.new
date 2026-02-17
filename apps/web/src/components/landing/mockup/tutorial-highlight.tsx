@@ -1,9 +1,11 @@
 'use client';
 
 import { motion, AnimatePresence } from 'motion/react';
-import { type ReactNode, useRef, useState, useEffect } from 'react';
+import { type ReactNode, useRef, useState, useEffect, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { useTutorialOptional } from './tutorial-context';
+
+const emptySubscribe = () => () => {};
 
 interface TutorialHighlightProps {
   /** The step ID this highlight corresponds to */
@@ -32,12 +34,7 @@ export function TutorialHighlight({
   const isActive = tutorial?.isStepActive(stepId) ?? false;
   const contentRef = useRef<HTMLDivElement>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
-  const [mounted, setMounted] = useState(false);
-
-  // Calculate tooltip position based on element position
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   useEffect(() => {
     if (!(isActive && contentRef.current)) {
@@ -45,7 +42,6 @@ export function TutorialHighlight({
     }
 
     const updatePosition = () => {
-      // Get the first child element (the actual button) for more accurate positioning
       const targetEl = contentRef.current
         ?.firstElementChild as HTMLElement | null;
       const rect =

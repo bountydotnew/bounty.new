@@ -41,53 +41,44 @@ interface DeadlinePickerProps {
 
 function DeadlinePicker({ value, onChange }: DeadlinePickerProps) {
   const [open, setOpen] = useState(false);
-  const [inputValue, setInputValue] = useState('');
-  const [date, setDate] = useState<Date | undefined>(() =>
-    parseFieldValue(value)
-  );
+  const [pickerState, setPickerState] = useState(() => ({
+    inputValue: '',
+    date: parseFieldValue(value) as Date | undefined,
+  }));
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!value) {
-      setDate(undefined);
-      setInputValue('');
+      setPickerState({ date: undefined, inputValue: '' });
       return;
     }
     const parsed = parseFieldValue(value);
     if (parsed) {
-      setDate(parsed);
-      setInputValue(formatDate(parsed));
+      setPickerState({ date: parsed, inputValue: formatDate(parsed) });
       return;
     }
-    setDate(undefined);
-    setInputValue(value);
+    setPickerState({ date: undefined, inputValue: value });
   }, [value]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-    setInputValue(newValue);
+    setPickerState((prev) => ({ ...prev, inputValue: newValue }));
 
-    // Clear any pending timeout
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
 
-    // Debounce the onChange callback
     debounceTimeoutRef.current = setTimeout(() => {
-      // Parse natural language input
       const parsed = parseDate(newValue);
       if (parsed) {
-        setDate(parsed);
+        setPickerState((prev) => ({ ...prev, date: parsed }));
         onChange(parsed.toISOString());
       } else {
-        // If not a valid date, still update the form value
-        // This allows for partial input like "tomorr" that will be completed
         onChange(newValue);
       }
     }, 300);
   };
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (debounceTimeoutRef.current) {
@@ -99,12 +90,10 @@ function DeadlinePicker({ value, onChange }: DeadlinePickerProps) {
   const handleCalendarSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
       const isoString = selectedDate.toISOString();
-      setDate(selectedDate);
-      setInputValue(formatDate(selectedDate));
+      setPickerState({ date: selectedDate, inputValue: formatDate(selectedDate) });
       onChange(isoString);
     } else {
-      setDate(undefined);
-      setInputValue('');
+      setPickerState({ date: undefined, inputValue: '' });
       onChange('');
     }
     setOpen(false);
@@ -114,7 +103,7 @@ function DeadlinePicker({ value, onChange }: DeadlinePickerProps) {
     <div className="relative flex">
       <input
         type="text"
-        value={inputValue}
+        value={pickerState.inputValue}
         onChange={handleInputChange}
         placeholder="Deadline, e.g. tomorrow"
         className="rounded-full flex justify-center items-center px-[11px] py-[6px] bg-surface-hover border border-solid border-border-subtle hover:border-border-default transition-colors text-[16px] leading-5 font-sans placeholder:text-text-muted text-foreground focus:outline-none focus:border-border-strong pr-8 min-w-[100px]"
@@ -136,9 +125,9 @@ function DeadlinePicker({ value, onChange }: DeadlinePickerProps) {
         >
           <Calendar
             mode="single"
-            selected={date}
+            selected={pickerState.date}
             onSelect={handleCalendarSelect}
-            month={date || new Date()}
+            month={pickerState.date || new Date()}
             captionLayout="dropdown"
             disabled={(date) => {
               const today = new Date();
@@ -164,7 +153,6 @@ export function DeadlineChip({
   value: controlledValue,
   onChange: controlledOnChange,
 }: DeadlineChipProps) {
-  // Controlled mode
   if (controlledOnChange !== undefined) {
     return (
       <DeadlinePicker
@@ -174,7 +162,6 @@ export function DeadlineChip({
     );
   }
 
-  // React Hook Form integration
   return (
     <Controller
       control={control}

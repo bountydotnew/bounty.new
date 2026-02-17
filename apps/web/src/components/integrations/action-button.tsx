@@ -71,9 +71,11 @@ interface ActionButtonGroupProps {
   dropdownActions?: DropdownAction[];
 }
 
+const EMPTY_DROPDOWN_ACTIONS: DropdownAction[] = [];
+
 export function ActionButtonGroup({
   children,
-  dropdownActions = [],
+  dropdownActions = EMPTY_DROPDOWN_ACTIONS,
 }: ActionButtonGroupProps) {
   return (
     <div className="flex flex-wrap items-center gap-2 pt-2">

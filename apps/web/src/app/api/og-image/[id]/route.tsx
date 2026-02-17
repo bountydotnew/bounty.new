@@ -237,7 +237,7 @@ export async function GET(
                   padding: '6px 12px',
                   backgroundColor: '#147224',
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease',
+                  transition: 'background-color 0.3s ease, box-shadow 0.3s ease',
                   boxShadow: '0px 0px 8.5px 0px rgba(0, 0, 0, 0.25)',
                 }}
               >
@@ -263,7 +263,7 @@ export async function GET(
               padding: '20px 64px',
               backgroundColor: '#151515',
               cursor: 'pointer',
-              transition: 'all 0.3s ease',
+              transition: 'background-color 0.3s ease, box-shadow 0.3s ease',
               boxShadow: '0px 0px 8.5px 0px rgba(0, 0, 0, 0.25)',
 
               filter: 'invert(1)',

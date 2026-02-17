@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, m } from 'motion/react';
 import { useMockBrowser } from './mock-browser-context';
 
 interface MockPageProps {
@@ -16,7 +16,7 @@ export function MockPage({ url, children }: MockPageProps) {
   return (
     <AnimatePresence mode="wait">
       {isActive && (
-        <motion.div
+        <m.div
           key={url}
           initial={{ opacity: 0, y: 8, scale: 0.995 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -28,7 +28,7 @@ export function MockPage({ url, children }: MockPageProps) {
           className="absolute inset-0 overflow-auto"
         >
           {children}
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

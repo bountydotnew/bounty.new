@@ -295,7 +295,7 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
           {/* Amount + GitHub - One row */}
           <div className="flex items-stretch gap-3">
             <div className="flex-1">
-              <label className="block text-xs text-text-tertiary mb-1.5">Amount</label>
+              <label className="block text-xs text-text-tertiary mb-1.5" aria-label="Amount">Amount</label>
               <div className="relative">
                 <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary pointer-events-none" />
                 <input
@@ -304,12 +304,11 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
                   inputMode="decimal"
                   className="w-full h-9 pl-8 pr-3 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-default"
                   placeholder="0"
-                  autoFocus
                 />
               </div>
             </div>
             <div className="flex-1">
-              <label className="block text-xs text-text-tertiary mb-1.5">GitHub</label>
+              <label className="block text-xs text-text-tertiary mb-1.5" aria-label="GitHub">GitHub</label>
               <div className="h-9 px-3 rounded-lg border border-border-subtle bg-surface-1 flex items-center">
                 <GitHubRepoSelector
                   selectedRepository={selectedGithubRepo}
@@ -338,7 +337,7 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
           {/* Description */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs text-text-tertiary">Description</label>
+              <label className="text-xs text-text-tertiary" aria-label="Description">Description</label>
               {issue.description && description !== issue.description && (
                 <button
                   type="button"
@@ -390,7 +389,7 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
             {showOptional && (
               <div className="mt-3 space-y-4">
                 <div>
-                  <label className="block text-xs text-text-tertiary mb-1.5">Deadline</label>
+                  <label className="block text-xs text-text-tertiary mb-1.5" aria-label="Deadline">Deadline</label>
                   <input
                     {...register('deadline')}
                     type="date"
@@ -399,7 +398,7 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-text-tertiary mb-1.5">Tags</label>
+                  <label className="block text-xs text-text-tertiary mb-1.5" aria-label="Tags">Tags</label>
                   <div className="flex gap-2">
                     <input
                       type="text"

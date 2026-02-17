@@ -5,7 +5,7 @@ import { Button } from '@bounty/ui/components/button';
 import { BountyDetailContext } from './context';
 import { ChevronDown, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 
 /**
  * BountyDetailPaymentAlert
@@ -35,7 +35,7 @@ export function BountyDetailPaymentAlert() {
     <div className="mb-6">
       <AnimatePresence>
         {isExpanded ? (
-          <motion.div
+          <m.div
             key="expanded"
             initial={{ opacity: 0, y: -4, height: 0 }}
             animate={{ opacity: 1, y: 0, height: 'auto' }}
@@ -48,14 +48,14 @@ export function BountyDetailPaymentAlert() {
                 <AlertTriangle className="w-4 h-4 text-orange-500" />
                 <span>{problemCount} problem{problemCount !== 1 ? 's' : ''} to resolve</span>
               </div>
-              <motion.button
+              <m.button
                 onClick={() => setIsExpanded(false)}
                 className="text-text-muted hover:text-foreground transition-colors"
               >
                 <ChevronDown className="w-4 h-4" />
-              </motion.button>
+              </m.button>
             </div>
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -91,10 +91,10 @@ export function BountyDetailPaymentAlert() {
                   </div>
                 </div>
               )}
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         ) : (
-          <motion.button
+          <m.button
             key="collapsed"
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
@@ -106,7 +106,7 @@ export function BountyDetailPaymentAlert() {
             <AlertTriangle className="w-4 h-4 text-orange-500" />
             <span>{problemCount} problem{problemCount !== 1 ? 's' : ''} to resolve</span>
             <ChevronDown className="w-4 h-4" />
-          </motion.button>
+          </m.button>
         )}
       </AnimatePresence>
     </div>

@@ -23,7 +23,8 @@
  */
 
 import { useCallback } from 'react';
-import { BountyActions as CompoundBountyActions } from './bounty-actions/index';
+import { BountyActionsProvider } from './bounty-actions/provider';
+import { Dropdown } from './bounty-actions/dropdown';
 import type { ActionItem } from '@/types/bounty-actions';
 
 interface BountyActionsProps {
@@ -93,7 +94,7 @@ export default function BountyActions({
         </svg>
         <span>{voteCount}</span>
       </button>
-      <CompoundBountyActions.Provider
+      <BountyActionsProvider
         actions={actions}
         bountyId={bountyId}
         canDelete={canDelete}
@@ -108,8 +109,8 @@ export default function BountyActions({
         onEdit={onEdit}
         onShare={onShare}
       >
-        <CompoundBountyActions.Dropdown />
-      </CompoundBountyActions.Provider>
+        <Dropdown />
+      </BountyActionsProvider>
     </div>
   );
 }

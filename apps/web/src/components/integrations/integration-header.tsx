@@ -20,11 +20,13 @@ const badgeStyles = {
   error: 'bg-red-500/10 text-red-400',
 };
 
+const EMPTY_BADGES: Badge[] = [];
+
 export function IntegrationHeader({
   icon,
   title,
   description,
-  badges = [],
+  badges = EMPTY_BADGES,
   actions,
 }: IntegrationHeaderProps) {
   return (

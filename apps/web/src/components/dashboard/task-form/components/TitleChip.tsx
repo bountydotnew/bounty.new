@@ -54,7 +54,6 @@ export function TitleChip({ control }: TitleChipProps) {
               onChange={field.onChange}
               placeholder="Enter a title"
               className="w-full bg-transparent text-foreground text-[16px] py-0 leading-5 outline-none placeholder:text-text-tertiary"
-              autoFocus
             />
           )}
         />

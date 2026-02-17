@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import { useRef, useState, useEffect, useSyncExternalStore } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { devNames } from './demo-data';
 import { MockBrowser, useMockBrowser } from './mockup';
@@ -26,7 +27,7 @@ function CreatePRPage() {
       <div className="flex h-full">
         <div className="flex-1 p-6">
           <div className="mb-6">
-            <label className="block text-gh-text text-lg font-semibold mb-3">
+            <label className="block text-gh-text text-lg font-semibold mb-3" aria-label="Add a title">
               Add a title
             </label>
             <input
@@ -39,7 +40,7 @@ function CreatePRPage() {
           </div>
 
           <div className="mb-6">
-            <label className="block text-gh-text text-lg font-semibold mb-3">
+            <label className="block text-gh-text text-lg font-semibold mb-3" aria-label="Add a description">
               Add a description
             </label>
             <div className="border border-gh-border rounded-md overflow-hidden">
@@ -79,9 +80,7 @@ function CreatePRPage() {
           <div className="flex items-center justify-between">
             <p className="text-xs text-gh-text-muted">
               Remember, contributions should follow our{' '}
-              <a href="#" className="text-gh-link hover:underline">
-                GitHub Community Guidelines
-              </a>
+              <span className="text-gh-link">GitHub Community Guidelines</span>
               .
             </p>
             <div className="flex items-center">
@@ -151,11 +150,12 @@ function PRCommentsPage({
   const [botReplied, setBotReplied] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Use first dev as default to avoid hydration mismatch, then randomize after mount
-  const [randomDev, setRandomDev] = useState(devNames[0]);
-  useEffect(() => {
-    setRandomDev(devNames[Math.floor(Math.random() * devNames.length)]);
-  }, []);
+  const randomDevRef = useRef(devNames[Math.floor(Math.random() * devNames.length)]);
+  const randomDev = useSyncExternalStore(
+    () => () => {},
+    () => randomDevRef.current,
+    () => devNames[0]
+  );
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -224,12 +224,7 @@ function PRCommentsPage({
               Open
             </span>
             <span>
-              <a
-                href="#"
-                className="text-gh-link hover:underline font-semibold"
-              >
-                {randomDev}
-              </a>{' '}
+              <span className="text-gh-link font-semibold">{randomDev}</span>{' '}
               wants to merge 2 commits into{' '}
               <span className="px-1.5 py-0.5 rounded-md bg-gh-link/15 text-gh-link text-xs font-mono">
                 main
@@ -247,7 +242,7 @@ function PRCommentsPage({
         {devCommented && (
           <div className="flex gap-3">
             <div className="flex-shrink-0">
-              <img
+              <Image
                 src={`https://github.com/${randomDev}.png`}
                 alt={randomDev}
                 className="w-10 h-10 rounded-full"
@@ -256,9 +251,9 @@ function PRCommentsPage({
             <div className="flex-1 border border-gh-border rounded-md">
               <div className="bg-gh-surface px-4 py-2 border-b border-gh-border">
                 <div className="text-sm text-gh-text">
-                  <a href="#" className="font-semibold hover:text-gh-link">
+                  <span className="font-semibold text-gh-link">
                     {randomDev}
-                  </a>
+                  </span>
                   <span className="text-gh-text-muted ml-2">2 minutes ago</span>
                 </div>
               </div>
@@ -272,7 +267,7 @@ function PRCommentsPage({
         {maintainerReviewed && (
           <div className="flex gap-3">
             <div className="flex-shrink-0">
-              <img
+              <Image
                 src="/images/gcomb.jpeg"
                 alt="ripgrim"
                 className="w-10 h-10 rounded-full"
@@ -281,9 +276,9 @@ function PRCommentsPage({
             <div className="flex-1 border border-gh-border rounded-md">
               <div className="bg-gh-surface px-4 py-2 border-b border-gh-border">
                 <div className="text-sm text-gh-text">
-                  <a href="#" className="font-semibold hover:text-gh-link">
+                  <span className="font-semibold text-gh-link">
                     ripgrim
-                  </a>
+                  </span>
                   <span className="text-gh-text-muted ml-2">1 minute ago</span>
                 </div>
               </div>
@@ -300,7 +295,7 @@ function PRCommentsPage({
         {maintainerApproved && (
           <div className="flex gap-3">
             <div className="flex-shrink-0">
-              <img
+              <Image
                 src="/images/gcomb.jpeg"
                 alt="ripgrim"
                 className="w-10 h-10 rounded-full"
@@ -309,17 +304,17 @@ function PRCommentsPage({
             <div className="flex-1 border border-gh-border rounded-md">
               <div className="bg-gh-surface px-4 py-2 border-b border-gh-border">
                 <div className="text-sm text-gh-text">
-                  <a href="#" className="font-semibold hover:text-gh-link">
+                  <span className="font-semibold text-gh-link">
                     ripgrim
-                  </a>
+                  </span>
                   <span className="text-gh-text-muted ml-2">just now</span>
                 </div>
               </div>
               <div className="p-4 text-sm">
                 <p className="text-gh-text">
-                  <a href="#" className="text-gh-link hover:underline">
+                  <span className="text-gh-link">
                     @bountydotnew
-                  </a>{' '}
+                  </span>{' '}
                   /approve
                 </p>
               </div>
@@ -355,7 +350,7 @@ function PRCommentsPage({
         {botReplied && (
           <div className="flex gap-3">
             <div className="flex-shrink-0">
-              <img
+              <Image
                 src="/images/ruo10xfk-400x400.jpg"
                 alt="bountydotnew"
                 className="w-10 h-10 rounded-full"
@@ -364,34 +359,34 @@ function PRCommentsPage({
             <div className="flex-1 border border-gh-border rounded-md">
               <div className="bg-gh-surface px-4 py-2 border-b border-gh-border">
                 <div className="text-sm text-gh-text">
-                  <a href="#" className="font-semibold hover:text-gh-link">
+                  <span className="font-semibold text-gh-link">
                     bountydotnew
-                  </a>
+                  </span>
                   <span className="inline-flex items-center gap-1 bg-gh-link/10 text-gh-link px-1.5 py-0.5 rounded text-xs ml-1.5 border border-gh-link/20">
                     bot
                   </span>
                   <span className="text-gh-text-muted ml-1.5">
                     just now – with{' '}
-                    <a href="#" className="text-gh-link hover:underline">
+                    <span className="text-gh-link">
                       bountydotnew
-                    </a>
+                    </span>
                   </span>
                 </div>
               </div>
               <div className="p-4 text-sm text-gh-text">
                 <p>
-                  <a href="#" className="text-gh-link hover:underline">
+                  <span className="text-gh-link">
                     @ripgrim
-                  </a>{' '}
+                  </span>{' '}
                   Approved. When you're ready, merge the PR and confirm here
                   with{' '}
                   <code className="bg-gh-surface px-1.5 py-0.5 rounded text-xs">
                     /merge 47
                   </code>{' '}
                   (or comment{' '}
-                  <a href="#" className="text-gh-link hover:underline">
+                  <span className="text-gh-link">
                     @bountydotnew
-                  </a>{' '}
+                  </span>{' '}
                   merge on the PR). Merging releases the payout.
                 </p>
               </div>

@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+import Link from 'next/link';
 import { useState } from 'react';
 import { ChevronDown, RotateCcw } from 'lucide-react';
 import { CreateBountyDemo } from './create-bounty-demo';
@@ -39,12 +41,12 @@ export function Hero() {
             Get paid to help your favorite founders build the apps you love
           </h1>
           <div className="flex items-center gap-4">
-            <a
+            <Link
               href="/dashboard"
               className="inline-flex items-center justify-center gap-2 bg-foreground text-background px-6 py-3 rounded-full font-medium hover:bg-foreground/90 transition-colors"
             >
               Create your first bounty
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -93,7 +95,7 @@ export function Hero() {
 
           <div className="relative rounded-2xl overflow-hidden bg-surface-1">
             <div className="absolute inset-0">
-              <img
+              <Image
                 src="/images/asset-cc24ca462279ca23250c.webp"
                 alt=""
                 className="w-full h-full object-cover"

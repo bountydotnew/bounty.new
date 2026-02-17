@@ -27,8 +27,10 @@ interface BountiesFeedProviderProps {
  *
  * Wraps the feed with state and actions following Vercel composition patterns.
  */
+const EMPTY_BOUNTIES: Bounty[] = [];
+
 export function BountiesFeedProvider({
-  bounties = [],
+  bounties = EMPTY_BOUNTIES,
   isLoading = false,
   isError = false,
   error = null,

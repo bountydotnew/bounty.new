@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
 import { LogOut, Menu } from 'lucide-react';
@@ -112,7 +113,7 @@ export function Header() {
                       aria-label="Account menu"
                     >
                       {session?.user?.image ? (
-                        <img
+                        <Image
                           src={session.user.image}
                           alt={
                             session?.user?.name ||

@@ -558,7 +558,7 @@ function StripeCheckoutPage() {
               </div>
 
               {/* Save info checkbox */}
-              <label className="flex items-start gap-3 mb-6 cursor-pointer">
+              <label className="flex items-start gap-3 mb-6 cursor-pointer" aria-label="Save my information for faster checkout">
                 <input
                   type="checkbox"
                   defaultChecked

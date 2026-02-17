@@ -37,7 +37,7 @@ export function DeviceCodeEntry({ initialCode = '' }: DeviceCodeEntryProps) {
     () => normalizeCode(initialCode),
     [initialCode]
   );
-  const [inputValue, setInputValue] = useState(
+  const [inputValue, setInputValue] = useState(() =>
     formatForDisplay(normalizedInitial)
   );
   const [error, setError] = useState<string | null>(null);

@@ -378,7 +378,7 @@ export function TestBillingClient() {
         <CardContent>
           <div className="space-y-3">
             {feeScenarios.map((scenario, i) => (
-              <div key={i} className="rounded-lg border p-3">
+              <div key={scenario.monthlySpend} className="rounded-lg border p-3">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">${scenario.monthlySpend}/mo spend</span>
                   <Badge variant="outline">Tier {i + 1}</Badge>

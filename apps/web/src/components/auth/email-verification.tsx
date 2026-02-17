@@ -5,7 +5,7 @@ import { Button } from '@bounty/ui/components/button';
 import { Input } from '@bounty/ui/components/input';
 import { cn } from '@bounty/ui/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, m } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -89,7 +89,7 @@ export function EmailVerification({
   useEffect(() => {
     if (resendCooldown > 0) {
       const timer = setTimeout(
-        () => setResendCooldown(resendCooldown - 1),
+        () => setResendCooldown(prev => prev - 1),
         1000
       );
       return () => clearTimeout(timer);
@@ -315,7 +315,7 @@ export function EmailVerification({
 
           <AnimatePresence mode="wait">
             {form.formState.errors.code ? (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
@@ -323,9 +323,9 @@ export function EmailVerification({
                 className="text-center text-sm text-destructive font-medium"
               >
                 {form.formState.errors.code?.message}
-              </motion.div>
+              </m.div>
             ) : focusedField === 'code' ? (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
@@ -333,7 +333,7 @@ export function EmailVerification({
                 className="text-center text-sm text-gray-400"
               >
                 Enter the 6-digit code from your email
-              </motion.div>
+              </m.div>
             ) : null}
           </AnimatePresence>
         </div>

@@ -9,21 +9,21 @@ import Link from 'next/link';
 export default function OrgInvitationAcceptPage() {
   const params = useParams();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [pageState, setPageState] = useState<{
+    isLoading: boolean;
+    error: string | null;
+  }>({ isLoading: true, error: null });
   const invitationId = params.id as string;
   const hasAccepted = useRef(false);
 
   useEffect(() => {
-    // Prevent duplicate calls on StrictMode double-mount
     if (hasAccepted.current) return;
 
     let cancelled = false;
 
     const acceptInvitation = async () => {
       if (!invitationId) {
-        setError('Invalid invitation link');
-        setIsLoading(false);
+        setPageState({ isLoading: false, error: 'Invalid invitation link' });
         return;
       }
 
@@ -38,8 +38,9 @@ export default function OrgInvitationAcceptPage() {
 
         if (result.error) {
           console.error('Failed to accept invitation:', result.error);
-          setError(result.error.message ?? 'Failed to accept invitation');
-          toast.error(result.error.message ?? 'Failed to accept invitation');
+          const msg = result.error.message ?? 'Failed to accept invitation';
+          setPageState({ isLoading: false, error: msg });
+          toast.error(msg);
         } else {
           toast.success('Invitation accepted! Welcome to the team.');
           const orgId = result.data?.invitation?.organizationId;
@@ -59,11 +60,11 @@ export default function OrgInvitationAcceptPage() {
       } catch (err) {
         if (cancelled) return;
         console.error('Error accepting invitation:', err);
-        setError('An unexpected error occurred');
+        setPageState({ isLoading: false, error: 'An unexpected error occurred' });
         toast.error('An unexpected error occurred');
       } finally {
         if (!cancelled) {
-          setIsLoading(false);
+          setPageState((prev) => ({ ...prev, isLoading: false }));
         }
       }
     };
@@ -75,7 +76,7 @@ export default function OrgInvitationAcceptPage() {
     };
   }, [invitationId, router]);
 
-  if (isLoading) {
+  if (pageState.isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
@@ -91,7 +92,7 @@ export default function OrgInvitationAcceptPage() {
     );
   }
 
-  if (error) {
+  if (pageState.error) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center max-w-md px-4">
@@ -113,7 +114,7 @@ export default function OrgInvitationAcceptPage() {
           <h1 className="text-xl font-semibold text-foreground mb-2">
             Invitation Error
           </h1>
-          <p className="text-text-muted mb-6">{error}</p>
+          <p className="text-text-muted mb-6">{pageState.error}</p>
           <div className="flex flex-col gap-2">
             <Link
               href="/dashboard"

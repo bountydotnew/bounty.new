@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -32,6 +33,12 @@ interface TutorialProviderProps {
 export function TutorialProvider({ children, autoStart = true }: TutorialProviderProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const [isActive, setIsActive] = useState(autoStart);
+
+  const prevAutoStartRef = useRef(autoStart);
+  if (prevAutoStartRef.current !== autoStart) {
+    prevAutoStartRef.current = autoStart;
+    setIsActive(autoStart);
+  }
 
   const currentStep = TUTORIAL_STEPS[stepIndex] ?? 'complete';
 

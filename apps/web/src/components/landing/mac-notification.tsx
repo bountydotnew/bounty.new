@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 const GmailIcon = () => (
@@ -98,7 +99,7 @@ export function MacNotification({
               <GitHubIcon />
             </div>
           ) : (
-            <img
+            <Image
               src={appIcon || '/placeholder.svg'}
               alt={appName}
               className="w-10 h-10 rounded-[10px]"

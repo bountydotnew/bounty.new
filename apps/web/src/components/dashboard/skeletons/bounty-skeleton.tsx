@@ -16,7 +16,7 @@ export function BountySkeleton({
       }
     >
       {Array.from({ length: count }, (_, i) => (
-        <div className="animate-pulse" key={i}>
+        <div className="animate-pulse" key={`skeleton-${i}`}>
           <div className="flex w-full flex-col items-start gap-3 rounded-lg border border-border-strong/20 bg-surface-1 p-6">
             <div className="flex w-full items-center justify-between">
               <div className="flex items-center gap-2">

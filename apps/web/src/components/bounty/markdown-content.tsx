@@ -145,8 +145,8 @@ const markdownComponents: Components = {
     // For external images, use regular img tag to avoid Next.js optimization issues
     if (isExternalImage) {
       return (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        
+        <Image
           alt={alt || ''}
           src={srcString}
           {...props}
