@@ -8,6 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuContent,
 } from '@bounty/ui/components/dropdown-menu';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 
 interface Issue {
   number: number;
@@ -32,6 +33,17 @@ export function IssueSelector({
   onSelect,
 }: IssueSelectorProps) {
   const [showIssueDropdown, setShowIssueDropdown] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+
+  // Derive content key for animated transitions
+  const isLoading = issuesList.isLoading || issuesList.isFetching;
+  const contentKey = isLoading
+    ? 'loading'
+    : filteredIssues.length > 0
+      ? 'results'
+      : issueQuery.length > 0
+        ? 'no-results'
+        : 'empty';
 
   return (
     <DropdownMenu open={showIssueDropdown} onOpenChange={setShowIssueDropdown}>
@@ -67,40 +79,54 @@ export function IssueSelector({
             />
           </div>
           <DropdownMenuSeparator className="h-px bg-surface-3 my-1 -mx-1" />
-          <div className="max-h-[240px] overflow-y-auto px-1 pb-1">
-            {issuesList.isLoading || issuesList.isFetching ? (
-              <div className="flex items-center justify-center py-4">
-                <Spinner size="sm" className="w-4 h-4" />
-              </div>
-            ) : filteredIssues.length > 0 ? (
-              filteredIssues.map((issue: Issue) => (
-                <DropdownMenuItem
-                  key={issue.number}
-                  className="relative cursor-default select-none py-1.5 outline-none data-[disabled=true]:pointer-events-none data-[selected=true]:text-text-secondary data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 flex items-center gap-2 w-full h-8 px-2 rounded-lg data-[selected=true]:bg-surface-2 text-sm font-medium hover:bg-surface-2 focus:bg-surface-2 bg-transparent"
-                  onClick={() => {
-                    onSelect(issue);
-                    setShowIssueDropdown(false);
-                  }}
-                  data-selected={selectedIssue?.number === issue.number}
-                >
-                  <GithubIcon className="size-4 text-text-tertiary" />
-                  <span className="text-text-secondary truncate block overflow-hidden">
-                    #{issue.number}: {issue.title}
-                  </span>
-                  {selectedIssue?.number === issue.number && (
-                    <Check className="w-3 h-3 text-green-500 ml-auto shrink-0" />
-                  )}
-                </DropdownMenuItem>
-              ))
-            ) : issueQuery.length > 0 ? (
-              <div className="px-2 py-1.5 text-sm text-text-tertiary">
-                No issues found
-              </div>
-            ) : (
-              <div className="px-2 py-1.5 text-sm text-text-tertiary">
-                No open issues
-              </div>
-            )}
+          <div className="max-h-[240px] overflow-hidden relative">
+            <AnimatePresence initial={false}>
+              <motion.div
+                key={contentKey}
+                initial={
+                  prefersReducedMotion
+                    ? false
+                    : { transform: 'translateY(8px)' }
+                }
+                animate={{ transform: 'translateY(0px)' }}
+                transition={{ duration: 0.1, ease: [0.23, 1, 0.32, 1] }}
+                className="overflow-y-auto px-1 pb-1 max-h-[240px]"
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Spinner size="sm" className="w-4 h-4" />
+                  </div>
+                ) : filteredIssues.length > 0 ? (
+                  filteredIssues.map((issue: Issue) => (
+                    <DropdownMenuItem
+                      key={issue.number}
+                      className="relative cursor-default select-none py-1.5 outline-none data-[disabled=true]:pointer-events-none data-[selected=true]:text-text-secondary data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 flex items-center gap-2 w-full h-8 px-2 rounded-lg data-[selected=true]:bg-surface-2 text-sm font-medium hover:bg-surface-2 focus:bg-surface-2 bg-transparent"
+                      onClick={() => {
+                        onSelect(issue);
+                        setShowIssueDropdown(false);
+                      }}
+                      data-selected={selectedIssue?.number === issue.number}
+                    >
+                      <GithubIcon className="size-4 text-text-tertiary" />
+                      <span className="text-text-secondary truncate block overflow-hidden">
+                        #{issue.number}: {issue.title}
+                      </span>
+                      {selectedIssue?.number === issue.number && (
+                        <Check className="w-3 h-3 text-green-500 ml-auto shrink-0" />
+                      )}
+                    </DropdownMenuItem>
+                  ))
+                ) : issueQuery.length > 0 ? (
+                  <div className="px-2 py-1.5 text-sm text-text-tertiary">
+                    No issues found
+                  </div>
+                ) : (
+                  <div className="px-2 py-1.5 text-sm text-text-tertiary">
+                    No open issues
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
       </DropdownMenuContent>

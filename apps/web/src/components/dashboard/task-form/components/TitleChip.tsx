@@ -39,7 +39,7 @@ export function TitleChip({ control }: TitleChipProps) {
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-64 px-3 bg-surface-1 border-border-subtle rounded-xl py-2"
+        className="w-64 px-3 bg-surface-1 border-border-subtle rounded-xl py-0"
         align="start"
         sideOffset={8}
       >
@@ -53,7 +53,7 @@ export function TitleChip({ control }: TitleChipProps) {
               value={field.value}
               onChange={field.onChange}
               placeholder="Enter a title"
-              className="w-full bg-transparent text-foreground text-[16px] leading-5 outline-none placeholder:text-text-tertiary"
+              className="w-full bg-transparent text-foreground text-[16px] py-0 leading-5 outline-none placeholder:text-text-tertiary"
               autoFocus
             />
           )}

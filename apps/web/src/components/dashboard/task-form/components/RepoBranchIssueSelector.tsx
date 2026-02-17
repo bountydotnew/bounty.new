@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronRight, ChevronLeft, Check, Loader2 } from 'lucide-react';
 import { GithubIcon, BranchIcon } from '@bounty/ui';
 import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
@@ -15,6 +15,7 @@ import {
   DrawerTrigger,
 } from '@bounty/ui/components/drawer';
 import { cn } from '@bounty/ui/lib/utils';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 
 interface Account {
   id: number;
@@ -126,8 +127,12 @@ function AccountsSelectorContent({
   onClose: () => void;
 }) {
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const prefersReducedMotion = useReducedMotion();
+  const directionRef = useRef<'forward' | 'back'>('forward');
   const ACCOUNTS_PER_PAGE = 5;
   const totalAccountPages = Math.ceil(installations.length / ACCOUNTS_PER_PAGE);
+
+  const paneKey = selectedAccount ? `repos-${selectedAccount.id}` : 'accounts';
 
   return (
     <div className="flex flex-col">
@@ -137,7 +142,10 @@ function AccountsSelectorContent({
           <>
             <button
               type="button"
-              onClick={() => setSelectedAccount(null)}
+              onClick={() => {
+                directionRef.current = 'back';
+                setSelectedAccount(null);
+              }}
               className="p-1 -ml-1 rounded hover:bg-white/10 text-text-secondary"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -152,9 +160,11 @@ function AccountsSelectorContent({
             <GithubIcon className="w-4 h-4 text-text-tertiary" />
             <input
               className="flex-1 bg-transparent text-sm text-text-secondary placeholder:text-text-tertiary outline-none"
-              placeholder={installations.length === 1
-                ? installations[0]?.accountLogin ?? 'Search accounts...'
-                : 'Search accounts...'}
+              placeholder={
+                installations.length === 1
+                  ? (installations[0]?.accountLogin ?? 'Search accounts...')
+                  : 'Search accounts...'
+              }
               autoComplete="off"
               spellCheck={false}
             />
@@ -163,65 +173,98 @@ function AccountsSelectorContent({
       </div>
 
       {/* Content */}
-      <div className="min-h-[250px] max-h-[250px] overflow-y-auto p-1">
-        {selectedAccount ? (
-          // Repos list for selected account
-          (() => {
-            const accountRepos = installationRepos.find((r) => r.installationId === selectedAccount.id);
-            return (
-              <>
-                {accountRepos?.repositories && accountRepos.repositories.length > 0 ? (
-                  accountRepos.repositories.map((repo: string) => (
+      <div className="min-h-[250px] max-h-[250px] overflow-hidden relative">
+        <AnimatePresence initial={false}>
+          <motion.div
+            key={paneKey}
+            initial={
+              prefersReducedMotion
+                ? false
+                : {
+                    transform: `translateX(${directionRef.current === 'forward' ? 40 : -40}px)`,
+                  }
+            }
+            animate={{
+              transform: 'translateX(0px)',
+            }}
+            transition={{ duration: 0.12, ease: [0.23, 1, 0.32, 1] }}
+            className="overflow-y-auto p-1 h-[250px]"
+          >
+            {selectedAccount ? (
+              // Repos list for selected account
+              (() => {
+                const accountRepos = installationRepos.find(
+                  (r) => r.installationId === selectedAccount.id
+                );
+                return (
+                  <>
+                    {accountRepos?.repositories &&
+                    accountRepos.repositories.length > 0 ? (
+                      accountRepos.repositories.map((repo: string) => (
+                        <button
+                          key={repo}
+                          type="button"
+                          onClick={() => {
+                            onSelectRepo(repo);
+                            onClose();
+                          }}
+                          className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-white/10 transition-colors"
+                        >
+                          <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
+                          <span className="flex-1 text-sm text-text-secondary truncate">
+                            {repo}
+                          </span>
+                          <ChevronRight className="w-3 h-3 text-text-tertiary shrink-0" />
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-sm text-text-tertiary">
+                        No repositories
+                      </div>
+                    )}
+                  </>
+                );
+              })()
+            ) : // Accounts list
+            installations.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-text-tertiary">
+                No accounts found
+              </div>
+            ) : (
+              installations
+                .slice(
+                  (accountsPage - 1) * ACCOUNTS_PER_PAGE,
+                  accountsPage * ACCOUNTS_PER_PAGE
+                )
+                .map((account) => {
+                  const accountRepos = installationRepos.find(
+                    (r) => r.installationId === account.id
+                  );
+                  const count = accountRepos?.repositories.length ?? 0;
+                  return (
                     <button
-                      key={repo}
+                      key={account.id}
                       type="button"
                       onClick={() => {
-                        onSelectRepo(repo);
-                        onClose();
+                        directionRef.current = 'forward';
+                        setSelectedAccount(account);
                       }}
                       className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-white/10 transition-colors"
                     >
                       <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
-                      <span className="flex-1 text-sm text-text-secondary truncate">{repo}</span>
+                      <span className="flex-1 text-sm text-text-secondary truncate">
+                        {account.accountLogin ?? 'Unknown Account'}
+                      </span>
+                      <span className="text-xs text-text-tertiary">
+                        {count}
+                      </span>
                       <ChevronRight className="w-3 h-3 text-text-tertiary shrink-0" />
                     </button>
-                  ))
-                ) : (
-                  <div className="px-3 py-2 text-sm text-text-tertiary">No repositories</div>
-                )}
-              </>
-            );
-          })()
-        ) : (
-          // Accounts list
-          installations.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-text-tertiary">
-              No accounts found
-            </div>
-          ) : (
-            installations
-              .slice((accountsPage - 1) * ACCOUNTS_PER_PAGE, accountsPage * ACCOUNTS_PER_PAGE)
-              .map((account) => {
-                const accountRepos = installationRepos.find((r) => r.installationId === account.id);
-                const count = accountRepos?.repositories.length ?? 0;
-                return (
-                  <button
-                    key={account.id}
-                    type="button"
-                    onClick={() => setSelectedAccount(account)}
-                    className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-white/10 transition-colors"
-                  >
-                    <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
-                    <span className="flex-1 text-sm text-text-secondary truncate">
-                      {account.accountLogin ?? 'Unknown Account'}
-                    </span>
-                    <span className="text-xs text-text-tertiary">{count}</span>
-                    <ChevronRight className="w-3 h-3 text-text-tertiary shrink-0" />
-                  </button>
-                );
-              })
-          )
-        )}
+                  );
+                })
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Pagination for accounts only */}
@@ -255,7 +298,9 @@ function BranchesSelectorContent({
   onClose: () => void;
 }) {
   const BRANCHES_PER_PAGE = 10;
-  const totalBranchPages = Math.ceil(filteredBranches.length / BRANCHES_PER_PAGE);
+  const totalBranchPages = Math.ceil(
+    filteredBranches.length / BRANCHES_PER_PAGE
+  );
   const paginatedBranches = filteredBranches.slice(
     (branchesPage - 1) * BRANCHES_PER_PAGE,
     branchesPage * BRANCHES_PER_PAGE
@@ -287,11 +332,15 @@ function BranchesSelectorContent({
               className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-white/10 transition-colors"
             >
               <BranchIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
-              <span className="flex-1 text-sm text-text-secondary truncate">{branch}</span>
+              <span className="flex-1 text-sm text-text-secondary truncate">
+                {branch}
+              </span>
             </button>
           ))
         ) : (
-          <div className="px-3 py-2 text-sm text-text-tertiary">No branches found</div>
+          <div className="px-3 py-2 text-sm text-text-tertiary">
+            No branches found
+          </div>
         )}
       </div>
 
@@ -358,9 +407,9 @@ function IssuesSelectorContent({
                 onClose();
               }}
               className={cn(
-                "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors",
-                "hover:bg-white/10",
-                selectedIssue?.number === issue.number && "bg-white/5"
+                'flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors',
+                'hover:bg-white/10',
+                selectedIssue?.number === issue.number && 'bg-white/5'
               )}
             >
               <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
@@ -373,7 +422,9 @@ function IssuesSelectorContent({
             </button>
           ))
         ) : (
-          <div className="px-3 py-2 text-sm text-text-tertiary">No open issues</div>
+          <div className="px-3 py-2 text-sm text-text-tertiary">
+            No open issues
+          </div>
         )}
       </div>
 
@@ -449,14 +500,22 @@ function MobileSelectorContent({
   setIssuesPage: (page: number) => void;
 }) {
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const prefersReducedMotion = useReducedMotion();
+  const mobileDirectionRef = useRef<'forward' | 'back'>('forward');
   const ACCOUNTS_PER_PAGE = 5;
   const BRANCHES_PER_PAGE = 10;
   const ISSUES_PER_PAGE = 10;
 
   // Calculate total pages
   const totalAccountPages = Math.ceil(installations.length / ACCOUNTS_PER_PAGE);
-  const totalBranchPages = Math.ceil(filteredBranches.length / BRANCHES_PER_PAGE);
+  const totalBranchPages = Math.ceil(
+    filteredBranches.length / BRANCHES_PER_PAGE
+  );
   const totalIssuePages = Math.ceil(filteredIssues.length / ISSUES_PER_PAGE);
+
+  // Derive a composite key for animated transitions
+  const stepKey =
+    step === 'repos' && selectedAccount ? `repos-${selectedAccount.id}` : step;
 
   // Header based on current step
   const renderHeader = () => {
@@ -466,6 +525,7 @@ function MobileSelectorContent({
           <button
             type="button"
             onClick={() => {
+              mobileDirectionRef.current = 'back';
               if (step === 'issues') {
                 setStep('branches');
               } else if (step === 'branches') {
@@ -483,9 +543,11 @@ function MobileSelectorContent({
             <GithubIcon className="w-4 h-4 text-text-tertiary" />
             <input
               className="flex-1 bg-transparent text-sm text-text-secondary placeholder:text-text-tertiary outline-none"
-              placeholder={installations.length === 1
-                ? installations[0]?.accountLogin ?? 'Search accounts...'
-                : 'Search accounts...'}
+              placeholder={
+                installations.length === 1
+                  ? (installations[0]?.accountLogin ?? 'Search accounts...')
+                  : 'Search accounts...'
+              }
               value={accountSearchQuery}
               onChange={(e) => {
                 setAccountSearchQuery(e.target.value);
@@ -501,7 +563,10 @@ function MobileSelectorContent({
           <>
             <button
               type="button"
-              onClick={() => setSelectedAccount(null)}
+              onClick={() => {
+                mobileDirectionRef.current = 'back';
+                setSelectedAccount(null);
+              }}
               className="p-1 -ml-1 rounded hover:bg-white/10 text-text-secondary"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -557,26 +622,32 @@ function MobileSelectorContent({
     // REPOS STEP - Accounts or Repos
     if (step === 'repos') {
       if (selectedAccount) {
-        const accountRepos = installationRepos.find((r) => r.installationId === selectedAccount.id);
+        const accountRepos = installationRepos.find(
+          (r) => r.installationId === selectedAccount.id
+        );
         return (
           <>
-            {accountRepos?.repositories && accountRepos.repositories.length > 0 ? (
+            {accountRepos?.repositories &&
+            accountRepos.repositories.length > 0 ? (
               accountRepos.repositories.map((repo: string) => (
                 <button
                   key={repo}
                   type="button"
                   onClick={() => {
+                    mobileDirectionRef.current = 'forward';
                     onSelectRepo(repo);
                     setStep('branches');
                   }}
                   className={cn(
-                    "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors",
-                    "hover:bg-white/10",
-                    selectedRepository === repo && "bg-white/5"
+                    'flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors',
+                    'hover:bg-white/10',
+                    selectedRepository === repo && 'bg-white/5'
                   )}
                 >
                   <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
-                  <span className="flex-1 text-sm text-text-secondary truncate">{repo}</span>
+                  <span className="flex-1 text-sm text-text-secondary truncate">
+                    {repo}
+                  </span>
                   {selectedRepository === repo && (
                     <Check className="w-3.5 h-3.5 text-green-500 shrink-0" />
                   )}
@@ -584,7 +655,9 @@ function MobileSelectorContent({
                 </button>
               ))
             ) : (
-              <div className="px-3 py-2 text-sm text-text-tertiary">No repositories</div>
+              <div className="px-3 py-2 text-sm text-text-tertiary">
+                No repositories
+              </div>
             )}
           </>
         );
@@ -597,19 +670,25 @@ function MobileSelectorContent({
 
       return (
         <>
-          {branchesLoading && !installationRepos.some((r) => r.repositories.length > 0) ? (
+          {branchesLoading &&
+          !installationRepos.some((r) => r.repositories.length > 0) ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-4 h-4 animate-spin text-text-tertiary" />
             </div>
           ) : (
             paginatedInstallations.map((account) => {
-              const accountRepos = installationRepos.find((r) => r.installationId === account.id);
+              const accountRepos = installationRepos.find(
+                (r) => r.installationId === account.id
+              );
               const count = accountRepos?.repositories.length ?? 0;
               return (
                 <button
                   key={account.id}
                   type="button"
-                  onClick={() => setSelectedAccount(account)}
+                  onClick={() => {
+                    mobileDirectionRef.current = 'forward';
+                    setSelectedAccount(account);
+                  }}
                   className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-white/10 transition-colors"
                 >
                   <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
@@ -645,17 +724,20 @@ function MobileSelectorContent({
                 key={branch}
                 type="button"
                 onClick={() => {
+                  mobileDirectionRef.current = 'forward';
                   onSelectBranch(branch);
                   setStep('issues');
                 }}
                 className={cn(
-                  "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors",
-                  "hover:bg-white/10",
-                  selectedBranch === branch && "bg-white/5"
+                  'flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors',
+                  'hover:bg-white/10',
+                  selectedBranch === branch && 'bg-white/5'
                 )}
               >
                 <BranchIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
-                <span className="flex-1 text-sm text-text-secondary truncate">{branch}</span>
+                <span className="flex-1 text-sm text-text-secondary truncate">
+                  {branch}
+                </span>
                 {selectedBranch === branch && (
                   <Check className="w-3.5 h-3.5 text-green-500 shrink-0" />
                 )}
@@ -663,7 +745,9 @@ function MobileSelectorContent({
               </button>
             ))
           ) : (
-            <div className="px-3 py-2 text-sm text-text-tertiary">No branches found</div>
+            <div className="px-3 py-2 text-sm text-text-tertiary">
+              No branches found
+            </div>
           )}
         </>
       );
@@ -689,9 +773,9 @@ function MobileSelectorContent({
                 type="button"
                 onClick={() => onSelectIssue(issue)}
                 className={cn(
-                  "flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors",
-                  "hover:bg-white/10",
-                  selectedIssue?.number === issue.number && "bg-white/5"
+                  'flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors',
+                  'hover:bg-white/10',
+                  selectedIssue?.number === issue.number && 'bg-white/5'
                 )}
               >
                 <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
@@ -704,7 +788,9 @@ function MobileSelectorContent({
               </button>
             ))
           ) : (
-            <div className="px-3 py-2 text-sm text-text-tertiary">No open issues</div>
+            <div className="px-3 py-2 text-sm text-text-tertiary">
+              No open issues
+            </div>
           )}
         </>
       );
@@ -714,15 +800,34 @@ function MobileSelectorContent({
   };
 
   // Calculate which pagination to show
-  const showPagination = totalAccountPages > 1 && step === 'repos' && !selectedAccount;
+  const showPagination =
+    totalAccountPages > 1 && step === 'repos' && !selectedAccount;
   const showBranchesPagination = totalBranchPages > 1 && step === 'branches';
   const showIssuesPagination = totalIssuePages > 1 && step === 'issues';
 
   return (
     <div className="flex flex-col">
       {renderHeader()}
-      <div className="min-h-[250px] max-h-[250px] overflow-y-auto p-1">
-        {renderContent()}
+      <div className="min-h-[250px] max-h-[250px] overflow-hidden relative">
+        <AnimatePresence initial={false}>
+          <motion.div
+            key={stepKey}
+            initial={
+              prefersReducedMotion
+                ? false
+                : {
+                    transform: `translateX(${mobileDirectionRef.current === 'forward' ? 40 : -40}px)`,
+                  }
+            }
+            animate={{
+              transform: 'translateX(0px)',
+            }}
+            transition={{ duration: 0.12, ease: [0.23, 1, 0.32, 1] }}
+            className="overflow-y-auto p-1 h-[250px]"
+          >
+            {renderContent()}
+          </motion.div>
+        </AnimatePresence>
       </div>
       {(showPagination || showBranchesPagination || showIssuesPagination) && (
         <>
@@ -858,14 +963,16 @@ export function RepoBranchIssueSelector({
                 setMobileAccountsPage(1);
               }}
               className={cn(
-                "flex items-center gap-2 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5",
-                "hover:bg-white/10",
-                mobileOpen && mobileStep === 'repos' && "bg-white/10"
+                'flex items-center gap-2 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5',
+                'hover:bg-white/10',
+                mobileOpen && mobileStep === 'repos' && 'bg-white/10'
               )}
             >
               <GithubIcon className="w-4 h-4" />
               {selectedRepository ? (
-                <span className="text-sm text-foreground">{selectedRepository}</span>
+                <span className="text-sm text-foreground">
+                  {selectedRepository}
+                </span>
               ) : (
                 <span className="text-sm">Select repository</span>
               )}
@@ -884,13 +991,15 @@ export function RepoBranchIssueSelector({
                     setMobileBranchesPage(1);
                   }}
                   className={cn(
-                    "flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5",
-                    "hover:bg-white/10",
-                    mobileOpen && mobileStep === 'branches' && "bg-white/10"
+                    'flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5',
+                    'hover:bg-white/10',
+                    mobileOpen && mobileStep === 'branches' && 'bg-white/10'
                   )}
                 >
                   <BranchIcon className="w-3.5 h-3.5" />
-                  <span className="text-[14px] text-text-muted">{selectedBranch}</span>
+                  <span className="text-[14px] text-text-muted">
+                    {selectedBranch}
+                  </span>
                   <ChevronSortIcon className="size-2" />
                 </button>
               </>
@@ -908,9 +1017,9 @@ export function RepoBranchIssueSelector({
                     setMobileIssuesPage(1);
                   }}
                   className={cn(
-                    "flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5",
-                    "hover:bg-white/10",
-                    mobileOpen && mobileStep === 'issues' && "bg-white/10"
+                    'flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5',
+                    'hover:bg-white/10',
+                    mobileOpen && mobileStep === 'issues' && 'bg-white/10'
                   )}
                 >
                   <GithubIcon className="w-3.5 h-3.5" />
@@ -970,14 +1079,16 @@ export function RepoBranchIssueSelector({
         <button
           type="button"
           className={cn(
-            "flex items-center gap-2 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5",
-            "hover:bg-white/10",
-            accountsOpen && "bg-white/10"
+            'flex items-center gap-2 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5',
+            'hover:bg-white/10',
+            accountsOpen && 'bg-white/10'
           )}
         >
           <GithubIcon className="w-4 h-4" />
           {selectedRepository ? (
-            <span className="text-sm text-foreground">{selectedRepository}</span>
+            <span className="text-sm text-foreground">
+              {selectedRepository}
+            </span>
           ) : (
             <span className="text-sm">Select repository</span>
           )}
@@ -1008,9 +1119,9 @@ export function RepoBranchIssueSelector({
         <button
           type="button"
           className={cn(
-            "flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5",
-            "hover:bg-white/10",
-            branchesOpen && "bg-white/10"
+            'flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5',
+            'hover:bg-white/10',
+            branchesOpen && 'bg-white/10'
           )}
         >
           <BranchIcon className="w-3.5 h-3.5" />
@@ -1042,9 +1153,9 @@ export function RepoBranchIssueSelector({
         <button
           type="button"
           className={cn(
-            "flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5",
-            "hover:bg-white/10",
-            issuesOpen && "bg-white/10"
+            'flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5',
+            'hover:bg-white/10',
+            issuesOpen && 'bg-white/10'
           )}
         >
           <GithubIcon className="w-3.5 h-3.5" />

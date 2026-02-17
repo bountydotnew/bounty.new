@@ -27,6 +27,7 @@ import {
   AvatarFacehash,
   AvatarImage,
 } from '@bounty/ui/components/avatar';
+import { Skeleton } from '@bounty/ui/components/skeleton';
 import { useSession } from '@/context/session-context';
 import { useActiveOrg } from '@/hooks/use-active-org';
 import { AccountDropdown } from '@/components/billing/account-dropdown';
@@ -63,9 +64,9 @@ const WorkspaceSwitcher = () => {
     return (
       <div className="flex items-center justify-between py-0 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:hidden">
         <div className="inline-flex items-center gap-[10px] px-[5px] py-[5px]">
-          <div className="h-[27px] w-[27px] rounded-[6px] bg-surface-2 animate-pulse" />
+          <Skeleton className="h-[27px] w-[27px] rounded-[6px]" />
           <div className="flex items-center gap-[7px] group-data-[collapsible=icon]:hidden">
-            <div className="h-5 w-24 rounded-md bg-surface-2 animate-pulse" />
+            <Skeleton className="h-5 w-[100px] rounded-md" />
           </div>
         </div>
         <SidebarTrigger
@@ -299,7 +300,6 @@ export const AppSidebar = ({
               <RecentBountiesGroup />
             </div>
           )}
-
         </SidebarContent>
 
         {/* Footer - cards on main nav, minimal on settings */}

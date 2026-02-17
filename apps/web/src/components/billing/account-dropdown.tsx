@@ -555,7 +555,11 @@ export function AccountDropdown({
           )}
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent className="rounded-[15px] w-74 bg-surface-1 border border-border-subtle">
+        <DropdownMenuContent
+          align="start"
+          alignOffset={4}
+          className="rounded-[15px] w-74 bg-surface-1 border border-border-subtle"
+        >
           {/* User header section */}
           <div className="flex flex-col gap-1.5 border-b border-border-subtle px-4 py-1.5">
             <div className="flex items-center justify-between">
