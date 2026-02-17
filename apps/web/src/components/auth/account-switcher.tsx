@@ -100,7 +100,7 @@ export function AccountSwitcher({
 
   const content = (
     <PopoverContent
-      className="w-56 rounded-lg border border-border-subtle bg-surface-2 p-2 shadow-[rgba(0,0,0,0.08)_0px_16px_40px_0px]"
+      className="w-56 rounded-lg border border-border-subtle bg-surface-2 p-0 shadow-[rgba(0,0,0,0.08)_0px_16px_40px_0px]"
       align="start"
       sideOffset={8}
     >
@@ -174,7 +174,7 @@ export function AccountSwitcher({
 
   if (trigger) {
     return (
-      <Popover className="p-0" open={popoverOpen} onOpenChange={setPopoverOpen}>
+      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
         <PopoverTrigger asChild>{trigger}</PopoverTrigger>
         {content}
       </Popover>
