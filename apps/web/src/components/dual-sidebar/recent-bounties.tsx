@@ -32,8 +32,17 @@ export function addRecentBounty(bounty: { id: string; title: string }) {
   localStorage.setItem(RECENT_BOUNTIES_KEY, JSON.stringify(updated));
 }
 
-function RecentlyViewedSection() {
+export function RecentBountiesGroup() {
   const [recentBounties, setRecentBounties] = useState<RecentBounty[]>([]);
+  const { session, isAuthenticated } = useSession();
+  const userId = session?.user?.id;
+
+  const { data } = useQuery({
+    ...trpc.bounties.getBountiesByUserId.queryOptions({
+      userId: userId ?? '',
+    }),
+    enabled: isAuthenticated && !!userId,
+  });
 
   useEffect(() => {
     const loadRecentBounties = () => {
@@ -66,16 +75,18 @@ function RecentlyViewedSection() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  if (recentBounties.length === 0) {
+  const startedBounties = data?.data?.slice(0, 5) ?? [];
+
+  if (recentBounties.length === 0 && startedBounties.length === 0) {
     return null;
   }
 
   return (
     <SidebarGroup className="mt-4">
-      <SidebarGroupLabel>Recently Viewed</SidebarGroupLabel>
+      <SidebarGroupLabel>Recent Bounties</SidebarGroupLabel>
       <SidebarMenu className="flex flex-col gap-[8px] w-full">
         {recentBounties.map((bounty) => (
-          <SidebarMenuItem key={bounty.id}>
+          <SidebarMenuItem key={`viewed-${bounty.id}`}>
             <SidebarMenuButton
               asChild
               tooltip={bounty.title}
@@ -90,34 +101,8 @@ function RecentlyViewedSection() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         ))}
-      </SidebarMenu>
-    </SidebarGroup>
-  );
-}
-
-function RecentlyStartedSection() {
-  const { session, isAuthenticated } = useSession();
-  const userId = session?.user?.id;
-
-  const { data } = useQuery({
-    ...trpc.bounties.getBountiesByUserId.queryOptions({
-      userId: userId ?? '',
-    }),
-    enabled: isAuthenticated && !!userId,
-  });
-
-  const bounties = data?.data?.slice(0, 5) ?? [];
-
-  if (bounties.length === 0) {
-    return null;
-  }
-
-  return (
-    <SidebarGroup className="mt-4">
-      <SidebarGroupLabel>Recently Started</SidebarGroupLabel>
-      <SidebarMenu className="flex flex-col gap-[8px] w-full">
-        {bounties.map((bounty) => (
-          <SidebarMenuItem key={bounty.id}>
+        {startedBounties.map((bounty) => (
+          <SidebarMenuItem key={`started-${bounty.id}`}>
             <SidebarMenuButton
               asChild
               tooltip={bounty.title}
@@ -134,14 +119,5 @@ function RecentlyStartedSection() {
         ))}
       </SidebarMenu>
     </SidebarGroup>
-  );
-}
-
-export function RecentBountiesGroup() {
-  return (
-    <>
-      <RecentlyViewedSection />
-      <RecentlyStartedSection />
-    </>
   );
 }
