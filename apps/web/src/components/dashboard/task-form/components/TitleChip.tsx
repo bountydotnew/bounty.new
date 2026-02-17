@@ -18,7 +18,7 @@ export function TitleChip({ control }: TitleChipProps) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button type="button" className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-surface-hover border border-solid border-border-subtle hover:border-border-default transition-colors cursor-pointer">
+        <button type="button" className="rounded-full flex justify-center items-center px-[6px] py-[3px] shrink-0 gap-2 bg-surface-hover border border-solid border-border-subtle hover:border-border-default transition-colors cursor-pointer">
           <Controller
             control={control}
             name="title"

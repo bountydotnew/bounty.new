@@ -30,7 +30,7 @@ export function GridView() {
   const { bounties, isLoading, isError, error, statsMap, title } = state;
   const { deleteBounty } = actions;
   const { className } = meta;
-  const { session } = useSession();
+  const { session } = useSession();rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-surface-hover border border-solid border-border-subtle hover:border-border-default transition-colors cursor-pointer
 
   if (isLoading) {
     return (
