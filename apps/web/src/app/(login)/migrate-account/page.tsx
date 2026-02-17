@@ -21,11 +21,8 @@ function MigrateAccountContent() {
     queryKey: ['check-migration'],
     queryFn: async () => {
       const response = await fetch('/api/auth/check-migration');
-      if (response.status === 401) {
-        throw new Error('unauthorized');
-      }
       if (!response.ok) {
-        return null;
+        throw new Error(`${response.status} ${response.statusText}`);
       }
       return response.json() as Promise<{ hasOAuth: boolean }>;
     },
