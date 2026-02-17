@@ -39,7 +39,7 @@ export function TitleChip({ control }: TitleChipProps) {
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-64 px-3 bg-surface-1 border-border-subtle rounded-xl"
+        className="w-64 px-3 bg-surface-1 border-border-subtle rounded-xl py-2"
         align="start"
         sideOffset={8}
       >

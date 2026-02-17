@@ -49,7 +49,7 @@ export function PriceChip({ control }: PriceChipProps) {
         </div>
       </PopoverTrigger>
       <PopoverContent
-        className="w-48 px-3 bg-surface-1 border-border-subtle rounded-xl"
+        className="w-48 px-3 bg-surface-1 border-border-subtle rounded-xl py-2"
         align="start"
         sideOffset={8}
       >
