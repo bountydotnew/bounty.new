@@ -308,10 +308,10 @@ export const AppSidebar = ({
             <div className="px-[15px] py-0 group-data-[collapsible=icon]:px-0">
               {/* Footer cards (Getting Started, Changelog, Recent Bounties) */}
               {/* These only show on main nav pages, not settings */}
-              <div className="space-y-2 pb-3">
+              {/* <div className="space-y-2 pb-3">
                 <GettingStartedCard />
                 <ChangelogCard />
-              </div>
+              </div> */}
               <RecentBountiesGroup />
               {/* Bottom actions row */}
               <div className="flex items-center justify-between gap-2 pt-3 mt-3 border-t border-border-subtle group-data-[collapsible=icon]:justify-center">
