@@ -121,8 +121,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     defaultValues: { email: '' },
   });
 
-  const [fingerprintData, setFingerprintData] = useState<any>(null);
-  const [fingerprintLoading, setFingerprintLoading] = useState(true);
+  const [fingerprint, setFingerprint] = useState<{ data: any; loading: boolean }>({ data: null, loading: true });
   const waitlistSubmission = useWaitlistSubmission();
 
   useEffect(() => {
@@ -135,15 +134,13 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
   useEffect(() => {
     const generateFingerprint = async () => {
       try {
-        setFingerprintLoading(true);
         const result = await getThumbmark();
-        setFingerprintData(result);
+        setFingerprint({ data: result, loading: false });
       } catch {
         toast.error(
           'Device fingerprinting failed. Please refresh and try again.'
         );
-      } finally {
-        setFingerprintLoading(false);
+        setFingerprint({ data: null, loading: false });
       }
     };
 
@@ -151,17 +148,17 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
   }, []);
 
   function joinWaitlist({ email }: FormSchema) {
-    if (!fingerprintData) {
+    if (!fingerprint.data) {
       toast.error(
         'Device fingerprint not ready. Please wait a moment and try again.'
       );
       return;
     }
-    waitlistSubmission.mutate({ email, fingerprintData });
+    waitlistSubmission.mutate({ email, fingerprintData: fingerprint.data });
   }
 
   const isFormDisabled =
-    waitlistSubmission.isPending || fingerprintLoading || !fingerprintData;
+    waitlistSubmission.isPending || fingerprint.loading || !fingerprint.data;
 
   const waitlistCountQuery = useQuery({
     ...trpc.earlyAccess.getWaitlistCount.queryOptions(),

@@ -16,7 +16,7 @@ import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
 import { useOrgPath } from '@/hooks/use-org-path';
 import { toast } from 'sonner';
-import { useState, useCallback } from 'react';
+import { Suspense, useState, useCallback } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,7 +54,7 @@ const PRIORITY_COLORS: Record<number, string> = {
   0: 'bg-neutral-500',
 };
 
-export default function LinearIssuesPage() {
+function LinearIssuesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const params = useParams();
@@ -392,5 +392,13 @@ export default function LinearIssuesPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function LinearIssuesPage() {
+  return (
+    <Suspense fallback={null}>
+      <LinearIssuesContent />
+    </Suspense>
   );
 }

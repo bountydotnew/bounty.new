@@ -616,17 +616,15 @@ function GitHubIssuePage({
 }: {
   onShowNotifications?: () => void;
 }) {
-  const [botCommentVisible, setBotCommentVisible] = useState(false);
-  const [botReacted, setBotReacted] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [animState, setAnimState] = useState({ botCommentVisible: false, botReacted: false, showSuccess: false });
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Timed sequence for bot animations
   useEffect(() => {
-    const t1 = setTimeout(() => setBotCommentVisible(true), 800);
-    const t2 = setTimeout(() => setBotReacted(true), 2000);
+    const t1 = setTimeout(() => setAnimState(prev => ({ ...prev, botCommentVisible: true })), 800);
+    const t2 = setTimeout(() => setAnimState(prev => ({ ...prev, botReacted: true })), 2000);
     const t3 = setTimeout(() => {
-      setShowSuccess(true);
+      setAnimState(prev => ({ ...prev, showSuccess: true }));
       onShowNotifications?.();
     }, 3200);
     return () => {
@@ -638,7 +636,7 @@ function GitHubIssuePage({
 
   // Auto-scroll when new content appears
   useEffect(() => {
-    if (botCommentVisible || botReacted || showSuccess) {
+    if (animState.botCommentVisible || animState.botReacted || animState.showSuccess) {
       setTimeout(() => {
         scrollRef.current?.scrollTo({
           top: scrollRef.current.scrollHeight,
@@ -646,7 +644,7 @@ function GitHubIssuePage({
         });
       }, 100);
     }
-  }, [botCommentVisible, botReacted, showSuccess]);
+  }, [animState.botCommentVisible, animState.botReacted, animState.showSuccess]);
 
   return (
     <div className="h-full bg-gh-bg overflow-auto" ref={scrollRef}>
@@ -721,7 +719,7 @@ function GitHubIssuePage({
         </div>
 
         {/* Bot comment - Bounty created (animated) */}
-        {botCommentVisible && (
+        {animState.botCommentVisible && (
           <div className="border border-gh-border rounded-md mb-6 animate-in fade-in slide-in-from-top-2 duration-500">
             <div className="bg-gh-surface px-4 py-3 border-b border-gh-border flex items-center gap-3">
               <Image
@@ -744,7 +742,7 @@ function GitHubIssuePage({
             <div className="p-4 text-sm text-gh-text">
               <div className="flex items-center gap-2 mb-3">
                 <span
-                  className={`px-2 py-1 text-xs font-medium rounded bg-gh-success/20 text-gh-success-text border border-gh-success/40 transition-all duration-500 ${showSuccess ? 'shadow-md shadow-success/50' : ''}`}
+                  className={`px-2 py-1 text-xs font-medium rounded bg-gh-success/20 text-gh-success-text border border-gh-success/40 transition-all duration-500 ${animState.showSuccess ? 'shadow-md shadow-success/50' : ''}`}
                 >
                   💰 Bounty Active
                 </span>
@@ -792,13 +790,13 @@ function GitHubIssuePage({
                   />
                 </svg>
               </button>
-              {botReacted && (
+              {animState.botReacted && (
                 <span className="inline-flex items-center gap-1 bg-gh-border px-2 py-0.5 rounded-full text-xs animate-in fade-in zoom-in duration-300">
                   <span>👀</span>
                   <span className="text-gh-text-muted">1</span>
                 </span>
               )}
-              {showSuccess && (
+              {animState.showSuccess && (
                 <span className="inline-flex items-center gap-1 bg-gh-success/20 px-2 py-0.5 rounded-full text-xs animate-in fade-in zoom-in duration-300">
                   <span>🎉</span>
                   <span className="text-gh-success-text">1</span>

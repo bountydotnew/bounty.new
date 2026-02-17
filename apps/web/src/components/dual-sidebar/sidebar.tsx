@@ -168,10 +168,13 @@ const BackToMainButton = (_props: { slug: string }) => {
   );
 };
 
-const renderNavItems = (
-  items: ReturnType<typeof mainNavItems>,
-  pathname: string | null
-) => {
+const NavItems = ({
+  items,
+  pathname,
+}: {
+  items: ReturnType<typeof mainNavItems>;
+  pathname: string | null;
+}) => {
   return (
     <SidebarMenu className="flex flex-col gap-[8px] w-full">
       {items.map((item) => {
@@ -192,10 +195,13 @@ const renderNavItems = (
   );
 };
 
-const renderSettingsNav = (
-  sections: ReturnType<typeof settingsNavSections>,
-  pathname: string | null
-) => {
+const SettingsNav = ({
+  sections,
+  pathname,
+}: {
+  sections: ReturnType<typeof settingsNavSections>;
+  pathname: string | null;
+}) => {
   return (
     <>
       {sections.map((section) => (
@@ -292,11 +298,13 @@ export const AppSidebar = ({
         <SidebarContent className="flex-1 overflow-y-auto px-[15px] py-0 group-data-[collapsible=icon]:px-0">
           {isSettingsRoute ? (
             <SidebarGroup>
-              {renderSettingsNav(settingsNav, pathname)}
+              <SettingsNav sections={settingsNav} pathname={pathname} />
             </SidebarGroup>
           ) : (
             <div>
-              <SidebarGroup>{renderNavItems(mainNav, pathname)}</SidebarGroup>
+              <SidebarGroup>
+                <NavItems items={mainNav} pathname={pathname} />
+              </SidebarGroup>
               <RecentBountiesGroup />
             </div>
           )}

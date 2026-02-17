@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, AnimatePresence } from 'motion/react';
+import { m, AnimatePresence } from 'motion/react';
 import { type ReactNode, useRef, useState, useEffect, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { useTutorialOptional } from './tutorial-context';
@@ -71,7 +71,7 @@ export function TutorialHighlight({
       {/* Glow effect behind the element */}
       <AnimatePresence>
         {isActive && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
@@ -79,7 +79,7 @@ export function TutorialHighlight({
             className={`absolute -inset-1 ${borderRadius} z-0 pointer-events-none`}
           >
             {/* Pulsing glow */}
-            <motion.div
+            <m.div
               className={`absolute inset-0 ${borderRadius} bg-blue-500/20`}
               animate={{
                 boxShadow: [
@@ -97,7 +97,7 @@ export function TutorialHighlight({
             <div
               className={`absolute inset-0 ${borderRadius} ring-2 ring-blue-500/60 ring-offset-2 ring-offset-black`}
             />
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
@@ -114,7 +114,7 @@ export function TutorialHighlight({
         isActive &&
         createPortal(
           <AnimatePresence>
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: tooltipPosition === 'top' ? 4 : -4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: tooltipPosition === 'top' ? 4 : -4 }}
@@ -143,7 +143,7 @@ export function TutorialHighlight({
                   }`}
                 />
               </div>
-            </motion.div>
+            </m.div>
           </AnimatePresence>,
           document.body
         )}

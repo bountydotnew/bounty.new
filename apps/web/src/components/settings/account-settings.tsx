@@ -325,7 +325,7 @@ function ThemeOption({
             src={imageSrc}
             alt={`${label} theme preview`}
             fill
-            sizes=`"128px`"
+            sizes="48px"
             className={cn('rounded object-contain', !isDark && 'shadow-sm')}
           />
         </div>

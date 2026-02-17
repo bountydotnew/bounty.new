@@ -1,0 +1,8 @@
+rg : The term 'rg' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the 
+spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:125
++ ... g\waitlist-demo.tsx' -Raw).Substring(0, 50) | Format-Hex ; rg -n fing ...
++                                                                ~~
+    + CategoryInfo          : ObjectNotFound: (rg:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 

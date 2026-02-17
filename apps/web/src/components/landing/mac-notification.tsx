@@ -78,8 +78,8 @@ export function MacNotification({
       style={{
         background:
           'linear-gradient(to bottom, var(--surface-3), var(--surface-2))',
-        backdropFilter: 'blur(40px)',
-        WebkitBackdropFilter: 'blur(40px)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
         border: '1px solid var(--border-subtle)',
         boxShadow: 'var(--shadow-lg)',
       }}

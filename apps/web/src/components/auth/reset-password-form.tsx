@@ -4,7 +4,7 @@ import { authClient } from '@bounty/auth/client';
 import { Button } from '@bounty/ui/components/button';
 import { Input } from '@bounty/ui/components/input';
 import { Label } from '@bounty/ui/components/label';
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
@@ -13,18 +13,11 @@ export default function ResetPasswordForm() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isPending, startTransition] = useTransition();
-  const [step, setStep] = useState<'request' | 'reset'>('request');
   const [emailSent, setEmailSent] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
-
-  // If there's a token in the URL, show the reset form
-  useEffect(() => {
-    if (token) {
-      setStep('reset');
-    }
-  }, [token]);
+  const [step, setStep] = useState<'request' | 'reset'>(token ? 'reset' : 'request');
 
   const handleRequestReset = (e: React.FormEvent) => {
     e.preventDefault();

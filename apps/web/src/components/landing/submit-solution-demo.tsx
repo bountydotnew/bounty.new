@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { devNames } from './demo-data';
 import { MockBrowser } from './mockup';
@@ -69,12 +70,12 @@ function GitHubIssuePage() {
               Open
             </span>
             <span>
-              <a
+              <Link
                 href="/contributors"
                 className="text-gh-link hover:underline font-semibold"
               >
                 ripgrim
-              </a>{' '}
+              </Link>{' '}
               opened this issue 2 days ago · {commentSent ? '4' : '3'} comments
             </span>
           </div>
@@ -95,12 +96,12 @@ function GitHubIssuePage() {
           <div className="flex-1 border border-gh-border rounded-md">
             <div className="bg-gh-surface px-4 py-2 border-b border-gh-border flex items-center justify-between">
               <div className="text-sm text-gh-text">
-                <a
+                <Link
                   href="/bounties"
                   className="font-semibold hover:text-gh-link"
                 >
                   ripgrim
-                </a>
+                </Link>
                 <span className="text-gh-text-muted ml-2">2 days ago</span>
               </div>
             </div>
@@ -126,20 +127,20 @@ function GitHubIssuePage() {
           <div className="flex-1 border border-gh-border rounded-md">
             <div className="bg-gh-surface px-4 py-2 border-b border-gh-border flex items-center justify-between">
               <div className="text-sm text-gh-text">
-                <a
+                <Link
                   href="/bounties"
                   className="font-semibold hover:text-gh-link"
                 >
                   bountydotnew
-                </a>
+                </Link>
                 <span className="inline-flex items-center gap-1 bg-gh-link/10 text-gh-link px-1.5 py-0.5 rounded text-xs ml-1.5 border border-gh-link/20">
                   bot
                 </span>
                 <span className="text-gh-text-muted ml-1.5">
                   2 days ago – with{' '}
-                  <a href="/bounties" className="text-gh-link hover:underline">
+                  <Link href="/bounties" className="text-gh-link hover:underline">
                     bountydotnew
-                  </a>
+                  </Link>
                 </span>
               </div>
             </div>
@@ -194,12 +195,12 @@ function GitHubIssuePage() {
           <div className="flex-1 border border-gh-border rounded-md">
             <div className="bg-gh-surface px-4 py-2 border-b border-gh-border flex items-center justify-between">
               <div className="text-sm text-gh-text">
-                <a
+                <Link
                   href="/bounties"
                   className="font-semibold hover:text-gh-link"
                 >
                   {randomDev}
-                </a>
+                </Link>
                 <span className="text-gh-text-muted ml-2">3 hours ago</span>
               </div>
             </div>
@@ -271,35 +272,35 @@ function GitHubIssuePage() {
             <div className="flex-1 border border-gh-border rounded-md">
               <div className="bg-gh-surface px-4 py-2 border-b border-gh-border">
                 <div className="text-sm text-gh-text">
-                  <a
+                  <Link
                     href="/bounties"
                     className="font-semibold hover:text-gh-link"
                   >
                     bountydotnew
-                  </a>
+                  </Link>
                   <span className="inline-flex items-center gap-1 bg-gh-link/10 text-gh-link px-1.5 py-0.5 rounded text-xs ml-1.5 border border-gh-link/20">
                     bot
                   </span>
                   <span className="text-gh-text-muted ml-1.5">
                     just now – with{' '}
-                    <a
+                    <Link
                       href="/bounties"
                       className="text-gh-link hover:underline"
                     >
                       bountydotnew
-                    </a>
+                    </Link>
                   </span>
                 </div>
               </div>
               <div className="p-4 text-sm text-gh-text">
                 <p>
                   Submission received from{' '}
-                  <a
+                  <Link
                     href="/contributors"
                     className="text-gh-link hover:underline"
                   >
                     @{randomDev}
-                  </a>
+                  </Link>
                   . Waiting for maintainer approval.
                 </p>
               </div>

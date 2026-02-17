@@ -295,10 +295,11 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
           {/* Amount + GitHub - One row */}
           <div className="flex items-stretch gap-3">
             <div className="flex-1">
-              <label className="block text-xs text-text-tertiary mb-1.5" aria-label="Amount">Amount</label>
+              <label className="block text-xs text-text-tertiary mb-1.5" htmlFor="bounty-amount">Amount</label>
               <div className="relative">
                 <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary pointer-events-none" />
                 <input
+                  id="bounty-amount"
                   {...register('amount')}
                   type="text"
                   inputMode="decimal"
@@ -337,7 +338,7 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
           {/* Description */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs text-text-tertiary" aria-label="Description">Description</label>
+              <label className="text-xs text-text-tertiary" htmlFor="bounty-description">Description</label>
               {issue.description && description !== issue.description && (
                 <button
                   type="button"
@@ -350,6 +351,7 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
               )}
             </div>
             <textarea
+              id="bounty-description"
               {...register('description')}
               rows={3}
               className="w-full px-3 py-2 rounded-lg border border-border-subtle bg-surface-1 text-sm text-text-secondary placeholder:text-text-muted focus:outline-none focus:border-border-default resize-none"
@@ -389,8 +391,9 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
             {showOptional && (
               <div className="mt-3 space-y-4">
                 <div>
-                  <label className="block text-xs text-text-tertiary mb-1.5" aria-label="Deadline">Deadline</label>
+                  <label className="block text-xs text-text-tertiary mb-1.5" htmlFor="bounty-deadline">Deadline</label>
                   <input
+                    id="bounty-deadline"
                     {...register('deadline')}
                     type="date"
                     min={new Date().toISOString().split('T')[0]}
@@ -398,9 +401,10 @@ export function CreateBountyForm({ issue, onCancel, onSuccess }: CreateBountyFor
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-text-tertiary mb-1.5" aria-label="Tags">Tags</label>
+                  <label className="block text-xs text-text-tertiary mb-1.5" htmlFor="bounty-tags">Tags</label>
                   <div className="flex gap-2">
                     <input
+                      id="bounty-tags"
                       type="text"
                       value={tagInput}
                       onChange={(e) => setTagInput(e.target.value)}

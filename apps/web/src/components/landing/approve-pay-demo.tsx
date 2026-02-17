@@ -27,10 +27,11 @@ function CreatePRPage() {
       <div className="flex h-full">
         <div className="flex-1 p-6">
           <div className="mb-6">
-            <label className="block text-gh-text text-lg font-semibold mb-3" aria-label="Add a title">
+            <label className="block text-gh-text text-lg font-semibold mb-3" htmlFor="demo-pr-title">
               Add a title
             </label>
             <input
+              id="demo-pr-title"
               type="text"
               value={prTitle}
               onChange={(e) => setPrTitle(e.target.value)}
@@ -40,7 +41,7 @@ function CreatePRPage() {
           </div>
 
           <div className="mb-6">
-            <label className="block text-gh-text text-lg font-semibold mb-3" aria-label="Add a description">
+            <label className="block text-gh-text text-lg font-semibold mb-3" htmlFor="demo-pr-description">
               Add a description
             </label>
             <div className="border border-gh-border rounded-md overflow-hidden">
@@ -63,6 +64,7 @@ function CreatePRPage() {
 
               <div className="bg-gh-bg min-h-[180px] p-4">
                 <textarea
+                  id="demo-pr-description"
                   value={prDescription}
                   onChange={(e) => setPrDescription(e.target.value)}
                   placeholder="Add your description here..."

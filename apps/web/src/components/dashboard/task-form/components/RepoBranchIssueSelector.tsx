@@ -69,7 +69,10 @@ interface RepoBranchIssueSelectorProps {
   openStep?: Step;
 }
 
-// Minimal pagination: prev/next arrows with page count
+const ACCOUNTS_PER_PAGE = 5;
+const BRANCHES_PER_PAGE = 10;
+const ISSUES_PER_PAGE = 10;
+
 function Pagination({
   currentPage,
   totalPages,
@@ -129,7 +132,6 @@ function AccountsSelectorContent({
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const prefersReducedMotion = useReducedMotion();
   const directionRef = useRef<'forward' | 'back'>('forward');
-  const ACCOUNTS_PER_PAGE = 5;
   const totalAccountPages = Math.ceil(installations.length / ACCOUNTS_PER_PAGE);
 
   const paneKey = selectedAccount ? `repos-${selectedAccount.id}` : 'accounts';
@@ -297,7 +299,6 @@ function BranchesSelectorContent({
   onSelectBranch: (branch: string) => void;
   onClose: () => void;
 }) {
-  const BRANCHES_PER_PAGE = 10;
   const totalBranchPages = Math.ceil(
     filteredBranches.length / BRANCHES_PER_PAGE
   );
@@ -376,7 +377,6 @@ function IssuesSelectorContent({
   onSelectIssue: (issue: Issue) => void;
   onClose: () => void;
 }) {
-  const ISSUES_PER_PAGE = 10;
   const totalIssuePages = Math.ceil(filteredIssues.length / ISSUES_PER_PAGE);
   const paginatedIssues = filteredIssues.slice(
     (issuesPage - 1) * ISSUES_PER_PAGE,
@@ -441,7 +441,362 @@ function IssuesSelectorContent({
 }
 
 // ============================================================================
-// UNIFIED SELECTOR (Mobile Drawer)
+// UNIFIED SELECTOR (Mobile Drawer) - Extracted Subcomponents
+// ============================================================================
+
+function MobileSelectorHeader({
+  step,
+  mobileDirectionRef,
+  setStep,
+  selectedAccount,
+  setSelectedAccount,
+  installations,
+  accountSearchQuery,
+  setAccountSearchQuery,
+  setAccountsPage,
+  branchSearchQuery,
+  setBranchSearchQuery,
+  setBranchesPage,
+  issueQuery,
+  setIssueQuery,
+  setIssuesPage,
+}: {
+  step: Step;
+  mobileDirectionRef: { current: 'forward' | 'back' };
+  setStep: (step: Step) => void;
+  selectedAccount: Account | null;
+  setSelectedAccount: (account: Account | null) => void;
+  installations: Account[];
+  accountSearchQuery: string;
+  setAccountSearchQuery: (query: string) => void;
+  setAccountsPage: (page: number) => void;
+  branchSearchQuery: string;
+  setBranchSearchQuery: (query: string) => void;
+  setBranchesPage: (page: number) => void;
+  issueQuery: string;
+  setIssueQuery: (query: string) => void;
+  setIssuesPage: (page: number) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 border-b border-border-subtle">
+      {step !== 'repos' && (
+        <button
+          type="button"
+          onClick={() => {
+            mobileDirectionRef.current = 'back';
+            if (step === 'issues') {
+              setStep('branches');
+            } else if (step === 'branches') {
+              setStep('repos');
+            }
+          }}
+          className="p-1 -ml-1 rounded hover:bg-white/10 text-text-secondary"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+      )}
+
+      {step === 'repos' && !selectedAccount && (
+        <>
+          <GithubIcon className="w-4 h-4 text-text-tertiary" />
+          <input
+            className="flex-1 bg-transparent text-sm text-text-secondary placeholder:text-text-tertiary outline-none"
+            placeholder={
+              installations.length === 1
+                ? (installations[0]?.accountLogin ?? 'Search accounts...')
+                : 'Search accounts...'
+            }
+            value={accountSearchQuery}
+            onChange={(e) => {
+              setAccountSearchQuery(e.target.value);
+              setAccountsPage(1);
+            }}
+            autoComplete="off"
+            spellCheck={false}
+          />
+        </>
+      )}
+
+      {step === 'repos' && selectedAccount && (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              mobileDirectionRef.current = 'back';
+              setSelectedAccount(null);
+            }}
+            className="p-1 -ml-1 rounded hover:bg-white/10 text-text-secondary"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <GithubIcon className="w-4 h-4 text-text-tertiary" />
+          <span className="text-sm text-text-secondary">
+            {selectedAccount.accountLogin ?? 'Unknown Account'}
+          </span>
+        </>
+      )}
+
+      {step === 'branches' && (
+        <>
+          <BranchIcon className="w-4 h-4 text-text-tertiary" />
+          <span className="text-sm text-text-secondary">Select branch</span>
+          <input
+            className="flex-1 bg-transparent text-sm text-text-secondary placeholder:text-text-tertiary outline-none"
+            placeholder="Search branches..."
+            value={branchSearchQuery}
+            onChange={(e) => {
+              setBranchSearchQuery(e.target.value);
+              setBranchesPage(1);
+            }}
+            autoComplete="off"
+            spellCheck={false}
+          />
+        </>
+      )}
+
+      {step === 'issues' && (
+        <>
+          <GithubIcon className="w-4 h-4 text-text-tertiary" />
+          <span className="text-sm text-text-secondary">Select issue</span>
+          <input
+            className="flex-1 bg-transparent text-sm text-text-secondary placeholder:text-text-tertiary outline-none"
+            placeholder="Search issues..."
+            value={issueQuery}
+            onChange={(e) => {
+              setIssueQuery(e.target.value);
+              setIssuesPage(1);
+            }}
+            autoComplete="off"
+            spellCheck={false}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
+function MobileSelectorBody({
+  step,
+  selectedAccount,
+  setSelectedAccount,
+  mobileDirectionRef,
+  installationRepos,
+  onSelectRepo,
+  setStep,
+  selectedRepository,
+  branchesLoading,
+  installations,
+  accountsPage,
+  filteredBranches,
+  branchesPage,
+  onSelectBranch,
+  selectedBranch,
+  filteredIssues,
+  issuesPage,
+  issuesList,
+  onSelectIssue,
+  selectedIssue,
+}: {
+  step: Step;
+  selectedAccount: Account | null;
+  setSelectedAccount: (account: Account | null) => void;
+  mobileDirectionRef: { current: 'forward' | 'back' };
+  installationRepos: InstallationRepos[];
+  onSelectRepo: (repo: string) => void;
+  setStep: (step: Step) => void;
+  selectedRepository: string;
+  branchesLoading: boolean;
+  installations: Account[];
+  accountsPage: number;
+  filteredBranches: string[];
+  branchesPage: number;
+  onSelectBranch: (branch: string) => void;
+  selectedBranch: string;
+  filteredIssues: Issue[];
+  issuesPage: number;
+  issuesList: { isLoading: boolean; isFetching: boolean; data?: Issue[] };
+  onSelectIssue: (issue: Issue) => void;
+  selectedIssue: { number: number; title: string; url: string } | null;
+}) {
+  if (step === 'repos') {
+    if (selectedAccount) {
+      const accountRepos = installationRepos.find(
+        (r) => r.installationId === selectedAccount.id
+      );
+      return (
+        <>
+          {accountRepos?.repositories &&
+          accountRepos.repositories.length > 0 ? (
+            accountRepos.repositories.map((repo: string) => (
+              <button
+                key={repo}
+                type="button"
+                onClick={() => {
+                  mobileDirectionRef.current = 'forward';
+                  onSelectRepo(repo);
+                  setStep('branches');
+                }}
+                className={cn(
+                  'flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors',
+                  'hover:bg-white/10',
+                  selectedRepository === repo && 'bg-white/5'
+                )}
+              >
+                <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
+                <span className="flex-1 text-sm text-text-secondary truncate">
+                  {repo}
+                </span>
+                {selectedRepository === repo && (
+                  <Check className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                )}
+                <ChevronRight className="w-3 h-3 text-text-tertiary shrink-0" />
+              </button>
+            ))
+          ) : (
+            <div className="px-3 py-2 text-sm text-text-tertiary">
+              No repositories
+            </div>
+          )}
+        </>
+      );
+    }
+
+    const paginatedInstallations = installations.slice(
+      (accountsPage - 1) * ACCOUNTS_PER_PAGE,
+      accountsPage * ACCOUNTS_PER_PAGE
+    );
+
+    return (
+      <>
+        {branchesLoading &&
+        !installationRepos.some((r) => r.repositories.length > 0) ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-4 h-4 animate-spin text-text-tertiary" />
+          </div>
+        ) : (
+          paginatedInstallations.map((account) => {
+            const accountRepos = installationRepos.find(
+              (r) => r.installationId === account.id
+            );
+            const count = accountRepos?.repositories.length ?? 0;
+            return (
+              <button
+                key={account.id}
+                type="button"
+                onClick={() => {
+                  mobileDirectionRef.current = 'forward';
+                  setSelectedAccount(account);
+                }}
+                className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-white/10 transition-colors"
+              >
+                <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
+                <span className="flex-1 text-sm text-text-secondary truncate">
+                  {account.accountLogin ?? 'Unknown Account'}
+                </span>
+                <span className="text-xs text-text-tertiary">{count}</span>
+                <ChevronRight className="w-3 h-3 text-text-tertiary shrink-0" />
+              </button>
+            );
+          })
+        )}
+      </>
+    );
+  }
+
+  if (step === 'branches') {
+    const paginatedBranches = filteredBranches.slice(
+      (branchesPage - 1) * BRANCHES_PER_PAGE,
+      branchesPage * BRANCHES_PER_PAGE
+    );
+
+    return (
+      <>
+        {branchesLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-4 h-4 animate-spin text-text-tertiary" />
+          </div>
+        ) : paginatedBranches.length > 0 ? (
+          paginatedBranches.map((branch: string) => (
+            <button
+              key={branch}
+              type="button"
+              onClick={() => {
+                mobileDirectionRef.current = 'forward';
+                onSelectBranch(branch);
+                setStep('issues');
+              }}
+              className={cn(
+                'flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors',
+                'hover:bg-white/10',
+                selectedBranch === branch && 'bg-white/5'
+              )}
+            >
+              <BranchIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
+              <span className="flex-1 text-sm text-text-secondary truncate">
+                {branch}
+              </span>
+              {selectedBranch === branch && (
+                <Check className="w-3.5 h-3.5 text-green-500 shrink-0" />
+              )}
+              <ChevronRight className="w-3 h-3 text-text-tertiary shrink-0" />
+            </button>
+          ))
+        ) : (
+          <div className="px-3 py-2 text-sm text-text-tertiary">
+            No branches found
+          </div>
+        )}
+      </>
+    );
+  }
+
+  if (step === 'issues') {
+    const paginatedIssues = filteredIssues.slice(
+      (issuesPage - 1) * ISSUES_PER_PAGE,
+      issuesPage * ISSUES_PER_PAGE
+    );
+
+    return (
+      <>
+        {issuesList.isLoading || issuesList.isFetching ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-4 h-4 animate-spin text-text-tertiary" />
+          </div>
+        ) : paginatedIssues.length > 0 ? (
+          paginatedIssues.map((issue: Issue) => (
+            <button
+              key={issue.number}
+              type="button"
+              onClick={() => onSelectIssue(issue)}
+              className={cn(
+                'flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors',
+                'hover:bg-white/10',
+                selectedIssue?.number === issue.number && 'bg-white/5'
+              )}
+            >
+              <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
+              <span className="flex-1 text-sm text-text-secondary truncate">
+                #{issue.number}: {issue.title}
+              </span>
+              {selectedIssue?.number === issue.number && (
+                <Check className="w-3.5 h-3.5 text-green-500 shrink-0" />
+              )}
+            </button>
+          ))
+        ) : (
+          <div className="px-3 py-2 text-sm text-text-tertiary">
+            No open issues
+          </div>
+        )}
+      </>
+    );
+  }
+
+  return null;
+}
+
+// ============================================================================
+// UNIFIED SELECTOR (Mobile Drawer) - Main Component
 // ============================================================================
 function MobileSelectorContent({
   step,
@@ -502,304 +857,16 @@ function MobileSelectorContent({
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const prefersReducedMotion = useReducedMotion();
   const mobileDirectionRef = useRef<'forward' | 'back'>('forward');
-  const ACCOUNTS_PER_PAGE = 5;
-  const BRANCHES_PER_PAGE = 10;
-  const ISSUES_PER_PAGE = 10;
 
-  // Calculate total pages
   const totalAccountPages = Math.ceil(installations.length / ACCOUNTS_PER_PAGE);
   const totalBranchPages = Math.ceil(
     filteredBranches.length / BRANCHES_PER_PAGE
   );
   const totalIssuePages = Math.ceil(filteredIssues.length / ISSUES_PER_PAGE);
 
-  // Derive a composite key for animated transitions
   const stepKey =
     step === 'repos' && selectedAccount ? `repos-${selectedAccount.id}` : step;
 
-  // Header based on current step
-  const renderHeader = () => {
-    return (
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-border-subtle">
-        {step !== 'repos' && (
-          <button
-            type="button"
-            onClick={() => {
-              mobileDirectionRef.current = 'back';
-              if (step === 'issues') {
-                setStep('branches');
-              } else if (step === 'branches') {
-                setStep('repos');
-              }
-            }}
-            className="p-1 -ml-1 rounded hover:bg-white/10 text-text-secondary"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-        )}
-
-        {step === 'repos' && !selectedAccount && (
-          <>
-            <GithubIcon className="w-4 h-4 text-text-tertiary" />
-            <input
-              className="flex-1 bg-transparent text-sm text-text-secondary placeholder:text-text-tertiary outline-none"
-              placeholder={
-                installations.length === 1
-                  ? (installations[0]?.accountLogin ?? 'Search accounts...')
-                  : 'Search accounts...'
-              }
-              value={accountSearchQuery}
-              onChange={(e) => {
-                setAccountSearchQuery(e.target.value);
-                setAccountsPage(1);
-              }}
-              autoComplete="off"
-              spellCheck={false}
-            />
-          </>
-        )}
-
-        {step === 'repos' && selectedAccount && (
-          <>
-            <button
-              type="button"
-              onClick={() => {
-                mobileDirectionRef.current = 'back';
-                setSelectedAccount(null);
-              }}
-              className="p-1 -ml-1 rounded hover:bg-white/10 text-text-secondary"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <GithubIcon className="w-4 h-4 text-text-tertiary" />
-            <span className="text-sm text-text-secondary">
-              {selectedAccount.accountLogin ?? 'Unknown Account'}
-            </span>
-          </>
-        )}
-
-        {step === 'branches' && (
-          <>
-            <BranchIcon className="w-4 h-4 text-text-tertiary" />
-            <span className="text-sm text-text-secondary">Select branch</span>
-            <input
-              className="flex-1 bg-transparent text-sm text-text-secondary placeholder:text-text-tertiary outline-none"
-              placeholder="Search branches..."
-              value={branchSearchQuery}
-              onChange={(e) => {
-                setBranchSearchQuery(e.target.value);
-                setBranchesPage(1);
-              }}
-              autoComplete="off"
-              spellCheck={false}
-            />
-          </>
-        )}
-
-        {step === 'issues' && (
-          <>
-            <GithubIcon className="w-4 h-4 text-text-tertiary" />
-            <span className="text-sm text-text-secondary">Select issue</span>
-            <input
-              className="flex-1 bg-transparent text-sm text-text-secondary placeholder:text-text-tertiary outline-none"
-              placeholder="Search issues..."
-              value={issueQuery}
-              onChange={(e) => {
-                setIssueQuery(e.target.value);
-                setIssuesPage(1);
-              }}
-              autoComplete="off"
-              spellCheck={false}
-            />
-          </>
-        )}
-      </div>
-    );
-  };
-
-  // Content based on current step
-  const renderContent = () => {
-    // REPOS STEP - Accounts or Repos
-    if (step === 'repos') {
-      if (selectedAccount) {
-        const accountRepos = installationRepos.find(
-          (r) => r.installationId === selectedAccount.id
-        );
-        return (
-          <>
-            {accountRepos?.repositories &&
-            accountRepos.repositories.length > 0 ? (
-              accountRepos.repositories.map((repo: string) => (
-                <button
-                  key={repo}
-                  type="button"
-                  onClick={() => {
-                    mobileDirectionRef.current = 'forward';
-                    onSelectRepo(repo);
-                    setStep('branches');
-                  }}
-                  className={cn(
-                    'flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors',
-                    'hover:bg-white/10',
-                    selectedRepository === repo && 'bg-white/5'
-                  )}
-                >
-                  <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
-                  <span className="flex-1 text-sm text-text-secondary truncate">
-                    {repo}
-                  </span>
-                  {selectedRepository === repo && (
-                    <Check className="w-3.5 h-3.5 text-green-500 shrink-0" />
-                  )}
-                  <ChevronRight className="w-3 h-3 text-text-tertiary shrink-0" />
-                </button>
-              ))
-            ) : (
-              <div className="px-3 py-2 text-sm text-text-tertiary">
-                No repositories
-              </div>
-            )}
-          </>
-        );
-      }
-
-      const paginatedInstallations = installations.slice(
-        (accountsPage - 1) * ACCOUNTS_PER_PAGE,
-        accountsPage * ACCOUNTS_PER_PAGE
-      );
-
-      return (
-        <>
-          {branchesLoading &&
-          !installationRepos.some((r) => r.repositories.length > 0) ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-4 h-4 animate-spin text-text-tertiary" />
-            </div>
-          ) : (
-            paginatedInstallations.map((account) => {
-              const accountRepos = installationRepos.find(
-                (r) => r.installationId === account.id
-              );
-              const count = accountRepos?.repositories.length ?? 0;
-              return (
-                <button
-                  key={account.id}
-                  type="button"
-                  onClick={() => {
-                    mobileDirectionRef.current = 'forward';
-                    setSelectedAccount(account);
-                  }}
-                  className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-white/10 transition-colors"
-                >
-                  <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
-                  <span className="flex-1 text-sm text-text-secondary truncate">
-                    {account.accountLogin ?? 'Unknown Account'}
-                  </span>
-                  <span className="text-xs text-text-tertiary">{count}</span>
-                  <ChevronRight className="w-3 h-3 text-text-tertiary shrink-0" />
-                </button>
-              );
-            })
-          )}
-        </>
-      );
-    }
-
-    // BRANCHES STEP
-    if (step === 'branches') {
-      const paginatedBranches = filteredBranches.slice(
-        (branchesPage - 1) * BRANCHES_PER_PAGE,
-        branchesPage * BRANCHES_PER_PAGE
-      );
-
-      return (
-        <>
-          {branchesLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-4 h-4 animate-spin text-text-tertiary" />
-            </div>
-          ) : paginatedBranches.length > 0 ? (
-            paginatedBranches.map((branch: string) => (
-              <button
-                key={branch}
-                type="button"
-                onClick={() => {
-                  mobileDirectionRef.current = 'forward';
-                  onSelectBranch(branch);
-                  setStep('issues');
-                }}
-                className={cn(
-                  'flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors',
-                  'hover:bg-white/10',
-                  selectedBranch === branch && 'bg-white/5'
-                )}
-              >
-                <BranchIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
-                <span className="flex-1 text-sm text-text-secondary truncate">
-                  {branch}
-                </span>
-                {selectedBranch === branch && (
-                  <Check className="w-3.5 h-3.5 text-green-500 shrink-0" />
-                )}
-                <ChevronRight className="w-3 h-3 text-text-tertiary shrink-0" />
-              </button>
-            ))
-          ) : (
-            <div className="px-3 py-2 text-sm text-text-tertiary">
-              No branches found
-            </div>
-          )}
-        </>
-      );
-    }
-
-    // ISSUES STEP
-    if (step === 'issues') {
-      const paginatedIssues = filteredIssues.slice(
-        (issuesPage - 1) * ISSUES_PER_PAGE,
-        issuesPage * ISSUES_PER_PAGE
-      );
-
-      return (
-        <>
-          {issuesList.isLoading || issuesList.isFetching ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-4 h-4 animate-spin text-text-tertiary" />
-            </div>
-          ) : paginatedIssues.length > 0 ? (
-            paginatedIssues.map((issue: Issue) => (
-              <button
-                key={issue.number}
-                type="button"
-                onClick={() => onSelectIssue(issue)}
-                className={cn(
-                  'flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors',
-                  'hover:bg-white/10',
-                  selectedIssue?.number === issue.number && 'bg-white/5'
-                )}
-              >
-                <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
-                <span className="flex-1 text-sm text-text-secondary truncate">
-                  #{issue.number}: {issue.title}
-                </span>
-                {selectedIssue?.number === issue.number && (
-                  <Check className="w-3.5 h-3.5 text-green-500 shrink-0" />
-                )}
-              </button>
-            ))
-          ) : (
-            <div className="px-3 py-2 text-sm text-text-tertiary">
-              No open issues
-            </div>
-          )}
-        </>
-      );
-    }
-
-    return null;
-  };
-
-  // Calculate which pagination to show
   const showPagination =
     totalAccountPages > 1 && step === 'repos' && !selectedAccount;
   const showBranchesPagination = totalBranchPages > 1 && step === 'branches';
@@ -807,7 +874,23 @@ function MobileSelectorContent({
 
   return (
     <div className="flex flex-col">
-      {renderHeader()}
+      <MobileSelectorHeader
+        step={step}
+        mobileDirectionRef={mobileDirectionRef}
+        setStep={setStep}
+        selectedAccount={selectedAccount}
+        setSelectedAccount={setSelectedAccount}
+        installations={installations}
+        accountSearchQuery={accountSearchQuery}
+        setAccountSearchQuery={setAccountSearchQuery}
+        setAccountsPage={setAccountsPage}
+        branchSearchQuery={branchSearchQuery}
+        setBranchSearchQuery={setBranchSearchQuery}
+        setBranchesPage={setBranchesPage}
+        issueQuery={issueQuery}
+        setIssueQuery={setIssueQuery}
+        setIssuesPage={setIssuesPage}
+      />
       <div className="min-h-[250px] max-h-[250px] overflow-hidden relative">
         <AnimatePresence initial={false}>
           <m.div
@@ -825,7 +908,28 @@ function MobileSelectorContent({
             transition={{ duration: 0.12, ease: [0.23, 1, 0.32, 1] }}
             className="overflow-y-auto p-1 h-[250px]"
           >
-            {renderContent()}
+            <MobileSelectorBody
+              step={step}
+              selectedAccount={selectedAccount}
+              setSelectedAccount={setSelectedAccount}
+              mobileDirectionRef={mobileDirectionRef}
+              installationRepos={installationRepos}
+              onSelectRepo={onSelectRepo}
+              setStep={setStep}
+              selectedRepository={selectedRepository}
+              branchesLoading={branchesLoading}
+              installations={installations}
+              accountsPage={accountsPage}
+              filteredBranches={filteredBranches}
+              branchesPage={branchesPage}
+              onSelectBranch={onSelectBranch}
+              selectedBranch={selectedBranch}
+              filteredIssues={filteredIssues}
+              issuesPage={issuesPage}
+              issuesList={issuesList}
+              onSelectIssue={onSelectIssue}
+              selectedIssue={selectedIssue}
+            />
           </m.div>
         </AnimatePresence>
       </div>
@@ -881,17 +985,14 @@ export function RepoBranchIssueSelector({
 }: RepoBranchIssueSelectorProps) {
   const [isMobile, setIsMobile] = useState(false);
 
-  // Desktop: separate state for each dropdown
   const [accountsOpen, setAccountsOpen] = useState(false);
   const [branchesOpen, setBranchesOpen] = useState(false);
   const [issuesOpen, setIssuesOpen] = useState(false);
 
-  // Desktop pagination states
   const [accountsPage, setAccountsPage] = useState(1);
   const [branchesPage, setBranchesPage] = useState(1);
   const [issuesPage, setIssuesPage] = useState(1);
 
-  // Mobile: unified drawer state
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileStep, setMobileStep] = useState<Step>(openStep);
   const prevOpenStepRef = useRef(openStep);
@@ -947,13 +1048,10 @@ export function RepoBranchIssueSelector({
     setMobileOpen(false);
   };
 
-  // If opening from specific trigger, hide other triggers (for standalone usage)
   if (openStep === 'branches') {
-    // Only show branch selector (not implemented here, would need separate component)
     return null;
   }
   if (openStep === 'issues') {
-    // Only show issue selector (not implemented here, would need separate component)
     return null;
   }
 
@@ -1083,7 +1181,6 @@ export function RepoBranchIssueSelector({
   // DESKTOP: Separate Dropdowns for each scope
   // ============================================================================
 
-  // Repo/Accounts Dropdown
   const AccountsDropdown = (
     <DropdownMenu open={accountsOpen} onOpenChange={setAccountsOpen}>
       <DropdownMenuTrigger asChild>
@@ -1123,7 +1220,6 @@ export function RepoBranchIssueSelector({
     </DropdownMenu>
   );
 
-  // Branches Dropdown
   const BranchesDropdown = selectedRepository ? (
     <DropdownMenu open={branchesOpen} onOpenChange={setBranchesOpen}>
       <DropdownMenuTrigger asChild>
@@ -1157,7 +1253,6 @@ export function RepoBranchIssueSelector({
     </DropdownMenu>
   ) : null;
 
-  // Issues Dropdown
   const IssuesDropdown = selectedBranch ? (
     <DropdownMenu open={issuesOpen} onOpenChange={setIssuesOpen}>
       <DropdownMenuTrigger asChild>
