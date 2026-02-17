@@ -1,12 +1,49 @@
 'use client';
 
 import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useReducer } from 'react';
 
 interface CollapsibleTextProps {
   children: React.ReactNode;
   collapsedHeight?: number;
   buttonLabel?: string;
+}
+
+type CollapseState = {
+  isCollapsible: boolean;
+  expanded: boolean;
+  maxHeight: number | null;
+};
+
+type CollapseAction =
+  | { type: 'RESET' }
+  | { type: 'SET_COLLAPSIBLE'; maxHeight: number }
+  | { type: 'SET_NOT_COLLAPSIBLE' }
+  | { type: 'EXPAND'; fullHeight: number }
+  | { type: 'CLEAR_MAX_HEIGHT' };
+
+function collapseReducer(
+  state: CollapseState,
+  action: CollapseAction
+): CollapseState {
+  switch (action.type) {
+    case 'RESET':
+      return { isCollapsible: false, expanded: true, maxHeight: null };
+    case 'SET_COLLAPSIBLE':
+      return {
+        isCollapsible: true,
+        expanded: false,
+        maxHeight: action.maxHeight,
+      };
+    case 'SET_NOT_COLLAPSIBLE':
+      return { isCollapsible: false, expanded: true, maxHeight: null };
+    case 'EXPAND':
+      return { ...state, expanded: true, maxHeight: action.fullHeight };
+    case 'CLEAR_MAX_HEIGHT':
+      return { ...state, maxHeight: null };
+    default:
+      return state;
+  }
 }
 
 export default function CollapsibleText({
@@ -16,15 +53,15 @@ export default function CollapsibleText({
 }: CollapsibleTextProps) {
   const isMobile = useMediaQuery('(max-width: 1280px)');
   const contentRef = useRef<HTMLDivElement | null>(null);
-  const [collapseState, setCollapseState] = useState({
+  const [collapseState, dispatch] = useReducer(collapseReducer, {
     isCollapsible: false,
     expanded: false,
-    maxHeight: null as number | null,
+    maxHeight: null,
   });
 
   useEffect(() => {
     if (!isMobile) {
-      setCollapseState({ isCollapsible: false, expanded: true, maxHeight: null });
+      dispatch({ type: 'RESET' });
       return;
     }
     const el = contentRef.current;
@@ -33,9 +70,9 @@ export default function CollapsibleText({
     }
     const full = el.scrollHeight;
     if (full > collapsedHeight) {
-      setCollapseState({ isCollapsible: true, expanded: false, maxHeight: collapsedHeight });
+      dispatch({ type: 'SET_COLLAPSIBLE', maxHeight: collapsedHeight });
     } else {
-      setCollapseState({ isCollapsible: false, expanded: true, maxHeight: null });
+      dispatch({ type: 'SET_NOT_COLLAPSIBLE' });
     }
   }, [isMobile, collapsedHeight]);
 
@@ -45,8 +82,8 @@ export default function CollapsibleText({
       return;
     }
     const full = el.scrollHeight;
-    setCollapseState((prev) => ({ ...prev, expanded: true, maxHeight: full }));
-    window.setTimeout(() => setCollapseState((prev) => ({ ...prev, maxHeight: null })), 320);
+    dispatch({ type: 'EXPAND', fullHeight: full });
+    window.setTimeout(() => dispatch({ type: 'CLEAR_MAX_HEIGHT' }), 320);
   };
 
   return (
@@ -55,7 +92,12 @@ export default function CollapsibleText({
         className={
           'overflow-hidden transition-[max-height] duration-300 ease-out'
         }
-        style={{ maxHeight: collapseState.maxHeight === null ? undefined : collapseState.maxHeight }}
+        style={{
+          maxHeight:
+            collapseState.maxHeight === null
+              ? undefined
+              : collapseState.maxHeight,
+        }}
       >
         <div ref={contentRef}>{children}</div>
       </div>

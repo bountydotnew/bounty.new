@@ -1,18 +1,43 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useReducer, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { authClient } from '@bounty/auth/client';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
+interface PageState {
+  isLoading: boolean;
+  error: string | null;
+}
+
+type PageAction =
+  | { type: 'START' }
+  | { type: 'SET_ERROR'; error: string }
+  | { type: 'STOP_LOADING' }
+  | { type: 'RESET' };
+
+const initialState: PageState = { isLoading: true, error: null };
+
+function pageReducer(state: PageState, action: PageAction): PageState {
+  switch (action.type) {
+    case 'START':
+      return { isLoading: true, error: null };
+    case 'SET_ERROR':
+      return { isLoading: false, error: action.error };
+    case 'STOP_LOADING':
+      return { ...state, isLoading: false };
+    case 'RESET':
+      return initialState;
+    default:
+      return state;
+  }
+}
+
 export default function OrgInvitationAcceptPage() {
   const params = useParams();
   const router = useRouter();
-  const [pageState, setPageState] = useState<{
-    isLoading: boolean;
-    error: string | null;
-  }>({ isLoading: true, error: null });
+  const [state, dispatch] = useReducer(pageReducer, initialState);
   const invitationId = params.id as string;
   const hasAccepted = useRef(false);
 
@@ -23,7 +48,7 @@ export default function OrgInvitationAcceptPage() {
 
     const acceptInvitation = async () => {
       if (!invitationId) {
-        setPageState({ isLoading: false, error: 'Invalid invitation link' });
+        dispatch({ type: 'SET_ERROR', error: 'Invalid invitation link' });
         return;
       }
 
@@ -39,7 +64,7 @@ export default function OrgInvitationAcceptPage() {
         if (result.error) {
           console.error('Failed to accept invitation:', result.error);
           const msg = result.error.message ?? 'Failed to accept invitation';
-          setPageState({ isLoading: false, error: msg });
+          dispatch({ type: 'SET_ERROR', error: msg });
           toast.error(msg);
         } else {
           toast.success('Invitation accepted! Welcome to the team.');
@@ -60,11 +85,11 @@ export default function OrgInvitationAcceptPage() {
       } catch (err) {
         if (cancelled) return;
         console.error('Error accepting invitation:', err);
-        setPageState({ isLoading: false, error: 'An unexpected error occurred' });
+        dispatch({ type: 'SET_ERROR', error: 'An unexpected error occurred' });
         toast.error('An unexpected error occurred');
       } finally {
         if (!cancelled) {
-          setPageState((prev) => ({ ...prev, isLoading: false }));
+          dispatch({ type: 'STOP_LOADING' });
         }
       }
     };
@@ -76,7 +101,7 @@ export default function OrgInvitationAcceptPage() {
     };
   }, [invitationId, router]);
 
-  if (pageState.isLoading) {
+  if (state.isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
@@ -92,7 +117,7 @@ export default function OrgInvitationAcceptPage() {
     );
   }
 
-  if (pageState.error) {
+  if (state.error) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center max-w-md px-4">
@@ -114,7 +139,7 @@ export default function OrgInvitationAcceptPage() {
           <h1 className="text-xl font-semibold text-foreground mb-2">
             Invitation Error
           </h1>
-          <p className="text-text-muted mb-6">{pageState.error}</p>
+          <p className="text-text-muted mb-6">{state.error}</p>
           <div className="flex flex-col gap-2">
             <Link
               href="/dashboard"

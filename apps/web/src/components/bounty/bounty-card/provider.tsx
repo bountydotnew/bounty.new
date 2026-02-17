@@ -16,73 +16,18 @@ import {
 import type { Bounty } from '@/types/dashboard';
 import { addNavigationContext } from '@bounty/ui/hooks/use-navigation-context';
 
-// Regex patterns for parsing GitHub URLs - defined at module scope for performance
 const GITHUB_REPO_REGEX = /github\.com\/([^/]+\/[^/]+)/i;
 const GITHUB_ISSUE_REGEX = /github\.com\/[^/]+\/[^/]+\/issues\/(\d+)/i;
 
-interface BountyCardProviderProps {
-  children: ReactNode;
-  /** The bounty data */
-  bounty: Bounty;
-  /** Stats for the bounty */
-  stats?: {
-    commentCount: number;
-    voteCount: number;
-    submissionCount: number;
-    isVoted: boolean;
-    bookmarked: boolean;
-  };
-  /** Optional delete callback from parent */
-  onDelete?: () => void;
-}
-
-/**
- * BountyCard Provider
- *
- * Wraps the card with state and actions following Vercel composition patterns.
- * The provider is the ONLY place that knows how state is managed.
- * Child components only depend on the context interface.
- *
- * @example
- * ```tsx
- * <BountyCardProvider bounty={bounty} stats={stats}>
- *   <CompactBountyCard />
- * </BountyCardProvider>
- * ```
- */
-export function BountyCardProvider({
-  children,
-  bounty,
-  stats,
-  onDelete,
-}: BountyCardProviderProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { session } = useSession();
-  const queryClient = useQueryClient();
-
-  // Dialog states
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showCancellationDialog, setShowCancellationDialog] = useState(false);
-  const [cancellationReason, setCancellationReason] = useState('');
-
-  const isOwner = session?.user?.id
-    ? bounty.creator.id === session.user.id
-    : false;
-
-  // Determine funding and cancellation status
+function useBountyCardQueries(bounty: Bounty, userId: string | undefined) {
+  const isOwner = userId ? bounty.creator.id === userId : false;
   const isFunded =
     bounty.paymentStatus === 'held' || bounty.paymentStatus === 'released';
   const isCancelled = bounty.status === 'cancelled';
   const isRefunded = bounty.paymentStatus === 'refunded';
-
-  const canPin = session?.user?.id
-    ? bounty.creator.id === session.user.id
-    : false;
-
+  const canPin = userId ? bounty.creator.id === userId : false;
   const canRequestCancellation = isOwner && isFunded;
 
-  // Query cancellation status
   const cancellationStatusQuery = useQuery({
     ...trpc.bounties.getCancellationStatus.queryOptions({
       bountyId: bounty.id,
@@ -97,7 +42,31 @@ export function BountyCardProvider({
     isOwner &&
     (!isFunded || hasPendingCancellation || isCancelled || isRefunded);
 
-  // Mutations
+  return {
+    isOwner,
+    isFunded,
+    isCancelled,
+    isRefunded,
+    canPin,
+    canRequestCancellation,
+    hasPendingCancellation,
+    canDelete,
+  };
+}
+
+function useBountyCardMutations(
+  bounty: Bounty,
+  canDelete: boolean,
+  canRequestCancellation: boolean,
+  hasPendingCancellation: boolean,
+  onDelete: (() => void) | undefined,
+  setShowDeleteDialog: (show: boolean) => void,
+  setShowCancellationDialog: (show: boolean) => void,
+  setCancellationReason: (reason: string) => void,
+  cancellationReason: string
+) {
+  const queryClient = useQueryClient();
+
   const togglePinMutation = useMutation({
     mutationFn: async (input: { bountyId: string }) => {
       return await trpcClient.bounties.toggleBountyPin.mutate(input);
@@ -115,12 +84,10 @@ export function BountyCardProvider({
     },
   });
 
-  // Helper to check if a query key is bounty-related
   const isBountyQuery = (query: { queryKey: unknown }) => {
     const key = query.queryKey;
     if (Array.isArray(key) && key.length > 0) {
       const first = key[0];
-      // tRPC query keys are like [['bounties', 'fetchAllBounties'], {input}]
       if (Array.isArray(first) && first.length > 0 && first[0] === 'bounties') {
         return true;
       }
@@ -133,19 +100,15 @@ export function BountyCardProvider({
       return await trpcClient.bounties.deleteBounty.mutate({ id: bounty.id });
     },
     onMutate: async () => {
-      // Cancel any outgoing refetches to avoid overwriting optimistic update
       await queryClient.cancelQueries({ predicate: isBountyQuery });
 
-      // Snapshot current cache for rollback
       const previousData = new Map<unknown, unknown>();
 
-      // Get all bounty queries and store their current data
       const queries = queryClient.getQueriesData({ predicate: isBountyQuery });
       for (const [queryKey, data] of queries) {
         previousData.set(queryKey, data);
       }
 
-      // Optimistically remove the bounty from all cached queries
       queryClient.setQueriesData(
         { predicate: isBountyQuery },
         (oldData: unknown) => {
@@ -153,7 +116,6 @@ export function BountyCardProvider({
             return oldData;
           }
 
-          // Handle paginated response: { success, data: [...], pagination: {...} }
           if (
             typeof oldData === 'object' &&
             oldData !== null &&
@@ -178,12 +140,10 @@ export function BountyCardProvider({
             };
           }
 
-          // Handle array of bounties directly
           if (Array.isArray(oldData)) {
             return oldData.filter((b: { id?: string }) => b?.id !== bounty.id);
           }
 
-          // Handle single bounty query
           if (
             typeof oldData === 'object' &&
             oldData !== null &&
@@ -199,7 +159,6 @@ export function BountyCardProvider({
         }
       );
 
-      // Close dialog immediately for snappy feedback
       setShowDeleteDialog(false);
 
       return { previousData };
@@ -207,7 +166,6 @@ export function BountyCardProvider({
     onSuccess: () => {
       toast.success('Bounty deleted');
 
-      // If we're on the bounty detail page, redirect to dashboard
       if (
         typeof window !== 'undefined' &&
         window.location.pathname.includes('/bounty/')
@@ -219,7 +177,6 @@ export function BountyCardProvider({
     },
     onError: (error: Error, _variables, context) => {
       toast.error(`Failed to delete bounty: ${error.message}`);
-      // Rollback to previous data
       if (context?.previousData) {
         for (const [queryKey, data] of context.previousData) {
           queryClient.setQueryData(queryKey as unknown[], data);
@@ -227,7 +184,6 @@ export function BountyCardProvider({
       }
     },
     onSettled: () => {
-      // Always refetch after error or success to ensure consistency
       queryClient.invalidateQueries({ predicate: isBountyQuery });
     },
   });
@@ -264,35 +220,6 @@ export function BountyCardProvider({
     },
   });
 
-  // Actions
-  const handleClick = useCallback(() => {
-    const url = addNavigationContext(`/bounty/${bounty.id}`, pathname);
-    router.push(url);
-  }, [bounty.id, pathname, router]);
-
-  // Prefetch bounty detail on hover/focus for faster navigation
-  const prefetchBountyDetail = useCallback(() => {
-    queryClient.prefetchQuery(
-      trpc.bounties.getBountyDetail.queryOptions({ id: bounty.id })
-    );
-    // Also prefetch related data
-    queryClient.prefetchQuery(
-      trpc.bounties.getBountyVotes.queryOptions({ bountyId: bounty.id })
-    );
-  }, [bounty.id, queryClient]);
-
-  const togglePin = useCallback(() => {
-    if (canPin && !togglePinMutation.isPending) {
-      togglePinMutation.mutate({ bountyId: bounty.id });
-    }
-  }, [canPin, togglePinMutation.isPending, togglePinMutation, bounty.id]);
-
-  const openDeleteDialog = useCallback(() => {
-    if (canDelete) {
-      setShowDeleteDialog(true);
-    }
-  }, [canDelete]);
-
   const confirmDelete = useCallback(() => {
     if (!canDelete || deleteBountyMutation.isPending) {
       return;
@@ -304,24 +231,14 @@ export function BountyCardProvider({
       return;
     }
 
-    // Dialog is closed in onMutate for instant feedback
     deleteBountyMutation.mutate();
   }, [
     canDelete,
     deleteBountyMutation.isPending,
     deleteBountyMutation,
     onDelete,
+    setShowDeleteDialog,
   ]);
-
-  const cancelDelete = useCallback(() => {
-    setShowDeleteDialog(false);
-  }, []);
-
-  const openCancellationDialog = useCallback(() => {
-    if (canRequestCancellation && !hasPendingCancellation) {
-      setShowCancellationDialog(true);
-    }
-  }, [canRequestCancellation, hasPendingCancellation]);
 
   const confirmCancellation = useCallback(() => {
     if (
@@ -348,7 +265,24 @@ export function BountyCardProvider({
     cancelCancellationRequestMutation.mutate({ bountyId: bounty.id });
   }, [cancelCancellationRequestMutation, bounty.id]);
 
-  // Computed values
+  return {
+    togglePinMutation,
+    deleteBountyMutation,
+    requestCancellationMutation,
+    cancelCancellationRequestMutation,
+    confirmDelete,
+    confirmCancellation,
+    cancelCancellationRequest,
+  };
+}
+
+function useBountyCardComputedValues(
+  bounty: Bounty,
+  isCancelled: boolean,
+  isRefunded: boolean,
+  hasPendingCancellation: boolean,
+  isFunded: boolean
+) {
   const getBadgeInfo = useCallback(() => {
     if (isCancelled || isRefunded) {
       return {
@@ -430,7 +364,130 @@ export function BountyCardProvider({
 
   const formattedAmount = `$${bounty.amount.toLocaleString()}`;
 
-  // State object
+  return {
+    getBadgeInfo,
+    creatorName,
+    creatorInitial,
+    avatarColor,
+    repoDisplay,
+    issueDisplay,
+    linearDisplay,
+    formattedAmount,
+  };
+}
+
+interface BountyCardProviderProps {
+  children: ReactNode;
+  bounty: Bounty;
+  stats?: {
+    commentCount: number;
+    voteCount: number;
+    submissionCount: number;
+    isVoted: boolean;
+    bookmarked: boolean;
+  };
+  onDelete?: () => void;
+}
+
+export function BountyCardProvider({
+  children,
+  bounty,
+  stats,
+  onDelete,
+}: BountyCardProviderProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { session } = useSession();
+  const queryClient = useQueryClient();
+
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showCancellationDialog, setShowCancellationDialog] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState('');
+
+  const {
+    isOwner,
+    isFunded,
+    isCancelled,
+    isRefunded,
+    canPin,
+    canRequestCancellation,
+    hasPendingCancellation,
+    canDelete,
+  } = useBountyCardQueries(bounty, session?.user?.id);
+
+  const {
+    togglePinMutation,
+    deleteBountyMutation,
+    requestCancellationMutation,
+    cancelCancellationRequestMutation,
+    confirmDelete,
+    confirmCancellation,
+    cancelCancellationRequest,
+  } = useBountyCardMutations(
+    bounty,
+    canDelete,
+    canRequestCancellation,
+    hasPendingCancellation,
+    onDelete,
+    setShowDeleteDialog,
+    setShowCancellationDialog,
+    setCancellationReason,
+    cancellationReason
+  );
+
+  const {
+    getBadgeInfo,
+    creatorName,
+    creatorInitial,
+    avatarColor,
+    repoDisplay,
+    issueDisplay,
+    linearDisplay,
+    formattedAmount,
+  } = useBountyCardComputedValues(
+    bounty,
+    isCancelled,
+    isRefunded,
+    hasPendingCancellation,
+    isFunded
+  );
+
+  const handleClick = useCallback(() => {
+    const url = addNavigationContext(`/bounty/${bounty.id}`, pathname);
+    router.push(url);
+  }, [bounty.id, pathname, router]);
+
+  const prefetchBountyDetail = useCallback(() => {
+    queryClient.prefetchQuery(
+      trpc.bounties.getBountyDetail.queryOptions({ id: bounty.id })
+    );
+    queryClient.prefetchQuery(
+      trpc.bounties.getBountyVotes.queryOptions({ bountyId: bounty.id })
+    );
+  }, [bounty.id, queryClient]);
+
+  const togglePin = useCallback(() => {
+    if (canPin && !togglePinMutation.isPending) {
+      togglePinMutation.mutate({ bountyId: bounty.id });
+    }
+  }, [canPin, togglePinMutation.isPending, togglePinMutation, bounty.id]);
+
+  const openDeleteDialog = useCallback(() => {
+    if (canDelete) {
+      setShowDeleteDialog(true);
+    }
+  }, [canDelete]);
+
+  const cancelDelete = useCallback(() => {
+    setShowDeleteDialog(false);
+  }, []);
+
+  const openCancellationDialog = useCallback(() => {
+    if (canRequestCancellation && !hasPendingCancellation) {
+      setShowCancellationDialog(true);
+    }
+  }, [canRequestCancellation, hasPendingCancellation]);
+
   const state: BountyCardState = useMemo(
     () => ({
       bounty,
@@ -483,7 +540,6 @@ export function BountyCardProvider({
     ]
   );
 
-  // Actions object
   const actions: BountyCardActions = useMemo(
     () => ({
       handleClick,
@@ -509,8 +565,6 @@ export function BountyCardProvider({
     ]
   );
 
-  // Meta object
-  // Note: React setters are stable and don't need to be in deps
   const meta: BountyCardMeta = useMemo(
     () => ({
       onDelete,
@@ -521,12 +575,7 @@ export function BountyCardProvider({
       cancellationReason,
       setCancellationReason,
     }),
-    [
-      onDelete,
-      showDeleteDialog,
-      showCancellationDialog,
-      cancellationReason,
-    ]
+    [onDelete, showDeleteDialog, showCancellationDialog, cancellationReason]
   );
 
   const contextValue: BountyCardContextValue = useMemo(

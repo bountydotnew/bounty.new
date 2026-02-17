@@ -129,7 +129,7 @@ export function TutorialHighlight({
               <div className="relative">
                 {/* Tooltip card */}
                 <div className="px-3 py-2 rounded-lg bg-surface-1 border border-border-default shadow-xl whitespace-nowrap">
-                  <span className="text-sm text-white font-medium">
+                  <span className="text-sm text-foreground font-medium">
                     {tooltip}
                   </span>
                 </div>

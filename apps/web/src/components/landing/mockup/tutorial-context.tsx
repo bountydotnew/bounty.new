@@ -1,11 +1,10 @@
-"use client";
+'use client';
 
 import {
   createContext,
   useCallback,
   useContext,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -30,15 +29,13 @@ interface TutorialProviderProps {
   autoStart?: boolean;
 }
 
-export function TutorialProvider({ children, autoStart = true }: TutorialProviderProps) {
+export function TutorialProvider({
+  children,
+  autoStart = true,
+}: TutorialProviderProps) {
   const [stepIndex, setStepIndex] = useState(0);
-  const [isActive, setIsActive] = useState(autoStart);
-
-  const prevAutoStartRef = useRef(autoStart);
-  if (prevAutoStartRef.current !== autoStart) {
-    prevAutoStartRef.current = autoStart;
-    setIsActive(autoStart);
-  }
+  // Use autoStart only for initial state - uncontrolled pattern
+  const [isActive, setIsActive] = useState(() => autoStart);
 
   const currentStep = TUTORIAL_STEPS[stepIndex] ?? 'complete';
 
@@ -78,7 +75,9 @@ export function TutorialProvider({ children, autoStart = true }: TutorialProvide
   );
 
   return (
-    <TutorialContext.Provider value={value}>{children}</TutorialContext.Provider>
+    <TutorialContext.Provider value={value}>
+      {children}
+    </TutorialContext.Provider>
   );
 }
 

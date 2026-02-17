@@ -51,9 +51,6 @@ function GithubIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────────────────────────────────────
 
 interface ContentBlock {
   title: string;
@@ -63,10 +60,6 @@ interface ContentBlock {
   visual: React.ReactNode;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Visual: Linear Integration
-// Replicates Linear's actual issue list UI with sidebar + list view
-// ─────────────────────────────────────────────────────────────────────────────
 
 function LinearBountyVisual() {
   const issues = [
@@ -331,9 +324,6 @@ function LinearBountyVisual() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Visual: Process Steps
-// ─────────────────────────────────────────────────────────────────────────────
 
 function ProcessStepsVisual() {
   const steps = [
@@ -380,11 +370,6 @@ function ProcessStepsVisual() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Visual: Bounty Creation Form
-// Matches the real bounty creation form from the app (chip selectors, textarea,
-// repo selector, create button)
-// ─────────────────────────────────────────────────────────────────────────────
 
 function CreateBountyFlowVisual() {
   return (
@@ -487,10 +472,6 @@ function CreateBountyFlowVisual() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Visual: GitHub Integration
-// Matches GitHub's actual issue page UI (dark theme)
-// ─────────────────────────────────────────────────────────────────────────────
 
 function GitHubIntegrationVisual() {
   return (
@@ -555,9 +536,6 @@ function GitHubIntegrationVisual() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Content Block Row
-// ─────────────────────────────────────────────────────────────────────────────
 
 function ContentBlockRow({
   block,
@@ -605,9 +583,6 @@ function ContentBlockRow({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Main Export
-// ─────────────────────────────────────────────────────────────────────────────
 
 const CONTENT_BLOCKS: ContentBlock[] = [
   {

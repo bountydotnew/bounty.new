@@ -962,226 +962,26 @@ function MobileSelectorContent({
   );
 }
 
-export function RepoBranchIssueSelector({
+function DesktopRepoDropdown({
+  accountsOpen,
+  setAccountsOpen,
   selectedRepository,
-  selectedBranch,
-  selectedIssue,
   installations,
   installationRepos,
-  filteredBranches,
-  filteredIssues,
-  branchesLoading,
-  issuesList,
-  accountSearchQuery,
-  setAccountSearchQuery,
-  branchSearchQuery,
-  setBranchSearchQuery,
-  issueQuery,
-  setIssueQuery,
+  accountsPage,
+  setAccountsPage,
   onSelectRepo,
-  onSelectBranch,
-  onSelectIssue,
-  openStep = 'repos',
-}: RepoBranchIssueSelectorProps) {
-  const [isMobile, setIsMobile] = useState(false);
-
-  const [accountsOpen, setAccountsOpen] = useState(false);
-  const [branchesOpen, setBranchesOpen] = useState(false);
-  const [issuesOpen, setIssuesOpen] = useState(false);
-
-  const [accountsPage, setAccountsPage] = useState(1);
-  const [branchesPage, setBranchesPage] = useState(1);
-  const [issuesPage, setIssuesPage] = useState(1);
-
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [mobileStep, setMobileStep] = useState<Step>(openStep);
-  const prevOpenStepRef = useRef(openStep);
-  if (prevOpenStepRef.current !== openStep) {
-    prevOpenStepRef.current = openStep;
-    setMobileStep(openStep);
-  }
-  const [mobileAccountsPage, setMobileAccountsPage] = useState(1);
-  const [mobileBranchesPage, setMobileBranchesPage] = useState(1);
-  const [mobileIssuesPage, setMobileIssuesPage] = useState(1);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 640);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  const prevAccountQueryRef = useRef(accountSearchQuery);
-  const prevBranchQueryRef = useRef(branchSearchQuery);
-  const prevIssueQRef = useRef(issueQuery);
-
-  if (accountSearchQuery !== prevAccountQueryRef.current) {
-    prevAccountQueryRef.current = accountSearchQuery;
-    setAccountsPage(1);
-    setMobileAccountsPage(1);
-  }
-
-  if (branchSearchQuery !== prevBranchQueryRef.current) {
-    prevBranchQueryRef.current = branchSearchQuery;
-    setBranchesPage(1);
-    setMobileBranchesPage(1);
-  }
-
-  if (issueQuery !== prevIssueQRef.current) {
-    prevIssueQRef.current = issueQuery;
-    setIssuesPage(1);
-    setMobileIssuesPage(1);
-  }
-
-  const handleSelectRepo = (repo: string) => {
-    onSelectRepo(repo);
-  };
-
-  const handleSelectBranch = (branch: string) => {
-    onSelectBranch(branch);
-  };
-
-  const handleSelectIssue = (issue: Issue) => {
-    onSelectIssue(issue);
-    setMobileOpen(false);
-  };
-
-  if (openStep === 'branches') {
-    return null;
-  }
-  if (openStep === 'issues') {
-    return null;
-  }
-
-  // ============================================================================
-  // MOBILE: Unified Drawer
-  // ============================================================================
-  if (isMobile) {
-    return (
-      <Drawer open={mobileOpen} onOpenChange={setMobileOpen}>
-        <DrawerTrigger asChild>
-          <div className="flex items-center gap-4">
-            {/* Repo trigger */}
-            <button
-              type="button"
-              onClick={() => {
-                setMobileStep('repos');
-                setMobileOpen(true);
-                setMobileAccountsPage(1);
-              }}
-              className={cn(
-                'flex items-center gap-2 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5',
-                'hover:bg-white/10',
-                mobileOpen && mobileStep === 'repos' && 'bg-white/10'
-              )}
-            >
-              <GithubIcon className="w-4 h-4" />
-              {selectedRepository ? (
-                <span className="text-sm text-foreground">
-                  {selectedRepository}
-                </span>
-              ) : (
-                <span className="text-sm">Select repository</span>
-              )}
-              <ChevronSortIcon className="size-2" />
-            </button>
-
-            {/* Branch trigger */}
-            {selectedRepository && (
-              <>
-                <div className="w-px h-4 bg-surface-3 shrink-0" />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileStep('branches');
-                    setMobileOpen(true);
-                    setMobileBranchesPage(1);
-                  }}
-                  className={cn(
-                    'flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5',
-                    'hover:bg-white/10',
-                    mobileOpen && mobileStep === 'branches' && 'bg-white/10'
-                  )}
-                >
-                  <BranchIcon className="w-3.5 h-3.5" />
-                  <span className="text-[14px] text-text-muted">
-                    {selectedBranch}
-                  </span>
-                  <ChevronSortIcon className="size-2" />
-                </button>
-              </>
-            )}
-
-            {/* Issue trigger */}
-            {selectedBranch && (
-              <>
-                <div className="w-px h-4 bg-surface-3 shrink-0" />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileStep('issues');
-                    setMobileOpen(true);
-                    setMobileIssuesPage(1);
-                  }}
-                  className={cn(
-                    'flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5',
-                    'hover:bg-white/10',
-                    mobileOpen && mobileStep === 'issues' && 'bg-white/10'
-                  )}
-                >
-                  <GithubIcon className="w-3.5 h-3.5" />
-                  <span className="text-[14px] text-text-muted">
-                    {selectedIssue ? `#${selectedIssue.number}` : 'Issue'}
-                  </span>
-                  <ChevronSortIcon className="size-2" />
-                </button>
-              </>
-            )}
-          </div>
-        </DrawerTrigger>
-        <DrawerContent className="border-border-subtle bg-surface-1 rounded-t-xl">
-          <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-surface-3 shrink-0" />
-          <MobileSelectorContent
-            step={mobileStep}
-            selectedRepository={selectedRepository}
-            selectedBranch={selectedBranch}
-            selectedIssue={selectedIssue}
-            installations={installations}
-            installationRepos={installationRepos}
-            filteredBranches={filteredBranches}
-            filteredIssues={filteredIssues}
-            branchesLoading={branchesLoading}
-            issuesList={issuesList}
-            accountSearchQuery={accountSearchQuery}
-            setAccountSearchQuery={setAccountSearchQuery}
-            branchSearchQuery={branchSearchQuery}
-            setBranchSearchQuery={setBranchSearchQuery}
-            issueQuery={issueQuery}
-            setIssueQuery={setIssueQuery}
-            setStep={setMobileStep}
-            onSelectRepo={handleSelectRepo}
-            onSelectBranch={handleSelectBranch}
-            onSelectIssue={handleSelectIssue}
-            onClose={() => setMobileOpen(false)}
-            accountsPage={mobileAccountsPage}
-            setAccountsPage={setMobileAccountsPage}
-            branchesPage={mobileBranchesPage}
-            setBranchesPage={setMobileBranchesPage}
-            issuesPage={mobileIssuesPage}
-            setIssuesPage={setMobileIssuesPage}
-          />
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
-  // ============================================================================
-  // DESKTOP: Separate Dropdowns for each scope
-  // ============================================================================
-
-  const AccountsDropdown = (
+}: {
+  accountsOpen: boolean;
+  setAccountsOpen: (v: boolean) => void;
+  selectedRepository: string;
+  installations: Account[];
+  installationRepos: InstallationRepos[];
+  accountsPage: number;
+  setAccountsPage: (v: number) => void;
+  onSelectRepo: (repo: string) => void;
+}) {
+  return (
     <DropdownMenu open={accountsOpen} onOpenChange={setAccountsOpen}>
       <DropdownMenuTrigger asChild>
         <button
@@ -1213,14 +1013,34 @@ export function RepoBranchIssueSelector({
           installationRepos={installationRepos}
           accountsPage={accountsPage}
           setAccountsPage={setAccountsPage}
-          onSelectRepo={handleSelectRepo}
+          onSelectRepo={onSelectRepo}
           onClose={() => setAccountsOpen(false)}
         />
       </DropdownMenuContent>
     </DropdownMenu>
   );
+}
 
-  const BranchesDropdown = selectedRepository ? (
+function DesktopBranchDropdown({
+  branchesOpen,
+  setBranchesOpen,
+  selectedBranch,
+  filteredBranches,
+  branchesPage,
+  setBranchesPage,
+  branchesLoading,
+  onSelectBranch,
+}: {
+  branchesOpen: boolean;
+  setBranchesOpen: (v: boolean) => void;
+  selectedBranch: string;
+  filteredBranches: string[];
+  branchesPage: number;
+  setBranchesPage: (v: number) => void;
+  branchesLoading: boolean;
+  onSelectBranch: (branch: string) => void;
+}) {
+  return (
     <DropdownMenu open={branchesOpen} onOpenChange={setBranchesOpen}>
       <DropdownMenuTrigger asChild>
         <button
@@ -1246,14 +1066,34 @@ export function RepoBranchIssueSelector({
           branchesPage={branchesPage}
           setBranchesPage={setBranchesPage}
           branchesLoading={branchesLoading}
-          onSelectBranch={handleSelectBranch}
+          onSelectBranch={onSelectBranch}
           onClose={() => setBranchesOpen(false)}
         />
       </DropdownMenuContent>
     </DropdownMenu>
-  ) : null;
+  );
+}
 
-  const IssuesDropdown = selectedBranch ? (
+function DesktopIssueDropdown({
+  issuesOpen,
+  setIssuesOpen,
+  selectedIssue,
+  filteredIssues,
+  issuesPage,
+  setIssuesPage,
+  issuesList,
+  onSelectIssue,
+}: {
+  issuesOpen: boolean;
+  setIssuesOpen: (v: boolean) => void;
+  selectedIssue: { number: number; title: string; url: string } | null;
+  filteredIssues: Issue[];
+  issuesPage: number;
+  setIssuesPage: (v: number) => void;
+  issuesList: { isLoading: boolean; isFetching: boolean; data?: Issue[] };
+  onSelectIssue: (issue: Issue) => void;
+}) {
+  return (
     <DropdownMenu open={issuesOpen} onOpenChange={setIssuesOpen}>
       <DropdownMenuTrigger asChild>
         <button
@@ -1282,18 +1122,399 @@ export function RepoBranchIssueSelector({
           issuesPage={issuesPage}
           setIssuesPage={setIssuesPage}
           issuesList={issuesList}
-          onSelectIssue={handleSelectIssue}
+          onSelectIssue={onSelectIssue}
           onClose={() => setIssuesOpen(false)}
         />
       </DropdownMenuContent>
     </DropdownMenu>
-  ) : null;
+  );
+}
+
+function MobileDrawerView({
+  mobileOpen,
+  setMobileOpen,
+  mobileStep,
+  setMobileStep,
+  selectedRepository,
+  selectedBranch,
+  selectedIssue,
+  installations,
+  installationRepos,
+  filteredBranches,
+  filteredIssues,
+  branchesLoading,
+  issuesList,
+  accountSearchQuery,
+  setAccountSearchQuery,
+  branchSearchQuery,
+  setBranchSearchQuery,
+  issueQuery,
+  setIssueQuery,
+  mobileAccountsPage,
+  setMobileAccountsPage,
+  mobileBranchesPage,
+  setMobileBranchesPage,
+  mobileIssuesPage,
+  setMobileIssuesPage,
+  onSelectRepo,
+  onSelectBranch,
+  onSelectIssue,
+}: {
+  mobileOpen: boolean;
+  setMobileOpen: (v: boolean) => void;
+  mobileStep: Step;
+  setMobileStep: (v: Step) => void;
+  selectedRepository: string;
+  selectedBranch: string;
+  selectedIssue: { number: number; title: string; url: string } | null;
+  installations: Account[];
+  installationRepos: InstallationRepos[];
+  filteredBranches: string[];
+  filteredIssues: Issue[];
+  branchesLoading: boolean;
+  issuesList: { isLoading: boolean; isFetching: boolean; data?: Issue[] };
+  accountSearchQuery: string;
+  setAccountSearchQuery: (query: string) => void;
+  branchSearchQuery: string;
+  setBranchSearchQuery: (query: string) => void;
+  issueQuery: string;
+  setIssueQuery: (query: string) => void;
+  mobileAccountsPage: number;
+  setMobileAccountsPage: (v: number) => void;
+  mobileBranchesPage: number;
+  setMobileBranchesPage: (v: number) => void;
+  mobileIssuesPage: number;
+  setMobileIssuesPage: (v: number) => void;
+  onSelectRepo: (repo: string) => void;
+  onSelectBranch: (branch: string) => void;
+  onSelectIssue: (issue: Issue) => void;
+}) {
+  return (
+    <Drawer open={mobileOpen} onOpenChange={setMobileOpen}>
+      <DrawerTrigger asChild>
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => {
+              setMobileStep('repos');
+              setMobileOpen(true);
+              setMobileAccountsPage(1);
+            }}
+            className={cn(
+              'flex items-center gap-2 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5',
+              'hover:bg-white/10',
+              mobileOpen && mobileStep === 'repos' && 'bg-white/10'
+            )}
+          >
+            <GithubIcon className="w-4 h-4" />
+            {selectedRepository ? (
+              <span className="text-sm text-foreground">
+                {selectedRepository}
+              </span>
+            ) : (
+              <span className="text-sm">Select repository</span>
+            )}
+            <ChevronSortIcon className="size-2" />
+          </button>
+
+          {selectedRepository && (
+            <>
+              <div className="w-px h-4 bg-surface-3 shrink-0" />
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileStep('branches');
+                  setMobileOpen(true);
+                  setMobileBranchesPage(1);
+                }}
+                className={cn(
+                  'flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5',
+                  'hover:bg-white/10',
+                  mobileOpen && mobileStep === 'branches' && 'bg-white/10'
+                )}
+              >
+                <BranchIcon className="w-3.5 h-3.5" />
+                <span className="text-[14px] text-text-muted">
+                  {selectedBranch}
+                </span>
+                <ChevronSortIcon className="size-2" />
+              </button>
+            </>
+          )}
+
+          {selectedBranch && (
+            <>
+              <div className="w-px h-4 bg-surface-3 shrink-0" />
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileStep('issues');
+                  setMobileOpen(true);
+                  setMobileIssuesPage(1);
+                }}
+                className={cn(
+                  'flex items-center gap-1.5 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5',
+                  'hover:bg-white/10',
+                  mobileOpen && mobileStep === 'issues' && 'bg-white/10'
+                )}
+              >
+                <GithubIcon className="w-3.5 h-3.5" />
+                <span className="text-[14px] text-text-muted">
+                  {selectedIssue ? `#${selectedIssue.number}` : 'Issue'}
+                </span>
+                <ChevronSortIcon className="size-2" />
+              </button>
+            </>
+          )}
+        </div>
+      </DrawerTrigger>
+      <DrawerContent className="border-border-subtle bg-surface-1 rounded-t-xl">
+        <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-surface-3 shrink-0" />
+        <MobileSelectorContent
+          step={mobileStep}
+          selectedRepository={selectedRepository}
+          selectedBranch={selectedBranch}
+          selectedIssue={selectedIssue}
+          installations={installations}
+          installationRepos={installationRepos}
+          filteredBranches={filteredBranches}
+          filteredIssues={filteredIssues}
+          branchesLoading={branchesLoading}
+          issuesList={issuesList}
+          accountSearchQuery={accountSearchQuery}
+          setAccountSearchQuery={setAccountSearchQuery}
+          branchSearchQuery={branchSearchQuery}
+          setBranchSearchQuery={setBranchSearchQuery}
+          issueQuery={issueQuery}
+          setIssueQuery={setIssueQuery}
+          setStep={setMobileStep}
+          onSelectRepo={onSelectRepo}
+          onSelectBranch={onSelectBranch}
+          onSelectIssue={onSelectIssue}
+          onClose={() => setMobileOpen(false)}
+          accountsPage={mobileAccountsPage}
+          setAccountsPage={setMobileAccountsPage}
+          branchesPage={mobileBranchesPage}
+          setBranchesPage={setMobileBranchesPage}
+          issuesPage={mobileIssuesPage}
+          setIssuesPage={setMobileIssuesPage}
+        />
+      </DrawerContent>
+    </Drawer>
+  );
+}
+
+export function RepoBranchIssueSelector({
+  selectedRepository,
+  selectedBranch,
+  selectedIssue,
+  installations,
+  installationRepos,
+  filteredBranches,
+  filteredIssues,
+  branchesLoading,
+  issuesList,
+  accountSearchQuery,
+  setAccountSearchQuery,
+  branchSearchQuery,
+  setBranchSearchQuery,
+  issueQuery,
+  setIssueQuery,
+  onSelectRepo,
+  onSelectBranch,
+  onSelectIssue,
+  openStep = 'repos',
+}: RepoBranchIssueSelectorProps) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  const [dropdownState, setDropdownState] = useState({
+    accountsOpen: false,
+    branchesOpen: false,
+    issuesOpen: false,
+  });
+
+  const [pagination, setPagination] = useState({
+    accountsPage: 1,
+    branchesPage: 1,
+    issuesPage: 1,
+    mobileAccountsPage: 1,
+    mobileBranchesPage: 1,
+    mobileIssuesPage: 1,
+  });
+
+  const [mobileNav, setMobileNav] = useState({
+    open: false,
+    step: openStep as Step,
+  });
+  const prevOpenStepRef = useRef(openStep);
+  if (prevOpenStepRef.current !== openStep) {
+    prevOpenStepRef.current = openStep;
+    setMobileNav((prev) => ({ ...prev, step: openStep }));
+  }
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const prevAccountQueryRef = useRef(accountSearchQuery);
+  const prevBranchQueryRef = useRef(branchSearchQuery);
+  const prevIssueQRef = useRef(issueQuery);
+
+  if (accountSearchQuery !== prevAccountQueryRef.current) {
+    prevAccountQueryRef.current = accountSearchQuery;
+    setPagination((prev) => ({
+      ...prev,
+      accountsPage: 1,
+      mobileAccountsPage: 1,
+    }));
+  }
+
+  if (branchSearchQuery !== prevBranchQueryRef.current) {
+    prevBranchQueryRef.current = branchSearchQuery;
+    setPagination((prev) => ({
+      ...prev,
+      branchesPage: 1,
+      mobileBranchesPage: 1,
+    }));
+  }
+
+  if (issueQuery !== prevIssueQRef.current) {
+    prevIssueQRef.current = issueQuery;
+    setPagination((prev) => ({ ...prev, issuesPage: 1, mobileIssuesPage: 1 }));
+  }
+
+  const { accountsOpen, branchesOpen, issuesOpen } = dropdownState;
+  const setAccountsOpen = (v: boolean) =>
+    setDropdownState((prev) => ({ ...prev, accountsOpen: v }));
+  const setBranchesOpen = (v: boolean) =>
+    setDropdownState((prev) => ({ ...prev, branchesOpen: v }));
+  const setIssuesOpen = (v: boolean) =>
+    setDropdownState((prev) => ({ ...prev, issuesOpen: v }));
+
+  const {
+    accountsPage,
+    branchesPage,
+    issuesPage,
+    mobileAccountsPage,
+    mobileBranchesPage,
+    mobileIssuesPage,
+  } = pagination;
+  const setAccountsPage = (v: number) =>
+    setPagination((prev) => ({ ...prev, accountsPage: v }));
+  const setBranchesPage = (v: number) =>
+    setPagination((prev) => ({ ...prev, branchesPage: v }));
+  const setIssuesPage = (v: number) =>
+    setPagination((prev) => ({ ...prev, issuesPage: v }));
+  const setMobileAccountsPage = (v: number) =>
+    setPagination((prev) => ({ ...prev, mobileAccountsPage: v }));
+  const setMobileBranchesPage = (v: number) =>
+    setPagination((prev) => ({ ...prev, mobileBranchesPage: v }));
+  const setMobileIssuesPage = (v: number) =>
+    setPagination((prev) => ({ ...prev, mobileIssuesPage: v }));
+
+  const mobileOpen = mobileNav.open;
+  const mobileStep = mobileNav.step;
+  const setMobileOpen = (v: boolean) =>
+    setMobileNav((prev) => ({ ...prev, open: v }));
+  const setMobileStep = (v: Step) =>
+    setMobileNav((prev) => ({ ...prev, step: v }));
+
+  const handleSelectRepo = (repo: string) => {
+    onSelectRepo(repo);
+  };
+
+  const handleSelectBranch = (branch: string) => {
+    onSelectBranch(branch);
+  };
+
+  const handleSelectIssue = (issue: Issue) => {
+    onSelectIssue(issue);
+    setMobileOpen(false);
+  };
+
+  if (openStep === 'branches') {
+    return null;
+  }
+  if (openStep === 'issues') {
+    return null;
+  }
+
+  if (isMobile) {
+    return (
+      <MobileDrawerView
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
+        mobileStep={mobileStep}
+        setMobileStep={setMobileStep}
+        selectedRepository={selectedRepository}
+        selectedBranch={selectedBranch}
+        selectedIssue={selectedIssue}
+        installations={installations}
+        installationRepos={installationRepos}
+        filteredBranches={filteredBranches}
+        filteredIssues={filteredIssues}
+        branchesLoading={branchesLoading}
+        issuesList={issuesList}
+        accountSearchQuery={accountSearchQuery}
+        setAccountSearchQuery={setAccountSearchQuery}
+        branchSearchQuery={branchSearchQuery}
+        setBranchSearchQuery={setBranchSearchQuery}
+        issueQuery={issueQuery}
+        setIssueQuery={setIssueQuery}
+        mobileAccountsPage={mobileAccountsPage}
+        setMobileAccountsPage={setMobileAccountsPage}
+        mobileBranchesPage={mobileBranchesPage}
+        setMobileBranchesPage={setMobileBranchesPage}
+        mobileIssuesPage={mobileIssuesPage}
+        setMobileIssuesPage={setMobileIssuesPage}
+        onSelectRepo={handleSelectRepo}
+        onSelectBranch={handleSelectBranch}
+        onSelectIssue={handleSelectIssue}
+      />
+    );
+  }
 
   return (
     <div className="flex items-center gap-4">
-      {AccountsDropdown}
-      {BranchesDropdown}
-      {IssuesDropdown}
+      <DesktopRepoDropdown
+        accountsOpen={accountsOpen}
+        setAccountsOpen={setAccountsOpen}
+        selectedRepository={selectedRepository}
+        installations={installations}
+        installationRepos={installationRepos}
+        accountsPage={accountsPage}
+        setAccountsPage={setAccountsPage}
+        onSelectRepo={handleSelectRepo}
+      />
+      {selectedRepository && (
+        <DesktopBranchDropdown
+          branchesOpen={branchesOpen}
+          setBranchesOpen={setBranchesOpen}
+          selectedBranch={selectedBranch}
+          filteredBranches={filteredBranches}
+          branchesPage={branchesPage}
+          setBranchesPage={setBranchesPage}
+          branchesLoading={branchesLoading}
+          onSelectBranch={handleSelectBranch}
+        />
+      )}
+      {selectedBranch && (
+        <DesktopIssueDropdown
+          issuesOpen={issuesOpen}
+          setIssuesOpen={setIssuesOpen}
+          selectedIssue={selectedIssue}
+          filteredIssues={filteredIssues}
+          issuesPage={issuesPage}
+          setIssuesPage={setIssuesPage}
+          issuesList={issuesList}
+          onSelectIssue={handleSelectIssue}
+        />
+      )}
     </div>
   );
 }

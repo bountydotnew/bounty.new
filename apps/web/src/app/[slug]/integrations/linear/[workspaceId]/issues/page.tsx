@@ -30,6 +30,7 @@ import { cn } from '@bounty/ui/lib/utils';
 import type {
   LinearWorkflowState,
   LinearProject,
+  LinearIssue,
 } from '@bounty/api/driver/linear-client';
 
 interface FilterState {
@@ -54,16 +55,9 @@ const PRIORITY_COLORS: Record<number, string> = {
   0: 'bg-neutral-500',
 };
 
-function LinearIssuesContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const params = useParams();
-  const workspaceId = params.workspaceId as string;
-  const orgPath = useOrgPath();
+function useLinearIssuesData() {
   const { linearWorkspace, hasLinear, refreshLinear, isLinearLoading } =
     useIntegrations();
-
-  const selectedIssueId = searchParams?.get('issue');
 
   const [filters, setFilters] = useState<FilterState>({
     status: [],
@@ -71,7 +65,6 @@ function LinearIssuesContent() {
     projectId: null,
   });
 
-  // Fetch workflow states and projects in parallel for filter dropdowns
   const [workflowStatesQuery, projectsQuery] = useQueries({
     queries: [
       trpc.linear.getWorkflowStates.queryOptions(
@@ -84,7 +77,6 @@ function LinearIssuesContent() {
   const workflowStatesData = workflowStatesQuery.data;
   const projectsData = projectsQuery.data;
 
-  // Issues query is separate as it depends on filter state
   const {
     data: issuesData,
     isLoading: issuesLoading,
@@ -146,251 +138,389 @@ function LinearIssuesContent() {
     filters.priority.length > 0 ||
     filters.projectId !== null;
 
-  if (!hasLinear) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-        <div className="w-full max-w-md text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-2 mb-6">
-            <LinearIcon className="w-8 h-8 text-text-primary" />
-          </div>
-          <h1 className="text-2xl font-semibold text-text-primary mb-2">
-            Connect Linear
-          </h1>
-          <p className="text-sm text-text-muted mb-6">
-            Connect your workspace to view issues
-          </p>
-          <Button
-            onClick={() => router.push(orgPath('/integrations/linear'))}
-            size="lg"
-          >
-            Go to Linear integration
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  const workflowStates = workflowStatesData?.states ?? [];
-  const projects = projectsData?.projects ?? [];
-  const issues = issuesData?.issues ?? [];
-
   const activeFilterCount =
     filters.status.length +
     filters.priority.length +
     (filters.projectId ? 1 : 0);
 
+  const workflowStates: LinearWorkflowState[] =
+    workflowStatesData?.states ?? [];
+  const projects: LinearProject[] = projectsData?.projects ?? [];
+  const issues: LinearIssue[] = issuesData?.issues ?? [];
+
+  return {
+    linearWorkspace,
+    hasLinear,
+    isLinearLoading,
+    filters,
+    workflowStates,
+    projects,
+    issues,
+    issuesLoading,
+    hasActiveFilters,
+    activeFilterCount,
+    handleRefresh,
+    toggleStatusFilter,
+    togglePriorityFilter,
+    setProjectFilter,
+    clearFilters,
+  };
+}
+
+function LinearNotConnectedState() {
+  const router = useRouter();
+  const orgPath = useOrgPath();
+
   return (
-    <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-semibold text-text-primary mb-1">
-            Issues
-          </h1>
-          <p className="text-sm text-text-secondary">
-            {issuesLoading
-              ? '...'
-              : `${issues.length} issue${issues.length !== 1 ? 's' : ''}`}
-          </p>
+    <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+      <div className="w-full max-w-md text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-2 mb-6">
+          <LinearIcon className="w-8 h-8 text-text-primary" />
         </div>
+        <h1 className="text-2xl font-semibold text-text-primary mb-2">
+          Connect Linear
+        </h1>
+        <p className="text-sm text-text-muted mb-6">
+          Connect your workspace to view issues
+        </p>
+        <Button
+          onClick={() => router.push(orgPath('/integrations/linear'))}
+          size="lg"
+        >
+          Go to Linear integration
+        </Button>
+      </div>
+    </div>
+  );
+}
 
-        <div className="flex items-center gap-2">
-          <a
-            href={linearWorkspace?.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="h-9 px-4 rounded-lg border border-border-subtle text-sm text-text-secondary hover:bg-surface-2 transition-colors flex items-center gap-2"
-          >
-            <ExternalLink className="w-4 h-4" />
-            <span className="hidden sm:inline">Open in Linear</span>
-          </a>
-
-          <Button
-            onClick={handleRefresh}
-            disabled={isLinearLoading}
-            variant="outline"
-            size="icon"
-            aria-label="Refresh"
-          >
-            <RefreshCw
-              className={cn('w-4 h-4', isLinearLoading && 'animate-spin')}
-            />
-          </Button>
-        </div>
+function IssuesPageHeader({
+  issuesLoading,
+  issues,
+  linearWorkspaceUrl,
+  isLinearLoading,
+  onRefresh,
+}: {
+  issuesLoading: boolean;
+  issues: LinearIssue[];
+  linearWorkspaceUrl: string | undefined;
+  isLinearLoading: boolean;
+  onRefresh: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between mb-6">
+      <div>
+        <h1 className="text-xl font-semibold text-text-primary mb-1">Issues</h1>
+        <p className="text-sm text-text-secondary">
+          {issuesLoading
+            ? '...'
+            : `${issues.length} issue${issues.length !== 1 ? 's' : ''}`}
+        </p>
       </div>
 
-      {/* Filter Bar */}
-      <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <div className="flex items-center gap-2 text-text-muted">
-          <Filter className="w-4 h-4" />
-          <span className="text-sm">Filter</span>
-        </div>
+      <div className="flex items-center gap-2">
+        <a
+          href={linearWorkspaceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="h-9 px-4 rounded-lg border border-border-subtle text-sm text-text-secondary hover:bg-surface-2 transition-colors flex items-center gap-2"
+        >
+          <ExternalLink className="w-4 h-4" />
+          <span className="hidden sm:inline">Open in Linear</span>
+        </a>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant={filters.status.length > 0 ? 'secondary' : 'outline'}
-              size="sm"
-            >
-              Status
-              <ChevronDown className="w-3.5 h-3.5 opacity-50" />
-              {filters.status.length > 0 && (
-                <span className="w-5 h-5 rounded-full bg-surface-3 text-text-primary text-xs flex items-center justify-center">
-                  {filters.status.length}
-                </span>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="min-w-[180px]">
-            {workflowStates.length > 0 ? (
-              workflowStates.map((state: LinearWorkflowState) => (
-                <DropdownMenuCheckboxItem
-                  key={state.id}
-                  checked={filters.status.includes(state.id)}
-                  onCheckedChange={() => toggleStatusFilter(state.id)}
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: state.color }}
-                    />
-                    {state.name}
-                  </div>
-                </DropdownMenuCheckboxItem>
-              ))
-            ) : (
-              <div className="px-2 py-1.5 text-sm text-text-tertiary">
-                No states available
-              </div>
+        <Button
+          onClick={onRefresh}
+          disabled={isLinearLoading}
+          variant="outline"
+          size="icon"
+          aria-label="Refresh"
+        >
+          <RefreshCw
+            className={cn('w-4 h-4', isLinearLoading && 'animate-spin')}
+          />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function IssuesFilterBar({
+  filters,
+  workflowStates,
+  projects,
+  hasActiveFilters,
+  activeFilterCount,
+  toggleStatusFilter,
+  togglePriorityFilter,
+  setProjectFilter,
+  clearFilters,
+}: {
+  filters: FilterState;
+  workflowStates: LinearWorkflowState[];
+  projects: LinearProject[];
+  hasActiveFilters: boolean;
+  activeFilterCount: number;
+  toggleStatusFilter: (statusId: string) => void;
+  togglePriorityFilter: (priority: number) => void;
+  setProjectFilter: (projectId: string | null) => void;
+  clearFilters: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 mb-6 flex-wrap">
+      <div className="flex items-center gap-2 text-text-muted">
+        <Filter className="w-4 h-4" />
+        <span className="text-sm">Filter</span>
+      </div>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant={filters.status.length > 0 ? 'secondary' : 'outline'}
+            size="sm"
+          >
+            Status
+            <ChevronDown className="w-3.5 h-3.5 opacity-50" />
+            {filters.status.length > 0 && (
+              <span className="w-5 h-5 rounded-full bg-surface-3 text-text-primary text-xs flex items-center justify-center">
+                {filters.status.length}
+              </span>
             )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant={filters.priority.length > 0 ? 'secondary' : 'outline'}
-              size="sm"
-            >
-              Priority
-              <ChevronDown className="w-3.5 h-3.5 opacity-50" />
-              {filters.priority.length > 0 && (
-                <span className="w-5 h-5 rounded-full bg-surface-3 text-text-primary text-xs flex items-center justify-center">
-                  {filters.priority.length}
-                </span>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="min-w-[140px]">
-            {([0, 1, 2, 3, 4] as const).map((priority) => (
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="min-w-[180px]">
+          {workflowStates.length > 0 ? (
+            workflowStates.map((state: LinearWorkflowState) => (
               <DropdownMenuCheckboxItem
-                key={priority}
-                checked={filters.priority.includes(priority)}
-                onCheckedChange={() => togglePriorityFilter(priority)}
+                key={state.id}
+                checked={filters.status.includes(state.id)}
+                onCheckedChange={() => toggleStatusFilter(state.id)}
               >
                 <div className="flex items-center gap-2">
                   <div
-                    className={cn(
-                      'w-2 h-2 rounded-full',
-                      PRIORITY_COLORS[priority]
-                    )}
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: state.color }}
                   />
-                  {PRIORITY_LABELS[priority]}
+                  {state.name}
                 </div>
               </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+            ))
+          ) : (
+            <div className="px-2 py-1.5 text-sm text-text-tertiary">
+              No states available
+            </div>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant={filters.projectId ? 'secondary' : 'outline'}
-              size="sm"
-            >
-              Project
-              <ChevronDown className="w-3.5 h-3.5 opacity-50" />
-              {filters.projectId && (
-                <span className="w-5 h-5 rounded-full bg-surface-3 text-text-primary text-xs flex items-center justify-center">
-                  1
-                </span>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="min-w-[180px]">
-            <DropdownMenuItem onClick={() => setProjectFilter(null)}>
-              All projects
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {projects.length > 0 ? (
-              projects.map((project: LinearProject) => (
-                <DropdownMenuItem
-                  key={project.id}
-                  onClick={() => setProjectFilter(project.id)}
-                >
-                  {project.name}
-                </DropdownMenuItem>
-              ))
-            ) : (
-              <div className="px-2 py-1.5 text-sm text-text-tertiary">
-                No projects available
-              </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant={filters.priority.length > 0 ? 'secondary' : 'outline'}
+            size="sm"
+          >
+            Priority
+            <ChevronDown className="w-3.5 h-3.5 opacity-50" />
+            {filters.priority.length > 0 && (
+              <span className="w-5 h-5 rounded-full bg-surface-3 text-text-primary text-xs flex items-center justify-center">
+                {filters.priority.length}
+              </span>
             )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="min-w-[140px]">
+          {([0, 1, 2, 3, 4] as const).map((priority) => (
+            <DropdownMenuCheckboxItem
+              key={priority}
+              checked={filters.priority.includes(priority)}
+              onCheckedChange={() => togglePriorityFilter(priority)}
+            >
+              <div className="flex items-center gap-2">
+                <div
+                  className={cn(
+                    'w-2 h-2 rounded-full',
+                    PRIORITY_COLORS[priority]
+                  )}
+                />
+                {PRIORITY_LABELS[priority]}
+              </div>
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant={filters.projectId ? 'secondary' : 'outline'}
+            size="sm"
+          >
+            Project
+            <ChevronDown className="w-3.5 h-3.5 opacity-50" />
+            {filters.projectId && (
+              <span className="w-5 h-5 rounded-full bg-surface-3 text-text-primary text-xs flex items-center justify-center">
+                1
+              </span>
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="min-w-[180px]">
+          <DropdownMenuItem onClick={() => setProjectFilter(null)}>
+            All projects
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          {projects.length > 0 ? (
+            projects.map((project: LinearProject) => (
+              <DropdownMenuItem
+                key={project.id}
+                onClick={() => setProjectFilter(project.id)}
+              >
+                {project.name}
+              </DropdownMenuItem>
+            ))
+          ) : (
+            <div className="px-2 py-1.5 text-sm text-text-tertiary">
+              No projects available
+            </div>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {hasActiveFilters && (
+        <Button onClick={clearFilters} variant="ghost" size="sm">
+          <X className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Clear all</span>
+          <span className="sm:hidden">{activeFilterCount}</span>
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function IssuesList({
+  issuesLoading,
+  issues,
+  hasActiveFilters,
+  clearFilters,
+  selectedIssueId,
+  workspaceId,
+}: {
+  issuesLoading: boolean;
+  issues: LinearIssue[];
+  hasActiveFilters: boolean;
+  clearFilters: () => void;
+  selectedIssueId: string | null | undefined;
+  workspaceId: string;
+}) {
+  if (issuesLoading) {
+    return (
+      <div className="py-12 flex justify-center">
+        <div className="w-6 h-6 border-2 border-border-default border-t-text-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (issues.length === 0) {
+    return (
+      <div className="py-12 flex flex-col items-center justify-center text-center">
+        <div className="w-12 h-12 rounded-xl bg-surface-2 border border-border-subtle flex items-center justify-center mb-3">
+          <Inbox className="w-5 h-5 text-text-muted" />
+        </div>
+        <p className="text-sm text-text-primary">
+          {hasActiveFilters ? 'No issues match your filters' : 'No issues yet'}
+        </p>
+        <p className="text-xs text-text-muted mt-1">
+          {hasActiveFilters
+            ? 'Try adjusting your filters'
+            : 'Issues from your workspace will appear here'}
+        </p>
         {hasActiveFilters && (
-          <Button onClick={clearFilters} variant="ghost" size="sm">
-            <X className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Clear all</span>
-            <span className="sm:hidden">{activeFilterCount}</span>
+          <Button
+            onClick={clearFilters}
+            variant="ghost"
+            size="sm"
+            className="mt-3"
+          >
+            Clear filters
           </Button>
         )}
       </div>
+    );
+  }
 
-      {/* Issues List */}
-      {issuesLoading ? (
-        <div className="py-12 flex justify-center">
-          <div className="w-6 h-6 border-2 border-border-default border-t-text-primary rounded-full animate-spin" />
-        </div>
-      ) : issues.length === 0 ? (
-        <div className="py-12 flex flex-col items-center justify-center text-center">
-          <div className="w-12 h-12 rounded-xl bg-surface-2 border border-border-subtle flex items-center justify-center mb-3">
-            <Inbox className="w-5 h-5 text-text-muted" />
-          </div>
-          <p className="text-sm text-text-primary">
-            {hasActiveFilters
-              ? 'No issues match your filters'
-              : 'No issues yet'}
-          </p>
-          <p className="text-xs text-text-muted mt-1">
-            {hasActiveFilters
-              ? 'Try adjusting your filters'
-              : 'Issues from your workspace will appear here'}
-          </p>
-          {hasActiveFilters && (
-            <Button
-              onClick={clearFilters}
-              variant="ghost"
-              size="sm"
-              className="mt-3"
-            >
-              Clear filters
-            </Button>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {issues.map((issue) => (
-            <LinearIssueCard
-              key={issue.id}
-              issue={issue}
-              isExpanded={selectedIssueId === issue.id}
-              workspaceId={workspaceId}
-            />
-          ))}
-        </div>
-      )}
+  return (
+    <div className="space-y-3">
+      {issues.map((issue) => (
+        <LinearIssueCard
+          key={issue.id}
+          issue={issue}
+          isExpanded={selectedIssueId === issue.id}
+          workspaceId={workspaceId}
+        />
+      ))}
+    </div>
+  );
+}
+
+function LinearIssuesContent() {
+  const searchParams = useSearchParams();
+  const params = useParams();
+  const workspaceId = params.workspaceId as string;
+
+  const selectedIssueId = searchParams?.get('issue');
+
+  const {
+    linearWorkspace,
+    hasLinear,
+    isLinearLoading,
+    filters,
+    workflowStates,
+    projects,
+    issues,
+    issuesLoading,
+    hasActiveFilters,
+    activeFilterCount,
+    handleRefresh,
+    toggleStatusFilter,
+    togglePriorityFilter,
+    setProjectFilter,
+    clearFilters,
+  } = useLinearIssuesData();
+
+  if (!hasLinear) {
+    return <LinearNotConnectedState />;
+  }
+
+  return (
+    <div>
+      <IssuesPageHeader
+        issuesLoading={issuesLoading}
+        issues={issues}
+        linearWorkspaceUrl={linearWorkspace?.url}
+        isLinearLoading={isLinearLoading}
+        onRefresh={handleRefresh}
+      />
+
+      <IssuesFilterBar
+        filters={filters}
+        workflowStates={workflowStates}
+        projects={projects}
+        hasActiveFilters={hasActiveFilters}
+        activeFilterCount={activeFilterCount}
+        toggleStatusFilter={toggleStatusFilter}
+        togglePriorityFilter={togglePriorityFilter}
+        setProjectFilter={setProjectFilter}
+        clearFilters={clearFilters}
+      />
+
+      <IssuesList
+        issuesLoading={issuesLoading}
+        issues={issues}
+        hasActiveFilters={hasActiveFilters}
+        clearFilters={clearFilters}
+        selectedIssueId={selectedIssueId}
+        workspaceId={workspaceId}
+      />
     </div>
   );
 }

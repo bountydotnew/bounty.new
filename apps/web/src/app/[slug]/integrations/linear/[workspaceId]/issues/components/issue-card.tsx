@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import type { LinearIssue } from '@bounty/api/driver/linear-client';
@@ -65,12 +65,8 @@ export function LinearIssueCard({
   const router = useRouter();
   const queryClient = useQueryClient();
   const orgPath = useOrgPath();
-  const [expanded, setExpanded] = useState(isExpanded);
-  const prevIsExpandedRef = useRef(isExpanded);
-  if (prevIsExpandedRef.current !== isExpanded) {
-    prevIsExpandedRef.current = isExpanded;
-    setExpanded(isExpanded);
-  }
+  // Fully controlled: always use prop as source of truth
+  const expanded = isExpanded;
 
   const prefetchIssueDetail = useCallback(() => {
     queryClient.prefetchQuery(
@@ -84,7 +80,6 @@ export function LinearIssueCard({
   }, [issue.id, queryClient]);
 
   const toggleExpand = () => {
-    setExpanded(!expanded);
     const url = new URL(window.location.href);
     if (expanded) {
       url.searchParams.delete('issue');
@@ -232,9 +227,12 @@ export function LinearIssueCard({
           <div className="p-4 sm:p-5">
             <CreateBountyForm
               issue={issue}
-              onCancel={() => setExpanded(false)}
+              onCancel={() => {
+                const url = new URL(window.location.href);
+                url.searchParams.delete('issue');
+                router.push(url.pathname + url.search, { scroll: false });
+              }}
               onSuccess={() => {
-                setExpanded(false);
                 const url = new URL(window.location.href);
                 url.searchParams.delete('issue');
                 router.push(url.pathname + url.search, { scroll: false });

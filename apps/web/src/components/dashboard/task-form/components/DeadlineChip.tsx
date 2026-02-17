@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useReducer } from 'react';
 import { Controller, type Control } from 'react-hook-form';
 import type { CreateBountyForm } from '@bounty/ui/lib/forms';
 import {
@@ -39,30 +39,57 @@ interface DeadlinePickerProps {
   onChange: (value: string) => void;
 }
 
+type PickerState = {
+  inputValue: string;
+  date: Date | undefined;
+};
+
+type PickerAction =
+  | { type: 'RESET' }
+  | { type: 'SET_DATE'; date: Date; inputValue: string }
+  | { type: 'SET_INPUT'; inputValue: string };
+
+function pickerReducer(state: PickerState, action: PickerAction): PickerState {
+  switch (action.type) {
+    case 'RESET':
+      return { date: undefined, inputValue: '' };
+    case 'SET_DATE':
+      return { date: action.date, inputValue: action.inputValue };
+    case 'SET_INPUT':
+      return { ...state, inputValue: action.inputValue };
+    default:
+      return state;
+  }
+}
+
 function DeadlinePicker({ value, onChange }: DeadlinePickerProps) {
   const [open, setOpen] = useState(false);
-  const [pickerState, setPickerState] = useState(() => ({
+  const [pickerState, dispatch] = useReducer(pickerReducer, {
     inputValue: '',
-    date: parseFieldValue(value) as Date | undefined,
-  }));
+    date: parseFieldValue(value),
+  });
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!value) {
-      setPickerState({ date: undefined, inputValue: '' });
+      dispatch({ type: 'RESET' });
       return;
     }
     const parsed = parseFieldValue(value);
     if (parsed) {
-      setPickerState({ date: parsed, inputValue: formatDate(parsed) });
+      dispatch({
+        type: 'SET_DATE',
+        date: parsed,
+        inputValue: formatDate(parsed),
+      });
       return;
     }
-    setPickerState({ date: undefined, inputValue: value });
+    dispatch({ type: 'SET_INPUT', inputValue: value });
   }, [value]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-    setPickerState((prev) => ({ ...prev, inputValue: newValue }));
+    dispatch({ type: 'SET_INPUT', inputValue: newValue });
 
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
@@ -71,7 +98,11 @@ function DeadlinePicker({ value, onChange }: DeadlinePickerProps) {
     debounceTimeoutRef.current = setTimeout(() => {
       const parsed = parseDate(newValue);
       if (parsed) {
-        setPickerState((prev) => ({ ...prev, date: parsed }));
+        dispatch({
+          type: 'SET_DATE',
+          date: parsed,
+          inputValue: formatDate(parsed),
+        });
         onChange(parsed.toISOString());
       } else {
         onChange(newValue);
@@ -90,10 +121,14 @@ function DeadlinePicker({ value, onChange }: DeadlinePickerProps) {
   const handleCalendarSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
       const isoString = selectedDate.toISOString();
-      setPickerState({ date: selectedDate, inputValue: formatDate(selectedDate) });
+      dispatch({
+        type: 'SET_DATE',
+        date: selectedDate,
+        inputValue: formatDate(selectedDate),
+      });
       onChange(isoString);
     } else {
-      setPickerState({ date: undefined, inputValue: '' });
+      dispatch({ type: 'RESET' });
       onChange('');
     }
     setOpen(false);

@@ -42,15 +42,21 @@ interface BountyFormProps {
   onCancel?: () => void;
 }
 
-export function BountyForm({
+interface FormFields {
+  title: string;
+  description: string;
+  price: string;
+  deadline: string;
+}
+
+function useBountyFormState({
   initialValues,
   entryId,
   onSubmit,
-  onCancel,
-}: BountyFormProps) {
+}: Pick<BountyFormProps, 'initialValues' | 'entryId' | 'onSubmit'>) {
   const router = useRouter();
   const { session } = useSession();
-  const [formFields, setFormFields] = useState({
+  const [formFields, setFormFields] = useState<FormFields>({
     title: initialValues?.title || '',
     description: initialValues?.description || '',
     price: initialValues?.amount || '',
@@ -98,7 +104,13 @@ export function BountyForm({
       deadline: formFields.deadline || undefined,
     };
     localStorage.setItem(BOUNTY_DRAFT_STORAGE_KEY, JSON.stringify(draft));
-  }, [formFields.title, formFields.description, formFields.price, formFields.deadline, onSubmit]);
+  }, [
+    formFields.title,
+    formFields.description,
+    formFields.price,
+    formFields.deadline,
+    onSubmit,
+  ]);
 
   useEffect(() => {
     if (descriptionRef.current) {
@@ -227,156 +239,245 @@ export function BountyForm({
     router.push('/waitlist/dashboard');
   };
 
+  return {
+    formFields,
+    setFormFields,
+    isSubmitting,
+    titleRef,
+    priceRef,
+    descriptionRef,
+    titlePopoverOpen,
+    setTitlePopoverOpen,
+    pricePopoverOpen,
+    setPricePopoverOpen,
+    handleCreateBounty,
+    handleSkipAndJoinWaitlist,
+  };
+}
+
+function BountyFormChips({
+  formFields,
+  setFormFields,
+  titleRef,
+  priceRef,
+  titlePopoverOpen,
+  setTitlePopoverOpen,
+  pricePopoverOpen,
+  setPricePopoverOpen,
+}: {
+  formFields: FormFields;
+  setFormFields: React.Dispatch<React.SetStateAction<FormFields>>;
+  titleRef: React.RefObject<HTMLInputElement | null>;
+  priceRef: React.RefObject<HTMLInputElement | null>;
+  titlePopoverOpen: boolean;
+  setTitlePopoverOpen: (open: boolean) => void;
+  pricePopoverOpen: boolean;
+  setPricePopoverOpen: (open: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1.5 sm:gap-2.5 px-1.5 sm:px-[14px] pt-2 sm:pt-3 pb-1.5 sm:pb-2 overflow-x-auto no-scrollbar">
+      <Popover open={titlePopoverOpen} onOpenChange={setTitlePopoverOpen}>
+        <PopoverTrigger asChild>
+          <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-surface-2 border border-solid border-border-subtle hover:border-border-default transition-colors cursor-pointer">
+            <span
+              className={`text-[16px] leading-5 font-sans ${formFields.title ? 'text-foreground' : 'text-text-muted'}`}
+            >
+              {formFields.title || 'Title'}
+            </span>
+            <ChevronSortIcon className="size-2 text-text-muted shrink-0" />
+          </div>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-64 p-3 bg-surface-1 border-border-subtle rounded-xl"
+          align="start"
+          sideOffset={8}
+        >
+          <input
+            ref={titleRef}
+            type="text"
+            value={formFields.title}
+            onChange={(e) =>
+              setFormFields((prev) => ({ ...prev, title: e.target.value }))
+            }
+            placeholder="Enter a title"
+            className="w-full bg-transparent text-foreground text-[16px] leading-5 outline-none placeholder:text-text-tertiary"
+          />
+        </PopoverContent>
+      </Popover>
+
+      <Popover open={pricePopoverOpen} onOpenChange={setPricePopoverOpen}>
+        <PopoverTrigger asChild>
+          <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-surface-2 border border-solid border-border-subtle hover:border-border-default transition-colors cursor-pointer">
+            <span
+              className={`text-[16px] leading-5 font-sans ${formFields.price ? 'text-foreground' : 'text-text-muted'}`}
+            >
+              {formFields.price
+                ? formFields.price.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                : 'Price'}
+            </span>
+            <ChevronSortIcon className="size-2 text-text-muted shrink-0" />
+          </div>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-48 p-3 bg-surface-1 border-border-subtle rounded-xl"
+          align="start"
+          sideOffset={8}
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-text-tertiary text-[16px]">$</span>
+            <input
+              ref={priceRef}
+              type="text"
+              value={formFields.price}
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^0-9.]/g, '');
+                setFormFields((prev) => ({ ...prev, price: cleaned }));
+              }}
+              placeholder="0.00"
+              className="flex-1 bg-transparent text-foreground text-[16px] leading-5 outline-none placeholder:text-text-tertiary"
+            />
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      <DeadlineChip
+        value={formFields.deadline}
+        onChange={(v) => setFormFields((prev) => ({ ...prev, deadline: v }))}
+      />
+    </div>
+  );
+}
+
+function BountyFormFooter({
+  onCancel,
+  onSubmit,
+  isSubmitting,
+  formFields,
+  handleSkipAndJoinWaitlist,
+  handleCreateBounty,
+}: {
+  onCancel?: () => void;
+  onSubmit?: BountyFormProps['onSubmit'];
+  isSubmitting: boolean;
+  formFields: FormFields;
+  handleSkipAndJoinWaitlist: () => void;
+  handleCreateBounty: () => void;
+}) {
+  return (
+    <div className="flex justify-end items-center gap-1.5 sm:gap-2 px-1.5 sm:px-3 py-2 sm:py-3 flex-wrap">
+      {onCancel && (
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isSubmitting}
+          className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-surface-3 text-foreground text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+        >
+          Cancel
+        </button>
+      )}
+      {!(onSubmit || onCancel) && (
+        <button
+          type="button"
+          onClick={handleSkipAndJoinWaitlist}
+          disabled={isSubmitting}
+          className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-surface-3 text-foreground text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+        >
+          <span className="hidden sm:inline">
+            {isSubmitting ? 'Redirecting...' : 'Skip & join waitlist'}
+          </span>
+          <span className="sm:hidden">
+            {isSubmitting ? 'Redirecting...' : 'Skip'}
+          </span>
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={handleCreateBounty}
+        disabled={isSubmitting || !formFields.title}
+        className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-white text-black text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+      >
+        <GitHub className="w-4 h-4 shrink-0" />
+        <span className="hidden sm:inline">
+          {isSubmitting
+            ? onSubmit
+              ? 'Saving...'
+              : 'Creating...'
+            : onSubmit
+              ? 'Save'
+              : 'Create bounty'}
+        </span>
+        <span className="sm:hidden">
+          {isSubmitting
+            ? onSubmit
+              ? 'Saving...'
+              : 'Creating...'
+            : onSubmit
+              ? 'Save'
+              : 'Create'}
+        </span>
+      </button>
+    </div>
+  );
+}
+
+export function BountyForm({
+  initialValues,
+  entryId,
+  onSubmit,
+  onCancel,
+}: BountyFormProps) {
+  const {
+    formFields,
+    setFormFields,
+    isSubmitting,
+    titleRef,
+    priceRef,
+    descriptionRef,
+    titlePopoverOpen,
+    setTitlePopoverOpen,
+    pricePopoverOpen,
+    setPricePopoverOpen,
+    handleCreateBounty,
+    handleSkipAndJoinWaitlist,
+  } = useBountyFormState({ initialValues, entryId, onSubmit });
+
   return (
     <div className="w-full max-w-[95vw] sm:max-w-[703px] mx-auto">
       <div className="w-full min-h-[140px] sm:min-h-[180px] rounded-[12px] sm:rounded-[21px] bg-surface-1 border border-border-subtle flex flex-col px-2 sm:px-0">
-        {/* Top row: Chips */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 px-1.5 sm:px-[14px] pt-2 sm:pt-3 pb-1.5 sm:pb-2 overflow-x-auto no-scrollbar">
-          {/* Title chip */}
-          <Popover open={titlePopoverOpen} onOpenChange={setTitlePopoverOpen}>
-            <PopoverTrigger asChild>
-              <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-surface-2 border border-solid border-border-subtle hover:border-border-default transition-colors cursor-pointer">
-                <span
-                  className={`text-[16px] leading-5 font-sans ${formFields.title ? 'text-foreground' : 'text-text-muted'}`}
-                >
-                  {formFields.title || 'Title'}
-                </span>
-                <ChevronSortIcon className="size-2 text-text-muted shrink-0" />
-              </div>
-            </PopoverTrigger>
-            <PopoverContent
-              className="w-64 p-3 bg-surface-1 border-border-subtle rounded-xl"
-              align="start"
-              sideOffset={8}
-            >
-              <input
-                ref={titleRef}
-                type="text"
-                value={formFields.title}
-                onChange={(e) => setFormFields(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="Enter a title"
-                className="w-full bg-transparent text-foreground text-[16px] leading-5 outline-none placeholder:text-text-tertiary"
-              />
-            </PopoverContent>
-          </Popover>
+        <BountyFormChips
+          formFields={formFields}
+          setFormFields={setFormFields}
+          titleRef={titleRef}
+          priceRef={priceRef}
+          titlePopoverOpen={titlePopoverOpen}
+          setTitlePopoverOpen={setTitlePopoverOpen}
+          pricePopoverOpen={pricePopoverOpen}
+          setPricePopoverOpen={setPricePopoverOpen}
+        />
 
-          {/* Price chip */}
-          <Popover open={pricePopoverOpen} onOpenChange={setPricePopoverOpen}>
-            <PopoverTrigger asChild>
-              <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-surface-2 border border-solid border-border-subtle hover:border-border-default transition-colors cursor-pointer">
-                <span
-                  className={`text-[16px] leading-5 font-sans ${formFields.price ? 'text-foreground' : 'text-text-muted'}`}
-                >
-                  {formFields.price
-                    ? formFields.price.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                    : 'Price'}
-                </span>
-                <ChevronSortIcon className="size-2 text-text-muted shrink-0" />
-              </div>
-            </PopoverTrigger>
-            <PopoverContent
-              className="w-48 p-3 bg-surface-1 border-border-subtle rounded-xl"
-              align="start"
-              sideOffset={8}
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-text-tertiary text-[16px]">$</span>
-                <input
-                  ref={priceRef}
-                  type="text"
-                  value={formFields.price}
-                  onChange={(e) => {
-                    const cleaned = e.target.value.replace(/[^0-9.]/g, '');
-                    setFormFields(prev => ({ ...prev, price: cleaned }));
-                  }}
-                  placeholder="0.00"
-                  className="flex-1 bg-transparent text-foreground text-[16px] leading-5 outline-none placeholder:text-text-tertiary"
-                />
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          {/* Deadline chip */}
-          <DeadlineChip value={formFields.deadline} onChange={(v) => setFormFields(prev => ({ ...prev, deadline: v }))} />
-
-          {/* Divider */}
-          {/* <span className="text-text-tertiary text-base shrink-0">or</span> */}
-
-          {/* GitHub import chip (placeholder) */}
-          {/* <button 
-          className="rounded-[14px] px-[15px] py-1.5 bg-surface-3 text-base text-text-muted transition-colors flex items-center gap-[5px] shrink-0 h-[31.9965px] opacity-50 cursor-not-allowed"
-          disabled
-        >
-          <GitHub className="w-4 h-4 shrink-0" />
-          Import from GitHub
-        </button> */}
-        </div>
-
-        {/* Description textarea */}
         <div className="px-2 sm:px-[19px] py-1 sm:py-1.5 flex-1 flex">
           <textarea
             ref={descriptionRef}
             value={formFields.description}
-            onChange={(e) => setFormFields(prev => ({ ...prev, description: e.target.value }))}
+            onChange={(e) =>
+              setFormFields((prev) => ({
+                ...prev,
+                description: e.target.value,
+              }))
+            }
             placeholder="Start typing your description..."
             className="w-full bg-transparent text-text-tertiary text-sm sm:text-base outline-none placeholder:text-text-tertiary resize-none min-h-[80px] sm:min-h-[100px]"
           />
         </div>
 
-        {/* Footer row with buttons */}
-        <div className="flex justify-end items-center gap-1.5 sm:gap-2 px-1.5 sm:px-3 py-2 sm:py-3 flex-wrap">
-          {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={isSubmitting}
-              className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-surface-3 text-foreground text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
-            >
-              Cancel
-            </button>
-          )}
-          {!(onSubmit || onCancel) && (
-            <button
-              type="button"
-              onClick={handleSkipAndJoinWaitlist}
-              disabled={isSubmitting}
-              className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-surface-3 text-foreground text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
-            >
-              <span className="hidden sm:inline">
-                {isSubmitting ? 'Redirecting...' : 'Skip & join waitlist'}
-              </span>
-              <span className="sm:hidden">
-                {isSubmitting ? 'Redirecting...' : 'Skip'}
-              </span>
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={handleCreateBounty}
-            disabled={isSubmitting || !formFields.title}
-            className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-white text-black text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
-          >
-            <GitHub className="w-4 h-4 shrink-0" />
-            <span className="hidden sm:inline">
-              {isSubmitting
-                ? onSubmit
-                  ? 'Saving...'
-                  : 'Creating...'
-                : onSubmit
-                  ? 'Save'
-                  : 'Create bounty'}
-            </span>
-            <span className="sm:hidden">
-              {isSubmitting
-                ? onSubmit
-                  ? 'Saving...'
-                  : 'Creating...'
-                : onSubmit
-                  ? 'Save'
-                  : 'Create'}
-            </span>
-          </button>
-        </div>
+        <BountyFormFooter
+          onCancel={onCancel}
+          onSubmit={onSubmit}
+          isSubmitting={isSubmitting}
+          formFields={formFields}
+          handleSkipAndJoinWaitlist={handleSkipAndJoinWaitlist}
+          handleCreateBounty={handleCreateBounty}
+        />
       </div>
       <div className="text-text-tertiary text-[10px] sm:text-sm text-center pt-2 sm:pt-3 px-2 sm:px-0">
         Creating a draft bounty is optional. This step is not required to sign

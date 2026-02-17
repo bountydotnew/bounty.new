@@ -1,8 +1,35 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useReducer, useRef } from 'react';
 import { useFeedback } from '@/components/feedback-context';
 import { createPortal } from 'react-dom';
+
+type HoveredElement = {
+  rect: DOMRect;
+  tagName: string;
+} | null;
+
+type OverlayState = {
+  hoveredElement: HoveredElement;
+};
+
+type OverlayAction =
+  | { type: 'SET_HOVERED'; element: HoveredElement }
+  | { type: 'CLEAR' };
+
+function overlayReducer(
+  state: OverlayState,
+  action: OverlayAction
+): OverlayState {
+  switch (action.type) {
+    case 'SET_HOVERED':
+      return { hoveredElement: action.element };
+    case 'CLEAR':
+      return { hoveredElement: null };
+    default:
+      return state;
+  }
+}
 
 /**
  * Overlay component that handles the "element picker" interaction.
@@ -10,10 +37,9 @@ import { createPortal } from 'react-dom';
  */
 export function FeedbackOverlay() {
   const { isSelecting, selectElement, cancelSelection, config } = useFeedback();
-  const [hoveredElement, setHoveredElement] = useState<{
-    rect: DOMRect;
-    tagName: string;
-  } | null>(null);
+  const [state, dispatch] = useReducer(overlayReducer, {
+    hoveredElement: null,
+  });
 
   // Ref to track if we're currently processing an event to avoid loops
   const isProcessingRef = useRef(false);
@@ -23,7 +49,7 @@ export function FeedbackOverlay() {
 
   useEffect(() => {
     if (!isSelecting) {
-      setHoveredElement(null);
+      dispatch({ type: 'CLEAR' });
       return;
     }
 
@@ -54,12 +80,15 @@ export function FeedbackOverlay() {
         !element.hasAttribute('data-feedback-ignore')
       ) {
         const rect = element.getBoundingClientRect();
-        setHoveredElement({
-          rect,
-          tagName: element.tagName.toLowerCase(),
+        dispatch({
+          type: 'SET_HOVERED',
+          element: {
+            rect,
+            tagName: element.tagName.toLowerCase(),
+          },
         });
       } else {
-        setHoveredElement(null);
+        dispatch({ type: 'CLEAR' });
       }
 
       isProcessingRef.current = false;
@@ -121,14 +150,14 @@ export function FeedbackOverlay() {
         Hover to select an element • Press Esc to cancel
       </div>
 
-      {hoveredElement && (
+      {state.hoveredElement && (
         <div
           className="absolute border-2 pointer-events-none transition-all duration-75 ease-out rounded-sm"
           style={{
-            top: hoveredElement.rect.top,
-            left: hoveredElement.rect.left,
-            width: hoveredElement.rect.width,
-            height: hoveredElement.rect.height,
+            top: state.hoveredElement.rect.top,
+            left: state.hoveredElement.rect.left,
+            width: state.hoveredElement.rect.width,
+            height: state.hoveredElement.rect.height,
             borderColor: primaryColor,
             backgroundColor: `${primaryColor}1A`, // 10% opacity hex
           }}
@@ -137,7 +166,7 @@ export function FeedbackOverlay() {
             className="absolute -top-6 left-0 text-background text-xs px-2 py-0.5 rounded-sm"
             style={{ backgroundColor: primaryColor }}
           >
-            {hoveredElement.tagName}
+            {state.hoveredElement.tagName}
           </div>
         </div>
       )}

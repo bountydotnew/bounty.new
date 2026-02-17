@@ -35,6 +35,89 @@ interface GuildRow {
   installedAt: string;
 }
 
+const accountColumns: Column<DiscordRow>[] = [
+  {
+    key: 'displayName',
+    header: 'Account',
+    width: '1fr',
+    render: (row) => (
+      <div className="flex items-center gap-2 min-w-0">
+        {row.avatar ? (
+          <Image
+            src={row.avatar}
+            alt={row.displayName}
+            width={20}
+            height={20}
+            className="rounded-full shrink-0"
+          />
+        ) : (
+          <DiscordIcon className="h-5 w-5 text-[#5865F2] shrink-0" />
+        )}
+        <span className="truncate text-foreground">{row.displayName}</span>
+      </div>
+    ),
+  },
+  {
+    key: 'linkedAt',
+    header: 'Linked',
+    width: '150px',
+    render: (row) => (
+      <div className="text-text-muted">
+        {row.linkedAt ? new Date(row.linkedAt).toLocaleDateString() : 'Unknown'}
+      </div>
+    ),
+  },
+];
+
+const guildColumns: Column<GuildRow>[] = [
+  {
+    key: 'name',
+    header: 'Server',
+    width: '1fr',
+    render: (row) => (
+      <div className="flex items-center gap-2 min-w-0">
+        {row.icon ? (
+          <Image
+            src={`https://cdn.discordapp.com/icons/${row.id}/${row.icon}.png?size=32`}
+            alt={row.name}
+            width={20}
+            height={20}
+            className="rounded-full shrink-0"
+          />
+        ) : (
+          <div className="h-5 w-5 rounded-full bg-[#5865F2] flex items-center justify-center shrink-0">
+            <span className="text-[10px] text-foreground font-medium">
+              {row.name.charAt(0).toUpperCase()}
+            </span>
+          </div>
+        )}
+        <span className="truncate text-foreground">{row.name}</span>
+      </div>
+    ),
+  },
+  {
+    key: 'memberCount',
+    header: 'Members',
+    width: '100px',
+    render: (row) => (
+      <div className="flex items-center gap-1 text-text-muted">
+        <Users className="h-3.5 w-3.5" />
+        <span>{row.memberCount?.toLocaleString() ?? '-'}</span>
+      </div>
+    ),
+  },
+  {
+    key: 'installedAt',
+    header: 'Added',
+    width: '120px',
+    render: (row) => (
+      <div className="text-text-muted">
+        {new Date(row.installedAt).toLocaleDateString()}
+      </div>
+    ),
+  },
+];
+
 const CenteredWrapper = ({ children }: { children: React.ReactNode }) => (
   <div className="flex flex-1 shrink-0 flex-col w-full overflow-hidden lg:max-w-[805px] xl:px-0 xl:border-x border-border-subtle mx-auto py-4 min-w-0">
     <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
@@ -45,7 +128,7 @@ const CenteredWrapper = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-export default function DiscordDetailPage() {
+function useDiscordIntegration() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const orgPath = useOrgPath();
@@ -101,91 +184,6 @@ export default function DiscordDetailPage() {
   const isLinked = accountData?.linked;
   const guilds = guildsData?.guilds ?? [];
 
-  const accountColumns: Column<DiscordRow>[] = [
-    {
-      key: 'displayName',
-      header: 'Account',
-      width: '1fr',
-      render: (row) => (
-        <div className="flex items-center gap-2 min-w-0">
-          {row.avatar ? (
-            <Image
-              src={row.avatar}
-              alt={row.displayName}
-              width={20}
-              height={20}
-              className="rounded-full shrink-0"
-            />
-          ) : (
-            <DiscordIcon className="h-5 w-5 text-[#5865F2] shrink-0" />
-          )}
-          <span className="truncate text-foreground">{row.displayName}</span>
-        </div>
-      ),
-    },
-    {
-      key: 'linkedAt',
-      header: 'Linked',
-      width: '150px',
-      render: (row) => (
-        <div className="text-text-muted">
-          {row.linkedAt
-            ? new Date(row.linkedAt).toLocaleDateString()
-            : 'Unknown'}
-        </div>
-      ),
-    },
-  ];
-
-  const guildColumns: Column<GuildRow>[] = [
-    {
-      key: 'name',
-      header: 'Server',
-      width: '1fr',
-      render: (row) => (
-        <div className="flex items-center gap-2 min-w-0">
-          {row.icon ? (
-            <Image
-              src={`https://cdn.discordapp.com/icons/${row.id}/${row.icon}.png?size=32`}
-              alt={row.name}
-              width={20}
-              height={20}
-              className="rounded-full shrink-0"
-            />
-          ) : (
-            <div className="h-5 w-5 rounded-full bg-[#5865F2] flex items-center justify-center shrink-0">
-              <span className="text-[10px] text-foreground font-medium">
-                {row.name.charAt(0).toUpperCase()}
-              </span>
-            </div>
-          )}
-          <span className="truncate text-foreground">{row.name}</span>
-        </div>
-      ),
-    },
-    {
-      key: 'memberCount',
-      header: 'Members',
-      width: '100px',
-      render: (row) => (
-        <div className="flex items-center gap-1 text-text-muted">
-          <Users className="h-3.5 w-3.5" />
-          <span>{row.memberCount?.toLocaleString() ?? '-'}</span>
-        </div>
-      ),
-    },
-    {
-      key: 'installedAt',
-      header: 'Added',
-      width: '120px',
-      render: (row) => (
-        <div className="text-text-muted">
-          {new Date(row.installedAt).toLocaleDateString()}
-        </div>
-      ),
-    },
-  ];
-
   const accountRows: DiscordRow[] =
     account && isLinked
       ? [
@@ -206,76 +204,136 @@ export default function DiscordDetailPage() {
     installedAt: g.installedAt as unknown as string,
   }));
 
-  if (!(isLoading || isLinked)) {
-    return (
-      <CenteredWrapper>
-        <IntegrationDetailPage isLoading={false} error={null} errorMessage="">
-          <IntegrationHeader
-            icon={<DiscordIcon className="h-8 w-8 text-foreground" />}
-            title="Discord"
-            description="Connect your Discord account and add the Bounty bot to your server."
-          />
+  return {
+    account,
+    isLoading,
+    isLinked,
+    error,
+    guilds,
+    guildsLoading,
+    botInstallData,
+    unlinkMutation,
+    handleUnlink,
+    handleAddBot,
+    handleLinkAccount,
+    accountRows,
+    guildRows,
+  };
+}
 
-          <div className="pt-4 space-y-6">
-            <div>
-              <SectionHeader title="Step 1: Link your Discord account" />
-              <p className="text-sm text-text-muted mb-4">
-                Link your Discord account to authenticate with the Bounty bot
-                and use commands that require your identity.
-              </p>
-              <ActionButton onClick={handleLinkAccount}>
-                Link Discord Account
-              </ActionButton>
-            </div>
+function DiscordFeaturesList() {
+  return (
+    <div>
+      <SectionHeader title="Available features" />
+      <ul className="text-sm text-text-muted list-disc list-inside space-y-1">
+        <li>Create bounties directly from Discord</li>
+        <li>Receive notifications about bounty updates</li>
+        <li>Manage submissions and approvals</li>
+        <li>Use /login to authenticate bot commands</li>
+      </ul>
+    </div>
+  );
+}
 
-            <div>
-              <SectionHeader title="Step 2: Add bot to your server" />
-              <p className="text-sm text-text-muted mb-4">
-                Add the Bounty bot to your Discord server to use slash commands.
-              </p>
-              <ActionButton
-                onClick={handleAddBot}
-                disabled={!botInstallData?.url}
-                icon={<Plus className="h-4 w-4" />}
-              >
-                Add Bounty Bot
-              </ActionButton>
-            </div>
+function DiscordNotLinkedView({
+  handleLinkAccount,
+  handleAddBot,
+  botInstallData,
+  guilds,
+  guildRows,
+}: {
+  handleLinkAccount: () => Promise<void>;
+  handleAddBot: () => void;
+  botInstallData: ReturnType<typeof useDiscordIntegration>['botInstallData'];
+  guilds: { id: string }[];
+  guildRows: GuildRow[];
+}) {
+  return (
+    <CenteredWrapper>
+      <IntegrationDetailPage isLoading={false} error={null} errorMessage="">
+        <IntegrationHeader
+          icon={<DiscordIcon className="h-8 w-8 text-foreground" />}
+          title="Discord"
+          description="Connect your Discord account and add the Bounty bot to your server."
+        />
 
-            {guilds.length > 0 && (
-              <div>
-                <SectionHeader
-                  title="Servers with Bounty Bot"
-                  badge={{ label: String(guilds.length), variant: 'default' }}
-                />
-                <IntegrationTable
-                  columns={guildColumns}
-                  data={guildRows}
-                  keyExtractor={(row) => row.id}
-                />
-              </div>
-            )}
-
-            <div>
-              <SectionHeader title="Available features" />
-              <ul className="text-sm text-text-muted list-disc list-inside space-y-1">
-                <li>Create bounties directly from Discord</li>
-                <li>Receive notifications about bounty updates</li>
-                <li>Manage submissions and approvals</li>
-                <li>Use /login to authenticate bot commands</li>
-              </ul>
-            </div>
+        <div className="pt-4 space-y-6">
+          <div>
+            <SectionHeader title="Step 1: Link your Discord account" />
+            <p className="text-sm text-text-muted mb-4">
+              Link your Discord account to authenticate with the Bounty bot and
+              use commands that require your identity.
+            </p>
+            <ActionButton onClick={handleLinkAccount}>
+              Link Discord Account
+            </ActionButton>
           </div>
-        </IntegrationDetailPage>
-      </CenteredWrapper>
-    );
-  }
 
+          <div>
+            <SectionHeader title="Step 2: Add bot to your server" />
+            <p className="text-sm text-text-muted mb-4">
+              Add the Bounty bot to your Discord server to use slash commands.
+            </p>
+            <ActionButton
+              onClick={handleAddBot}
+              disabled={!botInstallData?.url}
+              icon={<Plus className="h-4 w-4" />}
+            >
+              Add Bounty Bot
+            </ActionButton>
+          </div>
+
+          {guilds.length > 0 && (
+            <div>
+              <SectionHeader
+                title="Servers with Bounty Bot"
+                badge={{ label: String(guilds.length), variant: 'default' }}
+              />
+              <IntegrationTable
+                columns={guildColumns}
+                data={guildRows}
+                keyExtractor={(row) => row.id}
+              />
+            </div>
+          )}
+
+          <DiscordFeaturesList />
+        </div>
+      </IntegrationDetailPage>
+    </CenteredWrapper>
+  );
+}
+
+function DiscordLinkedView({
+  account,
+  isLoading,
+  guildsLoading,
+  error,
+  guilds,
+  botInstallData,
+  unlinkMutation,
+  handleUnlink,
+  handleAddBot,
+  accountRows,
+  guildRows,
+}: {
+  account: NonNullable<ReturnType<typeof useDiscordIntegration>['account']>;
+  isLoading: boolean;
+  guildsLoading: boolean;
+  error: Error | null;
+  guilds: { id: string }[];
+  botInstallData: ReturnType<typeof useDiscordIntegration>['botInstallData'];
+  unlinkMutation: { isPending: boolean };
+  handleUnlink: () => void;
+  handleAddBot: () => void;
+  accountRows: DiscordRow[];
+  guildRows: GuildRow[];
+}) {
   return (
     <CenteredWrapper>
       <IntegrationDetailPage
         isLoading={isLoading || guildsLoading}
-        error={error as Error | null}
+        error={error}
         errorMessage="Failed to load Discord account."
       >
         {account && (
@@ -338,17 +396,43 @@ export default function DiscordDetailPage() {
             )}
 
             <div className="pt-2">
-              <SectionHeader title="Available features" />
-              <ul className="text-sm text-text-muted list-disc list-inside space-y-1">
-                <li>Create bounties directly from Discord</li>
-                <li>Receive notifications about bounty updates</li>
-                <li>Manage submissions and approvals</li>
-                <li>Use /login to authenticate bot commands</li>
-              </ul>
+              <DiscordFeaturesList />
             </div>
           </>
         )}
       </IntegrationDetailPage>
     </CenteredWrapper>
+  );
+}
+
+export default function DiscordDetailPage() {
+  const integration = useDiscordIntegration();
+
+  if (!(integration.isLoading || integration.isLinked)) {
+    return (
+      <DiscordNotLinkedView
+        handleLinkAccount={integration.handleLinkAccount}
+        handleAddBot={integration.handleAddBot}
+        botInstallData={integration.botInstallData}
+        guilds={integration.guilds}
+        guildRows={integration.guildRows}
+      />
+    );
+  }
+
+  return (
+    <DiscordLinkedView
+      account={integration.account!}
+      isLoading={integration.isLoading}
+      guildsLoading={integration.guildsLoading}
+      error={integration.error as Error | null}
+      guilds={integration.guilds}
+      botInstallData={integration.botInstallData}
+      unlinkMutation={integration.unlinkMutation}
+      handleUnlink={integration.handleUnlink}
+      handleAddBot={integration.handleAddBot}
+      accountRows={integration.accountRows}
+      guildRows={integration.guildRows}
+    />
   );
 }

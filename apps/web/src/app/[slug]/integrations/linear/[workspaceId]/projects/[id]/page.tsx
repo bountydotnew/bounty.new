@@ -221,8 +221,8 @@ function ProjectDetailSkeleton() {
       <div>
         <div className="h-4 w-16 rounded bg-white/5 mb-4 animate-pulse" />
         <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={`skeleton-${i}`} className="animate-pulse">
+          {['issue1', 'issue2', 'issue3'].map((item) => (
+            <div key={`project-skeleton-${item}`} className="animate-pulse">
               <div className="flex items-center gap-3 px-4 py-3 rounded-lg">
                 <div className="w-16 h-5 rounded bg-white/5 shrink-0" />
                 <div className="flex-1 h-4 rounded bg-white/5" />

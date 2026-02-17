@@ -26,11 +26,266 @@ import {
 import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
 import { CalendarIcon } from '@bounty/ui/components/icons/huge/calendar';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Bounty Dashboard Page (Create Bounty form + feed)
-// ─────────────────────────────────────────────────────────────────────────────
 interface BountyDashboardPageProps {
   compact?: boolean;
+}
+
+function DashboardSidebar({ compact }: { compact: boolean }) {
+  return (
+    <aside
+      className={`${compact ? 'w-12' : 'w-64'} bg-background border-r border-border-subtle flex flex-col`}
+    >
+      <div className={`${compact ? 'px-2 py-3' : 'px-[15px] py-4'}`}>
+        <div
+          className={`${compact ? ' justify-center flex items-center gap-2' : 'flex items-center gap-2'}`}
+        >
+          <div
+            className={`${compact ? 'h-5 w-5 text-xs' : 'h-[27px] w-[27px]'} rounded-[6px] bg-brand-primary flex items-center justify-center text-white font-semibold shrink-0`}
+          >
+            g
+          </div>
+          {!compact && (
+            <span className="text-[18px] font-semibold leading-[150%] text-foreground">
+              grim
+            </span>
+          )}
+        </div>
+      </div>
+
+      <nav
+        className={`${compact ? 'gap-1 px-1' : 'flex flex-col gap-[8px] px-[15px]'} flex-1`}
+      >
+        <button
+          type="button"
+          className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] border border-border-subtle bg-surface-1 px-[12px] py-[8px] text-[16px]'} font-medium text-foreground w-full`}
+        >
+          <HomeIcon
+            className={`${compact ? 'size-4' : 'size-4'} text-text-secondary shrink-0`}
+          />
+          {!compact && <span>Home</span>}
+        </button>
+        <button
+          type="button"
+          className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} font-medium text-text-tertiary hover:text-foreground hover:bg-surface-1 transition-colors w-full`}
+        >
+          <BountiesIcon className={compact ? 'size-4' : 'size-4'} shrink-0 />
+          {!compact && <span>Bounties</span>}
+        </button>
+        <button
+          type="button"
+          className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} font-medium text-text-tertiary hover:text-foreground hover:bg-surface-1 transition-colors w-full`}
+        >
+          <BookmarksIcon className={compact ? 'size-4' : 'size-4'} shrink-0 />
+          {!compact && <span>Bookmarks</span>}
+        </button>
+      </nav>
+
+      <div className={`${compact ? 'px-1 py-2' : 'px-[15px] py-4'}`}>
+        <button
+          type="button"
+          className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} text-text-tertiary transition-colors hover:text-foreground hover:bg-surface-1 w-full`}
+        >
+          <SettingsGearIcon className={compact ? 'size-4' : 'size-4'} />
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+function DashboardHeader({ compact }: { compact: boolean }) {
+  return (
+    <div
+      className={`flex items-center justify-between bg-background border-b border-border-subtle ${compact ? 'h-10 px-2' : 'h-[72px] px-4 sm:px-6'} sticky top-0 z-10`}
+    >
+      <div className="flex flex-1 items-center justify-center gap-6" />
+      <div className="flex items-center gap-2">
+        <button
+          className={`flex items-center gap-[7px] rounded-[12px] border border-border-subtle bg-surface-1 transition-colors hover:bg-surface-2 ${compact ? 'px-1.5 py-1' : 'py-[5px] px-[10px]'}`}
+          type="button"
+        >
+          <Plus
+            className={`${compact ? 'h-3 w-3' : 'h-4 w-4'} text-text-secondary`}
+          />
+          <span
+            className={`${compact ? 'text-[10px]' : 'text-[16px]'} font-semibold leading-[150%] tracking-[0.01em] text-text-secondary`}
+          >
+            Create Bounty
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CreateBountyFormCard({
+  compact,
+  onCreateBounty,
+}: {
+  compact: boolean;
+  onCreateBounty: () => void;
+}) {
+  return (
+    <div
+      className={`flex w-full shrink-0 flex-col ${compact ? 'px-3 py-2' : 'px-6 lg:px-8'} max-w-[880px] mx-auto min-w-0`}
+    >
+      <div
+        className={`w-full flex flex-col ${compact ? 'my-2' : 'mt-8 mb-6'} min-w-0`}
+      >
+        <div
+          className={`bg-surface-1 text-text-tertiary border border-border-subtle ${compact ? 'rounded-xl' : 'rounded-[24px]'} relative overflow-hidden w-full min-w-0 flex flex-col ${compact ? 'p-3 gap-2' : 'p-5 gap-4'}`}
+        >
+          <div className={`flex flex-col ${compact ? 'gap-1.5' : 'gap-2'}`}>
+            <div
+              className={`flex flex-row flex-wrap items-center ${compact ? 'gap-1.5' : 'gap-[6px]'}`}
+            >
+              <div
+                className={`rounded-full flex justify-center items-center shrink-0 gap-1.5 bg-surface-2 border border-solid border-border-subtle ${compact ? 'px-2 py-1' : 'px-[11px] py-[6px]'}`}
+              >
+                <span
+                  className={`${compact ? 'text-[11px]' : 'text-[16px]'} leading-5 font-sans text-foreground truncate`}
+                >
+                  Add OAuth integration
+                </span>
+                <ChevronSortIcon
+                  className={`${compact ? 'size-1.5' : 'size-2'} text-text-muted shrink-0`}
+                />
+              </div>
+              <div
+                className={`rounded-full flex justify-center items-center shrink-0 gap-1.5 bg-surface-2 border border-solid border-border-subtle ${compact ? 'px-2 py-1' : 'px-[11px] py-[6px]'}`}
+              >
+                <span
+                  className={`${compact ? 'text-[11px]' : 'text-[16px]'} leading-5 font-sans text-foreground`}
+                >
+                  $500
+                </span>
+                <ChevronSortIcon
+                  className={`${compact ? 'size-1.5' : 'size-2'} text-text-muted shrink-0`}
+                />
+              </div>
+              <div className={`relative flex ${compact ? '' : ''}`}>
+                <div
+                  className={`rounded-full flex justify-center items-center bg-surface-2 border border-solid border-border-subtle ${compact ? 'text-[11px] px-2 py-1 pr-6' : 'text-[16px] leading-5 px-[11px] py-[6px] pr-8 min-w-[150px]'} font-sans text-foreground`}
+                >
+                  Deadline
+                </div>
+                <button
+                  type="button"
+                  className="absolute top-1/2 right-2 -translate-y-1/2 text-text-muted hover:text-foreground transition-colors"
+                >
+                  <CalendarIcon className={compact ? 'size-2.5' : 'size-3.5'} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <textarea
+            readOnly
+            value={
+              compact
+                ? 'Need Google & GitHub OAuth integration...'
+                : 'Need Google & GitHub OAuth integration with proper error handling and session management.'
+            }
+            className={`flex-1 bg-transparent text-foreground outline-none resize-none ${compact ? 'min-h-[60px] text-[11px] leading-tight' : 'min-h-[160px] text-[15px] leading-6'}`}
+          />
+
+          <div
+            className={`flex flex-row justify-between items-center ${compact ? 'pt-0' : 'pt-1'}`}
+          >
+            <div className="relative flex items-center gap-2">
+              <div
+                className={`flex flex-row items-center gap-1.5 text-text-tertiary ${compact ? '' : ''}`}
+              >
+                <GithubIcon className={compact ? 'w-3 h-3' : 'w-4 h-4'} />
+                <span
+                  className={`${compact ? 'text-[11px]' : 'text-[14px]'} leading-[150%] tracking-[-0.02em] font-medium text-foreground truncate`}
+                >
+                  bountydotnew/bounty.new
+                </span>
+                <ChevronDown className={compact ? 'w-2 h-2' : 'w-3 h-3'} />
+              </div>
+            </div>
+            {!compact && (
+              <TutorialHighlight
+                stepId="create-bounty"
+                tooltip="Click to create your bounty"
+                borderRadius="rounded-full"
+              >
+                <button
+                  type="button"
+                  onClick={onCreateBounty}
+                  className="flex items-center justify-center gap-1.5 px-[16px] h-[34px] rounded-full text-[15px] font-medium bg-foreground text-background shadow-lg shadow-foreground/20 hover:bg-foreground/90 transition-colors"
+                >
+                  Create bounty
+                </button>
+              </TutorialHighlight>
+            )}
+            {compact && (
+              <button
+                type="button"
+                onClick={onCreateBounty}
+                className="flex items-center justify-center gap-1 px-3 h-7 rounded-full text-[11px] font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors"
+              >
+                Create
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BountyFeedList({
+  compact,
+  feedBounties,
+  visibleCount,
+}: {
+  compact: boolean;
+  feedBounties: Bounty[];
+  visibleCount: number;
+}) {
+  return (
+    <div
+      className={`flex w-full shrink-0 flex-col ${compact ? 'px-3 py-2' : 'px-6 lg:px-8'} max-w-[880px] mx-auto min-w-0 ${compact ? '' : 'pb-10'}`}
+    >
+      <div
+        className={`flex flex-col ${compact ? 'gap-2' : 'gap-3'} ${compact ? 'py-1' : 'pt-4'} pointer-events-none`}
+      >
+        {feedBounties
+          .slice(0, compact ? 3 : visibleCount)
+          .map((bounty, index) => (
+            <div
+              key={bounty.id}
+              className="animate-in fade-in slide-in-from-bottom-2 duration-500"
+            >
+              {compact ? (
+                <CompactBountyCard
+                  bounty={bounty}
+                  stats={{
+                    commentCount: 3 + index,
+                    voteCount: 2,
+                    submissionCount: 1 + (index % 2),
+                    isVoted: false,
+                    bookmarked: false,
+                  }}
+                />
+              ) : (
+                <StandardBountyCard
+                  bounty={bounty}
+                  stats={{
+                    commentCount: 3 + index,
+                    voteCount: 2,
+                    submissionCount: 1 + (index % 2),
+                    isVoted: false,
+                    bookmarked: false,
+                  }}
+                />
+              )}
+            </div>
+          ))}
+      </div>
+    </div>
+  );
 }
 
 function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
@@ -40,7 +295,6 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
   const [feedBounties, setFeedBounties] = useState<Bounty[]>([]);
   const [visibleCount, setVisibleCount] = useState(0);
 
-  // Skip scroll animation on compact
   useEffect(() => {
     if (compact) return;
     const timer = setTimeout(() => {
@@ -149,245 +403,53 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
 
   return (
     <div className="bg-background h-full flex">
-      {/* Sidebar */}
-      <aside
-        className={`${compact ? 'w-12' : 'w-64'} bg-background border-r border-border-subtle flex flex-col`}
-      >
-        {/* Workspace header */}
-        <div className={`${compact ? 'px-2 py-3' : 'px-[15px] py-4'}`}>
-          <div
-            className={`${compact ? ' justify-center flex items-center gap-2' : 'flex items-center gap-2'}`}
-          >
-            <div
-              className={`${compact ? 'h-5 w-5 text-xs' : 'h-[27px] w-[27px]'} rounded-[6px] bg-brand-primary flex items-center justify-center text-white font-semibold shrink-0`}
-            >
-              g
-            </div>
-            {!compact && (
-              <span className="text-[18px] font-semibold leading-[150%] text-foreground">
-                grim
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav
-          className={`${compact ? 'gap-1 px-1' : 'flex flex-col gap-[8px] px-[15px]'} flex-1`}
-        >
-          <button
-            type="button"
-            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] border border-border-subtle bg-surface-1 px-[12px] py-[8px] text-[16px]'} font-medium text-foreground w-full`}
-          >
-            <HomeIcon
-              className={`${compact ? 'size-4' : 'size-4'} text-text-secondary shrink-0`}
-            />
-            {!compact && <span>Home</span>}
-          </button>
-          <button
-            type="button"
-            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} font-medium text-text-tertiary hover:text-foreground hover:bg-surface-1 transition-colors w-full`}
-          >
-            <BountiesIcon className={compact ? 'size-4' : 'size-4'} shrink-0 />
-            {!compact && <span>Bounties</span>}
-          </button>
-          <button
-            type="button"
-            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} font-medium text-text-tertiary hover:text-foreground hover:bg-surface-1 transition-colors w-full`}
-          >
-            <BookmarksIcon className={compact ? 'size-4' : 'size-4'} shrink-0 />
-            {!compact && <span>Bookmarks</span>}
-          </button>
-        </nav>
-
-        {/* Footer */}
-        <div className={`${compact ? 'px-1 py-2' : 'px-[15px] py-4'}`}>
-          <button
-            type="button"
-            className={`${compact ? 'flex items-center justify-center px-1.5 py-1.5' : 'flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[16px]'} text-text-tertiary transition-colors hover:text-foreground hover:bg-surface-1 w-full`}
-          >
-            <SettingsGearIcon className={compact ? 'size-4' : 'size-4'} />
-          </button>
-        </div>
-      </aside>
-
-      {/* Main content */}
+      <DashboardSidebar compact={compact} />
       <div className="flex-1 overflow-auto" ref={scrollRef}>
-        {/* Header */}
-        <div
-          className={`flex items-center justify-between bg-background border-b border-border-subtle ${compact ? 'h-10 px-2' : 'h-[72px] px-4 sm:px-6'} sticky top-0 z-10`}
-        >
-          <div className="flex flex-1 items-center justify-center gap-6" />
-          <div className="flex items-center gap-2">
-            <button
-              className={`flex items-center gap-[7px] rounded-[12px] border border-border-subtle bg-surface-1 transition-colors hover:bg-surface-2 ${compact ? 'px-1.5 py-1' : 'py-[5px] px-[10px]'}`}
-              type="button"
-            >
-              <Plus
-                className={`${compact ? 'h-3 w-3' : 'h-4 w-4'} text-text-secondary`}
-              />
-              <span
-                className={`${compact ? 'text-[10px]' : 'text-[16px]'} font-semibold leading-[150%] tracking-[0.01em] text-text-secondary`}
-              >
-                Create Bounty
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* Create bounty form */}
-        <div
-          className={`flex w-full shrink-0 flex-col ${compact ? 'px-3 py-2' : 'px-6 lg:px-8'} max-w-[880px] mx-auto min-w-0`}
-        >
-          <div
-            className={`w-full flex flex-col ${compact ? 'my-2' : 'mt-8 mb-6'} min-w-0`}
-          >
-            <div
-              className={`bg-surface-1 text-text-tertiary border border-border-subtle ${compact ? 'rounded-xl' : 'rounded-[24px]'} relative overflow-hidden w-full min-w-0 flex flex-col ${compact ? 'p-3 gap-2' : 'p-5 gap-4'}`}
-            >
-              <div className={`flex flex-col ${compact ? 'gap-1.5' : 'gap-2'}`}>
-                <div
-                  className={`flex flex-row flex-wrap items-center ${compact ? 'gap-1.5' : 'gap-[6px]'}`}
-                >
-                  <div
-                    className={`rounded-full flex justify-center items-center shrink-0 gap-1.5 bg-surface-2 border border-solid border-border-subtle ${compact ? 'px-2 py-1' : 'px-[11px] py-[6px]'}`}
-                  >
-                    <span
-                      className={`${compact ? 'text-[11px]' : 'text-[16px]'} leading-5 font-sans text-foreground truncate`}
-                    >
-                      Add OAuth integration
-                    </span>
-                    <ChevronSortIcon
-                      className={`${compact ? 'size-1.5' : 'size-2'} text-text-muted shrink-0`}
-                    />
-                  </div>
-                  <div
-                    className={`rounded-full flex justify-center items-center shrink-0 gap-1.5 bg-surface-2 border border-solid border-border-subtle ${compact ? 'px-2 py-1' : 'px-[11px] py-[6px]'}`}
-                  >
-                    <span
-                      className={`${compact ? 'text-[11px]' : 'text-[16px]'} leading-5 font-sans text-foreground`}
-                    >
-                      $500
-                    </span>
-                    <ChevronSortIcon
-                      className={`${compact ? 'size-1.5' : 'size-2'} text-text-muted shrink-0`}
-                    />
-                  </div>
-                  <div className={`relative flex ${compact ? '' : ''}`}>
-                    <div
-                      className={`rounded-full flex justify-center items-center bg-surface-2 border border-solid border-border-subtle ${compact ? 'text-[11px] px-2 py-1 pr-6' : 'text-[16px] leading-5 px-[11px] py-[6px] pr-8 min-w-[150px]'} font-sans text-foreground`}
-                    >
-                      Deadline
-                    </div>
-                    <button
-                      type="button"
-                      className="absolute top-1/2 right-2 -translate-y-1/2 text-text-muted hover:text-foreground transition-colors"
-                    >
-                      <CalendarIcon
-                        className={compact ? 'size-2.5' : 'size-3.5'}
-                      />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <textarea
-                readOnly
-                value={
-                  compact
-                    ? 'Need Google & GitHub OAuth integration...'
-                    : 'Need Google & GitHub OAuth integration with proper error handling and session management.'
-                }
-                className={`flex-1 bg-transparent text-foreground outline-none resize-none ${compact ? 'min-h-[60px] text-[11px] leading-tight' : 'min-h-[160px] text-[15px] leading-6'}`}
-              />
-
-              <div
-                className={`flex flex-row justify-between items-center ${compact ? 'pt-0' : 'pt-1'}`}
-              >
-                <div className="relative flex items-center gap-2">
-                  <div
-                    className={`flex flex-row items-center gap-1.5 text-text-tertiary ${compact ? '' : ''}`}
-                  >
-                    <GithubIcon className={compact ? 'w-3 h-3' : 'w-4 h-4'} />
-                    <span
-                      className={`${compact ? 'text-[11px]' : 'text-[14px]'} leading-[150%] tracking-[-0.02em] font-medium text-foreground truncate`}
-                    >
-                      bountydotnew/bounty.new
-                    </span>
-                    <ChevronDown className={compact ? 'w-2 h-2' : 'w-3 h-3'} />
-                  </div>
-                </div>
-                {!compact && (
-                  <TutorialHighlight
-                    stepId="create-bounty"
-                    tooltip="Click to create your bounty"
-                    borderRadius="rounded-full"
-                  >
-                    <button
-                      type="button"
-                      onClick={handleCreateBounty}
-                      className="flex items-center justify-center gap-1.5 px-[16px] h-[34px] rounded-full text-[15px] font-medium bg-foreground text-background shadow-lg shadow-foreground/20 hover:bg-foreground/90 transition-colors"
-                    >
-                      Create bounty
-                    </button>
-                  </TutorialHighlight>
-                )}
-                {compact && (
-                  <button
-                    type="button"
-                    onClick={handleCreateBounty}
-                    className="flex items-center justify-center gap-1 px-3 h-7 rounded-full text-[11px] font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors"
-                  >
-                    Create
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Feed divider */}
+        <DashboardHeader compact={compact} />
+        <CreateBountyFormCard
+          compact={compact}
+          onCreateBounty={handleCreateBounty}
+        />
         <div className="h-px w-full shrink-0 bg-surface-3" />
+        <BountyFeedList
+          compact={compact}
+          feedBounties={feedBounties}
+          visibleCount={visibleCount}
+        />
+      </div>
+    </div>
+  );
+}
 
-        {/* Bounty feed */}
-        <div
-          className={`flex w-full shrink-0 flex-col ${compact ? 'px-3 py-2' : 'px-6 lg:px-8'} max-w-[880px] mx-auto min-w-0 ${compact ? '' : 'pb-10'}`}
-        >
-          <div
-            className={`flex flex-col ${compact ? 'gap-2' : 'gap-3'} ${compact ? 'py-1' : 'pt-4'} pointer-events-none`}
-          >
-            {feedBounties
-              .slice(0, compact ? 3 : visibleCount)
-              .map((bounty, index) => (
-                <div
-                  key={bounty.id}
-                  className="animate-in fade-in slide-in-from-bottom-2 duration-500"
-                >
-                  {compact ? (
-                    <CompactBountyCard
-                      bounty={bounty}
-                      stats={{
-                        commentCount: 3 + index,
-                        voteCount: 2,
-                        submissionCount: 1 + (index % 2),
-                        isVoted: false,
-                        bookmarked: false,
-                      }}
-                    />
-                  ) : (
-                    <StandardBountyCard
-                      bounty={bounty}
-                      stats={{
-                        commentCount: 3 + index,
-                        voteCount: 2,
-                        submissionCount: 1 + (index % 2),
-                        isVoted: false,
-                        bookmarked: false,
-                      }}
-                    />
-                  )}
-                </div>
-              ))}
+function StripeOrderSummary() {
+  return (
+    <div className="bg-surface-1 p-8 lg:p-12 border-r border-border-default">
+      <div className="max-w-md">
+        <p className="text-sm text-text-muted mb-1">Pay Bounty sandbox</p>
+        <h1 className="text-[42px] font-semibold tracking-tight text-foreground mb-8">
+          $1,029.30
+        </h1>
+
+        <div className="space-y-4">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="font-medium text-foreground">
+                Bounty creation deposit
+              </p>
+              <p className="text-sm text-text-muted">
+                Upfront bounty creation deposit
+              </p>
+            </div>
+            <span className="text-foreground">$1,000.00</span>
+          </div>
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="font-medium text-foreground">Processing Fees</p>
+              <p className="text-sm text-text-muted">
+                Stripe processing fees (2.9% + $0.30)
+              </p>
+            </div>
+            <span className="text-foreground">$29.30</span>
           </div>
         </div>
       </div>
@@ -395,9 +457,136 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Stripe Checkout Page
-// ─────────────────────────────────────────────────────────────────────────────
+function StripePaymentForm({ onPay }: { onPay: () => void }) {
+  return (
+    <div className="p-8 lg:p-12">
+      <div className="max-w-md mx-auto">
+        <div className="flex gap-2 mb-6">
+          <button
+            type="button"
+            className="flex-1 h-12 rounded-md bg-success text-white font-semibold flex items-center justify-center gap-2"
+          >
+            <span className="text-lg">⚡</span> Link
+          </button>
+          <button
+            type="button"
+            className="flex-1 h-12 rounded-md bg-destructive-surface text-foreground font-semibold"
+          >
+            Klarna
+          </button>
+          <button
+            type="button"
+            className="flex-1 h-12 rounded-md bg-warning text-foreground font-semibold text-sm"
+          >
+            amazon pay
+          </button>
+        </div>
+
+        <div className="flex items-center gap-4 my-6">
+          <div className="flex-1 h-px bg-surface-2" />
+          <span className="text-sm text-text-muted">OR</span>
+          <div className="flex-1 h-px bg-surface-2" />
+        </div>
+
+        <div className="mb-6">
+          <p className="text-sm font-medium text-foreground mb-2">
+            Contact information
+          </p>
+          <div className="rounded-md border border-border-default px-4 py-3 text-text-muted">
+            grim@bounty.new
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <p className="text-sm font-medium text-foreground mb-2">
+            Payment method
+          </p>
+          <div className="rounded-md border border-border-default divide-y divide-border-default">
+            <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-1">
+              <input
+                type="radio"
+                name="payment"
+                defaultChecked
+                className="w-4 h-4 accent-info"
+              />
+              <span className="flex-1 text-foreground">Card</span>
+              <span className="text-xs text-text-muted">VISA MC AMEX</span>
+            </label>
+            <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-1">
+              <input
+                type="radio"
+                name="payment"
+                className="w-4 h-4 accent-info"
+              />
+              <span className="flex-1 text-foreground">Affirm</span>
+            </label>
+            <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-1">
+              <input
+                type="radio"
+                name="payment"
+                className="w-4 h-4 accent-info"
+              />
+              <span className="flex-1 text-foreground">Cash App Pay</span>
+            </label>
+            <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-1">
+              <input
+                type="radio"
+                name="payment"
+                className="w-4 h-4 accent-info"
+              />
+              <span className="flex-1 text-foreground">Klarna</span>
+            </label>
+          </div>
+        </div>
+
+        <label
+          className="flex items-start gap-3 mb-6 cursor-pointer"
+          aria-label="Save my information for faster checkout"
+        >
+          <input
+            type="checkbox"
+            defaultChecked
+            className="w-4 h-4 mt-0.5 accent-info"
+          />
+          <div>
+            <p className="text-sm text-foreground">
+              Save my information for faster checkout
+            </p>
+            <p className="text-xs text-text-muted">
+              Pay securely at Bounty sandbox and everywhere Link is accepted.
+            </p>
+          </div>
+        </label>
+
+        <TutorialHighlight
+          stepId="stripe-pay"
+          tooltip="Click to complete payment"
+          tooltipPosition="bottom"
+          borderRadius="rounded-md"
+          fullWidth
+        >
+          <button
+            type="button"
+            onClick={onPay}
+            className="w-full h-12 rounded-md bg-foreground text-background font-semibold hover:bg-foreground/90 transition-colors"
+          >
+            Pay
+          </button>
+        </TutorialHighlight>
+
+        <p className="text-xs text-text-muted text-center mt-4">
+          By paying, you agree to Link&apos;s Terms and Privacy.
+        </p>
+
+        <div className="flex items-center justify-center gap-2 mt-6 text-xs text-text-muted">
+          <span>Powered by</span>
+          <span className="font-semibold text-info">stripe</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function StripeCheckoutPage() {
   const { navigate } = useMockBrowser();
   const { advanceStep } = useTutorial();
@@ -410,7 +599,6 @@ function StripeCheckoutPage() {
   return (
     <div className="h-full bg-background overflow-auto">
       <div className="min-h-full flex flex-col">
-        {/* Stripe header */}
         <div className="flex items-center gap-3 px-6 py-4 border-b border-border-default">
           <button
             type="button"
@@ -434,197 +622,39 @@ function StripeCheckoutPage() {
           </span>
         </div>
 
-        {/* Checkout content */}
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2">
-          {/* Left: Order summary */}
-          <div className="bg-surface-1 p-8 lg:p-12 border-r border-border-default">
-            <div className="max-w-md">
-              <p className="text-sm text-text-muted mb-1">Pay Bounty sandbox</p>
-              <h1 className="text-[42px] font-semibold tracking-tight text-foreground mb-8">
-                $1,029.30
-              </h1>
-
-              <div className="space-y-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="font-medium text-foreground">
-                      Bounty creation deposit
-                    </p>
-                    <p className="text-sm text-text-muted">
-                      Upfront bounty creation deposit
-                    </p>
-                  </div>
-                  <span className="text-foreground">$1,000.00</span>
-                </div>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="font-medium text-foreground">
-                      Processing Fees
-                    </p>
-                    <p className="text-sm text-text-muted">
-                      Stripe processing fees (2.9% + $0.30)
-                    </p>
-                  </div>
-                  <span className="text-foreground">$29.30</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Payment form */}
-          <div className="p-8 lg:p-12">
-            <div className="max-w-md mx-auto">
-              {/* Express checkout */}
-              <div className="flex gap-2 mb-6">
-                <button
-                  type="button"
-                  className="flex-1 h-12 rounded-md bg-success text-white font-semibold flex items-center justify-center gap-2"
-                >
-                  <span className="text-lg">⚡</span> Link
-                </button>
-                <button
-                  type="button"
-                  className="flex-1 h-12 rounded-md bg-destructive-surface text-foreground font-semibold"
-                >
-                  Klarna
-                </button>
-                <button
-                  type="button"
-                  className="flex-1 h-12 rounded-md bg-warning text-foreground font-semibold text-sm"
-                >
-                  amazon pay
-                </button>
-              </div>
-
-              <div className="flex items-center gap-4 my-6">
-                <div className="flex-1 h-px bg-surface-2" />
-                <span className="text-sm text-text-muted">OR</span>
-                <div className="flex-1 h-px bg-surface-2" />
-              </div>
-
-              {/* Contact info */}
-              <div className="mb-6">
-                <p className="text-sm font-medium text-foreground mb-2">
-                  Contact information
-                </p>
-                <div className="rounded-md border border-border-default px-4 py-3 text-text-muted">
-                  grim@bounty.new
-                </div>
-              </div>
-
-              {/* Payment methods */}
-              <div className="mb-6">
-                <p className="text-sm font-medium text-foreground mb-2">
-                  Payment method
-                </p>
-                <div className="rounded-md border border-border-default divide-y divide-border-default">
-                  <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-1">
-                    <input
-                      type="radio"
-                      name="payment"
-                      defaultChecked
-                      className="w-4 h-4 accent-info"
-                    />
-                    <span className="flex-1 text-foreground">Card</span>
-                    <span className="text-xs text-text-muted">
-                      VISA MC AMEX
-                    </span>
-                  </label>
-                  <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-1">
-                    <input
-                      type="radio"
-                      name="payment"
-                      className="w-4 h-4 accent-info"
-                    />
-                    <span className="flex-1 text-foreground">Affirm</span>
-                  </label>
-                  <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-1">
-                    <input
-                      type="radio"
-                      name="payment"
-                      className="w-4 h-4 accent-info"
-                    />
-                    <span className="flex-1 text-foreground">Cash App Pay</span>
-                  </label>
-                  <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-1">
-                    <input
-                      type="radio"
-                      name="payment"
-                      className="w-4 h-4 accent-info"
-                    />
-                    <span className="flex-1 text-foreground">Klarna</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Save info checkbox */}
-              <label className="flex items-start gap-3 mb-6 cursor-pointer" aria-label="Save my information for faster checkout">
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  className="w-4 h-4 mt-0.5 accent-info"
-                />
-                <div>
-                  <p className="text-sm text-foreground">
-                    Save my information for faster checkout
-                  </p>
-                  <p className="text-xs text-text-muted">
-                    Pay securely at Bounty sandbox and everywhere Link is
-                    accepted.
-                  </p>
-                </div>
-              </label>
-
-              {/* Pay button */}
-              <TutorialHighlight
-                stepId="stripe-pay"
-                tooltip="Click to complete payment"
-                tooltipPosition="bottom"
-                borderRadius="rounded-md"
-                fullWidth
-              >
-                <button
-                  type="button"
-                  onClick={handlePay}
-                  className="w-full h-12 rounded-md bg-foreground text-background font-semibold hover:bg-foreground/90 transition-colors"
-                >
-                  Pay
-                </button>
-              </TutorialHighlight>
-
-              <p className="text-xs text-text-muted text-center mt-4">
-                By paying, you agree to Link&apos;s Terms and Privacy.
-              </p>
-
-              <div className="flex items-center justify-center gap-2 mt-6 text-xs text-text-muted">
-                <span>Powered by</span>
-                <span className="font-semibold text-info">stripe</span>
-              </div>
-            </div>
-          </div>
+          <StripeOrderSummary />
+          <StripePaymentForm onPay={handlePay} />
         </div>
       </div>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GitHub Issue Page
-// ─────────────────────────────────────────────────────────────────────────────
 function GitHubIssuePage({
   onShowNotifications,
 }: {
   onShowNotifications?: () => void;
 }) {
-  const [animState, setAnimState] = useState({ botCommentVisible: false, botReacted: false, showSuccess: false });
+  const [animState, setAnimState] = useState({
+    botCommentVisible: false,
+    botReacted: false,
+    showSuccess: false,
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Timed sequence for bot animations
   useEffect(() => {
-    const t1 = setTimeout(() => setAnimState(prev => ({ ...prev, botCommentVisible: true })), 800);
-    const t2 = setTimeout(() => setAnimState(prev => ({ ...prev, botReacted: true })), 2000);
+    const t1 = setTimeout(
+      () => setAnimState((prev) => ({ ...prev, botCommentVisible: true })),
+      800
+    );
+    const t2 = setTimeout(
+      () => setAnimState((prev) => ({ ...prev, botReacted: true })),
+      2000
+    );
     const t3 = setTimeout(() => {
-      setAnimState(prev => ({ ...prev, showSuccess: true }));
+      setAnimState((prev) => ({ ...prev, showSuccess: true }));
       onShowNotifications?.();
     }, 3200);
     return () => {
@@ -636,7 +666,11 @@ function GitHubIssuePage({
 
   // Auto-scroll when new content appears
   useEffect(() => {
-    if (animState.botCommentVisible || animState.botReacted || animState.showSuccess) {
+    if (
+      animState.botCommentVisible ||
+      animState.botReacted ||
+      animState.showSuccess
+    ) {
       setTimeout(() => {
         scrollRef.current?.scrollTo({
           top: scrollRef.current.scrollHeight,
@@ -644,7 +678,11 @@ function GitHubIssuePage({
         });
       }, 100);
     }
-  }, [animState.botCommentVisible, animState.botReacted, animState.showSuccess]);
+  }, [
+    animState.botCommentVisible,
+    animState.botReacted,
+    animState.showSuccess,
+  ]);
 
   return (
     <div className="h-full bg-gh-bg overflow-auto" ref={scrollRef}>
@@ -828,9 +866,6 @@ function GitHubIssuePage({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Main Demo Component
-// ─────────────────────────────────────────────────────────────────────────────
 interface CreateBountyDemoProps {
   compact?: boolean;
   onShowNotifications?: () => void;

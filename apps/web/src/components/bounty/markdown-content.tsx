@@ -242,8 +242,6 @@ export function MarkdownContent({ content, encoding }: MarkdownContentProps) {
 
   return (
     <div className="prose prose-invert prose-neutral markdown-content max-w-none">
-      {/* eslint-disable-next-line react/no-danger */}
-      {/* biome-ignore lint/security/noDangerouslySetInnerHtml: CSS styles need to be injected for markdown content */}
       <style
         dangerouslySetInnerHTML={{
           __html: `

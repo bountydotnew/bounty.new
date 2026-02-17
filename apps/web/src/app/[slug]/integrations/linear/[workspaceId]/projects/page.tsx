@@ -171,9 +171,9 @@ function ProjectsSkeleton() {
 
       {/* Projects List */}
       <div className="space-y-1">
-        {[1, 2, 3, 4, 5].map((i) => (
+        {['item1', 'item2', 'item3', 'item4', 'item5'].map((item) => (
           <div
-            key={`skeleton-${i}`}
+            key={`projects-skeleton-${item}`}
             className="flex items-center gap-4 px-4 py-3 animate-pulse"
           >
             <div className="w-10 h-10 rounded-lg bg-white/5 shrink-0" />
