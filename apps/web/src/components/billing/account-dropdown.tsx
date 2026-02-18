@@ -276,10 +276,10 @@ function CreateTeamDialog({
         onCreated(result.data.id, slug, name.trim());
         onOpenChange(false);
       }
+      setFormState((prev) => ({ ...prev, isCreating: false }));
     } catch (err) {
       console.error('Failed to create team:', err);
       toast.error('Failed to create team');
-    } finally {
       setFormState((prev) => ({ ...prev, isCreating: false }));
     }
   };
@@ -403,10 +403,10 @@ function TeamSwitcherSubmenu({
           }
         }
         onClose();
+        setSwitching(false);
       } catch (err) {
         console.error('Failed to switch team:', err);
         toast.error('Failed to switch team');
-      } finally {
         setSwitching(false);
       }
     },

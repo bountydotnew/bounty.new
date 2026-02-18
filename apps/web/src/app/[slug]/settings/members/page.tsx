@@ -119,10 +119,10 @@ function useMembersData() {
       toast.success(`Invitation sent to ${inviteEmail.trim()}`);
       setInviteEmail('');
       invalidateAll();
+      setIsInviting(false);
     } catch (err) {
       console.error('Failed to invite:', err);
       toast.error('Failed to send invitation');
-    } finally {
       setIsInviting(false);
     }
   };

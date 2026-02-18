@@ -80,7 +80,8 @@ export default function LinearWorkspacePage() {
     setIsConnecting(true);
     try {
       await linkLinear();
-    } finally {
+      setIsConnecting(false);
+    } catch {
       setIsConnecting(false);
     }
   };
@@ -89,7 +90,8 @@ export default function LinearWorkspacePage() {
     setIsSyncing(true);
     try {
       await syncLinearWorkspace();
-    } finally {
+      setIsSyncing(false);
+    } catch {
       setIsSyncing(false);
     }
   };

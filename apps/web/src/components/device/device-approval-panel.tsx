@@ -153,6 +153,9 @@ export const DeviceApprovalPanel = ({ userCode }: DeviceApprovalPanelProps) => {
     const loadDeviceStatus = async () => {
       try {
         await fetchStatus();
+        if (active) {
+          dispatch({ type: 'STOP_LOADING' });
+        }
       } catch (fetchError) {
         if (active) {
           const message = getErrorMessage(
@@ -161,7 +164,6 @@ export const DeviceApprovalPanel = ({ userCode }: DeviceApprovalPanelProps) => {
           );
           dispatch({ type: 'SET_ERROR', error: message });
         }
-      } finally {
         if (active) {
           dispatch({ type: 'STOP_LOADING' });
         }
@@ -205,6 +207,7 @@ export const DeviceApprovalPanel = ({ userCode }: DeviceApprovalPanelProps) => {
       const nextStatus = await executeDeviceAction(type);
       dispatch({ type: 'SET_STATUS', status: nextStatus as DeviceStatus });
       toast.success(getActionSuccessMessage(type));
+      dispatch({ type: 'STOP_ACTION' });
     } catch (actionError) {
       const message = getErrorMessage(
         actionError,
@@ -212,7 +215,6 @@ export const DeviceApprovalPanel = ({ userCode }: DeviceApprovalPanelProps) => {
       );
       dispatch({ type: 'SET_ERROR', error: message });
       toast.error(message);
-    } finally {
       dispatch({ type: 'STOP_ACTION' });
     }
   };

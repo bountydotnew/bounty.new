@@ -348,6 +348,7 @@ export function EmailVerification({
       } else if (result?.error) {
         throw new Error(result.error.message || 'Verification failed');
       }
+      setUiState((prev) => ({ ...prev, isLoading: false }));
     } catch (error) {
       const parsed = parseOtpError(error);
       setUiState((prev) => ({
@@ -359,7 +360,6 @@ export function EmailVerification({
         type: 'manual',
         message: parsed.message,
       });
-    } finally {
       setUiState((prev) => ({ ...prev, isLoading: false }));
     }
   };
@@ -383,9 +383,9 @@ export function EmailVerification({
         type: 'sign-in',
       });
       setUiState((prev) => ({ ...prev, resendCooldown: 60 }));
+      setUiState((prev) => ({ ...prev, isResending: false }));
     } catch {
       // no-op; user can try again
-    } finally {
       setUiState((prev) => ({ ...prev, isResending: false }));
     }
   };

@@ -82,12 +82,14 @@ export default function OrgInvitationAcceptPage() {
             router.push('/dashboard');
           }
         }
+        if (!cancelled) {
+          dispatch({ type: 'STOP_LOADING' });
+        }
       } catch (err) {
         if (cancelled) return;
         console.error('Error accepting invitation:', err);
         dispatch({ type: 'SET_ERROR', error: 'An unexpected error occurred' });
         toast.error('An unexpected error occurred');
-      } finally {
         if (!cancelled) {
           dispatch({ type: 'STOP_LOADING' });
         }

@@ -22,7 +22,8 @@ export default function EarlyAccessRequiredPage() {
         // Hard navigate to bust the cookie-cached session
         window.location.href = '/dashboard';
       }
-    } finally {
+      setChecking(false);
+    } catch {
       setChecking(false);
     }
   };

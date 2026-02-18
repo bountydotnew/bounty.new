@@ -34,9 +34,9 @@ export function Header() {
     try {
       await authClient.signOut();
       router.refresh();
+      setSignOutPending(false);
     } catch (error) {
       console.error('Sign out failed', error);
-    } finally {
       setSignOutPending(false);
     }
   }, [router]);
@@ -119,6 +119,8 @@ export function Header() {
                             session?.user?.name ||
                             session?.user?.email?.split('@')[0]
                           }
+                          width={28}
+                          height={28}
                           className="h-7 w-7 rounded-full"
                         />
                       ) : (

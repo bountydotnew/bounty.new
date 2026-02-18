@@ -97,6 +97,8 @@ export function Hero() {
             <div className="absolute inset-0">
               <Image
                 src="/images/asset-cc24ca462279ca23250c.webp"
+                width={1200}
+                height={800}
                 alt=""
                 className="w-full h-full object-cover"
               />

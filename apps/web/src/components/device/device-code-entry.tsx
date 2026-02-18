@@ -77,6 +77,7 @@ export function DeviceCodeEntry({ initialCode = '' }: DeviceCodeEntryProps) {
 
       toast.success('Code verified. Continue on your primary device.');
       router.push(`/device/approve?user_code=${sanitizedCode}`);
+      setIsSubmitting(false);
     } catch (submissionError) {
       const message =
         submissionError instanceof Error
@@ -84,7 +85,6 @@ export function DeviceCodeEntry({ initialCode = '' }: DeviceCodeEntryProps) {
           : 'Unable to verify the device code.';
       setError(message);
       toast.error(message);
-    } finally {
       setIsSubmitting(false);
     }
   };

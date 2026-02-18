@@ -569,7 +569,8 @@ function FeesTabContent({
         if (result.data?.url) {
           window.location.href = result.data.url;
         }
-      } finally {
+        setIsPortalLoading(false);
+      } catch {
         setIsPortalLoading(false);
       }
       return;
@@ -590,10 +591,10 @@ function FeesTabContent({
       ) {
         window.location.href = result.data.checkout_url;
       }
+      setIsCheckoutLoading(null);
     } catch (error) {
       console.error('Checkout error:', error);
       toast.error('Failed to start checkout');
-    } finally {
       setIsCheckoutLoading(null);
     }
   };
@@ -605,7 +606,8 @@ function FeesTabContent({
       if (result.data?.url) {
         window.location.href = result.data.url;
       }
-    } finally {
+      setIsPortalLoading(false);
+    } catch {
       setIsPortalLoading(false);
     }
   };
