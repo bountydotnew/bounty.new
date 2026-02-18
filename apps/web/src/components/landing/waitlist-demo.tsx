@@ -121,7 +121,11 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     defaultValues: { email: '' },
   });
 
-  const [fingerprint, setFingerprint] = useState<{ data: any; loading: boolean }>({ data: null, loading: true });
+  type FingerprintData = Awaited<ReturnType<typeof getThumbmark>>;
+  const [fingerprint, setFingerprint] = useState<{
+    data: FingerprintData | null;
+    loading: boolean;
+  }>({ data: null, loading: true });
   const waitlistSubmission = useWaitlistSubmission();
 
   useEffect(() => {
