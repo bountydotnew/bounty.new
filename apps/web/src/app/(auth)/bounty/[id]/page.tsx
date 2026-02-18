@@ -25,7 +25,7 @@ export async function generateMetadata({
   const ogImageUrl = `${baseUrl}/api/og-image/${id}`;
 
   return {
-    title: thisBounty.title,
+    title: `"${thisBounty.title}" - bounty`,
     description: thisBounty.description,
     openGraph: {
       title: thisBounty.title,

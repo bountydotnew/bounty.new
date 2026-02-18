@@ -1,21 +1,11 @@
-'use client';
+import type { Metadata } from 'next';
+import { DashboardClient } from './dashboard-client';
 
-import { AuthGuard } from '@/components/auth/auth-guard';
-import { DashboardPageProvider } from '@/components/dashboard/dashboard-page';
-import { DashboardContent } from './dashboard-content';
-import { ErrorBoundary } from '@/components/dashboard/error-boundary';
-import { Empty } from '@bounty/ui';
+export const metadata: Metadata = {
+  title: 'Dasboard — bounty',
+  description: 'Manage your bounties and track submissions',
+};
 
-function DashboardPage() {
-  return (
-    <ErrorBoundary>
-      <AuthGuard>
-        <DashboardPageProvider>
-          <DashboardContent />
-        </DashboardPageProvider>
-      </AuthGuard>
-    </ErrorBoundary>
-  );
+export default function DashboardPage() {
+  return <DashboardClient />;
 }
-
-export default DashboardPage;
