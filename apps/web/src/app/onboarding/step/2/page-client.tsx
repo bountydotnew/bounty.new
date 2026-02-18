@@ -40,7 +40,7 @@ export default function OnboardingStep2Page() {
   const handleInstallGitHub = () => {
     if (installUrlData?.url) {
       setIsChecking(true);
-      window.open(installUrlData.url, '_blank');
+      window.open(installUrlData.url, '_blank', 'noopener,noreferrer');
     }
   };
 

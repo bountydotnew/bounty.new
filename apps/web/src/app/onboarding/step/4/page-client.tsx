@@ -44,15 +44,15 @@ export default function OnboardingStep4Page() {
     },
   });
 
-  const handleGoToDashboard = () => {
-    completeStepMutation.mutate();
+  const handleGoToDashboard = async () => {
+    await completeStepMutation.mutateAsync();
     router.push('/dashboard');
   };
 
-  const handleActionClick = (action: Action) => {
-    completeStepMutation.mutate();
+  const handleActionClick = async (action: Action) => {
+    await completeStepMutation.mutateAsync();
     if (action.external) {
-      window.open(action.href, '_blank');
+      window.open(action.href, '_blank', 'noopener,noreferrer');
     } else {
       router.push(action.href);
     }

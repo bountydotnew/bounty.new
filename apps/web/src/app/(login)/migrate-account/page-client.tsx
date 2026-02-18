@@ -14,9 +14,18 @@ import { AlertCircle } from 'lucide-react';
 
 function MigrateAccountContent() {
   const searchParams = useSearchParams();
+  const redirectParam = searchParams.get('redirect');
+  const callbackURL =
+    redirectParam?.startsWith('/') && !redirectParam?.startsWith('//')
+      ? redirectParam
+      : '/dashboard';
   const [isPending, setIsPending] = useState(false);
 
-  const { data: migrationData, isPending: isCheckingMigration } = useQuery({
+  const {
+    data: migrationData,
+    isPending: isCheckingMigration,
+    isError,
+  } = useQuery({
     queryKey: ['check-migration'],
     queryFn: async () => {
       const response = await fetch('/api/auth/check-migration');
@@ -29,15 +38,16 @@ function MigrateAccountContent() {
   });
 
   // Note: Server-side redirect in page.tsx handles hasOAuth and error cases
-
-  const needsMigration = migrationData != null && !migrationData.hasOAuth;
+  // On API failure, show migration UI instead of a blank screen
+  const needsMigration =
+    isError || (migrationData != null && !migrationData.hasOAuth);
 
   const handleGitHubLink = async () => {
     setIsPending(true);
     try {
       await authClient.signIn.social({
         provider: 'github',
-        callbackURL: searchParams.get('redirect') || '/dashboard',
+        callbackURL,
       });
     } catch {
       toast.error('Failed to link GitHub');
@@ -50,7 +60,7 @@ function MigrateAccountContent() {
     try {
       await authClient.signIn.social({
         provider: 'google',
-        callbackURL: searchParams.get('redirect') || '/dashboard',
+        callbackURL,
       });
     } catch {
       toast.error('Failed to link Google');

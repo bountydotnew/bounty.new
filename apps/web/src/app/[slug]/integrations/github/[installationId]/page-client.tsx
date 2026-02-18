@@ -3,7 +3,7 @@
 import type * as React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GithubIcon } from '@bounty/ui';
 import { ConfirmAlertDialog } from '@bounty/ui/components/alert-dialog';
 import { ExternalLink, RefreshCw, Plus, Star } from 'lucide-react';
@@ -115,27 +115,23 @@ export default function GitHubInstallationPage() {
   });
 
   // Invalidate caches when arriving from a new installation (one-time)
-  useQuery({
-    queryKey: ['githubInstallation.newFlag', newFlag, installationId],
-    queryFn: async () => {
-      await Promise.all([
-        queryClientLocal.invalidateQueries({
-          queryKey: ['githubInstallation.getInstallations'],
-        }),
-        queryClientLocal.invalidateQueries({
-          queryKey: ['githubInstallation.getRepositories', installationId],
-        }),
-        queryClientLocal.invalidateQueries({
-          queryKey: ['githubInstallation.getInstallation', installationId],
-        }),
-      ]);
+  useEffect(() => {
+    if (!newFlag) return;
+
+    void Promise.all([
+      queryClientLocal.invalidateQueries({
+        queryKey: ['githubInstallation.getInstallations'],
+      }),
+      queryClientLocal.invalidateQueries({
+        queryKey: ['githubInstallation.getRepositories', installationId],
+      }),
+      queryClientLocal.invalidateQueries({
+        queryKey: ['githubInstallation.getInstallation', installationId],
+      }),
+    ]).then(() => {
       setNewFlag(null);
-      return null;
-    },
-    enabled: !!newFlag,
-    retry: false,
-    staleTime: Number.POSITIVE_INFINITY,
-  });
+    });
+  }, [newFlag, installationId, queryClientLocal, setNewFlag]);
 
   const accountLogin = installation?.installation?.account.login || '';
   const accountType = installation?.installation?.account.type;
@@ -148,7 +144,7 @@ export default function GitHubInstallationPage() {
       githubUrl = `https://github.com/settings/installations/${installationId}`;
     }
 
-    window.open(githubUrl, '_blank');
+    window.open(githubUrl, '_blank', 'noopener,noreferrer');
   };
 
   if (!isValidId) {
@@ -237,7 +233,8 @@ export default function GitHubInstallationPage() {
             onClick={() =>
               window.open(
                 'https://docs.bounty.new/integrations/github',
-                '_blank'
+                '_blank',
+                'noopener,noreferrer'
               )
             }
             icon={<ExternalLink className="h-4 w-4" />}
