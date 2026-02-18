@@ -15,7 +15,7 @@ import {
   DrawerTrigger,
 } from '@bounty/ui/components/drawer';
 import { cn } from '@bounty/ui/lib/utils';
-import { AnimatePresence, m, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 
 interface Account {
   id: number;
@@ -177,7 +177,7 @@ function AccountsSelectorContent({
       {/* Content */}
       <div className="min-h-[250px] max-h-[250px] overflow-hidden relative">
         <AnimatePresence initial={false}>
-          <m.div
+          <motion.div
             key={paneKey}
             initial={
               prefersReducedMotion
@@ -265,7 +265,7 @@ function AccountsSelectorContent({
                   );
                 })
             )}
-          </m.div>
+          </motion.div>
         </AnimatePresence>
       </div>
 
@@ -893,7 +893,7 @@ function MobileSelectorContent({
       />
       <div className="min-h-[250px] max-h-[250px] overflow-hidden relative">
         <AnimatePresence initial={false}>
-          <m.div
+          <motion.div
             key={stepKey}
             initial={
               prefersReducedMotion
@@ -930,7 +930,7 @@ function MobileSelectorContent({
               onSelectIssue={onSelectIssue}
               selectedIssue={selectedIssue}
             />
-          </m.div>
+          </motion.div>
         </AnimatePresence>
       </div>
       {(showPagination || showBranchesPagination || showIssuesPagination) && (

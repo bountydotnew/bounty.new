@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { AnimatePresence, m } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useMockBrowser } from './mock-browser-context';
 
 export function MockLoadingBar() {
@@ -9,27 +9,27 @@ export function MockLoadingBar() {
   return (
     <AnimatePresence>
       {isNavigating && (
-        <m.div
-          className="absolute top-0 left-0 right-0 h-[3px] z-50 overflow-hidden bg-surface-1"
-          initial={{ opacity: 0 }}
+        <motion.div
           animate={{ opacity: 1 }}
+          className="absolute top-0 right-0 left-0 z-50 h-[3px] overflow-hidden bg-surface-1"
           exit={{ opacity: 0 }}
+          initial={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
         >
           {/* Main progress bar */}
-          <m.div
-            className="h-full bg-info relative"
-            initial={{ width: '0%' }}
+          <motion.div
             animate={{ width: `${loadingProgress}%` }}
+            className="relative h-full bg-info"
+            initial={{ width: '0%' }}
             transition={{
               duration: 0.1,
               ease: 'easeOut',
             }}
           >
             {/* Shimmer effect */}
-            <m.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+            <motion.div
               animate={{ x: ['-100%', '200%'] }}
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
               transition={{
                 duration: 1,
                 repeat: Number.POSITIVE_INFINITY,
@@ -37,9 +37,9 @@ export function MockLoadingBar() {
               }}
             />
             {/* Glow effect at the end */}
-            <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-r from-transparent to-info blur-sm" />
-          </m.div>
-        </m.div>
+            <div className="absolute top-0 right-0 bottom-0 w-24 bg-gradient-to-r from-transparent to-info blur-sm" />
+          </motion.div>
+        </motion.div>
       )}
     </AnimatePresence>
   );
