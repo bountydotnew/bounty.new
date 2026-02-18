@@ -358,7 +358,9 @@ export async function GET(
             return await response.arrayBuffer();
           }
         }
-      } catch {}
+      } catch {
+        // Ignore font loading errors and render with system font.
+      }
       return null;
     }
 
