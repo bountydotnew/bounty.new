@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@bounty/ui/lib/utils';
-import { motion, useAnimation } from 'motion/react';
+import { m, useAnimation } from 'motion/react';
 import type { HTMLAttributes } from 'react';
 import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
 
