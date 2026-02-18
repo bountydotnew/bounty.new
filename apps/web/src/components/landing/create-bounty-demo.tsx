@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { Plus, ChevronDown } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useReducer } from 'react';
 import {
   CompactBountyCard,
   StandardBountyCard,
@@ -25,6 +25,43 @@ import {
 } from '@bounty/ui';
 import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
 import { CalendarIcon } from '@bounty/ui/components/icons/huge/calendar';
+
+// Animation state for create-bounty demo
+type BountyAnimState = {
+  botCommentVisible: boolean;
+  botReacted: boolean;
+  showSuccess: boolean;
+};
+
+type BountyAnimAction =
+  | { type: 'SHOW_COMMENT' }
+  | { type: 'SET_REACTED' }
+  | { type: 'SHOW_SUCCESS' }
+  | { type: 'RESET' };
+
+const initialBountyAnimState: BountyAnimState = {
+  botCommentVisible: false,
+  botReacted: false,
+  showSuccess: false,
+};
+
+function bountyAnimReducer(
+  state: BountyAnimState,
+  action: BountyAnimAction
+): BountyAnimState {
+  switch (action.type) {
+    case 'SHOW_COMMENT':
+      return { ...state, botCommentVisible: true };
+    case 'SET_REACTED':
+      return { ...state, botReacted: true };
+    case 'SHOW_SUCCESS':
+      return { ...state, showSuccess: true };
+    case 'RESET':
+      return initialBountyAnimState;
+    default:
+      return state;
+  }
+}
 
 interface BountyDashboardPageProps {
   compact?: boolean;
@@ -636,25 +673,18 @@ function GitHubIssuePage({
 }: {
   onShowNotifications?: () => void;
 }) {
-  const [animState, setAnimState] = useState({
-    botCommentVisible: false,
-    botReacted: false,
-    showSuccess: false,
-  });
+  const [animState, dispatch] = useReducer(
+    bountyAnimReducer,
+    initialBountyAnimState
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Timed sequence for bot animations
   useEffect(() => {
-    const t1 = setTimeout(
-      () => setAnimState((prev) => ({ ...prev, botCommentVisible: true })),
-      800
-    );
-    const t2 = setTimeout(
-      () => setAnimState((prev) => ({ ...prev, botReacted: true })),
-      2000
-    );
+    const t1 = setTimeout(() => dispatch({ type: 'SHOW_COMMENT' }), 800);
+    const t2 = setTimeout(() => dispatch({ type: 'SET_REACTED' }), 2000);
     const t3 = setTimeout(() => {
-      setAnimState((prev) => ({ ...prev, showSuccess: true }));
+      dispatch({ type: 'SHOW_SUCCESS' });
       onShowNotifications?.();
     }, 3200);
     return () => {

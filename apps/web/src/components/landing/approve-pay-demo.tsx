@@ -1,10 +1,55 @@
 'use client';
 
 import Image from 'next/image';
-import { useRef, useState, useEffect, useSyncExternalStore } from 'react';
+import {
+  useRef,
+  useState,
+  useEffect,
+  useSyncExternalStore,
+  useReducer,
+} from 'react';
 import { ChevronDown } from 'lucide-react';
 import { devNames } from './demo-data';
 import { MockBrowser, useMockBrowser } from './mockup';
+
+// Animation state for approve-pay demo
+type AnimState = {
+  devCommented: boolean;
+  maintainerReviewed: boolean;
+  maintainerApproved: boolean;
+  botReplied: boolean;
+};
+
+type AnimAction =
+  | { type: 'DEV_COMMENTED' }
+  | { type: 'MAINTAINER_REVIEWED' }
+  | { type: 'MAINTAINER_APPROVED' }
+  | { type: 'BOT_REPLIED' }
+  | { type: 'RESET' };
+
+const initialAnimState: AnimState = {
+  devCommented: false,
+  maintainerReviewed: false,
+  maintainerApproved: false,
+  botReplied: false,
+};
+
+function animReducer(state: AnimState, action: AnimAction): AnimState {
+  switch (action.type) {
+    case 'DEV_COMMENTED':
+      return { ...state, devCommented: true };
+    case 'MAINTAINER_REVIEWED':
+      return { ...state, maintainerReviewed: true };
+    case 'MAINTAINER_APPROVED':
+      return { ...state, maintainerApproved: true };
+    case 'BOT_REPLIED':
+      return { ...state, botReplied: true };
+    case 'RESET':
+      return initialAnimState;
+    default:
+      return state;
+  }
+}
 
 function CreatePRPage() {
   const { navigate } = useMockBrowser();
@@ -145,12 +190,7 @@ function PRCommentsPage({
 }: {
   onShowNotifications: () => void;
 }) {
-  const [animState, setAnimState] = useState({
-    devCommented: false,
-    maintainerReviewed: false,
-    maintainerApproved: false,
-    botReplied: false,
-  });
+  const [animState, dispatch] = useReducer(animReducer, initialAnimState);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const randomDevRef = useRef(
@@ -179,20 +219,17 @@ function PRCommentsPage({
   ]);
 
   useEffect(() => {
-    const t1 = setTimeout(
-      () => setAnimState((prev) => ({ ...prev, devCommented: true })),
-      400
-    );
+    const t1 = setTimeout(() => dispatch({ type: 'DEV_COMMENTED' }), 400);
     const t2 = setTimeout(
-      () => setAnimState((prev) => ({ ...prev, maintainerReviewed: true })),
+      () => dispatch({ type: 'MAINTAINER_REVIEWED' }),
       1600
     );
     const t3 = setTimeout(
-      () => setAnimState((prev) => ({ ...prev, maintainerApproved: true })),
+      () => dispatch({ type: 'MAINTAINER_APPROVED' }),
       3600
     );
     const t4 = setTimeout(() => {
-      setAnimState((prev) => ({ ...prev, botReplied: true }));
+      dispatch({ type: 'BOT_REPLIED' });
       setTimeout(() => onShowNotifications(), 800);
     }, 5100);
     return () => {
