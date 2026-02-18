@@ -5,7 +5,7 @@ import { Button } from '@bounty/ui/components/button';
 import { Input } from '@bounty/ui/components/input';
 import { cn } from '@bounty/ui/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, m } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -65,6 +65,180 @@ function parseOtpError(error: unknown): ParsedError {
   };
 }
 
+interface VerificationHeaderProps {
+  email: string;
+}
+
+function VerificationHeader({ email }: VerificationHeaderProps) {
+  return (
+    <div className="text-center space-y-3">
+      <div className="mx-auto w-16 h-16 flex items-center justify-center">
+        <Bounty className="w-8 h-8 text-primary" />
+      </div>
+      <div className="space-y-2">
+        <h2 className="text-2xl font-semibold text-foreground">
+          Check your email
+        </h2>
+        <p className="text-gray-400 text-sm leading-relaxed">
+          We sent a verification code to
+          <br />
+          <span className="font-medium text-foreground">{email}</span>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+interface OtpCodeInputProps {
+  code: string;
+  inputRefs: React.MutableRefObject<(HTMLInputElement | null)[]>;
+  isLoading: boolean;
+  focusedField: string | null;
+  error?: { message?: string };
+  onCodeInput: (value: string, index: number) => void;
+  onKeyDown: (e: React.KeyboardEvent, index: number) => void;
+  onPaste: (e: React.ClipboardEvent) => void;
+  onFocus: () => void;
+  onBlur: () => void;
+}
+
+function OtpCodeInput({
+  code,
+  inputRefs,
+  isLoading,
+  focusedField,
+  error,
+  onCodeInput,
+  onKeyDown,
+  onPaste,
+  onFocus,
+  onBlur,
+}: OtpCodeInputProps) {
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-center gap-2">
+        {SLOT_IDS.map((slotId, index) => (
+          <Input
+            key={`otp-${slotId}`}
+            ref={(el) => {
+              inputRefs.current[index] = el;
+            }}
+            type="text"
+            inputMode="numeric"
+            maxLength={1}
+            value={code[index] || ''}
+            onChange={(e) => onCodeInput(e.target.value, index)}
+            onKeyDown={(e) => onKeyDown(e, index)}
+            onPaste={onPaste}
+            onFocus={onFocus}
+            onBlur={onBlur}
+            disabled={isLoading}
+            className={cn(
+              'w-12 h-10 text-center text-lg font-medium transition-all duration-200',
+              error
+                ? 'border-destructive focus-visible:border-destructive'
+                : 'focus-visible:border-primary'
+            )}
+          />
+        ))}
+      </div>
+
+      <AnimatePresence mode="wait">
+        {error ? (
+          <m.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="text-center text-sm text-destructive font-medium"
+          >
+            {error?.message}
+          </m.div>
+        ) : focusedField === 'code' ? (
+          <m.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="text-center text-sm text-gray-400"
+          >
+            Enter the 6-digit code from your email
+          </m.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+interface ResendCodeSectionProps {
+  resendCooldown: number;
+  isResending: boolean;
+  showResendSuggestion: boolean;
+  onResendCode: () => void;
+  onBack: () => void;
+  onEditInfo?: () => void;
+}
+
+function ResendCodeSection({
+  resendCooldown,
+  isResending,
+  showResendSuggestion,
+  onResendCode,
+  onBack,
+  onEditInfo,
+}: ResendCodeSectionProps) {
+  const getResendButtonText = () => {
+    if (isResending) {
+      return 'Sending...';
+    }
+    if (resendCooldown > 0) {
+      return `Resend code in ${resendCooldown}s`;
+    }
+    if (showResendSuggestion) {
+      return '👉 Click here to get a new code';
+    }
+    return 'Resend code';
+  };
+
+  const getResendButtonClass = () => {
+    if (resendCooldown > 0 || isResending) {
+      return 'text-gray-500 cursor-not-allowed';
+    }
+    if (showResendSuggestion) {
+      return 'text-primary hover:text-primary/80 underline font-semibold animate-pulse';
+    }
+    return 'text-foreground hover:text-gray-200 underline';
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="text-center">
+        <button
+          type="button"
+          onClick={onResendCode}
+          disabled={resendCooldown > 0 || isResending}
+          className={cn(
+            'text-sm font-medium transition-all duration-200',
+            getResendButtonClass()
+          )}
+        >
+          {getResendButtonText()}
+        </button>
+      </div>
+
+      <div className="text-center space-y-2">
+        <button
+          type="button"
+          onClick={() => (onEditInfo ? onEditInfo() : onBack())}
+          className="text-sm text-gray-400 hover:text-gray-200 underline block w-full"
+        >
+          ← Back to sign up
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function EmailVerification({
   email,
   onBack,
@@ -72,11 +246,13 @@ export function EmailVerification({
   onEditInfo,
   initialCode,
 }: EmailVerificationProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [isResending, setIsResending] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const [focusedField, setFocusedField] = useState<string | null>(null);
-  const [showResendSuggestion, setShowResendSuggestion] = useState(false);
+  const [uiState, setUiState] = useState({
+    isLoading: false,
+    isResending: false,
+    resendCooldown: 0,
+    focusedField: null as string | null,
+    showResendSuggestion: false,
+  });
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const form = useForm<VerificationFormData>({
@@ -85,11 +261,22 @@ export function EmailVerification({
   });
   const { setValue, setError } = form;
 
-  // Start cooldown timer
+  const {
+    isLoading,
+    isResending,
+    resendCooldown,
+    focusedField,
+    showResendSuggestion,
+  } = uiState;
+
   useEffect(() => {
     if (resendCooldown > 0) {
       const timer = setTimeout(
-        () => setResendCooldown(resendCooldown - 1),
+        () =>
+          setUiState((prev) => ({
+            ...prev,
+            resendCooldown: prev.resendCooldown - 1,
+          })),
         1000
       );
       return () => clearTimeout(timer);
@@ -149,7 +336,7 @@ export function EmailVerification({
   };
 
   const handleSubmit = async (data: VerificationFormData) => {
-    setIsLoading(true);
+    setUiState((prev) => ({ ...prev, isLoading: true }));
     try {
       const result = await authClient.signIn.emailOtp({
         email,
@@ -157,22 +344,23 @@ export function EmailVerification({
       });
 
       if (result?.data) {
-        // signIn.emailOtp creates a session and marks email as verified
         onSuccess();
       } else if (result?.error) {
-        // Handle error from result
         throw new Error(result.error.message || 'Verification failed');
       }
+      setUiState((prev) => ({ ...prev, isLoading: false }));
     } catch (error) {
       const parsed = parseOtpError(error);
-      setShowResendSuggestion(parsed.shouldSuggestResend);
+      setUiState((prev) => ({
+        ...prev,
+        showResendSuggestion: parsed.shouldSuggestResend,
+      }));
 
       form.setError('code', {
         type: 'manual',
         message: parsed.message,
       });
-    } finally {
-      setIsLoading(false);
+      setUiState((prev) => ({ ...prev, isLoading: false }));
     }
   };
 
@@ -181,21 +369,24 @@ export function EmailVerification({
       return;
     }
 
-    setIsResending(true);
-    setShowResendSuggestion(false); // Clear suggestion after resend
-    form.clearErrors('code'); // Clear the error
-    setValue('code', ''); // Clear the code input
+    setUiState((prev) => ({
+      ...prev,
+      isResending: true,
+      showResendSuggestion: false,
+    }));
+    form.clearErrors('code');
+    setValue('code', '');
 
     try {
       await authClient.emailOtp.sendVerificationOtp({
         email,
         type: 'sign-in',
       });
-      setResendCooldown(60); // 60 second cooldown
+      setUiState((prev) => ({ ...prev, resendCooldown: 60 }));
+      setUiState((prev) => ({ ...prev, isResending: false }));
     } catch {
       // no-op; user can try again
-    } finally {
-      setIsResending(false);
+      setUiState((prev) => ({ ...prev, isResending: false }));
     }
   };
 
@@ -219,7 +410,10 @@ export function EmailVerification({
         }
       } catch (error) {
         const parsed = parseOtpError(error);
-        setShowResendSuggestion(parsed.shouldSuggestResend);
+        setUiState((prev) => ({
+          ...prev,
+          showResendSuggestion: parsed.shouldSuggestResend,
+        }));
 
         setError('code', {
           type: 'manual',
@@ -243,100 +437,25 @@ export function EmailVerification({
 
   const code = form.watch('code');
 
-  const getResendButtonText = () => {
-    if (isResending) {
-      return 'Sending...';
-    }
-    if (resendCooldown > 0) {
-      return `Resend code in ${resendCooldown}s`;
-    }
-    if (showResendSuggestion) {
-      return '👉 Click here to get a new code';
-    }
-    return 'Resend code';
-  };
-
-  const getResendButtonClass = () => {
-    if (resendCooldown > 0 || isResending) {
-      return 'text-gray-500 cursor-not-allowed';
-    }
-    if (showResendSuggestion) {
-      return 'text-primary hover:text-primary/80 underline font-semibold animate-pulse';
-    }
-    return 'text-foreground hover:text-gray-200 underline';
-  };
-
   return (
     <div className="space-y-6">
-      <div className="text-center space-y-3">
-        <div className="mx-auto w-16 h-16 flex items-center justify-center">
-          <Bounty className="w-8 h-8 text-primary" />
-        </div>
-        <div className="space-y-2">
-          <h2 className="text-2xl font-semibold text-foreground">
-            Check your email
-          </h2>
-          <p className="text-gray-400 text-sm leading-relaxed">
-            We sent a verification code to
-            <br />
-            <span className="font-medium text-foreground">{email}</span>
-          </p>
-        </div>
-      </div>
+      <VerificationHeader email={email} />
 
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <div className="space-y-3">
-          <div className="flex justify-center gap-2">
-            {SLOT_IDS.map((slotId, index) => (
-              <Input
-                key={`otp-${slotId}`}
-                ref={(el) => {
-                  inputRefs.current[index] = el;
-                }}
-                type="text"
-                inputMode="numeric"
-                maxLength={1}
-                value={code[index] || ''}
-                onChange={(e) => handleCodeInput(e.target.value, index)}
-                onKeyDown={(e) => handleKeyDown(e, index)}
-                onPaste={handlePaste}
-                onFocus={() => setFocusedField('code')}
-                onBlur={() => setFocusedField(null)}
-                disabled={isLoading}
-                className={cn(
-                  'w-12 h-10 text-center text-lg font-medium transition-all duration-200',
-                  form.formState.errors.code
-                    ? 'border-destructive focus-visible:border-destructive'
-                    : 'focus-visible:border-primary'
-                )}
-              />
-            ))}
-          </div>
-
-          <AnimatePresence mode="wait">
-            {form.formState.errors.code ? (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2 }}
-                className="text-center text-sm text-destructive font-medium"
-              >
-                {form.formState.errors.code?.message}
-              </motion.div>
-            ) : focusedField === 'code' ? (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2 }}
-                className="text-center text-sm text-gray-400"
-              >
-                Enter the 6-digit code from your email
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-        </div>
+        <OtpCodeInput
+          code={code}
+          inputRefs={inputRefs}
+          isLoading={isLoading}
+          focusedField={focusedField}
+          error={form.formState.errors.code}
+          onCodeInput={handleCodeInput}
+          onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
+          onFocus={() =>
+            setUiState((prev) => ({ ...prev, focusedField: 'code' }))
+          }
+          onBlur={() => setUiState((prev) => ({ ...prev, focusedField: null }))}
+        />
 
         <Button
           type="submit"
@@ -354,31 +473,14 @@ export function EmailVerification({
         </Button>
       </form>
 
-      <div className="space-y-4">
-        <div className="text-center">
-          <button
-            type="button"
-            onClick={handleResendCode}
-            disabled={resendCooldown > 0 || isResending}
-            className={cn(
-              'text-sm font-medium transition-all duration-200',
-              getResendButtonClass()
-            )}
-          >
-            {getResendButtonText()}
-          </button>
-        </div>
-
-        <div className="text-center space-y-2">
-          <button
-            type="button"
-            onClick={() => (onEditInfo ? onEditInfo() : onBack())}
-            className="text-sm text-gray-400 hover:text-gray-200 underline block w-full"
-          >
-            ← Back to sign up
-          </button>
-        </div>
-      </div>
+      <ResendCodeSection
+        resendCooldown={resendCooldown}
+        isResending={isResending}
+        showResendSuggestion={showResendSuggestion}
+        onResendCode={handleResendCode}
+        onBack={onBack}
+        onEditInfo={onEditInfo}
+      />
     </div>
   );
 }

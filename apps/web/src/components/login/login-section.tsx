@@ -5,7 +5,7 @@ import { Badge } from '@bounty/ui/components/badge';
 import { useSession } from '@/context/session-context';
 import { Button } from '@bounty/ui/components/button';
 import { parseAsString, useQueryState } from 'nuqs';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { SignInForm } from '@/components/auth/auth-form';
 import Bounty from '@/components/icons/bounty';
@@ -20,22 +20,18 @@ interface LoginSectionProps {
 
 export function LoginSection({ callbackUrl }: LoginSectionProps) {
   const [loading, setLoading] = useState(false);
-  const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(null);
+  const [lastUsedMethod] = useState<string | null>(() => {
+    try {
+      return typeof localStorage !== 'undefined'
+        ? localStorage.getItem('bounty-last-login-method')
+        : null;
+    } catch {
+      return null;
+    }
+  });
   const [addAccountParam] = useQueryState('addAccount', parseAsString);
   const { session, isPending } = useSession();
   const isAddingAccount = addAccountParam === 'true';
-
-  useEffect(() => {
-    try {
-      const method =
-        typeof localStorage !== 'undefined'
-          ? localStorage.getItem('bounty-last-login-method')
-          : null;
-      setLastUsedMethod(method);
-    } catch {
-      // ignore storage access errors
-    }
-  }, []);
 
   const handleGitHubSignIn = async () => {
     try {

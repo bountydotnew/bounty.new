@@ -20,12 +20,12 @@ export interface DataBuddyUpstreamBody {
   filters?: unknown;
 }
 
-export interface ApiErrorResponse {
+interface ApiErrorResponse {
   success: false;
   error: string;
 }
 
-export interface ApiSuccessResponse<T = unknown> {
+interface ApiSuccessResponse<T = unknown> {
   success: true;
   data: T;
 }

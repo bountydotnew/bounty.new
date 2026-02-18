@@ -31,11 +31,13 @@ interface IntegrationTableProps<T> {
   emptyMessage?: string;
 }
 
+const EMPTY_ROW_ACTIONS: never[] = [];
+
 export function IntegrationTable<T>({
   columns,
   data,
   keyExtractor,
-  rowActions = [],
+  rowActions = EMPTY_ROW_ACTIONS,
   emptyMessage = 'No items found.',
 }: IntegrationTableProps<T>) {
   if (data.length === 0) {

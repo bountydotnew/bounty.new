@@ -100,8 +100,8 @@ export default function RootLayout({
       >
         <NuqsAdapter>
           <Providers>
-            <script
-              async
+            <Script
+              strategy='afterInteractive'
               data-toolbar-api-key="4570028d-502a-49d8-9435-ce0fc1569093"
               id="toolbar-script"
               src="https://get.usetool.bar/embedded-app.js"

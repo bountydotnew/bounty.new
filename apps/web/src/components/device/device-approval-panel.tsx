@@ -13,13 +13,66 @@ import {
 } from '@bounty/ui/components/card';
 import { Spinner } from '@bounty/ui/components/spinner';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useReducer } from 'react';
 import { toast } from 'sonner';
 
 type DeviceStatus = 'pending' | 'approved' | 'denied';
+type ActionType = 'approve' | 'deny' | null;
 
 interface DeviceApprovalPanelProps {
   userCode: string;
+}
+
+interface DeviceState {
+  status: DeviceStatus | null;
+  isLoading: boolean;
+  error: string | null;
+  actionLoading: ActionType;
+}
+
+type DeviceAction =
+  | { type: 'START_LOADING' }
+  | { type: 'SET_STATUS'; status: DeviceStatus }
+  | { type: 'SET_ERROR'; error: string }
+  | { type: 'CLEAR_ERROR' }
+  | { type: 'STOP_LOADING' }
+  | { type: 'START_ACTION'; action: ActionType }
+  | { type: 'STOP_ACTION' }
+  | { type: 'RESET' };
+
+const initialState: DeviceState = {
+  status: null,
+  isLoading: true,
+  error: null,
+  actionLoading: null,
+};
+
+function deviceReducer(state: DeviceState, action: DeviceAction): DeviceState {
+  switch (action.type) {
+    case 'START_LOADING':
+      return { ...state, isLoading: true, error: null };
+    case 'SET_STATUS':
+      return { ...state, status: action.status };
+    case 'SET_ERROR':
+      return { ...state, error: action.error, status: null };
+    case 'CLEAR_ERROR':
+      return { ...state, error: null };
+    case 'STOP_LOADING':
+      return { ...state, isLoading: false };
+    case 'START_ACTION':
+      return { ...state, actionLoading: action.action, error: null };
+    case 'STOP_ACTION':
+      return { ...state, actionLoading: null };
+    case 'RESET':
+      return {
+        status: null,
+        isLoading: false,
+        error: 'Missing device code.',
+        actionLoading: null,
+      };
+    default:
+      return state;
+  }
 }
 
 const normalizeCode = (value: string) =>
@@ -55,12 +108,7 @@ const getActionSuccessMessage = (type: 'approve' | 'deny'): string => {
 export const DeviceApprovalPanel = ({ userCode }: DeviceApprovalPanelProps) => {
   const router = useRouter();
   const sanitizedCode = useMemo(() => normalizeCode(userCode), [userCode]);
-  const [status, setStatus] = useState<DeviceStatus | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<'approve' | 'deny' | null>(
-    null
-  );
-  const [error, setError] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(deviceReducer, initialState);
   const { session, isPending: sessionLoading } = useSession();
 
   useEffect(() => {
@@ -73,29 +121,14 @@ export const DeviceApprovalPanel = ({ userCode }: DeviceApprovalPanelProps) => {
 
   useEffect(() => {
     if (!sanitizedCode) {
-      setError('Missing device code.');
-      setIsLoading(false);
+      dispatch({ type: 'RESET' });
       return;
     }
 
     let active = true;
 
-    const handleFetchSuccess = (data: { status: string }) => {
-      setStatus(data.status as DeviceStatus);
-    };
-
-    const handleFetchError = (fetchError: unknown) => {
-      const message = getErrorMessage(
-        fetchError,
-        'Unable to load device request.'
-      );
-      setError(message);
-      setStatus(null);
-    };
-
     const fetchStatus = async () => {
-      setIsLoading(true);
-      setError(null);
+      dispatch({ type: 'START_LOADING' });
 
       const response = await authClient.device({
         query: { user_code: sanitizedCode },
@@ -111,19 +144,28 @@ export const DeviceApprovalPanel = ({ userCode }: DeviceApprovalPanelProps) => {
         );
       }
 
-      handleFetchSuccess(response.data);
+      dispatch({
+        type: 'SET_STATUS',
+        status: response.data.status as DeviceStatus,
+      });
     };
 
     const loadDeviceStatus = async () => {
       try {
         await fetchStatus();
+        if (active) {
+          dispatch({ type: 'STOP_LOADING' });
+        }
       } catch (fetchError) {
         if (active) {
-          handleFetchError(fetchError);
+          const message = getErrorMessage(
+            fetchError,
+            'Unable to load device request.'
+          );
+          dispatch({ type: 'SET_ERROR', error: message });
         }
-      } finally {
         if (active) {
-          setIsLoading(false);
+          dispatch({ type: 'STOP_LOADING' });
         }
       }
     };
@@ -159,27 +201,26 @@ export const DeviceApprovalPanel = ({ userCode }: DeviceApprovalPanelProps) => {
       return;
     }
 
-    setActionLoading(type);
-    setError(null);
+    dispatch({ type: 'START_ACTION', action: type });
 
     try {
       const nextStatus = await executeDeviceAction(type);
-      setStatus(nextStatus as DeviceStatus);
+      dispatch({ type: 'SET_STATUS', status: nextStatus as DeviceStatus });
       toast.success(getActionSuccessMessage(type));
+      dispatch({ type: 'STOP_ACTION' });
     } catch (actionError) {
       const message = getErrorMessage(
         actionError,
         'Unable to update device request.'
       );
-      setError(message);
+      dispatch({ type: 'SET_ERROR', error: message });
       toast.error(message);
-    } finally {
-      setActionLoading(null);
+      dispatch({ type: 'STOP_ACTION' });
     }
   };
 
   const formattedCode = formatForDisplay(sanitizedCode);
-  const currentStatus = status ? STATUS_TEXT[status] : null;
+  const currentStatus = state.status ? STATUS_TEXT[state.status] : null;
 
   return (
     <div className="mx-auto w-full max-w-3xl">
@@ -211,9 +252,9 @@ export const DeviceApprovalPanel = ({ userCode }: DeviceApprovalPanelProps) => {
             </div>
           </div>
 
-          {error && (
+          {state.error && (
             <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-red-300 text-sm">
-              {error}
+              {state.error}
             </div>
           )}
 
@@ -232,14 +273,14 @@ export const DeviceApprovalPanel = ({ userCode }: DeviceApprovalPanelProps) => {
             <Button
               className="h-11 flex-1 rounded-lg bg-primary text-primary-foreground"
               disabled={
-                isLoading ||
-                !!actionLoading ||
-                status === 'approved' ||
+                state.isLoading ||
+                !!state.actionLoading ||
+                state.status === 'approved' ||
                 !sanitizedCode
               }
               onClick={() => handleAction('approve')}
             >
-              {actionLoading === 'approve' ? (
+              {state.actionLoading === 'approve' ? (
                 <span className="flex items-center justify-center gap-2">
                   <Spinner size="sm" />
                   Approving…
@@ -251,15 +292,15 @@ export const DeviceApprovalPanel = ({ userCode }: DeviceApprovalPanelProps) => {
             <Button
               className="h-11 flex-1 rounded-lg border border-neutral-700 bg-transparent text-neutral-200 hover:bg-neutral-900"
               disabled={
-                isLoading ||
-                !!actionLoading ||
-                status === 'denied' ||
+                state.isLoading ||
+                !!state.actionLoading ||
+                state.status === 'denied' ||
                 !sanitizedCode
               }
               onClick={() => handleAction('deny')}
               variant="secondary"
             >
-              {actionLoading === 'deny' ? (
+              {state.actionLoading === 'deny' ? (
                 <span className="flex items-center justify-center gap-2">
                   <Spinner size="sm" />
                   Denying…
@@ -270,7 +311,7 @@ export const DeviceApprovalPanel = ({ userCode }: DeviceApprovalPanelProps) => {
             </Button>
           </div>
 
-          {isLoading && (
+          {state.isLoading && (
             <div className="flex items-center gap-2 text-muted-foreground text-sm">
               <Spinner size="sm" />
               Checking device status…

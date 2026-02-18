@@ -4,27 +4,24 @@ import { authClient } from '@bounty/auth/client';
 import { Badge } from '@bounty/ui/components/badge';
 import { Button } from '@bounty/ui/components/button';
 import { LINKS } from '@/constants';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
+import Link from 'next/link';
 import Bounty from '@/components/icons/bounty';
 import { GithubIcon } from '../icons';
 import GoogleIcon from '../icons/google';
 
 export function SignUpSection() {
   const [loading, setLoading] = useState(false);
-  const [lastUsedMethod, setLastUsedMethod] = useState<string | null>(null);
-
-  useEffect(() => {
+  const [lastUsedMethod] = useState<string | null>(() => {
     try {
-      const method =
-        typeof localStorage !== 'undefined'
-          ? localStorage.getItem('bounty-last-login-method')
-          : null;
-      setLastUsedMethod(method);
+      return typeof localStorage !== 'undefined'
+        ? localStorage.getItem('bounty-last-login-method')
+        : null;
     } catch {
-      // ignore storage access errors
+      return null;
     }
-  }, []);
+  });
 
   const handleGitHubSignIn = async () => {
     try {
@@ -129,12 +126,12 @@ export function SignUpSection() {
         </div>
 
         <div className="text-center">
-          <a
+          <Link
             href="/login"
             className="text-sm text-gray-400 hover:text-foreground transition-colors"
           >
             Already have an account? Sign in
-          </a>
+          </Link>
         </div>
       </div>
     </div>

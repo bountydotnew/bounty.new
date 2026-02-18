@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import {
   getSinglePost,
   getPosts,
@@ -7,6 +8,24 @@ import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { BlogPostContent } from '@/components/blog/blog-post-content';
 import type { Post } from '@/types/post';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const postData = await getSinglePost(slug);
+  if (!postData?.post) {
+    return { title: 'Post Not Found' };
+  }
+  return {
+    title: postData.post.title,
+    description:
+      postData.post.description ||
+      `Read "${postData.post.title}" on the bounty.new blog.`,
+  };
+}
 
 interface BlogPostPageProps {
   params: Promise<{

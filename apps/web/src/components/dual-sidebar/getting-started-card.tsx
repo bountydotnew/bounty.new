@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { CheckCircle2, Circle, X } from 'lucide-react';
 import { cn } from '@bounty/ui/lib/utils';
 import { useActiveOrg } from '@/hooks/use-active-org';
@@ -49,15 +49,7 @@ export const GettingStartedCard = () => {
   const progress = (completedCount / items.length) * 100;
   const isComplete = completedCount === items.length;
 
-  // Auto-dismiss when all complete
-  useEffect(() => {
-    if (isComplete) {
-      const timer = setTimeout(() => setIsDismissed(true), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [isComplete]);
-
-  if (isDismissed) return null;
+  if (isDismissed || isComplete) return null;
 
   return (
     <div className="group/sheet relative flex flex-col gap-2 rounded-[8px] border border-border-subtle bg-surface-1 p-3">

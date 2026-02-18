@@ -5,8 +5,6 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { useSession } from '@/context/session-context';
-// Comments are not currently used
-// import type { BountyCommentCacheItem } from '@/types/comments';
 import {
   BountyDetailContext,
   type BountyDetailContextValue,
@@ -36,7 +34,6 @@ interface BountyDetailProviderProps {
   avatarSrc: string;
   canEditBounty: boolean;
   initialVotes?: { count: number; isVoted: boolean };
-  // initialComments?: BountyCommentCacheItem[];
   initialBookmarked?: boolean;
   paymentStatus?: string | null;
   createdById?: string;
@@ -48,50 +45,26 @@ interface BountyDetailProviderProps {
   onEdit?: () => void;
 }
 
-/**
- * BountyDetailProvider
- *
- * Provider component that implements the BountyDetailContext interface.
- * Handles all data fetching, mutations, and state management for the
- * bounty detail page.
- */
-export function BountyDetailProvider({
-  children,
+function useBountyDetailQueries({
   bountyId,
-  title,
-  amount,
-  description,
-  user,
-  avatarSrc,
-  canEditBounty,
-  initialVotes,
-  initialBookmarked,
-  paymentStatus,
+  sessionUserId,
   createdById,
-  githubRepoOwner,
-  githubRepoName,
-  githubIssueNumber,
-  repositoryUrl,
-  issueUrl,
-  onEdit,
-}: BountyDetailProviderProps) {
-  const queryClient = useQueryClient();
-  const { session } = useSession();
-
-  // Local state for dialogs
-  const [showCancellationDialog, setShowCancellationDialog] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [cancellationReason, setCancellationReason] = useState('');
-
-  // ===== Queries =====
-
+  paymentStatus,
+  initialVotes,
+}: {
+  bountyId: string;
+  sessionUserId: string | undefined;
+  createdById: string | undefined;
+  paymentStatus: string | null | undefined;
+  initialVotes?: { count: number; isVoted: boolean };
+}) {
   const paymentStatusQuery = useQuery({
     ...trpc.bounties.getBountyPaymentStatus.queryOptions({ bountyId }),
     enabled: Boolean(
       bountyId &&
-        session?.user?.id &&
+        sessionUserId &&
         createdById &&
-        createdById === session.user.id &&
+        createdById === sessionUserId &&
         paymentStatus === 'pending'
     ),
   });
@@ -102,14 +75,6 @@ export function BountyDetailProvider({
     staleTime: Number.POSITIVE_INFINITY,
   });
 
-  // Comments are not currently used - disabled to prevent build errors
-  // const commentsQuery = useQuery({
-  //   ...trpc.bounties.getBountyComments.queryOptions({ bountyId }),
-  //   initialData: initialComments,
-  //   staleTime: Number.POSITIVE_INFINITY,
-  // });
-  // const commentsQuery = { data: undefined };
-
   const submissionsQuery = useQuery({
     ...trpc.bounties.getBountySubmissions.queryOptions({ bountyId }),
     staleTime: 10_000,
@@ -118,12 +83,29 @@ export function BountyDetailProvider({
   const cancellationStatusQuery = useQuery({
     ...trpc.bounties.getCancellationStatus.queryOptions({ bountyId }),
     enabled: Boolean(
-      session?.user?.id === createdById &&
+      sessionUserId === createdById &&
         (paymentStatus === 'held' || paymentStatus === 'released')
     ),
   });
 
-  // ===== Mutations =====
+  return {
+    paymentStatusQuery,
+    votesQuery,
+    submissionsQuery,
+    cancellationStatusQuery,
+  };
+}
+
+function useBountyDetailMutations({
+  bountyId,
+  setShowCancellationDialog,
+  setCancellationReason,
+}: {
+  bountyId: string;
+  setShowCancellationDialog: (open: boolean) => void;
+  setCancellationReason: (reason: string) => void;
+}) {
+  const queryClient = useQueryClient();
 
   const voteMutation = useMutation({
     mutationFn: async (input: { bountyId: string; vote: boolean }) => {
@@ -137,11 +119,9 @@ export function BountyDetailProvider({
     },
     onSuccess: () => {
       toast.success('Bounty deleted successfully');
-      // Invalidate ALL bounty queries to remove from all feeds
       queryClient.invalidateQueries({
         predicate: (query) => {
           const key = query.queryKey;
-          // Match any query related to bounties
           if (Array.isArray(key)) {
             const first = key[0];
             if (typeof first === 'string' && first.includes('bounty')) {
@@ -151,7 +131,6 @@ export function BountyDetailProvider({
           return false;
         },
       });
-      // Redirect to dashboard after short delay for toast to be seen
       setTimeout(() => {
         window.location.href = '/dashboard';
       }, 1000);
@@ -238,20 +217,119 @@ export function BountyDetailProvider({
     },
   });
 
-  // ===== Computed State =====
+  return {
+    queryClient,
+    voteMutation,
+    deleteBountyMutation,
+    createPaymentMutation,
+    recheckPaymentMutation,
+    requestCancellationMutation,
+    cancelCancellationRequestMutation,
+  };
+}
 
-  const isCreator = session?.user?.id === createdById;
+function useBountyDetailComputedState({
+  sessionUserId,
+  createdById,
+  paymentStatus,
+  hasPendingRequest,
+}: {
+  sessionUserId: string | undefined;
+  createdById: string | undefined;
+  paymentStatus: string | null | undefined;
+  hasPendingRequest: boolean;
+}) {
+  const isCreator = sessionUserId === createdById;
   const isFunded = paymentStatus === 'held' || paymentStatus === 'released';
   const isCancelled = paymentStatus === 'refunded';
   const isUnfunded = paymentStatus !== 'held' && paymentStatus !== null;
   const needsPayment = paymentStatus === 'pending' && isCreator;
   const canRequestCancellation = isCreator && isFunded;
-  const hasPendingCancellation =
-    cancellationStatusQuery.data?.hasPendingRequest ?? false;
+  const hasPendingCancellation = hasPendingRequest;
   const canDelete =
     isCreator && (!isFunded || hasPendingCancellation || isCancelled);
 
-  // ===== State =====
+  return {
+    isCreator,
+    isFunded,
+    isCancelled,
+    isUnfunded,
+    needsPayment,
+    canRequestCancellation,
+    hasPendingCancellation,
+    canDelete,
+  };
+}
+
+export function BountyDetailProvider({
+  children,
+  bountyId,
+  title,
+  amount,
+  description,
+  user,
+  avatarSrc,
+  canEditBounty,
+  initialVotes,
+  initialBookmarked,
+  paymentStatus,
+  createdById,
+  githubRepoOwner,
+  githubRepoName,
+  githubIssueNumber,
+  repositoryUrl,
+  issueUrl,
+  onEdit,
+}: BountyDetailProviderProps) {
+  const { session } = useSession();
+  const sessionUserId = session?.user?.id;
+
+  const [showCancellationDialog, setShowCancellationDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState('');
+
+  const {
+    paymentStatusQuery,
+    votesQuery,
+    submissionsQuery,
+    cancellationStatusQuery,
+  } = useBountyDetailQueries({
+    bountyId,
+    sessionUserId,
+    createdById,
+    paymentStatus,
+    initialVotes,
+  });
+
+  const {
+    queryClient,
+    voteMutation,
+    deleteBountyMutation,
+    createPaymentMutation,
+    recheckPaymentMutation,
+    requestCancellationMutation,
+    cancelCancellationRequestMutation,
+  } = useBountyDetailMutations({
+    bountyId,
+    setShowCancellationDialog,
+    setCancellationReason,
+  });
+
+  const {
+    isCreator,
+    isFunded,
+    isCancelled,
+    isUnfunded,
+    needsPayment,
+    canRequestCancellation,
+    hasPendingCancellation,
+    canDelete,
+  } = useBountyDetailComputedState({
+    sessionUserId,
+    createdById,
+    paymentStatus,
+    hasPendingRequest: cancellationStatusQuery.data?.hasPendingRequest ?? false,
+  });
 
   const state: BountyDetailState = useMemo(
     () => ({
@@ -271,7 +349,7 @@ export function BountyDetailProvider({
         issueUrl,
       },
       votes: votesQuery.data ?? null,
-      comments: undefined, // commentsQuery.data, // Comments not currently used
+      comments: undefined,
       bookmarked: initialBookmarked,
       submissions: submissionsQuery.data?.submissions,
       isSubmissionsLoading: submissionsQuery.isLoading,
@@ -302,7 +380,6 @@ export function BountyDetailProvider({
       repositoryUrl,
       issueUrl,
       votesQuery.data,
-      // commentsQuery.data, // Comments not currently used
       initialBookmarked,
       submissionsQuery.data?.submissions,
       submissionsQuery.isLoading,
@@ -319,8 +396,6 @@ export function BountyDetailProvider({
       cancellationStatusQuery.isLoading,
     ]
   );
-
-  // ===== Actions =====
 
   const actions: BountyDetailActions = useMemo(
     () => ({
@@ -403,8 +478,6 @@ export function BountyDetailProvider({
     ]
   );
 
-  // ===== Meta =====
-
   const meta: BountyDetailMeta = useMemo(
     () => ({
       bountyId,
@@ -425,7 +498,6 @@ export function BountyDetailProvider({
     ]
   );
 
-  // Memoize only the context value to prevent unnecessary re-renders
   const contextValue: BountyDetailContextValue = useMemo(
     () => ({ state, actions, meta }),
     [state, actions, meta]
@@ -475,8 +547,6 @@ export function BountyDetailProvider({
     </BountyDetailContext>
   );
 }
-
-// ===== Internal Components =====
 
 interface CancellationDialogProps {
   open: boolean;

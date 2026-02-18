@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X, ArrowUpRight } from 'lucide-react';
 import { Button } from '@bounty/ui/components/button';
 
 // Changelog config - update this when new releases go out
-export const changelogConfig = {
+const changelogConfig = {
   date: 'February 2026',
   label: 'Feb 2026',
   title: 'Organization settings, unified sidebar refactor, and more.',
@@ -15,17 +15,12 @@ export const changelogConfig = {
 const STORAGE_KEY = 'changelog-card-dismissed';
 
 export const ChangelogCard = () => {
-  const [isDismissed, setIsDismissed] = useState(false);
-
-  // Check localStorage on mount
-  useEffect(() => {
+  const [isDismissed, setIsDismissed] = useState(() => {
     if (typeof window !== 'undefined') {
-      const dismissed = localStorage.getItem(STORAGE_KEY);
-      if (dismissed) {
-        setIsDismissed(true);
-      }
+      return !!localStorage.getItem(STORAGE_KEY);
     }
-  }, []);
+    return false;
+  });
 
   const handleDismiss = () => {
     setIsDismissed(true);
@@ -34,7 +29,9 @@ export const ChangelogCard = () => {
     }
   };
 
-  if (isDismissed) return null;
+  if (isDismissed) {
+    return null;
+  }
 
   return (
     <div className="group/sheet relative flex flex-col gap-2 rounded-[8px] border border-border-subtle bg-surface-1 p-3">

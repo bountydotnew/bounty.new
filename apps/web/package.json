@@ -71,6 +71,7 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@bounty/eslint-config": "workspace:*",
     "@tailwindcss/postcss": "catalog:",
     "@tanstack/react-query-devtools": "catalog:",
     "@types/node": "catalog:",

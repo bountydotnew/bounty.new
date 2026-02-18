@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PricingCards } from '@/components/billing/pricing-cards';
 import { BillingToggle } from '@/components/billing/billing-toggle';
@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { getRecommendedPlan } from '@bounty/types';
 import { useActiveOrg } from '@/hooks/use-active-org';
 
-export function PricingPageContent() {
+function PricingPageContentInner() {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>(
     'monthly'
   );
@@ -108,5 +108,19 @@ export function PricingPageContent() {
         />
       </section>
     </div>
+  );
+}
+
+export function PricingPageContent() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-7xl px-8 pt-32 pb-24">
+          <div className="text-center">Loading...</div>
+        </div>
+      }
+    >
+      <PricingPageContentInner />
+    </Suspense>
   );
 }

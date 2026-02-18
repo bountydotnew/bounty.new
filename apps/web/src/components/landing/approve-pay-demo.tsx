@@ -1,13 +1,50 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import { useRef, useState, useEffect, useReducer } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { devNames } from './demo-data';
 import { MockBrowser, useMockBrowser } from './mockup';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Create PR Page
-// ─────────────────────────────────────────────────────────────────────────────
+// Animation state for approve-pay demo
+type AnimState = {
+  devCommented: boolean;
+  maintainerReviewed: boolean;
+  maintainerApproved: boolean;
+  botReplied: boolean;
+};
+
+type AnimAction =
+  | { type: 'DEV_COMMENTED' }
+  | { type: 'MAINTAINER_REVIEWED' }
+  | { type: 'MAINTAINER_APPROVED' }
+  | { type: 'BOT_REPLIED' }
+  | { type: 'RESET' };
+
+const initialAnimState: AnimState = {
+  devCommented: false,
+  maintainerReviewed: false,
+  maintainerApproved: false,
+  botReplied: false,
+};
+
+function animReducer(state: AnimState, action: AnimAction): AnimState {
+  switch (action.type) {
+    case 'DEV_COMMENTED':
+      return { ...state, devCommented: true };
+    case 'MAINTAINER_REVIEWED':
+      return { ...state, maintainerReviewed: true };
+    case 'MAINTAINER_APPROVED':
+      return { ...state, maintainerApproved: true };
+    case 'BOT_REPLIED':
+      return { ...state, botReplied: true };
+    case 'RESET':
+      return initialAnimState;
+    default:
+      return state;
+  }
+}
+
 function CreatePRPage() {
   const { navigate } = useMockBrowser();
   const [prTitle, setPrTitle] = useState(
@@ -26,10 +63,14 @@ function CreatePRPage() {
       <div className="flex h-full">
         <div className="flex-1 p-6">
           <div className="mb-6">
-            <label className="block text-gh-text text-lg font-semibold mb-3">
+            <label
+              className="block text-gh-text text-lg font-semibold mb-3"
+              htmlFor="demo-pr-title"
+            >
               Add a title
             </label>
             <input
+              id="demo-pr-title"
               type="text"
               value={prTitle}
               onChange={(e) => setPrTitle(e.target.value)}
@@ -39,7 +80,10 @@ function CreatePRPage() {
           </div>
 
           <div className="mb-6">
-            <label className="block text-gh-text text-lg font-semibold mb-3">
+            <label
+              className="block text-gh-text text-lg font-semibold mb-3"
+              htmlFor="demo-pr-description"
+            >
               Add a description
             </label>
             <div className="border border-gh-border rounded-md overflow-hidden">
@@ -62,6 +106,7 @@ function CreatePRPage() {
 
               <div className="bg-gh-bg min-h-[180px] p-4">
                 <textarea
+                  id="demo-pr-description"
                   value={prDescription}
                   onChange={(e) => setPrDescription(e.target.value)}
                   placeholder="Add your description here..."
@@ -79,10 +124,7 @@ function CreatePRPage() {
           <div className="flex items-center justify-between">
             <p className="text-xs text-gh-text-muted">
               Remember, contributions should follow our{' '}
-              <a href="#" className="text-gh-link hover:underline">
-                GitHub Community Guidelines
-              </a>
-              .
+              <span className="text-gh-link">GitHub Community Guidelines</span>.
             </p>
             <div className="flex items-center">
               <button
@@ -137,25 +179,17 @@ function CreatePRPage() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PR Comments Page
-// ─────────────────────────────────────────────────────────────────────────────
 function PRCommentsPage({
   onShowNotifications,
 }: {
   onShowNotifications: () => void;
 }) {
-  const [devCommented, setDevCommented] = useState(false);
-  const [maintainerReviewed, setMaintainerReviewed] = useState(false);
-  const [maintainerApproved, setMaintainerApproved] = useState(false);
-  const [botReplied, setBotReplied] = useState(false);
+  const [animState, dispatch] = useReducer(animReducer, initialAnimState);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Use first dev as default to avoid hydration mismatch, then randomize after mount
-  const [randomDev, setRandomDev] = useState(devNames[0]);
-  useEffect(() => {
-    setRandomDev(devNames[Math.floor(Math.random() * devNames.length)]);
-  }, []);
+  const [randomDev] = useState(
+    () => devNames[Math.floor(Math.random() * devNames.length)]
+  );
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -166,42 +200,32 @@ function PRCommentsPage({
         });
       }, 300);
     }
-  }, [devCommented, maintainerReviewed, maintainerApproved, botReplied]);
+  }, [
+    animState.devCommented,
+    animState.maintainerReviewed,
+    animState.maintainerApproved,
+    animState.botReplied,
+  ]);
 
   useEffect(() => {
-    if (!devCommented) {
-      const timer = setTimeout(() => setDevCommented(true), 400);
-      return () => clearTimeout(timer);
-    }
-    return () => {};
-  }, [devCommented]);
+    const timeline: Array<{ delay: number; action: AnimAction }> = [
+      { delay: 400, action: { type: 'DEV_COMMENTED' } },
+      { delay: 1600, action: { type: 'MAINTAINER_REVIEWED' } },
+      { delay: 3600, action: { type: 'MAINTAINER_APPROVED' } },
+      { delay: 5100, action: { type: 'BOT_REPLIED' } },
+    ];
+    const timers = timeline.map(({ delay, action }) =>
+      setTimeout(() => dispatch(action), delay)
+    );
+    const notifyTimer = setTimeout(() => onShowNotifications(), 5900);
+    return () => {
+      timers.forEach(clearTimeout);
+      clearTimeout(notifyTimer);
+    };
+  }, [onShowNotifications]);
 
-  useEffect(() => {
-    if (devCommented && !maintainerReviewed) {
-      const timer = setTimeout(() => setMaintainerReviewed(true), 1200);
-      return () => clearTimeout(timer);
-    }
-    return () => {};
-  }, [devCommented, maintainerReviewed]);
-
-  useEffect(() => {
-    if (maintainerReviewed && !maintainerApproved) {
-      const timer = setTimeout(() => setMaintainerApproved(true), 2000);
-      return () => clearTimeout(timer);
-    }
-    return () => {};
-  }, [maintainerReviewed, maintainerApproved]);
-
-  useEffect(() => {
-    if (maintainerApproved && !botReplied) {
-      const timer = setTimeout(() => {
-        setBotReplied(true);
-        setTimeout(() => onShowNotifications(), 800);
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-    return () => {};
-  }, [maintainerApproved, botReplied, onShowNotifications]);
+  const { devCommented, maintainerReviewed, maintainerApproved, botReplied } =
+    animState;
 
   return (
     <div className="bg-gh-bg h-full overflow-auto relative" ref={scrollRef}>
@@ -224,12 +248,7 @@ function PRCommentsPage({
               Open
             </span>
             <span>
-              <a
-                href="#"
-                className="text-gh-link hover:underline font-semibold"
-              >
-                {randomDev}
-              </a>{' '}
+              <span className="text-gh-link font-semibold">{randomDev}</span>{' '}
               wants to merge 2 commits into{' '}
               <span className="px-1.5 py-0.5 rounded-md bg-gh-link/15 text-gh-link text-xs font-mono">
                 main
@@ -247,7 +266,7 @@ function PRCommentsPage({
         {devCommented && (
           <div className="flex gap-3">
             <div className="flex-shrink-0">
-              <img
+              <Image
                 src={`https://github.com/${randomDev}.png`}
                 alt={randomDev}
                 className="w-10 h-10 rounded-full"
@@ -256,9 +275,9 @@ function PRCommentsPage({
             <div className="flex-1 border border-gh-border rounded-md">
               <div className="bg-gh-surface px-4 py-2 border-b border-gh-border">
                 <div className="text-sm text-gh-text">
-                  <a href="#" className="font-semibold hover:text-gh-link">
+                  <span className="font-semibold text-gh-link">
                     {randomDev}
-                  </a>
+                  </span>
                   <span className="text-gh-text-muted ml-2">2 minutes ago</span>
                 </div>
               </div>
@@ -272,7 +291,7 @@ function PRCommentsPage({
         {maintainerReviewed && (
           <div className="flex gap-3">
             <div className="flex-shrink-0">
-              <img
+              <Image
                 src="/images/gcomb.jpeg"
                 alt="ripgrim"
                 className="w-10 h-10 rounded-full"
@@ -281,9 +300,7 @@ function PRCommentsPage({
             <div className="flex-1 border border-gh-border rounded-md">
               <div className="bg-gh-surface px-4 py-2 border-b border-gh-border">
                 <div className="text-sm text-gh-text">
-                  <a href="#" className="font-semibold hover:text-gh-link">
-                    ripgrim
-                  </a>
+                  <span className="font-semibold text-gh-link">ripgrim</span>
                   <span className="text-gh-text-muted ml-2">1 minute ago</span>
                 </div>
               </div>
@@ -300,7 +317,7 @@ function PRCommentsPage({
         {maintainerApproved && (
           <div className="flex gap-3">
             <div className="flex-shrink-0">
-              <img
+              <Image
                 src="/images/gcomb.jpeg"
                 alt="ripgrim"
                 className="w-10 h-10 rounded-full"
@@ -309,18 +326,13 @@ function PRCommentsPage({
             <div className="flex-1 border border-gh-border rounded-md">
               <div className="bg-gh-surface px-4 py-2 border-b border-gh-border">
                 <div className="text-sm text-gh-text">
-                  <a href="#" className="font-semibold hover:text-gh-link">
-                    ripgrim
-                  </a>
+                  <span className="font-semibold text-gh-link">ripgrim</span>
                   <span className="text-gh-text-muted ml-2">just now</span>
                 </div>
               </div>
               <div className="p-4 text-sm">
                 <p className="text-gh-text">
-                  <a href="#" className="text-gh-link hover:underline">
-                    @bountydotnew
-                  </a>{' '}
-                  /approve
+                  <span className="text-gh-link">@bountydotnew</span> /approve
                 </p>
               </div>
               <div className="px-4 pb-3 flex items-center gap-2">
@@ -355,7 +367,7 @@ function PRCommentsPage({
         {botReplied && (
           <div className="flex gap-3">
             <div className="flex-shrink-0">
-              <img
+              <Image
                 src="/images/ruo10xfk-400x400.jpg"
                 alt="bountydotnew"
                 className="w-10 h-10 rounded-full"
@@ -364,35 +376,28 @@ function PRCommentsPage({
             <div className="flex-1 border border-gh-border rounded-md">
               <div className="bg-gh-surface px-4 py-2 border-b border-gh-border">
                 <div className="text-sm text-gh-text">
-                  <a href="#" className="font-semibold hover:text-gh-link">
+                  <span className="font-semibold text-gh-link">
                     bountydotnew
-                  </a>
+                  </span>
                   <span className="inline-flex items-center gap-1 bg-gh-link/10 text-gh-link px-1.5 py-0.5 rounded text-xs ml-1.5 border border-gh-link/20">
                     bot
                   </span>
                   <span className="text-gh-text-muted ml-1.5">
                     just now – with{' '}
-                    <a href="#" className="text-gh-link hover:underline">
-                      bountydotnew
-                    </a>
+                    <span className="text-gh-link">bountydotnew</span>
                   </span>
                 </div>
               </div>
               <div className="p-4 text-sm text-gh-text">
                 <p>
-                  <a href="#" className="text-gh-link hover:underline">
-                    @ripgrim
-                  </a>{' '}
-                  Approved. When you're ready, merge the PR and confirm here
-                  with{' '}
+                  <span className="text-gh-link">@ripgrim</span> Approved. When
+                  you're ready, merge the PR and confirm here with{' '}
                   <code className="bg-gh-surface px-1.5 py-0.5 rounded text-xs">
                     /merge 47
                   </code>{' '}
                   (or comment{' '}
-                  <a href="#" className="text-gh-link hover:underline">
-                    @bountydotnew
-                  </a>{' '}
-                  merge on the PR). Merging releases the payout.
+                  <span className="text-gh-link">@bountydotnew</span> merge on
+                  the PR). Merging releases the payout.
                 </p>
               </div>
               <div className="px-4 pb-3 flex items-center gap-2">
@@ -428,9 +433,6 @@ function PRCommentsPage({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Main Demo Component
-// ─────────────────────────────────────────────────────────────────────────────
 export function ApprovePayDemo({
   onShowNotifications,
 }: {

@@ -83,10 +83,10 @@ export function AccountSwitcher({
         setPopoverOpen(false);
         // Refresh the page to update all components
         router.refresh();
+        setIsSwitching(false);
       } catch (error) {
         toast.error('Failed to switch account. Please try again.');
         console.error('Failed to switch account:', error);
-      } finally {
         setIsSwitching(false);
       }
     },

@@ -41,7 +41,3 @@ export const BountiesFeed = {
    */
   GridView,
 };
-
-// Re-export types and provider
-export type { BountiesFeedContextValue, BountiesFeedState, BountiesFeedActions, BountiesFeedMeta } from './context';
-export { BountiesFeedProvider } from './provider';

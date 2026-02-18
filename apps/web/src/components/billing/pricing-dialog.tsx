@@ -293,6 +293,7 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
                 alt="Bounty Pro"
                 src="https://pbs.twimg.com/profile_banners/1839004015215161345/1735487023/1500x500"
                 fill
+                sizes="(max-width: 768px) 100vw, 500px"
                 className="object-cover opacity-50"
               />
             </div>

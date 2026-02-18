@@ -25,15 +25,30 @@ export function addRecentBounty(bounty: { id: string; title: string }) {
   const stored = localStorage.getItem(RECENT_BOUNTIES_KEY);
   const recent: RecentBounty[] = stored ? JSON.parse(stored) : [];
   const filtered = recent.filter((b) => b.id !== bounty.id);
-  const updated = [
-    { ...bounty, timestamp: Date.now() },
-    ...filtered
-  ].slice(0, 5);
+  const updated = [{ ...bounty, timestamp: Date.now() }, ...filtered].slice(
+    0,
+    5
+  );
   localStorage.setItem(RECENT_BOUNTIES_KEY, JSON.stringify(updated));
 }
 
+function parseStoredBounties(raw: string | null): RecentBounty[] {
+  if (!raw) {
+    return [];
+  }
+  try {
+    return JSON.parse(raw) as RecentBounty[];
+  } catch {
+    return [];
+  }
+}
+
 export function RecentBountiesGroup() {
-  const [recentBounties, setRecentBounties] = useState<RecentBounty[]>([]);
+  const [recentBounties, setRecentBounties] = useState<RecentBounty[]>(() =>
+    typeof window !== 'undefined'
+      ? parseStoredBounties(localStorage.getItem(RECENT_BOUNTIES_KEY))
+      : []
+  );
   const { session, isAuthenticated } = useSession();
   const userId = session?.user?.id;
 
@@ -45,29 +60,9 @@ export function RecentBountiesGroup() {
   });
 
   useEffect(() => {
-    const loadRecentBounties = () => {
-      const stored = localStorage.getItem(RECENT_BOUNTIES_KEY);
-      if (stored) {
-        try {
-          const parsed: RecentBounty[] = JSON.parse(stored);
-          setRecentBounties(parsed);
-        } catch {
-          setRecentBounties([]);
-        }
-      }
-    };
-
-    loadRecentBounties();
-
-    // Listen for storage changes from other tabs
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === RECENT_BOUNTIES_KEY && e.newValue) {
-        try {
-          const parsed: RecentBounty[] = JSON.parse(e.newValue);
-          setRecentBounties(parsed);
-        } catch {
-          setRecentBounties([]);
-        }
+      if (e.key === RECENT_BOUNTIES_KEY) {
+        setRecentBounties(parseStoredBounties(e.newValue));
       }
     };
 
@@ -87,10 +82,7 @@ export function RecentBountiesGroup() {
       <SidebarMenu className="flex flex-col gap-[8px] w-full">
         {recentBounties.map((bounty) => (
           <SidebarMenuItem key={`viewed-${bounty.id}`}>
-            <SidebarMenuButton
-              asChild
-              tooltip={bounty.title}
-            >
+            <SidebarMenuButton asChild tooltip={bounty.title}>
               <a
                 href={`/bounty/${bounty.id}`}
                 className="flex items-center gap-2"
@@ -103,10 +95,7 @@ export function RecentBountiesGroup() {
         ))}
         {startedBounties.map((bounty) => (
           <SidebarMenuItem key={`started-${bounty.id}`}>
-            <SidebarMenuButton
-              asChild
-              tooltip={bounty.title}
-            >
+            <SidebarMenuButton asChild tooltip={bounty.title}>
               <a
                 href={`/bounty/${bounty.id}`}
                 className="flex items-center gap-2"

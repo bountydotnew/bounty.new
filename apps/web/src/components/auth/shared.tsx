@@ -11,7 +11,7 @@ import { Label } from '@bounty/ui/components/label';
 /**
  * Validates that a URL is a safe relative path to prevent open redirect attacks.
  */
-export function isSafeRedirectUrl(url: string | undefined): boolean {
+function isSafeRedirectUrl(url: string | undefined): boolean {
   if (!url) {
     return false;
   }
@@ -164,7 +164,7 @@ export function useEmailPasswordForm(callbackUrl?: string) {
 /**
  * Email input field component
  */
-export interface EmailFieldProps {
+interface EmailFieldProps {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
@@ -190,7 +190,7 @@ export function EmailField({ value, onChange, disabled }: EmailFieldProps) {
 /**
  * Password input field component
  */
-export interface PasswordFieldProps {
+interface PasswordFieldProps {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
@@ -237,7 +237,7 @@ export function PasswordField({
 /**
  * Submit button component
  */
-export interface SubmitButtonProps {
+interface SubmitButtonProps {
   isPending: boolean;
   children: ReactNode;
 }

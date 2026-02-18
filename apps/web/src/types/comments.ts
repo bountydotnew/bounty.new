@@ -1,9 +1,3 @@
-export interface CommentUser {
-  id: string;
-  name: string | null;
-  image: string | null;
-}
-
 // interface BountyCommentItem {
 //   id: string;
 //   content: string;

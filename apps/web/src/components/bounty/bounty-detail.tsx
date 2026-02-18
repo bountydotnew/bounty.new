@@ -28,7 +28,11 @@
  * @module
  */
 
-import { BountyDetail as CompoundBountyDetail } from './bounty-detail/index';
+import { BountyDetailProvider } from './bounty-detail/provider';
+import { BountyDetailHeader } from './bounty-detail/header';
+import { BountyDetailContent } from './bounty-detail/content';
+import { BountyDetailSubmissions } from './bounty-detail/submissions';
+import { BountyDetailPaymentAlert } from './bounty-detail/payment-alert';
 import type { BountyCommentCacheItem } from '@/types/comments';
 
 interface BountyData {
@@ -88,7 +92,7 @@ export default function BountyDetailPage({
   const amount = typeof bounty.amount === 'number' ? bounty.amount : 0;
 
   return (
-    <CompoundBountyDetail.Provider
+    <BountyDetailProvider
       bountyId={bountyId}
       initialBookmarked={bookmarked}
       title={bounty.title ?? 'Untitled Bounty'}
@@ -106,28 +110,12 @@ export default function BountyDetailPage({
       initialVotes={votes}
       canEditBounty={canEdit}
     >
-      <CompoundBountyDetail.Header />
-      <CompoundBountyDetail.PaymentAlert />
-      <CompoundBountyDetail.Content />
-      <CompoundBountyDetail.Submissions />
-    </CompoundBountyDetail.Provider>
+      <BountyDetailHeader />
+      <BountyDetailPaymentAlert />
+      <BountyDetailContent />
+      <BountyDetailSubmissions />
+    </BountyDetailProvider>
   );
 }
 
-// Re-export everything from the index file
-export {
-  BountyDetail,
-  BountyDetailProvider,
-} from './bounty-detail/index';
-
-export type {
-  BountyDetailContextValue,
-  BountyDetailState,
-  BountyDetailActions,
-  BountyDetailMeta,
-  SubmissionData,
-  SubmissionsData,
-} from './bounty-detail/context';
-
-// Export the BountyData type for consumers
 export type { BountyData };

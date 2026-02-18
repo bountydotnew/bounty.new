@@ -2,7 +2,7 @@
 
 import { cn } from '@bounty/ui/lib/utils';
 import type { Variants } from 'motion/react';
-import { motion, useAnimation } from 'motion/react';
+import { m, useAnimation } from 'motion/react';
 import type { HTMLAttributes } from 'react';
 import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
 
@@ -90,7 +90,7 @@ const AnimatedUserIcon = forwardRef<AnimatedUserIconHandle, AnimatedUserIconProp
           width={size}
           xmlns="http://www.w3.org/2000/svg"
         >
-          <motion.circle
+          <m.circle
             animate={controls}
             cx="12"
             cy="8"
@@ -98,7 +98,7 @@ const AnimatedUserIcon = forwardRef<AnimatedUserIconHandle, AnimatedUserIconProp
             variants={circleVariant}
           />
 
-          <motion.path
+          <m.path
             animate={controls}
             d="M20 21a8 8 0 0 0-16 0"
             transition={{

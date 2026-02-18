@@ -68,7 +68,6 @@ export function PriceChip({ control }: PriceChipProps) {
                 }
                 placeholder="0.00"
                 className="flex-1 bg-transparent text-foreground text-[16px] leading-5 outline-none placeholder:text-text-tertiary"
-                autoFocus
               />
             </div>
           )}

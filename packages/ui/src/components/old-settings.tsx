@@ -2,7 +2,7 @@
 
 import { cn } from '@bounty/ui/lib/utils';
 import type { Transition } from 'motion/react';
-import { motion, useAnimation } from 'motion/react';
+import { m, useAnimation } from 'motion/react';
 import type { HTMLAttributes } from 'react';
 import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
 
@@ -76,7 +76,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
           width={size}
           xmlns="http://www.w3.org/2000/svg"
         >
-          <motion.line
+          <m.line
             animate={controls}
             initial={false}
             transition={defaultTransition}
@@ -93,7 +93,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
             y1="4"
             y2="4"
           />
-          <motion.line
+          <m.line
             animate={controls}
             transition={defaultTransition}
             variants={{
@@ -110,7 +110,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
             y2="4"
           />
 
-          <motion.line
+          <m.line
             animate={controls}
             transition={defaultTransition}
             variants={{
@@ -127,7 +127,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
             y2="12"
           />
 
-          <motion.line
+          <m.line
             animate={controls}
             transition={defaultTransition}
             variants={{
@@ -144,7 +144,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
             y2="12"
           />
 
-          <motion.line
+          <m.line
             animate={controls}
             transition={defaultTransition}
             variants={{
@@ -161,7 +161,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
             y2="20"
           />
 
-          <motion.line
+          <m.line
             animate={controls}
             transition={defaultTransition}
             variants={{
@@ -178,7 +178,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
             y2="20"
           />
 
-          <motion.line
+          <m.line
             animate={controls}
             transition={defaultTransition}
             variants={{
@@ -197,7 +197,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
             y2="6"
           />
 
-          <motion.line
+          <m.line
             animate={controls}
             transition={defaultTransition}
             variants={{
@@ -216,7 +216,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
             y2="14"
           />
 
-          <motion.line
+          <m.line
             animate={controls}
             transition={defaultTransition}
             variants={{

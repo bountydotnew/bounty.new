@@ -6,7 +6,7 @@ import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { trpcClient } from '@/utils/trpc';
 
-export interface UsePaymentVerificationProps {
+interface UsePaymentVerificationProps {
   payment: string | null;
   sessionId: string | null;
   bountyId: string | null;

@@ -23,10 +23,7 @@ const sanitizeSchema = {
       'className',
     ],
   },
-  tagNames: [
-    ...(defaultSchema.tagNames || []),
-    'img',
-  ],
+  tagNames: [...(defaultSchema.tagNames || []), 'img'],
 };
 
 interface MarkdownContentProps {
@@ -77,13 +74,19 @@ const markdownComponents: Components = {
     <h1 className="mt-0 mb-4 font-bold text-2xl text-foreground">{children}</h1>
   ),
   h2: ({ children }) => (
-    <h2 className="mt-6 mb-3 font-semibold text-foreground text-xl">{children}</h2>
+    <h2 className="mt-6 mb-3 font-semibold text-foreground text-xl">
+      {children}
+    </h2>
   ),
   h3: ({ children }) => (
-    <h3 className="mt-5 mb-2 font-medium text-lg text-foreground">{children}</h3>
+    <h3 className="mt-5 mb-2 font-medium text-lg text-foreground">
+      {children}
+    </h3>
   ),
   h4: ({ children }) => (
-    <h4 className="mt-4 mb-2 font-medium text-base text-foreground">{children}</h4>
+    <h4 className="mt-4 mb-2 font-medium text-base text-foreground">
+      {children}
+    </h4>
   ),
   p: ({ children }) => {
     const containsOnlyImages = React.Children.toArray(children).every(
@@ -127,7 +130,7 @@ const markdownComponents: Components = {
       {children}
     </Link>
   ),
-  img: ({ src, alt, ...props }) => {
+  img: ({ src, alt, width, height, ...props }) => {
     // Convert Blob to data URL if needed, otherwise use string
     const srcString =
       typeof src === 'string'
@@ -137,33 +140,23 @@ const markdownComponents: Components = {
           : '';
 
     // Check if this is an external image (from Linear, GitHub, etc.)
-    const isExternalImage = typeof srcString === 'string' && (
-      srcString.startsWith('http://') ||
-      srcString.startsWith('https://')
-    );
+    const isExternalImage =
+      typeof srcString === 'string' &&
+      (srcString.startsWith('http://') || srcString.startsWith('https://'));
 
-    // For external images, use regular img tag to avoid Next.js optimization issues
-    if (isExternalImage) {
-      return (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          alt={alt || ''}
-          src={srcString}
-          {...props}
-          className="my-3 inline-block h-auto max-w-full max-h-[400px] object-contain border-neutral-800 dark:border-neutral-700 rounded"
-        />
-      );
-    }
+    // Use provided width/height or fallback to defaults, convert to numbers if strings
+    const imageWidth = width ? Number(width) : 800;
+    const imageHeight = height ? Number(height) : 400;
 
-    // For data URLs and other sources, use Next.js Image
+    // Use Next.js Image for all sources — unoptimized for external URLs
     return (
       <Image
         alt={alt || ''}
         src={srcString}
-        width={800}
-        height={400}
+        width={imageWidth}
+        height={imageHeight}
         className="my-3 inline-block h-auto max-w-full max-h-[400px] object-contain border-neutral-800 dark:border-neutral-700 rounded"
-        unoptimized
+        unoptimized={isExternalImage}
       />
     );
   },
@@ -242,11 +235,7 @@ export function MarkdownContent({ content, encoding }: MarkdownContentProps) {
 
   return (
     <div className="prose prose-invert prose-neutral markdown-content max-w-none">
-      {/* eslint-disable-next-line react/no-danger */}
-      {/* biome-ignore lint/security/noDangerouslySetInnerHtml: CSS styles need to be injected for markdown content */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
+      <style>{`
         .markdown-content ul ul,
         .markdown-content ol ol,
         .markdown-content ul ol,
@@ -290,9 +279,7 @@ export function MarkdownContent({ content, encoding }: MarkdownContentProps) {
         .markdown-content ul ul ul {
           list-style-type: square !important;
         }
-      `,
-        }}
-      />
+      `}</style>
       <ReactMarkdown
         components={markdownComponents}
         rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}

@@ -5,7 +5,7 @@ import { authClient } from '@bounty/auth/client';
 import { toast } from 'sonner';
 import { useOrgSlug } from '@/context/org-slug-context';
 
-export interface GitHubInstallation {
+interface GitHubInstallation {
   id: number;
   accountLogin?: string | null;
   accountType?: string | null;
@@ -13,7 +13,7 @@ export interface GitHubInstallation {
   isDefault?: boolean;
 }
 
-export interface DiscordAccount {
+interface DiscordAccount {
   discordId: string;
   username: string | null;
   globalName: string | null;
@@ -22,14 +22,14 @@ export interface DiscordAccount {
   linkedAt: string | null;
 }
 
-export interface LinearWorkspace {
+interface LinearWorkspace {
   id: string;
   name: string;
   key?: string;
   url?: string;
 }
 
-export interface IntegrationsState {
+interface IntegrationsState {
   // Loading states
   isLoading: boolean;
   isGitHubLoading: boolean;
@@ -55,7 +55,7 @@ export interface IntegrationsState {
   totalCount: number;
 }
 
-export interface IntegrationsActions {
+interface IntegrationsActions {
   // GitHub actions
   refreshGitHub: () => void;
   invalidateGitHub: () => void;

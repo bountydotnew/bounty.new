@@ -26,27 +26,11 @@ export interface Bounty {
   linearIssueUrl?: string | null;
 }
 
-export interface UserData {
+interface UserData {
   id: string;
   name: string | null;
   handle: string | null;
   isProfilePrivate: boolean;
-}
-
-export interface ActivityItem {
-  id: string;
-  type: 'comment' | 'completion' | 'payment';
-  title: string;
-  description: string;
-  timestamp: string;
-}
-
-export interface RecommendedBounty {
-  id: string;
-  title: string;
-  description: string;
-  technology: string;
-  amount: number;
 }
 
 interface DashboardQueries {

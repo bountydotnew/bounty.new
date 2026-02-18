@@ -24,7 +24,7 @@ interface SpendSliderProps {
 }
 
 export function SpendSlider({ value, onChange }: SpendSliderProps) {
-  const [inputValue, setInputValue] = useState(stringifyValue(value));
+  const [inputValue, setInputValue] = useState(() => stringifyValue(value));
   const [isFocused, setIsFocused] = useState(false);
 
   const sliderPosition = useMemo(() => {

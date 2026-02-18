@@ -1,5 +1,12 @@
+import type { Metadata } from 'next';
 import { getPosts, getCategories } from '@bounty/ui/lib/blog-query';
 import { BlogPageContent } from '@/components/blog/blog-page-content';
+
+export const metadata: Metadata = {
+  title: 'Blog',
+  description:
+    'Latest updates, articles, and insights from the bounty.new team.',
+};
 
 export default async function BlogPage() {
   const [postsData, categoriesData] = await Promise.all([

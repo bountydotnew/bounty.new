@@ -5,10 +5,11 @@ import {
 } from '@bounty/ui/components/avatar';
 import { Button } from '@bounty/ui/components/button';
 import { cn } from '@bounty/ui/lib/utils';
+import Image from 'next/image';
 import { ExternalLink, Github } from 'lucide-react';
 import { Badge } from '@/components/bounty/badge';
 
-export interface SubmissionCardProps {
+interface SubmissionCardProps {
   // User info
   user?: string;
   username?: string; // GitHub username
@@ -135,8 +136,8 @@ export default function SubmissionCard({
       {description && <p className="text-gray-400 text-sm">{description}</p>}
       {/* Hide image preview for GitHub PR submissions */}
       {!prUrl && previewSrc && (
-        // eslint-disable-next-line @next/next/no-image-element
-        <img
+        
+        <Image
           alt="Theme preview screenshot"
           className="h-20 w-20 rounded-md object-cover"
           src={previewSrc}

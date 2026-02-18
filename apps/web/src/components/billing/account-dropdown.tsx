@@ -180,21 +180,27 @@ function CreateTeamDialog({
   onOpenChange: (open: boolean) => void;
   onCreated: (orgId: string, slug: string, name: string) => void;
 }) {
-  const [name, setName] = useState('');
-  const [slug, setSlug] = useState('');
-  const [slugTouched, setSlugTouched] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
-  const [errors, setErrors] = useState<{ name?: string; slug?: string }>({});
+  const [formState, setFormState] = useState({
+    name: '',
+    slug: '',
+    slugTouched: false,
+    isCreating: false,
+    errors: {} as { name?: string; slug?: string },
+  });
 
-  // Reset form when dialog opens/closes
   React.useEffect(() => {
     if (!open) {
-      setName('');
-      setSlug('');
-      setSlugTouched(false);
-      setErrors({});
+      setFormState({
+        name: '',
+        slug: '',
+        slugTouched: false,
+        isCreating: false,
+        errors: {},
+      });
     }
   }, [open]);
+
+  const { name, slug, slugTouched, isCreating, errors } = formState;
 
   const validate = (fields: { name: string; slug: string }) => {
     const result = createTeamSchema.safeParse(fields);
@@ -218,27 +224,32 @@ function CreateTeamDialog({
   };
 
   const handleNameChange = (value: string) => {
-    setName(value);
-    const newSlug = slugTouched ? slug : slugify(value);
-    if (!slugTouched) setSlug(newSlug);
-
-    // Clear errors on change, validate on next blur
-    if (errors.name) {
-      setErrors((prev) => ({ ...prev, name: undefined }));
-    }
+    setFormState((prev) => {
+      const newSlug = prev.slugTouched ? prev.slug : slugify(value);
+      return {
+        ...prev,
+        name: value,
+        slug: newSlug,
+        errors: { ...prev.errors, name: undefined },
+      };
+    });
   };
 
   const handleSlugChange = (value: string) => {
-    setSlugTouched(true);
-    setSlug(value);
-    if (errors.slug) {
-      setErrors((prev) => ({ ...prev, slug: undefined }));
-    }
+    setFormState((prev) => ({
+      ...prev,
+      slugTouched: true,
+      slug: value,
+      errors: { ...prev.errors, slug: undefined },
+    }));
   };
 
   const handleBlur = (field: 'name' | 'slug') => {
     const fieldErrors = validate({ name, slug });
-    setErrors((prev) => ({ ...prev, [field]: fieldErrors[field] }));
+    setFormState((prev) => ({
+      ...prev,
+      errors: { ...prev.errors, [field]: fieldErrors[field] },
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -246,10 +257,10 @@ function CreateTeamDialog({
     e.stopPropagation();
 
     const fieldErrors = validate({ name, slug });
-    setErrors(fieldErrors);
+    setFormState((prev) => ({ ...prev, errors: fieldErrors }));
     if (fieldErrors.name || fieldErrors.slug) return;
 
-    setIsCreating(true);
+    setFormState((prev) => ({ ...prev, isCreating: true }));
     try {
       const result = await authClient.organization.create({
         name: name.trim(),
@@ -265,11 +276,11 @@ function CreateTeamDialog({
         onCreated(result.data.id, slug, name.trim());
         onOpenChange(false);
       }
+      setFormState((prev) => ({ ...prev, isCreating: false }));
     } catch (err) {
       console.error('Failed to create team:', err);
       toast.error('Failed to create team');
-    } finally {
-      setIsCreating(false);
+      setFormState((prev) => ({ ...prev, isCreating: false }));
     }
   };
 
@@ -392,10 +403,10 @@ function TeamSwitcherSubmenu({
           }
         }
         onClose();
+        setSwitching(false);
       } catch (err) {
         console.error('Failed to switch team:', err);
         toast.error('Failed to switch team');
-      } finally {
         setSwitching(false);
       }
     },
