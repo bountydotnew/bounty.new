@@ -156,10 +156,12 @@ export function BountyFilters() {
 
   // Sync local search with URL search query when it changes externally
   const prevSearchQueryRef = useRef(searchQuery);
-  if (searchQuery !== prevSearchQueryRef.current) {
-    prevSearchQueryRef.current = searchQuery;
-    dispatchFilter({ type: 'SYNC_SEARCH', value: searchQuery || '' });
-  }
+  useEffect(() => {
+    if (searchQuery !== prevSearchQueryRef.current) {
+      prevSearchQueryRef.current = searchQuery;
+      dispatchFilter({ type: 'SYNC_SEARCH', value: searchQuery || '' });
+    }
+  }, [searchQuery]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

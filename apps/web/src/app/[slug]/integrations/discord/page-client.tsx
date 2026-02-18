@@ -169,7 +169,7 @@ function useDiscordIntegration() {
 
   const handleAddBot = () => {
     if (botInstallData?.url) {
-      window.open(botInstallData.url, '_blank');
+      window.open(botInstallData.url, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -364,7 +364,11 @@ function DiscordLinkedView({
               </ActionButton>
               <ActionButton
                 onClick={() =>
-                  window.open('https://discord.com/channels/@me', '_blank')
+                  window.open(
+                    'https://discord.com/channels/@me',
+                    '_blank',
+                    'noopener,noreferrer'
+                  )
                 }
                 icon={<ExternalLink className="h-4 w-4" />}
               >

@@ -1,24 +1,28 @@
 'use client';
 
 import { Spinner } from '@bounty/ui/components/spinner';
-import { useQuery, skipToken } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useQueryState, parseAsString } from 'nuqs';
-import { Suspense } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import LoginPageClient from '@/components/login/login.page.client';
 import { trpcClient } from '@/utils/trpc';
 
 function LoginContent() {
   const [token] = useQueryState('invite', parseAsString);
 
-  // Apply invite token via useQuery — fires automatically when token is present
-  useQuery({
-    queryKey: ['applyInvite', token],
-    queryFn: token
-      ? () => trpcClient.user.applyInvite.mutate({ token })
-      : skipToken,
-    retry: false,
-    staleTime: Number.POSITIVE_INFINITY,
+  // Apply invite token via useMutation — fires once per token
+  const appliedTokenRef = useRef<string | null>(null);
+  const applyInvite = useMutation({
+    mutationFn: (inviteToken: string) =>
+      trpcClient.user.applyInvite.mutate({ token: inviteToken }),
   });
+
+  useEffect(() => {
+    if (token && appliedTokenRef.current !== token) {
+      appliedTokenRef.current = token;
+      applyInvite.mutate(token);
+    }
+  }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
   // const handleGitHubSignIn = async () => {
   //   try {
   //     const callbackURL = redirectUrl ? `${redirectUrl}` : `${baseUrl}/dashboard`;

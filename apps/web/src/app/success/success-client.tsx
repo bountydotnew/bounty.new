@@ -13,7 +13,7 @@ import { Separator } from '@bounty/ui/components/separator';
 import { useBilling } from '@/hooks/use-billing';
 import { ArrowRight } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useRef, Suspense } from 'react';
+import { useEffect, useRef, Suspense } from 'react';
 import { Sidebar } from '@/components/dual-sidebar';
 import Bounty from '@/components/icons/bounty';
 import { useConfetti } from '@/context/confetti-context';
@@ -28,13 +28,14 @@ function SuccessClientInner() {
   const { celebrate } = useConfetti();
   const hasInitialized = useRef(false);
 
-  if (!hasInitialized.current) {
+  useEffect(() => {
+    if (hasInitialized.current) return;
     hasInitialized.current = true;
     celebrate();
     if (checkoutId) {
-      refetch();
+      void refetch();
     }
-  }
+  }, [checkoutId, celebrate, refetch]);
 
   // Get plan details from the customer's subscription
   const subscription = customer?.subscriptions?.[0];

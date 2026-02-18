@@ -135,6 +135,7 @@ export default function ContributorsPage() {
               className="inline-flex items-center gap-2 rounded-lg border border-transparent px-5 py-3 text-[15px] text-text-muted transition-all duration-200 hover:border-border-subtle hover:bg-background hover:text-foreground"
               href={LINKS.SOCIALS.GITHUB}
               target="_blank"
+              rel="noopener noreferrer"
             >
               <Github className="h-4 w-4" />
               View on GitHub
@@ -155,6 +156,7 @@ export default function ContributorsPage() {
                     href={contributor.html_url}
                     key={contributor.login}
                     target="_blank"
+                    rel="noopener noreferrer"
                   >
                     <Avatar className="h-12 w-12 ring-1 ring-[#222]">
                       <AvatarImage src={contributor.avatar_url} />
@@ -198,6 +200,7 @@ export default function ContributorsPage() {
                   href={contributor.html_url}
                   key={contributor.login}
                   target="_blank"
+                  rel="noopener noreferrer"
                 >
                   <Avatar className="mx-auto mb-3 h-12 w-12 ring-1 ring-[#222] transition-transform duration-200 group-hover:scale-105">
                     <AvatarImage src={contributor.avatar_url} />
@@ -230,6 +233,7 @@ export default function ContributorsPage() {
                   href={tool.url}
                   key={tool.id}
                   target="_blank"
+                  rel="noopener noreferrer"
                 >
                   <div className="flex items-start gap-5">
                     <div className="flex h-12 w-12 items-center justify-center">

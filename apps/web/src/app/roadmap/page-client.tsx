@@ -826,6 +826,7 @@ export default function RoadmapPage() {
                       className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-[15px] font-medium text-background transition-colors hover:opacity-90"
                       href="https://github.com/bountydotnew/bounty.new"
                       target="_blank"
+                      rel="noopener noreferrer"
                     >
                       <GithubIcon className="h-4 w-4" />
                       View on GitHub
@@ -834,6 +835,7 @@ export default function RoadmapPage() {
                       className="inline-flex items-center gap-2 rounded-full border border-border-default bg-surface-1 px-6 py-3 text-[15px] text-foreground transition-colors hover:bg-surface-2"
                       href="https://github.com/bountydotnew/bounty.new/issues"
                       target="_blank"
+                      rel="noopener noreferrer"
                     >
                       Request a Feature
                     </Link>

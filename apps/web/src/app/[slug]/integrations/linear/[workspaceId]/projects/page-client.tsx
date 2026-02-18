@@ -139,15 +139,18 @@ export default function LinearProjectsPage() {
 
             {/* Right side */}
             <div className="flex items-center gap-2 shrink-0">
-              <a
-                href={project.url}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                aria-label="Open project in Linear"
                 className="h-8 w-8 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-3 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.open(project.url, '_blank', 'noopener,noreferrer');
+                }}
               >
                 <ExternalLink className="w-3.5 h-3.5" />
-              </a>
+              </button>
               <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-text-secondary transition-colors" />
             </div>
           </Link>
