@@ -56,11 +56,34 @@ function useBountyFormState({
 }: Pick<BountyFormProps, 'initialValues' | 'entryId' | 'onSubmit'>) {
   const router = useRouter();
   const { session } = useSession();
-  const [formFields, setFormFields] = useState<FormFields>({
-    title: initialValues?.title || '',
-    description: initialValues?.description || '',
-    price: initialValues?.amount || '',
-    deadline: initialValues?.deadline || '',
+  const [formFields, setFormFields] = useState<FormFields>(() => {
+    const defaults = {
+      title: initialValues?.title || '',
+      description: initialValues?.description || '',
+      price: initialValues?.amount || '',
+      deadline: initialValues?.deadline || '',
+    };
+    if (initialValues) {
+      return defaults;
+    }
+    try {
+      const stored =
+        typeof window !== 'undefined'
+          ? localStorage.getItem(BOUNTY_DRAFT_STORAGE_KEY)
+          : null;
+      if (stored) {
+        const draft = JSON.parse(stored) as BountyDraft;
+        return {
+          title: draft.title || '',
+          description: draft.description || '',
+          price: draft.amount || '',
+          deadline: draft.deadline || '',
+        };
+      }
+    } catch {
+      // Ignore parse errors
+    }
+    return defaults;
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -70,27 +93,6 @@ function useBountyFormState({
 
   const [titlePopoverOpen, setTitlePopoverOpen] = useState(false);
   const [pricePopoverOpen, setPricePopoverOpen] = useState(false);
-
-  useEffect(() => {
-    if (initialValues) {
-      return;
-    }
-
-    try {
-      const stored = localStorage.getItem(BOUNTY_DRAFT_STORAGE_KEY);
-      if (stored) {
-        const draft = JSON.parse(stored) as BountyDraft;
-        setFormFields({
-          title: draft.title || '',
-          description: draft.description || '',
-          price: draft.amount || '',
-          deadline: draft.deadline || '',
-        });
-      }
-    } catch {
-      // Ignore parse errors
-    }
-  }, [initialValues]);
 
   useEffect(() => {
     if (onSubmit) {
@@ -182,10 +184,10 @@ function useBountyFormState({
           amount: cleanedPrice || '0',
           deadline: formFields.deadline || undefined,
         });
+        setIsSubmitting(false);
       } catch (error) {
         console.error('Failed to update bounty:', error);
         parseAndShowErrors(error);
-      } finally {
         setIsSubmitting(false);
       }
       return;
@@ -217,10 +219,10 @@ function useBountyFormState({
       localStorage.removeItem(BOUNTY_DRAFT_STORAGE_KEY);
 
       router.push('/waitlist/dashboard');
+      setIsSubmitting(false);
     } catch (error) {
       console.error('Failed to save bounty:', error);
       parseAndShowErrors(error);
-    } finally {
       setIsSubmitting(false);
     }
   };

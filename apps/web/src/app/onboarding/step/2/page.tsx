@@ -5,7 +5,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { trpcClient } from '@/utils/trpc';
 import { OnboardingDialog } from '@/components/onboarding-flow/onboarding-dialog';
 import { ExternalLink } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export default function OnboardingStep2Page() {
   const router = useRouter();
@@ -19,7 +19,10 @@ export default function OnboardingStep2Page() {
 
   const { data: installUrlData } = useQuery({
     queryKey: ['githubInstallation.getInstallationUrl'],
-    queryFn: () => trpcClient.githubInstallation.getInstallationUrl.query({ state: 'onboarding' }),
+    queryFn: () =>
+      trpcClient.githubInstallation.getInstallationUrl.query({
+        state: 'onboarding',
+      }),
   });
 
   const completeStepMutation = useMutation({
@@ -31,11 +34,8 @@ export default function OnboardingStep2Page() {
 
   const hasInstallations = (installationsData?.installations?.length ?? 0) > 0;
 
-  useEffect(() => {
-    if (hasInstallations) {
-      setIsChecking(false);
-    }
-  }, [hasInstallations]);
+  // Derive checking state: if installations exist, we're no longer checking
+  const effectiveIsChecking = isChecking && !hasInstallations;
 
   const handleInstallGitHub = () => {
     if (installUrlData?.url) {
@@ -51,17 +51,25 @@ export default function OnboardingStep2Page() {
       subtitle="Install the app to your repositories"
       isLoading={completeStepMutation.isPending}
       actionLabel={hasInstallations ? 'Continue' : 'Install GitHub App'}
-      onAction={hasInstallations ? () => completeStepMutation.mutate() : handleInstallGitHub}
+      onAction={
+        hasInstallations
+          ? () => completeStepMutation.mutate()
+          : handleInstallGitHub
+      }
       skipLabel={hasInstallations ? undefined : 'Skip'}
-      onSkip={hasInstallations ? undefined : () => completeStepMutation.mutate()}
+      onSkip={
+        hasInstallations ? undefined : () => completeStepMutation.mutate()
+      }
     >
       <div className="w-full">
         {hasInstallations ? (
           <div className="flex items-center gap-2 text-sm text-text-tertiary">
             <span className="text-green-500">✓</span>
-            Connected to {installationsData?.installations?.[0]?.accountLogin || 'your account'}
+            Connected to{' '}
+            {installationsData?.installations?.[0]?.accountLogin ||
+              'your account'}
           </div>
-        ) : isChecking ? (
+        ) : effectiveIsChecking ? (
           <div className="flex items-center gap-2 text-sm text-text-tertiary">
             <div className="h-3 w-3 animate-spin rounded-full border border-[#929292] border-t-transparent" />
             Waiting for installation...

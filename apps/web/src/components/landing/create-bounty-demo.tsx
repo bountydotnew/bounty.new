@@ -329,11 +329,13 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
   const { navigate } = useMockBrowser();
   const { advanceStep } = useTutorial();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [feedBounties, setFeedBounties] = useState<Bounty[]>([]);
   const [visibleCount, setVisibleCount] = useState(0);
+  const [mountTime] = useState(() => Date.now());
 
   useEffect(() => {
-    if (compact) return;
+    if (compact) {
+      return;
+    }
     const timer = setTimeout(() => {
       if (scrollRef.current) {
         scrollRef.current.scrollTo({ top: 100, behavior: 'smooth' });
@@ -381,7 +383,7 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
 
     return devNames.slice(0, 12).map((author, index) => {
       const createdAt = new Date(
-        Date.now() - index * 1000 * 60 * 45
+        mountTime - index * 1000 * 60 * 45
       ).toISOString();
       const amount = 120 + (index % 6) * 80;
       return {
@@ -407,12 +409,17 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
         paymentStatus: index % 2 === 0 ? 'held' : 'pending',
       } satisfies Bounty;
     });
-  }, []);
+  }, [mountTime]);
 
-  useEffect(() => {
-    const shuffled = [...mockBounties].sort(() => Math.random() - 0.5);
-    setFeedBounties(shuffled);
-    setVisibleCount(0);
+  // Shuffle is stable since mockBounties only changes on mount
+  const feedBounties = useMemo(() => {
+    const shuffled = [...mockBounties];
+    // Fisher-Yates shuffle with seeded index to avoid Math.random in memo
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = (i * 7 + 3) % (i + 1);
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
   }, [mockBounties]);
 
   useEffect(() => {

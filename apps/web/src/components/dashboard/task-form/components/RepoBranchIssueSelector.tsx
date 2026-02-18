@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronRight, ChevronLeft, Check, Loader2 } from 'lucide-react';
 import { GithubIcon, BranchIcon } from '@bounty/ui';
 import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
@@ -131,7 +131,7 @@ function AccountsSelectorContent({
 }) {
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const prefersReducedMotion = useReducedMotion();
-  const directionRef = useRef<'forward' | 'back'>('forward');
+  const [direction, setDirection] = useState<'forward' | 'back'>('forward');
   const totalAccountPages = Math.ceil(installations.length / ACCOUNTS_PER_PAGE);
 
   const paneKey = selectedAccount ? `repos-${selectedAccount.id}` : 'accounts';
@@ -145,7 +145,7 @@ function AccountsSelectorContent({
             <button
               type="button"
               onClick={() => {
-                directionRef.current = 'back';
+                setDirection('back');
                 setSelectedAccount(null);
               }}
               className="p-1 -ml-1 rounded hover:bg-white/10 text-text-secondary"
@@ -183,7 +183,7 @@ function AccountsSelectorContent({
               prefersReducedMotion
                 ? false
                 : {
-                    transform: `translateX(${directionRef.current === 'forward' ? 40 : -40}px)`,
+                    transform: `translateX(${direction === 'forward' ? 40 : -40}px)`,
                   }
             }
             animate={{
@@ -248,7 +248,7 @@ function AccountsSelectorContent({
                       key={account.id}
                       type="button"
                       onClick={() => {
-                        directionRef.current = 'forward';
+                        setDirection('forward');
                         setSelectedAccount(account);
                       }}
                       className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-white/10 transition-colors"
@@ -446,7 +446,7 @@ function IssuesSelectorContent({
 
 function MobileSelectorHeader({
   step,
-  mobileDirectionRef,
+  setMobileDirection,
   setStep,
   selectedAccount,
   setSelectedAccount,
@@ -462,7 +462,8 @@ function MobileSelectorHeader({
   setIssuesPage,
 }: {
   step: Step;
-  mobileDirectionRef: { current: 'forward' | 'back' };
+  mobileDirection: 'forward' | 'back';
+  setMobileDirection: (dir: 'forward' | 'back') => void;
   setStep: (step: Step) => void;
   selectedAccount: Account | null;
   setSelectedAccount: (account: Account | null) => void;
@@ -483,7 +484,7 @@ function MobileSelectorHeader({
         <button
           type="button"
           onClick={() => {
-            mobileDirectionRef.current = 'back';
+            setMobileDirection('back');
             if (step === 'issues') {
               setStep('branches');
             } else if (step === 'branches') {
@@ -522,7 +523,7 @@ function MobileSelectorHeader({
           <button
             type="button"
             onClick={() => {
-              mobileDirectionRef.current = 'back';
+              setMobileDirection('back');
               setSelectedAccount(null);
             }}
             className="p-1 -ml-1 rounded hover:bg-white/10 text-text-secondary"
@@ -579,7 +580,7 @@ function MobileSelectorBody({
   step,
   selectedAccount,
   setSelectedAccount,
-  mobileDirectionRef,
+  setMobileDirection,
   installationRepos,
   onSelectRepo,
   setStep,
@@ -600,7 +601,8 @@ function MobileSelectorBody({
   step: Step;
   selectedAccount: Account | null;
   setSelectedAccount: (account: Account | null) => void;
-  mobileDirectionRef: { current: 'forward' | 'back' };
+  mobileDirection: 'forward' | 'back';
+  setMobileDirection: (dir: 'forward' | 'back') => void;
   installationRepos: InstallationRepos[];
   onSelectRepo: (repo: string) => void;
   setStep: (step: Step) => void;
@@ -632,7 +634,7 @@ function MobileSelectorBody({
                 key={repo}
                 type="button"
                 onClick={() => {
-                  mobileDirectionRef.current = 'forward';
+                  setMobileDirection('forward');
                   onSelectRepo(repo);
                   setStep('branches');
                 }}
@@ -684,7 +686,7 @@ function MobileSelectorBody({
                 key={account.id}
                 type="button"
                 onClick={() => {
-                  mobileDirectionRef.current = 'forward';
+                  setMobileDirection('forward');
                   setSelectedAccount(account);
                 }}
                 className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-white/10 transition-colors"
@@ -721,7 +723,7 @@ function MobileSelectorBody({
               key={branch}
               type="button"
               onClick={() => {
-                mobileDirectionRef.current = 'forward';
+                setMobileDirection('forward');
                 onSelectBranch(branch);
                 setStep('issues');
               }}
@@ -856,7 +858,9 @@ function MobileSelectorContent({
 }) {
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const prefersReducedMotion = useReducedMotion();
-  const mobileDirectionRef = useRef<'forward' | 'back'>('forward');
+  const [mobileDirection, setMobileDirection] = useState<'forward' | 'back'>(
+    'forward'
+  );
 
   const totalAccountPages = Math.ceil(installations.length / ACCOUNTS_PER_PAGE);
   const totalBranchPages = Math.ceil(
@@ -876,7 +880,8 @@ function MobileSelectorContent({
     <div className="flex flex-col">
       <MobileSelectorHeader
         step={step}
-        mobileDirectionRef={mobileDirectionRef}
+        mobileDirection={mobileDirection}
+        setMobileDirection={setMobileDirection}
         setStep={setStep}
         selectedAccount={selectedAccount}
         setSelectedAccount={setSelectedAccount}
@@ -899,7 +904,7 @@ function MobileSelectorContent({
               prefersReducedMotion
                 ? false
                 : {
-                    transform: `translateX(${mobileDirectionRef.current === 'forward' ? 40 : -40}px)`,
+                    transform: `translateX(${mobileDirection === 'forward' ? 40 : -40}px)`,
                   }
             }
             animate={{
@@ -912,7 +917,8 @@ function MobileSelectorContent({
               step={step}
               selectedAccount={selectedAccount}
               setSelectedAccount={setSelectedAccount}
-              mobileDirectionRef={mobileDirectionRef}
+              mobileDirection={mobileDirection}
+              setMobileDirection={setMobileDirection}
               installationRepos={installationRepos}
               onSelectRepo={onSelectRepo}
               setStep={setStep}
@@ -1346,9 +1352,11 @@ export function RepoBranchIssueSelector({
     open: false,
     step: openStep as Step,
   });
-  const prevOpenStepRef = useRef(openStep);
-  if (prevOpenStepRef.current !== openStep) {
-    prevOpenStepRef.current = openStep;
+  const [prevOpenStep, setPrevOpenStep] = useState(openStep);
+
+  // Sync mobile nav step when openStep prop changes (update during render)
+  if (prevOpenStep !== openStep) {
+    setPrevOpenStep(openStep);
     setMobileNav((prev) => ({ ...prev, step: openStep }));
   }
 
@@ -1361,12 +1369,13 @@ export function RepoBranchIssueSelector({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const prevAccountQueryRef = useRef(accountSearchQuery);
-  const prevBranchQueryRef = useRef(branchSearchQuery);
-  const prevIssueQRef = useRef(issueQuery);
+  // Reset pagination when search queries change (update during render)
+  const [prevAccountQuery, setPrevAccountQuery] = useState(accountSearchQuery);
+  const [prevBranchQuery, setPrevBranchQuery] = useState(branchSearchQuery);
+  const [prevIssueQ, setPrevIssueQ] = useState(issueQuery);
 
-  if (accountSearchQuery !== prevAccountQueryRef.current) {
-    prevAccountQueryRef.current = accountSearchQuery;
+  if (accountSearchQuery !== prevAccountQuery) {
+    setPrevAccountQuery(accountSearchQuery);
     setPagination((prev) => ({
       ...prev,
       accountsPage: 1,
@@ -1374,8 +1383,8 @@ export function RepoBranchIssueSelector({
     }));
   }
 
-  if (branchSearchQuery !== prevBranchQueryRef.current) {
-    prevBranchQueryRef.current = branchSearchQuery;
+  if (branchSearchQuery !== prevBranchQuery) {
+    setPrevBranchQuery(branchSearchQuery);
     setPagination((prev) => ({
       ...prev,
       branchesPage: 1,
@@ -1383,8 +1392,8 @@ export function RepoBranchIssueSelector({
     }));
   }
 
-  if (issueQuery !== prevIssueQRef.current) {
-    prevIssueQRef.current = issueQuery;
+  if (issueQuery !== prevIssueQ) {
+    setPrevIssueQ(issueQuery);
     setPagination((prev) => ({ ...prev, issuesPage: 1, mobileIssuesPage: 1 }));
   }
 

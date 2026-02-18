@@ -90,6 +90,14 @@ export function BountyFilters() {
 
   // Debounced title search - update URL after user stops typing
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery || '');
+  const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
+
+  // Sync local search with URL search query when it changes externally
+  if (searchQuery !== prevSearchQuery) {
+    setPrevSearchQuery(searchQuery);
+    setLocalSearchQuery(searchQuery || '');
+  }
+
   useEffect(() => {
     const timer = setTimeout(() => {
       if (localSearchQuery !== searchQuery) {
@@ -98,12 +106,6 @@ export function BountyFilters() {
     }, 300);
     return () => clearTimeout(timer);
   }, [localSearchQuery, searchQuery, setSearchQuery]);
-
-  const prevSearchQueryRef = useRef(searchQuery);
-  if (searchQuery !== prevSearchQueryRef.current) {
-    prevSearchQueryRef.current = searchQuery;
-    setLocalSearchQuery(searchQuery || '');
-  }
 
   const handleSortChange = useCallback(
     (value: string) => {

@@ -1,13 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import {
-  useRef,
-  useState,
-  useEffect,
-  useSyncExternalStore,
-  useReducer,
-} from 'react';
+import { useRef, useState, useEffect, useReducer } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { devNames } from './demo-data';
 import { MockBrowser, useMockBrowser } from './mockup';
@@ -193,13 +187,8 @@ function PRCommentsPage({
   const [animState, dispatch] = useReducer(animReducer, initialAnimState);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const randomDevRef = useRef(
-    devNames[Math.floor(Math.random() * devNames.length)]
-  );
-  const randomDev = useSyncExternalStore(
-    () => () => {},
-    () => randomDevRef.current,
-    () => devNames[0]
+  const [randomDev] = useState(
+    () => devNames[Math.floor(Math.random() * devNames.length)]
   );
 
   useEffect(() => {

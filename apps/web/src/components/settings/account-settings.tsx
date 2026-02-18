@@ -11,11 +11,18 @@ import {
 import { Button } from '@bounty/ui/components/button';
 import { Badge } from '@bounty/ui/components/badge';
 import { Switch } from '@bounty/ui/components/switch';
-import { Loader2, Check, Lock, LogOut, Link as LinkIcon, Unlink } from 'lucide-react';
+import {
+  Loader2,
+  Check,
+  Lock,
+  LogOut,
+  Link as LinkIcon,
+  Unlink,
+} from 'lucide-react';
 import { cn } from '@bounty/ui/lib/utils';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { trpc } from '@/utils/trpc';
@@ -88,11 +95,19 @@ function LinkedAccountsSection() {
   const [isUnlinking, setIsUnlinking] = useState<string | null>(null);
 
   // Use tRPC to fetch linked accounts
-  const { data: accountsData } = useQuery(trpc.user.getLinkedAccounts.queryOptions());
+  const { data: accountsData } = useQuery(
+    trpc.user.getLinkedAccounts.queryOptions()
+  );
 
-  const hasGitHub = accountsData?.accounts?.some((a: { providerId: string }) => a.providerId === 'github');
-  const hasGoogle = accountsData?.accounts?.some((a: { providerId: string }) => a.providerId === 'google');
-  const hasEmail = accountsData?.accounts?.some((a: { providerId: string }) => a.providerId === 'email');
+  const hasGitHub = accountsData?.accounts?.some(
+    (a: { providerId: string }) => a.providerId === 'github'
+  );
+  const hasGoogle = accountsData?.accounts?.some(
+    (a: { providerId: string }) => a.providerId === 'google'
+  );
+  const hasEmail = accountsData?.accounts?.some(
+    (a: { providerId: string }) => a.providerId === 'email'
+  );
 
   // Count total OAuth providers (excluding email)
   const oauthCount = (hasGitHub ? 1 : 0) + (hasGoogle ? 1 : 0);
@@ -113,14 +128,19 @@ function LinkedAccountsSection() {
         },
         {
           onError: (ctx) => {
-            const errorMessage = ctx.error?.message || `Failed to link ${provider === 'github' ? 'GitHub' : 'Google'}`;
+            const errorMessage =
+              ctx.error?.message ||
+              `Failed to link ${provider === 'github' ? 'GitHub' : 'Google'}`;
             toast.error(errorMessage);
             setIsLinking(null);
           },
         }
       );
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : `Failed to link ${provider === 'github' ? 'GitHub' : 'Google'}`;
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : `Failed to link ${provider === 'github' ? 'GitHub' : 'Google'}`;
       toast.error(errorMessage);
       setIsLinking(null);
     }
@@ -130,7 +150,9 @@ function LinkedAccountsSection() {
     // Don't allow unlinking if it's the only OAuth provider
     // Users must have at least one social connection (GitHub or Google)
     if (oauthCount <= 1) {
-      toast.error('You must have at least one social connection (GitHub or Google) to access your account');
+      toast.error(
+        'You must have at least one social connection (GitHub or Google) to access your account'
+      );
       return;
     }
 
@@ -143,20 +165,29 @@ function LinkedAccountsSection() {
         },
         {
           onSuccess: () => {
-            toast.success(`${provider === 'github' ? 'GitHub' : 'Google'} unlinked`);
+            toast.success(
+              `${provider === 'github' ? 'GitHub' : 'Google'} unlinked`
+            );
             // Refetch accounts
-            queryClient.invalidateQueries({ queryKey: trpc.user.getLinkedAccounts.queryKey() });
+            queryClient.invalidateQueries({
+              queryKey: trpc.user.getLinkedAccounts.queryKey(),
+            });
           },
           onError: (ctx) => {
-            const errorMessage = ctx.error?.message || `Failed to unlink ${provider === 'github' ? 'GitHub' : 'Google'}`;
+            const errorMessage =
+              ctx.error?.message ||
+              `Failed to unlink ${provider === 'github' ? 'GitHub' : 'Google'}`;
             toast.error(errorMessage);
           },
         }
       );
+      setIsUnlinking(null);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : `Failed to unlink ${provider === 'github' ? 'GitHub' : 'Google'}`;
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : `Failed to unlink ${provider === 'github' ? 'GitHub' : 'Google'}`;
       toast.error(errorMessage);
-    } finally {
       setIsUnlinking(null);
     }
   };
@@ -165,7 +196,8 @@ function LinkedAccountsSection() {
     <SettingsSection>
       <SectionTitle>Linked accounts</SectionTitle>
       <p className="text-sm text-text-secondary">
-        Link your GitHub and Google accounts for easier sign-in. You can use either to sign in.
+        Link your GitHub and Google accounts for easier sign-in. You can use
+        either to sign in.
       </p>
 
       <div className="flex flex-col gap-3 mt-2">
@@ -174,7 +206,9 @@ function LinkedAccountsSection() {
           <div className="flex items-center gap-3">
             <GithubIcon className="h-5 w-5 fill-foreground" />
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-foreground">GitHub</span>
+              <span className="text-sm font-medium text-foreground">
+                GitHub
+              </span>
               {hasGitHub && (
                 <span className="text-xs text-text-tertiary">Connected</span>
               )}
@@ -220,7 +254,9 @@ function LinkedAccountsSection() {
           <div className="flex items-center gap-3">
             <GoogleIcon className="h-5 w-5" />
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-foreground">Google</span>
+              <span className="text-sm font-medium text-foreground">
+                Google
+              </span>
               {hasGoogle && (
                 <span className="text-xs text-text-tertiary">Connected</span>
               )}
@@ -269,8 +305,12 @@ function LinkedAccountsSection() {
                 <span className="text-xs">@</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-medium text-foreground">Email</span>
-                <span className="text-xs text-text-tertiary">Password sign-in (deprecated)</span>
+                <span className="text-sm font-medium text-foreground">
+                  Email
+                </span>
+                <span className="text-xs text-text-tertiary">
+                  Password sign-in (deprecated)
+                </span>
               </div>
             </div>
             <Badge variant="secondary" className="text-xs">
@@ -282,7 +322,8 @@ function LinkedAccountsSection() {
 
       {hasEmail && !hasGitHub && !hasGoogle && (
         <p className="text-xs text-amber-500 mt-2">
-          ⚠️ Password sign-in is deprecated. Please link a GitHub or Google account.
+          ⚠️ Password sign-in is deprecated. Please link a GitHub or Google
+          account.
         </p>
       )}
     </SettingsSection>
@@ -358,11 +399,16 @@ function ComingSoonOption({ label }: { label: string }) {
 function PrivacySection() {
   const { user: userData } = useUser();
   const queryClient = useQueryClient();
-  const [isProfilePrivate, setIsProfilePrivate] = useState(false);
+  const isProfilePrivate = userData?.isProfilePrivate ?? false;
+  const [optimisticPrivate, setOptimisticPrivate] = useState<boolean | null>(
+    null
+  );
+  const displayPrivate = optimisticPrivate ?? isProfilePrivate;
 
   const updateProfilePrivacyMutation = useMutation(
     trpc.user.updateProfilePrivacy.mutationOptions({
       onSuccess: () => {
+        setOptimisticPrivate(null);
         const userQueryKey = trpc.user.getMe.queryOptions().queryKey;
         queryClient.invalidateQueries({ queryKey: userQueryKey });
 
@@ -382,22 +428,16 @@ function PrivacySection() {
     })
   );
 
-  useEffect(() => {
-    if (userData?.isProfilePrivate !== undefined) {
-      setIsProfilePrivate(userData.isProfilePrivate);
-    }
-  }, [userData?.isProfilePrivate]);
-
   const handlePrivacyToggle = useCallback(
     async (value: boolean) => {
-      setIsProfilePrivate(value);
+      setOptimisticPrivate(value);
       try {
         await updateProfilePrivacyMutation.mutateAsync({
           isProfilePrivate: value,
         });
         toast.success(`Profile is now ${value ? 'private' : 'public'}`);
       } catch {
-        setIsProfilePrivate(!value);
+        setOptimisticPrivate(null);
         toast.error('Failed to update privacy settings');
       }
     },
@@ -416,7 +456,7 @@ function PrivacySection() {
           </p>
         </div>
         <Switch
-          checked={isProfilePrivate}
+          checked={displayPrivate}
           disabled={updateProfilePrivacyMutation.isPending}
           onCheckedChange={handlePrivacyToggle}
         />

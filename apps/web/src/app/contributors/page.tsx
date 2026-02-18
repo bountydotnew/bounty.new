@@ -8,7 +8,7 @@ import {
 import Link from '@bounty/ui/components/link';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowUpRight, GitFork, GitGraph, Github, Star } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { DataBuddyIcon, MarbleIcon } from '@/components/icons';
 import { Header } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
@@ -23,12 +23,10 @@ interface Contributor {
 }
 
 const REPOSITORY = 'bountydotnew/bounty.new';
-const POLL_INTERVAL = 30_000;
 const EXCLUDE = ['dependabot', 'github-actions', 'autofix-ci[bot]'];
 const CORE = ['ripgrim'];
 
 export default function ContributorsPage() {
-  const [allContributors, setAllContributors] = useState<Contributor[]>([]);
   const lastCommitRef = useRef<string>('');
 
   const { data: contributors } = useQuery(
@@ -42,26 +40,18 @@ export default function ContributorsPage() {
   );
 
   useEffect(() => {
-    const poll = async () => {
-      try {
-        if (Array.isArray(commitsData) && commitsData.length) {
-          lastCommitRef.current =
-            (commitsData as { sha?: string }[])[0]?.sha ?? '';
-        }
-      } catch {}
-    };
-    poll();
-    const i = setInterval(poll, POLL_INTERVAL);
-    return () => clearInterval(i);
+    if (Array.isArray(commitsData) && commitsData.length) {
+      lastCommitRef.current = (commitsData as { sha?: string }[])[0]?.sha ?? '';
+    }
   }, [commitsData]);
 
-  useEffect(() => {
-    if (contributors && Array.isArray(contributors)) {
-      setAllContributors(
-        contributors.filter((c: Contributor) => !EXCLUDE.includes(c.login))
-      );
-    }
-  }, [contributors]);
+  const allContributors = useMemo(
+    () =>
+      contributors && Array.isArray(contributors)
+        ? contributors.filter((c: Contributor) => !EXCLUDE.includes(c.login))
+        : [],
+    [contributors]
+  );
 
   const core = useMemo(
     () => allContributors.filter((c) => CORE.includes(c.login)),

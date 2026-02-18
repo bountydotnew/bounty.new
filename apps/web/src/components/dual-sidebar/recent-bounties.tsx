@@ -32,8 +32,23 @@ export function addRecentBounty(bounty: { id: string; title: string }) {
   localStorage.setItem(RECENT_BOUNTIES_KEY, JSON.stringify(updated));
 }
 
+function parseStoredBounties(raw: string | null): RecentBounty[] {
+  if (!raw) {
+    return [];
+  }
+  try {
+    return JSON.parse(raw) as RecentBounty[];
+  } catch {
+    return [];
+  }
+}
+
 export function RecentBountiesGroup() {
-  const [recentBounties, setRecentBounties] = useState<RecentBounty[]>([]);
+  const [recentBounties, setRecentBounties] = useState<RecentBounty[]>(() =>
+    typeof window !== 'undefined'
+      ? parseStoredBounties(localStorage.getItem(RECENT_BOUNTIES_KEY))
+      : []
+  );
   const { session, isAuthenticated } = useSession();
   const userId = session?.user?.id;
 
@@ -45,20 +60,9 @@ export function RecentBountiesGroup() {
   });
 
   useEffect(() => {
-    const parseStored = (raw: string | null): RecentBounty[] => {
-      if (!raw) return [];
-      try {
-        return JSON.parse(raw) as RecentBounty[];
-      } catch {
-        return [];
-      }
-    };
-
-    setRecentBounties(parseStored(localStorage.getItem(RECENT_BOUNTIES_KEY)));
-
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === RECENT_BOUNTIES_KEY) {
-        setRecentBounties(parseStored(e.newValue));
+        setRecentBounties(parseStoredBounties(e.newValue));
       }
     };
 
