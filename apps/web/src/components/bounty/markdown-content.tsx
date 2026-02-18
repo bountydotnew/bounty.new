@@ -144,13 +144,17 @@ const markdownComponents: Components = {
       typeof srcString === 'string' &&
       (srcString.startsWith('http://') || srcString.startsWith('https://'));
 
+    // Use provided width/height or fallback to defaults, convert to numbers if strings
+    const imageWidth = width ? Number(width) : 800;
+    const imageHeight = height ? Number(height) : 400;
+
     // Use Next.js Image for all sources — unoptimized for external URLs
     return (
       <Image
         alt={alt || ''}
         src={srcString}
-        width={800}
-        height={400}
+        width={imageWidth}
+        height={imageHeight}
         className="my-3 inline-block h-auto max-w-full max-h-[400px] object-contain border-neutral-800 dark:border-neutral-700 rounded"
         unoptimized={isExternalImage}
       />
