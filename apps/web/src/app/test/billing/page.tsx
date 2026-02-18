@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { TestBillingClient } from '@/components/test/test-billing-client';
 import { TestAutumnSdk } from '@/components/test/test-autumn-sdk';
+
+export const metadata: Metadata = {
+  title: 'Billing Test',
+  description: 'Internal billing test page.',
+};
 
 export default function TestBillingPage() {
   return (
@@ -8,7 +14,8 @@ export default function TestBillingPage() {
       <header className="mb-8">
         <h1 className="mb-2 font-bold text-3xl">Billing Testing Dashboard</h1>
         <p className="text-muted-foreground">
-          Test and debug billing functionality, feature access, and usage tracking.
+          Test and debug billing functionality, feature access, and usage
+          tracking.
         </p>
       </header>
 

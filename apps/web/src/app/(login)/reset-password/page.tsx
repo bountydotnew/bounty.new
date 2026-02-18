@@ -1,21 +1,11 @@
-'use client';
+import type { Metadata } from 'next';
+import ResetPasswordPage from './_client';
 
-import { Spinner } from '@bounty/ui/components/spinner';
-import { Suspense } from 'react';
-import ResetPassword from '@/components/bounty/reset-password';
+export const metadata: Metadata = {
+  title: 'Reset Password',
+  description: 'Reset your bounty.new password',
+};
 
-export default function ResetPasswordPage() {
-  return (
-    <div className="mx-auto w-full bg-landing-background">
-      <Suspense
-        fallback={
-          <div className="flex h-screen items-center justify-center">
-            <Spinner />
-          </div>
-        }
-      >
-        <ResetPassword />
-      </Suspense>
-    </div>
-  );
+export default function Page() {
+  return <ResetPasswordPage />;
 }
