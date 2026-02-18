@@ -16,7 +16,9 @@ async function fetchImageAsDataUrl(imageUrl: string): Promise<string | null> {
         imageResponse.headers.get('content-type') || 'image/png';
       return `data:${imageType};base64,${imageBase64}`;
     }
-  } catch {}
+  } catch {
+    // Ignore avatar fetch failures and fall back to first letter.
+  }
   return null;
 }
 
