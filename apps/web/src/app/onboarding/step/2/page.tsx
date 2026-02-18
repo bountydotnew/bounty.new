@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import OnboardingStep2Page from './_client';
+import OnboardingStep2Page from './page-client';
 
 export const metadata: Metadata = {
   title: 'Connect GitHub',

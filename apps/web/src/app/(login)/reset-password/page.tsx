@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import ResetPasswordPage from './_client';
+import ResetPasswordPage from './page-client';
 
 export const metadata: Metadata = {
   title: 'Reset Password',

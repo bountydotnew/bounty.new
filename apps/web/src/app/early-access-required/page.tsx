@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import EarlyAccessRequiredPage from './_client';
+import EarlyAccessRequiredPage from './page-client';
 
 export const metadata: Metadata = {
   title: 'Early Access Required',

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import VerifyEmailPage from './_client';
+import VerifyEmailPage from './page-client';
 
 export const metadata: Metadata = {
   title: 'Verify Email',

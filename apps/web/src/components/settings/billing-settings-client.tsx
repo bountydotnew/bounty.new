@@ -23,6 +23,285 @@ type Feature = {
 const SECTION_PADDING = 'py-[18px]';
 const SECTION_TITLE = 'text-[20px] leading-[150%] text-foreground font-medium';
 
+function formatBillingDate(timestamp: number | null) {
+  if (!timestamp || timestamp === 0) return null;
+  const isSeconds = timestamp < 32_503_680_000;
+  const date = isSeconds ? new Date(timestamp * 1000) : new Date(timestamp);
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getFullYear() < 2000 ||
+    date.getFullYear() > 2100
+  )
+    return null;
+  return format(date, 'MMM d, yyyy');
+}
+
+function BillingHeader({
+  hasActiveSubscription,
+  isPortalLoading,
+  onOpenPortal,
+}: {
+  hasActiveSubscription: boolean;
+  isPortalLoading: boolean;
+  onOpenPortal: () => void;
+}) {
+  return (
+    <header className="flex justify-between items-start pb-4 border-b border-border">
+      <div className="flex flex-col justify-end">
+        <h1 className="text-[28px] leading-[150%] text-foreground font-medium">
+          Billing
+        </h1>
+        <p className="text-[16px] leading-[150%] text-text-secondary font-medium">
+          Manage your subscription and payment methods
+        </p>
+      </div>
+      {hasActiveSubscription && (
+        <button
+          onClick={onOpenPortal}
+          disabled={isPortalLoading}
+          className="w-fit h-[31px] rounded-[10px] flex items-center px-3 py-0 gap-2 bg-[#474747] hover:bg-[#5A5A5A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <span className="text-[13px] leading-[150%] text-white font-medium">
+            Manage billing
+          </span>
+          <ExternalLink className="size-4 text-white" />
+        </button>
+      )}
+    </header>
+  );
+}
+
+function CurrentPlanSection({
+  activeProduct,
+  hasActiveSubscription,
+  isFreeTier,
+  isPortalLoading,
+  onRefetch,
+}: {
+  activeProduct:
+    | {
+        name?: string | null;
+        status?: string | null;
+        started_at?: number | null;
+        current_period_end?: number | null;
+      }
+    | undefined;
+  hasActiveSubscription: boolean;
+  isFreeTier: boolean;
+  isPortalLoading: boolean;
+  onRefetch: () => void;
+}) {
+  return (
+    <section
+      className={cn(
+        'flex flex-col gap-4 border-b border-border',
+        SECTION_PADDING
+      )}
+    >
+      <div className="flex items-center justify-between">
+        <h2 className={SECTION_TITLE}>Current Plan</h2>
+        <button
+          onClick={onRefetch}
+          disabled={isPortalLoading}
+          className="size-8 flex items-center justify-center rounded-md hover:bg-surface-3 disabled:opacity-50 transition-colors"
+          aria-label="Refresh"
+        >
+          <RefreshCw
+            className={cn('size-4', isPortalLoading && 'animate-spin')}
+          />
+        </button>
+      </div>
+      <div className="flex items-center gap-3">
+        <Badge
+          className={
+            hasActiveSubscription ? 'bg-surface-3 text-foreground' : ''
+          }
+        >
+          {activeProduct?.name ?? 'Free'}
+        </Badge>
+        {activeProduct && (
+          <Badge variant="outline" className="text-xs uppercase">
+            {activeProduct.status}
+          </Badge>
+        )}
+      </div>
+      {activeProduct && (
+        <div className="flex flex-col gap-3 text-sm">
+          {activeProduct.started_at && (
+            <div className="text-text-secondary">
+              <span className="font-medium text-foreground">Started:</span>{' '}
+              {formatBillingDate(activeProduct.started_at)}
+            </div>
+          )}
+          {activeProduct.current_period_end && (
+            <div className="text-text-secondary">
+              <span className="font-medium text-foreground">Renews:</span>{' '}
+              {formatBillingDate(activeProduct.current_period_end)}
+            </div>
+          )}
+        </div>
+      )}
+      {isFreeTier && (
+        <p className="text-text-secondary text-sm">
+          You&apos;re on the free tier. Upgrade to unlock more features.
+        </p>
+      )}
+    </section>
+  );
+}
+
+function FeatureRow({
+  featureKey,
+  feature,
+}: {
+  featureKey: string;
+  feature: Feature;
+}) {
+  const usagePercent =
+    !feature.unlimited && (feature.included_usage ?? 0) > 0
+      ? Math.min(
+          100,
+          ((feature.usage ?? 0) / (feature.included_usage ?? 1)) * 100
+        )
+      : null;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <span className="font-medium text-foreground">
+          {feature.name ??
+            featureKey
+              .replace(/_/g, ' ')
+              .replace(/\b\w/g, (l: string) => l.toUpperCase())}
+        </span>
+        <Badge
+          variant={feature.enabled ? 'default' : 'secondary'}
+          className="text-xs"
+        >
+          {feature.enabled ? 'Enabled' : 'Disabled'}
+        </Badge>
+      </div>
+      {feature.type !== 'static' && feature.type !== 'single_use' && (
+        <div className="flex flex-col gap-2 text-sm">
+          <div className="flex items-center justify-between text-text-secondary">
+            <span>Usage</span>
+            <span className="font-medium text-foreground">
+              {feature.usage ?? 0} /{' '}
+              {feature.unlimited ? '\u221E' : (feature.included_usage ?? 'N/A')}
+            </span>
+          </div>
+          {usagePercent !== null && (
+            <div className="h-1.5 w-full rounded-full bg-surface-3 overflow-hidden">
+              <div
+                className={cn(
+                  'h-full transition-all',
+                  usagePercent > 80
+                    ? 'bg-red-500'
+                    : usagePercent > 50
+                      ? 'bg-yellow-500'
+                      : 'bg-green-500'
+                )}
+                style={{ width: `${usagePercent}%` }}
+              />
+            </div>
+          )}
+          {feature.next_reset_at && (
+            <div className="text-text-secondary text-xs">
+              Resets {formatBillingDate(feature.next_reset_at)}
+            </div>
+          )}
+        </div>
+      )}
+      {feature.type === 'static' && (
+        <p className="text-text-secondary text-sm">
+          {feature.enabled
+            ? 'Included in your plan'
+            : 'Not available in your plan'}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function FeaturesSection({ features }: { features: Record<string, unknown> }) {
+  return (
+    <section
+      className={cn(
+        'flex flex-col gap-4 border-b border-border',
+        SECTION_PADDING
+      )}
+    >
+      <h2 className={SECTION_TITLE}>Features & Usage</h2>
+      <div className="flex flex-col gap-4">
+        {Object.entries(features).map(([key, feature]) => (
+          <FeatureRow
+            key={key}
+            featureKey={key}
+            feature={feature as unknown as Feature}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AccountInfoSection({
+  customer,
+}: {
+  customer: {
+    id?: string | null;
+    email?: string | null;
+    name?: string | null;
+    env?: string | null;
+    created_at?: number | null;
+  };
+}) {
+  return (
+    <section
+      className={cn(
+        'flex flex-col gap-4 border-b border-border',
+        SECTION_PADDING
+      )}
+    >
+      <h2 className={SECTION_TITLE}>Account Information</h2>
+      <dl className="flex flex-col gap-3 text-sm">
+        <div className="flex items-center justify-between">
+          <dt className="text-text-secondary">Account ID</dt>
+          <dd>
+            <code className="rounded bg-surface-3 px-2 py-1 text-xs text-foreground">
+              {customer.id ?? 'N/A'}
+            </code>
+          </dd>
+        </div>
+        <div className="flex items-center justify-between">
+          <dt className="text-text-secondary">Email</dt>
+          <dd className="text-foreground">{customer.email ?? 'Not set'}</dd>
+        </div>
+        <div className="flex items-center justify-between">
+          <dt className="text-text-secondary">Name</dt>
+          <dd className="text-foreground">{customer.name ?? 'Not set'}</dd>
+        </div>
+        <div className="flex items-center justify-between">
+          <dt className="text-text-secondary">Environment</dt>
+          <dd>
+            <Badge variant="outline" className="text-xs">
+              {customer.env ?? 'unknown'}
+            </Badge>
+          </dd>
+        </div>
+        {customer.created_at && (
+          <div className="flex items-center justify-between">
+            <dt className="text-text-secondary">Member since</dt>
+            <dd className="text-foreground">
+              {formatBillingDate(customer.created_at)}
+            </dd>
+          </div>
+        )}
+      </dl>
+    </section>
+  );
+}
+
 export function BillingSettingsClient() {
   const { customer, isLoading, error, refetch, openBillingPortal } =
     useCustomer();
@@ -36,19 +315,6 @@ export function BillingSettingsClient() {
   const hasActiveSubscription = activeProducts.length > 0;
   const activeProduct = activeProducts[0];
   const features = customer?.features ?? {};
-
-  const formatDate = (timestamp: number | null) => {
-    if (!timestamp || timestamp === 0) return null;
-    const isSeconds = timestamp < 32_503_680_000;
-    const date = isSeconds ? new Date(timestamp * 1000) : new Date(timestamp);
-    if (
-      Number.isNaN(date.getTime()) ||
-      date.getFullYear() < 2000 ||
-      date.getFullYear() > 2100
-    )
-      return null;
-    return format(date, 'MMM d, yyyy');
-  };
 
   const handleOpenPortal = useCallback(async () => {
     setIsPortalLoading(true);
@@ -92,220 +358,25 @@ export function BillingSettingsClient() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <header className="flex justify-between items-start pb-4 border-b border-border">
-        <div className="flex flex-col justify-end">
-          <h1 className="text-[28px] leading-[150%] text-foreground font-medium">
-            Billing
-          </h1>
-          <p className="text-[16px] leading-[150%] text-text-secondary font-medium">
-            Manage your subscription and payment methods
-          </p>
-        </div>
-        {hasActiveSubscription && (
-          <button
-            onClick={handleOpenPortal}
-            disabled={isPortalLoading}
-            className="w-fit h-[31px] rounded-[10px] flex items-center px-3 py-0 gap-2 bg-[#474747] hover:bg-[#5A5A5A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <span className="text-[13px] leading-[150%] text-white font-medium">
-              Manage billing
-            </span>
-            <ExternalLink className="size-4 text-white" />
-          </button>
-        )}
-      </header>
+      <BillingHeader
+        hasActiveSubscription={hasActiveSubscription}
+        isPortalLoading={isPortalLoading}
+        onOpenPortal={handleOpenPortal}
+      />
 
-      {/* Current Plan */}
-      <section
-        className={cn(
-          'flex flex-col gap-4 border-b border-border',
-          SECTION_PADDING
-        )}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className={SECTION_TITLE}>Current Plan</h2>
-          <button
-            onClick={() => refetch()}
-            disabled={isPortalLoading}
-            className="size-8 flex items-center justify-center rounded-md hover:bg-surface-3 disabled:opacity-50 transition-colors"
-            aria-label="Refresh"
-          >
-            <RefreshCw
-              className={cn('size-4', isPortalLoading && 'animate-spin')}
-            />
-          </button>
-        </div>
+      <CurrentPlanSection
+        activeProduct={activeProduct}
+        hasActiveSubscription={hasActiveSubscription}
+        isFreeTier={isFreeTier}
+        isPortalLoading={isPortalLoading}
+        onRefetch={refetch}
+      />
 
-        <div className="flex items-center gap-3">
-          <Badge
-            className={
-              hasActiveSubscription ? 'bg-surface-3 text-foreground' : ''
-            }
-          >
-            {activeProduct?.name ?? 'Free'}
-          </Badge>
-          {activeProduct && (
-            <Badge variant="outline" className="text-xs uppercase">
-              {activeProduct.status}
-            </Badge>
-          )}
-        </div>
-
-        {activeProduct && (
-          <div className="flex flex-col gap-3 text-sm">
-            {activeProduct.started_at && (
-              <div className="text-text-secondary">
-                <span className="font-medium text-foreground">Started:</span>{' '}
-                {formatDate(activeProduct.started_at)}
-              </div>
-            )}
-            {activeProduct.current_period_end && (
-              <div className="text-text-secondary">
-                <span className="font-medium text-foreground">Renews:</span>{' '}
-                {formatDate(activeProduct.current_period_end)}
-              </div>
-            )}
-          </div>
-        )}
-
-        {isFreeTier && (
-          <p className="text-text-secondary text-sm">
-            You're on the free tier. Upgrade to unlock more features.
-          </p>
-        )}
-      </section>
-
-      {/* Features & Usage */}
       {customer && Object.keys(features).length > 0 && (
-        <section
-          className={cn(
-            'flex flex-col gap-4 border-b border-border',
-            SECTION_PADDING
-          )}
-        >
-          <h2 className={SECTION_TITLE}>Features & Usage</h2>
-          <div className="flex flex-col gap-4">
-            {Object.entries(features).map(([key, feature]) => {
-              const f = feature as unknown as Feature;
-              const usagePercent =
-                !f.unlimited && (f.included_usage ?? 0) > 0
-                  ? Math.min(
-                      100,
-                      ((f.usage ?? 0) / (f.included_usage ?? 1)) * 100
-                    )
-                  : null;
-
-              return (
-                <div key={key} className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-foreground">
-                      {f.name ??
-                        key
-                          .replace(/_/g, ' ')
-                          .replace(/\b\w/g, (l: string) => l.toUpperCase())}
-                    </span>
-                    <Badge
-                      variant={f.enabled ? 'default' : 'secondary'}
-                      className="text-xs"
-                    >
-                      {f.enabled ? 'Enabled' : 'Disabled'}
-                    </Badge>
-                  </div>
-
-                  {f.type !== 'static' && f.type !== 'single_use' && (
-                    <div className="flex flex-col gap-2 text-sm">
-                      <div className="flex items-center justify-between text-text-secondary">
-                        <span>Usage</span>
-                        <span className="font-medium text-foreground">
-                          {f.usage ?? 0} /{' '}
-                          {f.unlimited ? '∞' : (f.included_usage ?? 'N/A')}
-                        </span>
-                      </div>
-
-                      {usagePercent !== null && (
-                        <div className="h-1.5 w-full rounded-full bg-surface-3 overflow-hidden">
-                          <div
-                            className={cn(
-                              'h-full transition-all',
-                              usagePercent > 80
-                                ? 'bg-red-500'
-                                : usagePercent > 50
-                                  ? 'bg-yellow-500'
-                                  : 'bg-green-500'
-                            )}
-                            style={{ width: `${usagePercent}%` }}
-                          />
-                        </div>
-                      )}
-
-                      {f.next_reset_at && (
-                        <div className="text-text-secondary text-xs">
-                          Resets {formatDate(f.next_reset_at)}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {f.type === 'static' && (
-                    <p className="text-text-secondary text-sm">
-                      {f.enabled
-                        ? 'Included in your plan'
-                        : 'Not available in your plan'}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
+        <FeaturesSection features={features} />
       )}
 
-      {/* Account Info */}
-      {customer && (
-        <section
-          className={cn(
-            'flex flex-col gap-4 border-b border-border',
-            SECTION_PADDING
-          )}
-        >
-          <h2 className={SECTION_TITLE}>Account Information</h2>
-          <dl className="flex flex-col gap-3 text-sm">
-            <div className="flex items-center justify-between">
-              <dt className="text-text-secondary">Account ID</dt>
-              <dd>
-                <code className="rounded bg-surface-3 px-2 py-1 text-xs text-foreground">
-                  {customer.id ?? 'N/A'}
-                </code>
-              </dd>
-            </div>
-            <div className="flex items-center justify-between">
-              <dt className="text-text-secondary">Email</dt>
-              <dd className="text-foreground">{customer.email ?? 'Not set'}</dd>
-            </div>
-            <div className="flex items-center justify-between">
-              <dt className="text-text-secondary">Name</dt>
-              <dd className="text-foreground">{customer.name ?? 'Not set'}</dd>
-            </div>
-            <div className="flex items-center justify-between">
-              <dt className="text-text-secondary">Environment</dt>
-              <dd>
-                <Badge variant="outline" className="text-xs">
-                  {customer.env ?? 'unknown'}
-                </Badge>
-              </dd>
-            </div>
-            {customer.created_at && (
-              <div className="flex items-center justify-between">
-                <dt className="text-text-secondary">Member since</dt>
-                <dd className="text-foreground">
-                  {formatDate(customer.created_at)}
-                </dd>
-              </div>
-            )}
-          </dl>
-        </section>
-      )}
+      {customer && <AccountInfoSection customer={customer} />}
 
       {!hasActiveSubscription && (
         <section className={cn('flex flex-col gap-4', SECTION_PADDING)}>
@@ -322,7 +393,6 @@ export function BillingSettingsClient() {
         </section>
       )}
 
-      {/* Testing - dev only */}
       {process.env.NODE_ENV === 'development' && (
         <section
           className={cn(

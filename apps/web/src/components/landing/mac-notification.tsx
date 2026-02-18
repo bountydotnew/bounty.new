@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer } from 'react';
 
 const GmailIcon = () => (
   <svg
@@ -51,27 +51,30 @@ export function MacNotification({
   time: string;
   delay: number;
 }) {
-  const [visible, setVisible] = useState(false);
-  const [hiding, setHiding] = useState(false);
+  const [phase, dispatch] = useReducer(
+    (_: 'hidden' | 'visible' | 'hiding', action: 'show' | 'hide') =>
+      action === 'show' ? ('visible' as const) : ('hiding' as const),
+    'hidden' as const
+  );
 
   useEffect(() => {
-    const showTimer = setTimeout(() => setVisible(true), delay);
-    return () => clearTimeout(showTimer);
+    let hideTimer: ReturnType<typeof setTimeout>;
+    const showTimer = setTimeout(() => {
+      dispatch('show');
+      hideTimer = setTimeout(() => dispatch('hide'), 4000);
+    }, delay);
+    return () => {
+      clearTimeout(showTimer);
+      clearTimeout(hideTimer);
+    };
   }, [delay]);
 
-  useEffect(() => {
-    if (visible) {
-      const hideTimer = setTimeout(() => setHiding(true), 4000);
-      return () => clearTimeout(hideTimer);
-    }
-  }, [visible]);
-
-  if (!visible) return null;
+  if (phase === 'hidden') return null;
 
   return (
     <div
       className={`w-[340px] rounded-[18px] p-3 shadow-2xl transition-all duration-500 ${
-        hiding
+        phase === 'hiding'
           ? 'opacity-0 translate-x-8'
           : 'animate-in slide-in-from-right-8 fade-in'
       }`}

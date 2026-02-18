@@ -208,24 +208,19 @@ function PRCommentsPage({
   ]);
 
   useEffect(() => {
-    const t1 = setTimeout(() => dispatch({ type: 'DEV_COMMENTED' }), 400);
-    const t2 = setTimeout(
-      () => dispatch({ type: 'MAINTAINER_REVIEWED' }),
-      1600
+    const timeline: Array<{ delay: number; action: AnimAction }> = [
+      { delay: 400, action: { type: 'DEV_COMMENTED' } },
+      { delay: 1600, action: { type: 'MAINTAINER_REVIEWED' } },
+      { delay: 3600, action: { type: 'MAINTAINER_APPROVED' } },
+      { delay: 5100, action: { type: 'BOT_REPLIED' } },
+    ];
+    const timers = timeline.map(({ delay, action }) =>
+      setTimeout(() => dispatch(action), delay)
     );
-    const t3 = setTimeout(
-      () => dispatch({ type: 'MAINTAINER_APPROVED' }),
-      3600
-    );
-    const t4 = setTimeout(() => {
-      dispatch({ type: 'BOT_REPLIED' });
-      setTimeout(() => onShowNotifications(), 800);
-    }, 5100);
+    const notifyTimer = setTimeout(() => onShowNotifications(), 5900);
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-      clearTimeout(t4);
+      timers.forEach(clearTimeout);
+      clearTimeout(notifyTimer);
     };
   }, [onShowNotifications]);
 

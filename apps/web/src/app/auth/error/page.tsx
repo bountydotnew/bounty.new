@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import AuthErrorPage from './_client';
+import AuthErrorPage from './page-client';
 
 export const metadata: Metadata = {
   title: 'Authentication Error',

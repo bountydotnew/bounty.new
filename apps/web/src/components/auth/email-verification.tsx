@@ -5,7 +5,7 @@ import { Button } from '@bounty/ui/components/button';
 import { Input } from '@bounty/ui/components/input';
 import { cn } from '@bounty/ui/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, m } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -145,7 +145,7 @@ function OtpCodeInput({
 
       <AnimatePresence mode="wait">
         {error ? (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -153,9 +153,9 @@ function OtpCodeInput({
             className="text-center text-sm text-destructive font-medium"
           >
             {error?.message}
-          </motion.div>
+          </m.div>
         ) : focusedField === 'code' ? (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -163,7 +163,7 @@ function OtpCodeInput({
             className="text-center text-sm text-gray-400"
           >
             Enter the 6-digit code from your email
-          </motion.div>
+          </m.div>
         ) : null}
       </AnimatePresence>
     </div>

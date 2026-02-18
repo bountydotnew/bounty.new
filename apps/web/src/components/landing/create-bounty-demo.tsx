@@ -688,16 +688,18 @@ function GitHubIssuePage({
 
   // Timed sequence for bot animations
   useEffect(() => {
-    const t1 = setTimeout(() => dispatch({ type: 'SHOW_COMMENT' }), 800);
-    const t2 = setTimeout(() => dispatch({ type: 'SET_REACTED' }), 2000);
-    const t3 = setTimeout(() => {
-      dispatch({ type: 'SHOW_SUCCESS' });
-      onShowNotifications?.();
-    }, 3200);
+    const timeline: Array<{ delay: number; action: BountyAnimAction }> = [
+      { delay: 800, action: { type: 'SHOW_COMMENT' } },
+      { delay: 2000, action: { type: 'SET_REACTED' } },
+      { delay: 3200, action: { type: 'SHOW_SUCCESS' } },
+    ];
+    const timers = timeline.map(({ delay, action }) =>
+      setTimeout(() => dispatch(action), delay)
+    );
+    const notifyTimer = setTimeout(() => onShowNotifications?.(), 3200);
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
+      timers.forEach(clearTimeout);
+      clearTimeout(notifyTimer);
     };
   }, [onShowNotifications]);
 

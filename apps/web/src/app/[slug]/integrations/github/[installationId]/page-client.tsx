@@ -3,7 +3,7 @@
 import type * as React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { GithubIcon } from '@bounty/ui';
 import { ConfirmAlertDialog } from '@bounty/ui/components/alert-dialog';
 import { ExternalLink, RefreshCw, Plus, Star } from 'lucide-react';
@@ -114,20 +114,28 @@ export default function GitHubInstallationPage() {
     },
   });
 
-  useEffect(() => {
-    if (newFlag) {
-      queryClientLocal.invalidateQueries({
-        queryKey: ['githubInstallation.getInstallations'],
-      });
-      queryClientLocal.invalidateQueries({
-        queryKey: ['githubInstallation.getRepositories', installationId],
-      });
-      queryClientLocal.invalidateQueries({
-        queryKey: ['githubInstallation.getInstallation', installationId],
-      });
+  // Invalidate caches when arriving from a new installation (one-time)
+  useQuery({
+    queryKey: ['githubInstallation.newFlag', newFlag, installationId],
+    queryFn: async () => {
+      await Promise.all([
+        queryClientLocal.invalidateQueries({
+          queryKey: ['githubInstallation.getInstallations'],
+        }),
+        queryClientLocal.invalidateQueries({
+          queryKey: ['githubInstallation.getRepositories', installationId],
+        }),
+        queryClientLocal.invalidateQueries({
+          queryKey: ['githubInstallation.getInstallation', installationId],
+        }),
+      ]);
       setNewFlag(null);
-    }
-  }, [newFlag, installationId, queryClientLocal, setNewFlag]);
+      return null;
+    },
+    enabled: !!newFlag,
+    retry: false,
+    staleTime: Number.POSITIVE_INFINITY,
+  });
 
   const accountLogin = installation?.installation?.account.login || '';
   const accountType = installation?.installation?.account.type;

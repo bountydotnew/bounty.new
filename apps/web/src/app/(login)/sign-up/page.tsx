@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import SignUpPage from './_client';
+import SignUpPage from './page-client';
 
 export const metadata: Metadata = {
   title: 'Sign Up',

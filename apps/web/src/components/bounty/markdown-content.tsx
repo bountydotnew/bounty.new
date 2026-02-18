@@ -144,19 +144,7 @@ const markdownComponents: Components = {
       typeof srcString === 'string' &&
       (srcString.startsWith('http://') || srcString.startsWith('https://'));
 
-    // For external images, use regular img tag to avoid Next.js optimization issues
-    if (isExternalImage) {
-      return (
-        // biome-ignore lint/performance/noImgElement: Required for external images
-        <img
-          alt={alt || ''}
-          src={srcString}
-          className="my-3 inline-block h-auto max-w-full max-h-[400px] object-contain border-neutral-800 dark:border-neutral-700 rounded"
-        />
-      );
-    }
-
-    // For data URLs and other sources, use Next.js Image
+    // Use Next.js Image for all sources — unoptimized for external URLs
     return (
       <Image
         alt={alt || ''}
@@ -164,7 +152,7 @@ const markdownComponents: Components = {
         width={800}
         height={400}
         className="my-3 inline-block h-auto max-w-full max-h-[400px] object-contain border-neutral-800 dark:border-neutral-700 rounded"
-        unoptimized
+        unoptimized={isExternalImage}
       />
     );
   },
@@ -243,9 +231,7 @@ export function MarkdownContent({ content, encoding }: MarkdownContentProps) {
 
   return (
     <div className="prose prose-invert prose-neutral markdown-content max-w-none">
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
+      <style>{`
         .markdown-content ul ul,
         .markdown-content ol ol,
         .markdown-content ul ol,
@@ -289,9 +275,7 @@ export function MarkdownContent({ content, encoding }: MarkdownContentProps) {
         .markdown-content ul ul ul {
           list-style-type: square !important;
         }
-      `,
-        }}
-      />
+      `}</style>
       <ReactMarkdown
         components={markdownComponents}
         rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}

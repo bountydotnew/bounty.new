@@ -16,7 +16,7 @@ import {
 } from '@bounty/ui/components/select';
 import { useQuery } from '@tanstack/react-query';
 import { Search, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import { parseAsString, useQueryState } from 'nuqs';
 import { trpc } from '@/utils/trpc';
 import { Button } from '@bounty/ui/components/button';
@@ -40,15 +40,82 @@ export function BountyFilters() {
     parseAsString.withDefault('desc')
   );
 
-  const [creatorSearchQuery, setCreatorSearchQuery] = useState('');
-  const [creatorDropdownOpen, setCreatorDropdownOpen] = useState(false);
+  type FilterLocalState = {
+    creatorSearchQuery: string;
+    creatorDropdownOpen: boolean;
+    debouncedCreatorQuery: string;
+    localSearchQuery: string;
+  };
+
+  type FilterAction =
+    | { type: 'SET_CREATOR_SEARCH'; value: string }
+    | { type: 'SET_CREATOR_DROPDOWN'; value: boolean }
+    | { type: 'SET_DEBOUNCED_CREATOR'; value: string }
+    | { type: 'SET_LOCAL_SEARCH'; value: string }
+    | { type: 'SELECT_CREATOR' }
+    | { type: 'CLEAR_CREATOR' }
+    | { type: 'SYNC_SEARCH'; value: string };
+
+  const [filterState, dispatchFilter] = useReducer(
+    (state: FilterLocalState, action: FilterAction): FilterLocalState => {
+      switch (action.type) {
+        case 'SET_CREATOR_SEARCH':
+          return { ...state, creatorSearchQuery: action.value };
+        case 'SET_CREATOR_DROPDOWN':
+          return { ...state, creatorDropdownOpen: action.value };
+        case 'SET_DEBOUNCED_CREATOR':
+          return { ...state, debouncedCreatorQuery: action.value };
+        case 'SET_LOCAL_SEARCH':
+          return { ...state, localSearchQuery: action.value };
+        case 'SELECT_CREATOR':
+          return {
+            ...state,
+            creatorSearchQuery: '',
+            creatorDropdownOpen: false,
+          };
+        case 'CLEAR_CREATOR':
+          return { ...state, creatorSearchQuery: '' };
+        case 'SYNC_SEARCH':
+          return { ...state, localSearchQuery: action.value };
+        default:
+          return state;
+      }
+    },
+    {
+      creatorSearchQuery: '',
+      creatorDropdownOpen: false,
+      debouncedCreatorQuery: '',
+      localSearchQuery: searchQuery || '',
+    }
+  );
+
+  const {
+    creatorSearchQuery,
+    creatorDropdownOpen,
+    debouncedCreatorQuery,
+    localSearchQuery,
+  } = filterState;
+  const setCreatorSearchQuery = useCallback(
+    (v: string) => dispatchFilter({ type: 'SET_CREATOR_SEARCH', value: v }),
+    []
+  );
+  const setCreatorDropdownOpen = useCallback(
+    (v: boolean) => dispatchFilter({ type: 'SET_CREATOR_DROPDOWN', value: v }),
+    []
+  );
+  const setLocalSearchQuery = useCallback(
+    (v: string) => dispatchFilter({ type: 'SET_LOCAL_SEARCH', value: v }),
+    []
+  );
   const creatorInputRef = useRef<HTMLInputElement>(null);
 
   // Debounced search for creators
-  const [debouncedCreatorQuery, setDebouncedCreatorQuery] = useState('');
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedCreatorQuery(creatorSearchQuery);
+      dispatchFilter({
+        type: 'SET_DEBOUNCED_CREATOR',
+        value: creatorSearchQuery,
+      });
     }, 300);
     return () => clearTimeout(timer);
   }, [creatorSearchQuery]);
@@ -77,25 +144,21 @@ export function BountyFilters() {
   const handleCreatorSelect = useCallback(
     (creator: Creator) => {
       setCreatorId(creator.id);
-      setCreatorSearchQuery('');
-      setCreatorDropdownOpen(false);
+      dispatchFilter({ type: 'SELECT_CREATOR' });
     },
     [setCreatorId]
   );
 
   const handleClearCreator = useCallback(() => {
     setCreatorId(null);
-    setCreatorSearchQuery('');
+    dispatchFilter({ type: 'CLEAR_CREATOR' });
   }, [setCreatorId]);
 
-  // Debounced title search - update URL after user stops typing
-  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery || '');
-  const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
-
   // Sync local search with URL search query when it changes externally
-  if (searchQuery !== prevSearchQuery) {
-    setPrevSearchQuery(searchQuery);
-    setLocalSearchQuery(searchQuery || '');
+  const prevSearchQueryRef = useRef(searchQuery);
+  if (searchQuery !== prevSearchQueryRef.current) {
+    prevSearchQueryRef.current = searchQuery;
+    dispatchFilter({ type: 'SYNC_SEARCH', value: searchQuery || '' });
   }
 
   useEffect(() => {

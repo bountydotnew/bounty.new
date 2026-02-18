@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import LoginPage from './_client';
+import LoginPage from './page-client';
 
 export const metadata: Metadata = {
   title: 'Login',

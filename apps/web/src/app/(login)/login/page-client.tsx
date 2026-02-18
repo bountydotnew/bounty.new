@@ -1,28 +1,24 @@
 'use client';
 
 import { Spinner } from '@bounty/ui/components/spinner';
-import { useMutation } from '@tanstack/react-query';
+import { useQuery, skipToken } from '@tanstack/react-query';
 import { useQueryState, parseAsString } from 'nuqs';
-import { Suspense, useEffect } from 'react';
+import { Suspense } from 'react';
 import LoginPageClient from '@/components/login/login.page.client';
 import { trpcClient } from '@/utils/trpc';
 
 function LoginContent() {
   const [token] = useQueryState('invite', parseAsString);
 
-  // Note: Using direct trpcClient.mutate() instead of mutationOptions()
-  // to avoid keyPrefix error in the proxy layer
-
-  const applyInvite = useMutation({
-    mutationFn: async (input: { token: string }) => {
-      return await trpcClient.user.applyInvite.mutate(input);
-    },
+  // Apply invite token via useQuery — fires automatically when token is present
+  useQuery({
+    queryKey: ['applyInvite', token],
+    queryFn: token
+      ? () => trpcClient.user.applyInvite.mutate({ token })
+      : skipToken,
+    retry: false,
+    staleTime: Number.POSITIVE_INFINITY,
   });
-  useEffect(() => {
-    if (token) {
-      applyInvite.mutate({ token });
-    }
-  }, [token, applyInvite]);
   // const handleGitHubSignIn = async () => {
   //   try {
   //     const callbackURL = redirectUrl ? `${redirectUrl}` : `${baseUrl}/dashboard`;

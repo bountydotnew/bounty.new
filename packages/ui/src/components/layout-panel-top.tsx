@@ -70,7 +70,7 @@ const LayoutPanelTopIcon = forwardRef<
         width={size}
         xmlns="http://www.w3.org/2000/svg"
       >
-        <motion.rect
+        <m.rect
           animate={controls}
           height="7"
           initial="normal"
@@ -90,7 +90,7 @@ const LayoutPanelTopIcon = forwardRef<
           x="3"
           y="3"
         />
-        <motion.rect
+        <m.rect
           animate={controls}
           height="7"
           initial="normal"
@@ -111,7 +111,7 @@ const LayoutPanelTopIcon = forwardRef<
           x="3"
           y="14"
         />
-        <motion.rect
+        <m.rect
           animate={controls}
           height="7"
           initial="normal"

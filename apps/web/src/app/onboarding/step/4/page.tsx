@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import OnboardingStep4Page from './_client';
+import OnboardingStep4Page from './page-client';
 
 export const metadata: Metadata = {
   title: 'Invite Team',

@@ -38,12 +38,7 @@ export default function OnboardingStep1Page() {
 
   const isLoading = isLoadingWaitlist;
 
-  // If not on waitlist, skip to step 2
-  useEffect(() => {
-    if (!isLoadingWaitlist && waitlistData?.isOnWaitlist === false) {
-      router.push('/onboarding/step/2');
-    }
-  }, [isLoadingWaitlist, waitlistData, router]);
+  // Note: Server-side redirect in page.tsx handles the waitlist skip to step 2
 
   if (isLoading) {
     return (

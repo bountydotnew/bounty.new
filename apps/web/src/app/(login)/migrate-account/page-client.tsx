@@ -5,7 +5,7 @@ import { Button } from '@bounty/ui/components/button';
 import { Spinner } from '@bounty/ui/components/spinner';
 import { useQuery } from '@tanstack/react-query';
 import { Suspense, useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import Bounty from '@/components/icons/bounty';
 import { GithubIcon } from '@/components/icons';
@@ -13,15 +13,10 @@ import GoogleIcon from '@/components/icons/google';
 import { AlertCircle } from 'lucide-react';
 
 function MigrateAccountContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, setIsPending] = useState(false);
 
-  const {
-    data: migrationData,
-    isPending: isCheckingMigration,
-    isError,
-  } = useQuery({
+  const { data: migrationData, isPending: isCheckingMigration } = useQuery({
     queryKey: ['check-migration'],
     queryFn: async () => {
       const response = await fetch('/api/auth/check-migration');
@@ -33,20 +28,7 @@ function MigrateAccountContent() {
     retry: false,
   });
 
-  useEffect(() => {
-    if (isError) {
-      router.push('/login');
-      return;
-    }
-    if (migrationData?.hasOAuth) {
-      const redirect = searchParams.get('redirect');
-      const safeRedirect =
-        redirect && redirect.startsWith('/') && !redirect.startsWith('//')
-          ? redirect
-          : '/dashboard';
-      router.push(safeRedirect);
-    }
-  }, [migrationData, isError, router, searchParams]);
+  // Note: Server-side redirect in page.tsx handles hasOAuth and error cases
 
   const needsMigration = migrationData != null && !migrationData.hasOAuth;
 

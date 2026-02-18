@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import DevicePage from './_client';
+import DevicePage from './page-client';
 
 export const metadata: Metadata = {
   title: 'Device Authorization',

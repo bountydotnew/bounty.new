@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronRight, ChevronLeft, Check, Loader2 } from 'lucide-react';
 import { GithubIcon, BranchIcon } from '@bounty/ui';
 import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
@@ -15,7 +15,7 @@ import {
   DrawerTrigger,
 } from '@bounty/ui/components/drawer';
 import { cn } from '@bounty/ui/lib/utils';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, m, useReducedMotion } from 'motion/react';
 
 interface Account {
   id: number;
@@ -177,7 +177,7 @@ function AccountsSelectorContent({
       {/* Content */}
       <div className="min-h-[250px] max-h-[250px] overflow-hidden relative">
         <AnimatePresence initial={false}>
-          <motion.div
+          <m.div
             key={paneKey}
             initial={
               prefersReducedMotion
@@ -265,7 +265,7 @@ function AccountsSelectorContent({
                   );
                 })
             )}
-          </motion.div>
+          </m.div>
         </AnimatePresence>
       </div>
 
@@ -898,7 +898,7 @@ function MobileSelectorContent({
       />
       <div className="min-h-[250px] max-h-[250px] overflow-hidden relative">
         <AnimatePresence initial={false}>
-          <motion.div
+          <m.div
             key={stepKey}
             initial={
               prefersReducedMotion
@@ -936,7 +936,7 @@ function MobileSelectorContent({
               onSelectIssue={onSelectIssue}
               selectedIssue={selectedIssue}
             />
-          </motion.div>
+          </m.div>
         </AnimatePresence>
       </div>
       {(showPagination || showBranchesPagination || showIssuesPagination) && (
@@ -1352,11 +1352,11 @@ export function RepoBranchIssueSelector({
     open: false,
     step: openStep as Step,
   });
-  const [prevOpenStep, setPrevOpenStep] = useState(openStep);
+  const prevOpenStepRef = useRef(openStep);
 
   // Sync mobile nav step when openStep prop changes (update during render)
-  if (prevOpenStep !== openStep) {
-    setPrevOpenStep(openStep);
+  if (prevOpenStepRef.current !== openStep) {
+    prevOpenStepRef.current = openStep;
     setMobileNav((prev) => ({ ...prev, step: openStep }));
   }
 
@@ -1370,12 +1370,12 @@ export function RepoBranchIssueSelector({
   }, []);
 
   // Reset pagination when search queries change (update during render)
-  const [prevAccountQuery, setPrevAccountQuery] = useState(accountSearchQuery);
-  const [prevBranchQuery, setPrevBranchQuery] = useState(branchSearchQuery);
-  const [prevIssueQ, setPrevIssueQ] = useState(issueQuery);
+  const prevAccountQueryRef = useRef(accountSearchQuery);
+  const prevBranchQueryRef = useRef(branchSearchQuery);
+  const prevIssueQRef = useRef(issueQuery);
 
-  if (accountSearchQuery !== prevAccountQuery) {
-    setPrevAccountQuery(accountSearchQuery);
+  if (accountSearchQuery !== prevAccountQueryRef.current) {
+    prevAccountQueryRef.current = accountSearchQuery;
     setPagination((prev) => ({
       ...prev,
       accountsPage: 1,
@@ -1383,8 +1383,8 @@ export function RepoBranchIssueSelector({
     }));
   }
 
-  if (branchSearchQuery !== prevBranchQuery) {
-    setPrevBranchQuery(branchSearchQuery);
+  if (branchSearchQuery !== prevBranchQueryRef.current) {
+    prevBranchQueryRef.current = branchSearchQuery;
     setPagination((prev) => ({
       ...prev,
       branchesPage: 1,
@@ -1392,8 +1392,8 @@ export function RepoBranchIssueSelector({
     }));
   }
 
-  if (issueQuery !== prevIssueQ) {
-    setPrevIssueQ(issueQuery);
+  if (issueQuery !== prevIssueQRef.current) {
+    prevIssueQRef.current = issueQuery;
     setPagination((prev) => ({ ...prev, issuesPage: 1, mobileIssuesPage: 1 }));
   }
 
