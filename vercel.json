@@ -1,13 +1,13 @@
 {
-  "build": {
-    "env": {
-      "SKIP_ENV_VALIDATION": "true"
-    }
-  },
-  "crons": [
-    {
-      "path": "/api/cron/cleanup-sessions",
-      "schedule": "0 2 * * *"
-    }
-  ]
+	"build": {
+		"env": {
+			"SKIP_ENV_VALIDATION": "true"
+		}
+	},
+	"crons": [
+		{
+			"path": "/api/cron/cleanup-sessions",
+			"schedule": "0 2 * * *"
+		}
+	]
 }

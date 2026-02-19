@@ -1,11 +1,11 @@
-import type { Metadata } from 'next';
-import ClientPage from './page-client';
+import type { Metadata } from "next";
+import ClientPage from "./page-client";
 
 export const metadata: Metadata = {
-  title: 'Linear Issue',
-  description: 'View Linear issue details.',
+	title: "Linear Issue",
+	description: "View Linear issue details.",
 };
 
 export default function Page() {
-  return <ClientPage />;
+	return <ClientPage />;
 }

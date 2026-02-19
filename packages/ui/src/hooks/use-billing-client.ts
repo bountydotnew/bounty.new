@@ -11,16 +11,16 @@
 // Stub implementation for type exports only
 // The web app provides the actual implementation via its own useBilling hook
 export const useBillingClientStub = () => {
-  throw new Error(
-    'useBilling must be imported from @/hooks/use-billing in the web app, not from @bounty/ui/hooks'
-  );
+	throw new Error(
+		"useBilling must be imported from @/hooks/use-billing in the web app, not from @bounty/ui/hooks",
+	);
 };
 
 // Re-export types for TypeScript
 export type {
-  BillingHookResult,
-  ExtendedCustomerState,
-  FeatureState,
-  PendingAction,
-  UsageMetadata,
-} from '@bounty/types';
+	BillingHookResult,
+	ExtendedCustomerState,
+	FeatureState,
+	PendingAction,
+	UsageMetadata,
+} from "@bounty/types";

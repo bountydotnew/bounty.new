@@ -746,7 +746,8 @@ export class Renderer {
 					"reacord.update_path": "initial_reply",
 				});
 				this.message = yield* Effect.tryPromise({
-					try: () => interaction.reply({ ...discordOptions, withResponse: true }),
+					try: () =>
+						interaction.reply({ ...discordOptions, withResponse: true }),
 					catch: (cause) => new DiscordApiError({ operation: "reply", cause }),
 				}).pipe(Effect.withSpan("reacord.discord_reply"));
 				return;

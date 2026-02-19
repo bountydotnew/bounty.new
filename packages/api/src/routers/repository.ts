@@ -1,194 +1,194 @@
-import { TRPCError } from '@trpc/server';
-import { z } from 'zod';
-import { GithubManager } from '../../driver/github';
-import { protectedProcedure, publicProcedure, router } from '../trpc';
-import { account } from '@bounty/db';
-import { eq, and } from 'drizzle-orm';
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+import { GithubManager } from "../../driver/github";
+import { protectedProcedure, publicProcedure, router } from "../trpc";
+import { account } from "@bounty/db";
+import { eq, and } from "drizzle-orm";
 
 const githubToken =
-  process.env.GITHUB_TOKEN || process.env.NEXT_PUBLIC_GITHUB_TOKEN || undefined;
+	process.env.GITHUB_TOKEN || process.env.NEXT_PUBLIC_GITHUB_TOKEN || undefined;
 const github = new GithubManager(githubToken ? { token: githubToken } : {});
 
 export const repositoryRouter = router({
-  stats: publicProcedure
-    .input(z.object({ repo: z.string() }))
-    .query(async ({ input }) => {
-      const basic = await github.getRepoBasics(input.repo);
-      const contributors = await github.getContributors(input.repo);
-      const openPRs = await github.getOpenPRs(input.repo);
-      return {
-        repo: basic,
-        contributorsCount: contributors.length,
-        openPRs,
-      };
-    }),
-  contributors: publicProcedure
-    .input(z.object({ repo: z.string() }))
-    .query(async ({ input }) => {
-      return await github.getContributors(input.repo);
-    }),
-  recentCommits: publicProcedure
-    .input(
-      z.object({
-        repo: z.string(),
-        limit: z.number().min(1).max(100).default(20),
-      })
-    )
-    .query(async ({ input }) => {
-      return await github.getRecentCommits(input.repo, input.limit);
-    }),
-  biggestCommitByUser: publicProcedure
-    .input(z.object({ repo: z.string(), username: z.string() }))
-    .query(async ({ input }) => {
-      return await github.getBiggestCommitByUser(input.repo, input.username);
-    }),
-  issueFromUrl: publicProcedure
-    .input(z.object({ url: z.string().url() }))
-    .query(async ({ input }) => {
-      try {
-        const data = await github.getIssueFromUrl(input.url);
-        return { success: true, data };
-      } catch (err) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Failed to resolve issue from URL',
-          cause: err,
-        });
-      }
-    }),
-  userRepos: publicProcedure
-    .input(
-      z.object({ username: z.string().trim().min(1, 'username is required') })
-    )
-    .query(async ({ input }) => {
-      try {
-        const repos = await github.getUserRepos(input.username);
-        return repos;
-      } catch (_err) {
-        return [];
-      }
-    }),
-  myRepos: protectedProcedure.query(async ({ ctx }) => {
-    try {
-      // Get GitHub account for the authenticated user
-      const githubAccount = await ctx.db.query.account.findFirst({
-        where: and(
-          eq(account.userId, ctx.session.user.id),
-          eq(account.providerId, 'github')
-        ),
-      });
+	stats: publicProcedure
+		.input(z.object({ repo: z.string() }))
+		.query(async ({ input }) => {
+			const basic = await github.getRepoBasics(input.repo);
+			const contributors = await github.getContributors(input.repo);
+			const openPRs = await github.getOpenPRs(input.repo);
+			return {
+				repo: basic,
+				contributorsCount: contributors.length,
+				openPRs,
+			};
+		}),
+	contributors: publicProcedure
+		.input(z.object({ repo: z.string() }))
+		.query(async ({ input }) => {
+			return await github.getContributors(input.repo);
+		}),
+	recentCommits: publicProcedure
+		.input(
+			z.object({
+				repo: z.string(),
+				limit: z.number().min(1).max(100).default(20),
+			}),
+		)
+		.query(async ({ input }) => {
+			return await github.getRecentCommits(input.repo, input.limit);
+		}),
+	biggestCommitByUser: publicProcedure
+		.input(z.object({ repo: z.string(), username: z.string() }))
+		.query(async ({ input }) => {
+			return await github.getBiggestCommitByUser(input.repo, input.username);
+		}),
+	issueFromUrl: publicProcedure
+		.input(z.object({ url: z.string().url() }))
+		.query(async ({ input }) => {
+			try {
+				const data = await github.getIssueFromUrl(input.url);
+				return { success: true, data };
+			} catch (err) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Failed to resolve issue from URL",
+					cause: err,
+				});
+			}
+		}),
+	userRepos: publicProcedure
+		.input(
+			z.object({ username: z.string().trim().min(1, "username is required") }),
+		)
+		.query(async ({ input }) => {
+			try {
+				const repos = await github.getUserRepos(input.username);
+				return repos;
+			} catch (_err) {
+				return [];
+			}
+		}),
+	myRepos: protectedProcedure.query(async ({ ctx }) => {
+		try {
+			// Get GitHub account for the authenticated user
+			const githubAccount = await ctx.db.query.account.findFirst({
+				where: and(
+					eq(account.userId, ctx.session.user.id),
+					eq(account.providerId, "github"),
+				),
+			});
 
-      if (!githubAccount?.accessToken) {
-        return { success: false, error: 'GitHub account not connected' };
-      }
+			if (!githubAccount?.accessToken) {
+				return { success: false, error: "GitHub account not connected" };
+			}
 
-      // Create GithubManager with user's token
-      const userGithub = new GithubManager({
-        token: githubAccount.accessToken,
-      });
+			// Create GithubManager with user's token
+			const userGithub = new GithubManager({
+				token: githubAccount.accessToken,
+			});
 
-      // Get authenticated user's repos
-      const repos = await userGithub.getAuthenticatedUserRepos();
+			// Get authenticated user's repos
+			const repos = await userGithub.getAuthenticatedUserRepos();
 
-      // Check if the result indicates a bad credentials error
-      if (!repos.success && repos.error?.includes('Bad credentials')) {
-        return {
-          success: false,
-          error:
-            'GitHub token expired or invalid. Please reconnect your GitHub account.',
-        };
-      }
+			// Check if the result indicates a bad credentials error
+			if (!repos.success && repos.error?.includes("Bad credentials")) {
+				return {
+					success: false,
+					error:
+						"GitHub token expired or invalid. Please reconnect your GitHub account.",
+				};
+			}
 
-      return repos;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'Unknown error occurred while fetching repositories';
+			return repos;
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error
+					? error.message
+					: "Unknown error occurred while fetching repositories";
 
-      // Check for bad credentials in the error message
-      if (
-        errorMessage.includes('Bad credentials') ||
-        errorMessage.includes('401')
-      ) {
-        return {
-          success: false,
-          error:
-            'GitHub token expired or invalid. Please reconnect your GitHub account.',
-        };
-      }
+			// Check for bad credentials in the error message
+			if (
+				errorMessage.includes("Bad credentials") ||
+				errorMessage.includes("401")
+			) {
+				return {
+					success: false,
+					error:
+						"GitHub token expired or invalid. Please reconnect your GitHub account.",
+				};
+			}
 
-      return { success: false, error: errorMessage };
-    }
-  }),
-  searchIssues: publicProcedure
-    .input(
-      z.object({
-        owner: z.string(),
-        repo: z.string(),
-        q: z.string().optional(),
-      })
-    )
-    .query(async ({ input }) => {
-      try {
-        const owner = input.owner?.trim();
-        const repo = input.repo?.trim();
-        const q = (input.q || '').trim();
-        if (!(owner && repo && q)) {
-          return [];
-        }
-        return await github.searchIssues(owner, repo, q);
-      } catch {
-        return [];
-      }
-    }),
-  listIssues: publicProcedure
-    .input(
-      z.object({
-        owner: z.string(),
-        repo: z.string(),
-      })
-    )
-    .query(async ({ input }) => {
-      try {
-        const owner = input.owner?.trim();
-        const repo = input.repo?.trim();
-        if (!(owner && repo)) {
-          return [];
-        }
-        const issues = await github.listIssues(owner, repo);
-        // Sort by activity (comments + recency) - most active first
-        return issues.sort((a, b) => {
-          // Primary sort: by comments (activity)
-          if (b.comments !== a.comments) {
-            return b.comments - a.comments;
-          }
-          // Secondary sort: by updated_at (most recent)
-          return (
-            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-          );
-        });
-      } catch {
-        return [];
-      }
-    }),
-  branches: publicProcedure
-    .input(z.object({ repo: z.string() }))
-    .query(async ({ input }) => {
-      try {
-        return await github.getBranches(input.repo);
-      } catch {
-        return [];
-      }
-    }),
-  defaultBranch: publicProcedure
-    .input(z.object({ repo: z.string() }))
-    .query(async ({ input }) => {
-      try {
-        return await github.getDefaultBranch(input.repo);
-      } catch (error) {
-        console.error('Failed to fetch default branch:', error);
-        return 'main';
-      }
-    }),
+			return { success: false, error: errorMessage };
+		}
+	}),
+	searchIssues: publicProcedure
+		.input(
+			z.object({
+				owner: z.string(),
+				repo: z.string(),
+				q: z.string().optional(),
+			}),
+		)
+		.query(async ({ input }) => {
+			try {
+				const owner = input.owner?.trim();
+				const repo = input.repo?.trim();
+				const q = (input.q || "").trim();
+				if (!(owner && repo && q)) {
+					return [];
+				}
+				return await github.searchIssues(owner, repo, q);
+			} catch {
+				return [];
+			}
+		}),
+	listIssues: publicProcedure
+		.input(
+			z.object({
+				owner: z.string(),
+				repo: z.string(),
+			}),
+		)
+		.query(async ({ input }) => {
+			try {
+				const owner = input.owner?.trim();
+				const repo = input.repo?.trim();
+				if (!(owner && repo)) {
+					return [];
+				}
+				const issues = await github.listIssues(owner, repo);
+				// Sort by activity (comments + recency) - most active first
+				return issues.sort((a, b) => {
+					// Primary sort: by comments (activity)
+					if (b.comments !== a.comments) {
+						return b.comments - a.comments;
+					}
+					// Secondary sort: by updated_at (most recent)
+					return (
+						new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+					);
+				});
+			} catch {
+				return [];
+			}
+		}),
+	branches: publicProcedure
+		.input(z.object({ repo: z.string() }))
+		.query(async ({ input }) => {
+			try {
+				return await github.getBranches(input.repo);
+			} catch {
+				return [];
+			}
+		}),
+	defaultBranch: publicProcedure
+		.input(z.object({ repo: z.string() }))
+		.query(async ({ input }) => {
+			try {
+				return await github.getDefaultBranch(input.repo);
+			} catch (error) {
+				console.error("Failed to fetch default branch:", error);
+				return "main";
+			}
+		}),
 });

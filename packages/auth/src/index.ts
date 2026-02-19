@@ -46,17 +46,17 @@
 // ============================================================================
 
 // Server exports (includes AuthSession, AuthUser types)
-export * from './server';
+export * from "./server";
 
 // Client exports (includes authClient, Session, User types)
-export { authClient } from './client';
+export { authClient } from "./client";
 
 // Server utilities (includes getServerSession, getServerUser, etc.)
 export {
-  getServerSession,
-  getServerUser,
-  isServerAuthenticated,
-} from './server-utils';
+	getServerSession,
+	getServerUser,
+	isServerAuthenticated,
+} from "./server-utils";
 
 // Config exports
-export * from './config';
+export * from "./config";

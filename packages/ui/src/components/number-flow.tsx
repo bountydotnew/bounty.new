@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { m } from 'motion/react';
+import { m } from "motion/react";
 
 interface NumberFlowProps {
-  value: number;
+	value: number;
 }
 
 export default function NumberFlow({ value }: NumberFlowProps) {
-  return <m.span>{value.toLocaleString()}</m.span>;
+	return <m.span>{value.toLocaleString()}</m.span>;
 }

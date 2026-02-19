@@ -6,15 +6,15 @@
  */
 
 import {
-  adminClient,
-  deviceAuthorizationClient,
-  emailOTPClient,
-  organizationClient,
-} from 'better-auth/client/plugins';
-import { createAuthClient } from 'better-auth/react';
-import { multiSessionClient } from 'better-auth/client/plugins';
-import { env } from '@bounty/env/client';
-import { toast } from 'sonner';
+	adminClient,
+	deviceAuthorizationClient,
+	emailOTPClient,
+	organizationClient,
+} from "better-auth/client/plugins";
+import { createAuthClient } from "better-auth/react";
+import { multiSessionClient } from "better-auth/client/plugins";
+import { env } from "@bounty/env/client";
+import { toast } from "sonner";
 
 /**
  * Better Auth client instance
@@ -26,34 +26,34 @@ import { toast } from 'sonner';
  * - Global error handling with toast notifications
  */
 export const authClient = createAuthClient({
-  baseURL: env.NEXT_PUBLIC_BASE_URL,
-  plugins: [
-    adminClient(),
-    deviceAuthorizationClient(),
-    emailOTPClient(),
-    multiSessionClient(),
-    organizationClient(),
-  ],
-  // Global error handling for all Better Auth requests
-  fetchOptions: {
-    onError: (ctx) => {
-      const { error, response } = ctx;
+	baseURL: env.NEXT_PUBLIC_BASE_URL,
+	plugins: [
+		adminClient(),
+		deviceAuthorizationClient(),
+		emailOTPClient(),
+		multiSessionClient(),
+		organizationClient(),
+	],
+	// Global error handling for all Better Auth requests
+	fetchOptions: {
+		onError: (ctx) => {
+			const { error, response } = ctx;
 
-      // Skip rate limit errors (429) - they're handled elsewhere
-      if (response?.status === 429) {
-        return;
-      }
+			// Skip rate limit errors (429) - they're handled elsewhere
+			if (response?.status === 429) {
+				return;
+			}
 
-      // Extract error message
-      const errorMessage =
-        error?.message ||
-        response?.statusText ||
-        'An error occurred. Please try again.';
+			// Extract error message
+			const errorMessage =
+				error?.message ||
+				response?.statusText ||
+				"An error occurred. Please try again.";
 
-      // Show toast notification for errors
-      toast.error(errorMessage);
-    },
-  },
+			// Show toast notification for errors
+			toast.error(errorMessage);
+		},
+	},
 });
 
 // ============================================================================
@@ -64,6 +64,6 @@ export const authClient = createAuthClient({
  * Re-export commonly used types from Better Auth
  */
 export type {
-  Session,
-  User,
-} from 'better-auth/types';
+	Session,
+	User,
+} from "better-auth/types";

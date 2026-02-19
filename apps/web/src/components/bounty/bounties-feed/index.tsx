@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { BountiesFeedProvider } from './provider';
-import { ListView } from './list-view';
-import { GridView } from './grid-view';
+import { BountiesFeedProvider } from "./provider";
+import { ListView } from "./list-view";
+import { GridView } from "./grid-view";
 
 /**
  * BountiesFeed Compound Component
@@ -26,18 +26,18 @@ import { GridView } from './grid-view';
  * ```
  */
 export const BountiesFeed = {
-  /**
-   * Provider component that wraps the feed with state and actions
-   */
-  Provider: BountiesFeedProvider,
+	/**
+	 * Provider component that wraps the feed with state and actions
+	 */
+	Provider: BountiesFeedProvider,
 
-  /**
-   * List view variant - displays bounties in a vertical list
-   */
-  ListView,
+	/**
+	 * List view variant - displays bounties in a vertical list
+	 */
+	ListView,
 
-  /**
-   * Grid view variant - displays bounties in a responsive grid
-   */
-  GridView,
+	/**
+	 * Grid view variant - displays bounties in a responsive grid
+	 */
+	GridView,
 };

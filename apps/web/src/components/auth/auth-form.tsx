@@ -19,6 +19,5 @@
  */
 
 // Re-export the new explicit variants
-export { SignInForm } from './sign-in-form';
-export { AddAccountForm } from './add-account-form';
-
+export { SignInForm } from "./sign-in-form";
+export { AddAccountForm } from "./add-account-form";

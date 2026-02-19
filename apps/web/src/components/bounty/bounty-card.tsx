@@ -24,6 +24,6 @@
 
 // Re-export everything from the index file
 export {
-  CompactBountyCard,
-  StandardBountyCard,
-} from './bounty-card/index';
+	CompactBountyCard,
+	StandardBountyCard,
+} from "./bounty-card/index";

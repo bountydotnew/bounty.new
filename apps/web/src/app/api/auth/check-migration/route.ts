@@ -1,7 +1,7 @@
-import { auth } from '@bounty/auth/server';
-import { account, db } from '@bounty/db';
-import { eq } from 'drizzle-orm';
-import { NextRequest, NextResponse } from 'next/server';
+import { auth } from "@bounty/auth/server";
+import { account, db } from "@bounty/db";
+import { eq } from "drizzle-orm";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/auth/check-migration
@@ -14,36 +14,34 @@ import { NextRequest, NextResponse } from 'next/server';
  * - hasOAuth: true if user has at least one OAuth provider linked
  */
 export async function GET(req: NextRequest) {
-  try {
-    const session = await auth.api.getSession({
-      headers: req.headers,
-    });
+	try {
+		const session = await auth.api.getSession({
+			headers: req.headers,
+		});
 
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+		if (!session?.user?.id) {
+			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		}
 
-    // Check if user has any OAuth accounts (non-email providers)
-    const userAccounts = await db.query.account.findMany({
-      where: eq(account.userId, session.user.id),
-      columns: {
-        providerId: true,
-      },
-    });
+		// Check if user has any OAuth accounts (non-email providers)
+		const userAccounts = await db.query.account.findMany({
+			where: eq(account.userId, session.user.id),
+			columns: {
+				providerId: true,
+			},
+		});
 
-    const hasOAuth = userAccounts.some(
-      (acc) => acc.providerId !== 'email'
-    );
+		const hasOAuth = userAccounts.some((acc) => acc.providerId !== "email");
 
-    return NextResponse.json({
-      needsMigration: !hasOAuth,
-      hasOAuth,
-    });
-  } catch (error) {
-    console.error('Error checking migration status:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
+		return NextResponse.json({
+			needsMigration: !hasOAuth,
+			hasOAuth,
+		});
+	} catch (error) {
+		console.error("Error checking migration status:", error);
+		return NextResponse.json(
+			{ error: "Internal server error" },
+			{ status: 500 },
+		);
+	}
 }

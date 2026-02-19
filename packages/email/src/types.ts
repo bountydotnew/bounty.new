@@ -1,3 +1,3 @@
 export interface BaseTemplateProps {
-  previewText?: string;
+	previewText?: string;
 }

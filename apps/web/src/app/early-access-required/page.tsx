@@ -1,11 +1,11 @@
-import type { Metadata } from 'next';
-import EarlyAccessRequiredPage from './page-client';
+import type { Metadata } from "next";
+import EarlyAccessRequiredPage from "./page-client";
 
 export const metadata: Metadata = {
-  title: 'Early Access Required',
-  description: 'Join the waitlist for early access',
+	title: "Early Access Required",
+	description: "Join the waitlist for early access",
 };
 
 export default function Page() {
-  return <EarlyAccessRequiredPage />;
+	return <EarlyAccessRequiredPage />;
 }

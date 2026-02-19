@@ -1,11 +1,11 @@
 {
-  "extends": "@bounty/typescript-config/base.json",
-  "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./",
-    "jsx": "react-jsx",
-    "types": ["node"]
-  },
-  "include": ["./**/*.ts", "./**/*.tsx"],
-  "exclude": ["./node_modules", "./dist"]
+	"extends": "@bounty/typescript-config/base.json",
+	"compilerOptions": {
+		"outDir": "./dist",
+		"rootDir": "./",
+		"jsx": "react-jsx",
+		"types": ["node"]
+	},
+	"include": ["./**/*.ts", "./**/*.tsx"],
+	"exclude": ["./node_modules", "./dist"]
 }

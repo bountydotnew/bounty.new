@@ -1,27 +1,27 @@
 {
-  "name": "@bounty/discord-bot",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "bun run --watch index.ts",
-    "start": "bun run index.ts",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@bounty/api": "workspace:*",
-    "@bounty/db": "workspace:*",
-    "@bounty/env": "workspace:*",
-    "@bounty/reacord": "workspace:*",
-    "@effect-atom/atom-react": "^0.4.4",
-    "discord.js": "^14.25.1",
-    "drizzle-orm": "catalog:",
-    "react": "^19.2.1"
-  },
-  "devDependencies": {
-    "@bounty/typescript-config": "workspace:*",
-    "@types/node": "^24",
-    "@types/react": "19.2.2",
-    "typescript": "catalog:"
-  }
+	"name": "@bounty/discord-bot",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "bun run --watch index.ts",
+		"start": "bun run index.ts",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@bounty/api": "workspace:*",
+		"@bounty/db": "workspace:*",
+		"@bounty/env": "workspace:*",
+		"@bounty/reacord": "workspace:*",
+		"@effect-atom/atom-react": "^0.4.4",
+		"discord.js": "^14.25.1",
+		"drizzle-orm": "catalog:",
+		"react": "^19.2.1"
+	},
+	"devDependencies": {
+		"@bounty/typescript-config": "workspace:*",
+		"@types/node": "^24",
+		"@types/react": "19.2.2",
+		"typescript": "catalog:"
+	}
 }

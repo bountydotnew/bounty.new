@@ -1,12 +1,12 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
 export interface AuthGuardProps {
-  children: ReactNode;
-  fallback?: ReactNode;
-  redirectTo?: string;
-  redirectOnMount?: boolean;
+	children: ReactNode;
+	fallback?: ReactNode;
+	redirectTo?: string;
+	redirectOnMount?: boolean;
 }
 
 export interface AuthLayoutProps {
-  children: ReactNode;
+	children: ReactNode;
 }

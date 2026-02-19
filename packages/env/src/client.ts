@@ -1,29 +1,30 @@
-import { createEnv } from '@t3-oss/env-nextjs';
-import { z } from 'zod';
+import { createEnv } from "@t3-oss/env-nextjs";
+import { z } from "zod";
 
 export const env = createEnv({
-  client: {
-    // Server URLs
-    NEXT_PUBLIC_BASE_URL: z.string().url(),
-    // Rate limiting (client-side)
-    // PostHog analytics
-    NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1),
-    NEXT_PUBLIC_POSTHOG_HOST: z.string().url(),
-    // Vercel environment
-    NEXT_PUBLIC_VERCEL_ENV: z
-      .enum(['development', 'preview', 'production'])
-      .optional(),
-    NEXT_PUBLIC_VERCEL_URL: z.string().optional(),
-    // Stripe
-    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1),
-  },
-  experimental__runtimeEnv: {
-    NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
-    NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
-    NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
-    NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
-    NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
-    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
-  },
-  //skipValidation: process.env.NODE_ENV !== "production",
+	client: {
+		// Server URLs
+		NEXT_PUBLIC_BASE_URL: z.string().url(),
+		// Rate limiting (client-side)
+		// PostHog analytics
+		NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1),
+		NEXT_PUBLIC_POSTHOG_HOST: z.string().url(),
+		// Vercel environment
+		NEXT_PUBLIC_VERCEL_ENV: z
+			.enum(["development", "preview", "production"])
+			.optional(),
+		NEXT_PUBLIC_VERCEL_URL: z.string().optional(),
+		// Stripe
+		NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1),
+	},
+	experimental__runtimeEnv: {
+		NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
+		NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+		NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+		NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
+		NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
+		NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
+			process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+	},
+	//skipValidation: process.env.NODE_ENV !== "production",
 });

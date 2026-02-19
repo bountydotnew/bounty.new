@@ -1,5 +1,5 @@
-import type { Client } from 'discord.js';
+import type { Client } from "discord.js";
 
 export function setupUserCommand(client: Client) {
-  // TODO: Implement /user command
+	// TODO: Implement /user command
 }

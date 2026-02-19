@@ -25,4 +25,4 @@
  */
 
 // Re-export the compound component
-export { BountiesFeed } from './bounties-feed/index';
+export { BountiesFeed } from "./bounties-feed/index";

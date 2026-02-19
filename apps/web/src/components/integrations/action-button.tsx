@@ -1,119 +1,119 @@
-'use client';
+"use client";
 
-import { Loader2, MoreVertical } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { Loader2, MoreVertical } from "lucide-react";
+import type { ReactNode } from "react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@bounty/ui/components/dropdown-menu';
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@bounty/ui/components/dropdown-menu";
 
 interface ActionButtonProps {
-  children: ReactNode;
-  icon?: ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-  loading?: boolean;
-  variant?: 'default' | 'icon';
-  className?: string;
+	children: ReactNode;
+	icon?: ReactNode;
+	onClick?: () => void;
+	disabled?: boolean;
+	loading?: boolean;
+	variant?: "default" | "icon";
+	className?: string;
 }
 
 export function ActionButton({
-  children,
-  icon,
-  onClick,
-  disabled = false,
-  loading = false,
-  variant = 'default',
-  className,
+	children,
+	icon,
+	onClick,
+	disabled = false,
+	loading = false,
+	variant = "default",
+	className,
 }: ActionButtonProps) {
-  if (variant === 'icon') {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={disabled || loading}
-        className={`h-[29px] w-[29px] rounded-[7px] text-text-muted hover:text-foreground hover:bg-surface-3 transition-colors flex items-center justify-center disabled:opacity-50 ${className}`}
-      >
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : icon}
-      </button>
-    );
-  }
+	if (variant === "icon") {
+		return (
+			<button
+				type="button"
+				onClick={onClick}
+				disabled={disabled || loading}
+				className={`h-[29px] w-[29px] rounded-[7px] text-text-muted hover:text-foreground hover:bg-surface-3 transition-colors flex items-center justify-center disabled:opacity-50 ${className}`}
+			>
+				{loading ? <Loader2 className="h-4 w-4 animate-spin" /> : icon}
+			</button>
+		);
+	}
 
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled || loading}
-      className={`h-[29px] px-3 rounded-[7px] bg-surface-3 text-[13px] text-foreground hover:bg-surface-3 transition-colors flex items-center gap-1.5 disabled:opacity-50 ${className}`}
-    >
-      {children}
-      {loading ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : icon ? (
-        <span className="h-4 w-4 flex items-center justify-center">{icon}</span>
-      ) : null}
-    </button>
-  );
+	return (
+		<button
+			type="button"
+			onClick={onClick}
+			disabled={disabled || loading}
+			className={`h-[29px] px-3 rounded-[7px] bg-surface-3 text-[13px] text-foreground hover:bg-surface-3 transition-colors flex items-center gap-1.5 disabled:opacity-50 ${className}`}
+		>
+			{children}
+			{loading ? (
+				<Loader2 className="h-4 w-4 animate-spin" />
+			) : icon ? (
+				<span className="h-4 w-4 flex items-center justify-center">{icon}</span>
+			) : null}
+		</button>
+	);
 }
 
 interface DropdownAction {
-  label: string;
-  onClick: () => void;
-  icon?: ReactNode;
-  variant?: 'default' | 'danger';
-  disabled?: boolean;
+	label: string;
+	onClick: () => void;
+	icon?: ReactNode;
+	variant?: "default" | "danger";
+	disabled?: boolean;
 }
 
 interface ActionButtonGroupProps {
-  children?: ReactNode;
-  dropdownActions?: DropdownAction[];
+	children?: ReactNode;
+	dropdownActions?: DropdownAction[];
 }
 
 const EMPTY_DROPDOWN_ACTIONS: DropdownAction[] = [];
 
 export function ActionButtonGroup({
-  children,
-  dropdownActions = EMPTY_DROPDOWN_ACTIONS,
+	children,
+	dropdownActions = EMPTY_DROPDOWN_ACTIONS,
 }: ActionButtonGroupProps) {
-  return (
-    <div className="flex flex-wrap items-center gap-2 pt-2">
-      {children}
-      {dropdownActions.length > 0 && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="h-[29px] w-[29px] rounded-[7px] text-text-muted hover:text-foreground hover:bg-surface-3 transition-colors flex items-center justify-center"
-            >
-              <MoreVertical className="h-4 w-4" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="bg-surface-1 border-border-default"
-          >
-            {dropdownActions.map((action) => (
-              <DropdownMenuItem
-                key={action.label}
-                className={
-                  action.variant === 'danger'
-                    ? 'text-red-400 focus:text-red-400 focus:bg-surface-3'
-                    : 'focus:bg-surface-3'
-                }
-                onClick={action.onClick}
-                disabled={action.disabled}
-              >
-                {action.icon && (
-                  <span className="mr-2 h-4 w-4">{action.icon}</span>
-                )}
-                {action.label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
-    </div>
-  );
+	return (
+		<div className="flex flex-wrap items-center gap-2 pt-2">
+			{children}
+			{dropdownActions.length > 0 && (
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<button
+							type="button"
+							className="h-[29px] w-[29px] rounded-[7px] text-text-muted hover:text-foreground hover:bg-surface-3 transition-colors flex items-center justify-center"
+						>
+							<MoreVertical className="h-4 w-4" />
+						</button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent
+						align="end"
+						className="bg-surface-1 border-border-default"
+					>
+						{dropdownActions.map((action) => (
+							<DropdownMenuItem
+								key={action.label}
+								className={
+									action.variant === "danger"
+										? "text-red-400 focus:text-red-400 focus:bg-surface-3"
+										: "focus:bg-surface-3"
+								}
+								onClick={action.onClick}
+								disabled={action.disabled}
+							>
+								{action.icon && (
+									<span className="mr-2 h-4 w-4">{action.icon}</span>
+								)}
+								{action.label}
+							</DropdownMenuItem>
+						))}
+					</DropdownMenuContent>
+				</DropdownMenu>
+			)}
+		</div>
+	);
 }

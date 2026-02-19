@@ -21,16 +21,16 @@
 // }
 
 export interface BountyCommentCacheItem {
-  id: string;
-  createdAt: string | Date;
-  user: { id: string; name: string | null; image: string | null } | null;
-  parentId: string | null;
-  content: string;
-  originalContent: string | null;
-  editCount: number;
-  likeCount: number;
-  isLiked: boolean;
-  _removing?: boolean;
+	id: string;
+	createdAt: string | Date;
+	user: { id: string; name: string | null; image: string | null } | null;
+	parentId: string | null;
+	content: string;
+	originalContent: string | null;
+	editCount: number;
+	likeCount: number;
+	isLiked: boolean;
+	_removing?: boolean;
 }
 
 // interface DuplicateCommentError {

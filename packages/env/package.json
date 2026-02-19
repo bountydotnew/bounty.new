@@ -1,22 +1,22 @@
 {
-  "name": "@bounty/env",
-  "version": "0.1.0",
-  "private": true,
-  "exports": {
-    "./client": "./src/client.ts",
-    "./server": "./src/server.ts",
-    "./discord-bot": "./src/discord-bot.ts"
-  },
-  "scripts": {
-    "lint": "eslint ."
-  },
-  "dependencies": {
-    "@t3-oss/env-nextjs": "catalog:",
-    "zod": "catalog:"
-  },
-  "devDependencies": {
-    "@types/node": "catalog:",
-    "eslint": "catalog:",
-    "typescript": "catalog:"
-  }
+	"name": "@bounty/env",
+	"version": "0.1.0",
+	"private": true,
+	"exports": {
+		"./client": "./src/client.ts",
+		"./server": "./src/server.ts",
+		"./discord-bot": "./src/discord-bot.ts"
+	},
+	"scripts": {
+		"lint": "eslint ."
+	},
+	"dependencies": {
+		"@t3-oss/env-nextjs": "catalog:",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@types/node": "catalog:",
+		"eslint": "catalog:",
+		"typescript": "catalog:"
+	}
 }

@@ -1,26 +1,26 @@
 {
-  "name": "@bounty/db",
-  "version": "0.1.0",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
-  "scripts": {
-    "dev": "drizzle-kit studio",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "migrate:personal-orgs": "bun run src/scripts/migrate-personal-orgs.ts",
-    "migrate:personal-orgs:dry": "bun run src/scripts/migrate-personal-orgs.ts --dry-run"
-  },
-  "dependencies": {
-    "drizzle-orm": "catalog:",
-    "pg": "catalog:",
-    "react-activity-calendar": "^3.0.1",
-    "react-tooltip": "^5.30.0"
-  },
-  "devDependencies": {
-    "drizzle-kit": "catalog:",
-    "@types/pg": "catalog:",
-    "typescript": "catalog:"
-  }
+	"name": "@bounty/db",
+	"version": "0.1.0",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"scripts": {
+		"dev": "drizzle-kit studio",
+		"db:push": "drizzle-kit push",
+		"db:studio": "drizzle-kit studio",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate",
+		"migrate:personal-orgs": "bun run src/scripts/migrate-personal-orgs.ts",
+		"migrate:personal-orgs:dry": "bun run src/scripts/migrate-personal-orgs.ts --dry-run"
+	},
+	"dependencies": {
+		"drizzle-orm": "catalog:",
+		"pg": "catalog:",
+		"react-activity-calendar": "^3.0.1",
+		"react-tooltip": "^5.30.0"
+	},
+	"devDependencies": {
+		"drizzle-kit": "catalog:",
+		"@types/pg": "catalog:",
+		"typescript": "catalog:"
+	}
 }

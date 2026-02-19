@@ -1,41 +1,41 @@
 export interface BetterAuthUser {
-  id: string;
-  name: string | null;
-  email: string;
-  emailVerified: boolean;
-  image?: string;
-  // Role: 'user' | 'admin' | 'early_access'
-  role: string;
-  banned: boolean;
-  banReason?: string;
-  banExpires?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+	id: string;
+	name: string | null;
+	email: string;
+	emailVerified: boolean;
+	image?: string;
+	// Role: 'user' | 'admin' | 'early_access'
+	role: string;
+	banned: boolean;
+	banReason?: string;
+	banExpires?: Date;
+	createdAt: Date;
+	updatedAt: Date;
 }
 
 export interface BetterAuthSessionData {
-  id: string;
-  expiresAt: Date;
-  token: string;
-  createdAt: Date;
-  updatedAt: Date;
-  ipAddress?: string;
-  userAgent?: string;
-  userId: string;
-  impersonatedBy?: string;
-  activeOrganizationId?: string | null;
+	id: string;
+	expiresAt: Date;
+	token: string;
+	createdAt: Date;
+	updatedAt: Date;
+	ipAddress?: string;
+	userAgent?: string;
+	userId: string;
+	impersonatedBy?: string;
+	activeOrganizationId?: string | null;
 }
 
 export interface BetterAuthSession {
-  user: BetterAuthUser;
-  session: BetterAuthSessionData;
+	user: BetterAuthUser;
+	session: BetterAuthSessionData;
 }
 
 export interface ExtendedAuthSession extends BetterAuthSession {
-  impersonatedBy?: string;
-  session: BetterAuthSessionData & {
-    impersonatedBy?: string;
-  };
+	impersonatedBy?: string;
+	session: BetterAuthSessionData & {
+		impersonatedBy?: string;
+	};
 }
 
 /**
@@ -48,60 +48,60 @@ export interface ExtendedAuthSession extends BetterAuthSession {
  * apps/web/src/app/ that produce URL segments.
  */
 export const RESERVED_SLUGS = new Set([
-  // (auth) group routes
-  'bookmarks',
-  'bounties',
-  'bounty',
-  'dashboard',
-  'device',
-  'profile',
-  // (login) group routes
-  'login',
-  'sign-up',
-  'reset-password',
-  'migrate-account',
-  // (settings) group routes
-  'settings',
-  // Top-level static routes
-  'api',
-  'auth',
-  'blog',
-  'contributors',
-  'early-access-required',
-  'onboarding',
-  'org',
-  'ping',
-  'pricing',
-  'privacy',
-  'roadmap',
-  'success',
-  'terms',
-  'test',
-  'topic',
-  'waitlist',
-  // Common reserved words
-  'admin',
-  'app',
-  'www',
-  'help',
-  'support',
-  'about',
-  'new',
+	// (auth) group routes
+	"bookmarks",
+	"bounties",
+	"bounty",
+	"dashboard",
+	"device",
+	"profile",
+	// (login) group routes
+	"login",
+	"sign-up",
+	"reset-password",
+	"migrate-account",
+	// (settings) group routes
+	"settings",
+	// Top-level static routes
+	"api",
+	"auth",
+	"blog",
+	"contributors",
+	"early-access-required",
+	"onboarding",
+	"org",
+	"ping",
+	"pricing",
+	"privacy",
+	"roadmap",
+	"success",
+	"terms",
+	"test",
+	"topic",
+	"waitlist",
+	// Common reserved words
+	"admin",
+	"app",
+	"www",
+	"help",
+	"support",
+	"about",
+	"new",
 ]);
 
 /** Check if a slug is reserved (case-insensitive). */
 export function isReservedSlug(slug: string): boolean {
-  return RESERVED_SLUGS.has(slug.toLowerCase());
+	return RESERVED_SLUGS.has(slug.toLowerCase());
 }
 
 // Reason codes used to classify auth/authorization client UX
 export const ReasonCode = {
-  Unauthenticated: 'unauthenticated',
-  EarlyAccessRequired: 'early_access_required',
-  EmailUnverified: 'email_unverified',
-  Banned: 'banned',
-  PlanRequired: 'plan_required',
-  Forbidden: 'forbidden',
-  NoActiveOrg: 'no_active_org',
+	Unauthenticated: "unauthenticated",
+	EarlyAccessRequired: "early_access_required",
+	EmailUnverified: "email_unverified",
+	Banned: "banned",
+	PlanRequired: "plan_required",
+	Forbidden: "forbidden",
+	NoActiveOrg: "no_active_org",
 } as const;
 export type ReasonCode = (typeof ReasonCode)[keyof typeof ReasonCode];

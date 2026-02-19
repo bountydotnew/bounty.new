@@ -4,10 +4,10 @@
  * Optimized utilities for server-side session retrieval.
  */
 
-import { headers } from 'next/headers';
-import { cache } from 'react';
-import { auth } from './server';
-import type { AuthSession } from './server';
+import { headers } from "next/headers";
+import { cache } from "react";
+import { auth } from "./server";
+import type { AuthSession } from "./server";
 
 // ============================================================================
 // Session Utilities
@@ -26,16 +26,16 @@ import type { AuthSession } from './server';
  * ```
  */
 export const getServerSession = cache(async (): Promise<AuthSession | null> => {
-  try {
-    const headersList = await headers();
-    const result = await auth.api.getSession({
-      headers: headersList,
-    });
-    return result;
-  } catch (error) {
-    console.error('Failed to get server session:', error);
-    return null;
-  }
+	try {
+		const headersList = await headers();
+		const result = await auth.api.getSession({
+			headers: headersList,
+		});
+		return result;
+	} catch (error) {
+		console.error("Failed to get server session:", error);
+		return null;
+	}
 });
 
 /**
@@ -48,8 +48,8 @@ export const getServerSession = cache(async (): Promise<AuthSession | null> => {
  * ```
  */
 export const isServerAuthenticated = cache(async () => {
-  const session = await getServerSession();
-  return !!session?.user;
+	const session = await getServerSession();
+	return !!session?.user;
 });
 
 /**
@@ -65,13 +65,13 @@ export const isServerAuthenticated = cache(async () => {
  * ```
  */
 export const getServerUser = cache(async () => {
-  const session = await getServerSession();
-  return session?.user ?? null;
+	const session = await getServerSession();
+	return session?.user ?? null;
 });
 
 // ============================================================================
 // Re-exports
 // ============================================================================
 
-export type { AuthSession, AuthUser } from './server';
-export { auth } from './server';
+export type { AuthSession, AuthUser } from "./server";
+export { auth } from "./server";

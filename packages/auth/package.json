@@ -1,38 +1,38 @@
 {
-  "name": "@bounty/auth",
-  "version": "0.1.0",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
-  "exports": {
-    "./client": "./src/client.ts",
-    "./server": "./src/server.ts",
-    "./server-utils": "./src/server-utils.ts"
-  },
-  "typesVersions": {
-    "*": {
-      "client": [
-        "./src/client.ts"
-      ],
-      "server": [
-        "./src/server.ts"
-      ],
-      "server-utils": [
-        "./src/server-utils.ts"
-      ]
-    }
-  },
-  "dependencies": {
-    "better-auth": "catalog:",
-    "@better-auth/passkey": "catalog:",
-    "@bounty/db": "workspace:*",
-    "@bounty/email": "workspace:*",
-    "@bounty/types": "workspace:*",
-    "@bounty/env": "workspace:*",
-    "@octokit/core": "catalog:",
-    "@octokit/plugin-rest-endpoint-methods": "catalog:",
-    "drizzle-orm": "catalog:"
-  },
-  "devDependencies": {
-    "typescript": "catalog:"
-  }
+	"name": "@bounty/auth",
+	"version": "0.1.0",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"exports": {
+		"./client": "./src/client.ts",
+		"./server": "./src/server.ts",
+		"./server-utils": "./src/server-utils.ts"
+	},
+	"typesVersions": {
+		"*": {
+			"client": [
+				"./src/client.ts"
+			],
+			"server": [
+				"./src/server.ts"
+			],
+			"server-utils": [
+				"./src/server-utils.ts"
+			]
+		}
+	},
+	"dependencies": {
+		"better-auth": "catalog:",
+		"@better-auth/passkey": "catalog:",
+		"@bounty/db": "workspace:*",
+		"@bounty/email": "workspace:*",
+		"@bounty/types": "workspace:*",
+		"@bounty/env": "workspace:*",
+		"@octokit/core": "catalog:",
+		"@octokit/plugin-rest-endpoint-methods": "catalog:",
+		"drizzle-orm": "catalog:"
+	},
+	"devDependencies": {
+		"typescript": "catalog:"
+	}
 }

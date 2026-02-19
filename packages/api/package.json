@@ -1,31 +1,31 @@
 {
-  "name": "@bounty/api",
-  "version": "0.1.0",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
-  "dependencies": {
-    "@bounty/auth": "workspace:*",
-    "@bounty/db": "workspace:*",
-    "@bounty/email": "workspace:*",
-    "@bounty/env": "workspace:*",
-    "@bounty/realtime": "workspace:*",
-    "@bounty/stripe": "workspace:*",
-    "@bounty/track": "workspace:*",
-    "@bounty/types": "workspace:*",
-    "@linear/sdk": "^72.0.0",
-    "@octokit/auth-app": "catalog:",
-    "@octokit/core": "catalog:",
-    "@octokit/plugin-rest-endpoint-methods": "catalog:",
-    "@octokit/webhooks-methods": "catalog:",
-    "@trpc/server": "catalog:",
-    "@upstash/ratelimit": "catalog:",
-    "bs58": "^6.0.0",
-    "drizzle-orm": "catalog:",
-    "lru-cache": "catalog:",
-    "tweetnacl": "^1.0.3",
-    "zod": "catalog:"
-  },
-  "devDependencies": {
-    "typescript": "catalog:"
-  }
+	"name": "@bounty/api",
+	"version": "0.1.0",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"dependencies": {
+		"@bounty/auth": "workspace:*",
+		"@bounty/db": "workspace:*",
+		"@bounty/email": "workspace:*",
+		"@bounty/env": "workspace:*",
+		"@bounty/realtime": "workspace:*",
+		"@bounty/stripe": "workspace:*",
+		"@bounty/track": "workspace:*",
+		"@bounty/types": "workspace:*",
+		"@linear/sdk": "^72.0.0",
+		"@octokit/auth-app": "catalog:",
+		"@octokit/core": "catalog:",
+		"@octokit/plugin-rest-endpoint-methods": "catalog:",
+		"@octokit/webhooks-methods": "catalog:",
+		"@trpc/server": "catalog:",
+		"@upstash/ratelimit": "catalog:",
+		"bs58": "^6.0.0",
+		"drizzle-orm": "catalog:",
+		"lru-cache": "catalog:",
+		"tweetnacl": "^1.0.3",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"typescript": "catalog:"
+	}
 }

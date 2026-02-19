@@ -1,11 +1,11 @@
-import type { Metadata } from 'next';
-import ClientPage from './page-client';
+import type { Metadata } from "next";
+import ClientPage from "./page-client";
 
 export const metadata: Metadata = {
-  title: 'GitHub Integration',
-  description: 'Configure your GitHub integration.',
+	title: "GitHub Integration",
+	description: "Configure your GitHub integration.",
 };
 
 export default function Page() {
-  return <ClientPage />;
+	return <ClientPage />;
 }

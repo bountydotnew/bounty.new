@@ -5,5 +5,5 @@ export type SendVerificationEmailParams = { to: string; url: string };
  * Keeping a no-op here prevents accidental link sends if called.
  */
 export const sendVerificationEmail = (_: SendVerificationEmailParams): void => {
-  return;
+	return;
 };

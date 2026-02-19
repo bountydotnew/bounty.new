@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { memo } from 'react';
-import { BountyCardProvider } from './provider';
-import { BaseBountyCard } from './base-card';
-import type { Bounty } from '@/types/dashboard';
+import { memo } from "react";
+import { BountyCardProvider } from "./provider";
+import { BaseBountyCard } from "./base-card";
+import type { Bounty } from "@/types/dashboard";
 
 /**
  * BountyCard Compound Component
@@ -25,15 +25,15 @@ import type { Bounty } from '@/types/dashboard';
  */
 
 interface BountyCardProps {
-  bounty: Bounty;
-  stats?: {
-    commentCount: number;
-    voteCount: number;
-    submissionCount: number;
-    isVoted: boolean;
-    bookmarked: boolean;
-  };
-  onDelete?: () => void;
+	bounty: Bounty;
+	stats?: {
+		commentCount: number;
+		voteCount: number;
+		submissionCount: number;
+		isVoted: boolean;
+		bookmarked: boolean;
+	};
+	onDelete?: () => void;
 }
 
 /**
@@ -41,15 +41,15 @@ interface BountyCardProps {
  * Ideal for dense layouts and grid views.
  */
 export const CompactBountyCard = memo(function CompactBountyCard({
-  bounty,
-  stats,
-  onDelete,
+	bounty,
+	stats,
+	onDelete,
 }: BountyCardProps) {
-  return (
-    <BountyCardProvider bounty={bounty} stats={stats} onDelete={onDelete}>
-      <BaseBountyCard compact={true} />
-    </BountyCardProvider>
-  );
+	return (
+		<BountyCardProvider bounty={bounty} stats={stats} onDelete={onDelete}>
+			<BaseBountyCard compact={true} />
+		</BountyCardProvider>
+	);
 });
 
 /**
@@ -57,13 +57,13 @@ export const CompactBountyCard = memo(function CompactBountyCard({
  * Ideal for list views and featured bounties.
  */
 export const StandardBountyCard = memo(function StandardBountyCard({
-  bounty,
-  stats,
-  onDelete,
+	bounty,
+	stats,
+	onDelete,
 }: BountyCardProps) {
-  return (
-    <BountyCardProvider bounty={bounty} stats={stats} onDelete={onDelete}>
-      <BaseBountyCard compact={false} />
-    </BountyCardProvider>
-  );
+	return (
+		<BountyCardProvider bounty={bounty} stats={stats} onDelete={onDelete}>
+			<BaseBountyCard compact={false} />
+		</BountyCardProvider>
+	);
 });

@@ -2,17 +2,17 @@ import { Loader2Icon } from "lucide-react";
 import { cn } from "@bounty/ui/lib/utils";
 
 function Spinner({
-  className,
-  ...props
+	className,
+	...props
 }: React.ComponentProps<typeof Loader2Icon>) {
-  return (
-    <Loader2Icon
-      aria-label="Loading"
-      className={cn("animate-spin", className)}
-      role="status"
-      {...props}
-    />
-  );
+	return (
+		<Loader2Icon
+			aria-label="Loading"
+			className={cn("animate-spin", className)}
+			role="status"
+			{...props}
+		/>
+	);
 }
 
 export { Spinner };

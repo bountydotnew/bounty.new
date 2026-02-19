@@ -1,6 +1,11 @@
-'use client';
+"use client";
 
-import { useEmailPasswordForm, EmailField, PasswordField, SubmitButton } from './shared';
+import {
+	useEmailPasswordForm,
+	EmailField,
+	PasswordField,
+	SubmitButton,
+} from "./shared";
 
 /**
  * AddAccountForm
@@ -14,35 +19,25 @@ import { useEmailPasswordForm, EmailField, PasswordField, SubmitButton } from '.
  * ```
  */
 export function AddAccountForm() {
-  const {
-    email,
-    setEmail,
-    password,
-    setPassword,
-    isPending,
-    handleSignIn,
-  } = useEmailPasswordForm();
+	const { email, setEmail, password, setPassword, isPending, handleSignIn } =
+		useEmailPasswordForm();
 
-  return (
-    <div className="w-full max-w-md space-y-6">
-      <form onSubmit={(e) => handleSignIn(e, true)} className="space-y-4">
-        <EmailField
-          value={email}
-          onChange={setEmail}
-          disabled={isPending}
-        />
+	return (
+		<div className="w-full max-w-md space-y-6">
+			<form onSubmit={(e) => handleSignIn(e, true)} className="space-y-4">
+				<EmailField value={email} onChange={setEmail} disabled={isPending} />
 
-        <PasswordField
-          value={password}
-          onChange={setPassword}
-          disabled={isPending}
-          showForgotPassword={false}
-        />
+				<PasswordField
+					value={password}
+					onChange={setPassword}
+					disabled={isPending}
+					showForgotPassword={false}
+				/>
 
-        <SubmitButton isPending={isPending}>
-          {isPending ? 'Adding account...' : 'Add account'}
-        </SubmitButton>
-      </form>
-    </div>
-  );
+				<SubmitButton isPending={isPending}>
+					{isPending ? "Adding account..." : "Add account"}
+				</SubmitButton>
+			</form>
+		</div>
+	);
 }

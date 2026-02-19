@@ -1,3 +1,3 @@
-'use client';
+"use client";
 
-export { BountyListProvider, BountyListContext } from './provider';
+export { BountyListProvider, BountyListContext } from "./provider";

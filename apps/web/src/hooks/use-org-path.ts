@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useParams } from 'next/navigation';
-import { useCallback } from 'react';
+import { useParams } from "next/navigation";
+import { useCallback } from "react";
 
 /**
  * Returns a function that generates org-scoped paths using the current
@@ -14,14 +14,14 @@ import { useCallback } from 'react';
  *   orgPath('/settings/billing')      => '/my-team/settings/billing'
  */
 export function useOrgPath() {
-  const params = useParams();
-  const slug = params.slug as string;
+	const params = useParams();
+	const slug = params.slug as string;
 
-  return useCallback(
-    (path: string) => {
-      if (!slug) return path;
-      return `/${slug}${path.startsWith('/') ? path : `/${path}`}`;
-    },
-    [slug]
-  );
+	return useCallback(
+		(path: string) => {
+			if (!slug) return path;
+			return `/${slug}${path.startsWith("/") ? path : `/${path}`}`;
+		},
+		[slug],
+	);
 }

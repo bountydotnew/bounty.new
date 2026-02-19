@@ -1,81 +1,81 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, use } from 'react';
-import { BountiesFeed } from '@/components/bounty/bounties-feed';
-import { Header } from '@/components/dual-sidebar/sidebar-header';
+import { useEffect, useRef, use } from "react";
+import { BountiesFeed } from "@/components/bounty/bounties-feed";
+import { Header } from "@/components/dual-sidebar/sidebar-header";
 // import { Onboarding } from '@/components/onboarding';
 import {
-  TaskInputForm,
-  type TaskInputFormRef,
-} from '@/components/dashboard/task-input-form';
-import { DashboardPageContext } from '@/components/dashboard/dashboard-page';
+	TaskInputForm,
+	type TaskInputFormRef,
+} from "@/components/dashboard/task-input-form";
+import { DashboardPageContext } from "@/components/dashboard/dashboard-page";
 
 export function DashboardContent() {
-  const taskInputRef = useRef<TaskInputFormRef>(null);
+	const taskInputRef = useRef<TaskInputFormRef>(null);
 
-  // Access the dashboard state from context
-  const context = use(DashboardPageContext);
-  if (!context) {
-    throw new Error(
-      'DashboardContent must be used within DashboardPageProvider'
-    );
-  }
+	// Access the dashboard state from context
+	const context = use(DashboardPageContext);
+	if (!context) {
+		throw new Error(
+			"DashboardContent must be used within DashboardPageProvider",
+		);
+	}
 
-  const { state } = context;
+	const { state } = context;
 
-  // Focus textarea if hash is present (for navigation from other pages)
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (hash === '#focus-textarea' || hash === '#new-bounty') {
-      // Small delay to ensure component is mounted
-      setTimeout(() => {
-        taskInputRef.current?.focus();
-        window.history.replaceState(null, '', window.location.pathname);
-      }, 100);
-    }
+	// Focus textarea if hash is present (for navigation from other pages)
+	useEffect(() => {
+		const hash = window.location.hash;
+		if (hash === "#focus-textarea" || hash === "#new-bounty") {
+			// Small delay to ensure component is mounted
+			setTimeout(() => {
+				taskInputRef.current?.focus();
+				window.history.replaceState(null, "", window.location.pathname);
+			}, 100);
+		}
 
-    // Listen for custom event to focus textarea (when already on dashboard)
-    const handleFocusTextarea = () => {
-      setTimeout(() => {
-        taskInputRef.current?.focus();
-      }, 100);
-    };
+		// Listen for custom event to focus textarea (when already on dashboard)
+		const handleFocusTextarea = () => {
+			setTimeout(() => {
+				taskInputRef.current?.focus();
+			}, 100);
+		};
 
-    window.addEventListener('focus-textarea', handleFocusTextarea);
-    return () => {
-      window.removeEventListener('focus-textarea', handleFocusTextarea);
-    };
-  }, []);
+		window.addEventListener("focus-textarea", handleFocusTextarea);
+		return () => {
+			window.removeEventListener("focus-textarea", handleFocusTextarea);
+		};
+	}, []);
 
-  return (
-    <>
-      {/* <Onboarding /> */}
+	return (
+		<>
+			{/* <Onboarding /> */}
 
-      <div className="flex min-h-[calc(100vh-72px)] flex-col bg-background min-w-0 overflow-x-hidden">
-        {/* Horizontal border line above textarea */}
-        <div className="h-px w-full shrink-0 bg-surface-3" />
+			<div className="flex min-h-[calc(100vh-72px)] flex-col bg-background min-w-0 overflow-x-hidden">
+				{/* Horizontal border line above textarea */}
+				<div className="h-px w-full shrink-0 bg-surface-3" />
 
-        <TaskInputForm ref={taskInputRef} />
+				<TaskInputForm ref={taskInputRef} />
 
-        {/* Horizontal border line below textarea */}
-        <div className="h-px w-full shrink-0 bg-surface-3" />
+				{/* Horizontal border line below textarea */}
+				<div className="h-px w-full shrink-0 bg-surface-3" />
 
-        {/* Bounty list section with vertical borders */}
-        <div className="flex flex-1 shrink-0 flex-col w-full overflow-hidden lg:max-w-[805px] xl:px-0 xl:border-x border-border-subtle mx-auto py-4 min-w-0">
-          <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
-            <div className="relative flex flex-col pb-10 px-4 w-full min-w-0">
-              <BountiesFeed.Provider
-                bounties={state.bounties}
-                isLoading={state.isBountiesLoading}
-                error={state.bountiesError}
-                className="lg:pr-2"
-              >
-                <BountiesFeed.ListView />
-              </BountiesFeed.Provider>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  );
+				{/* Bounty list section with vertical borders */}
+				<div className="flex flex-1 shrink-0 flex-col w-full overflow-hidden lg:max-w-[805px] xl:px-0 xl:border-x border-border-subtle mx-auto py-4 min-w-0">
+					<div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
+						<div className="relative flex flex-col pb-10 px-4 w-full min-w-0">
+							<BountiesFeed.Provider
+								bounties={state.bounties}
+								isLoading={state.isBountiesLoading}
+								error={state.bountiesError}
+								className="lg:pr-2"
+							>
+								<BountiesFeed.ListView />
+							</BountiesFeed.Provider>
+						</div>
+					</div>
+				</div>
+			</div>
+		</>
+	);
 }

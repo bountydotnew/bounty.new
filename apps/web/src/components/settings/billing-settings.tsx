@@ -1,5 +1,5 @@
-import { BillingSettingsClient } from './billing-settings-client';
+import { BillingSettingsClient } from "./billing-settings-client";
 
 export function BillingSettings() {
-  return <BillingSettingsClient />;
+	return <BillingSettingsClient />;
 }

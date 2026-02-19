@@ -1,3 +1,3 @@
-'use client';
+"use client";
 
-export { DashboardPageProvider, DashboardPageContext } from './provider';
+export { DashboardPageProvider, DashboardPageContext } from "./provider";

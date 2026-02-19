@@ -1,39 +1,37 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.1.2/schema.json",
-  "extends": ["ultracite"],
-  "linter": {
-    "rules": {
-      "complexity": {
-        "noExcessiveCognitiveComplexity": "off"
-      },
-      "suspicious": {
-        "noConsole": "off"
-      },
-      "correctness": {
-        "noUnusedImports": "off"
-      },
-      "performance": {
-        "noNamespaceImport": "off"
-      },
-      "security": {
-        "noDangerouslySetInnerHtml": "warn"
-      },
-      "style": {
-        "noNestedTernary": "off"
-      },
-      "nursery": {
-        "noShadow": "off",
-        "useSortedClasses": "off"
-      }
-      
-    }
-  },
-  "assist": {
-    "actions": {
-      "source": {
-        "useSortedAttributes": "off",
-        "organizeImports": "off"
-      }
-    }
-  }
+	"$schema": "https://biomejs.dev/schemas/2.4.2/schema.json",
+	"linter": {
+		"rules": {
+			"complexity": {
+				"noExcessiveCognitiveComplexity": "off"
+			},
+			"suspicious": {
+				"noConsole": "off"
+			},
+			"correctness": {
+				"noUnusedImports": "off"
+			},
+			"performance": {
+				"noNamespaceImport": "off"
+			},
+			"security": {
+				"noDangerouslySetInnerHtml": "warn"
+			},
+			"style": {
+				"noNestedTernary": "off"
+			},
+			"nursery": {
+				"noShadow": "off",
+				"useSortedClasses": "off"
+			}
+		}
+	},
+	"assist": {
+		"actions": {
+			"source": {
+				"useSortedAttributes": "off",
+				"organizeImports": "off"
+			}
+		}
+	}
 }

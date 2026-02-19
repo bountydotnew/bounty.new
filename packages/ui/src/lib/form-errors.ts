@@ -1,4 +1,4 @@
-import type { FieldErrors, FieldValues } from 'react-hook-form';
+import type { FieldErrors, FieldValues } from "react-hook-form";
 
 const CAMEL_CASE_REGEX = /([A-Z])/g;
 const FIRST_CHAR_REGEX = /^./;
@@ -7,62 +7,62 @@ const FIRST_CHAR_REGEX = /^./;
  * Get the first error message from form errors
  */
 export function getFirstError<T extends FieldValues>(
-  errors: FieldErrors<T>
+	errors: FieldErrors<T>,
 ): string | undefined {
-  const firstErrorKey = Object.keys(errors)[0];
-  if (!firstErrorKey) {
-    return;
-  }
+	const firstErrorKey = Object.keys(errors)[0];
+	if (!firstErrorKey) {
+		return;
+	}
 
-  const error = errors[firstErrorKey as keyof T];
-  if (!error) {
-    return;
-  }
+	const error = errors[firstErrorKey as keyof T];
+	if (!error) {
+		return;
+	}
 
-  return error.message as string;
+	return error.message as string;
 }
 
 /**
  * Check if a specific field has an error
  */
 export function hasFieldError<T extends FieldValues>(
-  fieldName: keyof T,
-  errors: FieldErrors<T>
+	fieldName: keyof T,
+	errors: FieldErrors<T>,
 ): boolean {
-  return !!errors[fieldName];
+	return !!errors[fieldName];
 }
 
 /**
  * Get error message for a specific field
  */
 export function getFieldError<T extends FieldValues>(
-  fieldName: keyof T,
-  errors: FieldErrors<T>
+	fieldName: keyof T,
+	errors: FieldErrors<T>,
 ): string | undefined {
-  const error = errors[fieldName];
-  if (!error) {
-    return;
-  }
-  return error.message as string;
+	const error = errors[fieldName];
+	if (!error) {
+		return;
+	}
+	return error.message as string;
 }
 
 /**
  * Get all error messages from form errors
  */
 export function getAllErrors<T extends FieldValues>(
-  errors: FieldErrors<T>
+	errors: FieldErrors<T>,
 ): string[] {
-  return Object.values(errors)
-    .map((error) => error?.message as string)
-    .filter(Boolean);
+	return Object.values(errors)
+		.map((error) => error?.message as string)
+		.filter(Boolean);
 }
 
 /**
  * Format field name for display
  */
 export function formatFieldName(fieldName: string): string {
-  return fieldName
-    .replace(CAMEL_CASE_REGEX, ' $1')
-    .replace(FIRST_CHAR_REGEX, (str) => str.toUpperCase())
-    .trim();
+	return fieldName
+		.replace(CAMEL_CASE_REGEX, " $1")
+		.replace(FIRST_CHAR_REGEX, (str) => str.toUpperCase())
+		.trim();
 }

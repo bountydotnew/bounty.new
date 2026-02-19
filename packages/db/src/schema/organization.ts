@@ -1,30 +1,27 @@
-import { sql } from 'drizzle-orm';
+import { sql } from "drizzle-orm";
 import {
-  boolean,
-  index,
-  pgEnum,
-  pgTable,
-  text,
-  timestamp,
-  uniqueIndex,
-} from 'drizzle-orm/pg-core';
-import { user } from './auth';
+	boolean,
+	index,
+	pgEnum,
+	pgTable,
+	text,
+	timestamp,
+	uniqueIndex,
+} from "drizzle-orm/pg-core";
+import { user } from "./auth";
 
 // ============================================================================
 // Enums
 // ============================================================================
 
-export const orgMemberRoleEnum = pgEnum('org_member_role', [
-  'owner',
-  'member',
-]);
+export const orgMemberRoleEnum = pgEnum("org_member_role", ["owner", "member"]);
 
-export const orgInvitationStatusEnum = pgEnum('org_invitation_status', [
-  'pending',
-  'accepted',
-  'rejected',
-  'canceled',
-  'expired',
+export const orgInvitationStatusEnum = pgEnum("org_invitation_status", [
+	"pending",
+	"accepted",
+	"rejected",
+	"canceled",
+	"expired",
 ]);
 
 // ============================================================================
@@ -38,21 +35,19 @@ export const orgInvitationStatusEnum = pgEnum('org_invitation_status', [
  * We add custom fields: isPersonal, stripeCustomerId.
  */
 export const organization = pgTable(
-  'organization',
-  {
-    id: text('id').primaryKey(),
-    name: text('name').notNull(),
-    slug: text('slug').notNull().unique(),
-    logo: text('logo'),
-    metadata: text('metadata'), // JSON string, used by Better Auth
-    // Custom fields
-    isPersonal: boolean('is_personal').notNull().default(false),
-    stripeCustomerId: text('stripe_customer_id'),
-    createdAt: timestamp('created_at').notNull().default(sql`now()`),
-  },
-  (t) => [
-    index('organization_slug_idx').on(t.slug),
-  ]
+	"organization",
+	{
+		id: text("id").primaryKey(),
+		name: text("name").notNull(),
+		slug: text("slug").notNull().unique(),
+		logo: text("logo"),
+		metadata: text("metadata"), // JSON string, used by Better Auth
+		// Custom fields
+		isPersonal: boolean("is_personal").notNull().default(false),
+		stripeCustomerId: text("stripe_customer_id"),
+		createdAt: timestamp("created_at").notNull().default(sql`now()`),
+	},
+	(t) => [index("organization_slug_idx").on(t.slug)],
 );
 
 // ============================================================================
@@ -65,23 +60,23 @@ export const organization = pgTable(
  * Better Auth expects: id, userId, organizationId, role, createdAt.
  */
 export const member = pgTable(
-  'member',
-  {
-    id: text('id').primaryKey(),
-    userId: text('user_id')
-      .notNull()
-      .references(() => user.id, { onDelete: 'cascade' }),
-    organizationId: text('organization_id')
-      .notNull()
-      .references(() => organization.id, { onDelete: 'cascade' }),
-    role: text('role').notNull().default('member'),
-    createdAt: timestamp('created_at').notNull().default(sql`now()`),
-  },
-  (t) => [
-    uniqueIndex('member_org_user_idx').on(t.organizationId, t.userId),
-    index('member_user_id_idx').on(t.userId),
-    index('member_org_id_idx').on(t.organizationId),
-  ]
+	"member",
+	{
+		id: text("id").primaryKey(),
+		userId: text("user_id")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		organizationId: text("organization_id")
+			.notNull()
+			.references(() => organization.id, { onDelete: "cascade" }),
+		role: text("role").notNull().default("member"),
+		createdAt: timestamp("created_at").notNull().default(sql`now()`),
+	},
+	(t) => [
+		uniqueIndex("member_org_user_idx").on(t.organizationId, t.userId),
+		index("member_user_id_idx").on(t.userId),
+		index("member_org_id_idx").on(t.organizationId),
+	],
 );
 
 // ============================================================================
@@ -94,25 +89,25 @@ export const member = pgTable(
  * Better Auth expects: id, email, inviterId, organizationId, role, status, expiresAt, createdAt.
  */
 export const invitation = pgTable(
-  'invitation',
-  {
-    id: text('id').primaryKey(),
-    email: text('email').notNull(),
-    inviterId: text('inviter_id')
-      .notNull()
-      .references(() => user.id, { onDelete: 'cascade' }),
-    organizationId: text('organization_id')
-      .notNull()
-      .references(() => organization.id, { onDelete: 'cascade' }),
-    role: text('role').notNull().default('member'),
-    status: orgInvitationStatusEnum('status').notNull().default('pending'),
-    expiresAt: timestamp('expires_at').notNull(),
-    createdAt: timestamp('created_at').notNull().default(sql`now()`),
-  },
-  (t) => [
-    index('invitation_org_id_idx').on(t.organizationId),
-    index('invitation_email_idx').on(t.email),
-  ]
+	"invitation",
+	{
+		id: text("id").primaryKey(),
+		email: text("email").notNull(),
+		inviterId: text("inviter_id")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		organizationId: text("organization_id")
+			.notNull()
+			.references(() => organization.id, { onDelete: "cascade" }),
+		role: text("role").notNull().default("member"),
+		status: orgInvitationStatusEnum("status").notNull().default("pending"),
+		expiresAt: timestamp("expires_at").notNull(),
+		createdAt: timestamp("created_at").notNull().default(sql`now()`),
+	},
+	(t) => [
+		index("invitation_org_id_idx").on(t.organizationId),
+		index("invitation_email_idx").on(t.email),
+	],
 );
 
 // ============================================================================

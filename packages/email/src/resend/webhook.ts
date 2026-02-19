@@ -10,23 +10,23 @@
  * Docs: https://resend.com/docs/webhooks/verify-webhooks-requests
  */
 
-import { createResendClient } from './client';
+import { createResendClient } from "./client";
 
 // Re-export the SDK's webhook event types for consumers
 export type {
-  EmailReceivedEvent,
-  WebhookEventPayload,
-} from 'resend';
+	EmailReceivedEvent,
+	WebhookEventPayload,
+} from "resend";
 
 export interface VerifyWebhookInput {
-  /** Raw request body as string */
-  payload: string;
-  /** Svix headers from the request */
-  svixId: string;
-  svixTimestamp: string;
-  svixSignature: string;
-  /** Webhook signing secret from Resend dashboard */
-  webhookSecret: string;
+	/** Raw request body as string */
+	payload: string;
+	/** Svix headers from the request */
+	svixId: string;
+	svixTimestamp: string;
+	svixSignature: string;
+	/** Webhook signing secret from Resend dashboard */
+	webhookSecret: string;
 }
 
 /**
@@ -36,16 +36,16 @@ export interface VerifyWebhookInput {
  * @returns The parsed and verified webhook payload
  */
 export function verifyResendWebhook(input: VerifyWebhookInput) {
-  const resend = createResendClient();
+	const resend = createResendClient();
 
-  // resend.webhooks.verify() throws if invalid, returns parsed payload on success
-  return resend.webhooks.verify({
-    payload: input.payload,
-    headers: {
-      id: input.svixId,
-      timestamp: input.svixTimestamp,
-      signature: input.svixSignature,
-    },
-    webhookSecret: input.webhookSecret,
-  });
+	// resend.webhooks.verify() throws if invalid, returns parsed payload on success
+	return resend.webhooks.verify({
+		payload: input.payload,
+		headers: {
+			id: input.svixId,
+			timestamp: input.svixTimestamp,
+			signature: input.svixSignature,
+		},
+		webhookSecret: input.webhookSecret,
+	});
 }

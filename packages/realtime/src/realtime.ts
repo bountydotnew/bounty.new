@@ -1,11 +1,11 @@
-import { Realtime, type InferRealtimeEvents } from '@upstash/realtime';
-import { redis } from './redis';
-import { z } from 'zod';
+import { Realtime, type InferRealtimeEvents } from "@upstash/realtime";
+import { redis } from "./redis";
+import { z } from "zod";
 
 const schema = {
-  notifications: {
-    refresh: z.object({ userId: z.string(), ts: z.number() }),
-  },
+	notifications: {
+		refresh: z.object({ userId: z.string(), ts: z.number() }),
+	},
 };
 
 export const realtime = new Realtime({ schema, redis });

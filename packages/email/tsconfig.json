@@ -1,13 +1,13 @@
 {
-  "extends": "@bounty/typescript-config/base.json",
-  "compilerOptions": {
-    "rootDir": "src",
-    "moduleResolution": "bundler",
-    "jsx": "react-jsx",
-    "declaration": true,
-    "emitDeclarationOnly": false,
-    "types": []
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+	"extends": "@bounty/typescript-config/base.json",
+	"compilerOptions": {
+		"rootDir": "src",
+		"moduleResolution": "bundler",
+		"jsx": "react-jsx",
+		"declaration": true,
+		"emitDeclarationOnly": false,
+		"types": []
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "dist"]
 }

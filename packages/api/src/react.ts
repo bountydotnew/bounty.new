@@ -5,7 +5,7 @@
  * that sets up the actual tRPC client (e.g., apps/web/src/utils/trpc.ts)
  */
 
-export type { AppRouter } from './routers';
+export type { AppRouter } from "./routers";
 
 // Re-export types that applications may need
-export type { AppRouter as AppRouterType } from './routers';
+export type { AppRouter as AppRouterType } from "./routers";
