@@ -139,3 +139,5 @@ bun dev
 ---
 
 Ready to earn? Start contributing to bounty.new.
+
+- [Contributing](CONTRIBUTING.md)
