@@ -33,3 +33,6 @@ docs/STRIPE_WEBHOOK_SETUP.md
 /bugs
 task-*.md
 tasks.md
+/pencil
+*.pen
+*.txt

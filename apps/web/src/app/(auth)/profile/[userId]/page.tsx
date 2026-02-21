@@ -49,10 +49,10 @@ export async function generateMetadata({
     : `${baseUrl}/api/og-image/profile/${profileUser.id}`;
 
   return {
-    title: `@${profileUser.handle || profileUser.id} - ${displayName}`,
+    title: `@${profileUser.handle || displayName} — bounty`,
     description: `View ${displayName}'s profile on bounty.new`,
     openGraph: {
-      title: `@${profileUser.handle || profileUser.id} - ${displayName}`,
+      title: `@${profileUser.handle || displayName} — bounty`,
       description: `View ${displayName}'s profile on bounty.new`,
       images: ogImageUrl
         ? [

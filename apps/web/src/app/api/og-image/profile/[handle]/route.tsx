@@ -68,20 +68,16 @@ function UserBadgePill({
     <div
       style={{
         display: 'flex',
-        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'flex-start',
       }}
     >
       <div
         style={{
           display: 'flex',
-          flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'flex-start',
-          gap: '11px',
-          backgroundColor: '#313131',
-          borderRadius: '29px',
+          gap: '8px',
+          backgroundColor: '#26251E',
+          borderRadius: '999px',
           padding: '11px 17px 11px 13px',
           height: '74px',
         }}
@@ -89,110 +85,83 @@ function UserBadgePill({
         <div
           style={{
             display: 'flex',
-            flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '9px',
+            backgroundColor: '#FB6B28',
+            borderRadius: '50%',
+            width: '52px',
+            height: '52px',
+            overflow: 'hidden',
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: userData.image ? 'transparent' : '#FB6B28',
-              borderRadius: '17px',
-              width: '52px',
-              height: '52px',
-              outline: '3px solid #C95901',
-              outlineOffset: '-3px',
-              overflow: 'hidden',
-            }}
-          >
-            {avatarDataUrl ? (
-              // biome-ignore lint/performance/noImgElement: Required for OG image rendering
-              <img
-                src={avatarDataUrl}
-                alt=""
-                width={52}
-                height={52}
-                style={{
-                  width: '52px',
-                  height: '52px',
-                  objectFit: 'cover',
-                  borderRadius: '17px',
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  color: '#FFFFFF',
-                  fontFamily: 'system-ui, sans-serif',
-                  fontSize: '40px',
-                  fontWeight: 500,
-                  lineHeight: '48px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                {firstLetter}
-              </div>
-            )}
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
+          {avatarDataUrl ? (
+            <img
+              src={avatarDataUrl}
+              alt=""
+              width={52}
+              height={52}
+              style={{
+                width: '52px',
+                height: '52px',
+                objectFit: 'cover',
+                borderRadius: '50%',
+              }}
+            />
+          ) : (
             <div
               style={{
                 color: '#FFFFFF',
-                fontFamily: '"Inter", system-ui, sans-serif',
-                fontSize: '40px',
-                fontWeight: 600,
-                lineHeight: '48px',
-                whiteSpace: 'pre',
+                fontSize: '28px',
+                fontWeight: 500,
+                lineHeight: '34px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              {userData.handle || userData.name || 'User'}
+              {firstLetter}
             </div>
-          </div>
+          )}
         </div>
 
         <div
           style={{
-            width: '32px',
-            height: '32px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <svg
-            width="32"
-            height="32"
-            viewBox="0 0 16 16"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
+          <div
+            style={{
+              color: '#FFFFFF',
+              fontSize: '40px',
+              fontWeight: 600,
+              lineHeight: '48px',
+            }}
           >
-            <path
-              d="M5.33334 6.66675L7.52861 8.86201C7.78896 9.12236 8.21107 9.12236 8.47141 8.86201L10.6667 6.66675"
-              stroke="white"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+            {userData.handle || userData.name || 'User'}
+          </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function BountyLogo() {
+  return (
+    <svg
+      width="23"
+      height="27"
+      viewBox="0 0 18 21"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M10.5939 7.7981C12.364 8.5714 14.4163 7.7412 15.1778 5.9439C15.9393 4.1465 15.1217 2.0626 13.3517 1.2893C11.5816 0.516 9.5294 1.3462 8.7678 3.1436C8.0063 4.9409 8.8239 7.0248 10.5939 7.7981ZM10.5939 7.7981L3.7756 4.8195M1 11.3206L4.2298 12.7316C5.9999 13.5049 8.0521 12.6747 8.8137 10.8774C9.5752 9.08 8.7576 6.9961 6.9876 6.2228L3.7578 4.8118M17 10.5969L13.7702 9.1859C12.0001 8.4126 9.9479 9.2428 9.1863 11.0402L9.1883 20"
+        stroke="#26251E"
+        strokeWidth="2"
+      />
+    </svg>
   );
 }
 
@@ -201,52 +170,32 @@ function OgFooter() {
     <div
       style={{
         position: 'absolute',
-        left: '477px',
-        top: '573px',
+        right: '20px',
+        bottom: '17px',
         display: 'flex',
-        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'flex-end',
-        gap: '10px',
-        padding: '0px 20px',
+        gap: '15px',
       }}
     >
       <div
         style={{
-          color: '#FFFFFF',
-          fontFamily: '"Inter", system-ui, sans-serif',
-          fontSize: '25px',
+          color: '#26251E',
+          fontSize: '35px',
           fontWeight: 600,
-          lineHeight: '30px',
-          whiteSpace: 'pre',
+          lineHeight: '42px',
         }}
       >
         on
       </div>
 
-      <svg
-        fill="none"
-        stroke="#fff"
-        strokeWidth="21.3696"
-        viewBox="0 0 153 179"
-        xmlns="http://www.w3.org/2000/svg"
-        style={{
-          width: '20px',
-          height: '24px',
-        }}
-        aria-hidden="true"
-      >
-        <path d="M91.1385 71.1097C107.031 77.947 125.457 70.6065 132.294 54.7141C139.132 38.8217 131.791 20.3956 115.899 13.5582C100.006 6.72079 81.5803 14.0613 74.7429 29.9537C67.9055 45.8461 75.2461 64.2723 91.1385 71.1097ZM91.1385 71.1097L29.921 44.7722M5 102.256L33.9985 114.732C49.8909 121.57 68.317 114.229 75.1544 98.3367C81.9918 82.4443 74.6513 64.0182 58.7589 57.1808L29.7603 44.7048M148.655 95.8569L119.657 83.3808C103.764 76.5434 85.338 83.8839 78.5006 99.7763L78.5182 179" />
-      </svg>
+      <BountyLogo />
 
       <div
         style={{
-          color: '#FFFFFF',
-          fontFamily: '"Inter", system-ui, sans-serif',
-          fontSize: '25px',
+          color: '#26251E',
+          fontSize: '35px',
           fontWeight: 600,
-          lineHeight: '30px',
-          whiteSpace: 'pre',
+          lineHeight: '42px',
         }}
       >
         bounty.new
@@ -267,54 +216,38 @@ function OgProfileImage({
   return (
     <div
       style={{
-        backgroundColor: '#141414',
-        boxSizing: 'border-box',
+        backgroundColor: '#FFFFFF',
         height: '630px',
         width: '1200px',
         position: 'relative',
         display: 'flex',
-        fontFamily: '"Inter", system-ui, sans-serif',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
     >
       <div
         style={{
-          position: 'absolute',
-          left: '373px',
-          top: '273px',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
+          gap: '10px',
         }}
       >
         <div
           style={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            gap: '10px',
+            color: '#26251E',
+            fontSize: '70px',
+            fontWeight: 600,
+            lineHeight: '84px',
           }}
         >
-          <div
-            style={{
-              color: '#FFFFFF',
-              fontFamily: '"Inter", system-ui, sans-serif',
-              fontSize: '70px',
-              fontWeight: 600,
-              lineHeight: '84px',
-              whiteSpace: 'pre',
-            }}
-          >
-            Say hi to
-          </div>
-
-          <UserBadgePill
-            userData={userData}
-            avatarDataUrl={avatarDataUrl}
-            firstLetter={firstLetter}
-          />
+          Say hi to
         </div>
+
+        <UserBadgePill
+          userData={userData}
+          avatarDataUrl={avatarDataUrl}
+          firstLetter={firstLetter}
+        />
       </div>
 
       <OgFooter />
@@ -347,7 +280,7 @@ export async function GET(
       : null;
 
     async function loadGoogleFont(font: string, text: string) {
-      const url = `https://fonts.googleapis.com/css2?family=${font}:wght@600&text=${encodeURIComponent(text)}`;
+      const url = `https://fonts.googleapis.com/css2?family=${font}:wght@500;600&text=${encodeURIComponent(text)}`;
       try {
         const css = await (await fetch(url)).text();
         const resource = css.match(FONT_URL_REGEX);
@@ -364,8 +297,8 @@ export async function GET(
       return null;
     }
 
-    const fontText = `Say hi to ${userData.handle || userData.name || 'User'}`;
-    const interSemiboldFont = await loadGoogleFont('Inter', fontText);
+    const fontText = `Say hi to ${userData.handle || userData.name || 'User'} on bounty.new ${firstLetter}`;
+    const interFont = await loadGoogleFont('Inter', fontText);
 
     return new ImageResponse(
       <OgProfileImage
@@ -376,11 +309,11 @@ export async function GET(
       {
         width: 1200,
         height: 630,
-        fonts: interSemiboldFont
+        fonts: interFont
           ? [
               {
                 name: 'Inter',
-                data: interSemiboldFont,
+                data: interFont,
                 weight: 600,
                 style: 'normal',
               },
@@ -393,6 +326,7 @@ export async function GET(
       }
     );
   } catch (error) {
+    console.error('OG Image generation error:', error);
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(`Failed to generate OG image: ${errorMessage}`, {
