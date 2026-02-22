@@ -7,6 +7,8 @@ import {
   createRateLimitKey,
   type RateLimitOperation,
 } from './lib/ratelimiter';
+import { member, organization } from '@bounty/db';
+import { eq, and } from 'drizzle-orm';
 
 export const t = initTRPC.context<Context>().create({
   errorFormatter({ shape, error, path }) {
@@ -91,23 +93,100 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   });
 });
 
-export const earlyAccessProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-  const userRole = ctx.session.user.role ?? 'user';
-  if (!['early_access', 'admin'].includes(userRole)) {
+export const earlyAccessProcedure = protectedProcedure.use(
+  async ({ ctx, next }) => {
+    const userRole = ctx.session.user.role ?? 'user';
+    if (!['early_access', 'admin'].includes(userRole)) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Early access required',
+        cause: { reason: 'early_access_required' },
+      });
+    }
+
+    return next({
+      ctx: {
+        ...ctx,
+        session: ctx.session,
+      },
+    });
+  }
+);
+
+// ============================================================================
+// Organization-Scoped Procedures
+// ============================================================================
+
+/**
+ * Procedure that requires an active organization.
+ * Reads `session.activeOrganizationId`, validates membership via `member` table,
+ * and provides `ctx.org` (the organization row) and `ctx.orgMembership` (the member row).
+ */
+export const orgProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  const sessionData = ctx.session as ExtendedAuthSession;
+  const activeOrgId = sessionData.session?.activeOrganizationId;
+
+  if (!activeOrgId) {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: 'No active organization. Please select a team first.',
+      cause: { reason: 'no_active_org' },
+    });
+  }
+
+  // Validate membership in one query (join member + organization)
+  const result = await ctx.db
+    .select({
+      org: organization,
+      membership: member,
+    })
+    .from(member)
+    .innerJoin(organization, eq(organization.id, member.organizationId))
+    .where(
+      and(
+        eq(member.userId, ctx.session.user.id),
+        eq(member.organizationId, activeOrgId)
+      )
+    )
+    .limit(1);
+
+  const row = result[0];
+  if (!row) {
     throw new TRPCError({
       code: 'FORBIDDEN',
-      message: 'Early access required',
-      cause: { reason: 'early_access_required' },
+      message: 'You are not a member of this organization.',
+      cause: { reason: 'forbidden' },
     });
   }
 
   return next({
     ctx: {
       ...ctx,
-      session: ctx.session,
+      org: row.org,
+      orgMembership: row.membership,
     },
   });
 });
+
+/**
+ * Procedure that requires the user to be an **owner** of the active organization.
+ * Extends `orgProcedure` — provides `ctx.org` and `ctx.orgMembership`.
+ */
+export const orgOwnerProcedure = orgProcedure.use(async ({ ctx, next }) => {
+  if (ctx.orgMembership.role !== 'owner') {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'Only team owners can perform this action.',
+      cause: { reason: 'forbidden' },
+    });
+  }
+
+  return next({ ctx });
+});
+
+// ============================================================================
+// Rate-Limited Procedures
+// ============================================================================
 
 /**
  * Rate-limited middleware factory for public procedures
@@ -181,6 +260,37 @@ export const rateLimitedProtectedProcedure = (operation: RateLimitOperation) =>
 // Rate-limited admin procedure
 export const rateLimitedAdminProcedure = (operation: RateLimitOperation) =>
   adminProcedure.use(async ({ ctx, next }) => {
+    const identifier = createRateLimitKey(ctx.session.user.id, ctx.clientIP);
+    const result = await checkRateLimit(identifier, operation);
+
+    if (!result.success) {
+      throw new TRPCError({
+        code: 'TOO_MANY_REQUESTS',
+        message: `Rate limit exceeded. Try again in ${result.retryAfter} seconds.`,
+        cause: {
+          reason: 'rate_limited',
+          retryAfter: result.retryAfter,
+          limit: result.limit,
+          reset: result.reset,
+        },
+      });
+    }
+
+    return next({
+      ctx: {
+        ...ctx,
+        rateLimit: {
+          remaining: result.remaining,
+          limit: result.limit,
+          reset: result.reset,
+        },
+      },
+    });
+  });
+
+// Rate-limited org procedure
+export const rateLimitedOrgProcedure = (operation: RateLimitOperation) =>
+  orgProcedure.use(async ({ ctx, next }) => {
     const identifier = createRateLimitKey(ctx.session.user.id, ctx.clientIP);
     const result = await checkRateLimit(identifier, operation);
 

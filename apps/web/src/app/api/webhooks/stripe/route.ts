@@ -1,15 +1,17 @@
 import { db, bounty, transaction, payout, submission, cancellationRequest, user } from '@bounty/db';
 import { env } from '@bounty/env/server';
 import { constructEvent, stripeClient } from '@bounty/stripe';
-import { and, eq, isNotNull } from 'drizzle-orm';
+import { and, eq, isNotNull, sql } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import {
   getGithubAppManager,
-  createFundedBountyComment,
-  createSubmissionReceivedComment,
 } from '@bounty/api/driver/github-app';
+import {
+  fundedBountyComment,
+  submissionReceivedComment,
+} from '@bounty/api/src/lib/bot-comments';
 import { count } from 'drizzle-orm';
 import { FROM_ADDRESSES, sendEmail, BountyCancellationConfirm } from '@bounty/email';
 import { sendBountyCreatedWebhook } from '@bounty/api/src/lib/use-discord-webhook';
@@ -56,7 +58,7 @@ async function sendFundedBountyWebhook(bountyId: string) {
       .where(eq(user.id, bountyRecord.createdById))
       .limit(1);
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
 
     // Fire-and-forget: don't await, don't let webhook failures affect payment processing
     sendBountyCreatedWebhook({
@@ -122,7 +124,7 @@ async function updateGitHubBotCommentOnFunding(bountyId: string) {
       .where(eq(submission.bountyId, bountyId));
 
     // Create the funded comment
-    const newComment = createFundedBountyComment(
+    const newComment = fundedBountyComment(
       bountyRecord.id,
       submissionCount?.count || 0
     );
@@ -171,7 +173,11 @@ async function updateSubmissionReceivedCommentsOnFunding(bountyId: string) {
     }
 
     const submissionComments = await db
-      .select({ githubCommentId: submission.githubCommentId })
+      .select({
+        githubCommentId: submission.githubCommentId,
+        githubUsername: submission.githubUsername,
+        githubPullRequestNumber: submission.githubPullRequestNumber,
+      })
       .from(submission)
       .where(
         and(
@@ -185,18 +191,22 @@ async function updateSubmissionReceivedCommentsOnFunding(bountyId: string) {
     }
 
     const githubApp = getGithubAppManager();
-    const updatedBody = createSubmissionReceivedComment(true);
 
     await Promise.all(
-      submissionComments.map((record) =>
-        githubApp.editComment(
+      submissionComments.map((record) => {
+        const updatedBody = submissionReceivedComment(
+          true,
+          record.githubUsername || 'contributor',
+          record.githubPullRequestNumber || 0
+        );
+        return githubApp.editComment(
           bountyRecord.githubInstallationId!,
           bountyRecord.githubRepoOwner!,
           bountyRecord.githubRepoName!,
           record.githubCommentId!,
           updatedBody
-        )
-      )
+        );
+      })
     );
 
     console.log(`[Stripe Webhook] Updated ${submissionComments.length} submission comments for bounty ${bountyId}`);
@@ -355,8 +365,10 @@ export async function POST(request: Request) {
             break;
           }
 
-          // Update bounty payment status to held
-          await db
+          // Atomic conditional update — only update if not already held.
+          // This prevents race conditions when checkout.session.completed and
+          // payment_intent.succeeded fire concurrently.
+          const updatedRows = await db
             .update(bounty)
             .set({
               paymentStatus: 'held',
@@ -364,7 +376,18 @@ export async function POST(request: Request) {
               stripePaymentIntentId: paymentIntent.id,
               updatedAt: new Date(),
             })
-            .where(eq(bounty.id, bountyId));
+            .where(
+              and(
+                eq(bounty.id, bountyId),
+                sql`${bounty.paymentStatus} != 'held'`
+              )
+            )
+            .returning({ id: bounty.id });
+
+          if (updatedRows.length === 0) {
+            console.log(`[Stripe Webhook] Bounty ${bountyId} was already updated by a concurrent handler, skipping`);
+            break;
+          }
 
           // Check if transaction already exists (idempotency)
           const [existingTransaction] = await db
@@ -697,7 +720,7 @@ export async function POST(request: Request) {
               react: BountyCancellationConfirm({
                 bountyTitle: bountyRecord.title,
                 bountyUrl: `${baseUrl}/bounty/${bountyRecord.id}`,
-                creatorName: creator.name || 'there',
+                userName: creator.name || 'there',
                 originalAmount: `$${originalAmount.toLocaleString()}`,
                 refundAmount: `$${refundedAmount.toLocaleString()}`,
                 platformFee: `$${platformFee.toLocaleString()}`,

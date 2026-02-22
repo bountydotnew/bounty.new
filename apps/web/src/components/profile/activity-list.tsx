@@ -13,8 +13,8 @@ interface ActivityListProps {
 export function ActivityList({ activities }: ActivityListProps) {
   if (activities.length === 0) {
     return (
-      <div className="flex h-32 items-center justify-center rounded-xl border border-[#232323] border-dashed bg-[#191919]/50">
-        <p className="text-sm text-[#5A5A5A]">No recent activity</p>
+      <div className="flex h-32 items-center justify-center rounded-xl border border-border-subtle border-dashed bg-surface-1/50">
+        <p className="text-sm text-text-tertiary">No recent activity</p>
       </div>
     );
   }
@@ -27,13 +27,13 @@ export function ActivityList({ activities }: ActivityListProps) {
         return (
           <div
             key={`${activity.type}-${activity.id}`}
-            className="flex gap-4 rounded-xl border border-[#232323] bg-[#191919] p-4 transition-colors hover:bg-[#1F1F1F]"
+            className="flex gap-4 rounded-xl border border-border-subtle bg-surface-1 p-4 transition-colors hover:bg-surface-1"
           >
             <div
               className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
                 isBounty
-                  ? 'bg-transparent text-white'
-                  : 'bg-transparent text-white'
+                  ? 'bg-transparent text-foreground'
+                  : 'bg-transparent text-foreground'
               }`}
             >
               {isBounty ? (
@@ -45,10 +45,10 @@ export function ActivityList({ activities }: ActivityListProps) {
 
             <div className="flex flex-col gap-1 min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-[#CFCFCF]">
+                <span className="text-sm font-medium text-text-secondary">
                   {isBounty ? 'Created a bounty' : 'Commented on'}
                 </span>
-                <span className="text-xs text-[#5A5A5A]">
+                <span className="text-xs text-text-tertiary">
                   {formatDistanceToNow(new Date(activity.createdAt), {
                     addSuffix: true,
                   })}
@@ -57,18 +57,18 @@ export function ActivityList({ activities }: ActivityListProps) {
 
               <Link
                 href={`/bounty/${isBounty ? activity.id : activity.data.bountyId}`}
-                className="text-base font-semibold text-white hover:underline truncate"
+                className="text-base font-semibold text-foreground hover:underline truncate"
               >
                 {activity.title}
               </Link>
 
               {isBounty ? (
-                <span className="text-sm text-[#5A5A5A]">
+                <span className="text-sm text-text-tertiary">
                   {Number(activity.data.amount).toLocaleString()}{' '}
                   {activity.data.currency}
                 </span>
               ) : (
-                <p className="text-sm text-[#929292] line-clamp-2">
+                <p className="text-sm text-text-tertiary line-clamp-2">
                   "{activity.data.content}"
                 </p>
               )}

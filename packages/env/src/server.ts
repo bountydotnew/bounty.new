@@ -19,10 +19,9 @@ export const env = createEnv({
     GITHUB_CLIENT_ID: z.string().min(1),
     GITHUB_CLIENT_SECRET: z.string().min(1),
     // Google OAuth
-    // GOOGLE_CLIENT_ID: z.string().min(1),
-    // GOOGLE_CLIENT_SECRET: z.string().min(1),
+    GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+    GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
     // Rate limiting
-    UNKEY_ROOT_KEY: z.string().min(1),
     // Discord webhook
     DISCORD_WEBHOOK_URL: z.string().url().optional(),
     // Bounty feed webhooks (for Discord channel notifications)
@@ -43,19 +42,22 @@ export const env = createEnv({
     STRIPE_PUBLISHABLE_KEY: z.string().min(1),
     STRIPE_CONNECT_WEBHOOK_SECRET: z.string().min(1),
     RESEND_API_KEY: z.string().min(1),
+    RESEND_WEBHOOK_SECRET: z.string().min(1).optional(),
     DEVICE_AUTH_ALLOWED_CLIENT_IDS: z.string().optional().default(''),
+    // Additional trusted origins for Better Auth (comma-separated, dev only)
+    ADDITIONAL_TRUSTED_ORIGINS: z.string().optional().default(''),
     // Upstash Redis
     UPSTASH_REDIS_REST_URL: z.string().url(),
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
     // Cron jobs
     CRON_SECRET: z.string().min(16).optional(),
-    // Helius Solana RPC
-    HELIUS_API_KEY: z.string().min(1).optional(),
-    // Bounty token mint address (Solana SPL token)
-    BOUNTY_TOKEN_MINT_ADDRESS: z.string().min(1).optional(),
     // Discord OAuth
     DISCORD_CLIENT_ID: z.string().min(1).optional(),
     DISCORD_CLIENT_SECRET: z.string().min(1).optional(),
+    // Linear OAuth
+    LINEAR_CLIENT_ID: z.string().min(1).optional(),
+    LINEAR_CLIENT_SECRET: z.string().min(1).optional(),
+    LINEAR_REDIRECT_URI: z.string().url().optional(),
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
@@ -64,9 +66,8 @@ export const env = createEnv({
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
     GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
     GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
-    // GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
-    // GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-    UNKEY_ROOT_KEY: process.env.UNKEY_ROOT_KEY,
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL,
     BOUNTY_FEED_WEBHOOK_URL: process.env.BOUNTY_FEED_WEBHOOK_URL,
     BOUNTY_FUNDED_WEBHOOK_URL: process.env.BOUNTY_FUNDED_WEBHOOK_URL,
@@ -80,16 +81,21 @@ export const env = createEnv({
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
     STRIPE_CONNECT_WEBHOOK_SECRET: process.env.STRIPE_CONNECT_WEBHOOK_SECRET,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
+    RESEND_WEBHOOK_SECRET: process.env.RESEND_WEBHOOK_SECRET,
     DEVICE_AUTH_ALLOWED_CLIENT_IDS: process.env.DEVICE_AUTH_ALLOWED_CLIENT_IDS,
+    ADDITIONAL_TRUSTED_ORIGINS: process.env.ADDITIONAL_TRUSTED_ORIGINS,
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     CRON_SECRET: process.env.CRON_SECRET,
-    // Helius Solana RPC
-    HELIUS_API_KEY: process.env.HELIUS_API_KEY,
-    BOUNTY_TOKEN_MINT_ADDRESS: process.env.BOUNTY_TOKEN_MINT_ADDRESS,
     // Discord
     DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,
     DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET,
+    // Linear
+    LINEAR_CLIENT_ID: process.env.LINEAR_CLIENT_ID,
+    LINEAR_CLIENT_SECRET: process.env.LINEAR_CLIENT_SECRET,
+    LINEAR_REDIRECT_URI: process.env.LINEAR_REDIRECT_URI,
   },
-  skipValidation: process.env.NODE_ENV !== 'production',
+  // Always validate environment variables, even in development
+  // This catches missing critical secrets early
+  skipValidation: false,
 });

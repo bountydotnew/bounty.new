@@ -8,22 +8,6 @@ import { OTPVerification, ForgotPassword } from '@bounty/email';
 export const AUTH_CONFIG = {
   baseURL: env.BETTER_AUTH_URL,
   emailFrom: 'Bounty.new <noreply@mail.bounty.new>',
-  trustedOrigins: [
-    'https://bounty.new',
-    'https://www.bounty.new',
-    // Use specific domains instead of wildcard where possible
-    ...(env.NODE_ENV === 'production'
-      ? []
-      : [
-          'http://localhost:3000',
-          'http://localhost:3001',
-          'https://preview.bounty.new',
-          'http://192.168.1.147:3000',
-          'http://100.*.*.*:3000',
-          'http://172.*.*.*:3000',
-          'https://isiah-unsonant-linn.ngrok-free.dev',
-        ]),
-  ] as const,
 
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days

@@ -236,6 +236,30 @@ export function formatPriceString(price: string | null | undefined): string {
 export const GITHUB_URL_REGEX = /github\.com\/([^/]+)\/([^/]+)/;
 
 /**
+ * Convert number to formatted string with commas (e.g., 1500 -> "1,500", 1500.50 -> "1,500.50")
+ */
+export function stringifyValue(value: number): string {
+  // Only show decimals if the value has them
+  if (Number.isInteger(value)) {
+    return value.toLocaleString('en-US');
+  }
+  return value.toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+}
+
+/**
+ * Parse user input for currency/number values
+ * Handles "1,500", "1500", "$1,500", "1,500.50", etc.
+ */
+export function parseInputValue(input: string): number {
+  const cleaned = input.replace(/[$,\s]/g, '');
+  const parsed = Number.parseFloat(cleaned);
+  return Number.isNaN(parsed) ? 0 : Math.max(0, parsed);
+}
+
+/**
  * Helper to extract owner/repo from repo string (format: "owner/repo")
  * @param repo - Repository string in format "owner/repo"
  * @returns Object with owner and repo, or null if invalid format

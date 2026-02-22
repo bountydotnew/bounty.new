@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { trpc } from '@/utils/trpc';
-import { GITHUB_URL_REGEX } from '@/utils/utils';
+import { GITHUB_URL_REGEX } from '../lib/utils';
 
 export function useRepositories(githubUsername?: string) {
   const {

@@ -43,7 +43,7 @@ export function DescriptionTextarea({
             target.style.height = `${newHeight}px`;
           }}
           placeholder={placeholder}
-          className="flex-1 min-h-[160px] bg-transparent text-white text-[16px] leading-6 outline-none resize-none placeholder:text-[#5A5A5A]"
+          className="flex-1 min-h-[160px] bg-transparent text-foreground text-[16px] leading-6 outline-none resize-none placeholder:text-text-tertiary"
         />
       )}
     />

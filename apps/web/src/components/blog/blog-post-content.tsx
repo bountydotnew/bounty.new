@@ -23,7 +23,7 @@ export function BlogPostContent({
   const authorName = post.authors?.[0]?.name ?? 'Team';
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#0a0a0a] text-white">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       <Header />
 
       {/* Section with Cursor-style spacing */}
@@ -36,15 +36,15 @@ export function BlogPostContent({
                 <nav className="text-[15px]">
                   <Link
                     href="/blog"
-                    className="text-[#666] transition-colors duration-150 hover:text-[#efefef]"
+                    className="text-text-muted transition-colors duration-150 hover:text-foreground"
                   >
                     Blog
                   </Link>
-                  <span className="text-[#444]"> / </span>
+                  <span className="text-text-muted"> / </span>
                   {post.category && (
                     <Link
                       href={`/topic/${post.category.slug}`}
-                      className="capitalize text-[#666] transition-colors duration-150 hover:text-[#efefef]"
+                      className="capitalize text-text-muted transition-colors duration-150 hover:text-foreground"
                     >
                       {post.category.name}
                     </Link>
@@ -59,15 +59,15 @@ export function BlogPostContent({
               <nav className="mb-8 text-[15px] xl:hidden">
                 <Link
                   href="/blog"
-                  className="text-[#666] transition-colors duration-150 hover:text-[#efefef]"
+                  className="text-text-muted transition-colors duration-150 hover:text-foreground"
                 >
                   Blog
                 </Link>
-                <span className="text-[#444]"> / </span>
+                <span className="text-text-muted"> / </span>
                 {post.category && (
                   <Link
                     href={`/topic/${post.category.slug}`}
-                    className="capitalize text-[#666] transition-colors duration-150 hover:text-[#efefef]"
+                    className="capitalize text-text-muted transition-colors duration-150 hover:text-foreground"
                   >
                     {post.category.name}
                   </Link>
@@ -76,10 +76,10 @@ export function BlogPostContent({
 
               {/* Header */}
               <header className="mb-12">
-                <h1 className="text-balance font-display text-4xl tracking-tight text-[#efefef] md:text-5xl">
+                <h1 className="text-balance font-display text-4xl tracking-tight text-foreground md:text-5xl">
                   {post.title}
                 </h1>
-                <div className="mt-5 text-[15px] text-[#666]">
+                <div className="mt-5 text-[15px] text-text-muted">
                   <time
                     dateTime={
                       post.publishedAt instanceof Date
@@ -90,13 +90,13 @@ export function BlogPostContent({
                     {formatDate(post.publishedAt)}
                   </time>
                   {' by '}
-                  <span className="text-[#888]">{authorName}</span>
+                  <span className="text-text-muted">{authorName}</span>
                   {post.category && (
                     <span className="xl:hidden">
                       {' in '}
                       <Link
                         href={`/topic/${post.category.slug}`}
-                        className="capitalize text-[#666] transition-colors duration-150 hover:text-[#efefef]"
+                        className="capitalize text-text-muted transition-colors duration-150 hover:text-foreground"
                       >
                         {post.category.name}
                       </Link>
@@ -106,24 +106,24 @@ export function BlogPostContent({
               </header>
 
               {/* Content */}
-              <div className="prose prose-invert prose-lg max-w-none prose-headings:font-display prose-headings:tracking-tight prose-headings:text-[#efefef] prose-p:text-[#b0b0b0] prose-p:leading-[1.8] prose-a:text-inherit prose-a:underline prose-a:decoration-[#555] hover:prose-a:decoration-[#888] prose-strong:text-[#efefef] prose-blockquote:border-l-[#333] prose-blockquote:pl-6 prose-blockquote:text-[#888] prose-blockquote:italic prose-code:text-[#888] prose-pre:bg-[#111] prose-pre:border prose-pre:border-[#222] prose-hr:border-[#222] prose-img:rounded-xl prose-figcaption:text-[#666] prose-figcaption:text-center prose-li:text-[#b0b0b0]">
+              <div className="prose prose-invert prose-lg max-w-none prose-headings:font-display prose-headings:tracking-tight prose-headings:text-foreground prose-p:text-text-secondary prose-p:leading-[1.8] prose-a:text-inherit prose-a:underline prose-a:decoration-[#555] hover:prose-a:decoration-[#888] prose-strong:text-foreground prose-blockquote:border-l-[#333] prose-blockquote:pl-6 prose-blockquote:text-text-muted prose-blockquote:italic prose-code:text-text-muted prose-pre:bg-background prose-pre:border prose-pre:border-border-subtle prose-hr:border-border-subtle prose-img:rounded-xl prose-figcaption:text-text-muted prose-figcaption:text-center prose-li:text-text-secondary">
                 <Prose html={processedContent} />
               </div>
 
               {/* Footer */}
-              <footer className="mt-16 border-t border-[#222] pt-8">
+              <footer className="mt-16 border-t border-border-subtle pt-8">
                 {post.category && (
                   <p className="text-[15px]">
-                    <span className="text-[#666]">Filed under: </span>
+                    <span className="text-text-muted">Filed under: </span>
                     <Link
                       href={`/topic/${post.category.slug}`}
-                      className="capitalize text-[#efefef] transition-colors duration-150 hover:text-white"
+                      className="capitalize text-foreground transition-colors duration-150 hover:text-foreground"
                     >
                       {post.category.name}
                     </Link>
                   </p>
                 )}
-                <p className="text-[15px] text-[#666]">Author: {authorName}</p>
+                <p className="text-[15px] text-text-muted">Author: {authorName}</p>
               </footer>
             </div>
           </article>
@@ -136,12 +136,12 @@ export function BlogPostContent({
                 {prevPost && (
                   <Link
                     href={`/blog/${prevPost.slug}`}
-                    className="group flex flex-1 flex-col rounded-xl border border-transparent px-6 py-5 text-left transition-all duration-200 hover:border-[#222] hover:bg-[#111]"
+                    className="group flex flex-1 flex-col rounded-xl border border-transparent px-6 py-5 text-left transition-all duration-200 hover:border-border-subtle hover:bg-background"
                   >
-                    <span className="text-[14px] text-[#666]">
+                    <span className="text-[14px] text-text-muted">
                       ← Previous post
                     </span>
-                    <span className="text-[15px] text-[#efefef] transition-colors duration-200 group-hover:text-white">
+                    <span className="text-[15px] text-foreground transition-colors duration-200 group-hover:text-foreground">
                       {prevPost.title}
                     </span>
                   </Link>
@@ -149,10 +149,10 @@ export function BlogPostContent({
                 {nextPost && (
                   <Link
                     href={`/blog/${nextPost.slug}`}
-                    className="group flex flex-1 flex-col rounded-xl border border-transparent px-6 py-5 text-right transition-all duration-200 hover:border-[#222] hover:bg-[#111]"
+                    className="group flex flex-1 flex-col rounded-xl border border-transparent px-6 py-5 text-right transition-all duration-200 hover:border-border-subtle hover:bg-background"
                   >
-                    <span className="text-[14px] text-[#666]">Next post →</span>
-                    <span className="text-[15px] text-[#efefef] transition-colors duration-200 group-hover:text-white">
+                    <span className="text-[14px] text-text-muted">Next post →</span>
+                    <span className="text-[15px] text-foreground transition-colors duration-200 group-hover:text-foreground">
                       {nextPost.title}
                     </span>
                   </Link>

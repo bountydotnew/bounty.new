@@ -6,23 +6,24 @@
   "dependencies": {
     "@bounty/auth": "workspace:*",
     "@bounty/db": "workspace:*",
-    "@bounty/env": "workspace:*",
-    "@bounty/stripe": "workspace:*",
-    "@bounty/realtime": "workspace:*",
     "@bounty/email": "workspace:*",
+    "@bounty/env": "workspace:*",
+    "@bounty/realtime": "workspace:*",
+    "@bounty/stripe": "workspace:*",
     "@bounty/track": "workspace:*",
     "@bounty/types": "workspace:*",
-    "drizzle-orm": "catalog:",
+    "@linear/sdk": "^72.0.0",
+    "@octokit/auth-app": "catalog:",
     "@octokit/core": "catalog:",
     "@octokit/plugin-rest-endpoint-methods": "catalog:",
-    "@octokit/auth-app": "catalog:",
     "@octokit/webhooks-methods": "catalog:",
-    "zod": "catalog:",
     "@trpc/server": "catalog:",
     "@upstash/ratelimit": "catalog:",
+    "bs58": "^6.0.0",
+    "drizzle-orm": "catalog:",
     "lru-cache": "catalog:",
     "tweetnacl": "^1.0.3",
-    "bs58": "^6.0.0"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "typescript": "catalog:"

@@ -1,6 +1,6 @@
 'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from '../avatar';
+import { Avatar, AvatarFacehash, AvatarImage } from '../avatar';
 import { cn } from '../../lib/utils';
 import { X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -20,7 +20,6 @@ export type NotificationToastProps = {
 };
 
 export function NotificationToast({
-  id,
   user,
   message,
   timestamp,
@@ -28,7 +27,6 @@ export function NotificationToast({
   onDismiss,
   onMarkAsRead,
 }: NotificationToastProps) {
-  const userInitial = user.name?.charAt(0).toUpperCase() || 'U';
   const timeAgo = formatDistanceToNow(new Date(timestamp), { addSuffix: true });
 
   return (
@@ -37,36 +35,33 @@ export function NotificationToast({
       <div className="flex items-start gap-3">
         {/* Avatar with action icon overlay */}
         <div className="relative flex-shrink-0">
-          <Avatar className="size-8 rounded-full bg-[#E76800]">
+          <Avatar className="size-8 rounded-full bg-brand-primary">
             {user.image ? (
               <AvatarImage src={user.image} alt={user.name} />
             ) : null}
-            <AvatarFallback className="bg-[#E76800] text-white text-base font-medium">
-              {userInitial}
-            </AvatarFallback>
+            <AvatarFacehash name={user.name} size={32} />
           </Avatar>
           {/* Action icon overlay */}
           {actionIcon && (
-            <div className="absolute -bottom-1.5 -right-1.5">
-              {actionIcon}
-            </div>
+            <div className="absolute -bottom-1.5 -right-1.5">{actionIcon}</div>
           )}
         </div>
 
         {/* User name and timestamp */}
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-xs font-medium text-white leading-[150%] tracking-[-0.03em] whitespace-nowrap">
+          <span className="text-xs font-medium text-foreground leading-[150%] tracking-[-0.03em] whitespace-nowrap">
             {user.name}
           </span>
-          <span className="text-xs text-[#737373] leading-[150%] tracking-[-0.04em] shrink-0 whitespace-nowrap">
+          <span className="text-xs text-text-muted leading-[150%] tracking-[-0.04em] shrink-0 whitespace-nowrap">
             {timeAgo}
           </span>
         </div>
 
         {/* Dismiss button */}
         <button
+          type="button"
           onClick={onDismiss}
-          className="flex-shrink-0 cursor-pointer text-[#5F5F5F] hover:text-white transition-colors ml-auto"
+          className="flex-shrink-0 cursor-pointer text-text-muted hover:text-foreground transition-colors ml-auto"
           aria-label="Dismiss notification"
         >
           <X className="size-4" />
@@ -74,7 +69,7 @@ export function NotificationToast({
       </div>
 
       {/* Message */}
-      <p className="text-[11px] leading-[150%] tracking-[0.01em] text-white font-normal">
+      <p className="text-[11px] leading-[150%] tracking-[0.01em] text-foreground font-normal">
         {message}
       </p>
 
@@ -82,8 +77,9 @@ export function NotificationToast({
       {onMarkAsRead && (
         <div className="flex justify-end">
           <button
+            type="button"
             onClick={onMarkAsRead}
-            className="text-[11px] leading-[150%] tracking-[0.02em] text-right text-[#5F5F5F] font-semibold hover:text-white transition-colors cursor-pointer"
+            className="text-[11px] leading-[150%] tracking-[0.02em] text-right text-text-muted font-semibold hover:text-foreground transition-colors cursor-pointer"
           >
             Mark as Read
           </button>

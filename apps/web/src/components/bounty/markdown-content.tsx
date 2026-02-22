@@ -4,8 +4,27 @@ import { Check, Copy } from 'lucide-react';
 import React, { useState } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
+import Image from 'next/image';
+
+// Custom sanitize schema that allows images from external sources
+const sanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    img: [
+      ...(defaultSchema.attributes?.img || []),
+      'src',
+      'alt',
+      'title',
+      'width',
+      'height',
+      'className',
+    ],
+  },
+  tagNames: [...(defaultSchema.tagNames || []), 'img'],
+};
 
 interface MarkdownContentProps {
   content: string;
@@ -40,7 +59,7 @@ function CopyButton({ text }: CopyButtonProps) {
   return (
     <button
       aria-label={copied ? 'Copied!' : 'Copy to clipboard'}
-      className="rounded bg-neutral-800 p-1.5 text-neutral-400 transition-colors hover:bg-neutral-700 hover:text-white"
+      className="rounded bg-neutral-800 p-1.5 text-neutral-400 transition-colors hover:bg-neutral-700 hover:text-foreground"
       onClick={handleCopy}
       title={copied ? 'Copied!' : 'Copy to clipboard'}
       type="button"
@@ -52,16 +71,22 @@ function CopyButton({ text }: CopyButtonProps) {
 
 const markdownComponents: Components = {
   h1: ({ children }) => (
-    <h1 className="mt-0 mb-4 font-bold text-2xl text-white">{children}</h1>
+    <h1 className="mt-0 mb-4 font-bold text-2xl text-foreground">{children}</h1>
   ),
   h2: ({ children }) => (
-    <h2 className="mt-6 mb-3 font-semibold text-white text-xl">{children}</h2>
+    <h2 className="mt-6 mb-3 font-semibold text-foreground text-xl">
+      {children}
+    </h2>
   ),
   h3: ({ children }) => (
-    <h3 className="mt-5 mb-2 font-medium text-lg text-white">{children}</h3>
+    <h3 className="mt-5 mb-2 font-medium text-lg text-foreground">
+      {children}
+    </h3>
   ),
   h4: ({ children }) => (
-    <h4 className="mt-4 mb-2 font-medium text-base text-white">{children}</h4>
+    <h4 className="mt-4 mb-2 font-medium text-base text-foreground">
+      {children}
+    </h4>
   ),
   p: ({ children }) => {
     const containsOnlyImages = React.Children.toArray(children).every(
@@ -105,23 +130,33 @@ const markdownComponents: Components = {
       {children}
     </Link>
   ),
-  img: ({ src, alt, ...props }) => {
+  img: ({ src, alt, width, height, ...props }) => {
     // Convert Blob to data URL if needed, otherwise use string
     const srcString =
       typeof src === 'string'
         ? src
         : src instanceof Blob
           ? URL.createObjectURL(src)
-          : undefined;
+          : '';
 
+    // Check if this is an external image (from Linear, GitHub, etc.)
+    const isExternalImage =
+      typeof srcString === 'string' &&
+      (srcString.startsWith('http://') || srcString.startsWith('https://'));
+
+    // Use provided width/height or fallback to defaults, convert to numbers if strings
+    const imageWidth = width ? Number(width) : 800;
+    const imageHeight = height ? Number(height) : 400;
+
+    // Use Next.js Image for all sources — unoptimized for external URLs
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      // biome-ignore lint/performance/noImgElement: Markdown content may contain external images that can't use Next.js Image
-      <img
+      <Image
         alt={alt || ''}
         src={srcString}
-        {...props}
-        className="my-3 inline-block h-auto max-w-full border-neutral-800"
+        width={imageWidth}
+        height={imageHeight}
+        className="my-3 inline-block h-auto max-w-full max-h-[400px] object-contain border-neutral-800 dark:border-neutral-700 rounded"
+        unoptimized={isExternalImage}
       />
     );
   },
@@ -182,7 +217,7 @@ const markdownComponents: Components = {
     </table>
   ),
   th: ({ children }) => (
-    <th className="border border-neutral-800 bg-neutral-900 px-4 py-2 text-left font-medium text-white">
+    <th className="border border-neutral-800 bg-neutral-900 px-4 py-2 text-left font-medium text-foreground">
       {children}
     </th>
   ),
@@ -200,11 +235,7 @@ export function MarkdownContent({ content, encoding }: MarkdownContentProps) {
 
   return (
     <div className="prose prose-invert prose-neutral markdown-content max-w-none">
-      {/* eslint-disable-next-line react/no-danger */}
-      {/* biome-ignore lint/security/noDangerouslySetInnerHtml: CSS styles need to be injected for markdown content */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
+      <style>{`
         .markdown-content ul ul,
         .markdown-content ol ol,
         .markdown-content ul ol,
@@ -248,12 +279,10 @@ export function MarkdownContent({ content, encoding }: MarkdownContentProps) {
         .markdown-content ul ul ul {
           list-style-type: square !important;
         }
-      `,
-        }}
-      />
+      `}</style>
       <ReactMarkdown
         components={markdownComponents}
-        rehypePlugins={[rehypeRaw, rehypeSanitize]}
+        rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}
         remarkPlugins={[remarkGfm]}
       >
         {decodedContent}

@@ -10,12 +10,15 @@
     "cssVariables": true,
     "prefix": ""
   },
+  "iconLibrary": "lucide",
   "aliases": {
     "components": "@/components",
-    "hooks": "@/hooks",
-    "lib": "@/lib",
     "utils": "@bounty/ui/lib/utils",
-    "ui": "@bounty/ui/components"
+    "ui": "@bounty/ui/components",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
   },
-  "iconLibrary": "lucide"
+  "registries": {
+    "@coss": "https://coss.com/ui/r/{name}.json"
+  }
 }

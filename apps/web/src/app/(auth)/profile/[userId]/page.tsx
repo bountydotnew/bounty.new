@@ -1,7 +1,9 @@
 import { db } from '@bounty/db';
 import type { Metadata } from 'next';
 import { baseUrl } from '@bounty/ui/lib/constants';
+import { createServerCaller } from '@bounty/api/src/server-caller';
 import ProfilePageClient from './page.client';
+import type { ProfileData } from './hooks/use-profile-data';
 
 export async function generateMetadata({
   params,
@@ -47,10 +49,10 @@ export async function generateMetadata({
     : `${baseUrl}/api/og-image/profile/${profileUser.id}`;
 
   return {
-    title: `@${profileUser.handle || profileUser.id} - ${displayName}`,
+    title: `@${profileUser.handle || displayName} — bounty`,
     description: `View ${displayName}'s profile on bounty.new`,
     openGraph: {
-      title: `@${profileUser.handle || profileUser.id} - ${displayName}`,
+      title: `@${profileUser.handle || displayName} — bounty`,
       description: `View ${displayName}'s profile on bounty.new`,
       images: ogImageUrl
         ? [
@@ -73,6 +75,39 @@ export async function generateMetadata({
   };
 }
 
-export default function ProfilePage() {
-  return <ProfilePageClient />;
+export default async function ProfilePage({
+  params,
+}: {
+  params: Promise<{ userId: string }>;
+}) {
+  const { userId } = await params;
+
+  // Prefetch profile data on server to avoid client-side waterfall
+  let initialData: ProfileData | null = null;
+  try {
+    const caller = await createServerCaller();
+    const apiResponse = await caller.profiles.getProfile({ handle: userId });
+    
+    // Transform API response to ProfileData format
+    if (apiResponse) {
+      initialData = {
+        user: {
+          id: apiResponse.data.user.id,
+          name: apiResponse.data.user.name,
+          handle: apiResponse.data.user.handle ?? null,
+          email: apiResponse.data.user.email ?? null,
+          image: apiResponse.data.user.image,
+          createdAt: String(apiResponse.data.user.createdAt),
+          isProfilePrivate: apiResponse.data.user.isProfilePrivate ?? false,
+        },
+        profile: apiResponse.data.profile as ProfileData['profile'],
+        reputation: apiResponse.data.reputation as ProfileData['reputation'],
+        isPrivate: apiResponse.isPrivate ?? false,
+      };
+    }
+  } catch {
+    // If prefetch fails, client will fetch - no big deal
+  }
+
+  return <ProfilePageClient initialData={initialData} />;
 }

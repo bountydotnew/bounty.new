@@ -24,10 +24,6 @@ interface WaitlistResponse {
   limit: number;
 }
 
-export interface WaitlistCount {
-  count: number;
-}
-
 export interface WaitlistHookResult {
   mutate: (data: WaitlistSubmissionData) => void;
   isPending: boolean;

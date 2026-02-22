@@ -2,16 +2,16 @@
 
 import { cn } from '@bounty/ui/lib/utils';
 import type { Variants } from 'motion/react';
-import { motion, useAnimation } from 'motion/react';
+import { m, useAnimation } from 'motion/react';
 import type { HTMLAttributes } from 'react';
 import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
 
-export interface UserIconHandle {
+export interface AnimatedUserIconHandle {
   startAnimation: () => void;
   stopAnimation: () => void;
 }
 
-interface UserIconProps extends HTMLAttributes<HTMLDivElement> {
+interface AnimatedUserIconProps extends HTMLAttributes<HTMLDivElement> {
   size?: number;
 }
 
@@ -37,7 +37,7 @@ const circleVariant: Variants = {
   },
 };
 
-const UserIcon = forwardRef<UserIconHandle, UserIconProps>(
+const AnimatedUserIcon = forwardRef<AnimatedUserIconHandle, AnimatedUserIconProps>(
   ({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
     const controls = useAnimation();
     const isControlledRef = useRef(false);
@@ -90,7 +90,7 @@ const UserIcon = forwardRef<UserIconHandle, UserIconProps>(
           width={size}
           xmlns="http://www.w3.org/2000/svg"
         >
-          <motion.circle
+          <m.circle
             animate={controls}
             cx="12"
             cy="8"
@@ -98,7 +98,7 @@ const UserIcon = forwardRef<UserIconHandle, UserIconProps>(
             variants={circleVariant}
           />
 
-          <motion.path
+          <m.path
             animate={controls}
             d="M20 21a8 8 0 0 0-16 0"
             transition={{
@@ -113,6 +113,6 @@ const UserIcon = forwardRef<UserIconHandle, UserIconProps>(
   }
 );
 
-UserIcon.displayName = 'UserIcon';
+AnimatedUserIcon.displayName = 'AnimatedUserIcon';
 
-export { UserIcon };
+export { AnimatedUserIcon };

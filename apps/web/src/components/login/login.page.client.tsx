@@ -9,7 +9,7 @@ export default function LoginPageClient() {
   const callbackUrl = callbackParam || LINKS.DASHBOARD;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#111110] text-[#f3f3f3]">
+    <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
       <LoginSection callbackUrl={callbackUrl} />
     </div>
   );

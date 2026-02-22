@@ -8,16 +8,17 @@ import { FeedbackProvider } from '@/components/feedback-context';
 import { FeedbackModal } from '@/components/feedback-modal';
 import { FeedbackOverlay } from '@/components/feedback-overlay';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
+import { Header } from '@/components/dual-sidebar/sidebar-header';
 
 export const metadata: Metadata = {
-  title: 'bounty',
+  title: 'bounty.new',
   description: 'bounty',
   icons: {
     icon: '/favicon/favicon_dark.png',
     apple: '/favicon/favicon_dark.png',
   },
   openGraph: {
-    title: 'bounty - App',
+    title: 'bounty.new',
     description: 'Ship fast, get paid faster.',
     url: 'https://bounty.new',
     siteName: 'bounty',
@@ -63,7 +64,10 @@ export default async function RootLayout({
             <FeedbackModal />
             <FeedbackOverlay />
             <EarlyAccessGuard>
-              <Sidebar admin={false}>{children}</Sidebar>
+              <Sidebar admin={false}>
+                <Header />
+                {children}
+              </Sidebar>
             </EarlyAccessGuard>
           </FeedbackProvider>
         </NuqsAdapter>

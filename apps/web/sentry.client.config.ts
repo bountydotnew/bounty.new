@@ -29,6 +29,16 @@ Sentry.init({
 
   // Filter out errors we don't care about
   beforeSend(event, hint) {
+    // Don't send errors from localhost/development
+    if (
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname.includes('local'))
+    ) {
+      return null;
+    }
+
     const error = hint.originalException;
 
     // Filter out network errors that are temporary

@@ -9,16 +9,14 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { RealtimeProvider } from '@upstash/realtime/client';
 import { AutumnProvider } from 'autumn-js/react';
+import { LazyMotion, domAnimation } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import ImpersonationBanner from '@/components/impersonation-banner';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ConfettiProvider } from '@/context/confetti-context';
 import { UserProvider } from '@/context/user-context';
-import {
-  SessionProvider,
-  useSessionHook,
-} from '@/context/session-context';
-import { TOAST_ICONS, TOAST_OPTIONS } from '@/context/toast';
+import { SessionProvider, useSessionHook } from '@/context/session-context';
+// Note: TOAST_ICONS and TOAST_OPTIONS are no longer used - coss toast has built-in styling
 import { queryClient } from '@/utils/trpc';
 import { FeedbackProvider } from '@/components/feedback-context';
 
@@ -57,37 +55,33 @@ export function Providers({ children }: { children: React.ReactNode }) {
       enableSystem
     >
       <QueryClientProvider client={queryClient}>
-        <RealtimeProvider>
-          <ConfettiProvider>
-            <AutumnProvider includeCredentials>
-              <SessionProvider>
-                <ProvidersInner>{children}</ProvidersInner>
-              </SessionProvider>
-            </AutumnProvider>
-            <Databuddy
-              clientId="bounty"
-              enableBatching={true}
-              trackAttributes={true}
-              trackBounceRate={true}
-              trackEngagement={true}
-              trackErrors={true}
-              trackExitIntent={true}
-              trackHashChanges={true}
-              trackInteractions={true}
-              trackOutgoingLinks={true}
-              trackScrollDepth={true}
-              trackWebVitals={true}
-            />
-          </ConfettiProvider>
-        </RealtimeProvider>
-        <ReactQueryDevtools />
-        <Toaster
-          //icons={TOAST_ICONS}
-          position="bottom-center"
-          richColors
-          toastOptions={TOAST_OPTIONS}
-          visibleToasts={4}
-        />
+        <LazyMotion features={domAnimation} strict>
+          <RealtimeProvider>
+            <ConfettiProvider>
+              <AutumnProvider includeCredentials backendUrl="">
+                <SessionProvider>
+                  <ProvidersInner>{children}</ProvidersInner>
+                </SessionProvider>
+              </AutumnProvider>
+              <Databuddy
+                clientId="bounty"
+                enableBatching={true}
+                trackAttributes={true}
+                trackBounceRate={true}
+                trackEngagement={true}
+                trackErrors={true}
+                trackExitIntent={true}
+                trackHashChanges={true}
+                trackInteractions={true}
+                trackOutgoingLinks={process.env.NODE_ENV !== 'development'}
+                trackScrollDepth={true}
+                trackWebVitals={true}
+              />
+            </ConfettiProvider>
+          </RealtimeProvider>
+          <ReactQueryDevtools />
+          <Toaster position="bottom-center" />
+        </LazyMotion>
       </QueryClientProvider>
     </ThemeProvider>
   );

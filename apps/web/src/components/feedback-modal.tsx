@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useFeedback } from '@/components/feedback-context';
 import { X, Loader2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from "@bounty/ui"
 
 /**
  * Modal component that displays the feedback form.
@@ -183,14 +184,14 @@ export function FeedbackModal() {
     >
       <div
         id="feedback-modal-content"
-        className="w-full max-w-md bg-[#191919] border border-[#232323] rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 transition-opacity"
+        className="w-full max-w-md bg-surface-1 border border-border-subtle rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 transition-opacity"
       >
-        <div className="flex items-center justify-between p-4 border-b border-[#232323]">
-          <h2 className="text-white font-medium text-lg">{ui.title}</h2>
+        <div className="flex items-center justify-between p-4 border-b border-border-subtle">
+          <h2 className="text-foreground font-medium text-lg">{ui.title}</h2>
           <button
             type="button"
             onClick={closeFeedback}
-            className="text-[#929292] hover:text-white transition-colors"
+            className="text-text-tertiary hover:text-foreground transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -201,21 +202,21 @@ export function FeedbackModal() {
             <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mb-4">
               <CheckCircle2 className="w-6 h-6 text-green-500" />
             </div>
-            <h3 className="text-white font-medium text-lg mb-2">
+            <h3 className="text-foreground font-medium text-lg mb-2">
               Feedback Sent!
             </h3>
-            <p className="text-[#929292] text-sm">
+            <p className="text-text-tertiary text-sm">
               Thank you for helping us improve.
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-4 space-y-4">
             {selectedElement && (
-              <div className="p-3 bg-[#141414] rounded-lg border border-[#232323]">
-                <div className="text-[#929292] text-xs uppercase tracking-wider font-semibold mb-1">
+              <div className="p-3 bg-surface-2 rounded-lg border border-border-subtle">
+                <div className="text-text-tertiary text-xs uppercase tracking-wider font-semibold mb-1">
                   Selected Element
                 </div>
-                <div className="text-white font-mono text-sm truncate">
+                <div className="text-foreground font-mono text-sm truncate">
                   {selectedElement.tagName.toLowerCase()}
                   {selectedElement.id ? `#${selectedElement.id}` : ''}
                   {selectedElement.className
@@ -228,7 +229,7 @@ export function FeedbackModal() {
             <div className="space-y-2">
               <label
                 htmlFor="comment"
-                className="text-[#929292] text-sm font-medium"
+                className="text-text-tertiary text-sm font-medium"
               >
                 Describe the issue
               </label>
@@ -237,7 +238,7 @@ export function FeedbackModal() {
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder={ui.placeholder}
-                className="w-full h-32 bg-[#141414] border border-[#232323] rounded-lg p-3 text-white placeholder:text-[#525252] focus:outline-none focus:ring-1 resize-none"
+                className="w-full h-32 bg-surface-2 border border-border-subtle rounded-lg p-3 text-foreground placeholder:text-text-muted focus:outline-none focus:ring-1 resize-none"
                 style={{
                   borderColor:
                     status === 'sending' ? ui.primaryColor : undefined,
@@ -247,18 +248,18 @@ export function FeedbackModal() {
             </div>
 
             {/* Screenshot toggle option */}
-            <div className="flex items-center gap-3 p-3 bg-[#141414] rounded-lg border border-[#232323]">
+            <div className="flex items-center gap-3 p-3 bg-surface-2 rounded-lg border border-border-subtle">
               <input
                 type="checkbox"
                 id="include-screenshot"
                 checked={includeScreenshot}
                 onChange={(e) => setIncludeScreenshot(e.target.checked)}
-                className="w-4 h-4 rounded border-[#232323] bg-[#191919] text-[#E66700] focus:ring-[#E66700] focus:ring-offset-0 cursor-pointer"
+                className="w-4 h-4 rounded border-border-subtle bg-surface-1 text-brand-primary focus:ring-brand-primary focus:ring-offset-0 cursor-pointer"
                 style={{ accentColor: ui.primaryColor as string }}
               />
               <label
                 htmlFor="include-screenshot"
-                className="text-[#929292] text-sm font-medium cursor-pointer flex-1"
+                className="text-text-tertiary text-sm font-medium cursor-pointer flex-1"
               >
                 Include screenshot
               </label>
@@ -268,15 +269,14 @@ export function FeedbackModal() {
               <button
                 type="button"
                 onClick={closeFeedback}
-                className="px-4 py-2 text-[#929292] hover:text-white text-sm font-medium transition-colors"
+                className="px-4 py-2 text-text-tertiary hover:text-foreground text-sm font-medium transition-colors"
               >
                 {ui.cancelLabel}
               </button>
-              <button
+              <Button
                 type="submit"
+                variant="default"
                 disabled={status === 'sending' || !comment.trim()}
-                className="px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: ui.primaryColor }}
               >
                 {status === 'sending' && (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -284,7 +284,7 @@ export function FeedbackModal() {
                 {status === 'sending'
                   ? 'Sending...'
                   : (ui.submitLabel as string)}
-              </button>
+              </Button>
             </div>
           </form>
         )}

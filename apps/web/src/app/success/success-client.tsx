@@ -13,36 +13,29 @@ import { Separator } from '@bounty/ui/components/separator';
 import { useBilling } from '@/hooks/use-billing';
 import { ArrowRight } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useRef, Suspense } from 'react';
 import { Sidebar } from '@/components/dual-sidebar';
 import Bounty from '@/components/icons/bounty';
 import { useConfetti } from '@/context/confetti-context';
 import { PRICING_TIERS } from '@bounty/types';
 
-export function SuccessClient() {
+function SuccessClientInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const checkoutId = searchParams.get('checkout_id');
   const { refetch, customer } = useBilling();
   const { session } = useSession();
   const { celebrate } = useConfetti();
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
     celebrate();
-  }, [celebrate]);
-
-  useEffect(() => {
-    if (!checkoutId) {
-      router.push('/dashboard');
-      return;
+    if (checkoutId) {
+      void refetch();
     }
-
-    refetch();
-  }, [checkoutId, refetch, router]);
-
-  if (!checkoutId) {
-    return null;
-  }
+  }, [checkoutId, celebrate, refetch]);
 
   // Get plan details from the customer's subscription
   const subscription = customer?.subscriptions?.[0];
@@ -76,7 +69,7 @@ export function SuccessClient() {
             </CardHeader>
 
             <CardContent className="space-y-6">
-              <Card className="border-border bg-[#191919]">
+              <Card className="border-border bg-surface-1">
                 <CardHeader>
                   <CardTitle className="font-semibold text-xl">
                     Purchase Summary
@@ -172,5 +165,19 @@ export function SuccessClient() {
         </div>
       </div>
     </Sidebar>
+  );
+}
+
+export function SuccessClient() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <p>Loading...</p>
+        </div>
+      }
+    >
+      <SuccessClientInner />
+    </Suspense>
   );
 }
