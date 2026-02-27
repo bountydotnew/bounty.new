@@ -80,6 +80,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'cdn.discordapp.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'uploads.linear.app',
+      },
     ],
   },
   rewrites() {
@@ -99,9 +103,10 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
   // This is required to support PostHog trailing slash API requests
   skipTrailingSlashRedirect: true,
-  transpilePackages: ['@bounty/ui'],
+  transpilePackages: ['@bounty/ui', 'facehash'],
   turbopack: {
     resolveExtensions: ['.ts', '.tsx', '.js', '.jsx', '.json', '.mjs', '.cjs'],
   },

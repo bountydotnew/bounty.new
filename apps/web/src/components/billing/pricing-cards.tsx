@@ -2,12 +2,22 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PRICING_TIERS, type BountyProPlan } from '@bounty/types';
+import {
+  PRICING_TIERS,
+  getPlanFeatures,
+  calculateBountyCost,
+  type BountyProPlan,
+} from '@bounty/types';
 import { cn } from '@bounty/ui';
 import { useSession } from '@/context/session-context';
 import { useCustomer } from 'autumn-js/react';
 import { toast } from 'sonner';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@bounty/ui/components/tooltip';
+import { useActiveOrg } from '@/hooks/use-active-org';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@bounty/ui/components/tooltip';
 
 const PLAN_ORDER: BountyProPlan[] = [
   'free',
@@ -15,44 +25,6 @@ const PLAN_ORDER: BountyProPlan[] = [
   'tier_2_pro',
   'tier_3_pro_plus',
 ];
-
-const PLAN_FEATURES: Record<BountyProPlan, string[]> = {
-  free: [
-    '1 concurrent bounty',
-    '5% platform fee',
-    'Full platform access',
-    'Standard support',
-  ],
-  tier_1_basic: [
-    'Unlimited concurrent bounties',
-    '$500 fee-free allowance',
-    '0% fee over allowance',
-    'Priority support',
-  ],
-  tier_2_pro: [
-    'Unlimited concurrent bounties',
-    '$5,000 fee-free allowance',
-    '2% fee over allowance',
-    'Priority support',
-    'Advanced analytics',
-  ],
-  tier_3_pro_plus: [
-    'Unlimited concurrent bounties',
-    '$12,000 fee-free allowance',
-    '4% fee over allowance',
-    'Priority support',
-    'Advanced analytics',
-    'Custom integrations',
-  ],
-};
-
-// Yearly pricing (typically ~2 months free)
-const YEARLY_PRICES: Record<BountyProPlan, number> = {
-  free: 0,
-  tier_1_basic: 100, // $10/mo * 10 months
-  tier_2_pro: 250,   // $25/mo * 10 months
-  tier_3_pro_plus: 1500, // $150/mo * 10 months
-};
 
 // Get the base URL for success/redirects
 const getBaseUrl = () => {
@@ -66,32 +38,34 @@ function PricingCard({
   plan,
   isRecommended,
   isYearly,
+  estimatedMonthlySpend,
 }: {
   plan: BountyProPlan;
   isRecommended: boolean;
   isYearly: boolean;
+  estimatedMonthlySpend?: number;
 }) {
   const router = useRouter();
   const { session, isAuthenticated } = useSession();
   const { attach } = useCustomer();
+  const { activeOrgSlug } = useActiveOrg();
   const pricing = PRICING_TIERS[plan];
   const [isLoading, setIsLoading] = useState(false);
 
   // Check if early access mode is enabled
-  const isEarlyAccessEnabled = process.env.NEXT_PUBLIC_EARLY_ACCESS_ENABLED !== 'false';
+  const isEarlyAccessEnabled =
+    process.env.NEXT_PUBLIC_EARLY_ACCESS_ENABLED !== 'false';
 
   // Check if user has early access (early_access or admin role)
-  const hasEarlyAccess = session?.user?.role === 'early_access' || session?.user?.role === 'admin';
+  const hasEarlyAccess =
+    session?.user?.role === 'early_access' || session?.user?.role === 'admin';
 
   // Determine if user can purchase
   const canPurchase = !isEarlyAccessEnabled || hasEarlyAccess;
 
-  const displayPrice = isYearly ? YEARLY_PRICES[plan] : pricing.monthlyPrice;
-  const checkoutSlug = plan === 'free'
-    ? 'free'
-    : isYearly
-      ? `${plan}_yearly`
-      : plan;
+  const displayPrice = isYearly ? pricing.yearlyPrice : pricing.monthlyPrice;
+  const checkoutSlug =
+    plan === 'free' ? 'free' : isYearly ? `${plan}_yearly` : plan;
 
   const handleCheckoutClick = () => {
     // If early access is enabled and user doesn't have access, redirect to early access required
@@ -124,7 +98,9 @@ function PricingCard({
       // forceCheckout: true ensures users always go through the checkout page
       const result = await attach({
         productId: checkoutSlug,
-        successUrl: `${getBaseUrl()}/settings/billing?checkout=success`,
+        successUrl: activeOrgSlug
+          ? `${getBaseUrl()}/${activeOrgSlug}/settings/billing?checkout=success`
+          : `${getBaseUrl()}/dashboard?checkout=success`,
         checkoutSessionParams: {
           cancel_url: `${getBaseUrl()}/pricing`,
         },
@@ -165,78 +141,93 @@ function PricingCard({
     <div
       className={cn(
         'group relative flex flex-col justify-between rounded-lg border p-6 transition-all duration-200',
-        'bg-[#1a1a1a]',
+        'bg-surface-1',
         // Recommended card gets highlighted styling
-        isRecommended
-          ? 'border-white/30 bg-[#1f1f1f]'
-          : 'border-[#2a2a2a]'
+        isRecommended ? 'border-white/30 bg-surface-1' : 'border-border-default'
       )}
     >
       {/* Plan Header */}
       <div className="flex-1">
         <div className="flex items-baseline gap-2">
-          <h3 className="text-lg font-medium text-[#efefef]">
+          <h3 className="text-lg font-medium text-foreground">
             {pricing.name}
           </h3>
           {isRecommended && (
-            <span className="text-[#888] text-sm">Recommended</span>
+            <span className="text-text-muted text-sm">Recommended</span>
           )}
         </div>
 
         {/* Price */}
         <div className="mt-2 flex items-baseline gap-0.5">
-          <span className="text-2xl font-medium text-[#888]">
+          <span className="text-2xl font-medium text-text-muted">
             ${displayPrice}
           </span>
-          <span className="text-sm text-[#888]">
+          <span className="text-sm text-text-muted">
             /{isYearly ? 'yr.' : 'mo.'}
           </span>
         </div>
         {isYearly && displayPrice > 0 && (
-          <p className="mt-1 text-xs text-[#666]">
+          <p className="mt-1 text-xs text-text-muted">
             ${Math.round(displayPrice / 12)}/mo. billed annually
           </p>
         )}
 
         {/* Features */}
-        <p className="mt-4 text-sm text-[#888]">
+        <p className="mt-4 text-sm text-text-muted">
           {plan === 'free' ? 'Includes:' : 'Everything in Free, plus:'}
         </p>
         <ul className="mt-3 space-y-2">
-          {PLAN_FEATURES[plan].map((feature) => (
+          {getPlanFeatures(plan).map((feature) => (
             <li
               key={feature}
-              className="flex items-start gap-2 text-sm text-[#efefef]"
+              className="flex items-start gap-2 text-sm text-foreground"
             >
-              <span className="text-[#888]">✓</span>
+              <span className="text-text-muted">✓</span>
               <span>{feature}</span>
             </li>
           ))}
         </ul>
       </div>
 
+      {/* Estimated fees based on spend slider - outside flex-1 so it aligns across cards */}
+      {estimatedMonthlySpend !== undefined &&
+        estimatedMonthlySpend > 0 &&
+        (() => {
+          const { platformFee } = calculateBountyCost(
+            pricing,
+            estimatedMonthlySpend
+          );
+          // Stripe fee: 2.9% + $0.30 per transaction (estimate as single transaction)
+          const stripeFee = estimatedMonthlySpend * 0.029 + 0.3;
+          const totalFees = platformFee + stripeFee;
+
+          return (
+            <div className="mt-4 pt-4 border-t border-border-subtle space-y-1.5">
+              <div className="flex items-baseline justify-between">
+                <span className="text-xs text-text-muted">Platform fee</span>
+                <span className="text-xs text-text-muted">
+                  ${platformFee.toFixed(2)}
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between">
+                <span className="text-xs text-text-muted">Stripe fee</span>
+                <span className="text-xs text-text-muted">
+                  ${stripeFee.toFixed(2)}
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between pt-1.5 border-t border-border-subtle">
+                <span className="text-xs text-text-muted">Total fees</span>
+                <span className="text-sm font-medium text-foreground">
+                  ${totalFees.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          );
+        })()}
+
       {/* CTA Button */}
       <div className="mt-6">
-        {!canPurchase ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span
-                className={cn(
-                  'inline-flex w-full items-center justify-center rounded-full text-sm font-medium transition-colors cursor-not-allowed opacity-70',
-                  isRecommended
-                    ? 'bg-white text-[#0E0E0E]'
-                    : 'bg-[#1a1a1a] text-white border border-[#333]'
-                )}
-                style={{ padding: '.5em 1em .52em' }}
-              >
-                {plan === 'free' ? 'Get Started' : `Get ${pricing.name}`}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Early Access Required - Join the waitlist to get access</p>
-            </TooltipContent>
-          </Tooltip>
-        ) : (
+        {canPurchase ? (
           <button
             type="button"
             onClick={handleCheckoutClick}
@@ -244,8 +235,8 @@ function PricingCard({
             className={cn(
               'w-full rounded-full text-sm font-medium transition-colors',
               isRecommended
-                ? 'bg-white text-[#0E0E0E] hover:bg-[#e5e5e5]'
-                : 'bg-[#1a1a1a] text-white hover:bg-[#252525] border border-[#333]',
+                ? 'bg-foreground text-background hover:opacity-90'
+                : 'bg-surface-1 text-foreground hover:bg-surface-2 border border-border-default',
               isLoading && 'cursor-wait opacity-50'
             )}
             style={{ padding: '.5em 1em .52em' }}
@@ -256,6 +247,25 @@ function PricingCard({
                 ? 'Get Started'
                 : `Get ${pricing.name}`}
           </button>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                className={cn(
+                  'inline-flex w-full items-center justify-center rounded-full text-sm font-medium transition-colors cursor-not-allowed opacity-70',
+                  isRecommended
+                    ? 'bg-foreground text-background'
+                    : 'bg-surface-1 text-foreground border border-border-default'
+                )}
+                style={{ padding: '.5em 1em .52em' }}
+              >
+                {plan === 'free' ? 'Get Started' : `Get ${pricing.name}`}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Early Access Required - Join the waitlist to get access</p>
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
     </div>
@@ -265,9 +275,14 @@ function PricingCard({
 interface PricingCardsProps {
   isYearly?: boolean;
   recommendedPlan?: BountyProPlan;
+  estimatedMonthlySpend?: number;
 }
 
-export function PricingCards({ isYearly = false, recommendedPlan = 'tier_2_pro' }: PricingCardsProps) {
+export function PricingCards({
+  isYearly = false,
+  recommendedPlan = 'tier_2_pro',
+  estimatedMonthlySpend,
+}: PricingCardsProps) {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
       {PLAN_ORDER.map((plan) => (
@@ -276,6 +291,7 @@ export function PricingCards({ isYearly = false, recommendedPlan = 'tier_2_pro' 
           plan={plan}
           isRecommended={plan === recommendedPlan}
           isYearly={isYearly}
+          estimatedMonthlySpend={estimatedMonthlySpend}
         />
       ))}
     </div>

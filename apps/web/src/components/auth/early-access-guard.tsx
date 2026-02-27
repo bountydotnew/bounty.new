@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSession } from '@/context/session-context';
 
 /**
@@ -22,20 +22,16 @@ export function EarlyAccessGuard({
   const { session, isPending } = useSession();
 
   // Check if early access mode is enabled (default: true unless explicitly set to "false")
-  const isEarlyAccessEnabled = process.env.NEXT_PUBLIC_EARLY_ACCESS_ENABLED !== 'false';
+  const isEarlyAccessEnabled =
+    process.env.NEXT_PUBLIC_EARLY_ACCESS_ENABLED !== 'false';
 
-  // Track the last checked session to avoid redundant checks
+  // Track the last checked session and redirect state via refs to avoid cascading setState
   const lastCheckedSessionRef = useRef<string | null>(null);
-  const [hasRedirected, setHasRedirected] = useState(false);
+  const hasRedirectedRef = useRef(false);
 
   useEffect(() => {
     // If early access is disabled, allow everyone
     if (!isEarlyAccessEnabled) {
-      return;
-    }
-
-    // Only redirect client-side to avoid hydration issues
-    if (typeof window === 'undefined') {
       return;
     }
 
@@ -67,13 +63,13 @@ export function EarlyAccessGuard({
     }
 
     // Don't redirect if already redirected
-    if (hasRedirected) {
+    if (hasRedirectedRef.current) {
       return;
     }
 
-    setHasRedirected(true);
+    hasRedirectedRef.current = true;
     router.push('/early-access-required');
-  }, [session, isPending, router, hasRedirected, isEarlyAccessEnabled]);
+  }, [session, isPending, router, isEarlyAccessEnabled]);
 
   // If early access is disabled, allow everyone
   if (!isEarlyAccessEnabled) {

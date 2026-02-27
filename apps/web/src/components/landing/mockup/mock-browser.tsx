@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import type { ReactNode } from 'react';
 import { MockBrowserProvider } from './mock-browser-context';
@@ -35,14 +35,22 @@ function MockBrowserRoot({
         <div className="absolute -inset-0.5 bg-gradient-to-b from-white/[0.08] to-transparent rounded-2xl blur-sm opacity-60" />
 
         {/* Browser frame */}
-        <div className="relative bg-[#0a0a0a] rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)] overflow-hidden border border-[#1f1f1f]">
+        <div className="relative bg-background rounded-2xl shadow-2xl overflow-hidden border border-border-subtle">
           {/* Title bar with headlights */}
-          <div className={`bg-gradient-to-b from-[#1c1c1c] to-[#161616] flex items-center border-b border-[#1f1f1f] ${compact ? 'px-3 py-2' : 'px-4 py-2.5'}`}>
+          <div
+            className={`bg-gradient-to-b from-surface-1 to-surface-1 flex items-center border-b border-border-subtle ${compact ? 'px-3 py-2' : 'px-4 py-2.5'}`}
+          >
             {headlights && (
               <div className={`flex gap-2 ${compact ? 'gap-1.5' : ''}`}>
-                <div className={`rounded-full bg-[#ff5f57] shadow-[0_0_6px_rgba(255,95,87,0.4)] ${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'}`} />
-                <div className={`rounded-full bg-[#febc2e] shadow-[0_0_6px_rgba(254,188,46,0.4)] ${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'}`} />
-                <div className={`rounded-full bg-[#28c840] shadow-[0_0_6px_rgba(40,200,64,0.4)] ${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'}`} />
+                <div
+                  className={`rounded-full bg-destructive shadow-sm shadow-destructive/40 ${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'}`}
+                />
+                <div
+                  className={`rounded-full bg-warning shadow-sm shadow-warning/40 ${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'}`}
+                />
+                <div
+                  className={`rounded-full bg-success shadow-sm shadow-success/40 ${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'}`}
+                />
               </div>
             )}
           </div>

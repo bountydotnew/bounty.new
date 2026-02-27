@@ -39,11 +39,14 @@ export const userProfileCache = new LRUCache<{
       name: string | null;
       email: string;
       image: string | null;
+      handle: string | null;
+      isProfilePrivate: boolean;
       createdAt: Date;
     };
     profile: unknown;
     reputation: unknown;
   };
+  isPrivate?: boolean;
 }>({
   maxSize: 200,
   ttl: 5 * 60 * 1000, // 5 minutes

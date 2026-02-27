@@ -6,7 +6,6 @@ export const env = createEnv({
     // Server URLs
     NEXT_PUBLIC_BASE_URL: z.string().url(),
     // Rate limiting (client-side)
-    NEXT_PUBLIC_UNKEY_ROOT_KEY: z.string().min(1).optional(),
     // PostHog analytics
     NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1),
     NEXT_PUBLIC_POSTHOG_HOST: z.string().url(),
@@ -15,19 +14,15 @@ export const env = createEnv({
       .enum(['development', 'preview', 'production'])
       .optional(),
     NEXT_PUBLIC_VERCEL_URL: z.string().optional(),
-    // Rivet endpoint
-    NEXT_PUBLIC_RIVET_ENDPOINT: z.string().optional(),
     // Stripe
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1),
   },
   experimental__runtimeEnv: {
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
-    NEXT_PUBLIC_UNKEY_ROOT_KEY: process.env.NEXT_PUBLIC_UNKEY_ROOT_KEY,
     NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
     NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
-    NEXT_PUBLIC_RIVET_ENDPOINT: process.env.NEXT_PUBLIC_RIVET_ENDPOINT,
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
   },
   //skipValidation: process.env.NODE_ENV !== "production",

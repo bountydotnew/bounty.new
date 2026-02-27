@@ -28,23 +28,20 @@ export function DevWarningDialog({
   const [dontShowAgain, setDontShowAgain] = useState(false);
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent
-        className="max-w-md border border-[#383838]/40 bg-[#111214]/95 text-white shadow-xl backdrop-blur-md sm:rounded-xl"
-        overlayVariant="default"
-      >
+      <DialogContent className="max-w-md border border-border-default/40 bg-surface-1/95 text-foreground shadow-xl backdrop-blur-md sm:rounded-xl">
         <DialogHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-border-default bg-surface-2">
             <Image
               alt="Bounty.new"
               height={32}
-              src="/bdn-b-w-trans.png"
+              src="/logo-black.png"
               width={32}
             />
           </div>
           <DialogTitle className="font-semibold text-lg tracking-tight">
             Early preview
           </DialogTitle>
-          <DialogDescription className="text-white/60">
+          <DialogDescription className="text-foreground/60">
             This build is unfinished. Features may be missing or unstable.
           </DialogDescription>
         </DialogHeader>
@@ -52,12 +49,12 @@ export function DevWarningDialog({
           <div className="flex items-center gap-2">
             <Checkbox
               checked={dontShowAgain}
-              className="border-neutral-700 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+              className="border-border-default data-[state=checked]:border-primary data-[state=checked]:bg-primary"
               id="dev-hide"
               onCheckedChange={(v) => setDontShowAgain(Boolean(v))}
             />
             <label
-              className="cursor-pointer text-neutral-300 text-sm"
+              className="cursor-pointer text-text-secondary text-sm"
               htmlFor="dev-hide"
             >
               Don&apos;t show this again
@@ -65,7 +62,7 @@ export function DevWarningDialog({
           </div>
           <div className="flex gap-3">
             <Button
-              className="flex-1 border-neutral-700 bg-white/5 text-white hover:bg-white/10"
+              className="flex-1 border-border-default bg-surface-2 text-foreground hover:bg-surface-hover"
               onClick={() => onOkay(dontShowAgain)}
               variant="outline"
             >

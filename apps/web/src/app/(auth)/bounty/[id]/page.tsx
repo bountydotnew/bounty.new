@@ -1,6 +1,7 @@
 import { db } from '@bounty/db';
 import type { Metadata } from 'next';
 import { baseUrl } from '../../../../../../../packages/ui/src/lib/constants';
+import { createServerCaller } from '@bounty/api/src/server-caller';
 import BountyPage from './page.client';
 
 export async function generateMetadata({
@@ -24,7 +25,7 @@ export async function generateMetadata({
   const ogImageUrl = `${baseUrl}/api/og-image/${id}`;
 
   return {
-    title: thisBounty.title,
+    title: `"${thisBounty.title}" - bounty`,
     description: thisBounty.description,
     openGraph: {
       title: thisBounty.title,
@@ -50,6 +51,21 @@ export async function generateMetadata({
   };
 }
 
-export default function Page() {
-  return <BountyPage />;
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+
+  // Prefetch bounty data on server to avoid client-side waterfall
+  let initialData: Awaited<ReturnType<Awaited<ReturnType<typeof createServerCaller>>['bounties']['getBountyDetail']>> | null = null;
+  try {
+    const caller = await createServerCaller();
+    initialData = await caller.bounties.getBountyDetail({ id });
+  } catch {
+    // If prefetch fails, client will fetch - no big deal
+  }
+
+  return <BountyPage initialData={initialData} />;
 }

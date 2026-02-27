@@ -79,7 +79,7 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#111110] text-[#f3f3f3] md:flex-row">
+    <div className="flex min-h-screen flex-col bg-background text-foreground md:flex-row">
       {/* Left Column: Reset Password Section */}
       <div className="flex flex-1 items-center justify-center p-8 md:p-12">
         <div className="w-full max-w-md justify-center flex space-y-8">
@@ -100,7 +100,7 @@ export default function ResetPassword() {
       {/* Right Column: Showcase Section */}
       <div className="hidden flex-1 items-center justify-center lg:flex">
         <div
-          className="relative flex min-h-[95%] flex-1 cursor-pointer items-center justify-center overflow-hidden border border-[#383838] p-8 md:p-12"
+          className="relative flex min-h-[95%] flex-1 cursor-pointer items-center justify-center overflow-hidden border border-border-strong p-8 md:p-12"
           onMouseLeave={handleMouseLeave}
           onMouseMove={handleMouseMove}
           ref={containerRef}
@@ -108,12 +108,12 @@ export default function ResetPassword() {
           aria-label="Interactive showcase canvas"
           style={{
             backgroundImage:
-              'radial-gradient(circle at 1px 1px, #383838 1px, transparent 0)',
+              'radial-gradient(circle at 1px 1px, var(--surface-3) 1px, transparent 0)',
             backgroundSize: '16px 16px',
             borderRadius: '25px',
             margin: '20px',
             height: '95%',
-            backgroundColor: '#1d1d1d',
+            backgroundColor: 'var(--surface-1)',
           }}
         >
           <svg

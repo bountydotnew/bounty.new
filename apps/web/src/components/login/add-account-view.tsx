@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import AuthForm from '@/components/auth/auth-form';
+import { AddAccountForm } from '@/components/auth/auth-form';
 import Bounty from '@/components/icons/bounty';
 import { LINKS } from '@/constants';
 import { GithubIcon } from '../icons';
@@ -22,7 +22,7 @@ interface AddAccountViewProps {
   };
 }
 
-export function AddAccountView({ callbackUrl, session }: AddAccountViewProps) {
+export function AddAccountView({ session }: AddAccountViewProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -72,7 +72,7 @@ export function AddAccountView({ callbackUrl, session }: AddAccountViewProps) {
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center space-x-3 rounded-lg bg-[#1D1D1D] p-3">
+        <div className="flex items-center space-x-3 rounded-lg bg-surface-1 p-3">
           {session.user.image && (
             <Image
               alt={session.user.name || 'User'}
@@ -83,7 +83,7 @@ export function AddAccountView({ callbackUrl, session }: AddAccountViewProps) {
             />
           )}
           <div className="text-left">
-            <p className="font-medium text-sm text-white">
+            <p className="font-medium text-sm text-foreground">
               {session.user.name}
             </p>
             <p className="text-gray-400 text-xs">{session.user.email}</p>
@@ -92,17 +92,18 @@ export function AddAccountView({ callbackUrl, session }: AddAccountViewProps) {
 
         <div className="space-y-4">
           <div className="space-y-3">
-            <AuthForm callbackUrl={callbackUrl} isAddingAccount={true} />
+            <AddAccountForm />
 
             <Button
-              className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#2A2A28] py-3 font-medium text-gray-200 transition-colors hover:bg-[#383838]"
+              variant="outline"
+              className="flex w-full items-center justify-center gap-3"
               disabled={loading}
               onClick={handleGitHubSignIn}
             >
               {loading ? (
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-black/30 border-t-foreground dark:border-white/30 dark:border-t-white" />
               ) : (
-                <GithubIcon className="h-5 w-5 fill-white" />
+                <GithubIcon className="h-5 w-5 fill-foreground" />
               )}
               {loading ? 'Signing in…' : 'Continue with GitHub'}
             </Button>

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { trpc, trpcClient } from '@/utils/trpc';
 
-export interface InstallationRepos {
+interface InstallationRepos {
   installationId: number;
   accountLogin: string | null;
   accountType: string | null;

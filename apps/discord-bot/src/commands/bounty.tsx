@@ -130,8 +130,12 @@ export function setupBountyCommands(client: Client) {
   const runtime = Runtime.defaultRuntime;
 
   client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
-    if (interaction.commandName !== 'bounty') return;
+    if (!interaction.isChatInputCommand()) {
+      return;
+    }
+    if (interaction.commandName !== 'bounty') {
+      return;
+    }
 
     const subcommand = interaction.options.getSubcommand();
 
@@ -149,7 +153,7 @@ export function setupBountyCommands(client: Client) {
       }
     } catch (error) {
       console.error('Error handling bounty command:', error);
-      if (!interaction.replied && !interaction.deferred) {
+      if (!interaction.replied) {
         await interaction.reply({
           content: `❌ An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`,
           flags: MessageFlags.Ephemeral,

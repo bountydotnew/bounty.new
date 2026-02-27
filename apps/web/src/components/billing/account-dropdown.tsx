@@ -7,15 +7,17 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@bounty/ui/components/dropdown-menu';
 import { useBilling } from '@/hooks/use-billing';
 import { cn } from '@bounty/ui';
-import { LogOut, RotateCcw } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Check, LogOut, Plus, RotateCcw } from 'lucide-react';
+import { useRouter, usePathname } from 'next/navigation';
 import * as React from 'react';
 import { toast } from 'sonner';
-import { LINKS } from '@/constants';
 import type {
   AccountDropdownProps,
   UserDisplayData,
@@ -23,18 +25,36 @@ import type {
 import { AccountSwitcher } from '@/components/auth/account-switcher';
 import { SwitchUsersIcon } from '@bounty/ui/components/icons/huge/switch-users';
 import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear';
-import { SwitchWorkspaceIcon } from '@bounty/ui/components/icons/huge/switch-workspace';
-import { ManageUsersWorkspaceIcon } from '@bounty/ui/components/icons/huge/manage-users-workspace';
+import { SwitchArrowsIcon } from '@bounty/ui/components/icons/huge/switch-arrows';
 import { BillingSettingsIcon } from '@bounty/ui/components/icons/huge/billing-settings';
-import { DropdownIcon } from '@bounty/ui';
 import { Feedback } from '@bounty/ui';
 import { UserIcon } from '@bounty/ui';
+
 import { useFeedback } from '@/components/feedback-context';
+import { useActiveOrg } from '@/hooks/use-active-org';
+import {
+  Avatar,
+  AvatarFacehash,
+  AvatarImage,
+} from '@bounty/ui/components/avatar';
 import { useUser } from '@/context/user-context';
 import { useState, useTransition } from 'react';
 import { PricingDialog } from '@/components/billing/pricing-dialog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { trpcClient } from '@/utils/trpc';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@bounty/ui/components/dialog';
+import { Input } from '@bounty/ui/components/input';
+import { Label } from '@bounty/ui/components/label';
+import { Button } from '@bounty/ui/components/button';
+import { createTeamSchema } from '@bounty/ui/lib/forms';
+import { isReservedSlug } from '@/constants';
 
 // Constants for better maintainability
 const MESSAGES = {
@@ -140,12 +160,349 @@ function useResetOnboarding() {
   return { handleResetOnboarding, pending: pending || mutation.isPending };
 }
 
+// Slugify helper: converts a team name into a URL-safe slug
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+// Create Team Dialog component
+function CreateTeamDialog({
+  open,
+  onOpenChange,
+  onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreated: (orgId: string, slug: string, name: string) => void;
+}) {
+  const [formState, setFormState] = useState({
+    name: '',
+    slug: '',
+    slugTouched: false,
+    isCreating: false,
+    errors: {} as { name?: string; slug?: string },
+  });
+
+  React.useEffect(() => {
+    if (!open) {
+      setFormState({
+        name: '',
+        slug: '',
+        slugTouched: false,
+        isCreating: false,
+        errors: {},
+      });
+    }
+  }, [open]);
+
+  const { name, slug, slugTouched, isCreating, errors } = formState;
+
+  const validate = (fields: { name: string; slug: string }) => {
+    const result = createTeamSchema.safeParse(fields);
+    const fieldErrors: { name?: string; slug?: string } = {};
+
+    if (!result.success) {
+      for (const issue of result.error.issues) {
+        const field = issue.path[0] as 'name' | 'slug';
+        if (!fieldErrors[field]) {
+          fieldErrors[field] = issue.message;
+        }
+      }
+    }
+
+    // Reserved slug check (not in the zod schema since it lives in apps/web)
+    if (fields.slug && isReservedSlug(fields.slug)) {
+      fieldErrors.slug = 'This slug is reserved and cannot be used for a team';
+    }
+
+    return fieldErrors;
+  };
+
+  const handleNameChange = (value: string) => {
+    setFormState((prev) => {
+      const newSlug = prev.slugTouched ? prev.slug : slugify(value);
+      return {
+        ...prev,
+        name: value,
+        slug: newSlug,
+        errors: { ...prev.errors, name: undefined },
+      };
+    });
+  };
+
+  const handleSlugChange = (value: string) => {
+    setFormState((prev) => ({
+      ...prev,
+      slugTouched: true,
+      slug: value,
+      errors: { ...prev.errors, slug: undefined },
+    }));
+  };
+
+  const handleBlur = (field: 'name' | 'slug') => {
+    const fieldErrors = validate({ name, slug });
+    setFormState((prev) => ({
+      ...prev,
+      errors: { ...prev.errors, [field]: fieldErrors[field] },
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const fieldErrors = validate({ name, slug });
+    setFormState((prev) => ({ ...prev, errors: fieldErrors }));
+    if (fieldErrors.name || fieldErrors.slug) return;
+
+    setFormState((prev) => ({ ...prev, isCreating: true }));
+    try {
+      const result = await authClient.organization.create({
+        name: name.trim(),
+        slug,
+      });
+
+      if (result.error) {
+        toast.error(result.error.message ?? 'Failed to create team');
+        return;
+      }
+
+      if (result.data?.id) {
+        onCreated(result.data.id, slug, name.trim());
+        onOpenChange(false);
+      }
+      setFormState((prev) => ({ ...prev, isCreating: false }));
+    } catch (err) {
+      console.error('Failed to create team:', err);
+      toast.error('Failed to create team');
+      setFormState((prev) => ({ ...prev, isCreating: false }));
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Create Team</DialogTitle>
+          <DialogDescription>
+            Create a new team to collaborate with others on bounties and
+            integrations.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2 px-4">
+              <Label htmlFor="team-name">
+                Team Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="team-name"
+                aria-invalid={!!errors.name}
+                className="focus-within:border-ring focus-within:ring-ring/50"
+                disabled={isCreating}
+                onBlur={() => handleBlur('name')}
+                onChange={(e) => handleNameChange(e.target.value)}
+                placeholder="Acme Inc"
+                type="text"
+                value={name}
+                maxLength={64}
+              />
+              {errors.name && (
+                <p className="text-destructive text-sm">{errors.name}</p>
+              )}
+            </div>
+
+            <div className="grid gap-2 px-4">
+              <Label htmlFor="team-slug">
+                Team Slug <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="team-slug"
+                aria-invalid={!!errors.slug}
+                className="focus-within:border-ring focus-within:ring-ring/50"
+                disabled={isCreating}
+                onBlur={() => handleBlur('slug')}
+                onChange={(e) => handleSlugChange(e.target.value)}
+                placeholder="acme-inc"
+                type="text"
+                value={slug}
+                maxLength={63}
+              />
+              {errors.slug ? (
+                <p className="text-destructive text-sm">{errors.slug}</p>
+              ) : (
+                <p className="text-muted-foreground text-xs">
+                  Used in URLs: bounty.new/{slug || 'your-slug'}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              disabled={isCreating}
+              onClick={() => onOpenChange(false)}
+              type="button"
+              variant="outline"
+            >
+              Cancel
+            </Button>
+            <Button disabled={isCreating} type="submit">
+              {isCreating ? 'Creating...' : 'Create Team'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Team switcher submenu (inside the account dropdown)
+function TeamSwitcherSubmenu({
+  onClose,
+  onCreateTeam,
+}: {
+  onClose: () => void;
+  onCreateTeam: () => void;
+}) {
+  const { activeOrg, orgs, switchOrg, isLoading } = useActiveOrg();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isSwitching, setSwitching] = React.useState(false);
+
+  const handleSwitch = React.useCallback(
+    async (orgId: string) => {
+      if (orgId === activeOrg?.id) {
+        onClose();
+        return;
+      }
+      setSwitching(true);
+      try {
+        await switchOrg(orgId);
+        const targetOrg = orgs.find((o) => o.id === orgId);
+        if (targetOrg) {
+          // Preserve the current route path when switching workspaces
+          // If on /{currentSlug}/integrations, go to /{newSlug}/integrations
+          // If on /{currentSlug}/settings/billing, go to /{newSlug}/settings/billing
+          const currentSlug = activeOrg?.slug;
+          if (currentSlug && pathname?.startsWith(`/${currentSlug}`)) {
+            const newPath = pathname.replace(
+              `/${currentSlug}`,
+              `/${targetOrg.slug}`
+            );
+            router.push(newPath);
+          } else {
+            // Default to integrations if not on a workspace-specific route
+            router.push(`/${targetOrg.slug}/integrations`);
+          }
+        }
+        onClose();
+        setSwitching(false);
+      } catch (err) {
+        console.error('Failed to switch team:', err);
+        toast.error('Failed to switch team');
+        setSwitching(false);
+      }
+    },
+    [activeOrg?.id, activeOrg?.slug, orgs, switchOrg, onClose, router, pathname]
+  );
+
+  const handleCreateTeam = React.useCallback(() => {
+    onClose();
+    // Small delay to let the dropdown close before opening the dialog
+    setTimeout(() => onCreateTeam(), 150);
+  }, [onClose, onCreateTeam]);
+
+  return (
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger className="flex items-center justify-between rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover">
+        <div className="flex items-center gap-2.25">
+          <SwitchArrowsIcon className="h-[19px] w-[19px]" />
+          <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
+            Switch team
+          </span>
+        </div>
+      </DropdownMenuSubTrigger>
+      <DropdownMenuSubContent className="w-64 rounded-[15px] bg-surface-1 border border-border-subtle">
+        <div className="px-1 py-1">
+          <div className="px-1.5 py-1.5 text-xs font-medium text-text-tertiary uppercase tracking-wider">
+            Teams
+          </div>
+          {isLoading ? (
+            <div className="px-3 py-2 text-[14px] text-text-tertiary">
+              Loading...
+            </div>
+          ) : (
+            orgs.map((org) => (
+              <DropdownMenuItem
+                key={org.id}
+                className={cn(
+                  'flex items-center gap-2.5 rounded-[10px] px-1 py-2 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover cursor-pointer',
+                  isSwitching && 'opacity-50 pointer-events-none'
+                )}
+                onClick={() => handleSwitch(org.id)}
+              >
+                <Avatar className="h-6 w-6 rounded-[5px] shrink-0">
+                  {org.logo && (
+                    <AvatarImage
+                      alt={org.name}
+                      src={org.logo}
+                      className="rounded-[5px]"
+                    />
+                  )}
+                  <AvatarFacehash
+                    name={org.slug}
+                    size={24}
+                    className="rounded-[5px]"
+                  />
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[15px] font-medium leading-tight truncate">
+                    {org.isPersonal
+                      ? org.name.split("'s team")[0] || org.name
+                      : org.name}
+                  </div>
+                  <div className="text-[12px] text-text-tertiary">
+                    {org.isPersonal
+                      ? 'Personal'
+                      : `${org.memberCount} ${org.memberCount === 1 ? 'member' : 'members'}`}
+                  </div>
+                </div>
+                {org.id === activeOrg?.id && (
+                  <Check className="h-4 w-4 shrink-0 text-brand-primary" />
+                )}
+              </DropdownMenuItem>
+            ))
+          )}
+        </div>
+        <DropdownMenuSeparator />
+        <div className="px-1 py-1">
+          <DropdownMenuItem
+            className="flex items-center gap-2.5 rounded-[10px] px-1 py-0 text-text-tertiary transition-colors hover:text-foreground focus:bg-surface-hover cursor-pointer"
+            onClick={handleCreateTeam}
+          >
+            <div className="flex h-6 w-6 items-center justify-center rounded-[5px] border border-border-subtle border-dashed">
+              <Plus className="h-3.5 w-3.5" />
+            </div>
+            <span className="text-[15px] font-medium">Create team</span>
+          </DropdownMenuItem>
+        </div>
+      </DropdownMenuSubContent>
+    </DropdownMenuSub>
+  );
+}
+
 // Main component
 export function AccountDropdown({
   user,
   children,
   onOpenChange: externalOnOpenChange,
-  onUpgradeClick,
 }: AccountDropdownProps & {
   children?: React.ReactNode;
   onOpenChange?: (open: boolean) => void;
@@ -153,7 +510,9 @@ export function AccountDropdown({
   const router = useRouter();
   const { session } = useSession();
   const { user: currentUser } = useUser();
+  const { activeOrgSlug, switchOrg } = useActiveOrg();
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const [createTeamOpen, setCreateTeamOpen] = React.useState(false);
 
   const handleOpenChange = React.useCallback(
     (open: boolean) => {
@@ -164,7 +523,7 @@ export function AccountDropdown({
   );
 
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
-  const handleUpgrade = async () => {
+  const handleUpgrade = () => {
     if (!session?.user) {
       toast.error('Please sign in to upgrade your account.');
       return;
@@ -177,7 +536,8 @@ export function AccountDropdown({
   const userDisplay = useUserDisplay(session?.user, user);
   const handleBillingPortal = useBillingPortal();
   const { handleSignOut, pending: signOutPending } = useSignOut();
-  const { handleResetOnboarding, pending: resetOnboardingPending } = useResetOnboarding();
+  const { handleResetOnboarding, pending: resetOnboardingPending } =
+    useResetOnboarding();
   const { startSelection } = useFeedback();
 
   const profileHref = currentUser?.handle
@@ -206,15 +566,19 @@ export function AccountDropdown({
           )}
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent className="rounded-[15px] w-74 bg-nav-active-bg border border-card-border-color">
+        <DropdownMenuContent
+          align="start"
+          alignOffset={4}
+          className="rounded-[15px] w-74 bg-surface-1 border border-border-subtle"
+        >
           {/* User header section */}
-          <div className="flex flex-col gap-1.5 border-b border-[#292828] px-4 py-1.5">
+          <div className="flex flex-col gap-1.5 border-b border-border-subtle px-4 py-1.5">
             <div className="flex items-center justify-between">
               <div className="flex flex-col gap-0">
-                <div className="text-lg font-medium leading-[150%] text-text-workspace">
+                <div className="text-lg font-medium leading-[150%] text-foreground">
                   {userDisplay.name}
                 </div>
-                <div className="text-base font-medium leading-[150%] tracking-[0.03em] text-[#999999]">
+                <div className="text-base font-medium leading-[150%] tracking-[0.03em] text-text-muted">
                   {userDisplay.email}
                 </div>
               </div>
@@ -233,7 +597,7 @@ export function AccountDropdown({
               />
             </div>
             <button
-              className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleProfileNavigation}
               disabled={!profileHref}
               type="button"
@@ -244,10 +608,14 @@ export function AccountDropdown({
               </span>
             </button>
             <button
-              className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-white"
+              className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-foreground"
               onClick={() => {
                 setMenuOpen(false);
-                router.push(LINKS.SETTINGS);
+                if (activeOrgSlug) {
+                  router.push(`/${activeOrgSlug}/settings/account`);
+                } else {
+                  router.push('/dashboard');
+                }
               }}
               type="button"
             >
@@ -259,44 +627,20 @@ export function AccountDropdown({
           </div>
 
           {/* Actions section */}
-          <div className="flex flex-col gap-2 border-b border-[#292828] px-0 py-2">
+          <div className="flex flex-col gap-2 border-b border-border-subtle px-0 py-2">
+            <TeamSwitcherSubmenu
+              onClose={() => setMenuOpen(false)}
+              onCreateTeam={() => setCreateTeamOpen(true)}
+            />
             <DropdownMenuItem
-              className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
+              className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"
               onClick={() => {
                 setMenuOpen(false);
-                handleUpgrade();
-              }}
-            >
-              <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
-                Upgrade
-              </span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="flex items-center justify-between rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
-              onClick={() => setMenuOpen(false)}
-            >
-              <div className="flex items-center gap-2.25">
-                <SwitchWorkspaceIcon className="h-[19px] w-[19px]" />
-                <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
-                  Switch workspace
-                </span>
-              </div>
-              <DropdownIcon className="h-[19px] w-[19px] -rotate-90" />
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
-              onClick={() => setMenuOpen(false)}
-            >
-              <ManageUsersWorkspaceIcon className="h-[19px] w-[19px]" />
-              <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
-                Manage members
-              </span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
-              onClick={() => {
-                setMenuOpen(false);
-                handleBillingPortal();
+                if (activeOrgSlug) {
+                  router.push(`/${activeOrgSlug}/settings/billing`);
+                } else {
+                  handleBillingPortal();
+                }
               }}
             >
               <BillingSettingsIcon className="h-[19px] w-[19px]" />
@@ -305,7 +649,7 @@ export function AccountDropdown({
               </span>
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg"
+              className="flex items-center gap-2 rounded-[10px] px-4 py-0.75 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover"
               onClick={() => {
                 setMenuOpen(false);
                 setTimeout(() => startSelection(), 100);
@@ -318,28 +662,9 @@ export function AccountDropdown({
             </DropdownMenuItem>
           </div>
 
-          <DropdownMenuSeparator className="border-[#292828]" />
-
           <DropdownMenuItem
             className={cn(
-              'flex items-center gap-2 rounded-[10px] px-4 py-2 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg',
-              resetOnboardingPending && 'opacity-70'
-            )}
-            disabled={resetOnboardingPending}
-            onClick={() => {
-              setMenuOpen(false);
-              handleResetOnboarding();
-            }}
-          >
-            <RotateCcw className="h-[19px] w-[19px]" />
-            <span className="text-[16px] font-medium leading-[150%] tracking-[0.03em]">
-              Show onboarding
-            </span>
-          </DropdownMenuItem>
-
-          <DropdownMenuItem
-            className={cn(
-              'flex items-center gap-2 rounded-[10px] px-4 py-2 text-text-secondary transition-colors hover:text-white focus:bg-nav-hover-bg',
+              'flex items-center gap-2 rounded-[10px] px-4 py-2 text-text-secondary transition-colors hover:text-foreground focus:bg-surface-hover',
               signOutPending && 'opacity-70'
             )}
             disabled={signOutPending}
@@ -358,6 +683,20 @@ export function AccountDropdown({
       <PricingDialog
         onOpenChange={setPricingDialogOpen}
         open={pricingDialogOpen}
+      />
+      <CreateTeamDialog
+        open={createTeamOpen}
+        onOpenChange={setCreateTeamOpen}
+        onCreated={async (orgId, slug, name) => {
+          try {
+            await switchOrg(orgId);
+            router.push(`/${slug}/integrations`);
+            toast.success(`Team "${name}" created`);
+          } catch (err) {
+            console.error('Failed to switch to new team:', err);
+            toast.error('Team created but failed to switch');
+          }
+        }}
       />
     </>
   );

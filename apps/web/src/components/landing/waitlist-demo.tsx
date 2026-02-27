@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { authClient } from '@bounty/auth/client';
 import { Button } from '@bounty/ui/components/button';
@@ -10,7 +10,6 @@ import { getThumbmark } from '@thumbmarkjs/thumbmarkjs';
 import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -54,7 +53,9 @@ function writeStoredWaitlist(data: WaitlistCookieData) {
 function useWaitlistSubmission(): WaitlistHookResult {
   const { celebrate } = useConfetti();
   const [success, setSuccess] = useState(false);
-  const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitInfo | null>(null);
+  const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitInfo | null>(
+    null
+  );
 
   const { mutate, isPending } = useMutation({
     mutationFn: async ({ email, fingerprintData }: WaitlistSubmissionData) => {
@@ -92,9 +93,11 @@ function useWaitlistSubmission(): WaitlistHookResult {
           callbackURL: '/',
         });
       } else if (error.message.includes('Rate limit exceeded')) {
-        toast.error("Too many attempts. Please try again later.");
+        toast.error('Too many attempts. Please try again later.');
       } else if (error.message.includes('Invalid device fingerprint')) {
-        toast.error('Security validation failed. Please refresh and try again.');
+        toast.error(
+          'Security validation failed. Please refresh and try again.'
+        );
       } else {
         toast.error(error.message || 'Something went wrong. Please try again.');
       }
@@ -104,7 +107,11 @@ function useWaitlistSubmission(): WaitlistHookResult {
   return { mutate, isPending, success, setSuccess, rateLimitInfo };
 }
 
-function WaitlistPage() {
+interface WaitlistPageProps {
+  compact?: boolean;
+}
+
+function WaitlistPage({ compact = false }: WaitlistPageProps) {
   const {
     register,
     handleSubmit,
@@ -114,8 +121,11 @@ function WaitlistPage() {
     defaultValues: { email: '' },
   });
 
-  const [fingerprintData, setFingerprintData] = useState<any>(null);
-  const [fingerprintLoading, setFingerprintLoading] = useState(true);
+  type FingerprintData = Awaited<ReturnType<typeof getThumbmark>>;
+  const [fingerprint, setFingerprint] = useState<{
+    data: FingerprintData | null;
+    loading: boolean;
+  }>({ data: null, loading: true });
   const waitlistSubmission = useWaitlistSubmission();
 
   useEffect(() => {
@@ -128,13 +138,13 @@ function WaitlistPage() {
   useEffect(() => {
     const generateFingerprint = async () => {
       try {
-        setFingerprintLoading(true);
         const result = await getThumbmark();
-        setFingerprintData(result);
+        setFingerprint({ data: result, loading: false });
       } catch {
-        toast.error('Device fingerprinting failed. Please refresh and try again.');
-      } finally {
-        setFingerprintLoading(false);
+        toast.error(
+          'Device fingerprinting failed. Please refresh and try again.'
+        );
+        setFingerprint({ data: null, loading: false });
       }
     };
 
@@ -142,14 +152,17 @@ function WaitlistPage() {
   }, []);
 
   function joinWaitlist({ email }: FormSchema) {
-    if (!fingerprintData) {
-      toast.error('Device fingerprint not ready. Please wait a moment and try again.');
+    if (!fingerprint.data) {
+      toast.error(
+        'Device fingerprint not ready. Please wait a moment and try again.'
+      );
       return;
     }
-    waitlistSubmission.mutate({ email, fingerprintData });
+    waitlistSubmission.mutate({ email, fingerprintData: fingerprint.data });
   }
 
-  const isFormDisabled = waitlistSubmission.isPending || fingerprintLoading || !fingerprintData;
+  const isFormDisabled =
+    waitlistSubmission.isPending || fingerprint.loading || !fingerprint.data;
 
   const waitlistCountQuery = useQuery({
     ...trpc.earlyAccess.getWaitlistCount.queryOptions(),
@@ -159,68 +172,106 @@ function WaitlistPage() {
   const waitlistCount = waitlistCountQuery.data?.count ?? 0;
 
   return (
-    <div className="h-full bg-[#0E0E0E] overflow-auto">
-      <div className="flex flex-col items-center justify-center h-full px-6 py-10">
-        <div className="w-full max-w-sm">
+    <div className="h-full bg-background overflow-auto">
+      <div
+        className={`flex flex-col items-center justify-center h-full ${compact ? 'px-3 py-4' : 'px-6 py-10'}`}
+      >
+        <div className={`w-full ${compact ? 'max-w-xs' : 'max-w-sm'}`}>
           {/* Header */}
-          <div className="text-left mb-8">
-            <h1 className="text-2xl font-medium text-[#efefef] tracking-tight mb-2">
+          <div className={`text-left ${compact ? 'mb-4' : 'mb-8'}`}>
+            <h1
+              className={`${compact ? 'text-lg' : 'text-2xl'} font-medium text-foreground tracking-tight ${compact ? 'mb-1' : 'mb-2'}`}
+            >
               Get early access
             </h1>
-            <p className="text-sm text-[#888] leading-relaxed">
-              Join the waitlist to start creating bounties and getting paid to build.
+            <p
+              className={`${compact ? 'text-xs' : 'text-sm'} text-text-muted leading-relaxed`}
+            >
+              {compact
+                ? 'Join the waitlist to get started.'
+                : 'Join the waitlist to start creating bounties and getting paid to build.'}
             </p>
           </div>
 
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className="text-left py-4">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#6CFF0015] mb-4">
-                <svg className="w-6 h-6 text-[#6CFF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
+              <div
+                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
+              >
+                <svg
+                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.5}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               </div>
-              <h2 className="text-xl font-medium text-[#efefef] mb-1">You're on the list</h2>
-              <p className="text-sm text-[#888] mb-6">
+              <h2
+                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
+              >
+                You're on the list
+              </h2>
+              <p
+                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
+              >
                 We'll reach out when it's your turn.
               </p>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#191919] border border-[#232323]">
-                <span className="text-xs text-[#888]">Position</span>
-                <span className="text-sm font-medium text-[#6CFF0099]">#{waitlistCount}</span>
+              <div
+                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
+              >
+                <span className="text-xs text-text-muted">Position</span>
+                <span
+                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
+                >
+                  #{waitlistCount}
+                </span>
               </div>
             </div>
           ) : (
             <>
               {/* Form */}
-              <form className="mb-6" onSubmit={handleSubmit(joinWaitlist)}>
-                <div className="flex gap-3">
+              <form
+                className={compact ? 'mb-3' : 'mb-6'}
+                onSubmit={handleSubmit(joinWaitlist)}
+              >
+                <div className={`flex ${compact ? 'flex-col gap-2' : 'flex-col sm:flex-row gap-3'}`}>
                   <div className="flex-1">
                     <Input
-                      className="flex-1 border-0 text-white placeholder:text-gray-400"
+                      className="flex-1 border border-border-default text-foreground placeholder:text-text-muted"
                       placeholder="your@email.com"
                       style={{
-                        background: 'rgba(40, 40, 40, 1)',
-                        borderRadius: '14px',
-                        padding: '12px 16px',
-                        height: '44px',
+                        background: 'var(--surface-1)',
+                        borderRadius: compact ? '10px' : '14px',
+                        padding: compact ? '8px 12px' : '12px 16px',
+                        height: compact ? '36px' : '44px',
+                        fontSize: compact ? '13px' : undefined,
                       }}
                       type="email"
                       {...register('email')}
                       disabled={isFormDisabled}
                     />
                     {errors.email && (
-                      <p className="mt-1 text-red-400 text-xs">{errors.email.message}</p>
+                      <p className="mt-1 text-red-400 text-xs">
+                        {errors.email.message}
+                      </p>
                     )}
                   </div>
                   <Button
-                    className="text-black hover:bg-gray-100 font-medium"
+                    className={`text-background hover:opacity-90 font-medium ${compact ? 'text-xs' : 'w-full sm:w-auto'}`}
                     disabled={isFormDisabled}
                     style={{
-                      background: 'rgba(255, 255, 255, 1)',
-                      borderRadius: '14px',
-                      padding: '12px 20px',
-                      height: '44px',
-                      width: '138px',
+                      background: 'var(--foreground)',
+                      borderRadius: compact ? '10px' : '14px',
+                      padding: compact ? '8px 12px' : '12px 20px',
+                      height: compact ? '36px' : '44px',
+                      minWidth: compact ? undefined : '138px',
                     }}
                     type="submit"
                   >
@@ -228,7 +279,10 @@ function WaitlistPage() {
                       'Joining...'
                     ) : (
                       <>
-                        <GithubIcon className="w-4 h-4 mr-1" /> Join Waitlist
+                        <GithubIcon
+                          className={`${compact ? 'w-3 h-3 mr-1' : 'w-4 h-4 mr-1'} text-background`}
+                        />{' '}
+                        {compact ? 'Join' : 'Join Waitlist'}
                       </>
                     )}
                   </Button>
@@ -236,22 +290,54 @@ function WaitlistPage() {
               </form>
 
               {/* Social proof */}
-              <div className="flex items-center gap-3">
+              <div
+                className={`flex items-center ${compact ? 'gap-2' : 'gap-3'}`}
+              >
                 <div className="-space-x-2 flex">
-                  <div className="w-7 h-7 rounded-full border-2 border-[#0E0E0E] overflow-hidden">
-                    <Image alt="waitlist" height={28} src="/nizzy.jpg" width={28} />
+                  <div
+                    className={`${compact ? 'w-5 h-5' : 'w-7 h-7'} rounded-full border-2 border-background overflow-hidden`}
+                  >
+                    <Image
+                      alt="waitlist"
+                      height={compact ? 20 : 28}
+                      src="/nizzy.jpg"
+                      width={compact ? 20 : 28}
+                    />
                   </div>
-                  <div className="w-7 h-7 rounded-full border-2 border-[#0E0E0E] overflow-hidden">
-                    <Image alt="waitlist" height={28} src="/brandon.jpg" width={28} />
+                  <div
+                    className={`${compact ? 'w-5 h-5' : 'w-7 h-7'} rounded-full border-2 border-background overflow-hidden`}
+                  >
+                    <Image
+                      alt="waitlist"
+                      height={compact ? 20 : 28}
+                      src="/brandon.jpg"
+                      width={compact ? 20 : 28}
+                    />
                   </div>
-                  <div className="w-7 h-7 rounded-full border-2 border-[#0E0E0E] overflow-hidden">
-                    <Image alt="waitlist" height={28} src="/adam.jpg" width={28} />
+                  <div
+                    className={`${compact ? 'w-5 h-5' : 'w-7 h-7'} rounded-full border-2 border-background overflow-hidden`}
+                  >
+                    <Image
+                      alt="waitlist"
+                      height={compact ? 20 : 28}
+                      src="/adam.jpg"
+                      width={compact ? 20 : 28}
+                    />
                   </div>
-                  <div className="w-7 h-7 rounded-full border-2 border-[#0E0E0E] overflow-hidden">
-                    <Image alt="waitlist" height={28} src="/ryan.jpg" width={28} />
+                  <div
+                    className={`${compact ? 'w-5 h-5' : 'w-7 h-7'} rounded-full border-2 border-background overflow-hidden`}
+                  >
+                    <Image
+                      alt="waitlist"
+                      height={compact ? 20 : 28}
+                      src="/ryan.jpg"
+                      width={compact ? 20 : 28}
+                    />
                   </div>
                 </div>
-                <span className="text-xs text-[#888]">
+                <span
+                  className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
+                >
                   <NumberFlow value={waitlistCount} />+ on the list
                 </span>
               </div>
@@ -259,7 +345,9 @@ function WaitlistPage() {
           )}
 
           {/* Footer note */}
-          <p className="text-xs text-[#666] mt-8">
+          <p
+            className={`${compact ? 'text-[10px] mt-4' : 'text-xs mt-8'} text-text-muted`}
+          >
             No spam, unsubscribe anytime.
           </p>
         </div>
@@ -268,13 +356,22 @@ function WaitlistPage() {
   );
 }
 
-export function WaitlistDemo() {
+interface WaitlistDemoProps {
+  compact?: boolean;
+}
+
+export function WaitlistDemo({ compact = false }: WaitlistDemoProps) {
   return (
-    <MockBrowser initialUrl="bounty.new/waitlist" headlights>
+    <MockBrowser
+      initialUrl="bounty.new/waitlist"
+      headlights
+      compact={compact}
+      className={compact ? 'h-[340px]' : undefined}
+    >
       <MockBrowser.Toolbar />
       <div className="flex-1 relative overflow-hidden">
         <MockBrowser.Page url="bounty.new/waitlist">
-          <WaitlistPage />
+          <WaitlistPage compact={compact} />
         </MockBrowser.Page>
       </div>
     </MockBrowser>

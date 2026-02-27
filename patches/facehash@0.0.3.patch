@@ -1,0 +1,88 @@
+diff --git a/package.json b/package.json
+index a32e4d0d507c40253dbfcd18bd0de65b665138cc..b1596a16cce607d87a0c872c390457033d1c7edf 100644
+--- a/package.json
++++ b/package.json
+@@ -3,58 +3,15 @@
+   "type": "module",
+   "version": "0.0.3",
+   "private": false,
+-  "author": "Cossistant team",
+-  "description": "Deterministic avatar faces from any string. Lightweight, interactive, pure CSS. Works with any framework.",
+-  "keywords": [
+-    "facehash",
+-    "avatar",
+-    "react",
+-    "react-avatar",
+-    "deterministic",
+-    "generative",
+-    "profile-picture",
+-    "profile-avatar",
+-    "identicon",
+-    "hash",
+-    "face",
+-    "3d",
+-    "interactive",
+-    "gradient",
+-    "typescript",
+-    "accessible",
+-    "headless",
+-    "unstyled",
+-    "css",
+-    "tailwind",
+-    "boring-avatars",
+-    "dicebear",
+-    "jdenticon",
+-    "gravatar-alternative",
+-    "user-avatar",
+-    "default-avatar"
+-  ],
+-  "bugs": {
+-    "url": "https://github.com/cossistantcom/cossistant/issues"
+-  },
+-  "repository": {
+-    "type": "git",
+-    "url": "git+https://github.com/cossistantcom/cossistant.git",
+-    "directory": "packages/facehash"
+-  },
+-  "license": "MIT",
+-  "homepage": "https://cossistant.com",
+   "exports": {
+-    ".": "./src/index.ts"
+-  },
+-  "main": "./src/index.ts",
+-  "module": "./src/index.ts",
+-  "types": "./src/index.ts",
+-  "files": [
+-    "dist"
+-  ],
+-  "devDependencies": {
+-    "@cossistant/typescript-config": "workspace:*"
++    ".": {
++      "types": "./dist/index.d.ts",
++      "import": "./dist/index.js"
++    }
+   },
++  "main": "./dist/index.js",
++  "module": "./dist/index.js",
++  "types": "./dist/index.d.ts",
+   "peerDependencies": {
+     "react": ">=18 <20",
+     "react-dom": ">=18 <20",
+@@ -64,17 +21,5 @@
+     "@types/react": {
+       "optional": true
+     }
+-  },
+-  "publishConfig": {
+-    "access": "public",
+-    "directory": "dist"
+-  },
+-  "scripts": {
+-    "build": "tsdown && bun run prepare-package",
+-    "prepare-package": "bun ../../scripts/prepare-package.ts",
+-    "pub:release": "bun run build && npm publish --access public",
+-    "pub:beta": "bun run build && npm publish --access public --tag beta --no-git-checks",
+-    "lint": "biome check .",
+-    "check-types": "tsc --noEmit --project tsconfig.json"
+   }
+ }

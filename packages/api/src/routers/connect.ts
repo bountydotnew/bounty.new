@@ -1,6 +1,6 @@
 import { db, payout, user } from '@bounty/db';
 import { TRPCError } from '@trpc/server';
-import { eq, desc, sql, or, and } from 'drizzle-orm';
+import { eq, desc, sql, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { protectedProcedure, router } from '../trpc';
 import {
@@ -390,4 +390,104 @@ export const connectRouter = router({
       });
     }
   }),
+
+  getActivity: protectedProcedure
+    .input(
+      z.object({
+        page: z.number().int().positive().default(1),
+        limit: z.number().int().positive().max(100).default(20),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      try {
+        const { payout, bounty: bountyTable } = await import('@bounty/db');
+
+        // Fetch payouts for this user
+        const userPayouts = await db
+          .select({
+            id: payout.id,
+            bountyId: payout.bountyId,
+            amount: payout.amount,
+            status: payout.status,
+            stripeTransferId: payout.stripeTransferId,
+            createdAt: payout.createdAt,
+          })
+          .from(payout)
+          .where(eq(payout.userId, ctx.session.user.id));
+
+        // Fetch bounties created by this user
+        const createdBounties = await db
+          .select({
+            id: bountyTable.id,
+            bountyId: bountyTable.id,
+            amount: bountyTable.amount,
+            status: bountyTable.paymentStatus,
+            stripeTransferId: bountyTable.stripeTransferId,
+            createdAt: bountyTable.createdAt,
+          })
+          .from(bountyTable)
+          .where(eq(bountyTable.createdById, ctx.session.user.id));
+
+        // Combine and format activities
+        const payouts = userPayouts.map((p) => ({ ...p, type: 'payout' as const }));
+        const created = createdBounties.map((b) => ({
+          ...b,
+          type: 'created' as const,
+          status: b.status as string, // payment_status enum to string
+        }));
+
+        // Merge and sort by createdAt desc
+        const allActivities = [...payouts, ...created].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        // Get bounty details for all unique bounty IDs
+        const bountyIds = Array.from(
+          new Set(allActivities.map((a) => a.bountyId).filter(Boolean))
+        );
+
+        const bountyDetails = bountyIds.length > 0
+          ? await db
+              .select({
+                id: bountyTable.id,
+                githubRepoOwner: bountyTable.githubRepoOwner,
+                githubRepoName: bountyTable.githubRepoName,
+                title: bountyTable.title,
+              })
+              .from(bountyTable)
+              .where(inArray(bountyTable.id, bountyIds))
+          : [];
+
+        // Build bounty map
+        const bountyMap = new Map(bountyDetails.map((b) => [b.id, b]));
+
+        // Paginate in memory (simpler than complex SQL UNION)
+        const offset = (input.page - 1) * input.limit;
+        const paginatedActivities = allActivities.slice(offset, offset + input.limit);
+
+        // Enrich with bounty details
+        const enrichedActivity = paginatedActivities.map((activity) => ({
+          ...activity,
+          bounty: bountyMap.get(activity.bountyId) || null,
+        }));
+
+        return {
+          success: true,
+          data: enrichedActivity,
+          pagination: {
+            page: input.page,
+            limit: input.limit,
+            total: allActivities.length,
+            totalPages: Math.ceil(allActivities.length / input.limit),
+          },
+        };
+      } catch (error) {
+        console.error('[getActivity] Error:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to get activity',
+          cause: error,
+        });
+      }
+    }),
 });

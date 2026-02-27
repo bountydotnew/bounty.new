@@ -1,6 +1,10 @@
 'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@bounty/ui/components/avatar';
+import {
+  Avatar,
+  AvatarFacehash,
+  AvatarImage,
+} from '@bounty/ui/components/avatar';
 import { AutocompleteDropdown } from '@bounty/ui/components/autocomplete';
 import { Input } from '@bounty/ui/components/input';
 import {
@@ -12,7 +16,7 @@ import {
 } from '@bounty/ui/components/select';
 import { useQuery } from '@tanstack/react-query';
 import { Search, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import { parseAsString, useQueryState } from 'nuqs';
 import { trpc } from '@/utils/trpc';
 import { Button } from '@bounty/ui/components/button';
@@ -27,18 +31,91 @@ interface Creator {
 export function BountyFilters() {
   const [searchQuery, setSearchQuery] = useQueryState('search', parseAsString);
   const [creatorId, setCreatorId] = useQueryState('creatorId', parseAsString);
-  const [sortBy, setSortBy] = useQueryState('sortBy', parseAsString.withDefault('created_at'));
-  const [sortOrder, setSortOrder] = useQueryState('sortOrder', parseAsString.withDefault('desc'));
+  const [sortBy, setSortBy] = useQueryState(
+    'sortBy',
+    parseAsString.withDefault('created_at')
+  );
+  const [sortOrder, setSortOrder] = useQueryState(
+    'sortOrder',
+    parseAsString.withDefault('desc')
+  );
 
-  const [creatorSearchQuery, setCreatorSearchQuery] = useState('');
-  const [creatorDropdownOpen, setCreatorDropdownOpen] = useState(false);
+  type FilterLocalState = {
+    creatorSearchQuery: string;
+    creatorDropdownOpen: boolean;
+    debouncedCreatorQuery: string;
+    localSearchQuery: string;
+  };
+
+  type FilterAction =
+    | { type: 'SET_CREATOR_SEARCH'; value: string }
+    | { type: 'SET_CREATOR_DROPDOWN'; value: boolean }
+    | { type: 'SET_DEBOUNCED_CREATOR'; value: string }
+    | { type: 'SET_LOCAL_SEARCH'; value: string }
+    | { type: 'SELECT_CREATOR' }
+    | { type: 'CLEAR_CREATOR' }
+    | { type: 'SYNC_SEARCH'; value: string };
+
+  const [filterState, dispatchFilter] = useReducer(
+    (state: FilterLocalState, action: FilterAction): FilterLocalState => {
+      switch (action.type) {
+        case 'SET_CREATOR_SEARCH':
+          return { ...state, creatorSearchQuery: action.value };
+        case 'SET_CREATOR_DROPDOWN':
+          return { ...state, creatorDropdownOpen: action.value };
+        case 'SET_DEBOUNCED_CREATOR':
+          return { ...state, debouncedCreatorQuery: action.value };
+        case 'SET_LOCAL_SEARCH':
+          return { ...state, localSearchQuery: action.value };
+        case 'SELECT_CREATOR':
+          return {
+            ...state,
+            creatorSearchQuery: '',
+            creatorDropdownOpen: false,
+          };
+        case 'CLEAR_CREATOR':
+          return { ...state, creatorSearchQuery: '' };
+        case 'SYNC_SEARCH':
+          return { ...state, localSearchQuery: action.value };
+        default:
+          return state;
+      }
+    },
+    {
+      creatorSearchQuery: '',
+      creatorDropdownOpen: false,
+      debouncedCreatorQuery: '',
+      localSearchQuery: searchQuery || '',
+    }
+  );
+
+  const {
+    creatorSearchQuery,
+    creatorDropdownOpen,
+    debouncedCreatorQuery,
+    localSearchQuery,
+  } = filterState;
+  const setCreatorSearchQuery = useCallback(
+    (v: string) => dispatchFilter({ type: 'SET_CREATOR_SEARCH', value: v }),
+    []
+  );
+  const setCreatorDropdownOpen = useCallback(
+    (v: boolean) => dispatchFilter({ type: 'SET_CREATOR_DROPDOWN', value: v }),
+    []
+  );
+  const setLocalSearchQuery = useCallback(
+    (v: string) => dispatchFilter({ type: 'SET_LOCAL_SEARCH', value: v }),
+    []
+  );
   const creatorInputRef = useRef<HTMLInputElement>(null);
 
   // Debounced search for creators
-  const [debouncedCreatorQuery, setDebouncedCreatorQuery] = useState('');
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedCreatorQuery(creatorSearchQuery);
+      dispatchFilter({
+        type: 'SET_DEBOUNCED_CREATOR',
+        value: creatorSearchQuery,
+      });
     }, 300);
     return () => clearTimeout(timer);
   }, [creatorSearchQuery]);
@@ -67,19 +144,25 @@ export function BountyFilters() {
   const handleCreatorSelect = useCallback(
     (creator: Creator) => {
       setCreatorId(creator.id);
-      setCreatorSearchQuery('');
-      setCreatorDropdownOpen(false);
+      dispatchFilter({ type: 'SELECT_CREATOR' });
     },
     [setCreatorId]
   );
 
   const handleClearCreator = useCallback(() => {
     setCreatorId(null);
-    setCreatorSearchQuery('');
+    dispatchFilter({ type: 'CLEAR_CREATOR' });
   }, [setCreatorId]);
 
-  // Debounced title search - update URL after user stops typing
-  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery || '');
+  // Sync local search with URL search query when it changes externally
+  const prevSearchQueryRef = useRef(searchQuery);
+  useEffect(() => {
+    if (searchQuery !== prevSearchQueryRef.current) {
+      prevSearchQueryRef.current = searchQuery;
+      dispatchFilter({ type: 'SYNC_SEARCH', value: searchQuery || '' });
+    }
+  }, [searchQuery]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       if (localSearchQuery !== searchQuery) {
@@ -88,11 +171,6 @@ export function BountyFilters() {
     }, 300);
     return () => clearTimeout(timer);
   }, [localSearchQuery, searchQuery, setSearchQuery]);
-
-  // Sync local state when URL changes externally
-  useEffect(() => {
-    setLocalSearchQuery(searchQuery || '');
-  }, [searchQuery]);
 
   const handleSortChange = useCallback(
     (value: string) => {
@@ -110,9 +188,9 @@ export function BountyFilters() {
       <div className="flex flex-wrap items-center gap-3">
         {/* Title Search */}
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#666]" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
           <Input
-            className="pl-9 border-[#232323] bg-[#191919] text-white placeholder:text-[#666]"
+            className="pl-9 border-border-subtle bg-surface-1 text-foreground placeholder:text-text-muted"
             onChange={(e) => setLocalSearchQuery(e.target.value)}
             placeholder="Search bounties..."
             value={localSearchQuery}
@@ -124,7 +202,7 @@ export function BountyFilters() {
           <div className="relative">
             <Input
               ref={creatorInputRef}
-              className="pr-8 border-[#232323] bg-[#191919] text-white placeholder:text-[#666]"
+              className="pr-8 border-border-subtle bg-surface-1 text-foreground placeholder:text-text-muted"
               onChange={(e) => {
                 setCreatorSearchQuery(e.target.value);
                 setCreatorDropdownOpen(true);
@@ -134,35 +212,47 @@ export function BountyFilters() {
                   setCreatorDropdownOpen(true);
                 }
               }}
-              placeholder={selectedCreator ? selectedCreator.name || selectedCreator.handle || 'Creator' : 'Creator: All'}
+              placeholder={
+                selectedCreator
+                  ? selectedCreator.name || selectedCreator.handle || 'Creator'
+                  : 'Creator: All'
+              }
               value={creatorSearchQuery}
             />
             {selectedCreator && !creatorSearchQuery && (
               <div className="absolute right-8 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
                 <Avatar className="h-4 w-4">
                   {selectedCreator.image && (
-                    <AvatarImage src={selectedCreator.image} alt={selectedCreator.name || ''} />
+                    <AvatarImage
+                      src={selectedCreator.image}
+                      alt={selectedCreator.name || ''}
+                    />
                   )}
-                  <AvatarFallback className="h-4 w-4 text-[8px]">
-                    {(selectedCreator.name || selectedCreator.handle || 'U').charAt(0).toUpperCase()}
-                  </AvatarFallback>
+                  <AvatarFacehash
+                    name={
+                      selectedCreator.name ||
+                      selectedCreator.handle ||
+                      selectedCreator.id
+                    }
+                    size={16}
+                  />
                 </Avatar>
               </div>
             )}
             {selectedCreator && !creatorSearchQuery && (
               <Button
-                className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 p-0 hover:bg-[#232323]"
+                className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 p-0 hover:bg-surface-3"
                 onClick={handleClearCreator}
                 size="sm"
                 type="button"
                 variant="link"
               >
-                <X className="h-3 w-3 text-[#666]" />
+                <X className="h-3 w-3 text-text-muted" />
               </Button>
             )}
           </div>
           <AutocompleteDropdown
-            className="border-[#232323] bg-[#191919]"
+            className="border-border-subtle bg-surface-1"
             getKey={(c) => c.id}
             items={creators}
             loading={creatorsQuery.isLoading}
@@ -174,16 +264,19 @@ export function BountyFilters() {
                   {creator.image && (
                     <AvatarImage src={creator.image} alt={creator.name || ''} />
                   )}
-                  <AvatarFallback className="h-4 w-4 text-[8px]">
-                    {(creator.name || creator.handle || 'U').charAt(0).toUpperCase()}
-                  </AvatarFallback>
+                  <AvatarFacehash
+                    name={creator.name || creator.handle || creator.id}
+                    size={16}
+                  />
                 </Avatar>
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate text-sm text-white">
+                  <span className="truncate text-sm text-foreground">
                     {creator.name || creator.handle || 'Unknown'}
                   </span>
                   {creator.handle && creator.name && (
-                    <span className="text-xs text-[#666]">{creator.handle}</span>
+                    <span className="text-xs text-text-muted">
+                      {creator.handle}
+                    </span>
                   )}
                 </div>
               </div>
@@ -193,11 +286,14 @@ export function BountyFilters() {
         </div>
 
         {/* Sort Dropdown */}
-        <Select onValueChange={handleSortChange} value={sortValue}>
-          <SelectTrigger className="w-[180px] border-[#232323] bg-[#191919] text-white">
+        <Select
+          onValueChange={(v) => v && handleSortChange(v)}
+          value={sortValue}
+        >
+          <SelectTrigger className="w-[180px] border-border-subtle bg-surface-1 text-foreground">
             <SelectValue placeholder="Sort by..." />
           </SelectTrigger>
-          <SelectContent className="border-[#232323] bg-[#191919]">
+          <SelectContent className="border-border-subtle bg-surface-1">
             <SelectItem value="created_at::desc">Newest</SelectItem>
             <SelectItem value="created_at::asc">Oldest</SelectItem>
             <SelectItem value="amount::desc">Price: High to Low</SelectItem>

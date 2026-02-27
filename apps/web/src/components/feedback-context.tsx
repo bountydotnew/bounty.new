@@ -6,7 +6,7 @@ import { createContext, useContext, useState, useCallback } from 'react';
 /**
  * Configuration options for the Feedback system.
  */
-export interface FeedbackConfig {
+interface FeedbackConfig {
   /**
    * The API endpoint to submit feedback to.
    * @default "/api/feedback"
@@ -100,9 +100,11 @@ const FeedbackContext = createContext<FeedbackContextType | undefined>(
  * Provider component for the Feedback system.
  * Wrap your application root with this to enable feedback functionality.
  */
+const EMPTY_CONFIG: FeedbackConfig = {};
+
 export function FeedbackProvider({
   children,
-  config = {},
+  config = EMPTY_CONFIG,
 }: {
   children: React.ReactNode;
   /** Optional configuration settings */

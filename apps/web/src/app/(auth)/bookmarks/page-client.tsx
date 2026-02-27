@@ -1,0 +1,89 @@
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { StandardBountyCard } from '@/components/bounty/bounty-card';
+import { BookmarksEmpty } from '@/components/empty-states/bookmarks-empty';
+import type { Bounty } from '@/types/dashboard';
+import { trpc } from '@/utils/trpc';
+
+const SKELETON_KEYS = [
+  'bookmark-skeleton-1',
+  'bookmark-skeleton-2',
+  'bookmark-skeleton-3',
+] as const;
+
+export function BookmarksContent() {
+  const [page, setPage] = useState(1);
+  const limit = 20;
+  const { data, isLoading } = useQuery(
+    trpc.bounties.listBookmarkedBounties.queryOptions({ page, limit })
+  );
+
+  const items = useMemo(() => data?.data ?? [], [data]);
+  const totalPages = data?.pagination?.totalPages ?? 1;
+
+  return (
+    <div className="p-6">
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="font-medium text-foreground text-xl">Bookmarks</h1>
+        {totalPages > 1 && (
+          <div className="text-neutral-400 text-xs">
+            Page {page} / {totalPages}
+          </div>
+        )}
+      </div>
+
+      {(() => {
+        if (isLoading) {
+          return (
+            <div className="space-y-2">
+              {SKELETON_KEYS.map((key) => (
+                <div
+                  className="animate-pulse rounded-md border border-neutral-800 bg-neutral-900/30 p-3"
+                  key={key}
+                >
+                  <div className="mb-2 h-4 w-24 rounded bg-neutral-800" />
+                  <div className="h-3 w-full rounded bg-neutral-800" />
+                </div>
+              ))}
+            </div>
+          );
+        }
+
+        if (items.length === 0) {
+          return <BookmarksEmpty />;
+        }
+
+        return (
+          <div className="space-y-3">
+            {items.map((bounty) => (
+              <StandardBountyCard bounty={bounty as Bounty} key={bounty.id} />
+            ))}
+          </div>
+        );
+      })()}
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <button
+            className="rounded-md border border-neutral-700 bg-neutral-800/60 px-3 py-1 text-neutral-300 text-xs disabled:opacity-50"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            type="button"
+          >
+            Previous
+          </button>
+          <button
+            className="rounded-md border border-neutral-700 bg-neutral-800/60 px-3 py-1 text-neutral-300 text-xs disabled:opacity-50"
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            type="button"
+          >
+            Next
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -42,76 +42,78 @@ interface BountyFormProps {
   onCancel?: () => void;
 }
 
-export function BountyForm({
+interface FormFields {
+  title: string;
+  description: string;
+  price: string;
+  deadline: string;
+}
+
+function useBountyFormState({
   initialValues,
   entryId,
   onSubmit,
-  onCancel,
-}: BountyFormProps) {
+}: Pick<BountyFormProps, 'initialValues' | 'entryId' | 'onSubmit'>) {
   const router = useRouter();
   const { session } = useSession();
-  const [title, setTitle] = useState(initialValues?.title || '');
-  const [description, setDescription] = useState(
-    initialValues?.description || ''
-  );
-  const [price, setPrice] = useState(initialValues?.amount || '');
-  const [deadline, setDeadline] = useState<string>(
-    initialValues?.deadline || ''
-  );
+  const [formFields, setFormFields] = useState<FormFields>(() => {
+    const defaults = {
+      title: initialValues?.title || '',
+      description: initialValues?.description || '',
+      price: initialValues?.amount || '',
+      deadline: initialValues?.deadline || '',
+    };
+    if (initialValues) {
+      return defaults;
+    }
+    try {
+      const stored =
+        typeof window !== 'undefined'
+          ? localStorage.getItem(BOUNTY_DRAFT_STORAGE_KEY)
+          : null;
+      if (stored) {
+        const draft = JSON.parse(stored) as BountyDraft;
+        return {
+          title: draft.title || '',
+          description: draft.description || '',
+          price: draft.amount || '',
+          deadline: draft.deadline || '',
+        };
+      }
+    } catch {
+      // Ignore parse errors
+    }
+    return defaults;
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const titleRef = useRef<HTMLInputElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
-  // Popover states
   const [titlePopoverOpen, setTitlePopoverOpen] = useState(false);
   const [pricePopoverOpen, setPricePopoverOpen] = useState(false);
 
-  // Load draft from localStorage on mount (only if not in edit mode)
-  useEffect(() => {
-    if (initialValues) {
-      return; // Skip if initial values provided
-    }
-
-    try {
-      const stored = localStorage.getItem(BOUNTY_DRAFT_STORAGE_KEY);
-      if (stored) {
-        const draft = JSON.parse(stored) as BountyDraft;
-        if (draft.title) {
-          setTitle(draft.title);
-        }
-        if (draft.description) {
-          setDescription(draft.description);
-        }
-        if (draft.amount) {
-          setPrice(draft.amount);
-        }
-        if (draft.deadline) {
-          setDeadline(draft.deadline);
-        }
-      }
-    } catch {
-      // Ignore parse errors
-    }
-  }, [initialValues]);
-
-  // Save draft to localStorage whenever fields change (only if not in edit mode)
   useEffect(() => {
     if (onSubmit) {
-      return; // Skip if in edit mode
+      return;
     }
 
     const draft: BountyDraft = {
-      title: title || undefined,
-      description: description || undefined,
-      amount: price || undefined,
-      deadline: deadline || undefined,
+      title: formFields.title || undefined,
+      description: formFields.description || undefined,
+      amount: formFields.price || undefined,
+      deadline: formFields.deadline || undefined,
     };
     localStorage.setItem(BOUNTY_DRAFT_STORAGE_KEY, JSON.stringify(draft));
-  }, [title, description, price, deadline, onSubmit]);
+  }, [
+    formFields.title,
+    formFields.description,
+    formFields.price,
+    formFields.deadline,
+    onSubmit,
+  ]);
 
-  // Auto-resize description
   useEffect(() => {
     if (descriptionRef.current) {
       descriptionRef.current.style.height = 'auto';
@@ -123,20 +125,16 @@ export function BountyForm({
     }
   }, []);
 
-  // Get waitlist entry ID when logged in
   const { data: myEntry } = useQuery({
     ...trpc.earlyAccess.getMyWaitlistEntry.queryOptions(),
     enabled: !!session?.user && !entryId,
   });
 
-  // Parse TRPC validation errors and show toast
   const parseAndShowErrors = (error: unknown) => {
     if (error instanceof TRPCClientError) {
       try {
-        // TRPC validation errors come as JSON string in the message
         const parsed = JSON.parse(error.message);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Show the first error message
           const firstError = parsed[0];
           if (firstError.message) {
             toast.error(firstError.message);
@@ -147,7 +145,6 @@ export function BountyForm({
           toast.error(error.message || 'An error occurred');
         }
       } catch {
-        // If parsing fails, show a generic error
         toast.error(error.message || 'An error occurred');
       }
     } else if (error instanceof Error) {
@@ -165,7 +162,6 @@ export function BountyForm({
       amount: string;
       deadline?: string;
     }) => {
-      // Remove commas from price before sending
       const cleanedAmount = data.amount.replace(/,/g, '');
       return await trpcClient.earlyAccess.updateBountyDraft.mutate({
         entryId: data.entryId,
@@ -178,35 +174,31 @@ export function BountyForm({
   });
 
   const handleCreateBounty = async () => {
-    // If onSubmit is provided (edit mode), use it
     if (onSubmit && entryId) {
       setIsSubmitting(true);
       try {
-        // Remove commas from price before submitting
-        const cleanedPrice = price.replace(/,/g, '');
+        const cleanedPrice = formFields.price.replace(/,/g, '');
         await onSubmit({
-          title: title || 'Untitled Bounty',
-          description: description || '',
+          title: formFields.title || 'Untitled Bounty',
+          description: formFields.description || '',
           amount: cleanedPrice || '0',
-          deadline: deadline || undefined,
+          deadline: formFields.deadline || undefined,
         });
+        setIsSubmitting(false);
       } catch (error) {
         console.error('Failed to update bounty:', error);
         parseAndShowErrors(error);
-      } finally {
         setIsSubmitting(false);
       }
       return;
     }
 
-    // If logged out, save draft and redirect to login
     if (!session?.user) {
       const callbackUrl = encodeURIComponent('/waitlist/dashboard');
       router.push(`/login?callback=${callbackUrl}`);
       return;
     }
 
-    // If logged in, save bounty to waitlist entry
     const effectiveEntryId = entryId || myEntry?.id;
     if (!effectiveEntryId) {
       console.error('No waitlist entry found');
@@ -215,201 +207,281 @@ export function BountyForm({
 
     setIsSubmitting(true);
     try {
-      // Remove commas from price before submitting
-      const cleanedPrice = price.replace(/,/g, '');
+      const cleanedPrice = formFields.price.replace(/,/g, '');
       await saveBountyMutation.mutateAsync({
         entryId: effectiveEntryId,
-        title: title || 'Untitled Bounty',
-        description: description || '',
+        title: formFields.title || 'Untitled Bounty',
+        description: formFields.description || '',
         amount: cleanedPrice || '0',
-        deadline: deadline || undefined,
+        deadline: formFields.deadline || undefined,
       });
 
-      // Clear localStorage draft
       localStorage.removeItem(BOUNTY_DRAFT_STORAGE_KEY);
 
-      // Redirect to dashboard
       router.push('/waitlist/dashboard');
+      setIsSubmitting(false);
     } catch (error) {
       console.error('Failed to save bounty:', error);
       parseAndShowErrors(error);
-    } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleSkipAndJoinWaitlist = () => {
-    // If onSubmit is provided, we're in edit/create mode - don't show skip button
     if (onSubmit) {
       return;
     }
 
     if (!session?.user) {
-      // Save draft and redirect to login
       const callbackUrl = encodeURIComponent('/waitlist/dashboard');
       router.push(`/login?callback=${callbackUrl}`);
       return;
     }
 
-    // If logged in, redirect to dashboard
     router.push('/waitlist/dashboard');
   };
 
+  return {
+    formFields,
+    setFormFields,
+    isSubmitting,
+    titleRef,
+    priceRef,
+    descriptionRef,
+    titlePopoverOpen,
+    setTitlePopoverOpen,
+    pricePopoverOpen,
+    setPricePopoverOpen,
+    handleCreateBounty,
+    handleSkipAndJoinWaitlist,
+  };
+}
+
+function BountyFormChips({
+  formFields,
+  setFormFields,
+  titleRef,
+  priceRef,
+  titlePopoverOpen,
+  setTitlePopoverOpen,
+  pricePopoverOpen,
+  setPricePopoverOpen,
+}: {
+  formFields: FormFields;
+  setFormFields: React.Dispatch<React.SetStateAction<FormFields>>;
+  titleRef: React.RefObject<HTMLInputElement | null>;
+  priceRef: React.RefObject<HTMLInputElement | null>;
+  titlePopoverOpen: boolean;
+  setTitlePopoverOpen: (open: boolean) => void;
+  pricePopoverOpen: boolean;
+  setPricePopoverOpen: (open: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1.5 sm:gap-2.5 px-1.5 sm:px-[14px] pt-2 sm:pt-3 pb-1.5 sm:pb-2 overflow-x-auto no-scrollbar">
+      <Popover open={titlePopoverOpen} onOpenChange={setTitlePopoverOpen}>
+        <PopoverTrigger asChild>
+          <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-surface-2 border border-solid border-border-subtle hover:border-border-default transition-colors cursor-pointer">
+            <span
+              className={`text-[16px] leading-5 font-sans ${formFields.title ? 'text-foreground' : 'text-text-muted'}`}
+            >
+              {formFields.title || 'Title'}
+            </span>
+            <ChevronSortIcon className="size-2 text-text-muted shrink-0" />
+          </div>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-64 p-3 bg-surface-1 border-border-subtle rounded-xl"
+          align="start"
+          sideOffset={8}
+        >
+          <input
+            ref={titleRef}
+            type="text"
+            value={formFields.title}
+            onChange={(e) =>
+              setFormFields((prev) => ({ ...prev, title: e.target.value }))
+            }
+            placeholder="Enter a title"
+            className="w-full bg-transparent text-foreground text-[16px] leading-5 outline-none placeholder:text-text-tertiary"
+          />
+        </PopoverContent>
+      </Popover>
+
+      <Popover open={pricePopoverOpen} onOpenChange={setPricePopoverOpen}>
+        <PopoverTrigger asChild>
+          <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-surface-2 border border-solid border-border-subtle hover:border-border-default transition-colors cursor-pointer">
+            <span
+              className={`text-[16px] leading-5 font-sans ${formFields.price ? 'text-foreground' : 'text-text-muted'}`}
+            >
+              {formFields.price
+                ? formFields.price.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                : 'Price'}
+            </span>
+            <ChevronSortIcon className="size-2 text-text-muted shrink-0" />
+          </div>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-48 p-3 bg-surface-1 border-border-subtle rounded-xl"
+          align="start"
+          sideOffset={8}
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-text-tertiary text-[16px]">$</span>
+            <input
+              ref={priceRef}
+              type="text"
+              value={formFields.price}
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/[^0-9.]/g, '');
+                setFormFields((prev) => ({ ...prev, price: cleaned }));
+              }}
+              placeholder="0.00"
+              className="flex-1 bg-transparent text-foreground text-[16px] leading-5 outline-none placeholder:text-text-tertiary"
+            />
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      <DeadlineChip
+        value={formFields.deadline}
+        onChange={(v) => setFormFields((prev) => ({ ...prev, deadline: v }))}
+      />
+    </div>
+  );
+}
+
+function BountyFormFooter({
+  onCancel,
+  onSubmit,
+  isSubmitting,
+  formFields,
+  handleSkipAndJoinWaitlist,
+  handleCreateBounty,
+}: {
+  onCancel?: () => void;
+  onSubmit?: BountyFormProps['onSubmit'];
+  isSubmitting: boolean;
+  formFields: FormFields;
+  handleSkipAndJoinWaitlist: () => void;
+  handleCreateBounty: () => void;
+}) {
+  return (
+    <div className="flex justify-end items-center gap-1.5 sm:gap-2 px-1.5 sm:px-3 py-2 sm:py-3 flex-wrap">
+      {onCancel && (
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isSubmitting}
+          className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-surface-3 text-foreground text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+        >
+          Cancel
+        </button>
+      )}
+      {!(onSubmit || onCancel) && (
+        <button
+          type="button"
+          onClick={handleSkipAndJoinWaitlist}
+          disabled={isSubmitting}
+          className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-surface-3 text-foreground text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+        >
+          <span className="hidden sm:inline">
+            {isSubmitting ? 'Redirecting...' : 'Skip & join waitlist'}
+          </span>
+          <span className="sm:hidden">
+            {isSubmitting ? 'Redirecting...' : 'Skip'}
+          </span>
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={handleCreateBounty}
+        disabled={isSubmitting || !formFields.title}
+        className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-white text-black text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+      >
+        <GitHub className="w-4 h-4 shrink-0" />
+        <span className="hidden sm:inline">
+          {isSubmitting
+            ? onSubmit
+              ? 'Saving...'
+              : 'Creating...'
+            : onSubmit
+              ? 'Save'
+              : 'Create bounty'}
+        </span>
+        <span className="sm:hidden">
+          {isSubmitting
+            ? onSubmit
+              ? 'Saving...'
+              : 'Creating...'
+            : onSubmit
+              ? 'Save'
+              : 'Create'}
+        </span>
+      </button>
+    </div>
+  );
+}
+
+export function BountyForm({
+  initialValues,
+  entryId,
+  onSubmit,
+  onCancel,
+}: BountyFormProps) {
+  const {
+    formFields,
+    setFormFields,
+    isSubmitting,
+    titleRef,
+    priceRef,
+    descriptionRef,
+    titlePopoverOpen,
+    setTitlePopoverOpen,
+    pricePopoverOpen,
+    setPricePopoverOpen,
+    handleCreateBounty,
+    handleSkipAndJoinWaitlist,
+  } = useBountyFormState({ initialValues, entryId, onSubmit });
+
   return (
     <div className="w-full max-w-[95vw] sm:max-w-[703px] mx-auto">
-      <div className="w-full min-h-[140px] sm:min-h-[180px] rounded-[12px] sm:rounded-[21px] bg-[#191919] border border-[#232323] flex flex-col px-2 sm:px-0">
-        {/* Top row: Chips */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 px-1.5 sm:px-[14px] pt-2 sm:pt-3 pb-1.5 sm:pb-2 overflow-x-auto no-scrollbar">
-          {/* Title chip */}
-          <Popover open={titlePopoverOpen} onOpenChange={setTitlePopoverOpen}>
-            <PopoverTrigger asChild>
-              <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-[#141414] border border-solid border-[#232323] hover:border-[#333] transition-colors cursor-pointer">
-                <span
-                  className={`text-[16px] leading-5 font-sans ${title ? 'text-white' : 'text-[#7C7878]'}`}
-                >
-                  {title || 'Title'}
-                </span>
-                <ChevronSortIcon className="size-2 text-[#7D7878] shrink-0" />
-              </div>
-            </PopoverTrigger>
-            <PopoverContent
-              className="w-64 p-3 bg-[#191919] border-[#232323] rounded-xl"
-              align="start"
-              sideOffset={8}
-            >
-              <input
-                ref={titleRef}
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter a title"
-                className="w-full bg-transparent text-white text-[16px] leading-5 outline-none placeholder:text-[#5A5A5A]"
-                autoFocus
-              />
-            </PopoverContent>
-          </Popover>
+      <div className="w-full min-h-[140px] sm:min-h-[180px] rounded-[12px] sm:rounded-[21px] bg-surface-1 border border-border-subtle flex flex-col px-2 sm:px-0">
+        <BountyFormChips
+          formFields={formFields}
+          setFormFields={setFormFields}
+          titleRef={titleRef}
+          priceRef={priceRef}
+          titlePopoverOpen={titlePopoverOpen}
+          setTitlePopoverOpen={setTitlePopoverOpen}
+          pricePopoverOpen={pricePopoverOpen}
+          setPricePopoverOpen={setPricePopoverOpen}
+        />
 
-          {/* Price chip */}
-          <Popover open={pricePopoverOpen} onOpenChange={setPricePopoverOpen}>
-            <PopoverTrigger asChild>
-              <div className="rounded-full flex justify-center items-center px-[11px] py-[6px] shrink-0 gap-2 bg-[#141414] border border-solid border-[#232323] hover:border-[#333] transition-colors cursor-pointer">
-                <span
-                  className={`text-[16px] leading-5 font-sans ${price ? 'text-white' : 'text-[#7C7878]'}`}
-                >
-                  {price
-                    ? price.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                    : 'Price'}
-                </span>
-                <ChevronSortIcon className="size-2 text-[#7D7878] shrink-0" />
-              </div>
-            </PopoverTrigger>
-            <PopoverContent
-              className="w-48 p-3 bg-[#191919] border-[#232323] rounded-xl"
-              align="start"
-              sideOffset={8}
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-[#5A5A5A] text-[16px]">$</span>
-                <input
-                  ref={priceRef}
-                  type="text"
-                  value={price}
-                  onChange={(e) => {
-                    // Remove non-numeric characters for storage
-                    const cleaned = e.target.value.replace(/[^0-9.]/g, '');
-                    setPrice(cleaned);
-                  }}
-                  placeholder="0.00"
-                  className="flex-1 bg-transparent text-white text-[16px] leading-5 outline-none placeholder:text-[#5A5A5A]"
-                  autoFocus
-                />
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          {/* Deadline chip */}
-          <DeadlineChip value={deadline} onChange={setDeadline} />
-
-          {/* Divider */}
-          {/* <span className="text-[#5A5A5A] text-base shrink-0">or</span> */}
-
-          {/* GitHub import chip (placeholder) */}
-          {/* <button 
-          className="rounded-[14px] px-[15px] py-1.5 bg-[#313030] text-base text-[#828181] transition-colors flex items-center gap-[5px] shrink-0 h-[31.9965px] opacity-50 cursor-not-allowed"
-          disabled
-        >
-          <GitHub className="w-4 h-4 shrink-0" />
-          Import from GitHub
-        </button> */}
-        </div>
-
-        {/* Description textarea */}
         <div className="px-2 sm:px-[19px] py-1 sm:py-1.5 flex-1 flex">
           <textarea
             ref={descriptionRef}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={formFields.description}
+            onChange={(e) =>
+              setFormFields((prev) => ({
+                ...prev,
+                description: e.target.value,
+              }))
+            }
             placeholder="Start typing your description..."
-            className="w-full bg-transparent text-[#5A5A5A] text-sm sm:text-base outline-none placeholder:text-[#5A5A5A] resize-none min-h-[80px] sm:min-h-[100px]"
+            className="w-full bg-transparent text-text-tertiary text-sm sm:text-base outline-none placeholder:text-text-tertiary resize-none min-h-[80px] sm:min-h-[100px]"
           />
         </div>
 
-        {/* Footer row with buttons */}
-        <div className="flex justify-end items-center gap-1.5 sm:gap-2 px-1.5 sm:px-3 py-2 sm:py-3 flex-wrap">
-          {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={isSubmitting}
-              className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
-            >
-              Cancel
-            </button>
-          )}
-          {!(onSubmit || onCancel) && (
-            <button
-              type="button"
-              onClick={handleSkipAndJoinWaitlist}
-              disabled={isSubmitting}
-              className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-[#313030] text-white text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
-            >
-              <span className="hidden sm:inline">
-                {isSubmitting ? 'Redirecting...' : 'Skip & join waitlist'}
-              </span>
-              <span className="sm:hidden">
-                {isSubmitting ? 'Redirecting...' : 'Skip'}
-              </span>
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={handleCreateBounty}
-            disabled={isSubmitting || !title}
-            className="flex items-center justify-center gap-1.5 px-3 sm:px-[13px] h-[31.9965px] rounded-full bg-white text-black text-sm sm:text-base font-normal transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
-          >
-            <GitHub className="w-4 h-4 shrink-0" />
-            <span className="hidden sm:inline">
-              {isSubmitting
-                ? onSubmit
-                  ? 'Saving...'
-                  : 'Creating...'
-                : onSubmit
-                  ? 'Save'
-                  : 'Create bounty'}
-            </span>
-            <span className="sm:hidden">
-              {isSubmitting
-                ? onSubmit
-                  ? 'Saving...'
-                  : 'Creating...'
-                : onSubmit
-                  ? 'Save'
-                  : 'Create'}
-            </span>
-          </button>
-        </div>
+        <BountyFormFooter
+          onCancel={onCancel}
+          onSubmit={onSubmit}
+          isSubmitting={isSubmitting}
+          formFields={formFields}
+          handleSkipAndJoinWaitlist={handleSkipAndJoinWaitlist}
+          handleCreateBounty={handleCreateBounty}
+        />
       </div>
-      <div className="text-[#5A5A5A] text-[10px] sm:text-sm text-center pt-2 sm:pt-3 px-2 sm:px-0">
+      <div className="text-text-tertiary text-[10px] sm:text-sm text-center pt-2 sm:pt-3 px-2 sm:px-0">
         Creating a draft bounty is optional. This step is not required to sign
         up.
       </div>

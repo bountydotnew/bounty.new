@@ -1,75 +1,52 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import React, { useEffect } from 'react';
+import React, { useEffect, use } from 'react';
 import { Button } from '@bounty/ui/components/button';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
 import { BountyFilters } from '@/components/bounty/bounty-filters';
-import GithubImportModal from '@/components/bounty/github-import-modal';
 import { Header } from '@/components/dual-sidebar/sidebar-header';
 import { AuthGuard } from '@/components/auth/auth-guard';
-import { trpc } from '@/utils/trpc';
-import { parseAsString, useQueryState } from 'nuqs';
-import { useSession } from '@/context/session-context';
+import { BountyListProvider, BountyListContext } from '@/components/bounty/bounty-list';
 import { toast } from 'sonner';
 
-export default function BountiesPage() {
-  const { isAuthenticated, isPending: isSessionPending } = useSession();
+function BountiesPageContent() {
+  // Access the bounty list state from context
+  const context = use(BountyListContext);
+  if (!context) {
+    throw new Error('BountiesPageContent must be used within BountyListProvider');
+  }
 
-  const [search] = useQueryState('search', parseAsString);
-  const [creatorId] = useQueryState('creatorId', parseAsString);
-  const [sortBy, setSortBy] = useQueryState('sortBy', parseAsString.withDefault('created_at'));
-  const [sortOrder, setSortOrder] = useQueryState('sortOrder', parseAsString.withDefault('desc'));
-
-  const {
-    data: bounties,
-    isLoading,
-    error,
-  } = useQuery({
-    ...trpc.bounties.fetchAllBounties.queryOptions({
-      page: 1,
-      limit: 100, // Higher limit for "view all" page
-      search: search || undefined,
-      creatorId: creatorId || undefined,
-      sortBy: (sortBy as 'created_at' | 'amount' | 'deadline' | 'title') || 'created_at',
-      sortOrder: (sortOrder as 'asc' | 'desc') || 'desc',
-    }),
-    enabled: isAuthenticated && !isSessionPending,
-    retry: false,
-  });
+  const { state, actions } = context;
 
   // Show toast notification for validation errors
   useEffect(() => {
-    if (error) {
-      const errorMessage = error.message || 'Failed to load bounties';
-      
+    if (state.error) {
+      const errorMessage = state.error.message || 'Failed to load bounties';
+
       // Check if it's a validation error (BAD_REQUEST)
       if (errorMessage.includes('Invalid option') || errorMessage.includes('invalid_value')) {
         toast.error('Invalid filter options. Please reset your filters.', {
           description: 'The selected sort or filter options are invalid.',
         });
         // Reset to defaults
-        setSortBy('created_at');
-        setSortOrder('desc');
+        actions.resetFilters();
       } else {
         toast.error('Failed to load bounties', {
           description: errorMessage,
         });
       }
     }
-  }, [error]);
+  }, [state.error, actions]);
 
-  const [importOpen, setImportOpen] = React.useState(false);
-
-  if (error) {
+  if (state.error) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
           <h1 className="mb-4 font-bold text-2xl text-red-600">
             Error Loading Bounties
           </h1>
-          <p className="text-gray-600">{error.message}</p>
+          <p className="text-gray-600">{state.error.message}</p>
           <Button className="mt-4" asChild>
             <Link href="/bounties">Try Again</Link>
           </Button>
@@ -79,23 +56,21 @@ export default function BountiesPage() {
   }
 
   return (
-    <>
-      <Header />
       <div className="container mx-auto px-4 py-8">
         <AuthGuard>
           <BountyFilters />
-          <BountiesFeed
-            bounties={bounties?.data}
-            error={error}
-            isError={Boolean(error)}
-            isLoading={isLoading}
-            layout="grid"
-            title=""
-          />
+          <BountiesFeed.Provider bounties={state.bounties} isLoading={state.isLoading}>
+            <BountiesFeed.GridView />
+          </BountiesFeed.Provider>
         </AuthGuard>
       </div>
+  );
+}
 
-      <GithubImportModal onOpenChange={setImportOpen} open={importOpen} />
-    </>
+export default function BountiesPage() {
+  return (
+    <BountyListProvider>
+      <BountiesPageContent />
+    </BountyListProvider>
   );
 }

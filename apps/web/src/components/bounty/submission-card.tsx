@@ -1,14 +1,15 @@
 import {
   Avatar,
-  AvatarFallback,
+  AvatarFacehash,
   AvatarImage,
 } from '@bounty/ui/components/avatar';
 import { Button } from '@bounty/ui/components/button';
 import { cn } from '@bounty/ui/lib/utils';
+import Image from 'next/image';
 import { ExternalLink, Github } from 'lucide-react';
 import { Badge } from '@/components/bounty/badge';
 
-export interface SubmissionCardProps {
+interface SubmissionCardProps {
   // User info
   user?: string;
   username?: string; // GitHub username
@@ -55,10 +56,11 @@ export default function SubmissionCard({
   const displayAvatar = avatarSrc || contributorImage || '';
 
   // Build PR URL if we have the PR number and repo info
-  const prUrl = pullRequestUrl ||
-    (githubPullRequestNumber && githubRepoOwner && githubRepoName)
+  const prUrl =
+    pullRequestUrl ||
+    ((githubPullRequestNumber && githubRepoOwner && githubRepoName)
       ? `https://github.com/${githubRepoOwner}/${githubRepoName}/pull/${githubPullRequestNumber}`
-      : deliverableUrl;
+      : deliverableUrl);
 
   const statusColors: Record<string, string> = {
     pending: 'text-yellow-400',
@@ -77,7 +79,7 @@ export default function SubmissionCard({
   return (
     <div
       className={cn(
-        'flex w-full min-w-[466px] max-w-[466px] flex-col items-start gap-3 rounded-lg bg-[#222222] p-6 transition-colors hover:bg-[#2A2A28]',
+        'flex w-full min-w-[466px] max-w-[466px] flex-col items-start gap-3 rounded-lg bg-surface-2 p-6 transition-colors hover:bg-surface-hover',
         className
       )}
     >
@@ -85,17 +87,24 @@ export default function SubmissionCard({
         <div className="flex items-center gap-2">
           <Avatar className="h-10 w-10">
             <AvatarImage alt={displayName} src={displayAvatar} />
-            <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
+            <AvatarFacehash name={displayName} size={40} />
           </Avatar>
           <div className="flex flex-col">
             <div className="flex items-center gap-1">
-              <span className="font-medium text-sm text-white">{displayName}</span>
+              <span className="font-medium text-sm text-foreground">
+                {displayName}
+              </span>
               {hasBadge && <Badge />}
             </div>
             <div className="flex items-center gap-2">
               {rank && <span className="text-gray-400 text-xs">{rank}</span>}
               {status && (
-                <span className={cn('text-xs', statusColors[status] || 'text-gray-400')}>
+                <span
+                  className={cn(
+                    'text-xs',
+                    statusColors[status] || 'text-gray-400'
+                  )}
+                >
                   {statusLabels[status] || status}
                 </span>
               )}
@@ -105,23 +114,21 @@ export default function SubmissionCard({
         {prUrl ? (
           <Button
             asChild
-            className="flex items-center justify-center gap-2 rounded-lg bg-[#333] px-3 py-3 text-white hover:bg-[#444]"
+            className="flex items-center justify-center gap-2 rounded-lg bg-surface-3 px-3 py-3 text-foreground hover:bg-surface-3"
           >
-            <a
-              href={prUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href={prUrl} target="_blank" rel="noopener noreferrer">
               <Github className="h-4 w-4" />
               <span className="font-medium text-sm">
-                {githubPullRequestNumber ? `PR #${githubPullRequestNumber}` : 'View'}
+                {githubPullRequestNumber
+                  ? `PR #${githubPullRequestNumber}`
+                  : 'View'}
               </span>
               <ExternalLink className="h-3 w-3" />
             </a>
           </Button>
         ) : (
-          <Button className="flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-white dark:text-black">
-            <Github className="h-4 w-4 text-white dark:text-black" />
+          <Button className="flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-foreground dark:text-black">
+            <Github className="h-4 w-4 text-foreground dark:text-black" />
             <span className="font-medium text-sm">Preview</span>
           </Button>
         )}
@@ -129,8 +136,8 @@ export default function SubmissionCard({
       {description && <p className="text-gray-400 text-sm">{description}</p>}
       {/* Hide image preview for GitHub PR submissions */}
       {!prUrl && previewSrc && (
-        // eslint-disable-next-line @next/next/no-image-element
-        <img
+        
+        <Image
           alt="Theme preview screenshot"
           className="h-20 w-20 rounded-md object-cover"
           src={previewSrc}

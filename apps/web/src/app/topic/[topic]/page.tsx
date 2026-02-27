@@ -1,6 +1,22 @@
+import type { Metadata } from 'next';
 import { getPosts, getCategories } from '@bounty/ui/lib/blog-query';
 import { BlogPageContent } from '@/components/blog/blog-page-content';
 import { notFound } from 'next/navigation';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ topic: string }>;
+}): Promise<Metadata> {
+  const { topic } = await params;
+  const formatted = topic
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return {
+    title: formatted,
+    description: `Browse articles and posts about ${formatted}.`,
+  };
+}
 
 interface TopicPageProps {
   params: Promise<{
@@ -16,9 +32,9 @@ export default async function TopicPage({ params }: TopicPageProps) {
     getCategories(),
   ]);
 
-  if (!postsData?.posts || !categoriesData?.categories) {
+  if (!(postsData?.posts && categoriesData?.categories)) {
     return (
-      <div className="mx-auto max-w-3xl px-6 py-24 text-center text-white">
+      <div className="mx-auto max-w-3xl px-6 py-24 text-center text-foreground">
         Error loading blog posts. Please try again later.
       </div>
     );
