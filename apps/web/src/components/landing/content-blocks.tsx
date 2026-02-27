@@ -596,7 +596,7 @@ const CONTENT_BLOCKS: ContentBlock[] = [
   {
     title: 'Post. Fix. Ship.',
     description:
-      'Describe what's broken and set a price. Developers who've seen the pattern before submit PRs. Approve the fix and they get paid instantly. No interviews, no contracts, no waiting.',
+      'Describe what\'s broken and set a price. Developers who\'ve seen the pattern before submit PRs. Approve the fix and they get paid instantly. No interviews, no contracts, no waiting.',
     ctaText: 'See how it works',
     ctaHref: 'https://docs.bounty.new/guides/creating-bounties',
     visual: <ProcessStepsVisual />,
@@ -604,7 +604,7 @@ const CONTENT_BLOCKS: ContentBlock[] = [
   {
     title: 'Describe the bug, set the bounty',
     description:
-      'Paste the error, describe what's failing, set your budget. We create a GitHub issue, hold funds via Stripe, and surface it to developers who specialize in AI-generated codebases.',
+      'Paste the error, describe what\'s failing, set your budget. We create a GitHub issue, hold funds via Stripe, and surface it to developers who specialize in AI-generated codebases.',
     ctaText: 'Create your first bounty',
     ctaHref: 'https://docs.bounty.new/guides/creating-bounties',
     visual: <CreateBountyFlowVisual />,
