@@ -37,9 +37,12 @@ export function Hero() {
     <section className="relative bg-background pt-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
         <div className="text-left max-w-prose mb-8 lg:mb-12">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-medium leading-tight text-balance mb-8 text-foreground">
-            Get paid to help your favorite founders build the apps you love
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-medium leading-tight text-balance mb-4 text-foreground">
+            Human fixes for the AI era
           </h1>
+          <p className="text-base sm:text-lg text-text-secondary mb-8 max-w-xl">
+            AI writes bugs humans have to fix. Post a bounty, get a real solution from developers who've seen the pattern before.
+          </p>
           <div className="flex items-center gap-4">
             <Link
               href="/dashboard"

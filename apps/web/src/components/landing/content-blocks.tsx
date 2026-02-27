@@ -588,31 +588,31 @@ const CONTENT_BLOCKS: ContentBlock[] = [
   {
     title: 'Create bounties straight from Linear',
     description:
-      'Connect your Linear workspace and turn issues into funded bounties without leaving your project management flow. Sync statuses, priorities, and labels automatically.',
-    ctaText: 'Learn about integrations',
+      'Connect your workspace and turn issues into funded bounties without leaving your project management flow. Sync statuses, priorities, and labels. When the fix ships, Linear updates automatically.',
+    ctaText: 'Connect Linear',
     ctaHref: 'https://docs.bounty.new/integrations/linear',
     visual: <LinearBountyVisual />,
   },
   {
-    title: 'From issue to payout in three steps',
+    title: 'Post. Fix. Ship.',
     description:
-      'Post a bounty describing the work you need done. Developers from around the world compete to build the best solution. Approve the PR and they get paid instantly.',
-    ctaText: 'Read the getting started guide',
+      'Describe what's broken and set a price. Developers who've seen the pattern before submit PRs. Approve the fix and they get paid instantly. No interviews, no contracts, no waiting.',
+    ctaText: 'See how it works',
     ctaHref: 'https://docs.bounty.new/guides/creating-bounties',
     visual: <ProcessStepsVisual />,
   },
   {
-    title: 'Set the scope and price, we handle the rest',
+    title: 'Describe the bug, set the bounty',
     description:
-      'Define your bounty with a title, description, budget, and target repo. We create a GitHub issue, hold funds securely via Stripe, and notify eligible developers.',
-    ctaText: 'See how bounties work',
+      'Paste the error, describe what's failing, set your budget. We create a GitHub issue, hold funds via Stripe, and surface it to developers who specialize in AI-generated codebases.',
+    ctaText: 'Create your first bounty',
     ctaHref: 'https://docs.bounty.new/guides/creating-bounties',
     visual: <CreateBountyFlowVisual />,
   },
   {
-    title: 'Everything lives in your GitHub repo',
+    title: 'Fixes ship as PRs to your repo',
     description:
-      'Bounties become GitHub issues with labels and a bot comment detailing the payout. Developers submit real PRs to your repo — no separate platform to manage.',
+      'Bounties become GitHub issues with labels and payout details. Developers submit real PRs—review diffs, run CI, merge when ready. No platform lock-in.',
     ctaText: 'Explore the GitHub integration',
     ctaHref: 'https://docs.bounty.new/integrations/github',
     visual: <GitHubIntegrationVisual />,
