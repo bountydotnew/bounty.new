@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "bounty.new",
@@ -119,7 +120,6 @@
         "@types/node": "catalog:",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
-        "babel-plugin-react-compiler": "^1.0.0",
         "eslint": "catalog:",
         "eslint-config-next": "16.0.0",
         "tailwindcss": "catalog:",
