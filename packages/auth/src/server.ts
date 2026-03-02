@@ -45,6 +45,7 @@ import {
 } from 'better-auth/plugins';
 import { admin } from 'better-auth/plugins';
 import { emailOTP } from 'better-auth/plugins/email-otp';
+import { dash } from '@better-auth/infra';
 import { Octokit } from '@octokit/core';
 import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods';
 import {
@@ -595,6 +596,11 @@ export const auth = betterAuth({
     multiSession({
       ...AUTH_CONFIG.multiSession,
     }),
+
+    // ========================================================================
+    // Dash (Better Auth Infrastructure / Analytics)
+    // ========================================================================
+    dash(),
   ],
 });
 
