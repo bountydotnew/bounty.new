@@ -15,7 +15,7 @@ import { createAuthClient } from 'better-auth/react';
 import { multiSessionClient } from 'better-auth/client/plugins';
 import { env } from '@bounty/env/client';
 import { toast } from 'sonner';
-import { dash } from '@better-auth/infra';
+import { dashClient } from '@better-auth/infra/client';
 
 /**
  * Better Auth client instance
@@ -34,7 +34,7 @@ export const authClient = createAuthClient({
     emailOTPClient(),
     multiSessionClient(),
     organizationClient(),
-    dash(),
+    dashClient(),
   ],
   // Global error handling for all Better Auth requests
   fetchOptions: {

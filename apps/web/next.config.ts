@@ -109,9 +109,6 @@ const nextConfig: NextConfig = {
   transpilePackages: ['@bounty/ui', 'facehash'],
   turbopack: {
     resolveExtensions: ['.ts', '.tsx', '.js', '.jsx', '.json', '.mjs', '.cjs'],
-    resolveAlias: {
-      fs: { browser: './empty-module.js' },
-    },
   },
 };
 
