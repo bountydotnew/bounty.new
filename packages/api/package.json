@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./driver/*": "./driver/*.ts",
+    "./src/*": "./src/*.ts",
+    "./src/lib/*": "./src/lib/*.ts"
+  },
   "dependencies": {
     "@bounty/auth": "workspace:*",
     "@bounty/db": "workspace:*",
@@ -12,6 +18,7 @@
     "@bounty/stripe": "workspace:*",
     "@bounty/track": "workspace:*",
     "@bounty/types": "workspace:*",
+    "@bounty/ui": "workspace:*",
     "@linear/sdk": "^72.0.0",
     "@octokit/auth-app": "catalog:",
     "@octokit/core": "catalog:",

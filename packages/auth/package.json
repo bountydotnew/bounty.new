@@ -31,7 +31,8 @@
     "@octokit/core": "catalog:",
     "@octokit/plugin-rest-endpoint-methods": "catalog:",
     "better-auth": "catalog:",
-    "drizzle-orm": "catalog:"
+    "drizzle-orm": "catalog:",
+    "sonner": "catalog:"
   },
   "devDependencies": {
     "typescript": "catalog:"

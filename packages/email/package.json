@@ -24,6 +24,7 @@
     "preview": "bun ./src/cli.ts"
   },
   "dependencies": {
+    "@bounty/env": "workspace:*",
     "@react-email/components": "^0.0.25",
     "react": "catalog:",
     "resend": "catalog:"

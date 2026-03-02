@@ -140,6 +140,7 @@
         "@bounty/stripe": "workspace:*",
         "@bounty/track": "workspace:*",
         "@bounty/types": "workspace:*",
+        "@bounty/ui": "workspace:*",
         "@linear/sdk": "^72.0.0",
         "@octokit/auth-app": "catalog:",
         "@octokit/core": "catalog:",
@@ -171,6 +172,7 @@
         "@octokit/plugin-rest-endpoint-methods": "catalog:",
         "better-auth": "catalog:",
         "drizzle-orm": "catalog:",
+        "sonner": "catalog:",
       },
       "devDependencies": {
         "typescript": "catalog:",
@@ -198,6 +200,7 @@
         "email": "./src/cli.ts",
       },
       "dependencies": {
+        "@bounty/env": "workspace:*",
         "@react-email/components": "^0.0.25",
         "react": "catalog:",
         "resend": "catalog:",
@@ -338,6 +341,7 @@
         "rehype-sanitize": "catalog:",
         "rehype-slug": "catalog:",
         "rehype-stringify": "catalog:",
+        "sonner": "catalog:",
         "tailwind-merge": "catalog:",
         "tw-animate-css": "catalog:",
         "unified": "catalog:",
