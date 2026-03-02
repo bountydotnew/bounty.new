@@ -5,7 +5,17 @@
  * Edit these messages to change how the bot responds to commands.
  */
 
-import { formatCurrency } from '@bounty/ui/lib/utils';
+/**
+ * Format currency consistently (inlined to avoid circular dependency on @bounty/ui)
+ */
+function formatCurrency(amount: number, currency = 'USD'): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
 
 // ============================================================================
 // BOUNTY CREATION COMMENTS
@@ -107,7 +117,9 @@ Submission withdrawn.
 /**
  * Comment posted when a submission is successfully withdrawn via command
  */
-export function submissionWithdrawnConfirmation(targetPrNumber: number): string {
+export function submissionWithdrawnConfirmation(
+  targetPrNumber: number
+): string {
   return `
 
 Submission for PR #${targetPrNumber} has been withdrawn.
@@ -141,7 +153,9 @@ export function submissionApprovedComment(
 /**
  * Comment posted when a submission is already approved (user tries to approve again)
  */
-export function submissionAlreadyApprovedComment(targetPrNumber: number): string {
+export function submissionAlreadyApprovedComment(
+  targetPrNumber: number
+): string {
   return `
 
 This submission is already approved. When you're ready, merge the PR and confirm with \`/merge ${targetPrNumber}\`.
@@ -271,7 +285,10 @@ export function bountyClosedComment(username: string): string {
 /**
  * Error: PR is not open (for submission)
  */
-export function prNotOpenForSubmitComment(username: string, prNumber: number): string {
+export function prNotOpenForSubmitComment(
+  username: string,
+  prNumber: number
+): string {
   return `
 @${username} PR #${prNumber} isn't open.
 
@@ -296,7 +313,10 @@ Only **@${prAuthor}** (the PR author) or a repo maintainer can submit this PR.
 /**
  * Error: PR already submitted
  */
-export function alreadySubmittedComment(prAuthor: string, prNumber: number): string {
+export function alreadySubmittedComment(
+  prAuthor: string,
+  prNumber: number
+): string {
   return `@${prAuthor} PR #${prNumber} is already submitted for this bounty. No action needed — just wait for the bounty creator to review it.`;
 }
 
@@ -389,7 +409,10 @@ The PR author needs to submit first. Ask **@${prAuthor}** to:
 /**
  * Error: Solver needs to connect Stripe
  */
-export function solverNeedsStripeComment(username: string, prNumber: number): string {
+export function solverNeedsStripeComment(
+  username: string,
+  prNumber: number
+): string {
   return `
 ${username} The solver needs to connect Stripe before approval. Ask them to visit https://bounty.new/settings/payments, then re-run \`/approve ${prNumber}\`.
 `;
@@ -486,7 +509,10 @@ PR #${prNumber} isn't merged yet. Merge it, then run \`/merge ${prNumber}\` agai
 /**
  * Error: Solver needs to connect Stripe (for merge)
  */
-export function solverNeedsStripeForMergeComment(username: string, prNumber: number): string {
+export function solverNeedsStripeForMergeComment(
+  username: string,
+  prNumber: number
+): string {
   return `
 ${username} The solver needs to connect Stripe before payout. Ask them to visit https://bounty.new/settings/payments, then re-run \`/merge ${prNumber}\`.
 `;
@@ -633,7 +659,9 @@ Cannot move bounty to a pull request. Please specify an issue number.
 /**
  * Error: Failed to validate target issue
  */
-export function failedToValidateTargetComment(targetIssueNumber: number): string {
+export function failedToValidateTargetComment(
+  targetIssueNumber: number
+): string {
   return `
 
 Failed to validate target issue #${targetIssueNumber}. Please ensure it exists and is an issue (not a pull request).
@@ -644,7 +672,9 @@ Failed to validate target issue #${targetIssueNumber}. Please ensure it exists a
 /**
  * Error: PR doesn't reference issue (for move)
  */
-export function prDoesNotReferenceIssueForMoveComment(prNumber: number): string {
+export function prDoesNotReferenceIssueForMoveComment(
+  prNumber: number
+): string {
   return `
 
 PR #${prNumber} doesn't reference this issue. Add "Fixes #${prNumber}" (or similar) to the PR description and try again.

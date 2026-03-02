@@ -18,7 +18,6 @@
     "@bounty/stripe": "workspace:*",
     "@bounty/track": "workspace:*",
     "@bounty/types": "workspace:*",
-    "@bounty/ui": "workspace:*",
     "@linear/sdk": "^72.0.0",
     "@octokit/auth-app": "catalog:",
     "@octokit/core": "catalog:",
