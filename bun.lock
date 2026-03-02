@@ -59,6 +59,7 @@
         "@bounty/api": "workspace:*",
         "@bounty/auth": "workspace:*",
         "@bounty/db": "workspace:*",
+        "@bounty/email": "workspace:*",
         "@bounty/env": "workspace:*",
         "@bounty/realtime": "workspace:*",
         "@bounty/stripe": "workspace:*",
