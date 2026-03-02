@@ -14,6 +14,7 @@ export const env = createEnv({
       ),
     BETTER_AUTH_SECRET: z.string().min(1),
     BETTER_AUTH_URL: z.string().url(),
+    BETTER_AUTH_API_KEY: z.string().min(1).optional(),
     GITHUB_TOKEN: z.string().min(1),
     // GitHub OAuth
     GITHUB_CLIENT_ID: z.string().min(1),
@@ -63,6 +64,7 @@ export const env = createEnv({
     DATABASE_URL: process.env.DATABASE_URL,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
+    BETTER_AUTH_API_KEY: process.env.BETTER_AUTH_API_KEY,
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
     GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
     GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
