@@ -1,12 +1,14 @@
 // Define the thumbmarkResponse interface based on the library's structure
+// Uses loose typing for `info` to remain compatible with the library's `infoInterface`
+// which has specific properties but no index signature.
 export interface thumbmarkResponse {
   components: Record<string, unknown>;
-  info: {
-    [key: string]: unknown;
-  };
+  // biome-ignore lint: must be `any` to accept the library's infoInterface which lacks an index signature
+  info: any;
   version: string;
   thumbmark: string;
   elapsed?: number; // Optional property that may be present if options.performance is true
+  [key: string]: unknown; // Allow additional properties from the library
 }
 
 // Validate that the components object has a reasonable structure
