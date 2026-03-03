@@ -324,6 +324,7 @@
         "@bounty/types": "workspace:*",
         "@databuddy/sdk": "catalog:",
         "@tanstack/react-query": "^5.90.5",
+        "@thumbmarkjs/thumbmarkjs": "catalog:",
         "class-variance-authority": "catalog:",
         "clsx": "catalog:",
         "date-fns": "catalog:",
