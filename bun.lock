@@ -155,6 +155,7 @@
         "zod": "catalog:",
       },
       "devDependencies": {
+        "next": "catalog:",
         "typescript": "catalog:",
       },
     },
