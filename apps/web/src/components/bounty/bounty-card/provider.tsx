@@ -305,12 +305,25 @@ function useBountyCardComputedValues(
           'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-brand-accent/10 text-brand-accent-muted border border-brand-accent/15',
       };
     }
+    if (bounty.amount === 0) {
+      return {
+        label: 'Free',
+        className:
+          'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-foreground/5 text-foreground/60 border border-foreground/10',
+      };
+    }
     return {
       label: 'Unfunded',
       className:
         'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-foreground/5 text-foreground/40 border border-foreground/8',
     };
-  }, [isCancelled, isRefunded, hasPendingCancellation, isFunded]);
+  }, [
+    isCancelled,
+    isRefunded,
+    hasPendingCancellation,
+    isFunded,
+    bounty.amount,
+  ]);
 
   const creatorName = bounty.creator.name || 'User';
   const creatorInitial = creatorName.charAt(0).toLowerCase();

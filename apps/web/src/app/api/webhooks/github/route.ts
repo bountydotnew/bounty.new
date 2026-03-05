@@ -1107,7 +1107,8 @@ async function createSubmissionFromPullRequest(params: {
     submissionReceivedComment(
       bountyRecord.paymentStatus === 'held',
       pullRequest.user.login,
-      pullRequest.number
+      pullRequest.number,
+      Number(bountyRecord.amount)
     )
   );
 
@@ -1120,7 +1121,8 @@ async function createSubmissionFromPullRequest(params: {
     submissionReceivedComment(
       bountyRecord.paymentStatus === 'held',
       pullRequest.user.login,
-      pullRequest.number
+      pullRequest.number,
+      Number(bountyRecord.amount)
     )
   );
   if (newSubmission?.id) {

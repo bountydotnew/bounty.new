@@ -8,8 +8,9 @@ import {
   AvatarImage,
 } from '@bounty/ui/components/avatar';
 import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
+import { Button } from '@bounty/ui/components/button';
 import BountyActions from '@/components/bounty/bounty-actions';
-import { AlertTriangle, ArrowUpRight, X } from 'lucide-react';
+import { AlertTriangle, ExternalLink, X } from 'lucide-react';
 import type { ActionItem } from '@/types/bounty-actions';
 import { BountyDetailContext } from './context';
 
@@ -82,23 +83,23 @@ export function BountyDetailHeader() {
   return (
     <div className="mb-8">
       {/* Title Row */}
-      <div className="flex items-start justify-between gap-4 mb-4">
+      <div className="flex items-center gap-3 mb-4">
         <h1 className="font-bold text-3xl md:text-4xl text-foreground leading-[120%] tracking-tight">
           {title}
         </h1>
         {hasGithubLink && (
-          <a
-            href={githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 shrink-0 mt-2 rounded-md border border-border-subtle px-2.5 py-1 text-xs text-text-secondary transition-colors hover:text-foreground hover:bg-surface-1"
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 shrink-0"
           >
-            <GithubIcon className="h-3.5 w-3.5" />
-            <span>
-              {githubRepoOwner}/{githubRepoName}
-            </span>
-            <ArrowUpRight className="h-3 w-3" />
-          </a>
+            <a href={githubUrl} target="_blank" rel="noopener noreferrer">
+              <GithubIcon className="h-3.5 w-3.5" />
+              <span className="font-medium text-sm">{githubRepoName}</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </Button>
         )}
       </div>
 

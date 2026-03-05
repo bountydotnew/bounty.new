@@ -7,7 +7,8 @@ import { Button } from '@bounty/ui/components/button';
 import { cn } from '@bounty/ui/lib/utils';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ExternalLink, Github } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
+import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
 import { Badge } from '@/components/bounty/badge';
 
 interface SubmissionCardProps {
@@ -128,7 +129,7 @@ export default function SubmissionCard({
             className="flex items-center gap-2"
           >
             <a href={prUrl} target="_blank" rel="noopener noreferrer">
-              <Github className="h-3.5 w-3.5" />
+              <GithubIcon className="h-3.5 w-3.5" />
               <span className="font-medium text-sm">
                 {githubPullRequestNumber
                   ? `PR #${githubPullRequestNumber}`
@@ -139,7 +140,7 @@ export default function SubmissionCard({
           </Button>
         ) : (
           <Button size="sm" className="flex items-center gap-2">
-            <Github className="h-3.5 w-3.5" />
+            <GithubIcon className="h-3.5 w-3.5" />
             <span className="font-medium text-sm">Preview</span>
           </Button>
         )}

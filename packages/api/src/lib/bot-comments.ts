@@ -82,8 +82,19 @@ Review submissions and approve with \`/approve #PR_NUMBER\` on this issue. After
 export function submissionReceivedComment(
   isFunded: boolean,
   prAuthor: string,
-  prNumber: number
+  prNumber: number,
+  amount?: number
 ): string {
+  if (amount === 0) {
+    return `
+**Submission Received**
+
+@${prAuthor} Your PR #${prNumber} has been submitted for this bounty. The bounty creator will review it shortly.
+
+> **Note:** This is a free bounty — no monetary reward will be issued. This bounty is for contributions, recognition, or experience.
+`;
+  }
+
   if (isFunded) {
     return `
 **Submission Received**

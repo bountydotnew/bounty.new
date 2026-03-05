@@ -1,7 +1,7 @@
 'use client';
 
 import { formatDistanceToNow } from 'date-fns';
-import { PlusCircleIcon } from 'lucide-react';
+import { GitPullRequestIcon, PlusCircleIcon } from 'lucide-react';
 import Link from 'next/link';
 import type { ActivityItem } from '@bounty/types';
 import { CommentsIcon } from '@bounty/ui';
@@ -22,31 +22,40 @@ export function ActivityList({ activities }: ActivityListProps) {
   return (
     <div className="flex flex-col gap-4">
       {activities.map((activity) => {
-        const isBounty = activity.type === 'bounty_created';
+        const icon =
+          activity.type === 'bounty_created' ? (
+            <PlusCircleIcon className="h-5 w-5" />
+          ) : activity.type === 'submission_created' ? (
+            <GitPullRequestIcon className="h-5 w-5" />
+          ) : (
+            <CommentsIcon className="h-5 w-5" />
+          );
+
+        const label =
+          activity.type === 'bounty_created'
+            ? 'Created a bounty'
+            : activity.type === 'submission_created'
+              ? 'Submitted to'
+              : 'Commented on';
+
+        const href =
+          activity.type === 'bounty_created'
+            ? `/bounty/${activity.id}`
+            : `/bounty/${activity.data.bountyId}`;
 
         return (
           <div
             key={`${activity.type}-${activity.id}`}
             className="flex gap-4 rounded-xl border border-border-subtle bg-surface-1 p-4 transition-colors hover:bg-surface-1"
           >
-            <div
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                isBounty
-                  ? 'bg-transparent text-foreground'
-                  : 'bg-transparent text-foreground'
-              }`}
-            >
-              {isBounty ? (
-                <PlusCircleIcon className="h-5 w-5" />
-              ) : (
-                <CommentsIcon className="h-5 w-5" />
-              )}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-foreground">
+              {icon}
             </div>
 
             <div className="flex flex-col gap-1 min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-text-secondary">
-                  {isBounty ? 'Created a bounty' : 'Commented on'}
+                  {label}
                 </span>
                 <span className="text-xs text-text-tertiary">
                   {formatDistanceToNow(new Date(activity.createdAt), {
@@ -56,20 +65,21 @@ export function ActivityList({ activities }: ActivityListProps) {
               </div>
 
               <Link
-                href={`/bounty/${isBounty ? activity.id : activity.data.bountyId}`}
+                href={href}
                 className="text-base font-semibold text-foreground hover:underline truncate"
               >
                 {activity.title}
               </Link>
 
-              {isBounty ? (
+              {activity.type === 'bounty_created' ||
+              activity.type === 'submission_created' ? (
                 <span className="text-sm text-text-tertiary">
                   {Number(activity.data.amount).toLocaleString()}{' '}
                   {activity.data.currency}
                 </span>
               ) : (
                 <p className="text-sm text-text-tertiary line-clamp-2">
-                  "{activity.data.content}"
+                  &ldquo;{activity.data.content}&rdquo;
                 </p>
               )}
             </div>

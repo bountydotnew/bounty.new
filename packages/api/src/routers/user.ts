@@ -9,6 +9,7 @@ import {
   db,
   invite,
   session,
+  submission,
   user,
   userProfile,
   userReputation,
@@ -442,9 +443,7 @@ export const userRouter = router({
 
       const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
 
-      await ctx.db
-        .insert(invite)
-        .values({ email, tokenHash, expiresAt });
+      await ctx.db.insert(invite).values({ email, tokenHash, expiresAt });
 
       const baseUrl =
         env.BETTER_AUTH_URL?.replace(TRAILING_SLASH_REGEX, '') ||
@@ -646,7 +645,7 @@ export const userRouter = router({
     .input(z.object({ query: z.string().min(1) }))
     .query(async ({ input }) => {
       const searchTerm = `%${input.query}%`;
-      
+
       const results = await db
         .select({
           id: user.id,
@@ -711,8 +710,30 @@ export const userRouter = router({
         .orderBy(desc(bountyComment.createdAt))
         .limit(input.limit);
 
+      const recentSubmissions = await db
+        .select({
+          type: sql<string>`'submission_created'`,
+          id: submission.id,
+          title: bounty.title,
+          createdAt: submission.createdAt,
+          data: {
+            bountyId: bounty.id,
+            amount: bounty.amount,
+            currency: bounty.currency,
+          },
+        })
+        .from(submission)
+        .innerJoin(bounty, eq(submission.bountyId, bounty.id))
+        .where(eq(submission.contributorId, input.userId))
+        .orderBy(desc(submission.createdAt))
+        .limit(input.limit);
+
       // Combine and sort
-      const activity = [...recentBounties, ...recentComments]
+      const activity = [
+        ...recentBounties,
+        ...recentComments,
+        ...recentSubmissions,
+      ]
         .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
         .slice(0, input.limit);
 
