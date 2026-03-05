@@ -519,9 +519,7 @@ async function checkEarlyAccessForUser(
   if (!userRecord) {
     return {
       allowed: false,
-      errorMessage: `@${githubUsername} bounty.new is currently in early access mode. You need an early access account to use the bot.
-
-Join the waitlist at https://bounty.new to get early access.`,
+      errorMessage: `@${githubUsername} bounty.new is in early access. Link your GitHub account at https://bounty.new to get started.`,
     };
   }
 
@@ -535,9 +533,7 @@ Join the waitlist at https://bounty.new to get early access.`,
   // User doesn't have early access
   return {
     allowed: false,
-    errorMessage: `@${githubUsername} bounty.new is currently in early access mode. Your account doesn't have early access yet.
-
-Join the waitlist at https://bounty.new to get early access.`,
+    errorMessage: `@${githubUsername} bounty.new is in early access. Your account doesn't have access yet. Join the waitlist at https://bounty.new.`,
   };
 }
 
@@ -2700,7 +2696,7 @@ async function handlePullRequestOpened(
       repository.name,
       pull_request.number,
       earlyAccessCheck.errorMessage ||
-        `@${pull_request.user.login} bounty.new is currently in early access mode. You need an early access account to submit.\n\nJoin the waitlist at https://bounty.new to get early access.`
+        `@${pull_request.user.login} bounty.new is in early access. Link your GitHub account at https://bounty.new to submit.`
     );
 
     return;
