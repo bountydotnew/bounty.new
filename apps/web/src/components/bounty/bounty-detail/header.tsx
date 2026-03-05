@@ -7,8 +7,9 @@ import {
   AvatarFacehash,
   AvatarImage,
 } from '@bounty/ui/components/avatar';
+import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
 import BountyActions from '@/components/bounty/bounty-actions';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, X } from 'lucide-react';
 import type { ActionItem } from '@/types/bounty-actions';
 import { BountyDetailContext } from './context';
 
@@ -29,7 +30,16 @@ export function BountyDetailHeader() {
   const { state, actions, meta } = context;
 
   const {
-    bounty: { title, amount, user, avatarSrc, repositoryUrl, issueUrl },
+    bounty: {
+      title,
+      amount,
+      user,
+      avatarSrc,
+      repositoryUrl,
+      issueUrl,
+      githubRepoOwner,
+      githubRepoName,
+    },
     votes,
     bookmarked,
     isCreator,
@@ -39,6 +49,9 @@ export function BountyDetailHeader() {
     hasPendingCancellation,
     isCancelled,
   } = state;
+
+  const githubUrl = issueUrl || repositoryUrl;
+  const hasGithubLink = githubRepoOwner && githubRepoName && githubUrl;
 
   // Build cancellation action items
   const cancellationActions: ActionItem[] =
@@ -83,6 +96,24 @@ export function BountyDetailHeader() {
           {user}
         </span>
       </div>
+
+      {/* GitHub Link */}
+      {hasGithubLink && (
+        <div className="mb-4">
+          <a
+            href={githubUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full border border-border-subtle bg-surface-1 px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-1/80"
+          >
+            <GithubIcon className="h-4 w-4" />
+            <span>
+              {githubRepoOwner}/{githubRepoName}
+            </span>
+            <ArrowUpRight className="h-3.5 w-3.5 text-text-secondary" />
+          </a>
+        </div>
+      )}
 
       {/* Amount and Actions Row */}
       <div className="flex w-full flex-col items-start justify-between gap-4 md:flex-row md:items-center">
