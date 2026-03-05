@@ -6,7 +6,9 @@ import {
 import { Button } from '@bounty/ui/components/button';
 import { cn } from '@bounty/ui/lib/utils';
 import Image from 'next/image';
-import { ExternalLink, Github, GitMerge, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { ExternalLink, GitMerge, Loader2 } from 'lucide-react';
+import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
 import { Badge } from '@/components/bounty/badge';
 
 interface SubmissionCardProps {
@@ -65,15 +67,15 @@ export default function SubmissionCard({
   // Build PR URL if we have the PR number and repo info
   const prUrl =
     pullRequestUrl ||
-    ((githubPullRequestNumber && githubRepoOwner && githubRepoName)
+    (githubPullRequestNumber && githubRepoOwner && githubRepoName
       ? `https://github.com/${githubRepoOwner}/${githubRepoName}/pull/${githubPullRequestNumber}`
       : deliverableUrl);
 
   const statusColors: Record<string, string> = {
-    pending: 'text-yellow-400',
-    approved: 'text-green-400',
-    rejected: 'text-red-400',
-    revision_requested: 'text-orange-400',
+    pending: 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400',
+    approved: 'bg-green-500/15 text-green-600 dark:text-green-400',
+    rejected: 'bg-red-500/15 text-red-600 dark:text-red-400',
+    revision_requested: 'bg-orange-500/15 text-orange-600 dark:text-orange-400',
   };
 
   const statusLabels: Record<string, string> = {
@@ -86,30 +88,38 @@ export default function SubmissionCard({
   return (
     <div
       className={cn(
-        'flex w-full min-w-[466px] max-w-[466px] flex-col items-start gap-3 rounded-lg bg-surface-2 p-6 transition-colors hover:bg-surface-hover',
+        'flex w-full flex-col items-start gap-3 rounded-lg border border-border-subtle bg-surface-2 p-4',
         className
       )}
     >
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
-          <Avatar className="h-10 w-10">
-            <AvatarImage alt={displayName} src={displayAvatar} />
-            <AvatarFacehash name={displayName} size={40} />
-          </Avatar>
+          <Link
+            href={`/profile/${username || displayName}`}
+            className="shrink-0"
+          >
+            <Avatar className="h-10 w-10 transition-opacity hover:opacity-80">
+              <AvatarImage alt={displayName} src={displayAvatar} />
+              <AvatarFacehash name={displayName} size={40} />
+            </Avatar>
+          </Link>
           <div className="flex flex-col">
             <div className="flex items-center gap-1">
-              <span className="font-medium text-sm text-foreground">
+              <Link
+                href={`/profile/${username || displayName}`}
+                className="font-medium text-sm text-foreground hover:underline"
+              >
                 {displayName}
-              </span>
+              </Link>
               {hasBadge && <Badge />}
             </div>
             <div className="flex items-center gap-2">
-              {rank && <span className="text-gray-400 text-xs">{rank}</span>}
+              {rank && <span className="text-text-muted text-xs">{rank}</span>}
               {status && (
                 <span
                   className={cn(
-                    'text-xs',
-                    statusColors[status] || 'text-gray-400'
+                    'text-xs font-medium px-2 py-0.5 rounded-md',
+                    statusColors[status] || 'bg-muted text-text-muted'
                   )}
                 >
                   {statusLabels[status] || status}
@@ -121,10 +131,12 @@ export default function SubmissionCard({
         {prUrl ? (
           <Button
             asChild
-            className="flex items-center justify-center gap-2 rounded-lg bg-surface-3 px-3 py-3 text-foreground hover:bg-surface-3"
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
           >
             <a href={prUrl} target="_blank" rel="noopener noreferrer">
-              <Github className="h-4 w-4" />
+              <GithubIcon className="h-3.5 w-3.5" />
               <span className="font-medium text-sm">
                 {githubPullRequestNumber
                   ? `PR #${githubPullRequestNumber}`
@@ -134,16 +146,17 @@ export default function SubmissionCard({
             </a>
           </Button>
         ) : (
-          <Button className="flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-foreground dark:text-black">
-            <Github className="h-4 w-4 text-foreground dark:text-black" />
+          <Button size="sm" className="flex items-center gap-2">
+            <GithubIcon className="h-3.5 w-3.5" />
             <span className="font-medium text-sm">Preview</span>
           </Button>
         )}
       </div>
-      {description && <p className="text-gray-400 text-sm">{description}</p>}
+      {description && (
+        <p className="text-text-secondary text-sm">{description}</p>
+      )}
       {/* Hide image preview for GitHub PR submissions */}
       {!prUrl && previewSrc && (
-
         <Image
           alt="Theme preview screenshot"
           className="h-20 w-20 rounded-md object-cover"
@@ -154,12 +167,13 @@ export default function SubmissionCard({
         <Button
           onClick={onMerge}
           disabled={isMerging}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-50"
+          size="sm"
+          className="flex w-full items-center justify-center gap-2"
         >
           {isMerging ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
-            <GitMerge className="h-4 w-4" />
+            <GitMerge className="h-3.5 w-3.5" />
           )}
           {isMerging ? 'Merging...' : 'Merge & Pay Out'}
         </Button>

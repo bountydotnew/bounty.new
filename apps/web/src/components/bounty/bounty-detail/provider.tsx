@@ -121,13 +121,20 @@ function useBountyDetailMutations({
       toast.success('Bounty deleted successfully');
       queryClient.invalidateQueries({
         predicate: (query) => {
-          const key = query.queryKey;
-          if (Array.isArray(key)) {
-            const first = key[0];
-            if (typeof first === 'string' && first.includes('bounty')) {
-              return true;
-            }
+          const [first] = query.queryKey;
+
+          if (typeof first === 'string') {
+            return first.includes('bounty');
           }
+
+          if (Array.isArray(first)) {
+            const namespace = first[0];
+            return (
+              typeof namespace === 'string' &&
+              namespace.includes('bounty')
+            );
+          }
+
           return false;
         },
       });
@@ -225,13 +232,20 @@ function useBountyDetailMutations({
       toast.success('Submission merged and payout released!');
       queryClient.invalidateQueries({
         predicate: (query) => {
-          const key = query.queryKey;
-          if (Array.isArray(key)) {
-            const first = key[0];
-            if (typeof first === 'string' && first.includes('bounty')) {
-              return true;
-            }
+          const [first] = query.queryKey;
+
+          if (typeof first === 'string') {
+            return first.includes('bounty');
           }
+
+          if (Array.isArray(first)) {
+            const namespace = first[0];
+            return (
+              typeof namespace === 'string' &&
+              namespace.includes('bounty')
+            );
+          }
+
           return false;
         },
       });
@@ -488,6 +502,9 @@ export function BountyDetailProvider({
         });
       },
       mergeSubmission: (submissionId: string) => {
+        if (mergeSubmissionMutation.isPending) {
+          return;
+        }
         setMergingSubmissionId(submissionId);
         mergeSubmissionMutation.mutate(
           { bountyId, submissionId },

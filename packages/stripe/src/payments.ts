@@ -138,13 +138,19 @@ export async function createTransfer(params: {
   amount: number; // Amount in cents
   connectAccountId: string; // Solver's Connect account ID
   bountyId: string;
+  idempotencyKey?: string;
 }) {
-  return stripeClient.transfers.create({
-    amount: params.amount,
-    currency: "usd",
-    destination: params.connectAccountId,
-    metadata: { bountyId: params.bountyId },
-  });
+  return stripeClient.transfers.create(
+    {
+      amount: params.amount,
+      currency: "usd",
+      destination: params.connectAccountId,
+      metadata: { bountyId: params.bountyId },
+    },
+    params.idempotencyKey
+      ? { idempotencyKey: params.idempotencyKey }
+      : undefined
+  );
 }
 
 /**

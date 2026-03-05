@@ -21,11 +21,8 @@ export function BountyDetailSubmissions() {
   const { state, actions, meta } = context;
   const { submissions, isSubmissionsLoading, bounty } = state;
 
-  // Show merge button when the caller is the creator/org member and the bounty is funded
-  const canMerge =
-    state.isCreator &&
-    state.isFunded &&
-    bounty.paymentStatus === 'held';
+  // Show merge button when the caller can manage the bounty and the bounty is funded
+  const canMerge = state.canEdit && bounty.paymentStatus === 'held';
 
   const submissionCount = submissions?.length ?? 0;
 

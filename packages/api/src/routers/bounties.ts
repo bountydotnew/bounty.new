@@ -4813,33 +4813,48 @@ To approve and pay:
             .then((rows) => rows[0])
         : undefined;
 
-      const solver =
-        solverUser ||
-        (submissionRecord.githubUsername
-          ? await db
-              .select({
-                id: user.id,
-                stripeConnectAccountId: user.stripeConnectAccountId,
-                stripeConnectOnboardingComplete:
-                  user.stripeConnectOnboardingComplete,
-              })
-              .from(user)
-              .leftJoin(userProfile, eq(user.id, userProfile.userId))
-              .where(
-                or(
-                  eq(user.handle, submissionRecord.githubUsername),
-                  eq(
-                    userProfile.githubUsername,
-                    submissionRecord.githubUsername
-                  )
-                )
+      let solver = solverUser;
+
+      if (!solver && submissionRecord.githubUsername) {
+        const matchedUsers = await db
+          .select({
+            id: user.id,
+            stripeConnectAccountId: user.stripeConnectAccountId,
+            stripeConnectOnboardingComplete:
+              user.stripeConnectOnboardingComplete,
+          })
+          .from(user)
+          .leftJoin(userProfile, eq(user.id, userProfile.userId))
+          .where(
+            or(
+              eq(user.handle, submissionRecord.githubUsername),
+              eq(
+                userProfile.githubUsername,
+                submissionRecord.githubUsername
               )
-              .limit(1)
-              .then((rows) => rows[0])
-          : undefined);
+            )
+          );
+
+        if (matchedUsers.length > 1) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message:
+              'Multiple users matched for this GitHub username. Please contact support.',
+          });
+        }
+
+        solver = matchedUsers[0];
+      }
+
+      if (!solver) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Unable to resolve solver for this submission',
+        });
+      }
 
       if (
-        !solver?.stripeConnectAccountId ||
+        !solver.stripeConnectAccountId ||
         !solver.stripeConnectOnboardingComplete
       ) {
         throw new TRPCError({
@@ -4854,13 +4869,37 @@ To approve and pay:
         Number.parseFloat(bountyRecord.amount) * 100
       );
 
+      if (!Number.isFinite(amountInCents) || amountInCents <= 0) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Invalid bounty amount',
+        });
+      }
+
       // 7. Execute payout within payment lock
       try {
         await withPaymentLock(bountyRecord.id, async () => {
+          // Re-check bounty state inside the lock to prevent races
+          const [latestBounty] = await db
+            .select({
+              paymentStatus: bounty.paymentStatus,
+              stripeTransferId: bounty.stripeTransferId,
+            })
+            .from(bounty)
+            .where(eq(bounty.id, bountyRecord.id))
+            .limit(1);
+
+          if (
+            !latestBounty ||
+            latestBounty.paymentStatus === 'released' ||
+            latestBounty.stripeTransferId
+          ) {
+            return;
+          }
+
           const alreadyProcessed = await wasOperationPerformed(
             'merge-payout',
-            bountyRecord.id,
-            input.submissionId
+            bountyRecord.id
           );
 
           if (alreadyProcessed) {
@@ -4871,6 +4910,7 @@ To approve and pay:
             amount: amountInCents,
             connectAccountId: stripeConnectAccountId,
             bountyId: bountyRecord.id,
+            idempotencyKey: `merge-payout:${bountyRecord.id}`,
           });
 
           await db
@@ -4911,8 +4951,7 @@ To approve and pay:
           await markOperationPerformed(
             'merge-payout',
             bountyRecord.id,
-            'success',
-            input.submissionId
+            'success'
           );
         });
       } catch (error) {
