@@ -7,14 +7,14 @@ import { Button } from '@bounty/ui/components/button';
 import { cn } from '@bounty/ui/lib/utils';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ExternalLink, GitMerge, Loader2 } from 'lucide-react';
+import { Check, ExternalLink, Loader2, X } from 'lucide-react';
 import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
 import { Badge } from '@/components/bounty/badge';
 
 interface SubmissionCardProps {
   // User info
   user?: string;
-  username?: string; // GitHub username
+  username?: string;
   contributorName?: string;
   contributorImage?: string;
   avatarSrc?: string;
@@ -33,9 +33,13 @@ interface SubmissionCardProps {
   hasBadge?: boolean;
   previewSrc?: string;
   className?: string;
-  // Merge action
-  canMerge?: boolean;
+  // Actions
+  canManage?: boolean;
+  isApproving?: boolean;
+  isUnapproving?: boolean;
   isMerging?: boolean;
+  onApprove?: () => void;
+  onUnapprove?: () => void;
   onMerge?: () => void;
   mergeLabel?: string;
 }
@@ -57,16 +61,18 @@ export default function SubmissionCard({
   githubRepoName,
   pullRequestUrl,
   deliverableUrl,
-  canMerge,
+  canManage,
+  isApproving,
+  isUnapproving,
   isMerging,
+  onApprove,
+  onUnapprove,
   onMerge,
-  mergeLabel = 'Merge & Pay Out',
+  mergeLabel = 'Pay Out',
 }: SubmissionCardProps) {
-  // Use GitHub username if available, otherwise fallback to contributor name or user
   const displayName = username || contributorName || user || 'Anonymous';
   const displayAvatar = avatarSrc || contributorImage || '';
 
-  // Build PR URL if we have the PR number and repo info
   const prUrl =
     pullRequestUrl ||
     (githubPullRequestNumber && githubRepoOwner && githubRepoName
@@ -86,6 +92,8 @@ export default function SubmissionCard({
     rejected: 'Rejected',
     revision_requested: 'Revision Requested',
   };
+
+  const isApproved = status === 'approved';
 
   return (
     <div
@@ -130,55 +138,95 @@ export default function SubmissionCard({
             </div>
           </div>
         </div>
-        {prUrl ? (
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <a href={prUrl} target="_blank" rel="noopener noreferrer">
+        <div className="flex items-center gap-2">
+          {prUrl ? (
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <a href={prUrl} target="_blank" rel="noopener noreferrer">
+                <GithubIcon className="h-3.5 w-3.5" />
+                <span className="font-medium text-sm">
+                  {githubPullRequestNumber
+                    ? `#${githubPullRequestNumber}`
+                    : 'View'}
+                </span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
               <GithubIcon className="h-3.5 w-3.5" />
-              <span className="font-medium text-sm">
-                {githubPullRequestNumber
-                  ? `PR #${githubPullRequestNumber}`
-                  : 'View'}
-              </span>
-              <ExternalLink className="h-3 w-3" />
-            </a>
-          </Button>
-        ) : (
-          <Button size="sm" className="flex items-center gap-2">
-            <GithubIcon className="h-3.5 w-3.5" />
-            <span className="font-medium text-sm">Preview</span>
-          </Button>
-        )}
+              <span className="font-medium text-sm">Preview</span>
+            </Button>
+          )}
+          {canManage && !isApproved && onApprove && (
+            <Button
+              onClick={onApprove}
+              disabled={isApproving}
+              size="sm"
+              className="flex items-center gap-1.5"
+            >
+              {isApproving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Check className="h-3.5 w-3.5" />
+              )}
+              {isApproving ? 'Approving...' : 'Approve'}
+            </Button>
+          )}
+          {canManage && isApproved && (
+            <>
+              {onMerge && (
+                <Button
+                  onClick={onMerge}
+                  disabled={isMerging}
+                  size="sm"
+                  className="flex items-center gap-1.5"
+                >
+                  {isMerging ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Check className="h-3.5 w-3.5" />
+                  )}
+                  {isMerging ? 'Processing...' : mergeLabel}
+                </Button>
+              )}
+              {onUnapprove && (
+                <Button
+                  onClick={onUnapprove}
+                  disabled={isUnapproving}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1.5 text-text-secondary"
+                >
+                  {isUnapproving ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <X className="h-3.5 w-3.5" />
+                  )}
+                  {isUnapproving ? 'Revoking...' : 'Unapprove'}
+                </Button>
+              )}
+            </>
+          )}
+        </div>
       </div>
       {description && (
         <p className="text-text-secondary text-sm">{description}</p>
       )}
-      {/* Hide image preview for GitHub PR submissions */}
       {!prUrl && previewSrc && (
         <Image
           alt="Theme preview screenshot"
           className="h-20 w-20 rounded-md object-cover"
           src={previewSrc}
         />
-      )}
-      {canMerge && onMerge && (
-        <Button
-          onClick={onMerge}
-          disabled={isMerging}
-          size="sm"
-          className="flex w-full items-center justify-center gap-2"
-        >
-          {isMerging ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <GitMerge className="h-3.5 w-3.5" />
-          )}
-          {isMerging ? 'Merging...' : mergeLabel}
-        </Button>
       )}
     </div>
   );

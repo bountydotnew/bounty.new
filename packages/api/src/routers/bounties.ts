@@ -25,6 +25,8 @@ import { getGithubAppManager } from '@bounty/api/driver/github-app';
 import {
   unfundedBountyComment,
   fundedBountyComment,
+  submissionApprovedComment,
+  approvalWithdrawnComment,
 } from '@bounty/api/src/lib/bot-comments';
 import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
@@ -806,13 +808,14 @@ export const bountiesRouter = router({
 
         const conditions = [];
 
-        // Exclude draft bounties unless the caller is explicitly filtering
-        // by status or by their own creatorId (users can see their own drafts).
+        // Exclude draft, completed, and cancelled bounties unless the caller
+        // is explicitly filtering by status.
         if (input.status) {
           conditions.push(eq(bounty.status, input.status));
         } else {
-          // By default, hide drafts from cross-org listing
-          conditions.push(sql`${bounty.status} != 'draft'`);
+          conditions.push(
+            sql`${bounty.status} NOT IN ('draft', 'completed', 'cancelled')`
+          );
         }
 
         if (input.search) {
@@ -4754,6 +4757,237 @@ To approve and pay:
     }),
 
   /**
+   * Approve a submission without triggering payout.
+   * Sets submission status to 'approved' and bounty status to 'in_progress'.
+   */
+  approveSubmission: protectedProcedure
+    .input(
+      z.object({
+        bountyId: z.string().uuid(),
+        submissionId: z.string().uuid(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [bountyRecord] = await db
+        .select()
+        .from(bounty)
+        .where(eq(bounty.id, input.bountyId))
+        .limit(1);
+
+      if (!bountyRecord) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Bounty not found' });
+      }
+
+      const hasPermission = await isUserBountyOrgMember(
+        ctx.session.user.id,
+        bountyRecord
+      );
+      if (!hasPermission) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message:
+            'You do not have permission to approve submissions for this bounty',
+        });
+      }
+
+      const [submissionRecord] = await db
+        .select()
+        .from(submission)
+        .where(
+          and(
+            eq(submission.id, input.submissionId),
+            eq(submission.bountyId, input.bountyId)
+          )
+        )
+        .limit(1);
+
+      if (!submissionRecord) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Submission not found',
+        });
+      }
+
+      if (submissionRecord.status === 'approved') {
+        return { success: true, message: 'Already approved' };
+      }
+
+      await db
+        .update(submission)
+        .set({
+          status: 'approved',
+          reviewedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(submission.id, input.submissionId));
+
+      // Move bounty to in_progress if it's currently open
+      if (bountyRecord.status === 'open') {
+        await db
+          .update(bounty)
+          .set({ status: 'in_progress', updatedAt: new Date() })
+          .where(eq(bounty.id, input.bountyId));
+      }
+
+      // Post approval comment on GitHub
+      if (
+        bountyRecord.githubInstallationId &&
+        bountyRecord.githubRepoOwner &&
+        bountyRecord.githubRepoName &&
+        bountyRecord.githubIssueNumber
+      ) {
+        try {
+          const githubApp = getGithubAppManager();
+          const approverUsername = ctx.session.user.name || 'bounty creator';
+          const solverUsername =
+            submissionRecord.githubUsername || 'contributor';
+          const prNumber = submissionRecord.githubPullRequestNumber || 0;
+
+          await githubApp.createIssueComment(
+            bountyRecord.githubInstallationId,
+            bountyRecord.githubRepoOwner,
+            bountyRecord.githubRepoName,
+            bountyRecord.githubIssueNumber,
+            submissionApprovedComment(
+              solverUsername,
+              approverUsername,
+              prNumber,
+              Number(bountyRecord.amount)
+            )
+          );
+        } catch (error) {
+          console.error(
+            '[approveSubmission] Failed to post GitHub comment:',
+            error
+          );
+        }
+      }
+
+      return { success: true, message: 'Submission approved' };
+    }),
+
+  /**
+   * Unapprove a submission. Reverts submission status to 'pending'
+   * and bounty status back to 'open' if no other approved submissions remain.
+   */
+  unapproveSubmission: protectedProcedure
+    .input(
+      z.object({
+        bountyId: z.string().uuid(),
+        submissionId: z.string().uuid(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [bountyRecord] = await db
+        .select()
+        .from(bounty)
+        .where(eq(bounty.id, input.bountyId))
+        .limit(1);
+
+      if (!bountyRecord) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Bounty not found' });
+      }
+
+      const hasPermission = await isUserBountyOrgMember(
+        ctx.session.user.id,
+        bountyRecord
+      );
+      if (!hasPermission) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message:
+            'You do not have permission to unapprove submissions for this bounty',
+        });
+      }
+
+      if (bountyRecord.status === 'completed') {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Cannot unapprove a completed bounty',
+        });
+      }
+
+      const [submissionRecord] = await db
+        .select()
+        .from(submission)
+        .where(
+          and(
+            eq(submission.id, input.submissionId),
+            eq(submission.bountyId, input.bountyId)
+          )
+        )
+        .limit(1);
+
+      if (!submissionRecord) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Submission not found',
+        });
+      }
+
+      if (submissionRecord.status !== 'approved') {
+        return { success: true, message: 'Submission is not approved' };
+      }
+
+      await db
+        .update(submission)
+        .set({
+          status: 'pending',
+          reviewedAt: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(submission.id, input.submissionId));
+
+      // Check if any other submissions are still approved
+      const otherApproved = await db
+        .select({ id: submission.id })
+        .from(submission)
+        .where(
+          and(
+            eq(submission.bountyId, input.bountyId),
+            eq(submission.status, 'approved')
+          )
+        )
+        .limit(1);
+
+      // If no other approved submissions, revert bounty to open
+      if (otherApproved.length === 0 && bountyRecord.status === 'in_progress') {
+        await db
+          .update(bounty)
+          .set({ status: 'open', updatedAt: new Date() })
+          .where(eq(bounty.id, input.bountyId));
+      }
+
+      // Post unapproval comment on GitHub
+      if (
+        bountyRecord.githubInstallationId &&
+        bountyRecord.githubRepoOwner &&
+        bountyRecord.githubRepoName &&
+        bountyRecord.githubIssueNumber
+      ) {
+        try {
+          const githubApp = getGithubAppManager();
+          const prNumber = submissionRecord.githubPullRequestNumber || 0;
+
+          await githubApp.createIssueComment(
+            bountyRecord.githubInstallationId,
+            bountyRecord.githubRepoOwner,
+            bountyRecord.githubRepoName,
+            bountyRecord.githubIssueNumber,
+            approvalWithdrawnComment(prNumber)
+          );
+        } catch (error) {
+          console.error(
+            '[unapproveSubmission] Failed to post GitHub comment:',
+            error
+          );
+        }
+      }
+
+      return { success: true, message: 'Submission unapproved' };
+    }),
+
+  /**
    * Merge a submission – marks the bounty as completed, approves the
    * submission, and releases the payout to the solver. This is the
    * web-UI equivalent of the `/merge` GitHub bot command.
@@ -4866,10 +5100,7 @@ To approve and pay:
           .where(
             or(
               eq(user.handle, submissionRecord.githubUsername),
-              eq(
-                userProfile.githubUsername,
-                submissionRecord.githubUsername
-              )
+              eq(userProfile.githubUsername, submissionRecord.githubUsername)
             )
           );
 
@@ -4893,9 +5124,11 @@ To approve and pay:
 
       // Only require Stripe Connect for paid bounties
       if (
-        !isFreeBounty &&
-        (!solver.stripeConnectAccountId ||
-          !solver.stripeConnectOnboardingComplete)
+        !(
+          isFreeBounty ||
+          (solver.stripeConnectAccountId &&
+            solver.stripeConnectOnboardingComplete)
+        )
       ) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
@@ -4904,7 +5137,10 @@ To approve and pay:
         });
       }
 
-      if (!isFreeBounty && (!Number.isFinite(amountInCents) || amountInCents <= 0)) {
+      if (
+        !isFreeBounty &&
+        (!Number.isFinite(amountInCents) || amountInCents <= 0)
+      ) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Invalid bounty amount',
@@ -4944,12 +5180,14 @@ To approve and pay:
           // For free bounties, skip Stripe transfer entirely
           const transferId = isFreeBounty
             ? `free_bounty_${bountyRecord.id}`
-            : (await createTransfer({
-                amount: amountInCents,
-                connectAccountId: solver.stripeConnectAccountId!,
-                bountyId: bountyRecord.id,
-                idempotencyKey: `merge-payout:${bountyRecord.id}`,
-              })).id;
+            : (
+                await createTransfer({
+                  amount: amountInCents,
+                  connectAccountId: solver.stripeConnectAccountId!,
+                  bountyId: bountyRecord.id,
+                  idempotencyKey: `merge-payout:${bountyRecord.id}`,
+                })
+              ).id;
 
           await db
             .update(submission)
@@ -5008,6 +5246,9 @@ To approve and pay:
         });
       }
 
-      return { success: true, message: 'Submission merged and payout released' };
+      return {
+        success: true,
+        message: 'Submission merged and payout released',
+      };
     }),
 });

@@ -8,6 +8,11 @@ import type { Bounty } from '@/types/dashboard';
  */
 export type SortByOption = 'created_at' | 'amount' | 'deadline' | 'title';
 export type SortOrderOption = 'asc' | 'desc';
+export type BountyStatusFilter =
+  | 'open'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled';
 
 /**
  * Bounty List State
@@ -25,6 +30,7 @@ export interface BountyListState {
   filters: {
     search: string | null;
     creatorId: string | null;
+    status: BountyStatusFilter | null;
     sortBy: SortByOption;
     sortOrder: SortOrderOption;
   };
@@ -40,6 +46,8 @@ export interface BountyListActions {
   setSearch: (search: string | null) => void;
   /** Set the creator ID filter */
   setCreatorId: (creatorId: string | null) => void;
+  /** Set the status filter */
+  setStatus: (status: BountyStatusFilter | null) => void;
   /** Set the sort by option */
   setSortBy: (sortBy: SortByOption) => void;
   /** Set the sort order */
@@ -76,4 +84,6 @@ export interface BountyListContextValue {
  *
  * Created with createContext for React 19+ compatibility.
  */
-export const BountyListContext = createContext<BountyListContextValue | null>(null);
+export const BountyListContext = createContext<BountyListContextValue | null>(
+  null
+);

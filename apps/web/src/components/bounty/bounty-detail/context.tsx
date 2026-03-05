@@ -99,6 +99,10 @@ export interface BountyDetailActions {
   openEditModal: () => void;
   /** Share bounty */
   share: () => void;
+  /** Approve a submission */
+  approveSubmission: (submissionId: string) => void;
+  /** Unapprove a submission */
+  unapproveSubmission: (submissionId: string) => void;
   /** Merge a submission (approve + pay out) */
   mergeSubmission: (submissionId: string) => void;
 }
@@ -117,6 +121,10 @@ export interface BountyDetailMeta {
   isCancellingCancellationRequest: boolean;
   isRecheckingPayment: boolean;
   isCreatingPayment: boolean;
+  isApprovingSubmission: boolean;
+  approvingSubmissionId: string | null;
+  isUnapprovingSubmission: boolean;
+  unapprovingSubmissionId: string | null;
   isMergingSubmission: boolean;
   mergingSubmissionId: string | null;
 }
@@ -139,4 +147,5 @@ export interface BountyDetailContextValue {
  *
  * Created with createContext for React 19+ compatibility.
  */
-export const BountyDetailContext = createContext<BountyDetailContextValue | null>(null);
+export const BountyDetailContext =
+  createContext<BountyDetailContextValue | null>(null);

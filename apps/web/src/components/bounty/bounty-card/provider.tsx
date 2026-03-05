@@ -283,6 +283,8 @@ function useBountyCardComputedValues(
   hasPendingCancellation: boolean,
   isFunded: boolean
 ) {
+  const isCompleted = bounty.status === 'completed';
+
   const getBadgeInfo = useCallback(() => {
     if (isCancelled || isRefunded) {
       return {
@@ -296,6 +298,13 @@ function useBountyCardComputedValues(
         label: 'Cancelling',
         className:
           'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/15',
+      };
+    }
+    if (isCompleted) {
+      return {
+        label: 'Completed',
+        className:
+          'text-[10px] font-medium leading-[150%] px-1.5 py-0.5 rounded-full bg-brand-accent/10 text-brand-accent-muted border border-brand-accent/15',
       };
     }
     if (isFunded) {
@@ -320,6 +329,7 @@ function useBountyCardComputedValues(
   }, [
     isCancelled,
     isRefunded,
+    isCompleted,
     hasPendingCancellation,
     isFunded,
     bounty.amount,
@@ -375,7 +385,8 @@ function useBountyCardComputedValues(
     return null;
   })();
 
-  const formattedAmount = `$${bounty.amount.toLocaleString()}`;
+  const formattedAmount =
+    bounty.amount === 0 ? 'Free' : `$${bounty.amount.toLocaleString()}`;
 
   return {
     getBadgeInfo,

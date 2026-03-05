@@ -4,7 +4,13 @@ import { useQuery } from '@tanstack/react-query';
 import { trpc } from '@/utils/trpc';
 import { useSession } from '@/context/session-context';
 import { parseAsString, useQueryState } from 'nuqs';
-import { BountyListContext, type BountyListContextValue, type SortByOption, type SortOrderOption } from './context';
+import {
+  BountyListContext,
+  type BountyListContextValue,
+  type BountyStatusFilter,
+  type SortByOption,
+  type SortOrderOption,
+} from './context';
 
 interface BountyListProviderProps {
   children: React.ReactNode;
@@ -25,8 +31,15 @@ export function BountyListProvider({ children }: BountyListProviderProps) {
   // URL state for filters using nuqs (stable references)
   const [search, setSearch] = useQueryState('search', parseAsString);
   const [creatorId, setCreatorId] = useQueryState('creatorId', parseAsString);
-  const [sortBy, setSortBy] = useQueryState('sortBy', parseAsString.withDefault(DEFAULT_SORT_BY));
-  const [sortOrder, setSortOrder] = useQueryState('sortOrder', parseAsString.withDefault(DEFAULT_SORT_ORDER));
+  const [status, setStatus] = useQueryState('status', parseAsString);
+  const [sortBy, setSortBy] = useQueryState(
+    'sortBy',
+    parseAsString.withDefault(DEFAULT_SORT_BY)
+  );
+  const [sortOrder, setSortOrder] = useQueryState(
+    'sortOrder',
+    parseAsString.withDefault(DEFAULT_SORT_ORDER)
+  );
 
   // Query
   const {
@@ -40,6 +53,7 @@ export function BountyListProvider({ children }: BountyListProviderProps) {
       limit: 100,
       search: search || undefined,
       creatorId: creatorId || undefined,
+      status: (status as BountyStatusFilter) || undefined,
       sortBy: (sortBy as SortByOption) || DEFAULT_SORT_BY,
       sortOrder: (sortOrder as SortOrderOption) || DEFAULT_SORT_ORDER,
     }),
@@ -56,6 +70,7 @@ export function BountyListProvider({ children }: BountyListProviderProps) {
       filters: {
         search: search ?? null,
         creatorId: creatorId ?? null,
+        status: (status as BountyStatusFilter) ?? null,
         sortBy: (sortBy as SortByOption) ?? DEFAULT_SORT_BY,
         sortOrder: (sortOrder as SortOrderOption) ?? DEFAULT_SORT_ORDER,
       },
@@ -63,11 +78,13 @@ export function BountyListProvider({ children }: BountyListProviderProps) {
     actions: {
       setSearch: (value) => setSearch(value ?? ''),
       setCreatorId: (value) => setCreatorId(value ?? ''),
+      setStatus: (value) => setStatus(value),
       setSortBy: (value) => setSortBy(value),
       setSortOrder: (value) => setSortOrder(value),
       resetFilters: () => {
         setSearch(null);
         setCreatorId(null);
+        setStatus(null);
         setSortBy(DEFAULT_SORT_BY);
         setSortOrder(DEFAULT_SORT_ORDER);
       },
@@ -78,11 +95,7 @@ export function BountyListProvider({ children }: BountyListProviderProps) {
     },
   };
 
-  return (
-    <BountyListContext value={contextValue}>
-      {children}
-    </BountyListContext>
-  );
+  return <BountyListContext value={contextValue}>{children}</BountyListContext>;
 }
 
 // Export context for use in consuming components
