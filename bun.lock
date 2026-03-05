@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 1,
   "workspaces": {
     "": {
       "name": "bounty.new",
@@ -177,6 +176,10 @@
       },
       "devDependencies": {
         "typescript": "catalog:",
+      },
+      "peerDependencies": {
+        "next": "*",
+        "react": "*",
       },
     },
     "packages/db": {
