@@ -32,9 +32,11 @@ export const AUTH_CONFIG = {
  * Parse allowed device client IDs from env
  */
 export function parseAllowedDeviceClientIds(): string[] {
-  return env.DEVICE_AUTH_ALLOWED_CLIENT_IDS?.split(',')
-    .map((id) => id.trim())
-    .filter(Boolean) ?? [];
+  return (
+    env.DEVICE_AUTH_ALLOWED_CLIENT_IDS?.split(',')
+      .map((id) => id.trim())
+      .filter(Boolean) ?? []
+  );
 }
 
 /**
@@ -113,7 +115,7 @@ export async function sendEmailVerificationEmail(params: {
 export async function sendOTPEmail(params: {
   email: string;
   otp: string;
-  type: 'email-verification' | 'sign-in' | 'forget-password';
+  type: 'email-verification' | 'sign-in' | 'forget-password' | 'change-email';
 }): Promise<void> {
   const { email, otp, type } = params;
   const continueUrl = `${AUTH_CONFIG.baseURL}/sign-up/verify-email-address?email=${encodeURIComponent(email)}`;
@@ -123,7 +125,9 @@ export async function sendOTPEmail(params: {
       ? 'Verify your email address'
       : type === 'sign-in'
         ? 'Sign in to Bounty.new'
-        : 'Reset your password';
+        : type === 'change-email'
+          ? 'Confirm your new email address'
+          : 'Reset your password';
 
   await sendAuthEmail({
     to: email,
