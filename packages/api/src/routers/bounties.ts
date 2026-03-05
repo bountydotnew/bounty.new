@@ -5282,14 +5282,9 @@ To approve and pay:
                 error
               );
             }
-              'merge-payout',
-              bountyRecord.id,
-              'success'
-            );
 
             return 'released' as const;
-          }
-        );
+          });
 
         if (mergeResult === 'already_released') {
           throw new TRPCError({
