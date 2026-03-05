@@ -27,7 +27,7 @@ export function BountyDetailSubmissions() {
   const submissionCount = submissions?.length ?? 0;
 
   return (
-    <div className="mb-8 rounded-lg border border-border-subtle bg-surface-1 p-6">
+    <div className="mb-8 rounded-lg py-6">
       <h3 className="mb-4 font-medium text-xl text-foreground">
         Submissions
         {submissionCount > 0 && (

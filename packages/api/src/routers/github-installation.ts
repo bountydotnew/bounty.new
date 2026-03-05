@@ -86,9 +86,17 @@ export const githubInstallationRouter = router({
         };
       } catch (error) {
         console.error('Failed to get installation repositories:', error);
+
+        const isNotFound =
+          error instanceof Error &&
+          'status' in error &&
+          (error as any).status === 404;
+
         throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to fetch repositories from GitHub',
+          code: isNotFound ? 'NOT_FOUND' : 'INTERNAL_SERVER_ERROR',
+          message: isNotFound
+            ? 'GitHub App installation not found. It may have been removed or its permissions changed. Try reinstalling the app.'
+            : 'Failed to fetch repositories from GitHub',
         });
       }
     }),

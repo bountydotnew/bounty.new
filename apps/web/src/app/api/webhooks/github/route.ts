@@ -503,23 +503,23 @@ async function checkEarlyAccessForUser(
   }
 
   // Look up the user by their GitHub username
-  const userRecord = await db.query.user.findFirst({
-    where: or(
-      eq(user.handle, githubUsername),
-      eq(userProfile.githubUsername, githubUsername)
-    ),
-    with: {
-      profile: true,
-    },
-  });
+  const [userRecord] = await db
+    .select({ id: user.id, role: user.role })
+    .from(user)
+    .leftJoin(userProfile, eq(user.id, userProfile.userId))
+    .where(
+      or(
+        eq(user.handle, githubUsername),
+        eq(userProfile.githubUsername, githubUsername)
+      )
+    )
+    .limit(1);
 
   // If no user found, they don't have early access
   if (!userRecord) {
     return {
       allowed: false,
-      errorMessage: `@${githubUsername} bounty.new is currently in early access mode. You need an early access account to use the bot.
-
-Join the waitlist at https://bounty.new to get early access.`,
+      errorMessage: `@${githubUsername} bounty.new is in early access. Link your GitHub account at https://bounty.new to get started.`,
     };
   }
 
@@ -533,9 +533,7 @@ Join the waitlist at https://bounty.new to get early access.`,
   // User doesn't have early access
   return {
     allowed: false,
-    errorMessage: `@${githubUsername} bounty.new is currently in early access mode. Your account doesn't have early access yet.
-
-Join the waitlist at https://bounty.new to get early access.`,
+    errorMessage: `@${githubUsername} bounty.new is in early access. Your account doesn't have access yet. Join the waitlist at https://bounty.new.`,
   };
 }
 
@@ -809,7 +807,7 @@ async function handleBountyCreateCommand(
       repository.name,
       issue.number,
       `
-Invalid bounty amount: ${command.amount}. Amount must be greater than 0 and less than or equal to 1,000,000.
+Invalid bounty amount: ${command.amount}. Amount must be between 0 and 1,000,000.
 
 `
     );
@@ -1105,7 +1103,8 @@ async function createSubmissionFromPullRequest(params: {
     submissionReceivedComment(
       bountyRecord.paymentStatus === 'held',
       pullRequest.user.login,
-      pullRequest.number
+      pullRequest.number,
+      Number(bountyRecord.amount)
     )
   );
 
@@ -1118,7 +1117,8 @@ async function createSubmissionFromPullRequest(params: {
     submissionReceivedComment(
       bountyRecord.paymentStatus === 'held',
       pullRequest.user.login,
-      pullRequest.number
+      pullRequest.number,
+      Number(bountyRecord.amount)
     )
   );
   if (newSubmission?.id) {
@@ -2688,6 +2688,17 @@ async function handlePullRequestOpened(
     console.log(
       `[GitHub Webhook] User ${pull_request.user.login} does not have early access, skipping auto-submit`
     );
+
+    const githubApp = getGithubAppManager();
+    await githubApp.createIssueComment(
+      installationId,
+      repository.owner.login,
+      repository.name,
+      pull_request.number,
+      earlyAccessCheck.errorMessage ||
+        `@${pull_request.user.login} bounty.new is in early access. Link your GitHub account at https://bounty.new to submit.`
+    );
+
     return;
   }
 

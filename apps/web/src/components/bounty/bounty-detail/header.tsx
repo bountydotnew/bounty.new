@@ -7,8 +7,10 @@ import {
   AvatarFacehash,
   AvatarImage,
 } from '@bounty/ui/components/avatar';
+import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
+import { Button } from '@bounty/ui/components/button';
 import BountyActions from '@/components/bounty/bounty-actions';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, ExternalLink, X } from 'lucide-react';
 import type { ActionItem } from '@/types/bounty-actions';
 import { BountyDetailContext } from './context';
 
@@ -29,7 +31,16 @@ export function BountyDetailHeader() {
   const { state, actions, meta } = context;
 
   const {
-    bounty: { title, amount, user, avatarSrc, repositoryUrl, issueUrl },
+    bounty: {
+      title,
+      amount,
+      user,
+      avatarSrc,
+      repositoryUrl,
+      issueUrl,
+      githubRepoOwner,
+      githubRepoName,
+    },
     votes,
     bookmarked,
     isCreator,
@@ -39,6 +50,9 @@ export function BountyDetailHeader() {
     hasPendingCancellation,
     isCancelled,
   } = state;
+
+  const githubUrl = issueUrl || repositoryUrl;
+  const hasGithubLink = githubRepoOwner && githubRepoName && githubUrl;
 
   // Build cancellation action items
   const cancellationActions: ActionItem[] =
@@ -68,10 +82,26 @@ export function BountyDetailHeader() {
 
   return (
     <div className="mb-8">
-      {/* Title */}
-      <h1 className="font-bold text-3xl md:text-4xl text-foreground leading-[120%] tracking-tight mb-4">
-        {title}
-      </h1>
+      {/* Title Row */}
+      <div className="flex items-center gap-3 mb-4">
+        <h1 className="font-bold text-3xl md:text-4xl text-foreground leading-[120%] tracking-tight">
+          {title}
+        </h1>
+        {hasGithubLink && (
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 shrink-0"
+          >
+            <a href={githubUrl} target="_blank" rel="noopener noreferrer">
+              <GithubIcon className="h-3.5 w-3.5" />
+              <span className="font-medium text-sm">{githubRepoName}</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </Button>
+        )}
+      </div>
 
       {/* User Profile Row */}
       <div className="flex items-center gap-2.5 mb-4">

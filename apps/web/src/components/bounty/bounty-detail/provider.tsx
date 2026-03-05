@@ -271,18 +271,20 @@ function useBountyDetailComputedState({
   sessionUserId,
   createdById,
   paymentStatus,
+  amount,
   hasPendingRequest,
 }: {
   sessionUserId: string | undefined;
   createdById: string | undefined;
   paymentStatus: string | null | undefined;
+  amount: number;
   hasPendingRequest: boolean;
 }) {
   const isCreator = sessionUserId === createdById;
   const isFunded = paymentStatus === 'held' || paymentStatus === 'released';
   const isCancelled = paymentStatus === 'refunded';
   const isUnfunded = paymentStatus !== 'held' && paymentStatus !== null;
-  const needsPayment = paymentStatus === 'pending' && isCreator;
+  const needsPayment = paymentStatus === 'pending' && isCreator && amount > 0;
   const canRequestCancellation = isCreator && isFunded;
   const hasPendingCancellation = hasPendingRequest;
   const canDelete =
@@ -369,6 +371,7 @@ export function BountyDetailProvider({
     sessionUserId,
     createdById,
     paymentStatus,
+    amount,
     hasPendingRequest: cancellationStatusQuery.data?.hasPendingRequest ?? false,
   });
 
