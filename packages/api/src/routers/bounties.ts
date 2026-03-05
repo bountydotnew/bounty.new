@@ -5197,7 +5197,19 @@ To approve and pay:
               latestBounty.paymentStatus === 'released' ||
               latestBounty.stripeTransferId
             ) {
+            if (!latestBounty) {
+              throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: 'Bounty not found',
+              });
+            }
+
+            if (
+              latestBounty.paymentStatus === 'released' ||
+              latestBounty.stripeTransferId
+            ) {
               return 'already_released' as const;
+            }
             }
 
             const alreadyProcessed = await wasOperationPerformed(
