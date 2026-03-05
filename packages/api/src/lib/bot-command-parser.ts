@@ -159,7 +159,7 @@ function parseCreateCommand(commentBody: string): BountyCreateCommand | null {
   }
   const amountStr = createMatch[1]?.replace(',', '.') || '0';
   const amount = Number.parseFloat(amountStr);
-  if (amount <= 0) {
+  if (amount < 0) {
     return null;
   }
   const currency = createMatch[2]?.toUpperCase() || 'USD';
@@ -198,7 +198,9 @@ function parseSubmitCommand(commentBody: string): BountySubmitCommand | null {
     startIndex: submitMatch.index || 0,
     endIndex: (submitMatch.index || 0) + submitMatch[0].length,
   };
-  const prNumber = submitMatch[1] ? Number.parseInt(submitMatch[1], 10) : undefined;
+  const prNumber = submitMatch[1]
+    ? Number.parseInt(submitMatch[1], 10)
+    : undefined;
   if (prNumber && prNumber > 0) {
     command.prNumber = prNumber;
   }
@@ -209,7 +211,9 @@ function parseSubmitCommand(commentBody: string): BountySubmitCommand | null {
   return command;
 }
 
-function parseUnsubmitCommand(commentBody: string): BountyUnsubmitCommand | null {
+function parseUnsubmitCommand(
+  commentBody: string
+): BountyUnsubmitCommand | null {
   const unsubmitIssueMatch = commentBody.match(UNSUBMIT_ISSUE_PATTERN);
   if (unsubmitIssueMatch) {
     const prNumber = Number.parseInt(unsubmitIssueMatch[1] || '0', 10);
@@ -219,7 +223,8 @@ function parseUnsubmitCommand(commentBody: string): BountyUnsubmitCommand | null
         prNumber,
         match: unsubmitIssueMatch[0],
         startIndex: unsubmitIssueMatch.index || 0,
-        endIndex: (unsubmitIssueMatch.index || 0) + unsubmitIssueMatch[0].length,
+        endIndex:
+          (unsubmitIssueMatch.index || 0) + unsubmitIssueMatch[0].length,
       };
     }
   }
@@ -235,7 +240,9 @@ function parseUnsubmitCommand(commentBody: string): BountyUnsubmitCommand | null
     startIndex: unsubmitMatch.index || 0,
     endIndex: (unsubmitMatch.index || 0) + unsubmitMatch[0].length,
   };
-  const prNumber = unsubmitMatch[1] ? Number.parseInt(unsubmitMatch[1], 10) : undefined;
+  const prNumber = unsubmitMatch[1]
+    ? Number.parseInt(unsubmitMatch[1], 10)
+    : undefined;
   if (prNumber && prNumber > 0) {
     command.prNumber = prNumber;
   }
@@ -269,7 +276,9 @@ function parseApproveCommand(commentBody: string): BountyApproveCommand | null {
   };
 }
 
-function parseUnapproveCommand(commentBody: string): BountyUnapproveCommand | null {
+function parseUnapproveCommand(
+  commentBody: string
+): BountyUnapproveCommand | null {
   const unapproveIssueMatch = commentBody.match(UNAPPROVE_ISSUE_PATTERN);
   if (unapproveIssueMatch) {
     const prNumber = Number.parseInt(unapproveIssueMatch[1] || '0', 10);
@@ -279,7 +288,8 @@ function parseUnapproveCommand(commentBody: string): BountyUnapproveCommand | nu
         prNumber,
         match: unapproveIssueMatch[0],
         startIndex: unapproveIssueMatch.index || 0,
-        endIndex: (unapproveIssueMatch.index || 0) + unapproveIssueMatch[0].length,
+        endIndex:
+          (unapproveIssueMatch.index || 0) + unapproveIssueMatch[0].length,
       };
     }
   }
@@ -296,7 +306,9 @@ function parseUnapproveCommand(commentBody: string): BountyUnapproveCommand | nu
   };
 }
 
-function parseReapproveCommand(commentBody: string): BountyReapproveCommand | null {
+function parseReapproveCommand(
+  commentBody: string
+): BountyReapproveCommand | null {
   const reapproveIssueMatch = commentBody.match(REAPPROVE_ISSUE_PATTERN);
   if (reapproveIssueMatch) {
     const prNumber = Number.parseInt(reapproveIssueMatch[1] || '0', 10);
@@ -306,7 +318,8 @@ function parseReapproveCommand(commentBody: string): BountyReapproveCommand | nu
         prNumber,
         match: reapproveIssueMatch[0],
         startIndex: reapproveIssueMatch.index || 0,
-        endIndex: (reapproveIssueMatch.index || 0) + reapproveIssueMatch[0].length,
+        endIndex:
+          (reapproveIssueMatch.index || 0) + reapproveIssueMatch[0].length,
       };
     }
   }
@@ -380,7 +393,10 @@ export function containsSubmissionKeyword(
   }
 
   // Check for the keyword (case-insensitive)
-  const pattern = new RegExp(keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+  const pattern = new RegExp(
+    keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+    'i'
+  );
   return pattern.test(prBody);
 }
 
@@ -410,9 +426,7 @@ export function extractSubmissionDescription(
  */
 export function isValidBountyAmount(amount: number): boolean {
   return (
-    Number.isFinite(amount) &&
-    amount > 0 &&
-    amount <= 1_000_000 // Max 1 million
+    Number.isFinite(amount) && amount >= 0 && amount <= 1_000_000 // Max 1 million
   );
 }
 

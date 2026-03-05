@@ -81,10 +81,26 @@ export function BountyDetailHeader() {
 
   return (
     <div className="mb-8">
-      {/* Title */}
-      <h1 className="font-bold text-3xl md:text-4xl text-foreground leading-[120%] tracking-tight mb-4">
-        {title}
-      </h1>
+      {/* Title Row */}
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <h1 className="font-bold text-3xl md:text-4xl text-foreground leading-[120%] tracking-tight">
+          {title}
+        </h1>
+        {hasGithubLink && (
+          <a
+            href={githubUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 shrink-0 mt-2 rounded-md border border-border-subtle px-2.5 py-1 text-xs text-text-secondary transition-colors hover:text-foreground hover:bg-surface-1"
+          >
+            <GithubIcon className="h-3.5 w-3.5" />
+            <span>
+              {githubRepoOwner}/{githubRepoName}
+            </span>
+            <ArrowUpRight className="h-3 w-3" />
+          </a>
+        )}
+      </div>
 
       {/* User Profile Row */}
       <div className="flex items-center gap-2.5 mb-4">
@@ -96,24 +112,6 @@ export function BountyDetailHeader() {
           {user}
         </span>
       </div>
-
-      {/* GitHub Link */}
-      {hasGithubLink && (
-        <div className="mb-4">
-          <a
-            href={githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full border border-border-subtle bg-surface-1 px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-1/80"
-          >
-            <GithubIcon className="h-4 w-4" />
-            <span>
-              {githubRepoOwner}/{githubRepoName}
-            </span>
-            <ArrowUpRight className="h-3.5 w-3.5 text-text-secondary" />
-          </a>
-        </div>
-      )}
 
       {/* Amount and Actions Row */}
       <div className="flex w-full flex-col items-start justify-between gap-4 md:flex-row md:items-center">
