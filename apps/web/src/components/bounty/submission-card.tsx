@@ -163,7 +163,11 @@ export default function SubmissionCard({
               size="sm"
               className="flex items-center gap-2"
             >
-              <a href={previewSrc} target="_blank" rel="noopener noreferrer">
+              <a
+                href={/^https?:\/\//.test(previewSrc) ? previewSrc : undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <GithubIcon className="h-3.5 w-3.5" />
                 <span className="font-medium text-sm">Preview</span>
                 <ExternalLink className="h-3 w-3" />
