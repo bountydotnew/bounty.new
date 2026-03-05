@@ -22,7 +22,12 @@ export function BountyDetailSubmissions() {
   const { submissions, isSubmissionsLoading, bounty } = state;
 
   // Show merge button when the caller can manage the bounty and the bounty is funded
-  const canMerge = state.canEdit && bounty.paymentStatus === 'held';
+  // Free bounties ($0) stay at paymentStatus 'pending' and are always mergeable
+  const isFreeBounty = bounty.amount === 0;
+  const canMerge =
+    state.canEdit &&
+    (bounty.paymentStatus === 'held' ||
+      (isFreeBounty && bounty.paymentStatus === 'pending'));
 
   const submissionCount = submissions?.length ?? 0;
 
@@ -69,6 +74,7 @@ export function BountyDetailSubmissions() {
                 meta.mergingSubmissionId === sub.id
               }
               onMerge={() => actions.mergeSubmission(sub.id)}
+              mergeLabel={isFreeBounty ? 'Approve & Complete' : 'Merge & Pay Out'}
             />
           ))
         ) : (

@@ -4823,8 +4823,13 @@ To approve and pay:
         });
       }
 
-      // 5. Check bounty is funded
-      if (bountyRecord.paymentStatus !== 'held') {
+      // 5. Check bounty is funded (free bounties stay 'pending' and are always mergeable)
+      const amountInCents = Math.round(
+        Number.parseFloat(bountyRecord.amount) * 100
+      );
+      const isFreeBounty = amountInCents === 0;
+
+      if (!isFreeBounty && bountyRecord.paymentStatus !== 'held') {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'This bounty is not funded yet',
@@ -4886,9 +4891,11 @@ To approve and pay:
         });
       }
 
+      // Only require Stripe Connect for paid bounties
       if (
-        !solver.stripeConnectAccountId ||
-        !solver.stripeConnectOnboardingComplete
+        !isFreeBounty &&
+        (!solver.stripeConnectAccountId ||
+          !solver.stripeConnectOnboardingComplete)
       ) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
@@ -4897,12 +4904,7 @@ To approve and pay:
         });
       }
 
-      const stripeConnectAccountId = solver.stripeConnectAccountId;
-      const amountInCents = Math.round(
-        Number.parseFloat(bountyRecord.amount) * 100
-      );
-
-      if (!Number.isFinite(amountInCents) || amountInCents <= 0) {
+      if (!isFreeBounty && (!Number.isFinite(amountInCents) || amountInCents <= 0)) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Invalid bounty amount',
@@ -4939,12 +4941,15 @@ To approve and pay:
             return;
           }
 
-          const transfer = await createTransfer({
-            amount: amountInCents,
-            connectAccountId: stripeConnectAccountId,
-            bountyId: bountyRecord.id,
-            idempotencyKey: `merge-payout:${bountyRecord.id}`,
-          });
+          // For free bounties, skip Stripe transfer entirely
+          const transferId = isFreeBounty
+            ? `free_bounty_${bountyRecord.id}`
+            : (await createTransfer({
+                amount: amountInCents,
+                connectAccountId: solver.stripeConnectAccountId!,
+                bountyId: bountyRecord.id,
+                idempotencyKey: `merge-payout:${bountyRecord.id}`,
+              })).id;
 
           await db
             .update(submission)
@@ -4960,7 +4965,7 @@ To approve and pay:
             .set({
               status: 'completed',
               paymentStatus: 'released',
-              stripeTransferId: transfer.id,
+              stripeTransferId: transferId,
               assignedToId: solver.id,
               updatedAt: new Date(),
             })
@@ -4970,15 +4975,15 @@ To approve and pay:
             userId: solver.id,
             bountyId: bountyRecord.id,
             amount: bountyRecord.amount,
-            status: 'processing',
-            stripeTransferId: transfer.id,
+            status: isFreeBounty ? 'completed' : 'processing',
+            stripeTransferId: transferId,
           });
 
           await db.insert(transaction).values({
             bountyId: bountyRecord.id,
             type: 'transfer',
             amount: bountyRecord.amount,
-            stripeId: transfer.id,
+            stripeId: transferId,
           });
 
           await markOperationPerformed(

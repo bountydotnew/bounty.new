@@ -37,6 +37,7 @@ interface SubmissionCardProps {
   canMerge?: boolean;
   isMerging?: boolean;
   onMerge?: () => void;
+  mergeLabel?: string;
 }
 
 export default function SubmissionCard({
@@ -59,6 +60,7 @@ export default function SubmissionCard({
   canMerge,
   isMerging,
   onMerge,
+  mergeLabel = 'Merge & Pay Out',
 }: SubmissionCardProps) {
   // Use GitHub username if available, otherwise fallback to contributor name or user
   const displayName = username || contributorName || user || 'Anonymous';
@@ -175,7 +177,7 @@ export default function SubmissionCard({
           ) : (
             <GitMerge className="h-3.5 w-3.5" />
           )}
-          {isMerging ? 'Merging...' : 'Merge & Pay Out'}
+          {isMerging ? 'Merging...' : mergeLabel}
         </Button>
       )}
     </div>
