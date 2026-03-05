@@ -31,6 +31,7 @@ interface Creator {
 export function BountyFilters() {
   const [searchQuery, setSearchQuery] = useQueryState('search', parseAsString);
   const [creatorId, setCreatorId] = useQueryState('creatorId', parseAsString);
+  const [status, setStatus] = useQueryState('status', parseAsString);
   const [sortBy, setSortBy] = useQueryState(
     'sortBy',
     parseAsString.withDefault('created_at')
@@ -284,6 +285,23 @@ export function BountyFilters() {
             skeletonCount={3}
           />
         </div>
+
+        {/* Status Filter */}
+        <Select
+          onValueChange={(v) => setStatus(v === 'all' ? null : v)}
+          value={status || 'all'}
+        >
+          <SelectTrigger className="w-[150px] border-border-subtle bg-surface-1 text-foreground">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent className="border-border-subtle bg-surface-1">
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="open">Open</SelectItem>
+            <SelectItem value="in_progress">In Progress</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
 
         {/* Sort Dropdown */}
         <Select

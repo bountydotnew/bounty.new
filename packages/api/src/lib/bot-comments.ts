@@ -133,8 +133,18 @@ Submission for PR #${targetPrNumber} withdrawn.
 export function submissionApprovedComment(
   solverUsername: string,
   approver: string,
-  targetPrNumber: number
+  targetPrNumber: number,
+  amount?: number
 ): string {
+  if (amount === 0) {
+    return `
+@${solverUsername} PR #${targetPrNumber} approved.
+
+This is a free bounty, so no payout will be issued.
+@${approver} Merge PR #${targetPrNumber}, then confirm with \`/merge ${targetPrNumber}\`.
+`;
+  }
+
   return `
 @${solverUsername} PR #${targetPrNumber} approved. Payout releases after merge.
 

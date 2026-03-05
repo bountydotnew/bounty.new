@@ -121,13 +121,19 @@ function useBountyDetailMutations({
       toast.success('Bounty deleted successfully');
       queryClient.invalidateQueries({
         predicate: (query) => {
-          const key = query.queryKey;
-          if (Array.isArray(key)) {
-            const first = key[0];
-            if (typeof first === 'string' && first.includes('bounty')) {
-              return true;
-            }
+          const [first] = query.queryKey;
+
+          if (typeof first === 'string') {
+            return first.includes('bounty');
           }
+
+          if (Array.isArray(first)) {
+            const namespace = first[0];
+            return (
+              typeof namespace === 'string' && namespace.includes('bounty')
+            );
+          }
+
           return false;
         },
       });
@@ -217,6 +223,87 @@ function useBountyDetailMutations({
     },
   });
 
+  const approveSubmissionMutation = useMutation({
+    mutationFn: async (input: { bountyId: string; submissionId: string }) => {
+      return await trpcClient.bounties.approveSubmission.mutate(input);
+    },
+    onSuccess: () => {
+      toast.success('Submission approved');
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const [first] = query.queryKey;
+          if (typeof first === 'string') {
+            return first.includes('bounty');
+          }
+          if (Array.isArray(first)) {
+            const namespace = first[0];
+            return (
+              typeof namespace === 'string' && namespace.includes('bounty')
+            );
+          }
+          return false;
+        },
+      });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to approve: ${error.message}`);
+    },
+  });
+
+  const unapproveSubmissionMutation = useMutation({
+    mutationFn: async (input: { bountyId: string; submissionId: string }) => {
+      return await trpcClient.bounties.unapproveSubmission.mutate(input);
+    },
+    onSuccess: () => {
+      toast.success('Approval withdrawn');
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const [first] = query.queryKey;
+          if (typeof first === 'string') {
+            return first.includes('bounty');
+          }
+          if (Array.isArray(first)) {
+            const namespace = first[0];
+            return (
+              typeof namespace === 'string' && namespace.includes('bounty')
+            );
+          }
+          return false;
+        },
+      });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to unapprove: ${error.message}`);
+    },
+  });
+
+  const mergeSubmissionMutation = useMutation({
+    mutationFn: async (input: { bountyId: string; submissionId: string }) => {
+      return await trpcClient.bounties.mergeSubmission.mutate(input);
+    },
+    onSuccess: (result) => {
+      toast.success(result.message || 'Submission processed');
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const [first] = query.queryKey;
+          if (typeof first === 'string') {
+            return first.includes('bounty');
+          }
+          if (Array.isArray(first)) {
+            const namespace = first[0];
+            return (
+              typeof namespace === 'string' && namespace.includes('bounty')
+            );
+          }
+          return false;
+        },
+      });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to release payout: ${error.message}`);
+    },
+  });
+
   return {
     queryClient,
     voteMutation,
@@ -225,6 +312,9 @@ function useBountyDetailMutations({
     recheckPaymentMutation,
     requestCancellationMutation,
     cancelCancellationRequestMutation,
+    approveSubmissionMutation,
+    unapproveSubmissionMutation,
+    mergeSubmissionMutation,
   };
 }
 
@@ -289,6 +379,15 @@ export function BountyDetailProvider({
   const [showCancellationDialog, setShowCancellationDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [cancellationReason, setCancellationReason] = useState('');
+  const [approvingSubmissionId, setApprovingSubmissionId] = useState<
+    string | null
+  >(null);
+  const [unapprovingSubmissionId, setUnapprovingSubmissionId] = useState<
+    string | null
+  >(null);
+  const [mergingSubmissionId, setMergingSubmissionId] = useState<string | null>(
+    null
+  );
 
   const {
     paymentStatusQuery,
@@ -311,6 +410,9 @@ export function BountyDetailProvider({
     recheckPaymentMutation,
     requestCancellationMutation,
     cancelCancellationRequestMutation,
+    approveSubmissionMutation,
+    unapproveSubmissionMutation,
+    mergeSubmissionMutation,
   } = useBountyDetailMutations({
     bountyId,
     setShowCancellationDialog,
@@ -463,6 +565,104 @@ export function BountyDetailProvider({
           url: `${window.location.origin}/bounty/${bountyId}`,
         });
       },
+      approveSubmission: (submissionId: string) => {
+        if (
+          approveSubmissionMutation.isPending ||
+          unapproveSubmissionMutation.isPending ||
+          mergeSubmissionMutation.isPending
+        ) {
+          return;
+        }
+        setApprovingSubmissionId(submissionId);
+        // Optimistic update
+        const submissionsKey = trpc.bounties.getBountySubmissions.queryKey({
+          bountyId,
+        });
+        const prevSubmissions = queryClient.getQueryData(submissionsKey);
+        queryClient.setQueryData(
+          submissionsKey,
+          (old: typeof prevSubmissions) => {
+            if (!old?.submissions) {
+              return old;
+            }
+            return {
+              ...old,
+              submissions: old.submissions.map((s) =>
+                s.id === submissionId
+                  ? { ...s, status: 'approved' as const }
+                  : s
+              ),
+            };
+          }
+        );
+        approveSubmissionMutation.mutate(
+          { bountyId, submissionId },
+          {
+            onError: () => {
+              queryClient.setQueryData(submissionsKey, prevSubmissions);
+            },
+            onSettled: () => {
+              setApprovingSubmissionId(null);
+              queryClient.invalidateQueries({ queryKey: submissionsKey });
+            },
+          }
+        );
+      },
+      unapproveSubmission: (submissionId: string) => {
+        if (
+          approveSubmissionMutation.isPending ||
+          unapproveSubmissionMutation.isPending ||
+          mergeSubmissionMutation.isPending
+        ) {
+          return;
+        }
+        setUnapprovingSubmissionId(submissionId);
+        // Optimistic update
+        const submissionsKey = trpc.bounties.getBountySubmissions.queryKey({
+          bountyId,
+        });
+        const prevSubmissions = queryClient.getQueryData(submissionsKey);
+        queryClient.setQueryData(
+          submissionsKey,
+          (old: typeof prevSubmissions) => {
+            if (!old?.submissions) {
+              return old;
+            }
+            return {
+              ...old,
+              submissions: old.submissions.map((s) =>
+                s.id === submissionId ? { ...s, status: 'pending' as const } : s
+              ),
+            };
+          }
+        );
+        unapproveSubmissionMutation.mutate(
+          { bountyId, submissionId },
+          {
+            onError: () => {
+              queryClient.setQueryData(submissionsKey, prevSubmissions);
+            },
+            onSettled: () => {
+              setUnapprovingSubmissionId(null);
+              queryClient.invalidateQueries({ queryKey: submissionsKey });
+            },
+          }
+        );
+      },
+      mergeSubmission: (submissionId: string) => {
+        if (
+          approveSubmissionMutation.isPending ||
+          unapproveSubmissionMutation.isPending ||
+          mergeSubmissionMutation.isPending
+        ) {
+          return;
+        }
+        setMergingSubmissionId(submissionId);
+        mergeSubmissionMutation.mutate(
+          { bountyId, submissionId },
+          { onSettled: () => setMergingSubmissionId(null) }
+        );
+      },
     }),
     [
       bountyId,
@@ -475,6 +675,9 @@ export function BountyDetailProvider({
       cancelCancellationRequestMutation,
       recheckPaymentMutation,
       createPaymentMutation,
+      approveSubmissionMutation,
+      unapproveSubmissionMutation,
+      mergeSubmissionMutation,
       onEdit,
       title,
       description,
@@ -490,6 +693,12 @@ export function BountyDetailProvider({
         cancelCancellationRequestMutation.isPending,
       isRecheckingPayment: recheckPaymentMutation.isPending,
       isCreatingPayment: createPaymentMutation.isPending,
+      isApprovingSubmission: approveSubmissionMutation.isPending,
+      approvingSubmissionId,
+      isUnapprovingSubmission: unapproveSubmissionMutation.isPending,
+      unapprovingSubmissionId,
+      isMergingSubmission: mergeSubmissionMutation.isPending,
+      mergingSubmissionId,
     }),
     [
       bountyId,
@@ -498,6 +707,12 @@ export function BountyDetailProvider({
       cancelCancellationRequestMutation.isPending,
       recheckPaymentMutation.isPending,
       createPaymentMutation.isPending,
+      approveSubmissionMutation.isPending,
+      approvingSubmissionId,
+      unapproveSubmissionMutation.isPending,
+      unapprovingSubmissionId,
+      mergeSubmissionMutation.isPending,
+      mergingSubmissionId,
     ]
   );
 

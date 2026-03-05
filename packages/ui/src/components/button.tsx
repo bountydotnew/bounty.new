@@ -6,6 +6,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
 import { cn } from '@bounty/ui/lib/utils';
+import { useHaptics } from '@bounty/ui/hooks/use-haptics';
 
 const buttonVariants = cva(
   "[&_svg]:-mx-0.5 relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg border font-medium text-base outline-none transition-shadow before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] pointer-coarse:after:absolute pointer-coarse:after:size-full pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-64 sm:text-sm [&_svg:not([class*='opacity-'])]:opacity-80 [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
@@ -64,6 +65,8 @@ function Button({
   children,
   ...props
 }: ButtonProps) {
+  const haptic = useHaptics();
+
   // Legacy asChild support: convert first child element to render prop
   // Only treat asChild as active if children is a valid React element
   const isAsChildActive = asChild && !render && React.isValidElement(children);
@@ -85,10 +88,23 @@ function Button({
   const typeValue: React.ButtonHTMLAttributes<HTMLButtonElement>['type'] =
     render || isAsChildActive ? undefined : 'button';
 
+  // Determine haptic type based on variant
+  const hapticType =
+    variant === 'destructive' || variant === 'destructive-outline'
+      ? 'warning'
+      : variant === 'ghost' ||
+          variant === 'outline' ||
+          variant === 'link' ||
+          variant === 'text'
+        ? 'light'
+        : 'medium';
+
   const defaultProps: Record<string, unknown> = {
     className: cn(buttonVariants({ className, size, variant })),
     'data-slot': 'button',
     children: finalChildren,
+    onClick: () =>
+      haptic.trigger(hapticType as Parameters<typeof haptic.trigger>[0]),
   };
 
   // Only include type in defaultProps when defined to avoid overriding child's explicit type

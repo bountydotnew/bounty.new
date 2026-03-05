@@ -40,6 +40,7 @@
     "tw-animate-css": "catalog:",
     "unified": "catalog:",
     "vaul": "catalog:",
+    "web-haptics": "^0.0.6",
     "zod": "catalog:"
   },
   "devDependencies": {

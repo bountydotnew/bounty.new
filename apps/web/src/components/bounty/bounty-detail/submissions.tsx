@@ -18,8 +18,17 @@ export function BountyDetailSubmissions() {
     );
   }
 
-  const { state } = context;
+  const { state, actions, meta } = context;
   const { submissions, isSubmissionsLoading, bounty } = state;
+
+  const isFreeBounty = bounty.amount === 0;
+  const isFundedOrFree =
+    bounty.paymentStatus === 'held' ||
+    (isFreeBounty && bounty.paymentStatus === 'pending');
+  // canManage: owner can approve/unapprove as long as bounty is funded (or free)
+  // and not already completed (released)
+  const canManage =
+    state.canEdit && isFundedOrFree && bounty.paymentStatus !== 'released';
 
   const submissionCount = submissions?.length ?? 0;
 
@@ -60,6 +69,22 @@ export function BountyDetailSubmissions() {
               githubRepoName={bounty.githubRepoName ?? undefined}
               pullRequestUrl={sub.pullRequestUrl ?? undefined}
               deliverableUrl={sub.deliverableUrl ?? undefined}
+              canManage={canManage}
+              isApproving={
+                meta.isApprovingSubmission &&
+                meta.approvingSubmissionId === sub.id
+              }
+              isUnapproving={
+                meta.isUnapprovingSubmission &&
+                meta.unapprovingSubmissionId === sub.id
+              }
+              isMerging={
+                meta.isMergingSubmission && meta.mergingSubmissionId === sub.id
+              }
+              onApprove={() => actions.approveSubmission(sub.id)}
+              onUnapprove={() => actions.unapproveSubmission(sub.id)}
+              onMerge={() => actions.mergeSubmission(sub.id)}
+              mergeLabel={isFreeBounty ? 'Complete' : 'Pay Out'}
             />
           ))
         ) : (

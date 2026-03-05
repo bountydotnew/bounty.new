@@ -48,7 +48,7 @@ export const Header = () => {
           aria-label="Create new bounty"
         >
           <Plus className="h-4 w-4 text-text-secondary md:hidden" />
-          <span className="hidden md:inline text-sm font-semibold leading-[150%] tracking-[0.01em] text-text-secondary">
+          <span className="text-sm font-semibold leading-[150%] tracking-[0.01em] text-text-secondary">
             New bounty
           </span>
         </Button>

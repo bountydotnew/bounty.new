@@ -34,6 +34,10 @@
     "drizzle-orm": "catalog:",
     "sonner": "catalog:"
   },
+  "peerDependencies": {
+    "next": "*",
+    "react": "*"
+  },
   "devDependencies": {
     "typescript": "catalog:"
   }

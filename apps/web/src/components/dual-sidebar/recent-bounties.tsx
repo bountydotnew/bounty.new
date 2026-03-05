@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from '@bounty/ui/components/link';
 import { useQuery } from '@tanstack/react-query';
 import { ClockIcon, HourglassIcon } from '@bounty/ui';
 import {
@@ -99,26 +100,26 @@ export function RecentBountiesGroup() {
         {recentBounties.map((bounty) => (
           <SidebarMenuItem key={`viewed-${bounty.id}`}>
             <SidebarMenuButton asChild tooltip={bounty.title}>
-              <a
+              <Link
                 href={`/bounty/${bounty.id}`}
                 className="flex items-center gap-2"
               >
                 <ClockIcon className="h-[19px] w-[19px]" />
                 <span className="truncate text-sm">{bounty.title}</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         ))}
         {startedBounties.map((bounty) => (
           <SidebarMenuItem key={`started-${bounty.id}`}>
             <SidebarMenuButton asChild tooltip={bounty.title}>
-              <a
+              <Link
                 href={`/bounty/${bounty.id}`}
                 className="flex items-center gap-2"
               >
                 <HourglassIcon className="h-[19px] w-[19px]" />
                 <span className="truncate text-sm">{bounty.title}</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         ))}

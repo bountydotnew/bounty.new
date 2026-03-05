@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import Link from '@bounty/ui/components/link';
 import {
   ArrowDownIcon,
   NotificationsIcon,
@@ -183,10 +184,10 @@ const NavItems = ({
         return (
           <SidebarMenuItem key={item.title}>
             <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
-              <a href={item.url}>
+              <Link href={item.url}>
                 {IconComponent && <IconComponent className="h-5 w-5" />}
                 <span>{item.title}</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         );
@@ -222,10 +223,10 @@ const SettingsNav = ({
                     isActive={isActive}
                     tooltip={item.title}
                   >
-                    <a href={item.url}>
+                    <Link href={item.url}>
                       {IconComponent && <IconComponent className="h-5 w-5" />}
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               );

@@ -14,6 +14,7 @@ import {
   submission,
   transaction,
   user,
+  userProfile,
 } from '@bounty/db';
 import {
   FROM_ADDRESSES,
@@ -24,6 +25,8 @@ import { getGithubAppManager } from '@bounty/api/driver/github-app';
 import {
   unfundedBountyComment,
   fundedBountyComment,
+  submissionApprovedComment,
+  approvalWithdrawnComment,
 } from '@bounty/api/src/lib/bot-comments';
 import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
@@ -805,13 +808,14 @@ export const bountiesRouter = router({
 
         const conditions = [];
 
-        // Exclude draft bounties unless the caller is explicitly filtering
-        // by status or by their own creatorId (users can see their own drafts).
+        // Exclude draft, completed, and cancelled bounties unless the caller
+        // is explicitly filtering by status.
         if (input.status) {
           conditions.push(eq(bounty.status, input.status));
         } else {
-          // By default, hide drafts from cross-org listing
-          conditions.push(sql`${bounty.status} != 'draft'`);
+          conditions.push(
+            sql`${bounty.status} NOT IN ('draft', 'completed', 'cancelled')`
+          );
         }
 
         if (input.search) {
@@ -4750,5 +4754,573 @@ To approve and pay:
           cause: error,
         });
       }
+    }),
+
+  /**
+   * Approve a submission without triggering payout.
+   * Sets submission status to 'approved' and bounty status to 'in_progress'.
+   */
+  approveSubmission: protectedProcedure
+    .input(
+      z.object({
+        bountyId: z.string().uuid(),
+        submissionId: z.string().uuid(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [bountyRecord] = await db
+        .select()
+        .from(bounty)
+        .where(eq(bounty.id, input.bountyId))
+        .limit(1);
+
+      if (!bountyRecord) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Bounty not found' });
+      }
+
+      const hasPermission = await isUserBountyOrgMember(
+        ctx.session.user.id,
+        bountyRecord
+      );
+      if (!hasPermission) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message:
+            'You do not have permission to approve submissions for this bounty',
+        });
+      }
+
+      const [submissionRecord] = await db
+        .select()
+        .from(submission)
+        .where(
+          and(
+            eq(submission.id, input.submissionId),
+            eq(submission.bountyId, input.bountyId)
+          )
+        )
+        .limit(1);
+
+      if (!submissionRecord) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Submission not found',
+        });
+      }
+
+      if (submissionRecord.status === 'approved') {
+        return { success: true, message: 'Already approved' };
+      }
+
+      // Prevent multiple approved submissions on the same bounty
+      const [existingApproved] = await db
+        .select({ id: submission.id })
+        .from(submission)
+        .where(
+          and(
+            eq(submission.bountyId, input.bountyId),
+            eq(submission.status, 'approved')
+          )
+        )
+        .limit(1);
+
+      if (existingApproved && existingApproved.id !== input.submissionId) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message:
+            'This bounty already has an approved submission. Unapprove it first.',
+        });
+      }
+
+      await db
+        .update(submission)
+        .set({
+          status: 'approved',
+          reviewedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(submission.id, input.submissionId));
+
+      // Move bounty to in_progress if it's currently open
+      if (bountyRecord.status === 'open') {
+        await db
+          .update(bounty)
+          .set({ status: 'in_progress', updatedAt: new Date() })
+          .where(eq(bounty.id, input.bountyId));
+      }
+
+      // Post approval comment on GitHub
+      if (
+        bountyRecord.githubInstallationId &&
+        bountyRecord.githubRepoOwner &&
+        bountyRecord.githubRepoName &&
+        bountyRecord.githubIssueNumber
+      ) {
+        try {
+          const githubApp = getGithubAppManager();
+          const approverUsername = ctx.session.user.name || 'bounty creator';
+          const solverUsername = submissionRecord.githubUsername;
+          const prNumber = submissionRecord.githubPullRequestNumber;
+
+          if (solverUsername && prNumber != null) {
+            await githubApp.createIssueComment(
+              bountyRecord.githubInstallationId,
+              bountyRecord.githubRepoOwner,
+              bountyRecord.githubRepoName,
+              bountyRecord.githubIssueNumber,
+              submissionApprovedComment(
+                solverUsername,
+                approverUsername,
+                prNumber,
+                Number(bountyRecord.amount)
+              )
+            );
+          }
+        } catch (error) {
+          console.error(
+            '[approveSubmission] Failed to post GitHub comment:',
+            error
+          );
+        }
+      }
+
+      return { success: true, message: 'Submission approved' };
+    }),
+
+  /**
+   * Unapprove a submission. Reverts submission status to 'pending'
+   * and bounty status back to 'open' if no other approved submissions remain.
+   */
+  unapproveSubmission: protectedProcedure
+    .input(
+      z.object({
+        bountyId: z.string().uuid(),
+        submissionId: z.string().uuid(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [bountyRecord] = await db
+        .select()
+        .from(bounty)
+        .where(eq(bounty.id, input.bountyId))
+        .limit(1);
+
+      if (!bountyRecord) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Bounty not found' });
+      }
+
+      const hasPermission = await isUserBountyOrgMember(
+        ctx.session.user.id,
+        bountyRecord
+      );
+      if (!hasPermission) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message:
+            'You do not have permission to unapprove submissions for this bounty',
+        });
+      }
+
+      if (bountyRecord.status === 'completed') {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Cannot unapprove a completed bounty',
+        });
+      }
+
+      const [submissionRecord] = await db
+        .select()
+        .from(submission)
+        .where(
+          and(
+            eq(submission.id, input.submissionId),
+            eq(submission.bountyId, input.bountyId)
+          )
+        )
+        .limit(1);
+
+      if (!submissionRecord) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Submission not found',
+        });
+      }
+
+      if (submissionRecord.status !== 'approved') {
+        return { success: true, message: 'Submission is not approved' };
+      }
+
+      await db
+        .update(submission)
+        .set({
+          status: 'pending',
+          reviewedAt: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(submission.id, input.submissionId));
+
+      // Check if any other submissions are still approved
+      const otherApproved = await db
+        .select({ id: submission.id })
+        .from(submission)
+        .where(
+          and(
+            eq(submission.bountyId, input.bountyId),
+            eq(submission.status, 'approved')
+          )
+        )
+        .limit(1);
+
+      // If no other approved submissions, revert bounty to open
+      if (otherApproved.length === 0 && bountyRecord.status === 'in_progress') {
+        await db
+          .update(bounty)
+          .set({ status: 'open', updatedAt: new Date() })
+          .where(eq(bounty.id, input.bountyId));
+      }
+
+      // Post unapproval comment on GitHub
+      if (
+        bountyRecord.githubInstallationId &&
+        bountyRecord.githubRepoOwner &&
+        bountyRecord.githubRepoName &&
+        bountyRecord.githubIssueNumber
+      ) {
+        try {
+          const githubApp = getGithubAppManager();
+          const prNumber = submissionRecord.githubPullRequestNumber;
+
+          if (prNumber != null) {
+            await githubApp.createIssueComment(
+              bountyRecord.githubInstallationId,
+              bountyRecord.githubRepoOwner,
+              bountyRecord.githubRepoName,
+              bountyRecord.githubIssueNumber,
+              approvalWithdrawnComment(prNumber)
+            );
+          }
+        } catch (error) {
+          console.error(
+            '[unapproveSubmission] Failed to post GitHub comment:',
+            error
+          );
+        }
+      }
+
+      return { success: true, message: 'Submission unapproved' };
+    }),
+
+  /**
+   * Merge a submission – marks the bounty as completed, approves the
+   * submission, and releases the payout to the solver. This is the
+   * web-UI equivalent of the `/merge` GitHub bot command.
+   */
+  mergeSubmission: protectedProcedure
+    .input(
+      z.object({
+        bountyId: z.string().uuid(),
+        submissionId: z.string().uuid(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // 1. Fetch bounty record
+      const [bountyRecord] = await db
+        .select()
+        .from(bounty)
+        .where(eq(bounty.id, input.bountyId))
+        .limit(1);
+
+      if (!bountyRecord) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Bounty not found',
+        });
+      }
+
+      // 2. Permission check – caller must be an org member (or creator for legacy bounties)
+      const hasPermission = await isUserBountyOrgMember(
+        ctx.session.user.id,
+        bountyRecord
+      );
+      if (!hasPermission) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message:
+            'You do not have permission to merge submissions for this bounty',
+        });
+      }
+
+      // 3. Fetch submission
+      const [submissionRecord] = await db
+        .select()
+        .from(submission)
+        .where(
+          and(
+            eq(submission.id, input.submissionId),
+            eq(submission.bountyId, input.bountyId)
+          )
+        )
+        .limit(1);
+
+      if (!submissionRecord) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Submission not found',
+        });
+      }
+
+      if (submissionRecord.status !== 'approved') {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Approve this submission before merging',
+        });
+      }
+
+      // 4. Check bounty is not already completed/released
+      if (
+        bountyRecord.paymentStatus === 'released' ||
+        bountyRecord.stripeTransferId
+      ) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'This bounty has already been paid out',
+        });
+      }
+
+      // 5. Check bounty is funded (free bounties stay 'pending' and are always mergeable)
+      const amountInCents = Math.round(
+        Number.parseFloat(bountyRecord.amount) * 100
+      );
+      const isFreeBounty = amountInCents === 0;
+
+      if (!isFreeBounty && bountyRecord.paymentStatus !== 'held') {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'This bounty is not funded yet',
+        });
+      }
+
+      // 6. Resolve solver user
+      const solverUser = submissionRecord.contributorId
+        ? await db
+            .select({
+              id: user.id,
+              stripeConnectAccountId: user.stripeConnectAccountId,
+              stripeConnectOnboardingComplete:
+                user.stripeConnectOnboardingComplete,
+            })
+            .from(user)
+            .where(eq(user.id, submissionRecord.contributorId))
+            .limit(1)
+            .then((rows) => rows[0])
+        : undefined;
+
+      let solver = solverUser;
+
+      if (!solver && submissionRecord.githubUsername) {
+        const matchedUsers = await db
+          .select({
+            id: user.id,
+            stripeConnectAccountId: user.stripeConnectAccountId,
+            stripeConnectOnboardingComplete:
+              user.stripeConnectOnboardingComplete,
+          })
+          .from(user)
+          .leftJoin(userProfile, eq(user.id, userProfile.userId))
+          .where(
+            or(
+              eq(user.handle, submissionRecord.githubUsername),
+              eq(userProfile.githubUsername, submissionRecord.githubUsername)
+            )
+          );
+
+        if (matchedUsers.length > 1) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message:
+              'Multiple users matched for this GitHub username. Please contact support.',
+          });
+        }
+
+        solver = matchedUsers[0];
+      }
+
+      if (!solver) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Unable to resolve solver for this submission',
+        });
+      }
+
+      // Only require Stripe Connect for paid bounties
+      if (
+        !(
+          isFreeBounty ||
+          (solver.stripeConnectAccountId &&
+            solver.stripeConnectOnboardingComplete)
+        )
+      ) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message:
+            'The solver needs to connect their Stripe account before payout can be released',
+        });
+      }
+
+      if (
+        !isFreeBounty &&
+        (!Number.isFinite(amountInCents) || amountInCents <= 0)
+      ) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Invalid bounty amount',
+        });
+      }
+
+      // 7. Execute payout within payment lock
+      try {
+        const mergeResult = await withPaymentLock(
+          bountyRecord.id,
+          async () => {
+            // Re-check bounty state inside the lock to prevent races
+            const [latestBounty] = await db
+              .select({
+                paymentStatus: bounty.paymentStatus,
+                stripeTransferId: bounty.stripeTransferId,
+              })
+              .from(bounty)
+              .where(eq(bounty.id, bountyRecord.id))
+              .limit(1);
+
+            if (
+              !latestBounty ||
+              latestBounty.paymentStatus === 'released' ||
+              latestBounty.stripeTransferId
+            ) {
+            if (!latestBounty) {
+              throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: 'Bounty not found',
+              });
+            }
+
+            if (
+              latestBounty.paymentStatus === 'released' ||
+              latestBounty.stripeTransferId
+            ) {
+              return 'already_released' as const;
+            }
+            }
+
+            const alreadyProcessed = await wasOperationPerformed(
+              'merge-payout',
+              bountyRecord.id
+            );
+
+            if (alreadyProcessed) {
+              return 'already_released' as const;
+            }
+
+            // For free bounties, skip Stripe transfer entirely
+            const transferId = isFreeBounty
+              ? `free_bounty_${bountyRecord.id}`
+              : (
+                  await createTransfer({
+                    amount: amountInCents,
+                    connectAccountId: solver.stripeConnectAccountId!,
+                    bountyId: bountyRecord.id,
+                    idempotencyKey: `merge-payout:${bountyRecord.id}`,
+                  })
+                ).id;
+
+            await db.transaction(async (tx) => {
+              await tx
+                .update(submission)
+                .set({
+                  status: 'approved',
+                  reviewedAt: new Date(),
+                  updatedAt: new Date(),
+                })
+                .where(eq(submission.id, submissionRecord.id));
+
+              await tx.insert(payout).values({
+                userId: solver.id,
+                bountyId: bountyRecord.id,
+                amount: bountyRecord.amount,
+                status: isFreeBounty ? 'completed' : 'processing',
+                stripeTransferId: transferId,
+              });
+
+              await tx.insert(transaction).values({
+                bountyId: bountyRecord.id,
+                type: 'transfer',
+                amount: bountyRecord.amount,
+                stripeId: transferId,
+              });
+
+              await tx
+                .update(bounty)
+                .set({
+                  status: 'completed',
+                  paymentStatus: 'released',
+                  stripeTransferId: transferId,
+                  assignedToId: solver.id,
+                  updatedAt: new Date(),
+                })
+                .where(eq(bounty.id, bountyRecord.id));
+            });
+
+            try {
+              await markOperationPerformed(
+                'merge-payout',
+                bountyRecord.id,
+                'success'
+              );
+            } catch (error) {
+              console.error(
+                '[mergeSubmission] Failed to mark operation performed:',
+                error
+              );
+            }
+              'merge-payout',
+              bountyRecord.id,
+              'success'
+            );
+
+            return 'released' as const;
+          }
+        );
+
+        if (mergeResult === 'already_released') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'This bounty has already been paid out',
+          });
+        }
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        if (error instanceof PaymentLockError) {
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message:
+              'Payout is already being processed. Please try again in a moment.',
+          });
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message:
+            'Something went wrong releasing the payout. Please try again or contact support.',
+          cause: error,
+        });
+      }
+
+      return {
+        success: true,
+        message: isFreeBounty
+          ? 'Submission merged'
+          : 'Submission merged and payout released',
+      };
     }),
 });
