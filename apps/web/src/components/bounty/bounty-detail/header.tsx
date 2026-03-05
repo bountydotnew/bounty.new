@@ -7,8 +7,9 @@ import {
   AvatarFacehash,
   AvatarImage,
 } from '@bounty/ui/components/avatar';
+import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
 import BountyActions from '@/components/bounty/bounty-actions';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, X } from 'lucide-react';
 import type { ActionItem } from '@/types/bounty-actions';
 import { BountyDetailContext } from './context';
 
@@ -29,7 +30,16 @@ export function BountyDetailHeader() {
   const { state, actions, meta } = context;
 
   const {
-    bounty: { title, amount, user, avatarSrc, repositoryUrl, issueUrl },
+    bounty: {
+      title,
+      amount,
+      user,
+      avatarSrc,
+      repositoryUrl,
+      issueUrl,
+      githubRepoOwner,
+      githubRepoName,
+    },
     votes,
     bookmarked,
     isCreator,
@@ -39,6 +49,9 @@ export function BountyDetailHeader() {
     hasPendingCancellation,
     isCancelled,
   } = state;
+
+  const githubUrl = issueUrl || repositoryUrl;
+  const hasGithubLink = githubRepoOwner && githubRepoName && githubUrl;
 
   // Build cancellation action items
   const cancellationActions: ActionItem[] =
@@ -68,10 +81,26 @@ export function BountyDetailHeader() {
 
   return (
     <div className="mb-8">
-      {/* Title */}
-      <h1 className="font-bold text-3xl md:text-4xl text-foreground leading-[120%] tracking-tight mb-4">
-        {title}
-      </h1>
+      {/* Title Row */}
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <h1 className="font-bold text-3xl md:text-4xl text-foreground leading-[120%] tracking-tight">
+          {title}
+        </h1>
+        {hasGithubLink && (
+          <a
+            href={githubUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 shrink-0 mt-2 rounded-md border border-border-subtle px-2.5 py-1 text-xs text-text-secondary transition-colors hover:text-foreground hover:bg-surface-1"
+          >
+            <GithubIcon className="h-3.5 w-3.5" />
+            <span>
+              {githubRepoOwner}/{githubRepoName}
+            </span>
+            <ArrowUpRight className="h-3 w-3" />
+          </a>
+        )}
+      </div>
 
       {/* User Profile Row */}
       <div className="flex items-center gap-2.5 mb-4">

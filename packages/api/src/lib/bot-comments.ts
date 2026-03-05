@@ -589,7 +589,7 @@ This submission is already approved. When you're ready, merge the PR and confirm
 export function invalidAmountComment(amount: string): string {
   return `
 
-Invalid bounty amount: ${amount}. Amount must be greater than 0 and less than or equal to 1,000,000.
+Invalid bounty amount: ${amount}. Amount must be between 0 and 1,000,000.
 
 `;
 }

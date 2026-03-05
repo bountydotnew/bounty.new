@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ClockIcon, HourglassIcon } from '@bounty/ui';
 import {
@@ -70,6 +70,11 @@ export function RecentBountiesGroup() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
+  const clearRecent = useCallback(() => {
+    localStorage.removeItem(RECENT_BOUNTIES_KEY);
+    setRecentBounties([]);
+  }, []);
+
   const startedBounties = data?.data?.slice(0, 5) ?? [];
 
   if (recentBounties.length === 0 && startedBounties.length === 0) {
@@ -78,7 +83,18 @@ export function RecentBountiesGroup() {
 
   return (
     <SidebarGroup className="mt-4">
-      <SidebarGroupLabel>Recent Bounties</SidebarGroupLabel>
+      <div className="flex items-center justify-between">
+        <SidebarGroupLabel>Recent Bounties</SidebarGroupLabel>
+        {recentBounties.length > 0 && (
+          <button
+            type="button"
+            onClick={clearRecent}
+            className="px-1.5 py-0.5 rounded-md text-[11px] text-text-tertiary hover:text-text-secondary hover:bg-surface-hover transition-colors"
+          >
+            Clear
+          </button>
+        )}
+      </div>
       <SidebarMenu className="flex flex-col gap-[8px] w-full">
         {recentBounties.map((bounty) => (
           <SidebarMenuItem key={`viewed-${bounty.id}`}>

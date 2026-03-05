@@ -29,6 +29,7 @@ import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
 import {
   createBountyCheckoutSession,
+  createFreeBountyInvoice,
   capturePayment,
   createTransfer,
   refundPayment,
@@ -539,7 +540,7 @@ export const bountiesRouter = router({
 
         let checkoutSessionUrl = null;
 
-        // If not paying later, validate email upfront (payment created after bounty insert)
+        // If not paying later, validate email upfront (needed for Stripe customer)
         if (!payLater) {
           const userEmail = ctx.session.user.email;
           if (!userEmail) {
@@ -573,7 +574,7 @@ export const bountiesRouter = router({
             linearAccountId: input.linearAccountId,
             organizationId: ctx.org.id,
             createdById: ctx.session.user.id,
-            status: 'draft', // Draft until payment confirmed
+            status: bountyAmountInCents === 0 ? 'open' : 'draft', // $0 bounties go live immediately, others are draft until payment
             stripePaymentIntentId: null, // Will be set via webhook
             paymentStatus: 'pending',
           })
@@ -663,7 +664,7 @@ export const bountiesRouter = router({
           }
         }
 
-        // Create Checkout Session if not paying later
+        // Handle payment flow
         if (!payLater) {
           const userEmail = ctx.session.user.email!;
           const stripeCustomerId = await ensureOrgStripeCustomer(
@@ -673,25 +674,40 @@ export const bountiesRouter = router({
             ctx.session.user.name
           );
 
-          const baseUrl =
-            process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-          const checkoutSession = await createBountyCheckoutSession({
-            bountyId: newBounty.id,
-            amount: bountyAmountInCents,
-            fees,
-            currency: input.currency,
-            customerId: stripeCustomerId,
-            successUrl: `${baseUrl}/bounty/${newBounty.id}`,
-            cancelUrl: `${baseUrl}/bounty/${newBounty.id}?payment=cancelled`,
-          });
+          if (bountyAmountInCents === 0) {
+            // $0 bounty — create a $0 Stripe invoice for the paper trail
+            const invoice = await createFreeBountyInvoice({
+              bountyId: newBounty.id,
+              customerId: stripeCustomerId,
+              currency: input.currency,
+            });
 
-          checkoutSessionUrl = checkoutSession.url;
+            await db
+              .update(bounty)
+              .set({ stripeCheckoutSessionId: invoice.id })
+              .where(eq(bounty.id, newBounty.id));
+          } else {
+            // Paid bounty — create Stripe Checkout Session
+            const baseUrl =
+              process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+            const checkoutSession = await createBountyCheckoutSession({
+              bountyId: newBounty.id,
+              amount: bountyAmountInCents,
+              fees,
+              currency: input.currency,
+              customerId: stripeCustomerId,
+              successUrl: `${baseUrl}/bounty/${newBounty.id}`,
+              cancelUrl: `${baseUrl}/bounty/${newBounty.id}?payment=cancelled`,
+            });
 
-          // Store checkout session ID for verification
-          await db
-            .update(bounty)
-            .set({ stripeCheckoutSessionId: checkoutSession.id })
-            .where(eq(bounty.id, newBounty.id));
+            checkoutSessionUrl = checkoutSession.url;
+
+            // Store checkout session ID for verification
+            await db
+              .update(bounty)
+              .set({ stripeCheckoutSessionId: checkoutSession.id })
+              .where(eq(bounty.id, newBounty.id));
+          }
         }
 
         try {
@@ -760,9 +776,12 @@ export const bountiesRouter = router({
           fees: fees / 100, // Convert back to dollars
           totalWithFees: totalWithFees / 100, // Convert back to dollars
           payLater,
-          message: payLater
-            ? 'Bounty created. Complete payment to make it live.'
-            : 'Bounty created successfully',
+          message:
+            bountyAmountInCents === 0
+              ? 'Free bounty created and is now live.'
+              : payLater
+                ? 'Bounty created. Complete payment to make it live.'
+                : 'Bounty created successfully',
         };
       } catch (error) {
         if (error instanceof TRPCError) {
@@ -4520,9 +4539,16 @@ To process this request:
         }
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
+
+        const isDisabled = errorMessage
+          .toLowerCase()
+          .includes('issues are disabled');
+
         throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: `Failed to sync to GitHub: ${errorMessage}`,
+          code: isDisabled ? 'BAD_REQUEST' : 'INTERNAL_SERVER_ERROR',
+          message: isDisabled
+            ? 'Issues are disabled in this repository. Enable them in the repository settings on GitHub.'
+            : `Failed to sync to GitHub: ${errorMessage}`,
           cause: error,
         });
       }
@@ -4711,9 +4737,16 @@ To approve and pay:
         }
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
+
+        const isDisabled = errorMessage
+          .toLowerCase()
+          .includes('issues has been disabled');
+
         throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: `Failed to create GitHub issue: ${errorMessage}`,
+          code: isDisabled ? 'BAD_REQUEST' : 'INTERNAL_SERVER_ERROR',
+          message: isDisabled
+            ? 'Issues are disabled in this repository. Enable them in the repository settings on GitHub.'
+            : `Failed to create GitHub issue: ${errorMessage}`,
           cause: error,
         });
       }

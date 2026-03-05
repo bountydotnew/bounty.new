@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { trpc, trpcClient } from '@/utils/trpc';
 import {
@@ -93,7 +93,7 @@ export function BountyActionsProvider({
 
   const bookmarked = onToggleBookmark
     ? controlledBookmarked
-    : bookmarkQuery.data?.bookmarked ?? false;
+    : (bookmarkQuery.data?.bookmarked ?? false);
 
   // Toggle bookmark mutation
   const toggleBookmarkMutation = useMutation({

@@ -503,15 +503,17 @@ async function checkEarlyAccessForUser(
   }
 
   // Look up the user by their GitHub username
-  const userRecord = await db.query.user.findFirst({
-    where: or(
-      eq(user.handle, githubUsername),
-      eq(userProfile.githubUsername, githubUsername)
-    ),
-    with: {
-      profile: true,
-    },
-  });
+  const [userRecord] = await db
+    .select({ id: user.id, role: user.role })
+    .from(user)
+    .leftJoin(userProfile, eq(user.id, userProfile.userId))
+    .where(
+      or(
+        eq(user.handle, githubUsername),
+        eq(userProfile.githubUsername, githubUsername)
+      )
+    )
+    .limit(1);
 
   // If no user found, they don't have early access
   if (!userRecord) {
@@ -809,7 +811,7 @@ async function handleBountyCreateCommand(
       repository.name,
       issue.number,
       `
-Invalid bounty amount: ${command.amount}. Amount must be greater than 0 and less than or equal to 1,000,000.
+Invalid bounty amount: ${command.amount}. Amount must be between 0 and 1,000,000.
 
 `
     );
@@ -2688,6 +2690,17 @@ async function handlePullRequestOpened(
     console.log(
       `[GitHub Webhook] User ${pull_request.user.login} does not have early access, skipping auto-submit`
     );
+
+    const githubApp = getGithubAppManager();
+    await githubApp.createIssueComment(
+      installationId,
+      repository.owner.login,
+      repository.name,
+      pull_request.number,
+      earlyAccessCheck.errorMessage ||
+        `@${pull_request.user.login} bounty.new is currently in early access mode. You need an early access account to submit.\n\nJoin the waitlist at https://bounty.new to get early access.`
+    );
+
     return;
   }
 
