@@ -141,6 +141,7 @@ export function submissionApprovedComment(
 @${solverUsername} PR #${targetPrNumber} approved.
 
 This is a free bounty, so no payout will be issued.
+@${approver} Merge PR #${targetPrNumber}, then confirm with \`/merge ${targetPrNumber}\`.
 `;
   }
 
