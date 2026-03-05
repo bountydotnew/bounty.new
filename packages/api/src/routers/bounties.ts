@@ -4812,6 +4812,26 @@ To approve and pay:
         return { success: true, message: 'Already approved' };
       }
 
+      // Prevent multiple approved submissions on the same bounty
+      const [existingApproved] = await db
+        .select({ id: submission.id })
+        .from(submission)
+        .where(
+          and(
+            eq(submission.bountyId, input.bountyId),
+            eq(submission.status, 'approved')
+          )
+        )
+        .limit(1);
+
+      if (existingApproved && existingApproved.id !== input.submissionId) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message:
+            'This bounty already has an approved submission. Unapprove it first.',
+        });
+      }
+
       await db
         .update(submission)
         .set({
@@ -4839,22 +4859,23 @@ To approve and pay:
         try {
           const githubApp = getGithubAppManager();
           const approverUsername = ctx.session.user.name || 'bounty creator';
-          const solverUsername =
-            submissionRecord.githubUsername || 'contributor';
-          const prNumber = submissionRecord.githubPullRequestNumber || 0;
+          const solverUsername = submissionRecord.githubUsername;
+          const prNumber = submissionRecord.githubPullRequestNumber;
 
-          await githubApp.createIssueComment(
-            bountyRecord.githubInstallationId,
-            bountyRecord.githubRepoOwner,
-            bountyRecord.githubRepoName,
-            bountyRecord.githubIssueNumber,
-            submissionApprovedComment(
-              solverUsername,
-              approverUsername,
-              prNumber,
-              Number(bountyRecord.amount)
-            )
-          );
+          if (solverUsername && prNumber != null) {
+            await githubApp.createIssueComment(
+              bountyRecord.githubInstallationId,
+              bountyRecord.githubRepoOwner,
+              bountyRecord.githubRepoName,
+              bountyRecord.githubIssueNumber,
+              submissionApprovedComment(
+                solverUsername,
+                approverUsername,
+                prNumber,
+                Number(bountyRecord.amount)
+              )
+            );
+          }
         } catch (error) {
           console.error(
             '[approveSubmission] Failed to post GitHub comment:',
@@ -4967,15 +4988,17 @@ To approve and pay:
       ) {
         try {
           const githubApp = getGithubAppManager();
-          const prNumber = submissionRecord.githubPullRequestNumber || 0;
+          const prNumber = submissionRecord.githubPullRequestNumber;
 
-          await githubApp.createIssueComment(
-            bountyRecord.githubInstallationId,
-            bountyRecord.githubRepoOwner,
-            bountyRecord.githubRepoName,
-            bountyRecord.githubIssueNumber,
-            approvalWithdrawnComment(prNumber)
-          );
+          if (prNumber != null) {
+            await githubApp.createIssueComment(
+              bountyRecord.githubInstallationId,
+              bountyRecord.githubRepoOwner,
+              bountyRecord.githubRepoName,
+              bountyRecord.githubIssueNumber,
+              approvalWithdrawnComment(prNumber)
+            );
+          }
         } catch (error) {
           console.error(
             '[unapproveSubmission] Failed to post GitHub comment:',
@@ -5043,6 +5066,13 @@ To approve and pay:
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'Submission not found',
+        });
+      }
+
+      if (submissionRecord.status !== 'approved') {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Approve this submission before merging',
         });
       }
 
@@ -5149,88 +5179,105 @@ To approve and pay:
 
       // 7. Execute payout within payment lock
       try {
-        await withPaymentLock(bountyRecord.id, async () => {
-          // Re-check bounty state inside the lock to prevent races
-          const [latestBounty] = await db
-            .select({
-              paymentStatus: bounty.paymentStatus,
-              stripeTransferId: bounty.stripeTransferId,
-            })
-            .from(bounty)
-            .where(eq(bounty.id, bountyRecord.id))
-            .limit(1);
+        const mergeResult = await withPaymentLock(
+          bountyRecord.id,
+          async () => {
+            // Re-check bounty state inside the lock to prevent races
+            const [latestBounty] = await db
+              .select({
+                paymentStatus: bounty.paymentStatus,
+                stripeTransferId: bounty.stripeTransferId,
+              })
+              .from(bounty)
+              .where(eq(bounty.id, bountyRecord.id))
+              .limit(1);
 
-          if (
-            !latestBounty ||
-            latestBounty.paymentStatus === 'released' ||
-            latestBounty.stripeTransferId
-          ) {
-            return;
-          }
+            if (
+              !latestBounty ||
+              latestBounty.paymentStatus === 'released' ||
+              latestBounty.stripeTransferId
+            ) {
+              return 'already_released' as const;
+            }
 
-          const alreadyProcessed = await wasOperationPerformed(
-            'merge-payout',
-            bountyRecord.id
-          );
+            const alreadyProcessed = await wasOperationPerformed(
+              'merge-payout',
+              bountyRecord.id
+            );
 
-          if (alreadyProcessed) {
-            return;
-          }
+            if (alreadyProcessed) {
+              return 'already_released' as const;
+            }
 
-          // For free bounties, skip Stripe transfer entirely
-          const transferId = isFreeBounty
-            ? `free_bounty_${bountyRecord.id}`
-            : (
-                await createTransfer({
-                  amount: amountInCents,
-                  connectAccountId: solver.stripeConnectAccountId!,
-                  bountyId: bountyRecord.id,
-                  idempotencyKey: `merge-payout:${bountyRecord.id}`,
+            // For free bounties, skip Stripe transfer entirely
+            const transferId = isFreeBounty
+              ? `free_bounty_${bountyRecord.id}`
+              : (
+                  await createTransfer({
+                    amount: amountInCents,
+                    connectAccountId: solver.stripeConnectAccountId!,
+                    bountyId: bountyRecord.id,
+                    idempotencyKey: `merge-payout:${bountyRecord.id}`,
+                  })
+                ).id;
+
+            await db.transaction(async (tx) => {
+              await tx
+                .update(submission)
+                .set({
+                  status: 'approved',
+                  reviewedAt: new Date(),
+                  updatedAt: new Date(),
                 })
-              ).id;
+                .where(eq(submission.id, submissionRecord.id));
 
-          await db
-            .update(submission)
-            .set({
-              status: 'approved',
-              reviewedAt: new Date(),
-              updatedAt: new Date(),
-            })
-            .where(eq(submission.id, submissionRecord.id));
+              await tx.insert(payout).values({
+                userId: solver.id,
+                bountyId: bountyRecord.id,
+                amount: bountyRecord.amount,
+                status: isFreeBounty ? 'completed' : 'processing',
+                stripeTransferId: transferId,
+              });
 
-          await db
-            .update(bounty)
-            .set({
-              status: 'completed',
-              paymentStatus: 'released',
-              stripeTransferId: transferId,
-              assignedToId: solver.id,
-              updatedAt: new Date(),
-            })
-            .where(eq(bounty.id, bountyRecord.id));
+              await tx.insert(transaction).values({
+                bountyId: bountyRecord.id,
+                type: 'transfer',
+                amount: bountyRecord.amount,
+                stripeId: transferId,
+              });
 
-          await db.insert(payout).values({
-            userId: solver.id,
-            bountyId: bountyRecord.id,
-            amount: bountyRecord.amount,
-            status: isFreeBounty ? 'completed' : 'processing',
-            stripeTransferId: transferId,
+              await tx
+                .update(bounty)
+                .set({
+                  status: 'completed',
+                  paymentStatus: 'released',
+                  stripeTransferId: transferId,
+                  assignedToId: solver.id,
+                  updatedAt: new Date(),
+                })
+                .where(eq(bounty.id, bountyRecord.id));
+            });
+
+            await markOperationPerformed(
+              'merge-payout',
+              bountyRecord.id,
+              'success'
+            );
+
+            return 'released' as const;
+          }
+        );
+
+        if (mergeResult === 'already_released') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'This bounty has already been paid out',
           });
-
-          await db.insert(transaction).values({
-            bountyId: bountyRecord.id,
-            type: 'transfer',
-            amount: bountyRecord.amount,
-            stripeId: transferId,
-          });
-
-          await markOperationPerformed(
-            'merge-payout',
-            bountyRecord.id,
-            'success'
-          );
-        });
+        }
       } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         if (error instanceof PaymentLockError) {
           throw new TRPCError({
             code: 'CONFLICT',
@@ -5248,7 +5295,9 @@ To approve and pay:
 
       return {
         success: true,
-        message: 'Submission merged and payout released',
+        message: isFreeBounty
+          ? 'Submission merged'
+          : 'Submission merged and payout released',
       };
     }),
 });

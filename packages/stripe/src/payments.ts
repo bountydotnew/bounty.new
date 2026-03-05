@@ -188,7 +188,7 @@ export async function createTransfer(params: {
   return stripeClient.transfers.create(
     {
       amount: params.amount,
-      currency: "usd",
+      currency: 'usd',
       destination: params.connectAccountId,
       metadata: { bountyId: params.bountyId },
     },

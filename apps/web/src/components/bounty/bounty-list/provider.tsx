@@ -19,6 +19,25 @@ interface BountyListProviderProps {
 const DEFAULT_SORT_BY: SortByOption = 'created_at';
 const DEFAULT_SORT_ORDER: SortOrderOption = 'desc';
 
+const ALLOWED_STATUS_FILTERS: BountyStatusFilter[] = [
+  'open',
+  'in_progress',
+  'completed',
+  'cancelled',
+];
+
+function normalizeStatusFilter(
+  value: string | null
+): BountyStatusFilter | null {
+  if (
+    value != null &&
+    ALLOWED_STATUS_FILTERS.includes(value as BountyStatusFilter)
+  ) {
+    return value as BountyStatusFilter;
+  }
+  return null;
+}
+
 /**
  * BountyListProvider
  *
@@ -31,7 +50,8 @@ export function BountyListProvider({ children }: BountyListProviderProps) {
   // URL state for filters using nuqs (stable references)
   const [search, setSearch] = useQueryState('search', parseAsString);
   const [creatorId, setCreatorId] = useQueryState('creatorId', parseAsString);
-  const [status, setStatus] = useQueryState('status', parseAsString);
+  const [rawStatus, setStatus] = useQueryState('status', parseAsString);
+  const status = normalizeStatusFilter(rawStatus);
   const [sortBy, setSortBy] = useQueryState(
     'sortBy',
     parseAsString.withDefault(DEFAULT_SORT_BY)
@@ -53,7 +73,7 @@ export function BountyListProvider({ children }: BountyListProviderProps) {
       limit: 100,
       search: search || undefined,
       creatorId: creatorId || undefined,
-      status: (status as BountyStatusFilter) || undefined,
+      status: status || undefined,
       sortBy: (sortBy as SortByOption) || DEFAULT_SORT_BY,
       sortOrder: (sortOrder as SortOrderOption) || DEFAULT_SORT_ORDER,
     }),
@@ -70,7 +90,7 @@ export function BountyListProvider({ children }: BountyListProviderProps) {
       filters: {
         search: search ?? null,
         creatorId: creatorId ?? null,
-        status: (status as BountyStatusFilter) ?? null,
+        status: status,
         sortBy: (sortBy as SortByOption) ?? DEFAULT_SORT_BY,
         sortOrder: (sortOrder as SortOrderOption) ?? DEFAULT_SORT_ORDER,
       },

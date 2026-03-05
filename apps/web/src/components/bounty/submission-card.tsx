@@ -156,16 +156,20 @@ export default function SubmissionCard({
                 <ExternalLink className="h-3 w-3" />
               </a>
             </Button>
-          ) : (
+          ) : previewSrc ? (
             <Button
+              asChild
               variant="outline"
               size="sm"
               className="flex items-center gap-2"
             >
-              <GithubIcon className="h-3.5 w-3.5" />
-              <span className="font-medium text-sm">Preview</span>
+              <a href={previewSrc} target="_blank" rel="noopener noreferrer">
+                <GithubIcon className="h-3.5 w-3.5" />
+                <span className="font-medium text-sm">Preview</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
             </Button>
-          )}
+          ) : null}
           {canManage && !isApproved && onApprove && (
             <Button
               onClick={onApprove}

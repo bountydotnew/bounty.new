@@ -281,8 +281,8 @@ function useBountyDetailMutations({
     mutationFn: async (input: { bountyId: string; submissionId: string }) => {
       return await trpcClient.bounties.mergeSubmission.mutate(input);
     },
-    onSuccess: () => {
-      toast.success('Payout released');
+    onSuccess: (result) => {
+      toast.success(result.message || 'Submission processed');
       queryClient.invalidateQueries({
         predicate: (query) => {
           const [first] = query.queryKey;
@@ -566,7 +566,11 @@ export function BountyDetailProvider({
         });
       },
       approveSubmission: (submissionId: string) => {
-        if (approveSubmissionMutation.isPending) {
+        if (
+          approveSubmissionMutation.isPending ||
+          unapproveSubmissionMutation.isPending ||
+          mergeSubmissionMutation.isPending
+        ) {
           return;
         }
         setApprovingSubmissionId(submissionId);
@@ -605,7 +609,11 @@ export function BountyDetailProvider({
         );
       },
       unapproveSubmission: (submissionId: string) => {
-        if (unapproveSubmissionMutation.isPending) {
+        if (
+          approveSubmissionMutation.isPending ||
+          unapproveSubmissionMutation.isPending ||
+          mergeSubmissionMutation.isPending
+        ) {
           return;
         }
         setUnapprovingSubmissionId(submissionId);
@@ -642,7 +650,11 @@ export function BountyDetailProvider({
         );
       },
       mergeSubmission: (submissionId: string) => {
-        if (mergeSubmissionMutation.isPending) {
+        if (
+          approveSubmissionMutation.isPending ||
+          unapproveSubmissionMutation.isPending ||
+          mergeSubmissionMutation.isPending
+        ) {
           return;
         }
         setMergingSubmissionId(submissionId);
