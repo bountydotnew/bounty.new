@@ -5270,7 +5270,18 @@ To approve and pay:
                 .where(eq(bounty.id, bountyRecord.id));
             });
 
-            await markOperationPerformed(
+            try {
+              await markOperationPerformed(
+                'merge-payout',
+                bountyRecord.id,
+                'success'
+              );
+            } catch (error) {
+              console.error(
+                '[mergeSubmission] Failed to mark operation performed:',
+                error
+              );
+            }
               'merge-payout',
               bountyRecord.id,
               'success'
