@@ -6,6 +6,7 @@ import * as React from 'react';
 import { cn } from '@bounty/ui/lib/utils';
 import { Button } from '@bounty/ui/components/button';
 import { ScrollArea } from '@bounty/ui/components/scroll-area';
+import { useHaptics } from '@bounty/ui/hooks/use-haptics';
 
 const Sheet = SheetPrimitive.Root;
 
@@ -14,8 +15,10 @@ const SheetPortal = SheetPrimitive.Portal;
 function SheetTrigger({
   asChild,
   children,
+  onClick,
   ...props
 }: SheetPrimitive.Trigger.Props & { asChild?: boolean }) {
+  const haptic = useHaptics();
   let finalRender = props.render;
   let finalChildren = children;
   if (asChild && !props.render && React.isValidElement(children)) {
@@ -29,6 +32,10 @@ function SheetTrigger({
     <SheetPrimitive.Trigger
       data-slot="sheet-trigger"
       {...props}
+      onClick={(event) => {
+        haptic.trigger('medium');
+        onClick?.(event);
+      }}
       render={finalRender}
     >
       {finalChildren}

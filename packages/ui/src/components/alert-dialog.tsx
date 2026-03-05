@@ -5,6 +5,7 @@ import * as React from 'react';
 import { createContext, useContext, useState, type ReactNode } from 'react';
 
 import { cn } from '@bounty/ui/lib/utils';
+import { useHaptics } from '@bounty/ui/hooks/use-haptics';
 
 // ============================================================================
 // Base UI AlertDialog Components (new coss API)
@@ -19,8 +20,10 @@ const AlertDialogPortal = AlertDialogPrimitive.Portal;
 function AlertDialogTrigger({
   asChild,
   children,
+  onClick,
   ...props
 }: AlertDialogPrimitive.Trigger.Props & { asChild?: boolean }) {
+  const haptic = useHaptics();
   let finalRender = props.render;
   let finalChildren = children;
   if (asChild && !props.render && React.isValidElement(children)) {
@@ -37,6 +40,10 @@ function AlertDialogTrigger({
     <AlertDialogPrimitive.Trigger
       data-slot="alert-dialog-trigger"
       {...props}
+      onClick={(event) => {
+        haptic.trigger('warning');
+        onClick?.(event);
+      }}
       render={finalRender}
     >
       {finalChildren}

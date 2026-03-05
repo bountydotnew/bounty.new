@@ -566,7 +566,9 @@ export function BountyDetailProvider({
         });
       },
       approveSubmission: (submissionId: string) => {
-        if (approveSubmissionMutation.isPending) return;
+        if (approveSubmissionMutation.isPending) {
+          return;
+        }
         setApprovingSubmissionId(submissionId);
         // Optimistic update
         const submissionsKey = trpc.bounties.getBountySubmissions.queryKey({
@@ -576,7 +578,9 @@ export function BountyDetailProvider({
         queryClient.setQueryData(
           submissionsKey,
           (old: typeof prevSubmissions) => {
-            if (!old?.submissions) return old;
+            if (!old?.submissions) {
+              return old;
+            }
             return {
               ...old,
               submissions: old.submissions.map((s) =>
@@ -601,7 +605,9 @@ export function BountyDetailProvider({
         );
       },
       unapproveSubmission: (submissionId: string) => {
-        if (unapproveSubmissionMutation.isPending) return;
+        if (unapproveSubmissionMutation.isPending) {
+          return;
+        }
         setUnapprovingSubmissionId(submissionId);
         // Optimistic update
         const submissionsKey = trpc.bounties.getBountySubmissions.queryKey({
@@ -611,7 +617,9 @@ export function BountyDetailProvider({
         queryClient.setQueryData(
           submissionsKey,
           (old: typeof prevSubmissions) => {
-            if (!old?.submissions) return old;
+            if (!old?.submissions) {
+              return old;
+            }
             return {
               ...old,
               submissions: old.submissions.map((s) =>

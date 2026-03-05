@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
+import Link  from '@bounty/ui/components/link';
 import { useState } from 'react';
 import { ChevronDown, RotateCcw } from 'lucide-react';
 import { CreateBountyDemo } from './create-bounty-demo';

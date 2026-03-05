@@ -4,6 +4,7 @@ import { cn } from '@bounty/ui/lib/utils';
 import { track } from '@databuddy/sdk';
 import { type LinkProps, default as NextLink } from 'next/link';
 import type { ComponentPropsWithoutRef } from 'react';
+import { useHaptics } from '@bounty/ui/hooks/use-haptics';
 
 const trackLinkClick = (linkName: string) => {
   track('link_click', { link_name: linkName });
@@ -35,6 +36,7 @@ type Props = ComponentPropsWithoutRef<'a'> &
     eventObject?: TrackingEventObject;
     /** Analytics: human-readable name for link_click (avoids [object Object] when children is a React node). */
     linkName?: string;
+    haptics?: boolean;
   };
 
 export default function Link({
@@ -44,15 +46,20 @@ export default function Link({
   event,
   eventObject,
   linkName,
+  haptics = true,
   onClick,
   ...props
 }: Props) {
+  const haptic = useHaptics();
   return (
     <NextLink
       className={cn(className)}
       href={href}
       {...props}
       onClick={(e) => {
+        if (haptics) {
+          haptic.trigger('light');
+        }
         if (event) {
           track(event, eventObject);
         }
