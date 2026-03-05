@@ -99,6 +99,8 @@ export interface BountyDetailActions {
   openEditModal: () => void;
   /** Share bounty */
   share: () => void;
+  /** Merge a submission (approve + pay out) */
+  mergeSubmission: (submissionId: string) => void;
 }
 
 /**
@@ -115,6 +117,8 @@ export interface BountyDetailMeta {
   isCancellingCancellationRequest: boolean;
   isRecheckingPayment: boolean;
   isCreatingPayment: boolean;
+  isMergingSubmission: boolean;
+  mergingSubmissionId: string | null;
 }
 
 /**

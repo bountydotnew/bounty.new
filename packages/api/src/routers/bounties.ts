@@ -14,6 +14,7 @@ import {
   submission,
   transaction,
   user,
+  userProfile,
 } from '@bounty/db';
 import {
   FROM_ADDRESSES,
@@ -4717,5 +4718,219 @@ To approve and pay:
           cause: error,
         });
       }
+    }),
+
+  /**
+   * Merge a submission – marks the bounty as completed, approves the
+   * submission, and releases the payout to the solver. This is the
+   * web-UI equivalent of the `/merge` GitHub bot command.
+   */
+  mergeSubmission: protectedProcedure
+    .input(
+      z.object({
+        bountyId: z.string().uuid(),
+        submissionId: z.string().uuid(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // 1. Fetch bounty record
+      const [bountyRecord] = await db
+        .select()
+        .from(bounty)
+        .where(eq(bounty.id, input.bountyId))
+        .limit(1);
+
+      if (!bountyRecord) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Bounty not found',
+        });
+      }
+
+      // 2. Permission check – caller must be an org member (or creator for legacy bounties)
+      const hasPermission = await isUserBountyOrgMember(
+        ctx.session.user.id,
+        bountyRecord
+      );
+      if (!hasPermission) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message:
+            'You do not have permission to merge submissions for this bounty',
+        });
+      }
+
+      // 3. Fetch submission
+      const [submissionRecord] = await db
+        .select()
+        .from(submission)
+        .where(
+          and(
+            eq(submission.id, input.submissionId),
+            eq(submission.bountyId, input.bountyId)
+          )
+        )
+        .limit(1);
+
+      if (!submissionRecord) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Submission not found',
+        });
+      }
+
+      // 4. Check bounty is not already completed/released
+      if (
+        bountyRecord.paymentStatus === 'released' ||
+        bountyRecord.stripeTransferId
+      ) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'This bounty has already been paid out',
+        });
+      }
+
+      // 5. Check bounty is funded
+      if (bountyRecord.paymentStatus !== 'held') {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'This bounty is not funded yet',
+        });
+      }
+
+      // 6. Resolve solver user
+      const solverUser = submissionRecord.contributorId
+        ? await db
+            .select({
+              id: user.id,
+              stripeConnectAccountId: user.stripeConnectAccountId,
+              stripeConnectOnboardingComplete:
+                user.stripeConnectOnboardingComplete,
+            })
+            .from(user)
+            .where(eq(user.id, submissionRecord.contributorId))
+            .limit(1)
+            .then((rows) => rows[0])
+        : undefined;
+
+      const solver =
+        solverUser ||
+        (submissionRecord.githubUsername
+          ? await db
+              .select({
+                id: user.id,
+                stripeConnectAccountId: user.stripeConnectAccountId,
+                stripeConnectOnboardingComplete:
+                  user.stripeConnectOnboardingComplete,
+              })
+              .from(user)
+              .leftJoin(userProfile, eq(user.id, userProfile.userId))
+              .where(
+                or(
+                  eq(user.handle, submissionRecord.githubUsername),
+                  eq(
+                    userProfile.githubUsername,
+                    submissionRecord.githubUsername
+                  )
+                )
+              )
+              .limit(1)
+              .then((rows) => rows[0])
+          : undefined);
+
+      if (
+        !solver?.stripeConnectAccountId ||
+        !solver.stripeConnectOnboardingComplete
+      ) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message:
+            'The solver needs to connect their Stripe account before payout can be released',
+        });
+      }
+
+      const stripeConnectAccountId = solver.stripeConnectAccountId;
+      const amountInCents = Math.round(
+        Number.parseFloat(bountyRecord.amount) * 100
+      );
+
+      // 7. Execute payout within payment lock
+      try {
+        await withPaymentLock(bountyRecord.id, async () => {
+          const alreadyProcessed = await wasOperationPerformed(
+            'merge-payout',
+            bountyRecord.id,
+            input.submissionId
+          );
+
+          if (alreadyProcessed) {
+            return;
+          }
+
+          const transfer = await createTransfer({
+            amount: amountInCents,
+            connectAccountId: stripeConnectAccountId,
+            bountyId: bountyRecord.id,
+          });
+
+          await db
+            .update(submission)
+            .set({
+              status: 'approved',
+              reviewedAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .where(eq(submission.id, submissionRecord.id));
+
+          await db
+            .update(bounty)
+            .set({
+              status: 'completed',
+              paymentStatus: 'released',
+              stripeTransferId: transfer.id,
+              assignedToId: solver.id,
+              updatedAt: new Date(),
+            })
+            .where(eq(bounty.id, bountyRecord.id));
+
+          await db.insert(payout).values({
+            userId: solver.id,
+            bountyId: bountyRecord.id,
+            amount: bountyRecord.amount,
+            status: 'processing',
+            stripeTransferId: transfer.id,
+          });
+
+          await db.insert(transaction).values({
+            bountyId: bountyRecord.id,
+            type: 'transfer',
+            amount: bountyRecord.amount,
+            stripeId: transfer.id,
+          });
+
+          await markOperationPerformed(
+            'merge-payout',
+            bountyRecord.id,
+            'success',
+            input.submissionId
+          );
+        });
+      } catch (error) {
+        if (error instanceof PaymentLockError) {
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message:
+              'Payout is already being processed. Please try again in a moment.',
+          });
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message:
+            'Something went wrong releasing the payout. Please try again or contact support.',
+          cause: error,
+        });
+      }
+
+      return { success: true, message: 'Submission merged and payout released' };
     }),
 });

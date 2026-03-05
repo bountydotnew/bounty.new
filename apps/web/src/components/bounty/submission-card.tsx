@@ -6,7 +6,7 @@ import {
 import { Button } from '@bounty/ui/components/button';
 import { cn } from '@bounty/ui/lib/utils';
 import Image from 'next/image';
-import { ExternalLink, Github } from 'lucide-react';
+import { ExternalLink, Github, GitMerge, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/bounty/badge';
 
 interface SubmissionCardProps {
@@ -31,6 +31,10 @@ interface SubmissionCardProps {
   hasBadge?: boolean;
   previewSrc?: string;
   className?: string;
+  // Merge action
+  canMerge?: boolean;
+  isMerging?: boolean;
+  onMerge?: () => void;
 }
 
 export default function SubmissionCard({
@@ -50,6 +54,9 @@ export default function SubmissionCard({
   githubRepoName,
   pullRequestUrl,
   deliverableUrl,
+  canMerge,
+  isMerging,
+  onMerge,
 }: SubmissionCardProps) {
   // Use GitHub username if available, otherwise fallback to contributor name or user
   const displayName = username || contributorName || user || 'Anonymous';
@@ -136,12 +143,26 @@ export default function SubmissionCard({
       {description && <p className="text-gray-400 text-sm">{description}</p>}
       {/* Hide image preview for GitHub PR submissions */}
       {!prUrl && previewSrc && (
-        
+
         <Image
           alt="Theme preview screenshot"
           className="h-20 w-20 rounded-md object-cover"
           src={previewSrc}
         />
+      )}
+      {canMerge && onMerge && (
+        <Button
+          onClick={onMerge}
+          disabled={isMerging}
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90 disabled:opacity-50"
+        >
+          {isMerging ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <GitMerge className="h-4 w-4" />
+          )}
+          {isMerging ? 'Merging...' : 'Merge & Pay Out'}
+        </Button>
       )}
     </div>
   );

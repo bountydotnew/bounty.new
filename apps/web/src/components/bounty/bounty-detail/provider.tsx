@@ -217,6 +217,30 @@ function useBountyDetailMutations({
     },
   });
 
+  const mergeSubmissionMutation = useMutation({
+    mutationFn: async (input: { bountyId: string; submissionId: string }) => {
+      return await trpcClient.bounties.mergeSubmission.mutate(input);
+    },
+    onSuccess: () => {
+      toast.success('Submission merged and payout released!');
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey;
+          if (Array.isArray(key)) {
+            const first = key[0];
+            if (typeof first === 'string' && first.includes('bounty')) {
+              return true;
+            }
+          }
+          return false;
+        },
+      });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to merge submission: ${error.message}`);
+    },
+  });
+
   return {
     queryClient,
     voteMutation,
@@ -225,6 +249,7 @@ function useBountyDetailMutations({
     recheckPaymentMutation,
     requestCancellationMutation,
     cancelCancellationRequestMutation,
+    mergeSubmissionMutation,
   };
 }
 
@@ -287,6 +312,7 @@ export function BountyDetailProvider({
   const [showCancellationDialog, setShowCancellationDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [cancellationReason, setCancellationReason] = useState('');
+  const [mergingSubmissionId, setMergingSubmissionId] = useState<string | null>(null);
 
   const {
     paymentStatusQuery,
@@ -309,6 +335,7 @@ export function BountyDetailProvider({
     recheckPaymentMutation,
     requestCancellationMutation,
     cancelCancellationRequestMutation,
+    mergeSubmissionMutation,
   } = useBountyDetailMutations({
     bountyId,
     setShowCancellationDialog,
@@ -460,6 +487,17 @@ export function BountyDetailProvider({
           url: `${window.location.origin}/bounty/${bountyId}`,
         });
       },
+      mergeSubmission: (submissionId: string) => {
+        setMergingSubmissionId(submissionId);
+        mergeSubmissionMutation.mutate(
+          { bountyId, submissionId },
+          {
+            onSettled: () => {
+              setMergingSubmissionId(null);
+            },
+          }
+        );
+      },
     }),
     [
       bountyId,
@@ -472,6 +510,7 @@ export function BountyDetailProvider({
       cancelCancellationRequestMutation,
       recheckPaymentMutation,
       createPaymentMutation,
+      mergeSubmissionMutation,
       onEdit,
       title,
       description,
@@ -487,6 +526,8 @@ export function BountyDetailProvider({
         cancelCancellationRequestMutation.isPending,
       isRecheckingPayment: recheckPaymentMutation.isPending,
       isCreatingPayment: createPaymentMutation.isPending,
+      isMergingSubmission: mergeSubmissionMutation.isPending,
+      mergingSubmissionId,
     }),
     [
       bountyId,
@@ -495,6 +536,8 @@ export function BountyDetailProvider({
       cancelCancellationRequestMutation.isPending,
       recheckPaymentMutation.isPending,
       createPaymentMutation.isPending,
+      mergeSubmissionMutation.isPending,
+      mergingSubmissionId,
     ]
   );
 

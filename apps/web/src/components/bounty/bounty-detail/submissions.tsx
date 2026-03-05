@@ -18,8 +18,14 @@ export function BountyDetailSubmissions() {
     );
   }
 
-  const { state } = context;
+  const { state, actions, meta } = context;
   const { submissions, isSubmissionsLoading, bounty } = state;
+
+  // Show merge button when the caller is the creator/org member and the bounty is funded
+  const canMerge =
+    state.isCreator &&
+    state.isFunded &&
+    bounty.paymentStatus === 'held';
 
   const submissionCount = submissions?.length ?? 0;
 
@@ -60,6 +66,12 @@ export function BountyDetailSubmissions() {
               githubRepoName={bounty.githubRepoName ?? undefined}
               pullRequestUrl={sub.pullRequestUrl ?? undefined}
               deliverableUrl={sub.deliverableUrl ?? undefined}
+              canMerge={canMerge}
+              isMerging={
+                meta.isMergingSubmission &&
+                meta.mergingSubmissionId === sub.id
+              }
+              onMerge={() => actions.mergeSubmission(sub.id)}
             />
           ))
         ) : (
