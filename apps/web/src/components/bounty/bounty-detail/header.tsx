@@ -10,6 +10,7 @@ import {
 import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
 import { Button } from '@bounty/ui/components/button';
 import BountyActions from '@/components/bounty/bounty-actions';
+import { useSession } from '@/context/session-context';
 import { AlertTriangle, ExternalLink, X } from 'lucide-react';
 import type { ActionItem } from '@/types/bounty-actions';
 import { BountyDetailContext } from './context';
@@ -27,6 +28,9 @@ export function BountyDetailHeader() {
       'BountyDetailHeader must be used within BountyDetailProvider'
     );
   }
+
+  const { session } = useSession();
+  const isAuthenticated = !!session?.user;
 
   const { state, actions, meta } = context;
 
@@ -138,6 +142,7 @@ export function BountyDetailHeader() {
             actions={
               cancellationActions.length > 0 ? cancellationActions : undefined
             }
+            disableUpvote={!isAuthenticated}
           />
         </div>
       </div>

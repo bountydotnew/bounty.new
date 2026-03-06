@@ -42,6 +42,7 @@ interface BountyActionsProps {
   repositoryUrl?: string | null;
   issueUrl?: string | null;
   actions?: ActionItem[];
+  disableUpvote?: boolean;
 }
 
 /**
@@ -63,6 +64,7 @@ export default function BountyActions({
   repositoryUrl = null,
   issueUrl = null,
   actions,
+  disableUpvote = false,
 }: BountyActionsProps) {
   const handleUpvoteClick = useCallback(() => {
     onUpvote?.();
@@ -73,8 +75,9 @@ export default function BountyActions({
       <button
         aria-label="Upvote bounty"
         aria-pressed={isVoted}
-        className="flex items-center gap-1 rounded-md border border-neutral-700 bg-neutral-800/40 px-2 py-1 text-neutral-300 text-xs hover:bg-neutral-700/40"
-        onClick={handleUpvoteClick}
+        className={`flex items-center gap-1 rounded-md border border-neutral-700 bg-neutral-800/40 px-2 py-1 text-neutral-300 text-xs ${disableUpvote ? 'opacity-50 cursor-not-allowed' : 'hover:bg-neutral-700/40'}`}
+        onClick={disableUpvote ? undefined : handleUpvoteClick}
+        disabled={disableUpvote}
         type="button"
       >
         <svg

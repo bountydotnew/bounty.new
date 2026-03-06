@@ -18,7 +18,7 @@ import { useSession } from '@/context/session-context';
 
 const NAV_LINKS = [
   { href: '/blog', label: 'Blog' },
-  { href: '/contributors', label: 'For Devs' },
+  { href: '/for-developers', label: 'For Devs' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/roadmap', label: 'Roadmap' },
 ];

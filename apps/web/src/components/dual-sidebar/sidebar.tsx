@@ -196,6 +196,89 @@ const NavItems = ({
   );
 };
 
+// ============================================================================
+// Unauthenticated Subcomponents
+// ============================================================================
+
+const UnauthenticatedWorkspaceSwitcher = () => {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  return (
+    <div className="flex items-center justify-between py-0 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:hidden">
+      <button
+        className="group inline-flex items-center gap-[10px] rounded-[11px] px-[5px] py-[5px] text-left transition-colors bg-transparent hover:bg-surface-2 group-data-[collapsible=icon]:size-[26px] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-[3px]"
+        onClick={() =>
+          router.push(`/login?callback=${encodeURIComponent(pathname || '/')}`)
+        }
+        type="button"
+      >
+        <Avatar className="h-[27px] w-[27px] rounded-[6px] border-2 border-border-subtle shadow-[inset_0_2px_3px_rgba(0,0,0,0.2)] group-data-[collapsible=icon]:size-5 group-data-[collapsible=icon]:h-5 group-data-[collapsible=icon]:w-5">
+          <AvatarFacehash name="guest" size={27} className="rounded-[6px]" />
+        </Avatar>
+        <div className="flex items-center gap-[7px] group-data-[collapsible=icon]:hidden">
+          <span className="text-[18px] font-semibold leading-[150%] text-text-tertiary">
+            Sign in
+          </span>
+          <ArrowDownIcon className="h-4 w-4 text-text-tertiary transition-colors group-hover:text-foreground" />
+        </div>
+      </button>
+      <SidebarTrigger
+        aria-label="Toggle sidebar layout"
+        className="flex h-5 w-5 items-center justify-center p-0 hover:bg-transparent"
+      >
+        <SidebarToggleIcon className="h-5 w-5 text-text-tertiary" />
+      </SidebarTrigger>
+    </div>
+  );
+};
+
+const UnauthenticatedNavItems = () => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const navItems = mainNavItems();
+
+  return (
+    <SidebarGroup>
+      <SidebarMenu className="flex flex-col gap-[8px] w-full">
+        {navItems.map((item) => {
+          const IconComponent = item.icon;
+          return (
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton
+                tooltip={item.title}
+                className="cursor-not-allowed opacity-50"
+                disabled
+                asChild={false}
+              >
+                {IconComponent && <IconComponent className="h-5 w-5" />}
+                <span>{item.title}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          );
+        })}
+      </SidebarMenu>
+      <div className="mt-4 rounded-[10px] bg-surface-1 p-4 group-data-[collapsible=icon]:hidden">
+        <p className="mb-3 text-[13px] font-medium leading-[150%] text-text-tertiary">
+          Sign in to access your dashboard, bounties, and more
+        </p>
+        <button
+          className="inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2 text-[14px] font-semibold leading-[150%] text-primary-foreground transition-colors hover:bg-primary/90"
+          onClick={() =>
+            router.push(
+              `/login?callback=${encodeURIComponent(pathname || '/')}`
+            )
+          }
+          type="button"
+        >
+          Sign In
+        </button>
+      </div>
+    </SidebarGroup>
+  );
+};
+
+
 const SettingsNav = ({
   sections,
   pathname,
@@ -280,73 +363,77 @@ export const AppSidebar = ({
 
         {/* Header */}
         <SidebarHeader className="px-[15px] py-0 group-data-[collapsible=icon]:px-0">
-          {isSettingsRoute && activeOrgSlug ? (
-            <div className="flex items-center justify-between group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:hidden">
-              <BackToMainButton slug={activeOrgSlug} />
-              <SidebarTrigger
-                aria-label="Toggle sidebar layout"
-                className="flex h-5 w-5 items-center justify-center p-0 hover:bg-transparent"
-              >
-                <SidebarToggleIcon className="h-5 w-5 text-text-tertiary" />
-              </SidebarTrigger>
-            </div>
+          {isAuthenticated || isPending ? (
+            isSettingsRoute && activeOrgSlug ? (
+              <div className="flex items-center justify-between group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:hidden">
+                <BackToMainButton slug={activeOrgSlug} />
+                <SidebarTrigger
+                  aria-label="Toggle sidebar layout"
+                  className="flex h-5 w-5 items-center justify-center p-0 hover:bg-transparent"
+                >
+                  <SidebarToggleIcon className="h-5 w-5 text-text-tertiary" />
+                </SidebarTrigger>
+              </div>
+            ) : (
+              <WorkspaceSwitcher />
+            )
           ) : (
-            <WorkspaceSwitcher />
+            <UnauthenticatedWorkspaceSwitcher />
           )}
         </SidebarHeader>
 
         {/* Content */}
         <SidebarContent className="flex-1 overflow-y-auto px-[15px] py-0 group-data-[collapsible=icon]:px-0">
-          {isSettingsRoute ? (
-            <SidebarGroup>
-              <SettingsNav sections={settingsNav} pathname={pathname} />
-            </SidebarGroup>
-          ) : (
-            <div>
+          {isAuthenticated || isPending ? (
+            isSettingsRoute ? (
               <SidebarGroup>
-                <NavItems items={mainNav} pathname={pathname} />
+                <SettingsNav sections={settingsNav} pathname={pathname} />
               </SidebarGroup>
-              <RecentBountiesGroup />
-            </div>
+            ) : (
+              <div>
+                <SidebarGroup>
+                  <NavItems items={mainNav} pathname={pathname} />
+                </SidebarGroup>
+                <RecentBountiesGroup />
+              </div>
+            )
+          ) : (
+            <UnauthenticatedNavItems />
           )}
         </SidebarContent>
 
         {/* Footer - cards on main nav, minimal on settings */}
         <SidebarFooter className="px-0 py-0 group-data-[collapsible=icon]:px-0">
-          {isSettingsRoute ? (
-            <div className="px-[15px] py-0 group-data-[collapsible=icon]:px-0">
-              {/* Settings footer - minimal */}
-            </div>
-          ) : (
-            <div className="px-[15px] py-0 group-data-[collapsible=icon]:px-0">
-              {/* Footer cards (Getting Started, Changelog, Recent Bounties) */}
-              {/* These only show on main nav pages, not settings */}
-              {/* <div className="space-y-2 pb-3">
-                <GettingStartedCard />
-                <ChangelogCard />
-              </div> */}
-              {/* Bottom actions row */}
-              <div className="flex items-center justify-between gap-2 pt-3 mt-3 border-t border-border-subtle group-data-[collapsible=icon]:justify-center">
-                {/* Docs link */}
-                <button
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-surface-1 px-2.5 py-1.5 text-xs text-text-tertiary transition-colors hover:text-foreground group-data-[collapsible=icon]:hidden"
-                  onClick={() =>
-                    window.open('https://docs.bounty.new', '_blank')
-                  }
-                  type="button"
-                >
-                  <FileIcon className="h-[19px] w-[19px]" />
-                  <span className="text-xs font-medium">Docs</span>
-                </button>
-                {/* Notifications */}
-                {isAuthenticated && !isPending && (
-                  <NotificationsDropdown triggerClassName="flex h-auto w-auto items-center justify-center rounded-lg bg-surface-1 px-2.5 py-1.5 text-text-tertiary transition-colors hover:text-foreground">
-                    <NotificationsIcon className="h-[19px] w-[19px]" />
-                  </NotificationsDropdown>
-                )}
+          {isAuthenticated || isPending ? (
+            isSettingsRoute ? (
+              <div className="px-[15px] py-0 group-data-[collapsible=icon]:px-0">
+                {/* Settings footer - minimal */}
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="px-[15px] py-0 group-data-[collapsible=icon]:px-0">
+                {/* Bottom actions row */}
+                <div className="flex items-center justify-between gap-2 pt-3 mt-3 border-t border-border-subtle group-data-[collapsible=icon]:justify-center">
+                  {/* Docs link */}
+                  <button
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-surface-1 px-2.5 py-1.5 text-xs text-text-tertiary transition-colors hover:text-foreground group-data-[collapsible=icon]:hidden"
+                    onClick={() =>
+                      window.open('https://docs.bounty.new', '_blank')
+                    }
+                    type="button"
+                  >
+                    <FileIcon className="h-[19px] w-[19px]" />
+                    <span className="text-xs font-medium">Docs</span>
+                  </button>
+                  {/* Notifications */}
+                  {isAuthenticated && !isPending && (
+                    <NotificationsDropdown triggerClassName="flex h-auto w-auto items-center justify-center rounded-lg bg-surface-1 px-2.5 py-1.5 text-text-tertiary transition-colors hover:text-foreground">
+                      <NotificationsIcon className="h-[19px] w-[19px]" />
+                    </NotificationsDropdown>
+                  )}
+                </div>
+              </div>
+            )
+          ) : null}
         </SidebarFooter>
       </div>
       <SidebarRail />
