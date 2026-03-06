@@ -15,6 +15,7 @@ export const AUTH_CONFIG = {
     cookieCache: {
       enabled: true,
       maxAge: 60 * 5, // 5 minutes
+      strategy: 'jwe', // Encrypt cached session data in the cookie
     },
   } as const,
 

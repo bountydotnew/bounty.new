@@ -21,6 +21,7 @@ import {
   member,
   notification,
   organization,
+  rateLimit,
   session,
   submission,
   user as userTable,
@@ -78,6 +79,7 @@ const schema = {
   member,
   notification,
   organization,
+  rateLimit,
   session,
   submission,
   user: userTable,
@@ -281,6 +283,35 @@ export const auth = betterAuth({
     schema,
     usePlural: false,
   }),
+
+  // IP address resolution for rate limiting + session tracking.
+  // Vercel sets x-vercel-forwarded-for at the edge (can't be spoofed by clients).
+  // x-forwarded-for is the fallback for local dev and non-Vercel environments.
+  advanced: {
+    ipAddress: {
+      ipAddressHeaders: ['x-vercel-forwarded-for', 'x-forwarded-for'],
+    },
+    // TODO: Enable experimental joins when better-auth ships the feature.
+    // advanced.database.experimentalJoins is documented but not yet available
+    // in any released version (checked up to v1.5.4). Drizzle relations are
+    // already defined in auth.ts and organization.ts, ready for when it lands.
+    // See: https://better-auth.com/docs/reference/options#advanced
+  },
+
+  // Rate limiting: database storage is required on serverless (Vercel) because
+  // in-memory storage is per-invocation and doesn't share state across instances.
+  rateLimit: {
+    enabled: true,
+    window: 60,
+    max: 100,
+    storage: 'database',
+    customRules: {
+      '/sign-in/email': { window: 10, max: 5 },
+      '/sign-up/email': { window: 60, max: 5 },
+      '/forget-password': { window: 60, max: 3 },
+      '/email-otp/*': { window: 10, max: 3 },
+    },
+  },
 
   user: {
     additionalFields: {

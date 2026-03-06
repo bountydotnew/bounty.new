@@ -2,6 +2,7 @@ import type { ExtendedAuthSession } from '@bounty/types';
 import { initTRPC, TRPCError } from '@trpc/server';
 import type { ReasonCode } from '@bounty/types';
 import type { Context } from './context';
+
 import {
   checkRateLimit,
   createRateLimitKey,
@@ -94,8 +95,8 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
 });
 
 export const earlyAccessProcedure = protectedProcedure.use(
-  async ({ ctx, next }) => {
-    const userRole = ctx.session.user.role ?? 'user';
+  ({ ctx, next }) => {
+    const userRole = (ctx.session.user as ExtendedAuthSession['user']).role ?? 'user';
     if (!['early_access', 'admin'].includes(userRole)) {
       throw new TRPCError({
         code: 'FORBIDDEN',

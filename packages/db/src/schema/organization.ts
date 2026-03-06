@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
   boolean,
   index,
@@ -14,10 +14,7 @@ import { user } from './auth';
 // Enums
 // ============================================================================
 
-export const orgMemberRoleEnum = pgEnum('org_member_role', [
-  'owner',
-  'member',
-]);
+export const orgMemberRoleEnum = pgEnum('org_member_role', ['owner', 'member']);
 
 export const orgInvitationStatusEnum = pgEnum('org_invitation_status', [
   'pending',
@@ -50,9 +47,7 @@ export const organization = pgTable(
     stripeCustomerId: text('stripe_customer_id'),
     createdAt: timestamp('created_at').notNull().default(sql`now()`),
   },
-  (t) => [
-    index('organization_slug_idx').on(t.slug),
-  ]
+  (t) => [index('organization_slug_idx').on(t.slug)]
 );
 
 // ============================================================================
@@ -114,6 +109,37 @@ export const invitation = pgTable(
     index('invitation_email_idx').on(t.email),
   ]
 );
+
+// ============================================================================
+// Relations (required for Better Auth experimental.joins)
+// ============================================================================
+
+export const organizationRelations = relations(organization, ({ many }) => ({
+  members: many(member),
+  invitations: many(invitation),
+}));
+
+export const memberRelations = relations(member, ({ one }) => ({
+  user: one(user, {
+    fields: [member.userId],
+    references: [user.id],
+  }),
+  organization: one(organization, {
+    fields: [member.organizationId],
+    references: [organization.id],
+  }),
+}));
+
+export const invitationRelations = relations(invitation, ({ one }) => ({
+  inviter: one(user, {
+    fields: [invitation.inviterId],
+    references: [user.id],
+  }),
+  organization: one(organization, {
+    fields: [invitation.organizationId],
+    references: [organization.id],
+  }),
+}));
 
 // ============================================================================
 // Type Exports

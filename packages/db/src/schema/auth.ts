@@ -1,5 +1,6 @@
-import { sql } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
+  bigint,
   boolean,
   integer,
   pgEnum,
@@ -73,6 +74,29 @@ export const account = pgTable('account', {
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
 });
+
+// ---------------------------------------------------------------------------
+// Relations (required for Better Auth experimental.joins)
+// ---------------------------------------------------------------------------
+
+export const userRelations = relations(user, ({ many }) => ({
+  sessions: many(session),
+  accounts: many(account),
+}));
+
+export const sessionRelations = relations(session, ({ one }) => ({
+  user: one(user, {
+    fields: [session.userId],
+    references: [user.id],
+  }),
+}));
+
+export const accountRelations = relations(account, ({ one }) => ({
+  user: one(user, {
+    fields: [account.userId],
+    references: [user.id],
+  }),
+}));
 
 export const verification = pgTable('verification', {
   id: text('id').primaryKey(),
@@ -168,4 +192,15 @@ export const discordGuild = pgTable('discord_guild', {
   removedAt: timestamp('removed_at'), // Set when bot is removed, null if active
   // Organization scoping
   organizationId: text('organization_id'),
+});
+
+// ============================================================================
+// Rate Limit (Better Auth database-backed rate limiting)
+// ============================================================================
+
+export const rateLimit = pgTable('rate_limit', {
+  id: text('id').primaryKey(),
+  key: text('key').notNull(),
+  count: integer('count').notNull(),
+  lastRequest: bigint('last_request', { mode: 'number' }).notNull(),
 });
