@@ -1,4 +1,5 @@
-import { protectedProcedure, publicProcedure, router } from '../trpc';
+import { withIntrospection } from '@trpc-studio/introspection';
+import { protectedProcedure, publicProcedure, router, t } from '../trpc';
 import { bountiesRouter } from './bounties';
 import { connectRouter } from './connect';
 import { discordRouter } from './discord';
@@ -14,7 +15,7 @@ import { profilesRouter } from './profiles';
 import { repositoryRouter } from './repository';
 import { userRouter } from './user';
 
-export const appRouter = router({
+const baseRouter = router({
   healthCheck: publicProcedure.query(() => {
     return {
       message: 'IM ALIVE!!!!',
@@ -48,6 +49,10 @@ export const appRouter = router({
   onboarding: onboardingRouter,
   featureVotes: featureVotesRouter,
   organization: organizationRouter,
+});
+
+export const appRouter = withIntrospection(t, baseRouter, {
+  enabled: process.env.NODE_ENV === 'development',
 });
 
 export type AppRouter = typeof appRouter;

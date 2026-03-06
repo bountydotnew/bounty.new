@@ -81,10 +81,18 @@ export function Footer() {
               <ul className="space-y-2">
                 <li>
                   <Link
+                    href="/for-developers"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    For Developers
+                  </Link>
+                </li>
+                <li>
+                  <Link
                     href="/contributors"
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    For Devs
+                    Contributors
                   </Link>
                 </li>
                 <li>

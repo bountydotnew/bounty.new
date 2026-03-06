@@ -23,6 +23,7 @@
     "@octokit/core": "catalog:",
     "@octokit/plugin-rest-endpoint-methods": "catalog:",
     "@octokit/webhooks-methods": "catalog:",
+    "@trpc-studio/introspection": "^0.2.3",
     "@trpc/server": "catalog:",
     "@upstash/ratelimit": "catalog:",
     "bs58": "^6.0.0",
