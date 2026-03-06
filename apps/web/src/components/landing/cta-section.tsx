@@ -23,7 +23,7 @@ export function CTASection() {
 
   return (
     <section className="py-16 sm:py-24 px-4 sm:px-8">
-      <div className="mx-auto max-w-3xl text-center">
+      <div className="mx-auto max-w-3xl text-left sm:text-center">
         <h2 className="text-3xl font-medium tracking-tight text-foreground sm:text-4xl md:text-5xl">
           Ship faster. Pay on completion.
         </h2>
@@ -31,7 +31,7 @@ export function CTASection() {
           Create bounties for your projects and only pay when work is done. Let
           developers compete to solve your problems.
         </p>
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="mt-10 flex flex-col sm:flex-row items-start sm:items-center sm:justify-center gap-3">
           <button
             type="button"
             onClick={handleCreateBounty}
