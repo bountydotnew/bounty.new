@@ -7,7 +7,9 @@
         "noExcessiveCognitiveComplexity": "off"
       },
       "suspicious": {
-        "noConsole": "off"
+        "noConsole": "off",
+        "noEmptyBlockStatements": "off"
+        
       },
       "correctness": {
         "noUnusedImports": "off"

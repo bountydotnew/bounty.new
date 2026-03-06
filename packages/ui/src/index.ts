@@ -96,7 +96,6 @@ export * from './hooks/use-mobile';
 export * from './hooks/use-navigation-context';
 export * from './hooks/use-passkey';
 export * from './hooks/use-window-size';
-export * from './hooks/use-repositories';
 export * from './hooks/use-branches';
 export * from './hooks/use-issues';
 

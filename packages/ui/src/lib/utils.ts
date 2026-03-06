@@ -234,6 +234,7 @@ export function formatPriceString(price: string | null | undefined): string {
 
 // Regex for extracting owner/repo from GitHub URLs
 export const GITHUB_URL_REGEX = /github\.com\/([^/]+)\/([^/]+)/;
+export const GITHUB_ISSUE_URL_REGEX = /github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/i;
 
 /**
  * Convert number to formatted string with commas (e.g., 1500 -> "1,500", 1500.50 -> "1,500.50")
