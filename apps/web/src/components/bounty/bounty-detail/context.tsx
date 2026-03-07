@@ -4,6 +4,18 @@ import { createContext } from 'react';
 import type { BountyCommentCacheItem } from '@/types/comments';
 
 /**
+ * Parsed link data from bounty description
+ */
+export interface BountyLink {
+  url: string;
+  domain: string;
+  displayText: string;
+  isGitHub: boolean;
+  githubOwner?: string | null;
+  githubRepo?: string | null;
+}
+
+/**
  * Submission data type
  */
 export interface SubmissionData {
@@ -16,6 +28,8 @@ export interface SubmissionData {
   githubPullRequestNumber: number | null;
   pullRequestUrl: string | null;
   deliverableUrl: string | null;
+  githubHeadSha: string | null;
+  pullRequestTitle: string | null;
 }
 
 /**
@@ -39,6 +53,7 @@ export interface BountyDetailState {
     githubIssueNumber?: number | null;
     repositoryUrl?: string | null;
     issueUrl?: string | null;
+    links?: BountyLink[];
   };
   /** Votes data */
   votes: {

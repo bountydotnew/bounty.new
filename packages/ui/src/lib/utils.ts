@@ -77,6 +77,8 @@ export function parseNumber(num: string): number {
 
 /**
  * Format large numbers with M+ suffix for millions
+ * Shows whole numbers for exact round thousands (e.g., 1000 → "1,000", 10000 → "10,000")
+ * Uses K/k suffix for non-round thousands (e.g., 1200 → "1.2k")
  */
 export function formatLargeNumber(num: number): string {
   if (num >= 1_000_000_000_000) {
@@ -98,10 +100,15 @@ export function formatLargeNumber(num: number): string {
       : `${(millions).toFixed(1)}M`;
   }
   if (num >= 1000) {
+    // Show full number for exact thousands (e.g., 1000, 10000)
+    // Use K suffix for non-round numbers (e.g., 1200 → 1.2k)
+    if (num % 1000 === 0) {
+      return num.toLocaleString('en-US');
+    }
     const thousands = num / 1000;
     return thousands >= 10
-      ? `${Math.floor(thousands)}K`
-      : `${(thousands).toFixed(1)}K`;
+      ? `${Math.floor(thousands)}k`
+      : `${thousands.toFixed(1)}k`;
   }
   return num.toLocaleString('en-US');
 }

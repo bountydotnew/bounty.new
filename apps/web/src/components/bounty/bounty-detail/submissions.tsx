@@ -73,6 +73,8 @@ export function BountyDetailSubmissions() {
               githubRepoOwner={bounty.githubRepoOwner ?? undefined}
               githubRepoName={bounty.githubRepoName ?? undefined}
               pullRequestUrl={sub.pullRequestUrl ?? undefined}
+              pullRequestTitle={sub.pullRequestTitle ?? undefined}
+              githubHeadSha={sub.githubHeadSha ?? undefined}
               deliverableUrl={sub.deliverableUrl ?? undefined}
               canManage={canManage}
               isApproving={

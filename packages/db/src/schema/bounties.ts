@@ -111,6 +111,7 @@ export const submission = pgTable('submission', {
   githubCommentId: bigint('github_comment_id', { mode: 'number' }),
   githubUsername: text('github_username'),
   githubHeadSha: text('github_head_sha'), // For tracking the commit
+  pullRequestTitle: text('pull_request_title'), // PR title for display
   status: submissionStatusEnum('status').notNull().default('pending'),
   reviewNotes: text('review_notes'),
   submittedAt: timestamp('submitted_at').notNull().default(sql`now()`),
@@ -118,6 +119,27 @@ export const submission = pgTable('submission', {
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
 });
+
+export const bounty_links = pgTable(
+  'bounty_links',
+  {
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    bountyId: text('bounty_id')
+      .notNull()
+      .references(() => bounty.id, { onDelete: 'cascade' }),
+    url: text('url').notNull(),
+    domain: text('domain').notNull(),
+    displayText: text('display_text').notNull(),
+    isGitHub: boolean('is_github').notNull().default(false),
+    githubOwner: text('github_owner'),
+    githubRepo: text('github_repo'),
+    createdAt: timestamp('created_at').notNull().default(sql`now()`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
+  },
+  (t) => [
+    index('bounty_links_bounty_id_idx').on(t.bountyId),
+  ]
+);
 
 export const bountyApplication = pgTable('bounty_application', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),

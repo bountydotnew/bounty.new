@@ -4,6 +4,7 @@ import {
   bountyBookmark,
   bountyComment,
   bountyCommentLike,
+  bounty_links,
   bountyVote,
   cancellationRequest,
   createNotification,
@@ -82,6 +83,7 @@ import {
 } from '../trpc';
 import { realtime } from '@bounty/realtime';
 import { GITHUB_ISSUE_URL_REGEX, GITHUB_URL_REGEX } from '@bounty/ui/lib/utils';
+import { parseLinksFromMarkdown } from '@bounty/ui/lib/links';
 
 const GIT_SUFFIX_REGEX = /\.git$/;
 
@@ -780,6 +782,35 @@ export const bountiesRouter = router({
           });
         }
 
+        // Parse and store links from bounty description (fire-and-forget)
+        if (input.description) {
+          // Run asynchronously in background, don't await
+          (async () => {
+            try {
+              const links = parseLinksFromMarkdown(input.description);
+              if (links.length > 0) {
+                await db
+                  .insert(bounty_links)
+                  .values(
+                    links.map((link) => ({
+                      bountyId: newBounty.id,
+                      url: link.url,
+                      domain: link.domain,
+                      displayText: link.displayText,
+                      isGitHub: link.isGitHub,
+                      githubOwner: link.githubOwner ?? null,
+                      githubRepo: link.githubRepo ?? null,
+                    }))
+                  )
+                  .onConflictDoNothing();
+              }
+            } catch (error) {
+              // Silently fail - link parsing is non-critical
+              console.error('Failed to parse bounty links:', error);
+            }
+          })();
+        }
+
         return {
           success: true,
           data: newBounty,
@@ -961,11 +992,25 @@ export const bountiesRouter = router({
           });
         }
 
+        // Fetch links for this bounty
+        const bountyLinks = await db
+          .select({
+            url: bounty_links.url,
+            domain: bounty_links.domain,
+            displayText: bounty_links.displayText,
+            isGitHub: bounty_links.isGitHub,
+            githubOwner: bounty_links.githubOwner,
+            githubRepo: bounty_links.githubRepo,
+          })
+          .from(bounty_links)
+          .where(eq(bounty_links.bountyId, input.id));
+
         return {
           success: true,
           data: {
             ...result,
             amount: parseAmount(result.amount),
+            links: bountyLinks,
           },
         };
       } catch (error) {
@@ -1261,6 +1306,32 @@ export const bountiesRouter = router({
           });
         }
 
+        // Update links if description was provided
+        if (input.description) {
+          (async () => {
+            try {
+              const links = parseLinksFromMarkdown(input.description!);
+              // Delete old links and insert new ones
+              await db.delete(bounty_links).where(eq(bounty_links.bountyId, id));
+              if (links.length > 0) {
+                await db.insert(bounty_links).values(
+                  links.map((link) => ({
+                    bountyId: id,
+                    url: link.url,
+                    domain: link.domain,
+                    displayText: link.displayText,
+                    isGitHub: link.isGitHub,
+                    githubOwner: link.githubOwner,
+                    githubRepo: link.githubRepo,
+                  }))
+                );
+              }
+            } catch (error) {
+              console.error('Failed to update bounty links:', error);
+            }
+          })();
+        }
+
         try {
           await track('bounty_updated', {
             bounty_id: updatedBounty.id,
@@ -1494,6 +1565,7 @@ export const bountiesRouter = router({
           voteCountResult,
           userInteractionsResult,
           commentsResult,
+          linksResult,
         ] = await Promise.all([
           // Query 1: Get bounty with creator
           db
@@ -1575,6 +1647,19 @@ export const bountiesRouter = router({
             .leftJoin(user, eq(bountyComment.userId, user.id))
             .where(eq(bountyComment.bountyId, input.id))
             .orderBy(desc(bountyComment.createdAt)),
+
+          // Query 5: Get relevant links
+          db
+            .select({
+              url: bounty_links.url,
+              domain: bounty_links.domain,
+              displayText: bounty_links.displayText,
+              isGitHub: bounty_links.isGitHub,
+              githubOwner: bounty_links.githubOwner,
+              githubRepo: bounty_links.githubRepo,
+            })
+            .from(bounty_links)
+            .where(eq(bounty_links.bountyId, input.id)),
         ]);
 
         const bountyRow = bountyResult[0];
@@ -1600,7 +1685,11 @@ export const bountiesRouter = router({
 
         if (commentIds.length === 0) {
           return {
-            bounty: { ...bountyRow, amount: parseAmount(bountyRow.amount) },
+            bounty: {
+              ...bountyRow,
+              amount: parseAmount(bountyRow.amount),
+              links: linksResult,
+            },
             votes: { count: Number(voteCount), isVoted },
             bookmarked,
             comments: [],
@@ -1645,7 +1734,11 @@ export const bountiesRouter = router({
         }));
 
         return {
-          bounty: { ...bountyRow, amount: parseAmount(bountyRow.amount) },
+          bounty: {
+            ...bountyRow,
+            amount: parseAmount(bountyRow.amount),
+            links: linksResult,
+          },
           votes: { count: Number(voteCount), isVoted },
           bookmarked,
           comments: commentsWithLikes,
@@ -3463,6 +3556,7 @@ export const bountiesRouter = router({
             githubCommentId: submission.githubCommentId,
             githubUsername: submission.githubUsername,
             githubHeadSha: submission.githubHeadSha,
+            pullRequestTitle: submission.pullRequestTitle,
             // Contributor info
             contributorId: submission.contributorId,
             contributorName: user.name,

@@ -27,6 +27,8 @@ interface SubmissionCardProps {
   githubRepoOwner?: string;
   githubRepoName?: string;
   pullRequestUrl?: string;
+  pullRequestTitle?: string | null;
+  githubHeadSha?: string | null;
   deliverableUrl?: string;
   // Display
   rank?: string;
@@ -60,6 +62,8 @@ export default function SubmissionCard({
   githubRepoOwner,
   githubRepoName,
   pullRequestUrl,
+  pullRequestTitle,
+  githubHeadSha,
   deliverableUrl,
   canManage,
   isApproving,
@@ -226,9 +230,43 @@ export default function SubmissionCard({
           )}
         </div>
       </div>
+
+      {/* PR Title with inline commit chip */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {pullRequestTitle && prUrl && (
+          <a
+            href={prUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-sm text-foreground hover:underline"
+          >
+            {pullRequestTitle}
+          </a>
+        )}
+        {githubHeadSha && (
+          <a
+            href={githubRepoOwner && githubRepoName && githubPullRequestNumber
+              ? `https://github.com/${githubRepoOwner}/${githubRepoName}/pull/${githubPullRequestNumber}/commits/${githubHeadSha}`
+              : prUrl || '#'
+            }
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-[9px] border border-[#232323] bg-[oklab(28.5%_0_0/32%)] px-1.5 py-0.5 transition-colors hover:bg-[oklab(28.5%_0_0/40%)]"
+          >
+            <GithubIcon className="h-3 w-3 flex-shrink-0" />
+            <span className="text-xs text-text-muted">
+              {githubHeadSha.slice(0, 7)}
+            </span>
+            <ExternalLink className="h-3 w-3 flex-shrink-0 text-text-muted" />
+          </a>
+        )}
+      </div>
+
+      {/* Description */}
       {description && (
         <p className="text-text-secondary text-sm">{description}</p>
       )}
+
       {!prUrl && previewSrc && (
         <Image
           alt="Theme preview screenshot"

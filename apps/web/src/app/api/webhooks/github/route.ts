@@ -1086,6 +1086,7 @@ async function createSubmissionFromPullRequest(params: {
       githubPullRequestNumber: pullRequest.number,
       githubUsername: pullRequest.user.login,
       githubHeadSha: pullRequest.head.sha,
+      pullRequestTitle: pullRequest.title,
       status: 'pending',
     })
     .returning({ id: submission.id });

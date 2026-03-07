@@ -11,6 +11,7 @@ import {
   type BountyDetailState,
   type BountyDetailActions,
   type BountyDetailMeta,
+  type BountyLink,
 } from './context';
 import { AlertDialog } from '@bounty/ui/components/alert-dialog';
 import { Button } from '@bounty/ui/components/button';
@@ -42,6 +43,7 @@ interface BountyDetailProviderProps {
   githubIssueNumber?: number | null;
   repositoryUrl?: string | null;
   issueUrl?: string | null;
+  links?: BountyLink[];
   onEdit?: () => void;
 }
 
@@ -371,6 +373,7 @@ export function BountyDetailProvider({
   githubIssueNumber,
   repositoryUrl,
   issueUrl,
+  links,
   onEdit,
 }: BountyDetailProviderProps) {
   const { session } = useSession();
@@ -452,6 +455,7 @@ export function BountyDetailProvider({
         githubIssueNumber,
         repositoryUrl,
         issueUrl,
+        links,
       },
       votes: votesQuery.data ?? null,
       comments: undefined,
@@ -484,6 +488,7 @@ export function BountyDetailProvider({
       githubIssueNumber,
       repositoryUrl,
       issueUrl,
+      links,
       votesQuery.data,
       initialBookmarked,
       submissionsQuery.data?.submissions,

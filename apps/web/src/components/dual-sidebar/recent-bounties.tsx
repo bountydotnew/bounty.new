@@ -78,7 +78,15 @@ export function RecentBountiesGroup() {
 
   const startedBounties = data?.data?.slice(0, 5) ?? [];
 
-  if (recentBounties.length === 0 && startedBounties.length === 0) {
+  // Create a Set of IDs from started bounties to filter out duplicates
+  const startedBountyIds = new Set(startedBounties.map((b) => b.id));
+
+  // Filter out viewed bounties that are already in started bounties
+  const filteredRecentBounties = recentBounties.filter(
+    (b) => !startedBountyIds.has(b.id)
+  );
+
+  if (filteredRecentBounties.length === 0 && startedBounties.length === 0) {
     return null;
   }
 
@@ -86,7 +94,7 @@ export function RecentBountiesGroup() {
     <SidebarGroup className="mt-4">
       <div className="flex items-center justify-between">
         <SidebarGroupLabel>Recent Bounties</SidebarGroupLabel>
-        {recentBounties.length > 0 && (
+        {filteredRecentBounties.length > 0 && (
           <button
             type="button"
             onClick={clearRecent}
@@ -97,19 +105,6 @@ export function RecentBountiesGroup() {
         )}
       </div>
       <SidebarMenu className="flex flex-col gap-[8px] w-full">
-        {recentBounties.map((bounty) => (
-          <SidebarMenuItem key={`viewed-${bounty.id}`}>
-            <SidebarMenuButton asChild tooltip={bounty.title}>
-              <Link
-                href={`/bounty/${bounty.id}`}
-                className="flex items-center gap-2"
-              >
-                <ClockIcon className="h-[19px] w-[19px]" />
-                <span className="truncate text-sm">{bounty.title}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
         {startedBounties.map((bounty) => (
           <SidebarMenuItem key={`started-${bounty.id}`}>
             <SidebarMenuButton asChild tooltip={bounty.title}>
@@ -118,6 +113,19 @@ export function RecentBountiesGroup() {
                 className="flex items-center gap-2"
               >
                 <HourglassIcon className="h-[19px] w-[19px]" />
+                <span className="truncate text-sm">{bounty.title}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ))}
+        {filteredRecentBounties.map((bounty) => (
+          <SidebarMenuItem key={`viewed-${bounty.id}`}>
+            <SidebarMenuButton asChild tooltip={bounty.title}>
+              <Link
+                href={`/bounty/${bounty.id}`}
+                className="flex items-center gap-2"
+              >
+                <ClockIcon className="h-[19px] w-[19px]" />
                 <span className="truncate text-sm">{bounty.title}</span>
               </Link>
             </SidebarMenuButton>

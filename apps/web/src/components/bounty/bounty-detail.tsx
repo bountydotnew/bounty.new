@@ -53,6 +53,14 @@ interface BountyData {
       name: string | null;
       image: string | null;
     };
+    links?: Array<{
+      url: string;
+      domain: string;
+      displayText: string;
+      isGitHub: boolean;
+      githubOwner?: string | null;
+      githubRepo?: string | null;
+    }>;
   };
   comments: BountyCommentCacheItem[];
   votes: {
@@ -107,6 +115,7 @@ export default function BountyDetailPage({
       githubIssueNumber={bounty.githubIssueNumber}
       repositoryUrl={bounty.repositoryUrl}
       issueUrl={bounty.issueUrl}
+      links={bounty.links}
       initialVotes={votes}
       canEditBounty={canEdit}
     >
