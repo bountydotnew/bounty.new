@@ -30,7 +30,7 @@ export const Header = () => {
     <header
       className={cn(
         'flex h-[72px] items-center justify-between bg-background border-b border-border-subtle',
-        'px-4 sm:px-6 w-full max-w-full overflow-hidden'
+        'px-4 sm:px-6 w-full max-w-full overflow-x-hidden'
       )}
     >
       {/* Left side - empty spacer */}
