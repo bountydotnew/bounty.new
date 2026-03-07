@@ -43,6 +43,9 @@ export function Hero() {
           <p className="text-base sm:text-lg text-text-secondary mb-8 max-w-xl">
             AI writes bugs humans have to fix. Post a bounty, get a real solution from developers who've seen the pattern before.
           </p>
+          <p className="text-base sm:text-lg text-text-secondary mb-8 max-w-xl">
+            Spend your money on what matters, instead of dumping it into AI credits hoping it will fix your code.
+          </p>
           <div className="flex items-center gap-4">
             <Link
               href="/dashboard"
