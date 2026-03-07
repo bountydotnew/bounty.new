@@ -73,12 +73,12 @@ export function BountyDetailPaymentAlert() {
               className="px-4 py-4 space-y-3"
             >
               {needsPayment && (
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-3">
                   <span className="text-sm text-foreground">
                     This bounty requires payment to become active. Complete
                     payment to allow submissions.
                   </span>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2">
                     <Button
                       onClick={() => {
                         actions.recheckPayment();
@@ -117,13 +117,15 @@ export function BountyDetailPaymentAlert() {
             exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.1 } }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
             onClick={() => setIsExpanded(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-1 border border-border-subtle text-foreground text-sm font-medium hover:bg-surface-2"
+            className="flex w-full items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-surface-1 border border-border-subtle text-foreground text-sm font-medium hover:bg-surface-2"
           >
-            <AlertTriangle className="w-4 h-4 text-orange-500" />
-            <span>
-              {problemCount} problem{problemCount !== 1 ? 's' : ''} to resolve
-            </span>
-            <ChevronDown className="w-4 h-4" />
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-orange-500" />
+              <span>
+                {problemCount} problem{problemCount !== 1 ? 's' : ''} to resolve
+              </span>
+            </div>
+            <ChevronDown className="w-4 h-4 shrink-0" />
           </m.button>
         )}
       </AnimatePresence>
