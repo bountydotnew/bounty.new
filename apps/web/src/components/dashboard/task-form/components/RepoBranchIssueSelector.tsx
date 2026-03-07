@@ -1195,7 +1195,7 @@ function MobileDrawerView({
   return (
     <Drawer open={mobileOpen} onOpenChange={setMobileOpen}>
       <DrawerTrigger asChild>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => {
