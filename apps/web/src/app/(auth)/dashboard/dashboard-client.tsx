@@ -5,11 +5,15 @@ import { DashboardPageProvider } from '@/components/dashboard/dashboard-page';
 import { DashboardContent } from './dashboard-content';
 import { ErrorBoundary } from '@/components/dashboard/error-boundary';
 
-export function DashboardClient() {
+interface DashboardClientProps {
+  initialAllBounties?: unknown;
+}
+
+export function DashboardClient({ initialAllBounties }: DashboardClientProps) {
   return (
     <ErrorBoundary>
       <AuthGuard>
-        <DashboardPageProvider>
+        <DashboardPageProvider initialAllBounties={initialAllBounties}>
           <DashboardContent />
         </DashboardPageProvider>
       </AuthGuard>

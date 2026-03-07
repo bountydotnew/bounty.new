@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { trpc } from '@/utils/trpc';
 import { useSession } from '@/context/session-context';
@@ -81,26 +82,32 @@ export function BountyListProvider({ children }: BountyListProviderProps) {
     retry: false,
   });
 
-  // Context value
-  const contextValue: BountyListContextValue = {
-    state: {
-      bounties: bounties?.data ?? [],
+  const bountiesData = bounties?.data;
+  const queryError = error instanceof Error ? error : null;
+
+  const state = useMemo(
+    () => ({
+      bounties: bountiesData ?? [],
       isLoading,
-      error: error instanceof Error ? error : null,
+      error: queryError,
       filters: {
         search: search ?? null,
         creatorId: creatorId ?? null,
-        status: status,
+        status,
         sortBy: (sortBy as SortByOption) ?? DEFAULT_SORT_BY,
         sortOrder: (sortOrder as SortOrderOption) ?? DEFAULT_SORT_ORDER,
       },
-    },
-    actions: {
-      setSearch: (value) => setSearch(value ?? ''),
-      setCreatorId: (value) => setCreatorId(value ?? ''),
-      setStatus: (value) => setStatus(value),
-      setSortBy: (value) => setSortBy(value),
-      setSortOrder: (value) => setSortOrder(value),
+    }),
+    [bountiesData, isLoading, queryError, search, creatorId, status, sortBy, sortOrder]
+  );
+
+  const actions = useMemo(
+    () => ({
+      setSearch: (value: string | null) => setSearch(value ?? ''),
+      setCreatorId: (value: string | null) => setCreatorId(value ?? ''),
+      setStatus: (value: BountyStatusFilter | null) => setStatus(value),
+      setSortBy: (value: SortByOption) => setSortBy(value),
+      setSortOrder: (value: SortOrderOption) => setSortOrder(value),
       resetFilters: () => {
         setSearch(null);
         setCreatorId(null);
@@ -109,11 +116,19 @@ export function BountyListProvider({ children }: BountyListProviderProps) {
         setSortOrder(DEFAULT_SORT_ORDER);
       },
       refetch: () => refetch(),
-    },
-    meta: {
-      totalCount: bounties?.data?.length ?? 0,
-    },
-  };
+    }),
+    [setSearch, setCreatorId, setStatus, setSortBy, setSortOrder, refetch]
+  );
+
+  const meta = useMemo(
+    () => ({ totalCount: bountiesData?.length ?? 0 }),
+    [bountiesData?.length]
+  );
+
+  const contextValue: BountyListContextValue = useMemo(
+    () => ({ state, actions, meta }),
+    [state, actions, meta]
+  );
 
   return <BountyListContext value={contextValue}>{children}</BountyListContext>;
 }

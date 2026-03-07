@@ -1,9 +1,18 @@
-import { db } from '@bounty/db';
+import { cache } from 'react';
 import type { Metadata } from 'next';
 import { baseUrl } from '@bounty/ui/lib/constants';
 import { createServerCaller } from '@bounty/api/src/server-caller';
 import ProfilePageClient from './page.client';
 import type { ProfileData } from './hooks/use-profile-data';
+
+const getProfileData = cache(async (handle: string) => {
+  try {
+    const caller = await createServerCaller();
+    return await caller.profiles.getProfile({ handle });
+  } catch {
+    return null;
+  }
+});
 
 export async function generateMetadata({
   params,
@@ -12,37 +21,16 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { userId } = await params;
 
-  // Try to fetch user by handle first, then by userId
-  const userData = await db.query.user.findFirst({
-    where: (fields, { eq }) => eq(fields.handle, userId.toLowerCase()),
-    columns: {
-      id: true,
-      name: true,
-      handle: true,
-    },
-  });
+  const profileResponse = await getProfileData(userId);
 
-  // If not found by handle, try by userId
-  const userById = userData
-    ? null
-    : await db.query.user.findFirst({
-        where: (fields, { eq }) => eq(fields.id, userId),
-        columns: {
-          id: true,
-          name: true,
-          handle: true,
-        },
-      });
-
-  const profileUser = userData || userById;
-
-  if (!profileUser) {
+  if (!profileResponse) {
     return {
       title: 'User Not Found',
       description: 'The requested user profile could not be found.',
     };
   }
 
+  const profileUser = profileResponse.data.user;
   const displayName = profileUser.name || profileUser.handle || 'User';
   const ogImageUrl = profileUser.handle
     ? `${baseUrl}/api/og-image/profile/${profileUser.handle}`
@@ -82,32 +70,57 @@ export default async function ProfilePage({
 }) {
   const { userId } = await params;
 
-  // Prefetch profile data on server to avoid client-side waterfall
+  const apiResponse = await getProfileData(userId);
+
   let initialData: ProfileData | null = null;
-  try {
-    const caller = await createServerCaller();
-    const apiResponse = await caller.profiles.getProfile({ handle: userId });
-    
-    // Transform API response to ProfileData format
-    if (apiResponse) {
-      initialData = {
-        user: {
-          id: apiResponse.data.user.id,
-          name: apiResponse.data.user.name,
-          handle: apiResponse.data.user.handle ?? null,
-          email: apiResponse.data.user.email ?? null,
-          image: apiResponse.data.user.image,
-          createdAt: String(apiResponse.data.user.createdAt),
-          isProfilePrivate: apiResponse.data.user.isProfilePrivate ?? false,
-        },
-        profile: apiResponse.data.profile as ProfileData['profile'],
-        reputation: apiResponse.data.reputation as ProfileData['reputation'],
-        isPrivate: apiResponse.isPrivate ?? false,
-      };
+  let serverTabData: {
+    bounties?: unknown;
+    activity?: unknown;
+    highlights?: unknown;
+  } = {};
+
+  if (apiResponse) {
+    initialData = {
+      user: {
+        id: apiResponse.data.user.id,
+        name: apiResponse.data.user.name,
+        handle: apiResponse.data.user.handle ?? null,
+        email: apiResponse.data.user.email ?? null,
+        image: apiResponse.data.user.image,
+        createdAt: String(apiResponse.data.user.createdAt),
+        isProfilePrivate: apiResponse.data.user.isProfilePrivate ?? false,
+      },
+      profile: apiResponse.data.profile as ProfileData['profile'],
+      reputation: apiResponse.data.reputation as ProfileData['reputation'],
+      isPrivate: apiResponse.isPrivate ?? false,
+    };
+
+    // Prefetch tab data in parallel if profile is public
+    if (!apiResponse.isPrivate) {
+      const resolvedUserId = apiResponse.data.user.id;
+      try {
+        const caller = await createServerCaller();
+        const [bounties, activity, highlights] = await Promise.allSettled([
+          caller.bounties.getBountiesByUserId({ userId: resolvedUserId }),
+          caller.user.getUserActivity({ userId: resolvedUserId }),
+          caller.bounties.getHighlights({ userId: resolvedUserId }),
+        ]);
+        serverTabData = {
+          bounties: bounties.status === 'fulfilled' ? bounties.value : undefined,
+          activity: activity.status === 'fulfilled' ? activity.value : undefined,
+          highlights: highlights.status === 'fulfilled' ? highlights.value : undefined,
+        };
+      } catch {
+        // Tab prefetch is best-effort
+      }
     }
-  } catch {
-    // If prefetch fails, client will fetch - no big deal
   }
 
-  return <ProfilePageClient initialData={initialData} />;
+  return (
+    <ProfilePageClient
+      initialData={initialData}
+      serverData={apiResponse}
+      serverTabData={serverTabData}
+    />
+  );
 }

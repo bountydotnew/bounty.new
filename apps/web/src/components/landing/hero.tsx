@@ -2,14 +2,25 @@
 
 import Image from 'next/image';
 import Link  from '@bounty/ui/components/link';
-import { useState } from 'react';
+import dynamic from 'next/dynamic';
+import { Suspense, useState } from 'react';
 import { ChevronDown, RotateCcw } from 'lucide-react';
-import { CreateBountyDemo } from './create-bounty-demo';
-import { SubmitSolutionDemo } from './submit-solution-demo';
-import { ApprovePayDemo } from './approve-pay-demo';
 import { WaitlistDemo } from './waitlist-demo';
 import { MacNotification } from './mac-notification';
 import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
+
+const CreateBountyDemo = dynamic(
+  () => import('./create-bounty-demo').then((m) => ({ default: m.CreateBountyDemo })),
+  { ssr: false },
+);
+const SubmitSolutionDemo = dynamic(
+  () => import('./submit-solution-demo').then((m) => ({ default: m.SubmitSolutionDemo })),
+  { ssr: false },
+);
+const ApprovePayDemo = dynamic(
+  () => import('./approve-pay-demo').then((m) => ({ default: m.ApprovePayDemo })),
+  { ssr: false },
+);
 
 export function Hero() {
   const [activeDemo, setActiveDemo] = useState('waitlist');
