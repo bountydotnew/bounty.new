@@ -61,7 +61,7 @@ export function DashboardContent() {
         <div className="h-px w-full shrink-0 bg-surface-3" />
 
         {/* Bounty list section with vertical borders */}
-        <div className="flex flex-1 shrink-0 flex-col w-full overflow-hidden lg:max-w-[805px] xl:px-0 xl:border-x border-border-subtle mx-auto py-4 min-w-0">
+        <div className="flex flex-1 shrink-0 flex-col w-full overflow-hidden lg:max-w-[805px] xl:px-0 xl:border-x border-border-subtle mx-auto py-4 min-w-0 max-w-full">
           <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
             <div className="relative flex flex-col pb-10 px-4 w-full min-w-0">
               <BountiesFeed.Provider
