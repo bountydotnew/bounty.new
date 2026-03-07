@@ -43,6 +43,7 @@ import {
   openAPI,
   multiSession,
   organization as organizationPlugin,
+  oAuthProxy,
 } from 'better-auth/plugins';
 import { admin } from 'better-auth/plugins';
 import { emailOTP } from 'better-auth/plugins/email-otp';
@@ -481,6 +482,7 @@ export const auth = betterAuth({
     'https://*.databuddy.cc',
     'https://bounty.new',
     'https://*.bounty.new', // Matches www.bounty.new, local.bounty.new, preview.bounty.new, etc.
+    'https://*.vercel.app', // Vercel preview deployments (OAuth proxy handles callback routing)
     ...(env.NODE_ENV === 'production'
       ? []
       : [
@@ -498,6 +500,7 @@ export const auth = betterAuth({
       clientId: env.GITHUB_CLIENT_ID,
       clientSecret: env.GITHUB_CLIENT_SECRET,
       scope: ['read:user', 'public_repo', 'read:org'],
+      redirectURI: 'https://bounty.new/api/auth/callback/github',
       mapProfileToUser: (profile) => ({
         handle: profile.login?.toLowerCase(),
       }),
@@ -506,11 +509,13 @@ export const auth = betterAuth({
       clientId: env.GOOGLE_CLIENT_ID || '',
       clientSecret: env.GOOGLE_CLIENT_SECRET || '',
       scope: ['openid', 'email', 'profile'],
+      redirectURI: 'https://bounty.new/api/auth/callback/google',
     },
     discord: {
       clientId: env.DISCORD_CLIENT_ID || '',
       clientSecret: env.DISCORD_CLIENT_SECRET || '',
       scope: ['identify', 'email', 'guilds'],
+      redirectURI: 'https://bounty.new/api/auth/callback/discord',
     },
     linear: {
       clientId: env.LINEAR_CLIENT_ID || '',
@@ -626,6 +631,15 @@ export const auth = betterAuth({
     // ========================================================================
     multiSession({
       ...AUTH_CONFIG.multiSession,
+    }),
+
+    // ========================================================================
+    // OAuth Proxy (for Vercel preview deployments)
+    // Proxies OAuth callbacks through production so preview URLs don't need
+    // to be registered with each OAuth provider.
+    // ========================================================================
+    oAuthProxy({
+      productionURL: 'https://bounty.new',
     }),
 
     // ========================================================================
