@@ -1,20 +1,17 @@
+import { cache } from 'react';
 import type { Metadata } from 'next';
-import { cacheTag, cacheLife } from 'next/cache';
 import { baseUrl } from '../../../../../../../packages/ui/src/lib/constants';
 import { createServerCaller } from '@bounty/api/src/server-caller';
 import BountyPage from './page.client';
 
-async function getBountyData(id: string) {
-  'use cache';
-  cacheTag(`bounty-${id}`);
-  cacheLife('minutes');
+const getBountyData = cache(async (id: string) => {
   try {
     const caller = await createServerCaller();
     return await caller.bounties.getBountyDetail({ id });
   } catch {
     return null;
   }
-}
+});
 
 export async function generateMetadata({
   params,

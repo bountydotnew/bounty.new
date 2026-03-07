@@ -1,21 +1,18 @@
+import { cache } from 'react';
 import type { Metadata } from 'next';
-import { cacheTag, cacheLife } from 'next/cache';
 import { baseUrl } from '@bounty/ui/lib/constants';
 import { createServerCaller } from '@bounty/api/src/server-caller';
 import ProfilePageClient from './page.client';
 import type { ProfileData } from './hooks/use-profile-data';
 
-async function getProfileData(handle: string) {
-  'use cache';
-  cacheTag(`profile-${handle}`);
-  cacheLife('hours');
+const getProfileData = cache(async (handle: string) => {
   try {
     const caller = await createServerCaller();
     return await caller.profiles.getProfile({ handle });
   } catch {
     return null;
   }
-}
+});
 
 export async function generateMetadata({
   params,
