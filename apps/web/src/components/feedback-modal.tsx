@@ -4,19 +4,35 @@ import type React from 'react';
 import html2canvas from 'html2canvas-pro';
 import { useState } from 'react';
 import { useFeedback } from '@/components/feedback-context';
-import { X, Loader2, CheckCircle2 } from 'lucide-react';
+import { Loader2, CheckCircle2, Camera } from 'lucide-react';
+import { SparklesIcon } from '@bounty/ui/components/icons/huge/sparkles';
+import { FileCodeIcon } from '@bounty/ui/components/icons/huge/file-code';
 import { toast } from 'sonner';
-import { Button } from "@bounty/ui"
+import { openFile } from 'react-grab/primitives';
+import { Button } from '@bounty/ui/components/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@bounty/ui/components/dialog';
+import { Label } from '@bounty/ui/components/label';
+import { Switch } from '@bounty/ui/components/switch';
+import { Textarea } from '@bounty/ui/components/textarea';
 
 /**
  * Modal component that displays the feedback form.
- * Handles screenshot generation and data submission.
+ * Uses react-grab element context for rich component information.
  */
 export function FeedbackModal() {
-  const { isFeedbackOpen, closeFeedback, selectedElement, config } =
+  const { isFeedbackOpen, closeFeedback, elementContext, config } =
     useFeedback();
   const [status, setStatus] = useState<'idle' | 'sending' | 'success'>('idle');
   const [comment, setComment] = useState('');
+  const [prompt, setPrompt] = useState('');
   const [includeScreenshot, setIncludeScreenshot] = useState(true);
 
   const ui = {
@@ -24,13 +40,18 @@ export function FeedbackModal() {
     placeholder: config.ui?.placeholder || 'What seems to be the problem?',
     submitLabel: config.ui?.submitLabel || 'Send Feedback',
     cancelLabel: config.ui?.cancelLabel || 'Cancel',
-    zIndex: config.ui?.zIndex || 9999,
-    primaryColor: config.ui?.colors?.primary || '#E66700',
   };
 
-  if (!isFeedbackOpen) {
-    return null;
-  }
+  const handleClose = () => {
+    if (status === 'sending') {
+      return;
+    }
+    setStatus('idle');
+    setComment('');
+    setPrompt('');
+    setIncludeScreenshot(true);
+    closeFeedback();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,37 +60,18 @@ export function FeedbackModal() {
     try {
       let blob: Blob | null = null;
 
-      // 1. Capture Screenshot (only if user wants it)
       if (includeScreenshot) {
-        // Hide the modal backdrop, content, and overlay temporarily so they don't block the screenshot
-        const modalBackdrop = document.getElementById(
-          'feedback-modal-backdrop'
-        );
-        if (modalBackdrop) {
-          modalBackdrop.style.display = 'none';
-        }
-        const modalElement = document.getElementById('feedback-modal-content');
-        if (modalElement) {
-          modalElement.style.opacity = '0';
-        }
-        const overlayElement = document.getElementById(
-          'feedback-overlay-layer'
-        );
-        if (overlayElement) {
-          overlayElement.style.display = 'none';
-        }
+        // Compute the highlight rect from the selected element before cloning
+        const selectedRect = elementContext?.element
+          ? elementContext.element.getBoundingClientRect()
+          : null;
+        const highlightComponentLabel =
+          elementContext?.componentName ||
+          elementContext?.selector ||
+          'Selected';
 
-        // Apply privacy mask
-        const sensitiveElements = document.querySelectorAll(
-          '[data-privacy="masked"]'
-        );
-        for (const el of sensitiveElements) {
-          (el as HTMLElement).style.filter = 'blur(10px)';
-        }
-
-        // Capture only the viewport - replace all images with solid color placeholders
         const canvas = await html2canvas(document.body, {
-          logging: false, // Suppress console errors
+          logging: false,
           width: window.innerWidth,
           height: window.innerHeight,
           scrollX: -window.scrollX,
@@ -77,17 +79,73 @@ export function FeedbackModal() {
           windowWidth: window.innerWidth,
           windowHeight: window.innerHeight,
           onclone: (clonedDoc) => {
-            // Replace all images with solid color divs
-            const images = clonedDoc.querySelectorAll('img');
-            for (const img of images) {
+            // Remove dialog and overlay from the clone (never touches real DOM)
+            for (const el of clonedDoc.querySelectorAll(
+              '[data-slot="dialog-backdrop"], [data-slot="dialog-viewport"]'
+            )) {
+              el.remove();
+            }
+            const clonedOverlay = clonedDoc.getElementById(
+              'feedback-overlay-layer'
+            );
+            if (clonedOverlay) {
+              clonedOverlay.remove();
+            }
+
+            // Apply privacy mask in the clone
+            for (const el of clonedDoc.querySelectorAll(
+              '[data-privacy="masked"]'
+            )) {
+              (el as HTMLElement).style.filter = 'blur(10px)';
+            }
+
+            // Replace images with placeholders in the clone
+            for (const img of clonedDoc.querySelectorAll('img')) {
               const rect = img.getBoundingClientRect();
               const placeholder = clonedDoc.createElement('div');
               placeholder.style.width = `${rect.width}px`;
               placeholder.style.height = `${rect.height}px`;
-              placeholder.style.backgroundColor = '#1a1a1a'; // Dark gray placeholder
+              placeholder.style.backgroundColor = '#1a1a1a';
               placeholder.style.display = 'inline-block';
               placeholder.style.verticalAlign = 'middle';
               img.parentNode?.replaceChild(placeholder, img);
+            }
+
+            // Add element highlight to the clone
+            if (selectedRect) {
+              const highlight = clonedDoc.createElement('div');
+              Object.assign(highlight.style, {
+                position: 'fixed',
+                top: `${selectedRect.top}px`,
+                left: `${selectedRect.left}px`,
+                width: `${selectedRect.width}px`,
+                height: `${selectedRect.height}px`,
+                border: '2px solid #3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                borderRadius: '3px',
+                zIndex: '999999',
+                pointerEvents: 'none',
+              });
+              clonedDoc.body.appendChild(highlight);
+
+              const label = clonedDoc.createElement('div');
+              Object.assign(label.style, {
+                position: 'fixed',
+                top: `${Math.max(selectedRect.top - 24, 4)}px`,
+                left: `${selectedRect.left}px`,
+                backgroundColor: '#3b82f6',
+                color: '#ffffff',
+                fontSize: '11px',
+                fontFamily: 'ui-monospace, monospace',
+                fontWeight: '500',
+                padding: '2px 6px',
+                borderRadius: '3px',
+                zIndex: '999999',
+                pointerEvents: 'none',
+                whiteSpace: 'nowrap',
+              });
+              label.textContent = highlightComponentLabel;
+              clonedDoc.body.appendChild(label);
             }
           },
         });
@@ -100,44 +158,39 @@ export function FeedbackModal() {
             }
           }, 'image/png');
         });
-
-        // Restore UI
-        if (modalBackdrop) {
-          modalBackdrop.style.display = '';
-        }
-        if (modalElement) {
-          modalElement.style.opacity = '1';
-        }
-        if (overlayElement) {
-          overlayElement.style.display = '';
-        }
-        for (const el of sensitiveElements) {
-          (el as HTMLElement).style.filter = 'none';
-        }
       }
 
-      // 2. Prepare Data
+      // Prepare & send data
       const formData = new FormData();
       formData.append('comment', comment);
       formData.append('route', window.location.href);
       formData.append('includeScreenshot', includeScreenshot.toString());
+      if (prompt.trim()) {
+        formData.append('prompt', prompt);
+      }
 
       if (blob && includeScreenshot) {
         formData.append('screenshot', blob, 'screenshot.png');
       }
 
-      // Append metadata from config if available
       if (config.metadata) {
         formData.append('metadata', JSON.stringify(config.metadata));
       }
 
-      if (selectedElement) {
+      // Send rich element context from react-grab
+      if (elementContext) {
         formData.append(
           'element',
           JSON.stringify({
-            tagName: selectedElement.tagName,
-            id: selectedElement.id,
-            className: selectedElement.className,
+            componentName: elementContext.componentName,
+            selector: elementContext.selector,
+            htmlPreview: elementContext.htmlPreview,
+            stack: elementContext.stack.map((frame) => ({
+              functionName: frame.functionName,
+              fileName: frame.fileName,
+              lineNumber: frame.lineNumber,
+              columnNumber: frame.columnNumber,
+            })),
           })
         );
       }
@@ -151,144 +204,187 @@ export function FeedbackModal() {
         throw new Error('Failed to send feedback');
       }
 
-      console.log('[Feedback] Feedback submitted successfully');
       setStatus('success');
 
-      // Trigger success callback
       config.onFeedbackSubmit?.({
         comment,
+        prompt,
         route: window.location.href,
-        selectedElement: selectedElement?.toString() || '',
+        componentName: elementContext?.componentName || '',
+        selector: elementContext?.selector || '',
         includeScreenshot: includeScreenshot.toString(),
       });
 
       setTimeout(() => {
-        setStatus('idle');
-        setComment('');
-        setIncludeScreenshot(true);
-        closeFeedback();
+        handleClose();
       }, 2000);
     } catch (error) {
       console.error('[Feedback] Error sending feedback:', error);
-      // Reset status so user can try again
       setStatus('idle');
       toast.error('Failed to send feedback. Please try again.');
     }
   };
 
+  // Extract source location from the first stack frame
+  const sourceFrame = elementContext?.stack[0] ?? null;
+  const sourceLabel = sourceFrame?.fileName
+    ? `${sourceFrame.fileName.split('/').pop()}${sourceFrame.lineNumber ? `:${sourceFrame.lineNumber}` : ''}`
+    : null;
+
   return (
-    <div
-      id="feedback-modal-backdrop"
-      className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in"
-      style={{ zIndex: ui.zIndex }}
+    <Dialog
+      open={isFeedbackOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          handleClose();
+        }
+      }}
     >
-      <div
-        id="feedback-modal-content"
-        className="w-full max-w-md bg-surface-1 border border-border-subtle rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 transition-opacity"
-      >
-        <div className="flex items-center justify-between p-4 border-b border-border-subtle">
-          <h2 className="text-foreground font-medium text-lg">{ui.title}</h2>
-          <button
-            type="button"
-            onClick={closeFeedback}
-            className="text-text-tertiary hover:text-foreground transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
+      <DialogContent showCloseButton={status !== 'sending'}>
         {status === 'success' ? (
-          <div className="p-8 flex flex-col items-center text-center">
-            <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle2 className="w-6 h-6 text-green-500" />
-            </div>
-            <h3 className="text-foreground font-medium text-lg mb-2">
-              Feedback Sent!
-            </h3>
-            <p className="text-text-tertiary text-sm">
-              Thank you for helping us improve.
-            </p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="p-4 space-y-4">
-            {selectedElement && (
-              <div className="p-3 bg-surface-2 rounded-lg border border-border-subtle">
-                <div className="text-text-tertiary text-xs uppercase tracking-wider font-semibold mb-1">
-                  Selected Element
-                </div>
-                <div className="text-foreground font-mono text-sm truncate">
-                  {selectedElement.tagName.toLowerCase()}
-                  {selectedElement.id ? `#${selectedElement.id}` : ''}
-                  {selectedElement.className
-                    ? `.${selectedElement.className.split(' ').join('.')}`
-                    : ''}
-                </div>
+          <>
+            <DialogHeader>
+              <DialogTitle className="sr-only">Feedback Sent</DialogTitle>
+            </DialogHeader>
+            <div className="p-8 flex flex-col items-center text-center">
+              <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle2 className="w-6 h-6 text-green-500" />
               </div>
-            )}
+              <h3 className="text-foreground font-semibold text-lg mb-1">
+                Feedback Sent!
+              </h3>
+              <p className="text-muted-foreground text-sm">
+                Thank you for helping us improve.
+              </p>
+            </div>
+          </>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <DialogHeader>
+              <DialogTitle>{ui.title}</DialogTitle>
+              <DialogDescription>
+                Help us improve by describing what went wrong.
+              </DialogDescription>
+            </DialogHeader>
 
-            <div className="space-y-2">
-              <label
-                htmlFor="comment"
-                className="text-text-tertiary text-sm font-medium"
-              >
-                Describe the issue
-              </label>
-              <textarea
-                id="comment"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder={ui.placeholder}
-                className="w-full h-32 bg-surface-2 border border-border-subtle rounded-lg p-3 text-foreground placeholder:text-text-muted focus:outline-none focus:ring-1 resize-none"
-                style={{
-                  borderColor:
-                    status === 'sending' ? ui.primaryColor : undefined,
-                }}
-                required
-              />
+            <div className="px-6 space-y-4">
+              {/* Element context card */}
+              {elementContext && (
+                <div className="rounded-lg border border-border overflow-hidden">
+                  {/* Component name header */}
+                  <div className="flex items-center justify-between gap-2 px-3 py-2.5 bg-muted/50">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileCodeIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm font-medium text-foreground truncate">
+                        {elementContext.componentName || 'Unknown Component'}
+                      </span>
+                    </div>
+                    {elementContext.selector && (
+                      <code className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono shrink-0 max-w-[200px] truncate">
+                        {elementContext.selector}
+                      </code>
+                    )}
+                  </div>
+
+                  {/* Source file link */}
+                  {sourceFrame?.fileName && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (sourceFrame.fileName) {
+                          openFile(
+                            sourceFrame.fileName,
+                            sourceFrame.lineNumber ?? undefined
+                          );
+                        }
+                      }}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-left border-t border-border hover:bg-muted/30 transition-colors group"
+                    >
+                      <FileCodeIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors font-mono truncate">
+                        {sourceLabel}
+                      </span>
+                      <span className="text-xs text-muted-foreground/60 ml-auto shrink-0">
+                        Open in editor
+                      </span>
+                    </button>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="feedback-comment">Describe the issue</Label>
+                <Textarea
+                  id="feedback-comment"
+                  value={comment}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setComment(e.target.value)
+                  }
+                  placeholder={ui.placeholder}
+                  required
+                  disabled={status === 'sending'}
+                  style={{ minHeight: '120px', resize: 'none' }}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="feedback-prompt"
+                  className="flex items-center gap-1.5"
+                >
+                  <SparklesIcon className="w-3.5 h-3.5" />
+                  Suggested fix prompt
+                  <span className="text-muted-foreground font-normal text-xs">
+                    (optional)
+                  </span>
+                </Label>
+                <Textarea
+                  id="feedback-prompt"
+                  value={prompt}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setPrompt(e.target.value)
+                  }
+                  placeholder="e.g. Make the submit button disabled when the form is empty"
+                  disabled={status === 'sending'}
+                  style={{ minHeight: '72px', resize: 'none' }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
+                <Label
+                  htmlFor="screenshot-toggle"
+                  className="flex items-center gap-2 cursor-pointer font-normal text-muted-foreground"
+                >
+                  <Camera className="w-4 h-4" />
+                  Include screenshot
+                </Label>
+                <Switch
+                  id="screenshot-toggle"
+                  checked={includeScreenshot}
+                  onCheckedChange={(checked) => setIncludeScreenshot(checked)}
+                />
+              </div>
             </div>
 
-            {/* Screenshot toggle option */}
-            <div className="flex items-center gap-3 p-3 bg-surface-2 rounded-lg border border-border-subtle">
-              <input
-                type="checkbox"
-                id="include-screenshot"
-                checked={includeScreenshot}
-                onChange={(e) => setIncludeScreenshot(e.target.checked)}
-                className="w-4 h-4 rounded border-border-subtle bg-surface-1 text-brand-primary focus:ring-brand-primary focus:ring-offset-0 cursor-pointer"
-                style={{ accentColor: ui.primaryColor as string }}
-              />
-              <label
-                htmlFor="include-screenshot"
-                className="text-text-tertiary text-sm font-medium cursor-pointer flex-1"
-              >
-                Include screenshot
-              </label>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={closeFeedback}
-                className="px-4 py-2 text-text-tertiary hover:text-foreground text-sm font-medium transition-colors"
-              >
-                {ui.cancelLabel}
-              </button>
+            <DialogFooter variant="bare">
+              <DialogClose asChild>
+                <Button variant="outline" disabled={status === 'sending'}>
+                  {ui.cancelLabel}
+                </Button>
+              </DialogClose>
               <Button
                 type="submit"
-                variant="default"
                 disabled={status === 'sending' || !comment.trim()}
               >
                 {status === 'sending' && (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 )}
-                {status === 'sending'
-                  ? 'Sending...'
-                  : (ui.submitLabel as string)}
+                {status === 'sending' ? 'Sending...' : ui.submitLabel}
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

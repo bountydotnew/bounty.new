@@ -43,3 +43,5 @@ export * from './file';
 export * from './hourglass';
 export * from './switch-arrows';
 export * from './issue-opened';
+export * from './sparkles';
+export * from './file-code';

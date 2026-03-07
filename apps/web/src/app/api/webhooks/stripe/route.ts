@@ -21,6 +21,11 @@ import { createNotification } from '@bounty/db/src/services/notifications';
  * Sends Discord webhook notification when a bounty becomes funded
  */
 async function sendFundedBountyWebhook(bountyId: string) {
+  // Only send webhook outside of development (i.e., production/test)
+  if (env.NODE_ENV === 'development') {
+    return;
+  }
+
   const webhookUrl = env.BOUNTY_FUNDED_WEBHOOK_URL || env.BOUNTY_FEED_WEBHOOK_URL;
   if (!webhookUrl) {
     return;

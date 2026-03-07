@@ -162,6 +162,7 @@
     "cmdk": "^1.1.1",
     "facehash": "^0.0.3",
     "html2canvas-pro": "^1.5.13",
+    "react-grab": "^0.1.25",
     "react-intersection-observer": "^10.0.2"
   },
   "resolutions": {
