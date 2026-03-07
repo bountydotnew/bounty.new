@@ -3,7 +3,7 @@ import { QueryClient } from '@tanstack/react-query';
 import {
   TRPCClientError,
   createTRPCClient,
-  httpLink,
+  httpBatchLink,
   loggerLink,
 } from '@trpc/client';
 import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query';
@@ -81,9 +81,9 @@ export const trpcClient = createTRPCClient<AppRouter>({
         );
       },
     }),
-    httpLink({
+    httpBatchLink({
       url: `${process.env.NEXT_PUBLIC_API_URL || ''}/api/trpc`,
-      // Enable batching - combines multiple requests into a single HTTP call
+      maxURLLength: 2083,
       fetch(input: RequestInfo | URL, init?: RequestInit) {
         return fetch(input, {
           ...init,
@@ -95,7 +95,6 @@ export const trpcClient = createTRPCClient<AppRouter>({
         })
           .then(async (res) => {
             if (!res.ok) {
-              // Capture body for better error messages
               const text = await res.clone().text();
               try {
                 JSON.parse(text);

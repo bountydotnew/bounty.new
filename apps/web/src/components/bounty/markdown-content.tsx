@@ -7,6 +7,7 @@ import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 import Image from 'next/image';
+import './markdown-content.css';
 
 // Custom sanitize schema that allows images from external sources
 const sanitizeSchema = {
@@ -235,51 +236,6 @@ export function MarkdownContent({ content, encoding }: MarkdownContentProps) {
 
   return (
     <div className="prose prose-invert prose-neutral markdown-content max-w-none">
-      <style>{`
-        .markdown-content ul ul,
-        .markdown-content ol ol,
-        .markdown-content ul ol,
-        .markdown-content ol ul {
-          margin-left: 2rem !important;
-          margin-top: 0.5rem !important;
-          margin-bottom: 0.5rem !important;
-        }
-        .markdown-content pre {
-          white-space: pre-wrap !important;
-          position: relative !important;
-        }
-        .markdown-content pre code {
-          display: block !important;
-          overflow-x: auto !important;
-          padding: 0.5rem !important;
-          white-space: pre !important;
-        }
-        .markdown-content li > p {
-          margin-bottom: 0.25rem !important;
-          display: inline-block !important;
-        }
-        .markdown-content li > ul,
-        .markdown-content li > ol {
-          margin-top: 0.25rem !important;
-        }
-        .markdown-content code {
-          white-space: pre !important;
-        }
-        .markdown-content ul {
-          list-style-type: disc !important;
-          list-style-position: outside !important;
-        }
-        .markdown-content ol {
-          list-style-type: decimal !important;
-          list-style-position: outside !important;
-        }
-        .markdown-content ul ul {
-          list-style-type: circle !important;
-        }
-        .markdown-content ul ul ul {
-          list-style-type: square !important;
-        }
-      `}</style>
       <ReactMarkdown
         components={markdownComponents}
         rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}

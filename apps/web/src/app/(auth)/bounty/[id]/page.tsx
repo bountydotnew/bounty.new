@@ -1,8 +1,20 @@
-import { db } from '@bounty/db';
 import type { Metadata } from 'next';
+import { cacheTag, cacheLife } from 'next/cache';
 import { baseUrl } from '../../../../../../../packages/ui/src/lib/constants';
 import { createServerCaller } from '@bounty/api/src/server-caller';
 import BountyPage from './page.client';
+
+async function getBountyData(id: string) {
+  'use cache';
+  cacheTag(`bounty-${id}`);
+  cacheLife('minutes');
+  try {
+    const caller = await createServerCaller();
+    return await caller.bounties.getBountyDetail({ id });
+  } catch {
+    return null;
+  }
+}
 
 export async function generateMetadata({
   params,
@@ -11,17 +23,16 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
 
-  const thisBounty = await db.query.bounty.findFirst({
-    where: (fields, { eq }) => eq(fields.id, id),
-  });
+  const bountyData = await getBountyData(id);
 
-  if (!thisBounty) {
+  if (!bountyData) {
     return {
       title: 'Bounty Not Found',
       description: 'The requested bounty could not be found.',
     };
   }
 
+  const thisBounty = bountyData.bounty;
   const ogImageUrl = `${baseUrl}/api/og-image/${id}`;
 
   return {
@@ -57,15 +68,6 @@ export default async function Page({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-
-  // Prefetch bounty data on server to avoid client-side waterfall
-  let initialData: Awaited<ReturnType<Awaited<ReturnType<typeof createServerCaller>>['bounties']['getBountyDetail']>> | null = null;
-  try {
-    const caller = await createServerCaller();
-    initialData = await caller.bounties.getBountyDetail({ id });
-  } catch {
-    // If prefetch fails, client will fetch - no big deal
-  }
-
+  const initialData = await getBountyData(id);
   return <BountyPage initialData={initialData} />;
 }

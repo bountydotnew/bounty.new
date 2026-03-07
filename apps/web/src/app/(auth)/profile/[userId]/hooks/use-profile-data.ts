@@ -28,10 +28,14 @@ export interface ProfileData {
   isPrivate: boolean;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type RawProfileResponse = any;
+
 interface UseProfileDataProps {
   handle: string;
   enabled: boolean;
   initialData?: ProfileData;
+  serverData?: RawProfileResponse;
 }
 
 interface UseProfileDataReturn {
@@ -44,12 +48,14 @@ export function useProfileData({
   handle,
   enabled,
   initialData,
+  serverData,
 }: UseProfileDataProps): UseProfileDataReturn {
   const queryOptions = trpc.profiles.getProfile.queryOptions({ handle });
 
   const query = useQuery({
     ...queryOptions,
     enabled,
+    ...(serverData ? { initialData: serverData } : {}),
   });
 
   // Transform API response to ProfileData format

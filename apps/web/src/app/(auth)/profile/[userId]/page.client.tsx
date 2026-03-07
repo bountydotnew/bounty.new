@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { ProfileHeader } from '@/components/profile/profile-header';
 import { ProfileTabs } from '@/components/profile/profile-tabs';
-import { useProfileData, type ProfileData } from './hooks/use-profile-data';
+import { useProfileData, type ProfileData, type RawProfileResponse } from './hooks/use-profile-data';
 import {
   ProfileLoadingState,
   ProfileNotFoundState,
@@ -15,9 +15,10 @@ import { trpc } from '@/utils/trpc';
 
 interface ProfilePageClientProps {
   initialData?: ProfileData | null;
+  serverData?: RawProfileResponse;
 }
 
-export default function ProfilePageClient({ initialData }: ProfilePageClientProps) {
+export default function ProfilePageClient({ initialData, serverData }: ProfilePageClientProps) {
   const params = useParams();
   const handleOrUserId = params.userId as string;
   const queryClient = useQueryClient();
@@ -26,6 +27,7 @@ export default function ProfilePageClient({ initialData }: ProfilePageClientProp
     handle: handleOrUserId,
     enabled: !!handleOrUserId,
     initialData: initialData ?? undefined,
+    serverData,
   });
 
   // Prefetch all tab data in parallel to flatten waterfall
