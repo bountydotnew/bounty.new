@@ -1,6 +1,7 @@
 'use client';
 
-import { use } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { formatLargeNumber } from '@bounty/ui/lib/utils';
 import {
   Avatar,
@@ -11,9 +12,10 @@ import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
 import { Button } from '@bounty/ui/components/button';
 import BountyActions from '@/components/bounty/bounty-actions';
 import { useSession } from '@/context/session-context';
-import { AlertTriangle, ExternalLink, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ExternalLink, X } from 'lucide-react';
 import type { ActionItem } from '@/types/bounty-actions';
 import { BountyDetailContext } from './context';
+import { LINKS } from '@/constants';
 
 /**
  * BountyDetailHeader
@@ -29,8 +31,32 @@ export function BountyDetailHeader() {
     );
   }
 
+  const router = useRouter();
   const { session } = useSession();
   const isAuthenticated = !!session?.user;
+
+  const [hasPreviousPage, setHasPreviousPage] = useState(false);
+
+  useEffect(() => {
+    // Check if user navigated here from within the same app
+    const referrer = document.referrer;
+    if (referrer) {
+      try {
+        const referrerUrl = new URL(referrer);
+        setHasPreviousPage(referrerUrl.origin === window.location.origin);
+      } catch {
+        setHasPreviousPage(false);
+      }
+    }
+  }, []);
+
+  const handleBack = useCallback(() => {
+    if (hasPreviousPage) {
+      router.back();
+    } else {
+      router.push(LINKS.DASHBOARD);
+    }
+  }, [hasPreviousPage, router]);
 
   const { state, actions, meta } = context;
 
@@ -86,6 +112,19 @@ export function BountyDetailHeader() {
 
   return (
     <div className="mb-8">
+      {/* Back Button */}
+      <div className="mb-4">
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
+          onClick={handleBack}
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          <span className="font-medium text-sm">Back</span>
+        </Button>
+      </div>
+
       {/* Title Row */}
       <div className="flex items-center gap-3 mb-4">
         <h1 className="font-bold text-3xl md:text-4xl text-foreground leading-[120%] tracking-tight">
