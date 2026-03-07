@@ -15,7 +15,7 @@ const Sidebar = ({
   return (
     <SidebarProvider variant="sidebar">
       {admin ? <AdminAppSidebar side="left" /> : <AppSidebar side="left" />}
-      <SidebarInset id="sidebar-content" className="flex min-h-screen flex-col bg-dashboard-bg overflow-x-hidden">
+      <SidebarInset id="sidebar-content" className="flex min-h-screen flex-col bg-dashboard-bg">
         <main className="flex-1 min-w-0">{children}</main>
       </SidebarInset>
     </SidebarProvider>
