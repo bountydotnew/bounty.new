@@ -30,16 +30,16 @@ export const Header = () => {
     <header
       className={cn(
         'flex h-[72px] items-center justify-between bg-background border-b border-border-subtle',
-        'px-4 sm:px-6'
+        'px-4 sm:px-6 w-full max-w-full overflow-x-hidden'
       )}
     >
       {/* Left side - empty spacer */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 shrink-0">
         {isMobile && <SidebarTrigger />}
       </div>
 
       {/* Right side - Create Bounty button */}
-      <div className="flex min-w-0 items-center">
+      <div className="flex shrink-0 items-center">
         <Button
           className="flex items-center gap-[7px] rounded-lg bg-surface-hover px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-3"
           onClick={handleCreateBounty}

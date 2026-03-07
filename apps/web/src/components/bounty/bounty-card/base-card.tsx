@@ -50,9 +50,9 @@ export function BaseBountyCard({ compact }: BaseBountyCardProps) {
       type="button"
     >
       {/* Top row: Creator + Amount */}
-      <div className="flex items-center justify-between">
-        <div className={`flex items-center ${compact ? 'gap-1' : 'gap-[5px]'}`}>
-          <Avatar className={compact ? 'h-3 w-3' : 'h-5 w-5'}>
+      <div className="flex items-center justify-between min-w-0 overflow-hidden">
+        <div className={`flex items-center min-w-0 ${compact ? 'gap-1' : 'gap-[5px]'}`}>
+          <Avatar className={`shrink-0 ${compact ? 'h-3 w-3' : 'h-5 w-5'}`}>
             <AvatarImage
               alt={creatorName}
               src={bounty.creator.image ?? undefined}
@@ -64,13 +64,13 @@ export function BaseBountyCard({ compact }: BaseBountyCardProps) {
             />
           </Avatar>
           <span
-            className={`${compact ? 'text-[10px]' : 'text-[15px]'} font-normal leading-[150%] text-foreground/60`}
+            className={`${compact ? 'text-[10px]' : 'text-[15px]'} font-normal leading-[150%] text-foreground/60 truncate`}
           >
             {creatorName}
           </span>
         </div>
         <div
-          className={`flex items-center ${compact ? 'gap-1 px-1' : 'h-5 gap-[5px] px-[3px]'}`}
+          className={`flex items-center shrink-0 ${compact ? 'gap-1 px-1' : 'h-5 gap-[5px] px-[3px]'}`}
         >
           <span
             className={`${compact ? 'text-[10px]' : 'text-[13px]'} font-semibold leading-[150%] text-brand-accent-muted`}
