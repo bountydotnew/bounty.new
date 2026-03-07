@@ -112,9 +112,6 @@ function Pagination({
   );
 }
 
-// ============================================================================
-// ACCOUNTS/REPOS SELECTOR (Desktop Dropdown)
-// ============================================================================
 function AccountsSelectorContent({
   installations,
   installationRepos,
@@ -215,7 +212,7 @@ function AccountsSelectorContent({
                         >
                           <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
                           <span className="flex-1 text-sm text-text-secondary truncate">
-                            {repo}
+                            {repo.split('/').pop()}
                           </span>
                           <ChevronRight className="w-3 h-3 text-text-tertiary shrink-0" />
                         </button>
@@ -282,9 +279,6 @@ function AccountsSelectorContent({
   );
 }
 
-// ============================================================================
-// BRANCHES SELECTOR (Desktop Dropdown)
-// ============================================================================
 function BranchesSelectorContent({
   filteredBranches,
   branchesPage,
@@ -358,9 +352,6 @@ function BranchesSelectorContent({
   );
 }
 
-// ============================================================================
-// ISSUES SELECTOR (Desktop Dropdown)
-// ============================================================================
 function IssuesSelectorContent({
   selectedIssue,
   filteredIssues,
@@ -440,10 +431,6 @@ function IssuesSelectorContent({
     </div>
   );
 }
-
-// ============================================================================
-// UNIFIED SELECTOR (Mobile Drawer) - Extracted Subcomponents
-// ============================================================================
 
 function MobileSelectorHeader({
   step,
@@ -541,7 +528,6 @@ function MobileSelectorHeader({
       {step === 'branches' && (
         <>
           <BranchIcon className="w-4 h-4 text-text-tertiary" />
-          <span className="text-sm text-text-secondary">Select branch</span>
           <input
             className="flex-1 bg-transparent text-sm text-text-secondary placeholder:text-text-tertiary outline-none"
             placeholder="Search branches..."
@@ -647,7 +633,7 @@ function MobileSelectorBody({
               >
                 <GithubIcon className="w-3.5 h-3.5 text-text-tertiary shrink-0" />
                 <span className="flex-1 text-sm text-text-secondary truncate">
-                  {repo}
+                  {repo.split('/').pop()}
                 </span>
                 {selectedRepository === repo && (
                   <Check className="w-3.5 h-3.5 text-green-500 shrink-0" />
@@ -798,9 +784,6 @@ function MobileSelectorBody({
   return null;
 }
 
-// ============================================================================
-// UNIFIED SELECTOR (Mobile Drawer) - Main Component
-// ============================================================================
 function MobileSelectorContent({
   step,
   selectedRepository,
@@ -1002,7 +985,7 @@ function DesktopRepoDropdown({
           <GithubIcon className="w-4 h-4" />
           {selectedRepository ? (
             <span className="text-sm text-foreground">
-              {selectedRepository}
+              {selectedRepository.split('/').pop()}
             </span>
           ) : (
             <span className="text-sm">Select repository</span>
@@ -1059,6 +1042,9 @@ function DesktopBranchDropdown({
           )}
         >
           <BranchIcon className="w-3.5 h-3.5" />
+          <span className="hidden md:block lg:block text-[14px] text-text-muted">
+            {selectedBranch}
+          </span>
           <ChevronSortIcon className="size-2" />
         </button>
       </DropdownMenuTrigger>
@@ -1111,6 +1097,9 @@ function DesktopIssueDropdown({
           )}
         >
           <IssueOpenedIcon className="w-3.5 h-3.5" />
+          <span className="hidden md:block lg:block text-[14px] text-text-muted">
+            {selectedIssue ? `#${selectedIssue.number}` : 'Issue'}
+          </span>
           <ChevronSortIcon className="size-2" />
         </button>
       </DropdownMenuTrigger>
@@ -1195,7 +1184,7 @@ function MobileDrawerView({
   return (
     <Drawer open={mobileOpen} onOpenChange={setMobileOpen}>
       <DrawerTrigger asChild>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 md:gap-2 lg:gap-2">
           <button
             type="button"
             onClick={() => {
@@ -1212,7 +1201,7 @@ function MobileDrawerView({
             <GithubIcon className="w-4 h-4" />
             {selectedRepository ? (
               <span className="text-sm text-foreground">
-                {selectedRepository}
+                {selectedRepository.split('/').pop()}
               </span>
             ) : (
               <span className="text-sm">Select repository</span>
@@ -1480,7 +1469,7 @@ export function RepoBranchIssueSelector({
   }
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-2">
       <DesktopRepoDropdown
         accountsOpen={accountsOpen}
         setAccountsOpen={setAccountsOpen}

@@ -634,12 +634,15 @@ export const auth = betterAuth({
     }),
 
     // ========================================================================
-    // OAuth Proxy (for Vercel preview deployments)
-    // Proxies OAuth callbacks through production so preview URLs don't need
-    // to be registered with each OAuth provider.
+    // OAuth Proxy (for Vercel preview deployments & local dev)
+    // Proxies OAuth callbacks through production so preview/local URLs
+    // don't need to be registered with each OAuth provider.
+    // When baseURL already equals productionURL (i.e. on production itself),
+    // the plugin is automatically a no-op.
     // ========================================================================
     oAuthProxy({
       productionURL: 'https://bounty.new',
+      currentURL: AUTH_CONFIG.baseURL,
     }),
 
     // ========================================================================

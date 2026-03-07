@@ -398,8 +398,8 @@ function TeamSwitcherSubmenu({
             );
             router.push(newPath);
           } else {
-            // Default to integrations if not on a workspace-specific route
-            router.push(`/${targetOrg.slug}/integrations`);
+            // Stay on the current page — just refresh to pick up new session
+            router.refresh();
           }
         }
         onClose();
