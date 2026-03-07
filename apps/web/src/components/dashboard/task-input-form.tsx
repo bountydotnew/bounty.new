@@ -5,7 +5,13 @@ import {
   useQueryClient,
   type useQuery,
 } from '@tanstack/react-query';
-import { useRef, useImperativeHandle, forwardRef, useState } from 'react';
+import {
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+  useState,
+  useCallback,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -115,6 +121,12 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
       useIssues(selectedRepository, {
         listIssues: (params) => trpcClient.repository.listIssues.query(params),
       });
+
+    // Price chip open state (for tab-to-focus from title)
+    const [priceChipOpen, setPriceChipOpen] = useState(false);
+    const handleTitleTab = useCallback(() => {
+      setPriceChipOpen(true);
+    }, []);
 
     // Issue selector state
     const [selectedIssue, setSelectedIssue] = useState<{
@@ -286,8 +298,12 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
               {/* Inline input chips row */}
               <div className="flex flex-col gap-1">
                 <div className="flex flex-row flex-wrap items-center gap-[5px]">
-                  <TitleChip control={control} />
-                  <PriceChip control={control} />
+                  <TitleChip control={control} onTab={handleTitleTab} />
+                  <PriceChip
+                    control={control}
+                    open={priceChipOpen}
+                    onOpenChange={setPriceChipOpen}
+                  />
                   {/* <DeadlineChip control={control} /> */}
 
                   {/* Currency selector - hidden but kept for form */}

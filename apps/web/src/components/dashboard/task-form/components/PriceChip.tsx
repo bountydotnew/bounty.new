@@ -11,6 +11,8 @@ import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
 
 interface PriceChipProps {
   control: Control<CreateBountyForm>;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 function formatPrice(value: string): string {
@@ -22,8 +24,14 @@ function formatPrice(value: string): string {
   return parts.join('.');
 }
 
-export function PriceChip({ control }: PriceChipProps) {
-  const [open, setOpen] = useState(false);
+export function PriceChip({
+  control,
+  open: controlledOpen,
+  onOpenChange,
+}: PriceChipProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

@@ -10,15 +10,19 @@ import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
 
 interface TitleChipProps {
   control: Control<CreateBountyForm>;
+  onTab?: () => void;
 }
 
-export function TitleChip({ control }: TitleChipProps) {
+export function TitleChip({ control, onTab }: TitleChipProps) {
   const [open, setOpen] = useState(false);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button type="button" className="rounded-full flex justify-center items-center px-[6px] py-[3px] shrink-0 gap-2 bg-surface-hover border border-solid border-border-subtle hover:border-border-default transition-colors cursor-pointer">
+        <button
+          type="button"
+          className="rounded-full flex justify-center items-center px-[6px] py-[3px] shrink-0 gap-2 bg-surface-hover border border-solid border-border-subtle hover:border-border-default transition-colors cursor-pointer"
+        >
           <Controller
             control={control}
             name="title"
@@ -52,6 +56,13 @@ export function TitleChip({ control }: TitleChipProps) {
               type="text"
               value={field.value}
               onChange={field.onChange}
+              onKeyDown={(e) => {
+                if (e.key === 'Tab') {
+                  e.preventDefault();
+                  setOpen(false);
+                  onTab?.();
+                }
+              }}
               placeholder="Enter a title"
               className="w-full bg-transparent text-foreground text-[16px] py-0 leading-5 outline-none placeholder:text-text-tertiary"
             />
