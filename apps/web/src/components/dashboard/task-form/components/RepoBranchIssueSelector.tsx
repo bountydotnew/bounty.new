@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChevronRight, ChevronLeft, Check, Loader2 } from 'lucide-react';
 import { GithubIcon, BranchIcon } from '@bounty/ui';
+import { IssueOpenedIcon } from '@bounty/ui/components/icons/huge/issue-opened';
 import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
 import {
   DropdownMenu,
@@ -1058,7 +1059,6 @@ function DesktopBranchDropdown({
           )}
         >
           <BranchIcon className="w-3.5 h-3.5" />
-          <span className="text-[14px] text-text-muted">{selectedBranch}</span>
           <ChevronSortIcon className="size-2" />
         </button>
       </DropdownMenuTrigger>
@@ -1110,10 +1110,7 @@ function DesktopIssueDropdown({
             issuesOpen && 'bg-white/10'
           )}
         >
-          <GithubIcon className="w-3.5 h-3.5" />
-          <span className="text-[14px] text-text-muted">
-            {selectedIssue ? `#${selectedIssue.number}` : 'Issue'}
-          </span>
+          <IssueOpenedIcon className="w-3.5 h-3.5" />
           <ChevronSortIcon className="size-2" />
         </button>
       </DropdownMenuTrigger>
@@ -1240,9 +1237,6 @@ function MobileDrawerView({
                 )}
               >
                 <BranchIcon className="w-3.5 h-3.5" />
-                <span className="text-[14px] text-text-muted">
-                  {selectedBranch}
-                </span>
                 <ChevronSortIcon className="size-2" />
               </button>
             </>
@@ -1264,10 +1258,7 @@ function MobileDrawerView({
                   mobileOpen && mobileStep === 'issues' && 'bg-white/10'
                 )}
               >
-                <GithubIcon className="w-3.5 h-3.5" />
-                <span className="text-[14px] text-text-muted">
-                  {selectedIssue ? `#${selectedIssue.number}` : 'Issue'}
-                </span>
+                <IssueOpenedIcon className="w-3.5 h-3.5" />
                 <ChevronSortIcon className="size-2" />
               </button>
             </>

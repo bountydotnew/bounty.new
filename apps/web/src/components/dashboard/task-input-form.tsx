@@ -288,7 +288,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
                 <div className="flex flex-row flex-wrap items-center gap-[5px]">
                   <TitleChip control={control} />
                   <PriceChip control={control} />
-                  <DeadlineChip control={control} />
+                  {/* <DeadlineChip control={control} /> */}
 
                   {/* Currency selector - hidden but kept for form */}
                   <Controller
