@@ -111,19 +111,11 @@ export function BountyDetailPaymentAlert() {
           </m.div>
         ) : (
           <m.button
-            key="collapsed"
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-          <m.button
             type="button"
             key="collapsed"
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.1 } }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
-            onClick={() => setIsExpanded(true)}
-            className="flex w-full items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-surface-1 border border-border-subtle text-foreground text-sm font-medium hover:bg-surface-2"
-          >
             transition={{ duration: 0.15, ease: 'easeOut' }}
             onClick={() => setIsExpanded(true)}
             className="flex w-full items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-surface-1 border border-border-subtle text-foreground text-sm font-medium hover:bg-surface-2"
