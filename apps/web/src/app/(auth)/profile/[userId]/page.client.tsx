@@ -16,9 +16,14 @@ import { trpc } from '@/utils/trpc';
 interface ProfilePageClientProps {
   initialData?: ProfileData | null;
   serverData?: RawProfileResponse;
+  serverTabData?: {
+    bounties?: unknown;
+    activity?: unknown;
+    highlights?: unknown;
+  };
 }
 
-export default function ProfilePageClient({ initialData, serverData }: ProfilePageClientProps) {
+export default function ProfilePageClient({ initialData, serverData, serverTabData }: ProfilePageClientProps) {
   const params = useParams();
   const handleOrUserId = params.userId as string;
   const queryClient = useQueryClient();
@@ -30,11 +35,32 @@ export default function ProfilePageClient({ initialData, serverData }: ProfilePa
     serverData,
   });
 
-  // Prefetch all tab data in parallel to flatten waterfall
+  // Seed tab query cache from server-prefetched data (runs once)
+  useEffect(() => {
+    if (!data?.user?.id || data.isPrivate) return;
+    const userId = data.user.id;
+
+    if (serverTabData?.bounties) {
+      const key = trpc.bounties.getBountiesByUserId.queryOptions({ userId }).queryKey;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      queryClient.setQueryData(key, serverTabData.bounties as any);
+    }
+    if (serverTabData?.activity) {
+      const key = trpc.user.getUserActivity.queryOptions({ userId }).queryKey;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      queryClient.setQueryData(key, serverTabData.activity as any);
+    }
+    if (serverTabData?.highlights) {
+      const key = trpc.bounties.getHighlights.queryOptions({ userId }).queryKey;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      queryClient.setQueryData(key, serverTabData.highlights as any);
+    }
+  }, [data?.user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Prefetch tab data client-side (fallback if server didn't prefetch)
   useEffect(() => {
     if (data?.user?.id && !data.isPrivate) {
       const userId = data.user.id;
-      // Prefetch bounties, activity, and highlights in parallel
       queryClient.prefetchQuery(
         trpc.bounties.getBountiesByUserId.queryOptions({ userId })
       );

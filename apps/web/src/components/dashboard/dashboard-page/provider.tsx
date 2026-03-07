@@ -12,6 +12,7 @@ export { DashboardPageContext } from './context';
 
 interface DashboardPageProviderProps {
   children: React.ReactNode;
+  initialAllBounties?: unknown;
 }
 
 /**
@@ -20,19 +21,24 @@ interface DashboardPageProviderProps {
  * Provider component that implements the DashboardPageContext interface.
  * Handles all data fetching and state management for the dashboard page.
  */
-export function DashboardPageProvider({ children }: DashboardPageProviderProps) {
+export function DashboardPageProvider({ children, initialAllBounties }: DashboardPageProviderProps) {
   const { isAuthenticated, isPending: isSessionPending } = useSession();
   const taskInputRef = useRef<{ focus: () => void } | null>(null);
   const queryClient = useQueryClient();
 
+  const allBountiesOptions = trpc.bounties.fetchAllBounties.queryOptions({
+    page: PAGINATION_DEFAULTS.PAGE,
+    limit: PAGINATION_LIMITS.ALL_BOUNTIES,
+  });
+
   // Queries - only run when authenticated
   const bounties = useQuery({
-    ...trpc.bounties.fetchAllBounties.queryOptions({
-      page: PAGINATION_DEFAULTS.PAGE,
-      limit: PAGINATION_LIMITS.ALL_BOUNTIES,
-    }),
+    ...allBountiesOptions,
     enabled: isAuthenticated && !isSessionPending,
     staleTime: 2 * 60 * 1000,
+    ...(initialAllBounties
+      ? { initialData: initialAllBounties as typeof allBountiesOptions extends { queryFn: () => Promise<infer T> } ? T : never }
+      : {}),
   });
 
   const myBounties = useQuery({
