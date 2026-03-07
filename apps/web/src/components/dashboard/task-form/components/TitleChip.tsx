@@ -10,10 +10,9 @@ import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
 
 interface TitleChipProps {
   control: Control<CreateBountyForm>;
-  onTab?: () => void;
 }
 
-export function TitleChip({ control, onTab }: TitleChipProps) {
+export function TitleChip({ control }: TitleChipProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -56,13 +55,6 @@ export function TitleChip({ control, onTab }: TitleChipProps) {
               type="text"
               value={field.value}
               onChange={field.onChange}
-              onKeyDown={(e) => {
-                if (e.key === 'Tab') {
-                  e.preventDefault();
-                  setOpen(false);
-                  onTab?.();
-                }
-              }}
               placeholder="Enter a title"
               className="w-full bg-transparent text-foreground text-[16px] py-0 leading-5 outline-none placeholder:text-text-tertiary"
             />

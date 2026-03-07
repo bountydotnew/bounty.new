@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Controller, type Control } from 'react-hook-form';
 import type { CreateBountyForm } from '@bounty/ui/lib/forms';
-import { calculateWidth } from '@bounty/ui/lib/calculate-width';
 import {
   Popover,
   PopoverContent,
@@ -11,8 +10,6 @@ import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
 
 interface PriceChipProps {
   control: Control<CreateBountyForm>;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
 }
 
 function formatPrice(value: string): string {
@@ -24,14 +21,8 @@ function formatPrice(value: string): string {
   return parts.join('.');
 }
 
-export function PriceChip({
-  control,
-  open: controlledOpen,
-  onOpenChange,
-}: PriceChipProps) {
-  const [internalOpen, setInternalOpen] = useState(false);
-  const open = controlledOpen ?? internalOpen;
-  const setOpen = onOpenChange ?? setInternalOpen;
+export function PriceChip({ control }: PriceChipProps) {
+  const [open, setOpen] = useState(false);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -41,14 +32,14 @@ export function PriceChip({
             control={control}
             name="amount"
             render={({ field }) => {
-              const displayValue = formatPrice(field.value) || 'Price';
+              const formatted = formatPrice(field.value);
               return (
                 <span
                   className={`text-[16px] leading-5 font-sans ${
                     field.value ? 'text-foreground' : 'text-text-muted'
                   }`}
                 >
-                  {displayValue}
+                  {formatted ? `$${formatted}` : 'Price'}
                 </span>
               );
             }}
