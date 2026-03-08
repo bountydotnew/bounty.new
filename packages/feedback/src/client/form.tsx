@@ -1,6 +1,12 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback, type FormEvent } from 'react';
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  type FormEvent,
+} from 'react';
 import { useFeedback } from './context';
 
 /**
@@ -23,13 +29,12 @@ import { useFeedback } from './context';
  * }
  * ```
  */
-export function FeedbackForm({
-  onSuccess,
-}: {
-  onSuccess?: () => void;
-} = {}) {
+export function FeedbackForm({ onSuccess }: { onSuccess?: () => void }) {
   const { close, elementContext, config } = useFeedback();
-  const [status, setStatus] = useState<'idle' | 'sending' | 'success'>('idle');
+  const [status, setStatus] = useState<
+    'idle' | 'sending' | 'success' | 'error'
+  >('idle');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [comment, setComment] = useState('');
   const [prompt, setPrompt] = useState('');
   const [includeScreenshot, setIncludeScreenshot] = useState(true);
@@ -42,12 +47,15 @@ export function FeedbackForm({
   };
 
   useEffect(() => {
-    setTimeout(() => textareaRef.current?.focus(), 50);
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+    });
   }, []);
 
   const handleClose = useCallback(() => {
     if (status === 'sending') return;
     setStatus('idle');
+    setErrorMessage(null);
     setComment('');
     setPrompt('');
     setIncludeScreenshot(true);
@@ -88,10 +96,14 @@ export function FeedbackForm({
                 )) {
                   el.remove();
                 }
-                const overlay = clonedDoc.getElementById('feedback-overlay-layer');
+                const overlay = clonedDoc.getElementById(
+                  'feedback-overlay-layer'
+                );
                 if (overlay) overlay.remove();
 
-                for (const el of clonedDoc.querySelectorAll('[data-privacy="masked"]')) {
+                for (const el of clonedDoc.querySelectorAll(
+                  '[data-privacy="masked"]'
+                )) {
                   (el as HTMLElement).style.filter = 'blur(10px)';
                 }
 
@@ -182,7 +194,9 @@ export function FeedbackForm({
           method: 'POST',
           body: formData,
         });
-        if (!res.ok) throw new Error('Failed');
+        if (!res.ok) {
+          throw new Error(res.statusText || 'Failed to submit feedback');
+        }
 
         config.onSubmit?.({
           comment: comment.trim(),
@@ -194,15 +208,29 @@ export function FeedbackForm({
         });
 
         setStatus('success');
+        setErrorMessage(null);
         setTimeout(() => {
           onSuccess?.();
           handleClose();
         }, 1500);
-      } catch {
-        setStatus('idle');
+      } catch (err) {
+        setStatus('error');
+        setErrorMessage(
+          err instanceof Error
+            ? err.message
+            : 'Something went wrong. Please try again.'
+        );
       }
     },
-    [comment, prompt, includeScreenshot, config, elementContext, handleClose, onSuccess]
+    [
+      comment,
+      prompt,
+      includeScreenshot,
+      config,
+      elementContext,
+      handleClose,
+      onSuccess,
+    ]
   );
 
   const sourceFrame = elementContext?.stack[0] ?? null;
@@ -212,14 +240,29 @@ export function FeedbackForm({
 
   if (status === 'success') {
     return (
-      <div className="flex flex-col items-center gap-3 p-8 text-center" data-feedback-success>
+      <div
+        className="flex flex-col items-center gap-3 p-8 text-center"
+        data-feedback-success
+      >
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10">
-          <svg className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          <svg
+            className="h-6 w-6 text-green-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M5 13l4 4L19 7"
+            />
           </svg>
         </div>
         <p className="text-lg font-semibold">Feedback Sent!</p>
-        <p className="text-sm text-muted-foreground">Thank you for helping us improve.</p>
+        <p className="text-sm text-muted-foreground">
+          Thank you for helping us improve.
+        </p>
       </div>
     );
   }
@@ -232,8 +275,18 @@ export function FeedbackForm({
           <div className="rounded-lg border border-border overflow-hidden">
             <div className="flex items-center justify-between gap-2 px-3 py-2.5 bg-muted/50">
               <div className="flex items-center gap-2 min-w-0">
-                <svg className="w-4 h-4 text-muted-foreground shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+                <svg
+                  className="w-4 h-4 text-muted-foreground shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"
+                  />
                 </svg>
                 <span className="text-sm font-medium text-foreground truncate">
                   {elementContext.componentName || 'Unknown Component'}
@@ -247,8 +300,18 @@ export function FeedbackForm({
             </div>
             {sourceLabel && (
               <div className="flex items-center gap-2 px-3 py-2 border-t border-border text-xs text-muted-foreground font-mono">
-                <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                <svg
+                  className="w-3.5 h-3.5 shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+                  />
                 </svg>
                 <span className="truncate">{sourceLabel}</span>
               </div>
@@ -258,7 +321,9 @@ export function FeedbackForm({
 
         {/* Comment */}
         <div className="space-y-2">
-          <label htmlFor="fb-comment" className="text-sm font-medium">Describe the issue</label>
+          <label htmlFor="fb-comment" className="text-sm font-medium">
+            Describe the issue
+          </label>
           <textarea
             ref={textareaRef}
             id="fb-comment"
@@ -274,12 +339,27 @@ export function FeedbackForm({
 
         {/* Suggested fix */}
         <div className="space-y-2">
-          <label htmlFor="fb-prompt" className="text-sm font-medium flex items-center gap-1.5">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+          <label
+            htmlFor="fb-prompt"
+            className="text-sm font-medium flex items-center gap-1.5"
+          >
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"
+              />
             </svg>
             Suggested fix
-            <span className="text-muted-foreground font-normal text-xs">(optional)</span>
+            <span className="text-muted-foreground font-normal text-xs">
+              (optional)
+            </span>
           </label>
           <textarea
             id="fb-prompt"
@@ -295,9 +375,23 @@ export function FeedbackForm({
         {/* Screenshot toggle */}
         <label className="flex cursor-pointer items-center justify-between rounded-lg border border-border px-3 py-2.5">
           <span className="flex items-center gap-2 text-sm text-muted-foreground">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"
+              />
             </svg>
             Include screenshot
           </span>
@@ -309,6 +403,11 @@ export function FeedbackForm({
           />
         </label>
       </div>
+
+      {/* Error message */}
+      {status === 'error' && errorMessage && (
+        <p className="text-sm text-red-500 pt-2">{errorMessage}</p>
+      )}
 
       {/* Actions */}
       <div className="flex items-center justify-end gap-2 pt-4">
@@ -323,12 +422,28 @@ export function FeedbackForm({
         <button
           type="submit"
           disabled={status === 'sending' || !comment.trim()}
+          onClick={() => status === 'error' && setErrorMessage(null)}
           className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
         >
           {status === 'sending' && (
-            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            <svg
+              className="h-4 w-4 animate-spin"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+              />
             </svg>
           )}
           {status === 'sending' ? 'Sending...' : ui.submitLabel}

@@ -42,38 +42,66 @@ export interface FeedbackData {
   screenshot?: File | null;
 }
 
-let chatInstance: Chat | null = null;
-
-function getChat(config: FeedbackHandlerConfig): Chat {
-  if (!chatInstance) {
-    chatInstance = new Chat({
-      userName: config.botName ?? 'feedback-bot',
-      adapters: config.adapters,
-      state: config.state ?? createMemoryState(),
-    });
-  }
-  return chatInstance;
-}
-
 export function createFeedbackHandler(config: FeedbackHandlerConfig) {
+  // Scope chatInstance per handler factory instead of module-global
+  let chatInstance: Chat | null = null;
+
+  function getChat(): Chat {
+    if (!chatInstance) {
+      chatInstance = new Chat({
+        userName: config.botName ?? 'feedback-bot',
+        adapters: config.adapters,
+        state: config.state ?? createMemoryState(),
+      });
+    }
+    return chatInstance;
+  }
+
   return async function POST(request: Request): Promise<Response> {
     try {
       const formData = await request.formData();
-      const comment = (formData.get('comment') as string) ?? '';
-      const route = (formData.get('route') as string) ?? '';
-      const userAgent = (formData.get('userAgent') as string) ?? '';
-      const prompt = (formData.get('prompt') as string) || undefined;
-      const elementStr = formData.get('element') as string | null;
-      const metadataStr = formData.get('metadata') as string | null;
-      const screenshot = formData.get('screenshot') as File | null;
 
-      const metadata: Record<string, string> = metadataStr
-        ? JSON.parse(metadataStr)
-        : {};
+      // Validate formData field types before using them
+      const rawComment = formData.get('comment');
+      const rawRoute = formData.get('route');
+      const rawUserAgent = formData.get('userAgent');
+      const rawPrompt = formData.get('prompt');
+      const rawElement = formData.get('element');
+      const rawMetadata = formData.get('metadata');
+      const rawScreenshot = formData.get('screenshot');
 
-      const element: ElementContext | null = elementStr
-        ? JSON.parse(elementStr)
-        : null;
+      const comment = typeof rawComment === 'string' ? rawComment : '';
+      const route = typeof rawRoute === 'string' ? rawRoute : '';
+      const userAgent = typeof rawUserAgent === 'string' ? rawUserAgent : '';
+      const prompt =
+        typeof rawPrompt === 'string' && rawPrompt ? rawPrompt : undefined;
+      const elementStr = typeof rawElement === 'string' ? rawElement : null;
+      const metadataStr = typeof rawMetadata === 'string' ? rawMetadata : null;
+      const screenshot = rawScreenshot instanceof File ? rawScreenshot : null;
+
+      let metadata: Record<string, string> = {};
+      if (metadataStr) {
+        try {
+          metadata = JSON.parse(metadataStr);
+        } catch {
+          return new Response(
+            JSON.stringify({ error: 'Invalid metadata JSON' }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
+      let element: ElementContext | null = null;
+      if (elementStr) {
+        try {
+          element = JSON.parse(elementStr);
+        } catch {
+          return new Response(
+            JSON.stringify({ error: 'Invalid element JSON' }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+      }
 
       const feedbackData: FeedbackData = {
         comment,
@@ -88,7 +116,15 @@ export function createFeedbackHandler(config: FeedbackHandlerConfig) {
 
       await config.onFeedback?.(feedbackData);
 
-      const chat = getChat(config);
+      // Short-circuit when no channels are configured
+      if (config.channels.length === 0) {
+        return new Response(JSON.stringify({ success: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      const chat = getChat();
 
       const title = config.formatTitle?.(feedbackData) ?? 'New Feedback';
       const body = config.formatBody?.(feedbackData) ?? comment;
@@ -131,10 +167,7 @@ export function createFeedbackHandler(config: FeedbackHandlerConfig) {
             await channel.post(card);
           }
         } catch (err) {
-          console.error(
-            `[feedback] Failed to post to ${channelId}:`,
-            err
-          );
+          console.error(`[feedback] Failed to post to ${channelId}:`, err);
         }
       });
 

@@ -5,6 +5,8 @@ import {
   useContext,
   useState,
   useCallback,
+  useMemo,
+  useRef,
   type ReactNode,
 } from 'react';
 import type { ReactGrabElementContext } from 'react-grab/primitives';
@@ -28,23 +30,32 @@ export function FeedbackProvider({
   const [elementContext, setElementContext] =
     useState<ReactGrabElementContext | null>(null);
 
-  const mergedConfig: FeedbackConfig = {
-    ...config,
-    endpoint: endpoint ?? '/api/feedback',
-  };
+  const mergedConfig: FeedbackConfig = useMemo(
+    () => ({
+      ...config,
+      endpoint: endpoint ?? '/api/feedback',
+    }),
+    [config, endpoint]
+  );
+
+  // Store onOpen/onClose in refs so callbacks don't depend on mergedConfig
+  const onOpenRef = useRef(mergedConfig.onOpen);
+  const onCloseRef = useRef(mergedConfig.onClose);
+  onOpenRef.current = mergedConfig.onOpen;
+  onCloseRef.current = mergedConfig.onClose;
 
   const open = useCallback(() => {
     setIsOpen(true);
     setIsSelecting(false);
-    mergedConfig.onOpen?.();
-  }, [mergedConfig]);
+    onOpenRef.current?.();
+  }, []);
 
   const close = useCallback(() => {
     setIsOpen(false);
     setElementContext(null);
     setIsSelecting(false);
-    mergedConfig.onClose?.();
-  }, [mergedConfig]);
+    onCloseRef.current?.();
+  }, []);
 
   const startSelection = useCallback(() => {
     setIsSelecting(true);
@@ -55,15 +66,12 @@ export function FeedbackProvider({
     setIsSelecting(false);
   }, []);
 
-  const selectElement = useCallback(
-    (context: ReactGrabElementContext) => {
-      setElementContext(context);
-      setIsSelecting(false);
-      setIsOpen(true);
-      mergedConfig.onOpen?.();
-    },
-    [mergedConfig]
-  );
+  const selectElement = useCallback((context: ReactGrabElementContext) => {
+    setElementContext(context);
+    setIsSelecting(false);
+    setIsOpen(true);
+    onOpenRef.current?.();
+  }, []);
 
   return (
     <FeedbackContext

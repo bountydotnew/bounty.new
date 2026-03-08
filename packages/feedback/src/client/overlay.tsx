@@ -32,7 +32,8 @@ function getComponentName(element: Element): string | null {
 }
 
 export function FeedbackOverlay() {
-  const { isSelecting, selectElement, cancelSelection } = useFeedback();
+  const { isSelecting, selectElement, cancelSelection, config } = useFeedback();
+  const overlayZIndex = config.ui?.zIndex ? config.ui.zIndex - 2 : 9998;
   const [hovered, setHovered] = useState<HoveredInfo>(null);
   const [isResolving, setIsResolving] = useState(false);
   const highlightRef = useRef<HTMLDivElement>(null);
@@ -89,8 +90,10 @@ export function FeedbackOverlay() {
         const context = await getElementContext(target);
         unfreeze();
         selectElement(context);
-      } catch {
+      } catch (err) {
         unfreeze();
+        console.error('[feedback] Failed to resolve element context:', err);
+        cancelSelection();
       } finally {
         setIsResolving(false);
       }
@@ -116,7 +119,7 @@ export function FeedbackOverlay() {
     <div
       id="feedback-overlay-layer"
       className="fixed inset-0 cursor-crosshair bg-black/10"
-      style={{ zIndex: 9998 }}
+      style={{ zIndex: overlayZIndex }}
     >
       <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-background text-foreground px-4 py-2 rounded-full font-medium text-sm shadow-lg border border-border animate-in fade-in slide-in-from-top-4">
         {isResolving

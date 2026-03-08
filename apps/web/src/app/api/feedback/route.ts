@@ -1,19 +1,41 @@
-import { createFeedbackHandler, type FeedbackData } from '@bounty/feedback/server';
+import {
+  createFeedbackHandler,
+  type FeedbackData,
+} from '@bounty/feedback/server';
 
 const DISCORD_WEBHOOK_URL = process.env.FEEDBACK_WEBHOOK_URL;
+
+// Discord embed limits
+const DISCORD_DESCRIPTION_MAX = 4096;
+const DISCORD_FIELD_NAME_MAX = 256;
+const DISCORD_FIELD_VALUE_MAX = 1024;
+const DISCORD_FIELDS_MAX = 25;
+const DISCORD_EMBED_TOTAL_CHARS_MAX = 6000;
+
+function truncate(str: string, max: number): string {
+  if (str.length <= max) return str;
+  return `${str.slice(0, max - 3)}...`;
+}
 
 async function sendToDiscordWebhook(data: FeedbackData) {
   if (!DISCORD_WEBHOOK_URL) return;
 
   const fields: Array<{ name: string; value: string; inline: boolean }> = [
-    { name: 'Route', value: data.route || 'N/A', inline: false },
+    {
+      name: 'Route',
+      value: truncate(data.route || 'N/A', DISCORD_FIELD_VALUE_MAX),
+      inline: false,
+    },
   ];
 
   if (data.element) {
     fields.push({
       name: 'Component',
       value: data.element.componentName
-        ? `\`<${data.element.componentName} />\``
+        ? truncate(
+            `\`<${data.element.componentName} />\``,
+            DISCORD_FIELD_VALUE_MAX
+          )
         : '`Unknown`',
       inline: true,
     });
@@ -21,7 +43,10 @@ async function sendToDiscordWebhook(data: FeedbackData) {
     if (data.element.selector) {
       fields.push({
         name: 'Selector',
-        value: `\`${data.element.selector}\``,
+        value: truncate(
+          `\`${data.element.selector}\``,
+          DISCORD_FIELD_VALUE_MAX
+        ),
         inline: true,
       });
     }
@@ -29,7 +54,11 @@ async function sendToDiscordWebhook(data: FeedbackData) {
     const sourceFrame = data.element.stack?.[0];
     if (sourceFrame?.fileName) {
       const loc = `${sourceFrame.fileName}${sourceFrame.lineNumber ? `:${sourceFrame.lineNumber}` : ''}`;
-      fields.push({ name: 'Source', value: `\`${loc}\``, inline: false });
+      fields.push({
+        name: 'Source',
+        value: truncate(`\`${loc}\``, DISCORD_FIELD_VALUE_MAX),
+        inline: false,
+      });
     }
 
     if (data.element.stack?.length) {
@@ -44,7 +73,7 @@ async function sendToDiscordWebhook(data: FeedbackData) {
         .join('\n');
       fields.push({
         name: 'Component Stack',
-        value: `\`\`\`\n${stackStr}\n\`\`\``,
+        value: truncate(`\`\`\`\n${stackStr}\n\`\`\``, DISCORD_FIELD_VALUE_MAX),
         inline: false,
       });
     }
@@ -53,14 +82,21 @@ async function sendToDiscordWebhook(data: FeedbackData) {
   if (data.prompt) {
     fields.push({
       name: 'Suggested Fix Prompt',
-      value: `\`\`\`\n${data.prompt}\n\`\`\``,
+      value: truncate(
+        `\`\`\`\n${data.prompt}\n\`\`\``,
+        DISCORD_FIELD_VALUE_MAX
+      ),
       inline: false,
     });
   }
 
   if (data.metadata && Object.keys(data.metadata).length > 0) {
     for (const [key, value] of Object.entries(data.metadata)) {
-      fields.push({ name: key, value, inline: true });
+      fields.push({
+        name: truncate(key, DISCORD_FIELD_NAME_MAX),
+        value: truncate(value, DISCORD_FIELD_VALUE_MAX),
+        inline: true,
+      });
     }
   }
 
@@ -70,24 +106,43 @@ async function sendToDiscordWebhook(data: FeedbackData) {
     inline: true,
   });
 
+  // Enforce Discord's max 25 fields limit
+  const clampedFields = fields.slice(0, DISCORD_FIELDS_MAX);
+
+  const description = truncate(data.comment, DISCORD_DESCRIPTION_MAX);
+
+  const embed = {
+    title: data.element?.componentName
+      ? truncate(`Feedback: ${data.element.componentName}`, 256)
+      : 'New User Feedback',
+    description,
+    color: 0x23_23_23,
+    fields: clampedFields,
+    ...(data.hasScreenshot && data.screenshot
+      ? { image: { url: 'attachment://screenshot.png' } }
+      : {}),
+    footer: { text: 'Feedback System' },
+    timestamp: new Date().toISOString(),
+  };
+
+  // Enforce total embed character limit (6000)
+  let totalChars =
+    (embed.title?.length ?? 0) +
+    (embed.description?.length ?? 0) +
+    (embed.footer?.text?.length ?? 0);
+  const finalFields: typeof clampedFields = [];
+  for (const field of clampedFields) {
+    const fieldChars = field.name.length + field.value.length;
+    if (totalChars + fieldChars > DISCORD_EMBED_TOTAL_CHARS_MAX) break;
+    totalChars += fieldChars;
+    finalFields.push(field);
+  }
+  embed.fields = finalFields;
+
   const discordPayload = {
     username: 'Feedback Bot',
     avatar_url: 'https://v0.dev/favicon.ico',
-    embeds: [
-      {
-        title: data.element?.componentName
-          ? `Feedback: ${data.element.componentName}`
-          : 'New User Feedback',
-        description: data.comment,
-        color: 0x23_23_23,
-        fields,
-        ...(data.hasScreenshot && data.screenshot
-          ? { image: { url: 'attachment://screenshot.png' } }
-          : {}),
-        footer: { text: 'Feedback System' },
-        timestamp: new Date().toISOString(),
-      },
-    ],
+    embeds: [embed],
   };
 
   const formData = new FormData();

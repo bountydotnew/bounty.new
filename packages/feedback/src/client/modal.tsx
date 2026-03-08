@@ -32,8 +32,9 @@ import { FeedbackForm } from './form';
  * ```
  */
 export function FeedbackModal() {
-  const { isOpen, close } = useFeedback();
+  const { isOpen, close, config } = useFeedback();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const modalZIndex = config.ui?.zIndex ?? 10_000;
 
   useEffect(() => {
     if (isOpen) {
@@ -43,13 +44,11 @@ export function FeedbackModal() {
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   return (
     <dialog
       ref={dialogRef}
       onClose={close}
-      style={{ zIndex: 10000 }}
+      style={{ zIndex: modalZIndex }}
       className="fixed inset-0 m-auto w-full max-w-md rounded-xl border border-neutral-800 bg-neutral-950 p-6 text-white shadow-2xl backdrop:bg-black/50"
     >
       <FeedbackForm />

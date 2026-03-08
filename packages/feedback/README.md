@@ -6,7 +6,7 @@ feedback widget with element selection, screenshots, and server-side routing.
 
 workspace package — already available via `bun install` at the repo root.
 
-```
+```ts
 import { FeedbackProvider, FeedbackForm, ... } from '@bounty/feedback'
 import { createFeedbackHandler } from '@bounty/feedback/server'
 ```
@@ -121,6 +121,8 @@ export const POST = createFeedbackHandler({
 });
 ```
 
+> **Production note:** The example above logs raw `FeedbackData` for simplicity. In production, avoid logging raw feedback — fields like `data.comment`, `data.screenshot`, and `data.element.htmlPreview` may contain PII. Validate and sanitize input in your `onFeedback` handler before storing or forwarding, and redact sensitive fields before logging.
+
 the handler parses the multipart form data and calls your `onFeedback` callback with a typed `FeedbackData` object.
 
 ## provider props
@@ -218,6 +220,29 @@ createFeedbackHandler({
 - **screenshots**: captures the page via `html2canvas-pro`. removes dialogs/overlays from the capture, blurs elements with `data-privacy="masked"`, and highlights the selected element.
 - **privacy masking**: add `data-privacy="masked"` to any element to blur it in screenshots.
 - **ignore elements**: add `data-feedback-ignore` to exclude elements from the picker.
+
+## privacy & security
+
+this package collects user-provided feedback along with contextual data. be aware of the following:
+
+### element selection
+
+- `react-grab` and `bippy` resolve React component names and source file locations from the fiber tree. in development builds this may expose source paths. **strip or disable source maps in production** to avoid leaking internal file structure.
+- `data-feedback-ignore` excludes elements from the picker — use it on sensitive controls.
+
+### screenshots
+
+- screenshots are captured client-side with `html2canvas-pro` and may include PII visible on screen.
+- implement a **consent flow** before enabling screenshots in user-facing environments.
+- use `data-privacy="masked"` on elements that should be blurred in captures (e.g. email fields, avatars, billing info).
+- apply appropriate **retention policies** and secure transmission (HTTPS) when storing screenshots server-side.
+- consider GDPR/CCPA obligations if screenshots may contain personal data.
+
+### server-side handling
+
+- all `FeedbackData` fields are user-controlled. **validate and sanitize** `comment`, `prompt`, and `element.htmlPreview` before storing or rendering them.
+- enforce size limits and MIME-type checks on `screenshot` before persisting.
+- `metadata` is opaque — never trust it for authentication or authorization logic.
 
 ## deps
 
