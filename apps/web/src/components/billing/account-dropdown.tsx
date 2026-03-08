@@ -30,7 +30,7 @@ import { BillingSettingsIcon } from '@bounty/ui/components/icons/huge/billing-se
 import { Feedback } from '@bounty/ui';
 import { UserIcon } from '@bounty/ui';
 
-import { useFeedback } from '@/components/feedback-context';
+import { useFeedback } from '@bounty/feedback';
 import { useActiveOrg } from '@/hooks/use-active-org';
 import {
   Avatar,
