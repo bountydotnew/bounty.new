@@ -1,161 +1,118 @@
-import { NextResponse } from 'next/server';
+import { createFeedbackHandler, type FeedbackData } from '@bounty/feedback/server';
 
-const DISCORD_WEBHOOK_URL = process.env.FEEDBACK_WEBHOOK_URL as string;
+const DISCORD_WEBHOOK_URL = process.env.FEEDBACK_WEBHOOK_URL;
 
-interface ElementContext {
-  componentName: string | null;
-  selector: string | null;
-  htmlPreview: string;
-  stack: Array<{
-    functionName: string | null;
-    fileName: string | null;
-    lineNumber: number | null;
-    columnNumber: number | null;
-  }>;
-}
+async function sendToDiscordWebhook(data: FeedbackData) {
+  if (!DISCORD_WEBHOOK_URL) return;
 
-export async function POST(request: Request) {
-  try {
-    const formData = await request.formData();
-    const comment = formData.get('comment') as string;
-    const route = formData.get('route') as string;
-    const prompt = formData.get('prompt') as string | null;
-    const elementStr = formData.get('element') as string;
-    const screenshot = formData.get('screenshot') as File | null;
-    const includeScreenshot = formData.get('includeScreenshot') === 'true';
-    const element: ElementContext | null = elementStr
-      ? JSON.parse(elementStr)
-      : null;
+  const fields: Array<{ name: string; value: string; inline: boolean }> = [
+    { name: 'Route', value: data.route || 'N/A', inline: false },
+  ];
 
-    if (!DISCORD_WEBHOOK_URL) {
-      return NextResponse.json(
-        { error: 'Webhook URL not configured' },
-        { status: 400 }
-      );
-    }
-
-    // Build the source location string from the stack
-    const sourceFrame = element?.stack?.[0];
-    const sourceLocation = sourceFrame?.fileName
-      ? `${sourceFrame.fileName}${sourceFrame.lineNumber ? `:${sourceFrame.lineNumber}` : ''}${sourceFrame.columnNumber ? `:${sourceFrame.columnNumber}` : ''}`
-      : null;
-
-    // Build embed fields
-    const fields: Array<{ name: string; value: string; inline: boolean }> = [
-      {
-        name: 'Route',
-        value: route || 'N/A',
-        inline: false,
-      },
-    ];
-
-    // Component info
-    if (element) {
-      fields.push({
-        name: 'Component',
-        value: element.componentName
-          ? `\`<${element.componentName} />\``
-          : '`Unknown`',
-        inline: true,
-      });
-
-      if (element.selector) {
-        fields.push({
-          name: 'Selector',
-          value: `\`${element.selector}\``,
-          inline: true,
-        });
-      }
-
-      if (sourceLocation) {
-        fields.push({
-          name: 'Source',
-          value: `\`${sourceLocation}\``,
-          inline: false,
-        });
-      }
-
-      // Show the component stack (up to 5 frames)
-      if (element.stack && element.stack.length > 0) {
-        const stackStr = element.stack
-          .slice(0, 5)
-          .map((frame) => {
-            const name = frame.functionName || 'anonymous';
-            const file = frame.fileName ? frame.fileName.split('/').pop() : '?';
-            const line = frame.lineNumber ? `:${frame.lineNumber}` : '';
-            return `${name} (${file}${line})`;
-          })
-          .join('\n');
-        fields.push({
-          name: 'Component Stack',
-          value: `\`\`\`\n${stackStr}\n\`\`\``,
-          inline: false,
-        });
-      }
-    }
-
-    // Prompt field
-    if (prompt?.trim()) {
-      fields.push({
-        name: 'Suggested Fix Prompt',
-        value: `\`\`\`\n${prompt.trim()}\n\`\`\``,
-        inline: false,
-      });
-    }
-
+  if (data.element) {
     fields.push({
-      name: 'Screenshot',
-      value: includeScreenshot && screenshot ? 'Attached' : 'No',
+      name: 'Component',
+      value: data.element.componentName
+        ? `\`<${data.element.componentName} />\``
+        : '`Unknown`',
       inline: true,
     });
 
-    const discordPayload = {
-      username: 'Feedback Bot',
-      avatar_url: 'https://v0.dev/favicon.ico',
-      embeds: [
-        {
-          title: element?.componentName
-            ? `Feedback: ${element.componentName}`
-            : 'New User Feedback',
-          description: comment,
-          color: 0x23_23_23,
-          fields,
-          ...(includeScreenshot &&
-            screenshot && {
-              image: {
-                url: 'attachment://screenshot.png',
-              },
-            }),
-          footer: {
-            text: 'Feedback System',
-          },
-          timestamp: new Date().toISOString(),
-        },
-      ],
-    };
-
-    const discordFormData = new FormData();
-    discordFormData.append('payload_json', JSON.stringify(discordPayload));
-
-    if (screenshot && includeScreenshot) {
-      discordFormData.append('file', screenshot, 'screenshot.png');
+    if (data.element.selector) {
+      fields.push({
+        name: 'Selector',
+        value: `\`${data.element.selector}\``,
+        inline: true,
+      });
     }
 
-    const response = await fetch(DISCORD_WEBHOOK_URL, {
-      method: 'POST',
-      body: discordFormData,
+    const sourceFrame = data.element.stack?.[0];
+    if (sourceFrame?.fileName) {
+      const loc = `${sourceFrame.fileName}${sourceFrame.lineNumber ? `:${sourceFrame.lineNumber}` : ''}`;
+      fields.push({ name: 'Source', value: `\`${loc}\``, inline: false });
+    }
+
+    if (data.element.stack?.length) {
+      const stackStr = data.element.stack
+        .slice(0, 5)
+        .map((f) => {
+          const name = f.functionName || 'anonymous';
+          const file = f.fileName?.split('/').pop() ?? '?';
+          const line = f.lineNumber ? `:${f.lineNumber}` : '';
+          return `${name} (${file}${line})`;
+        })
+        .join('\n');
+      fields.push({
+        name: 'Component Stack',
+        value: `\`\`\`\n${stackStr}\n\`\`\``,
+        inline: false,
+      });
+    }
+  }
+
+  if (data.prompt) {
+    fields.push({
+      name: 'Suggested Fix Prompt',
+      value: `\`\`\`\n${data.prompt}\n\`\`\``,
+      inline: false,
     });
+  }
 
-    if (!response.ok) {
-      throw new Error(`Discord API error: ${response.statusText}`);
+  if (data.metadata && Object.keys(data.metadata).length > 0) {
+    for (const [key, value] of Object.entries(data.metadata)) {
+      fields.push({ name: key, value, inline: true });
     }
+  }
 
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error sending feedback:', error);
-    return NextResponse.json(
-      { error: 'Failed to send feedback' },
-      { status: 500 }
+  fields.push({
+    name: 'Screenshot',
+    value: data.hasScreenshot ? 'Attached' : 'No',
+    inline: true,
+  });
+
+  const discordPayload = {
+    username: 'Feedback Bot',
+    avatar_url: 'https://v0.dev/favicon.ico',
+    embeds: [
+      {
+        title: data.element?.componentName
+          ? `Feedback: ${data.element.componentName}`
+          : 'New User Feedback',
+        description: data.comment,
+        color: 0x23_23_23,
+        fields,
+        ...(data.hasScreenshot && data.screenshot
+          ? { image: { url: 'attachment://screenshot.png' } }
+          : {}),
+        footer: { text: 'Feedback System' },
+        timestamp: new Date().toISOString(),
+      },
+    ],
+  };
+
+  const formData = new FormData();
+  formData.append('payload_json', JSON.stringify(discordPayload));
+
+  if (data.screenshot) {
+    const arrayBuffer = await data.screenshot.arrayBuffer();
+    formData.append(
+      'file',
+      new Blob([arrayBuffer], { type: 'image/png' }),
+      'screenshot.png'
     );
   }
+
+  const res = await fetch(DISCORD_WEBHOOK_URL, {
+    method: 'POST',
+    body: formData,
+  });
+  if (!res.ok) {
+    console.error(`[feedback] Discord webhook error: ${res.statusText}`);
+  }
 }
+
+export const POST = createFeedbackHandler({
+  adapters: {},
+  channels: [],
+  onFeedback: sendToDiscordWebhook,
+});

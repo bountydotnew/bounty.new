@@ -4,9 +4,7 @@ import { DeviceProvider } from '@/components/device-provider';
 import { Sidebar } from '@/components/dual-sidebar';
 import { AuthLayout } from '@/components/auth/auth-layout';
 import { EarlyAccessGuard } from '@/components/auth/early-access-guard';
-import { FeedbackProvider } from '@/components/feedback-context';
-import { FeedbackModal } from '@/components/feedback-modal';
-import { FeedbackOverlay } from '@/components/feedback-overlay';
+import { FeedbackProvider, FeedbackModal, FeedbackOverlay } from '@bounty/feedback';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { OrgSlugProvider } from '@/context/org-slug-context';
 import { OrgSyncGuard } from '@/components/auth/org-sync-guard';
@@ -40,15 +38,11 @@ export default async function OrgScopedLayout({
             config={{
               metadata: {
                 appVersion: '1.0.0',
-                environment: process.env.NODE_ENV,
+                environment: process.env.NODE_ENV ?? 'development',
               },
               ui: {
                 title: 'Report an Issue',
                 placeholder: 'Found a bug? Let us know what happened...',
-                colors: {
-                  primary: '#232323',
-                },
-                zIndex: 9999,
               },
             }}
           >

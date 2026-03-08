@@ -61,6 +61,7 @@
         "@bounty/db": "workspace:*",
         "@bounty/email": "workspace:*",
         "@bounty/env": "workspace:*",
+        "@bounty/feedback": "workspace:*",
         "@bounty/realtime": "workspace:*",
         "@bounty/stripe": "workspace:*",
         "@bounty/track": "workspace:*",
@@ -252,8 +253,10 @@
       "version": "0.1.0",
       "dependencies": {
         "@chat-adapter/state-memory": "latest",
+        "bippy": "*",
         "chat": "latest",
         "html2canvas-pro": "^1.5.13",
+        "react-grab": "^0.1.25",
       },
       "devDependencies": {
         "@types/react": "catalog:",

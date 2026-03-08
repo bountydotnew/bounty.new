@@ -19,10 +19,24 @@ export interface FeedbackHandlerConfig {
   onFeedback?: (data: FeedbackData) => void | Promise<void>;
 }
 
+export interface ElementContext {
+  componentName: string | null;
+  selector: string | null;
+  htmlPreview?: string;
+  stack: Array<{
+    functionName: string | null;
+    fileName: string | null;
+    lineNumber: number | null;
+    columnNumber: number | null;
+  }>;
+}
+
 export interface FeedbackData {
   comment: string;
   route: string;
   userAgent: string;
+  prompt?: string;
+  element?: ElementContext | null;
   metadata?: Record<string, string>;
   hasScreenshot: boolean;
   screenshot?: File | null;
@@ -48,6 +62,8 @@ export function createFeedbackHandler(config: FeedbackHandlerConfig) {
       const comment = (formData.get('comment') as string) ?? '';
       const route = (formData.get('route') as string) ?? '';
       const userAgent = (formData.get('userAgent') as string) ?? '';
+      const prompt = (formData.get('prompt') as string) || undefined;
+      const elementStr = formData.get('element') as string | null;
       const metadataStr = formData.get('metadata') as string | null;
       const screenshot = formData.get('screenshot') as File | null;
 
@@ -55,10 +71,16 @@ export function createFeedbackHandler(config: FeedbackHandlerConfig) {
         ? JSON.parse(metadataStr)
         : {};
 
+      const element: ElementContext | null = elementStr
+        ? JSON.parse(elementStr)
+        : null;
+
       const feedbackData: FeedbackData = {
         comment,
         route,
         userAgent,
+        prompt,
+        element,
         metadata,
         hasScreenshot: !!screenshot,
         screenshot,

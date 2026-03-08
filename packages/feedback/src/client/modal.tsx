@@ -10,16 +10,18 @@ import {
 import { useFeedback } from './context';
 
 export function FeedbackModal() {
-  const { isOpen, close, config } = useFeedback();
+  const { isOpen, close, elementContext, config } = useFeedback();
   const [status, setStatus] = useState<'idle' | 'sending' | 'success'>('idle');
   const [comment, setComment] = useState('');
+  const [prompt, setPrompt] = useState('');
   const [includeScreenshot, setIncludeScreenshot] = useState(true);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const ui = {
     title: config.ui?.title ?? 'Send Feedback',
-    description: config.ui?.description ?? 'Help us improve by sharing what went wrong.',
+    description:
+      config.ui?.description ?? 'Help us improve by sharing what went wrong.',
     placeholder: config.ui?.placeholder ?? 'Describe the issue...',
     submitLabel: config.ui?.submitLabel ?? 'Send Feedback',
     cancelLabel: config.ui?.cancelLabel ?? 'Cancel',
@@ -39,6 +41,7 @@ export function FeedbackModal() {
     if (status === 'sending') return;
     setStatus('idle');
     setComment('');
+    setPrompt('');
     setIncludeScreenshot(true);
     close();
   }, [status, close]);
@@ -54,8 +57,18 @@ export function FeedbackModal() {
         if (includeScreenshot) {
           try {
             const html2canvas = (await import('html2canvas-pro')).default;
+
+            const selectedRect = elementContext?.element
+              ? elementContext.element.getBoundingClientRect()
+              : null;
+            const highlightLabel =
+              elementContext?.componentName ??
+              elementContext?.selector ??
+              'Selected';
+
             dialogRef.current?.close();
             await new Promise((r) => setTimeout(r, 100));
+
             const canvas = await html2canvas(document.body, {
               logging: false,
               width: window.innerWidth,
@@ -64,8 +77,63 @@ export function FeedbackModal() {
               scrollY: -window.scrollY,
               windowWidth: window.innerWidth,
               windowHeight: window.innerHeight,
+              onclone: (clonedDoc) => {
+                for (const el of clonedDoc.querySelectorAll(
+                  '[data-slot="dialog-backdrop"], [data-slot="dialog-viewport"], dialog[open]'
+                )) {
+                  el.remove();
+                }
+                const overlay = clonedDoc.getElementById(
+                  'feedback-overlay-layer'
+                );
+                if (overlay) overlay.remove();
+
+                for (const el of clonedDoc.querySelectorAll(
+                  '[data-privacy="masked"]'
+                )) {
+                  (el as HTMLElement).style.filter = 'blur(10px)';
+                }
+
+                if (selectedRect) {
+                  const highlight = clonedDoc.createElement('div');
+                  Object.assign(highlight.style, {
+                    position: 'fixed',
+                    top: `${selectedRect.top}px`,
+                    left: `${selectedRect.left}px`,
+                    width: `${selectedRect.width}px`,
+                    height: `${selectedRect.height}px`,
+                    border: '2px solid #3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                    borderRadius: '3px',
+                    zIndex: '999999',
+                    pointerEvents: 'none',
+                  });
+                  clonedDoc.body.appendChild(highlight);
+
+                  const label = clonedDoc.createElement('div');
+                  Object.assign(label.style, {
+                    position: 'fixed',
+                    top: `${Math.max(selectedRect.top - 24, 4)}px`,
+                    left: `${selectedRect.left}px`,
+                    backgroundColor: '#3b82f6',
+                    color: '#ffffff',
+                    fontSize: '11px',
+                    fontFamily: 'ui-monospace, monospace',
+                    fontWeight: '500',
+                    padding: '2px 6px',
+                    borderRadius: '3px',
+                    zIndex: '999999',
+                    pointerEvents: 'none',
+                    whiteSpace: 'nowrap',
+                  });
+                  label.textContent = highlightLabel;
+                  clonedDoc.body.appendChild(label);
+                }
+              },
             });
+
             dialogRef.current?.showModal();
+
             screenshotBlob = await new Promise<Blob>((resolve, reject) =>
               canvas.toBlob(
                 (b) => (b ? resolve(b) : reject(new Error('toBlob failed'))),
@@ -73,20 +141,40 @@ export function FeedbackModal() {
               )
             );
           } catch {
-            // screenshot is best-effort
+            dialogRef.current?.showModal();
           }
         }
 
         const formData = new FormData();
         formData.append('comment', comment.trim());
         formData.append('route', window.location.href);
-        formData.append(
-          'userAgent',
-          navigator.userAgent
-        );
+        formData.append('userAgent', navigator.userAgent);
+
+        if (prompt.trim()) {
+          formData.append('prompt', prompt.trim());
+        }
+
         if (config.metadata) {
           formData.append('metadata', JSON.stringify(config.metadata));
         }
+
+        if (elementContext) {
+          formData.append(
+            'element',
+            JSON.stringify({
+              componentName: elementContext.componentName,
+              selector: elementContext.selector,
+              htmlPreview: elementContext.htmlPreview,
+              stack: elementContext.stack.map((frame) => ({
+                functionName: frame.functionName,
+                fileName: frame.fileName,
+                lineNumber: frame.lineNumber,
+                columnNumber: frame.columnNumber,
+              })),
+            })
+          );
+        }
+
         if (screenshotBlob) {
           formData.append('screenshot', screenshotBlob, 'screenshot.png');
         }
@@ -100,6 +188,8 @@ export function FeedbackModal() {
         config.onSubmit?.({
           comment: comment.trim(),
           route: window.location.href,
+          componentName: elementContext?.componentName ?? undefined,
+          selector: elementContext?.selector ?? undefined,
           metadata: config.metadata,
           screenshot: !!screenshotBlob,
         });
@@ -110,10 +200,15 @@ export function FeedbackModal() {
         setStatus('idle');
       }
     },
-    [comment, includeScreenshot, config, handleClose]
+    [comment, prompt, includeScreenshot, config, elementContext, handleClose]
   );
 
   if (!isOpen) return null;
+
+  const sourceFrame = elementContext?.stack[0] ?? null;
+  const sourceLabel = sourceFrame?.fileName
+    ? `${sourceFrame.fileName.split('/').pop()}${sourceFrame.lineNumber ? `:${sourceFrame.lineNumber}` : ''}`
+    : null;
 
   return (
     <dialog
@@ -140,16 +235,70 @@ export function FeedbackModal() {
           </div>
 
           <div className="space-y-4 px-6 py-4">
-            <textarea
-              ref={textareaRef}
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder={ui.placeholder}
-              required
-              disabled={status === 'sending'}
-              rows={4}
-              className="w-full resize-none rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm text-white placeholder:text-neutral-500 focus:border-neutral-600 focus:outline-none disabled:opacity-50"
-            />
+            {/* Element context card */}
+            {elementContext && (
+              <div className="rounded-lg border border-neutral-800 overflow-hidden">
+                <div className="flex items-center justify-between gap-2 px-3 py-2.5 bg-neutral-900/50">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <svg className="w-4 h-4 text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+                    </svg>
+                    <span className="text-sm font-medium text-white truncate">
+                      {elementContext.componentName || 'Unknown Component'}
+                    </span>
+                  </div>
+                  {elementContext.selector && (
+                    <code className="text-xs text-neutral-400 bg-neutral-800 px-1.5 py-0.5 rounded font-mono shrink-0 max-w-[200px] truncate">
+                      {elementContext.selector}
+                    </code>
+                  )}
+                </div>
+                {sourceLabel && (
+                  <div className="flex items-center gap-2 px-3 py-2 border-t border-neutral-800 text-xs text-neutral-500 font-mono">
+                    <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    <span className="truncate">{sourceLabel}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label htmlFor="fb-comment" className="text-sm font-medium text-neutral-300">
+                Describe the issue
+              </label>
+              <textarea
+                ref={textareaRef}
+                id="fb-comment"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder={ui.placeholder}
+                required
+                disabled={status === 'sending'}
+                rows={4}
+                className="w-full resize-none rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm text-white placeholder:text-neutral-500 focus:border-neutral-600 focus:outline-none disabled:opacity-50"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="fb-prompt" className="text-sm font-medium text-neutral-300 flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+                </svg>
+                Suggested fix
+                <span className="text-neutral-500 font-normal text-xs">(optional)</span>
+              </label>
+              <textarea
+                id="fb-prompt"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="e.g. Make the submit button disabled when the form is empty"
+                disabled={status === 'sending'}
+                rows={2}
+                className="w-full resize-none rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm text-white placeholder:text-neutral-500 focus:border-neutral-600 focus:outline-none disabled:opacity-50"
+              />
+            </div>
 
             <label className="flex cursor-pointer items-center justify-between rounded-lg border border-neutral-800 px-3 py-2.5">
               <span className="flex items-center gap-2 text-sm text-neutral-400">
