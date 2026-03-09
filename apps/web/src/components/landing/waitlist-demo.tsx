@@ -5,7 +5,7 @@ import { Button } from '@bounty/ui/components/button';
 import { Input } from '@bounty/ui/components/input';
 import NumberFlow from '@bounty/ui/components/number-flow';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getThumbmark } from '@thumbmarkjs/thumbmarkjs';
 import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
 import Image from 'next/image';
@@ -56,6 +56,7 @@ function useWaitlistSubmission(): WaitlistHookResult {
   const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitInfo | null>(
     null
   );
+  const queryClient = useQueryClient();
 
   const { mutate, isPending } = useMutation({
     mutationFn: async ({ email, fingerprintData }: WaitlistSubmissionData) => {
@@ -83,6 +84,7 @@ function useWaitlistSubmission(): WaitlistHookResult {
       };
       writeStoredWaitlist(cookieData);
 
+      void queryClient.invalidateQueries(trpc.earlyAccess.getWaitlistCount.queryOptions());
       celebrate();
       toast.success("You're on the list! 🎉");
     },
@@ -169,7 +171,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     retry: 2,
     retryDelay: 1000,
   });
-  const waitlistCount = waitlistCountQuery.data?.count ?? 0;
+  const waitlistCount = waitlistCountQuery.data?.count;
 
   return (
     <div className="h-full bg-background overflow-auto">
@@ -226,17 +228,19 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                 We'll reach out when it's your turn.
               </p>
 
-              {/* Position badge */}
-              <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1 mb-3' : 'px-3 py-1.5 mb-6'} rounded-full bg-surface-1 border border-border-subtle`}
-              >
-                <span className="text-xs text-text-muted">Position</span>
-                <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
+              {/* Waitlist size badge */}
+              {waitlistCount !== undefined && (
+                <div
+                  className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1 mb-3' : 'px-3 py-1.5 mb-6'} rounded-full bg-surface-1 border border-border-subtle`}
                 >
-                  #{waitlistCount}
-                </span>
-              </div>
+                  <span className="text-xs text-text-muted">Members joined</span>
+                  <span
+                    className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
+                  >
+                    {waitlistCount.toLocaleString()}
+                  </span>
+                </div>
+              )}
 
               {/* Share CTA — skip in compact mode */}
               {!compact && (
@@ -378,7 +382,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                 <span
                   className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
                 >
-                  <NumberFlow value={waitlistCount} />+ on the list
+                  <NumberFlow value={waitlistCount ?? 0} />+ on the list
                 </span>
               </div>
             </>
