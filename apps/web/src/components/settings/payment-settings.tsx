@@ -1,6 +1,7 @@
 'use client';
 
 import { Tabs, TabsPanel } from '@bounty/ui/components/tabs';
+import { Button } from '@bounty/ui/components/button';
 import { BillingToggle } from '@/components/billing/billing-toggle';
 import { Badge } from '@bounty/ui/components/badge';
 import {
@@ -17,6 +18,7 @@ import { IssuesBlock } from './payment/issues-block';
 import { PaymentActivity } from './payment-activity';
 import { BalanceCard } from './payment/balance-card';
 import { StripeDashIcon } from '@bounty/ui/components/icons/huge/stripe';
+import { CardIcon } from '@bounty/ui/components/icons/huge/card';
 import { useState, useEffect, useCallback } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
 import Image from 'next/image';
@@ -30,6 +32,7 @@ import {
   type BountyProPlan,
 } from '@bounty/types';
 import Link from 'next/link';
+import { useActiveOrg } from '@/hooks/use-active-org';
 
 // Available card background options
 const CARD_BACKGROUNDS = [
@@ -515,6 +518,7 @@ function FeesTabContent({
   allTimeBountyCount: number;
 }) {
   const { attach, openBillingPortal } = useCustomer();
+  const { activeOrgSlug } = useActiveOrg();
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>(
     'monthly'
   );
@@ -581,7 +585,7 @@ function FeesTabContent({
       const productId = isYearly ? `${planSlug}_yearly` : planSlug;
       const result = await attach({
         productId,
-        successUrl: `${window.location.origin}/settings/payments?tab=fees&checkout=success`,
+        successUrl: `${window.location.origin}/${activeOrgSlug}/settings/payments?tab=fees&checkout=success`,
         forceCheckout: true,
       });
       if (
@@ -777,6 +781,8 @@ function SettingsTabContent({
   onConnect,
   isConnectPending,
   onSelectCardBackground,
+  onRefresh,
+  isRefreshing,
 }: {
   hasConnectAccount: boolean;
   status: ConnectStatus | undefined;
@@ -787,6 +793,8 @@ function SettingsTabContent({
   onConnect: () => void;
   isConnectPending: boolean;
   onSelectCardBackground: (id: string) => void;
+  onRefresh: () => void;
+  isRefreshing: boolean;
 }) {
   return (
     <>
@@ -862,6 +870,8 @@ function SettingsTabContent({
             cardPaymentsActive={status.cardPaymentsActive}
             requirements={status.accountDetails.requirements}
             onCompleteOnboarding={onConnect}
+            onRefresh={onRefresh}
+            isRefreshing={isRefreshing}
           />
         )}
       </div>
@@ -1110,10 +1120,35 @@ export function PaymentSettings() {
         </div>
 
         <TabsPanel value="activity" className="space-y-6">
-          <div className="shrink-0 flex flex-col justify-center items-start gap-0 w-full h-fit self-stretch p-0">
-            <div className="text-[28px] leading-[150%] shrink-0 text-foreground font-['Inter',system-ui,sans-serif] font-medium size-fit">
-              Recent activity
+          {(!hasConnectAccount ||
+            (hasConnectAccount && !status?.onboardingComplete)) && (
+            <div className="flex items-center justify-between gap-4 rounded-lg bg-secondary px-4 py-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <CardIcon className="size-4 shrink-0 text-secondary-foreground opacity-60" />
+                <p className="text-sm text-secondary-foreground">
+                  {hasConnectAccount
+                    ? 'Finish Stripe setup to start receiving payouts.'
+                    : 'Set up Stripe Connect to receive bounty payouts.'}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleConnect}
+                disabled={createAccountLink.isPending}
+              >
+                {createAccountLink.isPending
+                  ? 'Connecting...'
+                  : hasConnectAccount
+                    ? 'Continue'
+                    : 'Set up'}
+              </Button>
             </div>
+          )}
+          <div>
+            <h2 className="text-[28px] leading-[150%] text-foreground font-medium">
+              Recent activity
+            </h2>
           </div>
           <PaymentActivity />
         </TabsPanel>
@@ -1140,6 +1175,8 @@ export function PaymentSettings() {
             onConnect={handleConnect}
             isConnectPending={createAccountLink.isPending}
             onSelectCardBackground={(id) => updateCardBackground.mutate(id)}
+            onRefresh={() => refetch()}
+            isRefreshing={isLoading}
           />
         </TabsPanel>
       </Tabs>

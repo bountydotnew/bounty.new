@@ -96,6 +96,15 @@ export function BountyDetailSubmissions() {
           ))
         ) : (
           <div className="rounded-lg bg-surface-2 p-6 text-center">
+            {/* TODO: Add in-app submission flow — allow non-owners to submit
+                work directly from the bounty detail page instead of requiring
+                the GitHub PR + /submit command flow. Form fields: PR URL,
+                description (min 10 chars), optional deliverable URL.
+                Backend: new tRPC mutation (validate bounty is open/funded,
+                check duplicates/pending limit of 2, insert submission row,
+                optionally post GitHub bot comment if app installed).
+                See: packages/api/src/routers/bounties.ts (submitBountyWork),
+                apps/web/src/app/api/webhooks/github/route.ts (createSubmissionFromPullRequest) */}
             <p className="text-text-muted text-sm mb-4">No submissions yet</p>
             {isAuthenticated ? (
               bounty.githubRepoOwner &&
