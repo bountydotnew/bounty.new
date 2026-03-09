@@ -61,9 +61,9 @@ Funded · ${submissionCount} submissions
 
 **Contributors:** Add \`@bountydotnew submit\` to your PR description, or comment \`/submit #PR_NUMBER\` on this issue.
 
-**Bounty creator:** Approve with \`/approve #PR_NUMBER\`. After merging, confirm with \`/merge #PR_NUMBER\` to release payment.
+**Bounty creator:** Approve with \`/approve #PR_NUMBER\`, then merge the PR. Payment releases automatically on merge.
 
-Payouts are released within 2–3 business days after merge.
+Payouts arrive within 2–3 business days after merge.
 `;
 }
 
@@ -92,7 +92,7 @@ This is a free bounty. No payout will be issued.
     return `
 @${prAuthor} PR #${prNumber} submitted. The bounty creator will review it.
 
-After approval and merge, payout is released within 2–3 business days.
+Payout releases automatically when the PR is merged. Funds arrive within 2–3 business days.
 `;
   }
 
@@ -146,9 +146,9 @@ This is a free bounty, so no payout will be issued.
   }
 
   return `
-@${solverUsername} PR #${targetPrNumber} approved. Payout releases after merge.
+@${solverUsername} PR #${targetPrNumber} approved. Payout releases automatically when the PR is merged.
 
-@${approver} Merge PR #${targetPrNumber}, then confirm with \`/merge ${targetPrNumber}\`.
+@${approver} Merge PR #${targetPrNumber} to release the payout.
 `;
 }
 
@@ -159,7 +159,7 @@ export function submissionAlreadyApprovedComment(
   targetPrNumber: number
 ): string {
   return `
-Already approved. Merge the PR and confirm with \`/merge ${targetPrNumber}\`.
+Already approved. Merge the PR to release the payout.
 `;
 }
 

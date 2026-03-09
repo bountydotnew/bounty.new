@@ -490,9 +490,11 @@ export async function POST(request: Request) {
         const transfer = event.data.object as Stripe.Transfer;
         const bountyId = transfer.metadata?.bountyId;
 
-        // Check if transfer failed
+        // Check if transfer was reversed (failed payout)
         if (bountyId && transfer.reversed) {
-          // Update payout status to failed if transfer was reversed
+          console.log(`[Stripe Webhook] Transfer ${transfer.id} reversed for bounty ${bountyId}`);
+
+          // Update payout status to failed
           await db
             .update(payout)
             .set({
@@ -500,6 +502,24 @@ export async function POST(request: Request) {
               updatedAt: new Date(),
             })
             .where(eq(payout.stripeTransferId, transfer.id));
+
+          // Revert bounty to funded state so payout can be retried
+          await db
+            .update(bounty)
+            .set({
+              status: 'in_progress',
+              paymentStatus: 'held',
+              stripeTransferId: null,
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(bounty.id, bountyId),
+                eq(bounty.stripeTransferId, transfer.id)
+              )
+            );
+
+          console.log(`[Stripe Webhook] Reverted bounty ${bountyId} to held state after transfer reversal`);
         }
         break;
       }
@@ -583,15 +603,28 @@ export async function POST(request: Request) {
 
         console.log(`[Stripe Webhook] charge.refund.updated: Refund ${refundedAmount} of ${originalAmount} (fee: ${platformFee})`);
 
-        // Update bounty status to cancelled/refunded
-        await db
+        // Atomic conditional update — only update if not already refunded.
+        // This prevents races with the charge.refunded handler which handles
+        // the full notification flow (email + in-app notification + transaction record).
+        const updatedRows = await db
           .update(bounty)
           .set({
             status: 'cancelled',
             paymentStatus: 'refunded',
             updatedAt: new Date(),
           })
-          .where(eq(bounty.id, bountyRecord.id));
+          .where(
+            and(
+              eq(bounty.id, bountyRecord.id),
+              sql`${bounty.paymentStatus} != 'refunded'`
+            )
+          )
+          .returning({ id: bounty.id });
+
+        if (updatedRows.length === 0) {
+          console.log(`[Stripe Webhook] charge.refund.updated: Bounty ${bountyRecord.id} already processed by charge.refunded handler, skipping`);
+          break;
+        }
 
         // If there's a pending cancellation request, mark it as approved
         const [pendingRequest] = await db
@@ -617,17 +650,10 @@ export async function POST(request: Request) {
           console.log(`[Stripe Webhook] Marked cancellation request ${pendingRequest.id} as approved`);
         }
 
-        // Create notification for the bounty creator
-        await createNotification({
-          userId: bountyRecord.createdById,
-          type: 'system',
-          title: 'Bounty Refunded',
-          message: `Your bounty "${bountyRecord.title}" has been refunded and cancelled. Refund amount: $${refundedAmount.toLocaleString()}`,
-          data: {
-            bountyId: bountyRecord.id,
-            linkTo: `/bounty/${bountyRecord.id}`,
-          },
-        });
+        // Skip notification here — the charge.refunded handler sends the full
+        // notification (email + in-app + transaction record). If charge.refunded
+        // fires later, it will see paymentStatus=refunded and skip the DB update
+        // but still won't double-notify since the bounty status check prevents it.
 
         console.log(`[Stripe Webhook] charge.refund.updated: Successfully processed refund for bounty ${bountyRecord.id}`);
         break;
@@ -661,12 +687,6 @@ export async function POST(request: Request) {
           break;
         }
 
-        // Skip if already refunded
-        if (bountyRecord.paymentStatus === 'refunded') {
-          console.log(`[Stripe Webhook] Bounty ${bountyRecord.id} already marked as refunded, skipping`);
-          break;
-        }
-
         // Calculate refund amount from the charge
         const refundedAmount = charge.amount_refunded / 100; // Convert from cents
         const originalAmount = Number(bountyRecord.amount);
@@ -674,15 +694,27 @@ export async function POST(request: Request) {
 
         console.log(`[Stripe Webhook] Refund: ${refundedAmount} of ${originalAmount} (fee: ${platformFee})`);
 
-        // Update bounty status to cancelled/refunded
-        await db
+        // Atomic conditional update — only process if not already refunded.
+        // Prevents races with charge.refund.updated and duplicate webhook deliveries.
+        const refundUpdatedRows = await db
           .update(bounty)
           .set({
             status: 'cancelled',
             paymentStatus: 'refunded',
             updatedAt: new Date(),
           })
-          .where(eq(bounty.id, bountyRecord.id));
+          .where(
+            and(
+              eq(bounty.id, bountyRecord.id),
+              sql`${bounty.paymentStatus} != 'refunded'`
+            )
+          )
+          .returning({ id: bounty.id });
+
+        if (refundUpdatedRows.length === 0) {
+          console.log(`[Stripe Webhook] Bounty ${bountyRecord.id} already marked as refunded, skipping`);
+          break;
+        }
 
         // If there's a pending cancellation request, mark it as approved
         const [pendingRequest] = await db
