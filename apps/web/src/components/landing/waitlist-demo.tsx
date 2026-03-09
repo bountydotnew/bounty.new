@@ -178,29 +178,35 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
       >
         <div className={`w-full ${compact ? 'max-w-xs' : 'max-w-sm'}`}>
           {/* Header */}
-          <div className={`text-left ${compact ? 'mb-4' : 'mb-8'}`}>
-            <h1
-              className={`${compact ? 'text-lg' : 'text-2xl'} font-medium text-foreground tracking-tight ${compact ? 'mb-1' : 'mb-2'}`}
-            >
-              Get early access
-            </h1>
-            <p
-              className={`${compact ? 'text-xs' : 'text-sm'} text-text-muted leading-relaxed`}
-            >
-              {compact
-                ? 'Join the waitlist to get started.'
-                : 'Join the waitlist to start creating bounties and getting paid to build.'}
-            </p>
-          </div>
+          {!waitlistSubmission.success && (
+            <div className={`text-left ${compact ? 'mb-4' : 'mb-8'}`}>
+              <h1
+                className={`${compact ? 'text-lg' : 'text-2xl'} font-medium text-foreground tracking-tight ${compact ? 'mb-1' : 'mb-2'}`}
+              >
+                Get early access
+              </h1>
+              <p
+                className={`${compact ? 'text-xs' : 'text-sm'} text-text-muted leading-relaxed`}
+              >
+                {compact
+                  ? 'Join the waitlist to get started.'
+                  : 'Join the waitlist to start creating bounties and getting paid to build.'}
+              </p>
+            </div>
+          )}
 
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
+            <div
+              className={`text-center ${compact ? 'py-2' : 'py-4'}`}
+              style={{ animation: 'fadeSlideIn 0.4s ease-out forwards', opacity: 0, transform: 'translateY(8px)' }}
+            >
+              {/* Success icon */}
               <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
+                className={`inline-flex items-center justify-center ${compact ? 'w-10 h-10 mb-3' : 'w-14 h-14 mb-5'} rounded-full bg-brand-accent/10 border border-brand-accent/20`}
               >
                 <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
+                  className={`${compact ? 'w-5 h-5' : 'w-7 h-7'} text-brand-accent`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -213,24 +219,97 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                   />
                 </svg>
               </div>
+
+              {/* Heading */}
               <h2
-                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
+                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground ${compact ? 'mb-0.5' : 'mb-1'}`}
               >
-                You're on the list
+                You&apos;re on the list!
               </h2>
               <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
+                className={`${compact ? 'text-xs' : 'text-sm'} text-text-muted ${compact ? 'mb-3' : 'mb-5'}`}
               >
-                We'll reach out when it's your turn.
+                We&apos;ll notify you when it&apos;s your turn.
               </p>
+
+              {/* Position card */}
               <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
+                className={`rounded-xl border border-border-subtle bg-surface-1 ${compact ? 'px-3 py-2.5 mb-3' : 'px-4 py-3.5 mb-5'}`}
               >
-                <span className="text-xs text-text-muted">Position</span>
                 <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
+                  className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted uppercase tracking-wider`}
                 >
-                  #{waitlistCount}
+                  Your position
+                </span>
+                <div
+                  className={`${compact ? 'text-xl' : 'text-3xl'} font-medium text-foreground ${compact ? 'mt-0.5' : 'mt-1'} tabular-nums`}
+                >
+                  #<NumberFlow value={waitlistCount} />
+                </div>
+                {/* Progress bar */}
+                <div
+                  className={`w-full bg-surface-3 rounded-full overflow-hidden ${compact ? 'h-1 mt-2' : 'h-1.5 mt-3'}`}
+                >
+                  <div
+                    className="h-full rounded-full bg-brand-accent/60"
+                    style={{
+                      width: `${Math.max(5, Math.min(95, (1 / Math.max(waitlistCount, 1)) * 100))}%`,
+                      transition: 'width 1s ease-out',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Social proof */}
+              <div
+                className={`flex items-center justify-center ${compact ? 'gap-2' : 'gap-3'}`}
+              >
+                <div className="-space-x-2 flex">
+                  <div
+                    className={`${compact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full border-2 border-background overflow-hidden`}
+                  >
+                    <Image
+                      alt="waitlist member"
+                      height={compact ? 20 : 24}
+                      src="/nizzy.jpg"
+                      width={compact ? 20 : 24}
+                    />
+                  </div>
+                  <div
+                    className={`${compact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full border-2 border-background overflow-hidden`}
+                  >
+                    <Image
+                      alt="waitlist member"
+                      height={compact ? 20 : 24}
+                      src="/brandon.jpg"
+                      width={compact ? 20 : 24}
+                    />
+                  </div>
+                  <div
+                    className={`${compact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full border-2 border-background overflow-hidden`}
+                  >
+                    <Image
+                      alt="waitlist member"
+                      height={compact ? 20 : 24}
+                      src="/adam.jpg"
+                      width={compact ? 20 : 24}
+                    />
+                  </div>
+                  <div
+                    className={`${compact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full border-2 border-background overflow-hidden`}
+                  >
+                    <Image
+                      alt="waitlist member"
+                      height={compact ? 20 : 24}
+                      src="/ryan.jpg"
+                      width={compact ? 20 : 24}
+                    />
+                  </div>
+                </div>
+                <span
+                  className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
+                >
+                  Join <NumberFlow value={waitlistCount} />+ others waiting
                 </span>
               </div>
             </div>
@@ -348,7 +427,9 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
           <p
             className={`${compact ? 'text-[10px] mt-4' : 'text-xs mt-8'} text-text-muted`}
           >
-            No spam, unsubscribe anytime.
+            {waitlistSubmission.success
+              ? 'Check your email for updates.'
+              : 'No spam, unsubscribe anytime.'}
           </p>
         </div>
       </div>
