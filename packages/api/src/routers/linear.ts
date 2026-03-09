@@ -14,6 +14,7 @@ import {
   LINEAR_COMMENT_TEMPLATES,
 } from "../../driver/linear-client";
 import { env } from "@bounty/env/server";
+import { log } from "@bounty/logging";
 
 type Database = typeof database;
 
@@ -80,7 +81,7 @@ async function refreshLinearToken(
     });
   }
 
-  console.log("[Linear] Refreshing access token...");
+  log.info("[Linear] Refreshing access token");
 
   try {
     const response = await fetch("https://api.linear.app/oauth/token", {
@@ -98,7 +99,7 @@ async function refreshLinearToken(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[Linear] Token refresh failed:", errorText);
+      log.error("[Linear] Token refresh failed", { error: errorText });
       throw new TRPCError({
         code: "UNAUTHORIZED",
         message:
@@ -127,16 +128,13 @@ async function refreshLinearToken(
       })
       .where(eq(account.id, linearOAuthAccount.id));
 
-    console.log(
-      "[Linear] Token refreshed successfully, expires at:",
-      expiresAt,
-    );
+    log.info("[Linear] Token refreshed successfully", { expiresAt });
     return tokenData.access_token;
   } catch (error) {
     if (error instanceof TRPCError) {
       throw error;
     }
-    console.error("[Linear] Error refreshing token:", error);
+    log.error("[Linear] Error refreshing token", { error });
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: "Failed to refresh Linear token",
@@ -166,9 +164,7 @@ async function getValidAccessToken(
     expiresAt && new Date(expiresAt).getTime() < Date.now() + bufferTime;
 
   if (isExpired) {
-    console.log(
-      "[Linear] Access token expired or expiring soon, refreshing...",
-    );
+    log.info("[Linear] Access token expired or expiring soon, refreshing");
     return await refreshLinearToken(db, linearOAuthAccount);
   }
 
@@ -233,7 +229,7 @@ export const linearRouter = router({
           : [],
       };
     } catch (error) {
-      console.error("Failed to fetch Linear workspaces:", error);
+      log.error("[Linear] Failed to fetch workspaces", { error });
       return { success: true, workspaces: [] };
     }
   }),
@@ -383,7 +379,7 @@ export const linearRouter = router({
           endCursor: result.endCursor,
         };
       } catch (error) {
-        console.error("Failed to fetch Linear issues:", error);
+        log.error("[Linear] Failed to fetch issues", { error });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to fetch issues from Linear",
@@ -442,7 +438,7 @@ export const linearRouter = router({
           issue,
         };
       } catch (error) {
-        console.error("Failed to fetch Linear issue:", error);
+        log.error("[Linear] Failed to fetch issue", { error });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to fetch issue from Linear",
@@ -490,7 +486,7 @@ export const linearRouter = router({
         projects,
       };
     } catch (error) {
-      console.error("Failed to fetch Linear projects:", error);
+      log.error("[Linear] Failed to fetch projects", { error });
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to fetch projects from Linear",
@@ -535,7 +531,7 @@ export const linearRouter = router({
           states,
         };
       } catch (error) {
-        console.error("Failed to fetch Linear workflow states:", error);
+        log.error("[Linear] Failed to fetch workflow states", { error });
         return { success: true, states: [] };
       }
     },
@@ -574,7 +570,7 @@ export const linearRouter = router({
         teams,
       };
     } catch (error) {
-      console.error("Failed to fetch Linear teams:", error);
+      log.error("[Linear] Failed to fetch teams", { error });
       return { success: true, teams: [] };
     }
   }),
@@ -640,7 +636,7 @@ export const linearRouter = router({
           },
         };
       } catch (error) {
-        console.error("Failed to fetch Linear issue for bounty:", error);
+        log.error("[Linear] Failed to fetch issue for bounty", { error });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to fetch issue from Linear",
@@ -777,7 +773,7 @@ export const linearRouter = router({
           commentId: comment?.id ?? null,
         };
       } catch (error) {
-        console.error("Failed to post comment to Linear:", error);
+        log.error("[Linear] Failed to post comment", { error });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to post comment to Linear",
@@ -953,7 +949,7 @@ export const linearRouter = router({
         },
       };
     } catch (error) {
-      console.error("Failed to sync Linear workspace:", error);
+      log.error("[Linear] Failed to sync workspace", { error });
       if (error instanceof TRPCError) {
         throw error;
       }

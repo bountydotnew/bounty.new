@@ -1,11 +1,12 @@
 import { auth } from '@bounty/auth/server';
 import { db, user, waitlist } from '@bounty/db';
+import { withEvlog, log } from '@bounty/logging';
 import { headers } from 'next/headers';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 
-export async function GET(request: NextRequest) {
+export const GET = withEvlog(async function GET(request: NextRequest) {
   try {
     const token = request.nextUrl.searchParams.get('token');
 
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
     // Redirect to dashboard
     return NextResponse.redirect(new URL('/dashboard', request.url));
   } catch (error) {
-    console.error('[accept-access] Error:', error);
+    log.error('[accept-access] Error', { error });
     return NextResponse.redirect(new URL('/?error=server_error', request.url));
   }
-}
+});

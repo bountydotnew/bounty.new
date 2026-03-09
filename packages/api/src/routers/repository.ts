@@ -1,5 +1,6 @@
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
+import { log } from '@bounty/logging';
 import { GithubManager } from '../../driver/github';
 import { protectedProcedure, publicProcedure, router } from '../trpc';
 import { account } from '@bounty/db';
@@ -187,7 +188,7 @@ export const repositoryRouter = router({
       try {
         return await github.getDefaultBranch(input.repo);
       } catch (error) {
-        console.error('Failed to fetch default branch:', error);
+        log.error('Failed to fetch default branch', { error });
         return 'main';
       }
     }),

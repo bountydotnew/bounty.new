@@ -1,4 +1,5 @@
 import { redis } from '@bounty/realtime';
+import { log } from '@bounty/logging';
 
 /**
  * Distributed Redis Cache for horizontal scaling
@@ -33,7 +34,7 @@ export class RedisCache<T> {
       const data = await redis.get<T>(this.getKey(key));
       return data;
     } catch (error) {
-      console.error(`[RedisCache] Error getting key ${key}:`, error);
+      log.error('RedisCache error getting key', { key, error });
       return null;
     }
   }
@@ -45,7 +46,7 @@ export class RedisCache<T> {
     try {
       await redis.setex(this.getKey(key), this.ttl, JSON.stringify(value));
     } catch (error) {
-      console.error(`[RedisCache] Error setting key ${key}:`, error);
+      log.error('RedisCache error setting key', { key, error });
     }
   }
 
@@ -56,7 +57,7 @@ export class RedisCache<T> {
     try {
       await redis.del(this.getKey(key));
     } catch (error) {
-      console.error(`[RedisCache] Error deleting key ${key}:`, error);
+      log.error('RedisCache error deleting key', { key, error });
     }
   }
 
@@ -80,7 +81,7 @@ export class RedisCache<T> {
         }
       } while (cursor !== 0);
     } catch (error) {
-      console.error(`[RedisCache] Error clearing cache:`, error);
+      log.error('RedisCache error clearing cache', { error });
     }
   }
 
@@ -106,7 +107,7 @@ export class RedisCache<T> {
       const exists = await redis.exists(this.getKey(key));
       return exists === 1;
     } catch (error) {
-      console.error(`[RedisCache] Error checking key ${key}:`, error);
+      log.error('RedisCache error checking key', { key, error });
       return false;
     }
   }

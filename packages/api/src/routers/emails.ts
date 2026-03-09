@@ -1,4 +1,5 @@
 import type { AudienceKey, FromKey } from '@bounty/email';
+import { log } from '@bounty/logging';
 import {
   AUDIENCES,
   FROM_ADDRESSES,
@@ -35,7 +36,7 @@ export const emailsRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      console.info('email.send', {
+      log.info('email.send', {
         to: Array.isArray(input.to) ? input.to : [input.to],
         subject: input.subject,
         fromKey: input.fromKey,
@@ -63,7 +64,7 @@ export const emailsRouter = router({
         throw new TRPCError({ code, message: res.error.message });
       }
       const payload = { id: res.data?.id ?? null };
-      console.info('email.send.result', payload);
+      log.info('email.send.result', payload);
       return { success: true, data: payload };
     }),
 

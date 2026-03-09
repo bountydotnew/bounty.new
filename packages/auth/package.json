@@ -25,6 +25,7 @@
     "@better-auth/infra": "^0.1.8",
     "@better-auth/passkey": "catalog:",
     "@bounty/db": "workspace:*",
+    "@bounty/logging": "workspace:*",
     "@bounty/email": "workspace:*",
     "@bounty/env": "workspace:*",
     "@bounty/types": "workspace:*",

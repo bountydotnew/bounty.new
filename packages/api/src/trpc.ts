@@ -1,5 +1,6 @@
 import type { ExtendedAuthSession } from '@bounty/types';
 import { initTRPC, TRPCError } from '@trpc/server';
+import { log } from '@bounty/logging';
 import type { ReasonCode } from '@bounty/types';
 import type { Context } from './context';
 
@@ -21,15 +22,12 @@ export const t = initTRPC.context<Context>().create({
         ? (cause as { reason?: ReasonCode }).reason
         : undefined;
 
-    // Log errors to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('tRPC Error:', {
-        code: error.code,
-        message: error.message,
-        path,
-        reason,
-      });
-    }
+    log.debug('tRPC Error', {
+      code: error.code,
+      message: error.message,
+      path,
+      reason,
+    });
 
     return {
       ...shape,

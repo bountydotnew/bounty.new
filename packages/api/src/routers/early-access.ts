@@ -1,12 +1,9 @@
+import { log } from '@bounty/logging';
 import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
 import { eq, and, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { randomInt, randomBytes, timingSafeEqual } from 'node:crypto';
-
-const info = console.info.bind(console);
-const error = console.error.bind(console);
-const warn = console.warn.bind(console);
 
 // Generate 6-digit OTP code using cryptographically secure random number
 const generateOTP = (): string => {
@@ -47,18 +44,18 @@ import {
 export const earlyAccessRouter = router({
   getWaitlistCount: publicProcedure.query(async () => {
     try {
-      info('[getWaitlistCount] called');
+      log.info('[getWaitlistCount] called');
       const [result] = await db
         .select({ count: sql<number>`count(*)` })
         .from(waitlist);
       const count = result?.count ?? 0;
-      info('[getWaitlistCount] db result:', count);
+      log.info('[getWaitlistCount] db result', { count });
 
       return {
         count,
       };
     } catch (err) {
-      error('[getWaitlistCount] Error:', err);
+      log.error('[getWaitlistCount] Error', { error: err });
 
       // Provide more specific error messages
       if (err instanceof TRPCError) {
@@ -90,7 +87,7 @@ export const earlyAccessRouter = router({
       }
 
       // Return a default count instead of throwing an error
-      warn('[getWaitlistCount] Returning default count due to error:', err);
+      log.warn('[getWaitlistCount] Returning default count due to error', { error: err });
       return {
         count: 0,
       };
@@ -105,7 +102,7 @@ export const earlyAccessRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        info('[addToWaitlist] Processing new entry');
+        log.info('[addToWaitlist] Processing new entry');
 
         const userAlreadyInWaitlist = await db.query.waitlist.findFirst({
           where: (fields, { eq }) => eq(fields.email, input.email),
@@ -124,13 +121,10 @@ export const earlyAccessRouter = router({
           await track('waitlist_joined', { source: 'api' });
         } catch {}
 
-        info(
-          '[addToWaitlist] Successfully added email to waitlist:',
-          input.email
-        );
+        log.info('[addToWaitlist] Successfully added email to waitlist', { email: input.email });
         return { message: "You've been added to the waitlist!" };
       } catch (error: unknown) {
-        warn('[addToWaitlist] Error:', error);
+        log.warn('[addToWaitlist] Error', { error });
 
         if (
           error instanceof Error &&
@@ -237,7 +231,7 @@ export const earlyAccessRouter = router({
           },
         };
       } catch (err) {
-        error('[getAdminWaitlist] Error:', err);
+        log.error('[getAdminWaitlist] Error', { error: err });
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to fetch waitlist data',
@@ -279,7 +273,7 @@ export const earlyAccessRouter = router({
           })
           .where(eq(waitlist.id as any, id) as any);
 
-        info('[grantWaitlistAccess] Granted access for ID:', id);
+        log.info('[grantWaitlistAccess] Granted access for ID', { id });
 
         // Send email with access link
         const u = await db.query.user.findFirst({
@@ -304,7 +298,7 @@ export const earlyAccessRouter = router({
 
         return { success: true };
       } catch (err) {
-        error('[grantWaitlistAccess] Error:', err);
+        log.error('[grantWaitlistAccess] Error', { error: err });
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to grant waitlist access',
@@ -357,11 +351,11 @@ export const earlyAccessRouter = router({
           .set({ accessToken: null })
           .where(eq(waitlist.id as any, entry.id) as any);
 
-        info('[acceptAccessToken] Granted early_access to user:', userId);
+        log.info('[acceptAccessToken] Granted early_access to user', { userId });
 
         return { success: true };
       } catch (err) {
-        error('[acceptAccessToken] Error:', err);
+        log.error('[acceptAccessToken] Error', { error: err });
         if (err instanceof TRPCError) {
           throw err;
         }
@@ -384,7 +378,7 @@ export const earlyAccessRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        info('[submitWithBounty] Processing email:', input.email);
+        log.info('[submitWithBounty] Processing email', { email: input.email });
 
         // Check if entry exists
         const existingEntry = await db.query.waitlist.findFirst({
@@ -472,7 +466,7 @@ export const earlyAccessRouter = router({
             }),
           });
         } catch (emailError) {
-          warn('[submitWithBounty] Failed to send email:', emailError);
+          log.warn('[submitWithBounty] Failed to send email', { error: emailError });
           // Don't fail the request if email fails
         }
 
@@ -480,10 +474,10 @@ export const earlyAccessRouter = router({
           await track('waitlist_joined', { source: 'api' });
         } catch {}
 
-        info('[submitWithBounty] Successfully processed:', input.email);
+        log.info('[submitWithBounty] Successfully processed', { email: input.email });
         return { success: true, entryId, position };
       } catch (error: unknown) {
-        warn('[submitWithBounty] Error:', error);
+        log.warn('[submitWithBounty] Error', { error });
 
         if (error instanceof TRPCError) {
           throw error;
@@ -559,14 +553,14 @@ export const earlyAccessRouter = router({
           .set({ emailVerified: true, otpAttempts: 0 })
           .where(eq(waitlist.id as any, entry.id) as any);
 
-        info('[verifyOTP] Entry verified:', input.entryId);
+        log.info('[verifyOTP] Entry verified', { entryId: input.entryId });
         return { success: true, entryId: entry.id };
       } catch (error: unknown) {
         if (error instanceof TRPCError) {
           throw error;
         }
 
-        warn('[verifyOTP] Error:', error);
+        log.warn('[verifyOTP] Error', { error });
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to verify OTP',
@@ -618,21 +612,21 @@ export const earlyAccessRouter = router({
             }),
           });
         } catch (emailError) {
-          warn('[resendOTP] Failed to send email:', emailError);
+          log.warn('[resendOTP] Failed to send email', { error: emailError });
           throw new TRPCError({
             code: 'INTERNAL_SERVER_ERROR',
             message: 'Failed to send verification email',
           });
         }
 
-        info('[resendOTP] OTP resent for entry:', input.entryId);
+        log.info('[resendOTP] OTP resent for entry', { entryId: input.entryId });
         return { success: true };
       } catch (error: unknown) {
         if (error instanceof TRPCError) {
           throw error;
         }
 
-        warn('[resendOTP] Error:', error);
+        log.warn('[resendOTP] Error', { error });
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to resend OTP',
@@ -690,7 +684,7 @@ export const earlyAccessRouter = router({
           throw error;
         }
 
-        warn('[getWaitlistEntry] Error:', error);
+        log.warn('[getWaitlistEntry] Error', { error });
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to fetch waitlist entry',
@@ -722,7 +716,7 @@ export const earlyAccessRouter = router({
             .set({ userId })
             .where(eq(waitlist.id as any, entry.id) as any);
 
-          info('[getMyWaitlistEntry] Auto-linked entry by email:', userEmail);
+          log.info('[getMyWaitlistEntry] Auto-linked entry by email', { email: userEmail });
         }
       }
 
@@ -745,7 +739,7 @@ export const earlyAccessRouter = router({
           .returning();
 
         if (newEntry) {
-          info('[getMyWaitlistEntry] Auto-created entry for user:', userId);
+          log.info('[getMyWaitlistEntry] Auto-created entry for user', { userId });
 
           // Fetch the full entry to get position
           entry = await db.query.waitlist.findFirst({
@@ -793,7 +787,7 @@ export const earlyAccessRouter = router({
         throw error;
       }
 
-      warn('[getMyWaitlistEntry] Error:', error);
+      log.warn('[getMyWaitlistEntry] Error', { error });
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Failed to fetch waitlist entry',
@@ -905,12 +899,7 @@ export const earlyAccessRouter = router({
           }
 
           if (input.role) {
-            info(
-              '[linkUserToWaitlist] Role preference:',
-              input.role,
-              'for user:',
-              userId
-            );
+            log.info('[linkUserToWaitlist] Role preference', { role: input.role, userId });
           }
         }
 
@@ -936,11 +925,7 @@ export const earlyAccessRouter = router({
 
             const organizationId = personalTeam[0]?.organizationId;
             if (!organizationId) {
-              warn(
-                '[linkUserToWaitlist] No personal team found for user:',
-                userId,
-                '— bounty will be created without organizationId'
-              );
+              log.warn('[linkUserToWaitlist] No personal team found for user, bounty will be created without organizationId', { userId });
             }
 
             const [newBounty] = await db
@@ -963,17 +948,12 @@ export const earlyAccessRouter = router({
               bountyId = newBounty.id;
             }
           } catch (bountyError) {
-            warn('[linkUserToWaitlist] Failed to create bounty:', bountyError);
+            log.warn('[linkUserToWaitlist] Failed to create bounty', { error: bountyError });
             // Don't fail the whole operation if bounty creation fails
           }
         }
 
-        info(
-          '[linkUserToWaitlist] User linked:',
-          userId,
-          'to entry:',
-          entry.id
-        );
+        log.info('[linkUserToWaitlist] User linked', { userId, entryId: entry.id });
         return {
           success: true,
           entryId: entry.id,
@@ -985,7 +965,7 @@ export const earlyAccessRouter = router({
           throw error;
         }
 
-        warn('[linkUserToWaitlist] Error:', error);
+        log.warn('[linkUserToWaitlist] Error', { error });
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to link user to waitlist',
@@ -1017,7 +997,7 @@ export const earlyAccessRouter = router({
 
         // If already unlinked, just return success
         if (!entry.userId) {
-          info('[unlinkGithub] Entry already unlinked:', entry.id);
+          log.info('[unlinkGithub] Entry already unlinked', { entryId: entry.id });
           return {
             success: true,
             entryId: entry.id,
@@ -1038,7 +1018,7 @@ export const earlyAccessRouter = router({
           .set({ userId: null })
           .where(eq(waitlist.id as any, entry.id) as any);
 
-        info('[unlinkGithub] User unlinked:', userId, 'from entry:', entry.id);
+        log.info('[unlinkGithub] User unlinked', { userId, entryId: entry.id });
         return {
           success: true,
           entryId: entry.id,
@@ -1048,7 +1028,7 @@ export const earlyAccessRouter = router({
           throw error;
         }
 
-        warn('[unlinkGithub] Error:', error);
+        log.warn('[unlinkGithub] Error', { error });
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to disconnect GitHub',
@@ -1139,7 +1119,7 @@ export const earlyAccessRouter = router({
           })
           .where(eq(waitlist.id as any, entryId) as any);
 
-        info('[updateBountyDraft] Updated draft for entry:', entryId);
+        log.info('[updateBountyDraft] Updated draft for entry', { entryId });
 
         return {
           success: true,
@@ -1150,7 +1130,7 @@ export const earlyAccessRouter = router({
           throw error;
         }
 
-        warn('[updateBountyDraft] Error:', error);
+        log.warn('[updateBountyDraft] Error', { error });
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to update bounty draft',

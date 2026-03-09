@@ -1,6 +1,7 @@
 import { auth } from '@bounty/auth/server';
 import { account, db } from '@bounty/db';
 import { eq } from 'drizzle-orm';
+import { withEvlog, log } from '@bounty/logging';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
@@ -9,7 +10,7 @@ import { NextResponse } from 'next/server';
  *
  * Returns all linked accounts for the authenticated user.
  */
-export async function GET(req: NextRequest) {
+export const GET = withEvlog(async function GET(req: NextRequest) {
   try {
     const session = await auth.api.getSession({
       headers: req.headers,
@@ -29,10 +30,10 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ accounts: userAccounts });
   } catch (error) {
-    console.error('Error fetching linked accounts:', error);
+    log.error('Error fetching linked accounts', { error });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

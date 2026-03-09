@@ -1,4 +1,5 @@
 import { env } from '@bounty/env/server';
+import { log } from '@bounty/logging';
 import { account, discordGuild } from '@bounty/db';
 import { eq, and, isNull, inArray } from 'drizzle-orm';
 import { protectedProcedure, orgProcedure, router } from '../trpc';
@@ -81,7 +82,7 @@ export const discordRouter = router({
             : null;
         }
       } catch (error) {
-        console.error('Failed to fetch Discord user profile:', error);
+        log.error('Failed to fetch Discord user profile', { error });
       }
     }
 
@@ -148,7 +149,7 @@ export const discordRouter = router({
         userGuildIds = userGuilds.map((g) => g.id);
       }
     } catch (error) {
-      console.error('Failed to fetch user guilds from Discord:', error);
+      log.error('Failed to fetch user guilds from Discord', { error });
     }
 
     if (userGuildIds.length === 0) {

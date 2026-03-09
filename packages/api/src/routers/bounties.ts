@@ -30,6 +30,7 @@ import {
   approvalWithdrawnComment,
 } from '@bounty/api/src/lib/bot-comments';
 import { track } from '@bounty/track';
+import { log } from '@bounty/logging';
 import { TRPCError } from '@trpc/server';
 import {
   createBountyCheckoutSession,
@@ -150,9 +151,7 @@ async function ensureStripeCustomer(
     } catch (error) {
       // Customer doesn't exist in Stripe (deleted, wrong environment, etc.)
       // Create a new one and update the database
-      console.warn(
-        `Stripe customer ${existingUser.stripeCustomerId} not found, creating new customer for user ${userId} ${error}`
-      );
+      log.warn('Stripe customer not found, creating new customer', { stripeCustomerId: existingUser.stripeCustomerId, userId, error });
       throw error;
     }
   }
@@ -196,9 +195,7 @@ async function ensureOrgStripeCustomer(
       await stripeClient.customers.retrieve(existingOrg.stripeCustomerId);
       return existingOrg.stripeCustomerId;
     } catch {
-      console.warn(
-        `Stripe customer ${existingOrg.stripeCustomerId} not found for org ${orgId}, creating new customer`
-      );
+      log.warn('Stripe customer not found for org, creating new customer', { stripeCustomerId: existingOrg.stripeCustomerId, orgId });
     }
   }
 
@@ -470,7 +467,7 @@ export const bountiesRouter = router({
         },
       };
     } catch (error) {
-      console.error('Failed to get monthly spend:', error);
+      log.error('Failed to get monthly spend', { error });
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Failed to get monthly spending data',
@@ -631,7 +628,7 @@ export const bountiesRouter = router({
             // Update newBounty to reflect the changes
             newBounty.githubIssueNumber = githubIssue.number;
           } catch (error) {
-            console.error('Failed to create GitHub mirror issue:', error);
+            log.error('Failed to create GitHub mirror issue', { error });
             // Continue even if GitHub issue creation fails
           }
         }
@@ -667,7 +664,7 @@ export const bountiesRouter = router({
               .set({ githubCommentId: botComment.id })
               .where(eq(bounty.id, newBounty.id));
           } catch (error) {
-            console.error('Failed to post GitHub bot comment:', error);
+            log.error('Failed to post GitHub bot comment', { error });
             // Continue even if bot comment fails
           }
         }
@@ -778,7 +775,7 @@ export const bountiesRouter = router({
             },
           }).catch((error) => {
             // Silently log webhook failures - don't affect bounty creation
-            console.error('Failed to send unfunded bounty webhook:', error);
+            log.error('Failed to send unfunded bounty webhook', { error });
           });
         }
 
@@ -806,7 +803,7 @@ export const bountiesRouter = router({
               }
             } catch (error) {
               // Silently fail - link parsing is non-critical
-              console.error('Failed to parse bounty links:', error);
+              log.error('Failed to parse bounty links', { error });
             }
           })();
         }
@@ -1167,7 +1164,7 @@ export const bountiesRouter = router({
         };
       } catch (error) {
         // If isFeatured column doesn't exist, return empty array
-        console.error('Error fetching highlights:', error);
+        log.error('Error fetching highlights', { error });
         return {
           success: true,
           data: [],
@@ -1329,7 +1326,7 @@ export const bountiesRouter = router({
                 );
               }
             } catch (error) {
-              console.error('Failed to update bounty links:', error);
+              log.error('Failed to update bounty links', { error });
             }
           })();
         }
@@ -3054,10 +3051,7 @@ export const bountiesRouter = router({
                         updatedCommentBody
                       );
                     } catch (error) {
-                      console.error(
-                        'Failed to update GitHub comment to funded status:',
-                        error
-                      );
+                      log.error('Failed to update GitHub comment to funded status', { error });
                       // Continue even if comment update fails
                     }
                   }
@@ -3216,10 +3210,7 @@ export const bountiesRouter = router({
                   updatedCommentBody
                 );
               } catch (error) {
-                console.error(
-                  'Failed to update GitHub comment to funded status:',
-                  error
-                );
+                log.error('Failed to update GitHub comment to funded status', { error });
                 // Continue even if comment update fails
               }
             }
@@ -3350,10 +3341,7 @@ export const bountiesRouter = router({
                   updatedCommentBody
                 );
               } catch (error) {
-                console.error(
-                  'Failed to update GitHub comment to funded status:',
-                  error
-                );
+                log.error('Failed to update GitHub comment to funded status', { error });
                 // Continue even if comment update fails
               }
             }
@@ -3442,10 +3430,7 @@ export const bountiesRouter = router({
                 updatedCommentBody
               );
             } catch (error) {
-              console.error(
-                'Failed to update GitHub comment to funded status:',
-                error
-              );
+              log.error('Failed to update GitHub comment to funded status', { error });
               // Continue even if comment update fails
             }
           }
@@ -3786,10 +3771,7 @@ export const bountiesRouter = router({
                 bountyAmount: bountyAmountFormatted,
               }),
             }).catch((emailError) => {
-              console.error(
-                `[Cancellation] Failed to email submitter ${submitter.email}:`,
-                emailError
-              );
+              log.error('Failed to email submitter', { email: submitter.email, error: emailError });
             })
           );
         await Promise.allSettled(emailPromises);
@@ -3827,9 +3809,7 @@ To process this request:
           `.trim(),
         });
 
-        console.log(
-          `[Cancellation] Request created for bounty ${input.bountyId}, ${pendingSubmitters.length} submitters to notify`
-        );
+        log.info('Cancellation request created', { bountyId: input.bountyId, submittersToNotify: pendingSubmitters.length });
 
         return {
           success: true,
@@ -3924,9 +3904,7 @@ To process this request:
           });
         }
 
-        console.log(
-          `[Cancellation] Request ${existingRequest.id} withdrawn by creator for bounty ${input.bountyId}`
-        );
+        log.info('Cancellation request withdrawn by creator', { requestId: existingRequest.id, bountyId: input.bountyId });
 
         return {
           success: true,
@@ -4015,14 +3993,9 @@ To process this request:
                 bountyRecord.stripePaymentIntentId,
                 refundAmountInCents
               );
-              console.log(
-                `[Cancellation] Stripe refund issued for bounty ${request.bountyId}: $${refundAmount} (${refundAmountInCents} cents)`
-              );
+              log.info('Stripe refund issued', { bountyId: request.bountyId, refundAmount, refundAmountInCents });
             } catch (stripeError) {
-              console.error(
-                `[Cancellation] Failed to issue Stripe refund for bounty ${request.bountyId}:`,
-                stripeError
-              );
+              log.error('Failed to issue Stripe refund', { bountyId: request.bountyId, error: stripeError });
               throw new TRPCError({
                 code: 'INTERNAL_SERVER_ERROR',
                 message:
@@ -4056,9 +4029,7 @@ To process this request:
           // the confirmation email + in-app notification to the creator.
           // We log here but don't duplicate notifications.
 
-          console.log(
-            `[Cancellation] Approved for bounty ${request.bountyId}, refund: $${refundAmount}`
-          );
+          log.info('Cancellation approved', { bountyId: request.bountyId, refundAmount });
 
           // Invalidate caches
           await invalidateBountyCaches();
@@ -4187,9 +4158,7 @@ To process this request:
             .where(eq(cancellationRequest.id, pendingRequest.id));
         }
 
-        console.log(
-          `[Refund] Bounty ${input.bountyId} marked as refunded by ${ctx.session.user.id}`
-        );
+        log.info('Bounty marked as refunded', { bountyId: input.bountyId, userId: ctx.session.user.id });
 
         return {
           success: true,
@@ -4319,9 +4288,7 @@ To process this request:
               )
             );
 
-          console.log(
-            `[Sync] Bounty ${input.bountyId} synced as refunded (${refundedAmount} of ${originalAmount})`
-          );
+          log.info('Bounty synced as refunded', { bountyId: input.bountyId, refundedAmount, originalAmount });
 
           return {
             success: true,
@@ -4371,9 +4338,7 @@ To process this request:
             )
           );
 
-        console.log(
-          `[Sync] Bounty ${input.bountyId} synced as refunded (${refundedAmount} of ${originalAmount})`
-        );
+        log.info('Bounty synced as refunded', { bountyId: input.bountyId, refundedAmount, originalAmount });
 
         return {
           success: true,
@@ -4679,9 +4644,7 @@ To process this request:
           })
           .where(eq(bounty.id, input.bountyId));
 
-        console.log(
-          `[Sync] Bounty ${input.bountyId} synced to GitHub issue ${repoOwner}/${repoName}#${issueNumber}`
-        );
+        log.info('Bounty synced to GitHub issue', { bountyId: input.bountyId, repoOwner, repoName, issueNumber });
 
         return {
           success: true,
@@ -4877,9 +4840,7 @@ To approve and pay:
           })
           .where(eq(bounty.id, input.bountyId));
 
-        console.log(
-          `[Create Issue] GitHub issue created for bounty ${input.bountyId}: ${repoOwner}/${repoName}#${issue.number}`
-        );
+        log.info('GitHub issue created for bounty', { bountyId: input.bountyId, repoOwner, repoName, issueNumber: issue.number });
 
         return {
           success: true,
@@ -5029,10 +4990,7 @@ To approve and pay:
             );
           }
         } catch (error) {
-          console.error(
-            '[approveSubmission] Failed to post GitHub comment:',
-            error
-          );
+          log.error('[approveSubmission] Failed to post GitHub comment', { error });
         }
       }
 
@@ -5152,10 +5110,7 @@ To approve and pay:
             );
           }
         } catch (error) {
-          console.error(
-            '[unapproveSubmission] Failed to post GitHub comment:',
-            error
-          );
+          log.error('[unapproveSubmission] Failed to post GitHub comment', { error });
         }
       }
 
@@ -5427,10 +5382,7 @@ To approve and pay:
               'success'
             );
           } catch (error) {
-            console.error(
-              '[mergeSubmission] Failed to mark operation performed:',
-              error
-            );
+            log.error('[mergeSubmission] Failed to mark operation performed', { error });
           }
 
           return 'released' as const;

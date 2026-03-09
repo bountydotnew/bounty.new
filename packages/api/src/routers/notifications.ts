@@ -1,3 +1,4 @@
+import { log } from '@bounty/logging';
 import { createNotification, db, notification } from '@bounty/db';
 import { TRPCError } from '@trpc/server';
 import { and, count, desc, eq, lt } from 'drizzle-orm';
@@ -65,7 +66,7 @@ export const notificationsRouter = router({
           ts: Date.now(),
         });
       } catch (emitError) {
-        console.error('[sendToUser] Failed to emit realtime event:', {
+        log.error('[sendToUser] Failed to emit realtime event', {
           operation: 'sendToUser',
           userId: input.userId,
           error: emitError,
@@ -133,7 +134,7 @@ export const notificationsRouter = router({
           ts: Date.now(),
         });
       } catch (emitError) {
-        console.error('[markAsRead] Failed to emit realtime event:', {
+        log.error('[markAsRead] Failed to emit realtime event', {
           operation: 'markAsRead',
           userId: ctx.session.user.id,
           error: emitError,
@@ -154,7 +155,7 @@ export const notificationsRouter = router({
         ts: Date.now(),
       });
     } catch (emitError) {
-      console.error('[markAllAsRead] Failed to emit realtime event:', {
+      log.error('[markAllAsRead] Failed to emit realtime event', {
         operation: 'markAllAsRead',
         userId: ctx.session.user.id,
         error: emitError,
@@ -226,7 +227,7 @@ export const notificationsRouter = router({
 
         return { success: true, message: 'Webhook sent successfully' };
       } catch (err) {
-        console.error('[sendWebhook] Error:', err);
+        log.error('[sendWebhook] Error', { error: err });
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to send webhook',
@@ -242,7 +243,7 @@ export const notificationsRouter = router({
         const webhookUrl = process.env.DISCORD_WEBHOOK_URL as string;
 
         if (!webhookUrl) {
-          console.warn('[sendError] Discord webhook not configured');
+          log.warn('[sendError] Discord webhook not configured');
           return { success: false, message: 'Webhook not configured' };
         }
 
@@ -260,7 +261,7 @@ export const notificationsRouter = router({
             : 'Failed to send error webhook',
         };
       } catch (err) {
-        console.error('[sendError] Error:', err);
+        log.error('[sendError] Error', { error: err });
         return { success: false, message: 'Failed to send error webhook' };
       }
     }),
@@ -299,7 +300,7 @@ export const notificationsRouter = router({
         message: 'Test webhook sent successfully',
       };
     } catch (err) {
-      console.error('[testWebhook] Error:', err);
+      log.error('[testWebhook] Error', { error: err });
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Failed to test webhook',
@@ -352,10 +353,10 @@ export const notificationsRouter = router({
         }
 
         // In development, just log locally
-        console.info('[reportError] Client error (dev mode):', input.error);
+        log.info('[reportError] Client error (dev mode)', { error: input.error });
         return { success: true, message: 'Error logged in development' };
       } catch (err) {
-        console.error('[reportError] Error:', err);
+        log.error('[reportError] Error', { error: err });
         return { success: false, message: 'Failed to report error' };
       }
     }),

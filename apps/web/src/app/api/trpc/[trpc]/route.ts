@@ -1,4 +1,5 @@
 import { appRouter, createContext } from '@bounty/api';
+import { withEvlog } from '@bounty/logging';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import type { NextRequest } from 'next/server';
 
@@ -21,7 +22,7 @@ function addCorsHeaders(response: Response): Response {
   return newResponse;
 }
 
-async function handler(req: NextRequest) {
+const handler = withEvlog(async (req: NextRequest) => {
   const response = await fetchRequestHandler({
     endpoint: '/api/trpc',
     req,
@@ -29,7 +30,7 @@ async function handler(req: NextRequest) {
     createContext: () => createContext(req),
   });
   return addCorsHeaders(response);
-}
+});
 
 export function OPTIONS() {
   if (process.env.NODE_ENV !== 'development') {

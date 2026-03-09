@@ -18,6 +18,7 @@
  */
 
 import { env } from '@bounty/env/server';
+import { withEvlog, log } from '@bounty/logging';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import {
@@ -29,11 +30,11 @@ import {
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-export async function POST(request: Request) {
+export const POST = withEvlog(async function POST(request: Request) {
   try {
     const webhookSecret = env.RESEND_WEBHOOK_SECRET;
     if (!webhookSecret) {
-      console.error('[Resend Webhook] RESEND_WEBHOOK_SECRET not configured');
+      log.error('[Resend Webhook] RESEND_WEBHOOK_SECRET not configured');
       return NextResponse.json(
         { error: 'Webhook not configured' },
         { status: 500 }
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('[Resend Webhook] Error:', error);
+    log.error('[Resend Webhook] Error', { error });
 
     // Signature verification failures
     if (
@@ -88,7 +89,7 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+});
 
 // ============================================================================
 // Event Handlers
@@ -106,7 +107,7 @@ export async function POST(request: Request) {
 async function handleEmailReceived(event: EmailReceivedEvent) {
   const { email_id, from, to, subject, attachments } = event.data;
 
-  console.log('[Resend Webhook] Email received:', {
+  log.info('[Resend Webhook] Email received', {
     emailId: email_id,
     from,
     to,
@@ -120,12 +121,12 @@ async function handleEmailReceived(event: EmailReceivedEvent) {
     const { data: emailContent, error } = await getReceivedEmail(email_id);
 
     if (error) {
-      console.error('[Resend Webhook] Failed to fetch email content:', error);
+      log.error('[Resend Webhook] Failed to fetch email content', { error });
       return;
     }
 
     if (emailContent) {
-      console.log('[Resend Webhook] Email content fetched:', {
+      log.info('[Resend Webhook] Email content fetched', {
         emailId: email_id,
         hasHtml: !!emailContent.html,
         hasText: !!emailContent.text,
@@ -145,6 +146,6 @@ async function handleEmailReceived(event: EmailReceivedEvent) {
     // }
     // ======================================================================
   } catch (err) {
-    console.error('[Resend Webhook] Error processing email:', err);
+    log.error('[Resend Webhook] Error processing email', { error: err });
   }
 }

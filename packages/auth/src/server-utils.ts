@@ -6,6 +6,7 @@
 
 import { headers } from 'next/headers';
 import { cache } from 'react';
+import { log } from '@bounty/logging';
 import { auth } from './server';
 import type { AuthSession } from './server';
 
@@ -33,7 +34,7 @@ export const getServerSession = cache(async (): Promise<AuthSession | null> => {
     });
     return result;
   } catch (error) {
-    console.error('Failed to get server session:', error);
+    log.error('Failed to get server session', { error });
     return null;
   }
 });

@@ -1,3 +1,4 @@
+import { log } from '@bounty/logging';
 import { db, payout, user, organization } from '@bounty/db';
 import { TRPCError } from '@trpc/server';
 import { eq, desc, sql, inArray } from 'drizzle-orm';
@@ -108,7 +109,7 @@ export const connectRouter = router({
           }
         } catch (error) {
           // Account might not exist in Stripe, ignore
-          console.error('Failed to get Connect account status:', error);
+          log.error('Failed to get Connect account status', { error });
         }
       }
 
@@ -193,7 +194,7 @@ export const connectRouter = router({
               .set({ stripeConnectAccountId: connectAccountId })
               .where(eq(user.id, ctx.session.user.id));
           } catch (error) {
-            console.error('Failed to create Connect account:', error);
+            log.error('Failed to create Connect account', { error });
             const errorMessage =
               error instanceof Error ? error.message : 'Unknown error';
 
@@ -235,7 +236,7 @@ export const connectRouter = router({
             },
           };
         } catch (error) {
-          console.error('Failed to create account link:', error);
+          log.error('Failed to create account link', { error });
           const errorMessage =
             error instanceof Error ? error.message : 'Unknown error';
           throw new TRPCError({
@@ -283,7 +284,7 @@ export const connectRouter = router({
           userData.stripeConnectAccountId
         );
       } catch (statusError) {
-        console.error('Connect account not found in Stripe:', statusError);
+        log.error('Connect account not found in Stripe', { error: statusError });
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message:
@@ -335,10 +336,7 @@ export const connectRouter = router({
         const errorMessage =
           loginError instanceof Error ? loginError.message : 'Unknown error';
 
-        console.log(
-          'Failed to create login link, falling back to onboarding:',
-          errorMessage
-        );
+        log.info('Failed to create login link, falling back to onboarding', { error: errorMessage });
 
         const baseUrl = env.BETTER_AUTH_URL;
         const orgSlug = await resolveActiveOrgSlug(
@@ -363,7 +361,7 @@ export const connectRouter = router({
       if (error instanceof TRPCError) {
         throw error;
       }
-      console.error('Failed to get dashboard link:', error);
+      log.error('Failed to get dashboard link', { error });
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
       throw new TRPCError({
@@ -462,7 +460,7 @@ export const connectRouter = router({
         },
       };
     } catch (error) {
-      console.error('Failed to get account balance:', error);
+      log.error('Failed to get account balance', { error });
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Failed to get account balance',
@@ -570,7 +568,7 @@ export const connectRouter = router({
           },
         };
       } catch (error) {
-        console.error('[getActivity] Error:', error);
+        log.error('[getActivity] Error', { error });
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to get activity',
@@ -628,7 +626,7 @@ export const connectRouter = router({
         'statusCode' in error &&
         (error as { statusCode: number }).statusCode === 404;
       if (!isNotFound) {
-        console.error('Failed to delete Connect account on Stripe:', error);
+        log.error('Failed to delete Connect account on Stripe', { error });
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to delete Connect account. Please try again.',
