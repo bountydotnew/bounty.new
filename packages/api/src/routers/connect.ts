@@ -119,8 +119,8 @@ export const connectRouter = router({
             accountStatus?.onboardingComplete ??
             userData.stripeConnectOnboardingComplete ??
             false,
-          cardPaymentsActive: accountStatus?.cardPaymentsActive,
-          transfersActive: accountStatus?.transfersActive,
+          cardPaymentsActive: accountStatus?.cardPaymentsActive ?? false,
+          transfersActive: accountStatus?.transfersActive ?? false,
           connectAccountId: userData.stripeConnectAccountId,
           accountDetails,
         },
