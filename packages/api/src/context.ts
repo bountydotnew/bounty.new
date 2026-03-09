@@ -1,5 +1,6 @@
 import { auth } from '@bounty/auth/server';
 import { db } from '@bounty/db';
+import { log } from '@bounty/logging';
 import type { NextRequest } from 'next/server';
 
 function getClientIP(req: NextRequest): string {
@@ -47,7 +48,7 @@ export async function createContext(req: NextRequest) {
     });
   } catch (error) {
     sessionError = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[Context] getSession threw error:', sessionError);
+    log.error('getSession threw error', { context: 'Context', error: sessionError });
   }
 
   // Debug logging for session issues
@@ -59,7 +60,8 @@ export async function createContext(req: NextRequest) {
   // Only log for protected endpoints that need auth
   const isBillingEndpoint = req.url.includes('billing');
   if (!session && isBillingEndpoint) {
-    console.log('[Context] No session found for billing:', {
+    log.info('No session found for billing', {
+      context: 'Context',
       hasCookies,
       hasSessionCookie,
       hasAuthHeader: !!authHeader,

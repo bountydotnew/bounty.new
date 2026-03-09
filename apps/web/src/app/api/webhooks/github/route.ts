@@ -1,3 +1,4 @@
+import { withEvlog, useLogger, log } from '@bounty/logging';
 import {
   db,
   bounty,
@@ -429,16 +430,18 @@ async function resolveBountyIssueForUnsubmit(
   return ctx.issueNumber;
 }
 
-export async function POST(request: Request) {
+export const POST = withEvlog(async (request: Request) => {
+  const logger = useLogger();
   try {
     const body = await request.text();
     const headersList = await headers();
     const signature = headersList.get('x-hub-signature-256');
 
-    console.log('[GitHub Webhook] Received webhook request');
+    logger.set({ operation: 'github-webhook' });
+    log.info('[GitHub Webhook] Received webhook request');
 
     if (!signature) {
-      console.error('[GitHub Webhook] Missing x-hub-signature-256 header');
+      log.error('[GitHub Webhook] Missing x-hub-signature-256 header');
       return NextResponse.json(
         { error: 'Missing signature header' },
         { status: 400 }
@@ -450,7 +453,7 @@ export async function POST(request: Request) {
     const isValid = await githubApp.verifyWebhookSignature(signature, body);
 
     if (!isValid) {
-      console.error('[GitHub Webhook] Signature verification failed');
+      log.error('[GitHub Webhook] Signature verification failed');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
@@ -488,18 +491,18 @@ export async function POST(request: Request) {
     ) {
       await handleInstallationEvent(event);
     } else {
-      console.log('[GitHub Webhook] Unhandled event type');
+      log.info('[GitHub Webhook] Unhandled event type');
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('[GitHub Webhook] Error processing webhook:', error);
+    log.error('[GitHub Webhook] Error processing webhook', { error });
     return NextResponse.json(
       { error: 'Webhook handler failed' },
       { status: 500 }
     );
   }
-}
+});
 
 function getIssueNumberFromPrBody(prBody: string | null): number | null {
   if (!prBody) {
@@ -603,19 +606,20 @@ async function checkEarlyAccessForUser(
 async function handleIssueComment(event: IssueCommentEvent) {
   const { issue, comment, repository, installation } = event;
 
-  console.log(
-    `[GitHub Webhook] Issue comment created: ${repository.owner.login}/${repository.name}#${issue.number}`
-  );
+  log.info('[GitHub Webhook] Issue comment created', {
+    repo: `${repository.owner.login}/${repository.name}`,
+    issueNumber: issue.number,
+  });
 
   if (!installation?.id) {
-    console.warn('[GitHub Webhook] No installation ID, skipping');
+    log.warn('[GitHub Webhook] No installation ID, skipping');
     return;
   }
 
   // Ignore comments from the bot itself to avoid infinite loops
   // GitHub bot accounts have '[bot]' in their login name (e.g., 'bountydotnew[bot]')
   if (comment.user.login.includes('[bot]')) {
-    console.log('[GitHub Webhook] Ignoring comment from bot');
+    log.info('[GitHub Webhook] Ignoring comment from bot');
     return;
   }
 
@@ -623,11 +627,11 @@ async function handleIssueComment(event: IssueCommentEvent) {
   const command = parseBotCommand(comment.body);
 
   if (!command) {
-    console.log('[GitHub Webhook] No bot command found');
+    log.info('[GitHub Webhook] No bot command found');
     return;
   }
 
-  console.log(`[GitHub Webhook] Command found: ${command.action}`);
+  log.info('[GitHub Webhook] Command found', { action: command.action });
 
   // Add eyes reaction to acknowledge the command
   const githubApp = getGithubAppManager();
@@ -641,7 +645,7 @@ async function handleIssueComment(event: IssueCommentEvent) {
     );
   } catch (error) {
     // Don't fail if reaction fails
-    console.warn('[GitHub Webhook] Failed to add reaction:', error);
+    log.warn('[GitHub Webhook] Failed to add reaction', { error });
   }
 
   // Check early access before processing any command
@@ -690,10 +694,10 @@ async function handleBountyUnsubmitCommand(
   command: Extract<ReturnType<typeof parseBotCommand>, { action: 'unsubmit' }>
 ) {
   const { issue, repository, installation, comment } = event;
-  console.log('[GitHub Webhook] Unsubmit command received');
+  log.info('[GitHub Webhook] Unsubmit command received');
 
   if (!installation?.id) {
-    console.warn('[GitHub Webhook] No installation ID, skipping');
+    log.warn('[GitHub Webhook] No installation ID, skipping');
     return;
   }
 
@@ -798,10 +802,7 @@ async function handleBountyUnsubmitCommand(
         submissionWithdrawnComment()
       );
     } catch (error) {
-      console.warn(
-        '[GitHub Webhook] Failed to update submission comment:',
-        error
-      );
+      log.warn('[GitHub Webhook] Failed to update submission comment', { error });
     }
   }
 
@@ -847,12 +848,13 @@ async function handleBountyCreateCommand(
 ) {
   const { issue, repository, installation, comment } = event;
 
-  console.log(
-    `[GitHub Webhook] Creating bounty: ${command.amount} ${command.currency}`
-  );
+  log.info('[GitHub Webhook] Creating bounty', {
+    amount: command.amount,
+    currency: command.currency,
+  });
 
   if (!installation?.id) {
-    console.warn('[GitHub Webhook] No installation ID');
+    log.warn('[GitHub Webhook] No installation ID');
     return;
   }
 
@@ -890,9 +892,9 @@ async function handleBountyCreateCommand(
   );
 
   if (!isMaintainerPermission(permission)) {
-    console.log(
-      `[GitHub Webhook] User ${comment.user.login} does not have permission to create bounties`
-    );
+    log.info('[GitHub Webhook] User does not have permission to create bounties', {
+      user: comment.user.login,
+    });
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
@@ -919,9 +921,9 @@ async function handleBountyCreateCommand(
     .limit(1);
 
   if (!linkedUser) {
-    console.log(
-      `[GitHub Webhook] No user found for GitHub username: ${commenterGitHubUsername}`
-    );
+    log.info('[GitHub Webhook] No user found for GitHub username', {
+      githubUsername: commenterGitHubUsername,
+    });
     // User needs to link their GitHub account first
     await githubApp.createIssueComment(
       installation.id,
@@ -947,9 +949,9 @@ async function handleBountyCreateCommand(
     .limit(1);
 
   if (existingBounty) {
-    console.log(
-      `[GitHub Webhook] Bounty already exists for issue ${issue.number}`
-    );
+    log.info('[GitHub Webhook] Bounty already exists for issue', {
+      issueNumber: issue.number,
+    });
     // Create a new reply instead of editing user's comment
     await githubApp.createIssueComment(
       installation.id,
@@ -986,9 +988,9 @@ async function handleBountyCreateCommand(
   }
 
   if (!organizationId) {
-    console.error(
-      `[GitHub Webhook] No organization found for user ${linkedUser.id}, cannot create bounty`
-    );
+    log.error('[GitHub Webhook] No organization found for user, cannot create bounty', {
+      userId: linkedUser.id,
+    });
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
@@ -1018,7 +1020,7 @@ async function handleBountyCreateCommand(
     })
     .returning();
 
-  console.log(`[GitHub Webhook] Created bounty ${newBounty.id}`);
+  log.info('[GitHub Webhook] Created bounty', { bountyId: newBounty.id });
 
   // Post the bot comment with link to bounty detail page
   const commentBody = unfundedBountyComment(
@@ -1044,7 +1046,7 @@ async function handleBountyCreateCommand(
     })
     .where(eq(bounty.id, newBounty.id));
 
-  console.log(`[GitHub Webhook] Posted bot comment ${botComment.id}`);
+  log.info('[GitHub Webhook] Posted bot comment', { commentId: botComment.id });
 }
 
 async function createSubmissionFromPullRequest(params: {
@@ -1136,7 +1138,7 @@ async function createSubmissionFromPullRequest(params: {
 
   const githubApp = getGithubAppManager();
   if (!bountyRecord.githubIssueNumber) {
-    console.error('[GitHub Webhook] No GitHub issue number for bounty');
+    log.error('[GitHub Webhook] No GitHub issue number for bounty');
     return { status: 'skipped', reason: 'no_github_issue' } as const;
   }
   const submissionComment = await githubApp.createIssueComment(
@@ -1210,10 +1212,10 @@ async function handleBountySubmitCommand(
   command: Extract<ReturnType<typeof parseBotCommand>, { action: 'submit' }>
 ) {
   const { issue, repository, installation, comment } = event;
-  console.log('[GitHub Webhook] Submit command received');
+  log.info('[GitHub Webhook] Submit command received');
 
   if (!installation?.id) {
-    console.warn('[GitHub Webhook] No installation ID, skipping');
+    log.warn('[GitHub Webhook] No installation ID, skipping');
     return;
   }
 
@@ -1367,7 +1369,7 @@ async function handleBountyApproveCommand(
   const { issue, repository, installation, comment } = event;
 
   if (!installation?.id) {
-    console.warn('[GitHub Webhook] No installation ID, skipping');
+    log.warn('[GitHub Webhook] No installation ID, skipping');
     return;
   }
 
@@ -1578,7 +1580,7 @@ async function handleBountyUnapproveCommand(
   const { issue, repository, installation, comment } = event;
 
   if (!installation?.id) {
-    console.warn('[GitHub Webhook] No installation ID, skipping');
+    log.warn('[GitHub Webhook] No installation ID, skipping');
     return;
   }
 
@@ -1760,7 +1762,7 @@ async function handleBountyReapproveCommand(
   const { issue, repository, installation, comment } = event;
 
   if (!installation?.id) {
-    console.warn('[GitHub Webhook] No installation ID, skipping');
+    log.warn('[GitHub Webhook] No installation ID, skipping');
     return;
   }
 
@@ -1806,7 +1808,7 @@ async function handleBountyReapproveCommand(
       targetPrNumber
     );
   } catch (error) {
-    console.error('[GitHub Webhook] Failed to fetch PR for reapprove:', error);
+    log.error('[GitHub Webhook] Failed to fetch PR for reapprove', { error });
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
@@ -2021,7 +2023,7 @@ async function handleBountyMergeCommand(
   const { issue, repository, installation, comment } = event;
 
   if (!installation?.id) {
-    console.warn('[GitHub Webhook] No installation ID, skipping');
+    log.warn('[GitHub Webhook] No installation ID, skipping');
     return;
   }
 
@@ -2067,7 +2069,7 @@ async function handleBountyMergeCommand(
       targetPrNumber
     );
   } catch (error) {
-    console.error('[GitHub Webhook] Failed to fetch PR for merge:', error);
+    log.error('[GitHub Webhook] Failed to fetch PR for merge', { error });
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
@@ -2353,7 +2355,7 @@ This bounty has a pending cancellation request. Payment cannot be released until
       );
       return;
     }
-    console.error('[GitHub Webhook] Failed to release payout:', error);
+    log.error('[GitHub Webhook] Failed to release payout', { error });
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
@@ -2384,12 +2386,13 @@ async function handleBountyMoveCommand(
 ) {
   const { issue, repository, installation, comment } = event;
 
-  console.log(
-    `[GitHub Webhook] Move command: moving bounty from issue #${issue.number} to issue #${command.targetIssueNumber}`
-  );
+  log.info('[GitHub Webhook] Move command: moving bounty', {
+    fromIssue: issue.number,
+    toIssue: command.targetIssueNumber,
+  });
 
   if (!installation?.id) {
-    console.warn('[GitHub Webhook] No installation ID');
+    log.warn('[GitHub Webhook] No installation ID');
     return;
   }
 
@@ -2404,9 +2407,9 @@ async function handleBountyMoveCommand(
   );
 
   if (!isMaintainerPermission(permission)) {
-    console.log(
-      `[GitHub Webhook] User ${comment.user.login} does not have permission to move bounties`
-    );
+    log.info('[GitHub Webhook] User does not have permission to move bounties', {
+      user: comment.user.login,
+    });
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
@@ -2431,7 +2434,7 @@ async function handleBountyMoveCommand(
     .limit(1);
 
   if (!bountyRecord) {
-    console.log(`[GitHub Webhook] No bounty found for issue ${issue.number}`);
+    log.info('[GitHub Webhook] No bounty found for issue', { issueNumber: issue.number });
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
@@ -2473,7 +2476,7 @@ async function handleBountyMoveCommand(
       command.targetIssueNumber
     );
   } catch (error) {
-    console.error('[GitHub Webhook] Failed to validate target issue:', error);
+    log.error('[GitHub Webhook] Failed to validate target issue', { error });
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
@@ -2495,9 +2498,10 @@ async function handleBountyMoveCommand(
     })
     .where(eq(bounty.id, bountyRecord.id));
 
-  console.log(
-    `[GitHub Webhook] Moved bounty ${bountyRecord.id} to issue #${command.targetIssueNumber}`
-  );
+  log.info('[GitHub Webhook] Moved bounty to issue', {
+    bountyId: bountyRecord.id,
+    targetIssue: command.targetIssueNumber,
+  });
 
   // Delete bot comment from old issue (if exists)
   if (bountyRecord.githubCommentId) {
@@ -2510,7 +2514,7 @@ async function handleBountyMoveCommand(
       );
     } catch (error) {
       // Comment might already be deleted, ignore error
-      console.warn('[GitHub Webhook] Failed to delete old comment:', error);
+      log.warn('[GitHub Webhook] Failed to delete old comment', { error });
     }
   }
 
@@ -2559,19 +2563,21 @@ async function handleBountyMoveCommand(
     bountyMovedComment(command.targetIssueNumber)
   );
 
-  console.log('[GitHub Webhook] Move command completed successfully');
+  log.info('[GitHub Webhook] Move command completed successfully');
 }
 
 async function handlePullRequest(event: PullRequestEvent) {
   const { pull_request, repository, installation } = event;
 
-  console.log(
-    `[GitHub Webhook] Pull request ${event.action}: ${repository.owner.login}/${repository.name}#${pull_request.number}`
-  );
+  log.info('[GitHub Webhook] Pull request event', {
+    action: event.action,
+    repo: `${repository.owner.login}/${repository.name}`,
+    prNumber: pull_request.number,
+  });
 
   const installationId = installation?.id;
   if (!installationId) {
-    console.warn('[GitHub Webhook] No installation ID, skipping');
+    log.warn('[GitHub Webhook] No installation ID, skipping');
     return;
   }
 
@@ -2583,7 +2589,7 @@ async function handlePullRequest(event: PullRequestEvent) {
   const issueNumber = getIssueNumberFromPrBody(prBody);
 
   if (!issueNumber) {
-    console.log('[GitHub Webhook] No issue number found in PR');
+    log.info('[GitHub Webhook] No issue number found in PR');
     return;
   }
 
@@ -2601,7 +2607,7 @@ async function handlePullRequest(event: PullRequestEvent) {
     .limit(1);
 
   if (!bountyRecord) {
-    console.log(`[GitHub Webhook] No bounty found for issue ${issueNumber}`);
+    log.info('[GitHub Webhook] No bounty found for issue', { issueNumber });
     return;
   }
 
@@ -2628,7 +2634,7 @@ async function handlePullRequestOpened(
   const { repository, installation } = event;
   const installationId = installation?.id;
   if (!installationId) {
-    console.warn('[GitHub Webhook] No installation ID, skipping');
+    log.warn('[GitHub Webhook] No installation ID, skipping');
     return;
   }
 
@@ -2644,9 +2650,9 @@ async function handlePullRequestOpened(
     pull_request.user.login
   );
   if (!earlyAccessCheck.allowed) {
-    console.log(
-      `[GitHub Webhook] User ${pull_request.user.login} does not have early access, skipping auto-submit`
-    );
+    log.info('[GitHub Webhook] User does not have early access, skipping auto-submit', {
+      user: pull_request.user.login,
+    });
 
     const githubApp = getGithubAppManager();
     await githubApp.createIssueComment(
@@ -2678,15 +2684,16 @@ async function handlePullRequestOpened(
   });
 
   if (submissionResult.status === 'skipped') {
-    console.log(
-      `[GitHub Webhook] Submission skipped for PR ${pull_request.number}: ${submissionResult.reason}`
-    );
+    log.info('[GitHub Webhook] Submission skipped for PR', {
+      prNumber: pull_request.number,
+      reason: submissionResult.reason,
+    });
     return;
   }
 
-  console.log(
-    `[GitHub Webhook] Created submission for PR ${pull_request.number}`
-  );
+  log.info('[GitHub Webhook] Created submission for PR', {
+    prNumber: pull_request.number,
+  });
 }
 
 async function handlePullRequestMerged(
@@ -2701,15 +2708,16 @@ async function handlePullRequestMerged(
   const { repository, installation } = event;
   const installationId = installation?.id;
   if (!installationId) {
-    console.warn('[GitHub Webhook] No installation ID, skipping comment');
+    log.warn('[GitHub Webhook] No installation ID, skipping comment');
     return;
   }
 
   const githubApp = getGithubAppManager();
 
-  console.log(
-    `[GitHub Webhook] PR ${pull_request.number} merged, processing payment for bounty ${bountyRecord.id}`
-  );
+  log.info('[GitHub Webhook] PR merged, processing payment for bounty', {
+    prNumber: pull_request.number,
+    bountyId: bountyRecord.id,
+  });
 
   // Find the submission for this PR
   const [submissionRecord] = await db
@@ -2724,9 +2732,9 @@ async function handlePullRequestMerged(
     .limit(1);
 
   if (!submissionRecord) {
-    console.log(
-      `[GitHub Webhook] No submission found for PR ${pull_request.number}, skipping auto-payment`
-    );
+    log.info('[GitHub Webhook] No submission found for PR, skipping auto-payment', {
+      prNumber: pull_request.number,
+    });
     return;
   }
 
@@ -2760,9 +2768,10 @@ async function handlePullRequestMerged(
     })();
 
     if (!(mergerIsMaintainer || mergerIsBountyCreator)) {
-      console.log(
-        `[GitHub Webhook] PR ${pull_request.number} merged by ${mergerLogin} who is not a maintainer or bounty creator, skipping auto-payment`
-      );
+      log.info('[GitHub Webhook] PR merged by non-authorized user, skipping auto-payment', {
+        prNumber: pull_request.number,
+        mergerLogin,
+      });
       try {
         await githubApp.createIssueComment(
           installationId,
@@ -2772,24 +2781,26 @@ async function handlePullRequestMerged(
           `PR #${pull_request.number} has been merged but the submission hasn't been approved yet.\n\nA maintainer or the bounty creator can run \`/approve ${pull_request.number}\` then \`/merge ${pull_request.number}\` to release payment.`
         );
       } catch (commentError) {
-        console.error(
-          '[GitHub Webhook] Failed to post unapproved merge comment:',
-          commentError
-        );
+        log.error('[GitHub Webhook] Failed to post unapproved merge comment', {
+          error: commentError,
+        });
       }
       return;
     }
 
-    console.log(
-      `[GitHub Webhook] PR ${pull_request.number} merged by authorized user ${mergerLogin} (maintainer: ${mergerIsMaintainer}, creator: ${mergerIsBountyCreator}), auto-approving and releasing payment`
-    );
+    log.info('[GitHub Webhook] PR merged by authorized user, auto-approving and releasing payment', {
+      prNumber: pull_request.number,
+      mergerLogin,
+      mergerIsMaintainer,
+      mergerIsBountyCreator,
+    });
   }
 
   // Already paid out — nothing to do
   if (isBountyReleased(bountyRecord)) {
-    console.log(
-      `[GitHub Webhook] Bounty ${bountyRecord.id} already paid out, skipping`
-    );
+    log.info('[GitHub Webhook] Bounty already paid out, skipping', {
+      bountyId: bountyRecord.id,
+    });
     return;
   }
 
@@ -2801,9 +2812,10 @@ async function handlePullRequestMerged(
 
   // For paid bounties, funds must be held before we can release
   if (!(isFreeBounty || isBountyFunded(bountyRecord))) {
-    console.log(
-      `[GitHub Webhook] Bounty ${bountyRecord.id} not funded (status: ${bountyRecord.paymentStatus}), cannot auto-release on merge`
-    );
+    log.info('[GitHub Webhook] Bounty not funded, cannot auto-release on merge', {
+      bountyId: bountyRecord.id,
+      paymentStatus: bountyRecord.paymentStatus,
+    });
     return;
   }
 
@@ -2820,9 +2832,10 @@ async function handlePullRequestMerged(
     .limit(1);
 
   if (pendingCancellation) {
-    console.log(
-      `[GitHub Webhook] Bounty ${bountyRecord.id} has pending cancellation request ${pendingCancellation.id}, skipping auto-payment`
-    );
+    log.info('[GitHub Webhook] Bounty has pending cancellation request, skipping auto-payment', {
+      bountyId: bountyRecord.id,
+      cancellationId: pendingCancellation.id,
+    });
     try {
       await githubApp.createIssueComment(
         installationId,
@@ -2832,10 +2845,9 @@ async function handlePullRequestMerged(
         `PR #${pull_request.number} was merged, but this bounty has a pending cancellation request. Payment was not released. If the cancellation is withdrawn, a maintainer can run \`/merge ${pull_request.number}\` to release payment.`
       );
     } catch (commentError) {
-      console.error(
-        '[GitHub Webhook] Failed to post cancellation notice:',
-        commentError
-      );
+      log.error('[GitHub Webhook] Failed to post cancellation notice', {
+        error: commentError,
+      });
     }
     return;
   }
@@ -2878,9 +2890,9 @@ async function handlePullRequestMerged(
 
   // For paid bounties, solver must have Stripe Connect set up
   if (!(isFreeBounty || isSolverReadyForPayout(solver))) {
-    console.log(
-      `[GitHub Webhook] Solver not ready for payout on bounty ${bountyRecord.id}, posting reminder`
-    );
+    log.info('[GitHub Webhook] Solver not ready for payout, posting reminder', {
+      bountyId: bountyRecord.id,
+    });
     try {
       await githubApp.createIssueComment(
         installationId,
@@ -2890,18 +2902,17 @@ async function handlePullRequestMerged(
         `PR #${pull_request.number} has been merged. @${pull_request.user.login} please connect your Stripe account at https://bounty.new/settings/payments so we can release your payout.\n\nOnce connected, a maintainer can run \`/merge ${pull_request.number}\` to release payment.`
       );
     } catch (commentError) {
-      console.error(
-        '[GitHub Webhook] Failed to post Stripe reminder comment:',
-        commentError
-      );
+      log.error('[GitHub Webhook] Failed to post Stripe reminder comment', {
+        error: commentError,
+      });
     }
     return;
   }
 
   if (!solver) {
-    console.log(
-      `[GitHub Webhook] Could not resolve solver for submission ${submissionRecord.id}`
-    );
+    log.info('[GitHub Webhook] Could not resolve solver for submission', {
+      submissionId: submissionRecord.id,
+    });
 
     // For free bounties, still mark complete even without a resolved solver
     if (isFreeBounty) {
@@ -2941,10 +2952,10 @@ async function handlePullRequestMerged(
           completionMessage
         );
       } catch (error) {
-        console.error(
-          `[GitHub Webhook] Failed to complete free bounty ${bountyRecord.id} without solver:`,
-          error
-        );
+        log.error('[GitHub Webhook] Failed to complete free bounty without solver', {
+          bountyId: bountyRecord.id,
+          error,
+        });
       }
     }
     return;
@@ -2959,9 +2970,9 @@ async function handlePullRequestMerged(
       );
 
       if (alreadyProcessed) {
-        console.log(
-          `[GitHub Webhook] Payout already processed for bounty ${bountyRecord.id}, skipping`
-        );
+        log.info('[GitHub Webhook] Payout already processed for bounty, skipping', {
+          bountyId: bountyRecord.id,
+        });
         return;
       }
 
@@ -2981,9 +2992,11 @@ async function handlePullRequestMerged(
         return;
       }
       if (!isFreeBounty && latestBounty.paymentStatus !== 'held') {
-        console.log(
-          `[GitHub Webhook] Bounty ${bountyRecord.id} paymentStatus is '${latestBounty.paymentStatus}' (expected 'held'), skipping`
-        );
+        log.info('[GitHub Webhook] Bounty paymentStatus unexpected, skipping', {
+          bountyId: bountyRecord.id,
+          paymentStatus: latestBounty.paymentStatus,
+          expected: 'held',
+        });
         return;
       }
       if (
@@ -2991,9 +3004,9 @@ async function handlePullRequestMerged(
         (latestBounty.paymentStatus === 'released' ||
           latestBounty.stripeTransferId)
       ) {
-        console.log(
-          `[GitHub Webhook] Free bounty ${bountyRecord.id} already released inside lock, skipping`
-        );
+        log.info('[GitHub Webhook] Free bounty already released inside lock, skipping', {
+          bountyId: bountyRecord.id,
+        });
         return;
       }
 
@@ -3005,9 +3018,10 @@ async function handlePullRequestMerged(
         .limit(1);
 
       if (!latestSubmission || latestSubmission.status === 'rejected') {
-        console.log(
-          `[GitHub Webhook] Submission ${submissionRecord.id} no longer eligible (status: ${latestSubmission?.status}), skipping`
-        );
+        log.info('[GitHub Webhook] Submission no longer eligible, skipping', {
+          submissionId: submissionRecord.id,
+          status: latestSubmission?.status,
+        });
         return;
       }
 
@@ -3024,9 +3038,9 @@ async function handlePullRequestMerged(
         .limit(1);
 
       if (lockCancellation) {
-        console.log(
-          `[GitHub Webhook] Bounty ${bountyRecord.id} has pending cancellation inside lock, skipping`
-        );
+        log.info('[GitHub Webhook] Bounty has pending cancellation inside lock, skipping', {
+          bountyId: bountyRecord.id,
+        });
         return;
       }
 
@@ -3089,21 +3103,22 @@ async function handlePullRequestMerged(
         'success'
       );
 
-      console.log(
-        `[GitHub Webhook] Payment released for bounty ${bountyRecord.id} (transfer: ${transferId})`
-      );
+      log.info('[GitHub Webhook] Payment released for bounty', {
+        bountyId: bountyRecord.id,
+        transferId,
+      });
     });
   } catch (error) {
     if (error instanceof PaymentLockError) {
-      console.warn(
-        `[GitHub Webhook] Payment lock contention for bounty ${bountyRecord.id}, /merge command can retry`
-      );
+      log.warn('[GitHub Webhook] Payment lock contention for bounty, /merge command can retry', {
+        bountyId: bountyRecord.id,
+      });
       return;
     }
-    console.error(
-      `[GitHub Webhook] Failed to release payment on merge for bounty ${bountyRecord.id}:`,
-      error
-    );
+    log.error('[GitHub Webhook] Failed to release payment on merge for bounty', {
+      bountyId: bountyRecord.id,
+      error,
+    });
     // Post a fallback comment so the maintainer can manually trigger via /merge
     try {
       await githubApp.createIssueComment(
@@ -3114,10 +3129,9 @@ async function handlePullRequestMerged(
         `PR #${pull_request.number} was merged but automatic payout failed. A maintainer can run \`/merge ${pull_request.number}\` to retry.`
       );
     } catch (commentError) {
-      console.error(
-        '[GitHub Webhook] Failed to post fallback comment:',
-        commentError
-      );
+      log.error('[GitHub Webhook] Failed to post fallback comment', {
+        error: commentError,
+      });
     }
     return;
   }
@@ -3136,20 +3150,19 @@ async function handlePullRequestMerged(
       completionMessage
     );
   } catch (commentError) {
-    console.error(
-      '[GitHub Webhook] Failed to post completion comment:',
-      commentError
-    );
+    log.error('[GitHub Webhook] Failed to post completion comment', {
+      error: commentError,
+    });
   }
 }
 
 async function handleInstallationEvent(event: InstallationEvent) {
   const { installation, action, sender } = event;
 
-  console.log(`[GitHub Webhook] Installation ${action}: ${installation.id}`);
+  log.info('[GitHub Webhook] Installation event', { action, installationId: installation.id });
 
   if (!installation.id) {
-    console.warn('[GitHub Webhook] Installation event missing ID');
+    log.warn('[GitHub Webhook] Installation event missing ID');
     return;
   }
 
@@ -3234,12 +3247,13 @@ async function handleInstallationEvent(event: InstallationEvent) {
 async function handleIssueEdited(event: IssueEditedEvent) {
   const { issue, repository, installation } = event;
 
-  console.log(
-    `[GitHub Webhook] Issue edited: ${repository.owner.login}/${repository.name}#${issue.number}`
-  );
+  log.info('[GitHub Webhook] Issue edited', {
+    repo: `${repository.owner.login}/${repository.name}`,
+    issueNumber: issue.number,
+  });
 
   if (!installation?.id) {
-    console.warn('[GitHub Webhook] No installation ID, skipping');
+    log.warn('[GitHub Webhook] No installation ID, skipping');
     return;
   }
 
@@ -3267,21 +3281,22 @@ async function handleIssueEdited(event: IssueEditedEvent) {
       })
       .where(eq(bounty.id, bountyRecord.id));
 
-    console.log(
-      `[GitHub Webhook] Updated bounty ${bountyRecord.id} from GitHub issue edit`
-    );
+    log.info('[GitHub Webhook] Updated bounty from GitHub issue edit', {
+      bountyId: bountyRecord.id,
+    });
   }
 }
 
 async function handleIssueDeleted(event: IssueDeletedEvent) {
   const { issue, repository, installation } = event;
 
-  console.log(
-    `[GitHub Webhook] Issue deleted: ${repository.owner.login}/${repository.name}#${issue.number}`
-  );
+  log.info('[GitHub Webhook] Issue deleted', {
+    repo: `${repository.owner.login}/${repository.name}`,
+    issueNumber: issue.number,
+  });
 
   if (!installation?.id) {
-    console.warn('[GitHub Webhook] No installation ID, skipping');
+    log.warn('[GitHub Webhook] No installation ID, skipping');
     return;
   }
 
@@ -3299,9 +3314,9 @@ async function handleIssueDeleted(event: IssueDeletedEvent) {
     .limit(1);
 
   if (!bountyRecord) {
-    console.log(
-      `[GitHub Webhook] No bounty found for deleted issue ${issue.number}`
-    );
+    log.info('[GitHub Webhook] No bounty found for deleted issue', {
+      issueNumber: issue.number,
+    });
     return;
   }
 
@@ -3311,7 +3326,7 @@ async function handleIssueDeleted(event: IssueDeletedEvent) {
     bountyRecord.paymentStatus !== 'held'
   ) {
     await db.delete(bounty).where(eq(bounty.id, bountyRecord.id));
-    console.log(`[GitHub Webhook] Deleted unfunded bounty ${bountyRecord.id}`);
+    log.info('[GitHub Webhook] Deleted unfunded bounty', { bountyId: bountyRecord.id });
   } else {
     // If funded, orphan the bounty (clear GitHub link fields but keep the bounty)
     await db
@@ -3325,8 +3340,8 @@ async function handleIssueDeleted(event: IssueDeletedEvent) {
         updatedAt: new Date(),
       })
       .where(eq(bounty.id, bountyRecord.id));
-    console.log(
-      `[GitHub Webhook] Orphaned funded bounty ${bountyRecord.id} (issue deleted)`
-    );
+    log.info('[GitHub Webhook] Orphaned funded bounty (issue deleted)', {
+      bountyId: bountyRecord.id,
+    });
   }
 }

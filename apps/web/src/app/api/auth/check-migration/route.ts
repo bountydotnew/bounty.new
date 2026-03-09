@@ -1,6 +1,7 @@
 import { auth } from '@bounty/auth/server';
 import { account, db } from '@bounty/db';
 import { eq } from 'drizzle-orm';
+import { withEvlog, log } from '@bounty/logging';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
@@ -13,7 +14,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * - needsMigration: true if user only has email/password auth
  * - hasOAuth: true if user has at least one OAuth provider linked
  */
-export async function GET(req: NextRequest) {
+export const GET = withEvlog(async function GET(req: NextRequest) {
   try {
     const session = await auth.api.getSession({
       headers: req.headers,
@@ -40,10 +41,10 @@ export async function GET(req: NextRequest) {
       hasOAuth,
     });
   } catch (error) {
-    console.error('Error checking migration status:', error);
+    log.error('Error checking migration status', { error });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

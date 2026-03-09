@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@bounty/auth": "workspace:*",
+    "@bounty/logging": "workspace:*",
     "@bounty/db": "workspace:*",
     "@bounty/email": "workspace:*",
     "@bounty/env": "workspace:*",

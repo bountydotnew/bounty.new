@@ -1,5 +1,6 @@
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
+import { log } from '@bounty/logging';
 import { getGithubAppManager } from '../../driver/github-app';
 import {
   protectedProcedure,
@@ -85,7 +86,7 @@ export const githubInstallationRouter = router({
           })),
         };
       } catch (error) {
-        console.error('Failed to get installation repositories:', error);
+        log.error('Failed to get installation repositories', { error });
 
         const isNotFound =
           error instanceof Error &&
@@ -143,7 +144,7 @@ export const githubInstallationRouter = router({
           },
         };
       } catch (error) {
-        console.error('Failed to get installation details:', error);
+        log.error('Failed to get installation details', { error });
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to fetch installation details from GitHub',
@@ -267,7 +268,7 @@ export const githubInstallationRouter = router({
           },
         };
       } catch (error) {
-        console.error('Failed to sync installation:', error);
+        log.error('Failed to sync installation', { error });
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to sync GitHub installation',
@@ -313,7 +314,7 @@ export const githubInstallationRouter = router({
           'status' in error &&
           (error as { status: number }).status === 404;
         if (!isNotFound) {
-          console.error('Failed to delete installation on GitHub:', error);
+          log.error('Failed to delete installation on GitHub', { error });
           throw new TRPCError({
             code: 'INTERNAL_SERVER_ERROR',
             message: 'Failed to uninstall the GitHub App. Please try again.',

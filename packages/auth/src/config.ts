@@ -1,4 +1,5 @@
 import { env } from '@bounty/env/server';
+import { log } from '@bounty/logging';
 import { sendEmail } from '@bounty/email';
 import { OTPVerification, ForgotPassword } from '@bounty/email';
 
@@ -60,13 +61,13 @@ export async function sendAuthEmail(options: {
     });
 
     if (result.error) {
-      console.error(`❌ Failed to send ${context} email:`, result.error);
+      log.error('Failed to send email', { context, error: result.error });
       throw new Error(`Email send failed: ${result.error.message}`);
     }
 
-    console.log(`✅ ${context} email sent successfully:`, result.data?.id);
+    log.info('Email sent successfully', { context, emailId: result.data?.id });
   } catch (error) {
-    console.error(`❌ Error in ${context}:`, error);
+    log.error('Error sending email', { context, error });
     throw error;
   }
 }

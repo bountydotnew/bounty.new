@@ -34,6 +34,7 @@ import {
 import { eq, and } from 'drizzle-orm';
 import crypto from 'node:crypto';
 import { env } from '@bounty/env/server';
+import { log } from '@bounty/logging';
 import { sendEmail, FROM_ADDRESSES, OrgInvitation } from '@bounty/email';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
@@ -137,7 +138,7 @@ async function syncGitHubHandle({
       .set({ handle: githubHandle, updatedAt: new Date() })
       .where(eq(userTable.id, userId));
 
-    console.warn(`✅ Synced GitHub handle for user ${userId}: ${githubHandle}`);
+    log.info('Synced GitHub handle for user', { userId, githubHandle });
   } catch {
     // Silently fail - don't block account creation/update
   }
@@ -233,11 +234,13 @@ async function createPersonalTeam(user: {
         });
       });
 
-      if (env.NODE_ENV !== 'production') {
-        console.warn(
-          `[createPersonalTeam] Created "${teamName}" (${slug}) for user ${user.id}${attempt > 0 ? ' (slug collision retry)' : ''}`
-        );
-      }
+      log.debug('Created personal team', {
+        context: 'createPersonalTeam',
+        teamName,
+        slug,
+        userId: user.id,
+        slugCollisionRetry: attempt > 0,
+      });
       return; // Success — exit the retry loop
     } catch (error) {
       const isSlugCollision =
@@ -248,10 +251,10 @@ async function createPersonalTeam(user: {
         continue;
       }
 
-      console.error(
-        `Failed to create personal team for user ${user.id}:`,
-        error
-      );
+      log.error('Failed to create personal team for user', {
+        userId: user.id,
+        error,
+      });
       return;
     }
   }
@@ -383,11 +386,12 @@ export const auth = betterAuth({
                     })
                     .where(eq(organization.id, org.id));
 
-                  if (env.NODE_ENV !== 'production') {
-                    console.warn(
-                      `[user.update.after] Synced personal team slug: ${org.slug} -> ${slug}${attempt > 0 ? ' (collision retry)' : ''}`
-                    );
-                  }
+                  log.debug('Synced personal team slug', {
+                    context: 'user.update.after',
+                    oldSlug: org.slug,
+                    newSlug: slug,
+                    collisionRetry: attempt > 0,
+                  });
                   break; // Success
                 } catch (updateErr) {
                   const isSlugCollision =
@@ -404,10 +408,10 @@ export const auth = betterAuth({
             }
           } catch (err) {
             // Slug collision or other error — don't break the user update
-            console.error(
-              '[user.update.after] Failed to sync personal team slug:',
-              err
-            );
+            log.error('Failed to sync personal team slug', {
+              context: 'user.update.after',
+              error: err,
+            });
           }
         },
       },
@@ -415,13 +419,11 @@ export const auth = betterAuth({
     session: {
       create: {
         before: async (session) => {
-          const isDev = env.NODE_ENV !== 'production';
-
-          if (isDev) {
-            console.warn(
-              `[session.create.before] userId=${session.userId} activeOrganizationId=${session.activeOrganizationId ?? 'null'}`
-            );
-          }
+          log.debug('Session create before hook', {
+            context: 'session.create.before',
+            userId: session.userId,
+            activeOrganizationId: session.activeOrganizationId ?? null,
+          });
 
           // If no active org is set, default to the user's personal team.
           // For existing users who don't have a personal team yet (pre-org era),
@@ -436,11 +438,10 @@ export const auth = betterAuth({
                 columns: { id: true, name: true, email: true, handle: true },
               });
 
-              if (isDev) {
-                console.warn(
-                  `[session.create.before] self-healing: creating personal team for user ${sessionUser?.id ?? session.userId}`
-                );
-              }
+              log.debug('Self-healing: creating personal team for user', {
+                context: 'session.create.before',
+                userId: sessionUser?.id ?? session.userId,
+              });
 
               if (sessionUser) {
                 await createPersonalTeam(sessionUser);
@@ -472,7 +473,7 @@ export const auth = betterAuth({
   onAPIError: {
     throw: true,
     onError: (err) => {
-      console.error('Better Auth API Error:', err);
+      log.error('Better Auth API Error', { error: err });
     },
     errorURL: '/auth/error',
   },
@@ -572,9 +573,13 @@ export const auth = betterAuth({
         const orgName = data.organization.name;
         const role = data.role ?? 'member';
 
-        console.warn(
-          `[sendInvitationEmail] ${data.email} invited to ${orgName} by ${inviterName} as ${role}`
-        );
+        log.info('Sending invitation email', {
+          context: 'sendInvitationEmail',
+          email: data.email,
+          orgName,
+          inviterName,
+          role,
+        });
 
         try {
           const result = await sendEmail({
@@ -585,13 +590,16 @@ export const auth = betterAuth({
           });
 
           if (result.error) {
-            console.error(
-              '[sendInvitationEmail] Failed:',
-              result.error.message
-            );
+            log.error('Failed to send invitation email', {
+              context: 'sendInvitationEmail',
+              error: result.error.message,
+            });
           }
         } catch (err) {
-          console.error('[sendInvitationEmail] Error:', err);
+          log.error('Error in sendInvitationEmail', {
+            context: 'sendInvitationEmail',
+            error: err,
+          });
         }
       },
       // Organization hooks — slug uniqueness enforced by DB unique constraint.
@@ -616,10 +624,10 @@ export const auth = betterAuth({
         // SECURITY: Fail closed - if no allowed IDs configured, reject all clients
         // This prevents unauthorized device auth when misconfigured
         if (allowedIds.length === 0) {
-          console.warn(
-            '[Device Auth] No allowed client IDs configured, rejecting client:',
-            clientId
-          );
+          log.warn('No allowed client IDs configured, rejecting client', {
+            context: 'Device Auth',
+            clientId,
+          });
           return false;
         }
         return allowedIds.includes(clientId);

@@ -2,6 +2,7 @@ import {
   createFeedbackHandler,
   type FeedbackData,
 } from '@bounty/feedback/server';
+import { log } from '@bounty/logging';
 
 const DISCORD_WEBHOOK_URL = process.env.FEEDBACK_WEBHOOK_URL;
 
@@ -175,7 +176,7 @@ async function sendToDiscordWebhook(data: FeedbackData) {
     body: formData,
   });
   if (!res.ok) {
-    console.error(`[feedback] Discord webhook error: ${res.statusText}`);
+    log.error('[feedback] Discord webhook error', { statusText: res.statusText });
   }
 }
 

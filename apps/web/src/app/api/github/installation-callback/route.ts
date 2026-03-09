@@ -5,8 +5,9 @@ import { githubInstallation } from '@bounty/db/src/schema/github-installation';
 import { getGithubAppManager } from '@bounty/api/driver/github-app';
 import { eq, and } from 'drizzle-orm';
 import { env } from '@bounty/env/server';
+import { withEvlog, log } from '@bounty/logging';
 
-export async function GET(request: NextRequest) {
+export const GET = withEvlog(async function GET(request: NextRequest) {
   // Use BETTER_AUTH_URL as the base for redirects so we stay on the
   // correct host (e.g. local.bounty.new instead of localhost:3000).
   const baseUrl = env.BETTER_AUTH_URL || request.url;
@@ -28,9 +29,7 @@ export async function GET(request: NextRequest) {
     // Validate installationId is numeric
     const parsedInstallationId = Number(installationId);
     if (!Number.isFinite(parsedInstallationId) || parsedInstallationId <= 0) {
-      console.error(
-        `[Installation Callback] Invalid installation_id: ${installationId}`
-      );
+      log.error('[Installation Callback] Invalid installation_id', { installationId });
       return NextResponse.json(
         { error: 'Invalid installation_id parameter' },
         { status: 400 }
@@ -71,9 +70,7 @@ export async function GET(request: NextRequest) {
         }
 
         if (!activeOrgId) {
-          console.error(
-            `[Installation Callback] No active org and no personal team found for user ${session.user.id}`
-          );
+          log.error('[Installation Callback] No active org and no personal team found', { userId: session.user.id });
           return NextResponse.redirect(
             new URL('/dashboard?error=no_team', baseUrl)
           );
@@ -142,17 +139,12 @@ export async function GET(request: NextRequest) {
             });
         } else {
           // Installation exists and belongs to a different account/org
-          console.warn(
-            `[Installation Callback] Installation ${installationId} belongs to a different account/org — skipping`
-          );
+          log.warn('[Installation Callback] Installation belongs to a different account/org — skipping', { installationId });
         }
       }
     } catch (error) {
       // Log error but don't fail the redirect
-      console.error(
-        '[Installation Callback] Failed to link installation:',
-        error
-      );
+      log.error('[Installation Callback] Failed to link installation', { error });
     }
   }
 
@@ -178,4 +170,4 @@ export async function GET(request: NextRequest) {
 
   // Fallback to integrations list
   return NextResponse.redirect(new URL(integrationsBase, baseUrl));
-}
+});

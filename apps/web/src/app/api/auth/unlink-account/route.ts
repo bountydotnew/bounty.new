@@ -1,6 +1,7 @@
 import { auth } from '@bounty/auth/server';
 import { account, db } from '@bounty/db';
 import { eq, and } from 'drizzle-orm';
+import { withEvlog, log } from '@bounty/logging';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
@@ -10,7 +11,7 @@ import { NextResponse } from 'next/server';
  * Unlinks an OAuth provider from the user's account.
  * Body: { provider: 'github' | 'google' }
  */
-export async function POST(req: NextRequest) {
+export const POST = withEvlog(async function POST(req: NextRequest) {
   try {
     const session = await auth.api.getSession({
       headers: req.headers,
@@ -58,10 +59,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error unlinking account:', error);
+    log.error('Error unlinking account', { error });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});
