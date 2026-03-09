@@ -162,9 +162,11 @@ export function FeedbackForm({ onSuccess }: { onSuccess?: () => void }) {
           }
         }
 
+        const route = window.location.pathname;
+
         const formData = new FormData();
         formData.append('comment', comment.trim());
-        formData.append('route', window.location.href);
+        formData.append('route', route);
         formData.append('userAgent', navigator.userAgent);
 
         if (prompt.trim()) {
@@ -206,7 +208,7 @@ export function FeedbackForm({ onSuccess }: { onSuccess?: () => void }) {
 
         config.onSubmit?.({
           comment: comment.trim(),
-          route: window.location.href,
+          route,
           componentName: elementContext?.componentName ?? undefined,
           selector: elementContext?.selector ?? undefined,
           metadata: config.metadata,
