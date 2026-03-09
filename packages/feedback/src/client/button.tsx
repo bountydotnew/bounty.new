@@ -28,7 +28,9 @@ export function FeedbackButton({
 }) {
   const { open, isOpen } = useFeedback();
 
-  if (isOpen) return null;
+  if (isOpen) {
+    return null;
+  }
 
   const resolvedLabel = label ?? DEFAULT_LABEL;
 
@@ -47,6 +49,7 @@ export function FeedbackButton({
             viewBox="0 0 24 24"
             stroke="currentColor"
             strokeWidth={1.5}
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"

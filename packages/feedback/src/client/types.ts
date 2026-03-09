@@ -1,6 +1,4 @@
-import type { ReactGrabElementContext } from 'react-grab/primitives';
-
-export type { ReactGrabElementContext };
+export type { ReactGrabElementContext } from 'react-grab/primitives';
 
 export interface FeedbackConfig {
   endpoint?: string;

@@ -13,12 +13,16 @@ const DISCORD_FIELDS_MAX = 25;
 const DISCORD_EMBED_TOTAL_CHARS_MAX = 6000;
 
 function truncate(str: string, max: number): string {
-  if (str.length <= max) return str;
+  if (str.length <= max) {
+    return str;
+  }
   return `${str.slice(0, max - 3)}...`;
 }
 
 async function sendToDiscordWebhook(data: FeedbackData) {
-  if (!DISCORD_WEBHOOK_URL) return;
+  if (!DISCORD_WEBHOOK_URL) {
+    return;
+  }
 
   const fields: Array<{ name: string; value: string; inline: boolean }> = [
     {
@@ -133,7 +137,9 @@ async function sendToDiscordWebhook(data: FeedbackData) {
   const finalFields: typeof clampedFields = [];
   for (const field of clampedFields) {
     const fieldChars = field.name.length + field.value.length;
-    if (totalChars + fieldChars > DISCORD_EMBED_TOTAL_CHARS_MAX) break;
+    if (totalChars + fieldChars > DISCORD_EMBED_TOTAL_CHARS_MAX) {
+      break;
+    }
     totalChars += fieldChars;
     finalFields.push(field);
   }

@@ -53,7 +53,9 @@ export function FeedbackForm({ onSuccess }: { onSuccess?: () => void }) {
   }, []);
 
   const handleClose = useCallback(() => {
-    if (status === 'sending') return;
+    if (status === 'sending') {
+      return;
+    }
     setStatus('idle');
     setErrorMessage(null);
     setComment('');
@@ -65,7 +67,9 @@ export function FeedbackForm({ onSuccess }: { onSuccess?: () => void }) {
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
-      if (!comment.trim()) return;
+      if (!comment.trim()) {
+        return;
+      }
       setStatus('sending');
 
       try {
@@ -99,7 +103,9 @@ export function FeedbackForm({ onSuccess }: { onSuccess?: () => void }) {
                 const overlay = clonedDoc.getElementById(
                   'feedback-overlay-layer'
                 );
-                if (overlay) overlay.remove();
+                if (overlay) {
+                  overlay.remove();
+                }
 
                 for (const el of clonedDoc.querySelectorAll(
                   '[data-privacy="masked"]'
@@ -251,6 +257,7 @@ export function FeedbackForm({ onSuccess }: { onSuccess?: () => void }) {
             viewBox="0 0 24 24"
             stroke="currentColor"
             strokeWidth={2}
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -281,6 +288,7 @@ export function FeedbackForm({ onSuccess }: { onSuccess?: () => void }) {
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                   strokeWidth={1.5}
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -306,6 +314,7 @@ export function FeedbackForm({ onSuccess }: { onSuccess?: () => void }) {
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                   strokeWidth={1.5}
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -349,6 +358,7 @@ export function FeedbackForm({ onSuccess }: { onSuccess?: () => void }) {
               viewBox="0 0 24 24"
               stroke="currentColor"
               strokeWidth={1.5}
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -381,6 +391,7 @@ export function FeedbackForm({ onSuccess }: { onSuccess?: () => void }) {
               viewBox="0 0 24 24"
               stroke="currentColor"
               strokeWidth={1.5}
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -430,6 +441,7 @@ export function FeedbackForm({ onSuccess }: { onSuccess?: () => void }) {
               className="h-4 w-4 animate-spin"
               viewBox="0 0 24 24"
               fill="none"
+              aria-hidden="true"
             >
               <circle
                 className="opacity-25"

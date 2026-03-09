@@ -17,7 +17,68 @@ import {
   fundedBountyComment,
   submissionReceivedComment,
   submissionWithdrawnComment,
+  submissionWithdrawnConfirmation,
   bountyCompletedComment,
+  prNotFoundComment,
+  noBountyFoundComment,
+  bountyAlreadyExistsComment,
+  bountyClosedComment,
+  prNotOpenForSubmitComment,
+  cannotSubmitOthersPrComment,
+  alreadySubmittedComment,
+  tooManyPendingComment,
+  submissionFailedComment,
+  cannotUnsubmitComment,
+  cannotUnsubmitOthersPrComment,
+  noPermissionToApproveComment,
+  approveMissingPrComment,
+  bountyNotFundedComment,
+  noSubmissionFoundComment,
+  solverNeedsStripeComment,
+  submissionAlreadyApprovedComment,
+  submissionApprovedFollowupComment,
+  approvalWithdrawnComment,
+  notApprovedComment,
+  noSubmissionFoundGeneralComment,
+  bountyAlreadyPaidComment,
+  bountyAlreadyCompletedComment,
+  bountyAlreadyPaidForUnapproveComment,
+  noPermissionToUnapproveComment,
+  unapproveMissingPrComment,
+  noPermissionToReapproveComment,
+  reapproveMissingPrComment,
+  reapproveAlreadyApprovedComment,
+  bountyNotFundedForReapproveComment,
+  noSubmissionFoundForReapproveComment,
+  solverNeedsStripeForReapproveComment,
+  reapproveFollowupComment,
+  noPermissionToMergeComment,
+  mergeMissingPrComment,
+  cannotTellIssueForMergeComment,
+  prDoesNotReferenceThisIssueComment,
+  noSubmissionForMergeComment,
+  notApprovedForMergeComment,
+  prNotMergedComment,
+  bountyNotFundedForMergeWithPrComment,
+  solverNeedsStripeForMergeWithPrComment,
+  payoutInProgressComment,
+  payoutErrorComment,
+  noPermissionToMoveComment,
+  noBountyToMoveComment,
+  cannotMoveToPrComment,
+  failedToValidateTargetComment,
+  bountyMovedComment,
+  submitMissingPrComment,
+  unsubmitMissingPrComment,
+  cannotTellIssueComment,
+  cannotTellIssueForReapproveComment,
+  invalidAmountComment,
+  invalidCurrencyComment,
+  noPermissionToCreateComment,
+  githubNotLinkedComment,
+  noTeamFoundComment,
+  earlyAccessNotLinkedComment,
+  earlyAccessNoAccessComment,
 } from '@bounty/api/src/lib/bot-comments';
 import {
   parseBotCommand,
@@ -231,7 +292,7 @@ async function validatePullRequest(
       ctx.owner,
       ctx.repo,
       ctx.issueNumber,
-      `\nI couldn't find PR #${prNumber}. Double‑check the number and try again.\n`
+      prNotFoundComment(prNumber)
     );
     return { success: false, handled: true };
   }
@@ -260,7 +321,7 @@ async function validateBountyExists(
       ctx.owner,
       ctx.repo,
       ctx.issueNumber,
-      '\nNo bounty found for this issue.\n'
+      noBountyFoundComment
     );
     return { success: false, handled: true };
   }
@@ -307,7 +368,7 @@ async function validateSubmissionExists(
       ctx.owner,
       ctx.repo,
       ctx.issueNumber,
-      `\nNo submission found for PR #${prNumber}.\n`
+      noSubmissionFoundGeneralComment(prNumber)
     );
     return { success: false, handled: true };
   }
@@ -345,7 +406,7 @@ async function resolveBountyIssueForUnsubmit(
         ctx.owner,
         ctx.repo,
         ctx.issueNumber,
-        '\nI couldn\'t tell which issue this PR is for. Add "Fixes #123" to the PR body or unsubmit from the issue with `/unsubmit <PR#>`.\n'
+        cannotTellIssueComment()
       );
       return null;
     }
@@ -358,7 +419,7 @@ async function resolveBountyIssueForUnsubmit(
       ctx.owner,
       ctx.repo,
       ctx.issueNumber,
-      `\nPR #${targetPrNumber} doesn't reference this issue. Add "Fixes #${ctx.issueNumber}" (or similar) to the PR description and try again.\n`
+      prDoesNotReferenceThisIssueComment(targetPrNumber)
     );
     return null;
   }
@@ -492,7 +553,7 @@ async function findUserByGithubLogin(login: string) {
 
 // Check if user has early access when early access mode is enabled
 async function checkEarlyAccessForUser(
-  ctx: ValidationContext,
+  _ctx: ValidationContext,
   githubUsername: string
 ): Promise<{ allowed: boolean; errorMessage?: string }> {
   // Early access mode is disabled, allow everyone
@@ -519,7 +580,7 @@ async function checkEarlyAccessForUser(
   if (!userRecord) {
     return {
       allowed: false,
-      errorMessage: `@${githubUsername} bounty.new is in early access. Link your GitHub account at https://bounty.new to get started.`,
+      errorMessage: earlyAccessNotLinkedComment(githubUsername),
     };
   }
 
@@ -533,7 +594,7 @@ async function checkEarlyAccessForUser(
   // User doesn't have early access
   return {
     allowed: false,
-    errorMessage: `@${githubUsername} bounty.new is in early access. Your account doesn't have access yet. Join the waitlist at https://bounty.new.`,
+    errorMessage: earlyAccessNoAccessComment(githubUsername),
   };
 }
 
@@ -650,7 +711,7 @@ async function handleBountyUnsubmitCommand(
       ctx.owner,
       ctx.repo,
       ctx.issueNumber,
-      '\nPlease include a PR number, like `/unsubmit 123`.\n'
+      unsubmitMissingPrComment
     );
     return;
   }
@@ -695,7 +756,7 @@ async function handleBountyUnsubmitCommand(
         ctx.owner,
         ctx.repo,
         ctx.issueNumber,
-        '\nOnly the PR author (or a repo maintainer) can unsubmit this PR.\n'
+        cannotUnsubmitOthersPrComment()
       );
       return;
     }
@@ -718,9 +779,7 @@ async function handleBountyUnsubmitCommand(
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-This submission can’t be unsubmitted because it’s already ${submissionRecord.status}.
-`
+      cannotUnsubmitComment(submissionRecord.status)
     );
     return;
   }
@@ -776,9 +835,7 @@ This submission can’t be unsubmitted because it’s already ${submissionRecord
     repository.owner.login,
     repository.name,
     issue.number,
-    `
-Submission for PR #${targetPrNumber} has been withdrawn.
-`
+    submissionWithdrawnConfirmation(targetPrNumber)
   );
 }
 
@@ -806,10 +863,7 @@ async function handleBountyCreateCommand(
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-Invalid bounty amount: ${command.amount}. Amount must be between 0 and 1,000,000.
-
-`
+      invalidAmountComment(String(command.amount))
     );
     return;
   }
@@ -820,10 +874,7 @@ Invalid bounty amount: ${command.amount}. Amount must be between 0 and 1,000,000
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-Invalid currency: ${command.currency}. Supported currencies are USD, EUR, and GBP.
-
-`
+      invalidCurrencyComment(command.currency)
     );
     return;
   }
@@ -845,11 +896,7 @@ Invalid currency: ${command.currency}. Supported currencies are USD, EUR, and GB
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-
-Sorry, you don't have permission to create bounties on this repository. Only repo admins, maintainers, or writers can do this.
-
-`
+      noPermissionToCreateComment
     );
     return;
   }
@@ -879,13 +926,7 @@ Sorry, you don't have permission to create bounties on this repository. Only rep
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-
-Could not create bounty: Your GitHub account is not linked to a bounty.new account.
-
-Please visit https://bounty.new/integrations to link your GitHub account, then try again.
-
-`
+      githubNotLinkedComment
     );
     return;
   }
@@ -913,7 +954,7 @@ Please visit https://bounty.new/integrations to link your GitHub account, then t
       repository.owner.login,
       repository.name,
       issue.number,
-      `A bounty already exists for this issue. View it at https://bounty.new/bounty/${existingBounty.id}`
+      bountyAlreadyExistsComment(existingBounty.id)
     );
     return;
   }
@@ -951,7 +992,7 @@ Please visit https://bounty.new/integrations to link your GitHub account, then t
       repository.owner.login,
       repository.name,
       issue.number,
-      `Failed to create bounty: no team found for your account. Please log in to [bounty.new](${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://bounty.new'}) and ensure you have a team set up.`
+      noTeamFoundComment()
     );
     return;
   }
@@ -1193,7 +1234,7 @@ async function handleBountySubmitCommand(
       ctx.owner,
       ctx.repo,
       ctx.issueNumber,
-      '\nPlease include a PR number, like `/submit 123`, or add `@bountydotnew submit` to your PR description.\n'
+      submitMissingPrComment
     );
     return;
   }
@@ -1211,7 +1252,7 @@ async function handleBountySubmitCommand(
       ctx.owner,
       ctx.repo,
       ctx.issueNumber,
-      `\nPR #${targetPrNumber} isn't open. Please reopen it before approving.\n`
+      prNotOpenForSubmitComment(comment.user.login, targetPrNumber)
     );
     return;
   }
@@ -1243,13 +1284,7 @@ async function handleBountySubmitCommand(
       ctx.owner,
       ctx.repo,
       ctx.issueNumber,
-      `
-@${comment.user.login} This bounty already has an approved submission — new submissions are closed.
-
-**If you're the bounty creator** and want to switch winners:
-- Use \`/unapprove #PR_NUMBER\` to unapprove the current winner
-- Then \`/approve #PR_NUMBER\` to approve a different submission
-`
+      bountyClosedComment(comment.user.login)
     );
     return;
   }
@@ -1260,11 +1295,7 @@ async function handleBountySubmitCommand(
       ctx.owner,
       ctx.repo,
       ctx.issueNumber,
-      `
-@${comment.user.login} PR #${targetPrNumber} isn't open.
-
-Please reopen the PR first, then try submitting again with \`/submit ${targetPrNumber}\`.
-`
+      prNotOpenForSubmitComment(comment.user.login, targetPrNumber)
     );
     return;
   }
@@ -1282,11 +1313,7 @@ Please reopen the PR first, then try submitting again with \`/submit ${targetPrN
         repository.owner.login,
         repository.name,
         issue.number,
-        `
-@${comment.user.login} You can't submit someone else's PR.
-
-Only **@${pullRequest.user.login}** (the PR author) or a repo maintainer can submit this PR.
-`
+        cannotSubmitOthersPrComment(comment.user.login, pullRequest.user.login)
       );
       return;
     }
@@ -1312,20 +1339,21 @@ Only **@${pullRequest.user.login}** (the PR author) or a repo maintainer can sub
   if (submissionResult.status === 'skipped') {
     let skipMessage: string;
     if (submissionResult.reason === 'already_submitted') {
-      skipMessage = `@${pullRequest.user.login} PR #${targetPrNumber} is already submitted for this bounty. No action needed — just wait for the bounty creator to review it.`;
+      skipMessage = alreadySubmittedComment(
+        pullRequest.user.login,
+        targetPrNumber
+      );
     } else if (submissionResult.reason === 'too_many_pending') {
-      skipMessage = `@${pullRequest.user.login} You already have 2 pending submissions for this bounty. Wait for one to be reviewed before submitting again.`;
+      skipMessage = tooManyPendingComment(pullRequest.user.login);
     } else {
-      skipMessage = `@${pullRequest.user.login} Could not submit this PR. Please try again or check that the PR is open and linked to this issue.`;
+      skipMessage = submissionFailedComment(pullRequest.user.login);
     }
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-${skipMessage}
-`
+      skipMessage
     );
   }
 }
@@ -1359,11 +1387,7 @@ async function handleBountyApproveCommand(
       ctx.owner,
       ctx.repo,
       ctx.issueNumber,
-      `
-@${comment.user.login} You don't have permission to approve submissions on this repository.
-
-Only repo **admins**, **maintainers**, or **collaborators with write access** can approve submissions.
-`
+      noPermissionToApproveComment(comment.user.login)
     );
     return;
   }
@@ -1374,12 +1398,7 @@ Only repo **admins**, **maintainers**, or **collaborators with write access** ca
       ctx.owner,
       ctx.repo,
       ctx.issueNumber,
-      `
-@${comment.user.login} Please include a PR number to approve.
-
-**Usage:** \`/approve #PR_NUMBER\`
-**Example:** \`/approve 123\`
-`
+      approveMissingPrComment(comment.user.login)
     );
     return;
   }
@@ -1413,19 +1432,12 @@ Only repo **admins**, **maintainers**, or **collaborators with write access** ca
   const bountyRecord = bountyResult.data;
 
   if (!isBountyFunded(bountyRecord)) {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
     await githubApp.createIssueComment(
       ctx.installationId,
       ctx.owner,
       ctx.repo,
       ctx.issueNumber,
-      `
-@${comment.user.login} This bounty isn't funded yet.
-
-**To approve submissions**, first fund the bounty at [bounty.new](${baseUrl}/bounty/${bountyRecord.id}).
-
-After funding, run \`/approve ${targetPrNumber}\` again.
-`
+      bountyNotFundedComment(comment.user.login, bountyRecord.id)
     );
     return;
   }
@@ -1447,13 +1459,11 @@ After funding, run \`/approve ${targetPrNumber}\` again.
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-@${comment.user.login} No submission found for PR #${targetPrNumber}.
-
-The PR author needs to submit first. Ask **@${pullRequest.user.login}** to:
-- Add \`@bountydotnew submit\` to their PR description, or
-- Comment \`/submit ${targetPrNumber}\` on this issue
-`
+      noSubmissionFoundComment(
+        comment.user.login,
+        targetPrNumber,
+        pullRequest.user.login
+      )
     );
     return;
   }
@@ -1491,15 +1501,12 @@ The PR author needs to submit first. Ask **@${pullRequest.user.login}** to:
       : undefined);
 
   if (!isSolverReadyForPayout(solver)) {
-    const mention = `@${comment.user.login}`;
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-${mention} The solver needs to connect Stripe before approval. Ask them to visit https://bounty.new/settings/payments, then re‑run \`/approve ${targetPrNumber}\`.
-`
+      solverNeedsStripeComment(comment.user.login, targetPrNumber)
     );
     return;
   }
@@ -1510,9 +1517,7 @@ ${mention} The solver needs to connect Stripe before approval. Ask them to visit
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-This submission is already approved. When you're ready, merge the PR and confirm with \`/merge ${targetPrNumber}\`.
-`
+      submissionAlreadyApprovedComment(targetPrNumber)
     );
     return;
   }
@@ -1539,15 +1544,11 @@ This submission is already approved. When you're ready, merge the PR and confirm
 
   const approver = comment.user.login;
   const solverUsername = pullRequest.user.login;
-  const followup = `
-**Submission Approved**
-
-@${solverUsername} Your submission (PR #${targetPrNumber}) has been approved. Once the PR is merged, payment will be released automatically.
-
-@${approver} To complete the payout:
-1. Merge PR #${targetPrNumber}
-2. Confirm with \`/merge ${targetPrNumber}\` on this issue (or \`@bountydotnew merge\` on the PR)
-`;
+  const followup = submissionApprovedFollowupComment(
+    solverUsername,
+    approver,
+    targetPrNumber
+  );
 
   // Post on the bounty issue
   await githubApp.createIssueComment(
@@ -1597,7 +1598,7 @@ async function handleBountyUnapproveCommand(
       ctx.owner,
       ctx.repo,
       ctx.issueNumber,
-      "\nSorry, you don't have permission to unapprove submissions on this repository. Only repo admins, maintainers, or writers can do this.\n"
+      noPermissionToUnapproveComment
     );
     return;
   }
@@ -1608,7 +1609,7 @@ async function handleBountyUnapproveCommand(
       ctx.owner,
       ctx.repo,
       ctx.issueNumber,
-      '\nPlease include a PR number, like `/unapprove 123`.\n'
+      unapproveMissingPrComment
     );
     return;
   }
@@ -1647,9 +1648,7 @@ async function handleBountyUnapproveCommand(
       ctx.owner,
       ctx.repo,
       ctx.issueNumber,
-      `
-This bounty has already been paid out and can’t be unapproved.
-`
+      bountyAlreadyPaidForUnapproveComment
     );
     return;
   }
@@ -1660,9 +1659,7 @@ This bounty has already been paid out and can’t be unapproved.
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-This bounty is already completed and can’t be unapproved.
-`
+      bountyAlreadyCompletedComment
     );
     return;
   }
@@ -1684,9 +1681,7 @@ This bounty is already completed and can’t be unapproved.
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-I couldn’t find a submission for PR #${targetPrNumber}.
-`
+      noSubmissionFoundGeneralComment(targetPrNumber)
     );
     return;
   }
@@ -1697,9 +1692,7 @@ I couldn’t find a submission for PR #${targetPrNumber}.
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-PR #${targetPrNumber} isn’t approved, so there’s nothing to unapprove.
-`
+      notApprovedComment(targetPrNumber)
     );
     return;
   }
@@ -1754,9 +1747,7 @@ PR #${targetPrNumber} isn’t approved, so there’s nothing to unapprove.
     repository.owner.login,
     repository.name,
     issue.number,
-    `
-Approval withdrawn for PR #${targetPrNumber}. The bounty is open for another submission.
-`
+    approvalWithdrawnComment(targetPrNumber)
   );
 }
 
@@ -1788,9 +1779,7 @@ async function handleBountyReapproveCommand(
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-Sorry, you don't have permission to approve submissions on this repository. Only repo admins, maintainers, or writers can do this.
-`
+      noPermissionToReapproveComment
     );
     return;
   }
@@ -1801,9 +1790,7 @@ Sorry, you don't have permission to approve submissions on this repository. Only
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-Please include a PR number, like \`/reapprove 123\`.
-`
+      reapproveMissingPrComment
     );
     return;
   }
@@ -1823,9 +1810,7 @@ Please include a PR number, like \`/reapprove 123\`.
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-I couldn't find PR #${targetPrNumber}. Double‑check the number and try again.
-`
+      prNotFoundComment(targetPrNumber)
     );
     return;
   }
@@ -1842,9 +1827,7 @@ I couldn't find PR #${targetPrNumber}. Double‑check the number and try again.
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-I couldn't tell which issue this PR is for. Add “Fixes #123” to the PR body or reapprove from the issue with \`/reapprove <PR#>\`.
-`
+      cannotTellIssueForReapproveComment()
     );
     return;
   }
@@ -1855,9 +1838,7 @@ I couldn't tell which issue this PR is for. Add “Fixes #123” to the PR body 
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-PR #${targetPrNumber} doesn’t reference this issue. Add “Fixes #${issue.number}” (or similar) to the PR description and try again.
-`
+      prDoesNotReferenceThisIssueComment(targetPrNumber)
     );
     return;
   }
@@ -1874,9 +1855,7 @@ PR #${targetPrNumber} doesn’t reference this issue. Add “Fixes #${issue.numb
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-No bounty found for this issue.
-`
+      noBountyFoundComment
     );
     return;
   }
@@ -1888,24 +1867,19 @@ No bounty found for this issue.
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-This bounty has already been paid out.
-`
+      bountyAlreadyPaidComment()
     );
     return;
   }
 
   // Then check if not yet funded (pending)
   if (!isBountyFunded(bountyRecord)) {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-This bounty isn't funded yet. Fund it at ${baseUrl}/bounty/${bountyRecord.id} before approving submissions.
-`
+      bountyNotFundedForReapproveComment(bountyRecord.id)
     );
     return;
   }
@@ -1927,9 +1901,7 @@ This bounty isn't funded yet. Fund it at ${baseUrl}/bounty/${bountyRecord.id} be
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-I couldn’t find a submission for PR #${targetPrNumber}. Ask the contributor to submit first with \`/submit ${targetPrNumber}\`.
-`
+      noSubmissionFoundForReapproveComment(targetPrNumber)
     );
     return;
   }
@@ -1940,9 +1912,7 @@ I couldn’t find a submission for PR #${targetPrNumber}. Ask the contributor to
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-This submission is already approved. When you're ready, merge the PR and confirm with \`/merge ${targetPrNumber}\`.
-`
+      reapproveAlreadyApprovedComment(targetPrNumber)
     );
     return;
   }
@@ -1980,15 +1950,12 @@ This submission is already approved. When you're ready, merge the PR and confirm
       : undefined);
 
   if (!isSolverReadyForPayout(solver)) {
-    const mention = `@${comment.user.login}`;
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-${mention} The solver needs to connect Stripe before approval. Ask them to visit https://bounty.new/settings/payments, then re‑run \`/reapprove ${targetPrNumber}\`.
-`
+      solverNeedsStripeForReapproveComment(comment.user.login, targetPrNumber)
     );
     return;
   }
@@ -2034,16 +2001,14 @@ ${mention} The solver needs to connect Stripe before approval. Ask them to visit
     .where(eq(bounty.id, bountyRecord.id));
 
   const approver = comment.user.login;
-  const followup = `@${approver} Re‑approved. When you're ready, merge the PR and confirm here with \`/merge ${targetPrNumber}\` (or comment \`@bountydotnew merge\` on the PR). Merging releases the payout.`;
+  const followup = reapproveFollowupComment(approver, targetPrNumber);
 
   await githubApp.createIssueComment(
     installation.id,
     repository.owner.login,
     repository.name,
     issue.number,
-    `
-${followup}
-`
+    followup
   );
 }
 
@@ -2075,9 +2040,7 @@ async function handleBountyMergeCommand(
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-Sorry, you don't have permission to confirm merges on this repository. Only repo admins, maintainers, or writers can do this.
-`
+      noPermissionToMergeComment
     );
     return;
   }
@@ -2088,9 +2051,7 @@ Sorry, you don't have permission to confirm merges on this repository. Only repo
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-Please include a PR number, like \`/merge 123\`.
-`
+      mergeMissingPrComment
     );
     return;
   }
@@ -2110,9 +2071,7 @@ Please include a PR number, like \`/merge 123\`.
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-I couldn't find PR #${targetPrNumber}. Double‑check the number and try again.
-`
+      prNotFoundComment(targetPrNumber)
     );
     return;
   }
@@ -2130,9 +2089,7 @@ I couldn't find PR #${targetPrNumber}. Double‑check the number and try again.
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-I couldn't tell which issue this PR is for. Add “Fixes #123” to the PR body or confirm merge from the issue with \`/merge <PR#>\`.
-`
+      cannotTellIssueForMergeComment()
     );
     return;
   }
@@ -2143,9 +2100,7 @@ I couldn't tell which issue this PR is for. Add “Fixes #123” to the PR body 
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-PR #${targetPrNumber} doesn’t reference this issue. Add “Fixes #${issue.number}” (or similar) to the PR description and try again.
-`
+      prDoesNotReferenceThisIssueComment(targetPrNumber)
     );
     return;
   }
@@ -2162,9 +2117,7 @@ PR #${targetPrNumber} doesn’t reference this issue. Add “Fixes #${issue.numb
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-No bounty found for this issue.
-`
+      noBountyFoundComment
     );
     return;
   }
@@ -2186,9 +2139,7 @@ No bounty found for this issue.
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-I couldn’t find a submission for PR #${targetPrNumber}. Ask the contributor to submit first with \`/submit ${targetPrNumber}\`.
-`
+      noSubmissionForMergeComment(targetPrNumber)
     );
     return;
   }
@@ -2199,9 +2150,7 @@ I couldn’t find a submission for PR #${targetPrNumber}. Ask the contributor to
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-Please approve the submission first with \`/approve ${targetPrNumber}\`, then confirm the merge.
-`
+      notApprovedForMergeComment(targetPrNumber)
     );
     return;
   }
@@ -2212,9 +2161,7 @@ Please approve the submission first with \`/approve ${targetPrNumber}\`, then co
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-PR #${targetPrNumber} isn’t merged yet. Merge it, then run \`/merge ${targetPrNumber}\` again. Merging triggers the payout.
-`
+      prNotMergedComment(targetPrNumber)
     );
     return;
   }
@@ -2226,24 +2173,19 @@ PR #${targetPrNumber} isn’t merged yet. Merge it, then run \`/merge ${targetPr
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-This bounty has already been paid out.
-`
+      bountyAlreadyPaidComment()
     );
     return;
   }
 
   // Then check if not yet funded (pending)
   if (!isBountyFunded(bountyRecord)) {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-This bounty isn't funded yet. Fund it at ${baseUrl}/bounty/${bountyRecord.id}, then run \`/merge ${targetPrNumber}\` to release the payout.
-`
+      bountyNotFundedForMergeWithPrComment(bountyRecord.id, targetPrNumber)
     );
     return;
   }
@@ -2281,15 +2223,12 @@ This bounty isn't funded yet. Fund it at ${baseUrl}/bounty/${bountyRecord.id}, t
       : undefined);
 
   if (!isSolverReadyForPayout(solver)) {
-    const mention = `@${comment.user.login}`;
     await githubApp.createIssueComment(
       installation.id,
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-${mention} The solver needs to connect Stripe before payout. Ask them to visit https://bounty.new/settings/payments, then re‑run \`/merge ${targetPrNumber}\`.
-`
+      solverNeedsStripeForMergeWithPrComment(comment.user.login, targetPrNumber)
     );
     return;
   }
@@ -2367,9 +2306,7 @@ ${mention} The solver needs to connect Stripe before payout. Ask them to visit h
         repository.owner.login,
         repository.name,
         issue.number,
-        `
-Payout is already being processed. Try again in a minute.
-`
+        payoutInProgressComment
       );
       return;
     }
@@ -2379,9 +2316,7 @@ Payout is already being processed. Try again in a minute.
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-Something went wrong releasing the payout. Please try again or contact support.
-`
+      payoutErrorComment
     );
     return;
   }
@@ -2434,11 +2369,7 @@ async function handleBountyMoveCommand(
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-
-Sorry, you don't have permission to move bounties on this repository. Only repo admins, maintainers, or writers can move bounties.
-
-`
+      noPermissionToMoveComment
     );
     return;
   }
@@ -2463,11 +2394,7 @@ Sorry, you don't have permission to move bounties on this repository. Only repo 
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-
-No bounty found for this issue. Cannot move.
-
-`
+      noBountyToMoveComment
     );
     return;
   }
@@ -2490,11 +2417,7 @@ No bounty found for this issue. Cannot move.
         repository.owner.login,
         repository.name,
         issue.number,
-        `
-
-Cannot move bounty to a pull request. Please specify an issue number.
-
-`
+        cannotMoveToPrComment
       );
       return;
     }
@@ -2513,11 +2436,7 @@ Cannot move bounty to a pull request. Please specify an issue number.
       repository.owner.login,
       repository.name,
       issue.number,
-      `
-
-Failed to validate target issue #${command.targetIssueNumber}. Please ensure it exists and is an issue (not a pull request).
-
-`
+      failedToValidateTargetComment(command.targetIssueNumber)
     );
     return;
   }
@@ -2594,11 +2513,7 @@ Failed to validate target issue #${command.targetIssueNumber}. Please ensure it 
     repository.owner.login,
     repository.name,
     issue.number,
-    `
-
-Bounty moved to issue #${command.targetIssueNumber}.
-
-`
+    bountyMovedComment(command.targetIssueNumber)
   );
 
   console.log('[GitHub Webhook] Move command completed successfully');
@@ -2679,7 +2594,7 @@ async function handlePullRequestOpened(
     installationId,
     owner: repository.owner.login,
     repo: repository.name,
-    issueNumber: bountyRecord.githubIssueNumber!, // Bounty was found by this issue number, so it's non-null
+    issueNumber: bountyRecord.githubIssueNumber ?? 0, // Bounty was found by this issue number, so it's non-null
   };
   const earlyAccessCheck = await checkEarlyAccessForUser(
     ctx,
@@ -2697,7 +2612,7 @@ async function handlePullRequestOpened(
       repository.name,
       pull_request.number,
       earlyAccessCheck.errorMessage ||
-        `@${pull_request.user.login} bounty.new is in early access. Link your GitHub account at https://bounty.new to submit.`
+        earlyAccessNotLinkedComment(pull_request.user.login)
     );
 
     return;

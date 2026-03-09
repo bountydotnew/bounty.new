@@ -14,7 +14,9 @@ type HoveredInfo = {
 
 function getComponentName(element: Element): string | null {
   const fiber = getFiberFromHostInstance(element);
-  if (!fiber) return null;
+  if (!fiber) {
+    return null;
+  }
   let name: string | null = null;
   traverseFiber(
     fiber,
@@ -45,16 +47,26 @@ export function FeedbackOverlay() {
     }
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (isResolving) return;
+      if (isResolving) {
+        return;
+      }
 
-      if (highlightRef.current) highlightRef.current.style.display = 'none';
+      if (highlightRef.current) {
+        highlightRef.current.style.display = 'none';
+      }
       const overlay = document.getElementById('feedback-overlay-layer');
-      if (overlay) overlay.style.pointerEvents = 'none';
+      if (overlay) {
+        overlay.style.pointerEvents = 'none';
+      }
 
       const target = document.elementFromPoint(e.clientX, e.clientY);
 
-      if (overlay) overlay.style.pointerEvents = 'auto';
-      if (highlightRef.current) highlightRef.current.style.display = '';
+      if (overlay) {
+        overlay.style.pointerEvents = 'auto';
+      }
+      if (highlightRef.current) {
+        highlightRef.current.style.display = '';
+      }
 
       if (
         target &&
@@ -72,17 +84,27 @@ export function FeedbackOverlay() {
     };
 
     const handleClick = async (e: MouseEvent) => {
-      if (!isSelecting || isResolving) return;
+      if (!isSelecting || isResolving) {
+        return;
+      }
       e.preventDefault();
       e.stopPropagation();
 
-      if (highlightRef.current) highlightRef.current.style.display = 'none';
+      if (highlightRef.current) {
+        highlightRef.current.style.display = 'none';
+      }
       const overlay = document.getElementById('feedback-overlay-layer');
-      if (overlay) overlay.style.pointerEvents = 'none';
+      if (overlay) {
+        overlay.style.pointerEvents = 'none';
+      }
 
       const target = document.elementFromPoint(e.clientX, e.clientY);
-      if (overlay) overlay.style.pointerEvents = 'auto';
-      if (!target) return;
+      if (overlay) {
+        overlay.style.pointerEvents = 'auto';
+      }
+      if (!target) {
+        return;
+      }
 
       setIsResolving(true);
       try {
@@ -100,7 +122,9 @@ export function FeedbackOverlay() {
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') cancelSelection();
+      if (e.key === 'Escape') {
+        cancelSelection();
+      }
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -113,7 +137,9 @@ export function FeedbackOverlay() {
     };
   }, [isSelecting, isResolving, selectElement, cancelSelection]);
 
-  if (!isSelecting) return null;
+  if (!isSelecting) {
+    return null;
+  }
 
   return createPortal(
     <div
