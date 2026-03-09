@@ -3,13 +3,15 @@ import { getServerSession } from '@bounty/auth/server-utils';
 import { createServerCaller } from '@bounty/api/src/server-caller';
 import { DashboardClient } from './dashboard-client';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
-  title: 'Dasboard — bounty',
+  title: 'Dashboard — bounty',
   description: 'Manage your bounties and track submissions',
 };
 
 export default async function DashboardPage() {
-  let initialAllBounties: unknown = undefined;
+  let initialAllBounties: unknown;
   try {
     const session = await getServerSession();
     if (session?.user?.id) {
