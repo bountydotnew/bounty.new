@@ -18,7 +18,7 @@ import { UserProvider } from '@/context/user-context';
 import { SessionProvider, useSessionHook } from '@/context/session-context';
 // Note: TOAST_ICONS and TOAST_OPTIONS are no longer used - coss toast has built-in styling
 import { queryClient } from '@/utils/trpc';
-import { FeedbackProvider } from '@/components/feedback-context';
+import { FeedbackProvider } from '@bounty/feedback';
 
 function ProvidersInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();

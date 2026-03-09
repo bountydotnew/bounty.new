@@ -674,3 +674,157 @@ This bounty already has an approved submission. Want to switch? Use \`/unapprove
 export const bountyAlreadyCompletedComment = `
 This bounty is already completed and can't be unapproved.
 `;
+
+/**
+ * Missing PR number in submit command.
+ */
+export const submitMissingPrComment = `
+Which PR? Try \`/submit 123\`
+`;
+
+/**
+ * No permission to unapprove a submission.
+ */
+export const noPermissionToUnapproveComment = `
+You need admin, maintainer, or write access to unapprove submissions.
+`;
+
+/**
+ * Missing PR number in unapprove command.
+ */
+export const unapproveMissingPrComment = `
+Which PR? Try \`/unapprove 123\`
+`;
+
+/**
+ * Bounty already paid out, can't unapprove.
+ */
+export const bountyAlreadyPaidForUnapproveComment = `
+This bounty has already been paid out, so it can't be unapproved.
+`;
+
+/**
+ * Follow-up comment after a submission is approved.
+ */
+export function submissionApprovedFollowupComment(
+  solverUsername: string,
+  approver: string,
+  targetPrNumber: number
+): string {
+  return `
+@${solverUsername} Your submission (PR #${targetPrNumber}) has been approved by @${approver}!
+
+Merge the PR and confirm with \`/merge ${targetPrNumber}\` to release the payout.
+`;
+}
+
+/**
+ * Follow-up comment after a reapproval.
+ */
+export function reapproveFollowupComment(
+  approver: string,
+  targetPrNumber: number
+): string {
+  return `
+@${approver} Re-approved! Merge the PR and confirm with \`/merge ${targetPrNumber}\` to release the payout.
+`;
+}
+
+/**
+ * Bounty not funded, can't reapprove.
+ */
+export function bountyNotFundedForReapproveComment(bountyId: string): string {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
+  return `
+This bounty needs to be funded before submissions can be approved. Fund it at [bounty.new](${baseUrl}/bounty/${bountyId}), then try again.
+`;
+}
+
+/**
+ * No submission found for reapprove command.
+ */
+export function noSubmissionFoundForReapproveComment(
+  targetPrNumber: number
+): string {
+  return `
+No submission found for PR #${targetPrNumber}. The contributor needs to submit first with \`/submit ${targetPrNumber}\`.
+`;
+}
+
+/**
+ * Solver needs Stripe for reapprove.
+ */
+export function solverNeedsStripeForReapproveComment(
+  commenterLogin: string,
+  targetPrNumber: number
+): string {
+  return `
+@${commenterLogin} The solver needs to set up Stripe before we can approve: https://bounty.new/settings/payments
+
+Once that's done, run \`/reapprove ${targetPrNumber}\` again.
+`;
+}
+
+/**
+ * Can't determine which issue a PR references (for merge).
+ */
+export function cannotTellIssueForMergeComment(): string {
+  return `
+Couldn't figure out which issue this PR is for. Add "Fixes #123" to the PR body, or confirm merge from the issue with \`/merge <PR#>\`.
+`;
+}
+
+/**
+ * Solver needs Stripe for merge payout.
+ */
+export function solverNeedsStripeForMergeWithPrComment(
+  commenterLogin: string,
+  targetPrNumber: number
+): string {
+  return `
+@${commenterLogin} The solver needs to set up Stripe before payout: https://bounty.new/settings/payments
+
+Once that's done, run \`/merge ${targetPrNumber}\` again.
+`;
+}
+
+/**
+ * Bounty not funded for merge payout.
+ */
+export function bountyNotFundedForMergeWithPrComment(
+  bountyId: string,
+  targetPrNumber: number
+): string {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
+  return `
+This bounty needs to be funded first. Fund it at [bounty.new](${baseUrl}/bounty/${bountyId}), then run \`/merge ${targetPrNumber}\` to release the payout.
+`;
+}
+
+/**
+ * Early access: GitHub user not linked to any account.
+ */
+export function earlyAccessNotLinkedComment(githubUsername: string): string {
+  return `
+@${githubUsername} bounty.new is in early access. Link your GitHub account at https://bounty.new/integrations to get started.
+`;
+}
+
+/**
+ * Early access: User exists but doesn't have early access.
+ */
+export function earlyAccessNoAccessComment(githubUsername: string): string {
+  return `
+@${githubUsername} bounty.new is in early access and your account doesn't have access yet. Join the waitlist at https://bounty.new.
+`;
+}
+
+/**
+ * No team/organization found for user when creating a bounty.
+ */
+export function noTeamFoundComment(): string {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
+  return `
+No team found for your account. Log in at [bounty.new](${baseUrl}) and make sure you have a team set up, then try again.
+`;
+}
