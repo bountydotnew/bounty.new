@@ -8,6 +8,7 @@ interface IntegrationDetailPageProps {
   isLoading?: boolean;
   error?: Error | null;
   errorMessage?: string;
+  errorContent?: React.ReactNode;
   backHref?: string;
   backLabel?: string;
 }
@@ -17,6 +18,7 @@ export function IntegrationDetailPage({
   isLoading = false,
   error = null,
   errorMessage = 'Failed to load. Please try again.',
+  errorContent,
   backHref,
   backLabel,
 }: IntegrationDetailPageProps) {
@@ -30,9 +32,11 @@ export function IntegrationDetailPage({
         </div>
       )}
 
-      {!isLoading && error && (
-        <p className="text-sm text-text-tertiary">{errorMessage}</p>
-      )}
+      {!isLoading &&
+        error &&
+        (errorContent || (
+          <p className="text-sm text-text-tertiary">{errorMessage}</p>
+        ))}
 
       {!(isLoading || error) && children}
     </div>

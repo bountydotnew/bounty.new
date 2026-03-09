@@ -5,6 +5,14 @@ import { Button } from '@bounty/ui/components/button';
 import { BillingToggle } from '@/components/billing/billing-toggle';
 import { Badge } from '@bounty/ui/components/badge';
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@bounty/ui/components/table';
+import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
@@ -22,7 +30,7 @@ import { CardIcon } from '@bounty/ui/components/icons/huge/card';
 import { useState, useEffect, useCallback } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
 import Image from 'next/image';
-import { cn } from '@bounty/ui/lib/utils';
+import { cn, formatAmount, formatDate } from '@bounty/ui/lib/utils';
 import { ChevronDown } from 'lucide-react';
 import { PAYMENTS_FAQ_ITEMS } from '@bounty/ui/lib/faqs';
 import { useCustomer } from 'autumn-js/react';
@@ -877,45 +885,56 @@ function SettingsTabContent({
       </div>
 
       {status?.hasConnectAccount && status.onboardingComplete && (
-        <div className="shrink-0 w-full h-fit flex flex-col items-start justify-between rounded-none opacity-100 gap-[18px] self-stretch px-[18px] py-[18px] overflow-clip border-b border-b-solid border-border">
-          <div className="text-[20px] leading-[150%] shrink-0 text-foreground font-['Inter',system-ui,sans-serif] font-medium size-fit">
+        <div className="shrink-0 w-full h-fit flex flex-col items-start gap-[18px] self-stretch px-[18px] py-[18px] border-b border-border">
+          <div className="text-[20px] leading-[150%] text-foreground font-medium">
             Payout History
           </div>
           {payoutHistory && payoutHistory.length > 0 ? (
-            <div className="space-y-2 w-full">
-              {payoutHistory.map((payout: PayoutRecord) => (
-                <div
-                  key={payout.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-border"
-                >
-                  <div>
-                    <p className="font-medium">
-                      ${Number(payout.amount).toFixed(2)}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(payout.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <Badge
-                    variant={
-                      payout.status === 'completed'
-                        ? 'default'
-                        : payout.status === 'failed'
-                          ? 'destructive'
-                          : 'secondary'
-                    }
-                  >
-                    {payout.status}
-                  </Badge>
-                </div>
-              ))}
+            <div className="w-full">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {payoutHistory.map((p: PayoutRecord) => {
+                    const dotColor =
+                      p.status === 'completed'
+                        ? 'bg-emerald-500'
+                        : p.status === 'failed'
+                          ? 'bg-red-500'
+                          : 'bg-muted-foreground/64';
+                    return (
+                      <TableRow key={p.id}>
+                        <TableCell className="font-medium">
+                          {formatAmount(p.amount)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            <span
+                              aria-hidden="true"
+                              className={`size-1.5 rounded-full ${dotColor}`}
+                            />
+                            {p.status.charAt(0).toUpperCase() +
+                              p.status.slice(1)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatDate(p.createdAt)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-[14px] leading-[150%] text-text-secondary">
-                No payouts yet
-              </p>
-              <p className="text-[13px] leading-[150%] text-text-secondary">
+              <p className="text-sm text-muted-foreground">No payouts yet</p>
+              <p className="text-[13px] text-muted-foreground">
                 Payouts appear here when you complete bounties and receive
                 payments. Find a bounty to solve and submit your solution to
                 earn your first payout.
@@ -925,7 +944,7 @@ function SettingsTabContent({
                 className="inline-flex items-center gap-2 text-[13px] font-medium text-foreground hover:opacity-80 transition-opacity"
               >
                 Browse open bounties
-                <ExternalLink className="h-3.5 w-3.5" />
+                <ExternalLink className="size-3.5" />
               </Link>
             </div>
           )}

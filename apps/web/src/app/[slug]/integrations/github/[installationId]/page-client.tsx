@@ -5,8 +5,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { GithubIcon } from '@bounty/ui';
+import { Button } from '@bounty/ui/components/button';
 import { ConfirmAlertDialog } from '@bounty/ui/components/alert-dialog';
 import { ExternalLink, RefreshCw, Plus, Star } from 'lucide-react';
+import { TRPCClientError } from '@trpc/client';
 import { toast } from 'sonner';
 import { trpcClient } from '@/utils/trpc';
 import { useQueryState, parseAsString } from 'nuqs';
@@ -25,6 +27,17 @@ interface Repository {
   id: number;
   name: string;
   htmlUrl: string;
+}
+
+/**
+ * Detect if a tRPC error indicates a stale/removed GitHub App installation.
+ * This happens when the installation ID exists in our DB but the GitHub App
+ * has been uninstalled or its access token revoked on GitHub's side.
+ */
+function isStaleInstallationError(error: Error | null): boolean {
+  if (!(error && error instanceof TRPCClientError)) return false;
+  const code = error.data?.code;
+  return code === 'NOT_FOUND' || code === 'INTERNAL_SERVER_ERROR';
 }
 
 const CenteredWrapper = ({ children }: { children: React.ReactNode }) => (
@@ -68,6 +81,14 @@ export default function GitHubInstallationPage() {
       trpcClient.githubInstallation.getInstallation.query({ installationId }),
     enabled: isValidId,
   });
+
+  const { data: installUrlData } = useQuery({
+    queryKey: ['githubInstallation.getInstallationUrl'],
+    queryFn: () => trpcClient.githubInstallation.getInstallationUrl.query({}),
+    enabled: isValidId,
+  });
+
+  const isStale = isStaleInstallationError(error as Error | null);
 
   const syncMutation = useMutation({
     mutationFn: () =>
@@ -187,12 +208,50 @@ export default function GitHubInstallationPage() {
     },
   ];
 
+  const staleErrorContent = isStale ? (
+    <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
+      <GithubIcon className="h-10 w-10 text-text-tertiary" />
+      <div className="space-y-1.5">
+        <p className="text-sm font-medium text-foreground">
+          This installation is no longer active
+        </p>
+        <p className="text-sm text-text-muted max-w-sm">
+          The GitHub App was uninstalled or its permissions were revoked. You
+          can reinstall it or remove this record.
+        </p>
+      </div>
+      <div className="flex items-center gap-2 pt-2">
+        <Button
+          onClick={() => {
+            if (installUrlData?.url) {
+              window.open(installUrlData.url, '_blank', 'noopener,noreferrer');
+            }
+          }}
+          disabled={!installUrlData?.url}
+          size="sm"
+        >
+          <GithubIcon className="h-4 w-4" />
+          Reinstall GitHub App
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={uninstallMutation.isPending}
+          onClick={() => uninstallMutation.mutate()}
+        >
+          {uninstallMutation.isPending ? 'Removing...' : 'Remove'}
+        </Button>
+      </div>
+    </div>
+  ) : undefined;
+
   return (
     <CenteredWrapper>
       <IntegrationDetailPage
         isLoading={isLoading}
         error={error as Error | null}
         errorMessage="Failed to load installation details. Please try again."
+        errorContent={staleErrorContent}
       >
         <IntegrationHeader
           icon={<GithubIcon className="h-8 w-8 text-foreground" />}
@@ -263,30 +322,32 @@ export default function GitHubInstallationPage() {
         </ActionButton>
       </IntegrationDetailPage>
 
-      <ConfirmAlertDialog
-        open={showUninstallDialog}
-        onOpenChange={setShowUninstallDialog}
-        title="Uninstall GitHub App"
-        description={
-          <>
-            This will revoke bounty.new&apos;s access to{' '}
-            <span className="font-semibold text-foreground">
-              {accountLogin}
-            </span>
-            .{' '}
-            <span className="font-semibold text-red-400">
-              This can not be undone.
-            </span>
-          </>
-        }
-        confirmValue={accountLogin}
-        confirmLabel="Uninstall"
-        pendingLabel="Uninstalling..."
-        isPending={uninstallMutation.isPending}
-        onConfirm={async () => {
-          await uninstallMutation.mutateAsync();
-        }}
-      />
+      {!isStale && (
+        <ConfirmAlertDialog
+          open={showUninstallDialog}
+          onOpenChange={setShowUninstallDialog}
+          title="Uninstall GitHub App"
+          description={
+            <>
+              This will revoke bounty.new&apos;s access to{' '}
+              <span className="font-semibold text-foreground">
+                {accountLogin}
+              </span>
+              .{' '}
+              <span className="font-semibold text-red-400">
+                This can not be undone.
+              </span>
+            </>
+          }
+          confirmValue={accountLogin}
+          confirmLabel="Uninstall"
+          pendingLabel="Uninstalling..."
+          isPending={uninstallMutation.isPending}
+          onConfirm={async () => {
+            await uninstallMutation.mutateAsync();
+          }}
+        />
+      )}
     </CenteredWrapper>
   );
 }

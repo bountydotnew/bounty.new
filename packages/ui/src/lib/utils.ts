@@ -234,6 +234,51 @@ export function formatPriceString(price: string | null | undefined): string {
 }
 
 /**
+ * Format relative time from a date string (e.g., "3m ago", "2h ago", "5d ago")
+ */
+export function formatRelativeTime(date: string | Date): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const now = new Date();
+  const diffMs = now.getTime() - dateObj.getTime();
+  const diffMins = Math.floor(diffMs / 60_000);
+  const diffHours = Math.floor(diffMs / 3_600_000);
+  const diffDays = Math.floor(diffMs / 86_400_000);
+
+  if (diffMins < 1) {
+    return 'Just now';
+  }
+  if (diffMins < 60) {
+    return `${diffMins}m ago`;
+  }
+  if (diffHours < 24) {
+    return `${diffHours}h ago`;
+  }
+  if (diffDays < 7) {
+    return `${diffDays}d ago`;
+  }
+  return dateObj.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+/**
+ * Format amount with 2 decimal places and currency symbol (e.g., "$1,250.00")
+ */
+export function formatAmount(
+  amount: string | number,
+  currency = 'USD'
+): string {
+  const num = typeof amount === 'string' ? Number.parseFloat(amount) : amount;
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(num);
+}
+
+/**
  * GitHub helper utilities
  * These are helper functions for GitHub-related operations.
  * For GitHub API functions, see @bounty/api/driver/github
@@ -241,7 +286,8 @@ export function formatPriceString(price: string | null | undefined): string {
 
 // Regex for extracting owner/repo from GitHub URLs
 export const GITHUB_URL_REGEX = /github\.com\/([^/]+)\/([^/]+)/;
-export const GITHUB_ISSUE_URL_REGEX = /github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/i;
+export const GITHUB_ISSUE_URL_REGEX =
+  /github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/i;
 
 /**
  * Convert number to formatted string with commas (e.g., 1500 -> "1,500", 1500.50 -> "1,500.50")
