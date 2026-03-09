@@ -2,6 +2,7 @@
  * Bot Comment Templates
  *
  * All GitHub bot comments live here.
+ * Tone: friendly, concise, helpful. Like a teammate, not a system notification.
  */
 
 /**
@@ -37,11 +38,11 @@ export function unfundedBountyComment(
 
 ${formattedAmount} · ${submissionCount} submissions
 
-**Contributors:** Add \`@bountydotnew submit\` to your PR description, or comment \`/submit #PR_NUMBER\` on this issue.
+**Want to work on this?** Add \`@bountydotnew submit\` to your PR description, or comment \`/submit #PR_NUMBER\` on this issue.
 
-**Bounty creator:** Fund this bounty at [bounty.new](${baseUrl}/bounty/${bountyId}) to start reviewing. After funding, approve with \`/approve #PR_NUMBER\` and confirm with \`/merge #PR_NUMBER\` once merged.
+**Created this bounty?** Fund it at [bounty.new](${baseUrl}/bounty/${bountyId}) to start reviewing submissions. Once funded, approve a PR with \`/approve #PR_NUMBER\` and confirm with \`/merge #PR_NUMBER\` after it's merged.
 
-Funding is required before approvals and payouts.
+The bounty needs to be funded before approvals or payouts can happen.
 `;
 }
 
@@ -59,11 +60,11 @@ export function fundedBountyComment(
 
 Funded · ${submissionCount} submissions
 
-**Contributors:** Add \`@bountydotnew submit\` to your PR description, or comment \`/submit #PR_NUMBER\` on this issue.
+**Want to work on this?** Add \`@bountydotnew submit\` to your PR description, or comment \`/submit #PR_NUMBER\` on this issue.
 
-**Bounty creator:** Approve with \`/approve #PR_NUMBER\`. After merging, confirm with \`/merge #PR_NUMBER\` to release payment.
+**Ready to pay out?** Approve a submission with \`/approve #PR_NUMBER\`, then merge the PR. Payment releases automatically on merge.
 
-Payouts are released within 2–3 business days after merge.
+Payouts land within 2-3 business days.
 `;
 }
 
@@ -82,24 +83,24 @@ export function submissionReceivedComment(
 ): string {
   if (amount === 0) {
     return `
-@${prAuthor} PR #${prNumber} submitted. The bounty creator will review it.
+Hey @${prAuthor}, got your submission for PR #${prNumber}! The bounty creator will take a look.
 
-This is a free bounty. No payout will be issued.
+This is a free bounty, so there's no payout attached.
 `;
   }
 
   if (isFunded) {
     return `
-@${prAuthor} PR #${prNumber} submitted. The bounty creator will review it.
+Hey @${prAuthor}, got your submission for PR #${prNumber}! The bounty creator will take a look.
 
-After approval and merge, payout is released within 2–3 business days.
+When the PR gets merged, payout happens automatically. Funds land within 2-3 business days.
 `;
   }
 
   return `
-@${prAuthor} PR #${prNumber} submitted.
+Hey @${prAuthor}, got your submission for PR #${prNumber}!
 
-This bounty isn't funded yet. Your submission stays pending until the creator funds it.
+Heads up: this bounty isn't funded yet, so your submission will stay pending until the creator funds it.
 `;
 }
 
@@ -108,7 +109,7 @@ This bounty isn't funded yet. Your submission stays pending until the creator fu
  */
 export function submissionWithdrawnComment(): string {
   return `
-Submission withdrawn.
+Submission withdrawn. No worries!
 `;
 }
 
@@ -138,17 +139,17 @@ export function submissionApprovedComment(
 ): string {
   if (amount === 0) {
     return `
-@${solverUsername} PR #${targetPrNumber} approved.
+@${solverUsername} PR #${targetPrNumber} is approved!
 
 This is a free bounty, so no payout will be issued.
-@${approver} Merge PR #${targetPrNumber}, then confirm with \`/merge ${targetPrNumber}\`.
+@${approver} Go ahead and merge PR #${targetPrNumber}, then confirm with \`/merge ${targetPrNumber}\`.
 `;
   }
 
   return `
-@${solverUsername} PR #${targetPrNumber} approved. Payout releases after merge.
+@${solverUsername} PR #${targetPrNumber} is approved! Payout releases automatically when the PR is merged.
 
-@${approver} Merge PR #${targetPrNumber}, then confirm with \`/merge ${targetPrNumber}\`.
+@${approver} Merge PR #${targetPrNumber} whenever you're ready to release the payout.
 `;
 }
 
@@ -156,10 +157,10 @@ This is a free bounty, so no payout will be issued.
  * Submission already approved.
  */
 export function submissionAlreadyApprovedComment(
-  targetPrNumber: number
+  _targetPrNumber: number
 ): string {
   return `
-Already approved. Merge the PR and confirm with \`/merge ${targetPrNumber}\`.
+This one's already approved. Just merge the PR to release the payout.
 `;
 }
 
@@ -172,7 +173,7 @@ Already approved. Merge the PR and confirm with \`/merge ${targetPrNumber}\`.
  */
 export function approvalWithdrawnComment(targetPrNumber: number): string {
   return `
-Approval withdrawn for PR #${targetPrNumber}. The bounty is open again.
+Approval for PR #${targetPrNumber} has been withdrawn. The bounty is open for submissions again.
 `;
 }
 
@@ -181,7 +182,7 @@ Approval withdrawn for PR #${targetPrNumber}. The bounty is open again.
  */
 export function notApprovedComment(targetPrNumber: number): string {
   return `
-PR #${targetPrNumber} isn't approved.
+PR #${targetPrNumber} isn't currently approved, so there's nothing to unapprove.
 `;
 }
 
@@ -198,9 +199,9 @@ export function bountyCompletedComment(
 ): string {
   const formattedAmount = formatCurrency(amount, currency);
   return `
-Bounty completed. ${formattedAmount} released.
+Bounty complete! ${formattedAmount} is on its way.
 
-Funds arrive in the solver's Stripe account within 2–3 business days.
+Funds should land in the solver's Stripe account within 2-3 business days.
 `;
 }
 
@@ -235,7 +236,7 @@ Bounty moved to #${targetIssueNumber}.
  */
 export function prNotFoundComment(prNumber: number): string {
   return `
-Couldn't find PR #${prNumber}. Check the number and try again.
+Hmm, I couldn't find PR #${prNumber}. Double-check the number and try again?
 `;
 }
 
@@ -243,14 +244,14 @@ Couldn't find PR #${prNumber}. Check the number and try again.
  * No bounty on this issue.
  */
 export const noBountyFoundComment = `
-No bounty found for this issue.
+There's no bounty on this issue.
 `;
 
 /**
  * Bounty already exists.
  */
 export function bountyAlreadyExistsComment(bountyId: string): string {
-  return `A bounty already exists for this issue: https://bounty.new/bounty/${bountyId}`;
+  return `This issue already has a bounty: https://bounty.new/bounty/${bountyId}`;
 }
 
 // ============================================================================
@@ -264,7 +265,7 @@ export function bountyClosedComment(username: string): string {
   return `
 @${username} This bounty already has an approved submission.
 
-To switch winners, use \`/unapprove #PR_NUMBER\` then \`/approve #PR_NUMBER\`.
+Want to pick a different winner? Use \`/unapprove #PR_NUMBER\` first, then \`/approve #PR_NUMBER\` on the new one.
 `;
 }
 
@@ -276,7 +277,7 @@ export function prNotOpenForSubmitComment(
   prNumber: number
 ): string {
   return `
-@${username} PR #${prNumber} isn't open. Reopen it, then run \`/submit ${prNumber}\`.
+@${username} PR #${prNumber} isn't open. Reopen it and then run \`/submit ${prNumber}\`.
 `;
 }
 
@@ -299,21 +300,21 @@ export function alreadySubmittedComment(
   prAuthor: string,
   prNumber: number
 ): string {
-  return `@${prAuthor} PR #${prNumber} is already submitted. The bounty creator will review it.`;
+  return `@${prAuthor} PR #${prNumber} is already submitted. Sit tight while the bounty creator reviews it!`;
 }
 
 /**
  * Too many pending submissions.
  */
 export function tooManyPendingComment(username: string): string {
-  return `@${username} You have 2 pending submissions for this bounty. Wait for one to be reviewed before submitting another.`;
+  return `@${username} You already have 2 pending submissions for this bounty. Wait for one to be reviewed before submitting another.`;
 }
 
 /**
  * Generic submission failure.
  */
 export function submissionFailedComment(prAuthor: string): string {
-  return `@${prAuthor} Couldn't submit this PR. Check that it's open and linked to this issue, then try again.`;
+  return `@${prAuthor} Something went wrong submitting this PR. Make sure it's open and linked to this issue, then try again.`;
 }
 
 /**
@@ -321,7 +322,7 @@ export function submissionFailedComment(prAuthor: string): string {
  */
 export function cannotUnsubmitComment(status: string): string {
   return `
-Can't unsubmit. This submission is already ${status}.
+Can't unsubmit — this submission is already ${status}.
 `;
 }
 
@@ -334,7 +335,7 @@ Can't unsubmit. This submission is already ${status}.
  */
 export function noPermissionToApproveComment(username: string): string {
   return `
-@${username} You don't have permission to approve submissions. This requires admin, maintainer, or write access.
+@${username} You need admin, maintainer, or write access to approve submissions.
 `;
 }
 
@@ -343,7 +344,7 @@ export function noPermissionToApproveComment(username: string): string {
  */
 export function approveMissingPrComment(username: string): string {
   return `
-@${username} Include a PR number: \`/approve #PR_NUMBER\`
+@${username} Which PR? Try \`/approve #PR_NUMBER\`
 `;
 }
 
@@ -356,7 +357,7 @@ export function bountyNotFundedComment(
 ): string {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
   return `
-@${username} This bounty isn't funded yet. Fund it at [bounty.new](${baseUrl}/bounty/${bountyId}), then run \`/approve\` again.
+@${username} This bounty needs to be funded first. Fund it at [bounty.new](${baseUrl}/bounty/${bountyId}), then run \`/approve\` again.
 `;
 }
 
@@ -371,7 +372,7 @@ export function noSubmissionFoundComment(
   return `
 @${username} No submission found for PR #${prNumber}.
 
-@${prAuthor} needs to submit first: add \`@bountydotnew submit\` to the PR description, or comment \`/submit ${prNumber}\` on this issue.
+@${prAuthor} can submit by adding \`@bountydotnew submit\` to the PR description, or commenting \`/submit ${prNumber}\` on this issue.
 `;
 }
 
@@ -383,9 +384,9 @@ export function solverNeedsStripeComment(
   prNumber: number
 ): string {
   return `
-${username} The solver needs to connect Stripe before approval: https://bounty.new/settings/payments
+${username} The solver needs to set up Stripe before we can approve: https://bounty.new/settings/payments
 
-Then run \`/approve ${prNumber}\` again.
+Once that's done, run \`/approve ${prNumber}\` again.
 `;
 }
 
@@ -397,7 +398,7 @@ Then run \`/approve ${prNumber}\` again.
  * Missing PR number in unsubmit command.
  */
 export const unsubmitMissingPrComment = `
-Include a PR number: \`/unsubmit 123\`
+Which PR? Try \`/unsubmit 123\`
 `;
 
 /**
@@ -417,14 +418,14 @@ Only the PR author or a repo maintainer can unsubmit.
  * Missing PR number in merge command.
  */
 export const mergeMissingPrComment = `
-Include a PR number: \`/merge 123\`
+Which PR? Try \`/merge 123\`
 `;
 
 /**
  * No permission to confirm merge.
  */
 export const noPermissionToMergeComment = `
-You don't have permission to confirm merges. This requires admin, maintainer, or write access.
+You need admin, maintainer, or write access to confirm merges.
 `;
 
 /**
@@ -471,9 +472,9 @@ export function solverNeedsStripeForMergeComment(
   prNumber: number
 ): string {
   return `
-${username} The solver needs to connect Stripe before payout: https://bounty.new/settings/payments
+${username} The solver needs to set up Stripe before payout: https://bounty.new/settings/payments
 
-Then run \`/merge ${prNumber}\` again.
+Once that's done, run \`/merge ${prNumber}\` again.
 `;
 }
 
@@ -481,14 +482,14 @@ Then run \`/merge ${prNumber}\` again.
  * Payout already processing.
  */
 export const payoutInProgressComment = `
-Payout is already processing.
+Payout is already being processed. Hang tight!
 `;
 
 /**
  * Payout failed.
  */
 export const payoutErrorComment = `
-Something went wrong releasing the payout. Try again or contact support.
+Something went wrong releasing the payout. Try again, or reach out to support if it keeps happening.
 `;
 
 /**
@@ -497,7 +498,7 @@ Something went wrong releasing the payout. Try again or contact support.
 export function bountyNotFundedForMergeComment(bountyId: string): string {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
   return `
-This bounty isn't funded yet. Fund it at ${baseUrl}/bounty/${bountyId}, then run \`/merge\` again.
+This bounty needs to be funded first. Fund it at ${baseUrl}/bounty/${bountyId}, then run \`/merge\` again.
 `;
 }
 
@@ -509,14 +510,14 @@ This bounty isn't funded yet. Fund it at ${baseUrl}/bounty/${bountyId}, then run
  * No permission to reapprove.
  */
 export const noPermissionToReapproveComment = `
-You don't have permission to approve submissions. This requires admin, maintainer, or write access.
+You need admin, maintainer, or write access to approve submissions.
 `;
 
 /**
  * Missing PR number for reapprove.
  */
 export const reapproveMissingPrComment = `
-Include a PR number: \`/reapprove 123\`
+Which PR? Try \`/reapprove 123\`
 `;
 
 /**
@@ -524,7 +525,7 @@ Include a PR number: \`/reapprove 123\`
  */
 export function reapproveAlreadyApprovedComment(prNumber: number): string {
   return `
-Already approved. Merge the PR and confirm with \`/merge ${prNumber}\`.
+Already approved! Just merge the PR and confirm with \`/merge ${prNumber}\`.
 `;
 }
 
@@ -537,7 +538,7 @@ Already approved. Merge the PR and confirm with \`/merge ${prNumber}\`.
  */
 export function invalidAmountComment(amount: string): string {
   return `
-Invalid amount: ${amount}. Must be between 0 and 1,000,000.
+Invalid amount: ${amount}. It needs to be between 0 and 1,000,000.
 `;
 }
 
@@ -546,7 +547,7 @@ Invalid amount: ${amount}. Must be between 0 and 1,000,000.
  */
 export function invalidCurrencyComment(currency: string): string {
   return `
-Invalid currency: ${currency}. Supported: USD, EUR, GBP.
+"${currency}" isn't a supported currency. We support USD, EUR, and GBP.
 `;
 }
 
@@ -554,14 +555,14 @@ Invalid currency: ${currency}. Supported: USD, EUR, GBP.
  * No permission to create bounties.
  */
 export const noPermissionToCreateComment = `
-You don't have permission to create bounties. This requires admin, maintainer, or write access.
+You need admin, maintainer, or write access to create bounties.
 `;
 
 /**
  * GitHub account not linked.
  */
 export const githubNotLinkedComment = `
-Your GitHub account isn't linked to a bounty.new account.
+Your GitHub account isn't linked to a bounty.new account yet.
 
 Link it at https://bounty.new/integrations, then try again.
 `;
@@ -574,7 +575,7 @@ Link it at https://bounty.new/integrations, then try again.
  * No permission to move bounties.
  */
 export const noPermissionToMoveComment = `
-You don't have permission to move bounties. This requires admin, maintainer, or write access.
+You need admin, maintainer, or write access to move bounties.
 `;
 
 /**
@@ -588,7 +589,7 @@ No bounty found on this issue.
  * Can't move to a PR.
  */
 export const cannotMoveToPrComment = `
-Can't move a bounty to a pull request. Specify an issue number.
+Can't move a bounty to a pull request. Use an issue number instead.
 `;
 
 /**
@@ -618,7 +619,7 @@ PR #${prNumber} doesn't reference this issue. Add "Fixes #${prNumber}" to the PR
  */
 export function cannotTellIssueComment(): string {
   return `
-Couldn't determine which issue this PR is for. Add "Fixes #123" to the PR body, or unsubmit from the issue with \`/unsubmit <PR#>\`.
+Couldn't figure out which issue this PR is for. Add "Fixes #123" to the PR body, or unsubmit from the issue directly with \`/unsubmit <PR#>\`.
 `;
 }
 
@@ -627,7 +628,7 @@ Couldn't determine which issue this PR is for. Add "Fixes #123" to the PR body, 
  */
 export function cannotTellIssueForReapproveComment(): string {
   return `
-Couldn't determine which issue this PR is for. Add "Fixes #123" to the PR body, or reapprove from the issue with \`/reapprove <PR#>\`.
+Couldn't figure out which issue this PR is for. Add "Fixes #123" to the PR body, or reapprove from the issue with \`/reapprove <PR#>\`.
 `;
 }
 
@@ -648,7 +649,7 @@ PR #${prNumber} doesn't reference this issue. Add "Fixes #${prNumber}" to the PR
  * Can't tell which issue from PR comment.
  */
 export const cannotTellWhichIssueComment = `
-Couldn't determine which issue this PR is for. Add "Fixes #123" to the PR body, or unsubmit from the issue with \`/unsubmit <PR#>\`.
+Couldn't figure out which issue this PR is for. Add "Fixes #123" to the PR body, or unsubmit from the issue with \`/unsubmit <PR#>\`.
 `;
 
 /**
@@ -664,12 +665,12 @@ No submission found for PR #${prNumber}.
  * Bounty has an approved submission, closed to new ones.
  */
 export const bountyNotAcceptingComment = `
-This bounty already has an approved submission. To switch winners, use \`/unapprove <PR#>\` then \`/reapprove <PR#>\`.
+This bounty already has an approved submission. Want to switch? Use \`/unapprove <PR#>\` then \`/reapprove <PR#>\`.
 `;
 
 /**
  * Bounty already completed, can't unapprove.
  */
 export const bountyAlreadyCompletedComment = `
-This bounty is completed and can't be unapproved.
+This bounty is already completed and can't be unapproved.
 `;

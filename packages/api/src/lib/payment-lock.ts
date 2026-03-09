@@ -102,7 +102,7 @@ export class PaymentLockError extends Error {
  * Prevents duplicate operations even if our system retries
  */
 const IDEMPOTENCY_PREFIX = 'bounty:idempotency';
-const IDEMPOTENCY_TTL = 86400; // 24 hours
+const IDEMPOTENCY_TTL = 86_400; // 24 hours
 
 /**
  * Generate and store an idempotency key for a payment operation
@@ -153,4 +153,17 @@ export async function markOperationPerformed(
 ): Promise<void> {
   const key = `${IDEMPOTENCY_PREFIX}:${operation}:${bountyId}${additionalContext ? `:${additionalContext}` : ''}`;
   await redis.setex(key, IDEMPOTENCY_TTL, result);
+}
+
+/**
+ * Clear an idempotency marker so the operation can be retried
+ * Used when a previously-successful operation is reversed (e.g. transfer reversal)
+ */
+export async function clearOperationPerformed(
+  operation: string,
+  bountyId: string,
+  additionalContext?: string
+): Promise<void> {
+  const key = `${IDEMPOTENCY_PREFIX}:${operation}:${bountyId}${additionalContext ? `:${additionalContext}` : ''}`;
+  await redis.del(key);
 }

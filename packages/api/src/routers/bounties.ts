@@ -1312,7 +1312,9 @@ export const bountiesRouter = router({
             try {
               const links = parseLinksFromMarkdown(input.description!);
               // Delete old links and insert new ones
-              await db.delete(bounty_links).where(eq(bounty_links.bountyId, id));
+              await db
+                .delete(bounty_links)
+                .where(eq(bounty_links.bountyId, id));
               if (links.length > 0) {
                 await db.insert(bounty_links).values(
                   links.map((link) => ({
@@ -2739,50 +2741,108 @@ export const bountiesRouter = router({
           parseAmount(existingBounty.amount) * 100
         );
 
-        // Create transfer to solver
-        const transfer = await createTransfer({
-          amount: amountInCents,
-          connectAccountId: solver.stripeConnectAccountId,
-          bountyId: input.bountyId,
-        });
+        // Use payment lock + idempotency to prevent double payment
+        // (e.g., if PR merge auto-payment races with this approval)
+        try {
+          await withPaymentLock(input.bountyId, async () => {
+            // Re-check bounty state inside the lock to prevent races
+            const [latestBounty] = await db
+              .select({
+                paymentStatus: bounty.paymentStatus,
+                stripeTransferId: bounty.stripeTransferId,
+              })
+              .from(bounty)
+              .where(eq(bounty.id, input.bountyId))
+              .limit(1);
 
-        // Update submission status
-        await db
-          .update(submission)
-          .set({
-            status: 'approved',
-            reviewedAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(eq(submission.id, input.submissionId));
+            if (!latestBounty || latestBounty.paymentStatus !== 'held') {
+              throw new TRPCError({
+                code: 'BAD_REQUEST',
+                message:
+                  latestBounty?.paymentStatus === 'released' ||
+                  latestBounty?.stripeTransferId
+                    ? 'This bounty has already been paid out'
+                    : 'Funds are not held for this bounty',
+              });
+            }
 
-        // Update bounty status
-        await db
-          .update(bounty)
-          .set({
-            status: 'completed',
-            paymentStatus: 'released',
-            stripeTransferId: transfer.id,
-            updatedAt: new Date(),
-          })
-          .where(eq(bounty.id, input.bountyId));
+            const alreadyProcessed = await wasOperationPerformed(
+              'release-payout',
+              input.bountyId
+            );
+            if (alreadyProcessed) {
+              throw new TRPCError({
+                code: 'BAD_REQUEST',
+                message: 'This bounty has already been paid out',
+              });
+            }
 
-        // Create payout record
-        await db.insert(payout).values({
-          userId: solver.id,
-          bountyId: input.bountyId,
-          amount: existingBounty.amount,
-          status: 'processing',
-          stripeTransferId: transfer.id,
-        });
+            // Create transfer to solver
+            // solver.stripeConnectAccountId was validated non-null above (line 2726)
+            const transfer = await createTransfer({
+              amount: amountInCents,
+              connectAccountId: solver.stripeConnectAccountId!,
+              bountyId: input.bountyId,
+              idempotencyKey: `release-payout:${input.bountyId}`,
+            });
 
-        // Create transaction record
-        await db.insert(transaction).values({
-          bountyId: input.bountyId,
-          type: 'transfer',
-          amount: existingBounty.amount,
-          stripeId: transfer.id,
-        });
+            // Atomically update all records
+            await db.transaction(async (tx) => {
+              await tx
+                .update(submission)
+                .set({
+                  status: 'approved',
+                  reviewedAt: new Date(),
+                  updatedAt: new Date(),
+                })
+                .where(eq(submission.id, input.submissionId));
+
+              await tx
+                .update(bounty)
+                .set({
+                  status: 'completed',
+                  paymentStatus: 'released',
+                  stripeTransferId: transfer.id,
+                  assignedToId: solver.id,
+                  updatedAt: new Date(),
+                })
+                .where(eq(bounty.id, input.bountyId));
+
+              await tx.insert(payout).values({
+                userId: solver.id,
+                bountyId: input.bountyId,
+                amount: existingBounty.amount,
+                status: 'processing',
+                stripeTransferId: transfer.id,
+              });
+
+              await tx.insert(transaction).values({
+                bountyId: input.bountyId,
+                type: 'transfer',
+                amount: existingBounty.amount,
+                stripeId: transfer.id,
+              });
+            });
+
+            await markOperationPerformed(
+              'release-payout',
+              input.bountyId,
+              'success'
+            );
+          });
+        } catch (error) {
+          if (error instanceof TRPCError) {
+            throw error;
+          }
+          if (error instanceof PaymentLockError) {
+            throw new TRPCError({
+              code: 'CONFLICT',
+              message:
+                'Payout is already being processed. Please try again in a moment.',
+            });
+          }
+          throw error;
+        }
 
         return {
           success: true,
@@ -3933,8 +3993,7 @@ To process this request:
           });
         }
 
-        // Get creator info (unused until email sending is wired up)
-        const [_creator] = await db
+        const [creator] = await db
           .select({ email: user.email, name: user.name })
           .from(user)
           .where(eq(user.id, bountyRecord.createdById))
@@ -3947,6 +4006,30 @@ To process this request:
           const platformFeePercent = 0.05;
           const platformFee = bountyAmount * platformFeePercent;
           const refundAmount = input.refundAmount ?? bountyAmount - platformFee;
+
+          // Issue the Stripe refund if we have a payment intent
+          if (bountyRecord.stripePaymentIntentId) {
+            try {
+              const refundAmountInCents = Math.round(refundAmount * 100);
+              await refundPayment(
+                bountyRecord.stripePaymentIntentId,
+                refundAmountInCents
+              );
+              console.log(
+                `[Cancellation] Stripe refund issued for bounty ${request.bountyId}: $${refundAmount} (${refundAmountInCents} cents)`
+              );
+            } catch (stripeError) {
+              console.error(
+                `[Cancellation] Failed to issue Stripe refund for bounty ${request.bountyId}:`,
+                stripeError
+              );
+              throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message:
+                  'Failed to issue Stripe refund. Please try again or refund manually via the Stripe Dashboard.',
+              });
+            }
+          }
 
           // Update bounty status
           await db
@@ -3969,20 +4052,9 @@ To process this request:
             })
             .where(eq(cancellationRequest.id, input.requestId));
 
-          // TODO: Send BountyCancellationConfirm email to creator
-          // if (creator?.email) {
-          //   await sendEmail({
-          //     to: creator.email,
-          //     subject: 'Your Bounty Has Been Cancelled',
-          //     react: BountyCancellationConfirm({
-          //       bountyTitle: bountyRecord.title,
-          //       bountyAmount: `$${bountyAmount.toLocaleString()}`,
-          //       refundAmount: `$${refundAmount.toLocaleString()}`,
-          //       platformFee: `$${platformFee.toLocaleString()}`,
-          //       email: creator.email,
-          //     }),
-          //   });
-          // }
+          // Note: The charge.refunded Stripe webhook will also fire and send
+          // the confirmation email + in-app notification to the creator.
+          // We log here but don't duplicate notifications.
 
           console.log(
             `[Cancellation] Approved for bounty ${request.bountyId}, refund: $${refundAmount}`
@@ -3996,7 +4068,7 @@ To process this request:
             success: true,
             status: 'approved',
             refundAmount,
-            message: 'Cancellation approved. Refund will be processed.',
+            message: 'Cancellation approved and refund issued.',
           };
         }
         // Rejected
