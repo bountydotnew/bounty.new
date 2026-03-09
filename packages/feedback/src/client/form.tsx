@@ -30,7 +30,7 @@ import { useFeedback } from './context';
  * ```
  */
 export function FeedbackForm({ onSuccess }: { onSuccess?: () => void }) {
-  const { close, elementContext, config } = useFeedback();
+  const { isOpen, close, elementContext, config } = useFeedback();
   const [status, setStatus] = useState<
     'idle' | 'sending' | 'success' | 'error'
   >('idle');
@@ -47,10 +47,13 @@ export function FeedbackForm({ onSuccess }: { onSuccess?: () => void }) {
   };
 
   useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
     requestAnimationFrame(() => {
       textareaRef.current?.focus();
     });
-  }, []);
+  }, [isOpen]);
 
   const handleClose = useCallback(() => {
     if (status === 'sending') {
@@ -95,8 +98,10 @@ export function FeedbackForm({ onSuccess }: { onSuccess?: () => void }) {
               windowWidth: window.innerWidth,
               windowHeight: window.innerHeight,
               onclone: (clonedDoc) => {
+                // Remove only the feedback UI elements, not other dialogs
+                // the user may be reporting bugs about
                 for (const el of clonedDoc.querySelectorAll(
-                  '[data-slot="dialog-backdrop"], [data-slot="dialog-viewport"], dialog[open], [role="dialog"]'
+                  '[data-feedback-ui], [data-feedback-ignore]'
                 )) {
                   el.remove();
                 }
@@ -184,12 +189,19 @@ export function FeedbackForm({ onSuccess }: { onSuccess?: () => void }) {
               componentName: elementContext.componentName,
               selector: elementContext.selector,
               htmlPreview: elementContext.htmlPreview,
-              stack: elementContext.stack.map((frame) => ({
-                functionName: frame.functionName,
-                fileName: frame.fileName,
-                lineNumber: frame.lineNumber,
-                columnNumber: frame.columnNumber,
-              })),
+              stack: elementContext.stack.map(
+                (frame: {
+                  functionName?: string;
+                  fileName?: string;
+                  lineNumber?: number;
+                  columnNumber?: number;
+                }) => ({
+                  functionName: frame.functionName,
+                  fileName: frame.fileName,
+                  lineNumber: frame.lineNumber,
+                  columnNumber: frame.columnNumber,
+                })
+              ),
             })
           );
         }

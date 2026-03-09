@@ -48,6 +48,7 @@ export function FeedbackModal() {
     <dialog
       ref={dialogRef}
       onClose={close}
+      data-feedback-ui
       style={{ zIndex: modalZIndex }}
       className="fixed inset-0 m-auto w-full max-w-md rounded-xl border border-neutral-800 bg-neutral-950 p-6 text-white shadow-2xl backdrop:bg-black/50"
     >

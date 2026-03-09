@@ -1,4 +1,27 @@
-export type { ReactGrabElementContext } from 'react-grab/primitives';
+/**
+ * Locally declared to avoid build failures when react-grab/primitives
+ * can't be resolved by the bundler (e.g. Turbopack).
+ * Mirrors the shape exported by react-grab/primitives.
+ */
+export interface ReactGrabElementContext {
+  element: Element;
+  htmlPreview: string;
+  stackString: string;
+  stack: Array<{
+    args?: unknown[];
+    columnNumber?: number;
+    lineNumber?: number;
+    fileName?: string;
+    functionName?: string;
+    source?: string;
+    isServer?: boolean;
+    isSymbolicated?: boolean;
+  }>;
+  componentName: string | null;
+  fiber: unknown;
+  selector: string | null;
+  styles: string;
+}
 
 export interface FeedbackConfig {
   endpoint?: string;

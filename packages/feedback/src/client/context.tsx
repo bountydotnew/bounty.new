@@ -9,7 +9,7 @@ import {
   useRef,
   type ReactNode,
 } from 'react';
-import type { ReactGrabElementContext } from 'react-grab/primitives';
+import type { ReactGrabElementContext } from './types';
 import type { FeedbackConfig, FeedbackContextType } from './types';
 
 const FeedbackContext = createContext<FeedbackContextType | null>(null);
@@ -51,10 +51,16 @@ export function FeedbackProvider({
   }, []);
 
   const close = useCallback(() => {
-    setIsOpen(false);
+    setIsOpen((prev) => {
+      if (!prev) {
+        return prev;
+      }
+      // Defer side-effects to after the state update
+      queueMicrotask(() => onCloseRef.current?.());
+      return false;
+    });
     setElementContext(null);
     setIsSelecting(false);
-    onCloseRef.current?.();
   }, []);
 
   const startSelection = useCallback(() => {

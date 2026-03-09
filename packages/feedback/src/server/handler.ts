@@ -82,7 +82,31 @@ export function createFeedbackHandler(config: FeedbackHandlerConfig) {
       let metadata: Record<string, string> = {};
       if (metadataStr) {
         try {
-          metadata = JSON.parse(metadataStr);
+          const parsed: unknown = JSON.parse(metadataStr);
+          if (
+            typeof parsed !== 'object' ||
+            parsed === null ||
+            Array.isArray(parsed)
+          ) {
+            return new Response(
+              JSON.stringify({ error: 'metadata must be a JSON object' }),
+              { status: 400, headers: { 'Content-Type': 'application/json' } }
+            );
+          }
+          for (const [key, value] of Object.entries(parsed)) {
+            if (typeof value !== 'string') {
+              return new Response(
+                JSON.stringify({
+                  error: `metadata value for "${key}" must be a string`,
+                }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                }
+              );
+            }
+          }
+          metadata = parsed as Record<string, string>;
         } catch {
           return new Response(
             JSON.stringify({ error: 'Invalid metadata JSON' }),
@@ -94,7 +118,38 @@ export function createFeedbackHandler(config: FeedbackHandlerConfig) {
       let element: ElementContext | null = null;
       if (elementStr) {
         try {
-          element = JSON.parse(elementStr);
+          const parsed: unknown = JSON.parse(elementStr);
+          if (
+            typeof parsed !== 'object' ||
+            parsed === null ||
+            Array.isArray(parsed)
+          ) {
+            return new Response(
+              JSON.stringify({ error: 'element must be a JSON object' }),
+              { status: 400, headers: { 'Content-Type': 'application/json' } }
+            );
+          }
+          const obj = parsed as Record<string, unknown>;
+          if (!Array.isArray(obj.stack)) {
+            return new Response(
+              JSON.stringify({ error: 'element.stack must be an array' }),
+              { status: 400, headers: { 'Content-Type': 'application/json' } }
+            );
+          }
+          for (const item of obj.stack) {
+            if (typeof item !== 'object' || item === null) {
+              return new Response(
+                JSON.stringify({
+                  error: 'element.stack items must be objects',
+                }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                }
+              );
+            }
+          }
+          element = parsed as ElementContext;
         } catch {
           return new Response(
             JSON.stringify({ error: 'Invalid element JSON' }),

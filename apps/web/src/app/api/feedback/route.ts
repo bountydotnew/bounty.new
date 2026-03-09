@@ -55,7 +55,9 @@ async function sendToDiscordWebhook(data: FeedbackData) {
       });
     }
 
-    const sourceFrame = data.element.stack?.[0];
+    const stack = Array.isArray(data.element.stack) ? data.element.stack : [];
+
+    const sourceFrame = stack[0];
     if (sourceFrame?.fileName) {
       const loc = `${sourceFrame.fileName}${sourceFrame.lineNumber ? `:${sourceFrame.lineNumber}` : ''}`;
       fields.push({
@@ -65,8 +67,8 @@ async function sendToDiscordWebhook(data: FeedbackData) {
       });
     }
 
-    if (data.element.stack?.length) {
-      const stackStr = data.element.stack
+    if (stack.length > 0) {
+      const stackStr = stack
         .slice(0, 5)
         .map((f) => {
           const name = f.functionName || 'anonymous';
@@ -94,11 +96,16 @@ async function sendToDiscordWebhook(data: FeedbackData) {
     });
   }
 
-  if (data.metadata && Object.keys(data.metadata).length > 0) {
+  if (
+    data.metadata &&
+    typeof data.metadata === 'object' &&
+    !Array.isArray(data.metadata) &&
+    Object.keys(data.metadata).length > 0
+  ) {
     for (const [key, value] of Object.entries(data.metadata)) {
       fields.push({
-        name: truncate(key, DISCORD_FIELD_NAME_MAX),
-        value: truncate(value, DISCORD_FIELD_VALUE_MAX),
+        name: truncate(String(key), DISCORD_FIELD_NAME_MAX),
+        value: truncate(String(value), DISCORD_FIELD_VALUE_MAX),
         inline: true,
       });
     }

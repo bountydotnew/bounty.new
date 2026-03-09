@@ -39,6 +39,7 @@ export function FeedbackOverlay() {
   const [hovered, setHovered] = useState<HoveredInfo>(null);
   const [isResolving, setIsResolving] = useState(false);
   const highlightRef = useRef<HTMLDivElement>(null);
+  const cancelledRef = useRef(false);
 
   useEffect(() => {
     if (!isSelecting) {
@@ -107,15 +108,22 @@ export function FeedbackOverlay() {
       }
 
       setIsResolving(true);
+      cancelledRef.current = false;
       try {
         freeze();
         const context = await getElementContext(target);
+        if (cancelledRef.current) {
+          unfreeze();
+          return;
+        }
         unfreeze();
         selectElement(context);
       } catch (err) {
         unfreeze();
-        console.error('[feedback] Failed to resolve element context:', err);
-        cancelSelection();
+        if (!cancelledRef.current) {
+          console.error('[feedback] Failed to resolve element context:', err);
+          cancelSelection();
+        }
       } finally {
         setIsResolving(false);
       }
@@ -123,6 +131,10 @@ export function FeedbackOverlay() {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (isResolving) {
+          cancelledRef.current = true;
+          unfreeze();
+        }
         cancelSelection();
       }
     };
