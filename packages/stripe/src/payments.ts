@@ -200,9 +200,12 @@ export async function createTransfer(params: {
 
 /**
  * Refund a payment intent (for cancelled bounties)
+ * @param paymentIntentId - The Stripe payment intent ID to refund
+ * @param amountInCents - Optional partial refund amount in cents. If omitted, full refund is issued.
  */
-export async function refundPayment(paymentIntentId: string) {
+export async function refundPayment(paymentIntentId: string, amountInCents?: number) {
   return stripeClient.refunds.create({
     payment_intent: paymentIntentId,
+    ...(amountInCents != null && amountInCents > 0 ? { amount: amountInCents } : {}),
   });
 }
