@@ -196,6 +196,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
           {/* Success state */}
           {waitlistSubmission.success ? (
             <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
+              {/* Checkmark */}
               <div
                 className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
               >
@@ -213,18 +214,21 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                   />
                 </svg>
               </div>
+
               <h2
                 className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
               >
                 You're on the list
               </h2>
               <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
+                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-4'} text-text-muted`}
               >
                 We'll reach out when it's your turn.
               </p>
+
+              {/* Position badge */}
               <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
+                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1 mb-3' : 'px-3 py-1.5 mb-6'} rounded-full bg-surface-1 border border-border-subtle`}
               >
                 <span className="text-xs text-text-muted">Position</span>
                 <span
@@ -233,6 +237,42 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                   #{waitlistCount}
                 </span>
               </div>
+
+              {/* Share CTA — skip in compact mode */}
+              {!compact && (
+                <div className="border border-border-subtle rounded-xl p-4 bg-surface-1">
+                  <p className="text-xs font-medium text-foreground mb-1">
+                    Skip the line
+                  </p>
+                  <p className="text-xs text-text-muted mb-3">
+                    Share with developers and move up faster.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const text =
+                        "I just joined the waitlist for bounty.new — the fastest way to hire developers to fix your code. Join me 👇";
+                      const url = "https://bounty.new";
+                      window.open(
+                        `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+                        "_blank",
+                        "noopener,noreferrer"
+                      );
+                    }}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-foreground text-background text-xs font-medium hover:opacity-90 transition-opacity"
+                  >
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.736-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                    Share on X
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <>
