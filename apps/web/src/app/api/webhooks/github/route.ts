@@ -2771,6 +2771,28 @@ async function handlePullRequestMerged(
     return;
   }
 
+  // Only auto-release if the submission was explicitly approved via /approve.
+  // We don't treat merge alone as approval because anyone with merge access
+  // (including the PR author) could merge — payment should require a deliberate
+  // /approve from a bounty maintainer first.
+  if (submissionRecord.status !== 'approved') {
+    console.log(
+      `[GitHub Webhook] Submission for PR ${pull_request.number} is not approved (status: ${submissionRecord.status}), skipping auto-payment`
+    );
+    try {
+      await githubApp.createIssueComment(
+        installationId,
+        repository.owner.login,
+        repository.name,
+        bountyRecord.githubIssueNumber!,
+        `PR #${pull_request.number} has been merged but the submission hasn't been approved yet.\n\nTo release payment, run \`/approve ${pull_request.number}\` then \`/merge ${pull_request.number}\`.`
+      );
+    } catch (commentError) {
+      console.error('[GitHub Webhook] Failed to post unapproved merge comment:', commentError);
+    }
+    return;
+  }
+
   // Already paid out — nothing to do
   if (isBountyReleased(bountyRecord)) {
     console.log(
@@ -2937,18 +2959,6 @@ async function handlePullRequestMerged(
 
       // Update all records atomically
       await db.transaction(async (tx) => {
-        // Auto-approve the submission if not already approved (merge implies approval)
-        if (submissionRecord.status !== 'approved') {
-          await tx
-            .update(submission)
-            .set({
-              status: 'approved',
-              reviewedAt: new Date(),
-              updatedAt: new Date(),
-            })
-            .where(eq(submission.id, submissionRecord.id));
-        }
-
         await tx.insert(payout).values({
           userId: solver.id,
           bountyId: bountyRecord.id,
