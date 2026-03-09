@@ -195,43 +195,68 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
-              <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
-              >
-                <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+            <div className={`text-left ${compact ? 'py-4' : 'py-10 animate-in fade-in slide-in-from-bottom-4 duration-1000'}`}>
+              <div className="flex flex-col items-center text-center">
+                <div
+                  className={`inline-flex items-center justify-center ${compact ? 'w-12 h-12 mb-4' : 'w-20 h-20 mb-8'} rounded-3xl bg-brand-accent/10 border border-brand-accent/20 shadow-[0_0_40px_-10px_rgba(74,222,0,0.3)]`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <h2
-                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
-              >
-                You're on the list
-              </h2>
-              <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
-              >
-                We'll reach out when it's your turn.
-              </p>
-              <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
-              >
-                <span className="text-xs text-text-muted">Position</span>
-                <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
+                  <svg
+                    className={`${compact ? 'w-6 h-6' : 'w-10 h-10'} text-brand-accent`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                
+                <h2
+                  className={`${compact ? 'text-xl' : 'text-3xl'} font-medium text-foreground tracking-tight mb-3`}
                 >
-                  #{waitlistCount}
-                </span>
+                  Welcome to the inner circle
+                </h2>
+                
+                <p
+                  className={`${compact ? 'text-sm mb-6' : 'text-base mb-10'} text-text-muted max-w-[280px] mx-auto leading-relaxed`}
+                >
+                  You're among the first to join the human-first AI development revolution.
+                </p>
+
+                <div className="w-full space-y-4">
+                  <div
+                    className={`flex items-center justify-between ${compact ? 'px-4 py-3' : 'px-6 py-5'} rounded-2xl bg-surface-2 border border-border-subtle shadow-sm`}
+                  >
+                    <div className="flex flex-col items-start">
+                      <span className="text-[10px] uppercase tracking-wider font-bold text-text-muted mb-0.5">Your Position</span>
+                      <span className={`${compact ? 'text-xl' : 'text-2xl'} font-display text-brand-accent tabular-nums`}>
+                        #{waitlistCount}
+                      </span>
+                    </div>
+                    <div className="h-10 w-[1px] bg-border-subtle" />
+                    <div className="flex flex-col items-end">
+                      <span className="text-[10px] uppercase tracking-wider font-bold text-text-muted mb-0.5">Priority Status</span>
+                      <span className={`${compact ? 'text-xs' : 'text-sm'} font-medium px-2.5 py-1 rounded-full bg-brand-primary/10 text-brand-primary border border-brand-primary/20`}>
+                        Early Access
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className={`p-4 rounded-xl bg-surface-1 border border-border-subtle flex items-start gap-3 text-left`}>
+                    <div className="mt-0.5">
+                      <svg className="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <p className="text-xs text-text-tertiary leading-normal">
+                      We release invites in batches. Keep an eye on your inbox for your unique access key.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
