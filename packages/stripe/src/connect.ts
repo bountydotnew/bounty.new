@@ -7,7 +7,6 @@ import { stripeClient } from './client';
 export async function createConnectAccount(email: string, displayName: string) {
   return stripeClient.accounts.create({
     type: 'express',
-    country: 'US',
     email,
     capabilities: {
       card_payments: { requested: true },
@@ -89,6 +88,15 @@ export async function createConnectAccountLink(params: {
     params.returnUrl,
     params.refreshUrl
   );
+}
+
+/**
+ * Delete a Stripe Connect account.
+ * In test mode this fully deletes the account.
+ * In live mode Stripe rejects the account (cannot be deleted via API).
+ */
+export async function deleteConnectAccount(accountId: string) {
+  return stripeClient.accounts.del(accountId);
 }
 
 /**

@@ -2,6 +2,14 @@
 
 import { Tabs, TabsPanel } from '@bounty/ui/components/tabs';
 import { Button } from '@bounty/ui/components/button';
+import {
+  AlertDialogRoot,
+  AlertDialogPopup,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogClose,
+} from '@bounty/ui/components/alert-dialog';
 import { BillingToggle } from '@/components/billing/billing-toggle';
 import { Badge } from '@bounty/ui/components/badge';
 import {
@@ -791,6 +799,8 @@ function SettingsTabContent({
   onSelectCardBackground,
   onRefresh,
   isRefreshing,
+  onResetConnect,
+  isResetPending,
 }: {
   hasConnectAccount: boolean;
   status: ConnectStatus | undefined;
@@ -803,7 +813,10 @@ function SettingsTabContent({
   onSelectCardBackground: (id: string) => void;
   onRefresh: () => void;
   isRefreshing: boolean;
+  onResetConnect: () => void;
+  isResetPending: boolean;
 }) {
+  const [showResetDialog, setShowResetDialog] = useState(false);
   return (
     <>
       <div className="shrink-0 w-full h-fit flex flex-col items-start justify-between rounded-none opacity-100 gap-[18px] self-stretch px-[18px] py-[18px] overflow-clip border-b border-b-solid border-border">
@@ -882,6 +895,68 @@ function SettingsTabContent({
             isRefreshing={isRefreshing}
           />
         )}
+
+        {hasConnectAccount && (
+          <div className="flex items-center justify-between gap-4 pt-2">
+            <div className="space-y-0.5">
+              <p className="text-sm text-text-secondary">
+                Having trouble with onboarding?
+              </p>
+              <p className="text-[13px] text-text-tertiary">
+                This will delete your current Connect account and let you start
+                fresh.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+              disabled={isResetPending}
+              onClick={() => setShowResetDialog(true)}
+            >
+              {isResetPending ? 'Resetting...' : 'Restart Onboarding'}
+            </Button>
+          </div>
+        )}
+
+        <AlertDialogRoot
+          open={showResetDialog}
+          onOpenChange={setShowResetDialog}
+        >
+          <AlertDialogPopup>
+            <div className="p-6">
+              <AlertDialogTitle>Restart Connect onboarding</AlertDialogTitle>
+              <AlertDialogDescription className="mt-2">
+                This will permanently delete your Stripe Connect account and
+                clear your onboarding progress. You'll need to go through the
+                full setup process again. Any completed payouts will remain
+                unaffected.
+              </AlertDialogDescription>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogClose asChild>
+                <button
+                  type="button"
+                  disabled={isResetPending}
+                  className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-foreground border border-border-subtle rounded-lg transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </AlertDialogClose>
+              <button
+                type="button"
+                disabled={isResetPending}
+                onClick={() => {
+                  onResetConnect();
+                  setShowResetDialog(false);
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-destructive hover:bg-destructive/90 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isResetPending ? 'Resetting...' : 'Reset Account'}
+              </button>
+            </AlertDialogFooter>
+          </AlertDialogPopup>
+        </AlertDialogRoot>
       </div>
 
       {status?.hasConnectAccount && status.onboardingComplete && (
@@ -1078,6 +1153,28 @@ export function PaymentSettings() {
     },
   });
 
+  const resetConnectAccount = useMutation({
+    mutationFn: async () => {
+      return await trpcClient.connect.resetConnectAccount.mutate();
+    },
+    onSuccess: () => {
+      toast.success('Connect account reset. You can start onboarding again.');
+      refetch();
+      queryClient.invalidateQueries({
+        queryKey: trpc.connect.getAccountBalance.queryOptions().queryKey,
+      });
+      queryClient.invalidateQueries({
+        queryKey: trpc.connect.getPayoutHistory.queryOptions({
+          page: 1,
+          limit: 10,
+        }).queryKey,
+      });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to reset Connect account');
+    },
+  });
+
   const status = connectStatus?.data;
   const balance = balanceResponse?.data;
   const totalBalance = balance?.total || 0;
@@ -1196,6 +1293,8 @@ export function PaymentSettings() {
             onSelectCardBackground={(id) => updateCardBackground.mutate(id)}
             onRefresh={() => refetch()}
             isRefreshing={isLoading}
+            onResetConnect={() => resetConnectAccount.mutate()}
+            isResetPending={resetConnectAccount.isPending}
           />
         </TabsPanel>
       </Tabs>

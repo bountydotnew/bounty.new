@@ -7,6 +7,7 @@ import {
   createConnectAccount,
   createConnectAccountLink,
   createLoginLink,
+  deleteConnectAccount,
   getConnectAccountStatus,
 } from '@bounty/stripe';
 import { env } from '@bounty/env/server';
@@ -559,4 +560,74 @@ export const connectRouter = router({
         });
       }
     }),
+
+  /**
+   * Reset the user's Stripe Connect account so they can start onboarding fresh.
+   * Deletes the Connect account on Stripe's side and clears the local reference.
+   * Blocked if the user has any pending or processing payouts.
+   */
+  resetConnectAccount: protectedProcedure.mutation(async ({ ctx }) => {
+    const [userData] = await db
+      .select({
+        stripeConnectAccountId: user.stripeConnectAccountId,
+      })
+      .from(user)
+      .where(eq(user.id, ctx.session.user.id))
+      .limit(1);
+
+    if (!userData?.stripeConnectAccountId) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'No Connect account to reset.',
+      });
+    }
+
+    // Block if there are in-flight payouts
+    const [activePayout] = await db
+      .select({ id: payout.id })
+      .from(payout)
+      .where(
+        sql`${payout.userId} = ${ctx.session.user.id}
+            AND ${payout.status} IN ('pending', 'processing')`
+      )
+      .limit(1);
+
+    if (activePayout) {
+      throw new TRPCError({
+        code: 'PRECONDITION_FAILED',
+        message:
+          'You have payouts that are still pending or processing. Please wait for them to complete before resetting your account.',
+      });
+    }
+
+    // Delete the account on Stripe's side
+    try {
+      await deleteConnectAccount(userData.stripeConnectAccountId);
+    } catch (error) {
+      // If the account is already gone (404), that's fine — continue to clean up
+      const isNotFound =
+        error instanceof Error &&
+        'statusCode' in error &&
+        (error as { statusCode: number }).statusCode === 404;
+      if (!isNotFound) {
+        console.error('Failed to delete Connect account on Stripe:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to delete Connect account. Please try again.',
+          cause: error,
+        });
+      }
+    }
+
+    // Clear the local reference
+    await db
+      .update(user)
+      .set({
+        stripeConnectAccountId: null,
+        stripeConnectOnboardingComplete: false,
+      })
+      .where(eq(user.id, ctx.session.user.id));
+
+    return { success: true };
+  }),
 });
