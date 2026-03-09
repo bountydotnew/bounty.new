@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from '@bounty/ui/components/dialog';
 import { Textarea } from '@bounty/ui/components/textarea';
+import { ConnectOnboardingModal } from '@/components/payment/connect-onboarding-modal';
 
 interface BountyDetailProviderProps {
   children: React.ReactNode;
@@ -205,7 +206,7 @@ function useBountyDetailMutations({
 
   const setupConnectMutation = useMutation({
     mutationFn: async () => {
-      return await trpcClient.connect.createConnectAccountLink.mutate();
+      return await trpcClient.connect.createConnectAccountLink.mutate({});
     },
     onSuccess: (result) => {
       if (result?.data?.url) {
@@ -406,6 +407,7 @@ export function BountyDetailProvider({
 
   const [showCancellationDialog, setShowCancellationDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showConnectModal, setShowConnectModal] = useState(false);
   const [cancellationReason, setCancellationReason] = useState('');
   const [approvingSubmissionId, setApprovingSubmissionId] = useState<
     string | null
@@ -599,7 +601,13 @@ export function BountyDetailProvider({
         createPaymentMutation.mutate();
       },
       setupConnect: () => {
-        setupConnectMutation.mutate();
+        if (connectData?.hasConnectAccount) {
+          // Account exists, just needs to finish onboarding
+          setupConnectMutation.mutate();
+        } else {
+          // No account — show modal with country picker
+          setShowConnectModal(true);
+        }
       },
       openEditModal: () => {
         onEdit?.();
@@ -722,6 +730,7 @@ export function BountyDetailProvider({
       recheckPaymentMutation,
       createPaymentMutation,
       setupConnectMutation,
+      connectData?.hasConnectAccount,
       approveSubmissionMutation,
       unapproveSubmissionMutation,
       mergeSubmissionMutation,
@@ -811,6 +820,12 @@ export function BountyDetailProvider({
           <AlertDialog.Confirm>Delete</AlertDialog.Confirm>
         </AlertDialog.Footer>
       </AlertDialog>
+      <ConnectOnboardingModal
+        open={showConnectModal}
+        onOpenChange={setShowConnectModal}
+        hasConnectAccount={Boolean(connectData?.hasConnectAccount)}
+        bountyAmount={amount}
+      />
     </BountyDetailContext>
   );
 }

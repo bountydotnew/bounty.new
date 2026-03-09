@@ -138,107 +138,125 @@ export const connectRouter = router({
     }
   }),
 
-  createConnectAccountLink: protectedProcedure.mutation(async ({ ctx }) => {
-    try {
-      const [userData] = await db
-        .select({
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          stripeConnectAccountId: user.stripeConnectAccountId,
-        })
-        .from(user)
-        .where(eq(user.id, ctx.session.user.id))
-        .limit(1);
+  createConnectAccountLink: protectedProcedure
+    .input(
+      z.object({
+        country: z
+          .string()
+          .length(2, 'Country must be a 2-letter ISO code')
+          .optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const [userData] = await db
+          .select({
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            stripeConnectAccountId: user.stripeConnectAccountId,
+          })
+          .from(user)
+          .where(eq(user.id, ctx.session.user.id))
+          .limit(1);
 
-      if (!(userData && userData.email)) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'User email is required',
-        });
-      }
+        if (!(userData && userData.email)) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'User email is required',
+          });
+        }
 
-      let connectAccountId = userData.stripeConnectAccountId;
+        let connectAccountId = userData.stripeConnectAccountId;
 
-      // Create Connect account if it doesn't exist
-      if (!connectAccountId) {
-        try {
-          const account = await createConnectAccount(
-            userData.email,
-            userData.name || userData.email
-          );
-          connectAccountId = account.id;
-
-          // Update user record
-          await db
-            .update(user)
-            .set({ stripeConnectAccountId: connectAccountId })
-            .where(eq(user.id, ctx.session.user.id));
-        } catch (error) {
-          console.error('Failed to create Connect account:', error);
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error';
-
-          // Provide helpful error message for Connect not enabled
-          if (errorMessage.includes('signed up for Connect')) {
+        // Create Connect account if it doesn't exist
+        if (!connectAccountId) {
+          if (!input.country) {
             throw new TRPCError({
               code: 'BAD_REQUEST',
               message:
-                'Stripe Connect is not enabled for your account. Please enable Connect in your Stripe Dashboard: https://dashboard.stripe.com/settings/connect',
-              cause: error,
+                'Country is required when creating a new Connect account.',
             });
           }
 
+          try {
+            const account = await createConnectAccount(
+              userData.email,
+              userData.name || userData.email,
+              input.country
+            );
+            connectAccountId = account.id;
+
+            // Update user record
+            await db
+              .update(user)
+              .set({ stripeConnectAccountId: connectAccountId })
+              .where(eq(user.id, ctx.session.user.id));
+          } catch (error) {
+            console.error('Failed to create Connect account:', error);
+            const errorMessage =
+              error instanceof Error ? error.message : 'Unknown error';
+
+            // Provide helpful error message for Connect not enabled
+            if (errorMessage.includes('signed up for Connect')) {
+              throw new TRPCError({
+                code: 'BAD_REQUEST',
+                message:
+                  'Stripe Connect is not enabled for your account. Please enable Connect in your Stripe Dashboard: https://dashboard.stripe.com/settings/connect',
+                cause: error,
+              });
+            }
+
+            throw new TRPCError({
+              code: 'INTERNAL_SERVER_ERROR',
+              message: `Failed to create Stripe Connect account: ${errorMessage}`,
+              cause: error,
+            });
+          }
+        }
+
+        // Create account link for onboarding
+        try {
+          const baseUrl = env.BETTER_AUTH_URL;
+          const orgSlug = await resolveActiveOrgSlug(
+            ctx.session as ExtendedAuthSession
+          );
+          const paymentsUrl = `${baseUrl}${paymentsPath(orgSlug)}`;
+          const accountLink = await createConnectAccountLink({
+            accountId: connectAccountId,
+            returnUrl: `${paymentsUrl}?onboarding=success`,
+            refreshUrl: `${paymentsUrl}?onboarding=refresh`,
+          });
+
+          return {
+            success: true,
+            data: {
+              url: accountLink.url,
+            },
+          };
+        } catch (error) {
+          console.error('Failed to create account link:', error);
+          const errorMessage =
+            error instanceof Error ? error.message : 'Unknown error';
           throw new TRPCError({
             code: 'INTERNAL_SERVER_ERROR',
-            message: `Failed to create Stripe Connect account: ${errorMessage}`,
+            message: `Failed to create account link: ${errorMessage}`,
             cause: error,
           });
         }
-      }
-
-      // Create account link for onboarding
-      try {
-        const baseUrl = env.BETTER_AUTH_URL;
-        const orgSlug = await resolveActiveOrgSlug(
-          ctx.session as ExtendedAuthSession
-        );
-        const paymentsUrl = `${baseUrl}${paymentsPath(orgSlug)}`;
-        const accountLink = await createConnectAccountLink({
-          accountId: connectAccountId,
-          returnUrl: `${paymentsUrl}?onboarding=success`,
-          refreshUrl: `${paymentsUrl}?onboarding=refresh`,
-        });
-
-        return {
-          success: true,
-          data: {
-            url: accountLink.url,
-          },
-        };
       } catch (error) {
-        console.error('Failed to create account link:', error);
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: `Failed to create account link: ${errorMessage}`,
+          message: `Failed to create Connect account link: ${errorMessage}`,
           cause: error,
         });
       }
-    } catch (error) {
-      if (error instanceof TRPCError) {
-        throw error;
-      }
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-      throw new TRPCError({
-        code: 'INTERNAL_SERVER_ERROR',
-        message: `Failed to create Connect account link: ${errorMessage}`,
-        cause: error,
-      });
-    }
-  }),
+    }),
 
   getConnectDashboardLink: protectedProcedure.mutation(async ({ ctx }) => {
     try {

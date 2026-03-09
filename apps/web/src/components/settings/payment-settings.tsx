@@ -1090,7 +1090,7 @@ export function PaymentSettings() {
 
   const createAccountLink = useMutation({
     mutationFn: async () => {
-      return await trpcClient.connect.createConnectAccountLink.mutate();
+      return await trpcClient.connect.createConnectAccountLink.mutate({});
     },
     onSuccess: (result) => {
       if (result?.data?.url) {
@@ -1182,7 +1182,13 @@ export function PaymentSettings() {
     optimisticCardBackground ?? user?.cardBackground ?? null;
 
   const handleConnect = () => {
-    createAccountLink.mutate();
+    if (hasConnectAccount) {
+      // Account exists, just needs to finish onboarding — no country needed
+      createAccountLink.mutate();
+    } else {
+      // No account yet — show modal with country picker
+      setShowOnboardingModal(true);
+    }
   };
 
   const handleOpenDashboard = () => {
@@ -1304,6 +1310,7 @@ export function PaymentSettings() {
       <ConnectOnboardingModal
         open={showOnboardingModal}
         onOpenChange={setShowOnboardingModal}
+        hasConnectAccount={hasConnectAccount}
       />
     </div>
   );

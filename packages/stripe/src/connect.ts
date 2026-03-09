@@ -4,9 +4,14 @@ import { stripeClient } from './client';
  * Create a Stripe Connect Express account
  * Express accounts are the simplest to set up and use Stripe's hosted onboarding
  */
-export async function createConnectAccount(email: string, displayName: string) {
+export async function createConnectAccount(
+  email: string,
+  displayName: string,
+  country: string
+) {
   return stripeClient.accounts.create({
     type: 'express',
+    country,
     email,
     capabilities: {
       card_payments: { requested: true },
