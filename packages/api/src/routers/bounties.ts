@@ -1312,7 +1312,9 @@ export const bountiesRouter = router({
             try {
               const links = parseLinksFromMarkdown(input.description!);
               // Delete old links and insert new ones
-              await db.delete(bounty_links).where(eq(bounty_links.bountyId, id));
+              await db
+                .delete(bounty_links)
+                .where(eq(bounty_links.bountyId, id));
               if (links.length > 0) {
                 await db.insert(bounty_links).values(
                   links.map((link) => ({
@@ -2753,18 +2755,19 @@ export const bountiesRouter = router({
               .where(eq(bounty.id, input.bountyId))
               .limit(1);
 
-            if (
-              latestBounty?.paymentStatus === 'released' ||
-              latestBounty?.stripeTransferId
-            ) {
+            if (!latestBounty || latestBounty.paymentStatus !== 'held') {
               throw new TRPCError({
                 code: 'BAD_REQUEST',
-                message: 'This bounty has already been paid out',
+                message:
+                  latestBounty?.paymentStatus === 'released' ||
+                  latestBounty?.stripeTransferId
+                    ? 'This bounty has already been paid out'
+                    : 'Funds are not held for this bounty',
               });
             }
 
             const alreadyProcessed = await wasOperationPerformed(
-              'approve-payout',
+              'release-payout',
               input.bountyId
             );
             if (alreadyProcessed) {
@@ -2780,7 +2783,7 @@ export const bountiesRouter = router({
               amount: amountInCents,
               connectAccountId: solver.stripeConnectAccountId!,
               bountyId: input.bountyId,
-              idempotencyKey: `approve-payout:${input.bountyId}`,
+              idempotencyKey: `release-payout:${input.bountyId}`,
             });
 
             // Atomically update all records
@@ -2822,7 +2825,7 @@ export const bountiesRouter = router({
             });
 
             await markOperationPerformed(
-              'approve-payout',
+              'release-payout',
               input.bountyId,
               'success'
             );
@@ -4008,7 +4011,10 @@ To process this request:
           if (bountyRecord.stripePaymentIntentId) {
             try {
               const refundAmountInCents = Math.round(refundAmount * 100);
-              await refundPayment(bountyRecord.stripePaymentIntentId, refundAmountInCents);
+              await refundPayment(
+                bountyRecord.stripePaymentIntentId,
+                refundAmountInCents
+              );
               console.log(
                 `[Cancellation] Stripe refund issued for bounty ${request.bountyId}: $${refundAmount} (${refundAmountInCents} cents)`
               );
@@ -4019,7 +4025,8 @@ To process this request:
               );
               throw new TRPCError({
                 code: 'INTERNAL_SERVER_ERROR',
-                message: 'Failed to issue Stripe refund. Please try again or refund manually via the Stripe Dashboard.',
+                message:
+                  'Failed to issue Stripe refund. Please try again or refund manually via the Stripe Dashboard.',
               });
             }
           }

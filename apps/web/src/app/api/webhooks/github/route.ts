@@ -2248,6 +2248,31 @@ This bounty isn't funded yet. Fund it at ${baseUrl}/bounty/${bountyRecord.id}, t
     return;
   }
 
+  // Check if there's a pending cancellation request — don't release payment
+  const [mergeCancellation] = await db
+    .select({ id: cancellationRequest.id })
+    .from(cancellationRequest)
+    .where(
+      and(
+        eq(cancellationRequest.bountyId, bountyRecord.id),
+        eq(cancellationRequest.status, 'pending')
+      )
+    )
+    .limit(1);
+
+  if (mergeCancellation) {
+    await githubApp.createIssueComment(
+      installation.id,
+      repository.owner.login,
+      repository.name,
+      issue.number,
+      `
+This bounty has a pending cancellation request. Payment cannot be released until the cancellation is withdrawn or resolved.
+`
+    );
+    return;
+  }
+
   const solverUser = await db
     .select({
       id: user.id,
@@ -2303,12 +2328,25 @@ ${mention} The solver needs to connect Stripe before payout. Ask them to visit h
   try {
     await withPaymentLock(bountyRecord.id, async () => {
       const alreadyProcessed = await wasOperationPerformed(
-        'merge-payout',
-        bountyRecord.id,
-        String(targetPrNumber)
+        'release-payout',
+        bountyRecord.id
       );
 
       if (alreadyProcessed) {
+        return;
+      }
+
+      // Re-check bounty state inside the lock to prevent races
+      const [latestBounty] = await db
+        .select({
+          paymentStatus: bounty.paymentStatus,
+          stripeTransferId: bounty.stripeTransferId,
+        })
+        .from(bounty)
+        .where(eq(bounty.id, bountyRecord.id))
+        .limit(1);
+
+      if (!latestBounty || latestBounty.paymentStatus !== 'held') {
         return;
       }
 
@@ -2316,48 +2354,51 @@ ${mention} The solver needs to connect Stripe before payout. Ask them to visit h
         amount: amountInCents,
         connectAccountId: stripeConnectAccountId,
         bountyId: bountyRecord.id,
+        idempotencyKey: `release-payout:${bountyRecord.id}`,
       });
 
-      await db
-        .update(submission)
-        .set({
-          status: 'approved',
-          reviewedAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .where(eq(submission.id, submissionRecord.id));
+      // Update all records atomically
+      await db.transaction(async (tx) => {
+        await tx
+          .update(submission)
+          .set({
+            status: 'approved',
+            reviewedAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(submission.id, submissionRecord.id));
 
-      await db
-        .update(bounty)
-        .set({
-          status: 'completed',
-          paymentStatus: 'released',
+        await tx
+          .update(bounty)
+          .set({
+            status: 'completed',
+            paymentStatus: 'released',
+            stripeTransferId: transfer.id,
+            assignedToId: solver.id,
+            updatedAt: new Date(),
+          })
+          .where(eq(bounty.id, bountyRecord.id));
+
+        await tx.insert(payout).values({
+          userId: solver.id,
+          bountyId: bountyRecord.id,
+          amount: bountyRecord.amount,
+          status: 'processing',
           stripeTransferId: transfer.id,
-          assignedToId: solver.id,
-          updatedAt: new Date(),
-        })
-        .where(eq(bounty.id, bountyRecord.id));
+        });
 
-      await db.insert(payout).values({
-        userId: solver.id,
-        bountyId: bountyRecord.id,
-        amount: bountyRecord.amount,
-        status: 'processing',
-        stripeTransferId: transfer.id,
-      });
-
-      await db.insert(transaction).values({
-        bountyId: bountyRecord.id,
-        type: 'transfer',
-        amount: bountyRecord.amount,
-        stripeId: transfer.id,
+        await tx.insert(transaction).values({
+          bountyId: bountyRecord.id,
+          type: 'transfer',
+          amount: bountyRecord.amount,
+          stripeId: transfer.id,
+        });
       });
 
       await markOperationPerformed(
-        'merge-payout',
+        'release-payout',
         bountyRecord.id,
-        'success',
-        String(targetPrNumber)
+        'success'
       );
     });
   } catch (error) {
@@ -2801,7 +2842,7 @@ async function handlePullRequestMerged(
       return linkedUser?.id === bountyRecord.createdById;
     })();
 
-    if (!mergerIsMaintainer && !mergerIsBountyCreator) {
+    if (!(mergerIsMaintainer || mergerIsBountyCreator)) {
       console.log(
         `[GitHub Webhook] PR ${pull_request.number} merged by ${mergerLogin} who is not a maintainer or bounty creator, skipping auto-payment`
       );
@@ -2814,7 +2855,10 @@ async function handlePullRequestMerged(
           `PR #${pull_request.number} has been merged but the submission hasn't been approved yet.\n\nA maintainer or the bounty creator can run \`/approve ${pull_request.number}\` then \`/merge ${pull_request.number}\` to release payment.`
         );
       } catch (commentError) {
-        console.error('[GitHub Webhook] Failed to post unapproved merge comment:', commentError);
+        console.error(
+          '[GitHub Webhook] Failed to post unapproved merge comment:',
+          commentError
+        );
       }
       return;
     }
@@ -2839,7 +2883,7 @@ async function handlePullRequestMerged(
   const isFreeBounty = amountInCents === 0;
 
   // For paid bounties, funds must be held before we can release
-  if (!isFreeBounty && !isBountyFunded(bountyRecord)) {
+  if (!(isFreeBounty || isBountyFunded(bountyRecord))) {
     console.log(
       `[GitHub Webhook] Bounty ${bountyRecord.id} not funded (status: ${bountyRecord.paymentStatus}), cannot auto-release on merge`
     );
@@ -2871,7 +2915,10 @@ async function handlePullRequestMerged(
         `PR #${pull_request.number} was merged, but this bounty has a pending cancellation request. Payment was not released. If the cancellation is withdrawn, a maintainer can run \`/merge ${pull_request.number}\` to release payment.`
       );
     } catch (commentError) {
-      console.error('[GitHub Webhook] Failed to post cancellation notice:', commentError);
+      console.error(
+        '[GitHub Webhook] Failed to post cancellation notice:',
+        commentError
+      );
     }
     return;
   }
@@ -2882,8 +2929,7 @@ async function handlePullRequestMerged(
         .select({
           id: user.id,
           stripeConnectAccountId: user.stripeConnectAccountId,
-          stripeConnectOnboardingComplete:
-            user.stripeConnectOnboardingComplete,
+          stripeConnectOnboardingComplete: user.stripeConnectOnboardingComplete,
         })
         .from(user)
         .where(eq(user.id, submissionRecord.contributorId))
@@ -2914,7 +2960,7 @@ async function handlePullRequestMerged(
       : undefined);
 
   // For paid bounties, solver must have Stripe Connect set up
-  if (!isFreeBounty && !isSolverReadyForPayout(solver)) {
+  if (!(isFreeBounty || isSolverReadyForPayout(solver))) {
     console.log(
       `[GitHub Webhook] Solver not ready for payout on bounty ${bountyRecord.id}, posting reminder`
     );
@@ -2927,15 +2973,63 @@ async function handlePullRequestMerged(
         `PR #${pull_request.number} has been merged. @${pull_request.user.login} please connect your Stripe account at https://bounty.new/settings/payments so we can release your payout.\n\nOnce connected, a maintainer can run \`/merge ${pull_request.number}\` to release payment.`
       );
     } catch (commentError) {
-      console.error('[GitHub Webhook] Failed to post Stripe reminder comment:', commentError);
+      console.error(
+        '[GitHub Webhook] Failed to post Stripe reminder comment:',
+        commentError
+      );
     }
     return;
   }
 
   if (!solver) {
     console.log(
-      `[GitHub Webhook] Could not resolve solver for submission ${submissionRecord.id}, skipping auto-payment`
+      `[GitHub Webhook] Could not resolve solver for submission ${submissionRecord.id}`
     );
+
+    // For free bounties, still mark complete even without a resolved solver
+    if (isFreeBounty) {
+      try {
+        await db.transaction(async (tx) => {
+          if (needsImplicitApproval) {
+            await tx
+              .update(submission)
+              .set({
+                status: 'approved',
+                reviewedAt: new Date(),
+                updatedAt: new Date(),
+              })
+              .where(eq(submission.id, submissionRecord.id));
+          }
+
+          await tx
+            .update(bounty)
+            .set({
+              status: 'completed',
+              paymentStatus: 'released',
+              stripeTransferId: `free_bounty_${bountyRecord.id}`,
+              updatedAt: new Date(),
+            })
+            .where(eq(bounty.id, bountyRecord.id));
+        });
+
+        const completionMessage = bountyCompletedComment(
+          Number.parseFloat(bountyRecord.amount),
+          bountyRecord.currency
+        );
+        await githubApp.createIssueComment(
+          installationId,
+          repository.owner.login,
+          repository.name,
+          bountyRecord.githubIssueNumber!,
+          completionMessage
+        );
+      } catch (error) {
+        console.error(
+          `[GitHub Webhook] Failed to complete free bounty ${bountyRecord.id} without solver:`,
+          error
+        );
+      }
+    }
     return;
   }
 
@@ -2943,9 +3037,8 @@ async function handlePullRequestMerged(
   try {
     await withPaymentLock(bountyRecord.id, async () => {
       const alreadyProcessed = await wasOperationPerformed(
-        'merge-payout',
-        bountyRecord.id,
-        String(pull_request.number)
+        'release-payout',
+        bountyRecord.id
       );
 
       if (alreadyProcessed) {
@@ -2960,18 +3053,62 @@ async function handlePullRequestMerged(
         .select({
           paymentStatus: bounty.paymentStatus,
           stripeTransferId: bounty.stripeTransferId,
+          status: bounty.status,
         })
         .from(bounty)
         .where(eq(bounty.id, bountyRecord.id))
         .limit(1);
 
+      // For paid bounties, funds must be held; for free bounties, just verify not already released
+      if (!latestBounty) {
+        return;
+      }
+      if (!isFreeBounty && latestBounty.paymentStatus !== 'held') {
+        console.log(
+          `[GitHub Webhook] Bounty ${bountyRecord.id} paymentStatus is '${latestBounty.paymentStatus}' (expected 'held'), skipping`
+        );
+        return;
+      }
       if (
-        !latestBounty ||
-        latestBounty.paymentStatus === 'released' ||
-        latestBounty.stripeTransferId
+        isFreeBounty &&
+        (latestBounty.paymentStatus === 'released' ||
+          latestBounty.stripeTransferId)
       ) {
         console.log(
-          `[GitHub Webhook] Bounty ${bountyRecord.id} already released inside lock, skipping`
+          `[GitHub Webhook] Free bounty ${bountyRecord.id} already released inside lock, skipping`
+        );
+        return;
+      }
+
+      // Re-check submission status inside the lock
+      const [latestSubmission] = await db
+        .select({ status: submission.status })
+        .from(submission)
+        .where(eq(submission.id, submissionRecord.id))
+        .limit(1);
+
+      if (!latestSubmission || latestSubmission.status === 'rejected') {
+        console.log(
+          `[GitHub Webhook] Submission ${submissionRecord.id} no longer eligible (status: ${latestSubmission?.status}), skipping`
+        );
+        return;
+      }
+
+      // Check for pending cancellation inside the lock
+      const [lockCancellation] = await db
+        .select({ id: cancellationRequest.id })
+        .from(cancellationRequest)
+        .where(
+          and(
+            eq(cancellationRequest.bountyId, bountyRecord.id),
+            eq(cancellationRequest.status, 'pending')
+          )
+        )
+        .limit(1);
+
+      if (lockCancellation) {
+        console.log(
+          `[GitHub Webhook] Bounty ${bountyRecord.id} has pending cancellation inside lock, skipping`
         );
         return;
       }
@@ -2984,7 +3121,7 @@ async function handlePullRequestMerged(
               amount: amountInCents,
               connectAccountId: solver.stripeConnectAccountId!,
               bountyId: bountyRecord.id,
-              idempotencyKey: `merge-payout:${bountyRecord.id}`,
+              idempotencyKey: `release-payout:${bountyRecord.id}`,
             })
           ).id;
 
@@ -3030,10 +3167,9 @@ async function handlePullRequestMerged(
       });
 
       await markOperationPerformed(
-        'merge-payout',
+        'release-payout',
         bountyRecord.id,
-        'success',
-        String(pull_request.number)
+        'success'
       );
 
       console.log(
@@ -3061,7 +3197,10 @@ async function handlePullRequestMerged(
         `PR #${pull_request.number} was merged but automatic payout failed. A maintainer can run \`/merge ${pull_request.number}\` to retry.`
       );
     } catch (commentError) {
-      console.error('[GitHub Webhook] Failed to post fallback comment:', commentError);
+      console.error(
+        '[GitHub Webhook] Failed to post fallback comment:',
+        commentError
+      );
     }
     return;
   }
@@ -3080,7 +3219,10 @@ async function handlePullRequestMerged(
       completionMessage
     );
   } catch (commentError) {
-    console.error('[GitHub Webhook] Failed to post completion comment:', commentError);
+    console.error(
+      '[GitHub Webhook] Failed to post completion comment:',
+      commentError
+    );
   }
 }
 

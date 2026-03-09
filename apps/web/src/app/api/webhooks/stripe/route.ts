@@ -1,21 +1,32 @@
-import { db, bounty, transaction, payout, submission, cancellationRequest, user } from '@bounty/db';
+import {
+  db,
+  bounty,
+  transaction,
+  payout,
+  submission,
+  cancellationRequest,
+  user,
+} from '@bounty/db';
 import { env } from '@bounty/env/server';
 import { constructEvent, stripeClient } from '@bounty/stripe';
 import { and, eq, isNotNull, sql } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
-import {
-  getGithubAppManager,
-} from '@bounty/api/driver/github-app';
+import { getGithubAppManager } from '@bounty/api/driver/github-app';
 import {
   fundedBountyComment,
   submissionReceivedComment,
 } from '@bounty/api/src/lib/bot-comments';
 import { count } from 'drizzle-orm';
-import { FROM_ADDRESSES, sendEmail, BountyCancellationConfirm } from '@bounty/email';
+import {
+  FROM_ADDRESSES,
+  sendEmail,
+  BountyCancellationConfirm,
+} from '@bounty/email';
 import { sendBountyCreatedWebhook } from '@bounty/api/src/lib/use-discord-webhook';
 import { createNotification } from '@bounty/db/src/services/notifications';
+import { clearOperationPerformed } from '@bounty/api/src/lib/payment-lock';
 
 /**
  * Sends Discord webhook notification when a bounty becomes funded
@@ -26,7 +37,8 @@ async function sendFundedBountyWebhook(bountyId: string) {
     return;
   }
 
-  const webhookUrl = env.BOUNTY_FUNDED_WEBHOOK_URL || env.BOUNTY_FEED_WEBHOOK_URL;
+  const webhookUrl =
+    env.BOUNTY_FUNDED_WEBHOOK_URL || env.BOUNTY_FEED_WEBHOOK_URL;
   if (!webhookUrl) {
     return;
   }
@@ -112,13 +124,24 @@ async function updateGitHubBotCommentOnFunding(bountyId: string) {
       .limit(1);
 
     if (!bountyRecord) {
-      console.log(`[Stripe Webhook] Bounty ${bountyId} not found, skipping GitHub comment update`);
+      console.log(
+        `[Stripe Webhook] Bounty ${bountyId} not found, skipping GitHub comment update`
+      );
       return;
     }
 
     // Check if this bounty has a GitHub bot comment to update
-    if (!bountyRecord.githubCommentId || !bountyRecord.githubInstallationId || !bountyRecord.githubRepoOwner || !bountyRecord.githubRepoName) {
-      console.log(`[Stripe Webhook] Bounty ${bountyId} does not have GitHub integration, skipping comment update`);
+    if (
+      !(
+        bountyRecord.githubCommentId &&
+        bountyRecord.githubInstallationId &&
+        bountyRecord.githubRepoOwner &&
+        bountyRecord.githubRepoName
+      )
+    ) {
+      console.log(
+        `[Stripe Webhook] Bounty ${bountyId} does not have GitHub integration, skipping comment update`
+      );
       return;
     }
 
@@ -144,10 +167,15 @@ async function updateGitHubBotCommentOnFunding(bountyId: string) {
       newComment
     );
 
-    console.log(`[Stripe Webhook] Updated GitHub bot comment for bounty ${bountyId}`);
+    console.log(
+      `[Stripe Webhook] Updated GitHub bot comment for bounty ${bountyId}`
+    );
   } catch (error) {
     // Don't fail the webhook if GitHub update fails
-    console.error(`[Stripe Webhook] Failed to update GitHub comment for bounty ${bountyId}:`, error);
+    console.error(
+      `[Stripe Webhook] Failed to update GitHub comment for bounty ${bountyId}:`,
+      error
+    );
   }
 }
 
@@ -168,12 +196,22 @@ async function updateSubmissionReceivedCommentsOnFunding(bountyId: string) {
       .limit(1);
 
     if (!bountyRecord) {
-      console.log(`[Stripe Webhook] Bounty ${bountyId} not found, skipping submission comment updates`);
+      console.log(
+        `[Stripe Webhook] Bounty ${bountyId} not found, skipping submission comment updates`
+      );
       return;
     }
 
-    if (!bountyRecord.githubInstallationId || !bountyRecord.githubRepoOwner || !bountyRecord.githubRepoName) {
-      console.log(`[Stripe Webhook] Bounty ${bountyId} does not have GitHub integration, skipping submission comment updates`);
+    if (
+      !(
+        bountyRecord.githubInstallationId &&
+        bountyRecord.githubRepoOwner &&
+        bountyRecord.githubRepoName
+      )
+    ) {
+      console.log(
+        `[Stripe Webhook] Bounty ${bountyId} does not have GitHub integration, skipping submission comment updates`
+      );
       return;
     }
 
@@ -214,9 +252,14 @@ async function updateSubmissionReceivedCommentsOnFunding(bountyId: string) {
       })
     );
 
-    console.log(`[Stripe Webhook] Updated ${submissionComments.length} submission comments for bounty ${bountyId}`);
+    console.log(
+      `[Stripe Webhook] Updated ${submissionComments.length} submission comments for bounty ${bountyId}`
+    );
   } catch (error) {
-    console.error(`[Stripe Webhook] Failed to update submission comments for bounty ${bountyId}:`, error);
+    console.error(
+      `[Stripe Webhook] Failed to update submission comments for bounty ${bountyId}:`,
+      error
+    );
   }
 }
 
@@ -243,13 +286,12 @@ export async function POST(request: Request) {
         signature,
         env.STRIPE_CONNECT_WEBHOOK_SECRET
       ) as Stripe.Event;
-      console.log(`[Stripe Webhook] Event verified: ${event.type} (id: ${event.id})`);
+      console.log(
+        `[Stripe Webhook] Event verified: ${event.type} (id: ${event.id})`
+      );
     } catch (err) {
       console.error('[Stripe Webhook] Signature verification failed:', err);
-      return NextResponse.json(
-        { error: 'Invalid signature' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
 
     switch (event.type) {
@@ -259,12 +301,17 @@ export async function POST(request: Request) {
         const bountyId = session.metadata?.bountyId;
         const paymentIntentId = session.payment_intent as string | null;
 
-        console.log(`[Stripe Webhook] Bounty ID: ${bountyId}, Payment Intent: ${paymentIntentId}`);
+        console.log(
+          `[Stripe Webhook] Bounty ID: ${bountyId}, Payment Intent: ${paymentIntentId}`
+        );
 
         if (bountyId && paymentIntentId) {
           // Check current bounty status for idempotency
           const [existingBounty] = await db
-            .select({ paymentStatus: bounty.paymentStatus, amount: bounty.amount })
+            .select({
+              paymentStatus: bounty.paymentStatus,
+              amount: bounty.amount,
+            })
             .from(bounty)
             .where(eq(bounty.id, bountyId))
             .limit(1);
@@ -276,21 +323,34 @@ export async function POST(request: Request) {
 
           // Idempotency check: Skip if already processed
           if (existingBounty.paymentStatus === 'held') {
-            console.log(`[Stripe Webhook] Bounty ${bountyId} already processed (paymentStatus: held), skipping`);
+            console.log(
+              `[Stripe Webhook] Bounty ${bountyId} already processed (paymentStatus: held), skipping`
+            );
             break;
           }
 
           // Retrieve the payment intent to check its status
-          const paymentIntent = await stripeClient.paymentIntents.retrieve(paymentIntentId);
-          
-          
+          const paymentIntent =
+            await stripeClient.paymentIntents.retrieve(paymentIntentId);
+
           // Build update data
           const updateData: {
             stripePaymentIntentId: string;
             stripeCheckoutSessionId: string;
             updatedAt: Date;
-            paymentStatus?: 'held' | 'pending' | 'released' | 'refunded' | 'failed' | null;
-            status?: 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled';
+            paymentStatus?:
+              | 'held'
+              | 'pending'
+              | 'released'
+              | 'refunded'
+              | 'failed'
+              | null;
+            status?:
+              | 'draft'
+              | 'open'
+              | 'in_progress'
+              | 'completed'
+              | 'cancelled';
           } = {
             stripePaymentIntentId: paymentIntentId,
             stripeCheckoutSessionId: session.id,
@@ -298,7 +358,9 @@ export async function POST(request: Request) {
           };
 
           // If payment is already succeeded (automatic capture), update status immediately
-          console.log(`[Stripe Webhook] Payment Intent status: ${paymentIntent.status}`);
+          console.log(
+            `[Stripe Webhook] Payment Intent status: ${paymentIntent.status}`
+          );
           if (paymentIntent.status === 'succeeded') {
             updateData.paymentStatus = 'held';
             updateData.status = 'open';
@@ -311,7 +373,9 @@ export async function POST(request: Request) {
               .limit(1);
 
             if (existingTransaction) {
-              console.log(`[Stripe Webhook] Transaction already exists for payment intent ${paymentIntentId}, skipping`);
+              console.log(
+                `[Stripe Webhook] Transaction already exists for payment intent ${paymentIntentId}, skipping`
+              );
             } else {
               await db.insert(transaction).values({
                 bountyId,
@@ -319,10 +383,14 @@ export async function POST(request: Request) {
                 amount: existingBounty.amount,
                 stripeId: paymentIntentId,
               });
-              console.log(`[Stripe Webhook] Created transaction record for bounty ${bountyId}`);
+              console.log(
+                `[Stripe Webhook] Created transaction record for bounty ${bountyId}`
+              );
             }
 
-            console.log(`[Stripe Webhook] Updating bounty ${bountyId} to held/open`);
+            console.log(
+              `[Stripe Webhook] Updating bounty ${bountyId} to held/open`
+            );
           }
 
           await db
@@ -337,9 +405,13 @@ export async function POST(request: Request) {
             await sendFundedBountyWebhook(bountyId);
           }
 
-          console.log(`[Stripe Webhook] Successfully updated bounty ${bountyId}`);
+          console.log(
+            `[Stripe Webhook] Successfully updated bounty ${bountyId}`
+          );
         } else {
-          console.warn(`[Stripe Webhook] Missing bountyId or paymentIntentId: bountyId=${bountyId}, paymentIntentId=${paymentIntentId}`);
+          console.warn(
+            `[Stripe Webhook] Missing bountyId or paymentIntentId: bountyId=${bountyId}, paymentIntentId=${paymentIntentId}`
+          );
         }
         break;
       }
@@ -349,12 +421,17 @@ export async function POST(request: Request) {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         const bountyId = paymentIntent.metadata?.bountyId;
 
-        console.log(`[Stripe Webhook] Payment Intent ID: ${paymentIntent.id}, Bounty ID: ${bountyId}`);
+        console.log(
+          `[Stripe Webhook] Payment Intent ID: ${paymentIntent.id}, Bounty ID: ${bountyId}`
+        );
 
         if (bountyId) {
           // Idempotency check: Get current status
           const [existingBounty] = await db
-            .select({ paymentStatus: bounty.paymentStatus, amount: bounty.amount })
+            .select({
+              paymentStatus: bounty.paymentStatus,
+              amount: bounty.amount,
+            })
             .from(bounty)
             .where(eq(bounty.id, bountyId))
             .limit(1);
@@ -366,7 +443,9 @@ export async function POST(request: Request) {
 
           // Skip if already processed
           if (existingBounty.paymentStatus === 'held') {
-            console.log(`[Stripe Webhook] Bounty ${bountyId} already processed (paymentStatus: held), skipping`);
+            console.log(
+              `[Stripe Webhook] Bounty ${bountyId} already processed (paymentStatus: held), skipping`
+            );
             break;
           }
 
@@ -390,7 +469,9 @@ export async function POST(request: Request) {
             .returning({ id: bounty.id });
 
           if (updatedRows.length === 0) {
-            console.log(`[Stripe Webhook] Bounty ${bountyId} was already updated by a concurrent handler, skipping`);
+            console.log(
+              `[Stripe Webhook] Bounty ${bountyId} was already updated by a concurrent handler, skipping`
+            );
             break;
           }
 
@@ -402,7 +483,9 @@ export async function POST(request: Request) {
             .limit(1);
 
           if (existingTransaction) {
-            console.log(`[Stripe Webhook] Transaction already exists for payment intent ${paymentIntent.id}, skipping`);
+            console.log(
+              `[Stripe Webhook] Transaction already exists for payment intent ${paymentIntent.id}, skipping`
+            );
           } else {
             await db.insert(transaction).values({
               bountyId,
@@ -410,7 +493,9 @@ export async function POST(request: Request) {
               amount: existingBounty.amount,
               stripeId: paymentIntent.id,
             });
-            console.log(`[Stripe Webhook] Created transaction record for bounty ${bountyId}`);
+            console.log(
+              `[Stripe Webhook] Created transaction record for bounty ${bountyId}`
+            );
           }
 
           // Update GitHub bot comments and send webhook now that bounty is funded
@@ -418,9 +503,13 @@ export async function POST(request: Request) {
           await updateSubmissionReceivedCommentsOnFunding(bountyId);
           await sendFundedBountyWebhook(bountyId);
 
-          console.log(`[Stripe Webhook] Successfully updated bounty ${bountyId} to held/open`);
+          console.log(
+            `[Stripe Webhook] Successfully updated bounty ${bountyId} to held/open`
+          );
         } else {
-          console.warn('[Stripe Webhook] Missing bountyId in payment_intent.succeeded event');
+          console.warn(
+            '[Stripe Webhook] Missing bountyId in payment_intent.succeeded event'
+          );
         }
         break;
       }
@@ -470,7 +559,9 @@ export async function POST(request: Request) {
             .limit(1);
 
           if (existingTransaction) {
-            console.log(`[Stripe Webhook] Transaction already exists for transfer ${transfer.id}, skipping`);
+            console.log(
+              `[Stripe Webhook] Transaction already exists for transfer ${transfer.id}, skipping`
+            );
             break;
           }
 
@@ -481,7 +572,9 @@ export async function POST(request: Request) {
             amount: (transfer.amount / 100).toFixed(2),
             stripeId: transfer.id,
           });
-          console.log(`[Stripe Webhook] Created transaction record for transfer ${transfer.id}`);
+          console.log(
+            `[Stripe Webhook] Created transaction record for transfer ${transfer.id}`
+          );
         }
         break;
       }
@@ -492,34 +585,44 @@ export async function POST(request: Request) {
 
         // Check if transfer was reversed (failed payout)
         if (bountyId && transfer.reversed) {
-          console.log(`[Stripe Webhook] Transfer ${transfer.id} reversed for bounty ${bountyId}`);
+          console.log(
+            `[Stripe Webhook] Transfer ${transfer.id} reversed for bounty ${bountyId}`
+          );
 
-          // Update payout status to failed
-          await db
-            .update(payout)
-            .set({
-              status: 'failed',
-              updatedAt: new Date(),
-            })
-            .where(eq(payout.stripeTransferId, transfer.id));
+          // Atomically revert payout + bounty state so retries see a consistent snapshot
+          await db.transaction(async (tx) => {
+            // Update payout status to failed
+            await tx
+              .update(payout)
+              .set({
+                status: 'failed',
+                updatedAt: new Date(),
+              })
+              .where(eq(payout.stripeTransferId, transfer.id));
 
-          // Revert bounty to funded state so payout can be retried
-          await db
-            .update(bounty)
-            .set({
-              status: 'in_progress',
-              paymentStatus: 'held',
-              stripeTransferId: null,
-              updatedAt: new Date(),
-            })
-            .where(
-              and(
-                eq(bounty.id, bountyId),
-                eq(bounty.stripeTransferId, transfer.id)
-              )
-            );
+            // Revert bounty to funded state so payout can be retried
+            await tx
+              .update(bounty)
+              .set({
+                status: 'in_progress',
+                paymentStatus: 'held',
+                stripeTransferId: null,
+                updatedAt: new Date(),
+              })
+              .where(
+                and(
+                  eq(bounty.id, bountyId),
+                  eq(bounty.stripeTransferId, transfer.id)
+                )
+              );
+          });
 
-          console.log(`[Stripe Webhook] Reverted bounty ${bountyId} to held state after transfer reversal`);
+          // Clear idempotency markers so the payout can be retried via /merge or approve
+          await clearOperationPerformed('release-payout', bountyId);
+
+          console.log(
+            `[Stripe Webhook] Reverted bounty ${bountyId} to held state after transfer reversal`
+          );
         }
         break;
       }
@@ -544,8 +647,10 @@ export async function POST(request: Request) {
         const chargeId = refund.charge as string | null;
         const paymentIntentId = refund.payment_intent as string | null;
 
-        if (!paymentIntentId && !chargeId) {
-          console.warn('[Stripe Webhook] charge.refund.updated: No payment_intent or charge on refund');
+        if (!(paymentIntentId || chargeId)) {
+          console.warn(
+            '[Stripe Webhook] charge.refund.updated: No payment_intent or charge on refund'
+          );
           break;
         }
 
@@ -556,18 +661,25 @@ export async function POST(request: Request) {
             const charge = await stripeClient.charges.retrieve(chargeId);
             finalPaymentIntentId = charge.payment_intent as string | null;
           } catch (e) {
-            console.warn('[Stripe Webhook] charge.refund.updated: Failed to fetch charge:', e);
+            console.warn(
+              '[Stripe Webhook] charge.refund.updated: Failed to fetch charge:',
+              e
+            );
           }
         }
 
         if (!finalPaymentIntentId) {
-          console.warn('[Stripe Webhook] charge.refund.updated: Could not determine payment_intent');
+          console.warn(
+            '[Stripe Webhook] charge.refund.updated: Could not determine payment_intent'
+          );
           break;
         }
 
         // Only process succeeded refunds
         if (refund.status !== 'succeeded') {
-          console.log(`[Stripe Webhook] charge.refund.updated: Refund status is ${refund.status}, skipping`);
+          console.log(
+            `[Stripe Webhook] charge.refund.updated: Refund status is ${refund.status}, skipping`
+          );
           break;
         }
 
@@ -586,13 +698,17 @@ export async function POST(request: Request) {
           .limit(1);
 
         if (!bountyRecord) {
-          console.warn(`[Stripe Webhook] charge.refund.updated: No bounty found for payment intent ${finalPaymentIntentId}`);
+          console.warn(
+            `[Stripe Webhook] charge.refund.updated: No bounty found for payment intent ${finalPaymentIntentId}`
+          );
           break;
         }
 
         // Skip if already refunded
         if (bountyRecord.paymentStatus === 'refunded') {
-          console.log(`[Stripe Webhook] Bounty ${bountyRecord.id} already marked as refunded, skipping`);
+          console.log(
+            `[Stripe Webhook] Bounty ${bountyRecord.id} already marked as refunded, skipping`
+          );
           break;
         }
 
@@ -601,7 +717,9 @@ export async function POST(request: Request) {
         const originalAmount = Number(bountyRecord.amount);
         const platformFee = originalAmount - refundedAmount;
 
-        console.log(`[Stripe Webhook] charge.refund.updated: Refund ${refundedAmount} of ${originalAmount} (fee: ${platformFee})`);
+        console.log(
+          `[Stripe Webhook] charge.refund.updated: Refund ${refundedAmount} of ${originalAmount} (fee: ${platformFee})`
+        );
 
         // Atomic conditional update — only update if not already refunded.
         // This prevents races with the charge.refunded handler which handles
@@ -622,7 +740,9 @@ export async function POST(request: Request) {
           .returning({ id: bounty.id });
 
         if (updatedRows.length === 0) {
-          console.log(`[Stripe Webhook] charge.refund.updated: Bounty ${bountyRecord.id} already processed by charge.refunded handler, skipping`);
+          console.log(
+            `[Stripe Webhook] charge.refund.updated: Bounty ${bountyRecord.id} already processed by charge.refunded handler, skipping`
+          );
           break;
         }
 
@@ -647,7 +767,9 @@ export async function POST(request: Request) {
               refundAmount: refundedAmount.toString(),
             })
             .where(eq(cancellationRequest.id, pendingRequest.id));
-          console.log(`[Stripe Webhook] Marked cancellation request ${pendingRequest.id} as approved`);
+          console.log(
+            `[Stripe Webhook] Marked cancellation request ${pendingRequest.id} as approved`
+          );
         }
 
         // Skip notification here — the charge.refunded handler sends the full
@@ -655,7 +777,9 @@ export async function POST(request: Request) {
         // fires later, it will see paymentStatus=refunded and skip the DB update
         // but still won't double-notify since the bounty status check prevents it.
 
-        console.log(`[Stripe Webhook] charge.refund.updated: Successfully processed refund for bounty ${bountyRecord.id}`);
+        console.log(
+          `[Stripe Webhook] charge.refund.updated: Successfully processed refund for bounty ${bountyRecord.id}`
+        );
         break;
       }
 
@@ -665,7 +789,9 @@ export async function POST(request: Request) {
         const paymentIntentId = charge.payment_intent as string | null;
 
         if (!paymentIntentId) {
-          console.warn('[Stripe Webhook] charge.refunded: No payment_intent on charge');
+          console.warn(
+            '[Stripe Webhook] charge.refunded: No payment_intent on charge'
+          );
           break;
         }
 
@@ -683,7 +809,9 @@ export async function POST(request: Request) {
           .limit(1);
 
         if (!bountyRecord) {
-          console.warn(`[Stripe Webhook] charge.refunded: No bounty found for payment intent ${paymentIntentId}`);
+          console.warn(
+            `[Stripe Webhook] charge.refunded: No bounty found for payment intent ${paymentIntentId}`
+          );
           break;
         }
 
@@ -692,7 +820,9 @@ export async function POST(request: Request) {
         const originalAmount = Number(bountyRecord.amount);
         const platformFee = originalAmount - refundedAmount;
 
-        console.log(`[Stripe Webhook] Refund: ${refundedAmount} of ${originalAmount} (fee: ${platformFee})`);
+        console.log(
+          `[Stripe Webhook] Refund: ${refundedAmount} of ${originalAmount} (fee: ${platformFee})`
+        );
 
         // Atomic conditional update — only process if not already refunded.
         // Prevents races with charge.refund.updated and duplicate webhook deliveries.
@@ -712,7 +842,9 @@ export async function POST(request: Request) {
           .returning({ id: bounty.id });
 
         if (refundUpdatedRows.length === 0) {
-          console.log(`[Stripe Webhook] Bounty ${bountyRecord.id} already marked as refunded, skipping`);
+          console.log(
+            `[Stripe Webhook] Bounty ${bountyRecord.id} already marked as refunded, skipping`
+          );
           break;
         }
 
@@ -737,7 +869,9 @@ export async function POST(request: Request) {
               refundAmount: refundedAmount.toString(),
             })
             .where(eq(cancellationRequest.id, pendingRequest.id));
-          console.log(`[Stripe Webhook] Marked cancellation request ${pendingRequest.id} as approved`);
+          console.log(
+            `[Stripe Webhook] Marked cancellation request ${pendingRequest.id} as approved`
+          );
         }
 
         // Send confirmation email to the bounty creator
@@ -749,7 +883,8 @@ export async function POST(request: Request) {
 
         if (creator?.email) {
           try {
-            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
+            const baseUrl =
+              process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
             await sendEmail({
               from: FROM_ADDRESSES.notifications,
               to: creator.email,
@@ -763,9 +898,14 @@ export async function POST(request: Request) {
                 platformFee: `$${platformFee.toLocaleString()}`,
               }),
             });
-            console.log(`[Stripe Webhook] Sent refund confirmation email to ${creator.email}`);
+            console.log(
+              `[Stripe Webhook] Sent refund confirmation email to ${creator.email}`
+            );
           } catch (emailError) {
-            console.error(`[Stripe Webhook] Failed to send refund email to ${creator.email}:`, emailError);
+            console.error(
+              `[Stripe Webhook] Failed to send refund email to ${creator.email}:`,
+              emailError
+            );
           }
         }
 
@@ -788,7 +928,11 @@ export async function POST(request: Request) {
           .where(eq(transaction.stripeId, charge.id))
           .limit(1);
 
-        if (!existingRefundTransaction) {
+        if (existingRefundTransaction) {
+          console.log(
+            `[Stripe Webhook] Refund transaction already exists for charge ${charge.id}, skipping`
+          );
+        } else {
           // Log the refund transaction
           await db.insert(transaction).values({
             bountyId: bountyRecord.id,
@@ -796,12 +940,14 @@ export async function POST(request: Request) {
             amount: refundedAmount.toFixed(2),
             stripeId: charge.id,
           });
-          console.log(`[Stripe Webhook] Created refund transaction for charge ${charge.id}`);
-        } else {
-          console.log(`[Stripe Webhook] Refund transaction already exists for charge ${charge.id}, skipping`);
+          console.log(
+            `[Stripe Webhook] Created refund transaction for charge ${charge.id}`
+          );
         }
 
-        console.log(`[Stripe Webhook] Successfully processed refund for bounty ${bountyRecord.id}`);
+        console.log(
+          `[Stripe Webhook] Successfully processed refund for bounty ${bountyRecord.id}`
+        );
         break;
       }
 
