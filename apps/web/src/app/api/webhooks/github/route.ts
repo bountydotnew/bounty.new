@@ -74,6 +74,7 @@ type PullRequestEvent = {
   };
   repository: { name: string; owner: { login: string } };
   installation: { id: number | null };
+  sender: { login: string };
 };
 
 // Installation event
@@ -2771,26 +2772,56 @@ async function handlePullRequestMerged(
     return;
   }
 
-  // Only auto-release if the submission was explicitly approved via /approve.
-  // We don't treat merge alone as approval because anyone with merge access
-  // (including the PR author) could merge — payment should require a deliberate
-  // /approve from a bounty maintainer first.
-  if (submissionRecord.status !== 'approved') {
-    console.log(
-      `[GitHub Webhook] Submission for PR ${pull_request.number} is not approved (status: ${submissionRecord.status}), skipping auto-payment`
-    );
-    try {
-      await githubApp.createIssueComment(
-        installationId,
-        repository.owner.login,
-        repository.name,
-        bountyRecord.githubIssueNumber!,
-        `PR #${pull_request.number} has been merged but the submission hasn't been approved yet.\n\nTo release payment, run \`/approve ${pull_request.number}\` then \`/merge ${pull_request.number}\`.`
+  // If the submission isn't already approved, check if the person who merged
+  // is authorized to release payment (repo maintainer or bounty creator).
+  // Only they can implicitly approve by merging — random write-access users cannot.
+  const needsImplicitApproval = submissionRecord.status !== 'approved';
+
+  if (needsImplicitApproval) {
+    const mergerLogin = event.sender.login;
+
+    // Check 1: Is the merger a repo maintainer (admin/maintain/write)?
+    const mergerIsMaintainer = await (async () => {
+      try {
+        const permission = await githubApp.getUserPermission(
+          installationId,
+          repository.owner.login,
+          repository.name,
+          mergerLogin
+        );
+        return isMaintainerPermission(permission);
+      } catch {
+        return false;
+      }
+    })();
+
+    // Check 2: Is the merger the bounty creator?
+    const mergerIsBountyCreator = await (async () => {
+      const linkedUser = await findUserByGithubLogin(mergerLogin);
+      return linkedUser?.id === bountyRecord.createdById;
+    })();
+
+    if (!mergerIsMaintainer && !mergerIsBountyCreator) {
+      console.log(
+        `[GitHub Webhook] PR ${pull_request.number} merged by ${mergerLogin} who is not a maintainer or bounty creator, skipping auto-payment`
       );
-    } catch (commentError) {
-      console.error('[GitHub Webhook] Failed to post unapproved merge comment:', commentError);
+      try {
+        await githubApp.createIssueComment(
+          installationId,
+          repository.owner.login,
+          repository.name,
+          bountyRecord.githubIssueNumber!,
+          `PR #${pull_request.number} has been merged but the submission hasn't been approved yet.\n\nA maintainer or the bounty creator can run \`/approve ${pull_request.number}\` then \`/merge ${pull_request.number}\` to release payment.`
+        );
+      } catch (commentError) {
+        console.error('[GitHub Webhook] Failed to post unapproved merge comment:', commentError);
+      }
+      return;
     }
-    return;
+
+    console.log(
+      `[GitHub Webhook] PR ${pull_request.number} merged by authorized user ${mergerLogin} (maintainer: ${mergerIsMaintainer}, creator: ${mergerIsBountyCreator}), auto-approving and releasing payment`
+    );
   }
 
   // Already paid out — nothing to do
@@ -2959,6 +2990,18 @@ async function handlePullRequestMerged(
 
       // Update all records atomically
       await db.transaction(async (tx) => {
+        // Auto-approve the submission if the merger is authorized
+        if (needsImplicitApproval) {
+          await tx
+            .update(submission)
+            .set({
+              status: 'approved',
+              reviewedAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .where(eq(submission.id, submissionRecord.id));
+        }
+
         await tx.insert(payout).values({
           userId: solver.id,
           bountyId: bountyRecord.id,
