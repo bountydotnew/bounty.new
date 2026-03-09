@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { useSession } from '@/context/session-context';
+import { useActiveOrg } from '@/hooks/use-active-org';
 import {
   BountyDetailContext,
   type BountyDetailContextValue,
@@ -90,11 +91,20 @@ function useBountyDetailQueries({
     ),
   });
 
+  const connectStatusQuery = useQuery({
+    ...trpc.connect.getConnectStatus.queryOptions(),
+    enabled: Boolean(
+      sessionUserId && createdById && createdById === sessionUserId
+    ),
+    staleTime: 60_000,
+  });
+
   return {
     paymentStatusQuery,
     votesQuery,
     submissionsQuery,
     cancellationStatusQuery,
+    connectStatusQuery,
   };
 }
 
@@ -190,6 +200,20 @@ function useBountyDetailMutations({
     },
     onError: (error: Error) => {
       toast.error(`Failed to recheck payment: ${error.message}`);
+    },
+  });
+
+  const setupConnectMutation = useMutation({
+    mutationFn: async () => {
+      return await trpcClient.connect.createConnectAccountLink.mutate();
+    },
+    onSuccess: (result) => {
+      if (result?.data?.url) {
+        window.location.href = result.data.url;
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to start Stripe setup: ${error.message}`);
     },
   });
 
@@ -312,6 +336,7 @@ function useBountyDetailMutations({
     deleteBountyMutation,
     createPaymentMutation,
     recheckPaymentMutation,
+    setupConnectMutation,
     requestCancellationMutation,
     cancelCancellationRequestMutation,
     approveSubmissionMutation,
@@ -397,6 +422,7 @@ export function BountyDetailProvider({
     votesQuery,
     submissionsQuery,
     cancellationStatusQuery,
+    connectStatusQuery,
   } = useBountyDetailQueries({
     bountyId,
     sessionUserId,
@@ -411,6 +437,7 @@ export function BountyDetailProvider({
     deleteBountyMutation,
     createPaymentMutation,
     recheckPaymentMutation,
+    setupConnectMutation,
     requestCancellationMutation,
     cancelCancellationRequestMutation,
     approveSubmissionMutation,
@@ -438,6 +465,15 @@ export function BountyDetailProvider({
     amount,
     hasPendingRequest: cancellationStatusQuery.data?.hasPendingRequest ?? false,
   });
+
+  // Creator needs to set up Stripe Connect (no account or onboarding incomplete)
+  const connectData = connectStatusQuery.data?.data;
+  const needsConnectSetup =
+    isCreator &&
+    Boolean(
+      connectData &&
+        !(connectData.hasConnectAccount && connectData.onboardingComplete)
+    );
 
   const state: BountyDetailState = useMemo(
     () => ({
@@ -472,6 +508,7 @@ export function BountyDetailProvider({
       canRequestCancellation,
       hasPendingCancellation,
       needsPayment,
+      needsConnectSetup,
       isCancellationStatusLoading: cancellationStatusQuery.isLoading,
     }),
     [
@@ -503,6 +540,7 @@ export function BountyDetailProvider({
       canRequestCancellation,
       hasPendingCancellation,
       needsPayment,
+      needsConnectSetup,
       cancellationStatusQuery.isLoading,
     ]
   );
@@ -559,6 +597,9 @@ export function BountyDetailProvider({
       },
       completePayment: () => {
         createPaymentMutation.mutate();
+      },
+      setupConnect: () => {
+        setupConnectMutation.mutate();
       },
       openEditModal: () => {
         onEdit?.();
@@ -680,6 +721,7 @@ export function BountyDetailProvider({
       cancelCancellationRequestMutation,
       recheckPaymentMutation,
       createPaymentMutation,
+      setupConnectMutation,
       approveSubmissionMutation,
       unapproveSubmissionMutation,
       mergeSubmissionMutation,
@@ -698,6 +740,7 @@ export function BountyDetailProvider({
         cancelCancellationRequestMutation.isPending,
       isRecheckingPayment: recheckPaymentMutation.isPending,
       isCreatingPayment: createPaymentMutation.isPending,
+      isSettingUpConnect: setupConnectMutation.isPending,
       isApprovingSubmission: approveSubmissionMutation.isPending,
       approvingSubmissionId,
       isUnapprovingSubmission: unapproveSubmissionMutation.isPending,
@@ -712,6 +755,7 @@ export function BountyDetailProvider({
       cancelCancellationRequestMutation.isPending,
       recheckPaymentMutation.isPending,
       createPaymentMutation.isPending,
+      setupConnectMutation.isPending,
       approveSubmissionMutation.isPending,
       approvingSubmissionId,
       unapproveSubmissionMutation.isPending,

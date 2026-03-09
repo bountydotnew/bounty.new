@@ -1,6 +1,7 @@
-import { ArrowRight, Check, Circle } from 'lucide-react';
+import { ArrowRight, Check, Circle, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@bounty/ui/components/button';
 import { cn } from '@bounty/ui/lib/utils';
+import { useState } from 'react';
 
 interface IssuesBlockProps {
   chargesEnabled: boolean;
@@ -12,6 +13,8 @@ interface IssuesBlockProps {
     pastDue: string[];
   };
   onCompleteOnboarding: () => void;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 interface StatusItem {
@@ -82,7 +85,11 @@ export function IssuesBlock({
   cardPaymentsActive,
   requirements,
   onCompleteOnboarding,
+  onRefresh,
+  isRefreshing,
 }: IssuesBlockProps) {
+  const [isContinuing, setIsContinuing] = useState(false);
+
   const hasPastDue = requirements.pastDue && requirements.pastDue.length > 0;
   const hasCurrentlyDue =
     requirements.currentlyDue && requirements.currentlyDue.length > 0;
@@ -123,10 +130,38 @@ export function IssuesBlock({
               {completedCount} of {totalCount} steps completed
             </p>
           </div>
-          <Button size="sm" onClick={onCompleteOnboarding}>
-            Continue
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onRefresh}
+              disabled={isRefreshing}
+            >
+              <RefreshCw
+                className={cn('h-4 w-4', isRefreshing && 'animate-spin')}
+              />
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                setIsContinuing(true);
+                onCompleteOnboarding();
+              }}
+              disabled={isContinuing}
+            >
+              {isContinuing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Redirecting...
+                </>
+              ) : (
+                <>
+                  Continue
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Progress bar */}

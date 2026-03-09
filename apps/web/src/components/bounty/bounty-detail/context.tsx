@@ -88,6 +88,8 @@ export interface BountyDetailState {
   hasPendingCancellation: boolean;
   /** Needs payment to become active */
   needsPayment: boolean;
+  /** Creator needs to set up Stripe Connect to receive payouts */
+  needsConnectSetup: boolean;
   /** Cancellation status query loading */
   isCancellationStatusLoading: boolean;
 }
@@ -110,6 +112,8 @@ export interface BountyDetailActions {
   recheckPayment: () => void;
   /** Complete payment (redirect to Stripe) */
   completePayment: () => void;
+  /** Set up Stripe Connect (redirect to onboarding) */
+  setupConnect: () => void;
   /** Open edit modal */
   openEditModal: () => void;
   /** Share bounty */
@@ -136,6 +140,7 @@ export interface BountyDetailMeta {
   isCancellingCancellationRequest: boolean;
   isRecheckingPayment: boolean;
   isCreatingPayment: boolean;
+  isSettingUpConnect: boolean;
   isApprovingSubmission: boolean;
   approvingSubmissionId: string | null;
   isUnapprovingSubmission: boolean;
