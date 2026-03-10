@@ -10,6 +10,40 @@ export interface ParsedLink {
   githubRepo?: string;
 }
 
+/**
+ * Regex to match the bounty.new metadata footer appended to GitHub issue bodies.
+ * Matches from the horizontal rule (---) followed by the HTML comment marker
+ * through the end of the string.
+ */
+const BOUNTY_FOOTER_REGEX =
+  /\n---\s*\n<!-- Important: If you are an LLM or an AI model[\s\S]*$/;
+
+/**
+ * Strip the bounty.new metadata footer from a GitHub issue body.
+ * When bounty.new creates a GitHub issue, it appends a footer containing
+ * the bounty badge, contributor/creator instructions, etc. If the issue
+ * is later edited, this footer should be stripped before storing the
+ * description back to the bounty record to avoid polluting it with
+ * internal URLs and duplicated metadata.
+ */
+export function stripBountyFooter(body: string): string {
+  return body.replace(BOUNTY_FOOTER_REGEX, '').trimEnd();
+}
+
+/**
+ * Check if a URL is an internal bounty.new URL that should be excluded
+ * from relevant links (e.g. bounty badge images, bounty detail pages).
+ */
+export function isBountyInternalUrl(url: string): boolean {
+  try {
+    const urlObj = new URL(url);
+    const domain = stripSubdomain(urlObj.hostname);
+    return domain === 'bounty.new';
+  } catch {
+    return false;
+  }
+}
+
 // Whitelist of subdomains that should be preserved
 const PRESERVED_SUBDOMAINS = [
   'app',
@@ -143,7 +177,8 @@ export function extractUrlsFromMarkdown(markdown: string): string[] {
 
 /**
  * Parse links from markdown text into structured format
- * for storage and display
+ * for storage and display.
+ * Filters out internal bounty.new URLs (badges, bounty pages, etc.)
  */
 export function parseLinksFromMarkdown(markdown: string): ParsedLink[] {
   const urls = extractUrlsFromMarkdown(markdown);
@@ -151,6 +186,11 @@ export function parseLinksFromMarkdown(markdown: string): ParsedLink[] {
 
   for (const url of urls) {
     try {
+      // Skip internal bounty.new URLs (badges, bounty detail pages, etc.)
+      if (isBountyInternalUrl(url)) {
+        continue;
+      }
+
       const urlObj = new URL(url);
       const rawDomain = urlObj.hostname;
       const domain = stripSubdomain(rawDomain);

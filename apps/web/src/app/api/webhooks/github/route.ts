@@ -98,6 +98,7 @@ import {
   markOperationPerformed,
   PaymentLockError,
 } from '@bounty/api/src/lib/payment-lock';
+import { stripBountyFooter } from '@bounty/ui/lib/links';
 
 const ISSUE_REFERENCE_PATTERN =
   /(?:fixes|closes|resolves|related to)\s+#?(\d+)/i;
@@ -999,12 +1000,12 @@ async function handleBountyCreateCommand(
     return;
   }
 
-  // Create the bounty
+  // Create the bounty — strip any bounty.new footer from the issue body
   const [newBounty] = await db
     .insert(bounty)
     .values({
       title: issue.title,
-      description: issue.body || '',
+      description: stripBountyFooter(issue.body || ''),
       amount: String(command.amount),
       currency: command.currency,
       status: 'draft', // Will be updated to 'open' when funded
@@ -3257,12 +3258,19 @@ async function handleIssueEdited(event: IssueEditedEvent) {
     .limit(1);
 
   if (bountyRecord) {
+    // Strip bounty.new metadata footer from the issue body before storing.
+    // When bounty.new creates a GitHub issue, it appends a footer with the
+    // bounty badge, contributor instructions, etc. Without stripping, the
+    // footer would pollute the bounty description and cause internal URLs
+    // to appear in the "Relevant Links" section.
+    const cleanDescription = stripBountyFooter(issue.body || '');
+
     // Update bounty title and description from GitHub issue
     await db
       .update(bounty)
       .set({
         title: issue.title,
-        description: issue.body || '',
+        description: cleanDescription,
         updatedAt: new Date(),
       })
       .where(eq(bounty.id, bountyRecord.id));

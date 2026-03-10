@@ -2,175 +2,28 @@
 
 import { use, useMemo } from 'react';
 import { BountyDetailContext, type BountyLink } from './context';
-import { GITHUB_URL_REGEX } from '@bounty/ui/lib/utils';
+import {
+  parseLinksFromMarkdown as parseLinksShared,
+  isBountyInternalUrl,
+} from '@bounty/ui/lib/links';
 
 interface RelevantLinksProps {
   className?: string;
 }
 
-// Whitelist of subdomains that should be preserved
-const PRESERVED_SUBDOMAINS = [
-  'app',
-  'api',
-  'admin',
-  'dashboard',
-  'console',
-  'portal',
-  'local',
-  'dev',
-  'development',
-  'staging',
-  'test',
-  'beta',
-  'demo',
-  'docs',
-  'doc',
-  'blog',
-  'wiki',
-  'help',
-  'support',
-  'community',
-  'go',
-  'id',
-  'login',
-  'auth',
-  'cdn',
-  'static',
-  'assets',
-  'media',
-  'img',
-  'image',
-  'video',
-  'db',
-  'database',
-  'mail',
-  'email',
-  'ftp',
-  'sftp',
-  'vpn',
-  'ssh',
-  'git',
-  'svn',
-  'hg',
-  'cvs',
-  'ns',
-  'dns',
-  'mx',
-  'txt',
-  'smtp',
-  'pop',
-  'imap',
-  'webmail',
-  'webdisk',
-  'cpanel',
-  'whm',
-  'plesk',
-  'direct',
-  'client',
-  'customers',
-  'partners',
-  'store',
-  'shop',
-  'cart',
-  'checkout',
-  'pay',
-  'payment',
-  'secure',
-  'account',
-  'accounts',
-  'profile',
-  'user',
-  'users',
-  'member',
-  'members',
-  'my',
-  'm',
-];
-
 /**
- * Strip www and other common subdomains from hostname
- * Keeps whitelisted subdomains
- */
-function stripSubdomain(hostname: string): string {
-  const parts = hostname.split('.');
-  if (parts.length <= 2) {
-    return hostname; // Already just domain + TLD
-  }
-
-  const subdomain = parts[0];
-  if (subdomain && PRESERVED_SUBDOMAINS.includes(subdomain)) {
-    return hostname; // Keep preserved subdomains
-  }
-
-  // Remove first part (www or other non-preserved subdomain)
-  return parts.slice(1).join('.');
-}
-
-/**
- * Parse links from markdown text (client-side fallback)
- * Extracts URLs from markdown [text](url) and bare URLs
+ * Parse links from markdown text (client-side fallback).
+ * Uses the shared parser from @bounty/ui and maps to BountyLink format.
  */
 function parseLinksFromMarkdown(markdown: string): BountyLink[] {
-  const links: BountyLink[] = [];
-  const seen = new Set<string>();
-
-  // Match markdown links: [text](url)
-  const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-  let match;
-  while ((match = markdownLinkRegex.exec(markdown)) !== null) {
-    const url = match[2];
-    if (url && !seen.has(url)) {
-      seen.add(url);
-      const link = parseUrl(url);
-      if (link) links.push(link);
-    }
-  }
-
-  // Match bare URLs (http/https)
-  const bareUrlRegex = /https?:\/\/[^\s\])\}]+/g;
-  while ((match = bareUrlRegex.exec(markdown)) !== null) {
-    const url = match[0];
-    if (url && !seen.has(url)) {
-      seen.add(url);
-      const link = parseUrl(url);
-      if (link) links.push(link);
-    }
-  }
-
-  return links;
-}
-
-function parseUrl(url: string): BountyLink | null {
-  try {
-    const urlObj = new URL(url);
-    const rawDomain = urlObj.hostname;
-    const domain = stripSubdomain(rawDomain);
-    const isGitHub = GITHUB_URL_REGEX.test(url);
-
-    let displayText = domain;
-    let githubOwner: string | undefined;
-    let githubRepo: string | undefined;
-
-    if (isGitHub) {
-      const githubMatch = url.match(GITHUB_URL_REGEX);
-      if (githubMatch) {
-        githubOwner = githubMatch[1];
-        githubRepo = githubMatch[2];
-        displayText = `${githubOwner ?? ''}/${githubRepo ?? ''}`;
-      }
-    }
-
-    return {
-      url,
-      domain,
-      displayText,
-      isGitHub,
-      githubOwner,
-      githubRepo,
-    };
-  } catch {
-    return null;
-  }
+  return parseLinksShared(markdown).map((link) => ({
+    url: link.url,
+    domain: link.domain,
+    displayText: link.displayText,
+    isGitHub: link.isGitHub,
+    githubOwner: link.githubOwner,
+    githubRepo: link.githubRepo,
+  }));
 }
 
 /**
@@ -190,16 +43,22 @@ export function RelevantLinks({ className = '' }: RelevantLinksProps) {
 
   const { bounty } = context.state;
 
-  // Use server-side links, or fall back to client-side parsing
+  // Use server-side links, or fall back to client-side parsing.
+  // Always filter out internal bounty.new URLs that may have leaked into
+  // the description via GitHub issue sync.
   const links = useMemo(() => {
+    let parsed: BountyLink[];
     if (bounty.links && bounty.links.length > 0) {
-      return bounty.links;
+      parsed = bounty.links;
+    } else if (bounty.description) {
+      // Client-side fallback for bounties created before link parsing was added
+      parsed = parseLinksFromMarkdown(bounty.description);
+    } else {
+      return [];
     }
-    // Client-side fallback for bounties created before link parsing was added
-    if (bounty.description) {
-      return parseLinksFromMarkdown(bounty.description);
-    }
-    return [];
+    // Filter out any internal bounty.new URLs from server-side data too,
+    // in case older records still contain them
+    return parsed.filter((link) => !isBountyInternalUrl(link.url));
   }, [bounty.links, bounty.description]);
 
   if (links.length === 0) {
