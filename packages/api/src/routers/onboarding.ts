@@ -24,6 +24,7 @@ export const onboardingRouter = router({
         completedStep4: false,
         source: null,
         claimedWaitlistDiscount: false,
+        completedOnboarding: false,
       };
     }
 
@@ -34,6 +35,7 @@ export const onboardingRouter = router({
       completedStep4: state.completedStep4,
       source: state.source,
       claimedWaitlistDiscount: state.claimedWaitlistDiscount,
+      completedOnboarding: state.completedOnboarding,
     };
   }),
 
@@ -204,6 +206,37 @@ export const onboardingRouter = router({
         code,
         alreadyClaimed: false,
       };
+    }),
+
+  /**
+   * Mark the product tour / onboarding walkthrough as complete
+   */
+  completeOnboarding: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const [existingState] = await ctx.db
+        .select()
+        .from(onboardingState)
+        .where(eq(onboardingState.userId, ctx.session.user.id))
+        .limit(1);
+
+      if (existingState) {
+        await ctx.db
+          .update(onboardingState)
+          .set({
+            completedOnboarding: true,
+            updatedAt: new Date(),
+          })
+          .where(eq(onboardingState.userId, ctx.session.user.id));
+      } else {
+        await ctx.db
+          .insert(onboardingState)
+          .values({
+            userId: ctx.session.user.id,
+            completedOnboarding: true,
+          });
+      }
+
+      return { success: true };
     }),
 
   /**

@@ -39,7 +39,7 @@ export const Header = () => {
       </div>
 
       {/* Right side - Create Bounty button */}
-      <div className="flex shrink-0 items-center">
+      <div className="flex shrink-0 items-center" data-tour-step-id="create-bounty">
         <Button
           className="flex items-center gap-[7px] rounded-lg bg-surface-hover px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-3"
           onClick={handleCreateBounty}

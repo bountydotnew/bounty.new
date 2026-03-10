@@ -235,38 +235,40 @@ function GitHubIntegrationCard({
         : `${installedCount} accounts connected`;
 
   return (
-    <IntegrationCard
-      key="github"
-      icon={<GithubIcon className="size-7 text-foreground" />}
-      title="GitHub"
-      description={description}
-      status={
-        installedCount > 0
-          ? {
-              type: 'installed',
-              count: installedCount,
-              accounts: installations.map((installation) => ({
-                id: installation.id,
-                accountLogin: installation.accountLogin,
-                href: `${pathPrefix}/integrations/github/${installation.id}`,
-              })),
-            }
-          : undefined
-      }
-      action={{
-        label: 'Install',
-        onClick: () => {
-          const fallbackUrl =
-            'https://github.com/apps/bountydotnew/installations/new';
-          window.location.href = installUrl?.url || fallbackUrl;
-        },
-      }}
-      href={
-        primaryInstallation
-          ? `${pathPrefix}/integrations/github/${primaryInstallation.id}`
-          : undefined
-      }
-    />
+    <div data-tour-step-id="github-integration">
+      <IntegrationCard
+        key="github"
+        icon={<GithubIcon className="size-7 text-foreground" />}
+        title="GitHub"
+        description={description}
+        status={
+          installedCount > 0
+            ? {
+                type: 'installed',
+                count: installedCount,
+                accounts: installations.map((installation) => ({
+                  id: installation.id,
+                  accountLogin: installation.accountLogin,
+                  href: `${pathPrefix}/integrations/github/${installation.id}`,
+                })),
+              }
+            : undefined
+        }
+        action={{
+          label: 'Install',
+          onClick: () => {
+            const fallbackUrl =
+              'https://github.com/apps/bountydotnew/installations/new';
+            window.location.href = installUrl?.url || fallbackUrl;
+          },
+        }}
+        href={
+          primaryInstallation
+            ? `${pathPrefix}/integrations/github/${primaryInstallation.id}`
+            : undefined
+        }
+      />
+    </div>
   );
 }
 

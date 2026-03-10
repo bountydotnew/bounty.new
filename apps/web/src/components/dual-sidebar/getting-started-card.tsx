@@ -3,7 +3,11 @@
 import { useState } from 'react';
 import { CheckCircle2, Circle, X } from 'lucide-react';
 import { cn } from '@bounty/ui/lib/utils';
+import { useQuery } from '@tanstack/react-query';
 import { useActiveOrg } from '@/hooks/use-active-org';
+import { useSession } from '@/context/session-context';
+import { trpc } from '@/utils/trpc';
+import Link from 'next/link';
 
 interface ChecklistItem {
   id: string;
@@ -12,47 +16,51 @@ interface ChecklistItem {
   completed: boolean;
 }
 
-// TODO: Replace with actual tRPC query
-const mockProgress = {
-  createdFirstBounty: false,
-  connectedTools: false,
-  invitedTeamMember: false,
-};
-
-const getChecklistItems = (orgSlug?: string): ChecklistItem[] => [
-  {
-    id: 'first-bounty',
-    label: 'Launch your first bounty',
-    href: '/bounties',
-    completed: mockProgress.createdFirstBounty,
-  },
-  {
-    id: 'integrations',
-    label: 'Set up an integration',
-    href: orgSlug ? `/${orgSlug}/integrations` : '/integrations',
-    completed: mockProgress.connectedTools,
-  },
-  {
-    id: 'invite-member',
-    label: 'Add a collaborator',
-    href: orgSlug ? `/${orgSlug}/settings/members` : '/settings/members',
-    completed: mockProgress.invitedTeamMember,
-  },
-];
-
 export const GettingStartedCard = () => {
   const [isDismissed, setIsDismissed] = useState(false);
   const { activeOrgSlug } = useActiveOrg();
+  const { isAuthenticated } = useSession();
 
-  const items = getChecklistItems(activeOrgSlug ?? undefined);
+  const { data: onboardingState } = useQuery({
+    ...trpc.onboarding.getState.queryOptions(),
+    enabled: isAuthenticated,
+  });
+
+  const items: ChecklistItem[] = [
+    {
+      id: 'payments',
+      label: 'Connect Stripe payments',
+      href: activeOrgSlug
+        ? `/${activeOrgSlug}/settings/payments`
+        : '/settings/payments',
+      completed: false,
+    },
+    {
+      id: 'integrations',
+      label: 'Install GitHub',
+      href: activeOrgSlug
+        ? `/${activeOrgSlug}/integrations`
+        : '/integrations',
+      completed: false,
+    },
+    {
+      id: 'first-bounty',
+      label: 'Create your first bounty',
+      href: '/bounties',
+      completed: false,
+    },
+  ];
+
   const completedCount = items.filter((i) => i.completed).length;
   const progress = (completedCount / items.length) * 100;
-  const isComplete = completedCount === items.length;
+  const isComplete =
+    completedCount === items.length ||
+    onboardingState?.completedOnboarding === true;
 
   if (isDismissed || isComplete) return null;
 
   return (
-    <div className="group/sheet relative flex flex-col gap-2 rounded-[8px] border border-border-subtle bg-surface-1 p-3">
+    <div className="group/sheet relative flex flex-col gap-2 rounded-[8px] border border-border-subtle bg-surface-1 p-3 group-data-[collapsible=icon]:hidden">
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
@@ -83,7 +91,7 @@ export const GettingStartedCard = () => {
       {/* Checklist items */}
       <div className="space-y-0.5">
         {items.map((item) => (
-          <a
+          <Link
             key={item.id}
             href={item.href}
             className={cn(
@@ -99,7 +107,7 @@ export const GettingStartedCard = () => {
               <Circle className="h-3 w-3 text-text-tertiary shrink-0" />
             )}
             <span className="truncate">{item.label}</span>
-          </a>
+          </Link>
         ))}
       </div>
     </div>
