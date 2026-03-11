@@ -48,7 +48,11 @@ export * from './components/textarea';
 export * from './components/toast';
 export * from './components/toggle';
 // Export toggle-group components except Toggle (to avoid conflict)
-export { ToggleGroup, ToggleGroupItem, ToggleGroupSeparator } from './components/toggle-group';
+export {
+  ToggleGroup,
+  ToggleGroupItem,
+  ToggleGroupSeparator,
+} from './components/toggle-group';
 export * from './components/toolbar';
 export * from './components/tooltip';
 
@@ -96,8 +100,8 @@ export * from './hooks/use-mobile';
 export * from './hooks/use-navigation-context';
 export * from './hooks/use-passkey';
 export * from './hooks/use-window-size';
-export * from './hooks/use-branches';
-export * from './hooks/use-issues';
+export * from './hooks/useBranches';
+export * from './hooks/useIssues';
 
 // Lib utilities
 export * from './lib/blog-query';

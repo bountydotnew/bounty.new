@@ -70,6 +70,11 @@ import {
   PaymentLockError,
 } from '../lib/payment-lock';
 import { sendBountyCreatedWebhook } from '../lib/use-discord-webhook';
+import {
+  postLinearUpdate,
+  LINEAR_BOT_MESSAGES,
+  buildBountyUrl,
+} from '../lib/bot';
 import { env } from '@bounty/env/server';
 import { stripeCircuitBreaker } from '../lib/circuit-breaker';
 import {
@@ -4056,6 +4061,18 @@ To process this request:
           // the confirmation email + in-app notification to the creator.
           // We log here but don't duplicate notifications.
 
+          // Notify Linear if this bounty is linked to a Linear issue
+          if (bountyRecord.linearIssueId && bountyRecord.organizationId) {
+            const url = buildBountyUrl(
+              bountyRecord.organizationId,
+              bountyRecord.id
+            );
+            postLinearUpdate(
+              bountyRecord.linearIssueId,
+              LINEAR_BOT_MESSAGES.bountyCancelled(url)
+            );
+          }
+
           console.log(
             `[Cancellation] Approved for bounty ${request.bountyId}, refund: $${refundAmount}`
           );
@@ -4187,6 +4204,18 @@ To process this request:
             .where(eq(cancellationRequest.id, pendingRequest.id));
         }
 
+        // Notify Linear if this bounty is linked to a Linear issue
+        if (bountyRecord.linearIssueId && bountyRecord.organizationId) {
+          const url = buildBountyUrl(
+            bountyRecord.organizationId,
+            bountyRecord.id
+          );
+          postLinearUpdate(
+            bountyRecord.linearIssueId,
+            LINEAR_BOT_MESSAGES.bountyCancelled(url)
+          );
+        }
+
         console.log(
           `[Refund] Bounty ${input.bountyId} marked as refunded by ${ctx.session.user.id}`
         );
@@ -4223,6 +4252,8 @@ To process this request:
             paymentStatus: bounty.paymentStatus,
             stripePaymentIntentId: bounty.stripePaymentIntentId,
             createdById: bounty.createdById,
+            linearIssueId: bounty.linearIssueId,
+            organizationId: bounty.organizationId,
           })
           .from(bounty)
           .where(eq(bounty.id, input.bountyId))
@@ -4319,6 +4350,18 @@ To process this request:
               )
             );
 
+          // Notify Linear if this bounty is linked to a Linear issue
+          if (bountyRecord.linearIssueId && bountyRecord.organizationId) {
+            const url = buildBountyUrl(
+              bountyRecord.organizationId,
+              bountyRecord.id
+            );
+            postLinearUpdate(
+              bountyRecord.linearIssueId,
+              LINEAR_BOT_MESSAGES.bountyCancelled(url)
+            );
+          }
+
           console.log(
             `[Sync] Bounty ${input.bountyId} synced as refunded (${refundedAmount} of ${originalAmount})`
           );
@@ -4370,6 +4413,18 @@ To process this request:
               eq(cancellationRequest.status, 'pending')
             )
           );
+
+        // Notify Linear if this bounty is linked to a Linear issue
+        if (bountyRecord.linearIssueId && bountyRecord.organizationId) {
+          const url = buildBountyUrl(
+            bountyRecord.organizationId,
+            bountyRecord.id
+          );
+          postLinearUpdate(
+            bountyRecord.linearIssueId,
+            LINEAR_BOT_MESSAGES.bountyCancelled(url)
+          );
+        }
 
         console.log(
           `[Sync] Bounty ${input.bountyId} synced as refunded (${refundedAmount} of ${originalAmount})`
