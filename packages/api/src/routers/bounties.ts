@@ -1693,6 +1693,7 @@ export const bountiesRouter = router({
               amount: bounty.amount,
               currency: bounty.currency,
               status: bounty.status,
+              organizationId: bounty.organizationId,
               deadline: bounty.deadline,
               tags: bounty.tags,
               repositoryUrl: bounty.repositoryUrl,

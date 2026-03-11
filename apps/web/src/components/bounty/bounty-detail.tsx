@@ -49,6 +49,7 @@ interface BountyData {
     githubIssueNumber: number | null;
     repositoryUrl: string | null;
     issueUrl: string | null;
+    organizationId: string | null;
     creator: {
       name: string | null;
       image: string | null;
@@ -115,6 +116,7 @@ export default function BountyDetailPage({
       githubIssueNumber={bounty.githubIssueNumber}
       repositoryUrl={bounty.repositoryUrl}
       issueUrl={bounty.issueUrl}
+      organizationId={bounty.organizationId}
       links={bounty.links}
       initialVotes={votes}
       canEditBounty={canEdit}

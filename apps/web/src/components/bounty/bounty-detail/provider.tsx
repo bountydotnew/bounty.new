@@ -45,6 +45,7 @@ interface BountyDetailProviderProps {
   githubIssueNumber?: number | null;
   repositoryUrl?: string | null;
   issueUrl?: string | null;
+  organizationId?: string | null;
   links?: BountyLink[];
   onEdit?: () => void;
 }
@@ -111,14 +112,17 @@ function useBountyDetailQueries({
 
 function useBountyDetailMutations({
   bountyId,
+  organizationId,
   setShowCancellationDialog,
   setCancellationReason,
 }: {
   bountyId: string;
+  organizationId?: string | null;
   setShowCancellationDialog: (open: boolean) => void;
   setCancellationReason: (reason: string) => void;
 }) {
   const queryClient = useQueryClient();
+  const { orgs, switchOrg } = useActiveOrg();
 
   const voteMutation = useMutation({
     mutationFn: async (input: { bountyId: string; vote: boolean }) => {
@@ -155,7 +159,28 @@ function useBountyDetailMutations({
       }, 1000);
     },
     onError: (error: Error) => {
-      toast.error(`Failed to delete bounty: ${error.message}`);
+      const isDifferentOrg = error.message.includes('different organization');
+      const bountyOrg = isDifferentOrg && organizationId
+        ? orgs.find((o) => o.id === organizationId)
+        : undefined;
+
+      if (isDifferentOrg && bountyOrg) {
+        toast.error('This bounty belongs to a different organization', {
+          description: `Switch to "${bountyOrg.name}" to manage this bounty.`,
+          action: {
+            label: `Switch to ${bountyOrg.name}`,
+            onClick: async () => {
+              try {
+                await switchOrg(bountyOrg.id);
+              } catch {
+                toast.error('Failed to switch organization');
+              }
+            },
+          },
+        });
+      } else {
+        toast.error(`Failed to delete bounty: ${error.message}`);
+      }
     },
   });
 
@@ -431,6 +456,7 @@ export function BountyDetailProvider({
   githubIssueNumber,
   repositoryUrl,
   issueUrl,
+  organizationId,
   links,
   onEdit,
 }: BountyDetailProviderProps) {
@@ -480,6 +506,7 @@ export function BountyDetailProvider({
     submitWorkMutation,
   } = useBountyDetailMutations({
     bountyId,
+    organizationId,
     setShowCancellationDialog,
     setCancellationReason,
   });
