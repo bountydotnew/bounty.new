@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cn } from '@bounty/ui/lib/utils';
 import { useActiveOrg } from '@/hooks/use-active-org';
 import { useSession } from '@/context/session-context';
 import { useTour } from '@bounty/ui/components/tour';
+import { trpc } from '@/utils/trpc';
 
 // ---------------------------------------------------------------------------
 // SVG Icons from Paper design
@@ -79,6 +81,7 @@ function MinimizeIcon() {
 
 interface ChecklistItem {
   id: string;
+  taskKey: 'tools' | 'payouts' | 'bounty' | 'member';
   label: string;
   completed: boolean;
   tourId?: string;
@@ -94,26 +97,44 @@ export const GettingStartedCard = () => {
   const { activeOrgSlug } = useActiveOrg();
   const { isAuthenticated } = useSession();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   let tour: ReturnType<typeof useTour> | null = null;
   try {
     tour = useTour();
   } catch {
-    // TourProvider not present — that's fine, card still works as navigation
+    // TourProvider not present — card still works as navigation
   }
+
+  const { data: onboardingState } = useQuery({
+    ...trpc.onboarding.getState.queryOptions(),
+    enabled: isAuthenticated,
+  });
+
+  const completeTask = useMutation(
+    trpc.onboarding.completeGettingStartedTask.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: [['onboarding', 'getState']],
+        });
+      },
+    })
+  );
 
   const items: ChecklistItem[] = [
     {
       id: 'tools',
+      taskKey: 'tools',
       label: 'Connect your tools',
-      completed: false,
+      completed: onboardingState?.gsConnectedTools ?? false,
       tourId: 'connect-tools',
       href: activeOrgSlug ? `/${activeOrgSlug}/integrations` : '/integrations',
     },
     {
       id: 'payouts',
+      taskKey: 'payouts',
       label: 'Start receiving payouts',
-      completed: false,
+      completed: onboardingState?.gsSetupPayouts ?? false,
       tourId: 'setup-payouts',
       href: activeOrgSlug
         ? `/${activeOrgSlug}/settings/payments?tab=settings`
@@ -121,14 +142,18 @@ export const GettingStartedCard = () => {
     },
     {
       id: 'first-bounty',
+      taskKey: 'bounty',
       label: 'Create your first bounty',
-      completed: false,
+      completed: onboardingState?.gsCreatedBounty ?? false,
+      tourId: 'create-bounty',
       href: '/dashboard',
     },
     {
       id: 'invite-member',
+      taskKey: 'member',
       label: 'Invite a member to your team',
-      completed: false,
+      completed: onboardingState?.gsInvitedMember ?? false,
+      tourId: 'invite-member',
       href: activeOrgSlug
         ? `/${activeOrgSlug}/settings/members`
         : '/settings/members',
@@ -142,8 +167,14 @@ export const GettingStartedCard = () => {
   if (!isAuthenticated || isComplete) return null;
 
   const handleItemClick = (item: ChecklistItem) => {
+    // Mark the task as complete when clicked
+    if (!item.completed) {
+      completeTask.mutate({ task: item.taskKey });
+    }
+
     if (item.tourId && tour) {
       router.push(item.href);
+      // Wait for navigation + render before starting tour
       setTimeout(() => {
         tour!.start(item.tourId!);
       }, 800);

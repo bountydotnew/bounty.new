@@ -8,6 +8,7 @@ import { FeedbackProvider, FeedbackOverlay } from '@bounty/feedback';
 import { FeedbackDialog } from '@/components/feedback-dialog';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Header } from '@/components/dual-sidebar/sidebar-header';
+import { OnboardingController } from '@/components/onboarding/onboarding-controller';
 
 export const metadata: Metadata = {
   title: 'bounty.new',
@@ -59,10 +60,12 @@ export default async function RootLayout({
             <FeedbackDialog />
             <FeedbackOverlay />
             <EarlyAccessGuard>
-              <Sidebar admin={false}>
-                <Header />
-                {children}
-              </Sidebar>
+              <OnboardingController>
+                <Sidebar admin={false}>
+                  <Header />
+                  {children}
+                </Sidebar>
+              </OnboardingController>
             </EarlyAccessGuard>
           </FeedbackProvider>
         </NuqsAdapter>

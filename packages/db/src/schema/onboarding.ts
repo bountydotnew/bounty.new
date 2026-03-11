@@ -16,6 +16,11 @@ export const onboardingState = pgTable('onboarding_state', {
   claimedWaitlistDiscount: boolean('claimed_waitlist_discount').notNull().default(false),
   // Tour / product onboarding (guided walkthrough)
   completedOnboarding: boolean('completed_onboarding').notNull().default(false),
+  // Getting Started checklist items
+  gsConnectedTools: boolean('gs_connected_tools').notNull().default(false),
+  gsSetupPayouts: boolean('gs_setup_payouts').notNull().default(false),
+  gsCreatedBounty: boolean('gs_created_bounty').notNull().default(false),
+  gsInvitedMember: boolean('gs_invited_member').notNull().default(false),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
 });

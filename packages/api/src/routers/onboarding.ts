@@ -25,6 +25,10 @@ export const onboardingRouter = router({
         source: null,
         claimedWaitlistDiscount: false,
         completedOnboarding: false,
+        gsConnectedTools: false,
+        gsSetupPayouts: false,
+        gsCreatedBounty: false,
+        gsInvitedMember: false,
       };
     }
 
@@ -36,6 +40,10 @@ export const onboardingRouter = router({
       source: state.source,
       claimedWaitlistDiscount: state.claimedWaitlistDiscount,
       completedOnboarding: state.completedOnboarding,
+      gsConnectedTools: state.gsConnectedTools,
+      gsSetupPayouts: state.gsSetupPayouts,
+      gsCreatedBounty: state.gsCreatedBounty,
+      gsInvitedMember: state.gsInvitedMember,
     };
   }),
 
@@ -233,6 +241,49 @@ export const onboardingRouter = router({
           .values({
             userId: ctx.session.user.id,
             completedOnboarding: true,
+          });
+      }
+
+      return { success: true };
+    }),
+
+  /**
+   * Mark a Getting Started checklist task as complete
+   */
+  completeGettingStartedTask: protectedProcedure
+    .input(z.object({
+      task: z.enum(['tools', 'payouts', 'bounty', 'member']),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const fieldMap = {
+        tools: 'gsConnectedTools',
+        payouts: 'gsSetupPayouts',
+        bounty: 'gsCreatedBounty',
+        member: 'gsInvitedMember',
+      } as const;
+
+      const field = fieldMap[input.task];
+
+      const [existingState] = await ctx.db
+        .select()
+        .from(onboardingState)
+        .where(eq(onboardingState.userId, ctx.session.user.id))
+        .limit(1);
+
+      if (existingState) {
+        await ctx.db
+          .update(onboardingState)
+          .set({
+            [field]: true,
+            updatedAt: new Date(),
+          })
+          .where(eq(onboardingState.userId, ctx.session.user.id));
+      } else {
+        await ctx.db
+          .insert(onboardingState)
+          .values({
+            userId: ctx.session.user.id,
+            [field]: true,
           });
       }
 
