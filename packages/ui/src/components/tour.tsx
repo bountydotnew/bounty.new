@@ -88,6 +88,10 @@ export function useTour() {
   return ctx;
 }
 
+export function useOptionalTour() {
+  return React.useContext(TourContext);
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
