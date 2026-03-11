@@ -30,9 +30,17 @@ const formSchema = z.object({
 type FormSchema = z.infer<typeof formSchema>;
 
 const WAITLIST_STORAGE_KEY = 'waitlist_data';
+const WAITLIST_AVATARS = [
+  '/nizzy.jpg',
+  '/brandon.jpg',
+  '/adam.jpg',
+  '/ryan.jpg',
+] as const;
 
 function readStoredWaitlist(): WaitlistCookieData | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') {
+    return null;
+  }
   try {
     const raw = window.localStorage.getItem(WAITLIST_STORAGE_KEY);
     return raw ? (JSON.parse(raw) as WaitlistCookieData) : null;
@@ -42,7 +50,9 @@ function readStoredWaitlist(): WaitlistCookieData | null {
 }
 
 function writeStoredWaitlist(data: WaitlistCookieData) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     window.localStorage.setItem(WAITLIST_STORAGE_KEY, JSON.stringify(data));
   } catch {
@@ -53,7 +63,7 @@ function writeStoredWaitlist(data: WaitlistCookieData) {
 function useWaitlistSubmission(): WaitlistHookResult {
   const { celebrate } = useConfetti();
   const [success, setSuccess] = useState(false);
-  const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitInfo | null>(
+  const [rateLimitInfo, _setRateLimitInfo] = useState<RateLimitInfo | null>(
     null
   );
 
@@ -105,6 +115,122 @@ function useWaitlistSubmission(): WaitlistHookResult {
   });
 
   return { mutate, isPending, success, setSuccess, rateLimitInfo };
+}
+
+function WaitlistAvatarStack({
+  compact = false,
+  className = '',
+}: {
+  compact?: boolean;
+  className?: string;
+}) {
+  const avatarSize = compact ? 20 : 28;
+
+  return (
+    <div className={`-space-x-2 flex ${className}`}>
+      {WAITLIST_AVATARS.map((src) => (
+        <div
+          key={src}
+          className={`${compact ? 'w-5 h-5' : 'w-7 h-7'} rounded-full border-2 border-background overflow-hidden`}
+        >
+          <Image
+            alt="waitlist"
+            height={avatarSize}
+            src={src}
+            width={avatarSize}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function WaitlistSuccessState({
+  compact = false,
+  waitlistCount,
+}: {
+  compact?: boolean;
+  waitlistCount: number;
+}) {
+  return (
+    <div
+      className={`${compact ? 'mt-2 rounded-[18px] p-3' : 'mt-3 rounded-[26px] p-4'} border border-border-default text-left`}
+      style={{
+        background:
+          'radial-gradient(circle at top left, rgba(94,106,211,0.16), transparent 42%), linear-gradient(180deg, var(--surface-2), var(--surface-1))',
+      }}
+    >
+      <div
+        className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1 text-[10px]' : 'px-2.5 py-1 text-[11px]'} rounded-full border border-border-subtle bg-background/70 font-medium uppercase tracking-[0.18em] text-text-muted`}
+      >
+        <span className="h-2 w-2 rounded-full bg-brand-accent" />
+        Access requested
+      </div>
+
+      <div className={compact ? 'mt-3' : 'mt-4'}>
+        <h2
+          className={`${compact ? 'text-base' : 'text-[22px]'} font-medium tracking-tight text-foreground`}
+        >
+          You're officially in line
+        </h2>
+        <p
+          className={`${compact ? 'mt-1 text-xs' : 'mt-2 text-sm'} max-w-[28ch] leading-relaxed text-text-muted`}
+        >
+          We saved your place. Watch your inbox for the invite when the next
+          batch opens up.
+        </p>
+      </div>
+
+      <div
+        className={`${compact ? 'mt-3 flex flex-col gap-2' : 'mt-4 grid grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] gap-3'}`}
+      >
+        <div
+          className={`${compact ? 'rounded-2xl p-3' : 'rounded-[22px] p-4'} border border-border-subtle bg-surface-1/80`}
+        >
+          <span className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
+            Queue position
+          </span>
+          <div className={`${compact ? 'mt-2' : 'mt-3'} flex items-end gap-2`}>
+            <span
+              className={`${compact ? 'text-3xl' : 'text-4xl'} leading-none font-medium tracking-tight text-foreground`}
+            >
+              <span className="mr-1 text-text-tertiary">#</span>
+              <NumberFlow value={waitlistCount} />
+            </span>
+          </div>
+          <p
+            className={`${compact ? 'mt-2 text-[11px]' : 'mt-3 text-xs'} leading-relaxed text-text-muted`}
+          >
+            You're ahead of the next wave of builders joining bounty.new.
+          </p>
+        </div>
+
+        <div
+          className={`${compact ? 'rounded-2xl p-3' : 'rounded-[22px] p-4'} border border-border-subtle bg-background/70`}
+        >
+          <span className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
+            What happens next
+          </span>
+          <p
+            className={`${compact ? 'mt-2 text-[11px]' : 'mt-3 text-xs'} leading-relaxed text-text-muted`}
+          >
+            We will email you as soon as your invite is ready. No extra steps,
+            no form resubmits.
+          </p>
+          <div
+            className={`${compact ? 'mt-3' : 'mt-4'} flex items-center justify-between gap-3`}
+          >
+            <WaitlistAvatarStack compact={compact} />
+            <span
+              className={`${compact ? 'text-[11px]' : 'text-xs'} text-right text-text-muted`}
+            >
+              <NumberFlow value={waitlistCount} />+ builders queued
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 interface WaitlistPageProps {
@@ -182,58 +308,29 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
             <h1
               className={`${compact ? 'text-lg' : 'text-2xl'} font-medium text-foreground tracking-tight ${compact ? 'mb-1' : 'mb-2'}`}
             >
-              Get early access
+              {waitlistSubmission.success
+                ? 'Access requested'
+                : 'Get early access'}
             </h1>
             <p
               className={`${compact ? 'text-xs' : 'text-sm'} text-text-muted leading-relaxed`}
             >
-              {compact
-                ? 'Join the waitlist to get started.'
-                : 'Join the waitlist to start creating bounties and getting paid to build.'}
+              {waitlistSubmission.success
+                ? compact
+                  ? 'Your spot is saved.'
+                  : 'Your spot is saved. We will reach out when your invite is ready.'
+                : compact
+                  ? 'Join the waitlist to get started.'
+                  : 'Join the waitlist to start creating bounties and getting paid to build.'}
             </p>
           </div>
 
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
-              <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
-              >
-                <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <h2
-                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
-              >
-                You're on the list
-              </h2>
-              <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
-              >
-                We'll reach out when it's your turn.
-              </p>
-              <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
-              >
-                <span className="text-xs text-text-muted">Position</span>
-                <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
-                >
-                  #{waitlistCount}
-                </span>
-              </div>
-            </div>
+            <WaitlistSuccessState
+              compact={compact}
+              waitlistCount={waitlistCount}
+            />
           ) : (
             <>
               {/* Form */}
@@ -241,7 +338,9 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                 className={compact ? 'mb-3' : 'mb-6'}
                 onSubmit={handleSubmit(joinWaitlist)}
               >
-                <div className={`flex ${compact ? 'flex-col gap-2' : 'flex-col sm:flex-row gap-3'}`}>
+                <div
+                  className={`flex ${compact ? 'flex-col gap-2' : 'flex-col sm:flex-row gap-3'}`}
+                >
                   <div className="flex-1">
                     <Input
                       className="flex-1 border border-border-default text-foreground placeholder:text-text-muted"
@@ -293,48 +392,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
               <div
                 className={`flex items-center ${compact ? 'gap-2' : 'gap-3'}`}
               >
-                <div className="-space-x-2 flex">
-                  <div
-                    className={`${compact ? 'w-5 h-5' : 'w-7 h-7'} rounded-full border-2 border-background overflow-hidden`}
-                  >
-                    <Image
-                      alt="waitlist"
-                      height={compact ? 20 : 28}
-                      src="/nizzy.jpg"
-                      width={compact ? 20 : 28}
-                    />
-                  </div>
-                  <div
-                    className={`${compact ? 'w-5 h-5' : 'w-7 h-7'} rounded-full border-2 border-background overflow-hidden`}
-                  >
-                    <Image
-                      alt="waitlist"
-                      height={compact ? 20 : 28}
-                      src="/brandon.jpg"
-                      width={compact ? 20 : 28}
-                    />
-                  </div>
-                  <div
-                    className={`${compact ? 'w-5 h-5' : 'w-7 h-7'} rounded-full border-2 border-background overflow-hidden`}
-                  >
-                    <Image
-                      alt="waitlist"
-                      height={compact ? 20 : 28}
-                      src="/adam.jpg"
-                      width={compact ? 20 : 28}
-                    />
-                  </div>
-                  <div
-                    className={`${compact ? 'w-5 h-5' : 'w-7 h-7'} rounded-full border-2 border-background overflow-hidden`}
-                  >
-                    <Image
-                      alt="waitlist"
-                      height={compact ? 20 : 28}
-                      src="/ryan.jpg"
-                      width={compact ? 20 : 28}
-                    />
-                  </div>
-                </div>
+                <WaitlistAvatarStack compact={compact} />
                 <span
                   className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
                 >
