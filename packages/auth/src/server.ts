@@ -520,7 +520,7 @@ export const auth = betterAuth({
     linear: {
       clientId: env.LINEAR_CLIENT_ID || '',
       clientSecret: env.LINEAR_CLIENT_SECRET || '',
-      scope: ['read', 'write'],
+      scope: ['read', 'write', 'comments:create'],
       redirectURI: env.LINEAR_REDIRECT_URI,
     },
   },

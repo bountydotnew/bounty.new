@@ -6,7 +6,7 @@ import {
   skipToken,
   useQueryClient,
 } from '@tanstack/react-query';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { LinearIcon } from '@bounty/ui';
 import { Button } from '@bounty/ui/components/button';
@@ -18,6 +18,8 @@ import {
   FolderKanban,
   LogOut,
   RefreshCw,
+  Bot,
+  CheckCircle2,
 } from 'lucide-react';
 import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
@@ -30,6 +32,7 @@ import type { LinearIssue } from '@bounty/api/driver/linear-client';
 export default function LinearWorkspacePage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const orgPath = useOrgPath();
   const workspaceIdFromUrl = params.workspaceId as string;
@@ -46,6 +49,26 @@ export default function LinearWorkspacePage() {
 
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [botJustInstalled, setBotJustInstalled] = useState(false);
+
+  // Fetch bot install URL
+  const { data: botInstallData } = useQuery(
+    trpc.linear.getBotInstallUrl.queryOptions(
+      hasLinear ? { workspaceId: workspaceIdFromUrl } : skipToken
+    )
+  );
+
+  // Show toast if redirected back from bot install
+  useEffect(() => {
+    if (searchParams.get('linear_bot') === 'installed') {
+      setBotJustInstalled(true);
+      toast.success('bounty bot installed in your Linear workspace');
+      // Clean up the URL param
+      const url = new URL(window.location.href);
+      url.searchParams.delete('linear_bot');
+      router.replace(url.pathname + url.search, { scroll: false });
+    }
+  }, [searchParams, router]);
 
   // Fetch issues and projects in parallel using useQueries
   const [issuesQuery, projectsQuery] = useQueries({
@@ -243,6 +266,46 @@ export default function LinearWorkspacePage() {
           </p>
         </Link>
       </div>
+
+      {/* Bot Install */}
+      {botInstallData?.url && (
+        <div className="mb-8 p-5 rounded-xl border border-border-subtle bg-surface-1">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-surface-2 border border-border-subtle flex items-center justify-center">
+                {botJustInstalled ? (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                ) : (
+                  <Bot className="w-5 h-5 text-text-muted" />
+                )}
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-text-primary">
+                  {botJustInstalled
+                    ? '@bounty bot is active'
+                    : 'Enable @bounty mentions'}
+                </h3>
+                <p className="text-xs text-text-muted">
+                  {botJustInstalled
+                    ? 'mention @bounty on any issue to create a bounty directly from Linear'
+                    : 'install the bot to create bounties by mentioning @bounty on issues'}
+                </p>
+              </div>
+            </div>
+            {!botJustInstalled && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  window.location.href = botInstallData.url as string;
+                }}
+              >
+                Install bot
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Recent Issues */}
       <div>
