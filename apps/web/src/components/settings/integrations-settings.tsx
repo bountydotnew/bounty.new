@@ -550,7 +550,7 @@ export function IntegrationsSettings() {
       )}
 
       {/* Integration Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div data-tour-step-id="integrations-grid" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filteredIntegrations.map((item) =>
           renderIntegrationCard(
             item,

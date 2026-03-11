@@ -14,6 +14,25 @@ interface OnboardingTourIntroProps {
   isLoading?: boolean;
 }
 
+const steps = [
+  {
+    label: 'Connect your tools',
+    description: 'Link GitHub, Discord, Linear & more',
+  },
+  {
+    label: 'Start receiving payouts',
+    description: 'Set up Stripe to get paid',
+  },
+  {
+    label: 'Create your first bounty',
+    description: 'Post a task for contributors',
+  },
+  {
+    label: 'Invite a member to your team',
+    description: 'Collaborate with your org',
+  },
+];
+
 export function OnboardingTourIntro({
   open,
   onStart,
@@ -56,43 +75,21 @@ export function OnboardingTourIntro({
             {/* Content */}
             <div className="p-8">
               <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-surface-2 flex items-center justify-center text-xs font-semibold text-text-secondary">
-                    1
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      Connect Stripe payments
-                    </p>
-                    <p className="text-xs text-text-tertiary">
-                      Set up payouts for contributors
-                    </p>
+                {steps.map((step, i) => (
+                  <div key={step.label} className="flex items-start gap-3">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-surface-2 flex items-center justify-center text-xs font-semibold text-text-secondary">
+                      {i + 1}
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        {step.label}
+                      </p>
+                      <p className="text-xs text-text-tertiary">
+                        {step.description}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-surface-2 flex items-center justify-center text-xs font-semibold text-text-secondary">
-                    2
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      Install GitHub
-                    </p>
-                    <p className="text-xs text-text-tertiary">
-                      Link repositories to create bounties from issues
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-surface-2 flex items-center justify-center text-xs font-semibold text-text-secondary">
-                    3
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      Create your first bounty
-                    </p>
-                    <p className="text-xs text-text-tertiary">Optional</p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
 

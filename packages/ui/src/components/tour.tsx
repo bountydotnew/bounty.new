@@ -128,17 +128,21 @@ export function TourProvider({
     setCurrentStepIndex(0);
   }, []);
 
-  const close = React.useCallback(() => {
-    if (activeTourId) {
-      onTourComplete?.(activeTourId);
-    }
+  const dismiss = React.useCallback(() => {
     setActiveTourId(null);
     setCurrentStepIndex(0);
     setAnchorElement(null);
     document
       .querySelectorAll('[data-tour-active]')
       .forEach((el) => el.removeAttribute('data-tour-active'));
-  }, [activeTourId, onTourComplete]);
+  }, []);
+
+  const close = React.useCallback(() => {
+    if (activeTourId) {
+      onTourComplete?.(activeTourId);
+    }
+    dismiss();
+  }, [activeTourId, onTourComplete, dismiss]);
 
   const next = React.useCallback(() => {
     if (!activeTour) return;
@@ -216,8 +220,8 @@ export function TourProvider({
         />
       )}
 
-      {/* Backdrop */}
-      {isActive && <div className="tour-backdrop" onClick={close} />}
+      {/* Backdrop — clicking just dismisses the tour, does NOT mark it complete */}
+      {isActive && <div className="tour-backdrop" onClick={dismiss} />}
 
       {/* Step popover */}
       {isActive && currentStep && anchorElement && (
@@ -229,6 +233,7 @@ export function TourProvider({
           onNext={next}
           onPrevious={previous}
           onClose={close}
+          onDismiss={dismiss}
         />
       )}
     </TourContext.Provider>
@@ -247,6 +252,7 @@ function TourStepPopover({
   onNext,
   onPrevious,
   onClose,
+  onDismiss,
 }: {
   step: TourStep;
   stepIndex: number;
@@ -255,6 +261,7 @@ function TourStepPopover({
   onNext: () => void;
   onPrevious: () => void;
   onClose: () => void;
+  onDismiss: () => void;
 }) {
   const isFirst = stepIndex === 0;
   const isLast = stepIndex === totalSteps - 1;
@@ -287,7 +294,7 @@ function TourStepPopover({
                 </span>
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={onDismiss}
                   className="text-text-tertiary hover:text-foreground transition-colors text-xs"
                 >
                   Skip tour
