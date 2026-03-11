@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { TourProvider } from '@bounty/ui/components/tour';
 import {
   Dialog,
@@ -19,6 +19,15 @@ import { GettingStartedFloat } from '@/components/onboarding/getting-started-flo
 import { trpc } from '@/utils/trpc';
 
 const TOTAL_TASKS = 4;
+
+/** Map tour IDs to their corresponding task keys for DB persistence */
+const TOUR_TO_TASK: Record<string, 'tools' | 'payouts' | 'bounty' | 'member'> =
+  {
+    'connect-tools': 'tools',
+    'setup-payouts': 'payouts',
+    'create-bounty': 'bounty',
+    'invite-member': 'member',
+  };
 
 /**
  * OnboardingController
@@ -41,10 +50,22 @@ export function OnboardingController({
 
   const tours = useMemo(() => buildOnboardingTours(), []);
 
+  const queryClient = useQueryClient();
+
   const { data: onboardingState } = useQuery({
     ...trpc.onboarding.getState.queryOptions(),
     enabled: isAuthenticated,
   });
+
+  const completeTask = useMutation(
+    trpc.onboarding.completeGettingStartedTask.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: [['onboarding', 'getState']],
+        });
+      },
+    })
+  );
 
   const handleNavigate = useCallback(
     (route: string) => {
@@ -54,24 +75,45 @@ export function OnboardingController({
   );
 
   const handleTourComplete = useCallback(
-    (_tourId: string) => {
-      // The task was marked complete before the tour started (in the
-      // checklist click handler), so onboardingState should already
-      // reflect it by the time the user clicks through the tour steps.
-      if (!onboardingState) return;
+    (tourId: string) => {
+      // Mark the task as complete when the tour finishes (last step "Finish"
+      // button) or when the user skips (dismiss). This is the ONLY place
+      // tasks get marked complete — not on checklist item click.
+      const taskKey = TOUR_TO_TASK[tourId];
+      if (taskKey) {
+        completeTask.mutate({ task: taskKey });
+      }
 
-      const completed = [
-        onboardingState.connectedTools,
-        onboardingState.setupPayouts,
-        onboardingState.createdBounty,
-        onboardingState.invitedMember,
-      ].filter(Boolean).length;
+      // Check if all tasks are now complete (count the ones already done
+      // plus this one we just completed)
+      if (onboardingState) {
+        const alreadyCompleted = [
+          onboardingState.connectedTools,
+          onboardingState.setupPayouts,
+          onboardingState.createdBounty,
+          onboardingState.invitedMember,
+        ].filter(Boolean).length;
 
-      if (completed >= TOTAL_TASKS) {
-        setShowCompletion(true);
+        // +1 for the task we just completed (if it wasn't already)
+        const taskField = taskKey
+          ? {
+              tools: 'connectedTools',
+              payouts: 'setupPayouts',
+              bounty: 'createdBounty',
+              member: 'invitedMember',
+            }[taskKey]
+          : null;
+        const wasAlreadyDone = taskField
+          ? onboardingState[taskField as keyof typeof onboardingState]
+          : false;
+        const total = alreadyCompleted + (wasAlreadyDone ? 0 : 1);
+
+        if (total >= TOTAL_TASKS) {
+          setShowCompletion(true);
+        }
       }
     },
-    [onboardingState]
+    [onboardingState, completeTask]
   );
 
   if (!isAuthenticated) {

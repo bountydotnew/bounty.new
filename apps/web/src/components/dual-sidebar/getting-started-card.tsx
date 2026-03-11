@@ -1,16 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { AnimatePresence, m } from 'motion/react';
 import { cn } from '@bounty/ui/lib/utils';
 import { useActiveOrg } from '@/hooks/use-active-org';
 import { useSession } from '@/context/session-context';
-import { useTour } from '@bounty/ui/components/tour';
+import { useOptionalTour } from '@bounty/ui/components/tour';
 import { trpc } from '@/utils/trpc';
 
 // ---------------------------------------------------------------------------
-// SVG Icons from Paper design
+// Storage key for dismiss persistence
+// ---------------------------------------------------------------------------
+
+const DISMISS_KEY = 'bounty-getting-started-dismissed';
+
+// ---------------------------------------------------------------------------
+// Animation config
+// ---------------------------------------------------------------------------
+
+const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
+
+// ---------------------------------------------------------------------------
+// SVG Icons
 // ---------------------------------------------------------------------------
 
 function CompletedIcon() {
@@ -20,7 +33,6 @@ function CompletedIcon() {
       height="16"
       viewBox="0 0 16 16"
       fill="none"
-      xmlns="http://www.w3.org/2000/svg"
       className="size-3.5 shrink-0"
     >
       <path
@@ -40,7 +52,6 @@ function IncompleteIcon() {
       height="16"
       viewBox="0 0 16 16"
       fill="none"
-      xmlns="http://www.w3.org/2000/svg"
       className="size-3.5 shrink-0"
     >
       <circle
@@ -59,7 +70,6 @@ function IncompleteIcon() {
 function MinimizeIcon() {
   return (
     <svg
-      xmlns="http://www.w3.org/2000/svg"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -68,9 +78,26 @@ function MinimizeIcon() {
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="size-4"
+      className="size-3"
     >
       <path d="M5 12h14" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      className="size-3 shrink-0"
+    >
+      <path
+        d="M17.293 5.293C17.683 4.902 18.317 4.902 18.707 5.293C19.098 5.683 19.098 6.316 18.707 6.707L13.413 12L18.706 17.293L18.775 17.369C19.095 17.762 19.072 18.341 18.706 18.707C18.34 19.073 17.761 19.096 17.368 18.775L17.292 18.707L11.999 13.414L6.708 18.706C6.317 19.097 5.684 19.096 5.294 18.706C4.903 18.316 4.903 17.683 5.294 17.292L10.585 12L5.293 6.708L5.225 6.632C4.904 6.239 4.927 5.66 5.293 5.294C5.659 4.928 6.238 4.905 6.631 5.225L6.707 5.294L11.999 10.586L17.293 5.293Z"
+        fill="currentColor"
+      />
     </svg>
   );
 }
@@ -94,38 +121,33 @@ interface ChecklistItem {
 
 export const GettingStartedCard = () => {
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
   const { activeOrgSlug } = useActiveOrg();
   const { isAuthenticated } = useSession();
   const router = useRouter();
-  const queryClient = useQueryClient();
+  const tour = useOptionalTour();
 
-  let tour: ReturnType<typeof useTour> | null = null;
-  try {
-    tour = useTour();
-  } catch {
-    // TourProvider not present — card still works as navigation
-  }
+  // Load dismiss state from localStorage on mount
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(DISMISS_KEY) === 'true') {
+        setIsDismissed(true);
+      }
+    } catch {
+      // localStorage may not be available
+    }
+  }, []);
 
   const { data: onboardingState } = useQuery({
     ...trpc.onboarding.getState.queryOptions(),
     enabled: isAuthenticated,
   });
 
-  const completeTask = useMutation(
-    trpc.onboarding.completeGettingStartedTask.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: [['onboarding', 'getState']],
-        });
-      },
-    })
-  );
-
   const items: ChecklistItem[] = [
     {
       id: 'tools',
       taskKey: 'tools',
-      label: 'Connect your tools',
+      label: 'Connect your repos',
       completed: onboardingState?.connectedTools ?? false,
       tourId: 'connect-tools',
       href: activeOrgSlug ? `/${activeOrgSlug}/integrations` : '/integrations',
@@ -164,17 +186,12 @@ export const GettingStartedCard = () => {
   const progress = Math.round((completedCount / items.length) * 100);
   const isComplete = completedCount === items.length;
 
-  if (!isAuthenticated || isComplete) return null;
+  if (!isAuthenticated || isComplete || isDismissed) {
+    return null;
+  }
 
   const handleItemClick = (item: ChecklistItem) => {
-    // Mark the task as complete when clicked
-    if (!item.completed) {
-      completeTask.mutate({ task: item.taskKey });
-    }
-
     if (item.tourId && tour) {
-      // Start the tour first — this persists to sessionStorage so it survives
-      // cross-page navigation (different layout groups remount TourProvider)
       tour.start(item.tourId);
       router.push(item.href);
     } else {
@@ -182,63 +199,100 @@ export const GettingStartedCard = () => {
     }
   };
 
+  const handleDismiss = () => {
+    setIsDismissed(true);
+    try {
+      localStorage.setItem(DISMISS_KEY, 'true');
+    } catch {
+      // localStorage may not be available
+    }
+  };
+
   return (
-    <div className="flex flex-col rounded-2xl gap-1 bg-surface-1 border border-border-subtle shadow-sm p-1.5 group-data-[collapsible=icon]:hidden">
+    <m.div
+      className="flex flex-col rounded-2xl gap-1 bg-surface-1 border border-border-subtle shadow-sm p-1.5 group-data-[collapsible=icon]:hidden overflow-hidden"
+      layout
+      transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
+    >
       {/* Header */}
       <div className="flex items-center justify-between pt-1.5 pb-2 px-1.5">
-        <span className="text-[13px] text-foreground/72 font-medium">
+        <span className="text-[13px] text-foreground/72 font-[520]">
           Getting started
         </span>
-        <button
-          type="button"
-          onClick={() => setIsMinimized(!isMinimized)}
-          className="flex items-center justify-center rounded-md bg-surface-2 shrink-0 size-5 text-text-tertiary hover:text-foreground transition-colors"
-        >
-          <MinimizeIcon />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setIsMinimized(!isMinimized)}
+            className="flex items-center justify-center rounded-md bg-surface-2 shrink-0 size-5 text-foreground/40 hover:text-foreground/60 transition-colors"
+          >
+            <MinimizeIcon />
+          </button>
+          <button
+            type="button"
+            onClick={handleDismiss}
+            className="flex items-center justify-center rounded-md bg-surface-2 shrink-0 size-5 text-foreground/40 hover:text-foreground/60 transition-colors"
+          >
+            <CloseIcon />
+          </button>
+        </div>
       </div>
 
-      {!isMinimized && (
-        <>
-          {/* Progress bar */}
-          <div className="flex items-center px-1.5">
-            <div className="grow h-1.5 rounded-full overflow-clip bg-surface-2">
-              <div
-                className="h-full rounded-full bg-[#4A6FDC] transition-all duration-500 ease-out"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <span className="text-[11px] ml-2 text-text-tertiary font-medium">
-              {progress}%
-            </span>
-          </div>
+      {/* Progress bar — always visible */}
+      <m.div className="flex items-center px-1.5" layout="position">
+        <div className="grow h-1.5 rounded-full overflow-clip bg-surface-2">
+          <div
+            className="h-full rounded-full bg-[#4A6FDC] transition-all duration-500 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <span className="text-[11px] ml-2 text-foreground/50 font-[520]">
+          {progress}%
+        </span>
+      </m.div>
 
-          {/* Checklist items */}
-          {items.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => handleItemClick(item)}
-              className={cn(
-                'flex items-center h-7 rounded-lg px-1 gap-1 shrink-0 text-left transition-colors',
-                'hover:bg-surface-hover',
-                item.completed ? 'text-foreground/80' : 'text-foreground/72'
-              )}
-            >
-              <span className="flex items-center justify-center shrink-0 size-5">
-                {item.completed ? (
-                  <CompletedIcon />
-                ) : (
-                  <span className="text-text-tertiary">
-                    <IncompleteIcon />
-                  </span>
+      {/* Checklist items — animated in/out */}
+      <AnimatePresence>
+        {!isMinimized && (
+          <m.div
+            className="flex flex-col"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3, ease: EASE_OUT_EXPO }}
+          >
+            {items.map((item, i) => (
+              <m.button
+                key={item.id}
+                type="button"
+                onClick={() => handleItemClick(item)}
+                className={cn(
+                  'flex items-center h-7 rounded-lg px-1 gap-1 shrink-0 text-left transition-colors',
+                  'hover:bg-surface-hover',
+                  item.completed ? 'text-foreground/80' : 'text-foreground/72'
                 )}
-              </span>
-              <span className="text-[13px] font-medium">{item.label}</span>
-            </button>
-          ))}
-        </>
-      )}
-    </div>
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{
+                  duration: 0.25,
+                  ease: EASE_OUT_EXPO,
+                  delay: i * 0.04,
+                }}
+              >
+                <span className="flex items-center justify-center shrink-0 size-5">
+                  {item.completed ? (
+                    <CompletedIcon />
+                  ) : (
+                    <span className="text-text-tertiary">
+                      <IncompleteIcon />
+                    </span>
+                  )}
+                </span>
+                <span className="text-[13px] font-[520]">{item.label}</span>
+              </m.button>
+            ))}
+          </m.div>
+        )}
+      </AnimatePresence>
+    </m.div>
   );
 };

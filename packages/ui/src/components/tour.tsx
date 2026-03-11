@@ -215,19 +215,29 @@ export function TourProvider({
   }, [targetElement, isActive]);
 
   const dismiss = React.useCallback(() => {
+    const tourId = activeTourId;
     setActiveTourId(null);
     setCurrentStepIndex(0);
     setTargetElement(null);
     setTargetRect(null);
     persistTourState(null);
-  }, []);
+    // Skipping a tour also counts as completing the task
+    if (tourId) {
+      onTourComplete?.(tourId);
+    }
+  }, [activeTourId, onTourComplete]);
 
   const close = React.useCallback(() => {
     if (activeTourId) {
       onTourComplete?.(activeTourId);
     }
-    dismiss();
-  }, [activeTourId, onTourComplete, dismiss]);
+    // Reset state without re-firing onTourComplete
+    setActiveTourId(null);
+    setCurrentStepIndex(0);
+    setTargetElement(null);
+    setTargetRect(null);
+    persistTourState(null);
+  }, [activeTourId, onTourComplete]);
 
   const start = React.useCallback((tourId: string) => {
     setActiveTourId(tourId);
@@ -243,13 +253,18 @@ export function TourProvider({
     if (currentStepIndex < activeTour.steps.length - 1) {
       const step = activeTour.steps[currentStepIndex];
       const nextIndex = currentStepIndex + 1;
-      if (step?.nextRoute && onNavigate) {
+      const isNavigating = !!(step?.nextRoute && onNavigate);
+      if (isNavigating) {
         // Persist state before navigating to another page
         persistTourState({ tourId: activeTour.id, stepIndex: nextIndex });
-        onNavigate(step.nextRoute);
+        onNavigate!(step!.nextRoute!);
+        // Only clear target when navigating away — the element won't exist
+        // on the new page, so the overlay should unmount while we poll.
+        setTargetElement(null);
+        setTargetRect(null);
       }
-      setTargetElement(null);
-      setTargetRect(null);
+      // For same-page transitions, keep targetRect so the overlay stays
+      // mounted and the spotlight/card animate smoothly to the new target.
       setCurrentStepIndex(nextIndex);
     } else {
       close();
@@ -257,18 +272,19 @@ export function TourProvider({
   }, [activeTour, currentStepIndex, onNavigate, close]);
 
   const previous = React.useCallback(() => {
-    if (currentStepIndex > 0 && activeTour) {
+    if (currentStepIndex > 0) {
       const step = activeTour?.steps[currentStepIndex];
       const prevIndex = currentStepIndex - 1;
-      if (step?.previousRoute && onNavigate) {
+      const isNavigating = !!(step?.previousRoute && onNavigate);
+      if (isNavigating) {
         persistTourState({
-          tourId: activeTour.id,
+          tourId: activeTour!.id,
           stepIndex: prevIndex,
         });
-        onNavigate(step.previousRoute);
+        onNavigate!(step!.previousRoute!);
+        setTargetElement(null);
+        setTargetRect(null);
       }
-      setTargetElement(null);
-      setTargetRect(null);
       setCurrentStepIndex(prevIndex);
     }
   }, [activeTour, currentStepIndex, onNavigate]);

@@ -45,3 +45,4 @@ export * from './switch-arrows';
 export * from './issue-opened';
 export * from './sparkles';
 export * from './file-code';
+export * from './close-x';
