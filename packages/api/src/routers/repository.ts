@@ -172,6 +172,25 @@ export const repositoryRouter = router({
         return [];
       }
     }),
+  listPullRequests: publicProcedure
+    .input(
+      z.object({
+        owner: z.string(),
+        repo: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      try {
+        const owner = input.owner?.trim();
+        const repo = input.repo?.trim();
+        if (!(owner && repo)) {
+          return [];
+        }
+        return await github.listPullRequests(owner, repo);
+      } catch {
+        return [];
+      }
+    }),
   branches: publicProcedure
     .input(z.object({ repo: z.string() }))
     .query(async ({ input }) => {

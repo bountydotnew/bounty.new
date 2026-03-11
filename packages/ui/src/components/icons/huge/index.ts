@@ -43,6 +43,7 @@ export * from './file';
 export * from './hourglass';
 export * from './switch-arrows';
 export * from './issue-opened';
+export * from './pull-request';
 export * from './sparkles';
 export * from './file-code';
 export * from './close-x';

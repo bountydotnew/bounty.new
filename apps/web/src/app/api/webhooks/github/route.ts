@@ -2661,6 +2661,8 @@ async function handlePullRequestOpened(
     return;
   }
 
+  // Auto-submit: if the PR references the bounty's issue (via "Fixes #123"),
+  // create a submission automatically — no @bountydotnew submit keyword required.
   const submissionResult = await createSubmissionFromPullRequest({
     installationId,
     repository,
@@ -2674,7 +2676,7 @@ async function handlePullRequestOpened(
       head: { sha: pull_request.head.sha },
       state: pull_request.state,
     },
-    requireSubmitKeyword: true,
+    requireSubmitKeyword: false,
   });
 
   if (submissionResult.status === 'skipped') {
@@ -2685,7 +2687,7 @@ async function handlePullRequestOpened(
   }
 
   console.log(
-    `[GitHub Webhook] Created submission for PR ${pull_request.number}`
+    `[GitHub Webhook] Auto-created submission for PR ${pull_request.number}`
   );
 }
 

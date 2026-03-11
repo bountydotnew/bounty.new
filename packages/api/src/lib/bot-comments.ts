@@ -33,16 +33,14 @@ export function unfundedBountyComment(
   const formattedAmount = formatCurrency(amount, currency);
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
   const buttonUrl = `${baseUrl}/bounty-button.svg`;
+  const isFreeBounty = amount === 0;
   return `
 [![bounty.new](${buttonUrl})](${baseUrl}/bounty/${bountyId})
 
 ${formattedAmount} · ${submissionCount} submissions
 
-**Want to work on this?** Add \`@bountydotnew submit\` to your PR description, or comment \`/submit #PR_NUMBER\` on this issue.
-
-**Created this bounty?** Fund it at [bounty.new](${baseUrl}/bounty/${bountyId}) to start reviewing submissions. Once funded, approve a PR with \`/approve #PR_NUMBER\` and confirm with \`/merge #PR_NUMBER\` after it's merged.
-
-The bounty needs to be funded before approvals or payouts can happen.
+**Want to work on this?** Open a PR referencing this issue — your submission is auto-detected. Or submit directly at [bounty.new](${baseUrl}/bounty/${bountyId}).
+${isFreeBounty ? '' : '\nThis bounty needs to be funded before payouts can happen.'}
 `;
 }
 
@@ -60,11 +58,9 @@ export function fundedBountyComment(
 
 Funded · ${submissionCount} submissions
 
-**Want to work on this?** Add \`@bountydotnew submit\` to your PR description, or comment \`/submit #PR_NUMBER\` on this issue.
+**Want to work on this?** Open a PR referencing this issue — your submission is auto-detected. Or submit directly at [bounty.new](${baseUrl}/bounty/${bountyId}).
 
-**Ready to pay out?** Approve a submission with \`/approve #PR_NUMBER\`, then merge the PR. Payment releases automatically on merge.
-
-Payouts land within 2-3 business days.
+Payouts land within 2-3 business days after approval.
 `;
 }
 
