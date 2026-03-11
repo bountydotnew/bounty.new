@@ -23,6 +23,7 @@ export interface SubmissionData {
   description: string | null;
   status: string;
   githubUsername: string | null;
+  contributorId: string | null;
   contributorName: string | null;
   contributorImage: string | null;
   githubPullRequestNumber: number | null;

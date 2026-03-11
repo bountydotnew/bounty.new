@@ -1,33 +1,38 @@
 'use client';
 
 import { use, useState, useRef, useEffect } from 'react';
-import Link from 'next/link';
-import SubmissionCard from '@/components/bounty/submission-card';
-import { useSession } from '@/context/session-context';
-import { BountyDetailContext, type SubmissionData } from './context';
-import { Button } from '@bounty/ui/components/button';
-import { Input } from '@bounty/ui/components/input';
-import { Textarea } from '@bounty/ui/components/textarea';
+import Link from '@bounty/ui/components/link';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2, Check } from 'lucide-react';
+import { Spinner } from '@bounty/ui';
+import { PullRequestIcon } from '@bounty/ui/components/icons/huge/pull-request';
+import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
 import {
-  Loader2,
-  Send,
-  ChevronDown,
-  GitPullRequest,
-  Check,
-  Search,
-} from 'lucide-react';
-import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
-import { trpcClient } from '@/utils/trpc';
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+} from '@bounty/ui/components/dropdown-menu'; 
+import { cn } from '@bounty/ui/lib/utils';
+import {
+  submissionSchema,
+  type SubmissionForm,
+  submissionDefaults,
+} from '@bounty/ui/lib/forms';
 import {
   usePullRequests,
   type PullRequestItem,
 } from '@bounty/ui/hooks/usePullRequests';
+import SubmissionCard from '@/components/bounty/submission-card';
+import { useSession } from '@/context/session-context';
+import { trpcClient } from '@/utils/trpc';
+import { BountyDetailContext, type SubmissionData } from './context';
+import { Textarea, Fieldset, Button } from '@bounty/ui';
 
 /**
  * BountyDetailSubmissions
  *
- * Displays the list of submissions for the bounty
- * and an in-app form for solvers to submit their PR URL.
+ * Renders the submit-work form (above) and submissions list (below).
  */
 export function BountyDetailSubmissions() {
   const context = use(BountyDetailContext);
@@ -47,17 +52,11 @@ export function BountyDetailSubmissions() {
   const isFundedOrFree =
     bounty.paymentStatus === 'held' ||
     (isFreeBounty && bounty.paymentStatus === 'pending');
-  // canManage: owner can approve/unapprove as long as bounty is funded (or free)
-  // and not already completed (released)
   const canManage =
     state.canEdit && isFundedOrFree && bounty.paymentStatus !== 'released';
 
   const submissionCount = submissions?.length ?? 0;
 
-  // Solvers can submit if:
-  // - Authenticated
-  // - Not the bounty creator
-  // - Bounty is accepting submissions (open or free+draft)
   const isAcceptingSubmissions =
     bounty.paymentStatus === 'held' ||
     bounty.paymentStatus === 'released' ||
@@ -68,123 +67,158 @@ export function BountyDetailSubmissions() {
     isAcceptingSubmissions &&
     bounty.paymentStatus !== 'released';
 
+  const userHasSubmission =
+    isAuthenticated &&
+    submissions?.some(
+      (sub: SubmissionData) => sub.contributorId === session?.user?.id
+    );
+
   return (
-    <div className="mb-8 rounded-lg py-6">
-      <h3 className="mb-4 font-medium text-xl text-foreground">
-        Submissions
-        {submissionCount > 0 && (
-          <span className="ml-2 text-sm text-text-muted">
-            ({submissionCount})
-          </span>
-        )}
-      </h3>
-
-      <div className="space-y-4">
-        {isSubmissionsLoading ? (
-          <div className="text-center text-text-muted text-sm py-4">
-            Loading submissions...
-          </div>
-        ) : submissions && submissions.length > 0 ? (
-          submissions.map((sub: SubmissionData) => (
-            <SubmissionCard
-              key={sub.id}
-              className="w-full"
-              description={sub.description ?? undefined}
-              status={
-                sub.status as
-                  | 'pending'
-                  | 'approved'
-                  | 'rejected'
-                  | 'revision_requested'
-              }
-              username={sub.githubUsername ?? undefined}
-              contributorName={sub.contributorName ?? undefined}
-              contributorImage={sub.contributorImage ?? undefined}
-              githubPullRequestNumber={sub.githubPullRequestNumber ?? undefined}
-              githubRepoOwner={bounty.githubRepoOwner ?? undefined}
-              githubRepoName={bounty.githubRepoName ?? undefined}
-              pullRequestUrl={sub.pullRequestUrl ?? undefined}
-              pullRequestTitle={sub.pullRequestTitle ?? undefined}
-              githubHeadSha={sub.githubHeadSha ?? undefined}
-              deliverableUrl={sub.deliverableUrl ?? undefined}
-              canManage={canManage}
-              isApproving={
-                meta.isApprovingSubmission &&
-                meta.approvingSubmissionId === sub.id
-              }
-              isUnapproving={
-                meta.isUnapprovingSubmission &&
-                meta.unapprovingSubmissionId === sub.id
-              }
-              isMerging={
-                meta.isMergingSubmission && meta.mergingSubmissionId === sub.id
-              }
-              onApprove={() => actions.approveSubmission(sub.id)}
-              onUnapprove={() => actions.unapproveSubmission(sub.id)}
-              onMerge={() => actions.mergeSubmission(sub.id)}
-              mergeLabel={isFreeBounty ? 'Complete' : 'Pay Out'}
-            />
-          ))
-        ) : !canSubmit ? (
-          <EmptyState
-            isAuthenticated={isAuthenticated}
-            bounty={bounty}
-          />
-        ) : null}
-
-        {/* In-app submit form for solvers */}
-        {canSubmit && (
+    <div className="mb-8">
+      {/* Submit form — above submissions, under relevant links */}
+      {canSubmit && (
+        <div className="py-6">
+          <h3 className="mb-4 font-medium text-xl text-foreground">
+            Submit your work
+          </h3>
           <SubmitWorkForm
             onSubmit={actions.submitWork}
             isSubmitting={meta.isSubmittingWork}
-            hasExistingSubmissions={submissionCount > 0}
+            isDisabled={!!userHasSubmission}
             githubRepoOwner={bounty.githubRepoOwner ?? undefined}
             githubRepoName={bounty.githubRepoName ?? undefined}
           />
-        )}
+        </div>
+      )}
 
-        {/* Sign in prompt for unauthenticated users when there are submissions */}
-        {!isAuthenticated && submissionCount > 0 && (
-          <div className="rounded-lg border border-border-subtle bg-surface-2 p-4 text-center">
+      {/* Sign-in prompt for unauthenticated users */}
+      {!isAuthenticated && (
+        <div className="mb-6 mt-10">
+          <div className="bg-surface-1 border border-border-subtle rounded-[21px] p-6 text-center">
             <Link
               href={`/login?callback=/bounty/${bounty.id}`}
-              className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
+              className="inline-flex items-center justify-center gap-1.5 px-4 h-[34px] rounded-full text-[15px] font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors"
             >
-              Sign in to Submit Your Solution
+              Sign in to submit your solution
             </Link>
           </div>
-        )}
+        </div>
+      )}
+
+      {/* Submissions heading + list */}
+      <div className="rounded-lg py-6">
+        <h3 className="mb-4 font-medium text-xl text-foreground">
+          Submissions
+          {submissionCount > 0 && (
+            <span className="ml-2 text-sm text-text-muted">
+              ({submissionCount})
+            </span>
+          )}
+        </h3>
+
+        <div className="space-y-4">
+          {isSubmissionsLoading ? (
+            <div className="text-center text-text-muted text-sm py-4">
+              Loading submissions...
+            </div>
+          ) : submissions && submissions.length > 0 ? (
+            submissions.map((sub: SubmissionData) => (
+              <SubmissionCard
+                key={sub.id}
+                className="w-full"
+                description={sub.description ?? undefined}
+                status={
+                  sub.status as
+                    | 'pending'
+                    | 'approved'
+                    | 'rejected'
+                    | 'revision_requested'
+                }
+                username={sub.githubUsername ?? undefined}
+                contributorName={sub.contributorName ?? undefined}
+                contributorImage={sub.contributorImage ?? undefined}
+                githubPullRequestNumber={
+                  sub.githubPullRequestNumber ?? undefined
+                }
+                githubRepoOwner={bounty.githubRepoOwner ?? undefined}
+                githubRepoName={bounty.githubRepoName ?? undefined}
+                pullRequestUrl={sub.pullRequestUrl ?? undefined}
+                pullRequestTitle={sub.pullRequestTitle ?? undefined}
+                githubHeadSha={sub.githubHeadSha ?? undefined}
+                deliverableUrl={sub.deliverableUrl ?? undefined}
+                canManage={canManage}
+                isApproving={
+                  meta.isApprovingSubmission &&
+                  meta.approvingSubmissionId === sub.id
+                }
+                isUnapproving={
+                  meta.isUnapprovingSubmission &&
+                  meta.unapprovingSubmissionId === sub.id
+                }
+                isMerging={
+                  meta.isMergingSubmission &&
+                  meta.mergingSubmissionId === sub.id
+                }
+                onApprove={() => actions.approveSubmission(sub.id)}
+                onUnapprove={() => actions.unapproveSubmission(sub.id)}
+                onMerge={() => actions.mergeSubmission(sub.id)}
+                mergeLabel={isFreeBounty ? 'Complete' : 'Pay Out'}
+              />
+            ))
+          ) : (
+            <div className="rounded-lg bg-surface-2 p-6 text-center">
+              <p className="text-text-muted text-sm">No submissions yet</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
 /**
- * In-app form for submitting work.
- * When a repo is linked, shows a PR dropdown selector.
- * Falls back to manual URL paste when no repo is linked.
+ * In-app submit form matching the task-input-form visual style.
+ *
+ * Uses react-hook-form + zodResolver with submissionSchema from @bounty/ui/lib/forms.
+ *
+ * Layout:
+ *  - Top:  textarea (notes)
+ *  - Bottom bar:  PR selector (left) + "Create submission" button (right)
  */
 function SubmitWorkForm({
   onSubmit,
   isSubmitting,
-  hasExistingSubmissions,
+  isDisabled,
   githubRepoOwner,
   githubRepoName,
 }: {
   onSubmit: (pullRequestUrl: string, description?: string) => void;
   isSubmitting: boolean;
-  hasExistingSubmissions: boolean;
+  isDisabled: boolean;
   githubRepoOwner?: string;
   githubRepoName?: string;
 }) {
   const hasRepo = !!(githubRepoOwner && githubRepoName);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [selectedPr, setSelectedPr] = useState<PullRequestItem | null>(null);
-  const [manualPrUrl, setManualPrUrl] = useState('');
-  const [description, setDescription] = useState('');
-  const [showDescription, setShowDescription] = useState(false);
-  const [error, setError] = useState('');
   const [showManualInput, setShowManualInput] = useState(!hasRepo);
+
+  const {
+    control,
+    handleSubmit: formHandleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+    reset,
+  } = useForm<SubmissionForm>({
+    resolver: zodResolver(submissionSchema),
+    mode: 'onSubmit',
+    reValidateMode: 'onSubmit',
+    defaultValues: submissionDefaults,
+  });
+
+  const pullRequestUrl = watch('pullRequestUrl');
 
   const { pullRequestsList, filteredPullRequests, prQuery, setPrQuery } =
     usePullRequests(githubRepoOwner ?? '', githubRepoName ?? '', {
@@ -192,161 +226,181 @@ function SubmitWorkForm({
         trpcClient.repository.listPullRequests.query(params),
     });
 
-  const prUrl = selectedPr
-    ? selectedPr.html_url
-    : manualPrUrl.trim();
-
-  const isValidPrUrl = /^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+/.test(
-    prUrl
-  );
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (!prUrl) {
-      setError('Please select a pull request');
-      return;
+  // Sync selected PR to form value
+  useEffect(() => {
+    if (selectedPr) {
+      setValue('pullRequestUrl', selectedPr.html_url, {
+        shouldValidate: false,
+      });
     }
-    if (!isValidPrUrl) {
-      setError(
-        'Please enter a valid GitHub PR URL (e.g. https://github.com/owner/repo/pull/123)'
-      );
-      return;
-    }
+  }, [selectedPr, setValue]);
 
-    onSubmit(prUrl, description.trim() || undefined);
+  const handleFormSubmit = formHandleSubmit((data: SubmissionForm) => {
+    onSubmit(data.pullRequestUrl, data.notes?.trim() || undefined);
     setSelectedPr(null);
-    setManualPrUrl('');
-    setDescription('');
-    setShowDescription(false);
-  };
+    reset();
+  });
+
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      const textarea = textareaRef.current;
+      textarea.style.height = 'auto';
+      const newHeight = Math.min(Math.max(textarea.scrollHeight, 60), 300);
+      textarea.style.height = `${newHeight}px`;
+    }
+  });
+
+  const disabled = isSubmitting || isDisabled;
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="rounded-lg border border-border-subtle bg-surface-2 p-4"
-    >
-      <div className="mb-3 flex items-center gap-2">
-        <GithubIcon className="h-4 w-4 text-text-secondary" />
-        <span className="text-sm font-medium text-foreground">
-          {hasExistingSubmissions
-            ? 'Submit another solution'
-            : 'Submit your solution'}
-        </span>
-      </div>
+    <form onSubmit={handleFormSubmit} className="min-w-0 w-full">
+      {/* Using raw fieldset with [all:unset] — same pattern as TaskInputForm */}
+      <Fieldset disabled={disabled} className="w-full! min-w-full gap-0">
+        {/* Top: textarea area */}
+        <div
+          className={cn(
+            'bg-surface-1 text-text-tertiary border border-border-subtle rounded-t-[21px] border-b-0 relative transition-colors cursor-text overflow-hidden w-full min-w-0 p-4 flex flex-col gap-3',
+            disabled && 'opacity-50 cursor-not-allowed'
+          )}
+        >
+          {/* Manual PR URL input (fallback when no repo or user toggled) */}
+          {showManualInput && (
+            <Controller
+              control={control}
+              name="pullRequestUrl"
+              render={({ field }) => (
+                <input
+                  ref={field.ref}
+                  type="url"
+                  placeholder="https://github.com/owner/repo/pull/123"
+                  value={field.value}
+                  onChange={(e) => {
+                    field.onChange(e.target.value);
+                  }}
+                  disabled={disabled}
+                  className="bg-transparent text-foreground text-[14px] leading-5 outline-none placeholder:text-text-tertiary w-full"
+                />
+              )}
+            />
+          )}
 
-      <div className="space-y-3">
-        {/* PR selector or manual input */}
-        {hasRepo && !showManualInput ? (
-          <div>
-            <PullRequestSelector
-              pullRequests={filteredPullRequests}
-              isLoading={pullRequestsList.isLoading}
-              selectedPr={selectedPr}
-              onSelect={(pr) => {
-                setSelectedPr(pr);
-                setError('');
-              }}
-              searchQuery={prQuery}
-              onSearchChange={setPrQuery}
-              disabled={isSubmitting}
-            />
-            <button
-              type="button"
-              onClick={() => {
-                setShowManualInput(true);
-                setSelectedPr(null);
-              }}
-              className="mt-1.5 text-xs text-text-muted hover:text-text-secondary transition-colors"
-            >
-              Or paste a PR URL manually
-            </button>
-          </div>
-        ) : (
-          <div>
-            <Input
-              type="url"
-              placeholder="https://github.com/owner/repo/pull/123"
-              value={manualPrUrl}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                setManualPrUrl(e.target.value);
-                if (error) setError('');
-              }}
-              className="border-border-default bg-background text-foreground placeholder:text-text-muted"
-              disabled={isSubmitting}
-            />
-            {hasRepo && (
+          {/* Notes textarea — inline style (no border), same pattern as DescriptionTextarea */}
+          <Controller
+            control={control}
+            name="notes"
+            render={({ field }) => (
+              <textarea
+                ref={(e) => {
+                  if (e) {
+                    textareaRef.current = e;
+                    field.ref(e);
+                  }
+                }}
+                value={field.value}
+                onChange={(e) => {
+                  field.onChange(e.target.value);
+                  const target = e.target;
+                  target.style.height = 'auto';
+                  const newHeight = Math.min(
+                    Math.max(target.scrollHeight, 60),
+                    300
+                  );
+                  target.style.height = `${newHeight}px`;
+                }}
+                placeholder="Add any other details you'd want the maintainers of this bounty to know..."
+                disabled={disabled}
+                maxLength={500}
+                className="flex-1 min-h-[60px] bg-transparent text-foreground text-[16px] leading-6 outline-none resize-none placeholder:text-text-tertiary"
+              />
+            )}
+          />
+
+          {/* Error messages */}
+          {(errors.pullRequestUrl || errors.notes) && (
+            <div className="flex flex-col gap-1 px-1">
+              {errors.pullRequestUrl && (
+                <span className="text-red-500 text-xs">
+                  {errors.pullRequestUrl.message}
+                </span>
+              )}
+              {errors.notes && (
+                <span className="text-red-500 text-xs">
+                  {errors.notes.message}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Bottom bar: PR selector + submit button */}
+        <div
+          className={cn(
+            'bg-surface-1 border border-border-subtle border-t-0 rounded-b-[21px] w-full flex items-center justify-between gap-2 pb-3 px-[11px]',
+            disabled && 'opacity-50 cursor-not-allowed'
+          )}
+        >
+          <div className="flex items-center flex-1 min-w-0 overflow-auto gap-2">
+            {hasRepo && !showManualInput ? (
+              <PrSelectorDropdown
+                pullRequests={filteredPullRequests}
+                isLoading={pullRequestsList.isLoading}
+                selectedPr={selectedPr}
+                onSelect={(pr) => {
+                  setSelectedPr(pr);
+                  setValue('pullRequestUrl', pr.html_url, {
+                    shouldValidate: false,
+                  });
+                }}
+                searchQuery={prQuery}
+                onSearchChange={setPrQuery}
+                disabled={disabled}
+                onSwitchToManual={() => {
+                  setShowManualInput(true);
+                  setSelectedPr(null);
+                  setValue('pullRequestUrl', '', { shouldValidate: false });
+                }}
+              />
+            ) : hasRepo ? (
               <button
                 type="button"
                 onClick={() => {
                   setShowManualInput(false);
-                  setManualPrUrl('');
+                  setValue('pullRequestUrl', '', { shouldValidate: false });
                 }}
-                className="mt-1.5 text-xs text-text-muted hover:text-text-secondary transition-colors"
+                className="flex items-center gap-2 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5 hover:bg-white/10"
               >
-                Select from open PRs instead
+                <PullRequestIcon className="size-[18px]" />
+                <span className="text-[14px] text-text-muted">
+                  Select from PRs
+                </span>
+                <ChevronSortIcon className="size-2" />
               </button>
-            )}
+            ) : null}
           </div>
-        )}
 
-        {error && <p className="text-xs text-red-500">{error}</p>}
-
-        {/* Optional description */}
-        {showDescription ? (
-          <div>
-            <Textarea
-              placeholder="Brief description of your changes (optional)"
-              value={description}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                setDescription(e.target.value)
-              }
-              className="min-h-[60px] border-border-default bg-background text-foreground placeholder:text-text-muted"
-              disabled={isSubmitting}
-              maxLength={2000}
-            />
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setShowDescription(true)}
-            className="flex items-center gap-1 text-xs text-text-muted hover:text-text-secondary transition-colors"
-          >
-            <ChevronDown className="h-3 w-3" />
-            Add description
-          </button>
-        )}
-
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-text-muted">
-            {hasRepo && !showManualInput
-              ? 'Select your PR — we handle the rest.'
-              : 'Paste your GitHub PR link — we handle the rest.'}
-          </p>
           <Button
             type="submit"
-            size="sm"
-            disabled={isSubmitting || !prUrl}
-            className="flex items-center gap-1.5"
+            disabled={disabled || !pullRequestUrl}
+            className="flex items-center justify-center gap-1.5 px-4 h-[34px] rounded-full text-[15px] font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
           >
             {isSubmitting ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <Spinner className="h-4 w-4 text-background" />
             ) : (
-              <Send className="h-3.5 w-3.5" />
+              <span>Create submission</span>
             )}
-            {isSubmitting ? 'Submitting...' : 'Submit'}
           </Button>
         </div>
-      </div>
+      </Fieldset>
     </form>
   );
 }
 
 /**
- * Dropdown selector for picking from open PRs.
+ * PR selector dropdown — follows the same pattern as RepoBranchIssueSelector
+ * using DropdownMenu from the design system.
  */
-function PullRequestSelector({
+function PrSelectorDropdown({
   pullRequests,
   isLoading,
   selectedPr,
@@ -354,6 +408,7 @@ function PullRequestSelector({
   searchQuery,
   onSearchChange,
   disabled,
+  onSwitchToManual,
 }: {
   pullRequests: PullRequestItem[];
   isLoading: boolean;
@@ -362,84 +417,61 @@ function PullRequestSelector({
   searchQuery: string;
   onSearchChange: (query: string) => void;
   disabled: boolean;
+  onSwitchToManual: () => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
-  // Close on outside click
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleClick = (e: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [isOpen]);
-
-  // Focus search input when opened
-  useEffect(() => {
-    if (isOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [isOpen]);
 
   return (
-    <div ref={containerRef} className="relative">
-      {/* Trigger button */}
-      <button
-        type="button"
-        onClick={() => {
-          if (!disabled) setIsOpen(!isOpen);
-        }}
-        disabled={disabled}
-        className="flex w-full items-center gap-2 rounded-md border border-border-default bg-background px-3 py-2 text-sm transition-colors hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed"
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          disabled={disabled}
+          className={cn(
+            'flex items-center gap-2 text-text-tertiary transition-colors rounded-full py-0.5 px-1.5',
+            'hover:bg-white/10',
+            isOpen && 'bg-white/10'
+          )}
+        >
+          <PullRequestIcon className="size-[18px]" />
+          {selectedPr ? (
+            <span className="text-[14px] text-foreground truncate max-w-[260px]">
+              {selectedPr.title}{' '}
+              <span className="text-text-muted">#{selectedPr.number}</span>
+            </span>
+          ) : (
+            <span className="text-[14px] text-text-muted">Select PR</span>
+          )}
+          <ChevronSortIcon className="size-2 shrink-0" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        className="w-80 p-0 border-border-subtle bg-surface-1 text-text-secondary rounded-xl"
+        align="start"
+        sideOffset={4}
       >
-        <GitPullRequest className="h-4 w-4 shrink-0 text-text-secondary" />
-        {selectedPr ? (
-          <span className="flex-1 truncate text-left text-foreground">
-            <span className="text-text-muted">#{selectedPr.number}</span>{' '}
-            {selectedPr.title}
-          </span>
-        ) : (
-          <span className="flex-1 text-left text-text-muted">
-            Select a pull request...
-          </span>
-        )}
-        <ChevronDown
-          className={`h-4 w-4 shrink-0 text-text-muted transition-transform ${isOpen ? 'rotate-180' : ''}`}
-        />
-      </button>
-
-      {/* Dropdown */}
-      {isOpen && (
-        <div className="absolute z-50 mt-1 w-full rounded-md border border-border-subtle bg-surface-1 shadow-lg">
-          {/* Search input */}
-          <div className="flex items-center gap-2 border-b border-border-subtle px-3 py-2">
-            <Search className="h-3.5 w-3.5 text-text-muted" />
+        <div className="flex flex-col">
+          {/* Search header */}
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-border-subtle">
+            <PullRequestIcon className="size-4 text-text-tertiary" />
             <input
-              ref={searchInputRef}
-              type="text"
-              placeholder="Search PRs..."
+              className="flex-1 bg-transparent text-sm text-text-secondary placeholder:text-text-tertiary outline-none"
+              placeholder="Search pull requests..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-text-muted outline-none"
+              autoComplete="off"
+              spellCheck={false}
             />
           </div>
 
           {/* PR list */}
-          <div className="max-h-[240px] overflow-y-auto">
+          <div className="min-h-[120px] max-h-[250px] overflow-y-auto p-1">
             {isLoading ? (
-              <div className="flex items-center justify-center py-6">
-                <Loader2 className="h-4 w-4 animate-spin text-text-muted" />
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-4 h-4 animate-spin text-text-tertiary" />
               </div>
             ) : pullRequests.length === 0 ? (
-              <div className="px-3 py-4 text-center text-xs text-text-muted">
+              <div className="px-3 py-4 text-center text-sm text-text-tertiary">
                 {searchQuery
                   ? 'No PRs match your search'
                   : 'No open pull requests found'}
@@ -454,57 +486,40 @@ function PullRequestSelector({
                     setIsOpen(false);
                     onSearchChange('');
                   }}
-                  className="flex w-full items-start gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-surface-hover"
+                  className={cn(
+                    'flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left transition-colors',
+                    'hover:bg-white/10',
+                    selectedPr?.number === pr.number && 'bg-white/5'
+                  )}
                 >
                   {selectedPr?.number === pr.number ? (
-                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-green-500" />
+                    <Check className="size-3.5 text-green-500 shrink-0" />
                   ) : (
-                    <GitPullRequest className="mt-0.5 h-3.5 w-3.5 shrink-0 text-green-500" />
+                    <PullRequestIcon className="size-3.5 text-green-500 shrink-0" />
                   )}
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-foreground">
-                      {pr.title}
-                    </div>
-                    <div className="text-xs text-text-muted">
-                      #{pr.number} by {pr.user}
-                    </div>
-                  </div>
+                  <span className="flex-1 text-sm text-text-secondary truncate">
+                    #{pr.number}: {pr.title}
+                  </span>
                 </button>
               ))
             )}
           </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
-/**
- * Empty state when no submissions exist and user can't submit.
- */
-function EmptyState({
-  isAuthenticated,
-  bounty,
-}: {
-  isAuthenticated: boolean;
-  bounty: {
-    id: string;
-    githubRepoOwner?: string | null;
-    githubRepoName?: string | null;
-    githubIssueNumber?: number | null;
-  };
-}) {
-  return (
-    <div className="rounded-lg bg-surface-2 p-6 text-center">
-      <p className="text-text-muted text-sm mb-4">No submissions yet</p>
-      {!isAuthenticated && (
-        <Link
-          href={`/login?callback=/bounty/${bounty.id}`}
-          className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
-        >
-          Sign in to Submit Your Solution
-        </Link>
-      )}
-    </div>
+          {/* Manual input toggle */}
+          <div className="border-t border-border-subtle px-3 py-2">
+            <button
+              type="button"
+              onClick={() => {
+                onSwitchToManual();
+                setIsOpen(false);
+              }}
+              className="text-xs text-text-muted hover:text-text-secondary transition-colors"
+            >
+              Paste a PR URL manually instead
+            </button>
+          </div>
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
