@@ -7,7 +7,8 @@
     ".": "./src/index.ts",
     "./driver/*": "./driver/*.ts",
     "./src/*": "./src/*.ts",
-    "./src/lib/*": "./src/lib/*.ts"
+    "./src/lib/*": "./src/lib/*.ts",
+    "./src/lib/bot": "./src/lib/bot/index.ts"
   },
   "dependencies": {
     "@bounty/auth": "workspace:*",
@@ -18,6 +19,8 @@
     "@bounty/stripe": "workspace:*",
     "@bounty/track": "workspace:*",
     "@bounty/types": "workspace:*",
+    "@chat-adapter/linear": "^4.19.0",
+    "@chat-adapter/state-pg": "^4.19.0",
     "@linear/sdk": "^72.0.0",
     "@octokit/auth-app": "catalog:",
     "@octokit/core": "catalog:",
@@ -27,6 +30,7 @@
     "@trpc/server": "catalog:",
     "@upstash/ratelimit": "catalog:",
     "bs58": "^6.0.0",
+    "chat": "^4.19.0",
     "drizzle-orm": "catalog:",
     "lru-cache": "catalog:",
     "tweetnacl": "^1.0.3",

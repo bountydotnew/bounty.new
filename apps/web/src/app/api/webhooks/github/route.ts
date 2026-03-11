@@ -98,6 +98,11 @@ import {
   markOperationPerformed,
   PaymentLockError,
 } from '@bounty/api/src/lib/payment-lock';
+import {
+  postLinearUpdate,
+  LINEAR_BOT_MESSAGES,
+  buildBountyUrl,
+} from '@bounty/api/src/lib/bot';
 
 const ISSUE_REFERENCE_PATTERN =
   /(?:fixes|closes|resolves|related to)\s+#?(\d+)/i;
@@ -1202,6 +1207,15 @@ async function createSubmissionFromPullRequest(params: {
     );
   }
 
+  // Notify Linear if this bounty is linked to a Linear issue
+  if (bountyRecord.linearIssueId && bountyRecord.organizationId) {
+    const url = buildBountyUrl(bountyRecord.organizationId, bountyRecord.id);
+    postLinearUpdate(
+      bountyRecord.linearIssueId,
+      LINEAR_BOT_MESSAGES.submissionReceived(url)
+    );
+  }
+
   return { status: 'created' } as const;
 }
 
@@ -1569,6 +1583,15 @@ async function handleBountyApproveCommand(
     targetPrNumber,
     followup
   );
+
+  // Notify Linear if this bounty is linked to a Linear issue
+  if (bountyRecord.linearIssueId && bountyRecord.organizationId) {
+    const url = buildBountyUrl(bountyRecord.organizationId, bountyRecord.id);
+    postLinearUpdate(
+      bountyRecord.linearIssueId,
+      LINEAR_BOT_MESSAGES.bountyApproved(url)
+    );
+  }
 }
 
 async function handleBountyUnapproveCommand(
@@ -2376,6 +2399,15 @@ This bounty has a pending cancellation request. Payment cannot be released until
     bountyIssueNumber,
     completionMessage
   );
+
+  // Notify Linear if this bounty is linked to a Linear issue
+  if (bountyRecord.linearIssueId && bountyRecord.organizationId) {
+    const url = buildBountyUrl(bountyRecord.organizationId, bountyRecord.id);
+    postLinearUpdate(
+      bountyRecord.linearIssueId,
+      LINEAR_BOT_MESSAGES.bountyCompleted(url)
+    );
+  }
 }
 
 async function handleBountyMoveCommand(
@@ -3139,6 +3171,15 @@ async function handlePullRequestMerged(
     console.error(
       '[GitHub Webhook] Failed to post completion comment:',
       commentError
+    );
+  }
+
+  // Notify Linear if this bounty is linked to a Linear issue
+  if (bountyRecord.linearIssueId && bountyRecord.organizationId) {
+    const url = buildBountyUrl(bountyRecord.organizationId, bountyRecord.id);
+    postLinearUpdate(
+      bountyRecord.linearIssueId,
+      LINEAR_BOT_MESSAGES.bountyCompleted(url)
     );
   }
 }

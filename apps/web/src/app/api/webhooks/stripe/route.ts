@@ -27,6 +27,11 @@ import {
 import { sendBountyCreatedWebhook } from '@bounty/api/src/lib/use-discord-webhook';
 import { createNotification } from '@bounty/db/src/services/notifications';
 import { clearOperationPerformed } from '@bounty/api/src/lib/payment-lock';
+import {
+  postLinearUpdate,
+  LINEAR_BOT_MESSAGES,
+  buildBountyUrl,
+} from '@bounty/api/src/lib/bot';
 
 /**
  * Sends Discord webhook notification when a bounty becomes funded
@@ -104,6 +109,36 @@ async function sendFundedBountyWebhook(bountyId: string) {
 }
 
 /**
+ * Notifies Linear when a bounty becomes funded (draft -> open)
+ */
+async function notifyLinearOnFunding(bountyId: string) {
+  try {
+    const [record] = await db
+      .select({
+        id: bounty.id,
+        linearIssueId: bounty.linearIssueId,
+        organizationId: bounty.organizationId,
+      })
+      .from(bounty)
+      .where(eq(bounty.id, bountyId))
+      .limit(1);
+
+    if (record?.linearIssueId && record.organizationId) {
+      const url = buildBountyUrl(record.organizationId, record.id);
+      await postLinearUpdate(
+        record.linearIssueId,
+        LINEAR_BOT_MESSAGES.bountyFunded(url)
+      );
+    }
+  } catch (error) {
+    console.error(
+      `[Stripe Webhook] Failed to notify Linear for bounty ${bountyId}:`,
+      error
+    );
+  }
+}
+
+/**
  * Updates the GitHub bot comment when a bounty becomes funded
  */
 async function updateGitHubBotCommentOnFunding(bountyId: string) {
@@ -118,6 +153,8 @@ async function updateGitHubBotCommentOnFunding(bountyId: string) {
         githubInstallationId: bounty.githubInstallationId,
         githubRepoOwner: bounty.githubRepoOwner,
         githubRepoName: bounty.githubRepoName,
+        linearIssueId: bounty.linearIssueId,
+        organizationId: bounty.organizationId,
       })
       .from(bounty)
       .where(eq(bounty.id, bountyId))
@@ -403,6 +440,7 @@ export async function POST(request: Request) {
             await updateGitHubBotCommentOnFunding(bountyId);
             await updateSubmissionReceivedCommentsOnFunding(bountyId);
             await sendFundedBountyWebhook(bountyId);
+            await notifyLinearOnFunding(bountyId);
           }
 
           console.log(
@@ -502,6 +540,7 @@ export async function POST(request: Request) {
           await updateGitHubBotCommentOnFunding(bountyId);
           await updateSubmissionReceivedCommentsOnFunding(bountyId);
           await sendFundedBountyWebhook(bountyId);
+          await notifyLinearOnFunding(bountyId);
 
           console.log(
             `[Stripe Webhook] Successfully updated bounty ${bountyId} to held/open`
@@ -692,6 +731,8 @@ export async function POST(request: Request) {
             paymentStatus: bounty.paymentStatus,
             status: bounty.status,
             createdById: bounty.createdById,
+            linearIssueId: bounty.linearIssueId,
+            organizationId: bounty.organizationId,
           })
           .from(bounty)
           .where(eq(bounty.stripePaymentIntentId, finalPaymentIntentId))
@@ -772,6 +813,18 @@ export async function POST(request: Request) {
           );
         }
 
+        // Notify Linear if this bounty was linked to a Linear issue
+        if (bountyRecord.linearIssueId && bountyRecord.organizationId) {
+          const url = buildBountyUrl(
+            bountyRecord.organizationId,
+            bountyRecord.id
+          );
+          postLinearUpdate(
+            bountyRecord.linearIssueId,
+            LINEAR_BOT_MESSAGES.bountyCancelled(url)
+          );
+        }
+
         // Skip notification here — the charge.refunded handler sends the full
         // notification (email + in-app + transaction record). If charge.refunded
         // fires later, it will see paymentStatus=refunded and skip the DB update
@@ -803,6 +856,8 @@ export async function POST(request: Request) {
             amount: bounty.amount,
             paymentStatus: bounty.paymentStatus,
             createdById: bounty.createdById,
+            linearIssueId: bounty.linearIssueId,
+            organizationId: bounty.organizationId,
           })
           .from(bounty)
           .where(eq(bounty.stripePaymentIntentId, paymentIntentId))
@@ -871,6 +926,18 @@ export async function POST(request: Request) {
             .where(eq(cancellationRequest.id, pendingRequest.id));
           console.log(
             `[Stripe Webhook] Marked cancellation request ${pendingRequest.id} as approved`
+          );
+        }
+
+        // Notify Linear if this bounty was linked to a Linear issue
+        if (bountyRecord.linearIssueId && bountyRecord.organizationId) {
+          const url = buildBountyUrl(
+            bountyRecord.organizationId,
+            bountyRecord.id
+          );
+          postLinearUpdate(
+            bountyRecord.linearIssueId,
+            LINEAR_BOT_MESSAGES.bountyCancelled(url)
           );
         }
 
