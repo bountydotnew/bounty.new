@@ -50,6 +50,18 @@ function writeStoredWaitlist(data: WaitlistCookieData) {
   }
 }
 
+function getTier(position: number): { label: string; color: string } {
+  if (position <= 100) return { label: 'Pioneer', color: '#f59e0b' };
+  if (position <= 500) return { label: 'Early Adopter', color: '#a78bfa' };
+  return { label: 'Member', color: '#60a5fa' };
+}
+
+interface CardData {
+  position: number;
+  tier: { label: string; color: string };
+  joinedDate: string;
+}
+
 function useWaitlistSubmission(): WaitlistHookResult {
   const { celebrate } = useConfetti();
   const [success, setSuccess] = useState(false);
@@ -129,11 +141,23 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     loading: boolean;
   }>({ data: null, loading: true });
   const waitlistSubmission = useWaitlistSubmission();
+  const [cardData, setCardData] = useState<CardData | null>(null);
 
   useEffect(() => {
     const stored = readStoredWaitlist();
     if (stored?.submitted) {
       waitlistSubmission.setSuccess(true);
+      if (stored.position) {
+        setCardData({
+          position: stored.position,
+          tier: getTier(stored.position),
+          joinedDate: new Date(stored.timestamp).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          }),
+        });
+      }
     }
   }, [waitlistSubmission.setSuccess]);
 
@@ -152,6 +176,31 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
     generateFingerprint();
   }, []);
+
+  // Capture position once waitlist count updates after joining
+  useEffect(() => {
+    if (waitlistSubmission.success && waitlistCount !== undefined && !cardData) {
+      const position = waitlistCount;
+      const tier = getTier(position);
+      const joinedDate = new Date().toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+      setCardData({ position, tier, joinedDate });
+      const stored = readStoredWaitlist();
+      if (stored) writeStoredWaitlist({ ...stored, position });
+    }
+  }, [waitlistSubmission.success, waitlistCount, cardData]);
+
+  function handleShareCard(position: number) {
+    const text = `I'm #${position} on the waitlist for bounty.new — the fastest way to hire devs to fix your code. Join me 👇`;
+    window.open(
+      `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent('https://bounty.new')}`,
+      '_blank',
+      'noopener,noreferrer'
+    );
+  }
 
   function joinWaitlist({ email }: FormSchema) {
     if (!fingerprint.data) {
@@ -242,8 +291,94 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                 </div>
               )}
 
-              {/* Share CTA — skip in compact mode */}
-              {!compact && (
+              {/* Trading Card — skip in compact mode */}
+              {!compact && cardData && (
+                <div
+                  className="relative rounded-2xl overflow-hidden"
+                  style={{
+                    background:
+                      'linear-gradient(135deg, #0a0a0a 0%, #111827 50%, #0a0a0a 100%)',
+                    border: `1px solid ${cardData.tier.color}40`,
+                    boxShadow: `0 0 28px ${cardData.tier.color}18`,
+                  }}
+                >
+                  {/* Subtle grid */}
+                  <div
+                    className="absolute inset-0 opacity-[0.04]"
+                    style={{
+                      backgroundImage:
+                        'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
+                      backgroundSize: '24px 24px',
+                    }}
+                  />
+                  {/* Top glow */}
+                  <div
+                    className="absolute top-0 left-0 right-0 h-20 opacity-20"
+                    style={{
+                      background: `radial-gradient(ellipse at top, ${cardData.tier.color} 0%, transparent 70%)`,
+                    }}
+                  />
+                  <div className="relative p-5">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-5">
+                      <span
+                        className="text-[10px] font-bold tracking-[0.2em] uppercase"
+                        style={{ color: cardData.tier.color }}
+                      >
+                        bounty.new
+                      </span>
+                      <span
+                        className="text-[9px] font-semibold px-2 py-0.5 rounded-full"
+                        style={{
+                          color: cardData.tier.color,
+                          border: `1px solid ${cardData.tier.color}50`,
+                          background: `${cardData.tier.color}15`,
+                        }}
+                      >
+                        {cardData.tier.label}
+                      </span>
+                    </div>
+                    {/* Position number */}
+                    <div className="mb-1">
+                      <span className="text-5xl font-bold text-white tracking-tight">
+                        #{cardData.position.toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-5">
+                      in line · joined {cardData.joinedDate}
+                    </p>
+                    {/* Footer */}
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-medium tracking-widest text-gray-600 uppercase">
+                        Bounty Hunter
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleShareCard(cardData.position)}
+                        className="inline-flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-1 rounded-lg transition-opacity hover:opacity-80"
+                        style={{
+                          color: cardData.tier.color,
+                          border: `1px solid ${cardData.tier.color}40`,
+                          background: `${cardData.tier.color}10`,
+                        }}
+                      >
+                        <svg
+                          className="w-3 h-3"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.736-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                        </svg>
+                        Share card
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Fallback share — compact or no card data yet */}
+              {!compact && !cardData && (
                 <div className="border border-border-subtle rounded-xl p-4 bg-surface-1">
                   <p className="text-xs font-medium text-foreground mb-1">
                     Skip the line
