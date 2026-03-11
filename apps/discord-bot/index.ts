@@ -34,7 +34,9 @@ async function startBot() {
 
   // Validate Discord bot token at runtime
   if (!env.DISCORD_BOT_TOKEN) {
-    throw new Error('DISCORD_BOT_TOKEN is required but not found in environment variables');
+    throw new Error(
+      'DISCORD_BOT_TOKEN is required but not found in environment variables'
+    );
   }
 
   client.once('clientReady', () => {

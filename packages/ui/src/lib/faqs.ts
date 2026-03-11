@@ -45,7 +45,7 @@ export const PAYMENTS_FAQ_ITEMS: FAQItem[] = [
   {
     question: 'How long do payouts take?',
     answer:
-      'Once your PR is merged and approved, payouts are released within 2-3 business days while funds clear from the original payment. The exact timing depends on the original payment method and your bank. Card payments typically take 2-3 business days to clear; bank transfers may take longer. You\'ll receive a notification when your payout is processed.',
+      "Once your PR is merged and approved, payouts are released within 2-3 business days while funds clear from the original payment. The exact timing depends on the original payment method and your bank. Card payments typically take 2-3 business days to clear; bank transfers may take longer. You'll receive a notification when your payout is processed.",
   },
   {
     question: 'Why is there a delay for payouts?',

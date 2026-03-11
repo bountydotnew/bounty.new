@@ -119,7 +119,7 @@ export function extractUrlsFromMarkdown(markdown: string): string[] {
 
   // Match markdown links: [text](url)
   const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-  let match;
+  let match: RegExpExecArray | null = null;
   while ((match = markdownLinkRegex.exec(markdown)) !== null) {
     const url = match[2];
     if (url && !seen.has(url)) {
@@ -129,7 +129,7 @@ export function extractUrlsFromMarkdown(markdown: string): string[] {
   }
 
   // Match bare URLs (http/https)
-  const bareUrlRegex = /https?:\/\/[^\s\])\}]+/g;
+  const bareUrlRegex = /https?:\/\/[^\s\])}]+/g;
   while ((match = bareUrlRegex.exec(markdown)) !== null) {
     const url = match[0];
     if (url && !seen.has(url)) {
@@ -181,7 +181,6 @@ export function parseLinksFromMarkdown(markdown: string): ParsedLink[] {
       });
     } catch {
       // Skip invalid URLs
-      continue;
     }
   }
 
