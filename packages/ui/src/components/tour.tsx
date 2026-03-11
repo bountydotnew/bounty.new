@@ -257,12 +257,12 @@ export function TourProvider({
   }, [activeTour, currentStepIndex, onNavigate, close]);
 
   const previous = React.useCallback(() => {
-    if (currentStepIndex > 0) {
+    if (currentStepIndex > 0 && activeTour) {
       const step = activeTour?.steps[currentStepIndex];
       const prevIndex = currentStepIndex - 1;
       if (step?.previousRoute && onNavigate) {
         persistTourState({
-          tourId: activeTour!.id,
+          tourId: activeTour.id,
           stepIndex: prevIndex,
         });
         onNavigate(step.previousRoute);
