@@ -62,9 +62,18 @@ interface CardData {
   joinedDate: string;
 }
 
+function openShareIntent(text: string) {
+  window.open(
+    `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent('https://bounty.new')}`,
+    '_blank',
+    'noopener,noreferrer'
+  );
+}
+
 function useWaitlistSubmission(): WaitlistHookResult {
   const { celebrate } = useConfetti();
   const [success, setSuccess] = useState(false);
+  const [position, setPosition] = useState<number | null>(null);
   const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitInfo | null>(
     null
   );
@@ -84,15 +93,19 @@ function useWaitlistSubmission(): WaitlistHookResult {
         throw new Error(data.error || 'Failed to join waitlist');
       }
 
-      return data;
+      return data as { success: boolean; position?: number; message?: string };
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
       setSuccess(true);
+
+      const pos = data.position;
+      if (pos) setPosition(pos);
 
       const cookieData: WaitlistCookieData = {
         submitted: true,
         timestamp: new Date().toISOString(),
         email: btoa(variables.email).substring(0, 16),
+        position: pos,
       };
       writeStoredWaitlist(cookieData);
 
@@ -118,7 +131,7 @@ function useWaitlistSubmission(): WaitlistHookResult {
     },
   });
 
-  return { mutate, isPending, success, setSuccess, rateLimitInfo };
+  return { mutate, isPending, success, setSuccess, rateLimitInfo, position };
 }
 
 interface WaitlistPageProps {
@@ -177,29 +190,24 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     generateFingerprint();
   }, []);
 
-  // Capture position once waitlist count updates after joining
+  // Build card data from API position (primary) or waitlistCount (fallback)
   useEffect(() => {
-    if (waitlistSubmission.success && waitlistCount !== undefined && !cardData) {
-      const position = waitlistCount;
-      const tier = getTier(position);
+    const pos = waitlistSubmission.position ?? (waitlistSubmission.success ? waitlistCount : undefined);
+    if (waitlistSubmission.success && pos && !cardData) {
+      const tier = getTier(pos);
       const joinedDate = new Date().toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
       });
-      setCardData({ position, tier, joinedDate });
+      setCardData({ position: pos, tier, joinedDate });
       const stored = readStoredWaitlist();
-      if (stored) writeStoredWaitlist({ ...stored, position });
+      if (stored && !stored.position) writeStoredWaitlist({ ...stored, position: pos });
     }
-  }, [waitlistSubmission.success, waitlistCount, cardData]);
+  }, [waitlistSubmission.success, waitlistSubmission.position, waitlistCount, cardData]);
 
   function handleShareCard(position: number) {
-    const text = `I'm #${position} on the waitlist for bounty.new — the fastest way to hire devs to fix your code. Join me 👇`;
-    window.open(
-      `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent('https://bounty.new')}`,
-      '_blank',
-      'noopener,noreferrer'
-    );
+    openShareIntent(`I'm #${position} on the waitlist for bounty.new — the fastest way to hire devs to fix your code. Join me 👇`);
   }
 
   function joinWaitlist({ email }: FormSchema) {
@@ -388,16 +396,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                   </p>
                   <button
                     type="button"
-                    onClick={() => {
-                      const text =
-                        "I just joined the waitlist for bounty.new — the fastest way to hire developers to fix your code. Join me 👇";
-                      const url = "https://bounty.new";
-                      window.open(
-                        `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
-                        "_blank",
-                        "noopener,noreferrer"
-                      );
-                    }}
+                    onClick={() => openShareIntent("I just joined the waitlist for bounty.new — the fastest way to hire developers to fix your code. Join me 👇")}
                     className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-foreground text-background text-xs font-medium hover:opacity-90 transition-opacity"
                   >
                     <svg
@@ -514,11 +513,13 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                     />
                   </div>
                 </div>
-                <span
-                  className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
-                >
-                  <NumberFlow value={waitlistCount ?? 0} />+ on the list
-                </span>
+                {waitlistCount !== undefined && (
+                  <span
+                    className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
+                  >
+                    <NumberFlow value={waitlistCount} />+ on the list
+                  </span>
+                )}
               </div>
             </>
           )}

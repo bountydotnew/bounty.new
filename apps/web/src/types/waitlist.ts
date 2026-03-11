@@ -31,4 +31,5 @@ export interface WaitlistHookResult {
   success: boolean;
   setSuccess: (success: boolean) => void;
   rateLimitInfo: RateLimitInfo | null;
+  position: number | null;
 }
