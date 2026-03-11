@@ -51,7 +51,6 @@ function GithubIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-
 interface ContentBlock {
   title: string;
   description: string;
@@ -59,7 +58,6 @@ interface ContentBlock {
   ctaHref: string;
   visual: React.ReactNode;
 }
-
 
 function LinearBountyVisual() {
   const issues = [
@@ -324,23 +322,25 @@ function LinearBountyVisual() {
   );
 }
 
-
 function ProcessStepsVisual() {
   const steps = [
     {
       number: '01',
       title: 'Post a bounty',
-      description: 'Describe the work, set a price, and pick a repo.',
+      description:
+        "Paste the error, describe what's broken, set a price. Takes about two minutes.",
     },
     {
       number: '02',
-      title: 'Devs compete',
-      description: 'Developers submit PRs. Review solutions at your pace.',
+      title: 'PRs come in',
+      description:
+        'Developers pick up the bounty and open pull requests to your repo.',
     },
     {
       number: '03',
-      title: 'Approve & pay',
-      description: 'Merge the PR and the developer gets paid instantly.',
+      title: 'Merge & pay',
+      description:
+        "Review the diff, run CI, merge when you're happy with it. Payment releases instantly.",
     },
   ];
 
@@ -369,7 +369,6 @@ function ProcessStepsVisual() {
     </div>
   );
 }
-
 
 function CreateBountyFlowVisual() {
   return (
@@ -472,7 +471,6 @@ function CreateBountyFlowVisual() {
   );
 }
 
-
 function GitHubIntegrationVisual() {
   return (
     <div className="relative w-full rounded-xl overflow-hidden border border-border-subtle bg-surface-1">
@@ -516,8 +514,7 @@ function GitHubIntegrationVisual() {
           </div>
           <div className="px-3 py-2.5">
             <p className="text-[12px] text-text-secondary">
-              This issue has a $500.00 USD bounty
-              attached.
+              This issue has a $500.00 USD bounty attached.
             </p>
           </div>
         </div>
@@ -535,7 +532,6 @@ function GitHubIntegrationVisual() {
     </div>
   );
 }
-
 
 function ContentBlockRow({
   block,
@@ -583,12 +579,11 @@ function ContentBlockRow({
   );
 }
 
-
 const CONTENT_BLOCKS: ContentBlock[] = [
   {
-    title: 'Create bounties straight from Linear',
+    title: 'Turn your backlog into bounties without switching tabs',
     description:
-      'Connect your workspace and turn issues into funded bounties without leaving your project management flow. Sync statuses, priorities, and labels. When the fix ships, Linear updates automatically.',
+      'That issue has been sitting in "In Progress" for three sprints and nobody wants to touch it. Right-click it in Linear, set a price, and it\'s live. Statuses, priorities, and labels sync both ways.',
     ctaText: 'Connect Linear',
     ctaHref: 'https://docs.bounty.new/integrations/linear',
     visual: <LinearBountyVisual />,
@@ -596,7 +591,7 @@ const CONTENT_BLOCKS: ContentBlock[] = [
   {
     title: 'Post. Fix. Ship.',
     description:
-      'Describe what\'s broken and set a price. Developers who\'ve seen the pattern before submit PRs. Approve the fix and they get paid instantly. No interviews, no contracts, no waiting.',
+      'You paste the error. You set a price. Someone opens a PR. You review the diff, run your tests, and merge it. They get paid, you get to go home. No interviews, no contracts, no waiting.',
     ctaText: 'See how it works',
     ctaHref: 'https://docs.bounty.new/guides/creating-bounties',
     visual: <ProcessStepsVisual />,
@@ -604,7 +599,7 @@ const CONTENT_BLOCKS: ContentBlock[] = [
   {
     title: 'Describe the bug, set the bounty',
     description:
-      'Paste the error, describe what\'s failing, set your budget. We create a GitHub issue, hold funds via Stripe, and surface it to developers who specialize in AI-generated codebases.',
+      'You know the one. The auth flow that breaks on redirect. The webhook that fires twice. The migration that nukes your staging data. Paste the stack trace, set your budget. We create a GitHub issue and hold the funds in Stripe until you merge the fix.',
     ctaText: 'Create your first bounty',
     ctaHref: 'https://docs.bounty.new/guides/creating-bounties',
     visual: <CreateBountyFlowVisual />,
@@ -612,7 +607,7 @@ const CONTENT_BLOCKS: ContentBlock[] = [
   {
     title: 'Fixes ship as PRs to your repo',
     description:
-      'Bounties become GitHub issues with labels and payout details. Developers submit real PRs—review diffs, run CI, merge when ready. No platform lock-in.',
+      "Every fix is a pull request to your GitHub repo. Review the diff, run CI, merge when you're satisfied. No platform lock-in, no vendor code in your codebase. Your repo, your workflow.",
     ctaText: 'Explore the GitHub integration',
     ctaHref: 'https://docs.bounty.new/integrations/github',
     visual: <GitHubIntegrationVisual />,
