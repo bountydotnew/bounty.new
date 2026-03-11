@@ -119,18 +119,13 @@ function WaitlistAvatarStack({
   const avatarSize = compact ? 20 : 28;
 
   return (
-    <div className={`-space-x-2 flex ${className}`}>
+    <div aria-hidden="true" className={`-space-x-2 flex ${className}`}>
       {WAITLIST_AVATARS.map((src) => (
         <div
           key={src}
           className={`${compact ? 'w-5 h-5' : 'w-7 h-7'} rounded-full border-2 border-background overflow-hidden`}
         >
-          <Image
-            alt="waitlist"
-            height={avatarSize}
-            src={src}
-            width={avatarSize}
-          />
+          <Image alt="" height={avatarSize} src={src} width={avatarSize} />
         </div>
       ))}
     </div>
