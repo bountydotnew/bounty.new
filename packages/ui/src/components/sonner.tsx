@@ -1,25 +1,7 @@
-'use client';
+// Legacy re-export for backward compatibility
+// Sonner has been replaced with coss Toast in Base UI
 
-import { useTheme } from 'next-themes';
-import { Toaster as Sonner, type ToasterProps } from 'sonner';
+export { ToastProvider as Toaster, toastManager } from './toast';
 
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = 'system' } = useTheme();
-
-  return (
-    <Sonner
-      className="toaster group"
-      style={
-        {
-          '--normal-bg': 'var(--background)',
-          '--normal-text': 'var(--foreground)',
-          '--normal-border': 'var(--border)',
-        } as React.CSSProperties
-      }
-      theme={theme as 'system' | 'light' | 'dark'}
-      {...props}
-    />
-  );
-};
-
-export { Toaster };
+// The toast function API has changed. Use toastManager.add() instead.
+// For backward compatibility, import { toast } from '@/context/toast' in your app.

@@ -1,38 +1,29 @@
-'use client';
+import { auth } from '@bounty/auth/server';
+import { db } from '@bounty/db';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 
-import { useSession } from '@/context/session-context';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { Spinner } from '@bounty/ui';
-import { useUser } from '@/context/user-context';
+export default async function MyProfilePage() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-export default function MyProfilePage() {
-  const router = useRouter();
-  const { session, isPending } = useSession();
-  const { user: userData } = useUser();
+  if (!session?.user) {
+    redirect('/');
+  }
 
-  useEffect(() => {
-    if (isPending) {
-      return;
-    }
+  // Look up the user's handle from the database
+  const userData = await db.query.user.findFirst({
+    where: (fields, { eq }) => eq(fields.id, session.user.id),
+    columns: { id: true, handle: true },
+  });
 
-    if (!session?.user) {
-      router.push('/');
-      return;
-    }
+  if (userData?.handle) {
+    redirect(`/profile/${userData.handle}`);
+  } else if (userData?.id) {
+    redirect(`/profile/${userData.id}`);
+  }
 
-    if (userData?.handle) {
-      // Redirect to handle-based profile URL
-      router.replace(`/profile/${userData.handle}`);
-    } else if (userData?.id) {
-      // Fallback to userId if no handle (shouldn't happen after onboarding, but just in case)
-      router.replace(`/profile/${userData.id}`);
-    }
-  }, [session, isPending, userData, router]);
-
-  return (
-    <div className="flex h-screen w-full items-center justify-center">
-      <Spinner />
-    </div>
-  );
+  // Fallback: redirect to root if user not found
+  redirect('/');
 }

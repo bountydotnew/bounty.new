@@ -1,9 +1,17 @@
-"use client";
+'use client';
 
-import { motion, AnimatePresence } from 'motion/react';
-import { type ReactNode, useRef, useState, useEffect } from 'react';
+import { AnimatePresence, m } from 'motion/react';
+import {
+  type ReactNode,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { useTutorialOptional } from './tutorial-context';
+
+const emptySubscribe = () => () => {};
 
 interface TutorialHighlightProps {
   /** The step ID this highlight corresponds to */
@@ -32,22 +40,23 @@ export function TutorialHighlight({
   const isActive = tutorial?.isStepActive(stepId) ?? false;
   const contentRef = useRef<HTMLDivElement>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
 
-  // Calculate tooltip position based on element position
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isActive || !contentRef.current) {
+    if (!(isActive && contentRef.current)) {
       return;
     }
 
     const updatePosition = () => {
-      // Get the first child element (the actual button) for more accurate positioning
-      const targetEl = contentRef.current?.firstElementChild as HTMLElement | null;
-      const rect = targetEl?.getBoundingClientRect() ?? contentRef.current?.getBoundingClientRect();
+      const targetEl = contentRef.current
+        ?.firstElementChild as HTMLElement | null;
+      const rect =
+        targetEl?.getBoundingClientRect() ??
+        contentRef.current?.getBoundingClientRect();
       if (!rect) {
         return;
       }
@@ -72,71 +81,82 @@ export function TutorialHighlight({
       {/* Glow effect behind the element */}
       <AnimatePresence>
         {isActive && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+          <m.div
             animate={{ opacity: 1, scale: 1 }}
+            className={`-inset-1 absolute ${borderRadius} pointer-events-none z-0`}
             exit={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className={`absolute -inset-1 ${borderRadius} z-0 pointer-events-none`}
           >
             {/* Pulsing glow */}
-            <motion.div
-              className={`absolute inset-0 ${borderRadius} bg-blue-500/20`}
+            <m.div
               animate={{
                 boxShadow: [
-                  '0 0 0 0 rgba(59, 130, 246, 0.4)',
-                  '0 0 0 8px rgba(59, 130, 246, 0)',
+                  '0 0 0 0 oklch(62% 0.21 255 / 40%)',
+                  '0 0 0 8px oklch(62% 0.21 255 / 0%)',
                 ],
               }}
+              className={`absolute inset-0 ${borderRadius} bg-blue-500/20`}
               transition={{
                 duration: 1.5,
-                repeat: Infinity,
+                repeat: Number.POSITIVE_INFINITY,
                 ease: 'easeOut',
               }}
             />
             {/* Static ring */}
-            <div className={`absolute inset-0 ${borderRadius} ring-2 ring-blue-500/60 ring-offset-2 ring-offset-black`} />
-          </motion.div>
+            <div
+              className={`absolute inset-0 ${borderRadius} ring-2 ring-blue-500/60 ring-offset-2 ring-offset-black`}
+            />
+          </m.div>
         )}
       </AnimatePresence>
 
       {/* The actual element */}
-      <div ref={contentRef} className={`relative z-10 ${fullWidth ? 'w-full' : ''}`}>{children}</div>
+      <div
+        className={`relative z-10 ${fullWidth ? 'w-full' : ''}`}
+        ref={contentRef}
+      >
+        {children}
+      </div>
 
       {/* Tooltip rendered via portal to escape overflow constraints */}
-      {mounted && isActive && createPortal(
-        <AnimatePresence>
-          <motion.div
-            initial={{ opacity: 0, y: tooltipPosition === 'top' ? 4 : -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: tooltipPosition === 'top' ? 4 : -4 }}
-            transition={{ duration: 0.2, delay: 0.1 }}
-            className="fixed z-[9999] pointer-events-none"
-            style={{
-              left: tooltipPos.x,
-              top: tooltipPos.y,
-              transform: `translate(-50%, ${tooltipPosition === 'top' ? '-100%' : '0'})`,
-            }}
-          >
-            <div className="relative">
-              {/* Tooltip card */}
-              <div className="px-3 py-2 rounded-lg bg-[#1a1a1a] border border-[#333] shadow-xl whitespace-nowrap">
-                <span className="text-sm text-white font-medium">{tooltip}</span>
+      {mounted &&
+        isActive &&
+        createPortal(
+          <AnimatePresence>
+            <m.div
+              animate={{ opacity: 1, y: 0 }}
+              className="pointer-events-none fixed z-[9999]"
+              exit={{ opacity: 0, y: tooltipPosition === 'top' ? 4 : -4 }}
+              initial={{ opacity: 0, y: tooltipPosition === 'top' ? 4 : -4 }}
+              style={{
+                left: tooltipPos.x,
+                top: tooltipPos.y,
+                transform: `translate(-50%, ${tooltipPosition === 'top' ? '-100%' : '0'})`,
+              }}
+              transition={{ duration: 0.2, delay: 0.1 }}
+            >
+              <div className="relative">
+                {/* Tooltip card */}
+                <div className="whitespace-nowrap rounded-lg border border-border-default bg-surface-1 px-3 py-2 shadow-xl">
+                  <span className="font-medium text-foreground text-sm">
+                    {tooltip}
+                  </span>
+                </div>
+
+                {/* Arrow */}
+                <div
+                  className={`-translate-x-1/2 absolute left-1/2 h-2 w-2 rotate-45 border-border-default bg-surface-1 ${
+                    tooltipPosition === 'top'
+                      ? '-mt-1 top-full border-r border-b'
+                      : '-mb-1 bottom-full border-t border-l'
+                  }`}
+                />
               </div>
-              
-              {/* Arrow */}
-              <div
-                className={`absolute left-1/2 -translate-x-1/2 w-2 h-2 bg-[#1a1a1a] border-[#333] rotate-45 ${
-                  tooltipPosition === 'top'
-                    ? 'top-full -mt-1 border-r border-b'
-                    : 'bottom-full -mb-1 border-l border-t'
-                }`}
-              />
-            </div>
-          </motion.div>
-        </AnimatePresence>,
-        document.body
-      )}
+            </m.div>
+          </AnimatePresence>,
+          document.body
+        )}
     </div>
   );
 }

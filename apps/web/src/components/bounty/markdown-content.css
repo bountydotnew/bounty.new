@@ -1,0 +1,52 @@
+.markdown-content ul ul,
+.markdown-content ol ol,
+.markdown-content ul ol,
+.markdown-content ol ul {
+  margin-left: 2rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.markdown-content pre {
+  white-space: pre-wrap !important;
+  position: relative !important;
+}
+
+.markdown-content pre code {
+  display: block !important;
+  overflow-x: auto !important;
+  padding: 0.5rem !important;
+  white-space: pre !important;
+}
+
+.markdown-content li > p {
+  margin-bottom: 0.25rem !important;
+  display: inline-block !important;
+}
+
+.markdown-content li > ul,
+.markdown-content li > ol {
+  margin-top: 0.25rem !important;
+}
+
+.markdown-content code {
+  white-space: pre !important;
+}
+
+.markdown-content ul {
+  list-style-type: disc !important;
+  list-style-position: outside !important;
+}
+
+.markdown-content ol {
+  list-style-type: decimal !important;
+  list-style-position: outside !important;
+}
+
+.markdown-content ul ul {
+  list-style-type: circle !important;
+}
+
+.markdown-content ul ul ul {
+  list-style-type: square !important;
+}

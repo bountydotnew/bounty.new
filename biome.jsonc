@@ -3,8 +3,13 @@
   "extends": ["ultracite"],
   "linter": {
     "rules": {
+      "complexity": {
+        "noExcessiveCognitiveComplexity": "off"
+      },
       "suspicious": {
-        "noConsole": "off"
+        "noConsole": "off",
+        "noEmptyBlockStatements": "off"
+        
       },
       "correctness": {
         "noUnusedImports": "off"
@@ -22,6 +27,7 @@
         "noShadow": "off",
         "useSortedClasses": "off"
       }
+      
     }
   },
   "assist": {

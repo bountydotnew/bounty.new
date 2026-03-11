@@ -1,12 +1,49 @@
 'use client';
 
 import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useReducer } from 'react';
 
 interface CollapsibleTextProps {
   children: React.ReactNode;
   collapsedHeight?: number;
   buttonLabel?: string;
+}
+
+type CollapseState = {
+  isCollapsible: boolean;
+  expanded: boolean;
+  maxHeight: number | null;
+};
+
+type CollapseAction =
+  | { type: 'RESET' }
+  | { type: 'SET_COLLAPSIBLE'; maxHeight: number }
+  | { type: 'SET_NOT_COLLAPSIBLE' }
+  | { type: 'EXPAND'; fullHeight: number }
+  | { type: 'CLEAR_MAX_HEIGHT' };
+
+function collapseReducer(
+  state: CollapseState,
+  action: CollapseAction
+): CollapseState {
+  switch (action.type) {
+    case 'RESET':
+      return { isCollapsible: false, expanded: true, maxHeight: null };
+    case 'SET_COLLAPSIBLE':
+      return {
+        isCollapsible: true,
+        expanded: false,
+        maxHeight: action.maxHeight,
+      };
+    case 'SET_NOT_COLLAPSIBLE':
+      return { isCollapsible: false, expanded: true, maxHeight: null };
+    case 'EXPAND':
+      return { ...state, expanded: true, maxHeight: action.fullHeight };
+    case 'CLEAR_MAX_HEIGHT':
+      return { ...state, maxHeight: null };
+    default:
+      return state;
+  }
 }
 
 export default function CollapsibleText({
@@ -16,15 +53,15 @@ export default function CollapsibleText({
 }: CollapsibleTextProps) {
   const isMobile = useMediaQuery('(max-width: 1280px)');
   const contentRef = useRef<HTMLDivElement | null>(null);
-  const [isCollapsible, setIsCollapsible] = useState(false);
-  const [expanded, setExpanded] = useState(false);
-  const [maxHeight, setMaxHeight] = useState<number | null>(null);
+  const [collapseState, dispatch] = useReducer(collapseReducer, {
+    isCollapsible: false,
+    expanded: false,
+    maxHeight: null,
+  });
 
   useEffect(() => {
     if (!isMobile) {
-      setIsCollapsible(false);
-      setExpanded(true);
-      setMaxHeight(null);
+      dispatch({ type: 'RESET' });
       return;
     }
     const el = contentRef.current;
@@ -33,13 +70,9 @@ export default function CollapsibleText({
     }
     const full = el.scrollHeight;
     if (full > collapsedHeight) {
-      setIsCollapsible(true);
-      setExpanded(false);
-      setMaxHeight(collapsedHeight);
+      dispatch({ type: 'SET_COLLAPSIBLE', maxHeight: collapsedHeight });
     } else {
-      setIsCollapsible(false);
-      setExpanded(true);
-      setMaxHeight(null);
+      dispatch({ type: 'SET_NOT_COLLAPSIBLE' });
     }
   }, [isMobile, collapsedHeight]);
 
@@ -49,9 +82,8 @@ export default function CollapsibleText({
       return;
     }
     const full = el.scrollHeight;
-    setExpanded(true);
-    setMaxHeight(full);
-    window.setTimeout(() => setMaxHeight(null), 320);
+    dispatch({ type: 'EXPAND', fullHeight: full });
+    window.setTimeout(() => dispatch({ type: 'CLEAR_MAX_HEIGHT' }), 320);
   };
 
   return (
@@ -60,12 +92,17 @@ export default function CollapsibleText({
         className={
           'overflow-hidden transition-[max-height] duration-300 ease-out'
         }
-        style={{ maxHeight: maxHeight === null ? undefined : maxHeight }}
+        style={{
+          maxHeight:
+            collapseState.maxHeight === null
+              ? undefined
+              : collapseState.maxHeight,
+        }}
       >
         <div ref={contentRef}>{children}</div>
       </div>
 
-      {isCollapsible && !expanded && (
+      {collapseState.isCollapsible && !collapseState.expanded && (
         <>
           <div
             className="pointer-events-none absolute inset-x-0 bottom-0 h-28"
@@ -76,7 +113,7 @@ export default function CollapsibleText({
           />
           <div className="absolute inset-x-0 bottom-4 flex justify-center">
             <button
-              aria-expanded={expanded}
+              aria-expanded={collapseState.expanded}
               className="flex items-center gap-1 rounded-md border border-neutral-700 bg-neutral-800/40 px-2 py-0.5 text-[11px] text-neutral-300 hover:bg-neutral-700/40"
               onClick={handleExpand}
             >

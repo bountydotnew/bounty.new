@@ -1,14 +1,18 @@
-import { stripeClient } from "./client";
+import { stripeClient } from './client';
 
 /**
  * Create a Stripe Connect Express account
  * Express accounts are the simplest to set up and use Stripe's hosted onboarding
  */
-export async function createConnectAccount(email: string, displayName: string) {
+export async function createConnectAccount(
+  email: string,
+  displayName: string,
+  country: string
+) {
   return stripeClient.accounts.create({
-    type: "express",
-    country: "US",
-    email: email,
+    type: 'express',
+    country,
+    email,
     capabilities: {
       card_payments: { requested: true },
       transfers: { requested: true },
@@ -28,8 +32,8 @@ export async function createAccountLink(
   return stripeClient.accountLinks.create({
     account: accountId,
     refresh_url: refreshUrl,
-    return_url: `${returnUrl}?accountId=${accountId}`,
-    type: "account_onboarding",
+    return_url: `${returnUrl}${returnUrl.includes('?') ? '&' : '?'}accountId=${accountId}`,
+    type: 'account_onboarding',
   });
 }
 
@@ -40,18 +44,18 @@ export async function createAccountLink(
 export async function getConnectAccountStatus(accountId: string) {
   const account = await stripeClient.accounts.retrieve(accountId);
 
-  const cardPaymentsActive =
-    account.capabilities?.card_payments === "active";
-  const transfersActive =
-    account.capabilities?.transfers === "active";
-  
+  const cardPaymentsActive = account.capabilities?.card_payments === 'active';
+  const transfersActive = account.capabilities?.transfers === 'active';
+
   // Check if onboarding is complete
   // For Express accounts, check if charges_enabled, details_submitted, and payouts_enabled
   // Also check that there are no pending requirements
   const hasNoPendingRequirements =
-    (!account.requirements?.currently_due || account.requirements.currently_due.length === 0) &&
-    (!account.requirements?.past_due || account.requirements.past_due.length === 0);
-  
+    (!account.requirements?.currently_due ||
+      account.requirements.currently_due.length === 0) &&
+    (!account.requirements?.past_due ||
+      account.requirements.past_due.length === 0);
+
   const onboardingComplete =
     account.details_submitted === true &&
     account.charges_enabled === true &&
@@ -59,8 +63,8 @@ export async function getConnectAccountStatus(accountId: string) {
     hasNoPendingRequirements;
 
   return {
-    cardPaymentsActive: cardPaymentsActive || false,
-    transfersActive: transfersActive || false,
+    cardPaymentsActive,
+    transfersActive,
     onboardingComplete,
     account,
   };
@@ -84,7 +88,20 @@ export async function createConnectAccountLink(params: {
   returnUrl: string;
   refreshUrl: string;
 }) {
-  return createAccountLink(params.accountId, params.returnUrl, params.refreshUrl);
+  return createAccountLink(
+    params.accountId,
+    params.returnUrl,
+    params.refreshUrl
+  );
+}
+
+/**
+ * Delete a Stripe Connect account.
+ * In test mode this fully deletes the account.
+ * In live mode Stripe rejects the account (cannot be deleted via API).
+ */
+export async function deleteConnectAccount(accountId: string) {
+  return stripeClient.accounts.del(accountId);
 }
 
 /**
@@ -107,9 +124,10 @@ export async function getConnectAccountBalance(accountId: string) {
       currency: b.currency,
       sourceTypes: b.source_types,
     })),
-    connectReserved: balance.connect_reserved?.map((b) => ({
-      amount: b.amount,
-      currency: b.currency,
-    })) || [],
+    connectReserved:
+      balance.connect_reserved?.map((b) => ({
+        amount: b.amount,
+        currency: b.currency,
+      })) || [],
   };
 }

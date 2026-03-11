@@ -1,4 +1,4 @@
-import { stripeClient } from "./client";
+import { stripeClient } from './client';
 
 /**
  * Calculate total payment amount including Stripe fees
@@ -9,10 +9,14 @@ export function calculateTotalWithFees(bountyAmount: number): {
   fees: number;
   total: number;
 } {
+  if (bountyAmount === 0) {
+    return { bountyAmount: 0, fees: 0, total: 0 };
+  }
+
   // Stripe's fee: 2.9% + $0.30
   const fees = Math.round(bountyAmount * 0.029 + 30);
   const total = bountyAmount + fees;
-  
+
   return {
     bountyAmount,
     fees,
@@ -34,7 +38,7 @@ export async function createPaymentIntent(params: {
     amount: params.amount,
     currency: params.currency.toLowerCase(),
     customer: params.customerId,
-    capture_method: "manual", // Hold funds, don't capture immediately
+    capture_method: 'manual', // Hold funds, don't capture immediately
     metadata: {
       bountyId: params.bountyId,
     },
@@ -50,9 +54,40 @@ export async function capturePayment(paymentIntentId: string) {
 }
 
 /**
+ * Create a $0 invoice for a free bounty (paper trail, no payment collected)
+ */
+export async function createFreeBountyInvoice(params: {
+  bountyId: string;
+  customerId: string;
+  currency: string;
+}) {
+  const invoice = await stripeClient.invoices.create({
+    customer: params.customerId,
+    currency: params.currency.toLowerCase(),
+    auto_advance: true,
+    collection_method: 'charge_automatically',
+    metadata: { bountyId: params.bountyId },
+  });
+
+  // Add a $0 line item
+  await stripeClient.invoiceItems.create({
+    customer: params.customerId,
+    invoice: invoice.id,
+    amount: 0,
+    currency: params.currency.toLowerCase(),
+    description: 'Free bounty creation',
+  });
+
+  // Finalize and auto-pay the $0 invoice
+  const finalized = await stripeClient.invoices.finalizeInvoice(invoice.id);
+
+  return finalized;
+}
+
+/**
  * Create a Checkout Session for bounty payment
  * Uses Stripe's hosted Checkout page - no custom card input needed
- * 
+ *
  * For marketplace model: Platform collects payment, will transfer to solver later
  */
 export async function createBountyCheckoutSession(params: {
@@ -68,7 +103,7 @@ export async function createBountyCheckoutSession(params: {
 
   // Create Checkout Session - Stripe handles all payment UI
   return stripeClient.checkout.sessions.create({
-    mode: "payment",
+    mode: 'payment',
     customer: params.customerId,
     line_items: [
       {
@@ -76,8 +111,8 @@ export async function createBountyCheckoutSession(params: {
           currency: params.currency.toLowerCase(),
           unit_amount: params.amount,
           product_data: {
-            name: `Bounty creation deposit`,
-            description: `Upfront bounty creation deposit`,
+            name: 'Bounty creation deposit',
+            description: 'Upfront bounty creation deposit',
           },
         },
         quantity: 1,
@@ -87,15 +122,15 @@ export async function createBountyCheckoutSession(params: {
           currency: params.currency.toLowerCase(),
           unit_amount: params.fees,
           product_data: {
-            name: `Processing Fees`,
-            description: `Stripe processing fees (2.9% + $0.30)`,
+            name: 'Processing Fees',
+            description: 'Stripe processing fees (2.9% + $0.30)',
           },
         },
         quantity: 1,
       },
     ],
     payment_intent_data: {
-      capture_method: "automatic", // Capture immediately - funds held in platform account
+      capture_method: 'automatic', // Capture immediately - funds held in platform account
       metadata: { bountyId: params.bountyId },
     },
     metadata: {
@@ -116,15 +151,25 @@ export async function transferToSolver(params: {
   bountyId: string;
   applicationFee: number; // Application fee in cents
 }) {
+  if (params.amount === 0) {
+    return {
+      id: 'free_bounty',
+      amount: 0,
+      currency: 'usd',
+      destination: params.connectAccountId,
+      metadata: { bountyId: params.bountyId },
+    } as any;
+  }
+
   const netAmount = params.amount - params.applicationFee;
 
   if (netAmount <= 0) {
-    throw new Error("Net amount after application fee must be positive");
+    throw new Error('Net amount after application fee must be positive');
   }
 
   return stripeClient.transfers.create({
     amount: netAmount,
-    currency: "usd",
+    currency: 'usd',
     destination: params.connectAccountId,
     metadata: { bountyId: params.bountyId },
   });
@@ -138,20 +183,29 @@ export async function createTransfer(params: {
   amount: number; // Amount in cents
   connectAccountId: string; // Solver's Connect account ID
   bountyId: string;
+  idempotencyKey?: string;
 }) {
-  return stripeClient.transfers.create({
-    amount: params.amount,
-    currency: "usd",
-    destination: params.connectAccountId,
-    metadata: { bountyId: params.bountyId },
-  });
+  return stripeClient.transfers.create(
+    {
+      amount: params.amount,
+      currency: 'usd',
+      destination: params.connectAccountId,
+      metadata: { bountyId: params.bountyId },
+    },
+    params.idempotencyKey
+      ? { idempotencyKey: params.idempotencyKey }
+      : undefined
+  );
 }
 
 /**
  * Refund a payment intent (for cancelled bounties)
+ * @param paymentIntentId - The Stripe payment intent ID to refund
+ * @param amountInCents - Optional partial refund amount in cents. If omitted, full refund is issued.
  */
-export async function refundPayment(paymentIntentId: string) {
+export async function refundPayment(paymentIntentId: string, amountInCents?: number) {
   return stripeClient.refunds.create({
     payment_intent: paymentIntentId,
+    ...(amountInCents != null && amountInCents > 0 ? { amount: amountInCents } : {}),
   });
 }

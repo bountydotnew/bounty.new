@@ -77,6 +77,8 @@ export function parseNumber(num: string): number {
 
 /**
  * Format large numbers with M+ suffix for millions
+ * Shows whole numbers for exact round thousands (e.g., 1000 → "1,000", 10000 → "10,000")
+ * Uses K/k suffix for non-round thousands (e.g., 1200 → "1.2k")
  */
 export function formatLargeNumber(num: number): string {
   if (num >= 1_000_000_000_000) {
@@ -98,10 +100,15 @@ export function formatLargeNumber(num: number): string {
       : `${(millions).toFixed(1)}M`;
   }
   if (num >= 1000) {
+    // Show full number for exact thousands (e.g., 1000, 10000)
+    // Use K suffix for non-round numbers (e.g., 1200 → 1.2k)
+    if (num % 1000 === 0) {
+      return num.toLocaleString('en-US');
+    }
     const thousands = num / 1000;
     return thousands >= 10
-      ? `${Math.floor(thousands)}K`
-      : `${(thousands).toFixed(1)}K`;
+      ? `${Math.floor(thousands)}k`
+      : `${thousands.toFixed(1)}k`;
   }
   return num.toLocaleString('en-US');
 }
@@ -227,6 +234,51 @@ export function formatPriceString(price: string | null | undefined): string {
 }
 
 /**
+ * Format relative time from a date string (e.g., "3m ago", "2h ago", "5d ago")
+ */
+export function formatRelativeTime(date: string | Date): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const now = new Date();
+  const diffMs = now.getTime() - dateObj.getTime();
+  const diffMins = Math.floor(diffMs / 60_000);
+  const diffHours = Math.floor(diffMs / 3_600_000);
+  const diffDays = Math.floor(diffMs / 86_400_000);
+
+  if (diffMins < 1) {
+    return 'Just now';
+  }
+  if (diffMins < 60) {
+    return `${diffMins}m ago`;
+  }
+  if (diffHours < 24) {
+    return `${diffHours}h ago`;
+  }
+  if (diffDays < 7) {
+    return `${diffDays}d ago`;
+  }
+  return dateObj.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+/**
+ * Format amount with 2 decimal places and currency symbol (e.g., "$1,250.00")
+ */
+export function formatAmount(
+  amount: string | number,
+  currency = 'USD'
+): string {
+  const num = typeof amount === 'string' ? Number.parseFloat(amount) : amount;
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(num);
+}
+
+/**
  * GitHub helper utilities
  * These are helper functions for GitHub-related operations.
  * For GitHub API functions, see @bounty/api/driver/github
@@ -234,6 +286,32 @@ export function formatPriceString(price: string | null | undefined): string {
 
 // Regex for extracting owner/repo from GitHub URLs
 export const GITHUB_URL_REGEX = /github\.com\/([^/]+)\/([^/]+)/;
+export const GITHUB_ISSUE_URL_REGEX =
+  /github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/i;
+
+/**
+ * Convert number to formatted string with commas (e.g., 1500 -> "1,500", 1500.50 -> "1,500.50")
+ */
+export function stringifyValue(value: number): string {
+  // Only show decimals if the value has them
+  if (Number.isInteger(value)) {
+    return value.toLocaleString('en-US');
+  }
+  return value.toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+}
+
+/**
+ * Parse user input for currency/number values
+ * Handles "1,500", "1500", "$1,500", "1,500.50", etc.
+ */
+export function parseInputValue(input: string): number {
+  const cleaned = input.replace(/[$,\s]/g, '');
+  const parsed = Number.parseFloat(cleaned);
+  return Number.isNaN(parsed) ? 0 : Math.max(0, parsed);
+}
 
 /**
  * Helper to extract owner/repo from repo string (format: "owner/repo")

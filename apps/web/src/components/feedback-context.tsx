@@ -2,92 +2,46 @@
 
 import type React from 'react';
 import { createContext, useContext, useState, useCallback } from 'react';
+import type { ReactGrabElementContext } from 'react-grab/primitives';
 
 /**
  * Configuration options for the Feedback system.
  */
-export interface FeedbackConfig {
-  /**
-   * The API endpoint to submit feedback to.
-   * @default "/api/feedback"
-   */
+interface FeedbackConfig {
   apiEndpoint?: string;
-  /**
-   * Additional metadata to send with every feedback report (e.g. user ID, version).
-   */
   metadata?: Record<string, string>;
-  /**
-   * Custom UI configuration for the modal and overlay.
-   */
   ui?: {
-    /**
-     * Title of the feedback modal.
-     * @default "Send Feedback"
-     */
     title?: string;
-    /**
-     * Placeholder text for the comment textarea.
-     * @default "What seems to be the problem?"
-     */
     placeholder?: string;
-    /**
-     * Label for the submit button.
-     * @default "Send Feedback"
-     */
     submitLabel?: string;
-    /**
-     * Label for the cancel button.
-     * @default "Cancel"
-     */
     cancelLabel?: string;
-    /**
-     * Custom z-index for the modal and overlay.
-     * Useful if the modal is hidden behind other elements.
-     * @default 10000
-     */
     zIndex?: number;
-    /**
-     * Custom colors for the UI.
-     */
     colors?: {
-      /**
-       * Primary color used for buttons and selection highlights.
-       * @default "#E66700" (Orange)
-       */
       primary?: string;
     };
   };
-  /**
-   * Callback fired when feedback is successfully submitted.
-   */
   onFeedbackSubmit?: (data: Record<string, string>) => void;
-  /**
-   * Callback fired when the modal is opened.
-   */
   onOpen?: () => void;
-  /**
-   * Callback fired when the modal is closed.
-   */
   onClose?: () => void;
 }
 
 interface FeedbackContextType {
   /** Whether the feedback modal is currently open */
   isFeedbackOpen: boolean;
-  /** Whether the user is currently in "selection mode" (hovering to pick an element) */
+  /** Whether the user is currently in "selection mode" */
   isSelecting: boolean;
-  /** The DOM element selected by the user, if any */
-  selectedElement: HTMLElement | null;
+  /** Rich element context from react-grab, if an element was selected */
+  elementContext: ReactGrabElementContext | null;
   /** Opens the feedback modal directly, skipping selection */
   openFeedback: () => void;
   /** Closes the feedback modal and resets state */
   closeFeedback: () => void;
-  /** Enters selection mode, allowing the user to click an element */
+  /** Enters selection mode */
   startSelection: () => void;
   /** Cancels selection mode without opening the modal */
   cancelSelection: () => void;
-  /** Programmatically selects an element and opens the modal */
-  selectElement: (element: HTMLElement) => void;
+  /** Sets the selected element context and opens the modal */
+  selectElement: (context: ReactGrabElementContext) => void;
   /** Current configuration object */
   config: FeedbackConfig;
 }
@@ -96,23 +50,19 @@ const FeedbackContext = createContext<FeedbackContextType | undefined>(
   undefined
 );
 
-/**
- * Provider component for the Feedback system.
- * Wrap your application root with this to enable feedback functionality.
- */
+const EMPTY_CONFIG: FeedbackConfig = {};
+
 export function FeedbackProvider({
   children,
-  config = {},
+  config = EMPTY_CONFIG,
 }: {
   children: React.ReactNode;
-  /** Optional configuration settings */
   config?: FeedbackConfig;
 }) {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isSelecting, setIsSelecting] = useState(false);
-  const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(
-    null
-  );
+  const [elementContext, setElementContext] =
+    useState<ReactGrabElementContext | null>(null);
 
   const openFeedback = useCallback(() => {
     setIsFeedbackOpen(true);
@@ -122,7 +72,7 @@ export function FeedbackProvider({
 
   const closeFeedback = useCallback(() => {
     setIsFeedbackOpen(false);
-    setSelectedElement(null);
+    setElementContext(null);
     setIsSelecting(false);
     config.onClose?.();
   }, [config]);
@@ -137,8 +87,8 @@ export function FeedbackProvider({
   }, []);
 
   const selectElement = useCallback(
-    (element: HTMLElement) => {
-      setSelectedElement(element);
+    (context: ReactGrabElementContext) => {
+      setElementContext(context);
       setIsSelecting(false);
       setIsFeedbackOpen(true);
       config.onOpen?.();
@@ -151,7 +101,7 @@ export function FeedbackProvider({
       value={{
         isFeedbackOpen,
         isSelecting,
-        selectedElement,
+        elementContext,
         openFeedback,
         closeFeedback,
         startSelection,
@@ -165,11 +115,6 @@ export function FeedbackProvider({
   );
 }
 
-/**
- * Hook to interact with the Feedback system.
- * @returns {FeedbackContextType} The feedback context interface
- * @throws {Error} If used outside of a FeedbackProvider
- */
 export function useFeedback() {
   const context = useContext(FeedbackContext);
   if (context === undefined) {

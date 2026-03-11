@@ -27,3 +27,12 @@ docs/STRIPE_WEBHOOK_SETUP.md
 *.pem
 /.cursor
 /.opencode
+/tasks
+/testing
+/launch-video
+/bugs
+task-*.md
+tasks.md
+/pencil
+*.pen
+*.txt

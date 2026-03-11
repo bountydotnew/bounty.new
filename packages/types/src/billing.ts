@@ -79,6 +79,7 @@ export { AUTUMN_FEATURE_IDS } from './autumn';
 // Re-export pricing utilities
 export {
   PRICING_TIERS,
+  getPlanFeatures,
   calculateBountyCost,
   getRecommendedPlan,
   formatFeePercent,

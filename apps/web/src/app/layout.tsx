@@ -24,18 +24,18 @@ const interDisplay = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL('https://bounty.new'),
   title: {
-    default: 'bounty',
-    template: '%s | bounty',
+    default: 'bounty.new',
+    template: '%s | bounty.new',
   },
   description: 'Ship faster. Get paid instantly.',
   icons: {
-    icon: '/favicon/favicon_dark.png.png',
-    apple: '/favicon/favicon_dark.png.png',
+    icon: '/favicon/favicon_dark.png',
+    apple: '/favicon/favicon_dark.png',
   },
   openGraph: {
     title: {
-      default: 'bounty',
-      template: '%s | bounty',
+      default: 'bounty.new',
+      template: '%s | bounty.new',
     },
     description: 'Ship faster. Get paid instantly.',
     url: 'https://bounty.new',
@@ -87,6 +87,11 @@ export default function RootLayout({
               src="//unpkg.com/@react-grab/cursor/dist/client.global.js"
               strategy="lazyOnload"
             />
+            <Script
+              async
+              crossOrigin="anonymous"
+              src="https://tweakcn.com/live-preview.min.js"
+            />
           </>
         )}
       </head>
@@ -95,8 +100,8 @@ export default function RootLayout({
       >
         <NuqsAdapter>
           <Providers>
-            <script
-              async
+            <Script
+              strategy='afterInteractive'
               data-toolbar-api-key="4570028d-502a-49d8-9435-ce0fc1569093"
               id="toolbar-script"
               src="https://get.usetool.bar/embedded-app.js"

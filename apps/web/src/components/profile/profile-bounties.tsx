@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { trpc } from '@/utils/trpc';
-import { BountyCard } from '@/components/bounty/bounty-card';
+import { StandardBountyCard } from '@/components/bounty/bounty-card';
 import { Spinner } from '@bounty/ui';
 import type { Bounty } from '@/types/dashboard';
 import { EmptyState } from './empty-state';
@@ -32,7 +32,7 @@ export function ProfileBounties({ userId }: ProfileBountiesProps) {
   return (
     <div className="flex flex-col gap-4">
       {bountiesData.data.map((bounty: Bounty) => (
-        <BountyCard key={bounty.id} bounty={bounty} />
+        <StandardBountyCard key={bounty.id} bounty={bounty} />
       ))}
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import type { AuthGuardProps } from '@bounty/types';
 import { useSession } from '@/context/session-context';
 
@@ -27,14 +27,9 @@ export function AuthGuard({
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated, isPending } = useSession();
-  const [hasRedirected, setHasRedirected] = useState(false);
+  const hasRedirectedRef = useRef(false);
 
   useEffect(() => {
-    // Only redirect client-side to avoid hydration issues
-    if (typeof window === 'undefined') {
-      return;
-    }
-
     if (isPending) {
       return;
     }
@@ -47,11 +42,11 @@ export function AuthGuard({
       return;
     }
 
-    if (hasRedirected) {
+    if (hasRedirectedRef.current) {
       return;
     }
 
-    setHasRedirected(true);
+    hasRedirectedRef.current = true;
     const callbackUrl = encodeURIComponent(pathname);
     const loginUrl = redirectTo || `/login?callback=${callbackUrl}`;
     router.push(loginUrl);
@@ -62,7 +57,6 @@ export function AuthGuard({
     redirectTo,
     redirectOnMount,
     router,
-    hasRedirected,
   ]);
 
   // Show nothing while loading - let page handle its own loading state

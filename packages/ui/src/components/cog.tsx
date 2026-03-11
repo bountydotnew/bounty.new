@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@bounty/ui/lib/utils';
-import { motion, useAnimation } from 'motion/react';
+import { m, useAnimation } from 'motion/react';
 import type { HTMLAttributes } from 'react';
 import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
 
@@ -56,7 +56,7 @@ const CogIcon = forwardRef<CogIconHandle, CogIconProps>(
         onMouseLeave={handleMouseLeave}
         {...props}
       >
-        <motion.svg
+        <m.svg
           animate={controls}
           fill="none"
           height={size}
@@ -91,7 +91,7 @@ const CogIcon = forwardRef<CogIconHandle, CogIconProps>(
           <path d="m3.34 17 1.73-1" />
           <path d="m17 3.34-1 1.73" />
           <path d="m11 13.73-4 6.93" />
-        </motion.svg>
+        </m.svg>
       </div>
     );
   }

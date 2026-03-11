@@ -18,7 +18,7 @@ export function BlogPageContent({
   activeCategory,
 }: BlogPageContentProps) {
   return (
-    <div className="flex min-h-screen flex-col bg-[#0a0a0a] text-white">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       <Header />
 
       {/* Section with Cursor-style spacing: pt-32 (v5) + px-8 (g2) */}
@@ -26,7 +26,7 @@ export function BlogPageContent({
         <div className="mx-auto max-w-6xl">
           {/* Title */}
           <div className="mb-12">
-            <h1 className="font-display text-5xl tracking-tight text-[#efefef]">
+            <h1 className="font-display text-5xl tracking-tight text-foreground">
               Blog
             </h1>
           </div>
@@ -42,8 +42,8 @@ export function BlogPageContent({
                       href="/blog"
                       className={`block py-1.5 text-[15px] capitalize transition-colors duration-150 ${
                         activeCategory
-                          ? 'text-[#666] hover:text-[#efefef]'
-                          : 'text-[#efefef]'
+                          ? 'text-text-muted hover:text-foreground'
+                          : 'text-foreground'
                       }`}
                     >
                       all posts
@@ -55,8 +55,8 @@ export function BlogPageContent({
                         href={`/topic/${category.slug}`}
                         className={`block py-1.5 text-[15px] capitalize transition-colors duration-150 ${
                           activeCategory === category.slug
-                            ? 'text-[#efefef]'
-                            : 'text-[#666] hover:text-[#efefef]'
+                            ? 'text-foreground'
+                            : 'text-text-muted hover:text-foreground'
                         }`}
                       >
                         {category.name}
@@ -71,22 +71,22 @@ export function BlogPageContent({
             <div className="flex flex-col gap-4">
               {posts.length === 0 ? (
                 <div className="py-32 text-center">
-                  <p className="text-[#666]">No posts yet. Check back soon.</p>
+                  <p className="text-text-muted">No posts yet. Check back soon.</p>
                 </div>
               ) : (
                 posts.map((post) => (
                   <article key={post.id} className="group">
                     <Link
                       href={`/blog/${post.slug}`}
-                      className="block rounded-xl border border-transparent bg-[#0E0E0E] px-6 py-5 transition-all duration-200 hover:border-[#222] hover:bg-[#111]"
+                      className="block rounded-xl border border-transparent bg-background px-6 py-5 transition-all duration-200 hover:border-border-subtle hover:bg-background"
                     >
-                      <h3 className="mb-1.5 text-[15px] font-medium text-[#efefef] transition-colors duration-200 group-hover:text-white">
+                      <h3 className="mb-1.5 text-[15px] font-medium text-foreground transition-colors duration-200 group-hover:text-foreground">
                         {post.title}
                       </h3>
-                      <p className="mb-4 line-clamp-2 text-[15px] leading-relaxed text-[#888]">
+                      <p className="mb-4 line-clamp-2 text-[15px] leading-relaxed text-text-muted">
                         {post.description}
                       </p>
-                      <div className="flex items-center gap-1.5 text-[14px] text-[#666]">
+                      <div className="flex items-center gap-1.5 text-[14px] text-text-muted">
                         {post.category && (
                           <>
                             <span className="capitalize">

@@ -32,12 +32,12 @@ export function SmartNavigation() {
     <div className="my-6 flex items-center justify-between">
       {/* Smart Back Button */}
       <Button
-        className="flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-white dark:text-black"
+        className="flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-3 text-primary-foreground"
         onClick={handleBack}
         size="sm"
         variant="default"
       >
-        <ArrowLeft className="h-4 w-4 text-white dark:text-black" />
+        <ArrowLeft className="h-4 w-4 text-primary-foreground" />
         <span className="hidden sm:inline">Back to {context.backLabel}</span>
         <span className="sm:hidden">Back</span>
       </Button>

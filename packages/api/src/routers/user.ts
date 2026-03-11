@@ -3,11 +3,13 @@ import type {
   AdminUserStatsResponse,
 } from '@bounty/types';
 import {
+  account,
   bounty,
   bountyComment,
   db,
   invite,
   session,
+  submission,
   user,
   userProfile,
   userReputation,
@@ -300,6 +302,18 @@ export const userRouter = router({
   getMe: protectedProcedure.query(async ({ ctx }) => {
     const userData = await ctx.db.query.user.findFirst({
       where: (user, { eq }) => eq(user.id, ctx.session.user.id),
+      columns: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        handle: true,
+        isProfilePrivate: true,
+        role: true,
+        cardBackground: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     if (!userData) {
@@ -429,9 +443,7 @@ export const userRouter = router({
 
       const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
 
-      await ctx.db
-        .insert(invite)
-        .values({ email, tokenHash, expiresAt });
+      await ctx.db.insert(invite).values({ email, tokenHash, expiresAt });
 
       const baseUrl =
         env.BETTER_AUTH_URL?.replace(TRAILING_SLASH_REGEX, '') ||
@@ -597,11 +609,43 @@ export const userRouter = router({
       }
     }),
 
+  updateCardBackground: protectedProcedure
+    .input(
+      z.object({
+        cardBackground: z.string().optional(), // undefined/null resets to default
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await ctx.db
+          .update(user)
+          .set({
+            cardBackground: input.cardBackground ?? null,
+            updatedAt: new Date(),
+          })
+          .where(eq(user.id, ctx.session.user.id));
+
+        // Invalidate user cache
+        currentUserCache.delete(ctx.session.user.id);
+
+        return {
+          success: true,
+          cardBackground: input.cardBackground ?? null,
+        };
+      } catch (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to update card background',
+          cause: error,
+        });
+      }
+    }),
+
   searchCreators: protectedProcedure
     .input(z.object({ query: z.string().min(1) }))
     .query(async ({ input }) => {
       const searchTerm = `%${input.query}%`;
-      
+
       const results = await db
         .select({
           id: user.id,
@@ -666,11 +710,48 @@ export const userRouter = router({
         .orderBy(desc(bountyComment.createdAt))
         .limit(input.limit);
 
+      const recentSubmissions = await db
+        .select({
+          type: sql<string>`'submission_created'`,
+          id: submission.id,
+          title: bounty.title,
+          createdAt: submission.createdAt,
+          data: {
+            bountyId: bounty.id,
+            amount: bounty.amount,
+            currency: bounty.currency,
+          },
+        })
+        .from(submission)
+        .innerJoin(bounty, eq(submission.bountyId, bounty.id))
+        .where(eq(submission.contributorId, input.userId))
+        .orderBy(desc(submission.createdAt))
+        .limit(input.limit);
+
       // Combine and sort
-      const activity = [...recentBounties, ...recentComments]
+      const activity = [
+        ...recentBounties,
+        ...recentComments,
+        ...recentSubmissions,
+      ]
         .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
         .slice(0, input.limit);
 
       return activity;
     }),
+
+  getLinkedAccounts: protectedProcedure.query(async ({ ctx }) => {
+    const accounts = await ctx.db.query.account.findMany({
+      where: (account, { eq }) => eq(account.userId, ctx.session.user.id),
+      columns: {
+        providerId: true,
+        accountId: true,
+      },
+    });
+
+    return {
+      success: true,
+      accounts,
+    };
+  }),
 });

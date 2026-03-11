@@ -1,7 +1,7 @@
 'use client';
 
 import { formatDistanceToNow } from 'date-fns';
-import { PlusCircleIcon } from 'lucide-react';
+import { GitPullRequestIcon, PlusCircleIcon } from 'lucide-react';
 import Link from 'next/link';
 import type { ActivityItem } from '@bounty/types';
 import { CommentsIcon } from '@bounty/ui';
@@ -13,8 +13,8 @@ interface ActivityListProps {
 export function ActivityList({ activities }: ActivityListProps) {
   if (activities.length === 0) {
     return (
-      <div className="flex h-32 items-center justify-center rounded-xl border border-[#232323] border-dashed bg-[#191919]/50">
-        <p className="text-sm text-[#5A5A5A]">No recent activity</p>
+      <div className="flex h-32 items-center justify-center rounded-xl border border-border-subtle border-dashed bg-surface-1/50">
+        <p className="text-sm text-text-tertiary">No recent activity</p>
       </div>
     );
   }
@@ -22,33 +22,42 @@ export function ActivityList({ activities }: ActivityListProps) {
   return (
     <div className="flex flex-col gap-4">
       {activities.map((activity) => {
-        const isBounty = activity.type === 'bounty_created';
+        const icon =
+          activity.type === 'bounty_created' ? (
+            <PlusCircleIcon className="h-5 w-5" />
+          ) : activity.type === 'submission_created' ? (
+            <GitPullRequestIcon className="h-5 w-5" />
+          ) : (
+            <CommentsIcon className="h-5 w-5" />
+          );
+
+        const label =
+          activity.type === 'bounty_created'
+            ? 'Created a bounty'
+            : activity.type === 'submission_created'
+              ? 'Submitted to'
+              : 'Commented on';
+
+        const href =
+          activity.type === 'bounty_created'
+            ? `/bounty/${activity.id}`
+            : `/bounty/${activity.data.bountyId}`;
 
         return (
           <div
             key={`${activity.type}-${activity.id}`}
-            className="flex gap-4 rounded-xl border border-[#232323] bg-[#191919] p-4 transition-colors hover:bg-[#1F1F1F]"
+            className="flex gap-4 rounded-xl border border-border-subtle bg-surface-1 p-4 transition-colors hover:bg-surface-1"
           >
-            <div
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                isBounty
-                  ? 'bg-transparent text-white'
-                  : 'bg-transparent text-white'
-              }`}
-            >
-              {isBounty ? (
-                <PlusCircleIcon className="h-5 w-5" />
-              ) : (
-                <CommentsIcon className="h-5 w-5" />
-              )}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-foreground">
+              {icon}
             </div>
 
             <div className="flex flex-col gap-1 min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-[#CFCFCF]">
-                  {isBounty ? 'Created a bounty' : 'Commented on'}
+                <span className="text-sm font-medium text-text-secondary">
+                  {label}
                 </span>
-                <span className="text-xs text-[#5A5A5A]">
+                <span className="text-xs text-text-tertiary">
                   {formatDistanceToNow(new Date(activity.createdAt), {
                     addSuffix: true,
                   })}
@@ -56,20 +65,21 @@ export function ActivityList({ activities }: ActivityListProps) {
               </div>
 
               <Link
-                href={`/bounty/${isBounty ? activity.id : activity.data.bountyId}`}
-                className="text-base font-semibold text-white hover:underline truncate"
+                href={href}
+                className="text-base font-semibold text-foreground hover:underline truncate"
               >
                 {activity.title}
               </Link>
 
-              {isBounty ? (
-                <span className="text-sm text-[#5A5A5A]">
+              {activity.type === 'bounty_created' ||
+              activity.type === 'submission_created' ? (
+                <span className="text-sm text-text-tertiary">
                   {Number(activity.data.amount).toLocaleString()}{' '}
                   {activity.data.currency}
                 </span>
               ) : (
-                <p className="text-sm text-[#929292] line-clamp-2">
-                  "{activity.data.content}"
+                <p className="text-sm text-text-tertiary line-clamp-2">
+                  &ldquo;{activity.data.content}&rdquo;
                 </p>
               )}
             </div>

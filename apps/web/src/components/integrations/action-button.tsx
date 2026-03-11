@@ -34,7 +34,7 @@ export function ActionButton({
         type="button"
         onClick={onClick}
         disabled={disabled || loading}
-        className={`h-[29px] w-[29px] rounded-[7px] text-[#888] hover:text-white hover:bg-[#303030] transition-colors flex items-center justify-center disabled:opacity-50 ${className}`}
+        className={`h-[29px] w-[29px] rounded-[7px] text-text-muted hover:text-foreground hover:bg-surface-3 transition-colors flex items-center justify-center disabled:opacity-50 ${className}`}
       >
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : icon}
       </button>
@@ -46,7 +46,7 @@ export function ActionButton({
       type="button"
       onClick={onClick}
       disabled={disabled || loading}
-      className={`h-[29px] px-3 rounded-[7px] bg-[#303030] text-[13px] text-white hover:bg-[#3a3a3a] transition-colors flex items-center gap-1.5 disabled:opacity-50 ${className}`}
+      className={`h-[29px] px-3 rounded-[7px] bg-surface-3 text-[13px] text-foreground hover:bg-surface-3 transition-colors flex items-center gap-1.5 disabled:opacity-50 ${className}`}
     >
       {children}
       {loading ? (
@@ -71,9 +71,11 @@ interface ActionButtonGroupProps {
   dropdownActions?: DropdownAction[];
 }
 
+const EMPTY_DROPDOWN_ACTIONS: DropdownAction[] = [];
+
 export function ActionButtonGroup({
   children,
-  dropdownActions = [],
+  dropdownActions = EMPTY_DROPDOWN_ACTIONS,
 }: ActionButtonGroupProps) {
   return (
     <div className="flex flex-wrap items-center gap-2 pt-2">
@@ -83,22 +85,22 @@ export function ActionButtonGroup({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="h-[29px] w-[29px] rounded-[7px] text-[#888] hover:text-white hover:bg-[#303030] transition-colors flex items-center justify-center"
+              className="h-[29px] w-[29px] rounded-[7px] text-text-muted hover:text-foreground hover:bg-surface-3 transition-colors flex items-center justify-center"
             >
               <MoreVertical className="h-4 w-4" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="bg-[#191919] border-[#2a2a2a]"
+            className="bg-surface-1 border-border-default"
           >
             {dropdownActions.map((action) => (
               <DropdownMenuItem
                 key={action.label}
                 className={
                   action.variant === 'danger'
-                    ? 'text-red-400 focus:text-red-400 focus:bg-[#232323]'
-                    : 'focus:bg-[#232323]'
+                    ? 'text-red-400 focus:text-red-400 focus:bg-surface-3'
+                    : 'focus:bg-surface-3'
                 }
                 onClick={action.onClick}
                 disabled={action.disabled}

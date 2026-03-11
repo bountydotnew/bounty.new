@@ -1,12 +1,10 @@
 'use client';
 
 import { cn } from '@bounty/ui/lib/utils';
-import React from 'react';
+import type React from 'react';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
-import rehypeStringify from 'rehype-stringify';
-import remarkParse from 'remark-parse';
-import remarkRehype from 'remark-rehype';
-import { unified } from 'unified';
 
 type ProseProps = React.HTMLAttributes<HTMLElement> & {
   as?: 'article';
@@ -14,36 +12,8 @@ type ProseProps = React.HTMLAttributes<HTMLElement> & {
   markdown?: string;
 };
 
-async function renderMarkdownToHtml(md: string): Promise<string> {
-  const file = await unified()
-    .use(remarkParse)
-    .use(remarkRehype)
-    .use(rehypeSanitize)
-    .use(rehypeStringify)
-    .process(md);
-  return String(file);
-}
-
 function Prose({ children, html, markdown, className }: ProseProps) {
-  const [rendered, setRendered] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    let active = true;
-    if (markdown) {
-      renderMarkdownToHtml(markdown).then((out) => {
-        if (active) {
-          setRendered(out);
-        }
-      });
-    } else if (html) {
-      setRendered(html);
-    } else {
-      setRendered(null);
-    }
-    return () => {
-      active = false;
-    };
-  }, [markdown, html]);
+  const content = markdown ?? html;
 
   return (
     <article
@@ -52,8 +22,10 @@ function Prose({ children, html, markdown, className }: ProseProps) {
         className
       )}
     >
-      {rendered ? (
-        <div dangerouslySetInnerHTML={{ __html: rendered }} />
+      {content ? (
+        <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+          {content}
+        </ReactMarkdown>
       ) : (
         children
       )}

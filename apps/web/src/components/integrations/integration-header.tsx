@@ -14,17 +14,19 @@ interface IntegrationHeaderProps {
 }
 
 const badgeStyles = {
-  default: 'bg-[#232323] text-[#888]',
+  default: 'bg-surface-3 text-text-muted',
   success: 'bg-green-500/10 text-green-400',
   warning: 'bg-yellow-500/10 text-yellow-400',
   error: 'bg-red-500/10 text-red-400',
 };
 
+const EMPTY_BADGES: Badge[] = [];
+
 export function IntegrationHeader({
   icon,
   title,
   description,
-  badges = [],
+  badges = EMPTY_BADGES,
   actions,
 }: IntegrationHeaderProps) {
   return (
@@ -44,7 +46,7 @@ export function IntegrationHeader({
         </div>
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
-      {description && <p className="text-[#888]">{description}</p>}
+      {description && <p className="text-text-muted">{description}</p>}
     </header>
   );
 }

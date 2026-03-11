@@ -8,22 +8,6 @@ import { OTPVerification, ForgotPassword } from '@bounty/email';
 export const AUTH_CONFIG = {
   baseURL: env.BETTER_AUTH_URL,
   emailFrom: 'Bounty.new <noreply@mail.bounty.new>',
-  trustedOrigins: [
-    'https://bounty.new',
-    'https://www.bounty.new',
-    // Use specific domains instead of wildcard where possible
-    ...(env.NODE_ENV === 'production'
-      ? []
-      : [
-          'http://localhost:3000',
-          'http://localhost:3001',
-          'https://preview.bounty.new',
-          'http://192.168.1.147:3000',
-          'http://100.*.*.*:3000',
-          'http://172.*.*.*:3000',
-          'https://isiah-unsonant-linn.ngrok-free.dev',
-        ]),
-  ] as const,
 
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
@@ -31,6 +15,7 @@ export const AUTH_CONFIG = {
     cookieCache: {
       enabled: true,
       maxAge: 60 * 5, // 5 minutes
+      strategy: 'jwe', // Encrypt cached session data in the cookie
     },
   } as const,
 
@@ -48,9 +33,11 @@ export const AUTH_CONFIG = {
  * Parse allowed device client IDs from env
  */
 export function parseAllowedDeviceClientIds(): string[] {
-  return env.DEVICE_AUTH_ALLOWED_CLIENT_IDS?.split(',')
-    .map((id) => id.trim())
-    .filter(Boolean) ?? [];
+  return (
+    env.DEVICE_AUTH_ALLOWED_CLIENT_IDS?.split(',')
+      .map((id) => id.trim())
+      .filter(Boolean) ?? []
+  );
 }
 
 /**
@@ -129,7 +116,7 @@ export async function sendEmailVerificationEmail(params: {
 export async function sendOTPEmail(params: {
   email: string;
   otp: string;
-  type: 'email-verification' | 'sign-in' | 'forget-password';
+  type: 'email-verification' | 'sign-in' | 'forget-password' | 'change-email';
 }): Promise<void> {
   const { email, otp, type } = params;
   const continueUrl = `${AUTH_CONFIG.baseURL}/sign-up/verify-email-address?email=${encodeURIComponent(email)}`;
@@ -139,7 +126,9 @@ export async function sendOTPEmail(params: {
       ? 'Verify your email address'
       : type === 'sign-in'
         ? 'Sign in to Bounty.new'
-        : 'Reset your password';
+        : type === 'change-email'
+          ? 'Confirm your new email address'
+          : 'Reset your password';
 
   await sendAuthEmail({
     to: email,

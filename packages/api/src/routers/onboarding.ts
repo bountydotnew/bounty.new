@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { protectedProcedure, router } from '../trpc';
-import { onboardingState, onboardingCoupon } from '@bounty/db/src/schema/onboarding';
+import {
+  onboardingState,
+  onboardingCoupon,
+} from '@bounty/db/src/schema/onboarding';
 import { waitlist } from '@bounty/db/src/schema/auth';
 import { user } from '@bounty/db';
 import { eq } from 'drizzle-orm';
@@ -24,6 +27,10 @@ export const onboardingRouter = router({
         completedStep4: false,
         source: null,
         claimedWaitlistDiscount: false,
+        connectedTools: false,
+        setupPayouts: false,
+        createdBounty: false,
+        invitedMember: false,
       };
     }
 
@@ -34,6 +41,10 @@ export const onboardingRouter = router({
       completedStep4: state.completedStep4,
       source: state.source,
       claimedWaitlistDiscount: state.claimedWaitlistDiscount,
+      connectedTools: state.connectedTools,
+      setupPayouts: state.setupPayouts,
+      createdBounty: state.createdBounty,
+      invitedMember: state.invitedMember,
     };
   }),
 
@@ -66,9 +77,11 @@ export const onboardingRouter = router({
    * Complete an onboarding step
    */
   completeStep: protectedProcedure
-    .input(z.object({
-      step: z.number().min(1).max(4),
-    }))
+    .input(
+      z.object({
+        step: z.number().min(1).max(4),
+      })
+    )
     .mutation(async ({ input, ctx }) => {
       const stepField = `completedStep${input.step}` as const;
 
@@ -90,12 +103,10 @@ export const onboardingRouter = router({
           .where(eq(onboardingState.userId, ctx.session.user.id));
       } else {
         // Create new state
-        await ctx.db
-          .insert(onboardingState)
-          .values({
-            userId: ctx.session.user.id,
-            [stepField]: true,
-          });
+        await ctx.db.insert(onboardingState).values({
+          userId: ctx.session.user.id,
+          [stepField]: true,
+        });
       }
 
       return { success: true };
@@ -105,9 +116,11 @@ export const onboardingRouter = router({
    * Save how the user found us (from step 3)
    */
   saveSource: protectedProcedure
-    .input(z.object({
-      source: z.string(),
-    }))
+    .input(
+      z.object({
+        source: z.string(),
+      })
+    )
     .mutation(async ({ input, ctx }) => {
       // Check if state exists
       const [existingState] = await ctx.db
@@ -128,13 +141,11 @@ export const onboardingRouter = router({
           .where(eq(onboardingState.userId, ctx.session.user.id));
       } else {
         // Create new state
-        await ctx.db
-          .insert(onboardingState)
-          .values({
-            userId: ctx.session.user.id,
-            source: input.source,
-            completedStep3: true,
-          });
+        await ctx.db.insert(onboardingState).values({
+          userId: ctx.session.user.id,
+          source: input.source,
+          completedStep3: true,
+        });
       }
 
       return { success: true };
@@ -143,78 +154,110 @@ export const onboardingRouter = router({
   /**
    * Claim waitlist discount and generate coupon code
    */
-  claimWaitlistDiscount: protectedProcedure
-    .mutation(async ({ ctx }) => {
-      // Check if user has already claimed
-      const [existingCoupon] = await ctx.db
-        .select()
-        .from(onboardingCoupon)
-        .where(eq(onboardingCoupon.userId, ctx.session.user.id))
-        .limit(1);
+  claimWaitlistDiscount: protectedProcedure.mutation(async ({ ctx }) => {
+    // Check if user has already claimed
+    const [existingCoupon] = await ctx.db
+      .select()
+      .from(onboardingCoupon)
+      .where(eq(onboardingCoupon.userId, ctx.session.user.id))
+      .limit(1);
 
-      if (existingCoupon) {
-        return {
-          success: true,
-          code: existingCoupon.code,
-          alreadyClaimed: true,
-        };
-      }
-
-      // Generate coupon code (20% off Pro plan)
-      const code = `WELCOME20-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-
-      // Create coupon
-      await ctx.db
-        .insert(onboardingCoupon)
-        .values({
-          userId: ctx.session.user.id,
-          code,
-          // Expires in 30 days
-          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        });
-
-      // Update onboarding state
-      const [existingState] = await ctx.db
-        .select()
-        .from(onboardingState)
-        .where(eq(onboardingState.userId, ctx.session.user.id))
-        .limit(1);
-
-      if (existingState) {
-        await ctx.db
-          .update(onboardingState)
-          .set({
-            claimedWaitlistDiscount: true,
-            completedStep1: true,
-            updatedAt: new Date(),
-          })
-          .where(eq(onboardingState.userId, ctx.session.user.id));
-      } else {
-        await ctx.db
-          .insert(onboardingState)
-          .values({
-            userId: ctx.session.user.id,
-            claimedWaitlistDiscount: true,
-            completedStep1: true,
-          });
-      }
-
+    if (existingCoupon) {
       return {
         success: true,
-        code,
-        alreadyClaimed: false,
+        code: existingCoupon.code,
+        alreadyClaimed: true,
       };
+    }
+
+    // Generate coupon code (20% off Pro plan)
+    const code = `WELCOME20-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+    // Create coupon
+    await ctx.db.insert(onboardingCoupon).values({
+      userId: ctx.session.user.id,
+      code,
+      // Expires in 30 days
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    });
+
+    // Update onboarding state
+    const [existingState] = await ctx.db
+      .select()
+      .from(onboardingState)
+      .where(eq(onboardingState.userId, ctx.session.user.id))
+      .limit(1);
+
+    if (existingState) {
+      await ctx.db
+        .update(onboardingState)
+        .set({
+          claimedWaitlistDiscount: true,
+          completedStep1: true,
+          updatedAt: new Date(),
+        })
+        .where(eq(onboardingState.userId, ctx.session.user.id));
+    } else {
+      await ctx.db.insert(onboardingState).values({
+        userId: ctx.session.user.id,
+        claimedWaitlistDiscount: true,
+        completedStep1: true,
+      });
+    }
+
+    return {
+      success: true,
+      code,
+      alreadyClaimed: false,
+    };
+  }),
+
+  /**
+   * Mark a Getting Started checklist task as complete
+   */
+  completeGettingStartedTask: protectedProcedure
+    .input(
+      z.object({
+        task: z.enum(['tools', 'payouts', 'bounty', 'member']),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const fieldMap = {
+        tools: 'connectedTools',
+        payouts: 'setupPayouts',
+        bounty: 'createdBounty',
+        member: 'invitedMember',
+      } as const;
+
+      const field = fieldMap[input.task];
+      const now = new Date();
+
+      await ctx.db
+        .insert(onboardingState)
+        .values({
+          userId: ctx.session.user.id,
+          [field]: true,
+          updatedAt: now,
+        })
+        .onConflictDoUpdate({
+          target: onboardingState.userId,
+          set: {
+            [field]: true,
+            updatedAt: now,
+          },
+        });
+
+      return { success: true };
     }),
 
   /**
    * Reset onboarding - allows user to go through onboarding again
    */
-  resetOnboarding: protectedProcedure
-    .mutation(async ({ ctx }) => {
-      await ctx.db
-        .delete(onboardingState)
-        .where(eq(onboardingState.userId, ctx.session.user.id));
+  resetOnboarding: protectedProcedure.mutation(async ({ ctx }) => {
+    await ctx.db
+      .delete(onboardingState)
+      .where(eq(onboardingState.userId, ctx.session.user.id));
 
-      return { success: true };
-    }),
+    return { success: true };
+  }),
 });

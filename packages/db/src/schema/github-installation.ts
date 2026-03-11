@@ -25,6 +25,8 @@ export const githubInstallation = pgTable(
     accountAvatarUrl: text('account_avatar_url'),
     isDefault: boolean('is_default').notNull().default(false),
     suspendedAt: timestamp('suspended_at'),
+    // Organization scoping
+    organizationId: text('organization_id'),
     createdAt: timestamp('created_at').notNull().default(sql`now()`),
     updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
   },

@@ -22,15 +22,21 @@
     }
   },
   "dependencies": {
-    "better-auth": "catalog:",
+    "@better-auth/infra": "^0.1.8",
     "@better-auth/passkey": "catalog:",
     "@bounty/db": "workspace:*",
     "@bounty/email": "workspace:*",
-    "@bounty/types": "workspace:*",
     "@bounty/env": "workspace:*",
+    "@bounty/types": "workspace:*",
     "@octokit/core": "catalog:",
     "@octokit/plugin-rest-endpoint-methods": "catalog:",
-    "drizzle-orm": "catalog:"
+    "better-auth": "catalog:",
+    "drizzle-orm": "catalog:",
+    "sonner": "catalog:"
+  },
+  "peerDependencies": {
+    "next": "*",
+    "react": "*"
   },
   "devDependencies": {
     "typescript": "catalog:"

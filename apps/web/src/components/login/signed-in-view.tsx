@@ -41,7 +41,7 @@ export function SignedInView({ callbackUrl, session }: SignedInViewProps) {
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center space-x-3 rounded-lg bg-[#1D1D1D] p-3">
+        <div className="flex items-center space-x-3 rounded-lg bg-surface-1 p-3">
           {session.user.image && (
             <Image
               alt={session.user.name || 'User'}
@@ -52,7 +52,7 @@ export function SignedInView({ callbackUrl, session }: SignedInViewProps) {
             />
           )}
           <div className="text-left">
-            <p className="font-medium text-sm text-white">
+            <p className="font-medium text-sm text-foreground">
               {session.user.name}
             </p>
             <p className="text-gray-400 text-xs">{session.user.email}</p>
@@ -61,7 +61,7 @@ export function SignedInView({ callbackUrl, session }: SignedInViewProps) {
 
         <div className="space-y-3">
           <Button
-            className="w-full rounded-lg bg-[#2A2A28] py-3 font-medium text-gray-200 transition-colors hover:bg-[#383838]"
+            className="w-full rounded-lg bg-foreground text-background py-3 font-medium hover:bg-black/80 dark:hover:bg-white/80"
             onClick={handleGoToDashboard}
           >
             Continue

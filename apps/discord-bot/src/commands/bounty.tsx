@@ -13,7 +13,12 @@ import {
   makeReacord,
 } from '@bounty/reacord';
 import type { ChatInputCommandInteraction } from 'discord.js';
-import { SlashCommandBuilder as Builder, Routes, REST, MessageFlags } from 'discord.js';
+import {
+  SlashCommandBuilder as Builder,
+  Routes,
+  REST,
+  MessageFlags,
+} from 'discord.js';
 import { Runtime } from 'effect';
 import { user, account } from '@bounty/db/src/schema/auth';
 import { and, eq } from 'drizzle-orm';
@@ -25,15 +30,19 @@ import type { Client } from 'discord.js';
  * TODO: This will be implemented when Discord linking is added
  * For now, we'll check the account table for Discord provider
  */
-async function getUserIdFromDiscordId(discordId: string): Promise<string | null> {
+async function getUserIdFromDiscordId(
+  discordId: string
+): Promise<string | null> {
   // Check account table for Discord provider
   const [discordAccount] = await db
     .select({ userId: account.userId })
     .from(account)
-    .where(and(
-      eq(account.providerId, 'discord'),
-      eq(account.accountId, discordId)
-    ))
+    .where(
+      and(
+        eq(account.providerId, 'discord'),
+        eq(account.accountId, discordId)
+      )
+    )
     .limit(1);
   
   return discordAccount?.userId ?? null;
@@ -130,8 +139,12 @@ export function setupBountyCommands(client: Client) {
   const runtime = Runtime.defaultRuntime;
 
   client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
-    if (interaction.commandName !== 'bounty') return;
+    if (!interaction.isChatInputCommand()) {
+      return;
+    }
+    if (interaction.commandName !== 'bounty') {
+      return;
+    }
 
     const subcommand = interaction.options.getSubcommand();
 
@@ -149,7 +162,7 @@ export function setupBountyCommands(client: Client) {
       }
     } catch (error) {
       console.error('Error handling bounty command:', error);
-      if (!interaction.replied && !interaction.deferred) {
+      if (!interaction.replied) {
         await interaction.reply({
           content: `❌ An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`,
           flags: MessageFlags.Ephemeral,
@@ -166,7 +179,7 @@ async function handleCreate(
 ) {
   const userId = await requireAuth(interaction);
 
-  const instance = await Runtime.runPromise(runtime)(
+  const _instance = await Runtime.runPromise(runtime)(
     reacord.reply(interaction, (
       <Container>
         <TextDisplay>Click the button below to create a new bounty:</TextDisplay>
@@ -267,19 +280,17 @@ async function handleCreate(
                       },
                     ],
                   });
-                } else {
+                } else if (modalInteraction.replied || modalInteraction.deferred) {
                   // Reacord defers the modal, so we need to use followUp instead of reply
-                  if (modalInteraction.replied || modalInteraction.deferred) {
-                    await modalInteraction.followUp({
-                      content: '❌ Failed to create bounty',
-                      flags: MessageFlags.Ephemeral,
-                    });
-                  } else {
-                    await modalInteraction.reply({
-                      content: '❌ Failed to create bounty',
-                      flags: MessageFlags.Ephemeral,
-                    });
-                  }
+                  await modalInteraction.followUp({
+                    content: '❌ Failed to create bounty',
+                    flags: MessageFlags.Ephemeral,
+                  });
+                } else {
+                  await modalInteraction.reply({
+                    content: '❌ Failed to create bounty',
+                    flags: MessageFlags.Ephemeral,
+                  });
                 }
               } catch (error) {
                 const errorContent = `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
@@ -319,7 +330,7 @@ async function handleList(
     status: 'open',
   });
 
-  if (!result.success || !result.data) {
+  if (!(result.success && result.data)) {
     await interaction.reply({
       content: '❌ Failed to fetch bounties',
       flags: MessageFlags.Ephemeral,
@@ -338,7 +349,7 @@ async function handleList(
     return;
   }
 
-  const instance = await Runtime.runPromise(runtime)(
+  const _instance = await Runtime.runPromise(runtime)(
     reacord.reply(interaction, (
       <Container>
         <TextDisplay>
@@ -420,7 +431,7 @@ async function handleView(
   const caller = await createServerCaller(userId);
   const result = await caller.bounties.fetchBountyById({ id: bountyId });
 
-  if (!result.success || !result.data) {
+  if (!(result.success && result.data)) {
     await interaction.reply({
       content: '❌ Bounty not found',
       flags: MessageFlags.Ephemeral,
@@ -431,7 +442,7 @@ async function handleView(
   const bounty = result.data;
   const bountyUrl = `${env.BETTER_AUTH_URL}/bounty/${bounty.id}`;
 
-  const instance = await Runtime.runPromise(runtime)(
+  const _instance = await Runtime.runPromise(runtime)(
     reacord.reply(interaction, (
       <Container>
         <Section
@@ -469,19 +480,19 @@ async function handleView(
 
 async function handleClose(
   interaction: ChatInputCommandInteraction,
-  reacord: ReturnType<typeof makeReacord>,
+  _reacord: ReturnType<typeof makeReacord>,
 ) {
   const userId = await requireAuth(interaction);
   const bountyId = interaction.options.getString('id', true);
 
   const caller = await createServerCaller(userId);
-  
+
   // First verify the bounty exists and belongs to the user
   const bountyResult = await caller.bounties.fetchBountyById({
     id: bountyId,
   });
 
-  if (!bountyResult.success || !bountyResult.data) {
+  if (!(bountyResult.success && bountyResult.data)) {
     await interaction.reply({
       content: '❌ Bounty not found',
       flags: MessageFlags.Ephemeral,
@@ -528,7 +539,7 @@ async function handleApprove(interaction: ChatInputCommandInteraction) {
     id: bountyId,
   });
 
-  if (!bountyResult.success || !bountyResult.data) {
+  if (!(bountyResult.success && bountyResult.data)) {
     await interaction.reply({
       content: '❌ Bounty not found',
       flags: MessageFlags.Ephemeral,

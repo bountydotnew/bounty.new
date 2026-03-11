@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useReducer } from 'react';
 import { Controller, type Control } from 'react-hook-form';
 import type { CreateBountyForm } from '@bounty/ui/lib/forms';
 import {
@@ -39,54 +39,96 @@ interface DeadlinePickerProps {
   onChange: (value: string) => void;
 }
 
+type PickerState = {
+  inputValue: string;
+  date: Date | undefined;
+};
+
+type PickerAction =
+  | { type: 'RESET' }
+  | { type: 'SET_DATE'; date: Date; inputValue: string }
+  | { type: 'SET_INPUT'; inputValue: string };
+
+function pickerReducer(state: PickerState, action: PickerAction): PickerState {
+  switch (action.type) {
+    case 'RESET':
+      return { date: undefined, inputValue: '' };
+    case 'SET_DATE':
+      return { date: action.date, inputValue: action.inputValue };
+    case 'SET_INPUT':
+      return { ...state, inputValue: action.inputValue };
+    default:
+      return state;
+  }
+}
+
 function DeadlinePicker({ value, onChange }: DeadlinePickerProps) {
   const [open, setOpen] = useState(false);
-  const [inputValue, setInputValue] = useState('');
-  const [date, setDate] = useState<Date | undefined>(() =>
-    parseFieldValue(value)
-  );
+  const [pickerState, dispatch] = useReducer(pickerReducer, {
+    inputValue: '',
+    date: parseFieldValue(value),
+  });
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!value) {
-      setDate(undefined);
-      setInputValue('');
+      dispatch({ type: 'RESET' });
       return;
     }
     const parsed = parseFieldValue(value);
     if (parsed) {
-      setDate(parsed);
-      setInputValue(formatDate(parsed));
+      dispatch({
+        type: 'SET_DATE',
+        date: parsed,
+        inputValue: formatDate(parsed),
+      });
       return;
     }
-    setDate(undefined);
-    setInputValue(value);
+    dispatch({ type: 'SET_INPUT', inputValue: value });
   }, [value]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-    setInputValue(newValue);
+    dispatch({ type: 'SET_INPUT', inputValue: newValue });
 
-    // Parse natural language input
-    const parsed = parseDate(newValue);
-    if (parsed) {
-      setDate(parsed);
-      onChange(parsed.toISOString());
-    } else {
-      // If not a valid date, still update the form value
-      // This allows for partial input like "tomorr" that will be completed
-      onChange(newValue);
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
     }
+
+    debounceTimeoutRef.current = setTimeout(() => {
+      const parsed = parseDate(newValue);
+      if (parsed) {
+        dispatch({
+          type: 'SET_DATE',
+          date: parsed,
+          inputValue: formatDate(parsed),
+        });
+        onChange(parsed.toISOString());
+      } else {
+        onChange(newValue);
+      }
+    }, 300);
   };
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleCalendarSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
       const isoString = selectedDate.toISOString();
-      setDate(selectedDate);
-      setInputValue(formatDate(selectedDate));
+      dispatch({
+        type: 'SET_DATE',
+        date: selectedDate,
+        inputValue: formatDate(selectedDate),
+      });
       onChange(isoString);
     } else {
-      setDate(undefined);
-      setInputValue('');
+      dispatch({ type: 'RESET' });
       onChange('');
     }
     setOpen(false);
@@ -96,31 +138,31 @@ function DeadlinePicker({ value, onChange }: DeadlinePickerProps) {
     <div className="relative flex">
       <input
         type="text"
-        value={inputValue}
+        value={pickerState.inputValue}
         onChange={handleInputChange}
         placeholder="Deadline, e.g. tomorrow"
-        className="rounded-full flex justify-center items-center px-[11px] py-[6px] bg-[#141414] border border-solid border-[#232323] hover:border-[#333] transition-colors text-[16px] leading-5 font-sans placeholder:text-[#7C7878] text-white focus:outline-none focus:border-[#444] pr-8 min-w-[100px]"
+        className="rounded-full flex justify-center items-center px-[11px] py-[6px] bg-surface-hover border border-solid border-border-subtle hover:border-border-default transition-colors text-[16px] leading-5 font-sans placeholder:text-text-muted text-foreground focus:outline-none focus:border-border-strong pr-8 min-w-[100px]"
       />
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="absolute top-1/2 right-2 -translate-y-1/2 text-[#7C7878] hover:text-white transition-colors"
+            className="absolute top-1/2 right-2 -translate-y-1/2 text-text-muted hover:text-foreground transition-colors"
           >
             <CalendarIcon className="size-3.5" />
             <span className="sr-only">Select date</span>
           </button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-auto p-0 bg-[#191919] border-[#232323]"
+          className="w-auto p-0 bg-surface-1 border-border-subtle"
           align="start"
           sideOffset={8}
         >
           <Calendar
             mode="single"
-            selected={date}
+            selected={pickerState.date}
             onSelect={handleCalendarSelect}
-            month={date || new Date()}
+            month={pickerState.date || new Date()}
             captionLayout="dropdown"
             disabled={(date) => {
               const today = new Date();
@@ -146,7 +188,6 @@ export function DeadlineChip({
   value: controlledValue,
   onChange: controlledOnChange,
 }: DeadlineChipProps) {
-  // Controlled mode
   if (controlledOnChange !== undefined) {
     return (
       <DeadlinePicker
@@ -156,7 +197,6 @@ export function DeadlineChip({
     );
   }
 
-  // React Hook Form integration
   return (
     <Controller
       control={control}

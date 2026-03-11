@@ -4,20 +4,21 @@ import { DeviceProvider } from '@/components/device-provider';
 import { Sidebar } from '@/components/dual-sidebar';
 import { AuthLayout } from '@/components/auth/auth-layout';
 import { EarlyAccessGuard } from '@/components/auth/early-access-guard';
-import { FeedbackProvider } from '@/components/feedback-context';
-import { FeedbackModal } from '@/components/feedback-modal';
-import { FeedbackOverlay } from '@/components/feedback-overlay';
+import { FeedbackProvider, FeedbackOverlay } from '@bounty/feedback';
+import { FeedbackDialog } from '@/components/feedback-dialog';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
+import { Header } from '@/components/dual-sidebar/sidebar-header';
+import { OnboardingController } from '@/components/onboarding/onboarding-controller';
 
 export const metadata: Metadata = {
-  title: 'bounty',
+  title: 'bounty.new',
   description: 'bounty',
   icons: {
     icon: '/favicon/favicon_dark.png',
     apple: '/favicon/favicon_dark.png',
   },
   openGraph: {
-    title: 'bounty - App',
+    title: 'bounty.new',
     description: 'Ship fast, get paid faster.',
     url: 'https://bounty.new',
     siteName: 'bounty',
@@ -48,22 +49,23 @@ export default async function RootLayout({
             config={{
               metadata: {
                 appVersion: '1.0.0',
-                environment: process.env.NODE_ENV,
+                environment: process.env.NODE_ENV ?? 'development',
               },
               ui: {
                 title: 'Report an Issue',
                 placeholder: 'Found a bug? Let us know what happened...',
-                colors: {
-                  primary: '#232323',
-                },
-                zIndex: 9999,
               },
             }}
           >
-            <FeedbackModal />
+            <FeedbackDialog />
             <FeedbackOverlay />
             <EarlyAccessGuard>
-              <Sidebar admin={false}>{children}</Sidebar>
+              <OnboardingController>
+                <Sidebar admin={false}>
+                  <Header />
+                  {children}
+                </Sidebar>
+              </OnboardingController>
             </EarlyAccessGuard>
           </FeedbackProvider>
         </NuqsAdapter>

@@ -3,7 +3,7 @@ import { QueryClient } from '@tanstack/react-query';
 import {
   TRPCClientError,
   createTRPCClient,
-  httpLink,
+  httpBatchLink,
   loggerLink,
 } from '@trpc/client';
 import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query';
@@ -16,8 +16,12 @@ export const queryClient = new QueryClient({
       // Default staleTime for all queries (5 minutes)
       // This prevents excessive refetching on component mounts
       staleTime: 5 * 60 * 1000,
-      // Better Auth session queries should be cached longer
-      // We'll override this specifically for session queries in the session context
+      // Keep data in cache for 10 minutes for Suspense transitions
+      gcTime: 10 * 60 * 1000,
+      // Reduce unnecessary refetches
+      refetchOnWindowFocus: false,
+      // Retry once on failure
+      retry: 1,
     },
   },
 });
@@ -77,9 +81,9 @@ export const trpcClient = createTRPCClient<AppRouter>({
         );
       },
     }),
-    httpLink({
+    httpBatchLink({
       url: `${process.env.NEXT_PUBLIC_API_URL || ''}/api/trpc`,
-      // Enable batching - combines multiple requests into a single HTTP call
+      maxURLLength: 2083,
       fetch(input: RequestInfo | URL, init?: RequestInit) {
         return fetch(input, {
           ...init,
@@ -91,7 +95,6 @@ export const trpcClient = createTRPCClient<AppRouter>({
         })
           .then(async (res) => {
             if (!res.ok) {
-              // Capture body for better error messages
               const text = await res.clone().text();
               try {
                 JSON.parse(text);

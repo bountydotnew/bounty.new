@@ -73,7 +73,7 @@ export function DatePicker({
         setMonth(parsed.date);
       }
     }
-  }, [value, parseValue]);
+  }, [value]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -139,20 +139,21 @@ export function DatePicker({
         id={id}
         value={textValue}
         placeholder={placeholder}
-        className="bg-transparent text-white text-base outline-none placeholder:text-[#5A5A5A] h-auto p-0 w-full border-0"
+        className="bg-transparent text-foreground text-base outline-none placeholder:text-text-tertiary h-auto p-0 w-full border-0"
         onChange={handleTextChange}
         onKeyDown={handleKeyDown}
       />
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            id={`${id}-picker`}
-            variant="text"
-            className="absolute top-1/2 right-0 size-4 -translate-y-1/2 p-0 h-auto"
-          >
-            {/* <CalendarIcon className="size-4 text-[#5A5A5A]" /> */}
-            <span className="sr-only">Pick a date</span>
-          </Button>
+        <PopoverTrigger
+          render={
+            <Button
+              id={`${id}-picker`}
+              variant="ghost"
+              className="absolute top-1/2 right-0 size-4 -translate-y-1/2 p-0 h-auto"
+            />
+          }
+        >
+          <span className="sr-only">Pick a date</span>
         </PopoverTrigger>
         <PopoverContent
           className="w-auto overflow-hidden p-0"
@@ -181,7 +182,7 @@ export function DatePicker({
               caption_label: 'text-sm font-medium',
               nav: 'flex items-center justify-between px-3 pt-0 pb-0 absolute top-0 left-0 right-0',
               nav_button:
-                'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 text-white',
+                'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 text-foreground',
               nav_button_previous: 'absolute left-3',
               nav_button_next: 'absolute right-3',
             }}

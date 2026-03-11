@@ -8,6 +8,7 @@ interface IntegrationDetailPageProps {
   isLoading?: boolean;
   error?: Error | null;
   errorMessage?: string;
+  errorContent?: React.ReactNode;
   backHref?: string;
   backLabel?: string;
 }
@@ -17,6 +18,7 @@ export function IntegrationDetailPage({
   isLoading = false,
   error = null,
   errorMessage = 'Failed to load. Please try again.',
+  errorContent,
   backHref,
   backLabel,
 }: IntegrationDetailPageProps) {
@@ -26,13 +28,15 @@ export function IntegrationDetailPage({
 
       {isLoading && (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-5 w-5 animate-spin text-[#5A5A5A]" />
+          <Loader2 className="h-5 w-5 animate-spin text-text-tertiary" />
         </div>
       )}
 
-      {!isLoading && error && (
-        <p className="text-sm text-[#5A5A5A]">{errorMessage}</p>
-      )}
+      {!isLoading &&
+        error &&
+        (errorContent || (
+          <p className="text-sm text-text-tertiary">{errorMessage}</p>
+        ))}
 
       {!(isLoading || error) && children}
     </div>

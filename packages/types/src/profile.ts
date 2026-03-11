@@ -46,7 +46,7 @@ export interface GetProfileResponse {
 }
 
 export interface ActivityItem {
-  type: 'bounty_created' | 'comment_created';
+  type: 'bounty_created' | 'comment_created' | 'submission_created';
   id: string;
   title: string;
   createdAt: Date;

@@ -1,13 +1,8 @@
-// Define the thumbmarkResponse interface based on the library's structure
-export interface thumbmarkResponse {
-  components: Record<string, unknown>;
-  info: {
-    [key: string]: unknown;
-  };
-  version: string;
-  thumbmark: string;
-  elapsed?: number; // Optional property that may be present if options.performance is true
-}
+import type { getThumbmark } from '@thumbmarkjs/thumbmarkjs';
+
+// Derive the type directly from the library's return type to avoid
+// maintaining a manual interface that drifts out of sync.
+export type thumbmarkResponse = Awaited<ReturnType<typeof getThumbmark>>;
 
 // Validate that the components object has a reasonable structure
 export function validateFingerprintStructure(components: unknown): boolean {

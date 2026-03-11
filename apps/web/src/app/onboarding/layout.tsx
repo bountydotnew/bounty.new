@@ -23,7 +23,7 @@ export default async function OnboardingLayout({
 
   return (
     <NuqsAdapter>
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-lg">
           {children}
         </div>

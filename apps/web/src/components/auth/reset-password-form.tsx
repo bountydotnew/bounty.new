@@ -4,27 +4,24 @@ import { authClient } from '@bounty/auth/client';
 import { Button } from '@bounty/ui/components/button';
 import { Input } from '@bounty/ui/components/input';
 import { Label } from '@bounty/ui/components/label';
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
-export default function ResetPasswordForm() {
-  const [email, setEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isPending, startTransition] = useTransition();
-  const [step, setStep] = useState<'request' | 'reset'>('request');
-  const [emailSent, setEmailSent] = useState(false);
+function ResetPasswordFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
+  const [isPending, startTransition] = useTransition();
+  const [formState, setFormState] = useState({
+    email: '',
+    newPassword: '',
+    confirmPassword: '',
+    emailSent: false,
+    step: (token ? 'reset' : 'request') as 'request' | 'reset',
+  });
 
-  // If there's a token in the URL, show the reset form
-  useEffect(() => {
-    if (token) {
-      setStep('reset');
-    }
-  }, [token]);
+  const { email, newPassword, confirmPassword, emailSent, step } = formState;
 
   const handleRequestReset = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +38,7 @@ export default function ResetPasswordForm() {
           redirectTo: `${window.location.origin}/reset-password`,
         });
         toast.success('Password reset link sent! Check your email.');
-        setEmailSent(true);
+        setFormState((prev) => ({ ...prev, emailSent: true }));
       } catch (error) {
         toast.error('Failed to send reset link. Please try again.');
         console.error('Reset password error:', error);
@@ -91,7 +88,7 @@ export default function ResetPasswordForm() {
     return (
       <div className="w-full max-w-md space-y-6">
         <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-white">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Reset your password
           </h1>
           <p className="text-gray-400 text-sm">Enter your new password below</p>
@@ -105,7 +102,12 @@ export default function ResetPasswordForm() {
               type="password"
               placeholder="Enter new password"
               value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
+              onChange={(e) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  newPassword: e.target.value,
+                }))
+              }
               disabled={isPending}
               required
             />
@@ -118,7 +120,12 @@ export default function ResetPasswordForm() {
               type="password"
               placeholder="Confirm new password"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={(e) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  confirmPassword: e.target.value,
+                }))
+              }
               disabled={isPending}
               required
             />
@@ -134,7 +141,7 @@ export default function ResetPasswordForm() {
             variant="text"
             onClick={() => router.push('/login')}
             disabled={isPending}
-            className="text-sm text-gray-400 hover:text-white"
+            className="text-sm text-gray-400 hover:text-foreground"
           >
             Back to sign in
           </Button>
@@ -146,7 +153,7 @@ export default function ResetPasswordForm() {
   return (
     <div className="w-full max-w-md space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-white">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Forgot your password?
         </h1>
         <p className="text-gray-400 text-sm">
@@ -162,7 +169,9 @@ export default function ResetPasswordForm() {
             type="email"
             placeholder="name@example.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) =>
+              setFormState((prev) => ({ ...prev, email: e.target.value }))
+            }
             disabled={isPending}
             required
           />
@@ -175,7 +184,7 @@ export default function ResetPasswordForm() {
 
       {emailSent && (
         <div className="space-y-3">
-          <div className="rounded-lg bg-[#1a1a1a] p-4 border border-[#383838]">
+          <div className="rounded-lg bg-surface-1 p-4 border border-border-strong">
             <p className="text-sm text-gray-400 text-center">
               Haven&apos;t received the email? Check your spam folder or resend
               it below.
@@ -198,11 +207,25 @@ export default function ResetPasswordForm() {
           variant="text"
           onClick={() => router.push('/login')}
           disabled={isPending}
-          className="text-sm text-gray-400 hover:text-white"
+          className="text-sm text-gray-400 hover:text-foreground"
         >
           Back to sign in
         </Button>
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordForm() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full max-w-md space-y-6 p-8 text-center">
+          <p>Loading...</p>
+        </div>
+      }
+    >
+      <ResetPasswordFormContent />
+    </Suspense>
   );
 }

@@ -37,7 +37,7 @@ export function DeviceCodeEntry({ initialCode = '' }: DeviceCodeEntryProps) {
     () => normalizeCode(initialCode),
     [initialCode]
   );
-  const [inputValue, setInputValue] = useState(
+  const [inputValue, setInputValue] = useState(() =>
     formatForDisplay(normalizedInitial)
   );
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +77,7 @@ export function DeviceCodeEntry({ initialCode = '' }: DeviceCodeEntryProps) {
 
       toast.success('Code verified. Continue on your primary device.');
       router.push(`/device/approve?user_code=${sanitizedCode}`);
+      setIsSubmitting(false);
     } catch (submissionError) {
       const message =
         submissionError instanceof Error
@@ -84,14 +85,13 @@ export function DeviceCodeEntry({ initialCode = '' }: DeviceCodeEntryProps) {
           : 'Unable to verify the device code.';
       setError(message);
       toast.error(message);
-    } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
     <div className="mx-auto w-full max-w-lg">
-      <Card className="border border-muted bg-[#111111] text-white">
+      <Card className="border border-muted bg-background text-foreground">
         <CardHeader>
           <CardTitle className="font-semibold text-2xl">
             Authorize a device

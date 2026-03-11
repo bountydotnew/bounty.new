@@ -30,7 +30,7 @@ export function GitHubActivityChart({ username }: GitHubActivityChartProps) {
 
   if (isLoading) {
     return (
-      <div className="h-[140px] w-full animate-pulse rounded-xl bg-[#191919]" />
+      <div className="h-[140px] w-full animate-pulse rounded-xl bg-surface-1" />
     );
   }
 
@@ -39,8 +39,8 @@ export function GitHubActivityChart({ username }: GitHubActivityChartProps) {
   }
 
   return (
-    <div className="w-full overflow-hidden rounded-xl border border-[#232323] bg-[#191919] p-4">
-      <h3 className="mb-4 text-sm font-medium text-[#CFCFCF]">
+    <div className="w-full overflow-hidden rounded-xl border border-border-subtle bg-surface-1 p-4">
+      <h3 className="mb-4 text-sm font-medium text-text-secondary">
         GitHub Activity
       </h3>
       <div className="flex justify-center overflow-x-auto">

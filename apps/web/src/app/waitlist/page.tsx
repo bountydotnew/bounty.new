@@ -1,14 +1,11 @@
-'use client';
+import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+export const metadata: Metadata = {
+  title: 'Waitlist',
+  description: 'Join the waitlist to get early access to bounty.new.',
+};
 
 export default function WaitlistPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace('/?waitlist=true');
-  }, [router]);
-
-  return null;
+  redirect('/?waitlist=true');
 }

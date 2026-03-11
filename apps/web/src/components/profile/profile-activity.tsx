@@ -31,7 +31,7 @@ export function ProfileActivity({ userId }: ProfileActivityProps) {
 
   // Transform the data to match ActivityItem type
   const activities: ActivityItem[] = activityData.map((item) => ({
-    type: item.type as 'bounty_created' | 'comment_created',
+    type: item.type as ActivityItem['type'],
     id: item.id,
     title: item.title,
     createdAt: new Date(item.createdAt),

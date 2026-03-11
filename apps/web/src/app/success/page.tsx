@@ -1,12 +1,28 @@
+import type { Metadata } from 'next';
 import { Card, CardContent } from '@bounty/ui/components/card';
 import { Spinner } from '@bounty/ui/components/spinner';
 import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
 import { Sidebar } from '@/components/dual-sidebar';
 import { SuccessClient } from './success-client';
 
+export const metadata: Metadata = {
+  title: 'Success',
+  description: 'Your action was completed successfully.',
+};
+
 export const dynamic = 'force-dynamic';
 
-export default async function SuccessPage() {
+export default async function SuccessPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  if (!params.checkout_id) {
+    redirect('/dashboard');
+  }
+
   return (
     <Suspense
       fallback={

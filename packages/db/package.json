@@ -8,7 +8,9 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "migrate:personal-orgs": "bun run src/scripts/migrate-personal-orgs.ts",
+    "migrate:personal-orgs:dry": "bun run src/scripts/migrate-personal-orgs.ts --dry-run"
   },
   "dependencies": {
     "drizzle-orm": "catalog:",
