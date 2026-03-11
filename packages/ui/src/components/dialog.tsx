@@ -72,12 +72,17 @@ function DialogClose({
 
 function DialogBackdrop({
   className,
+  variant = 'solid',
   ...props
-}: DialogPrimitive.Backdrop.Props) {
+}: DialogPrimitive.Backdrop.Props & {
+  variant?: 'solid' | 'translucent';
+}) {
   return (
     <DialogPrimitive.Backdrop
       className={cn(
-        'fixed inset-0 z-50 bg-background transition-all duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0',
+        'fixed inset-0 z-50 transition-all duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0',
+        variant === 'solid' && 'bg-background',
+        variant === 'translucent' && 'bg-black/32 backdrop-blur-sm',
         className
       )}
       data-slot="dialog-backdrop"
@@ -106,15 +111,17 @@ function DialogPopup({
   className,
   children,
   showCloseButton = true,
+  showBackdrop = true,
   bottomStickOnMobile = true,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean;
+  showBackdrop?: boolean;
   bottomStickOnMobile?: boolean;
 }) {
   return (
     <DialogPortal>
-      <DialogBackdrop />
+      <DialogBackdrop variant={showBackdrop ? 'solid' : 'translucent'} />
       <DialogViewport
         className={cn(
           bottomStickOnMobile &&

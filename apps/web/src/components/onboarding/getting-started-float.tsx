@@ -93,7 +93,8 @@ export function GettingStartedFloat() {
   const completedCount = items.filter((i) => i.completed).length;
   const isComplete = completedCount === items.length;
 
-  if (isComplete) return null;
+  // Only show when onboarding is in progress (at least 1 task started, not all done)
+  if (completedCount === 0 || isComplete) return null;
 
   const handleItemClick = (item: FloatItem) => {
     if (!item.completed) {
