@@ -169,7 +169,13 @@ function useBountyDetailMutations({
           description: `Switch to "${bountyOrg.name}" to manage this bounty.`,
           action: {
             label: `Switch to ${bountyOrg.name}`,
-            onClick: () => switchOrg(bountyOrg.id),
+            onClick: async () => {
+              try {
+                await switchOrg(bountyOrg.id);
+              } catch {
+                toast.error('Failed to switch organization');
+              }
+            },
           },
         });
       } else {
