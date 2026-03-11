@@ -438,7 +438,7 @@ export default function MembersPage() {
   } = useMembersData();
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" data-tour-step-id="members-settings">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Members</h1>
         <p className="text-sm text-text-muted mt-1">

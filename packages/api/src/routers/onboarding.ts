@@ -24,6 +24,10 @@ export const onboardingRouter = router({
         completedStep4: false,
         source: null,
         claimedWaitlistDiscount: false,
+        connectedTools: false,
+        setupPayouts: false,
+        createdBounty: false,
+        invitedMember: false,
       };
     }
 
@@ -34,6 +38,10 @@ export const onboardingRouter = router({
       completedStep4: state.completedStep4,
       source: state.source,
       claimedWaitlistDiscount: state.claimedWaitlistDiscount,
+      connectedTools: state.connectedTools,
+      setupPayouts: state.setupPayouts,
+      createdBounty: state.createdBounty,
+      invitedMember: state.invitedMember,
     };
   }),
 
@@ -204,6 +212,42 @@ export const onboardingRouter = router({
         code,
         alreadyClaimed: false,
       };
+    }),
+
+  /**
+   * Mark a Getting Started checklist task as complete
+   */
+  completeGettingStartedTask: protectedProcedure
+    .input(z.object({
+      task: z.enum(['tools', 'payouts', 'bounty', 'member']),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const fieldMap = {
+        tools: 'gsConnectedTools',
+        payouts: 'gsSetupPayouts',
+        bounty: 'gsCreatedBounty',
+        member: 'gsInvitedMember',
+      } as const;
+
+      const field = fieldMap[input.task];
+      const now = new Date();
+
+      await ctx.db
+        .insert(onboardingState)
+        .values({
+          userId: ctx.session.user.id,
+          [field]: true,
+          updatedAt: now,
+        })
+        .onConflictDoUpdate({
+          target: onboardingState.userId,
+          set: {
+            [field]: true,
+            updatedAt: now,
+          },
+        });
+
+      return { success: true };
     }),
 
   /**

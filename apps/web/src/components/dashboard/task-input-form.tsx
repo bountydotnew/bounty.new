@@ -280,6 +280,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
           <fieldset className="w-full [all:unset] min-w-0">
             <div
               role="presentation"
+              data-tour-step-id="create-bounty-input"
               className="bg-surface-1 text-text-tertiary border border-border-subtle rounded-[21px] relative transition-colors cursor-text overflow-hidden w-full min-w-0 p-4 flex flex-col gap-3 focus-within:shadow-[0_0_0_2px_rgba(59,130,246,0.5)] focus-within:outline-none"
             >
               {/* Inline input chips row */}

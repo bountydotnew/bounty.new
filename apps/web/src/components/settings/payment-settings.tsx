@@ -819,7 +819,7 @@ function SettingsTabContent({
   const [showResetDialog, setShowResetDialog] = useState(false);
   return (
     <>
-      <div className="shrink-0 w-full h-fit flex flex-col items-start justify-between rounded-none opacity-100 gap-[18px] self-stretch px-[18px] py-[18px] overflow-clip border-b border-b-solid border-border">
+      <div data-tour-step-id="stripe-connect" className="shrink-0 w-full h-fit flex flex-col items-start justify-between rounded-none opacity-100 gap-[18px] self-stretch px-[18px] py-[18px] overflow-clip border-b border-b-solid border-border">
         <div className="shrink-0 flex flex-col justify-center items-start gap-0 w-full h-fit self-stretch p-0">
           <div className="text-[20px] leading-[150%] shrink-0 text-foreground font-['Inter',system-ui,sans-serif] font-medium size-fit">
             Payouts
