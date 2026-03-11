@@ -124,6 +124,8 @@ export interface BountyDetailActions {
   unapproveSubmission: (submissionId: string) => void;
   /** Merge a submission (approve + pay out) */
   mergeSubmission: (submissionId: string) => void;
+  /** Submit work from in-app form */
+  submitWork: (pullRequestUrl: string, description?: string) => void;
 }
 
 /**
@@ -147,6 +149,7 @@ export interface BountyDetailMeta {
   unapprovingSubmissionId: string | null;
   isMergingSubmission: boolean;
   mergingSubmissionId: string | null;
+  isSubmittingWork: boolean;
 }
 
 /**

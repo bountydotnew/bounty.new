@@ -1,16 +1,21 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import Link from 'next/link';
 import SubmissionCard from '@/components/bounty/submission-card';
 import { useSession } from '@/context/session-context';
 import { BountyDetailContext, type SubmissionData } from './context';
+import { Button } from '@bounty/ui/components/button';
+import { Input } from '@bounty/ui/components/input';
+import { Textarea } from '@bounty/ui/components/textarea';
+import { Loader2, Send, ChevronDown } from 'lucide-react';
+import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
 
 /**
  * BountyDetailSubmissions
  *
- * Displays the list of submissions for the bounty.
- * Uses the BountyDetailContext to access submissions data.
+ * Displays the list of submissions for the bounty
+ * and an in-app form for solvers to submit their PR URL.
  */
 export function BountyDetailSubmissions() {
   const context = use(BountyDetailContext);
@@ -36,6 +41,20 @@ export function BountyDetailSubmissions() {
     state.canEdit && isFundedOrFree && bounty.paymentStatus !== 'released';
 
   const submissionCount = submissions?.length ?? 0;
+
+  // Solvers can submit if:
+  // - Authenticated
+  // - Not the bounty creator
+  // - Bounty is accepting submissions (open or free+draft)
+  const isAcceptingSubmissions =
+    bounty.paymentStatus === 'held' ||
+    bounty.paymentStatus === 'released' ||
+    (isFreeBounty && bounty.paymentStatus === 'pending');
+  const canSubmit =
+    isAuthenticated &&
+    !state.isCreator &&
+    isAcceptingSubmissions &&
+    bounty.paymentStatus !== 'released';
 
   return (
     <div className="mb-8 rounded-lg py-6">
@@ -94,58 +113,186 @@ export function BountyDetailSubmissions() {
               mergeLabel={isFreeBounty ? 'Complete' : 'Pay Out'}
             />
           ))
-        ) : (
-          <div className="rounded-lg bg-surface-2 p-6 text-center">
-            {/* TODO: Add in-app submission flow — allow non-owners to submit
-                work directly from the bounty detail page instead of requiring
-                the GitHub PR + /submit command flow. Form fields: PR URL,
-                description (min 10 chars), optional deliverable URL.
-                Backend: new tRPC mutation (validate bounty is open/funded,
-                check duplicates/pending limit of 2, insert submission row,
-                optionally post GitHub bot comment if app installed).
-                See: packages/api/src/routers/bounties.ts (submitBountyWork),
-                apps/web/src/app/api/webhooks/github/route.ts (createSubmissionFromPullRequest) */}
-            <p className="text-text-muted text-sm mb-4">No submissions yet</p>
-            {isAuthenticated ? (
-              bounty.githubRepoOwner &&
-              bounty.githubRepoName &&
-              bounty.githubIssueNumber && (
-                <a
-                  href={`https://github.com/${bounty.githubRepoOwner}/${bounty.githubRepoName}/issues/${bounty.githubIssueNumber}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
-                >
-                  <svg
-                    className="h-4 w-4"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.09-.745.08-.73.08-.73 1.205.085 1.838 1.238 1.838 1.238 1.07 1.835 2.807 1.305 3.492.998.108-.775.418-1.305.762-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
-                  </svg>
-                  Submit on GitHub
-                </a>
-              )
-            ) : (
-              <Link
-                href={`/login?callback=/bounty/${bounty.id}`}
-                className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.09-.745.08-.73.08-.73 1.205.085 1.838 1.238 1.838 1.238 1.07 1.835 2.807 1.305 3.492.998.108-.775.418-1.305.762-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
-                </svg>
-                Sign in to Submit
-              </Link>
-            )}
+        ) : !canSubmit ? (
+          <EmptyState
+            isAuthenticated={isAuthenticated}
+            bounty={bounty}
+          />
+        ) : null}
+
+        {/* In-app submit form for solvers */}
+        {canSubmit && (
+          <SubmitWorkForm
+            onSubmit={actions.submitWork}
+            isSubmitting={meta.isSubmittingWork}
+            hasExistingSubmissions={submissionCount > 0}
+          />
+        )}
+
+        {/* Sign in prompt for unauthenticated users when there are submissions */}
+        {!isAuthenticated && submissionCount > 0 && (
+          <div className="rounded-lg border border-border-subtle bg-surface-2 p-4 text-center">
+            <Link
+              href={`/login?callback=/bounty/${bounty.id}`}
+              className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
+            >
+              Sign in to Submit Your Solution
+            </Link>
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * In-app form for submitting work.
+ * Just paste a PR URL and optionally add a description.
+ */
+function SubmitWorkForm({
+  onSubmit,
+  isSubmitting,
+  hasExistingSubmissions,
+}: {
+  onSubmit: (pullRequestUrl: string, description?: string) => void;
+  isSubmitting: boolean;
+  hasExistingSubmissions: boolean;
+}) {
+  const [prUrl, setPrUrl] = useState('');
+  const [description, setDescription] = useState('');
+  const [showDescription, setShowDescription] = useState(false);
+  const [error, setError] = useState('');
+
+  const isValidPrUrl = /^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+/.test(
+    prUrl.trim()
+  );
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    const trimmedUrl = prUrl.trim();
+    if (!trimmedUrl) {
+      setError('Please enter a pull request URL');
+      return;
+    }
+    if (!isValidPrUrl) {
+      setError(
+        'Please enter a valid GitHub PR URL (e.g. https://github.com/owner/repo/pull/123)'
+      );
+      return;
+    }
+
+    onSubmit(trimmedUrl, description.trim() || undefined);
+    // Reset form on success (mutation success will re-render)
+    setPrUrl('');
+    setDescription('');
+    setShowDescription(false);
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-lg border border-border-subtle bg-surface-2 p-4"
+    >
+      <div className="mb-3 flex items-center gap-2">
+        <GithubIcon className="h-4 w-4 text-text-secondary" />
+        <span className="text-sm font-medium text-foreground">
+          {hasExistingSubmissions ? 'Submit another solution' : 'Submit your solution'}
+        </span>
+      </div>
+
+      <div className="space-y-3">
+        <div>
+          <Input
+            type="url"
+            placeholder="https://github.com/owner/repo/pull/123"
+            value={prUrl}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              setPrUrl(e.target.value);
+              if (error) setError('');
+            }}
+            className="border-border-default bg-background text-foreground placeholder:text-text-muted"
+            disabled={isSubmitting}
+          />
+          {error && (
+            <p className="mt-1 text-xs text-red-500">{error}</p>
+          )}
+        </div>
+
+        {showDescription ? (
+          <div>
+            <Textarea
+              placeholder="Brief description of your changes (optional)"
+              value={description}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                setDescription(e.target.value)
+              }
+              className="min-h-[60px] border-border-default bg-background text-foreground placeholder:text-text-muted"
+              disabled={isSubmitting}
+              maxLength={2000}
+            />
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowDescription(true)}
+            className="flex items-center gap-1 text-xs text-text-muted hover:text-text-secondary transition-colors"
+          >
+            <ChevronDown className="h-3 w-3" />
+            Add description
+          </button>
+        )}
+
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-text-muted">
+            Paste your GitHub PR link — we handle the rest.
+          </p>
+          <Button
+            type="submit"
+            size="sm"
+            disabled={isSubmitting || !prUrl.trim()}
+            className="flex items-center gap-1.5"
+          >
+            {isSubmitting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Send className="h-3.5 w-3.5" />
+            )}
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </Button>
+        </div>
+      </div>
+    </form>
+  );
+}
+
+/**
+ * Empty state when no submissions exist and user can't submit.
+ */
+function EmptyState({
+  isAuthenticated,
+  bounty,
+}: {
+  isAuthenticated: boolean;
+  bounty: {
+    id: string;
+    githubRepoOwner?: string | null;
+    githubRepoName?: string | null;
+    githubIssueNumber?: number | null;
+  };
+}) {
+  return (
+    <div className="rounded-lg bg-surface-2 p-6 text-center">
+      <p className="text-text-muted text-sm mb-4">No submissions yet</p>
+      {!isAuthenticated && (
+        <Link
+          href={`/login?callback=/bounty/${bounty.id}`}
+          className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
+        >
+          Sign in to Submit Your Solution
+        </Link>
+      )}
     </div>
   );
 }

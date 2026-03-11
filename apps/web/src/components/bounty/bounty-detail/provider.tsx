@@ -331,6 +331,37 @@ function useBountyDetailMutations({
     },
   });
 
+  const submitWorkMutation = useMutation({
+    mutationFn: async (input: {
+      bountyId: string;
+      pullRequestUrl: string;
+      description?: string;
+    }) => {
+      return await trpcClient.bounties.submitWorkFromApp.mutate(input);
+    },
+    onSuccess: (result) => {
+      toast.success(result.message || 'Submission received!');
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const [first] = query.queryKey;
+          if (typeof first === 'string') {
+            return first.includes('bounty');
+          }
+          if (Array.isArray(first)) {
+            const namespace = first[0];
+            return (
+              typeof namespace === 'string' && namespace.includes('bounty')
+            );
+          }
+          return false;
+        },
+      });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to submit: ${error.message}`);
+    },
+  });
+
   return {
     queryClient,
     voteMutation,
@@ -343,6 +374,7 @@ function useBountyDetailMutations({
     approveSubmissionMutation,
     unapproveSubmissionMutation,
     mergeSubmissionMutation,
+    submitWorkMutation,
   };
 }
 
@@ -445,6 +477,7 @@ export function BountyDetailProvider({
     approveSubmissionMutation,
     unapproveSubmissionMutation,
     mergeSubmissionMutation,
+    submitWorkMutation,
   } = useBountyDetailMutations({
     bountyId,
     setShowCancellationDialog,
@@ -717,6 +750,16 @@ export function BountyDetailProvider({
           { onSettled: () => setMergingSubmissionId(null) }
         );
       },
+      submitWork: (pullRequestUrl: string, description?: string) => {
+        if (submitWorkMutation.isPending) {
+          return;
+        }
+        submitWorkMutation.mutate({
+          bountyId,
+          pullRequestUrl,
+          description: description || undefined,
+        });
+      },
     }),
     [
       bountyId,
@@ -734,6 +777,7 @@ export function BountyDetailProvider({
       approveSubmissionMutation,
       unapproveSubmissionMutation,
       mergeSubmissionMutation,
+      submitWorkMutation,
       onEdit,
       title,
       description,
@@ -756,6 +800,7 @@ export function BountyDetailProvider({
       unapprovingSubmissionId,
       isMergingSubmission: mergeSubmissionMutation.isPending,
       mergingSubmissionId,
+      isSubmittingWork: submitWorkMutation.isPending,
     }),
     [
       bountyId,
@@ -771,6 +816,7 @@ export function BountyDetailProvider({
       unapprovingSubmissionId,
       mergeSubmissionMutation.isPending,
       mergingSubmissionId,
+      submitWorkMutation.isPending,
     ]
   );
 
