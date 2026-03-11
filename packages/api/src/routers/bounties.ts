@@ -88,6 +88,9 @@ import { GITHUB_ISSUE_URL_REGEX, GITHUB_URL_REGEX } from '@bounty/ui/lib/utils';
 import { parseLinksFromMarkdown } from '@bounty/ui/lib/links';
 
 const GIT_SUFFIX_REGEX = /\.git$/;
+const GITHUB_PR_URL_REGEX = /^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+/;
+const GITHUB_PR_URL_CAPTURE_REGEX =
+  /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/;
 
 const parseAmount = (amount: string | number | null): number => {
   if (amount === null || amount === undefined) {
@@ -97,12 +100,10 @@ const parseAmount = (amount: string | number | null): number => {
   return Number.isNaN(parsed) ? 0 : parsed;
 };
 
-const formatCurrency = (amount: number, currency = 'USD'): string =>
+const formatCurrency = (amount: number, currency: string): string =>
   new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
   }).format(amount);
 
 /**
@@ -526,7 +527,7 @@ export const bountiesRouter = router({
         }
 
         // Also extract owner/name from repositoryUrl when no issue is linked
-        if (!githubRepoOwner && !githubRepoName && repositoryUrl) {
+        if (!(githubRepoOwner || githubRepoName) && repositoryUrl) {
           const repoUrlMatch = repositoryUrl
             .replace(GIT_SUFFIX_REGEX, '')
             .match(GITHUB_URL_REGEX);
@@ -537,15 +538,10 @@ export const bountiesRouter = router({
         }
 
         // Look up the GitHub App installation for the org if not provided
-        if (
-          !resolvedInstallationId &&
-          githubRepoOwner &&
-          ctx.org?.id
-        ) {
+        if (!resolvedInstallationId && githubRepoOwner && ctx.org?.id) {
           const [inst] = await db
             .select({
-              githubInstallationId:
-                githubInstallation.githubInstallationId,
+              githubInstallationId: githubInstallation.githubInstallationId,
               accountLogin: githubInstallation.accountLogin,
             })
             .from(githubInstallation)
@@ -702,8 +698,7 @@ export const bountiesRouter = router({
         // Auto-create GitHub issue when bounty has a repo but no issue
         // This eliminates the manual step of creating an issue separately
         if (
-          !newBounty.linearIssueId && // Not a Linear mirror (handled above)
-          !newBounty.githubIssueNumber &&
+          !(newBounty.linearIssueId || newBounty.githubIssueNumber) &&
           newBounty.githubInstallationId &&
           newBounty.githubRepoOwner &&
           newBounty.githubRepoName
@@ -720,7 +715,7 @@ export const bountiesRouter = router({
 
 [![bounty.new](${buttonUrl})](${baseUrl}/bounty/${newBounty.id})
 
-**${formatCurrency(parseAmount(normalizedAmount))} Bounty**
+**${formatCurrency(parseAmount(normalizedAmount), input.currency)} Bounty**
 
 [View on bounty.new](${baseUrl}/bounty/${newBounty.id}) · Submit your PR referencing this issue to claim the bounty.
 `.trim();
@@ -5596,7 +5591,7 @@ ${formattedAmount} ${isFunded ? `![Funded](${fundedBadgeUrl})` : ''}
           .string()
           .url('Please enter a valid URL')
           .refine(
-            (url) => /^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+/.test(url),
+            (url) => GITHUB_PR_URL_REGEX.test(url),
             'Must be a GitHub pull request URL (e.g. https://github.com/owner/repo/pull/123)'
           ),
         description: z.string().max(2000).optional(),
@@ -5636,17 +5631,16 @@ ${formattedAmount} ${isFunded ? `![Funded](${fundedBadgeUrl})` : ''}
       }
 
       // 4. Parse PR URL
-      const prMatch = input.pullRequestUrl.match(
-        /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/
-      );
+      const prMatch = input.pullRequestUrl.match(GITHUB_PR_URL_CAPTURE_REGEX);
       if (!prMatch) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Invalid pull request URL format',
         });
       }
-      const [, prOwner, prRepo, prNumberStr] = prMatch;
-      const prNumber = Number.parseInt(prNumberStr, 10);
+      const prOwner = prMatch[1] as string;
+      const prRepo = prMatch[2] as string;
+      const prNumber = Number.parseInt(prMatch[3] as string, 10);
 
       // 5. Check for duplicate submission for this PR
       const [existingSubmission] = await db
@@ -5663,7 +5657,8 @@ ${formattedAmount} ${isFunded ? `![Funded](${fundedBadgeUrl})` : ''}
       if (existingSubmission) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: 'This pull request has already been submitted for this bounty',
+          message:
+            'This pull request has already been submitted for this bounty',
         });
       }
 
@@ -5687,17 +5682,38 @@ ${formattedAmount} ${isFunded ? `![Funded](${fundedBadgeUrl})` : ''}
         });
       }
 
-      // 7. Try to fetch PR details from GitHub (best-effort)
+      // 7. Require GitHub profile to be connected
+      const [profile] = await db
+        .select({ githubUsername: userProfile.githubUsername })
+        .from(userProfile)
+        .where(eq(userProfile.userId, ctx.session.user.id))
+        .limit(1);
+
+      if (!profile?.githubUsername) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Connect your GitHub account before submitting a PR',
+        });
+      }
+
+      // 8. Fetch PR details and verify authorship / target repo
       let prTitle: string | null = null;
       let prHeadSha: string | null = null;
       let prAuthorLogin: string | null = null;
 
-      if (
-        bountyRecord.githubInstallationId &&
-        bountyRecord.githubRepoOwner &&
-        bountyRecord.githubRepoName
-      ) {
-        try {
+      if (bountyRecord.githubRepoOwner && bountyRecord.githubRepoName) {
+        if (
+          prOwner.toLowerCase() !==
+            bountyRecord.githubRepoOwner.toLowerCase() ||
+          prRepo.toLowerCase() !== bountyRecord.githubRepoName.toLowerCase()
+        ) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'PR must target the bounty repository',
+          });
+        }
+
+        if (bountyRecord.githubInstallationId) {
           const githubApp = getGithubAppManager();
           const prData = await githubApp.getPullRequest(
             bountyRecord.githubInstallationId,
@@ -5705,25 +5721,25 @@ ${formattedAmount} ${isFunded ? `![Funded](${fundedBadgeUrl})` : ''}
             prRepo,
             prNumber
           );
+
           prTitle = prData.title;
           prHeadSha = prData.head.sha;
           prAuthorLogin = prData.user.login;
-        } catch {
-          // PR might be on a different repo or app not installed — that's OK
-          console.log(
-            `[submitWorkFromApp] Could not fetch PR details for ${prOwner}/${prRepo}#${prNumber}`
-          );
+
+          if (
+            prAuthorLogin.toLowerCase() !== profile.githubUsername.toLowerCase()
+          ) {
+            throw new TRPCError({
+              code: 'FORBIDDEN',
+              message: 'You can only submit your own pull requests',
+            });
+          }
         }
       }
 
-      // 8. Get user's GitHub username from profile (fallback)
+      // Fallback author from profile if we couldn't fetch from GitHub
       if (!prAuthorLogin) {
-        const [profile] = await db
-          .select({ githubUsername: userProfile.githubUsername })
-          .from(userProfile)
-          .where(eq(userProfile.userId, ctx.session.user.id))
-          .limit(1);
-        prAuthorLogin = profile?.githubUsername || null;
+        prAuthorLogin = profile.githubUsername;
       }
 
       // 9. Create submission
