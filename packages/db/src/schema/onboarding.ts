@@ -14,13 +14,11 @@ export const onboardingState = pgTable('onboarding_state', {
   completedStep4: boolean('completed_step_4').notNull().default(false),
   source: text('source'), // How they found us (from step 3): twitter, github, friend, hacker_news, other
   claimedWaitlistDiscount: boolean('claimed_waitlist_discount').notNull().default(false),
-  // Tour / product onboarding (guided walkthrough)
-  completedOnboarding: boolean('completed_onboarding').notNull().default(false),
   // Getting Started checklist items
-  gsConnectedTools: boolean('gs_connected_tools').notNull().default(false),
-  gsSetupPayouts: boolean('gs_setup_payouts').notNull().default(false),
-  gsCreatedBounty: boolean('gs_created_bounty').notNull().default(false),
-  gsInvitedMember: boolean('gs_invited_member').notNull().default(false),
+  connectedTools: boolean('connected_tools').notNull().default(false),
+  setupPayouts: boolean('setup_payouts').notNull().default(false),
+  createdBounty: boolean('created_bounty').notNull().default(false),
+  invitedMember: boolean('invited_member').notNull().default(false),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
 });

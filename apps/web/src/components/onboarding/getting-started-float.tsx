@@ -56,7 +56,7 @@ export function GettingStartedFloat() {
       id: 'tools',
       taskKey: 'tools',
       label: 'Connect tools',
-      completed: onboardingState?.gsConnectedTools ?? false,
+      completed: onboardingState?.connectedTools ?? false,
       tourId: 'connect-tools',
       href: activeOrgSlug ? `/${activeOrgSlug}/integrations` : '/integrations',
     },
@@ -64,7 +64,7 @@ export function GettingStartedFloat() {
       id: 'payouts',
       taskKey: 'payouts',
       label: 'Setup payouts',
-      completed: onboardingState?.gsSetupPayouts ?? false,
+      completed: onboardingState?.setupPayouts ?? false,
       tourId: 'setup-payouts',
       href: activeOrgSlug
         ? `/${activeOrgSlug}/settings/payments?tab=settings`
@@ -74,7 +74,7 @@ export function GettingStartedFloat() {
       id: 'first-bounty',
       taskKey: 'bounty',
       label: 'Create bounty',
-      completed: onboardingState?.gsCreatedBounty ?? false,
+      completed: onboardingState?.createdBounty ?? false,
       tourId: 'create-bounty',
       href: '/dashboard',
     },
@@ -82,7 +82,7 @@ export function GettingStartedFloat() {
       id: 'invite-member',
       taskKey: 'member',
       label: 'Invite member',
-      completed: onboardingState?.gsInvitedMember ?? false,
+      completed: onboardingState?.invitedMember ?? false,
       tourId: 'invite-member',
       href: activeOrgSlug
         ? `/${activeOrgSlug}/settings/members`

@@ -24,11 +24,10 @@ export const onboardingRouter = router({
         completedStep4: false,
         source: null,
         claimedWaitlistDiscount: false,
-        completedOnboarding: false,
-        gsConnectedTools: false,
-        gsSetupPayouts: false,
-        gsCreatedBounty: false,
-        gsInvitedMember: false,
+        connectedTools: false,
+        setupPayouts: false,
+        createdBounty: false,
+        invitedMember: false,
       };
     }
 
@@ -39,11 +38,10 @@ export const onboardingRouter = router({
       completedStep4: state.completedStep4,
       source: state.source,
       claimedWaitlistDiscount: state.claimedWaitlistDiscount,
-      completedOnboarding: state.completedOnboarding,
-      gsConnectedTools: state.gsConnectedTools,
-      gsSetupPayouts: state.gsSetupPayouts,
-      gsCreatedBounty: state.gsCreatedBounty,
-      gsInvitedMember: state.gsInvitedMember,
+      connectedTools: state.connectedTools,
+      setupPayouts: state.setupPayouts,
+      createdBounty: state.createdBounty,
+      invitedMember: state.invitedMember,
     };
   }),
 
@@ -217,37 +215,6 @@ export const onboardingRouter = router({
     }),
 
   /**
-   * Mark the product tour / onboarding walkthrough as complete
-   */
-  completeOnboarding: protectedProcedure
-    .mutation(async ({ ctx }) => {
-      const [existingState] = await ctx.db
-        .select()
-        .from(onboardingState)
-        .where(eq(onboardingState.userId, ctx.session.user.id))
-        .limit(1);
-
-      if (existingState) {
-        await ctx.db
-          .update(onboardingState)
-          .set({
-            completedOnboarding: true,
-            updatedAt: new Date(),
-          })
-          .where(eq(onboardingState.userId, ctx.session.user.id));
-      } else {
-        await ctx.db
-          .insert(onboardingState)
-          .values({
-            userId: ctx.session.user.id,
-            completedOnboarding: true,
-          });
-      }
-
-      return { success: true };
-    }),
-
-  /**
    * Mark a Getting Started checklist task as complete
    */
   completeGettingStartedTask: protectedProcedure
@@ -256,10 +223,10 @@ export const onboardingRouter = router({
     }))
     .mutation(async ({ input, ctx }) => {
       const fieldMap = {
-        tools: 'gsConnectedTools',
-        payouts: 'gsSetupPayouts',
-        bounty: 'gsCreatedBounty',
-        member: 'gsInvitedMember',
+        tools: 'connectedTools',
+        payouts: 'setupPayouts',
+        bounty: 'createdBounty',
+        member: 'invitedMember',
       } as const;
 
       const field = fieldMap[input.task];

@@ -126,7 +126,7 @@ export const GettingStartedCard = () => {
       id: 'tools',
       taskKey: 'tools',
       label: 'Connect your tools',
-      completed: onboardingState?.gsConnectedTools ?? false,
+      completed: onboardingState?.connectedTools ?? false,
       tourId: 'connect-tools',
       href: activeOrgSlug ? `/${activeOrgSlug}/integrations` : '/integrations',
     },
@@ -134,7 +134,7 @@ export const GettingStartedCard = () => {
       id: 'payouts',
       taskKey: 'payouts',
       label: 'Start receiving payouts',
-      completed: onboardingState?.gsSetupPayouts ?? false,
+      completed: onboardingState?.setupPayouts ?? false,
       tourId: 'setup-payouts',
       href: activeOrgSlug
         ? `/${activeOrgSlug}/settings/payments?tab=settings`
@@ -144,7 +144,7 @@ export const GettingStartedCard = () => {
       id: 'first-bounty',
       taskKey: 'bounty',
       label: 'Create your first bounty',
-      completed: onboardingState?.gsCreatedBounty ?? false,
+      completed: onboardingState?.createdBounty ?? false,
       tourId: 'create-bounty',
       href: '/dashboard',
     },
@@ -152,7 +152,7 @@ export const GettingStartedCard = () => {
       id: 'invite-member',
       taskKey: 'member',
       label: 'Invite a member to your team',
-      completed: onboardingState?.gsInvitedMember ?? false,
+      completed: onboardingState?.invitedMember ?? false,
       tourId: 'invite-member',
       href: activeOrgSlug
         ? `/${activeOrgSlug}/settings/members`
