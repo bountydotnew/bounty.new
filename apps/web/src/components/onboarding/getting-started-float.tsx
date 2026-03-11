@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cn } from '@bounty/ui/lib/utils';
 import { useActiveOrg } from '@/hooks/use-active-org';
 import { useSession } from '@/context/session-context';
-import { useOptionalTour } from '@bounty/ui/components/tour';
+import { useTour } from '@bounty/ui/components/tour';
 import { trpc } from '@/utils/trpc';
 
 interface FloatItem {
@@ -24,7 +24,12 @@ export function GettingStartedFloat() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const tour = useOptionalTour();
+  let tour: ReturnType<typeof useTour> | null = null;
+  try {
+    tour = useTour();
+  } catch {
+    // TourProvider not present
+  }
 
   const { data: onboardingState } = useQuery({
     ...trpc.onboarding.getState.queryOptions(),

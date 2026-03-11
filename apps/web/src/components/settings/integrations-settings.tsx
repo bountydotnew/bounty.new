@@ -235,38 +235,40 @@ function GitHubIntegrationCard({
         : `${installedCount} accounts connected`;
 
   return (
-    <IntegrationCard
-      key="github"
-      icon={<GithubIcon className="size-7 text-foreground" />}
-      title="GitHub"
-      description={description}
-      status={
-        installedCount > 0
-          ? {
-              type: 'installed',
-              count: installedCount,
-              accounts: installations.map((installation) => ({
-                id: installation.id,
-                accountLogin: installation.accountLogin,
-                href: `${pathPrefix}/integrations/github/${installation.id}`,
-              })),
-            }
-          : undefined
-      }
-      action={{
-        label: 'Install',
-        onClick: () => {
-          const fallbackUrl =
-            'https://github.com/apps/bountydotnew/installations/new';
-          window.location.href = installUrl?.url || fallbackUrl;
-        },
-      }}
-      href={
-        primaryInstallation
-          ? `${pathPrefix}/integrations/github/${primaryInstallation.id}`
-          : undefined
-      }
-    />
+    <div data-tour-step-id="github-integration">
+      <IntegrationCard
+        key="github"
+        icon={<GithubIcon className="size-7 text-foreground" />}
+        title="GitHub"
+        description={description}
+        status={
+          installedCount > 0
+            ? {
+                type: 'installed',
+                count: installedCount,
+                accounts: installations.map((installation) => ({
+                  id: installation.id,
+                  accountLogin: installation.accountLogin,
+                  href: `${pathPrefix}/integrations/github/${installation.id}`,
+                })),
+              }
+            : undefined
+        }
+        action={{
+          label: 'Install',
+          onClick: () => {
+            const fallbackUrl =
+              'https://github.com/apps/bountydotnew/installations/new';
+            window.location.href = installUrl?.url || fallbackUrl;
+          },
+        }}
+        href={
+          primaryInstallation
+            ? `${pathPrefix}/integrations/github/${primaryInstallation.id}`
+            : undefined
+        }
+      />
+    </div>
   );
 }
 
@@ -548,7 +550,7 @@ export function IntegrationsSettings() {
       )}
 
       {/* Integration Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div data-tour-step-id="integrations-grid" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filteredIntegrations.map((item) =>
           renderIntegrationCard(
             item,

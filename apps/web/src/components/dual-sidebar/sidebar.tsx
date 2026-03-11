@@ -411,6 +411,8 @@ export const AppSidebar = ({
               </div>
             ) : (
               <div className="px-[15px] py-0 group-data-[collapsible=icon]:px-0">
+                {/* Getting Started checklist */}
+                <GettingStartedCard />
                 {/* Bottom actions row */}
                 <div className="flex items-center justify-between gap-2 pt-3 mt-3 border-t border-border-subtle group-data-[collapsible=icon]:justify-center">
                   {/* Docs link */}
