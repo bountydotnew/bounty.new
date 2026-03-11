@@ -18,6 +18,7 @@ import type {
   RateLimitInfo,
   WaitlistCookieData,
   WaitlistHookResult,
+  WaitlistResponse,
   WaitlistSubmissionData,
 } from '@/types/waitlist';
 import { trpc } from '@/utils/trpc';
@@ -63,19 +64,23 @@ function writeStoredWaitlist(data: WaitlistCookieData) {
 function useWaitlistSubmission(): WaitlistHookResult {
   const { celebrate } = useConfetti();
   const [success, setSuccess] = useState(false);
+  const [position, setPosition] = useState<number | null>(null);
   const [rateLimitInfo, _setRateLimitInfo] = useState<RateLimitInfo | null>(
     null
   );
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async ({ email, fingerprintData }: WaitlistSubmissionData) => {
+    mutationFn: async ({
+      email,
+      fingerprintData,
+    }: WaitlistSubmissionData): Promise<WaitlistResponse> => {
       const response = await fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, fingerprintData }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as WaitlistResponse;
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to join waitlist');
@@ -83,13 +88,18 @@ function useWaitlistSubmission(): WaitlistHookResult {
 
       return data;
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
+      const savedPosition =
+        typeof data.position === 'number' ? data.position : null;
+
       setSuccess(true);
+      setPosition(savedPosition);
 
       const cookieData: WaitlistCookieData = {
         submitted: true,
         timestamp: new Date().toISOString(),
         email: btoa(variables.email).substring(0, 16),
+        position: savedPosition,
       };
       writeStoredWaitlist(cookieData);
 
@@ -114,7 +124,15 @@ function useWaitlistSubmission(): WaitlistHookResult {
     },
   });
 
-  return { mutate, isPending, success, setSuccess, rateLimitInfo };
+  return {
+    mutate,
+    isPending,
+    success,
+    position,
+    setSuccess,
+    setPosition,
+    rateLimitInfo,
+  };
 }
 
 function WaitlistAvatarStack({
@@ -127,18 +145,13 @@ function WaitlistAvatarStack({
   const avatarSize = compact ? 20 : 28;
 
   return (
-    <div className={`-space-x-2 flex ${className}`}>
+    <div aria-hidden="true" className={`-space-x-2 flex ${className}`}>
       {WAITLIST_AVATARS.map((src) => (
         <div
           key={src}
           className={`${compact ? 'w-5 h-5' : 'w-7 h-7'} rounded-full border-2 border-background overflow-hidden`}
         >
-          <Image
-            alt="waitlist"
-            height={avatarSize}
-            src={src}
-            width={avatarSize}
-          />
+          <Image alt="" height={avatarSize} src={src} width={avatarSize} />
         </div>
       ))}
     </div>
@@ -147,11 +160,16 @@ function WaitlistAvatarStack({
 
 function WaitlistSuccessState({
   compact = false,
+  queuePosition,
   waitlistCount,
 }: {
   compact?: boolean;
+  queuePosition: number | null;
   waitlistCount: number;
 }) {
+  const hasQueuePosition =
+    typeof queuePosition === 'number' && Number.isFinite(queuePosition);
+
   return (
     <div
       className={`${compact ? 'mt-2 rounded-[18px] p-3' : 'mt-3 rounded-[26px] p-4'} border border-border-default text-left`}
@@ -182,28 +200,36 @@ function WaitlistSuccessState({
       </div>
 
       <div
-        className={`${compact ? 'mt-3 flex flex-col gap-2' : 'mt-4 grid grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] gap-3'}`}
+        className={
+          compact
+            ? 'mt-3 flex flex-col gap-2'
+            : `mt-4 grid ${hasQueuePosition ? 'grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]' : 'grid-cols-1'} gap-3`
+        }
       >
-        <div
-          className={`${compact ? 'rounded-2xl p-3' : 'rounded-[22px] p-4'} border border-border-subtle bg-surface-1/80`}
-        >
-          <span className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
-            Queue position
-          </span>
-          <div className={`${compact ? 'mt-2' : 'mt-3'} flex items-end gap-2`}>
-            <span
-              className={`${compact ? 'text-3xl' : 'text-4xl'} leading-none font-medium tracking-tight text-foreground`}
-            >
-              <span className="mr-1 text-text-tertiary">#</span>
-              <NumberFlow value={waitlistCount} />
-            </span>
-          </div>
-          <p
-            className={`${compact ? 'mt-2 text-[11px]' : 'mt-3 text-xs'} leading-relaxed text-text-muted`}
+        {hasQueuePosition && (
+          <div
+            className={`${compact ? 'rounded-2xl p-3' : 'rounded-[22px] p-4'} border border-border-subtle bg-surface-1/80`}
           >
-            You're ahead of the next wave of builders joining bounty.new.
-          </p>
-        </div>
+            <span className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
+              Queue position
+            </span>
+            <div
+              className={`${compact ? 'mt-2' : 'mt-3'} flex items-end gap-2`}
+            >
+              <span
+                className={`${compact ? 'text-3xl' : 'text-4xl'} leading-none font-medium tracking-tight text-foreground`}
+              >
+                <span className="mr-1 text-text-tertiary">#</span>
+                <NumberFlow value={queuePosition} />
+              </span>
+            </div>
+            <p
+              className={`${compact ? 'mt-2 text-[11px]' : 'mt-3 text-xs'} leading-relaxed text-text-muted`}
+            >
+              This is the place we saved for your invite in the current queue.
+            </p>
+          </div>
+        )}
 
         <div
           className={`${compact ? 'rounded-2xl p-3' : 'rounded-[22px] p-4'} border border-border-subtle bg-background/70`}
@@ -258,8 +284,11 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     const stored = readStoredWaitlist();
     if (stored?.submitted) {
       waitlistSubmission.setSuccess(true);
+      waitlistSubmission.setPosition(
+        typeof stored.position === 'number' ? stored.position : null
+      );
     }
-  }, [waitlistSubmission.setSuccess]);
+  }, [waitlistSubmission.setPosition, waitlistSubmission.setSuccess]);
 
   useEffect(() => {
     const generateFingerprint = async () => {
@@ -329,6 +358,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
           {waitlistSubmission.success ? (
             <WaitlistSuccessState
               compact={compact}
+              queuePosition={waitlistSubmission.position}
               waitlistCount={waitlistCount}
             />
           ) : (

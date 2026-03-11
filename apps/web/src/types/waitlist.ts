@@ -15,19 +15,26 @@ export interface WaitlistCookieData {
   submitted: boolean;
   timestamp: string;
   email: string;
+  position?: number | null;
 }
 
-interface WaitlistResponse {
+export interface WaitlistResponse {
+  success: boolean;
   message?: string;
   warning?: string;
-  remaining: number;
-  limit: number;
+  error?: string;
+  alreadyJoined?: boolean;
+  position?: number | null;
+  remaining?: number;
+  limit?: number;
 }
 
 export interface WaitlistHookResult {
   mutate: (data: WaitlistSubmissionData) => void;
   isPending: boolean;
   success: boolean;
+  position: number | null;
   setSuccess: (success: boolean) => void;
+  setPosition: (position: number | null) => void;
   rateLimitInfo: RateLimitInfo | null;
 }

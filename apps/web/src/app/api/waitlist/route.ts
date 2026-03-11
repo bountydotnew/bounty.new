@@ -55,6 +55,7 @@ export async function POST(_request: NextRequest) {
         success: true,
         message: "You're already on the waitlist!",
         alreadyJoined: true,
+        position: existingEntry.position ?? null,
       });
     }
 
