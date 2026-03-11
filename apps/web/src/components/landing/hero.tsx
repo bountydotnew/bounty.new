@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import Link  from '@bounty/ui/components/link';
+import Link from '@bounty/ui/components/link';
 import dynamic from 'next/dynamic';
 import { Suspense, useState } from 'react';
 import { ChevronDown, RotateCcw } from 'lucide-react';
@@ -51,11 +51,11 @@ export function Hero() {
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-medium leading-tight text-balance mb-4 text-foreground">
             Human fixes for the AI era
           </h1>
-          <p className="text-base sm:text-lg text-text-secondary mb-8 max-w-xl">
-            AI writes bugs humans have to fix. Post a bounty, get a real solution from developers who've seen the pattern before.
+          <p className="text-base sm:text-lg text-text-secondary mb-8 max-w-2xl">
+            "You're absolutely right, I've fixed the issue!" - your AI, four builds deep. Meanwhile your tests are failing, your company is on fire, and you're mass accepting diffs at 2am while your boss yells at you.
           </p>
           <p className="text-base sm:text-lg text-text-secondary mb-8 max-w-xl">
-            Spend your money on what matters, instead of dumping it into AI credits hoping it will fix your code.
+            Post a bounty. Get a human who fixes it once.
           </p>
           <div className="flex items-center gap-4">
             <Link
