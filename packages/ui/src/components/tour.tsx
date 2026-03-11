@@ -28,6 +28,41 @@ export interface Tour {
 }
 
 // ---------------------------------------------------------------------------
+// Session storage key for cross-page persistence
+// ---------------------------------------------------------------------------
+
+const TOUR_STORAGE_KEY = 'bounty-active-tour';
+
+interface PersistedTourState {
+  tourId: string;
+  stepIndex: number;
+}
+
+function persistTourState(state: PersistedTourState | null) {
+  try {
+    if (state) {
+      sessionStorage.setItem(TOUR_STORAGE_KEY, JSON.stringify(state));
+    } else {
+      sessionStorage.removeItem(TOUR_STORAGE_KEY);
+    }
+  } catch {
+    // sessionStorage may not be available
+  }
+}
+
+function loadPersistedTourState(): PersistedTourState | null {
+  try {
+    const raw = sessionStorage.getItem(TOUR_STORAGE_KEY);
+    if (raw) {
+      return JSON.parse(raw) as PersistedTourState;
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Context
 // ---------------------------------------------------------------------------
 
@@ -87,6 +122,17 @@ export function TourProvider({
   const totalSteps = activeTour?.steps.length ?? 0;
   const isActive = !!activeTourId && !!currentStep;
 
+  // Restore persisted tour state on mount (cross-page navigation)
+  React.useEffect(() => {
+    const persisted = loadPersistedTourState();
+    if (persisted && tours.some((t) => t.id === persisted.tourId)) {
+      setActiveTourId(persisted.tourId);
+      setCurrentStepIndex(persisted.stepIndex);
+      // Clear it so it doesn't re-trigger on subsequent mounts
+      persistTourState(null);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Find and track target element
   React.useEffect(() => {
     if (!currentStep) {
@@ -97,7 +143,6 @@ export function TourProvider({
 
     let attempts = 0;
     const maxAttempts = 30; // 3 seconds total
-    let rafId: number;
 
     const findElement = () => {
       const el = document.querySelector(
@@ -128,7 +173,6 @@ export function TourProvider({
 
     return () => {
       clearInterval(interval);
-      if (rafId) cancelAnimationFrame(rafId);
     };
   }, [currentStep?.id, currentStepIndex, activeTourId]);
 
@@ -154,6 +198,7 @@ export function TourProvider({
     setCurrentStepIndex(0);
     setTargetElement(null);
     setTargetRect(null);
+    persistTourState(null);
   }, []);
 
   const close = React.useCallback(() => {
@@ -163,23 +208,31 @@ export function TourProvider({
     dismiss();
   }, [activeTourId, onTourComplete, dismiss]);
 
-  const start = React.useCallback((tourId: string) => {
-    setActiveTourId(tourId);
-    setCurrentStepIndex(0);
-    setTargetElement(null);
-    setTargetRect(null);
-  }, []);
+  const start = React.useCallback(
+    (tourId: string) => {
+      setActiveTourId(tourId);
+      setCurrentStepIndex(0);
+      setTargetElement(null);
+      setTargetRect(null);
+      // Persist so it survives cross-page navigation
+      persistTourState({ tourId, stepIndex: 0 });
+    },
+    []
+  );
 
   const next = React.useCallback(() => {
     if (!activeTour) return;
     if (currentStepIndex < activeTour.steps.length - 1) {
       const step = activeTour.steps[currentStepIndex];
+      const nextIndex = currentStepIndex + 1;
       if (step?.nextRoute && onNavigate) {
+        // Persist state before navigating to another page
+        persistTourState({ tourId: activeTour.id, stepIndex: nextIndex });
         onNavigate(step.nextRoute);
       }
       setTargetElement(null);
       setTargetRect(null);
-      setCurrentStepIndex((i) => i + 1);
+      setCurrentStepIndex(nextIndex);
     } else {
       close();
     }
@@ -188,12 +241,17 @@ export function TourProvider({
   const previous = React.useCallback(() => {
     if (currentStepIndex > 0) {
       const step = activeTour?.steps[currentStepIndex];
+      const prevIndex = currentStepIndex - 1;
       if (step?.previousRoute && onNavigate) {
+        persistTourState({
+          tourId: activeTour!.id,
+          stepIndex: prevIndex,
+        });
         onNavigate(step.previousRoute);
       }
       setTargetElement(null);
       setTargetRect(null);
-      setCurrentStepIndex((i) => i - 1);
+      setCurrentStepIndex(prevIndex);
     }
   }, [activeTour, currentStepIndex, onNavigate]);
 
@@ -273,7 +331,12 @@ function TourOverlay({
 
   // Calculate popover position
   const popoverRef = React.useRef<HTMLDivElement>(null);
-  const [popoverPos, setPopoverPos] = React.useState({ top: 0, left: 0 });
+  const [popoverPos, setPopoverPos] = React.useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+  // Track whether we've done an initial position so we can enable transitions
+  const hasPositioned = React.useRef(false);
 
   React.useLayoutEffect(() => {
     if (!popoverRef.current) return;
@@ -311,9 +374,7 @@ function TourOverlay({
           break;
         case 'center':
           left =
-            targetRect.left +
-            targetRect.width / 2 -
-            popRect.width / 2;
+            targetRect.left + targetRect.width / 2 - popRect.width / 2;
           break;
         case 'end':
           left = targetRect.right + padding - popRect.width;
@@ -329,9 +390,7 @@ function TourOverlay({
           break;
         case 'center':
           top =
-            targetRect.top +
-            targetRect.height / 2 -
-            popRect.height / 2;
+            targetRect.top + targetRect.height / 2 - popRect.height / 2;
           break;
         case 'end':
           top = targetRect.bottom + padding - popRect.height;
@@ -346,7 +405,21 @@ function TourOverlay({
     top = Math.max(12, Math.min(top, vh - popRect.height - 12));
 
     setPopoverPos({ top, left });
+
+    // Mark that we've done the first layout — after this, transitions kick in
+    if (!hasPositioned.current) {
+      // Use rAF to ensure the initial position is painted before enabling transitions
+      requestAnimationFrame(() => {
+        hasPositioned.current = true;
+      });
+    }
   }, [targetRect, step.side, step.sideOffset, step.align]);
+
+  // Reset hasPositioned when stepIndex changes so we don't animate from old position
+  React.useEffect(() => {
+    hasPositioned.current = false;
+    setPopoverPos(null);
+  }, [stepIndex]);
 
   const cutout = {
     x: targetRect.left - padding,
@@ -355,11 +428,23 @@ function TourOverlay({
     height: targetRect.height + padding * 2,
   };
 
+  // Use CSS transitions only after first position is set to avoid jarring entrance
+  const enableTransitions = hasPositioned.current && popoverPos !== null;
+
   return createPortal(
-    <div className="tour-overlay" style={{ position: 'fixed', inset: 0, zIndex: 99990 }}>
+    <div
+      className="tour-overlay"
+      style={{ position: 'fixed', inset: 0, zIndex: 99990 }}
+    >
       {/* SVG overlay with spotlight cutout */}
       <svg
-        style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+        }}
       >
         <defs>
           <mask id="tour-spotlight-mask">
@@ -372,6 +457,14 @@ function TourOverlay({
               rx={borderRadius}
               ry={borderRadius}
               fill="black"
+              style={
+                enableTransitions
+                  ? {
+                      transition:
+                        'x 0.35s cubic-bezier(0.4,0,0.2,1), y 0.35s cubic-bezier(0.4,0,0.2,1), width 0.35s cubic-bezier(0.4,0,0.2,1), height 0.35s cubic-bezier(0.4,0,0.2,1)',
+                    }
+                  : undefined
+              }
             />
           </mask>
         </defs>
@@ -396,9 +489,12 @@ function TourOverlay({
           width: cutout.width,
           height: cutout.height,
           borderRadius: borderRadius,
-          boxShadow: '0 0 0 2px rgba(74, 111, 220, 0.6), 0 0 0 4px rgba(74, 111, 220, 0.25)',
+          boxShadow:
+            '0 0 0 2px rgba(74, 111, 220, 0.6), 0 0 0 4px rgba(74, 111, 220, 0.25)',
           pointerEvents: 'none',
-          transition: 'all 0.3s ease',
+          transition: enableTransitions
+            ? 'top 0.35s cubic-bezier(0.4,0,0.2,1), left 0.35s cubic-bezier(0.4,0,0.2,1), width 0.35s cubic-bezier(0.4,0,0.2,1), height 0.35s cubic-bezier(0.4,0,0.2,1)'
+            : 'none',
         }}
       />
 
@@ -411,10 +507,14 @@ function TourOverlay({
         )}
         style={{
           position: 'fixed',
-          top: popoverPos.top,
-          left: popoverPos.left,
+          top: popoverPos?.top ?? -9999,
+          left: popoverPos?.left ?? -9999,
           zIndex: 99991,
-          transition: 'top 0.2s ease, left 0.2s ease',
+          // Only transition after initial position is painted
+          transition: enableTransitions
+            ? 'top 0.35s cubic-bezier(0.4,0,0.2,1), left 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease'
+            : 'none',
+          opacity: popoverPos ? 1 : 0,
         }}
       >
         <div className="p-4">

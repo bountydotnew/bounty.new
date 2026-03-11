@@ -173,11 +173,10 @@ export const GettingStartedCard = () => {
     }
 
     if (item.tourId && tour) {
+      // Start the tour first — this persists to sessionStorage so it survives
+      // cross-page navigation (different layout groups remount TourProvider)
+      tour.start(item.tourId);
       router.push(item.href);
-      // Wait for navigation + render before starting tour
-      setTimeout(() => {
-        tour!.start(item.tourId!);
-      }, 800);
     } else {
       router.push(item.href);
     }

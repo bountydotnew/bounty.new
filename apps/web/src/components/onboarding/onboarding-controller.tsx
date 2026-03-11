@@ -8,6 +8,7 @@ import { buildOnboardingTours } from '@/lib/onboarding-tours';
 import { OnboardingTourIntro } from '@/components/onboarding/onboarding-tour-intro';
 import { useSession } from '@/context/session-context';
 import { trpc } from '@/utils/trpc';
+import { GettingStartedFloat } from '@/components/onboarding/getting-started-float';
 
 /**
  * OnboardingController
@@ -91,6 +92,9 @@ export function OnboardingController({
       onNavigate={handleNavigate}
     >
       {children}
+
+      {/* Floating getting-started bar for settings pages */}
+      <GettingStartedFloat />
 
       {/* Intro dialog */}
       <OnboardingTourIntro
