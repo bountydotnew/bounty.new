@@ -33,14 +33,14 @@ export function unfundedBountyComment(
   const formattedAmount = formatCurrency(amount, currency);
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
   const buttonUrl = `${baseUrl}/bounty-button.svg`;
+  const isFreeBounty = amount === 0;
   return `
 [![bounty.new](${buttonUrl})](${baseUrl}/bounty/${bountyId})
 
 ${formattedAmount} · ${submissionCount} submissions
 
 **Want to work on this?** Open a PR referencing this issue — your submission is auto-detected. Or submit directly at [bounty.new](${baseUrl}/bounty/${bountyId}).
-
-This bounty needs to be funded before payouts can happen.
+${isFreeBounty ? '' : '\nThis bounty needs to be funded before payouts can happen.'}
 `;
 }
 
