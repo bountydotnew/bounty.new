@@ -17,6 +17,7 @@ import {
   user,
   userProfile,
 } from '@bounty/db';
+import { githubInstallation } from '@bounty/db/src/schema/github-installation';
 import {
   FROM_ADDRESSES,
   sendEmail,
@@ -512,6 +513,8 @@ export const bountiesRouter = router({
         let githubIssueNumber: number | undefined;
         let githubRepoOwner: string | undefined;
         let githubRepoName: string | undefined;
+        let resolvedInstallationId: number | undefined =
+          input.githubInstallationId;
 
         if (issueUrl) {
           const urlMatch = issueUrl.match(GITHUB_ISSUE_URL_REGEX);
@@ -519,6 +522,57 @@ export const bountiesRouter = router({
             githubRepoOwner = urlMatch[1] || undefined;
             githubRepoName = urlMatch[2] || undefined;
             githubIssueNumber = Number.parseInt(urlMatch[3] || '0', 10);
+          }
+        }
+
+        // Also extract owner/name from repositoryUrl when no issue is linked
+        if (!githubRepoOwner && !githubRepoName && repositoryUrl) {
+          const repoUrlMatch = repositoryUrl
+            .replace(GIT_SUFFIX_REGEX, '')
+            .match(GITHUB_URL_REGEX);
+          if (repoUrlMatch) {
+            githubRepoOwner = repoUrlMatch[1] || undefined;
+            githubRepoName = repoUrlMatch[2] || undefined;
+          }
+        }
+
+        // Look up the GitHub App installation for the org if not provided
+        if (
+          !resolvedInstallationId &&
+          githubRepoOwner &&
+          ctx.org?.id
+        ) {
+          const [inst] = await db
+            .select({
+              githubInstallationId:
+                githubInstallation.githubInstallationId,
+              accountLogin: githubInstallation.accountLogin,
+            })
+            .from(githubInstallation)
+            .where(
+              and(
+                eq(githubInstallation.organizationId, ctx.org.id),
+                eq(githubInstallation.accountLogin, githubRepoOwner)
+              )
+            )
+            .limit(1);
+
+          if (inst) {
+            resolvedInstallationId = inst.githubInstallationId;
+          } else {
+            // Fallback: try to find via the GitHub App API
+            try {
+              const githubApp = getGithubAppManager();
+              const installation = await githubApp.getInstallationForRepo(
+                githubRepoOwner,
+                githubRepoName || ''
+              );
+              if (installation) {
+                resolvedInstallationId = installation.id;
+              }
+            } catch {
+              // No installation found — that's OK
+            }
           }
         }
 
@@ -581,7 +635,7 @@ export const bountiesRouter = router({
             issueUrl,
             // GitHub fields
             githubIssueNumber: input.githubIssueNumber ?? githubIssueNumber,
-            githubInstallationId: input.githubInstallationId,
+            githubInstallationId: resolvedInstallationId,
             githubRepoOwner: input.githubRepoOwner ?? githubRepoOwner,
             githubRepoName: input.githubRepoName ?? githubRepoName,
             // Linear fields

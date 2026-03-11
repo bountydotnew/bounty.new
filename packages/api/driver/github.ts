@@ -314,6 +314,43 @@ export class GithubManager {
     return data.default_branch;
   }
 
+  async listPullRequests(
+    owner: string,
+    repo: string
+  ): Promise<
+    {
+      number: number;
+      title: string;
+      state: string;
+      user: string;
+      html_url: string;
+      head_sha: string;
+      updated_at: string;
+    }[]
+  > {
+    try {
+      const { data } = await this.octokit.rest.pulls.list({
+        owner,
+        repo,
+        state: 'open',
+        sort: 'updated',
+        direction: 'desc',
+        per_page: 50,
+      });
+      return data.map((pr) => ({
+        number: pr.number,
+        title: pr.title,
+        state: pr.state,
+        user: pr.user?.login ?? '',
+        html_url: pr.html_url,
+        head_sha: pr.head.sha,
+        updated_at: pr.updated_at,
+      }));
+    } catch {
+      return [];
+    }
+  }
+
   async getRecentCommits(identifier: string, perPage = 100) {
     const { owner, repo } = parseRepo(identifier);
     const { data } = await this.octokit.rest.repos.listCommits({
