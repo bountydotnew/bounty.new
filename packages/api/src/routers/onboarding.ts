@@ -223,36 +223,29 @@ export const onboardingRouter = router({
     }))
     .mutation(async ({ input, ctx }) => {
       const fieldMap = {
-        tools: 'connectedTools',
-        payouts: 'setupPayouts',
-        bounty: 'createdBounty',
-        member: 'invitedMember',
+        tools: 'gsConnectedTools',
+        payouts: 'gsSetupPayouts',
+        bounty: 'gsCreatedBounty',
+        member: 'gsInvitedMember',
       } as const;
 
       const field = fieldMap[input.task];
+      const now = new Date();
 
-      const [existingState] = await ctx.db
-        .select()
-        .from(onboardingState)
-        .where(eq(onboardingState.userId, ctx.session.user.id))
-        .limit(1);
-
-      if (existingState) {
-        await ctx.db
-          .update(onboardingState)
-          .set({
+      await ctx.db
+        .insert(onboardingState)
+        .values({
+          userId: ctx.session.user.id,
+          [field]: true,
+          updatedAt: now,
+        })
+        .onConflictDoUpdate({
+          target: onboardingState.userId,
+          set: {
             [field]: true,
-            updatedAt: new Date(),
-          })
-          .where(eq(onboardingState.userId, ctx.session.user.id));
-      } else {
-        await ctx.db
-          .insert(onboardingState)
-          .values({
-            userId: ctx.session.user.id,
-            [field]: true,
-          });
-      }
+            updatedAt: now,
+          },
+        });
 
       return { success: true };
     }),
