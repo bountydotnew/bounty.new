@@ -851,7 +851,11 @@ export function BountyDetailProvider({
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         onConfirm={async () => {
-          await deleteBountyMutation.mutateAsync({ id: bountyId });
+          try {
+            await deleteBountyMutation.mutateAsync({ id: bountyId });
+          } catch {
+            // Error is handled by the mutation's onError callback
+          }
         }}
       >
         <AlertDialog.Header>
