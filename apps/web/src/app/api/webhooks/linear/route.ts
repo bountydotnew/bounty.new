@@ -11,14 +11,26 @@ export async function POST(request: Request) {
     // mention handler can read it.
     const body = await request.text();
 
+    let webhookType: string | undefined;
+    let webhookAction: string | undefined;
     try {
-      const payload = JSON.parse(body) as { organizationId?: string };
+      const payload = JSON.parse(body) as {
+        organizationId?: string;
+        type?: string;
+        action?: string;
+      };
+      webhookType = payload.type;
+      webhookAction = payload.action;
       if (payload.organizationId) {
         setLastWebhookOrganizationId(payload.organizationId);
       }
     } catch {
       // If JSON parsing fails, the adapter will handle the error
     }
+
+    console.log(
+      `[Linear Webhook] Received: type=${webhookType}, action=${webhookAction}, signature=${request.headers.has('linear-signature') ? 'present' : 'MISSING'}`
+    );
 
     // Reconstruct the request since we consumed the body
     const newRequest = new Request(request.url, {
@@ -28,9 +40,12 @@ export async function POST(request: Request) {
     });
 
     const handler = getLinearWebhookHandler();
-    return await handler(newRequest, {
+    const response = await handler(newRequest, {
       waitUntil: (task) => after(() => task),
     });
+
+    console.log(`[Linear Webhook] Response: ${response.status}`);
+    return response;
   } catch (error) {
     console.error('[Linear Webhook] Handler error:', error);
     return new Response('Internal error', { status: 500 });

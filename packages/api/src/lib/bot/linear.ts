@@ -134,16 +134,25 @@ function getChat(): BotChat {
   const botClientSecret = env.LINEAR_BOT_CLIENT_SECRET;
   const webhookSecret = env.LINEAR_WEBHOOK_SECRET;
 
+  // The userName MUST match the bot's display name in Linear exactly.
+  // The Chat SDK uses `/@<userName>\b/i` to detect mentions in comment text.
+  // If the app is called "bountybot" in Linear, userName must be "bountybot".
+  const botUserName = env.LINEAR_BOT_USERNAME ?? 'bountybot';
+
+  console.log(
+    `[Linear Bot] Initializing with userName="${botUserName}", clientId=${botClientId ? 'set' : 'unset'}, webhookSecret=${webhookSecret ? 'set' : 'unset'}`
+  );
+
   const adapter =
     botClientId && botClientSecret
       ? createLinearAdapter({
           clientId: botClientId,
           clientSecret: botClientSecret,
-          userName: 'bounty',
+          userName: botUserName,
           ...(webhookSecret ? { webhookSecret } : {}),
         })
       : createLinearAdapter({
-          userName: 'bounty',
+          userName: botUserName,
           ...(webhookSecret ? { webhookSecret } : {}),
         });
 
@@ -151,7 +160,7 @@ function getChat(): BotChat {
 
   // Cast to work around exactOptionalPropertyTypes mismatch on botUserId
   const chat = new Chat({
-    userName: 'bounty',
+    userName: botUserName,
     adapters: { linear: adapter as unknown as Adapter },
     state: createPostgresState({ url: process.env.DATABASE_URL ?? '' }),
     logger: 'info',
@@ -160,7 +169,7 @@ function getChat(): BotChat {
   chatInstance = chat;
 
   // ------------------------------------------------------------------
-  // @mention handler -- someone wrote `@bounty` or `@bounty $500`
+  // @mention handler -- someone wrote `@bountybot` or `@bountybot $500`
   //
   // The bot's own OAuth app client credentials token handles posting
   // comments back to Linear via thread.post(). The workspace's user
@@ -170,6 +179,10 @@ function getChat(): BotChat {
     try {
       const text = message.text ?? '';
       const raw = message.raw as LinearRawMessage | undefined;
+
+      console.log(
+        `[Linear Bot] Mention received — thread=${thread.id}, text=${JSON.stringify(text.slice(0, 200))}`
+      );
       // The adapter hardcodes raw.organizationId to undefined, so fall back
       // to the value stashed by the webhook route before the adapter ran.
       const organizationId = raw?.organizationId ?? _lastWebhookOrgId;

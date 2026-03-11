@@ -59,10 +59,12 @@ export const env = createEnv({
     LINEAR_CLIENT_ID: z.string().min(1).optional(),
     LINEAR_CLIENT_SECRET: z.string().min(1).optional(),
     LINEAR_REDIRECT_URI: z.string().url().optional(),
-    // Linear bot (separate OAuth app for @bounty agent)
+    // Linear bot (separate OAuth app for @bountybot agent)
     LINEAR_BOT_CLIENT_ID: z.string().min(1).optional(),
     LINEAR_BOT_CLIENT_SECRET: z.string().min(1).optional(),
-    // Linear webhook (for @bounty bot mentions)
+    // Linear bot display name — must match the app name in Linear for @mention detection
+    LINEAR_BOT_USERNAME: z.string().min(1).optional(),
+    // Linear webhook secret (from the bountybot app's webhook settings)
     LINEAR_WEBHOOK_SECRET: z.string().min(1).optional(),
   },
   runtimeEnv: {
@@ -104,6 +106,7 @@ export const env = createEnv({
     // Linear bot
     LINEAR_BOT_CLIENT_ID: process.env.LINEAR_BOT_CLIENT_ID,
     LINEAR_BOT_CLIENT_SECRET: process.env.LINEAR_BOT_CLIENT_SECRET,
+    LINEAR_BOT_USERNAME: process.env.LINEAR_BOT_USERNAME,
     // Linear webhook
     LINEAR_WEBHOOK_SECRET: process.env.LINEAR_WEBHOOK_SECRET,
   },
