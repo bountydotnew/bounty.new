@@ -9,6 +9,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { getThumbmark } from '@thumbmarkjs/thumbmarkjs';
 import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -130,6 +131,12 @@ function useWaitlistSubmission(): WaitlistHookResult {
           provider: 'github',
           callbackURL: '/',
         });
+      } else if (
+        error.message.includes(
+          'Use the same email as your signed-in GitHub account'
+        )
+      ) {
+        toast.error('Use the email tied to your signed-in GitHub account.');
       } else if (error.message.includes('Rate limit exceeded')) {
         toast.error('Too many attempts. Please try again later.');
       } else if (error.message.includes('Invalid device fingerprint')) {
@@ -282,6 +289,7 @@ interface WaitlistPageProps {
 }
 
 function WaitlistPage({ compact = false }: WaitlistPageProps) {
+  const pathname = usePathname();
   const { session } = useSession();
   const {
     register,
@@ -301,6 +309,10 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
   const [needsPositionRecovery, setNeedsPositionRecovery] = useState(false);
 
   useEffect(() => {
+    if (!pathname) {
+      return;
+    }
+
     const stored = readStoredWaitlist();
     if (stored?.submitted) {
       waitlistSubmission.setSuccess(true);
@@ -308,7 +320,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
       waitlistSubmission.setPosition(storedPosition);
       setNeedsPositionRecovery(storedPosition === null);
     }
-  }, [waitlistSubmission.setPosition, waitlistSubmission.setSuccess]);
+  }, [pathname, waitlistSubmission.setPosition, waitlistSubmission.setSuccess]);
 
   useEffect(() => {
     const generateFingerprint = async () => {
