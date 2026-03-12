@@ -40,6 +40,15 @@ const WAITLIST_AVATARS = [
   '/ryan.jpg',
 ] as const;
 
+function normalizeWaitlistEmail(email?: string | null): string | null {
+  if (typeof email !== 'string') {
+    return null;
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  return normalizedEmail.includes('@') ? normalizedEmail : null;
+}
+
 function getStoredWaitlistPosition(position?: number | null): number | null {
   return typeof position === 'number' && Number.isFinite(position)
     ? position
@@ -64,6 +73,17 @@ function writeStoredWaitlist(data: WaitlistCookieData) {
   }
   try {
     window.localStorage.setItem(WAITLIST_STORAGE_KEY, JSON.stringify(data));
+  } catch {
+    // Ignore storage failures
+  }
+}
+
+function clearStoredWaitlist() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  try {
+    window.localStorage.removeItem(WAITLIST_STORAGE_KEY);
   } catch {
     // Ignore storage failures
   }
@@ -117,7 +137,7 @@ function useWaitlistSubmission(): WaitlistHookResult {
       const cookieData: WaitlistCookieData = {
         submitted: true,
         timestamp: new Date().toISOString(),
-        email: btoa(variables.email).substring(0, 16),
+        email: normalizeWaitlistEmail(variables.email) ?? variables.email,
         position: savedPosition,
       };
       writeStoredWaitlist(cookieData);
@@ -314,13 +334,38 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     }
 
     const stored = readStoredWaitlist();
-    if (stored?.submitted) {
-      waitlistSubmission.setSuccess(true);
-      const storedPosition = getStoredWaitlistPosition(stored.position);
-      waitlistSubmission.setPosition(storedPosition);
-      setNeedsPositionRecovery(storedPosition === null);
+    if (!stored?.submitted) {
+      waitlistSubmission.setSuccess(false);
+      waitlistSubmission.setPosition(null);
+      setNeedsPositionRecovery(false);
+      return;
     }
-  }, [pathname, waitlistSubmission.setPosition, waitlistSubmission.setSuccess]);
+
+    const storedEmail = normalizeWaitlistEmail(stored.email);
+    const sessionEmail = normalizeWaitlistEmail(session?.user?.email);
+
+    if (storedEmail && sessionEmail && storedEmail !== sessionEmail) {
+      clearStoredWaitlist();
+      waitlistSubmission.setSuccess(false);
+      waitlistSubmission.setPosition(null);
+      setNeedsPositionRecovery(false);
+      return;
+    }
+
+    waitlistSubmission.setSuccess(true);
+    const storedPosition = getStoredWaitlistPosition(stored.position);
+    waitlistSubmission.setPosition(storedPosition);
+    setNeedsPositionRecovery(
+      storedPosition === null &&
+        storedEmail !== null &&
+        storedEmail === sessionEmail
+    );
+  }, [
+    pathname,
+    session?.user?.email,
+    waitlistSubmission.setPosition,
+    waitlistSubmission.setSuccess,
+  ]);
 
   useEffect(() => {
     const generateFingerprint = async () => {

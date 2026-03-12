@@ -14,9 +14,26 @@ const waitlistRequestSchema = z.object({
   fingerprintData: z.unknown(),
 });
 
+function normalizeWaitlistEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const parsedBody = waitlistRequestSchema.safeParse(await request.json());
+    let requestBody: unknown;
+    try {
+      requestBody = await request.json();
+    } catch {
+      return NextResponse.json(
+        {
+          error: 'Invalid JSON body',
+          success: false,
+        },
+        { status: 400 }
+      );
+    }
+
+    const parsedBody = waitlistRequestSchema.safeParse(requestBody);
     if (!parsedBody.success) {
       return NextResponse.json(
         {
@@ -56,7 +73,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (submittedEmail !== userEmail) {
+    const normalizedUserEmail = normalizeWaitlistEmail(userEmail);
+    const normalizedSubmittedEmail = normalizeWaitlistEmail(submittedEmail);
+
+    if (normalizedSubmittedEmail !== normalizedUserEmail) {
       return NextResponse.json(
         {
           error: 'Use the same email as your signed-in GitHub account',
@@ -86,16 +106,27 @@ export async function POST(request: NextRequest) {
         sql`select pg_advisory_xact_lock(${WAITLIST_POSITION_LOCK_KEY})`
       );
 
-      const existingEntry = await tx.query.waitlist.findFirst({
-        where: (fields, { eq, or }) =>
-          or(eq(fields.userId, userId), eq(fields.email, userEmail)),
-      });
+      const existingEntry = (
+        await tx
+          .select()
+          .from(waitlist)
+          .where(
+            sql`${waitlist.userId} = ${userId} or lower(${waitlist.email}) = ${normalizedUserEmail}`
+          )
+          .limit(1)
+      )[0];
 
       if (existingEntry) {
-        if (!existingEntry.userId) {
+        if (
+          !existingEntry.userId ||
+          existingEntry.email !== normalizedUserEmail
+        ) {
           await tx
             .update(waitlist)
-            .set({ userId })
+            .set({
+              email: normalizedUserEmail,
+              userId,
+            })
             .where(eq(waitlist.id, existingEntry.id));
         }
 
@@ -126,7 +157,7 @@ export async function POST(request: NextRequest) {
       const position = (countResult?.count ?? 0) + 1;
 
       await tx.insert(waitlist).values({
-        email: userEmail,
+        email: normalizedUserEmail,
         userId,
         createdAt: new Date(),
         position,
@@ -139,7 +170,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (!waitlistResult.alreadyJoined) {
-      await track('waitlist_joined', { source: 'api', userId });
+      try {
+        await track('waitlist_joined', { source: 'api', userId });
+      } catch (error) {
+        console.warn('[waitlist] Failed to track waitlist_joined event', error);
+      }
     }
 
     return NextResponse.json({
