@@ -44,6 +44,10 @@ interface SubmissionCardProps {
   onUnapprove?: () => void;
   onMerge?: () => void;
   mergeLabel?: string;
+  // Withdrawal (for the submitter)
+  canWithdraw?: boolean;
+  isWithdrawing?: boolean;
+  onWithdraw?: () => void;
 }
 
 export default function SubmissionCard({
@@ -73,6 +77,9 @@ export default function SubmissionCard({
   onUnapprove,
   onMerge,
   mergeLabel = 'Pay Out',
+  canWithdraw,
+  isWithdrawing,
+  onWithdraw,
 }: SubmissionCardProps) {
   const displayName = username || contributorName || user || 'Anonymous';
   const displayAvatar = avatarSrc || contributorImage || '';
@@ -143,6 +150,22 @@ export default function SubmissionCard({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {canWithdraw && onWithdraw && (
+            <Button
+              onClick={onWithdraw}
+              disabled={isWithdrawing}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1.5 text-text-secondary"
+            >
+              {isWithdrawing ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <X className="h-3.5 w-3.5" />
+              )}
+              {isWithdrawing ? 'Withdrawing...' : 'Unsubmit'}
+            </Button>
+          )}
           {prUrl ? (
             <Button
               asChild
@@ -245,9 +268,10 @@ export default function SubmissionCard({
         )}
         {githubHeadSha && (
           <a
-            href={githubRepoOwner && githubRepoName && githubPullRequestNumber
-              ? `https://github.com/${githubRepoOwner}/${githubRepoName}/pull/${githubPullRequestNumber}/commits/${githubHeadSha}`
-              : prUrl || '#'
+            href={
+              githubRepoOwner && githubRepoName && githubPullRequestNumber
+                ? `https://github.com/${githubRepoOwner}/${githubRepoName}/pull/${githubPullRequestNumber}/commits/${githubHeadSha}`
+                : prUrl || '#'
             }
             target="_blank"
             rel="noopener noreferrer"

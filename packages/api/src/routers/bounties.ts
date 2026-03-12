@@ -5684,13 +5684,20 @@ ${formattedAmount} ${isFunded ? `![Funded](${fundedBadgeUrl})` : ''}
       }
 
       // 7. Require GitHub profile to be connected
+      // Check both userProfile.githubUsername and user.handle (set by GitHub OAuth)
       const [profile] = await db
-        .select({ githubUsername: userProfile.githubUsername })
-        .from(userProfile)
-        .where(eq(userProfile.userId, ctx.session.user.id))
+        .select({
+          githubUsername: userProfile.githubUsername,
+          handle: user.handle,
+        })
+        .from(user)
+        .leftJoin(userProfile, eq(userProfile.userId, user.id))
+        .where(eq(user.id, ctx.session.user.id))
         .limit(1);
 
-      if (!profile?.githubUsername) {
+      const githubUsername = profile?.githubUsername || profile?.handle;
+
+      if (!githubUsername) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Connect your GitHub account before submitting a PR',
@@ -5727,9 +5734,7 @@ ${formattedAmount} ${isFunded ? `![Funded](${fundedBadgeUrl})` : ''}
           prHeadSha = prData.head.sha;
           prAuthorLogin = prData.user.login;
 
-          if (
-            prAuthorLogin.toLowerCase() !== profile.githubUsername.toLowerCase()
-          ) {
+          if (prAuthorLogin.toLowerCase() !== githubUsername.toLowerCase()) {
             throw new TRPCError({
               code: 'FORBIDDEN',
               message: 'You can only submit your own pull requests',
@@ -5740,7 +5745,7 @@ ${formattedAmount} ${isFunded ? `![Funded](${fundedBadgeUrl})` : ''}
 
       // Fallback author from profile if we couldn't fetch from GitHub
       if (!prAuthorLogin) {
-        prAuthorLogin = profile.githubUsername;
+        prAuthorLogin = githubUsername;
       }
 
       // 9. Create submission
@@ -5816,6 +5821,60 @@ ${formattedAmount} ${isFunded ? `![Funded](${fundedBadgeUrl})` : ''}
         success: true,
         message: 'Submission received! The bounty creator will review it.',
         submissionId: newSubmission.id,
+      };
+    }),
+
+  /**
+   * Withdraw (retract) a pending submission.
+   * Only the contributor who created the submission can withdraw it,
+   * and only while it is still in 'pending' status.
+   * Matches the GitHub bot /unsubmit behaviour: hard-deletes the row.
+   */
+  withdrawSubmission: protectedProcedure
+    .input(
+      z.object({
+        bountyId: z.string().uuid(),
+        submissionId: z.string().uuid(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [submissionRecord] = await db
+        .select()
+        .from(submission)
+        .where(
+          and(
+            eq(submission.id, input.submissionId),
+            eq(submission.bountyId, input.bountyId)
+          )
+        )
+        .limit(1);
+
+      if (!submissionRecord) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Submission not found',
+        });
+      }
+
+      if (submissionRecord.contributorId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You can only withdraw your own submissions',
+        });
+      }
+
+      if (submissionRecord.status !== 'pending') {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Cannot withdraw a submission that is ${submissionRecord.status}`,
+        });
+      }
+
+      await db.delete(submission).where(eq(submission.id, input.submissionId));
+
+      return {
+        success: true,
+        message: 'Submission withdrawn',
       };
     }),
 });

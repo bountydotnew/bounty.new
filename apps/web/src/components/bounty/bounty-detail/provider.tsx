@@ -160,9 +160,10 @@ function useBountyDetailMutations({
     },
     onError: (error: Error) => {
       const isDifferentOrg = error.message.includes('different organization');
-      const bountyOrg = isDifferentOrg && organizationId
-        ? orgs.find((o) => o.id === organizationId)
-        : undefined;
+      const bountyOrg =
+        isDifferentOrg && organizationId
+          ? orgs.find((o) => o.id === organizationId)
+          : undefined;
 
       if (isDifferentOrg && bountyOrg) {
         toast.error('This bounty belongs to a different organization', {
@@ -366,24 +367,32 @@ function useBountyDetailMutations({
     },
     onSuccess: (result) => {
       toast.success(result.message || 'Submission received!');
-      queryClient.invalidateQueries({
-        predicate: (query) => {
-          const [first] = query.queryKey;
-          if (typeof first === 'string') {
-            return first.includes('bounty');
-          }
-          if (Array.isArray(first)) {
-            const namespace = first[0];
-            return (
-              typeof namespace === 'string' && namespace.includes('bounty')
-            );
-          }
-          return false;
-        },
+      // Force-refetch submissions so the new one appears immediately
+      const submissionsKey = trpc.bounties.getBountySubmissions.queryKey({
+        bountyId,
       });
+      queryClient.invalidateQueries({ queryKey: submissionsKey });
+      queryClient.refetchQueries({ queryKey: submissionsKey });
     },
     onError: (error: Error) => {
       toast.error(`Failed to submit: ${error.message}`);
+    },
+  });
+
+  const withdrawSubmissionMutation = useMutation({
+    mutationFn: async (input: { bountyId: string; submissionId: string }) => {
+      return await trpcClient.bounties.withdrawSubmission.mutate(input);
+    },
+    onSuccess: (result) => {
+      toast.success(result.message || 'Submission withdrawn');
+      const submissionsKey = trpc.bounties.getBountySubmissions.queryKey({
+        bountyId,
+      });
+      queryClient.invalidateQueries({ queryKey: submissionsKey });
+      queryClient.refetchQueries({ queryKey: submissionsKey });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to withdraw: ${error.message}`);
     },
   });
 
@@ -400,6 +409,7 @@ function useBountyDetailMutations({
     unapproveSubmissionMutation,
     mergeSubmissionMutation,
     submitWorkMutation,
+    withdrawSubmissionMutation,
   };
 }
 
@@ -476,6 +486,9 @@ export function BountyDetailProvider({
   const [mergingSubmissionId, setMergingSubmissionId] = useState<string | null>(
     null
   );
+  const [withdrawingSubmissionId, setWithdrawingSubmissionId] = useState<
+    string | null
+  >(null);
 
   const {
     paymentStatusQuery,
@@ -504,6 +517,7 @@ export function BountyDetailProvider({
     unapproveSubmissionMutation,
     mergeSubmissionMutation,
     submitWorkMutation,
+    withdrawSubmissionMutation,
   } = useBountyDetailMutations({
     bountyId,
     organizationId,
@@ -787,6 +801,41 @@ export function BountyDetailProvider({
           description: description || undefined,
         });
       },
+      withdrawSubmission: (submissionId: string) => {
+        if (withdrawSubmissionMutation.isPending) {
+          return;
+        }
+        setWithdrawingSubmissionId(submissionId);
+        // Optimistic update: remove the submission from the list
+        const submissionsKey = trpc.bounties.getBountySubmissions.queryKey({
+          bountyId,
+        });
+        const prevSubmissions = queryClient.getQueryData(submissionsKey);
+        queryClient.setQueryData(
+          submissionsKey,
+          (old: typeof prevSubmissions) => {
+            if (!old?.submissions) {
+              return old;
+            }
+            return {
+              ...old,
+              submissions: old.submissions.filter((s) => s.id !== submissionId),
+            };
+          }
+        );
+        withdrawSubmissionMutation.mutate(
+          { bountyId, submissionId },
+          {
+            onError: () => {
+              queryClient.setQueryData(submissionsKey, prevSubmissions);
+            },
+            onSettled: () => {
+              setWithdrawingSubmissionId(null);
+              queryClient.invalidateQueries({ queryKey: submissionsKey });
+            },
+          }
+        );
+      },
     }),
     [
       bountyId,
@@ -805,6 +854,7 @@ export function BountyDetailProvider({
       unapproveSubmissionMutation,
       mergeSubmissionMutation,
       submitWorkMutation,
+      withdrawSubmissionMutation,
       onEdit,
       title,
       description,
@@ -828,6 +878,8 @@ export function BountyDetailProvider({
       isMergingSubmission: mergeSubmissionMutation.isPending,
       mergingSubmissionId,
       isSubmittingWork: submitWorkMutation.isPending,
+      isWithdrawingSubmission: withdrawSubmissionMutation.isPending,
+      withdrawingSubmissionId,
     }),
     [
       bountyId,
@@ -844,6 +896,8 @@ export function BountyDetailProvider({
       mergeSubmissionMutation.isPending,
       mergingSubmissionId,
       submitWorkMutation.isPending,
+      withdrawSubmissionMutation.isPending,
+      withdrawingSubmissionId,
     ]
   );
 

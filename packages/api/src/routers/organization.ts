@@ -18,9 +18,15 @@ import {
   orgOwnerProcedure,
   router,
 } from '../trpc';
-import { member, organization } from '@bounty/db';
-import { eq, and, sql, count, ne } from 'drizzle-orm';
+import { bounty, member, organization, submission, user } from '@bounty/db';
+import { eq, and, sql, count, ne, inArray } from 'drizzle-orm';
 import { isReservedSlug } from '@bounty/types/auth';
+import {
+  FROM_ADDRESSES,
+  sendEmail,
+  BountyCancellationNotice,
+} from '@bounty/email';
+import { bountyCancelledByOrgDeletionComment } from '../lib/bot-comments';
 
 export const organizationRouter = router({
   /**
@@ -123,6 +129,130 @@ export const organizationRouter = router({
   }),
 
   /**
+   * Get bounty status for org deletion.
+   * Returns a summary of active bounties and whether deletion is blocked.
+   */
+  getOrgBountyStatusForDeletion: orgOwnerProcedure.query(async ({ ctx }) => {
+    if (ctx.org.isPersonal) {
+      return {
+        activeBounties: 0,
+        fundedBounties: 0,
+        approvedSubmissionBounties: 0,
+        freeBountiesWithSubmissions: 0,
+        totalSubmissions: 0,
+        canDelete: false,
+        blockReason: 'personal',
+        bounties: [] as Array<{
+          id: string;
+          title: string;
+          isFunded: boolean;
+          hasApprovedSubmission: boolean;
+          submissionCount: number;
+          amount: string;
+          status: string;
+        }>,
+      };
+    }
+
+    // Get all active bounties (not draft, not completed, not cancelled) for this org
+    const activeBounties = await ctx.db
+      .select({
+        id: bounty.id,
+        title: bounty.title,
+        amount: bounty.amount,
+        status: bounty.status,
+        paymentStatus: bounty.paymentStatus,
+        stripePaymentIntentId: bounty.stripePaymentIntentId,
+        githubIssueNumber: bounty.githubIssueNumber,
+        githubInstallationId: bounty.githubInstallationId,
+        githubRepoOwner: bounty.githubRepoOwner,
+        githubRepoName: bounty.githubRepoName,
+        githubCommentId: bounty.githubCommentId,
+      })
+      .from(bounty)
+      .where(
+        and(
+          eq(bounty.organizationId, ctx.org.id),
+          inArray(bounty.status, ['open', 'in_progress'])
+        )
+      );
+
+    // For each active bounty, check submissions
+    const bountyIds = activeBounties.map((b) => b.id);
+    const submissionsByBounty: Record<
+      string,
+      { total: number; approved: number }
+    > = {};
+
+    if (bountyIds.length > 0) {
+      const submissionStats = await ctx.db
+        .select({
+          bountyId: submission.bountyId,
+          total: count(),
+          approved: sql<number>`count(*) filter (where ${submission.status} = 'approved')`,
+        })
+        .from(submission)
+        .where(inArray(submission.bountyId, bountyIds))
+        .groupBy(submission.bountyId);
+
+      for (const stat of submissionStats) {
+        submissionsByBounty[stat.bountyId] = {
+          total: stat.total,
+          approved: stat.approved,
+        };
+      }
+    }
+
+    const bountyDetails = activeBounties.map((b) => {
+      const isFunded = b.paymentStatus === 'held' && !!b.stripePaymentIntentId;
+      const stats = submissionsByBounty[b.id] || { total: 0, approved: 0 };
+      return {
+        id: b.id,
+        title: b.title,
+        isFunded,
+        hasApprovedSubmission: stats.approved > 0,
+        submissionCount: stats.total,
+        amount: b.amount,
+        status: b.status!,
+      };
+    });
+
+    const fundedBounties = bountyDetails.filter((b) => b.isFunded);
+    const approvedSubmissionBounties = bountyDetails.filter(
+      (b) => b.hasApprovedSubmission
+    );
+    const freeBountiesWithSubmissions = bountyDetails.filter(
+      (b) => !b.isFunded && b.submissionCount > 0
+    );
+    const totalSubmissions = bountyDetails.reduce(
+      (sum, b) => sum + b.submissionCount,
+      0
+    );
+
+    let canDelete = true;
+    let blockReason: string | null = null;
+
+    if (fundedBounties.length > 0) {
+      canDelete = false;
+      blockReason = 'funded_bounties';
+    } else if (approvedSubmissionBounties.length > 0) {
+      canDelete = false;
+      blockReason = 'approved_submissions';
+    }
+
+    return {
+      activeBounties: activeBounties.length,
+      fundedBounties: fundedBounties.length,
+      approvedSubmissionBounties: approvedSubmissionBounties.length,
+      freeBountiesWithSubmissions: freeBountiesWithSubmissions.length,
+      totalSubmissions,
+      canDelete,
+      blockReason,
+      bounties: bountyDetails,
+    };
+  }),
+
+  /**
    * Update organization slug.
    * Only owners can update the slug.
    */
@@ -137,7 +267,10 @@ export const organizationRouter = router({
             /^[a-z0-9-]+$/,
             'Slug can only contain lowercase letters, numbers, and hyphens'
           )
-          .refine((val) => !val.startsWith('-'), 'Slug cannot start with a hyphen')
+          .refine(
+            (val) => !val.startsWith('-'),
+            'Slug cannot start with a hyphen'
+          )
           .refine((val) => !val.endsWith('-'), 'Slug cannot end with a hyphen')
           .refine(
             (val) => !/--/.test(val),
@@ -161,10 +294,7 @@ export const organizationRouter = router({
         .select({ id: organization.id })
         .from(organization)
         .where(
-          and(
-            eq(organization.slug, slug),
-            ne(organization.id, ctx.org.id)
-          )
+          and(eq(organization.slug, slug), ne(organization.id, ctx.org.id))
         )
         .then((rows) => rows[0]);
 
@@ -188,34 +318,271 @@ export const organizationRouter = router({
    * Delete organization.
    * Only owners can delete the organization.
    * Personal teams cannot be deleted.
+   * Blocks if there are funded bounties or bounties with approved submissions.
+   * For free bounties with submissions, emails all submitters and updates GitHub.
    */
-  deleteOrg: orgOwnerProcedure.mutation(async ({ ctx }) => {
-    // Prevent deletion of personal teams
-    if (ctx.org.isPersonal) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Personal teams cannot be deleted.',
+  deleteOrg: orgOwnerProcedure
+    .input(
+      z
+        .object({
+          /** User must confirm they understand bounties will be cancelled */
+          confirmBountyCancellation: z.boolean().optional(),
+        })
+        .optional()
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Prevent deletion of personal teams
+      if (ctx.org.isPersonal) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Personal teams cannot be deleted.',
+        });
+      }
+
+      // Run validation + delete atomically inside a transaction to prevent
+      // race conditions (e.g. a bounty getting funded between check and delete).
+      // Side effects (emails, GitHub) are collected inside the tx and executed after commit.
+      let submittersSideEffect: {
+        contributorId: string | null;
+        email: string | null;
+        name: string | null;
+        bountyId: string;
+      }[] = [];
+      let activeBountiesSideEffect: {
+        id: string;
+        title: string;
+        amount: string;
+        paymentStatus: string | null;
+        githubIssueNumber: number | null;
+        githubInstallationId: number | null;
+        githubRepoOwner: string | null;
+        githubRepoName: string | null;
+        githubCommentId: number | null;
+      }[] = [];
+      let creatorNameSideEffect = 'The bounty creator';
+
+      await ctx.db.transaction(async (tx) => {
+        // Check member count
+        const memberCount = await tx
+          .select({ count: count() })
+          .from(member)
+          .where(eq(member.organizationId, ctx.org.id));
+
+        if ((memberCount[0]?.count ?? 0) > 1) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message:
+              'Cannot delete organization with multiple members. Remove all members first.',
+          });
+        }
+
+        // Check active bounties
+        const activeBounties = await tx
+          .select({
+            id: bounty.id,
+            title: bounty.title,
+            amount: bounty.amount,
+            status: bounty.status,
+            paymentStatus: bounty.paymentStatus,
+            stripePaymentIntentId: bounty.stripePaymentIntentId,
+            githubIssueNumber: bounty.githubIssueNumber,
+            githubInstallationId: bounty.githubInstallationId,
+            githubRepoOwner: bounty.githubRepoOwner,
+            githubRepoName: bounty.githubRepoName,
+            githubCommentId: bounty.githubCommentId,
+          })
+          .from(bounty)
+          .where(
+            and(
+              eq(bounty.organizationId, ctx.org.id),
+              inArray(bounty.status, ['open', 'in_progress'])
+            )
+          );
+
+        // Check for funded bounties - BLOCK
+        const fundedBounties = activeBounties.filter(
+          (b) => b.paymentStatus === 'held' && !!b.stripePaymentIntentId
+        );
+
+        if (fundedBounties.length > 0) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `Cannot delete organization with ${fundedBounties.length} funded ${fundedBounties.length === 1 ? 'bounty' : 'bounties'}. Resolve or cancel them first.`,
+          });
+        }
+
+        // Check for bounties with approved submissions - BLOCK
+        if (activeBounties.length > 0) {
+          const bountyIds = activeBounties.map((b) => b.id);
+          const approvedSubmissions = await tx
+            .select({
+              bountyId: submission.bountyId,
+            })
+            .from(submission)
+            .where(
+              and(
+                inArray(submission.bountyId, bountyIds),
+                eq(submission.status, 'approved')
+              )
+            )
+            .limit(1);
+
+          if (approvedSubmissions.length > 0) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message:
+                'Cannot delete organization with bounties that have approved submissions. Resolve or cancel those bounties first.',
+            });
+          }
+        }
+
+        // Check for bounties with any submissions (requires confirm toggle)
+        let hasSubmissions = false;
+        if (activeBounties.length > 0) {
+          const bountyIds = activeBounties.map((b) => b.id);
+          const [subCount] = await tx
+            .select({ count: count() })
+            .from(submission)
+            .where(inArray(submission.bountyId, bountyIds));
+
+          hasSubmissions = (subCount?.count ?? 0) > 0;
+        }
+
+        // If there are active bounties with submissions, require confirmation toggle
+        if (hasSubmissions && !input?.confirmBountyCancellation) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message:
+              'You must confirm that you understand active bounties with submissions will be cancelled.',
+          });
+        }
+
+        // Collect side-effect data before deleting
+        if (activeBounties.length > 0) {
+          activeBountiesSideEffect = activeBounties;
+
+          if (hasSubmissions) {
+            const bountyIds = activeBounties.map((b) => b.id);
+
+            // Get ALL submitters (not just pending) so everyone is notified
+            submittersSideEffect = await tx
+              .select({
+                contributorId: submission.contributorId,
+                email: user.email,
+                name: user.name,
+                bountyId: submission.bountyId,
+              })
+              .from(submission)
+              .innerJoin(user, eq(submission.contributorId, user.id))
+              .where(inArray(submission.bountyId, bountyIds));
+          }
+
+          // Get creator info
+          const [creator] = await tx
+            .select({ name: user.name })
+            .from(user)
+            .where(eq(user.id, ctx.session.user.id))
+            .limit(1);
+
+          creatorNameSideEffect = creator?.name || 'The bounty creator';
+        }
+
+        // Delete the organization (cascade will handle bounties, members, invitations)
+        await tx.delete(organization).where(eq(organization.id, ctx.org.id));
       });
-    }
 
-    // Check member count - require confirmation for orgs with multiple members
-    const memberCount = await ctx.db
-      .select({ count: count() })
-      .from(member)
-      .where(eq(member.organizationId, ctx.org.id));
+      // --- Side effects (after successful commit) ---
 
-    if ((memberCount[0]?.count ?? 0) > 1) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Cannot delete organization with multiple members. Remove all members first.',
-      });
-    }
+      // Email all submitters
+      if (submittersSideEffect.length > 0) {
+        const baseUrl =
+          process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
 
-    // Delete the organization (cascade will handle members and invitations)
-    await ctx.db
-      .delete(organization)
-      .where(eq(organization.id, ctx.org.id));
+        const emailPromises = submittersSideEffect
+          .filter((s): s is typeof s & { email: string } => Boolean(s.email))
+          .map((submitter) => {
+            const matchingBounty = activeBountiesSideEffect.find(
+              (b) => b.id === submitter.bountyId
+            );
+            return sendEmail({
+              from: FROM_ADDRESSES.notifications,
+              to: submitter.email,
+              subject: `Bounty Cancelled: ${matchingBounty?.title || 'Bounty'}`,
+              react: BountyCancellationNotice({
+                bountyTitle: matchingBounty?.title || 'Bounty',
+                bountyUrl: `${baseUrl}/bounty/${submitter.bountyId}`,
+                creatorName: creatorNameSideEffect,
+                bountyAmount:
+                  Number(matchingBounty?.amount || 0) > 0
+                    ? `$${Number(matchingBounty?.amount || 0).toLocaleString()}`
+                    : 'Free',
+                userName: submitter.name ?? '',
+              }),
+            }).catch((err) => {
+              console.error(
+                `[OrgDelete] Failed to email contributor ${submitter.contributorId} for bounty ${submitter.bountyId}:`,
+                err
+              );
+            });
+          });
 
-    return { success: true };
-  }),
+        await Promise.allSettled(emailPromises);
+      }
+
+      // Update GitHub issues for ALL active bounties with GitHub integration
+      // (not just those with submissions)
+      if (activeBountiesSideEffect.length > 0) {
+        const githubBounties = activeBountiesSideEffect.filter(
+          (b) =>
+            b.githubIssueNumber &&
+            b.githubInstallationId &&
+            b.githubRepoOwner &&
+            b.githubRepoName
+        );
+
+        if (githubBounties.length > 0) {
+          try {
+            const { getGithubAppManager } = await import(
+              '@bounty/api/driver/github-app'
+            );
+            const ghApp = getGithubAppManager();
+            const orgName = ctx.org.name || ctx.org.slug;
+
+            for (const ghBounty of githubBounties) {
+              try {
+                if (ghBounty.githubCommentId) {
+                  await ghApp.editComment(
+                    ghBounty.githubInstallationId!,
+                    ghBounty.githubRepoOwner!,
+                    ghBounty.githubRepoName!,
+                    ghBounty.githubCommentId,
+                    bountyCancelledByOrgDeletionComment(ghBounty.id, orgName)
+                  );
+                } else {
+                  await ghApp.createIssueComment(
+                    ghBounty.githubInstallationId!,
+                    ghBounty.githubRepoOwner!,
+                    ghBounty.githubRepoName!,
+                    ghBounty.githubIssueNumber!,
+                    bountyCancelledByOrgDeletionComment(ghBounty.id, orgName)
+                  );
+                }
+              } catch (ghErr) {
+                console.error(
+                  `[OrgDelete] Failed to update GitHub issue for bounty ${ghBounty.id}:`,
+                  ghErr
+                );
+              }
+            }
+          } catch (ghErr) {
+            console.error(
+              '[OrgDelete] Failed to initialize GitHub App manager:',
+              ghErr
+            );
+          }
+        }
+      }
+
+      return { success: true };
+    }),
 });

@@ -224,6 +224,30 @@ Bounty moved to #${targetIssueNumber}.
 }
 
 // ============================================================================
+// BOUNTY CANCELLED (ORG DELETION)
+// ============================================================================
+
+/**
+ * Bounty cancelled because the organization was deleted.
+ * Replaces the original bot comment to notify contributors.
+ */
+export function bountyCancelledByOrgDeletionComment(
+  bountyId: string,
+  orgName: string
+): string {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://bounty.new';
+  return `
+> **Bounty Cancelled**
+
+The bounty author (**${orgName}**) has deleted their organization on [bounty.new](${baseUrl}), which cancelled this bounty.
+
+**Please stop any in-progress work** — no payouts will be made for this bounty.
+
+If you have questions, reach out to [support@bounty.new](mailto:support@bounty.new).
+`;
+}
+
+// ============================================================================
 // ERRORS: VALIDATION
 // ============================================================================
 

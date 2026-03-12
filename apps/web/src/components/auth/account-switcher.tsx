@@ -76,6 +76,33 @@ export function AccountSwitcher({
           return;
         }
 
+        // After switching sessions, activate the user's default org so they
+        // never land on a bare personal account with no org context.
+        try {
+          const orgsResult = await authClient.organization.list();
+          const orgs = orgsResult.data;
+          if (orgs && orgs.length > 0) {
+            // Prefer the first non-personal org; fall back to any org.
+            // isPersonal is a custom additional field on the org schema so
+            // we access it via a loose cast.
+            const defaultOrg =
+              orgs.find(
+                (o) => !(o as unknown as { isPersonal?: boolean }).isPersonal
+              ) ?? orgs[0];
+            if (defaultOrg) {
+              await authClient.organization.setActive({
+                organizationId: defaultOrg.id,
+              });
+            }
+          }
+        } catch (orgError) {
+          // Non-fatal — the session switch still succeeded
+          console.error(
+            'Failed to set default org after account switch:',
+            orgError
+          );
+        }
+
         toast.success('Switched account successfully');
         // Invalidate all queries to refresh auth-dependent data
         queryClient.invalidateQueries();
