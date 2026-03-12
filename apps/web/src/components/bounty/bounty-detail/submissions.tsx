@@ -12,7 +12,7 @@ import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-} from '@bounty/ui/components/dropdown-menu'; 
+} from '@bounty/ui/components/dropdown-menu';
 import { cn } from '@bounty/ui/lib/utils';
 import {
   submissionSchema,
@@ -163,6 +163,16 @@ export function BountyDetailSubmissions() {
                 onUnapprove={() => actions.unapproveSubmission(sub.id)}
                 onMerge={() => actions.mergeSubmission(sub.id)}
                 mergeLabel={isFreeBounty ? 'Complete' : 'Pay Out'}
+                canWithdraw={
+                  isAuthenticated &&
+                  sub.contributorId === session?.user?.id &&
+                  sub.status === 'pending'
+                }
+                isWithdrawing={
+                  meta.isWithdrawingSubmission &&
+                  meta.withdrawingSubmissionId === sub.id
+                }
+                onWithdraw={() => actions.withdrawSubmission(sub.id)}
               />
             ))
           ) : (

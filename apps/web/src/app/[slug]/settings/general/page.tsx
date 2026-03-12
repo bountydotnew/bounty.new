@@ -17,9 +17,7 @@ import {
   Card,
 } from '@bounty/ui';
 import { Button } from '@bounty/ui';
-import {
-  AlertDialogHeader,
-} from '@bounty/ui/components/alert-dialog';
+import { AlertDialogHeader } from '@bounty/ui/components/alert-dialog';
 import {
   Alert,
   AlertTitle,
@@ -115,21 +113,22 @@ export default function OrgGeneralSettingsPage() {
     }
   };
 
-  const handleDeleteDialogOpenChange = useCallback(
-    (open: boolean) => {
-      setIsDeleteDialogOpen(open);
-      if (!open) {
-        setConfirmInput('');
-        setConfirmToggle(false);
-        setCopied(false);
-      }
-    },
-    []
-  );
+  const handleDeleteDialogOpenChange = useCallback((open: boolean) => {
+    setIsDeleteDialogOpen(open);
+    if (!open) {
+      setConfirmInput('');
+      setConfirmToggle(false);
+      setCopied(false);
+    }
+  }, []);
 
-  const handleCopyName = useCallback(() => {
+  const handleCopyName = useCallback(async () => {
     if (!activeOrg?.name) return;
-    setConfirmInput(activeOrg.name);
+    try {
+      await navigator.clipboard.writeText(activeOrg.name);
+    } catch {
+      // Clipboard API may not be available in all contexts
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }, [activeOrg?.name]);
@@ -150,10 +149,9 @@ export default function OrgGeneralSettingsPage() {
     (bountyStatus.fundedBounties > 0 ||
       bountyStatus.approvedSubmissionBounties > 0);
   const needsConfirmToggle =
-    bountyStatus &&
-    bountyStatus.totalSubmissions > 0 &&
-    !isDeletionBlocked;
+    bountyStatus && bountyStatus.totalSubmissions > 0 && !isDeletionBlocked;
   const canConfirm =
+    !isBountyStatusLoading &&
     confirmInput === (activeOrg?.name || '') &&
     !deleteOrgMutation.isPending &&
     !isDeletionBlocked &&
@@ -254,9 +252,7 @@ export default function OrgGeneralSettingsPage() {
                   onClick={handleUpdateSlug}
                   disabled={updateSlugMutation.isPending}
                 >
-                  {updateSlugMutation.isPending
-                    ? 'Changing...'
-                    : 'Change Slug'}
+                  {updateSlugMutation.isPending ? 'Changing...' : 'Change Slug'}
                 </Button>
               </AlertDialogFooter>
             </AlertDialogPopup>
@@ -451,13 +447,11 @@ export default function OrgGeneralSettingsPage() {
                               }
                             />
                             <span className="text-xs text-text-secondary leading-tight">
-                              I understand that{' '}
-                              {bountyStatus!.totalSubmissions}{' '}
+                              I understand that {bountyStatus!.totalSubmissions}{' '}
                               {bountyStatus!.totalSubmissions === 1
                                 ? 'submission'
                                 : 'submissions'}{' '}
-                              across{' '}
-                              {bountyStatus!.activeBounties}{' '}
+                              across {bountyStatus!.activeBounties}{' '}
                               {bountyStatus!.activeBounties === 1
                                 ? 'bounty'
                                 : 'bounties'}{' '}

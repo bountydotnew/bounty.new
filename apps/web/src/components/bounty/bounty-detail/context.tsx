@@ -127,6 +127,8 @@ export interface BountyDetailActions {
   mergeSubmission: (submissionId: string) => void;
   /** Submit work from in-app form */
   submitWork: (pullRequestUrl: string, description?: string) => void;
+  /** Withdraw (retract) a pending submission */
+  withdrawSubmission: (submissionId: string) => void;
 }
 
 /**
@@ -151,6 +153,8 @@ export interface BountyDetailMeta {
   isMergingSubmission: boolean;
   mergingSubmissionId: string | null;
   isSubmittingWork: boolean;
+  isWithdrawingSubmission: boolean;
+  withdrawingSubmissionId: string | null;
 }
 
 /**
