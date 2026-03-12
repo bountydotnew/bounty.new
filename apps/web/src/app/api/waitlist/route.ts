@@ -1,10 +1,12 @@
 import { auth } from '@bounty/auth/server';
 import { db, waitlist } from '@bounty/db';
 import { track } from '@bounty/track';
+import { eq, sql } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { eq, or } from 'drizzle-orm';
+
+const WAITLIST_POSITION_LOCK_KEY = 53_407;
 
 export async function POST(_request: NextRequest) {
   try {
@@ -36,46 +38,76 @@ export async function POST(_request: NextRequest) {
       );
     }
 
-    // Check if user already has a waitlist entry (by userId or email)
-    const existingEntry = await db.query.waitlist.findFirst({
-      where: (fields, { eq, or }) =>
-        or(eq(fields.userId, userId), eq(fields.email, userEmail)),
-    });
+    const waitlistResult = await db.transaction(async (tx) => {
+      // Serialize queue-position allocation so concurrent joins cannot reuse
+      // the same rank.
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(${WAITLIST_POSITION_LOCK_KEY})`
+      );
 
-    if (existingEntry) {
-      // Update the entry with userId if not already set
-      if (!existingEntry.userId) {
-        await db
-          .update(waitlist)
-          .set({ userId })
-          .where(eq(waitlist.id, existingEntry.id));
+      const existingEntry = await tx.query.waitlist.findFirst({
+        where: (fields, { eq, or }) =>
+          or(eq(fields.userId, userId), eq(fields.email, userEmail)),
+      });
+
+      if (existingEntry) {
+        if (!existingEntry.userId) {
+          await tx
+            .update(waitlist)
+            .set({ userId })
+            .where(eq(waitlist.id, existingEntry.id));
+        }
+
+        let position = existingEntry.position ?? null;
+        if (position === null) {
+          const [positionResult] = await tx
+            .select({ count: sql<number>`count(*)::int` })
+            .from(waitlist)
+            .where(sql`${waitlist.createdAt} < ${existingEntry.createdAt}`);
+
+          position = (positionResult?.count ?? 0) + 1;
+
+          await tx
+            .update(waitlist)
+            .set({ position })
+            .where(eq(waitlist.id, existingEntry.id));
+        }
+
+        return {
+          alreadyJoined: true,
+          position,
+        };
       }
 
-      return NextResponse.json({
-        success: true,
-        message: "You're already on the waitlist!",
-        alreadyJoined: true,
-        position: existingEntry.position ?? null,
+      const [countResult] = await tx
+        .select({ count: sql<number>`count(*)::int` })
+        .from(waitlist);
+      const position = (countResult?.count ?? 0) + 1;
+
+      await tx.insert(waitlist).values({
+        email: userEmail,
+        userId,
+        createdAt: new Date(),
+        position,
       });
-    }
 
-    // Calculate position
-    const allEntries = await db.query.waitlist.findMany();
-    const position = allEntries.length + 1;
-
-    // Create new waitlist entry linked to user
-    await db.insert(waitlist).values({
-      email: userEmail,
-      userId,
-      createdAt: new Date(),
-      position,
+      return {
+        alreadyJoined: false,
+        position,
+      };
     });
 
-    await track('waitlist_joined', { source: 'api', userId });
+    if (!waitlistResult.alreadyJoined) {
+      await track('waitlist_joined', { source: 'api', userId });
+    }
+
     return NextResponse.json({
       success: true,
-      message: 'Successfully added to waitlist!',
-      position,
+      message: waitlistResult.alreadyJoined
+        ? "You're already on the waitlist!"
+        : 'Successfully added to waitlist!',
+      alreadyJoined: waitlistResult.alreadyJoined,
+      position: waitlistResult.position,
     });
   } catch (_error) {
     return NextResponse.json(

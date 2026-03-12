@@ -14,6 +14,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { useConfetti } from '@/context/confetti-context';
+import { useSession } from '@/context/session-context';
 import type {
   RateLimitInfo,
   WaitlistCookieData,
@@ -38,6 +39,12 @@ const WAITLIST_AVATARS = [
   '/ryan.jpg',
 ] as const;
 
+function getStoredWaitlistPosition(position?: number | null): number | null {
+  return typeof position === 'number' && Number.isFinite(position)
+    ? position
+    : null;
+}
+
 function readStoredWaitlist(): WaitlistCookieData | null {
   if (typeof window === 'undefined') {
     return null;
@@ -59,6 +66,18 @@ function writeStoredWaitlist(data: WaitlistCookieData) {
   } catch {
     // Ignore storage failures
   }
+}
+
+function updateStoredWaitlistPosition(position: number) {
+  const stored = readStoredWaitlist();
+  if (!stored?.submitted) {
+    return;
+  }
+
+  writeStoredWaitlist({
+    ...stored,
+    position,
+  });
 }
 
 function useWaitlistSubmission(): WaitlistHookResult {
@@ -89,8 +108,7 @@ function useWaitlistSubmission(): WaitlistHookResult {
       return data;
     },
     onSuccess: (data, variables) => {
-      const savedPosition =
-        typeof data.position === 'number' ? data.position : null;
+      const savedPosition = getStoredWaitlistPosition(data.position);
 
       setSuccess(true);
       setPosition(savedPosition);
@@ -264,6 +282,7 @@ interface WaitlistPageProps {
 }
 
 function WaitlistPage({ compact = false }: WaitlistPageProps) {
+  const { session } = useSession();
   const {
     register,
     handleSubmit,
@@ -279,14 +298,15 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     loading: boolean;
   }>({ data: null, loading: true });
   const waitlistSubmission = useWaitlistSubmission();
+  const [needsPositionRecovery, setNeedsPositionRecovery] = useState(false);
 
   useEffect(() => {
     const stored = readStoredWaitlist();
     if (stored?.submitted) {
       waitlistSubmission.setSuccess(true);
-      waitlistSubmission.setPosition(
-        typeof stored.position === 'number' ? stored.position : null
-      );
+      const storedPosition = getStoredWaitlistPosition(stored.position);
+      waitlistSubmission.setPosition(storedPosition);
+      setNeedsPositionRecovery(storedPosition === null);
     }
   }, [waitlistSubmission.setPosition, waitlistSubmission.setSuccess]);
 
@@ -305,6 +325,42 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
     generateFingerprint();
   }, []);
+
+  const storedWaitlistEntryQuery = useQuery({
+    ...trpc.earlyAccess.getMyWaitlistEntry.queryOptions(),
+    enabled: needsPositionRecovery && !!session?.user,
+    retry: 1,
+  });
+
+  useEffect(() => {
+    if (!needsPositionRecovery) {
+      return;
+    }
+
+    const recoveredPosition = getStoredWaitlistPosition(
+      storedWaitlistEntryQuery.data?.position
+    );
+
+    if (recoveredPosition !== null) {
+      waitlistSubmission.setPosition(recoveredPosition);
+      updateStoredWaitlistPosition(recoveredPosition);
+      setNeedsPositionRecovery(false);
+      return;
+    }
+
+    if (
+      storedWaitlistEntryQuery.isSuccess ||
+      storedWaitlistEntryQuery.isError
+    ) {
+      setNeedsPositionRecovery(false);
+    }
+  }, [
+    needsPositionRecovery,
+    storedWaitlistEntryQuery.data?.position,
+    storedWaitlistEntryQuery.isError,
+    storedWaitlistEntryQuery.isSuccess,
+    waitlistSubmission.setPosition,
+  ]);
 
   function joinWaitlist({ email }: FormSchema) {
     if (!fingerprint.data) {
