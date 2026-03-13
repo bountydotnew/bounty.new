@@ -19,6 +19,7 @@ import { useSession } from '@/context/session-context';
 import type {
   RateLimitInfo,
   WaitlistCookieData,
+  WaitlistErrorCode,
   WaitlistHookResult,
   WaitlistResponse,
   WaitlistSubmissionData,
@@ -101,6 +102,16 @@ function updateStoredWaitlistPosition(position: number) {
   });
 }
 
+class WaitlistRequestError extends Error {
+  code?: WaitlistErrorCode;
+
+  constructor(message: string, code?: WaitlistErrorCode) {
+    super(message);
+    this.name = 'WaitlistRequestError';
+    this.code = code;
+  }
+}
+
 function useWaitlistSubmission(): WaitlistHookResult {
   const { celebrate } = useConfetti();
   const [success, setSuccess] = useState(false);
@@ -123,7 +134,10 @@ function useWaitlistSubmission(): WaitlistHookResult {
       const data = (await response.json()) as WaitlistResponse;
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to join waitlist');
+        throw new WaitlistRequestError(
+          data.error || 'Failed to join waitlist',
+          data.code
+        );
       }
 
       return data;
@@ -146,20 +160,17 @@ function useWaitlistSubmission(): WaitlistHookResult {
       toast.success("You're on the list! 🎉");
     },
     onError: (error: Error) => {
-      if (error.message.includes('Must be logged in to join waitlist')) {
+      const errorCode =
+        error instanceof WaitlistRequestError ? error.code : undefined;
+
+      if (errorCode === 'AUTH_REQUIRED') {
         authClient.signIn.social({
           provider: 'github',
           callbackURL: '/',
         });
-      } else if (
-        error.message.includes(
-          'Use the same email as your signed-in GitHub account'
-        )
-      ) {
+      } else if (errorCode === 'EMAIL_MISMATCH') {
         toast.error('Use the email tied to your signed-in GitHub account.');
-      } else if (error.message.includes('Rate limit exceeded')) {
-        toast.error('Too many attempts. Please try again later.');
-      } else if (error.message.includes('Invalid device fingerprint')) {
+      } else if (errorCode === 'INVALID_DEVICE_FINGERPRINT') {
         toast.error(
           'Security validation failed. Please refresh and try again.'
         );

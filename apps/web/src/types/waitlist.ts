@@ -1,5 +1,14 @@
 import type { thumbmarkResponse } from '@bounty/ui/lib/fingerprint-validation';
 
+export type WaitlistErrorCode =
+  | 'AUTH_REQUIRED'
+  | 'DATABASE_UNAVAILABLE'
+  | 'EMAIL_MISMATCH'
+  | 'INVALID_DEVICE_FINGERPRINT'
+  | 'INVALID_JSON_BODY'
+  | 'INVALID_WAITLIST_REQUEST'
+  | 'USER_EMAIL_REQUIRED';
+
 export interface RateLimitInfo {
   remaining: number;
   limit: number;
@@ -20,6 +29,7 @@ export interface WaitlistCookieData {
 
 export interface WaitlistResponse {
   success: boolean;
+  code?: WaitlistErrorCode;
   message?: string;
   warning?: string;
   error?: string;

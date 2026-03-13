@@ -7,6 +7,7 @@ import { headers } from 'next/headers';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import type { WaitlistErrorCode } from '@/types/waitlist';
 
 const WAITLIST_POSITION_LOCK_KEY = 53_407;
 const waitlistRequestSchema = z.object({
@@ -18,29 +19,32 @@ function normalizeWaitlistEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
+function errorResponse(status: number, code: WaitlistErrorCode, error: string) {
+  return NextResponse.json(
+    {
+      code,
+      error,
+      success: false,
+    },
+    { status }
+  );
+}
+
 export async function POST(request: NextRequest) {
   try {
     let requestBody: unknown;
     try {
       requestBody = await request.json();
     } catch {
-      return NextResponse.json(
-        {
-          error: 'Invalid JSON body',
-          success: false,
-        },
-        { status: 400 }
-      );
+      return errorResponse(400, 'INVALID_JSON_BODY', 'Invalid JSON body');
     }
 
     const parsedBody = waitlistRequestSchema.safeParse(requestBody);
     if (!parsedBody.success) {
-      return NextResponse.json(
-        {
-          error: 'Invalid waitlist request',
-          success: false,
-        },
-        { status: 400 }
+      return errorResponse(
+        400,
+        'INVALID_WAITLIST_REQUEST',
+        'Invalid waitlist request'
       );
     }
 
@@ -50,12 +54,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!session?.user) {
-      return NextResponse.json(
-        {
-          error: 'Must be logged in to join waitlist',
-          success: false,
-        },
-        { status: 401 }
+      return errorResponse(
+        401,
+        'AUTH_REQUIRED',
+        'Must be logged in to join waitlist'
       );
     }
 
@@ -64,12 +66,10 @@ export async function POST(request: NextRequest) {
     const submittedEmail = parsedBody.data.email;
 
     if (!userEmail) {
-      return NextResponse.json(
-        {
-          error: 'User email is required',
-          success: false,
-        },
-        { status: 400 }
+      return errorResponse(
+        400,
+        'USER_EMAIL_REQUIRED',
+        'User email is required'
       );
     }
 
@@ -77,12 +77,10 @@ export async function POST(request: NextRequest) {
     const normalizedSubmittedEmail = normalizeWaitlistEmail(submittedEmail);
 
     if (normalizedSubmittedEmail !== normalizedUserEmail) {
-      return NextResponse.json(
-        {
-          error: 'Use the same email as your signed-in GitHub account',
-          success: false,
-        },
-        { status: 400 }
+      return errorResponse(
+        400,
+        'EMAIL_MISMATCH',
+        'Use the same email as your signed-in GitHub account'
       );
     }
 
@@ -90,12 +88,10 @@ export async function POST(request: NextRequest) {
       parsedBody.data.fingerprintData
     );
     if (!fingerprintValidation.isValid) {
-      return NextResponse.json(
-        {
-          error: 'Invalid device fingerprint',
-          success: false,
-        },
-        { status: 400 }
+      return errorResponse(
+        400,
+        'INVALID_DEVICE_FINGERPRINT',
+        'Invalid device fingerprint'
       );
     }
 
@@ -186,12 +182,10 @@ export async function POST(request: NextRequest) {
       position: waitlistResult.position,
     });
   } catch (_error) {
-    return NextResponse.json(
-      {
-        error: 'Database temporarily unavailable',
-        success: false,
-      },
-      { status: 500 }
+    return errorResponse(
+      500,
+      'DATABASE_UNAVAILABLE',
+      'Database temporarily unavailable'
     );
   }
 }
