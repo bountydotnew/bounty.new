@@ -384,7 +384,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
   }, []);
 
   const storedWaitlistEntryQuery = useQuery({
-    ...trpc.earlyAccess.getMyWaitlistEntry.queryOptions(),
+    ...trpc.earlyAccess.peekMyWaitlistEntry.queryOptions(),
     enabled: needsPositionRecovery && !!session?.user,
     retry: 1,
   });
