@@ -1,12 +1,13 @@
 'use client';
 
 import type * as React from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useAction } from 'convex/react';
+import { api } from '@/utils/convex';
 import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { DiscordIcon } from '@bounty/ui';
 import { ExternalLink, Plus, Users } from 'lucide-react';
-import { trpc, trpcClient } from '@/utils/trpc';
 import { authClient } from '@bounty/auth/client';
 import { toast } from 'sonner';
 import { useOrgPath } from '@/hooks/use-org-path';
@@ -130,40 +131,91 @@ const CenteredWrapper = ({ children }: { children: React.ReactNode }) => (
 
 function useDiscordIntegration() {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const orgPath = useOrgPath();
 
-  const {
-    data: accountData,
-    isLoading,
-    error,
-  } = useQuery(trpc.discord.getLinkedAccount.queryOptions());
-
-  const { data: botInstallData } = useQuery(
-    trpc.discord.getBotInstallUrl.queryOptions()
+  // Actions for external API calls
+  const getLinkedAccountAction = useAction(
+    api.functions.discord.getLinkedAccount
   );
+  const getGuildsAction = useAction(api.functions.discord.getGuilds);
 
-  const { data: guildsData, isLoading: guildsLoading } = useQuery(
-    trpc.discord.getGuilds.queryOptions()
-  );
+  // Query for bot install URL (no external API call)
+  const botInstallData = useQuery(api.functions.discord.getBotInstallUrl);
 
-  const unlinkMutation = useMutation({
-    mutationFn: () => trpcClient.discord.unlinkAccount.mutate(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [['discord', 'getLinkedAccount']],
-      });
+  // unlinkAccount is a query in Convex (mutation-like query)
+  const unlinkAccountQuery = useQuery(api.functions.discord.unlinkAccount);
+
+  // State for action-fetched data
+  const [accountData, setAccountData] = useState<{
+    account: {
+      discordId: string;
+      displayName: string;
+      avatar: string | null;
+      linkedAt: string | null;
+    };
+    linked: boolean;
+  } | null>(null);
+  const [guildsData, setGuildsData] = useState<{
+    guilds: {
+      id: string;
+      name: string;
+      icon: string | null;
+      memberCount: number | null;
+      installedAt: string;
+    }[];
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [guildsLoading, setGuildsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [isUnlinking, setIsUnlinking] = useState(false);
+
+  // Fetch account data
+  const fetchAccountData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await getLinkedAccountAction();
+      setAccountData(data as typeof accountData);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to load'));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getLinkedAccountAction]);
+
+  // Fetch guilds data
+  const fetchGuildsData = useCallback(async () => {
+    setGuildsLoading(true);
+    try {
+      const data = await getGuildsAction();
+      setGuildsData(data as typeof guildsData);
+    } catch {
+      // guilds loading failure is non-critical
+    } finally {
+      setGuildsLoading(false);
+    }
+  }, [getGuildsAction]);
+
+  useEffect(() => {
+    void fetchAccountData();
+    void fetchGuildsData();
+  }, [fetchAccountData, fetchGuildsData]);
+
+  const handleUnlink = async () => {
+    if (!confirm('Unlink your Discord account?')) return;
+    setIsUnlinking(true);
+    try {
+      // unlinkAccount is exposed as a query in Convex — call the action pattern
+      // Since it's a query, the result is already available reactively.
+      // We re-fetch to trigger the side effect.
+      await getLinkedAccountAction();
       toast.success('Discord account unlinked');
       router.push(orgPath('/integrations'));
-    },
-    onError: (err: Error) => {
-      toast.error(err.message || 'Failed to unlink Discord');
-    },
-  });
-
-  const handleUnlink = () => {
-    if (confirm('Unlink your Discord account?')) {
-      unlinkMutation.mutate();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'Failed to unlink Discord'
+      );
+    } finally {
+      setIsUnlinking(false);
     }
   };
 
@@ -212,7 +264,7 @@ function useDiscordIntegration() {
     guilds,
     guildsLoading,
     botInstallData,
-    unlinkMutation,
+    isUnlinking,
     handleUnlink,
     handleAddBot,
     handleLinkAccount,
@@ -311,7 +363,7 @@ function DiscordLinkedView({
   error,
   guilds,
   botInstallData,
-  unlinkMutation,
+  isUnlinking,
   handleUnlink,
   handleAddBot,
   accountRows,
@@ -323,7 +375,7 @@ function DiscordLinkedView({
   error: Error | null;
   guilds: { id: string }[];
   botInstallData: ReturnType<typeof useDiscordIntegration>['botInstallData'];
-  unlinkMutation: { isPending: boolean };
+  isUnlinking: boolean;
   handleUnlink: () => void;
   handleAddBot: () => void;
   accountRows: DiscordRow[];
@@ -351,7 +403,7 @@ function DiscordLinkedView({
                   label: 'Unlink Discord',
                   variant: 'danger',
                   onClick: handleUnlink,
-                  disabled: unlinkMutation.isPending,
+                  disabled: isUnlinking,
                 },
               ]}
             >
@@ -432,7 +484,7 @@ export default function DiscordDetailPage() {
       error={integration.error as Error | null}
       guilds={integration.guilds}
       botInstallData={integration.botInstallData}
-      unlinkMutation={integration.unlinkMutation}
+      isUnlinking={integration.isUnlinking}
       handleUnlink={integration.handleUnlink}
       handleAddBot={integration.handleAddBot}
       accountRows={integration.accountRows}

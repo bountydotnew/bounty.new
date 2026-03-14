@@ -1,11 +1,7 @@
 'use client';
 
-import {
-  useQuery,
-  useQueries,
-  skipToken,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useAction, useQuery } from 'convex/react';
+import { api } from '@/utils/convex';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { LinearIcon } from '@bounty/ui';
@@ -19,18 +15,16 @@ import {
   LogOut,
   RefreshCw,
 } from 'lucide-react';
-import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
 import { useOrgPath } from '@/hooks/use-org-path';
 import { toast } from 'sonner';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { cn } from '@bounty/ui/lib/utils';
 import type { LinearIssue } from '@bounty/api/driver/linear-client';
 
 export default function LinearWorkspacePage() {
   const router = useRouter();
   const params = useParams();
-  const queryClient = useQueryClient();
   const orgPath = useOrgPath();
   const workspaceIdFromUrl = params.workspaceId as string;
 
@@ -47,27 +41,56 @@ export default function LinearWorkspacePage() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Fetch issues and projects in parallel using useQueries
-  const [issuesQuery, projectsQuery] = useQueries({
-    queries: [
-      trpc.linear.getIssues.queryOptions(
-        hasLinear ? { pagination: { first: 5 } } : skipToken
-      ),
-      trpc.linear.getProjects.queryOptions(hasLinear ? undefined : skipToken),
-    ],
-  });
+  // Actions for external Linear API calls
+  const getIssuesAction = useAction(api.functions.linearActions.getIssues);
+  const getProjectsAction = useAction(api.functions.linearActions.getProjects);
 
-  const issuesData = issuesQuery.data;
-  const issuesLoading = issuesQuery.isLoading;
-  const projectsData = projectsQuery.data;
-  const projectsLoading = projectsQuery.isLoading;
+  // State for action-fetched data
+  const [issuesData, setIssuesData] = useState<{
+    issues: LinearIssue[];
+  } | null>(null);
+  const [projectsData, setProjectsData] = useState<{
+    projects: { id: string; name: string }[];
+  } | null>(null);
+  const [issuesLoading, setIssuesLoading] = useState(true);
+  const [projectsLoading, setProjectsLoading] = useState(true);
 
-  // Account status is separate as it's always needed (even when not connected)
-  const { data: accountData } = useQuery(
-    trpc.linear.getAccountStatus.queryOptions()
-  );
+  // Account status is a Convex query
+  const accountData = useQuery(api.functions.linear.getAccountStatus);
 
   const needsSync = accountData?.hasOAuth && !hasLinear;
+
+  // Fetch issues and projects via actions
+  const fetchIssues = useCallback(async () => {
+    if (!hasLinear) return;
+    setIssuesLoading(true);
+    try {
+      const data = await getIssuesAction({ pagination: { first: 5 } });
+      setIssuesData(data as typeof issuesData);
+    } catch {
+      // non-critical
+    } finally {
+      setIssuesLoading(false);
+    }
+  }, [hasLinear, getIssuesAction]);
+
+  const fetchProjects = useCallback(async () => {
+    if (!hasLinear) return;
+    setProjectsLoading(true);
+    try {
+      const data = await getProjectsAction({});
+      setProjectsData(data as typeof projectsData);
+    } catch {
+      // non-critical
+    } finally {
+      setProjectsLoading(false);
+    }
+  }, [hasLinear, getProjectsAction]);
+
+  useEffect(() => {
+    void fetchIssues();
+    void fetchProjects();
+  }, [fetchIssues, fetchProjects]);
 
   // Redirect to correct workspace URL if workspaceId doesn't match
   useEffect(() => {
@@ -99,8 +122,6 @@ export default function LinearWorkspacePage() {
   const handleDisconnect = async () => {
     if (linearWorkspace) {
       await unlinkLinear(linearWorkspace.id);
-      // Clear all Linear queries to prevent any API calls after disconnect
-      queryClient.removeQueries({ queryKey: [['linear']] });
       router.push(orgPath('/integrations'));
     }
   };
@@ -184,6 +205,8 @@ export default function LinearWorkspacePage() {
           <Button
             onClick={() => {
               refreshLinear();
+              void fetchIssues();
+              void fetchProjects();
               toast.success('Refreshed');
             }}
             disabled={isLinearLoading}

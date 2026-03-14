@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { trpc } from '@/utils/trpc';
+import { useQuery } from 'convex/react';
+import { api } from '@/utils/convex';
 import { authClient } from '@bounty/auth/client';
 import { useActiveOrg } from '@/hooks/use-active-org';
 import { toast } from 'sonner';
@@ -54,34 +54,37 @@ interface InvitationRow {
 function useMembersData() {
   const { session } = useSession();
   const { activeOrg, isPersonalTeam } = useActiveOrg();
-  const queryClient = useQueryClient();
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'member' | 'owner'>('member');
   const [isInviting, setIsInviting] = useState(false);
+  const [invitationsData, setInvitationsData] = useState<InvitationRow[]>([]);
+  const [invitationsLoading, setInvitationsLoading] = useState(false);
 
-  const { data: membersData, isLoading } = useQuery(
-    trpc.organization.getMembers.queryOptions()
-  );
+  const membersData = useQuery(api.functions.organization.getMembers);
 
-  const {
-    data: invitationsData,
-    isLoading: invitationsLoading,
-    refetch: refetchInvitations,
-  } = useQuery({
-    queryKey: ['organization', 'invitations', activeOrg?.id],
-    queryFn: async () => {
-      if (!activeOrg?.id) return [];
+  // Fetch invitations via authClient (not a Convex query)
+  const fetchInvitations = async () => {
+    if (!activeOrg?.id) return;
+    setInvitationsLoading(true);
+    try {
       const result = await authClient.organization.listInvitations({
         query: { organizationId: activeOrg.id },
       });
       if (result.error) {
         console.error('Failed to fetch invitations:', result.error);
-        return [];
+        setInvitationsData([]);
+      } else {
+        setInvitationsData((result.data ?? []) as InvitationRow[]);
       }
-      return (result.data ?? []) as InvitationRow[];
-    },
-    enabled: !!activeOrg?.id,
-    staleTime: 30_000,
+    } catch {
+      setInvitationsData([]);
+    }
+    setInvitationsLoading(false);
+  };
+
+  // Fetch invitations on mount / org change
+  useState(() => {
+    fetchInvitations();
   });
 
   const pendingInvitations = (invitationsData ?? []).filter(
@@ -93,11 +96,8 @@ function useMembersData() {
   const isOwner =
     members.find((m) => m.userId === currentUserId)?.role === 'owner';
 
-  const invalidateAll = () => {
-    queryClient.invalidateQueries({
-      queryKey: [['organization', 'getMembers']],
-    });
-    refetchInvitations();
+  const refetchInvitations = () => {
+    fetchInvitations();
   };
 
   const handleInvite = async () => {
@@ -118,7 +118,7 @@ function useMembersData() {
 
       toast.success(`Invitation sent to ${inviteEmail.trim()}`);
       setInviteEmail('');
-      invalidateAll();
+      refetchInvitations();
       setIsInviting(false);
     } catch (err) {
       console.error('Failed to invite:', err);
@@ -139,7 +139,7 @@ function useMembersData() {
       }
 
       toast.success('Invitation cancelled');
-      invalidateAll();
+      refetchInvitations();
     } catch (err) {
       console.error('Failed to cancel invitation:', err);
       toast.error('Failed to cancel invitation');
@@ -160,7 +160,7 @@ function useMembersData() {
         organizationId: activeOrg!.id,
       });
       toast.success('Member removed');
-      invalidateAll();
+      refetchInvitations();
     } catch (err) {
       console.error('Failed to remove member:', err);
       toast.error('Failed to remove member');
@@ -178,7 +178,7 @@ function useMembersData() {
         organizationId: activeOrg!.id,
       });
       toast.success('Role updated');
-      invalidateAll();
+      refetchInvitations();
     } catch (err) {
       console.error('Failed to update role:', err);
       toast.error('Failed to update role');
@@ -193,7 +193,7 @@ function useMembersData() {
     inviteRole,
     setInviteRole,
     isInviting,
-    isLoading,
+    isLoading: membersData === undefined,
     invitationsLoading,
     pendingInvitations,
     members,

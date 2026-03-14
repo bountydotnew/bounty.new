@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from 'convex/react';
+import { api } from '@/utils/convex';
 import { AnimatePresence, m } from 'motion/react';
 import { cn } from '@bounty/ui/lib/utils';
 import { useActiveOrg } from '@/hooks/use-active-org';
 import { useSession } from '@/context/session-context';
 import { useOptionalTour } from '@bounty/ui/components/tour';
-import { trpc } from '@/utils/trpc';
 
 // ---------------------------------------------------------------------------
 // Storage key for dismiss persistence
@@ -138,17 +138,17 @@ export const GettingStartedCard = () => {
     }
   }, []);
 
-  const { data: onboardingState } = useQuery({
-    ...trpc.onboarding.getState.queryOptions(),
-    enabled: isAuthenticated,
-  });
+  const onboardingState = useQuery(
+    api.functions.onboarding.getState,
+    isAuthenticated ? {} : 'skip'
+  );
 
   const items: ChecklistItem[] = [
     {
       id: 'tools',
       taskKey: 'tools',
       label: 'Connect your repos',
-      completed: onboardingState?.connectedTools ?? false,
+      completed: onboardingState?.completedStep1 ?? false,
       tourId: 'connect-tools',
       href: activeOrgSlug ? `/${activeOrgSlug}/integrations` : '/integrations',
     },
@@ -156,7 +156,7 @@ export const GettingStartedCard = () => {
       id: 'payouts',
       taskKey: 'payouts',
       label: 'Start receiving payouts',
-      completed: onboardingState?.setupPayouts ?? false,
+      completed: onboardingState?.completedStep2 ?? false,
       tourId: 'setup-payouts',
       href: activeOrgSlug
         ? `/${activeOrgSlug}/settings/payments?tab=settings`
@@ -166,7 +166,7 @@ export const GettingStartedCard = () => {
       id: 'first-bounty',
       taskKey: 'bounty',
       label: 'Create your first bounty',
-      completed: onboardingState?.createdBounty ?? false,
+      completed: onboardingState?.completedStep3 ?? false,
       tourId: 'create-bounty',
       href: '/dashboard',
     },
@@ -174,7 +174,7 @@ export const GettingStartedCard = () => {
       id: 'invite-member',
       taskKey: 'member',
       label: 'Invite a member to your team',
-      completed: onboardingState?.invitedMember ?? false,
+      completed: onboardingState?.completedStep4 ?? false,
       tourId: 'invite-member',
       href: activeOrgSlug
         ? `/${activeOrgSlug}/settings/members`

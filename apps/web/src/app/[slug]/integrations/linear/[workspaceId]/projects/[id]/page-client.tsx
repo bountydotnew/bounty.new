@@ -1,15 +1,19 @@
 'use client';
 
-import { useQueries, skipToken } from '@tanstack/react-query';
+import { useAction } from 'convex/react';
+import { api } from '@/utils/convex';
 import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
 import { LinearIcon } from '@bounty/ui';
 import { Button } from '@bounty/ui/components/button';
 import { ArrowLeft, ExternalLink, Inbox, FolderKanban } from 'lucide-react';
-import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
 import { useOrgPath } from '@/hooks/use-org-path';
 import { LinearIssueCard } from '../../issues/components/issue-card';
-import type { LinearProject } from '@bounty/api/driver/linear-client';
+import type {
+  LinearProject,
+  LinearIssue,
+} from '@bounty/api/driver/linear-client';
 
 export default function LinearProjectDetailPage() {
   const params = useParams();
@@ -19,30 +23,44 @@ export default function LinearProjectDetailPage() {
   const workspaceId = params.workspaceId as string;
   const projectId = params.id as string;
 
-  // Fetch projects and issues in parallel using useQueries
-  const [projectsQuery, issuesQuery] = useQueries({
-    queries: [
-      trpc.linear.getProjects.queryOptions(hasLinear ? undefined : skipToken),
-      trpc.linear.getIssues.queryOptions(
-        hasLinear
-          ? {
-              filters: { projectId },
-              pagination: { first: 50 },
-            }
-          : skipToken
-      ),
-    ],
-  });
+  // Actions for external Linear API calls
+  const getProjectsAction = useAction(api.functions.linearActions.getProjects);
+  const getIssuesAction = useAction(api.functions.linearActions.getIssues);
 
-  const projectsData = projectsQuery.data;
-  const issuesData = issuesQuery.data;
-  const projectLoading = projectsQuery.isLoading;
-  const issuesLoading = issuesQuery.isLoading;
+  // State for action-fetched data
+  const [project, setProject] = useState<LinearProject | null>(null);
+  const [issues, setIssues] = useState<LinearIssue[]>([]);
+  const [projectLoading, setProjectLoading] = useState(true);
+  const [issuesLoading, setIssuesLoading] = useState(true);
 
-  const project = projectsData?.projects?.find(
-    (p: LinearProject) => p.id === projectId
-  );
-  const issues = issuesData?.issues ?? [];
+  const fetchData = useCallback(async () => {
+    if (!hasLinear) return;
+    setProjectLoading(true);
+    setIssuesLoading(true);
+    try {
+      const [projectsData, issuesData] = await Promise.all([
+        getProjectsAction({}),
+        getIssuesAction({
+          filters: { projectId },
+          pagination: { first: 50 },
+        }),
+      ]);
+      const foundProject = (
+        projectsData as { projects: LinearProject[] }
+      )?.projects?.find((p: LinearProject) => p.id === projectId);
+      setProject(foundProject ?? null);
+      setIssues((issuesData as { issues: LinearIssue[] })?.issues ?? []);
+    } catch {
+      // non-critical
+    } finally {
+      setProjectLoading(false);
+      setIssuesLoading(false);
+    }
+  }, [hasLinear, projectId, getProjectsAction, getIssuesAction]);
+
+  useEffect(() => {
+    void fetchData();
+  }, [fetchData]);
 
   // Show skeleton while loading
   if (hasLinear && (projectLoading || issuesLoading)) {

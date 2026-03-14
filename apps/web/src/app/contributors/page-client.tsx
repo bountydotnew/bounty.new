@@ -6,14 +6,14 @@ import {
   AvatarImage,
 } from '@bounty/ui/components/avatar';
 import Link from '@bounty/ui/components/link';
-import { useQuery } from '@tanstack/react-query';
 import { ArrowUpRight, GitFork, GitGraph, Github, Star } from 'lucide-react';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { DataBuddyIcon, MarbleIcon } from '@/components/icons';
 import { Header } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
 import { LINKS } from '@/constants';
-import { trpc } from '@/utils/trpc';
+import { useAction } from 'convex/react';
+import { api } from '@/utils/convex';
 
 interface Contributor {
   login: string;
@@ -29,15 +29,35 @@ const CORE = ['ripgrim'];
 export default function ContributorsPage() {
   const lastCommitRef = useRef<string>('');
 
-  const { data: contributors } = useQuery(
-    trpc.repository.contributors.queryOptions({ repo: REPOSITORY })
+  // These are Convex actions (external GitHub API calls) — manage state locally
+  const getContributors = useAction(api.functions.repository.contributors);
+  const getStats = useAction(api.functions.repository.stats);
+  const getRecentCommits = useAction(api.functions.repository.recentCommits);
+
+  const [contributors, setContributors] = useState<Contributor[] | undefined>(
+    undefined
   );
-  const { data: repoStatsServer } = useQuery(
-    trpc.repository.stats.queryOptions({ repo: REPOSITORY })
-  );
-  const { data: commitsData } = useQuery(
-    trpc.repository.recentCommits.queryOptions({ repo: REPOSITORY, limit: 50 })
-  );
+  const [repoStatsServer, setRepoStatsServer] = useState<any>(undefined);
+  const [commitsData, setCommitsData] = useState<any[] | undefined>(undefined);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const [contribResult, statsResult, commitsResult] = await Promise.all([
+        getContributors({ repo: REPOSITORY }),
+        getStats({ repo: REPOSITORY }),
+        getRecentCommits({ repo: REPOSITORY, limit: 50 }),
+      ]);
+      setContributors(contribResult as Contributor[]);
+      setRepoStatsServer(statsResult);
+      setCommitsData(commitsResult as any[]);
+    } catch (error) {
+      console.error('Failed to fetch contributor data:', error);
+    }
+  }, [getContributors, getStats, getRecentCommits]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   useEffect(() => {
     if (Array.isArray(commitsData) && commitsData.length) {

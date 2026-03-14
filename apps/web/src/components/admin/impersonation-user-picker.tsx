@@ -16,10 +16,10 @@ import {
 } from '@bounty/ui/components/drawer';
 import { Input } from '@bounty/ui/components/input';
 import { useIsMobile } from '@bounty/ui/hooks/use-mobile';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from 'convex/react';
+import { api } from '@/utils/convex';
 import { Search, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { trpc } from '@/utils/trpc';
 
 interface Props {
   open: boolean;
@@ -31,29 +31,15 @@ export function ImpersonationUserPicker({ open, onOpenChange, onPick }: Props) {
   const isMobile = useIsMobile();
   const [search, setSearch] = useState('');
 
-  const { data, isLoading } = useQuery(
-    trpc.user.getAllUsers.queryOptions({
-      search: search || undefined,
-      page: 1,
-      limit: 20,
-    })
-  );
+  const data = useQuery(api.functions.user.getAllUsers, {
+    search: search || undefined,
+    page: 1,
+    limit: 20,
+  });
 
-  type UserListItem = {
-    id: string;
-    name: string | null;
-    email: string;
-    image: string | null;
-    role: string;
-    banned: boolean;
-    createdAt: string;
-    updatedAt: string;
-  };
+  const isLoading = data === undefined;
 
-  const users = useMemo(
-    () => (data?.users || []) as UserListItem[],
-    [data?.users]
-  );
+  const users = useMemo(() => data?.users || [], [data?.users]);
 
   const content = (
     <div className="p-4">
@@ -78,8 +64,8 @@ export function ImpersonationUserPicker({ open, onOpenChange, onPick }: Props) {
               users.map((u) => (
                 <button
                   className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900/40 p-3 text-left transition hover:bg-neutral-900/60"
-                  key={u.id}
-                  onClick={() => onPick(u.id)}
+                  key={u._id}
+                  onClick={() => onPick(u._id)}
                   type="button"
                 >
                   <div className="flex items-center gap-2">
@@ -124,9 +110,7 @@ export function ImpersonationUserPicker({ open, onOpenChange, onPick }: Props) {
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="p-0">
-        {content}
-      </DialogContent>
+      <DialogContent className="p-0">{content}</DialogContent>
     </Dialog>
   );
 }

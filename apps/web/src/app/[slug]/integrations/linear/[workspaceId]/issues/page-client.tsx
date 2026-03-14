@@ -1,6 +1,7 @@
 'use client';
 
-import { useQuery, useQueries, skipToken } from '@tanstack/react-query';
+import { useAction } from 'convex/react';
+import { api } from '@/utils/convex';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { LinearIcon } from '@bounty/ui';
 import { Button } from '@bounty/ui/components/button';
@@ -12,11 +13,10 @@ import {
   X,
   Inbox,
 } from 'lucide-react';
-import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
 import { useOrgPath } from '@/hooks/use-org-path';
 import { toast } from 'sonner';
-import { Suspense, useState, useCallback } from 'react';
+import { Suspense, useState, useCallback, useEffect } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,41 +65,70 @@ function useLinearIssuesData() {
     projectId: null,
   });
 
-  const [workflowStatesQuery, projectsQuery] = useQueries({
-    queries: [
-      trpc.linear.getWorkflowStates.queryOptions(
-        hasLinear ? undefined : skipToken
-      ),
-      trpc.linear.getProjects.queryOptions(hasLinear ? undefined : skipToken),
-    ],
-  });
-
-  const workflowStatesData = workflowStatesQuery.data;
-  const projectsData = projectsQuery.data;
-
-  const {
-    data: issuesData,
-    isLoading: issuesLoading,
-    refetch: refetchIssues,
-  } = useQuery(
-    trpc.linear.getIssues.queryOptions(
-      hasLinear
-        ? {
-            filters: {
-              status: filters.status.length > 0 ? filters.status : undefined,
-              priority:
-                filters.priority.length > 0 ? filters.priority : undefined,
-              projectId: filters.projectId || undefined,
-            },
-            pagination: { first: 50 },
-          }
-        : skipToken
-    )
+  // Actions for external Linear API calls
+  const getIssuesAction = useAction(api.functions.linearActions.getIssues);
+  const getWorkflowStatesAction = useAction(
+    api.functions.linearActions.getWorkflowStates
   );
+  const getProjectsAction = useAction(api.functions.linearActions.getProjects);
+
+  // State for action-fetched data
+  const [workflowStates, setWorkflowStates] = useState<LinearWorkflowState[]>(
+    []
+  );
+  const [projects, setProjects] = useState<LinearProject[]>([]);
+  const [issues, setIssues] = useState<LinearIssue[]>([]);
+  const [issuesLoading, setIssuesLoading] = useState(true);
+
+  // Fetch workflow states and projects once
+  useEffect(() => {
+    if (!hasLinear) return;
+    void (async () => {
+      try {
+        const [statesData, projectsData] = await Promise.all([
+          getWorkflowStatesAction({}),
+          getProjectsAction({}),
+        ]);
+        setWorkflowStates(
+          (statesData as { states: LinearWorkflowState[] })?.states ?? []
+        );
+        setProjects(
+          (projectsData as { projects: LinearProject[] })?.projects ?? []
+        );
+      } catch {
+        // non-critical
+      }
+    })();
+  }, [hasLinear, getWorkflowStatesAction, getProjectsAction]);
+
+  // Fetch issues when filters change
+  const fetchIssues = useCallback(async () => {
+    if (!hasLinear) return;
+    setIssuesLoading(true);
+    try {
+      const data = await getIssuesAction({
+        filters: {
+          status: filters.status.length > 0 ? filters.status : undefined,
+          priority: filters.priority.length > 0 ? filters.priority : undefined,
+          projectId: filters.projectId || undefined,
+        },
+        pagination: { first: 50 },
+      });
+      setIssues((data as { issues: LinearIssue[] })?.issues ?? []);
+    } catch {
+      // non-critical
+    } finally {
+      setIssuesLoading(false);
+    }
+  }, [hasLinear, getIssuesAction, filters]);
+
+  useEffect(() => {
+    void fetchIssues();
+  }, [fetchIssues]);
 
   const handleRefresh = () => {
     refreshLinear();
-    refetchIssues();
+    void fetchIssues();
     toast.success('Refreshed');
   };
 
@@ -142,11 +171,6 @@ function useLinearIssuesData() {
     filters.status.length +
     filters.priority.length +
     (filters.projectId ? 1 : 0);
-
-  const workflowStates: LinearWorkflowState[] =
-    workflowStatesData?.states ?? [];
-  const projects: LinearProject[] = projectsData?.projects ?? [];
-  const issues: LinearIssue[] = issuesData?.issues ?? [];
 
   return {
     linearWorkspace,

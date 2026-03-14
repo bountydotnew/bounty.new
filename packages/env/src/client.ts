@@ -16,6 +16,8 @@ export const env = createEnv({
     NEXT_PUBLIC_VERCEL_URL: z.string().optional(),
     // Stripe
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1),
+    // Convex
+    NEXT_PUBLIC_CONVEX_URL: z.string().url().optional(),
   },
   experimental__runtimeEnv: {
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
@@ -23,7 +25,9 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
     NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
-    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
+      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+    NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
   },
   //skipValidation: process.env.NODE_ENV !== "production",
 });

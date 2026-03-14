@@ -14,11 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@bounty/ui/components/select';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from 'convex/react';
 import { Search, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import { parseAsString, useQueryState } from 'nuqs';
-import { trpc } from '@/utils/trpc';
+import { api } from '@/utils/convex';
 import { Button } from '@bounty/ui/components/button';
 
 interface Creator {
@@ -122,15 +122,20 @@ export function BountyFilters() {
   }, [creatorSearchQuery]);
 
   // Fetch creators - only search if query is at least 1 character
-  const creatorsQuery = useQuery({
-    ...trpc.user.searchCreators.queryOptions({ query: debouncedCreatorQuery }),
-    enabled: debouncedCreatorQuery.length >= 1,
-  });
+  const creatorsData = useQuery(
+    api.functions.user.searchCreators,
+    debouncedCreatorQuery.length >= 1
+      ? { query: debouncedCreatorQuery }
+      : 'skip'
+  );
 
   const creators = useMemo(
-    () => creatorsQuery.data?.data || [],
-    [creatorsQuery.data?.data]
+    () => creatorsData?.data || [],
+    [creatorsData?.data]
   );
+
+  const creatorsLoading =
+    debouncedCreatorQuery.length >= 1 && creatorsData === undefined;
 
   // Get selected creator info
   const selectedCreator = useMemo(() => {
@@ -256,7 +261,7 @@ export function BountyFilters() {
             className="border-border-subtle bg-surface-1"
             getKey={(c) => c.id}
             items={creators}
-            loading={creatorsQuery.isLoading}
+            loading={creatorsLoading}
             onSelect={handleCreatorSelect}
             open={creatorDropdownOpen && creatorSearchQuery.length >= 1}
             renderItem={(creator) => (

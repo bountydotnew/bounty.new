@@ -4,17 +4,19 @@ import { Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardPreview } from '@/components/waitlist/dashboard-preview';
 import { useSession } from '@/context/session-context';
-import { trpc } from '@/utils/trpc';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from 'convex/react';
+import { api } from '@/utils/convex';
 
 function DashboardContent() {
   const router = useRouter();
   const { session, isPending: isSessionPending } = useSession();
 
-  const { data: myEntry, isLoading: isLoadingMyEntry } = useQuery({
-    ...trpc.earlyAccess.getMyWaitlistEntry.queryOptions(),
-    enabled: !!session?.user,
-  });
+  const myEntry = useQuery(
+    api.functions.earlyAccess.getMyWaitlistEntry,
+    session?.user ? {} : 'skip'
+  );
+
+  const isLoadingMyEntry = myEntry === undefined && !!session?.user;
 
   const handleLogin = () => {
     const callbackUrl = encodeURIComponent('/waitlist/dashboard');

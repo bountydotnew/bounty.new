@@ -1,9 +1,9 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useQuery, useMutation, useAction } from 'convex/react';
+import { useMemo, useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
-import { trpc, trpcClient } from '@/utils/trpc';
+import { api } from '@/utils/convex';
 import { useSession } from '@/context/session-context';
 import { useActiveOrg } from '@/hooks/use-active-org';
 import {
@@ -55,58 +55,56 @@ function useBountyDetailQueries({
   sessionUserId,
   createdById,
   paymentStatus,
-  initialVotes,
 }: {
   bountyId: string;
   sessionUserId: string | undefined;
   createdById: string | undefined;
   paymentStatus: string | null | undefined;
-  initialVotes?: { count: number; isVoted: boolean };
 }) {
-  const paymentStatusQuery = useQuery({
-    ...trpc.bounties.getBountyPaymentStatus.queryOptions({ bountyId }),
-    enabled: Boolean(
-      bountyId &&
-        sessionUserId &&
-        createdById &&
-        createdById === sessionUserId &&
-        paymentStatus === 'pending'
-    ),
+  const shouldQueryPaymentStatus = Boolean(
+    bountyId &&
+      sessionUserId &&
+      createdById &&
+      createdById === sessionUserId &&
+      paymentStatus === 'pending'
+  );
+  const paymentStatusData = useQuery(
+    api.functions.bounties.getBountyPaymentStatus,
+    shouldQueryPaymentStatus ? { bountyId } : 'skip'
+  );
+
+  const votesData = useQuery(api.functions.bounties.getBountyVotes, {
+    bountyId,
   });
 
-  const votesQuery = useQuery({
-    ...trpc.bounties.getBountyVotes.queryOptions({ bountyId }),
-    initialData: initialVotes,
-    staleTime: Number.POSITIVE_INFINITY,
-  });
+  const submissionsData = useQuery(
+    api.functions.bounties.getBountySubmissions,
+    { bountyId }
+  );
 
-  const submissionsQuery = useQuery({
-    ...trpc.bounties.getBountySubmissions.queryOptions({ bountyId }),
-    staleTime: 10_000,
-  });
+  const shouldQueryCancellation = Boolean(
+    sessionUserId === createdById &&
+      (paymentStatus === 'held' || paymentStatus === 'released')
+  );
+  const cancellationStatusData = useQuery(
+    api.functions.bounties.getCancellationStatus,
+    shouldQueryCancellation ? { bountyId } : 'skip'
+  );
 
-  const cancellationStatusQuery = useQuery({
-    ...trpc.bounties.getCancellationStatus.queryOptions({ bountyId }),
-    enabled: Boolean(
-      sessionUserId === createdById &&
-        (paymentStatus === 'held' || paymentStatus === 'released')
-    ),
-  });
-
-  const connectStatusQuery = useQuery({
-    ...trpc.connect.getConnectStatus.queryOptions(),
-    enabled: Boolean(
-      sessionUserId && createdById && createdById === sessionUserId
-    ),
-    staleTime: 60_000,
-  });
+  const shouldQueryConnect = Boolean(
+    sessionUserId && createdById && createdById === sessionUserId
+  );
+  const connectStatusData = useQuery(
+    api.functions.connect.getConnectStatus,
+    shouldQueryConnect ? {} : 'skip'
+  );
 
   return {
-    paymentStatusQuery,
-    votesQuery,
-    submissionsQuery,
-    cancellationStatusQuery,
-    connectStatusQuery,
+    paymentStatusData,
+    votesData,
+    submissionsData,
+    cancellationStatusData,
+    connectStatusData,
   };
 }
 
@@ -121,295 +119,296 @@ function useBountyDetailMutations({
   setShowCancellationDialog: (open: boolean) => void;
   setCancellationReason: (reason: string) => void;
 }) {
-  const queryClient = useQueryClient();
   const { orgs, switchOrg } = useActiveOrg();
 
-  const voteMutation = useMutation({
-    mutationFn: async (input: { bountyId: string; vote: boolean }) => {
-      return await trpcClient.bounties.voteBounty.mutate(input);
-    },
-  });
+  // DB-only mutations
+  const voteBounty = useMutation(api.functions.bounties.voteBounty);
+  const deleteBounty = useMutation(api.functions.bounties.deleteBounty);
+  const requestCancellation = useMutation(
+    api.functions.bounties.requestCancellation
+  );
+  const cancelCancellationRequest = useMutation(
+    api.functions.bounties.cancelCancellationRequest
+  );
+  const approveSubmission = useMutation(
+    api.functions.bounties.approveSubmission
+  );
+  const unapproveSubmission = useMutation(
+    api.functions.bounties.unapproveSubmission
+  );
+  const submitWorkFromApp = useMutation(
+    api.functions.bounties.submitWorkFromApp
+  );
+  const withdrawSubmission = useMutation(
+    api.functions.bounties.withdrawSubmission
+  );
 
-  const deleteBountyMutation = useMutation({
-    mutationFn: async (input: { id: string }) => {
-      return await trpcClient.bounties.deleteBounty.mutate(input);
-    },
-    onSuccess: () => {
-      toast.success('Bounty deleted successfully');
-      queryClient.invalidateQueries({
-        predicate: (query) => {
-          const [first] = query.queryKey;
+  // Actions (external API calls)
+  const createPaymentForBounty = useAction(
+    api.functions.bounties.createPaymentForBounty
+  );
+  const recheckPaymentStatus = useAction(
+    api.functions.bounties.recheckPaymentStatus
+  );
+  const mergeSubmission = useAction(api.functions.bounties.mergeSubmission);
+  const createConnectAccountLink = useAction(
+    api.functions.connect.createConnectAccountLink
+  );
 
-          if (typeof first === 'string') {
-            return first.includes('bounty');
-          }
+  // Pending state tracking
+  const [isVoting, setIsVoting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isCreatingPayment, setIsCreatingPayment] = useState(false);
+  const [isRecheckingPayment, setIsRecheckingPayment] = useState(false);
+  const [isSettingUpConnect, setIsSettingUpConnect] = useState(false);
+  const [isRequestingCancellation, setIsRequestingCancellation] =
+    useState(false);
+  const [isCancellingCancellationRequest, setIsCancellingCancellationRequest] =
+    useState(false);
+  const [isApprovingSubmission, setIsApprovingSubmission] = useState(false);
+  const [isUnapprovingSubmission, setIsUnapprovingSubmission] = useState(false);
+  const [isMergingSubmission, setIsMergingSubmission] = useState(false);
+  const [isSubmittingWork, setIsSubmittingWork] = useState(false);
+  const [isWithdrawingSubmission, setIsWithdrawingSubmission] = useState(false);
 
-          if (Array.isArray(first)) {
-            const namespace = first[0];
-            return (
-              typeof namespace === 'string' && namespace.includes('bounty')
-            );
-          }
+  const handleDeleteBounty = useCallback(
+    async (id: string) => {
+      setIsDeleting(true);
+      try {
+        await deleteBounty({ id });
+        toast.success('Bounty deleted successfully');
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1000);
+      } catch (error) {
+        const err = error as Error;
+        const isDifferentOrg = err.message.includes('different organization');
+        const bountyOrg =
+          isDifferentOrg && organizationId
+            ? orgs.find((o) => o.id === organizationId)
+            : undefined;
 
-          return false;
-        },
-      });
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 1000);
-    },
-    onError: (error: Error) => {
-      const isDifferentOrg = error.message.includes('different organization');
-      const bountyOrg =
-        isDifferentOrg && organizationId
-          ? orgs.find((o) => o.id === organizationId)
-          : undefined;
-
-      if (isDifferentOrg && bountyOrg) {
-        toast.error('This bounty belongs to a different organization', {
-          description: `Switch to "${bountyOrg.name}" to manage this bounty.`,
-          action: {
-            label: `Switch to ${bountyOrg.name}`,
-            onClick: async () => {
-              try {
-                await switchOrg(bountyOrg.id);
-              } catch {
-                toast.error('Failed to switch organization');
-              }
+        if (isDifferentOrg && bountyOrg) {
+          toast.error('This bounty belongs to a different organization', {
+            description: `Switch to "${bountyOrg.name}" to manage this bounty.`,
+            action: {
+              label: `Switch to ${bountyOrg.name}`,
+              onClick: async () => {
+                try {
+                  await switchOrg(bountyOrg.id);
+                } catch {
+                  toast.error('Failed to switch organization');
+                }
+              },
             },
-          },
-        });
-      } else {
-        toast.error(`Failed to delete bounty: ${error.message}`);
+          });
+        } else {
+          toast.error(`Failed to delete bounty: ${err.message}`);
+        }
+      } finally {
+        setIsDeleting(false);
       }
     },
-  });
+    [deleteBounty, organizationId, orgs, switchOrg]
+  );
 
-  const createPaymentMutation = useMutation({
-    mutationFn: async () => {
-      return await trpcClient.bounties.createPaymentForBounty.mutate({
+  const handleCreatePayment = useCallback(async () => {
+    setIsCreatingPayment(true);
+    try {
+      const result = await createPaymentForBounty({
         bountyId,
         origin: window.location.origin,
       });
-    },
-    onSuccess: (result) => {
       if (result?.data?.checkoutUrl) {
         window.location.href = result.data.checkoutUrl;
       }
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to create payment: ${error.message}`);
-    },
-  });
+    } catch (error) {
+      toast.error(`Failed to create payment: ${(error as Error).message}`);
+    } finally {
+      setIsCreatingPayment(false);
+    }
+  }, [createPaymentForBounty, bountyId]);
 
-  const recheckPaymentMutation = useMutation({
-    mutationFn: async () => {
-      return await trpcClient.bounties.recheckPaymentStatus.mutate({
-        bountyId,
-      });
-    },
-    onSuccess: (result) => {
+  const handleRecheckPayment = useCallback(async () => {
+    setIsRecheckingPayment(true);
+    try {
+      const result = await recheckPaymentStatus({ bountyId });
       if (result.success && result.paymentStatus === 'held') {
         toast.success(
           result.message || 'Payment verified! Bounty is now live.'
         );
-        queryClient.invalidateQueries({
-          queryKey: [['bounties', 'getBountyDetail']],
-        });
-        queryClient.invalidateQueries({
-          queryKey: [['bounties', 'getBountyPaymentStatus']],
-        });
       } else {
         toast.info(
           result.message || 'Payment status checked. No changes needed.'
         );
       }
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to recheck payment: ${error.message}`);
-    },
-  });
+    } catch (error) {
+      toast.error(`Failed to recheck payment: ${(error as Error).message}`);
+    } finally {
+      setIsRecheckingPayment(false);
+    }
+  }, [recheckPaymentStatus, bountyId]);
 
-  const setupConnectMutation = useMutation({
-    mutationFn: async () => {
-      return await trpcClient.connect.createConnectAccountLink.mutate({});
-    },
-    onSuccess: (result) => {
+  const handleSetupConnect = useCallback(async () => {
+    setIsSettingUpConnect(true);
+    try {
+      const result = await createConnectAccountLink({});
       if (result?.data?.url) {
         window.location.href = result.data.url;
       }
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to start Stripe setup: ${error.message}`);
-    },
-  });
+    } catch (error) {
+      toast.error(`Failed to start Stripe setup: ${(error as Error).message}`);
+    } finally {
+      setIsSettingUpConnect(false);
+    }
+  }, [createConnectAccountLink]);
 
-  const requestCancellationMutation = useMutation({
-    mutationFn: async (input: { bountyId: string; reason?: string }) => {
-      return await trpcClient.bounties.requestCancellation.mutate(input);
+  const handleRequestCancellation = useCallback(
+    async (reason?: string) => {
+      setIsRequestingCancellation(true);
+      try {
+        const result = await requestCancellation({
+          bountyId,
+          reason,
+        });
+        toast.success(result.message || 'Cancellation request submitted');
+        setShowCancellationDialog(false);
+        setCancellationReason('');
+      } catch (error) {
+        toast.error(
+          `Failed to request cancellation: ${(error as Error).message}`
+        );
+      } finally {
+        setIsRequestingCancellation(false);
+      }
     },
-    onSuccess: (result) => {
-      toast.success(result.message || 'Cancellation request submitted');
-      setShowCancellationDialog(false);
-      setCancellationReason('');
-      queryClient.invalidateQueries({
-        queryKey: [['bounties', 'getCancellationStatus']],
-      });
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to request cancellation: ${error.message}`);
-    },
-  });
+    [
+      requestCancellation,
+      bountyId,
+      setShowCancellationDialog,
+      setCancellationReason,
+    ]
+  );
 
-  const cancelCancellationRequestMutation = useMutation({
-    mutationFn: async (input: { bountyId: string }) => {
-      return await trpcClient.bounties.cancelCancellationRequest.mutate(input);
-    },
-    onSuccess: (result) => {
+  const handleCancelCancellationRequest = useCallback(async () => {
+    setIsCancellingCancellationRequest(true);
+    try {
+      const result = await cancelCancellationRequest({ bountyId });
       toast.success(result.message || 'Cancellation request withdrawn');
-      queryClient.invalidateQueries({
-        queryKey: [['bounties', 'getCancellationStatus']],
-      });
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to cancel cancellation request: ${error.message}`);
-    },
-  });
+    } catch (error) {
+      toast.error(
+        `Failed to cancel cancellation request: ${(error as Error).message}`
+      );
+    } finally {
+      setIsCancellingCancellationRequest(false);
+    }
+  }, [cancelCancellationRequest, bountyId]);
 
-  const approveSubmissionMutation = useMutation({
-    mutationFn: async (input: { bountyId: string; submissionId: string }) => {
-      return await trpcClient.bounties.approveSubmission.mutate(input);
+  const handleApproveSubmission = useCallback(
+    async (submissionId: string) => {
+      setIsApprovingSubmission(true);
+      try {
+        await approveSubmission({ bountyId, submissionId });
+        toast.success('Submission approved');
+      } catch (error) {
+        toast.error(`Failed to approve: ${(error as Error).message}`);
+      } finally {
+        setIsApprovingSubmission(false);
+      }
     },
-    onSuccess: () => {
-      toast.success('Submission approved');
-      queryClient.invalidateQueries({
-        predicate: (query) => {
-          const [first] = query.queryKey;
-          if (typeof first === 'string') {
-            return first.includes('bounty');
-          }
-          if (Array.isArray(first)) {
-            const namespace = first[0];
-            return (
-              typeof namespace === 'string' && namespace.includes('bounty')
-            );
-          }
-          return false;
-        },
-      });
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to approve: ${error.message}`);
-    },
-  });
+    [approveSubmission, bountyId]
+  );
 
-  const unapproveSubmissionMutation = useMutation({
-    mutationFn: async (input: { bountyId: string; submissionId: string }) => {
-      return await trpcClient.bounties.unapproveSubmission.mutate(input);
+  const handleUnapproveSubmission = useCallback(
+    async (submissionId: string) => {
+      setIsUnapprovingSubmission(true);
+      try {
+        await unapproveSubmission({ bountyId, submissionId });
+        toast.success('Approval withdrawn');
+      } catch (error) {
+        toast.error(`Failed to unapprove: ${(error as Error).message}`);
+      } finally {
+        setIsUnapprovingSubmission(false);
+      }
     },
-    onSuccess: () => {
-      toast.success('Approval withdrawn');
-      queryClient.invalidateQueries({
-        predicate: (query) => {
-          const [first] = query.queryKey;
-          if (typeof first === 'string') {
-            return first.includes('bounty');
-          }
-          if (Array.isArray(first)) {
-            const namespace = first[0];
-            return (
-              typeof namespace === 'string' && namespace.includes('bounty')
-            );
-          }
-          return false;
-        },
-      });
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to unapprove: ${error.message}`);
-    },
-  });
+    [unapproveSubmission, bountyId]
+  );
 
-  const mergeSubmissionMutation = useMutation({
-    mutationFn: async (input: { bountyId: string; submissionId: string }) => {
-      return await trpcClient.bounties.mergeSubmission.mutate(input);
+  const handleMergeSubmission = useCallback(
+    async (submissionId: string) => {
+      setIsMergingSubmission(true);
+      try {
+        const result = await mergeSubmission({ bountyId, submissionId });
+        toast.success(result.message || 'Submission processed');
+      } catch (error) {
+        toast.error(`Failed to release payout: ${(error as Error).message}`);
+      } finally {
+        setIsMergingSubmission(false);
+      }
     },
-    onSuccess: (result) => {
-      toast.success(result.message || 'Submission processed');
-      queryClient.invalidateQueries({
-        predicate: (query) => {
-          const [first] = query.queryKey;
-          if (typeof first === 'string') {
-            return first.includes('bounty');
-          }
-          if (Array.isArray(first)) {
-            const namespace = first[0];
-            return (
-              typeof namespace === 'string' && namespace.includes('bounty')
-            );
-          }
-          return false;
-        },
-      });
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to release payout: ${error.message}`);
-    },
-  });
+    [mergeSubmission, bountyId]
+  );
 
-  const submitWorkMutation = useMutation({
-    mutationFn: async (input: {
-      bountyId: string;
-      pullRequestUrl: string;
-      description?: string;
-    }) => {
-      return await trpcClient.bounties.submitWorkFromApp.mutate(input);
+  const handleSubmitWork = useCallback(
+    async (pullRequestUrl: string, description?: string) => {
+      setIsSubmittingWork(true);
+      try {
+        const result = await submitWorkFromApp({
+          bountyId,
+          pullRequestUrl,
+          description: description || undefined,
+        });
+        toast.success(result.message || 'Submission received!');
+      } catch (error) {
+        toast.error(`Failed to submit: ${(error as Error).message}`);
+      } finally {
+        setIsSubmittingWork(false);
+      }
     },
-    onSuccess: (result) => {
-      toast.success(result.message || 'Submission received!');
-      // Force-refetch submissions so the new one appears immediately
-      const submissionsKey = trpc.bounties.getBountySubmissions.queryKey({
-        bountyId,
-      });
-      queryClient.invalidateQueries({ queryKey: submissionsKey });
-      queryClient.refetchQueries({ queryKey: submissionsKey });
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to submit: ${error.message}`);
-    },
-  });
+    [submitWorkFromApp, bountyId]
+  );
 
-  const withdrawSubmissionMutation = useMutation({
-    mutationFn: async (input: { bountyId: string; submissionId: string }) => {
-      return await trpcClient.bounties.withdrawSubmission.mutate(input);
+  const handleWithdrawSubmission = useCallback(
+    async (submissionId: string) => {
+      setIsWithdrawingSubmission(true);
+      try {
+        const result = await withdrawSubmission({ bountyId, submissionId });
+        toast.success(result.message || 'Submission withdrawn');
+      } catch (error) {
+        toast.error(`Failed to withdraw: ${(error as Error).message}`);
+      } finally {
+        setIsWithdrawingSubmission(false);
+      }
     },
-    onSuccess: (result) => {
-      toast.success(result.message || 'Submission withdrawn');
-      const submissionsKey = trpc.bounties.getBountySubmissions.queryKey({
-        bountyId,
-      });
-      queryClient.invalidateQueries({ queryKey: submissionsKey });
-      queryClient.refetchQueries({ queryKey: submissionsKey });
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to withdraw: ${error.message}`);
-    },
-  });
+    [withdrawSubmission, bountyId]
+  );
 
   return {
-    queryClient,
-    voteMutation,
-    deleteBountyMutation,
-    createPaymentMutation,
-    recheckPaymentMutation,
-    setupConnectMutation,
-    requestCancellationMutation,
-    cancelCancellationRequestMutation,
-    approveSubmissionMutation,
-    unapproveSubmissionMutation,
-    mergeSubmissionMutation,
-    submitWorkMutation,
-    withdrawSubmissionMutation,
+    voteBounty,
+    handleDeleteBounty,
+    handleCreatePayment,
+    handleRecheckPayment,
+    handleSetupConnect,
+    handleRequestCancellation,
+    handleCancelCancellationRequest,
+    handleApproveSubmission,
+    handleUnapproveSubmission,
+    handleMergeSubmission,
+    handleSubmitWork,
+    handleWithdrawSubmission,
+    isVoting,
+    setIsVoting,
+    isDeleting,
+    isCreatingPayment,
+    isRecheckingPayment,
+    isSettingUpConnect,
+    isRequestingCancellation,
+    isCancellingCancellationRequest,
+    isApprovingSubmission,
+    isUnapprovingSubmission,
+    isMergingSubmission,
+    isSubmittingWork,
+    isWithdrawingSubmission,
   };
 }
 
@@ -491,39 +490,53 @@ export function BountyDetailProvider({
   >(null);
 
   const {
-    paymentStatusQuery,
-    votesQuery,
-    submissionsQuery,
-    cancellationStatusQuery,
-    connectStatusQuery,
+    paymentStatusData,
+    votesData,
+    submissionsData,
+    cancellationStatusData,
+    connectStatusData,
   } = useBountyDetailQueries({
     bountyId,
     sessionUserId,
     createdById,
     paymentStatus,
-    initialVotes,
   });
 
   const {
-    queryClient,
-    voteMutation,
-    deleteBountyMutation,
-    createPaymentMutation,
-    recheckPaymentMutation,
-    setupConnectMutation,
-    requestCancellationMutation,
-    cancelCancellationRequestMutation,
-    approveSubmissionMutation,
-    unapproveSubmissionMutation,
-    mergeSubmissionMutation,
-    submitWorkMutation,
-    withdrawSubmissionMutation,
+    voteBounty,
+    handleDeleteBounty,
+    handleCreatePayment,
+    handleRecheckPayment,
+    handleSetupConnect,
+    handleRequestCancellation,
+    handleCancelCancellationRequest,
+    handleApproveSubmission,
+    handleUnapproveSubmission,
+    handleMergeSubmission,
+    handleSubmitWork,
+    handleWithdrawSubmission,
+    isVoting,
+    setIsVoting,
+    isDeleting,
+    isCreatingPayment,
+    isRecheckingPayment,
+    isSettingUpConnect,
+    isRequestingCancellation,
+    isCancellingCancellationRequest,
+    isApprovingSubmission,
+    isUnapprovingSubmission,
+    isMergingSubmission,
+    isSubmittingWork,
+    isWithdrawingSubmission,
   } = useBountyDetailMutations({
     bountyId,
     organizationId,
     setShowCancellationDialog,
     setCancellationReason,
   });
+
+  // Use Convex reactive data, fall back to initialVotes
+  const votes = votesData ?? initialVotes ?? null;
 
   const {
     isCreator,
@@ -539,11 +552,11 @@ export function BountyDetailProvider({
     createdById,
     paymentStatus,
     amount,
-    hasPendingRequest: cancellationStatusQuery.data?.hasPendingRequest ?? false,
+    hasPendingRequest: cancellationStatusData?.hasPendingRequest ?? false,
   });
 
   // Creator needs to set up Stripe Connect (no account or onboarding incomplete)
-  const connectData = connectStatusQuery.data?.data;
+  const connectData = connectStatusData?.data;
   const needsConnectSetup =
     isCreator &&
     Boolean(
@@ -569,12 +582,12 @@ export function BountyDetailProvider({
         issueUrl,
         links,
       },
-      votes: votesQuery.data ?? null,
+      votes,
       comments: undefined,
       bookmarked: initialBookmarked,
-      submissions: submissionsQuery.data?.submissions,
-      isSubmissionsLoading: submissionsQuery.isLoading,
-      isPaymentStatusLoading: paymentStatusQuery.isLoading,
+      submissions: submissionsData?.submissions,
+      isSubmissionsLoading: submissionsData === undefined,
+      isPaymentStatusLoading: paymentStatusData === undefined,
       isCreator,
       canEdit: canEditBounty,
       canDelete,
@@ -585,7 +598,7 @@ export function BountyDetailProvider({
       hasPendingCancellation,
       needsPayment,
       needsConnectSetup,
-      isCancellationStatusLoading: cancellationStatusQuery.isLoading,
+      isCancellationStatusLoading: cancellationStatusData === undefined,
     }),
     [
       bountyId,
@@ -602,11 +615,10 @@ export function BountyDetailProvider({
       repositoryUrl,
       issueUrl,
       links,
-      votesQuery.data,
+      votes,
       initialBookmarked,
-      submissionsQuery.data?.submissions,
-      submissionsQuery.isLoading,
-      paymentStatusQuery.isLoading,
+      submissionsData,
+      paymentStatusData,
       isCreator,
       canEditBounty,
       canDelete,
@@ -617,37 +629,22 @@ export function BountyDetailProvider({
       hasPendingCancellation,
       needsPayment,
       needsConnectSetup,
-      cancellationStatusQuery.isLoading,
+      cancellationStatusData,
     ]
   );
 
   const actions: BountyDetailActions = useMemo(
     () => ({
-      upvote: () => {
-        const key = trpc.bounties.getBountyVotes.queryKey({ bountyId });
-        const previous = votesQuery.data;
-        const next = previous
-          ? {
-              count: previous.isVoted
-                ? Math.max(0, Number(previous.count) - 1)
-                : Number(previous.count) + 1,
-              isVoted: !previous.isVoted,
-            }
-          : { count: 1, isVoted: true };
-        queryClient.setQueryData(key, next);
-        voteMutation.mutate(
-          { bountyId, vote: next.isVoted },
-          {
-            onError: () => {
-              if (previous) {
-                queryClient.setQueryData(key, previous);
-              }
-            },
-            onSettled: () => {
-              queryClient.invalidateQueries({ queryKey: key });
-            },
-          }
-        );
+      upvote: async () => {
+        setIsVoting(true);
+        try {
+          const currentVoted = votes ? votes.isVoted : false;
+          await voteBounty({ bountyId, vote: !currentVoted });
+        } catch {
+          // Convex will reactively update on success; error is silent
+        } finally {
+          setIsVoting(false);
+        }
       },
       delete: () => {
         setShowDeleteDialog(true);
@@ -660,26 +657,24 @@ export function BountyDetailProvider({
           return;
         }
         if (reason !== undefined) {
-          requestCancellationMutation.mutate({ bountyId, reason });
+          handleRequestCancellation(reason);
         } else {
           setShowCancellationDialog(true);
         }
       },
       cancelCancellationRequest: () => {
-        cancelCancellationRequestMutation.mutate({ bountyId });
+        handleCancelCancellationRequest();
       },
       recheckPayment: () => {
-        recheckPaymentMutation.mutate();
+        handleRecheckPayment();
       },
       completePayment: () => {
-        createPaymentMutation.mutate();
+        handleCreatePayment();
       },
       setupConnect: () => {
         if (connectData?.hasConnectAccount) {
-          // Account exists, just needs to finish onboarding
-          setupConnectMutation.mutate();
+          handleSetupConnect();
         } else {
-          // No account — show modal with country picker
           setShowConnectModal(true);
         }
       },
@@ -695,166 +690,81 @@ export function BountyDetailProvider({
       },
       approveSubmission: (submissionId: string) => {
         if (
-          approveSubmissionMutation.isPending ||
-          unapproveSubmissionMutation.isPending ||
-          mergeSubmissionMutation.isPending
+          isApprovingSubmission ||
+          isUnapprovingSubmission ||
+          isMergingSubmission
         ) {
           return;
         }
         setApprovingSubmissionId(submissionId);
-        // Optimistic update
-        const submissionsKey = trpc.bounties.getBountySubmissions.queryKey({
-          bountyId,
-        });
-        const prevSubmissions = queryClient.getQueryData(submissionsKey);
-        queryClient.setQueryData(
-          submissionsKey,
-          (old: typeof prevSubmissions) => {
-            if (!old?.submissions) {
-              return old;
-            }
-            return {
-              ...old,
-              submissions: old.submissions.map((s) =>
-                s.id === submissionId
-                  ? { ...s, status: 'approved' as const }
-                  : s
-              ),
-            };
-          }
-        );
-        approveSubmissionMutation.mutate(
-          { bountyId, submissionId },
-          {
-            onError: () => {
-              queryClient.setQueryData(submissionsKey, prevSubmissions);
-            },
-            onSettled: () => {
-              setApprovingSubmissionId(null);
-              queryClient.invalidateQueries({ queryKey: submissionsKey });
-            },
-          }
+        handleApproveSubmission(submissionId).finally(() =>
+          setApprovingSubmissionId(null)
         );
       },
       unapproveSubmission: (submissionId: string) => {
         if (
-          approveSubmissionMutation.isPending ||
-          unapproveSubmissionMutation.isPending ||
-          mergeSubmissionMutation.isPending
+          isApprovingSubmission ||
+          isUnapprovingSubmission ||
+          isMergingSubmission
         ) {
           return;
         }
         setUnapprovingSubmissionId(submissionId);
-        // Optimistic update
-        const submissionsKey = trpc.bounties.getBountySubmissions.queryKey({
-          bountyId,
-        });
-        const prevSubmissions = queryClient.getQueryData(submissionsKey);
-        queryClient.setQueryData(
-          submissionsKey,
-          (old: typeof prevSubmissions) => {
-            if (!old?.submissions) {
-              return old;
-            }
-            return {
-              ...old,
-              submissions: old.submissions.map((s) =>
-                s.id === submissionId ? { ...s, status: 'pending' as const } : s
-              ),
-            };
-          }
-        );
-        unapproveSubmissionMutation.mutate(
-          { bountyId, submissionId },
-          {
-            onError: () => {
-              queryClient.setQueryData(submissionsKey, prevSubmissions);
-            },
-            onSettled: () => {
-              setUnapprovingSubmissionId(null);
-              queryClient.invalidateQueries({ queryKey: submissionsKey });
-            },
-          }
+        handleUnapproveSubmission(submissionId).finally(() =>
+          setUnapprovingSubmissionId(null)
         );
       },
       mergeSubmission: (submissionId: string) => {
         if (
-          approveSubmissionMutation.isPending ||
-          unapproveSubmissionMutation.isPending ||
-          mergeSubmissionMutation.isPending
+          isApprovingSubmission ||
+          isUnapprovingSubmission ||
+          isMergingSubmission
         ) {
           return;
         }
         setMergingSubmissionId(submissionId);
-        mergeSubmissionMutation.mutate(
-          { bountyId, submissionId },
-          { onSettled: () => setMergingSubmissionId(null) }
+        handleMergeSubmission(submissionId).finally(() =>
+          setMergingSubmissionId(null)
         );
       },
       submitWork: (pullRequestUrl: string, description?: string) => {
-        if (submitWorkMutation.isPending) {
+        if (isSubmittingWork) {
           return;
         }
-        submitWorkMutation.mutate({
-          bountyId,
-          pullRequestUrl,
-          description: description || undefined,
-        });
+        handleSubmitWork(pullRequestUrl, description);
       },
       withdrawSubmission: (submissionId: string) => {
-        if (withdrawSubmissionMutation.isPending) {
+        if (isWithdrawingSubmission) {
           return;
         }
         setWithdrawingSubmissionId(submissionId);
-        // Optimistic update: remove the submission from the list
-        const submissionsKey = trpc.bounties.getBountySubmissions.queryKey({
-          bountyId,
-        });
-        const prevSubmissions = queryClient.getQueryData(submissionsKey);
-        queryClient.setQueryData(
-          submissionsKey,
-          (old: typeof prevSubmissions) => {
-            if (!old?.submissions) {
-              return old;
-            }
-            return {
-              ...old,
-              submissions: old.submissions.filter((s) => s.id !== submissionId),
-            };
-          }
-        );
-        withdrawSubmissionMutation.mutate(
-          { bountyId, submissionId },
-          {
-            onError: () => {
-              queryClient.setQueryData(submissionsKey, prevSubmissions);
-            },
-            onSettled: () => {
-              setWithdrawingSubmissionId(null);
-              queryClient.invalidateQueries({ queryKey: submissionsKey });
-            },
-          }
+        handleWithdrawSubmission(submissionId).finally(() =>
+          setWithdrawingSubmissionId(null)
         );
       },
     }),
     [
       bountyId,
-      votesQuery.data,
-      queryClient,
-      voteMutation,
-      deleteBountyMutation,
+      votes,
+      voteBounty,
+      setIsVoting,
       hasPendingCancellation,
-      requestCancellationMutation,
-      cancelCancellationRequestMutation,
-      recheckPaymentMutation,
-      createPaymentMutation,
-      setupConnectMutation,
+      handleRequestCancellation,
+      handleCancelCancellationRequest,
+      handleRecheckPayment,
+      handleCreatePayment,
+      handleSetupConnect,
       connectData?.hasConnectAccount,
-      approveSubmissionMutation,
-      unapproveSubmissionMutation,
-      mergeSubmissionMutation,
-      submitWorkMutation,
-      withdrawSubmissionMutation,
+      handleApproveSubmission,
+      isApprovingSubmission,
+      handleUnapproveSubmission,
+      isUnapprovingSubmission,
+      handleMergeSubmission,
+      isMergingSubmission,
+      handleSubmitWork,
+      isSubmittingWork,
+      handleWithdrawSubmission,
+      isWithdrawingSubmission,
       onEdit,
       title,
       description,
@@ -864,39 +774,38 @@ export function BountyDetailProvider({
   const meta: BountyDetailMeta = useMemo(
     () => ({
       bountyId,
-      isDeleting: deleteBountyMutation.isPending,
-      isRequestingCancellation: requestCancellationMutation.isPending,
-      isCancellingCancellationRequest:
-        cancelCancellationRequestMutation.isPending,
-      isRecheckingPayment: recheckPaymentMutation.isPending,
-      isCreatingPayment: createPaymentMutation.isPending,
-      isSettingUpConnect: setupConnectMutation.isPending,
-      isApprovingSubmission: approveSubmissionMutation.isPending,
+      isDeleting,
+      isRequestingCancellation,
+      isCancellingCancellationRequest,
+      isRecheckingPayment,
+      isCreatingPayment,
+      isSettingUpConnect,
+      isApprovingSubmission,
       approvingSubmissionId,
-      isUnapprovingSubmission: unapproveSubmissionMutation.isPending,
+      isUnapprovingSubmission,
       unapprovingSubmissionId,
-      isMergingSubmission: mergeSubmissionMutation.isPending,
+      isMergingSubmission,
       mergingSubmissionId,
-      isSubmittingWork: submitWorkMutation.isPending,
-      isWithdrawingSubmission: withdrawSubmissionMutation.isPending,
+      isSubmittingWork,
+      isWithdrawingSubmission,
       withdrawingSubmissionId,
     }),
     [
       bountyId,
-      deleteBountyMutation.isPending,
-      requestCancellationMutation.isPending,
-      cancelCancellationRequestMutation.isPending,
-      recheckPaymentMutation.isPending,
-      createPaymentMutation.isPending,
-      setupConnectMutation.isPending,
-      approveSubmissionMutation.isPending,
+      isDeleting,
+      isRequestingCancellation,
+      isCancellingCancellationRequest,
+      isRecheckingPayment,
+      isCreatingPayment,
+      isSettingUpConnect,
+      isApprovingSubmission,
       approvingSubmissionId,
-      unapproveSubmissionMutation.isPending,
+      isUnapprovingSubmission,
       unapprovingSubmissionId,
-      mergeSubmissionMutation.isPending,
+      isMergingSubmission,
       mergingSubmissionId,
-      submitWorkMutation.isPending,
-      withdrawSubmissionMutation.isPending,
+      isSubmittingWork,
+      isWithdrawingSubmission,
       withdrawingSubmissionId,
     ]
   );
@@ -915,27 +824,21 @@ export function BountyDetailProvider({
         reason={cancellationReason}
         onReasonChange={setCancellationReason}
         onConfirm={() => {
-          if (
-            !canRequestCancellation ||
-            requestCancellationMutation.isPending
-          ) {
+          if (!canRequestCancellation || isRequestingCancellation) {
             return;
           }
-          requestCancellationMutation.mutate({
-            bountyId,
-            reason: cancellationReason || undefined,
-          });
+          handleRequestCancellation(cancellationReason || undefined);
         }}
-        isPending={requestCancellationMutation.isPending}
+        isPending={isRequestingCancellation}
       />
       <AlertDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         onConfirm={async () => {
           try {
-            await deleteBountyMutation.mutateAsync({ id: bountyId });
+            await handleDeleteBounty(bountyId);
           } catch {
-            // Error is handled by the mutation's onError callback
+            // Error is handled inside handleDeleteBounty
           }
         }}
       >

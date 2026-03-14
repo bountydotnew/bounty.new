@@ -1,33 +1,24 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { trpcClient } from '@/utils/trpc';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/utils/convex';
 import { OnboardingDialog } from '@/components/onboarding-flow/onboarding-dialog';
 
 export default function OnboardingStep1Page() {
   const router = useRouter();
+  const [isPending, setIsPending] = useState(false);
 
-  const { data: waitlistData, isLoading: isLoadingWaitlist } = useQuery({
-    queryKey: ['onboarding.checkWaitlist'],
-    queryFn: () => trpcClient.onboarding.checkWaitlist.query(),
-  });
+  const waitlistData = useQuery(api.functions.onboarding.checkWaitlist);
+  const isLoadingWaitlist = waitlistData === undefined;
 
   // Claim the discount in background if on waitlist (don't show the code)
-  const { mutate: claimDiscount } = useMutation({
-    mutationFn: () => trpcClient.onboarding.claimWaitlistDiscount.mutate(),
-    onSuccess: () => {
-      // Discount claimed silently
-    },
-  });
+  const claimDiscount = useMutation(
+    api.functions.onboarding.claimWaitlistDiscount
+  );
 
-  const completeStepMutation = useMutation({
-    mutationFn: () => trpcClient.onboarding.completeStep.mutate({ step: 1 }),
-    onSuccess: () => {
-      router.push('/onboarding/step/2');
-    },
-  });
+  const completeStep = useMutation(api.functions.onboarding.completeStep);
 
   // Claim discount if on waitlist
   useEffect(() => {
@@ -37,6 +28,16 @@ export default function OnboardingStep1Page() {
   }, [waitlistData?.isOnWaitlist, claimDiscount]);
 
   const isLoading = isLoadingWaitlist;
+
+  const handleCompleteStep = async () => {
+    setIsPending(true);
+    try {
+      await completeStep({ step: 1 });
+      router.push('/onboarding/step/2');
+    } finally {
+      setIsPending(false);
+    }
+  };
 
   // Note: Server-side redirect in page.tsx handles the waitlist skip to step 2
 
@@ -59,11 +60,11 @@ export default function OnboardingStep1Page() {
       open
       title="Welcome to Bounty!"
       subtitle="You're on the waitlist! Let's get you set up."
-      isLoading={completeStepMutation.isPending}
+      isLoading={isPending}
       actionLabel="Continue"
-      onAction={() => completeStepMutation.mutate()}
+      onAction={handleCompleteStep}
       skipLabel="Skip"
-      onSkip={() => completeStepMutation.mutate()}
+      onSkip={handleCompleteStep}
     >
       <div className="w-full text-center text-sm text-text-tertiary">
         We've added a 20% discount to your account for the Pro plan.

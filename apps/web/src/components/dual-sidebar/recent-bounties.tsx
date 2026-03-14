@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from '@bounty/ui/components/link';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from 'convex/react';
+import { api } from '@/utils/convex';
 import { ClockIcon, HourglassIcon } from '@bounty/ui';
 import {
   SidebarGroup,
@@ -12,7 +13,6 @@ import {
   SidebarMenuItem,
 } from '@bounty/ui/components/sidebar';
 import { useSession } from '@/context/session-context';
-import { trpc } from '@/utils/trpc';
 
 const RECENT_BOUNTIES_KEY = 'recent_bounties';
 
@@ -53,12 +53,10 @@ export function RecentBountiesGroup() {
   const { session, isAuthenticated } = useSession();
   const userId = session?.user?.id;
 
-  const { data } = useQuery({
-    ...trpc.bounties.getBountiesByUserId.queryOptions({
-      userId: userId ?? '',
-    }),
-    enabled: isAuthenticated && !!userId,
-  });
+  const data = useQuery(
+    api.functions.bounties.getBountiesByUserId,
+    isAuthenticated && userId ? { userId } : 'skip'
+  );
 
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {

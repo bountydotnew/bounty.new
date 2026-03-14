@@ -1,8 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useMutation } from '@tanstack/react-query';
-import { trpcClient } from '@/utils/trpc';
+import { useMutation } from 'convex/react';
+import { api } from '@/utils/convex';
 import { OnboardingDialog } from '@/components/onboarding-flow/onboarding-dialog';
 import { useState } from 'react';
 
@@ -20,18 +20,19 @@ const SOURCES = [
 export default function OnboardingStep3Page() {
   const router = useRouter();
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
+  const [isPending, setIsPending] = useState(false);
 
-  const saveSourceMutation = useMutation({
-    mutationFn: (source: string) =>
-      trpcClient.onboarding.saveSource.mutate({ source }),
-    onSuccess: () => {
-      router.push('/onboarding/step/4');
-    },
-  });
+  const saveSource = useMutation(api.functions.onboarding.saveSource);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (selectedSource) {
-      saveSourceMutation.mutate(selectedSource);
+      setIsPending(true);
+      try {
+        await saveSource({ source: selectedSource });
+        router.push('/onboarding/step/4');
+      } finally {
+        setIsPending(false);
+      }
     } else {
       router.push('/onboarding/step/4');
     }
@@ -46,7 +47,7 @@ export default function OnboardingStep3Page() {
       open
       title="How did you hear about us?"
       subtitle="Optional"
-      isLoading={saveSourceMutation.isPending}
+      isLoading={isPending}
       actionLabel="Continue"
       onAction={handleContinue}
       skipLabel="Skip"

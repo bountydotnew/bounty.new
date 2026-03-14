@@ -1,17 +1,18 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
 import { ProfileHeader } from '@/components/profile/profile-header';
 import { ProfileTabs } from '@/components/profile/profile-tabs';
-import { useProfileData, type ProfileData, type RawProfileResponse } from './hooks/use-profile-data';
+import {
+  useProfileData,
+  type ProfileData,
+  type RawProfileResponse,
+} from './hooks/use-profile-data';
 import {
   ProfileLoadingState,
   ProfileNotFoundState,
   PrivateProfileMessage,
 } from './components/profile-states';
-import { trpc } from '@/utils/trpc';
 
 interface ProfilePageClientProps {
   initialData?: ProfileData | null;
@@ -23,10 +24,13 @@ interface ProfilePageClientProps {
   };
 }
 
-export default function ProfilePageClient({ initialData, serverData, serverTabData }: ProfilePageClientProps) {
+export default function ProfilePageClient({
+  initialData,
+  serverData,
+  serverTabData,
+}: ProfilePageClientProps) {
   const params = useParams();
   const handleOrUserId = params.userId as string;
-  const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useProfileData({
     handle: handleOrUserId,
@@ -34,44 +38,6 @@ export default function ProfilePageClient({ initialData, serverData, serverTabDa
     initialData: initialData ?? undefined,
     serverData,
   });
-
-  // Seed tab query cache from server-prefetched data (runs once)
-  useEffect(() => {
-    if (!data?.user?.id || data.isPrivate) return;
-    const userId = data.user.id;
-
-    if (serverTabData?.bounties) {
-      const key = trpc.bounties.getBountiesByUserId.queryOptions({ userId }).queryKey;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      queryClient.setQueryData(key, serverTabData.bounties as any);
-    }
-    if (serverTabData?.activity) {
-      const key = trpc.user.getUserActivity.queryOptions({ userId }).queryKey;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      queryClient.setQueryData(key, serverTabData.activity as any);
-    }
-    if (serverTabData?.highlights) {
-      const key = trpc.bounties.getHighlights.queryOptions({ userId }).queryKey;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      queryClient.setQueryData(key, serverTabData.highlights as any);
-    }
-  }, [data?.user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Prefetch tab data client-side (fallback if server didn't prefetch)
-  useEffect(() => {
-    if (data?.user?.id && !data.isPrivate) {
-      const userId = data.user.id;
-      queryClient.prefetchQuery(
-        trpc.bounties.getBountiesByUserId.queryOptions({ userId })
-      );
-      queryClient.prefetchQuery(
-        trpc.user.getUserActivity.queryOptions({ userId })
-      );
-      queryClient.prefetchQuery(
-        trpc.bounties.getHighlights.queryOptions({ userId })
-      );
-    }
-  }, [data?.user?.id, data?.isPrivate, queryClient]);
 
   // Loading state (skip if we have initialData)
   if (isLoading && !initialData) {

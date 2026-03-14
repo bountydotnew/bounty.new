@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect, useCallback } from 'react';
+import { useAction } from 'convex/react';
+import { api } from '@/utils/convex';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { trpcClient } from '@/utils/trpc';
 import type { LinearIssue } from '@bounty/api/driver/linear-client';
 import { z } from 'zod';
 import {
@@ -165,25 +165,27 @@ function GitHubRepoSelector({
                 <span className="text-sm truncate">{repo}</span>
               </button>
             ))
-          : installations.map((account) => {
-              const count =
-                installationRepos.find((r) => r.installationId === account.id)
-                  ?.repositories.length ?? 0;
-              return (
-                <button
-                  key={account.id}
-                  type="button"
-                  onClick={() => setSelectedAccount(account)}
-                  className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-surface-2 text-text-secondary"
-                >
-                  <GithubIcon className="w-3.5 h-3.5 text-text-tertiary" />
-                  <span className="flex-1 text-sm truncate">
-                    {account.accountLogin ?? 'Unknown'}
-                  </span>
-                  <span className="text-xs text-text-tertiary">{count}</span>
-                </button>
-              );
-            })}
+          : installations.map(
+              (account: { id: number; accountLogin: string | null }) => {
+                const count =
+                  installationRepos.find((r) => r.installationId === account.id)
+                    ?.repositories.length ?? 0;
+                return (
+                  <button
+                    key={account.id}
+                    type="button"
+                    onClick={() => setSelectedAccount(account)}
+                    className="flex items-center gap-2 w-full px-3 py-1.5 rounded-md text-left hover:bg-surface-2 text-text-secondary"
+                  >
+                    <GithubIcon className="w-3.5 h-3.5 text-text-tertiary" />
+                    <span className="flex-1 text-sm truncate">
+                      {account.accountLogin ?? 'Unknown'}
+                    </span>
+                    <span className="text-xs text-text-tertiary">{count}</span>
+                  </button>
+                );
+              }
+            )}
       </div>
     </div>
   );
@@ -552,7 +554,8 @@ export function CreateBountyForm({
   onSuccess,
 }: CreateBountyFormProps) {
   const router = useRouter();
-  const queryClient = useQueryClient();
+  const createBountyAction = useAction(api.functions.bounties.createBounty);
+  const postCommentAction = useAction(api.functions.linearActions.postComment);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [githubRepo, setGithubRepo] = useState<{
@@ -592,55 +595,63 @@ export function CreateBountyForm({
   const amount = watch('amount');
   const description = watch('description');
 
-  const createBountyMutation = useMutation({
-    mutationFn: async (data: BountyForm) => {
-      return await trpcClient.bounties.createBounty.mutate({
-        title: data.title,
-        description: data.description,
-        amount: data.amount,
-        currency: 'USD',
-        deadline: data.deadline
-          ? new Date(data.deadline).toISOString()
-          : undefined,
-        tags: data.tags && data.tags.length > 0 ? data.tags : undefined,
-        payLater: true,
-        linearIssueId: issue.id,
-        linearIssueIdentifier: issue.identifier,
-        linearIssueUrl: issue.url,
-        githubInstallationId: githubRepo.installationId ?? undefined,
-        githubRepoOwner: githubRepo.repoOwner ?? undefined,
-        githubRepoName: githubRepo.repoName ?? undefined,
-      });
-    },
-    onSuccess: (result, variables) => {
-      toast.success('Bounty created!');
-      queryClient.invalidateQueries({ queryKey: [['bounties']] });
-      trpcClient.linear.postComment
-        .mutate({
+  const onSubmit = useCallback(
+    async (data: BountyForm) => {
+      setIsSubmitting(true);
+      try {
+        const result = await createBountyAction({
+          title: data.title,
+          description: data.description,
+          amount: data.amount,
+          currency: 'USD',
+          deadline: data.deadline
+            ? new Date(data.deadline).toISOString()
+            : undefined,
+          tags: data.tags && data.tags.length > 0 ? data.tags : undefined,
+          payLater: true,
           linearIssueId: issue.id,
+          linearIssueIdentifier: issue.identifier,
+          linearIssueUrl: issue.url,
+          githubInstallationId: githubRepo.installationId ?? undefined,
+          githubRepoOwner: githubRepo.repoOwner ?? undefined,
+          githubRepoName: githubRepo.repoName ?? undefined,
+        });
+
+        toast.success('Bounty created!');
+
+        // Post a comment to Linear (fire-and-forget)
+        postCommentAction({
           commentType: 'bountyCreated',
           bountyData: {
-            title: variables.title,
-            amount: variables.amount,
+            linearIssueId: issue.id,
+            title: data.title,
+            amount: data.amount,
             currency: 'USD',
-            bountyUrl: `${window.location.origin}/bounty/${result.data?.id ?? ''}`,
+            bountyUrl: `${window.location.origin}/bounty/${(result as { data?: { id?: string } })?.data?.id ?? ''}`,
           },
-        })
-        .catch(console.error);
-      onSuccess();
-      if (result.data?.id) router.push(`/bounty/${result.data.id}`);
-    },
-    onError: (error: Error) => {
-      console.error('Failed to create bounty:', error);
-      toast.error(error.message || 'Failed to create bounty');
-    },
-    onSettled: () => setIsSubmitting(false),
-  });
+        }).catch(console.error);
 
-  const onSubmit = (data: BountyForm) => {
-    setIsSubmitting(true);
-    createBountyMutation.mutate(data);
-  };
+        onSuccess();
+        const bountyId = (result as { data?: { id?: string } })?.data?.id;
+        if (bountyId) router.push(`/bounty/${bountyId}`);
+      } catch (error) {
+        console.error('Failed to create bounty:', error);
+        toast.error(
+          error instanceof Error ? error.message : 'Failed to create bounty'
+        );
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [
+      createBountyAction,
+      postCommentAction,
+      issue,
+      githubRepo,
+      onSuccess,
+      router,
+    ]
+  );
 
   const addTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {

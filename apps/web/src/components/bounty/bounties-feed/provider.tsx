@@ -1,10 +1,10 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, type ReactNode } from 'react';
+import { useQuery, useMutation } from 'convex/react';
+import { useMemo, useState, useCallback, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import type { Bounty } from '@/types/dashboard';
-import { trpc, trpcClient } from '@/utils/trpc';
+import { api } from '@/utils/convex';
 import {
   BountiesFeedContext,
   type BountiesFeedContextValue,
@@ -38,65 +38,56 @@ export function BountiesFeedProvider({
   className,
   children,
 }: BountiesFeedProviderProps) {
-  const queryClient = useQueryClient();
-
   // Fetch stats for all bounties
   const ids = useMemo(() => bounties.map((b) => b.id), [bounties]);
-  const statsQuery = useQuery({
-    ...trpc.bounties.getBountyStatsMany.queryOptions({ bountyIds: ids }),
-    enabled: ids.length > 0,
-  });
+  const statsData = useQuery(
+    api.functions.bounties.getBountyStatsMany,
+    ids.length > 0 ? { bountyIds: ids } : 'skip'
+  );
 
   const statsMap = useMemo(() => {
-    const m = new Map<string, {
-      commentCount: number;
-      voteCount: number;
-      submissionCount: number;
-      isVoted: boolean;
-      bookmarked: boolean;
-    }>();
-    const stats = statsQuery.data?.stats ?? [];
+    const m = new Map<
+      string,
+      {
+        commentCount: number;
+        voteCount: number;
+        submissionCount: number;
+        isVoted: boolean;
+        bookmarked: boolean;
+      }
+    >();
+    const stats = statsData?.stats ?? [];
     for (const stat of stats) {
       m.set(stat.bountyId, stat);
     }
     return m;
-  }, [statsQuery.data]);
+  }, [statsData]);
 
-  const deleteBountyMutation = useMutation({
-    mutationFn: async (input: { id: string }) => {
-      return await trpcClient.bounties.deleteBounty.mutate(input);
+  const deleteBountyMut = useMutation(api.functions.bounties.deleteBounty);
+  const [isDeletingBounty, setIsDeletingBounty] = useState(false);
+
+  const handleDeleteBounty = useCallback(
+    async (bountyId: string) => {
+      setIsDeletingBounty(true);
+      try {
+        await deleteBountyMut({ id: bountyId });
+        toast.success('Bounty deleted successfully');
+      } catch (err) {
+        toast.error(`Failed to delete bounty: ${(err as Error).message}`);
+      } finally {
+        setIsDeletingBounty(false);
+      }
     },
-    onSuccess: () => {
-      toast.success('Bounty deleted successfully');
-      queryClient.invalidateQueries({
-        predicate: (query) => {
-          const key = query.queryKey;
-          if (Array.isArray(key) && key.length > 0) {
-            const firstPart = key[0];
-            // Match any query containing 'bounty'
-            if (Array.isArray(firstPart) && typeof firstPart[0] === 'string' && firstPart[0].includes('bounty')) {
-              return true;
-            }
-            if (typeof firstPart === 'string' && firstPart.includes('bounty')) {
-              return true;
-            }
-          }
-          return false;
-        },
-      });
-    },
-    onError: (err: Error) => {
-      toast.error(`Failed to delete bounty: ${err.message}`);
-    },
-  });
+    [deleteBountyMut]
+  );
 
   const actions: BountiesFeedActions = useMemo(
     () => ({
       deleteBounty: (bountyId: string) => {
-        deleteBountyMutation.mutate({ id: bountyId });
+        handleDeleteBounty(bountyId);
       },
     }),
-    [deleteBountyMutation]
+    [handleDeleteBounty]
   );
 
   const state = useMemo(
@@ -133,4 +124,3 @@ export function BountiesFeedProvider({
     </BountiesFeedContext.Provider>
   );
 }
-

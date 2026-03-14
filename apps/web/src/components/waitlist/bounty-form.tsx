@@ -3,10 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSession } from '@/context/session-context';
 import { useRouter } from 'next/navigation';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { TRPCClientError } from '@trpc/client';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/utils/convex';
 import { toast } from 'sonner';
-import { trpc, trpcClient } from '@/utils/trpc';
 import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
 import GitHub from '@/components/icons/github';
 import {
@@ -125,53 +124,22 @@ function useBountyFormState({
     }
   }, []);
 
-  const { data: myEntry } = useQuery({
-    ...trpc.earlyAccess.getMyWaitlistEntry.queryOptions(),
-    enabled: !!session?.user && !entryId,
-  });
+  const myEntry = useQuery(
+    api.functions.earlyAccess.getMyWaitlistEntry,
+    session?.user && !entryId ? {} : 'skip'
+  );
+
+  const saveBountyDraft = useMutation(
+    api.functions.earlyAccess.updateBountyDraft
+  );
 
   const parseAndShowErrors = (error: unknown) => {
-    if (error instanceof TRPCClientError) {
-      try {
-        const parsed = JSON.parse(error.message);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const firstError = parsed[0];
-          if (firstError.message) {
-            toast.error(firstError.message);
-          } else {
-            toast.error('Validation error');
-          }
-        } else {
-          toast.error(error.message || 'An error occurred');
-        }
-      } catch {
-        toast.error(error.message || 'An error occurred');
-      }
-    } else if (error instanceof Error) {
+    if (error instanceof Error) {
       toast.error(error.message);
     } else {
       toast.error('An unexpected error occurred');
     }
   };
-
-  const saveBountyMutation = useMutation({
-    mutationFn: async (data: {
-      entryId: string;
-      title: string;
-      description: string;
-      amount: string;
-      deadline?: string;
-    }) => {
-      const cleanedAmount = data.amount.replace(/,/g, '');
-      return await trpcClient.earlyAccess.updateBountyDraft.mutate({
-        entryId: data.entryId,
-        bountyTitle: data.title,
-        bountyDescription: data.description,
-        bountyAmount: cleanedAmount,
-        bountyDeadline: data.deadline,
-      });
-    },
-  });
 
   const handleCreateBounty = async () => {
     if (onSubmit && entryId) {
@@ -208,12 +176,12 @@ function useBountyFormState({
     setIsSubmitting(true);
     try {
       const cleanedPrice = formFields.price.replace(/,/g, '');
-      await saveBountyMutation.mutateAsync({
+      await saveBountyDraft({
         entryId: effectiveEntryId,
-        title: formFields.title || 'Untitled Bounty',
-        description: formFields.description || '',
-        amount: cleanedPrice || '0',
-        deadline: formFields.deadline || undefined,
+        bountyTitle: formFields.title || 'Untitled Bounty',
+        bountyDescription: formFields.description || '',
+        bountyAmount: cleanedPrice || '0',
+        bountyDeadline: formFields.deadline || undefined,
       });
 
       localStorage.removeItem(BOUNTY_DRAFT_STORAGE_KEY);

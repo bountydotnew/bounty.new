@@ -1,8 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { trpcClient } from '@/utils/trpc';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/utils/convex';
 import { OnboardingDialog } from '@/components/onboarding-flow/onboarding-dialog';
 import { ExternalLink } from 'lucide-react';
 import { useState } from 'react';
@@ -10,27 +10,32 @@ import { useState } from 'react';
 export default function OnboardingStep2Page() {
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(false);
+  const [isPending, setIsPending] = useState(false);
 
-  const { data: installationsData } = useQuery({
-    queryKey: ['githubInstallation.getInstallations'],
-    queryFn: () => trpcClient.githubInstallation.getInstallations.query(),
-    refetchInterval: isChecking ? 2000 : false,
-  });
+  // Note: Convex useQuery doesn't support refetchInterval natively.
+  // Convex queries are reactive and will auto-update when data changes.
+  const installationsData = useQuery(
+    api.functions.githubInstallation.getInstallations
+  );
 
-  const { data: installUrlData } = useQuery({
-    queryKey: ['githubInstallation.getInstallationUrl'],
-    queryFn: () =>
-      trpcClient.githubInstallation.getInstallationUrl.query({
-        state: 'onboarding',
-      }),
-  });
+  const installUrlData = useQuery(
+    api.functions.githubInstallation.getInstallationUrl,
+    {
+      state: 'onboarding',
+    }
+  );
 
-  const completeStepMutation = useMutation({
-    mutationFn: () => trpcClient.onboarding.completeStep.mutate({ step: 2 }),
-    onSuccess: () => {
+  const completeStep = useMutation(api.functions.onboarding.completeStep);
+
+  const handleCompleteStep = async () => {
+    setIsPending(true);
+    try {
+      await completeStep({ step: 2 });
       router.push('/onboarding/step/3');
-    },
-  });
+    } finally {
+      setIsPending(false);
+    }
+  };
 
   const hasInstallations = (installationsData?.installations?.length ?? 0) > 0;
 
@@ -49,17 +54,11 @@ export default function OnboardingStep2Page() {
       open
       title="Connect GitHub"
       subtitle="Install the app to your repositories"
-      isLoading={completeStepMutation.isPending}
+      isLoading={isPending}
       actionLabel={hasInstallations ? 'Continue' : 'Install GitHub App'}
-      onAction={
-        hasInstallations
-          ? () => completeStepMutation.mutate()
-          : handleInstallGitHub
-      }
+      onAction={hasInstallations ? handleCompleteStep : handleInstallGitHub}
       skipLabel={hasInstallations ? undefined : 'Skip'}
-      onSkip={
-        hasInstallations ? undefined : () => completeStepMutation.mutate()
-      }
+      onSkip={hasInstallations ? undefined : handleCompleteStep}
     >
       <div className="w-full">
         {hasInstallations ? (

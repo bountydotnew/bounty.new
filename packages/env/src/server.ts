@@ -59,6 +59,9 @@ export const env = createEnv({
     LINEAR_CLIENT_ID: z.string().min(1).optional(),
     LINEAR_CLIENT_SECRET: z.string().min(1).optional(),
     LINEAR_REDIRECT_URI: z.string().url().optional(),
+    // Convex
+    CONVEX_DEPLOYMENT: z.string().min(1).optional(),
+    CONVEX_SITE_URL: z.string().url().optional(),
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
@@ -96,6 +99,9 @@ export const env = createEnv({
     LINEAR_CLIENT_ID: process.env.LINEAR_CLIENT_ID,
     LINEAR_CLIENT_SECRET: process.env.LINEAR_CLIENT_SECRET,
     LINEAR_REDIRECT_URI: process.env.LINEAR_REDIRECT_URI,
+    // Convex
+    CONVEX_DEPLOYMENT: process.env.CONVEX_DEPLOYMENT,
+    CONVEX_SITE_URL: process.env.CONVEX_SITE_URL,
   },
   // Always validate environment variables, even in development
   // This catches missing critical secrets early

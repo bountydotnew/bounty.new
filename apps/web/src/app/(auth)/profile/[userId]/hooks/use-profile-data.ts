@@ -1,7 +1,7 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { trpc } from '@/utils/trpc';
+import { useQuery } from 'convex/react';
+import { api } from '@/utils/convex';
 
 export interface ProfileData {
   user: {
@@ -50,36 +50,37 @@ export function useProfileData({
   initialData,
   serverData,
 }: UseProfileDataProps): UseProfileDataReturn {
-  const queryOptions = trpc.profiles.getProfile.queryOptions({ handle });
-
-  const query = useQuery({
-    ...queryOptions,
-    enabled,
-    ...(serverData ? { initialData: serverData } : {}),
-  });
+  const queryResult = useQuery(
+    api.functions.profiles.getProfile,
+    enabled ? { handle } : 'skip'
+  );
 
   // Transform API response to ProfileData format
   // API returns { success, data: { user, profile, reputation }, isPrivate }
-  const transformedData: ProfileData | null = query.data
+  const transformedData: ProfileData | null = queryResult
     ? {
         user: {
-          id: query.data.data.user.id,
-          name: query.data.data.user.name,
-          handle: (query.data.data.user as { handle?: string | null }).handle ?? null,
-          email: query.data.data.user.email ?? null,
-          image: query.data.data.user.image,
-          createdAt: String(query.data.data.user.createdAt),
-          isProfilePrivate: (query.data.data.user as { isProfilePrivate?: boolean }).isProfilePrivate ?? false,
+          id: queryResult.data.user.id,
+          name: queryResult.data.user.name,
+          handle:
+            (queryResult.data.user as { handle?: string | null }).handle ??
+            null,
+          email: queryResult.data.user.email ?? null,
+          image: queryResult.data.user.image,
+          createdAt: String(queryResult.data.user.createdAt),
+          isProfilePrivate:
+            (queryResult.data.user as { isProfilePrivate?: boolean })
+              .isProfilePrivate ?? false,
         },
-        profile: query.data.data.profile as ProfileData['profile'],
-        reputation: query.data.data.reputation as ProfileData['reputation'],
-        isPrivate: query.data.isPrivate ?? false,
+        profile: queryResult.data.profile as ProfileData['profile'],
+        reputation: queryResult.data.reputation as ProfileData['reputation'],
+        isPrivate: queryResult.isPrivate ?? false,
       }
-    : initialData ?? null;
+    : (initialData ?? null);
 
   return {
     data: transformedData,
-    isLoading: query.isLoading,
-    isError: query.isError,
+    isLoading: queryResult === undefined,
+    isError: false, // Convex queries don't have an isError state in the same way; errors throw
   };
 }

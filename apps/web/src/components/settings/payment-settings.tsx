@@ -25,10 +25,10 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@bounty/ui/components/tooltip';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useAction } from 'convex/react';
+import { api } from '@/utils/convex';
 import { ExternalLink, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import { trpc, trpcClient } from '@/utils/trpc';
 import { ConnectOnboardingModal } from '@/components/payment/connect-onboarding-modal';
 import { IssuesBlock } from './payment/issues-block';
 import { PaymentActivity } from './payment-activity';
@@ -174,28 +174,23 @@ function CardBackgroundSelector({
 function useHandleConnectRedirect({
   onboardingStatus,
   refreshParam,
-  refetch,
   clearParams,
 }: {
   onboardingStatus: string;
   refreshParam: string;
-  refetch: () => void;
   clearParams: () => void;
 }) {
   useEffect(() => {
     if (onboardingStatus === 'success') {
       toast.success('Stripe account connected successfully!');
-      refetch();
       clearParams();
     } else if (onboardingStatus === 'refresh') {
       toast.info('Please complete the onboarding process');
-      refetch();
       clearParams();
     } else if (refreshParam === 'true') {
-      refetch();
       clearParams();
     }
-  }, [onboardingStatus, refreshParam, refetch, clearParams]);
+  }, [onboardingStatus, refreshParam, clearParams]);
 }
 
 function FAQAccordionItem({
@@ -819,7 +814,10 @@ function SettingsTabContent({
   const [showResetDialog, setShowResetDialog] = useState(false);
   return (
     <>
-      <div data-tour-step-id="stripe-connect" className="shrink-0 w-full h-fit flex flex-col items-start justify-between rounded-none opacity-100 gap-[18px] self-stretch px-[18px] py-[18px] overflow-clip border-b border-b-solid border-border">
+      <div
+        data-tour-step-id="stripe-connect"
+        className="shrink-0 w-full h-fit flex flex-col items-start justify-between rounded-none opacity-100 gap-[18px] self-stretch px-[18px] py-[18px] overflow-clip border-b border-b-solid border-border"
+      >
         <div className="shrink-0 flex flex-col justify-center items-start gap-0 w-full h-fit self-stretch p-0">
           <div className="text-[20px] leading-[150%] shrink-0 text-foreground font-['Inter',system-ui,sans-serif] font-medium size-fit">
             Payouts
@@ -1062,18 +1060,13 @@ export function PaymentSettings() {
     string | null
   >(null);
 
-  const {
-    data: connectStatus,
-    isLoading,
-    refetch,
-  } = useQuery(trpc.connect.getConnectStatus.queryOptions());
+  // Convex queries — actions for Stripe API calls, queries for DB reads
+  const connectStatus = useQuery(api.functions.connect.getConnectStatus);
 
   const { customer: billingCustomer, isLoading: isBillingLoading } =
     useCustomer();
 
-  const { data: monthlySpendData } = useQuery(
-    trpc.bounties.getMonthlySpend.queryOptions()
-  );
+  const monthlySpendData = useQuery(api.functions.bounties.getMonthlySpend);
 
   // Clear both params in a single batch
   const clearParams = useCallback(() => {
@@ -1084,96 +1077,36 @@ export function PaymentSettings() {
   useHandleConnectRedirect({
     onboardingStatus,
     refreshParam,
-    refetch,
     clearParams,
   });
 
-  const createAccountLink = useMutation({
-    mutationFn: async () => {
-      return await trpcClient.connect.createConnectAccountLink.mutate({});
-    },
-    onSuccess: (result) => {
-      if (result?.data?.url) {
-        window.location.href = result.data.url;
-      }
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to start onboarding: ${error.message}`);
-    },
-  });
-
-  const getDashboardLink = useMutation({
-    mutationFn: async () => {
-      return await trpcClient.connect.getConnectDashboardLink.mutate();
-    },
-    onSuccess: (result) => {
-      if (result?.data?.url) {
-        if (result.data.isOnboarding) {
-          window.location.href = result.data.url;
-        } else {
-          window.open(result.data.url, '_blank');
-        }
-      }
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to open dashboard: ${error.message}`);
-    },
-  });
-
-  const { data: payoutHistoryResponse } = useQuery(
-    trpc.connect.getPayoutHistory.queryOptions({ page: 1, limit: 10 })
+  // Stripe actions (external API calls)
+  const createAccountLinkAction = useAction(
+    api.functions.connect.createConnectAccountLink
+  );
+  const getDashboardLinkAction = useAction(
+    api.functions.connect.getConnectDashboardLink
+  );
+  const getAccountBalanceAction = useAction(
+    api.functions.connect.getAccountBalance
+  );
+  const resetConnectAccountMutation = useMutation(
+    api.functions.connect.resetConnectAccount
+  );
+  const updateCardBackgroundMutation = useMutation(
+    api.functions.user.updateCardBackground
   );
 
-  const { data: balanceResponse } = useQuery(
-    trpc.connect.getAccountBalance.queryOptions()
+  const [isConnectPending, setIsConnectPending] = useState(false);
+  const [isDashboardPending, setIsDashboardPending] = useState(false);
+  const [isResetPending, setIsResetPending] = useState(false);
+
+  const payoutHistoryResponse = useQuery(
+    api.functions.connect.getPayoutHistory,
+    { page: 1, limit: 10 }
   );
-
-  const { data: user } = useQuery(trpc.user.getMe.queryOptions());
-
-  const queryClient = useQueryClient();
-
-  const updateCardBackground = useMutation({
-    mutationFn: async (cardBackground: string | undefined) => {
-      return await trpcClient.user.updateCardBackground.mutate({
-        cardBackground,
-      });
-    },
-    onMutate: (cardBackground) => {
-      setOptimisticCardBackground(cardBackground ?? null);
-    },
-    onSuccess: () => {
-      toast.success('Card background updated');
-      queryClient.invalidateQueries({
-        queryKey: trpc.user.getMe.queryOptions().queryKey,
-      });
-    },
-    onError: (error: Error) => {
-      setOptimisticCardBackground(user?.cardBackground ?? null);
-      toast.error(`Failed to update card background: ${error.message}`);
-    },
-  });
-
-  const resetConnectAccount = useMutation({
-    mutationFn: async () => {
-      return await trpcClient.connect.resetConnectAccount.mutate();
-    },
-    onSuccess: () => {
-      toast.success('Connect account reset. You can start onboarding again.');
-      refetch();
-      queryClient.invalidateQueries({
-        queryKey: trpc.connect.getAccountBalance.queryOptions().queryKey,
-      });
-      queryClient.invalidateQueries({
-        queryKey: trpc.connect.getPayoutHistory.queryOptions({
-          page: 1,
-          limit: 10,
-        }).queryKey,
-      });
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Failed to reset Connect account');
-    },
-  });
+  const balanceResponse = useQuery(api.functions.connect.getAccountBalance);
+  const user = useQuery(api.functions.user.getMe);
 
   const status = connectStatus?.data;
   const balance = balanceResponse?.data;
@@ -1181,19 +1114,68 @@ export function PaymentSettings() {
   const selectedCardBackground =
     optimisticCardBackground ?? user?.cardBackground ?? null;
 
-  const handleConnect = () => {
+  const handleConnect = async () => {
     if (hasConnectAccount) {
       // Account exists, just needs to finish onboarding — no country needed
-      createAccountLink.mutate();
+      setIsConnectPending(true);
+      try {
+        const result = await createAccountLinkAction({});
+        if (result?.data?.url) {
+          window.location.href = result.data.url;
+        }
+      } catch (error: any) {
+        toast.error(`Failed to start onboarding: ${error.message}`);
+      } finally {
+        setIsConnectPending(false);
+      }
     } else {
       // No account yet — show modal with country picker
       setShowOnboardingModal(true);
     }
   };
 
-  const handleOpenDashboard = () => {
-    getDashboardLink.mutate();
+  const handleOpenDashboard = async () => {
+    setIsDashboardPending(true);
+    try {
+      const result = await getDashboardLinkAction();
+      if (result?.data?.url) {
+        if (result.data.isOnboarding) {
+          window.location.href = result.data.url;
+        } else {
+          window.open(result.data.url, '_blank');
+        }
+      }
+    } catch (error: any) {
+      toast.error(`Failed to open dashboard: ${error.message}`);
+    } finally {
+      setIsDashboardPending(false);
+    }
   };
+
+  const handleUpdateCardBackground = async (id: string) => {
+    setOptimisticCardBackground(id);
+    try {
+      await updateCardBackgroundMutation({ cardBackground: id });
+      toast.success('Card background updated');
+    } catch (error: any) {
+      setOptimisticCardBackground(user?.cardBackground ?? null);
+      toast.error(`Failed to update card background: ${error.message}`);
+    }
+  };
+
+  const handleResetConnect = async () => {
+    setIsResetPending(true);
+    try {
+      await resetConnectAccountMutation();
+      toast.success('Connect account reset. You can start onboarding again.');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to reset Connect account');
+    } finally {
+      setIsResetPending(false);
+    }
+  };
+
+  const isLoading = connectStatus === undefined;
 
   if (isLoading) {
     return (
@@ -1212,7 +1194,7 @@ export function PaymentSettings() {
         totalBalance={totalBalance}
         selectedCardBackground={selectedCardBackground}
         onOpenDashboard={handleOpenDashboard}
-        isDashboardPending={getDashboardLink.isPending}
+        isDashboardPending={isDashboardPending}
       />
 
       <Tabs
@@ -1257,9 +1239,9 @@ export function PaymentSettings() {
                 size="sm"
                 variant="outline"
                 onClick={handleConnect}
-                disabled={createAccountLink.isPending}
+                disabled={isConnectPending}
               >
-                {createAccountLink.isPending
+                {isConnectPending
                   ? 'Connecting...'
                   : hasConnectAccount
                     ? 'Continue'
@@ -1293,14 +1275,14 @@ export function PaymentSettings() {
             payoutHistory={payoutHistoryResponse?.data}
             selectedCardBackground={selectedCardBackground}
             onOpenDashboard={handleOpenDashboard}
-            isDashboardPending={getDashboardLink.isPending}
+            isDashboardPending={isDashboardPending}
             onConnect={handleConnect}
-            isConnectPending={createAccountLink.isPending}
-            onSelectCardBackground={(id) => updateCardBackground.mutate(id)}
-            onRefresh={() => refetch()}
-            isRefreshing={isLoading}
-            onResetConnect={() => resetConnectAccount.mutate()}
-            isResetPending={resetConnectAccount.isPending}
+            isConnectPending={isConnectPending}
+            onSelectCardBackground={handleUpdateCardBackground}
+            onRefresh={() => {}} // Convex reactivity handles refresh
+            isRefreshing={false}
+            onResetConnect={handleResetConnect}
+            isResetPending={isResetPending}
           />
         </TabsPanel>
       </Tabs>

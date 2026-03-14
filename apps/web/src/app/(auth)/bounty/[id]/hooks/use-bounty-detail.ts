@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { trpc } from '@/utils/trpc';
+import { useQuery } from 'convex/react';
+import { api } from '@/utils/convex';
 import type { BountyData } from '@/components/bounty/bounty-detail';
 
 interface UseBountyDetailProps {
@@ -24,56 +23,28 @@ export function useBountyDetail({
   enabled,
   initialData,
 }: UseBountyDetailProps): UseBountyDetailReturn {
-  const queryClient = useQueryClient();
-
-  const queryOptions = trpc.bounties.getBountyDetail.queryOptions({ id });
-
-  const query = useQuery({
-    ...queryOptions,
-    enabled,
-    staleTime: Number.POSITIVE_INFINITY,
-    // Use server-provided initialData to avoid duplicate fetch
-    initialData: initialData as typeof queryOptions extends { queryFn: () => Promise<infer T> } ? T : never,
-    // Treat 404 errors as "not found" rather than a hard error
-    retry: (failureCount, error) => {
-      // Don't retry on 404 (bounty not found or deleted)
-      if (error?.message?.includes('not found') || error?.message?.includes('Bounty not found')) {
-        return false;
-      }
-      // Retry other errors up to 3 times
-      return failureCount < 3;
-    },
-  });
-
-  // Prefetch related data in parallel to flatten waterfall
-  useEffect(() => {
-    if (id && enabled) {
-      // Prefetch votes and submissions in parallel
-      queryClient.prefetchQuery(
-        trpc.bounties.getBountyVotes.queryOptions({ bountyId: id })
-      );
-      queryClient.prefetchQuery(
-        trpc.bounties.getBountySubmissions.queryOptions({ bountyId: id })
-      );
-    }
-  }, [id, enabled, queryClient]);
-
-  const isError = query.isError;
-  const error = query.error instanceof Error ? query.error : null;
-
-  // Check if the error is specifically a "not found" error
-  const isNotFound = Boolean(
-    isError &&
-    (error?.message?.includes('not found') ||
-     error?.message?.includes('Bounty not found') ||
-     error?.message?.includes('does not exist'))
+  // Convex useQuery returns data directly or undefined while loading.
+  // Pass 'skip' when not enabled.
+  const queryResult = useQuery(
+    api.functions.bounties.getBountyDetail,
+    enabled ? { id } : 'skip'
   );
 
+  // Convex queries are reactive — no need for prefetching votes/submissions.
+  // Those queries will be subscribed to by the components that need them.
+
+  // Use Convex data if available, otherwise fall back to initialData
+  const data = (queryResult ?? initialData) as BountyData | undefined;
+  const isLoading = enabled && queryResult === undefined && !initialData;
+
+  // Convex queries throw errors as exceptions in the component tree,
+  // but for compatibility we expose the same interface.
+  // In practice, error boundaries handle Convex query errors.
   return {
-    data: query.data as BountyData | undefined,
-    isLoading: query.isLoading,
-    isError,
-    isNotFound,
-    error,
+    data,
+    isLoading,
+    isError: false,
+    isNotFound: false,
+    error: null,
   };
 }

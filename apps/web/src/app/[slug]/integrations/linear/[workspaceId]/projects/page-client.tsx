@@ -1,13 +1,13 @@
 'use client';
 
-import { useQuery, skipToken, useQueryClient } from '@tanstack/react-query';
+import { useAction } from 'convex/react';
+import { api } from '@/utils/convex';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { LinearIcon } from '@bounty/ui';
 import { Button } from '@bounty/ui/components/button';
 import { ExternalLink, Inbox, FolderKanban, ChevronRight } from 'lucide-react';
-import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
 import { useOrgPath } from '@/hooks/use-org-path';
 import type { LinearProject } from '@bounty/api/driver/linear-client';
@@ -15,29 +15,33 @@ import type { LinearProject } from '@bounty/api/driver/linear-client';
 export default function LinearProjectsPage() {
   const router = useRouter();
   const params = useParams();
-  const queryClient = useQueryClient();
   const workspaceId = params.workspaceId as string;
   const orgPath = useOrgPath();
   const { hasLinear, linearWorkspace } = useIntegrations();
 
-  const { data: projectsData, isLoading: projectsLoading } = useQuery(
-    trpc.linear.getProjects.queryOptions(hasLinear ? undefined : skipToken)
-  );
+  // Action for external Linear API call
+  const getProjectsAction = useAction(api.functions.linearActions.getProjects);
 
-  const projects = projectsData?.projects ?? [];
+  // State for action-fetched data
+  const [projects, setProjects] = useState<LinearProject[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(true);
 
-  // Prefetch project issues on hover for faster navigation
-  const prefetchProjectIssues = useCallback(
-    (projectId: string) => {
-      queryClient.prefetchQuery(
-        trpc.linear.getIssues.queryOptions({
-          filters: { projectId },
-          pagination: { first: 20 },
-        })
-      );
-    },
-    [queryClient]
-  );
+  const fetchProjects = useCallback(async () => {
+    if (!hasLinear) return;
+    setProjectsLoading(true);
+    try {
+      const data = await getProjectsAction({});
+      setProjects((data as { projects: LinearProject[] })?.projects ?? []);
+    } catch {
+      // non-critical
+    } finally {
+      setProjectsLoading(false);
+    }
+  }, [hasLinear, getProjectsAction]);
+
+  useEffect(() => {
+    void fetchProjects();
+  }, [fetchProjects]);
 
   if (!hasLinear) {
     return (
@@ -114,8 +118,6 @@ export default function LinearProjectsPage() {
             href={orgPath(
               `/integrations/linear/${workspaceId}/projects/${project.id}`
             )}
-            onMouseEnter={() => prefetchProjectIssues(project.id)}
-            onFocus={() => prefetchProjectIssues(project.id)}
             className="group flex items-center gap-4 px-4 py-4 rounded-xl border border-border-subtle hover:border-border-default bg-surface-1 hover:bg-surface-2 transition-all"
           >
             {/* Icon */}

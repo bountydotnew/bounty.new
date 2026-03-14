@@ -25,7 +25,8 @@ import {
 } from '@bounty/ui/hooks/usePullRequests';
 import SubmissionCard from '@/components/bounty/submission-card';
 import { useSession } from '@/context/session-context';
-import { trpcClient } from '@/utils/trpc';
+import { useAction } from 'convex/react';
+import { api } from '@/utils/convex';
 import { BountyDetailContext, type SubmissionData } from './context';
 import { Textarea, Fieldset, Button } from '@bounty/ui';
 
@@ -214,6 +215,11 @@ function SubmitWorkForm({
   const [selectedPr, setSelectedPr] = useState<PullRequestItem | null>(null);
   const [showManualInput, setShowManualInput] = useState(!hasRepo);
 
+  // Use Convex action for listing pull requests (calls GitHub API)
+  const listPullRequestsAction = useAction(
+    api.functions.repository.listPullRequests
+  );
+
   const {
     control,
     handleSubmit: formHandleSubmit,
@@ -232,8 +238,7 @@ function SubmitWorkForm({
 
   const { pullRequestsList, filteredPullRequests, prQuery, setPrQuery } =
     usePullRequests(githubRepoOwner ?? '', githubRepoName ?? '', {
-      listPullRequests: (params) =>
-        trpcClient.repository.listPullRequests.query(params),
+      listPullRequests: (params) => listPullRequestsAction(params),
     });
 
   // Sync selected PR to form value

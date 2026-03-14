@@ -15,8 +15,8 @@ import {
   SelectPopup,
   SelectItem,
 } from '@bounty/ui/components/select';
-import { useMutation } from '@tanstack/react-query';
-import { trpcClient } from '@/utils/trpc';
+import { useAction } from 'convex/react';
+import { api } from '@/utils/convex';
 import { toast } from 'sonner';
 import { useState } from 'react';
 
@@ -96,29 +96,25 @@ export function ConnectOnboardingModal({
   currency = 'USD',
 }: ConnectOnboardingModalProps) {
   const [country, setCountry] = useState<string>('');
+  const [isPending, setIsPending] = useState(false);
 
-  const createAccountLink = useMutation({
-    mutationFn: async (selectedCountry?: string) => {
-      return await trpcClient.connect.createConnectAccountLink.mutate({
-        country: selectedCountry,
-      });
-    },
-    onSuccess: (result) => {
-      if (result?.data?.url) {
-        window.location.href = result.data.url;
+  const createConnectAccountLink = useAction(
+    api.functions.connect.createConnectAccountLink
+  );
+
+  const handleContinue = async () => {
+    setIsPending(true);
+    try {
+      const result = await createConnectAccountLink({});
+      if (result?.url) {
+        window.location.href = result.url;
       }
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to start onboarding: ${error.message}`);
-    },
-  });
-
-  const handleContinue = () => {
-    if (hasConnectAccount) {
-      // Account already exists, no country needed — just get an onboarding link
-      createAccountLink.mutate(undefined);
-    } else {
-      createAccountLink.mutate(country);
+    } catch (error: any) {
+      toast.error(
+        `Failed to start onboarding: ${error?.message || 'Unknown error'}`
+      );
+    } finally {
+      setIsPending(false);
     }
   };
 
@@ -193,11 +189,9 @@ export function ConnectOnboardingModal({
             </Button>
             <Button
               onClick={handleContinue}
-              disabled={!canContinue || createAccountLink.isPending}
+              disabled={!canContinue || isPending}
             >
-              {createAccountLink.isPending
-                ? 'Loading...'
-                : 'Continue to Payout Setup'}
+              {isPending ? 'Loading...' : 'Continue to Payout Setup'}
             </Button>
           </div>
         </div>

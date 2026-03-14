@@ -40,8 +40,8 @@ import {
 import { useUser } from '@/context/user-context';
 import { useState, useTransition } from 'react';
 import { PricingDialog } from '@/components/billing/pricing-dialog';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { trpcClient } from '@/utils/trpc';
+import { useMutation } from 'convex/react';
+import { api } from '@/utils/convex';
 import {
   Dialog,
   DialogContent,
@@ -131,33 +131,26 @@ function useSignOut() {
 
 // Custom hook for reset onboarding
 function useResetOnboarding() {
-  const queryClient = useQueryClient();
   const router = useRouter();
-  const [pending, startReset] = useTransition();
+  const [pending, setPending] = React.useState(false);
 
-  const mutation = useMutation({
-    mutationFn: () => trpcClient.onboarding.resetOnboarding.mutate(),
-    onSuccess: () => {
-      // Invalidate the onboarding state query
-      queryClient.invalidateQueries({
-        queryKey: [['onboarding', 'getState']],
-      });
+  const resetOnboarding = useMutation(api.functions.onboarding.resetOnboarding);
+
+  const handleResetOnboarding = React.useCallback(async () => {
+    setPending(true);
+    try {
+      await resetOnboarding({});
       toast.success(MESSAGES.ONBOARDING_RESET_SUCCESS);
       // Redirect to onboarding
       router.push('/onboarding/step/1');
-    },
-    onError: () => {
+    } catch {
       toast.error('Failed to reset onboarding. Please try again.');
-    },
-  });
+    } finally {
+      setPending(false);
+    }
+  }, [resetOnboarding, router]);
 
-  const handleResetOnboarding = React.useCallback(() => {
-    startReset(() => {
-      mutation.mutate();
-    });
-  }, [mutation]);
-
-  return { handleResetOnboarding, pending: pending || mutation.isPending };
+  return { handleResetOnboarding, pending };
 }
 
 // Slugify helper: converts a team name into a URL-safe slug

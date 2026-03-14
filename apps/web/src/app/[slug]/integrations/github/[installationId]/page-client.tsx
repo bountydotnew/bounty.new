@@ -1,16 +1,15 @@
 'use client';
 
 import type * as React from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useAction, useMutation } from 'convex/react';
+import { api } from '@/utils/convex';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { GithubIcon } from '@bounty/ui';
 import { Button } from '@bounty/ui/components/button';
 import { ConfirmAlertDialog } from '@bounty/ui/components/alert-dialog';
 import { ExternalLink, RefreshCw, Plus, Star } from 'lucide-react';
-import { TRPCClientError } from '@trpc/client';
 import { toast } from 'sonner';
-import { trpcClient } from '@/utils/trpc';
 import { useQueryState, parseAsString } from 'nuqs';
 import { useOrgPath } from '@/hooks/use-org-path';
 import {
@@ -30,14 +29,11 @@ interface Repository {
 }
 
 /**
- * Detect if a tRPC error indicates a stale/removed GitHub App installation.
- * This happens when the installation ID exists in our DB but the GitHub App
- * has been uninstalled or its access token revoked on GitHub's side.
+ * Detect if an error indicates a stale/removed GitHub App installation.
  */
-function isStaleInstallationError(error: Error | null): boolean {
-  if (!(error && error instanceof TRPCClientError)) return false;
-  const code = error.data?.code;
-  return code === 'NOT_FOUND' || code === 'INTERNAL_SERVER_ERROR';
+function isStaleInstallationError(error: string | null): boolean {
+  if (!error) return false;
+  return error.includes('NOT_FOUND') || error.includes('INTERNAL_SERVER_ERROR');
 }
 
 const CenteredWrapper = ({ children }: { children: React.ReactNode }) => (
@@ -57,102 +53,111 @@ export default function GitHubInstallationPage() {
   const installationId = isValidId ? rawInstallationId : 0;
   const router = useRouter();
   const orgPath = useOrgPath();
-  const queryClientLocal = useQueryClient();
   const [showUninstallDialog, setShowUninstallDialog] = useState(false);
   const [newFlag, setNewFlag] = useQueryState(
     'new',
     parseAsString.withDefault('')
   );
 
-  const {
-    data: repositories,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ['githubInstallation.getRepositories', installationId],
-    queryFn: () =>
-      trpcClient.githubInstallation.getRepositories.query({ installationId }),
-    enabled: isValidId,
-  });
+  // Action-based data fetching (these call external GitHub APIs)
+  const getRepositories = useAction(
+    api.functions.githubInstallation.getRepositories
+  );
+  const getInstallation = useAction(
+    api.functions.githubInstallation.getInstallation
+  );
+  const syncInstallationAction = useAction(
+    api.functions.githubInstallation.syncInstallation
+  );
+  const removeInstallationAction = useAction(
+    api.functions.githubInstallation.removeInstallation
+  );
+  const setDefaultInstallationMut = useMutation(
+    api.functions.githubInstallation.setDefaultInstallation
+  );
 
-  const { data: installation } = useQuery({
-    queryKey: ['githubInstallation.getInstallation', installationId],
-    queryFn: () =>
-      trpcClient.githubInstallation.getInstallation.query({ installationId }),
-    enabled: isValidId,
-  });
+  // Query-based data (no external API call)
+  const installUrlData = useQuery(
+    api.functions.githubInstallation.getInstallationUrl,
+    isValidId ? {} : 'skip'
+  );
 
-  const { data: installUrlData } = useQuery({
-    queryKey: ['githubInstallation.getInstallationUrl'],
-    queryFn: () => trpcClient.githubInstallation.getInstallationUrl.query({}),
-    enabled: isValidId,
-  });
+  // State for action-fetched data
+  const [repositories, setRepositories] = useState<{
+    repositories: Repository[];
+  } | null>(null);
+  const [installation, setInstallation] = useState<{
+    installation: { account: { login: string; type: string } };
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isSettingDefault, setIsSettingDefault] = useState(false);
+  const [isUninstalling, setIsUninstalling] = useState(false);
 
-  const isStale = isStaleInstallationError(error as Error | null);
+  // Fetch repositories and installation data
+  const fetchData = useCallback(async () => {
+    if (!isValidId) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [repoData, installData] = await Promise.all([
+        getRepositories({ installationId }),
+        getInstallation({ installationId }),
+      ]);
+      setRepositories(repoData as typeof repositories);
+      setInstallation(installData as typeof installation);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isValidId, installationId, getRepositories, getInstallation]);
 
-  const syncMutation = useMutation({
-    mutationFn: () =>
-      trpcClient.githubInstallation.syncInstallation.mutate({ installationId }),
-    onSuccess: () => {
-      queryClientLocal.invalidateQueries({
-        queryKey: ['githubInstallation.getRepositories', installationId],
-      });
-      queryClientLocal.invalidateQueries({
-        queryKey: ['githubInstallation.getInstallation', installationId],
-      });
-      queryClientLocal.invalidateQueries({
-        queryKey: ['githubInstallation.getInstallations'],
-      });
-    },
-  });
+  useEffect(() => {
+    void fetchData();
+  }, [fetchData]);
 
-  const setDefaultMutation = useMutation({
-    mutationFn: () =>
-      trpcClient.githubInstallation.setDefaultInstallation.mutate({
-        installationId,
-      }),
-    onSuccess: () => {
-      queryClientLocal.invalidateQueries({
-        queryKey: ['githubInstallation.getInstallations'],
-      });
-    },
-  });
+  const isStale = isStaleInstallationError(error);
 
-  const uninstallMutation = useMutation({
-    mutationFn: () =>
-      trpcClient.githubInstallation.removeInstallation.mutate({
-        installationId,
-      }),
-    onSuccess: () => {
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      await syncInstallationAction({ installationId });
+      await fetchData();
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleSetDefault = async () => {
+    setIsSettingDefault(true);
+    try {
+      await setDefaultInstallationMut({ installationId });
+    } finally {
+      setIsSettingDefault(false);
+    }
+  };
+
+  const handleUninstall = async () => {
+    setIsUninstalling(true);
+    try {
+      await removeInstallationAction({ installationId });
       toast.success('GitHub installation removed');
-      queryClientLocal.invalidateQueries({
-        queryKey: ['githubInstallation.getInstallations'],
-      });
       router.push(orgPath('/integrations'));
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Failed to uninstall');
-    },
-  });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to uninstall');
+      setIsUninstalling(false);
+    }
+  };
 
-  // Invalidate caches when arriving from a new installation (one-time)
+  // Clear new flag on arrival
   useEffect(() => {
     if (!newFlag) return;
-
-    void Promise.all([
-      queryClientLocal.invalidateQueries({
-        queryKey: ['githubInstallation.getInstallations'],
-      }),
-      queryClientLocal.invalidateQueries({
-        queryKey: ['githubInstallation.getRepositories', installationId],
-      }),
-      queryClientLocal.invalidateQueries({
-        queryKey: ['githubInstallation.getInstallation', installationId],
-      }),
-    ]).then(() => {
+    void fetchData().then(() => {
       setNewFlag(null);
     });
-  }, [newFlag, installationId, queryClientLocal, setNewFlag]);
+  }, [newFlag, fetchData, setNewFlag]);
 
   const accountLogin = installation?.installation?.account.login || '';
   const accountType = installation?.installation?.account.type;
@@ -236,10 +241,10 @@ export default function GitHubInstallationPage() {
         <Button
           variant="outline"
           size="sm"
-          disabled={uninstallMutation.isPending}
-          onClick={() => uninstallMutation.mutate()}
+          disabled={isUninstalling}
+          onClick={() => void handleUninstall()}
         >
-          {uninstallMutation.isPending ? 'Removing...' : 'Remove'}
+          {isUninstalling ? 'Removing...' : 'Remove'}
         </Button>
       </div>
     </div>
@@ -249,7 +254,7 @@ export default function GitHubInstallationPage() {
     <CenteredWrapper>
       <IntegrationDetailPage
         isLoading={isLoading}
-        error={error as Error | null}
+        error={error ? new Error(error) : null}
         errorMessage="Failed to load installation details. Please try again."
         errorContent={staleErrorContent}
       >
@@ -264,8 +269,8 @@ export default function GitHubInstallationPage() {
             {
               label: 'Make default',
               icon: <Star className="h-4 w-4" />,
-              onClick: () => setDefaultMutation.mutate(),
-              disabled: setDefaultMutation.isPending,
+              onClick: () => void handleSetDefault(),
+              disabled: isSettingDefault,
             },
             {
               label: 'Uninstall',
@@ -275,9 +280,9 @@ export default function GitHubInstallationPage() {
           ]}
         >
           <ActionButton
-            onClick={() => syncMutation.mutate()}
-            disabled={syncMutation.isPending}
-            loading={syncMutation.isPending}
+            onClick={() => void handleSync()}
+            disabled={isSyncing}
+            loading={isSyncing}
             icon={<RefreshCw className="h-4 w-4" />}
           >
             Sync
@@ -342,9 +347,9 @@ export default function GitHubInstallationPage() {
           confirmValue={accountLogin}
           confirmLabel="Uninstall"
           pendingLabel="Uninstalling..."
-          isPending={uninstallMutation.isPending}
+          isPending={isUninstalling}
           onConfirm={async () => {
-            await uninstallMutation.mutateAsync();
+            await handleUninstall();
           }}
         />
       )}

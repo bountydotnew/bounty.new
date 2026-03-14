@@ -24,8 +24,8 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { trpc } from '@/utils/trpc';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/utils/convex';
 import { authClient } from '@bounty/auth/client';
 import { GithubIcon } from '../icons';
 import GoogleIcon from '../icons/google';
@@ -90,14 +90,11 @@ function UserProfileRow() {
 
 // Linked accounts section
 function LinkedAccountsSection() {
-  const queryClient = useQueryClient();
   const [isLinking, setIsLinking] = useState<string | null>(null);
   const [isUnlinking, setIsUnlinking] = useState<string | null>(null);
 
-  // Use tRPC to fetch linked accounts
-  const { data: accountsData } = useQuery(
-    trpc.user.getLinkedAccounts.queryOptions()
-  );
+  // Use Convex to fetch linked accounts
+  const accountsData = useQuery(api.functions.user.getLinkedAccounts);
 
   const hasGitHub = accountsData?.accounts?.some(
     (a: { providerId: string }) => a.providerId === 'github'
@@ -168,10 +165,7 @@ function LinkedAccountsSection() {
             toast.success(
               `${provider === 'github' ? 'GitHub' : 'Google'} unlinked`
             );
-            // Refetch accounts
-            queryClient.invalidateQueries({
-              queryKey: trpc.user.getLinkedAccounts.queryKey(),
-            });
+            // Convex reactivity handles refetch automatically
           },
           onError: (ctx) => {
             const errorMessage =
@@ -398,50 +392,33 @@ function ComingSoonOption({ label }: { label: string }) {
 // Privacy section
 function PrivacySection() {
   const { user: userData } = useUser();
-  const queryClient = useQueryClient();
   const isProfilePrivate = userData?.isProfilePrivate ?? false;
   const [optimisticPrivate, setOptimisticPrivate] = useState<boolean | null>(
     null
   );
   const displayPrivate = optimisticPrivate ?? isProfilePrivate;
 
-  const updateProfilePrivacyMutation = useMutation(
-    trpc.user.updateProfilePrivacy.mutationOptions({
-      onSuccess: () => {
-        setOptimisticPrivate(null);
-        const userQueryKey = trpc.user.getMe.queryOptions().queryKey;
-        queryClient.invalidateQueries({ queryKey: userQueryKey });
-
-        if (userData?.handle) {
-          const profileQueryKey = trpc.profiles.getProfile.queryOptions({
-            handle: userData.handle,
-          }).queryKey;
-          queryClient.invalidateQueries({ queryKey: profileQueryKey });
-        }
-        if (userData?.id) {
-          const profileQueryKeyById = trpc.profiles.getProfile.queryOptions({
-            userId: userData.id,
-          }).queryKey;
-          queryClient.invalidateQueries({ queryKey: profileQueryKeyById });
-        }
-      },
-    })
+  const updateProfilePrivacy = useMutation(
+    api.functions.user.updateProfilePrivacy
   );
+  const [isPending, setIsPending] = useState(false);
 
   const handlePrivacyToggle = useCallback(
     async (value: boolean) => {
       setOptimisticPrivate(value);
+      setIsPending(true);
       try {
-        await updateProfilePrivacyMutation.mutateAsync({
-          isProfilePrivate: value,
-        });
+        await updateProfilePrivacy({ isProfilePrivate: value });
         toast.success(`Profile is now ${value ? 'private' : 'public'}`);
+        setOptimisticPrivate(null);
       } catch {
         setOptimisticPrivate(null);
         toast.error('Failed to update privacy settings');
+      } finally {
+        setIsPending(false);
       }
     },
-    [updateProfilePrivacyMutation]
+    [updateProfilePrivacy]
   );
 
   return (
@@ -457,7 +434,7 @@ function PrivacySection() {
         </div>
         <Switch
           checked={displayPrivate}
-          disabled={updateProfilePrivacyMutation.isPending}
+          disabled={isPending}
           onCheckedChange={handlePrivacyToggle}
         />
       </div>

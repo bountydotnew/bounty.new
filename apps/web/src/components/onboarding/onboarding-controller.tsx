@@ -2,7 +2,8 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/utils/convex';
 import { TourProvider } from '@bounty/ui/components/tour';
 import {
   Dialog,
@@ -16,18 +17,16 @@ import { Button } from '@bounty/ui/components/button';
 import { buildOnboardingTours } from '@/lib/onboarding-tours';
 import { useSession } from '@/context/session-context';
 import { GettingStartedFloat } from '@/components/onboarding/getting-started-float';
-import { trpc } from '@/utils/trpc';
 
 const TOTAL_TASKS = 4;
 
-/** Map tour IDs to their corresponding task keys for DB persistence */
-const TOUR_TO_TASK: Record<string, 'tools' | 'payouts' | 'bounty' | 'member'> =
-  {
-    'connect-tools': 'tools',
-    'setup-payouts': 'payouts',
-    'create-bounty': 'bounty',
-    'invite-member': 'member',
-  };
+/** Map tour IDs to their corresponding step numbers for DB persistence */
+const TOUR_TO_STEP: Record<string, 1 | 2 | 3 | 4> = {
+  'connect-tools': 1,
+  'setup-payouts': 2,
+  'create-bounty': 3,
+  'invite-member': 4,
+};
 
 /**
  * OnboardingController
@@ -50,22 +49,12 @@ export function OnboardingController({
 
   const tours = useMemo(() => buildOnboardingTours(), []);
 
-  const queryClient = useQueryClient();
-
-  const { data: onboardingState } = useQuery({
-    ...trpc.onboarding.getState.queryOptions(),
-    enabled: isAuthenticated,
-  });
-
-  const completeTask = useMutation(
-    trpc.onboarding.completeGettingStartedTask.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: [['onboarding', 'getState']],
-        });
-      },
-    })
+  const onboardingState = useQuery(
+    api.functions.onboarding.getState,
+    isAuthenticated ? {} : 'skip'
   );
+
+  const completeTask = useMutation(api.functions.onboarding.completeStep);
 
   const handleNavigate = useCallback(
     (route: string) => {
@@ -79,33 +68,26 @@ export function OnboardingController({
       // Mark the task as complete when the tour finishes (last step "Finish"
       // button) or when the user skips (dismiss). This is the ONLY place
       // tasks get marked complete — not on checklist item click.
-      const taskKey = TOUR_TO_TASK[tourId];
-      if (taskKey) {
-        completeTask.mutate({ task: taskKey });
+      const step = TOUR_TO_STEP[tourId];
+      if (step) {
+        completeTask({ step });
       }
 
       // Check if all tasks are now complete (count the ones already done
       // plus this one we just completed)
       if (onboardingState) {
         const alreadyCompleted = [
-          onboardingState.connectedTools,
-          onboardingState.setupPayouts,
-          onboardingState.createdBounty,
-          onboardingState.invitedMember,
+          onboardingState.completedStep1,
+          onboardingState.completedStep2,
+          onboardingState.completedStep3,
+          onboardingState.completedStep4,
         ].filter(Boolean).length;
 
         // +1 for the task we just completed (if it wasn't already)
-        const taskField = taskKey
-          ? {
-              tools: 'connectedTools',
-              payouts: 'setupPayouts',
-              bounty: 'createdBounty',
-              member: 'invitedMember',
-            }[taskKey]
+        const stepField = step
+          ? (`completedStep${step}` as keyof typeof onboardingState)
           : null;
-        const wasAlreadyDone = taskField
-          ? onboardingState[taskField as keyof typeof onboardingState]
-          : false;
+        const wasAlreadyDone = stepField ? onboardingState[stepField] : false;
         const total = alreadyCompleted + (wasAlreadyDone ? 0 : 1);
 
         if (total >= TOTAL_TASKS) {

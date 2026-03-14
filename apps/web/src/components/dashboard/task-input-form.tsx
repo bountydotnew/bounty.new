@@ -1,17 +1,13 @@
 'use client';
 
-import {
-  useMutation,
-  useQueryClient,
-  type useQuery,
-} from '@tanstack/react-query';
+import { useAction } from 'convex/react';
 import { useRef, useImperativeHandle, forwardRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Spinner, GithubIcon } from '@bounty/ui';
-import { trpc, trpcClient } from '@/utils/trpc';
+import { api } from '@/utils/convex';
 import Link from 'next/link';
 import { useActiveOrg } from '@/hooks/use-active-org';
 import {
@@ -45,7 +41,6 @@ export interface TaskInputFormRef {
 export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
   (_props, ref) => {
     const router = useRouter();
-    const queryClient = useQueryClient();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const { activeOrgSlug } = useActiveOrg();
 
@@ -90,6 +85,14 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
       setSelectedRepository,
     } = useGitHubInstallationRepositories();
 
+    // Convex actions for GitHub API calls
+    const defaultBranchAction = useAction(
+      api.functions.repository.defaultBranch
+    );
+    const branchesAction = useAction(api.functions.repository.branches);
+    const listIssuesAction = useAction(api.functions.repository.listIssues);
+    const issueFromUrlAction = useAction(api.functions.repository.issueFromUrl);
+
     const {
       filteredBranches,
       branchesLoading,
@@ -98,21 +101,14 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
       selectedBranch,
       setSelectedBranch,
     } = useBranches(selectedRepository, {
-      defaultBranchQueryOptions: {
-        ...trpc.repository.defaultBranch.queryOptions({
-          repo: selectedRepository,
-        }),
-      } as Parameters<typeof useQuery>[0],
-      branchesQueryOptions: {
-        ...trpc.repository.branches.queryOptions({
-          repo: selectedRepository,
-        }),
-      } as Parameters<typeof useQuery>[0],
+      defaultBranchFn: (params: { repo: string }) =>
+        defaultBranchAction(params),
+      branchesFn: (params: { repo: string }) => branchesAction(params),
     });
 
     const { issuesList, filteredIssues, issueQuery, setIssueQuery, repoInfo } =
       useIssues(selectedRepository, {
-        listIssues: (params) => trpcClient.repository.listIssues.query(params),
+        listIssues: (params) => listIssuesAction(params),
       });
 
     // Issue selector state
@@ -122,40 +118,32 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
       url: string;
     } | null>(null);
 
-    // Autofill prompt state (for issues)
-
     // Fund bounty modal state
     const [showFundModal, setShowFundModal] = useState(false);
     const [pendingFormData, setPendingFormData] = useState<
       (CreateBountyForm & { repositoryUrl?: string; issueUrl?: string }) | null
     >(null);
+    const [isCreatingBounty, setIsCreatingBounty] = useState(false);
 
-    // Bounty creation mutation
-    const createBounty = useMutation({
-      mutationFn: async (input: CreateBountyForm & { payLater?: boolean }) => {
-        return await trpcClient.bounties.createBounty.mutate({
+    // Convex action for bounty creation (calls Stripe)
+    const createBountyAction = useAction(api.functions.bounties.createBounty);
+
+    const handleCreateBounty = async (
+      input: CreateBountyForm & { payLater?: boolean }
+    ) => {
+      setIsCreatingBounty(true);
+      try {
+        const result = await createBountyAction({
           ...input,
           payLater: input.payLater ?? false,
-        });
-      },
-      onSuccess: (result) => {
-        // Invalidate specific bounty queries rather than all bounty queries
-        queryClient.invalidateQueries({
-          queryKey: [['bounties', 'fetchAllBounties']],
-        });
-        queryClient.invalidateQueries({
-          queryKey: [['bounties', 'fetchMyBounties']],
         });
 
         if (result?.data?.id) {
           if (result.checkoutUrl && !result.payLater) {
-            // Close modal before redirect
             setShowFundModal(false);
             setPendingFormData(null);
-            // Redirect to Stripe Checkout
             window.location.href = result.checkoutUrl;
           } else if (result.payLater) {
-            // Pay later - just redirect
             setShowFundModal(false);
             setPendingFormData(null);
             toast.success('Bounty created! Complete payment to make it live.');
@@ -165,7 +153,6 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
             setIssueQuery('');
             router.push(`/bounty/${result.data.id}`);
           } else {
-            // Shouldn't happen, but handle it
             setShowFundModal(false);
             setPendingFormData(null);
             toast.success('Bounty created successfully!');
@@ -180,12 +167,13 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
           setPendingFormData(null);
           router.push('/dashboard');
         }
-      },
-      onError: (error: Error) => {
-        toast.error(`Failed to create bounty: ${error.message}`);
+      } catch (error) {
+        toast.error(`Failed to create bounty: ${(error as Error).message}`);
         // Keep modal open on error so user can retry
-      },
-    });
+      } finally {
+        setIsCreatingBounty(false);
+      }
+    };
 
     const onSubmit = formHandleSubmit(
       (data: CreateBountyForm) => {
@@ -211,7 +199,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
         return;
       }
       setShowFundModal(false);
-      createBounty.mutate({ ...pendingFormData, payLater: true });
+      handleCreateBounty({ ...pendingFormData, payLater: true });
       setPendingFormData(null);
     };
 
@@ -219,9 +207,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
       if (!pendingFormData) {
         return;
       }
-      // Don't close modal yet - let it stay open until redirect happens
-      createBounty.mutate({ ...pendingFormData, payLater: false });
-      // Modal will close automatically when redirect happens
+      handleCreateBounty({ ...pendingFormData, payLater: false });
     };
 
     const handlePayWithBalance = () => {
@@ -255,14 +241,12 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
 
       // Fetch issue data to check if there's content to autofill
       try {
-        const result = await trpcClient.repository.issueFromUrl.query({
+        const result = await issueFromUrlAction({
           url: issueUrl,
         });
         if (result?.data && (result.data.title || result.data.body)) {
-          // There's actual data to autofill - show prompt
           setSelectedIssue(issueWithUrl);
         } else {
-          // No data to autofill - just select the issue
           setSelectedIssue(issueWithUrl);
         }
       } catch {
@@ -400,10 +384,10 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
                 ) : (
                   <button
                     type="submit"
-                    disabled={createBounty.isPending || !title || !amount}
+                    disabled={isCreatingBounty || !title || !amount}
                     className="flex items-center justify-center gap-1.5 px-4 h-[34px] rounded-full text-[15px] font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                   >
-                    {createBounty.isPending ? (
+                    {isCreatingBounty ? (
                       <Spinner className="h-4 w-4 text-background" />
                     ) : (
                       <>
@@ -426,7 +410,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
             onSkip={handleSkip}
             onPayWithStripe={handlePayWithStripe}
             onPayWithBalance={handlePayWithBalance}
-            isLoading={createBounty.isPending}
+            isLoading={isCreatingBounty}
           />
         )}
       </div>

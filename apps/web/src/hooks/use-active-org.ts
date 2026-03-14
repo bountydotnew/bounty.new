@@ -5,16 +5,16 @@
  * along with helpers to switch orgs and list user's orgs.
  *
  * Uses Better Auth's organization plugin on the client side
- * for setActive(), and tRPC for data queries.
+ * for setActive(), and Convex for data queries.
  */
 
 'use client';
 
 import { authClient } from '@bounty/auth/client';
 import { useSession } from '@/context/session-context';
-import { trpcClient, queryClient } from '@/utils/trpc';
+import { useQuery } from 'convex/react';
+import { api } from '@/utils/convex';
 import { useCallback, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { useCustomer } from 'autumn-js/react';
 
 interface OrgListItem {
@@ -35,7 +35,7 @@ interface UseActiveOrgResult {
   orgs: OrgListItem[];
   /** Whether the org list is loading */
   isLoading: boolean;
-  /** Switch the active organization. Invalidates all org-scoped queries. */
+  /** Switch the active organization. Convex reactivity handles re-renders. */
   switchOrg: (orgId: string) => Promise<void>;
   /** The active org from the list (convenience) */
   activeOrg: OrgListItem | undefined;
@@ -53,18 +53,18 @@ export function useActiveOrg(): UseActiveOrgResult {
 
   const activeOrgId = session?.session?.activeOrganizationId;
 
-  // Fetch orgs list via tRPC
-  const { data, isLoading } = useQuery({
-    queryKey: ['organization', 'listMyOrgs'],
-    queryFn: () => trpcClient.organization.listMyOrgs.query(),
-    enabled: !!session?.user,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-  });
+  // Fetch orgs list via Convex (reactive)
+  const data = useQuery(
+    api.functions.organization.listMyOrgs,
+    session?.user ? {} : 'skip'
+  );
+
+  const isLoading = data === undefined && !!session?.user;
 
   const orgs = useMemo(() => data?.orgs ?? [], [data]);
 
   const activeOrg = useMemo(
-    () => orgs.find((o) => o.id === activeOrgId),
+    () => orgs.find((o: OrgListItem) => o.id === activeOrgId),
     [orgs, activeOrgId]
   );
 
@@ -85,17 +85,14 @@ export function useActiveOrg(): UseActiveOrgResult {
 
   /**
    * Switch the active organization via Better Auth.
-   * This updates the session's activeOrganizationId on the server,
-   * then invalidates all org-scoped tRPC queries and billing data.
+   * This updates the session's activeOrganizationId on the server.
+   * Convex reactivity automatically handles re-fetching data for the new org.
    */
   const switchOrg = useCallback(
     async (orgId: string) => {
       await authClient.organization.setActive({
         organizationId: orgId,
       });
-
-      // Invalidate all org-scoped tRPC queries so they refetch with the new org
-      await queryClient.invalidateQueries();
 
       // Refetch billing data (Autumn SDK) for the new org
       refetchBilling();

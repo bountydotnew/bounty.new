@@ -1,7 +1,7 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { trpc } from '@/utils/trpc';
+import { useQuery } from 'convex/react';
+import { api } from '@/utils/convex';
 import { ActivityList } from './activity-list';
 import { Spinner } from '@bounty/ui';
 import type { ActivityItem } from '@bounty/types';
@@ -12,12 +12,12 @@ interface ProfileActivityProps {
 }
 
 export function ProfileActivity({ userId }: ProfileActivityProps) {
-  const { data: activityData, isLoading } = useQuery({
-    ...trpc.user.getUserActivity.queryOptions({ userId, limit: 10 }),
-    enabled: !!userId,
-  });
+  const activityData = useQuery(
+    api.functions.user.getUserActivity,
+    userId ? { userId, limit: 10 } : 'skip'
+  );
 
-  if (isLoading) {
+  if (activityData === undefined) {
     return (
       <div className="flex justify-center py-8">
         <Spinner />

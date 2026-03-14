@@ -23,8 +23,8 @@ import {
 import { Header } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
 import { useSession } from '@/context/session-context';
-import { trpc } from '@/utils/trpc';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/utils/convex';
 
 type Status = 'shipped' | 'in-progress' | 'planned';
 type Category = 'platform' | 'features' | 'integrations';
@@ -397,48 +397,30 @@ const VOTABLE_INTEGRATIONS = [
 
 function IntegrationVoteCard() {
   const { isAuthenticated } = useSession();
-  const queryClient = useQueryClient();
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [isVoting, setIsVoting] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
 
-  const { data: votes } = useQuery(
-    trpc.featureVotes.getIntegrationVotes.queryOptions()
+  const votes = useQuery(api.functions.featureVotes.getIntegrationVotes);
+  const userVote = useQuery(
+    api.functions.featureVotes.getUserVote,
+    isAuthenticated ? {} : 'skip'
   );
-  const { data: userVote } = useQuery({
-    ...trpc.featureVotes.getUserVote.queryOptions(),
-    enabled: isAuthenticated,
-  });
 
-  const voteMutation = useMutation({
-    ...trpc.featureVotes.vote.mutationOptions(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: trpc.featureVotes.getIntegrationVotes.queryKey(),
-      });
-      queryClient.invalidateQueries({
-        queryKey: trpc.featureVotes.getUserVote.queryKey(),
-      });
+  const vote = useMutation(api.functions.featureVotes.vote);
+  const removeVote = useMutation(api.functions.featureVotes.removeVote);
+
+  const handleRemoveVote = async () => {
+    setIsRemoving(true);
+    try {
+      await removeVote();
       setSelectedKey(null);
-    },
-  });
-
-  const removeMutation = useMutation({
-    ...trpc.featureVotes.removeVote.mutationOptions(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: trpc.featureVotes.getIntegrationVotes.queryKey(),
-      });
-      queryClient.invalidateQueries({
-        queryKey: trpc.featureVotes.getUserVote.queryKey(),
-      });
-      setSelectedKey(null);
-    },
-  });
-
-  const handleRemoveVote = () => {
-    removeMutation.mutate();
+    } finally {
+      setIsRemoving(false);
+    }
   };
 
-  const handleVote = () => {
+  const handleVote = async () => {
     if (!selectedKey) {
       return;
     }
@@ -446,9 +428,15 @@ function IntegrationVoteCard() {
       window.location.href = '/login?callback=/roadmap';
       return;
     }
-    voteMutation.mutate({
-      integrationKey: selectedKey as 'vscode' | 'notion' | 'crypto' | 'email',
-    });
+    setIsVoting(true);
+    try {
+      await vote({
+        integrationKey: selectedKey as 'vscode' | 'notion' | 'crypto' | 'email',
+      });
+      setSelectedKey(null);
+    } finally {
+      setIsVoting(false);
+    }
   };
 
   // Get the currently displayed integration (selected or user's vote or default)
@@ -563,14 +551,14 @@ function IntegrationVoteCard() {
 
         {/* Vote Button */}
         <VoteButton
-          isPending={voteMutation.isPending}
+          isPending={isVoting}
           isAuthenticated={isAuthenticated}
           hasVoted={hasVoted}
           hasSelection={hasSelection}
           selectionDiffersFromVote={!!selectionDiffersFromVote}
           onClick={handleVote}
           onRemove={handleRemoveVote}
-          isRemoving={removeMutation.isPending}
+          isRemoving={isRemoving}
         />
       </div>
     </div>

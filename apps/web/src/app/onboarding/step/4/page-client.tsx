@@ -1,8 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useMutation } from '@tanstack/react-query';
-import { trpcClient } from '@/utils/trpc';
+import { useState } from 'react';
+import { useMutation } from 'convex/react';
+import { api } from '@/utils/convex';
 import { OnboardingDialog } from '@/components/onboarding-flow/onboarding-dialog';
 import { ArrowRight } from 'lucide-react';
 
@@ -35,26 +36,35 @@ const ACTIONS: Action[] = [
 
 export default function OnboardingStep4Page() {
   const router = useRouter();
+  const [isPending, setIsPending] = useState(false);
 
-  const completeStepMutation = useMutation({
-    mutationFn: () => trpcClient.onboarding.completeStep.mutate({ step: 4 }),
-    onSuccess: () => {
-      // Set onboarding complete cookie
-      document.cookie = 'onboarding_complete=true; path=/; max-age=31536000';
-    },
-  });
+  const completeStep = useMutation(api.functions.onboarding.completeStep);
 
   const handleGoToDashboard = async () => {
-    await completeStepMutation.mutateAsync();
-    router.push('/dashboard');
+    setIsPending(true);
+    try {
+      await completeStep({ step: 4 });
+      // Set onboarding complete cookie
+      document.cookie = 'onboarding_complete=true; path=/; max-age=31536000';
+      router.push('/dashboard');
+    } finally {
+      setIsPending(false);
+    }
   };
 
   const handleActionClick = async (action: Action) => {
-    await completeStepMutation.mutateAsync();
-    if (action.external) {
-      window.open(action.href, '_blank', 'noopener,noreferrer');
-    } else {
-      router.push(action.href);
+    setIsPending(true);
+    try {
+      await completeStep({ step: 4 });
+      // Set onboarding complete cookie
+      document.cookie = 'onboarding_complete=true; path=/; max-age=31536000';
+      if (action.external) {
+        window.open(action.href, '_blank', 'noopener,noreferrer');
+      } else {
+        router.push(action.href);
+      }
+    } finally {
+      setIsPending(false);
     }
   };
 
@@ -63,7 +73,7 @@ export default function OnboardingStep4Page() {
       open
       title="You're all set"
       subtitle="Choose what to do next"
-      isLoading={completeStepMutation.isPending}
+      isLoading={isPending}
       actionLabel="Go to dashboard"
       onAction={handleGoToDashboard}
     >

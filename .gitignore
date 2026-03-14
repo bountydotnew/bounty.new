@@ -36,3 +36,6 @@ tasks.md
 /pencil
 *.pen
 *.txt
+
+# Convex
+convex/_generated

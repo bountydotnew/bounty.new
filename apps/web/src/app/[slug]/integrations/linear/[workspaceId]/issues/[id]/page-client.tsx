@@ -1,16 +1,17 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery, skipToken } from '@tanstack/react-query';
+import { useState, useEffect, useCallback } from 'react';
+import { useAction } from 'convex/react';
+import { api } from '@/utils/convex';
 import { useParams, useRouter } from 'next/navigation';
 import { LinearIcon } from '@bounty/ui';
 import { Button } from '@bounty/ui/components/button';
 import { ArrowLeft, ExternalLink, Inbox, User, Calendar } from 'lucide-react';
-import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
 import { useOrgPath } from '@/hooks/use-org-path';
 import { CreateBountyForm } from '../components/create-bounty-form';
 import { MarkdownContent } from '@/components/bounty/markdown-content';
+import type { LinearIssue } from '@bounty/api/driver/linear-client';
 
 function IssueSkeleton() {
   return (
@@ -49,9 +50,31 @@ export default function LinearIssueDetailPage() {
   const issueId = params.id as string;
   const [showCreateForm, setShowCreateForm] = useState(false);
 
-  const { data: issueData, isLoading: issueLoading } = useQuery(
-    trpc.linear.getIssue.queryOptions(hasLinear ? { issueId } : skipToken)
+  // Action for external Linear API call
+  const getIssueAction = useAction(api.functions.linearActions.getIssue);
+
+  // State for action-fetched data
+  const [issueData, setIssueData] = useState<{ issue: LinearIssue } | null>(
+    null
   );
+  const [issueLoading, setIssueLoading] = useState(true);
+
+  const fetchIssue = useCallback(async () => {
+    if (!hasLinear) return;
+    setIssueLoading(true);
+    try {
+      const data = await getIssueAction({ issueId });
+      setIssueData(data as typeof issueData);
+    } catch {
+      // non-critical
+    } finally {
+      setIssueLoading(false);
+    }
+  }, [hasLinear, issueId, getIssueAction]);
+
+  useEffect(() => {
+    void fetchIssue();
+  }, [fetchIssue]);
 
   const issue = issueData?.issue;
 

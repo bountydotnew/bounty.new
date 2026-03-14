@@ -1,9 +1,9 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, type ReactNode } from 'react';
+import { useQuery, useMutation, useAction } from 'convex/react';
+import { useMemo, useState, useCallback, type ReactNode } from 'react';
 import { toast } from 'sonner';
-import { trpc, trpcClient } from '@/utils/trpc';
+import { api } from '@/utils/convex';
 import {
   BountyActionsContext,
   type BountyActionsContextValue,
@@ -51,20 +51,6 @@ interface BountyActionsProviderProps {
  * Wraps the actions with state and mutations following Vercel composition patterns.
  * The provider is the ONLY place that knows how state is managed.
  * Child components only depend on the context interface.
- *
- * @example
- * ```tsx
- * <BountyActionsProvider
- *   bountyId={bountyId}
- *   canEdit={canEdit}
- *   isVoted={isVoted}
- *   voteCount={voteCount}
- * >
- *   <BountyActions.UpvoteButton />
- *   <BountyActions.BookmarkButton />
- *   <BountyActions.Dropdown />
- * </BountyActionsProvider>
- * ```
  */
 export function BountyActionsProvider({
   children,
@@ -83,121 +69,66 @@ export function BountyActionsProvider({
   onToggleBookmark,
   actions,
 }: BountyActionsProviderProps) {
-  const queryClient = useQueryClient();
-
   // Fetch bookmark state if not controlled
-  const bookmarkQuery = useQuery({
-    ...trpc.bounties.getBountyBookmark.queryOptions({ bountyId }),
-    enabled: !onToggleBookmark,
-  });
+  const bookmarkData = useQuery(
+    api.functions.bounties.getBountyBookmark,
+    onToggleBookmark ? 'skip' : { bountyId }
+  );
 
   const bookmarked = onToggleBookmark
     ? controlledBookmarked
-    : (bookmarkQuery.data?.bookmarked ?? false);
+    : (bookmarkData?.bookmarked ?? false);
 
-  // Toggle bookmark mutation
-  const toggleBookmarkMutation = useMutation({
-    mutationFn: async () => {
-      return await trpcClient.bounties.toggleBountyBookmark.mutate({
-        bountyId,
-      });
-    },
-    onSuccess: () => {
-      // Invalidate query to refetch
-      queryClient.invalidateQueries({
-        queryKey: [['bounties', 'getBountyBookmark']],
-      });
-    },
-  });
+  // DB-only mutations
+  const toggleBountyBookmark = useMutation(
+    api.functions.bounties.toggleBountyBookmark
+  );
 
-  // Create GitHub issue mutation
-  const createGithubIssueMutation = useMutation({
-    mutationFn: async () => {
-      return await trpcClient.bounties.createGithubIssue.mutate({ bountyId });
-    },
-    onSuccess: (result) => {
-      toast.success('GitHub issue created', {
-        description: result.message,
-      });
-      // Refresh the page to show the updated bounty
-      window.location.reload();
-    },
-    onError: (error: Error) => {
-      toast.error('Failed to create GitHub issue', {
-        description: error.message,
-      });
-    },
-  });
+  // Actions (external API calls — GitHub)
+  const createGithubIssue = useAction(api.functions.bounties.createGithubIssue);
+  const checkGithubSync = useAction(api.functions.bounties.checkGithubSync);
+  const syncToGithub = useAction(api.functions.bounties.syncToGithub);
 
-  // Check GitHub sync mutation
-  const checkGithubSyncMutation = useMutation({
-    mutationFn: async () => {
-      return await trpcClient.bounties.checkGithubSync.mutate({ bountyId });
-    },
-    onSuccess: (result) => {
-      if (result.synced) {
-        toast.success('GitHub sync check', {
-          description: result.message,
-        });
-      } else {
-        // Show sync button if not linked or needs sync
-        if (!result.hasComment || result.needsInitialComment === true) {
-          toast.error('Not synced to GitHub', {
-            description: result.message,
-            action: {
-              label: 'Sync now',
-              onClick: () => syncToGithubMutation.mutate(),
-            },
-          });
-        } else {
-          toast.warning('GitHub sync check', {
-            description: result.message,
-          });
-        }
-      }
-    },
-    onError: (error: Error) => {
-      toast.error('Failed to check GitHub sync', {
-        description: error.message,
-      });
-    },
-  });
+  // Pending state tracking
+  const [isBookmarkPending, setIsBookmarkPending] = useState(false);
+  const [isCreateGithubIssuePending, setIsCreateGithubIssuePending] =
+    useState(false);
+  const [isCheckGithubSyncPending, setIsCheckGithubSyncPending] =
+    useState(false);
+  const [isSyncToGithubPending, setIsSyncToGithubPending] = useState(false);
 
-  // Sync to GitHub mutation
-  const syncToGithubMutation = useMutation({
-    mutationFn: async () => {
-      return await trpcClient.bounties.syncToGithub.mutate({ bountyId });
-    },
-    onSuccess: (result) => {
+  const handleSyncToGithub = useCallback(async () => {
+    setIsSyncToGithubPending(true);
+    try {
+      const result = await syncToGithub({ bountyId });
       toast.success('Synced to GitHub', {
         description: result.message,
       });
-    },
-    onError: (error: Error) => {
+    } catch (error) {
       toast.error('Failed to sync to GitHub', {
-        description: error.message,
+        description: (error as Error).message,
       });
-    },
-  });
+    } finally {
+      setIsSyncToGithubPending(false);
+    }
+  }, [syncToGithub, bountyId]);
 
   // Actions object
   const actionsValue: BountyActionsActions = useMemo(
     () => ({
       upvote: () => {
         // This is handled by the parent component via props
-        // The provider just passes through the callback
       },
-      toggleBookmark: () => {
+      toggleBookmark: async () => {
         if (onToggleBookmark) {
           return onToggleBookmark();
         }
-        const key = trpc.bounties.getBountyBookmark.queryKey({ bountyId });
-        const current = bookmarkQuery.data?.bookmarked ?? false;
-        queryClient.setQueryData(key, { bookmarked: !current });
-        toggleBookmarkMutation.mutate(undefined, {
-          onError: () => queryClient.setQueryData(key, { bookmarked: current }),
-          onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
-        });
+        setIsBookmarkPending(true);
+        try {
+          await toggleBountyBookmark({ bountyId });
+        } finally {
+          setIsBookmarkPending(false);
+        }
       },
       share: () => {
         if (onShare) {
@@ -217,28 +148,66 @@ export function BountyActionsProvider({
       delete: () => {
         onDelete?.();
       },
-      createGithubIssue: () => {
-        createGithubIssueMutation.mutate();
+      createGithubIssue: async () => {
+        setIsCreateGithubIssuePending(true);
+        try {
+          const result = await createGithubIssue({ bountyId });
+          toast.success('GitHub issue created', {
+            description: result.message,
+          });
+          window.location.reload();
+        } catch (error) {
+          toast.error('Failed to create GitHub issue', {
+            description: (error as Error).message,
+          });
+        } finally {
+          setIsCreateGithubIssuePending(false);
+        }
       },
-      checkGithubSync: () => {
-        checkGithubSyncMutation.mutate();
+      checkGithubSync: async () => {
+        setIsCheckGithubSyncPending(true);
+        try {
+          const result = await checkGithubSync({ bountyId });
+          if (result.synced) {
+            toast.success('GitHub sync check', {
+              description: result.message,
+            });
+          } else if (
+            !result.hasComment ||
+            result.needsInitialComment === true
+          ) {
+            toast.error('Not synced to GitHub', {
+              description: result.message,
+              action: {
+                label: 'Sync now',
+                onClick: () => handleSyncToGithub(),
+              },
+            });
+          } else {
+            toast.warning('GitHub sync check', {
+              description: result.message,
+            });
+          }
+        } catch (error) {
+          toast.error('Failed to check GitHub sync', {
+            description: (error as Error).message,
+          });
+        } finally {
+          setIsCheckGithubSyncPending(false);
+        }
       },
-      syncToGithub: () => {
-        syncToGithubMutation.mutate();
-      },
+      syncToGithub: handleSyncToGithub,
     }),
     [
       onToggleBookmark,
-      bookmarkQuery,
+      toggleBountyBookmark,
       bountyId,
-      queryClient,
-      toggleBookmarkMutation,
       onShare,
       onEdit,
       onDelete,
-      createGithubIssueMutation,
-      checkGithubSyncMutation,
-      syncToGithubMutation,
+      createGithubIssue,
+      checkGithubSync,
+      handleSyncToGithub,
     ]
   );
 
@@ -251,10 +220,10 @@ export function BountyActionsProvider({
       canEdit,
       canDelete,
       isOwner,
-      isBookmarkPending: toggleBookmarkMutation.isPending,
-      isCreateGithubIssuePending: createGithubIssueMutation.isPending,
-      isCheckGithubSyncPending: checkGithubSyncMutation.isPending,
-      isSyncToGithubPending: syncToGithubMutation.isPending,
+      isBookmarkPending,
+      isCreateGithubIssuePending,
+      isCheckGithubSyncPending,
+      isSyncToGithubPending,
       repositoryUrl,
       issueUrl,
     }),
@@ -265,10 +234,10 @@ export function BountyActionsProvider({
       canEdit,
       canDelete,
       isOwner,
-      toggleBookmarkMutation.isPending,
-      createGithubIssueMutation.isPending,
-      checkGithubSyncMutation.isPending,
-      syncToGithubMutation.isPending,
+      isBookmarkPending,
+      isCreateGithubIssuePending,
+      isCheckGithubSyncPending,
+      isSyncToGithubPending,
       repositoryUrl,
       issueUrl,
     ]

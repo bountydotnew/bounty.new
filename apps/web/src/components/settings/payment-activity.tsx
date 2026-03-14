@@ -1,7 +1,7 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { trpc } from '@/utils/trpc';
+import { useQuery } from 'convex/react';
+import { api } from '@/utils/convex';
 import { Loader2, Clock, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@bounty/ui/components/badge';
@@ -34,24 +34,15 @@ const statusLabel: Record<string, string> = {
 };
 
 export function PaymentActivity() {
-  const { data, isLoading, isError } = useQuery(
-    trpc.connect.getActivity.queryOptions({ page: 1, limit: 20 })
-  );
+  const data = useQuery(api.functions.connect.getActivity, {
+    page: 1,
+    limit: 20,
+  });
 
-  if (isLoading) {
+  if (data === undefined) {
     return (
       <div className="flex items-center justify-center p-16">
         <Loader2 className="size-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="flex flex-col items-center justify-center p-16 text-center">
-        <AlertCircle className="size-10 text-muted-foreground mb-4" />
-        <p className="text-base font-semibold mb-2">Failed to load activity</p>
-        <p className="text-sm text-muted-foreground">Please try again later.</p>
       </div>
     );
   }
@@ -90,7 +81,7 @@ export function PaymentActivity() {
           const status =
             activity.type === 'payout' ? activity.status : 'active';
           return (
-            <TableRow key={activity.id}>
+            <TableRow key={activity._id}>
               <TableCell className="font-medium">
                 {activity.bounty ? (
                   <Link

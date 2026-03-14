@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { trpc } from '@/utils/trpc';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/utils/convex';
 import { useActiveOrg } from '@/hooks/use-active-org';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -44,66 +44,66 @@ export default function OrgGeneralSettingsPage() {
   const [confirmInput, setConfirmInput] = useState('');
   const [confirmToggle, setConfirmToggle] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isSlugPending, setIsSlugPending] = useState(false);
+  const [isDeletePending, setIsDeletePending] = useState(false);
 
   // Get active org data
-  const { data: orgData } = useQuery(
-    trpc.organization.getActiveOrg.queryOptions()
-  );
+  const orgData = useQuery(api.functions.organization.getActiveOrg);
 
   // Get bounty status for deletion (only fetched when dialog opens)
-  const { data: bountyStatus, isLoading: isBountyStatusLoading } = useQuery({
-    ...trpc.organization.getOrgBountyStatusForDeletion.queryOptions(),
-    enabled: isDeleteDialogOpen && !isPersonalTeam,
-  });
+  const bountyStatus = useQuery(
+    api.functions.organization.getOrgBountyStatusForDeletion,
+    isDeleteDialogOpen && !isPersonalTeam ? {} : 'skip'
+  );
 
   // Update slug mutation
-  const updateSlugMutation = useMutation(
-    trpc.organization.updateSlug.mutationOptions({
-      onSuccess: (data) => {
-        toast.success('Slug updated successfully');
-        setIsSlugDialogOpen(false);
-        setSlugInput('');
-        router.push(`/${data.slug}/settings/general`);
-        router.refresh();
-      },
-      onError: (error) => {
-        toast.error(error.message || 'Failed to update slug');
-      },
-    })
-  );
+  const updateSlugMutation = useMutation(api.functions.organization.updateSlug);
 
   // Delete org mutation
-  const deleteOrgMutation = useMutation(
-    trpc.organization.deleteOrg.mutationOptions({
-      onSuccess: async () => {
-        toast.success('Organization deleted');
-        setIsDeleteDialogOpen(false);
+  const deleteOrgMutation = useMutation(api.functions.organization.deleteOrg);
 
-        const personalOrg = orgs.find((o) => o.isPersonal);
-        if (personalOrg) {
-          await switchOrg(personalOrg.id);
-        }
-
-        router.push('/dashboard');
-      },
-      onError: (error) => {
-        toast.error(error.message || 'Failed to delete organization');
-      },
-    })
-  );
-
-  const handleUpdateSlug = () => {
+  const handleUpdateSlug = async () => {
     if (!slugInput.trim()) return;
-    updateSlugMutation.mutate({ slug: slugInput.trim().toLowerCase() });
+    setIsSlugPending(true);
+    try {
+      const data = await updateSlugMutation({
+        slug: slugInput.trim().toLowerCase(),
+      });
+      toast.success('Slug updated successfully');
+      setIsSlugDialogOpen(false);
+      setSlugInput('');
+      router.push(`/${data.slug}/settings/general`);
+      router.refresh();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update slug');
+    } finally {
+      setIsSlugPending(false);
+    }
   };
 
-  const handleDeleteOrg = useCallback(() => {
+  const handleDeleteOrg = useCallback(async () => {
     if (!activeOrg) return;
     const needsToggle = bountyStatus && bountyStatus.totalSubmissions > 0;
-    deleteOrgMutation.mutate({
-      confirmBountyCancellation: needsToggle ? true : undefined,
-    });
-  }, [activeOrg, bountyStatus, deleteOrgMutation]);
+    setIsDeletePending(true);
+    try {
+      await deleteOrgMutation({
+        confirmBountyCancellation: needsToggle ? true : undefined,
+      });
+      toast.success('Organization deleted');
+      setIsDeleteDialogOpen(false);
+
+      const personalOrg = orgs.find((o) => o.isPersonal);
+      if (personalOrg) {
+        await switchOrg(personalOrg.id);
+      }
+
+      router.push('/dashboard');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete organization');
+    } finally {
+      setIsDeletePending(false);
+    }
+  }, [activeOrg, bountyStatus, deleteOrgMutation, orgs, switchOrg, router]);
 
   const handleCopySlug = () => {
     if (activeOrg?.slug) {
@@ -133,7 +133,7 @@ export default function OrgGeneralSettingsPage() {
     setTimeout(() => setCopied(false), 2000);
   }, [activeOrg?.name]);
 
-  if (!orgData) {
+  if (orgData === undefined) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-text-tertiary">Loading...</div>
@@ -142,6 +142,8 @@ export default function OrgGeneralSettingsPage() {
   }
 
   const isOwner = orgData.role === 'owner';
+  const isBountyStatusLoading =
+    isDeleteDialogOpen && !isPersonalTeam && bountyStatus === undefined;
 
   // Deletion state
   const isDeletionBlocked =
@@ -153,7 +155,7 @@ export default function OrgGeneralSettingsPage() {
   const canConfirm =
     !isBountyStatusLoading &&
     confirmInput === (activeOrg?.name || '') &&
-    !deleteOrgMutation.isPending &&
+    !isDeletePending &&
     !isDeletionBlocked &&
     (!needsConfirmToggle || confirmToggle);
 
@@ -250,9 +252,9 @@ export default function OrgGeneralSettingsPage() {
                 <Button
                   variant="destructive"
                   onClick={handleUpdateSlug}
-                  disabled={updateSlugMutation.isPending}
+                  disabled={isSlugPending}
                 >
-                  {updateSlugMutation.isPending ? 'Changing...' : 'Change Slug'}
+                  {isSlugPending ? 'Changing...' : 'Change Slug'}
                 </Button>
               </AlertDialogFooter>
             </AlertDialogPopup>
@@ -501,7 +503,7 @@ export default function OrgGeneralSettingsPage() {
                         <AlertDialogClose asChild>
                           <button
                             type="button"
-                            disabled={deleteOrgMutation.isPending}
+                            disabled={isDeletePending}
                             className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-foreground border border-border-subtle rounded-lg transition-colors disabled:opacity-50"
                           >
                             Cancel
@@ -522,7 +524,7 @@ export default function OrgGeneralSettingsPage() {
                             disabled={!canConfirm}
                             className="px-4 py-2 text-sm font-medium text-white bg-destructive hover:bg-destructive/90 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            {deleteOrgMutation.isPending
+                            {isDeletePending
                               ? 'Deleting...'
                               : 'Delete Organization'}
                           </button>

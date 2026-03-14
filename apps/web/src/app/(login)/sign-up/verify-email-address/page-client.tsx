@@ -3,7 +3,6 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { toast } from 'sonner';
-import { queryClient } from '@/utils/trpc';
 import { EmailVerification } from '@/components/auth/email-verification';
 import { authClient } from '@bounty/auth/client';
 
@@ -20,9 +19,8 @@ function VerifyEmailAddressContent() {
     // Force Better Auth to refetch the session
     await authClient.$fetch('/session');
 
-    // Invalidate all related queries
-    queryClient.invalidateQueries({ queryKey: ['session'] });
-    queryClient.invalidateQueries({ queryKey: ['user', 'getMe'] });
+    // No need to invalidate queries — Convex reactive queries
+    // will automatically re-render when session state changes.
 
     // Small delay to ensure session is fully refreshed before redirect
     await new Promise((resolve) => setTimeout(resolve, 100));

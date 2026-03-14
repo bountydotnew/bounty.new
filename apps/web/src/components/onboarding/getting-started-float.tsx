@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from 'convex/react';
+import { api } from '@/utils/convex';
 import { AnimatePresence, m } from 'motion/react';
 import { cn } from '@bounty/ui/lib/utils';
 import { useActiveOrg } from '@/hooks/use-active-org';
 import { useSession } from '@/context/session-context';
 import { useOptionalTour } from '@bounty/ui/components/tour';
-import { trpc } from '@/utils/trpc';
 
 // ---------------------------------------------------------------------------
 // Storage key — shared with sidebar card so dismissing either hides both
@@ -151,10 +151,10 @@ export function GettingStartedFloat() {
     }
   }, []);
 
-  const { data: onboardingState } = useQuery({
-    ...trpc.onboarding.getState.queryOptions(),
-    enabled: isAuthenticated,
-  });
+  const onboardingState = useQuery(
+    api.functions.onboarding.getState,
+    isAuthenticated ? {} : 'skip'
+  );
 
   // Only show on settings routes where sidebar card isn't visible
   const isSettingsRoute = pathname?.match(SETTINGS_ROUTE_RE);
@@ -170,7 +170,7 @@ export function GettingStartedFloat() {
       id: 'tools',
       taskKey: 'tools',
       label: 'Connect your repos',
-      completed: onboardingState?.connectedTools ?? false,
+      completed: onboardingState?.completedStep1 ?? false,
       tourId: 'connect-tools',
       href: activeOrgSlug ? `/${activeOrgSlug}/integrations` : '/integrations',
     },
@@ -178,7 +178,7 @@ export function GettingStartedFloat() {
       id: 'payouts',
       taskKey: 'payouts',
       label: 'Start receiving payouts',
-      completed: onboardingState?.setupPayouts ?? false,
+      completed: onboardingState?.completedStep2 ?? false,
       tourId: 'setup-payouts',
       href: activeOrgSlug
         ? `/${activeOrgSlug}/settings/payments?tab=settings`
@@ -188,7 +188,7 @@ export function GettingStartedFloat() {
       id: 'first-bounty',
       taskKey: 'bounty',
       label: 'Create your first bounty',
-      completed: onboardingState?.createdBounty ?? false,
+      completed: onboardingState?.completedStep3 ?? false,
       tourId: 'create-bounty',
       href: '/dashboard',
     },
@@ -196,7 +196,7 @@ export function GettingStartedFloat() {
       id: 'invite-member',
       taskKey: 'member',
       label: 'Invite a member to your team',
-      completed: onboardingState?.invitedMember ?? false,
+      completed: onboardingState?.completedStep4 ?? false,
       tourId: 'invite-member',
       href: activeOrgSlug
         ? `/${activeOrgSlug}/settings/members`

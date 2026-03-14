@@ -1,15 +1,12 @@
 'use client';
 
-import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
 import type { LinearIssue } from '@bounty/api/driver/linear-client';
 import { Button } from '@bounty/ui/components/button';
 import { ChevronDown, ChevronUp, User, ExternalLink } from 'lucide-react';
 import { CreateBountyForm } from './create-bounty-form';
 import { MarkdownContent } from '@/components/bounty/markdown-content';
 import { cn } from '@bounty/ui/lib/utils';
-import { trpc } from '@/utils/trpc';
 import { useOrgPath } from '@/hooks/use-org-path';
 
 interface LinearIssueCardProps {
@@ -63,21 +60,11 @@ export function LinearIssueCard({
   workspaceId,
 }: LinearIssueCardProps) {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const orgPath = useOrgPath();
   // Fully controlled: always use prop as source of truth
   const expanded = isExpanded;
 
-  const prefetchIssueDetail = useCallback(() => {
-    queryClient.prefetchQuery(
-      trpc.linear.getIssue.queryOptions({ issueId: issue.id })
-    );
-    queryClient.prefetchQuery(
-      trpc.linear.getBountyDataFromIssue.queryOptions({
-        linearIssueId: issue.id,
-      })
-    );
-  }, [issue.id, queryClient]);
+  // No prefetching needed — Convex actions are called on-demand in detail pages
 
   const toggleExpand = () => {
     const url = new URL(window.location.href);
@@ -181,8 +168,6 @@ export function LinearIssueCard({
                   )
                 )
               }
-              onMouseEnter={prefetchIssueDetail}
-              onFocus={prefetchIssueDetail}
               className="hidden sm:flex"
             >
               Details

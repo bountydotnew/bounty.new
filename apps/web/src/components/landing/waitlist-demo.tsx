@@ -5,7 +5,6 @@ import { Button } from '@bounty/ui/components/button';
 import { Input } from '@bounty/ui/components/input';
 import NumberFlow from '@bounty/ui/components/number-flow';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { getThumbmark } from '@thumbmarkjs/thumbmarkjs';
 import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
 import Image from 'next/image';
@@ -20,7 +19,8 @@ import type {
   WaitlistHookResult,
   WaitlistSubmissionData,
 } from '@/types/waitlist';
-import { trpc } from '@/utils/trpc';
+import { useQuery } from 'convex/react';
+import { api } from '@/utils/convex';
 import { MockBrowser } from './mockup';
 
 const formSchema = z.object({
@@ -53,12 +53,14 @@ function writeStoredWaitlist(data: WaitlistCookieData) {
 function useWaitlistSubmission(): WaitlistHookResult {
   const { celebrate } = useConfetti();
   const [success, setSuccess] = useState(false);
+  const [isPending, setIsPending] = useState(false);
   const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitInfo | null>(
     null
   );
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: async ({ email, fingerprintData }: WaitlistSubmissionData) => {
+  const mutate = async ({ email, fingerprintData }: WaitlistSubmissionData) => {
+    setIsPending(true);
+    try {
       const response = await fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -71,38 +73,37 @@ function useWaitlistSubmission(): WaitlistHookResult {
         throw new Error(data.error || 'Failed to join waitlist');
       }
 
-      return data;
-    },
-    onSuccess: (_data, variables) => {
       setSuccess(true);
 
       const cookieData: WaitlistCookieData = {
         submitted: true,
         timestamp: new Date().toISOString(),
-        email: btoa(variables.email).substring(0, 16),
+        email: btoa(email).substring(0, 16),
       };
       writeStoredWaitlist(cookieData);
 
       celebrate();
       toast.success("You're on the list! 🎉");
-    },
-    onError: (error: Error) => {
-      if (error.message.includes('Must be logged in to join waitlist')) {
+    } catch (error: unknown) {
+      const err = error as Error;
+      if (err.message.includes('Must be logged in to join waitlist')) {
         authClient.signIn.social({
           provider: 'github',
           callbackURL: '/',
         });
-      } else if (error.message.includes('Rate limit exceeded')) {
+      } else if (err.message.includes('Rate limit exceeded')) {
         toast.error('Too many attempts. Please try again later.');
-      } else if (error.message.includes('Invalid device fingerprint')) {
+      } else if (err.message.includes('Invalid device fingerprint')) {
         toast.error(
           'Security validation failed. Please refresh and try again.'
         );
       } else {
-        toast.error(error.message || 'Something went wrong. Please try again.');
+        toast.error(err.message || 'Something went wrong. Please try again.');
       }
-    },
-  });
+    } finally {
+      setIsPending(false);
+    }
+  };
 
   return { mutate, isPending, success, setSuccess, rateLimitInfo };
 }
@@ -164,12 +165,11 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
   const isFormDisabled =
     waitlistSubmission.isPending || fingerprint.loading || !fingerprint.data;
 
-  const waitlistCountQuery = useQuery({
-    ...trpc.earlyAccess.getWaitlistCount.queryOptions(),
-    retry: 2,
-    retryDelay: 1000,
-  });
-  const waitlistCount = waitlistCountQuery.data?.count ?? 0;
+  const waitlistCountData = useQuery(
+    api.functions.earlyAccess.getWaitlistCount,
+    {}
+  );
+  const waitlistCount = waitlistCountData?.count ?? 0;
 
   return (
     <div className="h-full bg-background overflow-auto">
@@ -241,7 +241,9 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                 className={compact ? 'mb-3' : 'mb-6'}
                 onSubmit={handleSubmit(joinWaitlist)}
               >
-                <div className={`flex ${compact ? 'flex-col gap-2' : 'flex-col sm:flex-row gap-3'}`}>
+                <div
+                  className={`flex ${compact ? 'flex-col gap-2' : 'flex-col sm:flex-row gap-3'}`}
+                >
                   <div className="flex-1">
                     <Input
                       className="flex-1 border border-border-default text-foreground placeholder:text-text-muted"

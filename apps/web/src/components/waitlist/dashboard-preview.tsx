@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { trpc, trpcClient } from '@/utils/trpc';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/utils/convex';
 import { useSession } from '@/context/session-context';
 import { BountyForm } from './bounty-form';
 import { formatDateLong, formatPriceString } from '@bounty/ui/lib/utils';
@@ -19,33 +19,17 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
   const [entry, setEntry] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [hasAutoSaved, setHasAutoSaved] = useState(false);
-  const queryClient = useQueryClient();
   const { session } = useSession();
 
-  const { data, isLoading } = useQuery({
-    ...trpc.earlyAccess.getWaitlistEntry.queryOptions({ entryId }),
+  const data = useQuery(api.functions.earlyAccess.getWaitlistEntry, {
+    entryId,
   });
 
-  const updateMutation = useMutation({
-    mutationFn: async (input: {
-      entryId: string;
-      bountyTitle?: string;
-      bountyDescription?: string;
-      bountyAmount?: string;
-      bountyDeadline?: string;
-    }) => {
-      return await trpcClient.earlyAccess.updateBountyDraft.mutate(input);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [
-          ['earlyAccess', 'getWaitlistEntry'],
-          { input: { entryId }, type: 'query' },
-        ],
-      });
-      setIsEditing(false);
-    },
-  });
+  const updateBountyDraft = useMutation(
+    api.functions.earlyAccess.updateBountyDraft
+  );
+
+  const isLoading = data === undefined;
 
   useEffect(() => {
     if (data?.success && data.data) {
@@ -73,7 +57,7 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
           const draft = JSON.parse(stored);
           if (draft.title || draft.description || draft.amount) {
             // Auto-save draft to database
-            await updateMutation.mutateAsync({
+            await updateBountyDraft({
               entryId,
               bountyTitle: draft.title,
               bountyDescription: draft.description,
@@ -93,7 +77,7 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
 
     autoSaveDraft();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entry, isLoading, entryId, hasAutoSaved, updateMutation.mutateAsync]);
+  }, [entry, isLoading, entryId, hasAutoSaved, updateBountyDraft]);
 
   if (isLoading || !entry) {
     return (
@@ -123,7 +107,8 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
         </h2>
         <p className="text-text-tertiary text-base">
           Your bounty draft is saved. We'll notify you at{' '}
-          <span className="text-foreground">{email}</span> when bounty.new launches.
+          <span className="text-foreground">{email}</span> when bounty.new
+          launches.
         </p>
       </div>
 
@@ -147,13 +132,14 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
             }
             entryId={entryId}
             onSubmit={async (data) => {
-              await updateMutation.mutateAsync({
+              await updateBountyDraft({
                 entryId,
                 bountyTitle: data.title,
                 bountyDescription: data.description,
                 bountyAmount: data.amount,
                 bountyDeadline: data.deadline,
               });
+              setIsEditing(false);
             }}
             onCancel={() => setIsEditing(false)}
           />
@@ -226,7 +212,7 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
           <BountyForm
             entryId={entryId}
             onSubmit={async (data) => {
-              await updateMutation.mutateAsync({
+              await updateBountyDraft({
                 entryId,
                 bountyTitle: data.title,
                 bountyDescription: data.description,

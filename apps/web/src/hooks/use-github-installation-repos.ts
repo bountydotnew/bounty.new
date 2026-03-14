@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState, useEffect, useRef } from 'react';
-import { trpc, trpcClient } from '@/utils/trpc';
+import { useQuery, useAction } from 'convex/react';
+import { api } from '@/utils/convex';
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 
 interface InstallationRepos {
   installationId: number;
@@ -12,75 +12,96 @@ interface InstallationRepos {
 }
 
 export function useGitHubInstallationRepositories() {
-  // Get all installations for the user
-  const { data: installationsData, isLoading: installationsLoading } = useQuery(
-    trpc.githubInstallation.getInstallations.queryOptions()
+  // Get all installations for the user (reactive query)
+  const installationsData = useQuery(
+    api.functions.githubInstallation.getInstallations,
+    {}
   );
+  const installationsLoading = installationsData === undefined;
 
   const installations = installationsData?.installations ?? [];
 
-  // Fetch repos for each installation in parallel
-  const reposQueries = useQuery({
-    enabled: installations.length > 0,
-    staleTime: 120_000,
-    queryKey: ['github-installation-all-repos', installations.map((i) => i.id).sort()],
-    queryFn: async () => {
-      if (installations.length === 0) {
-        return {};
-      }
+  // Action to fetch repos from GitHub API
+  const getRepositories = useAction(
+    api.functions.githubInstallation.getRepositories
+  );
 
-      // Fetch repos for all installations in parallel
-      const results = await Promise.allSettled(
-        installations.map((installation) =>
-          trpcClient.githubInstallation.getRepositories.query({ installationId: installation.id })
-        )
-      );
+  // Local state to hold fetched repos
+  const [reposByInstallation, setReposByInstallation] = useState<
+    Record<number, string[]>
+  >({});
+  const [reposLoading, setReposLoading] = useState(false);
 
-      // Group results by installation
-      const reposByInstallation: Record<number, string[]> = {};
+  // Track which installation IDs we've fetched for to avoid re-fetching
+  const fetchedForRef = useRef<string>('');
+
+  // Fetch repos for each installation when installations change
+  useEffect(() => {
+    if (installations.length === 0) return;
+
+    const installationIdsKey = installations
+      .map((i: any) => i.id)
+      .sort()
+      .join(',');
+
+    // Skip if we already fetched for these installations
+    if (fetchedForRef.current === installationIdsKey) return;
+    fetchedForRef.current = installationIdsKey;
+
+    setReposLoading(true);
+
+    Promise.allSettled(
+      installations.map((installation: any) =>
+        getRepositories({ installationId: installation.id })
+      )
+    ).then((results) => {
+      const newReposByInstallation: Record<number, string[]> = {};
       results.forEach((result, index) => {
-        const installation = installations[index];
+        const installation = installations[index] as any;
         if (result.status === 'fulfilled' && result.value.success) {
-          reposByInstallation[installation.id] = result.value.repositories.map(
-            (r: { fullName: string }) => r.fullName
-          );
+          newReposByInstallation[installation.id] =
+            result.value.repositories.map(
+              (r: { fullName: string }) => r.fullName
+            );
         } else {
-          reposByInstallation[installation.id] = [];
+          newReposByInstallation[installation.id] = [];
         }
       });
+      setReposByInstallation(newReposByInstallation);
+      setReposLoading(false);
+    });
+  }, [installations, getRepositories]);
 
-      return reposByInstallation;
-    },
-  });
+  const hasReposData = Object.keys(reposByInstallation).length > 0;
 
   // Build InstallationRepos array, with default installation first
   const installationRepos: InstallationRepos[] = useMemo(() => {
-    const reposData = reposQueries.data ?? {};
-
-    const installationsWithRepos = installations.map((installation) => ({
+    const installationsWithRepos = installations.map((installation: any) => ({
       installationId: installation.id,
       accountLogin: installation.accountLogin,
       accountType: installation.accountType,
-      repositories: reposData[installation.id] ?? [],
-      loading: reposQueries.isLoading || !reposQueries.data,
+      repositories: reposByInstallation[installation.id] ?? [],
+      loading: reposLoading || !hasReposData,
       isDefault: installation.isDefault ?? false,
     }));
 
     // Sort: default installation first, then by account login
-    return installationsWithRepos.sort((a, b) => {
-      if (a.isDefault && !b.isDefault) return -1;
-      if (!a.isDefault && b.isDefault) return 1;
-      return (a.accountLogin ?? '').localeCompare(b.accountLogin ?? '');
-    });
-  }, [installations, reposQueries.data, reposQueries.isLoading]);
+    return installationsWithRepos.sort(
+      (a: InstallationRepos, b: InstallationRepos) => {
+        if (a.isDefault && !b.isDefault) return -1;
+        if (!a.isDefault && b.isDefault) return 1;
+        return (a.accountLogin ?? '').localeCompare(b.accountLogin ?? '');
+      }
+    );
+  }, [installations, reposByInstallation, reposLoading, hasReposData]);
 
   // Flatten all repositories for backward compatibility
   // Repositories from default installation come first
   const allRepositories = useMemo(() => {
-    if (!reposQueries.data) return [];
+    if (!hasReposData) return [];
     // Return repos in installation order (default first)
     return installationRepos.flatMap((install) => install.repositories);
-  }, [reposQueries.data, installationRepos]);
+  }, [hasReposData, installationRepos]);
 
   const [repoSearchQuery, setRepoSearchQuery] = useState('');
   const [selectedRepository, setSelectedRepository] = useState<string>('');
@@ -91,7 +112,9 @@ export function useGitHubInstallationRepositories() {
       return allRepositories;
     }
     const query = repoSearchQuery.toLowerCase();
-    return allRepositories.filter((repo: string) => repo.toLowerCase().includes(query));
+    return allRepositories.filter((repo: string) =>
+      repo.toLowerCase().includes(query)
+    );
   }, [allRepositories, repoSearchQuery]);
 
   // Filter installation repos based on search query
@@ -115,30 +138,32 @@ export function useGitHubInstallationRepositories() {
       return installations;
     }
     const query = accountSearchQuery.toLowerCase();
-    return installations.filter((inst) =>
+    return installations.filter((inst: any) =>
       inst.accountLogin?.toLowerCase().includes(query)
     );
   }, [installations, accountSearchQuery]);
 
   // Set default repository when repos are loaded
   useEffect(() => {
-    if (
-      allRepositories.length > 0 &&
-      !selectedRepository &&
-      !reposQueries.isLoading
-    ) {
+    if (allRepositories.length > 0 && !selectedRepository && !reposLoading) {
       setSelectedRepository(allRepositories[0]);
     }
-  }, [allRepositories, selectedRepository, reposQueries.isLoading]);
+  }, [allRepositories, selectedRepository, reposLoading]);
 
   // Reset selected repository when repositories change
   const prevRepositoriesRef = useRef<string[]>([]);
   useEffect(() => {
     const reposChanged =
       prevRepositoriesRef.current.length !== allRepositories.length ||
-      prevRepositoriesRef.current.some((repo, i) => repo !== allRepositories[i]);
+      prevRepositoriesRef.current.some(
+        (repo, i) => repo !== allRepositories[i]
+      );
 
-    if (reposChanged && selectedRepository && !allRepositories.includes(selectedRepository)) {
+    if (
+      reposChanged &&
+      selectedRepository &&
+      !allRepositories.includes(selectedRepository)
+    ) {
       setSelectedRepository('');
     }
 
@@ -153,7 +178,7 @@ export function useGitHubInstallationRepositories() {
     installations,
     filteredInstallations,
     installationsLoading,
-    reposLoading: reposQueries.isLoading || installationsLoading,
+    reposLoading: reposLoading || installationsLoading,
     accountSearchQuery,
     setAccountSearchQuery,
     repoSearchQuery,

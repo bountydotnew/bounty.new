@@ -1,11 +1,11 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from 'convex/react';
 import { useMemo, useState } from 'react';
 import { StandardBountyCard } from '@/components/bounty/bounty-card';
 import { BookmarksEmpty } from '@/components/empty-states/bookmarks-empty';
 import type { Bounty } from '@/types/dashboard';
-import { trpc } from '@/utils/trpc';
+import { api } from '@/utils/convex';
 
 const SKELETON_KEYS = [
   'bookmark-skeleton-1',
@@ -16,9 +16,11 @@ const SKELETON_KEYS = [
 export function BookmarksContent() {
   const [page, setPage] = useState(1);
   const limit = 20;
-  const { data, isLoading } = useQuery(
-    trpc.bounties.listBookmarkedBounties.queryOptions({ page, limit })
-  );
+  const data = useQuery(api.functions.bounties.listBookmarkedBounties, {
+    page,
+    limit,
+  });
+  const isLoading = data === undefined;
 
   const items = useMemo(() => data?.data ?? [], [data]);
   const totalPages = data?.pagination?.totalPages ?? 1;
@@ -58,7 +60,7 @@ export function BookmarksContent() {
         return (
           <div className="space-y-3">
             {items.map((bounty) => (
-              <StandardBountyCard bounty={bounty as Bounty} key={bounty.id} />
+              <StandardBountyCard bounty={bounty as Bounty} key={bounty._id} />
             ))}
           </div>
         );

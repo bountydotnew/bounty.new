@@ -1,161 +1,106 @@
 'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from 'convex/react';
 import { useCallback, useEffect, useRef } from 'react';
 import { toast } from '@/context/toast';
 import type { NotificationItem } from '@/types/notifications';
-import { trpc, trpcClient } from '@/utils/trpc';
-import { useRealtime } from '@upstash/realtime/client';
-import type { RealtimeEvents, RealtimeSchema } from '@bounty/types/realtime';
+import { api } from '@/utils/convex';
 import { showBountyCommentToast } from '@bounty/ui/components/toast/bounty-comment-toast';
 import { useSession } from '@/context/session-context';
 
 export const useNotifications = () => {
-  const { isAuthenticated, isPending, session } = useSession();
+  const { isAuthenticated, isPending } = useSession();
   const previousNotificationIdsRef = useRef<Set<string>>(new Set());
 
-  const notificationsQuery = useQuery({
-    ...trpc.notifications.getAll.queryOptions({ limit: 50 }),
-    enabled: isAuthenticated && !isPending,
-    staleTime: 1 * 60 * 1000, // 1 minute - notifications can change frequently
-  });
-
-  const unreadCountQuery = useQuery({
-    ...trpc.notifications.getUnreadCount.queryOptions(),
-    enabled: isAuthenticated && !isPending,
-    staleTime: 1 * 60 * 1000, // 1 minute
-  });
-  const unreadCount = Number(unreadCountQuery.data ?? 0);
-
-  // Initialize previous notification IDs on first load to avoid showing toasts for existing notifications
-  useEffect(() => {
-    if (notificationsQuery.data && previousNotificationIdsRef.current.size === 0) {
-      previousNotificationIdsRef.current = new Set(
-        notificationsQuery.data.map((n) => n.id)
-      );
-    }
-  }, [notificationsQuery.data]);
-
-  const markAsReadMutation = useMutation(
-    trpc.notifications.markAsRead.mutationOptions({
-      onSuccess: () => {
-        notificationsQuery.refetch();
-        unreadCountQuery.refetch();
-      },
-      onError: () => toast.error('Failed to mark as read'),
-    })
+  // Convex reactive queries — automatically update when data changes.
+  // No SSE/Upstash Realtime needed. When a notification is inserted
+  // server-side, these queries re-run and the component re-renders.
+  const notifications = useQuery(
+    api.functions.notifications.getAll,
+    isAuthenticated && !isPending ? { limit: 50 } : 'skip'
   );
 
+  const unreadCountResult = useQuery(
+    api.functions.notifications.getUnreadCount,
+    isAuthenticated && !isPending ? {} : 'skip'
+  );
+  const unreadCount = unreadCountResult?.count ?? 0;
+
+  // Show toasts for new notifications that appear via reactive updates
+  useEffect(() => {
+    if (!notifications) return;
+
+    if (previousNotificationIdsRef.current.size === 0) {
+      // First load — seed the set without showing toasts
+      previousNotificationIdsRef.current = new Set(
+        notifications.map((n: any) => n._id)
+      );
+      return;
+    }
+
+    // Find new notifications
+    const newNotifications = notifications.filter(
+      (n: any) => !(previousNotificationIdsRef.current.has(n._id) || n.read)
+    );
+
+    for (const notification of newNotifications) {
+      const data = (notification.data || {}) as {
+        userName?: string;
+        userImage?: string;
+        [key: string]: unknown;
+      };
+
+      const user = data.userName
+        ? { name: data.userName, image: data.userImage || null }
+        : { name: 'Someone', image: null };
+
+      showBountyCommentToast({
+        user,
+        timestamp: notification._creationTime,
+        onMarkAsRead: () => markAsRead(notification._id),
+      });
+    }
+
+    // Update the tracking set
+    previousNotificationIdsRef.current = new Set(
+      notifications.map((n: any) => n._id)
+    );
+  }, [notifications]);
+
+  const markAsReadMutation = useMutation(
+    api.functions.notifications.markAsRead
+  );
   const markAllAsReadMutation = useMutation(
-    trpc.notifications.markAllAsRead.mutationOptions({
-      onSuccess: () => {
-        notificationsQuery.refetch();
-        unreadCountQuery.refetch();
-        toast.success('All notifications marked as read');
-      },
-      onError: () => toast.error('Failed to mark all as read'),
-    })
+    api.functions.notifications.markAllAsRead
   );
 
   const markAsRead = useCallback(
-    (id: string) => markAsReadMutation.mutate({ id }),
+    (id: string) => {
+      markAsReadMutation({ id: id as any }).catch(() =>
+        toast.error('Failed to mark as read')
+      );
+    },
     [markAsReadMutation]
   );
 
-  useRealtime<RealtimeSchema, 'notifications.refresh'>({
-    enabled: isAuthenticated && !isPending,
-    onData: (payload: { data: RealtimeEvents['notifications']['refresh'] }) => {
-      if (payload.data.userId === session?.user?.id) {
-        // Fetch unread notifications to find new ones
-        trpcClient.notifications.getAll
-          .query({
-            limit: 10,
-            offset: 0,
-            unreadOnly: true,
-          })
-          .then((unreadNotifications) => {
-            // Find new notifications that weren't in the previous set
-            const newNotifications = unreadNotifications.filter(
-              (notification) => !previousNotificationIdsRef.current.has(notification.id)
-            );
-
-            // Show toast for each new notification
-            newNotifications.forEach((notification) => {
-              // Extract user info from notification data
-              const notificationData = (notification.data || {}) as {
-                commentId?: string;
-                userId?: string;
-                userName?: string;
-                userImage?: string;
-                [key: string]: unknown;
-              };
-
-              // Get user info from notification data, with fallback for backward compatibility
-              const user = notificationData.userName
-                ? {
-                    name: notificationData.userName,
-                    image: notificationData.userImage || null,
-                  }
-                : {
-                    name: 'Someone',
-                    image: null,
-                  };
-
-              showBountyCommentToast({
-                user,
-                timestamp: notification.createdAt,
-                onMarkAsRead: () => markAsRead(notification.id),
-              });
-            });
-
-            // Update the previous notification IDs set by merging with existing
-            previousNotificationIdsRef.current = new Set([
-              ...previousNotificationIdsRef.current,
-              ...unreadNotifications.map((n) => n.id),
-            ]);
-          })
-          .catch(() => {
-            // Silently fail - we'll still refetch below
-          });
-
-        // Refetch queries to update UI
-        notificationsQuery.refetch();
-        unreadCountQuery.refetch();
-      }
-    },
-  });
-
   const markAllAsRead = useCallback(() => {
     if (unreadCount > 0) {
-      markAllAsReadMutation.mutate();
+      markAllAsReadMutation({})
+        .then(() => toast.success('All notifications marked as read'))
+        .catch(() => toast.error('Failed to mark all as read'));
     }
   }, [markAllAsReadMutation, unreadCount]);
 
-  const refetch = useCallback(() => {
-    notificationsQuery.refetch();
-    unreadCountQuery.refetch();
-  }, [notificationsQuery, unreadCountQuery]);
-
-  useEffect(() => {
-    const onVis = () => {
-      if (document.visibilityState === 'visible') {
-        refetch();
-      }
-    };
-    document.addEventListener('visibilitychange', onVis);
-    return () => document.removeEventListener('visibilitychange', onVis);
-  }, [refetch]);
-
   return {
-    notifications: (notificationsQuery.data ?? []) as NotificationItem[],
+    notifications: (notifications ?? []) as NotificationItem[],
     unreadCount,
-    isLoading: notificationsQuery.isLoading,
-    hasError: notificationsQuery.isError || unreadCountQuery.isError,
-    error: notificationsQuery.error || unreadCountQuery.error,
+    isLoading: notifications === undefined,
+    hasError: false, // Convex handles errors via ErrorBoundary
+    error: null,
     markAsRead,
     markAllAsRead,
-    refetch,
-    isMarkingAsRead: markAsReadMutation.isPending,
-    isMarkingAllAsRead: markAllAsReadMutation.isPending,
+    refetch: () => {}, // No-op: Convex queries are reactive
+    isMarkingAsRead: false,
+    isMarkingAllAsRead: false,
   } as const;
 };

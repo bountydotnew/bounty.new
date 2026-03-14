@@ -1,11 +1,11 @@
 'use client';
 
 import { useMemo, type ReactNode, useState, useCallback } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from 'convex/react';
 import { useSession } from '@/context/session-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
-import { trpc, trpcClient } from '@/utils/trpc';
+import { api } from '@/utils/convex';
 import {
   BountyCardContext,
   type BountyCardContextValue,
@@ -28,15 +28,13 @@ function useBountyCardQueries(bounty: Bounty, userId: string | undefined) {
   const canPin = userId ? bounty.creator.id === userId : false;
   const canRequestCancellation = isOwner && isFunded;
 
-  const cancellationStatusQuery = useQuery({
-    ...trpc.bounties.getCancellationStatus.queryOptions({
-      bountyId: bounty.id,
-    }),
-    enabled: canRequestCancellation,
-  });
+  const cancellationStatusData = useQuery(
+    api.functions.bounties.getCancellationStatus,
+    canRequestCancellation ? { bountyId: bounty.id } : 'skip'
+  );
 
   const hasPendingCancellation =
-    cancellationStatusQuery.data?.hasPendingRequest ?? false;
+    cancellationStatusData?.hasPendingRequest ?? false;
 
   const canDelete =
     isOwner &&
@@ -65,106 +63,48 @@ function useBountyCardMutations(
   setCancellationReason: (reason: string) => void,
   cancellationReason: string
 ) {
-  const queryClient = useQueryClient();
+  const toggleBountyPin = useMutation(api.functions.bounties.toggleBountyPin);
+  const deleteBountyMut = useMutation(api.functions.bounties.deleteBounty);
+  const requestCancellationMut = useMutation(
+    api.functions.bounties.requestCancellation
+  );
+  const cancelCancellationRequestMut = useMutation(
+    api.functions.bounties.cancelCancellationRequest
+  );
 
-  const togglePinMutation = useMutation({
-    mutationFn: async (input: { bountyId: string }) => {
-      return await trpcClient.bounties.toggleBountyPin.mutate(input);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [['bounties', 'getHighlights']],
-      });
-      queryClient.invalidateQueries({
-        queryKey: [['bounties', 'getBountiesByUserId']],
-      });
-      queryClient.invalidateQueries({
-        queryKey: [['bounties', 'getBounties']],
-      });
-    },
-  });
+  const [isTogglePinPending, setIsTogglePinPending] = useState(false);
+  const [isDeletePending, setIsDeletePending] = useState(false);
+  const [isRequestCancellationPending, setIsRequestCancellationPending] =
+    useState(false);
+  const [
+    isCancelCancellationRequestPending,
+    setIsCancelCancellationRequestPending,
+  ] = useState(false);
 
-  const isBountyQuery = (query: { queryKey: unknown }) => {
-    const key = query.queryKey;
-    if (Array.isArray(key) && key.length > 0) {
-      const first = key[0];
-      if (Array.isArray(first) && first.length > 0 && first[0] === 'bounties') {
-        return true;
-      }
+  const togglePin = useCallback(async () => {
+    if (!bounty.creator.id || isTogglePinPending) return;
+    setIsTogglePinPending(true);
+    try {
+      await toggleBountyPin({ bountyId: bounty.id });
+    } finally {
+      setIsTogglePinPending(false);
     }
-    return false;
-  };
+  }, [bounty.id, bounty.creator.id, isTogglePinPending, toggleBountyPin]);
 
-  const deleteBountyMutation = useMutation({
-    mutationFn: async () => {
-      return await trpcClient.bounties.deleteBounty.mutate({ id: bounty.id });
-    },
-    onMutate: async () => {
-      await queryClient.cancelQueries({ predicate: isBountyQuery });
+  const confirmDelete = useCallback(async () => {
+    if (!canDelete || isDeletePending) return;
 
-      const previousData = new Map<unknown, unknown>();
-
-      const queries = queryClient.getQueriesData({ predicate: isBountyQuery });
-      for (const [queryKey, data] of queries) {
-        previousData.set(queryKey, data);
-      }
-
-      queryClient.setQueriesData(
-        { predicate: isBountyQuery },
-        (oldData: unknown) => {
-          if (!oldData) {
-            return oldData;
-          }
-
-          if (
-            typeof oldData === 'object' &&
-            oldData !== null &&
-            'data' in oldData &&
-            Array.isArray((oldData as { data: unknown }).data)
-          ) {
-            const response = oldData as {
-              success?: boolean;
-              data: { id: string }[];
-              pagination?: { total?: number };
-            };
-            const filtered = response.data.filter((b) => b.id !== bounty.id);
-            return {
-              ...response,
-              data: filtered,
-              pagination: response.pagination
-                ? {
-                    ...response.pagination,
-                    total: Math.max(0, (response.pagination.total ?? 0) - 1),
-                  }
-                : undefined,
-            };
-          }
-
-          if (Array.isArray(oldData)) {
-            return oldData.filter((b: { id?: string }) => b?.id !== bounty.id);
-          }
-
-          if (
-            typeof oldData === 'object' &&
-            oldData !== null &&
-            'id' in oldData
-          ) {
-            const data = oldData as { id: string };
-            if (data.id === bounty.id) {
-              return null;
-            }
-          }
-
-          return oldData;
-        }
-      );
-
+    if (onDelete) {
+      onDelete();
       setShowDeleteDialog(false);
+      return;
+    }
 
-      return { previousData };
-    },
-    onSuccess: () => {
+    setIsDeletePending(true);
+    try {
+      await deleteBountyMut({ id: bounty.id });
       toast.success('Bounty deleted');
+      setShowDeleteDialog(false);
 
       if (
         typeof window !== 'undefined' &&
@@ -174,105 +114,80 @@ function useBountyCardMutations(
           window.location.href = '/dashboard';
         }, 500);
       }
-    },
-    onError: (error: Error, _variables, context) => {
-      toast.error(`Failed to delete bounty: ${error.message}`);
-      if (context?.previousData) {
-        for (const [queryKey, data] of context.previousData) {
-          queryClient.setQueryData(queryKey as unknown[], data);
-        }
-      }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ predicate: isBountyQuery });
-    },
-  });
-
-  const requestCancellationMutation = useMutation({
-    mutationFn: async (input: { bountyId: string; reason?: string }) => {
-      return await trpcClient.bounties.requestCancellation.mutate(input);
-    },
-    onSuccess: (result) => {
-      toast.success(result.message || 'Cancellation request submitted');
-      setShowCancellationDialog(false);
-      setCancellationReason('');
-      queryClient.invalidateQueries({
-        queryKey: [['bounties', 'getCancellationStatus']],
-      });
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to request cancellation: ${error.message}`);
-    },
-  });
-
-  const cancelCancellationRequestMutation = useMutation({
-    mutationFn: async (input: { bountyId: string }) => {
-      return await trpcClient.bounties.cancelCancellationRequest.mutate(input);
-    },
-    onSuccess: (result) => {
-      toast.success(result.message || 'Cancellation request withdrawn');
-      queryClient.invalidateQueries({
-        queryKey: [['bounties', 'getCancellationStatus']],
-      });
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to cancel cancellation request: ${error.message}`);
-    },
-  });
-
-  const confirmDelete = useCallback(() => {
-    if (!canDelete || deleteBountyMutation.isPending) {
-      return;
+    } catch (error) {
+      toast.error(`Failed to delete bounty: ${(error as Error).message}`);
+    } finally {
+      setIsDeletePending(false);
     }
-
-    if (onDelete) {
-      onDelete();
-      setShowDeleteDialog(false);
-      return;
-    }
-
-    deleteBountyMutation.mutate();
   }, [
     canDelete,
-    deleteBountyMutation.isPending,
-    deleteBountyMutation,
+    isDeletePending,
+    deleteBountyMut,
+    bounty.id,
     onDelete,
     setShowDeleteDialog,
   ]);
 
-  const confirmCancellation = useCallback(() => {
+  const confirmCancellation = useCallback(async () => {
     if (
       !canRequestCancellation ||
       hasPendingCancellation ||
-      requestCancellationMutation.isPending
-    ) {
+      isRequestCancellationPending
+    )
       return;
+
+    setIsRequestCancellationPending(true);
+    try {
+      const result = await requestCancellationMut({
+        bountyId: bounty.id,
+        reason: cancellationReason || undefined,
+      });
+      toast.success(result.message || 'Cancellation request submitted');
+      setShowCancellationDialog(false);
+      setCancellationReason('');
+    } catch (error) {
+      toast.error(
+        `Failed to request cancellation: ${(error as Error).message}`
+      );
+    } finally {
+      setIsRequestCancellationPending(false);
     }
-    requestCancellationMutation.mutate({
-      bountyId: bounty.id,
-      reason: cancellationReason || undefined,
-    });
   }, [
     canRequestCancellation,
     hasPendingCancellation,
-    requestCancellationMutation.isPending,
-    requestCancellationMutation,
+    isRequestCancellationPending,
+    requestCancellationMut,
     bounty.id,
     cancellationReason,
+    setShowCancellationDialog,
+    setCancellationReason,
   ]);
 
-  const cancelCancellationRequest = useCallback(() => {
-    cancelCancellationRequestMutation.mutate({ bountyId: bounty.id });
-  }, [cancelCancellationRequestMutation, bounty.id]);
+  const cancelCancellationRequest = useCallback(async () => {
+    setIsCancelCancellationRequestPending(true);
+    try {
+      const result = await cancelCancellationRequestMut({
+        bountyId: bounty.id,
+      });
+      toast.success(result.message || 'Cancellation request withdrawn');
+    } catch (error) {
+      toast.error(
+        `Failed to cancel cancellation request: ${(error as Error).message}`
+      );
+    } finally {
+      setIsCancelCancellationRequestPending(false);
+    }
+  }, [cancelCancellationRequestMut, bounty.id]);
 
   return {
-    togglePinMutation,
-    deleteBountyMutation,
-    requestCancellationMutation,
-    cancelCancellationRequestMutation,
+    togglePin,
     confirmDelete,
     confirmCancellation,
     cancelCancellationRequest,
+    isTogglePinPending,
+    isDeletePending,
+    isRequestCancellationPending,
+    isCancelCancellationRequestPending,
   };
 }
 
@@ -422,7 +337,6 @@ export function BountyCardProvider({
   const router = useRouter();
   const pathname = usePathname();
   const { session } = useSession();
-  const queryClient = useQueryClient();
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showCancellationDialog, setShowCancellationDialog] = useState(false);
@@ -440,13 +354,14 @@ export function BountyCardProvider({
   } = useBountyCardQueries(bounty, session?.user?.id);
 
   const {
-    togglePinMutation,
-    deleteBountyMutation,
-    requestCancellationMutation,
-    cancelCancellationRequestMutation,
+    togglePin,
     confirmDelete,
     confirmCancellation,
     cancelCancellationRequest,
+    isTogglePinPending,
+    isDeletePending,
+    isRequestCancellationPending,
+    isCancelCancellationRequestPending,
   } = useBountyCardMutations(
     bounty,
     canDelete,
@@ -482,19 +397,9 @@ export function BountyCardProvider({
   }, [bounty.id, pathname, router]);
 
   const prefetchBountyDetail = useCallback(() => {
-    queryClient.prefetchQuery(
-      trpc.bounties.getBountyDetail.queryOptions({ id: bounty.id })
-    );
-    queryClient.prefetchQuery(
-      trpc.bounties.getBountyVotes.queryOptions({ bountyId: bounty.id })
-    );
-  }, [bounty.id, queryClient]);
-
-  const togglePin = useCallback(() => {
-    if (canPin && !togglePinMutation.isPending) {
-      togglePinMutation.mutate({ bountyId: bounty.id });
-    }
-  }, [canPin, togglePinMutation.isPending, togglePinMutation, bounty.id]);
+    // Convex queries are reactive — no manual prefetching needed.
+    // The data will be fetched when the detail page mounts.
+  }, []);
 
   const openDeleteDialog = useCallback(() => {
     if (canDelete) {
@@ -532,11 +437,10 @@ export function BountyCardProvider({
       repoDisplay,
       issueDisplay,
       linearDisplay,
-      isTogglePinPending: togglePinMutation.isPending,
-      isDeletePending: deleteBountyMutation.isPending,
-      isRequestCancellationPending: requestCancellationMutation.isPending,
-      isCancelCancellationRequestPending:
-        cancelCancellationRequestMutation.isPending,
+      isTogglePinPending,
+      isDeletePending,
+      isRequestCancellationPending,
+      isCancelCancellationRequestPending,
     }),
     [
       bounty,
@@ -557,10 +461,10 @@ export function BountyCardProvider({
       repoDisplay,
       issueDisplay,
       linearDisplay,
-      togglePinMutation.isPending,
-      deleteBountyMutation.isPending,
-      requestCancellationMutation.isPending,
-      cancelCancellationRequestMutation.isPending,
+      isTogglePinPending,
+      isDeletePending,
+      isRequestCancellationPending,
+      isCancelCancellationRequestPending,
     ]
   );
 

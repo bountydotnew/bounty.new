@@ -1,0 +1,26 @@
+{
+  /* This TypeScript project config is used by Convex for type-checking
+   * the convex/ directory. The _generated files need specific settings. */
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ES2021", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "noImplicitAny": false,
+    "allowImportingTsExtensions": true,
+    "types": [],
+    "paths": {
+      "convex/*": ["./*"]
+    }
+  },
+  "include": ["./**/*.ts", "./**/*.tsx"],
+  "exclude": ["node_modules"]
+}

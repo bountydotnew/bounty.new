@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useAction } from 'convex/react';
+import { api } from '@/utils/convex';
 import { useCallback, useMemo } from 'react';
-import { trpc, trpcClient } from '@/utils/trpc';
 import { authClient } from '@bounty/auth/client';
 import { toast } from 'sonner';
 import { useOrgSlug } from '@/context/org-slug-context';
@@ -78,91 +78,50 @@ interface IntegrationsActions {
 }
 
 export function useIntegrations(): IntegrationsState & IntegrationsActions {
-  const queryClient = useQueryClient();
   const orgSlug = useOrgSlug();
 
-  // GitHub installations queries
-  const {
-    data: githubData,
-    isLoading: githubLoading,
-    refetch: refetchGitHub,
-  } = useQuery(trpc.githubInstallation.getInstallations.queryOptions());
-  const { data: installUrlData } = useQuery(
-    trpc.githubInstallation.getInstallationUrl.queryOptions({})
+  // GitHub installations queries (reactive via Convex)
+  const githubData = useQuery(
+    api.functions.githubInstallation.getInstallations,
+    {}
+  );
+  const githubLoading = githubData === undefined;
+
+  const installUrlData = useQuery(
+    api.functions.githubInstallation.getInstallationUrl,
+    {}
   );
 
-  // Discord queries
-  const { data: discordBotInstallData } = useQuery(
-    trpc.discord.getBotInstallUrl.queryOptions()
-  );
-  const {
-    data: discordAccountData,
-    isLoading: discordLoading,
-    refetch: refetchDiscord,
-  } = useQuery(trpc.discord.getLinkedAccount.queryOptions());
-
-  // Linear queries
-  const {
-    data: linearConnectionData,
-    isLoading: linearLoading,
-    refetch: refetchLinear,
-  } = useQuery(trpc.linear.getConnectionStatus.queryOptions());
-  const { data: linearAccountStatusData } = useQuery(
-    trpc.linear.getAccountStatus.queryOptions()
+  // Discord queries (reactive via Convex)
+  const discordBotInstallData = useQuery(
+    api.functions.discord.getBotInstallUrl,
+    {}
   );
 
-  // Unlink Discord mutation
-  const unlinkDiscordMutation = useMutation({
-    mutationFn: () => trpcClient.discord.unlinkAccount.mutate(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [['discord', 'getLinkedAccount']],
-      });
-      toast.success('Discord account unlinked');
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Failed to unlink Discord');
-    },
-  });
+  const discordAccountData = useQuery(
+    api.functions.discord.getLinkedAccount,
+    {}
+  );
+  const discordLoading = discordAccountData === undefined;
 
-  // Unlink Linear mutation
-  const unlinkLinearMutation = useMutation({
-    mutationFn: (workspaceId: string) =>
-      trpcClient.linear.disconnect.mutate({ workspaceId }),
-    onSuccess: () => {
-      // Invalidate all Linear queries to immediately update UI state
-      queryClient.invalidateQueries({
-        queryKey: [['linear', 'getConnectionStatus']],
-      });
-      queryClient.invalidateQueries({
-        queryKey: [['linear', 'getAccountStatus']],
-      });
-      toast.success('Linear workspace disconnected');
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Failed to disconnect Linear');
-    },
-  });
+  // Linear queries (reactive via Convex)
+  const linearConnectionData = useQuery(
+    api.functions.linear.getConnectionStatus,
+    {}
+  );
+  const linearLoading = linearConnectionData === undefined;
 
-  // Sync Linear workspace mutation
-  const syncLinearWorkspaceMutation = useMutation({
-    mutationFn: () => trpcClient.linear.syncWorkspace.mutate(),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: [['linear', 'getConnectionStatus']],
-      });
-      queryClient.invalidateQueries({
-        queryKey: [['linear', 'getAccountStatus']],
-      });
-      // Only show success toast if sync actually succeeded
-      if (data?.success) {
-        toast.success('Linear workspace connected successfully');
-      }
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Failed to connect Linear workspace');
-    },
-  });
+  const linearAccountStatusData = useQuery(
+    api.functions.linear.getAccountStatus,
+    {}
+  );
+
+  // Convex mutations and actions
+  const unlinkAccountMutation = useMutation(
+    api.functions.discord.unlinkAccount
+  );
+  const disconnectLinearMutation = useAction(api.functions.linear.disconnect);
+  const syncWorkspaceAction = useAction(api.functions.linear.syncWorkspace);
 
   // Computed state
   const state: IntegrationsState = useMemo(
@@ -209,13 +168,10 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
     ]
   );
 
-  // Actions — individual useCallbacks so the final useMemo has stable deps
-  const refreshGitHub = useCallback(() => refetchGitHub(), [refetchGitHub]);
-  const invalidateGitHub = useCallback(() => {
-    queryClient.invalidateQueries({
-      queryKey: [['githubInstallation', 'getInstallations']],
-    });
-  }, [queryClient]);
+  // Actions
+  // Convex is reactive — refresh/invalidate are no-ops since data auto-updates
+  const refreshGitHub = useCallback(() => {}, []);
+  const invalidateGitHub = useCallback(() => {}, []);
 
   const addDiscordBot = useCallback(() => {
     if (discordBotInstallData?.url) {
@@ -231,10 +187,17 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
   }, [orgSlug]);
 
   const unlinkDiscord = useCallback(async () => {
-    await unlinkDiscordMutation.mutateAsync();
-  }, [unlinkDiscordMutation]);
+    try {
+      await unlinkAccountMutation();
+      toast.success('Discord account unlinked');
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to unlink Discord';
+      toast.error(message);
+    }
+  }, [unlinkAccountMutation]);
 
-  const refreshDiscord = useCallback(() => refetchDiscord(), [refetchDiscord]);
+  const refreshDiscord = useCallback(() => {}, []);
 
   const linkLinear = useCallback(async () => {
     await authClient.linkSocial({
@@ -245,34 +208,39 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
 
   const unlinkLinear = useCallback(
     async (workspaceId: string) => {
-      await unlinkLinearMutation.mutateAsync(workspaceId);
+      try {
+        await disconnectLinearMutation({ workspaceId });
+        toast.success('Linear workspace disconnected');
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Failed to disconnect Linear';
+        toast.error(message);
+      }
     },
-    [unlinkLinearMutation]
+    [disconnectLinearMutation]
   );
 
-  const refreshLinear = useCallback(() => refetchLinear(), [refetchLinear]);
+  const refreshLinear = useCallback(() => {}, []);
 
   const syncLinearWorkspace = useCallback(async () => {
-    await syncLinearWorkspaceMutation.mutateAsync();
-  }, [syncLinearWorkspaceMutation]);
+    try {
+      const data = await syncWorkspaceAction();
+      if (data?.success) {
+        toast.success('Linear workspace connected successfully');
+      }
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to connect Linear workspace';
+      toast.error(message);
+    }
+  }, [syncWorkspaceAction]);
 
-  const refreshAll = useCallback(() => {
-    refetchGitHub();
-    refetchDiscord();
-    refetchLinear();
-  }, [refetchGitHub, refetchDiscord, refetchLinear]);
-
-  const invalidateAll = useCallback(() => {
-    queryClient.invalidateQueries({
-      queryKey: [['githubInstallation', 'getInstallations']],
-    });
-    queryClient.invalidateQueries({
-      queryKey: [['discord', 'getLinkedAccount']],
-    });
-    queryClient.invalidateQueries({
-      queryKey: [['linear', 'getConnectionStatus']],
-    });
-  }, [queryClient]);
+  const refreshAll = useCallback(() => {}, []);
+  const invalidateAll = useCallback(() => {}, []);
 
   // Memoize the combined return value to maintain referential stability
   return useMemo(

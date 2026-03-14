@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { trpc } from '@/utils/trpc';
+import { useQuery } from 'convex/react';
+import { api } from '@/utils/convex';
 import { useSession } from '@/context/session-context';
 import { parseAsString, useQueryState } from 'nuqs';
 import {
@@ -62,34 +62,31 @@ export function BountyListProvider({ children }: BountyListProviderProps) {
     parseAsString.withDefault(DEFAULT_SORT_ORDER)
   );
 
-  // Query
-  const {
-    data: bounties,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
-    ...trpc.bounties.fetchAllBounties.queryOptions({
-      page: 1,
-      limit: 100,
-      search: search || undefined,
-      creatorId: creatorId || undefined,
-      status: status || undefined,
-      sortBy: (sortBy as SortByOption) || DEFAULT_SORT_BY,
-      sortOrder: (sortOrder as SortOrderOption) || DEFAULT_SORT_ORDER,
-    }),
-    enabled: isAuthenticated && !isSessionPending,
-    retry: false,
-  });
+  // Convex query — skip when not authenticated or session is still loading
+  const shouldQuery = isAuthenticated && !isSessionPending;
+  const bounties = useQuery(
+    api.functions.bounties.fetchAllBounties,
+    shouldQuery
+      ? {
+          page: 1,
+          limit: 100,
+          search: search || undefined,
+          creatorId: creatorId || undefined,
+          status: status || undefined,
+          sortBy: (sortBy as SortByOption) || DEFAULT_SORT_BY,
+          sortOrder: (sortOrder as SortOrderOption) || DEFAULT_SORT_ORDER,
+        }
+      : 'skip'
+  );
 
   const bountiesData = bounties?.data;
-  const queryError = error instanceof Error ? error : null;
+  const isLoading = bounties === undefined && shouldQuery;
 
   const state = useMemo(
     () => ({
       bounties: bountiesData ?? [],
       isLoading,
-      error: queryError,
+      error: null as Error | null,
       filters: {
         search: search ?? null,
         creatorId: creatorId ?? null,
@@ -98,7 +95,7 @@ export function BountyListProvider({ children }: BountyListProviderProps) {
         sortOrder: (sortOrder as SortOrderOption) ?? DEFAULT_SORT_ORDER,
       },
     }),
-    [bountiesData, isLoading, queryError, search, creatorId, status, sortBy, sortOrder]
+    [bountiesData, isLoading, search, creatorId, status, sortBy, sortOrder]
   );
 
   const actions = useMemo(
@@ -115,9 +112,12 @@ export function BountyListProvider({ children }: BountyListProviderProps) {
         setSortBy(DEFAULT_SORT_BY);
         setSortOrder(DEFAULT_SORT_ORDER);
       },
-      refetch: () => refetch(),
+      refetch: () => {
+        // Convex queries are reactive — no manual refetch needed.
+        // Changing filter state will automatically trigger a new query.
+      },
     }),
-    [setSearch, setCreatorId, setStatus, setSortBy, setSortOrder, refetch]
+    [setSearch, setCreatorId, setStatus, setSortBy, setSortOrder]
   );
 
   const meta = useMemo(
