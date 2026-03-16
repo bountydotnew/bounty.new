@@ -195,12 +195,12 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
+            <div className={`text-left ${compact ? 'py-2' : 'py-6'} animate-in fade-in duration-500`}>
               <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
+                className={`inline-flex items-center justify-center ${compact ? 'w-10 h-10 mb-3' : 'w-14 h-14 mb-5'} rounded-full bg-gradient-to-br from-brand-accent/20 to-brand-accent/10 animate-in zoom-in duration-300`}
               >
                 <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
+                  className={`${compact ? 'w-5 h-5' : 'w-7 h-7'} text-brand-accent animate-in zoom-in duration-500 delay-100`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -214,21 +214,24 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                 </svg>
               </div>
               <h2
-                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
+                className={`${compact ? 'text-lg' : 'text-2xl'} font-semibold text-foreground mb-2 tracking-tight`}
               >
-                You're on the list
+                You're on the list!
               </h2>
               <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
+                className={`${compact ? 'text-xs mb-4' : 'text-sm mb-6'} text-text-muted leading-relaxed`}
               >
-                We'll reach out when it's your turn.
+                We'll email you when it's your turn to get started.
               </p>
               <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
+                className={`inline-flex items-center gap-2 ${compact ? 'px-3 py-1.5' : 'px-4 py-2'} rounded-full bg-surface-1 border border-border-default shadow-sm animate-in slide-in-from-bottom-2 duration-500 delay-200`}
               >
-                <span className="text-xs text-text-muted">Position</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse" />
+                  <span className={`${compact ? 'text-xs' : 'text-sm'} text-text-muted font-medium`}>Position</span>
+                </div>
                 <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
+                  className={`${compact ? 'text-sm' : 'text-base'} font-semibold text-brand-accent`}
                 >
                   #{waitlistCount}
                 </span>
