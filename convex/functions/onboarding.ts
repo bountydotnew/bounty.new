@@ -5,7 +5,7 @@
  */
 import { query, mutation } from '../_generated/server';
 import { v } from 'convex/values';
-import { requireAuth } from '../lib/auth';
+import { requireAuth, getAuthenticatedUser } from '../lib/auth';
 
 /**
  * Get the user's onboarding state.
@@ -14,7 +14,8 @@ import { requireAuth } from '../lib/auth';
 export const getState = query({
   args: {},
   handler: async (ctx) => {
-    const user = await requireAuth(ctx);
+    const user = await getAuthenticatedUser(ctx);
+    if (!user) return null;
     const state = await ctx.db
       .query('onboardingState')
       .withIndex('by_userId', (q) => q.eq('userId', user._id))

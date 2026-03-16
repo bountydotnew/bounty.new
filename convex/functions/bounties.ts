@@ -26,6 +26,7 @@ import {
   requireAdmin,
   requireOrgMember,
   getAuthenticatedUser,
+  resolveUserId,
 } from '../lib/auth';
 import { toDollars, toCents, calculateTotalWithFees } from '../lib/money';
 import {
@@ -270,11 +271,35 @@ export const randomBounty = query({
  * Replaces: bounties.getBountiesByUserId (publicProcedure query)
  */
 export const getBountiesByUserId = query({
-  args: { userId: v.id('users') },
+  args: { userId: v.string() },
   handler: async (ctx, args) => {
+    // userId may be a Convex Id or a Better Auth user ID — resolve it
+    let convexUserId = args.userId;
+    try {
+      // Check if it's a valid Convex ID by trying to normalize it
+      const normalized = ctx.db.normalizeId('users', args.userId);
+      if (normalized) {
+        convexUserId = normalized;
+      } else {
+        // Not a Convex ID — look up by betterAuthUserId
+        const user = await ctx.db
+          .query('users')
+          .withIndex('by_betterAuthUserId', (q) =>
+            q.eq('betterAuthUserId', args.userId)
+          )
+          .unique();
+        if (user) convexUserId = user._id;
+        else return [];
+      }
+    } catch {
+      return [];
+    }
+
     const bounties = await ctx.db
       .query('bounties')
-      .withIndex('by_createdById', (q) => q.eq('createdById', args.userId))
+      .withIndex('by_createdById', (q) =>
+        q.eq('createdById', convexUserId as any)
+      )
       .order('desc')
       .collect();
 
@@ -406,7 +431,8 @@ export const getBountyComments = query({
 export const getCancellationStatus = query({
   args: { bountyId: v.id('bounties') },
   handler: async (ctx, args) => {
-    await requireAuth(ctx);
+    const user = await getAuthenticatedUser(ctx);
+    if (!user) return null;
 
     const request = await ctx.db
       .query('cancellationRequests')
@@ -428,7 +454,8 @@ export const listBookmarkedBounties = query({
     limit: v.optional(v.float64()),
   },
   handler: async (ctx, args) => {
-    const user = await requireAuth(ctx);
+    const user = await getAuthenticatedUser(ctx);
+    if (!user) return { bounties: [], total: 0, page: 1, limit: 20 };
     const page = args.page ?? 1;
     const limit = args.limit ?? 20;
 
@@ -1739,7 +1766,15 @@ export const fetchMyBounties = query({
     status: v.optional(bountyStatus),
   },
   handler: async (ctx, args) => {
-    const result = await requireOrgMember(ctx, args.organizationId as any);
+    const user = await getAuthenticatedUser(ctx);
+    if (!user)
+      return { bounties: [], total: 0, page: 1, limit: 20, totalPages: 0 };
+    let result;
+    try {
+      result = await requireOrgMember(ctx, args.organizationId as any);
+    } catch {
+      return { bounties: [], total: 0, page: 1, limit: 20, totalPages: 0 };
+    }
     const page = args.page ?? 1;
     const limit = args.limit ?? 20;
 
@@ -1800,7 +1835,37 @@ export const fetchMyBounties = query({
 export const getMonthlySpend = query({
   args: { organizationId: v.optional(v.id('organizations')) },
   handler: async (ctx, args) => {
-    const result = await requireOrgMember(ctx, args.organizationId as any);
+    const user = await getAuthenticatedUser(ctx);
+    if (!user)
+      return {
+        monthlySpend: 0,
+        bountyCount: 0,
+        allTimeSpend: 0,
+        allTimeBountyCount: 0,
+        periodStart: new Date(
+          Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)
+        ).toISOString(),
+        periodEnd: new Date(
+          Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth() + 1, 1)
+        ).toISOString(),
+      };
+    let result;
+    try {
+      result = await requireOrgMember(ctx, args.organizationId as any);
+    } catch {
+      return {
+        monthlySpend: 0,
+        bountyCount: 0,
+        allTimeSpend: 0,
+        allTimeBountyCount: 0,
+        periodStart: new Date(
+          Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)
+        ).toISOString(),
+        periodEnd: new Date(
+          Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth() + 1, 1)
+        ).toISOString(),
+      };
+    }
 
     const now = new Date();
     const startOfMonth = new Date(
@@ -2244,7 +2309,8 @@ export const withdrawSubmission = mutation({
 export const getBountyPaymentStatus = query({
   args: { bountyId: v.id('bounties') },
   handler: async (ctx, args) => {
-    const user = await requireAuth(ctx);
+    const user = await getAuthenticatedUser(ctx);
+    if (!user) return null;
 
     const bounty = await ctx.db.get(args.bountyId);
     if (!bounty) throw new ConvexError('BOUNTY_NOT_FOUND');
@@ -2338,11 +2404,14 @@ export const getBountyStatsMany = query({
  * Replaces: bounties.getHighlights (publicProcedure query)
  */
 export const getHighlights = query({
-  args: { userId: v.id('users') },
+  args: { userId: v.string() },
   handler: async (ctx, args) => {
+    const resolvedId = await resolveUserId(ctx, args.userId);
+    if (!resolvedId) return { success: true, data: [] };
+
     const bounties = await ctx.db
       .query('bounties')
-      .withIndex('by_createdById', (q: any) => q.eq('createdById', args.userId))
+      .withIndex('by_createdById', (q: any) => q.eq('createdById', resolvedId))
       .order('desc')
       .collect();
 

@@ -5,7 +5,7 @@
  */
 import { query, mutation } from '../_generated/server';
 import { v, ConvexError } from 'convex/values';
-import { requireAuth, getAuthenticatedUser } from '../lib/auth';
+import { requireAuth, getAuthenticatedUser, resolveUserId } from '../lib/auth';
 import { authComponent } from '../auth';
 import { toDollars, toCents } from '../lib/money';
 
@@ -330,17 +330,19 @@ export const rateUser = mutation({
  */
 export const getUserRatings = query({
   args: {
-    userId: v.id('users'),
+    userId: v.string(),
     page: v.optional(v.float64()),
     limit: v.optional(v.float64()),
   },
   handler: async (ctx, args) => {
+    const resolved = await resolveUserId(ctx, args.userId);
+    if (!resolved) return { ratings: [], total: 0, page: 1, limit: 10 };
     const page = args.page ?? 1;
     const limit = args.limit ?? 10;
 
     const ratings = await ctx.db
       .query('userRatings')
-      .withIndex('by_ratedUserId', (q) => q.eq('ratedUserId', args.userId))
+      .withIndex('by_ratedUserId', (q) => q.eq('ratedUserId', resolved as any))
       .order('desc')
       .collect();
 

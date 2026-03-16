@@ -67,19 +67,47 @@ export interface OrgContext {
 export async function getAuthenticatedUser(
   ctx: QueryCtx | MutationCtx
 ): Promise<AuthUser | null> {
-  // Get the Better Auth user from the component's session table
-  const authUser = await authComponent.getAuthUser(ctx);
-  if (!authUser) return null;
+  try {
+    // Get the Better Auth user from the component's session table
+    const authUser = await authComponent.getAuthUser(ctx);
+    if (!authUser) return null;
 
-  // Resolve our app-level user document
+    // Resolve our app-level user document
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_betterAuthUserId', (q: any) =>
+        q.eq('betterAuthUserId', authUser._id)
+      )
+      .unique();
+
+    return user as AuthUser | null;
+  } catch {
+    // If auth check fails for any reason, treat as unauthenticated
+    return null;
+  }
+}
+
+/**
+ * Resolve a user ID that may be a Convex _id or a Better Auth user ID.
+ * Returns the Convex _id, or null if the user doesn't exist.
+ */
+export async function resolveUserId(
+  ctx: QueryCtx | MutationCtx,
+  userId: string
+): Promise<string | null> {
+  // Try as Convex ID first
+  const normalized = ctx.db.normalizeId('users', userId);
+  if (normalized) return normalized;
+
+  // Fall back to Better Auth user ID
   const user = await ctx.db
     .query('users')
     .withIndex('by_betterAuthUserId', (q: any) =>
-      q.eq('betterAuthUserId', authUser._id)
+      q.eq('betterAuthUserId', userId)
     )
     .unique();
 
-  return user as AuthUser | null;
+  return user?._id ?? null;
 }
 
 /**

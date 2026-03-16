@@ -180,6 +180,11 @@ function CreateTeamDialog({
     isCreating: false,
     errors: {} as { name?: string; slug?: string },
   });
+  const [slugCheck, setSlugCheck] = useState<{
+    available: boolean;
+    reason: string | null;
+    checkedSlug: string;
+  } | null>(null);
 
   React.useEffect(() => {
     if (!open) {
@@ -190,10 +195,79 @@ function CreateTeamDialog({
         isCreating: false,
         errors: {},
       });
+      setSlugCheck(null);
     }
   }, [open]);
 
+  // Debounced slug availability check — checks both Convex and Better Auth
+  React.useEffect(() => {
+    const currentSlug = formState.slug?.toLowerCase().trim();
+    if (!currentSlug || currentSlug.length < 3) {
+      setSlugCheck(null);
+      return;
+    }
+
+    // Quick client-side checks
+    if (!/^[a-z0-9-]+$/.test(currentSlug)) {
+      setSlugCheck({
+        available: false,
+        reason: 'Only lowercase letters, numbers, and hyphens',
+        checkedSlug: currentSlug,
+      });
+      return;
+    }
+
+    if (isReservedSlug(currentSlug)) {
+      setSlugCheck({
+        available: false,
+        reason: 'This slug is reserved',
+        checkedSlug: currentSlug,
+      });
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        // Check via Better Auth — this is the source of truth for org slugs
+        const result = await authClient.organization.getFullOrganization({
+          query: { organizationSlug: currentSlug },
+        });
+        // If we get data back, the slug is taken
+        if (result.data) {
+          setSlugCheck({
+            available: false,
+            reason: 'This slug is already taken',
+            checkedSlug: currentSlug,
+          });
+        } else {
+          setSlugCheck({
+            available: true,
+            reason: null,
+            checkedSlug: currentSlug,
+          });
+        }
+      } catch {
+        // If the request fails (404 = not found = available)
+        setSlugCheck({
+          available: true,
+          reason: null,
+          checkedSlug: currentSlug,
+        });
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [formState.slug]);
+
   const { name, slug, slugTouched, isCreating, errors } = formState;
+
+  // Derived slug error from availability check
+  const slugAvailabilityError =
+    slugCheck &&
+    slugCheck.checkedSlug === slug?.toLowerCase().trim() &&
+    !slugCheck.available
+      ? slugCheck.reason
+      : null;
 
   const validate = (fields: { name: string; slug: string }) => {
     const result = createTeamSchema.safeParse(fields);
@@ -250,6 +324,12 @@ function CreateTeamDialog({
     e.stopPropagation();
 
     const fieldErrors = validate({ name, slug });
+
+    // Also check server-side slug availability
+    if (slugAvailabilityError) {
+      fieldErrors.slug = slugAvailabilityError;
+    }
+
     setFormState((prev) => ({ ...prev, errors: fieldErrors }));
     if (fieldErrors.name || fieldErrors.slug) return;
 
@@ -261,7 +341,21 @@ function CreateTeamDialog({
       });
 
       if (result.error) {
-        toast.error(result.error.message ?? 'Failed to create team');
+        // Surface "already exists" as inline slug error instead of toast
+        const msg = result.error.message ?? 'Failed to create team';
+        if (
+          msg.toLowerCase().includes('already exists') ||
+          result.error.code === 'ORGANIZATION_ALREADY_EXISTS'
+        ) {
+          setFormState((prev) => ({
+            ...prev,
+            isCreating: false,
+            errors: { ...prev.errors, slug: 'This slug is already taken' },
+          }));
+          return;
+        }
+        toast.error(msg);
+        setFormState((prev) => ({ ...prev, isCreating: false }));
         return;
       }
 
@@ -317,8 +411,16 @@ function CreateTeamDialog({
               </Label>
               <Input
                 id="team-slug"
-                aria-invalid={!!errors.slug}
-                className="focus-within:border-ring focus-within:ring-ring/50"
+                aria-invalid={!!(errors.slug || slugAvailabilityError)}
+                className={`focus-within:border-ring focus-within:ring-ring/50 ${
+                  slugAvailabilityError && !errors.slug
+                    ? 'border-destructive focus-within:ring-destructive/50'
+                    : ''
+                } ${
+                  slug && slugCheck?.available
+                    ? 'border-green-500/50 focus-within:ring-green-500/30'
+                    : ''
+                }`}
                 disabled={isCreating}
                 onBlur={() => handleBlur('slug')}
                 onChange={(e) => handleSlugChange(e.target.value)}
@@ -329,6 +431,14 @@ function CreateTeamDialog({
               />
               {errors.slug ? (
                 <p className="text-destructive text-sm">{errors.slug}</p>
+              ) : slugAvailabilityError ? (
+                <p className="text-destructive text-sm">
+                  {slugAvailabilityError}
+                </p>
+              ) : slug && slugCheck?.available ? (
+                <p className="text-green-500 text-xs">
+                  bounty.new/{slug} is available
+                </p>
               ) : (
                 <p className="text-muted-foreground text-xs">
                   Used in URLs: bounty.new/{slug || 'your-slug'}

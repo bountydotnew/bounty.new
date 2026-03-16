@@ -12,7 +12,12 @@ import {
 } from '../_generated/server';
 import { internal } from '../_generated/api';
 import { v, ConvexError } from 'convex/values';
-import { requireAuth, requireAdmin, getAuthenticatedUser } from '../lib/auth';
+import {
+  requireAuth,
+  requireAdmin,
+  getAuthenticatedUser,
+  resolveUserId,
+} from '../lib/auth';
 import { authComponent } from '../auth';
 
 // ============================================================================
@@ -60,12 +65,14 @@ export const getCurrentUser = query({
 
 /**
  * Get minimal user info for the current user.
+ * Returns null if not authenticated (safe to call on any page).
  * Replaces: user.getMe (protectedProcedure query)
  */
 export const getMe = query({
   args: {},
   handler: async (ctx) => {
-    const user = await requireAuth(ctx);
+    const user = await getAuthenticatedUser(ctx);
+    if (!user) return null;
     const authUser = await authComponent.getAuthUser(ctx);
 
     return {
@@ -178,30 +185,34 @@ export const searchCreators = query({
  */
 export const getUserActivity = query({
   args: {
-    userId: v.id('users'),
+    userId: v.string(),
     limit: v.optional(v.float64()),
   },
   handler: async (ctx, args) => {
+    const resolvedId = await resolveUserId(ctx, args.userId);
+    if (!resolvedId) return [];
+    // Override args.userId with resolved Convex ID for the queries below
+    const userId = resolvedId as any;
     const limit = args.limit ?? 20;
 
     // Get recent bounties created
     const bounties = await ctx.db
       .query('bounties')
-      .withIndex('by_createdById', (q) => q.eq('createdById', args.userId))
+      .withIndex('by_createdById', (q) => q.eq('createdById', userId))
       .order('desc')
       .take(limit);
 
     // Get recent comments
     const comments = await ctx.db
       .query('bountyComments')
-      .withIndex('by_userId', (q) => q.eq('userId', args.userId))
+      .withIndex('by_userId', (q) => q.eq('userId', userId))
       .order('desc')
       .take(limit);
 
     // Get recent submissions
     const submissions = await ctx.db
       .query('submissions')
-      .withIndex('by_contributorId', (q) => q.eq('contributorId', args.userId))
+      .withIndex('by_contributorId', (q) => q.eq('contributorId', userId))
       .order('desc')
       .take(limit);
 

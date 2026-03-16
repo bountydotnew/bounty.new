@@ -11,7 +11,7 @@
 import { query, mutation, internalMutation } from '../_generated/server';
 import { v } from 'convex/values';
 import { ConvexError } from 'convex/values';
-import { requireAuth, requireAdmin } from '../lib/auth';
+import { requireAuth, requireAdmin, getAuthenticatedUser } from '../lib/auth';
 import { notificationType } from '../schema';
 
 // ---------------------------------------------------------------------------
@@ -45,7 +45,8 @@ export const getAll = query({
     unreadOnly: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const user = await requireAuth(ctx);
+    const user = await getAuthenticatedUser(ctx);
+    if (!user) return [];
     const limit = args.limit ?? 50;
 
     let q;
@@ -73,7 +74,8 @@ export const getAll = query({
 export const getUnreadCount = query({
   args: {},
   handler: async (ctx) => {
-    const user = await requireAuth(ctx);
+    const user = await getAuthenticatedUser(ctx);
+    if (!user) return { count: 0 };
     const unread = await ctx.db
       .query('notifications')
       .withIndex('by_userId_read', (q) =>

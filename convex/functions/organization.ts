@@ -5,7 +5,12 @@
  */
 import { query, mutation } from '../_generated/server';
 import { v, ConvexError } from 'convex/values';
-import { requireAuth, requireOrgMember, requireOrgOwner } from '../lib/auth';
+import {
+  requireAuth,
+  getAuthenticatedUser,
+  requireOrgMember,
+  requireOrgOwner,
+} from '../lib/auth';
 import { authComponent } from '../auth';
 
 // Reserved slugs that cannot be used by organizations
@@ -33,13 +38,51 @@ const RESERVED_SLUGS = [
 ];
 
 /**
+ * Check if an organization slug is available.
+ * Public query — no auth required. Used for real-time form validation.
+ */
+export const checkSlugAvailability = query({
+  args: { slug: v.string() },
+  handler: async (ctx, args) => {
+    const slug = args.slug.toLowerCase().trim();
+
+    if (!slug || slug.length < 3) {
+      return { available: false, reason: 'Slug must be at least 3 characters' };
+    }
+
+    if (!/^[a-z0-9-]+$/.test(slug)) {
+      return {
+        available: false,
+        reason: 'Only lowercase letters, numbers, and hyphens',
+      };
+    }
+
+    if (RESERVED_SLUGS.includes(slug)) {
+      return { available: false, reason: 'This slug is reserved' };
+    }
+
+    const existing = await ctx.db
+      .query('organizations')
+      .withIndex('by_slug', (q) => q.eq('slug', slug))
+      .unique();
+
+    if (existing) {
+      return { available: false, reason: 'This slug is already taken' };
+    }
+
+    return { available: true, reason: null };
+  },
+});
+
+/**
  * List all organizations the current user is a member of.
  * Replaces: organization.listMyOrgs (protectedProcedure query)
  */
 export const listMyOrgs = query({
   args: {},
   handler: async (ctx) => {
-    const user = await requireAuth(ctx);
+    const user = await getAuthenticatedUser(ctx);
+    if (!user) return [];
 
     const memberships = await ctx.db
       .query('members')

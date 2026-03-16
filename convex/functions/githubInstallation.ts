@@ -8,7 +8,12 @@
 import { query, mutation, action } from '../_generated/server';
 import { internal } from '../_generated/api';
 import { v, ConvexError } from 'convex/values';
-import { requireAuth, requireOrgMember, requireOrgOwner } from '../lib/auth';
+import {
+  requireAuth,
+  getAuthenticatedUser,
+  requireOrgMember,
+  requireOrgOwner,
+} from '../lib/auth';
 
 // ============================================================================
 // QUERIES
@@ -21,7 +26,14 @@ import { requireAuth, requireOrgMember, requireOrgOwner } from '../lib/auth';
 export const getInstallations = query({
   args: { organizationId: v.optional(v.id('organizations')) },
   handler: async (ctx, args) => {
-    const result = await requireOrgMember(ctx, args.organizationId as any);
+    const user = await getAuthenticatedUser(ctx);
+    if (!user) return [];
+    let result;
+    try {
+      result = await requireOrgMember(ctx, args.organizationId as any);
+    } catch {
+      return [];
+    }
 
     const installations = await ctx.db
       .query('githubInstallations')
@@ -62,7 +74,8 @@ export const getDefaultInstallation = query({
 export const getInstallationUrl = query({
   args: { state: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    await requireAuth(ctx);
+    const user = await getAuthenticatedUser(ctx);
+    if (!user) return { url: null };
 
     const appId = process.env.GITHUB_APP_ID;
     if (!appId) return { url: null };

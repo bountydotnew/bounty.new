@@ -2,7 +2,6 @@
 
 import type { ExtendedAuthSession } from '@bounty/types';
 import { Button } from '@bounty/ui/components/button';
-import { useQueryClient } from '@tanstack/react-query';
 import { ShieldAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -12,7 +11,6 @@ import { authClient } from '@bounty/auth/client';
 
 export default function ImpersonationBanner() {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const { session } = useSession();
   const [open, setOpen] = useState(false);
   const sessionData = session as ExtendedAuthSession;
@@ -60,7 +58,7 @@ export default function ImpersonationBanner() {
                       error.message || 'Failed to stop impersonating'
                     );
                   }
-                  queryClient.invalidateQueries();
+                  // Convex reactive queries auto-update — just refresh Next.js
                   window.dispatchEvent(new Event('visibilitychange'));
                   router.refresh();
                 })
@@ -93,7 +91,7 @@ export default function ImpersonationBanner() {
                 throw new Error(res.error.message || 'Failed to impersonate');
               }
               setOpen(false);
-              queryClient.invalidateQueries();
+              // Convex reactive queries auto-update — just refresh Next.js
               window.dispatchEvent(new Event('visibilitychange'));
               router.refresh();
             } catch (error) {
