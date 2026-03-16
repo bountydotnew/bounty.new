@@ -10,6 +10,8 @@ import Link from 'next/link';
 import { Check, ExternalLink, Loader2, X } from 'lucide-react';
 import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
 import { Badge } from '@/components/bounty/badge';
+import { ScoreRing } from '@/components/bounty/score-ring';
+import type { ScoreResult } from '@/lib/contributor-score';
 
 interface SubmissionCardProps {
   // User info
@@ -35,6 +37,8 @@ interface SubmissionCardProps {
   hasBadge?: boolean;
   previewSrc?: string;
   className?: string;
+  // Contributor score
+  score?: ScoreResult | null;
   // Actions
   canManage?: boolean;
   isApproving?: boolean;
@@ -60,6 +64,7 @@ export default function SubmissionCard({
   hasBadge,
   previewSrc = '',
   className,
+  score,
   description = '',
   status,
   githubPullRequestNumber,
@@ -150,6 +155,7 @@ export default function SubmissionCard({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {score && <ScoreRing score={score} />}
           {canWithdraw && onWithdraw && (
             <Button
               onClick={onWithdraw}

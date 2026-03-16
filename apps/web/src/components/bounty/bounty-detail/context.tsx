@@ -2,6 +2,7 @@
 
 import { createContext } from 'react';
 import type { BountyCommentCacheItem } from '@/types/comments';
+import type { ScoreResult } from '@/lib/contributor-score';
 
 /**
  * Parsed link data from bounty description
@@ -31,6 +32,7 @@ export interface SubmissionData {
   deliverableUrl: string | null;
   githubHeadSha: string | null;
   pullRequestTitle: string | null;
+  score?: ScoreResult | null;
 }
 
 /**
