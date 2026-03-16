@@ -1,5 +1,8 @@
 import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from 'next';
+import path from 'path';
+
+const monorepoRoot = path.resolve(import.meta.dirname, '../../');
 
 const nextConfig: NextConfig = {
   images: {
@@ -108,6 +111,7 @@ const nextConfig: NextConfig = {
   skipTrailingSlashRedirect: true,
   transpilePackages: ['@bounty/ui', 'facehash'],
   turbopack: {
+    root: monorepoRoot,
     resolveExtensions: ['.ts', '.tsx', '.js', '.jsx', '.json', '.mjs', '.cjs'],
   },
 };
@@ -135,6 +139,8 @@ export default withSentryConfig(nextConfig, {
   // side errors will fail.
   tunnelRoute: '/monitoring',
 
-  // Automatically instrument Vercel Cron Monitors (must be at top level, not nested in webpack)
-  automaticVercelMonitors: true,
+  // Automatically instrument Vercel Cron Monitors
+  webpack: {
+    automaticVercelMonitors: true,
+  },
 });

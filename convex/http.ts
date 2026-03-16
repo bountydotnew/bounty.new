@@ -114,16 +114,12 @@ http.route({
 // Inbound webhook from GitHub App. Verifies signature and dispatches
 // to internal mutations/actions for bot commands and event processing.
 // ---------------------------------------------------------------------------
+import { githubWebhookAction } from './functions/githubWebhookHandler';
+
 http.route({
   path: '/webhooks/github',
   method: 'POST',
-  handler: httpAction(async (ctx, req) => {
-    // TODO: Port from apps/web/src/app/api/webhooks/github/route.ts
-    // This will be implemented in Phase 4.2
-    return new Response('GitHub webhook handler not yet implemented', {
-      status: 200,
-    });
-  }),
+  handler: githubWebhookAction,
 });
 
 // ---------------------------------------------------------------------------

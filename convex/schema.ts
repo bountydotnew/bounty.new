@@ -109,6 +109,9 @@ export default defineSchema({
   // manages its own user table. Link via betterAuthUserId.
   // --------------------------------------------------------------------------
   users: defineTable({
+    // Migration: original PG UUID (temporary, removed after migration)
+    legacyPgId: v.optional(v.string()),
+
     // Link to Better Auth component's user ID
     betterAuthUserId: v.string(),
 
@@ -196,6 +199,7 @@ export default defineSchema({
   // Organizations (supplements Better Auth's organization table)
   // --------------------------------------------------------------------------
   organizations: defineTable({
+    legacyPgId: v.optional(v.string()),
     betterAuthOrgId: v.string(),
     name: v.string(),
     slug: v.string(),
@@ -212,6 +216,7 @@ export default defineSchema({
   // Organization Members (supplements Better Auth's member table)
   // --------------------------------------------------------------------------
   members: defineTable({
+    legacyPgId: v.optional(v.string()),
     userId: v.id('users'),
     organizationId: v.id('organizations'),
     role: v.string(), // "owner" | "member"
@@ -238,6 +243,7 @@ export default defineSchema({
   // Bounties (core entity)
   // --------------------------------------------------------------------------
   bounties: defineTable({
+    legacyPgId: v.optional(v.string()),
     title: v.string(),
     description: v.string(),
     amountCents: v.int64(), // integer cents
@@ -303,6 +309,7 @@ export default defineSchema({
   // Submissions (PR submissions to bounties)
   // --------------------------------------------------------------------------
   submissions: defineTable({
+    legacyPgId: v.optional(v.string()),
     bountyId: v.id('bounties'),
     contributorId: v.id('users'),
     description: v.string(),
@@ -368,6 +375,7 @@ export default defineSchema({
   // Bounty Comments (threaded)
   // --------------------------------------------------------------------------
   bountyComments: defineTable({
+    legacyPgId: v.optional(v.string()),
     bountyId: v.id('bounties'),
     userId: v.id('users'),
     parentId: v.optional(v.id('bountyComments')), // self-referential for threading
