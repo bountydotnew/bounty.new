@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
-import { GithubIcon, DiscordIcon, TwitterIcon, SlackIcon } from '@bounty/ui';
+import { GithubIcon, TwitterIcon, SlackIcon } from '@bounty/ui';
 import { LinearIcon } from '@bounty/ui/components/icons/huge/linear';
 import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear';
 import Link from 'next/link';
@@ -182,18 +182,6 @@ type IntegrationItem =
       }>;
     }
   | {
-      type: 'discord';
-      account: {
-        discordId: string;
-        displayName: string;
-        avatar: string | null;
-        linkedAt: string | null;
-      } | null;
-      botInstallUrl?: string;
-      onAddBot: () => void;
-      onLinkAccount: () => void;
-    }
-  | {
       type: 'linear';
       workspace: {
         id: string;
@@ -297,51 +285,6 @@ function renderIntegrationCard(
           pathPrefix={pathPrefix}
         />
       );
-    case 'discord': {
-      const isLinked = !!item.account;
-      const displayName =
-        item.account?.displayName || item.account?.discordId || 'your account';
-      const description = isLinked
-        ? `Linked as ${displayName}`
-        : 'Link your Discord account or add the Bounty bot to your server';
-      return (
-        <IntegrationCard
-          key="discord"
-          icon={<DiscordIcon className="size-7 text-foreground" />}
-          title="Discord"
-          description={description}
-          status={
-            isLinked
-              ? {
-                  type: 'installed',
-                  count: 1,
-                  accounts: [
-                    {
-                      id: 1,
-                      accountLogin: displayName,
-                      icon: item.account?.avatar ?? undefined,
-                      href: `${pathPrefix}/integrations/discord`,
-                    },
-                  ],
-                }
-              : undefined
-          }
-          action={
-            isLinked
-              ? {
-                  label: 'Install',
-                  onClick: item.onAddBot,
-                  disabled: !item.botInstallUrl,
-                }
-              : {
-                  label: 'Link Account',
-                  onClick: item.onLinkAccount,
-                }
-          }
-          href={isLinked ? `${pathPrefix}/integrations/discord` : undefined}
-        />
-      );
-    }
     case 'twitter':
       return (
         <IntegrationCard
@@ -435,11 +378,6 @@ export function IntegrationsSettings() {
     isLoading,
     githubInstallations,
     githubInstallUrl,
-    discordAccount,
-    discordBotInstallUrl,
-    hasDiscord,
-    addDiscordBot,
-    linkDiscord,
     linearWorkspace,
     hasLinear,
     linkLinear,
@@ -464,21 +402,13 @@ export function IntegrationsSettings() {
   // The sync is handled on the Linear-specific page (/integrations/linear)
   // after the user completes the OAuth flow — not here on every visit.
 
-  const installedCount =
-    githubInstallations.length + (hasDiscord ? 1 : 0) + (hasLinear ? 1 : 0);
+  const installedCount = githubInstallations.length + (hasLinear ? 1 : 0);
 
   const allIntegrations = useMemo(
     () => [
       {
         type: 'github' as const,
         installations: githubInstallations,
-      },
-      {
-        type: 'discord' as const,
-        account: discordAccount,
-        botInstallUrl: discordBotInstallUrl,
-        onAddBot: addDiscordBot,
-        onLinkAccount: linkDiscord,
       },
       {
         type: 'linear' as const,
@@ -488,15 +418,7 @@ export function IntegrationsSettings() {
       { type: 'twitter' as const },
       { type: 'slack' as const },
     ],
-    [
-      githubInstallations,
-      discordAccount,
-      discordBotInstallUrl,
-      addDiscordBot,
-      linkDiscord,
-      linearWorkspace,
-      linkLinear,
-    ]
+    [githubInstallations, linearWorkspace, linkLinear]
   );
 
   const filteredIntegrations =
@@ -504,7 +426,6 @@ export function IntegrationsSettings() {
       ? allIntegrations.filter(
           (item) =>
             (item.type === 'github' && item.installations.length > 0) ||
-            (item.type === 'discord' && item.account) ||
             (item.type === 'linear' && item.workspace)
         )
       : allIntegrations;
@@ -550,7 +471,10 @@ export function IntegrationsSettings() {
       )}
 
       {/* Integration Cards Grid */}
-      <div data-tour-step-id="integrations-grid" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div
+        data-tour-step-id="integrations-grid"
+        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
+      >
         {filteredIntegrations.map((item) =>
           renderIntegrationCard(
             item,

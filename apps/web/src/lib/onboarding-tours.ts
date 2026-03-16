@@ -19,7 +19,7 @@ export function buildOnboardingTours(): Tour[] {
           id: 'integrations-grid',
           title: 'Your Integrations',
           content:
-            'This is where you manage all your integrations. Connect GitHub, Discord, Linear, and more to supercharge your bounty workflow.',
+            'This is where you manage all your integrations. Connect GitHub, Linear, and more to supercharge your bounty workflow.',
           side: 'bottom',
           sideOffset: 12,
           align: 'start',

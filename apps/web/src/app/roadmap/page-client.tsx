@@ -7,7 +7,6 @@ import {
   GithubIcon,
   SlackIcon,
   TwitterIcon,
-  DiscordIcon,
   LinearIcon,
   QuestionMarkIcon,
   NotionIcon,
@@ -663,27 +662,6 @@ export default function RoadmapPage() {
                         <div className="text-[11px] leading-[125%] text-text-secondary font-medium">
                           Connect Bounty to your GitHub and access all of our
                           tools from any repository
-                        </div>
-                      </div>
-                      <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-surface-3">
-                        <span className="text-[13px] leading-[150%] text-text-secondary/40 font-medium">
-                          Live
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Discord */}
-                    <div className="rounded-[15px] flex flex-col justify-between items-start px-[18px] py-[18px] gap-[18px] bg-surface-1 border border-solid border-border-default">
-                      <div className="flex flex-col justify-center items-start gap-[9px] w-full">
-                        <div className="size-7 flex items-center justify-center">
-                          <DiscordIcon className="size-7 text-foreground" />
-                        </div>
-                        <div className="text-[14px] leading-[150%] text-foreground font-bold">
-                          Discord
-                        </div>
-                        <div className="text-[11px] leading-[125%] text-text-secondary font-medium">
-                          Link your Discord account or add the Bounty bot to
-                          your server
                         </div>
                       </div>
                       <div className="w-full h-[29px] rounded-[7px] flex justify-center items-center bg-surface-3">

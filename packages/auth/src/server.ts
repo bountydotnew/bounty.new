@@ -326,7 +326,7 @@ export const auth = betterAuth({
   account: {
     accountLinking: {
       enabled: true,
-      trustedProviders: ['github', 'google', 'discord', 'linear'],
+      trustedProviders: ['github', 'google', 'linear'],
       allowDifferentEmails: true,
     },
   },
@@ -510,12 +510,6 @@ export const auth = betterAuth({
       clientSecret: env.GOOGLE_CLIENT_SECRET || '',
       scope: ['openid', 'email', 'profile'],
       redirectURI: 'https://bounty.new/api/auth/callback/google',
-    },
-    discord: {
-      clientId: env.DISCORD_CLIENT_ID || '',
-      clientSecret: env.DISCORD_CLIENT_SECRET || '',
-      scope: ['identify', 'email', 'guilds'],
-      redirectURI: 'https://bounty.new/api/auth/callback/discord',
     },
     linear: {
       clientId: env.LINEAR_CLIENT_ID || '',

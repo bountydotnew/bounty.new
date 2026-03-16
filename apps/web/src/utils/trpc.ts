@@ -1,5 +1,5 @@
 import type { AppRouter } from '@bounty/api';
-import { QueryClient } from '@tanstack/react-query';
+import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
 import {
   TRPCClientError,
   createTRPCClient,
@@ -9,6 +9,28 @@ import {
 import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query';
 import { showAppErrorToast } from '@/context/toast';
 import type { ReasonCode } from '@bounty/types/auth';
+
+/**
+ * tRPC error codes that are expected in normal app flow and should NOT
+ * trigger a toast.  These are handled locally by the calling component.
+ */
+const SILENT_TRPC_CODES = new Set(['NOT_FOUND', 'UNAUTHORIZED', 'BAD_REQUEST']);
+
+function handleGlobalError(error: unknown): void {
+  if (!(error instanceof TRPCClientError)) return;
+
+  const data = error.data as { code?: string; reason?: ReasonCode } | undefined;
+  const code = data?.code;
+  const reason = data?.reason;
+
+  // Suppress expected errors — the calling component handles them
+  if (code && SILENT_TRPC_CODES.has(code)) return;
+
+  // Suppress auth/access errors that middleware already handles via redirects
+  if (reason === 'unauthenticated' || reason === 'no_active_org') return;
+
+  maybeToastError(error);
+}
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,6 +46,12 @@ export const queryClient = new QueryClient({
       retry: 1,
     },
   },
+  queryCache: new QueryCache({
+    onError: handleGlobalError,
+  }),
+  mutationCache: new MutationCache({
+    onError: handleGlobalError,
+  }),
 });
 
 const toastDeduper = new Map<string, number>();
@@ -76,9 +104,28 @@ export const trpcClient = createTRPCClient<AppRouter>({
     loggerLink({
       enabled: (opts) => {
         const isDev = process.env.NODE_ENV === 'development';
-        return (
-          isDev || (opts.direction === 'down' && opts.result instanceof Error)
-        );
+        if (
+          !(
+            isDev ||
+            (opts.direction === 'down' && opts.result instanceof Error)
+          )
+        ) {
+          return false;
+        }
+        // In dev, suppress noisy logs for expected tRPC errors (NOT_FOUND, etc.)
+        if (
+          isDev &&
+          opts.direction === 'down' &&
+          opts.result instanceof TRPCClientError
+        ) {
+          const data = (opts.result as TRPCClientError<AppRouter>).data as
+            | { code?: string }
+            | undefined;
+          if (data?.code && SILENT_TRPC_CODES.has(data.code)) {
+            return false;
+          }
+        }
+        return true;
       },
     }),
     httpBatchLink({

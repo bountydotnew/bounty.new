@@ -252,7 +252,18 @@ export class GithubManager {
         state: i.state,
         html_url: i.html_url,
       }));
-    } catch {
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        'status' in error &&
+        ((error as any).status === 404 || (error as any).status === 403)
+      ) {
+        return [];
+      }
+      console.warn(
+        `Failed to search issues for ${owner}/${repo}:`,
+        error instanceof Error ? error.message : error
+      );
       return [];
     }
   }
@@ -300,18 +311,42 @@ export class GithubManager {
 
   async getBranches(identifier: string): Promise<string[]> {
     const { owner, repo } = parseRepo(identifier);
-    const { data } = await this.octokit.rest.repos.listBranches({
-      owner,
-      repo,
-      per_page: 100,
-    });
-    return data.map((branch) => branch.name);
+    try {
+      const { data } = await this.octokit.rest.repos.listBranches({
+        owner,
+        repo,
+        per_page: 100,
+      });
+      return data.map((branch) => branch.name);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        'status' in error &&
+        ((error as any).status === 404 || (error as any).status === 403)
+      ) {
+        // Repository not found or not accessible — return empty list
+        return [];
+      }
+      throw error;
+    }
   }
 
   async getDefaultBranch(identifier: string): Promise<string> {
     const { owner, repo } = parseRepo(identifier);
-    const { data } = await this.octokit.rest.repos.get({ owner, repo });
-    return data.default_branch;
+    try {
+      const { data } = await this.octokit.rest.repos.get({ owner, repo });
+      return data.default_branch;
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        'status' in error &&
+        ((error as any).status === 404 || (error as any).status === 403)
+      ) {
+        // Repository not found or not accessible — fall back to 'main'
+        return 'main';
+      }
+      throw error;
+    }
   }
 
   async listPullRequests(
@@ -346,7 +381,18 @@ export class GithubManager {
         head_sha: pr.head.sha,
         updated_at: pr.updated_at,
       }));
-    } catch {
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        'status' in error &&
+        ((error as any).status === 404 || (error as any).status === 403)
+      ) {
+        return [];
+      }
+      console.warn(
+        `Failed to list pull requests for ${owner}/${repo}:`,
+        error instanceof Error ? error.message : error
+      );
       return [];
     }
   }
@@ -526,7 +572,20 @@ export class GithubManager {
         updated_at: i.updated_at,
         comments: i.comments || 0,
       }));
-    } catch {
+    } catch (error) {
+      // Return empty for expected HTTP errors (not found, forbidden)
+      if (
+        error instanceof Error &&
+        'status' in error &&
+        ((error as any).status === 404 || (error as any).status === 403)
+      ) {
+        return [];
+      }
+      // Log unexpected errors but still return empty to avoid breaking the UI
+      console.warn(
+        `Failed to list issues for ${owner}/${repo}:`,
+        error instanceof Error ? error.message : error
+      );
       return [];
     }
   }

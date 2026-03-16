@@ -2,7 +2,6 @@ import { withIntrospection } from '@trpc-studio/introspection';
 import { protectedProcedure, publicProcedure, router, t } from '../trpc';
 import { bountiesRouter } from './bounties';
 import { connectRouter } from './connect';
-import { discordRouter } from './discord';
 import { earlyAccessRouter } from './early-access';
 import { emailsRouter } from './emails';
 import { featureVotesRouter } from './feature-votes';
@@ -45,7 +44,6 @@ const baseRouter = router({
   githubInstallation: githubInstallationRouter,
   linear: linearRouter,
   connect: connectRouter,
-  discord: discordRouter,
   onboarding: onboardingRouter,
   featureVotes: featureVotesRouter,
   organization: organizationRouter,

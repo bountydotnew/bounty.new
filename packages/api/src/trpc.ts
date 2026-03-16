@@ -21,14 +21,22 @@ export const t = initTRPC.context<Context>().create({
         ? (cause as { reason?: ReasonCode }).reason
         : undefined;
 
-    // Log errors to console in development
+    // Log errors to console in development (suppress expected client errors)
     if (process.env.NODE_ENV === 'development') {
-      console.error('tRPC Error:', {
-        code: error.code,
-        message: error.message,
-        path,
-        reason,
-      });
+      const silentCodes = new Set([
+        'NOT_FOUND',
+        'UNAUTHORIZED',
+        'BAD_REQUEST',
+        'FORBIDDEN',
+      ]);
+      if (!silentCodes.has(error.code)) {
+        console.error('tRPC Error:', {
+          code: error.code,
+          message: error.message,
+          path,
+          reason,
+        });
+      }
     }
 
     return {
@@ -94,25 +102,24 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   });
 });
 
-export const earlyAccessProcedure = protectedProcedure.use(
-  ({ ctx, next }) => {
-    const userRole = (ctx.session.user as ExtendedAuthSession['user']).role ?? 'user';
-    if (!['early_access', 'admin'].includes(userRole)) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'Early access required',
-        cause: { reason: 'early_access_required' },
-      });
-    }
-
-    return next({
-      ctx: {
-        ...ctx,
-        session: ctx.session,
-      },
+export const earlyAccessProcedure = protectedProcedure.use(({ ctx, next }) => {
+  const userRole =
+    (ctx.session.user as ExtendedAuthSession['user']).role ?? 'user';
+  if (!['early_access', 'admin'].includes(userRole)) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'Early access required',
+      cause: { reason: 'early_access_required' },
     });
   }
-);
+
+  return next({
+    ctx: {
+      ...ctx,
+      session: ctx.session,
+    },
+  });
+});
 
 // ============================================================================
 // Organization-Scoped Procedures

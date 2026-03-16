@@ -130,17 +130,13 @@ export const repositoryRouter = router({
       })
     )
     .query(async ({ input }) => {
-      try {
-        const owner = input.owner?.trim();
-        const repo = input.repo?.trim();
-        const q = (input.q || '').trim();
-        if (!(owner && repo && q)) {
-          return [];
-        }
-        return await github.searchIssues(owner, repo, q);
-      } catch {
+      const owner = input.owner?.trim();
+      const repo = input.repo?.trim();
+      const q = (input.q || '').trim();
+      if (!(owner && repo && q)) {
         return [];
       }
+      return await github.searchIssues(owner, repo, q);
     }),
   listIssues: publicProcedure
     .input(
@@ -150,27 +146,23 @@ export const repositoryRouter = router({
       })
     )
     .query(async ({ input }) => {
-      try {
-        const owner = input.owner?.trim();
-        const repo = input.repo?.trim();
-        if (!(owner && repo)) {
-          return [];
-        }
-        const issues = await github.listIssues(owner, repo);
-        // Sort by activity (comments + recency) - most active first
-        return issues.sort((a, b) => {
-          // Primary sort: by comments (activity)
-          if (b.comments !== a.comments) {
-            return b.comments - a.comments;
-          }
-          // Secondary sort: by updated_at (most recent)
-          return (
-            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-          );
-        });
-      } catch {
+      const owner = input.owner?.trim();
+      const repo = input.repo?.trim();
+      if (!(owner && repo)) {
         return [];
       }
+      const issues = await github.listIssues(owner, repo);
+      // Sort by activity (comments + recency) - most active first
+      return issues.sort((a, b) => {
+        // Primary sort: by comments (activity)
+        if (b.comments !== a.comments) {
+          return b.comments - a.comments;
+        }
+        // Secondary sort: by updated_at (most recent)
+        return (
+          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        );
+      });
     }),
   listPullRequests: publicProcedure
     .input(
@@ -180,34 +172,21 @@ export const repositoryRouter = router({
       })
     )
     .query(async ({ input }) => {
-      try {
-        const owner = input.owner?.trim();
-        const repo = input.repo?.trim();
-        if (!(owner && repo)) {
-          return [];
-        }
-        return await github.listPullRequests(owner, repo);
-      } catch {
+      const owner = input.owner?.trim();
+      const repo = input.repo?.trim();
+      if (!(owner && repo)) {
         return [];
       }
+      return await github.listPullRequests(owner, repo);
     }),
   branches: publicProcedure
     .input(z.object({ repo: z.string() }))
     .query(async ({ input }) => {
-      try {
-        return await github.getBranches(input.repo);
-      } catch {
-        return [];
-      }
+      return await github.getBranches(input.repo);
     }),
   defaultBranch: publicProcedure
     .input(z.object({ repo: z.string() }))
     .query(async ({ input }) => {
-      try {
-        return await github.getDefaultBranch(input.repo);
-      } catch (error) {
-        console.error('Failed to fetch default branch:', error);
-        return 'main';
-      }
+      return await github.getDefaultBranch(input.repo);
     }),
 });

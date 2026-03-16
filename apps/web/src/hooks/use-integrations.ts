@@ -13,15 +13,6 @@ interface GitHubInstallation {
   isDefault?: boolean;
 }
 
-interface DiscordAccount {
-  discordId: string;
-  username: string | null;
-  globalName: string | null;
-  displayName: string;
-  avatar: string | null;
-  linkedAt: string | null;
-}
-
 interface LinearWorkspace {
   id: string;
   name: string;
@@ -33,18 +24,12 @@ interface IntegrationsState {
   // Loading states
   isLoading: boolean;
   isGitHubLoading: boolean;
-  isDiscordLoading: boolean;
   isLinearLoading: boolean;
 
   // GitHub installations
   githubInstallations: GitHubInstallation[];
   githubInstallUrl?: string;
   hasGitHub: boolean;
-
-  // Discord
-  discordAccount: DiscordAccount | null;
-  discordBotInstallUrl?: string;
-  hasDiscord: boolean;
 
   // Linear
   linearWorkspace: LinearWorkspace | null;
@@ -59,12 +44,6 @@ interface IntegrationsActions {
   // GitHub actions
   refreshGitHub: () => void;
   invalidateGitHub: () => void;
-
-  // Discord actions
-  addDiscordBot: () => void;
-  linkDiscord: () => Promise<void>;
-  unlinkDiscord: () => Promise<void>;
-  refreshDiscord: () => void;
 
   // Linear actions
   linkLinear: () => Promise<void>;
@@ -91,16 +70,6 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
     trpc.githubInstallation.getInstallationUrl.queryOptions({})
   );
 
-  // Discord queries
-  const { data: discordBotInstallData } = useQuery(
-    trpc.discord.getBotInstallUrl.queryOptions()
-  );
-  const {
-    data: discordAccountData,
-    isLoading: discordLoading,
-    refetch: refetchDiscord,
-  } = useQuery(trpc.discord.getLinkedAccount.queryOptions());
-
   // Linear queries
   const {
     data: linearConnectionData,
@@ -111,26 +80,11 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
     trpc.linear.getAccountStatus.queryOptions()
   );
 
-  // Unlink Discord mutation
-  const unlinkDiscordMutation = useMutation({
-    mutationFn: () => trpcClient.discord.unlinkAccount.mutate(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [['discord', 'getLinkedAccount']],
-      });
-      toast.success('Discord account unlinked');
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Failed to unlink Discord');
-    },
-  });
-
   // Unlink Linear mutation
   const unlinkLinearMutation = useMutation({
     mutationFn: (workspaceId: string) =>
       trpcClient.linear.disconnect.mutate({ workspaceId }),
     onSuccess: () => {
-      // Invalidate all Linear queries to immediately update UI state
       queryClient.invalidateQueries({
         queryKey: [['linear', 'getConnectionStatus']],
       });
@@ -154,7 +108,6 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
       queryClient.invalidateQueries({
         queryKey: [['linear', 'getAccountStatus']],
       });
-      // Only show success toast if sync actually succeeded
       if (data?.success) {
         toast.success('Linear workspace connected successfully');
       }
@@ -167,18 +120,13 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
   // Computed state
   const state: IntegrationsState = useMemo(
     () => ({
-      isLoading: githubLoading || discordLoading || linearLoading,
+      isLoading: githubLoading || linearLoading,
       isGitHubLoading: githubLoading,
-      isDiscordLoading: discordLoading,
       isLinearLoading: linearLoading,
 
       githubInstallations: githubData?.installations ?? [],
       githubInstallUrl: installUrlData?.url,
       hasGitHub: (githubData?.installations?.length ?? 0) > 0,
-
-      discordAccount: discordAccountData?.account ?? null,
-      discordBotInstallUrl: discordBotInstallData?.url ?? undefined,
-      hasDiscord: discordAccountData?.linked ?? false,
 
       linearWorkspace: linearConnectionData?.workspace
         ? {
@@ -193,48 +141,25 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
 
       totalCount:
         (githubData?.installations?.length ?? 0) +
-        (discordAccountData?.linked ? 1 : 0) +
         (linearConnectionData?.connected ? 1 : 0),
     }),
     [
       githubData,
       installUrlData,
-      discordAccountData,
-      discordBotInstallData,
       linearConnectionData,
       linearAccountStatusData,
       githubLoading,
-      discordLoading,
       linearLoading,
     ]
   );
 
-  // Actions — individual useCallbacks so the final useMemo has stable deps
+  // Actions
   const refreshGitHub = useCallback(() => refetchGitHub(), [refetchGitHub]);
   const invalidateGitHub = useCallback(() => {
     queryClient.invalidateQueries({
       queryKey: [['githubInstallation', 'getInstallations']],
     });
   }, [queryClient]);
-
-  const addDiscordBot = useCallback(() => {
-    if (discordBotInstallData?.url) {
-      window.open(discordBotInstallData.url, '_blank');
-    }
-  }, [discordBotInstallData]);
-
-  const linkDiscord = useCallback(async () => {
-    await authClient.linkSocial({
-      provider: 'discord',
-      callbackURL: `/${orgSlug}/integrations/discord`,
-    });
-  }, [orgSlug]);
-
-  const unlinkDiscord = useCallback(async () => {
-    await unlinkDiscordMutation.mutateAsync();
-  }, [unlinkDiscordMutation]);
-
-  const refreshDiscord = useCallback(() => refetchDiscord(), [refetchDiscord]);
 
   const linkLinear = useCallback(async () => {
     await authClient.linkSocial({
@@ -258,32 +183,23 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
 
   const refreshAll = useCallback(() => {
     refetchGitHub();
-    refetchDiscord();
     refetchLinear();
-  }, [refetchGitHub, refetchDiscord, refetchLinear]);
+  }, [refetchGitHub, refetchLinear]);
 
   const invalidateAll = useCallback(() => {
     queryClient.invalidateQueries({
       queryKey: [['githubInstallation', 'getInstallations']],
     });
     queryClient.invalidateQueries({
-      queryKey: [['discord', 'getLinkedAccount']],
-    });
-    queryClient.invalidateQueries({
       queryKey: [['linear', 'getConnectionStatus']],
     });
   }, [queryClient]);
 
-  // Memoize the combined return value to maintain referential stability
   return useMemo(
     () => ({
       ...state,
       refreshGitHub,
       invalidateGitHub,
-      addDiscordBot,
-      linkDiscord,
-      unlinkDiscord,
-      refreshDiscord,
       linkLinear,
       unlinkLinear,
       refreshLinear,
@@ -295,10 +211,6 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
       state,
       refreshGitHub,
       invalidateGitHub,
-      addDiscordBot,
-      linkDiscord,
-      unlinkDiscord,
-      refreshDiscord,
       linkLinear,
       unlinkLinear,
       refreshLinear,
