@@ -87,7 +87,7 @@ import { realtime } from '@bounty/realtime';
 import { GITHUB_ISSUE_URL_REGEX, GITHUB_URL_REGEX } from '@bounty/ui/lib/utils';
 import { parseLinksFromMarkdown } from '@bounty/ui/lib/links';
 import { GithubManager } from '@bounty/api/driver/github';
-import { fetchContributorScore } from '../lib/contributor-score';
+import { fetchContributorScore, type ScoreResult } from '../lib/contributor-score';
 
 const GIT_SUFFIX_REGEX = /\.git$/;
 const GITHUB_PR_URL_REGEX = /^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+/;
@@ -3774,7 +3774,7 @@ export const bountiesRouter = router({
         const scores = await Promise.all(scorePromises);
         const scoredSubmissions = submissions.map((s, i) => ({
           ...s,
-          score: (scores[i] ?? null) as import('../lib/contributor-score').ScoreResult | null,
+          score: scores[i] ?? null,
         }));
 
         return {
