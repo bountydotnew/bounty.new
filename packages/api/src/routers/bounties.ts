@@ -86,6 +86,8 @@ import {
 import { realtime } from '@bounty/realtime';
 import { GITHUB_ISSUE_URL_REGEX, GITHUB_URL_REGEX } from '@bounty/ui/lib/utils';
 import { parseLinksFromMarkdown } from '@bounty/ui/lib/links';
+import { GithubManager } from '@bounty/api/driver/github';
+import { fetchContributorScore } from '../lib/contributor-score';
 
 const GIT_SUFFIX_REGEX = /\.git$/;
 const GITHUB_PR_URL_REGEX = /^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+/;
@@ -3743,9 +3745,48 @@ export const bountiesRouter = router({
           .where(eq(submission.bountyId, input.bountyId))
           .orderBy(desc(submission.submittedAt));
 
+        // Fetch bounty repo info for contributor scoring
+        const [bountyRow] = await db
+          .select({
+            githubRepoOwner: bounty.githubRepoOwner,
+            githubRepoName: bounty.githubRepoName,
+          })
+          .from(bounty)
+          .where(eq(bounty.id, input.bountyId))
+          .limit(1);
+
+        const repoOwner = bountyRow?.githubRepoOwner;
+        const repoName = bountyRow?.githubRepoName;
+
+        // Compute contributor scores in parallel (only if repo info exists)
+        let scoredSubmissions = submissions.map((s) => ({
+          ...s,
+          score: null as import('../lib/contributor-score').ScoreResult | null,
+        }));
+
+        if (repoOwner && repoName) {
+          const github = new GithubManager();
+          const scorePromises = submissions.map((sub) =>
+            sub.githubUsername
+              ? fetchContributorScore(
+                  sub.githubUsername,
+                  repoOwner,
+                  repoName,
+                  github
+                )
+              : Promise.resolve(null)
+          );
+
+          const scores = await Promise.all(scorePromises);
+          scoredSubmissions = submissions.map((s, i) => ({
+            ...s,
+            score: scores[i] ?? null,
+          }));
+        }
+
         return {
           success: true,
-          submissions,
+          submissions: scoredSubmissions,
         };
       } catch (error) {
         const errorMessage =

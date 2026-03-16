@@ -725,4 +725,79 @@ export class GithubManager {
     }
     return {};
   }
+
+  async getUserProfile(
+    username: string
+  ): Promise<{
+    login: string;
+    followers: number;
+    public_repos: number;
+    created_at: string;
+  } | null> {
+    try {
+      const { data } = await this.octokit.rest.users.getByUsername({
+        username,
+      });
+      return {
+        login: data.login,
+        followers: data.followers,
+        public_repos: data.public_repos,
+        created_at: data.created_at,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  async getCommitCountByUser(
+    identifier: string,
+    username: string
+  ): Promise<number> {
+    const { owner, repo } = parseRepo(identifier);
+    try {
+      const { data } = await this.octokit.rest.repos.listCommits({
+        owner,
+        repo,
+        author: username,
+        per_page: 1,
+      });
+      // The response headers contain total count, but the simplest approach
+      // is to just check if the list is non-empty and use the array length
+      // For a more accurate count, we'd paginate, but for scoring purposes
+      // we just need rough buckets (0, 1-5, 6-20, 20+)
+      if (data.length === 0) return 0;
+      // Fetch a larger page to get a better count estimate
+      const { data: moreData } = await this.octokit.rest.repos.listCommits({
+        owner,
+        repo,
+        author: username,
+        per_page: 100,
+      });
+      return moreData.length;
+    } catch {
+      return 0;
+    }
+  }
+
+  async searchUserPRsInRepo(
+    owner: string,
+    repo: string,
+    username: string
+  ): Promise<{ state: string }[]> {
+    try {
+      const { data } =
+        await this.octokit.rest.search.issuesAndPullRequests({
+          q: `repo:${owner}/${repo} is:pr author:${username}`,
+          per_page: 100,
+        });
+      return data.items.map((item) => {
+        if (item.pull_request?.merged_at) {
+          return { state: 'merged' };
+        }
+        return { state: item.state }; // "open" or "closed"
+      });
+    } catch {
+      return [];
+    }
+  }
 }
