@@ -698,6 +698,65 @@ export const earlyAccessRouter = router({
       }
     }),
 
+  // Read-only lookup for the authenticated user's waitlist entry.
+  // Unlike getMyWaitlistEntry, this never auto-links or auto-creates rows.
+  peekMyWaitlistEntry: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const userId = ctx.session.user.id;
+      const userEmail = ctx.session.user.email;
+      const normalizedUserEmail = userEmail?.trim().toLowerCase();
+
+      let entry = await db.query.waitlist.findFirst({
+        where: (fields, { eq }) => eq(fields.userId, userId),
+      });
+
+      if (!entry && normalizedUserEmail) {
+        const [entryByEmail] = await db
+          .select()
+          .from(waitlist)
+          .where(sql`lower(${waitlist.email}) = ${normalizedUserEmail}`)
+          .limit(1);
+
+        entry = entryByEmail ?? null;
+      }
+
+      if (!entry) {
+        return null;
+      }
+
+      let position = entry.position;
+      if (!position) {
+        const [posRes] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(waitlist)
+          .where(sql`${waitlist.createdAt} < ${entry.createdAt}`);
+        position = (posRes?.count ?? 0) + 1;
+      }
+
+      return {
+        id: entry.id,
+        email: entry.email,
+        emailVerified: entry.emailVerified,
+        position,
+        bountyTitle: entry.bountyTitle,
+        bountyDescription: entry.bountyDescription,
+        bountyAmount: entry.bountyAmount,
+        bountyDeadline: entry.bountyDeadline,
+        createdAt: entry.createdAt,
+      };
+    } catch (error: unknown) {
+      if (error instanceof TRPCError) {
+        throw error;
+      }
+
+      warn('[peekMyWaitlistEntry] Error:', error);
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch waitlist entry',
+      });
+    }
+  }),
+
   // Get waitlist entry for the authenticated user
   getMyWaitlistEntry: protectedProcedure.query(async ({ ctx }) => {
     try {
