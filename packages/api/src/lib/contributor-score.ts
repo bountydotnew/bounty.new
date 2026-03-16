@@ -97,52 +97,55 @@ export function computeContributorScore(input: ScoreInput): ScoreResult {
 
 /**
  * Fetch GitHub data for a contributor and compute their score.
- * Returns null if any critical data fetch fails.
+ * Works with or without a linked repo — when no repo is provided,
+ * repo-specific signals (commits, PRs, contributor status) are zeroed
+ * and the score is based on profile + OSS influence alone.
+ * Returns null if the user profile fetch fails.
  */
 export async function fetchContributorScore(
   githubUsername: string,
-  repoOwner: string,
-  repoName: string,
+  repoOwner: string | null | undefined,
+  repoName: string | null | undefined,
   github: GithubManager
 ): Promise<ScoreResult | null> {
   try {
-    const identifier = `${repoOwner}/${repoName}`;
+    const hasRepo = !!(repoOwner && repoName);
+    const identifier = hasRepo ? `${repoOwner}/${repoName}` : '';
 
-    // Fetch data in parallel for efficiency
+    // Always fetch profile + user repos; only fetch repo-specific data when a repo is linked
     const [userProfile, userRepos, contributors, commitsByUser, prSearch] =
       await Promise.all([
-        // 1. User profile (followers, public_repos, created_at)
-        github
-          .getUserProfile(githubUsername)
-          .catch(() => null),
+        github.getUserProfile(githubUsername).catch(() => null),
 
-        // 2. User's top repos by stars
         github
           .getUserRepos(githubUsername)
           .then((r) => (r.success ? r.data : []))
           .catch(() => []),
 
-        // 3. Repo contributors (check if user is listed)
-        github
-          .getContributors(identifier)
-          .catch(() => []),
+        hasRepo
+          ? github.getContributors(identifier).catch(() => [])
+          : Promise.resolve([]),
 
-        // 4. Commits by user in this repo
-        github
-          .getCommitCountByUser(identifier, githubUsername)
-          .catch(() => 0),
+        hasRepo
+          ? github
+              .getCommitCountByUser(identifier, githubUsername)
+              .catch(() => 0)
+          : Promise.resolve(0),
 
-        // 5. PRs by user in this repo (all states)
-        github
-          .searchUserPRsInRepo(repoOwner, repoName, githubUsername)
-          .catch(() => []),
+        hasRepo
+          ? github
+              .searchUserPRsInRepo(repoOwner, repoName, githubUsername)
+              .catch(() => [])
+          : Promise.resolve([]),
       ]);
 
     if (!userProfile) return null;
 
-    const contributor = contributors.find(
-      (c) => c.login.toLowerCase() === githubUsername.toLowerCase()
-    );
+    const contributor = hasRepo
+      ? contributors.find(
+          (c) => c.login.toLowerCase() === githubUsername.toLowerCase()
+        )
+      : undefined;
 
     const topRepoStars = userRepos
       .map((r) => r.stargazersCount ?? 0)
@@ -155,11 +158,13 @@ export async function fetchContributorScore(
       accountCreated: userProfile.created_at,
       commitsInRepo: commitsByUser,
       prsInRepo: prSearch,
-      reviewsInRepo: 0, // Reviews require authenticated search; omit for now
+      reviewsInRepo: 0,
       isContributor: !!contributor,
       contributionCount: contributor?.contributions ?? 0,
-      isOrgMember: false, // Checked separately if needed
-      isOwner: repoOwner.toLowerCase() === githubUsername.toLowerCase(),
+      isOrgMember: false,
+      isOwner: hasRepo
+        ? repoOwner.toLowerCase() === githubUsername.toLowerCase()
+        : false,
       topRepoStars,
     };
 

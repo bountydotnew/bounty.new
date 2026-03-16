@@ -3745,7 +3745,7 @@ export const bountiesRouter = router({
           .where(eq(submission.bountyId, input.bountyId))
           .orderBy(desc(submission.submittedAt));
 
-        // Fetch bounty repo info for contributor scoring
+        // Fetch bounty repo info for contributor scoring (optional — scores work without a repo)
         const [bountyRow] = await db
           .select({
             githubRepoOwner: bounty.githubRepoOwner,
@@ -3755,34 +3755,27 @@ export const bountiesRouter = router({
           .where(eq(bounty.id, input.bountyId))
           .limit(1);
 
-        const repoOwner = bountyRow?.githubRepoOwner;
-        const repoName = bountyRow?.githubRepoName;
+        const repoOwner = bountyRow?.githubRepoOwner ?? null;
+        const repoName = bountyRow?.githubRepoName ?? null;
 
-        // Compute contributor scores in parallel (only if repo info exists)
-        let scoredSubmissions = submissions.map((s) => ({
+        // Compute contributor scores in parallel for every submission with a GitHub username
+        const github = new GithubManager();
+        const scorePromises = submissions.map((sub) =>
+          sub.githubUsername
+            ? fetchContributorScore(
+                sub.githubUsername,
+                repoOwner,
+                repoName,
+                github
+              )
+            : Promise.resolve(null)
+        );
+
+        const scores = await Promise.all(scorePromises);
+        const scoredSubmissions = submissions.map((s, i) => ({
           ...s,
-          score: null as import('../lib/contributor-score').ScoreResult | null,
+          score: (scores[i] ?? null) as import('../lib/contributor-score').ScoreResult | null,
         }));
-
-        if (repoOwner && repoName) {
-          const github = new GithubManager();
-          const scorePromises = submissions.map((sub) =>
-            sub.githubUsername
-              ? fetchContributorScore(
-                  sub.githubUsername,
-                  repoOwner,
-                  repoName,
-                  github
-                )
-              : Promise.resolve(null)
-          );
-
-          const scores = await Promise.all(scorePromises);
-          scoredSubmissions = submissions.map((s, i) => ({
-            ...s,
-            score: scores[i] ?? null,
-          }));
-        }
 
         return {
           success: true,
