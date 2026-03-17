@@ -1,9 +1,18 @@
-import { db, user, userProfile, userRating, userReputation } from '@bounty/db';
+import {
+  db,
+  user,
+  userProfile,
+  userRating,
+  userReputation,
+  account,
+} from '@bounty/db';
 import { TRPCError } from '@trpc/server';
-import { desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { LRUCache } from '../lib/lru-cache';
 import { protectedProcedure, publicProcedure, router } from '../trpc';
+import { GithubManager } from '@bounty/api/driver/github';
+import { fetchProfileScore } from '../lib/profile-score';
 
 const updateProfileSchema = z.object({
   bio: z.string().max(500).optional(),
@@ -511,5 +520,32 @@ export const profilesRouter = router({
           cause: error,
         });
       }
+    }),
+
+  /**
+   * Fetch the profile-level trust score for a user's GitHub account.
+   * This score is based on overall GitHub presence (not repo-scoped).
+   * Shows regardless of whether the bounty.new profile is private.
+   */
+  getProfileScore: publicProcedure
+    .input(z.object({ githubUsername: z.string().min(1) }))
+    .query(async ({ input, ctx }) => {
+      // Use viewer's OAuth token if available, fall back to GITHUB_TOKEN
+      let githubToken: string | undefined;
+      if (ctx.session?.user?.id) {
+        const githubAccount = await ctx.db.query.account.findFirst({
+          where: and(
+            eq(account.userId, ctx.session.user.id),
+            eq(account.providerId, 'github')
+          ),
+        });
+        githubToken = githubAccount?.accessToken ?? undefined;
+      }
+
+      const github = new GithubManager(
+        githubToken ? { token: githubToken } : {}
+      );
+      const score = await fetchProfileScore(input.githubUsername, github);
+      return { score };
     }),
 });

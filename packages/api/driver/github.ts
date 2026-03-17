@@ -85,12 +85,96 @@ function parseCoAuthors(message: string): string[] {
   return out;
 }
 
+// ---------------------------------------------------------------------------
+// Profile dossier — raw GitHub data for profile-level scoring
+// ---------------------------------------------------------------------------
+
+export interface ProfileDossier {
+  followers: number;
+  following: number;
+  publicRepos: number;
+  accountCreated: string;
+  hasBio: boolean;
+  totalStars: number;
+  topRepoStars: number;
+  totalForks: number;
+  totalContributions: number;
+  orgCount: number;
+  languageCount: number;
+}
+
+interface GQLProfileUser {
+  login: string;
+  bio: string | null;
+  repositories: { totalCount: number };
+  followers: { totalCount: number };
+  following: { totalCount: number };
+  createdAt: string;
+  topRepositories?: {
+    nodes: {
+      stargazerCount: number;
+      forkCount: number;
+      primaryLanguage?: { name: string } | null;
+    }[];
+  };
+  organizations?: { totalCount: number };
+  contributionsCollection?: {
+    contributionCalendar?: {
+      totalContributions: number;
+    };
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Contributor dossier — raw GitHub data returned by getContributorDossier()
+// ---------------------------------------------------------------------------
+
+export interface ContributorDossier {
+  followers: number;
+  publicRepos: number;
+  accountCreated: string;
+  topRepoStars: number[];
+  orgs: string[]; // org logins
+  /** PR counts scoped to the target repo (zero when no repo provided) */
+  openPrs: number;
+  mergedPrs: number;
+  closedPrs: number;
+  reviewCount: number;
+}
+
+// GraphQL response shape (private to this module)
+interface GQLContributorUser {
+  login: string;
+  repositories: { totalCount: number };
+  followers: { totalCount: number };
+  createdAt: string;
+  topRepositories?: {
+    nodes: { stargazerCount: number }[];
+  };
+  organizations?: {
+    nodes: { login: string }[];
+  };
+}
+
+interface GQLContributorResponse {
+  data?: {
+    user?: GQLContributorUser;
+    openPrs?: { issueCount: number };
+    mergedPrs?: { issueCount: number };
+    closedPrs?: { issueCount: number };
+    reviews?: { issueCount: number };
+  };
+  errors?: { message: string }[];
+}
+
 export class GithubManager {
   private octokit: InstanceType<typeof MyOctokit>;
+  private token: string | undefined;
 
   constructor(config: { token?: string } | string = {}) {
     const token = typeof config === 'string' ? config : config.token;
     const auth = token || process.env.GITHUB_TOKEN;
+    this.token = auth || undefined;
     this.octokit = new MyOctokit(auth ? { auth } : {});
   }
 
@@ -726,9 +810,7 @@ export class GithubManager {
     return {};
   }
 
-  async getUserProfile(
-    username: string
-  ): Promise<{
+  async getUserProfile(username: string): Promise<{
     login: string;
     followers: number;
     public_repos: number;
@@ -785,11 +867,10 @@ export class GithubManager {
     username: string
   ): Promise<{ state: string }[]> {
     try {
-      const { data } =
-        await this.octokit.rest.search.issuesAndPullRequests({
-          q: `repo:${owner}/${repo} is:pr author:${username}`,
-          per_page: 100,
-        });
+      const { data } = await this.octokit.rest.search.issuesAndPullRequests({
+        q: `repo:${owner}/${repo} is:pr author:${username}`,
+        per_page: 100,
+      });
       return data.items.map((item) => {
         if (item.pull_request?.merged_at) {
           return { state: 'merged' };
@@ -799,5 +880,180 @@ export class GithubManager {
     } catch {
       return [];
     }
+  }
+
+  // -------------------------------------------------------------------------
+  // GraphQL
+  // -------------------------------------------------------------------------
+
+  /**
+   * Execute a GitHub GraphQL query using this instance's token.
+   * Returns `null` on any failure (network, auth, rate limit).
+   */
+  async graphql<T = unknown>(
+    query: string,
+    variables?: Record<string, unknown>
+  ): Promise<T | null> {
+    if (!this.token) return null;
+    try {
+      const response = await fetch('https://api.github.com/graphql', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'bounty.new',
+        },
+        body: JSON.stringify({ query, variables }),
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!response.ok) return null;
+      const json = (await response.json()) as { data?: T };
+      return json.data ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Contributor dossier — single GraphQL call for scoring data
+  // -------------------------------------------------------------------------
+
+  /**
+   * Fetch all GitHub signals needed to score a contributor in one GraphQL call.
+   *
+   * Returns raw data (profile, repos, orgs, PR/review counts) without computing
+   * the score itself — that's the job of `computeContributorScore()`.
+   *
+   * When `repoOwner`/`repoName` are null the repo-scoped search queries are
+   * omitted and the returned PR/review counts will be zero.
+   */
+  async getContributorDossier(
+    githubUsername: string,
+    repoOwner?: string | null,
+    repoName?: string | null
+  ): Promise<ContributorDossier | null> {
+    const hasRepo = !!(repoOwner && repoName);
+    const slug = hasRepo ? `${repoOwner}/${repoName}` : '';
+
+    const repoSearchQueries = hasRepo
+      ? `
+        openPrs: search(query: "repo:${slug} author:${githubUsername} type:pr is:open", type: ISSUE, first: 0) { issueCount }
+        mergedPrs: search(query: "repo:${slug} author:${githubUsername} type:pr is:merged", type: ISSUE, first: 0) { issueCount }
+        closedPrs: search(query: "repo:${slug} author:${githubUsername} type:pr is:unmerged is:closed", type: ISSUE, first: 0) { issueCount }
+        reviews: search(query: "repo:${slug} reviewed-by:${githubUsername} type:pr", type: ISSUE, first: 0) { issueCount }
+      `
+      : '';
+
+    const query = `
+      query($login: String!) {
+        user(login: $login) {
+          login
+          repositories { totalCount }
+          followers { totalCount }
+          createdAt
+          topRepositories(first: 10, orderBy: {field: STARGAZERS, direction: DESC}) {
+            nodes { stargazerCount }
+          }
+          organizations(first: 10) {
+            nodes { login }
+          }
+        }
+        ${repoSearchQueries}
+      }
+    `;
+
+    const data = await this.graphql<GQLContributorResponse['data']>(query, {
+      login: githubUsername,
+    });
+    const u = data?.user;
+    if (!u) return null;
+
+    return {
+      followers: u.followers?.totalCount ?? 0,
+      publicRepos: u.repositories?.totalCount ?? 0,
+      accountCreated: u.createdAt ?? '',
+      topRepoStars: (u.topRepositories?.nodes ?? [])
+        .map((r) => r.stargazerCount ?? 0)
+        .sort((a, b) => b - a)
+        .slice(0, 10),
+      orgs: (u.organizations?.nodes ?? []).map((o) => o.login),
+      openPrs: data?.openPrs?.issueCount ?? 0,
+      mergedPrs: data?.mergedPrs?.issueCount ?? 0,
+      closedPrs: data?.closedPrs?.issueCount ?? 0,
+      reviewCount: data?.reviews?.issueCount ?? 0,
+    };
+  }
+
+  // -------------------------------------------------------------------------
+  // Profile dossier — single GraphQL call for profile-level scoring
+  // -------------------------------------------------------------------------
+
+  /**
+   * Fetch all GitHub signals needed to compute a profile-level trust score.
+   *
+   * This is not repo-scoped — it represents the user's overall GitHub presence.
+   * Uses a single GraphQL call to fetch profile, top repos (with stars/forks/languages),
+   * org count, and contribution calendar totals.
+   */
+  async getProfileDossier(
+    githubUsername: string
+  ): Promise<ProfileDossier | null> {
+    const query = `
+      query($login: String!) {
+        user(login: $login) {
+          login
+          bio
+          repositories { totalCount }
+          followers { totalCount }
+          following { totalCount }
+          createdAt
+          topRepositories(first: 20, orderBy: {field: STARGAZERS, direction: DESC}) {
+            nodes {
+              stargazerCount
+              forkCount
+              primaryLanguage { name }
+            }
+          }
+          organizations { totalCount }
+          contributionsCollection {
+            contributionCalendar {
+              totalContributions
+            }
+          }
+        }
+      }
+    `;
+
+    const data = await this.graphql<{ user?: GQLProfileUser }>(query, {
+      login: githubUsername,
+    });
+    const u = data?.user;
+    if (!u) return null;
+
+    const repos = u.topRepositories?.nodes ?? [];
+    const stars = repos.map((r) => r.stargazerCount ?? 0);
+    const totalStars = stars.reduce((a, b) => a + b, 0);
+    const topRepoStars = stars.length > 0 ? Math.max(...stars) : 0;
+    const totalForks = repos.reduce((a, b) => a + (b.forkCount ?? 0), 0);
+
+    const languages = new Set(
+      repos.map((r) => r.primaryLanguage?.name).filter((l): l is string => !!l)
+    );
+
+    return {
+      followers: u.followers?.totalCount ?? 0,
+      following: u.following?.totalCount ?? 0,
+      publicRepos: u.repositories?.totalCount ?? 0,
+      accountCreated: u.createdAt ?? '',
+      hasBio: !!(u.bio && u.bio.trim()),
+      totalStars,
+      topRepoStars,
+      totalForks,
+      totalContributions:
+        u.contributionsCollection?.contributionCalendar?.totalContributions ??
+        0,
+      orgCount: u.organizations?.totalCount ?? 0,
+      languageCount: languages.size,
+    };
   }
 }

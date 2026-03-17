@@ -87,7 +87,8 @@ import { realtime } from '@bounty/realtime';
 import { GITHUB_ISSUE_URL_REGEX, GITHUB_URL_REGEX } from '@bounty/ui/lib/utils';
 import { parseLinksFromMarkdown } from '@bounty/ui/lib/links';
 import { GithubManager } from '@bounty/api/driver/github';
-import { fetchContributorScore, type ScoreResult } from '../lib/contributor-score';
+import { fetchContributorScores } from '../lib/contributor-score';
+import { account } from '@bounty/db';
 
 const GIT_SUFFIX_REGEX = /\.git$/;
 const GITHUB_PR_URL_REGEX = /^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+/;
@@ -3716,7 +3717,7 @@ export const bountiesRouter = router({
 
   getBountySubmissions: publicProcedure
     .input(z.object({ bountyId: z.string().uuid() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       try {
         const submissions = await db
           .select({
@@ -3745,7 +3746,7 @@ export const bountiesRouter = router({
           .where(eq(submission.bountyId, input.bountyId))
           .orderBy(desc(submission.submittedAt));
 
-        // Fetch bounty repo info for contributor scoring (optional — scores work without a repo)
+        // Fetch bounty repo info for contributor scoring
         const [bountyRow] = await db
           .select({
             githubRepoOwner: bounty.githubRepoOwner,
@@ -3758,20 +3759,31 @@ export const bountiesRouter = router({
         const repoOwner = bountyRow?.githubRepoOwner ?? null;
         const repoName = bountyRow?.githubRepoName ?? null;
 
-        // Compute contributor scores in parallel for every submission with a GitHub username
-        const github = new GithubManager();
-        const scorePromises = submissions.map((sub) =>
-          sub.githubUsername
-            ? fetchContributorScore(
-                sub.githubUsername,
-                repoOwner,
-                repoName,
-                github
-              )
-            : Promise.resolve(null)
+        // Use the viewer's GitHub OAuth token if logged in (each user gets
+        // their own 5k req/hr rate limit). Falls back to GITHUB_TOKEN env var.
+        let githubToken: string | undefined;
+        if (ctx.session?.user?.id) {
+          const githubAccount = await ctx.db.query.account.findFirst({
+            where: and(
+              eq(account.userId, ctx.session.user.id),
+              eq(account.providerId, 'github')
+            ),
+          });
+          githubToken = githubAccount?.accessToken ?? undefined;
+        }
+
+        const github = new GithubManager(
+          githubToken ? { token: githubToken } : {}
         );
 
-        const scores = await Promise.all(scorePromises);
+        // Batch-fetch contributor scores (1 GraphQL call per user, Redis-cached)
+        const scores = await fetchContributorScores(
+          submissions.map((s) => s.githubUsername),
+          repoOwner,
+          repoName,
+          github
+        );
+
         const scoredSubmissions = submissions.map((s, i) => ({
           ...s,
           score: scores[i] ?? null,

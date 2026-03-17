@@ -1,4 +1,12 @@
-import { GithubManager } from '@bounty/api/driver/github';
+import type {
+  GithubManager,
+  ContributorDossier,
+} from '@bounty/api/driver/github';
+import { RedisCache } from './redis-cache';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 export interface ScoreInput {
   followers: number;
@@ -22,6 +30,31 @@ export interface ScoreResult {
   prTrackRecord: number;
 }
 
+// ---------------------------------------------------------------------------
+// Redis cache — 1 hour TTL, keyed by owner/repo/username
+// ---------------------------------------------------------------------------
+
+const scoreCache = new RedisCache<ScoreResult>({
+  prefix: 'contributor-score',
+  ttl: 3600, // 1 hour
+});
+
+function cacheKey(
+  repoOwner: string | null | undefined,
+  repoName: string | null | undefined,
+  githubUsername: string
+): string {
+  const repo =
+    repoOwner && repoName
+      ? `${repoOwner.toLowerCase()}/${repoName.toLowerCase()}`
+      : '_no-repo_';
+  return `${repo}/${githubUsername.toLowerCase()}`;
+}
+
+// ---------------------------------------------------------------------------
+// Pure scoring functions
+// ---------------------------------------------------------------------------
+
 function accountAgeMonths(created: string): number {
   return (Date.now() - new Date(created).getTime()) / 2.628e9;
 }
@@ -31,7 +64,16 @@ function scoreRepoFamiliarity(input: ScoreInput): number {
   const c = input.commitsInRepo;
   s += c === 0 ? 0 : c <= 5 ? 3 : c <= 20 ? 7 : 10;
   const merged = input.prsInRepo.filter((p) => p.state === 'merged').length;
-  s += merged === 0 ? 0 : merged === 1 ? 3 : merged <= 5 ? 6 : merged <= 15 ? 9 : 12;
+  s +=
+    merged === 0
+      ? 0
+      : merged === 1
+        ? 3
+        : merged <= 5
+          ? 6
+          : merged <= 15
+            ? 9
+            : 12;
   const r = input.reviewsInRepo;
   s += r === 0 ? 0 : r <= 3 ? 3 : r <= 10 ? 5 : 8;
   if (input.isContributor) s += 5;
@@ -95,12 +137,55 @@ export function computeContributorScore(input: ScoreInput): ScoreResult {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Dossier → ScoreInput mapper
+// ---------------------------------------------------------------------------
+
+function dossierToScoreInput(
+  dossier: ContributorDossier,
+  githubUsername: string,
+  repoOwner?: string | null,
+  repoName?: string | null
+): ScoreInput {
+  const hasRepo = !!(repoOwner && repoName);
+  const isOrgMember = hasRepo
+    ? dossier.orgs.some((o) => o.toLowerCase() === repoOwner!.toLowerCase())
+    : false;
+
+  const prsInRepo = [
+    ...Array(dossier.mergedPrs).fill({ state: 'merged' }),
+    ...Array(dossier.closedPrs).fill({ state: 'closed' }),
+    ...Array(dossier.openPrs).fill({ state: 'open' }),
+  ] as { state: string }[];
+
+  const contributionCount = dossier.mergedPrs + dossier.reviewCount;
+
+  return {
+    followers: dossier.followers,
+    publicRepos: dossier.publicRepos,
+    accountCreated: dossier.accountCreated,
+    commitsInRepo: dossier.mergedPrs, // merged PRs as commit proxy
+    prsInRepo,
+    reviewsInRepo: dossier.reviewCount,
+    isContributor: contributionCount > 0,
+    contributionCount,
+    isOrgMember,
+    isOwner: hasRepo
+      ? repoOwner!.toLowerCase() === githubUsername.toLowerCase()
+      : false,
+    topRepoStars: dossier.topRepoStars,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Public API — fetch + score + cache
+// ---------------------------------------------------------------------------
+
 /**
- * Fetch GitHub data for a contributor and compute their score.
- * Works with or without a linked repo — when no repo is provided,
- * repo-specific signals (commits, PRs, contributor status) are zeroed
- * and the score is based on profile + OSS influence alone.
- * Returns null if the user profile fetch fails.
+ * Fetch GitHub data for a contributor and compute their trust score.
+ *
+ * Delegates the GitHub API call to `GithubManager.getContributorDossier()`
+ * (single GraphQL query) and caches the computed score in Redis for 1 hour.
  */
 export async function fetchContributorScore(
   githubUsername: string,
@@ -109,67 +194,51 @@ export async function fetchContributorScore(
   github: GithubManager
 ): Promise<ScoreResult | null> {
   try {
-    const hasRepo = !!(repoOwner && repoName);
-    const identifier = hasRepo ? `${repoOwner}/${repoName}` : '';
+    // 1. Check cache
+    const key = cacheKey(repoOwner, repoName, githubUsername);
+    const cached = await scoreCache.get(key);
+    if (cached) return cached;
 
-    // Always fetch profile + user repos; only fetch repo-specific data when a repo is linked
-    const [userProfile, userRepos, contributors, commitsByUser, prSearch] =
-      await Promise.all([
-        github.getUserProfile(githubUsername).catch(() => null),
+    // 2. Fetch dossier from GitHub (single GraphQL call)
+    const dossier = await github.getContributorDossier(
+      githubUsername,
+      repoOwner,
+      repoName
+    );
+    if (!dossier) return null;
 
-        github
-          .getUserRepos(githubUsername)
-          .then((r) => (r.success ? r.data : []))
-          .catch(() => []),
+    // 3. Score
+    const input = dossierToScoreInput(
+      dossier,
+      githubUsername,
+      repoOwner,
+      repoName
+    );
+    const score = computeContributorScore(input);
 
-        hasRepo
-          ? github.getContributors(identifier).catch(() => [])
-          : Promise.resolve([]),
-
-        hasRepo
-          ? github
-              .getCommitCountByUser(identifier, githubUsername)
-              .catch(() => 0)
-          : Promise.resolve(0),
-
-        hasRepo
-          ? github
-              .searchUserPRsInRepo(repoOwner, repoName, githubUsername)
-              .catch(() => [])
-          : Promise.resolve([]),
-      ]);
-
-    if (!userProfile) return null;
-
-    const contributor = hasRepo
-      ? contributors.find(
-          (c) => c.login.toLowerCase() === githubUsername.toLowerCase()
-        )
-      : undefined;
-
-    const topRepoStars = userRepos
-      .map((r) => r.stargazersCount ?? 0)
-      .sort((a, b) => b - a)
-      .slice(0, 10);
-
-    const input: ScoreInput = {
-      followers: userProfile.followers,
-      publicRepos: userProfile.public_repos,
-      accountCreated: userProfile.created_at,
-      commitsInRepo: commitsByUser,
-      prsInRepo: prSearch,
-      reviewsInRepo: 0,
-      isContributor: !!contributor,
-      contributionCount: contributor?.contributions ?? 0,
-      isOrgMember: false,
-      isOwner: hasRepo
-        ? repoOwner.toLowerCase() === githubUsername.toLowerCase()
-        : false,
-      topRepoStars,
-    };
-
-    return computeContributorScore(input);
+    // 4. Cache
+    await scoreCache.set(key, score);
+    return score;
   } catch {
     return null;
   }
+}
+
+/**
+ * Batch-fetch contributor scores for multiple GitHub usernames.
+ * Checks Redis cache first, then fires GraphQL calls only for cache misses.
+ */
+export async function fetchContributorScores(
+  githubUsernames: (string | null)[],
+  repoOwner: string | null | undefined,
+  repoName: string | null | undefined,
+  github: GithubManager
+): Promise<(ScoreResult | null)[]> {
+  return Promise.all(
+    githubUsernames.map((username) =>
+      username
+        ? fetchContributorScore(username, repoOwner, repoName, github)
+        : Promise.resolve(null)
+    )
+  );
 }

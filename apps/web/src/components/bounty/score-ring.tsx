@@ -1,26 +1,26 @@
 'use client';
 
-import { ShieldCheck } from 'lucide-react';
+import { SecurityIcon } from '@bounty/ui';
 import { cn } from '@bounty/ui/lib/utils';
 import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipPopup,
-} from '@bounty/ui/components/tooltip';
+  Popover,
+  PopoverTrigger,
+  PopoverPopup,
+} from '@bounty/ui/components/popover';
 import type { ScoreResult } from '@/lib/contributor-score';
 
 function scoreColor(total: number): string {
   if (total >= 80) return 'text-emerald-400';
   if (total >= 60) return 'text-green-400';
   if (total >= 30) return 'text-amber-400';
-  return 'text-muted-foreground/50';
+  return 'text-orange-400';
 }
 
 function scoreRingColor(total: number): string {
   if (total >= 80) return 'stroke-emerald-400';
   if (total >= 60) return 'stroke-green-400';
   if (total >= 30) return 'stroke-amber-400';
-  return 'stroke-muted-foreground/30';
+  return 'stroke-orange-400';
 }
 
 function scoreLabel(total: number): string {
@@ -30,32 +30,42 @@ function scoreLabel(total: number): string {
   return 'New contributor';
 }
 
-interface ScoreBarProps {
-  label: string;
-  value: number;
-  max: number;
-  color: string;
+function scoreDescription(total: number): string {
+  if (total >= 80)
+    return 'Deep repo familiarity, strong community presence, and a proven open-source track record.';
+  if (total >= 60)
+    return 'Solid activity in this repo and good standing in the community.';
+  if (total >= 30)
+    return 'Some history here but limited repo activity or community presence.';
+  return 'New to this repo with little or no prior activity.';
 }
 
-function ScoreBar({ label, value, max, color }: ScoreBarProps) {
-  const pct = Math.round((value / max) * 100);
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-[10px] text-muted-foreground w-[72px] shrink-0 truncate">
-        {label}
-      </span>
-      <div className="flex-1 h-1 rounded-full bg-muted/40 overflow-hidden">
-        <div
-          className={cn('h-full rounded-full', color)}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <span className="text-[10px] text-muted-foreground font-mono w-8 text-right shrink-0">
-        {value}/{max}
-      </span>
-    </div>
-  );
-}
+const CATEGORIES = [
+  {
+    label: 'Repo activity',
+    key: 'repoFamiliarity' as const,
+    max: 35,
+    color: 'bg-emerald-400',
+  },
+  {
+    label: 'Community',
+    key: 'communityStanding' as const,
+    max: 25,
+    color: 'bg-green-400',
+  },
+  {
+    label: 'Open source',
+    key: 'ossInfluence' as const,
+    max: 20,
+    color: 'bg-blue-400',
+  },
+  {
+    label: 'PR history',
+    key: 'prTrackRecord' as const,
+    max: 20,
+    color: 'bg-amber-400',
+  },
+];
 
 export function ScoreRing({ score }: { score: ScoreResult }) {
   const radius = 14;
@@ -63,9 +73,9 @@ export function ScoreRing({ score }: { score: ScoreResult }) {
   const progress = (score.total / 100) * circumference;
 
   return (
-    <Tooltip>
-      <TooltipTrigger>
-        <div className="relative size-9 flex items-center justify-center shrink-0 cursor-default">
+    <Popover>
+      <PopoverTrigger>
+        <div className="relative size-9 flex items-center justify-center shrink-0 cursor-pointer">
           <svg className="size-9 -rotate-90" viewBox="0 0 36 36">
             <circle
               cx="18"
@@ -73,7 +83,7 @@ export function ScoreRing({ score }: { score: ScoreResult }) {
               r={radius}
               fill="none"
               strokeWidth="2.5"
-              className="stroke-muted/40"
+              className="stroke-muted-foreground/15"
             />
             <circle
               cx="18"
@@ -92,59 +102,70 @@ export function ScoreRing({ score }: { score: ScoreResult }) {
           </svg>
           <span
             className={cn(
-              'absolute inset-0 flex items-center justify-center text-[9px] font-semibold font-mono',
+              'absolute inset-0 flex items-center justify-center text-[13px] font-semibold font-mono',
               scoreColor(score.total)
             )}
           >
             {score.total}
           </span>
         </div>
-      </TooltipTrigger>
-      <TooltipPopup side="bottom" sideOffset={6} className="w-56 p-0">
-        <div className="px-3 py-2.5">
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <ShieldCheck className="w-3 h-3 text-muted-foreground" />
+      </PopoverTrigger>
+      <PopoverPopup side="bottom" sideOffset={6} tooltipStyle className="w-72">
+        <div className="p-3">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <SecurityIcon
+                className={cn('w-4 h-4', scoreColor(score.total))}
+              />
+              <span
+                className={cn('text-sm font-semibold', scoreColor(score.total))}
+              >
+                {scoreLabel(score.total)}
+              </span>
+            </div>
             <span
               className={cn(
-                'text-[11px] font-semibold',
+                'text-sm font-mono font-semibold',
                 scoreColor(score.total)
               )}
             >
-              {scoreLabel(score.total)}
+              {score.total}/100
             </span>
           </div>
-          <div className="space-y-1.5 mt-2">
-            <ScoreBar
-              label="Repo activity"
-              value={score.repoFamiliarity}
-              max={35}
-              color="bg-emerald-400/70"
-            />
-            <ScoreBar
-              label="Community"
-              value={score.communityStanding}
-              max={25}
-              color="bg-green-400/70"
-            />
-            <ScoreBar
-              label="Open source"
-              value={score.ossInfluence}
-              max={20}
-              color="bg-blue-400/70"
-            />
-            <ScoreBar
-              label="PR history"
-              value={score.prTrackRecord}
-              max={20}
-              color="bg-amber-400/70"
-            />
-          </div>
-          <p className="text-[10px] leading-relaxed text-muted-foreground mt-2">
-            Trust score from profile, repo contributions, and open-source track
-            record.
+
+          {/* Description */}
+          <p className="text-xs leading-relaxed text-foreground/60 mb-4">
+            {scoreDescription(score.total)}
           </p>
+
+          {/* Breakdown */}
+          <div className="space-y-2.5">
+            {CATEGORIES.map((cat) => {
+              const value = score[cat.key];
+              const pct = Math.round((value / cat.max) * 100);
+              return (
+                <div key={cat.key} className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-foreground/80">
+                      {cat.label}
+                    </span>
+                    <span className="text-xs font-mono text-foreground/60">
+                      {value}/{cat.max}
+                    </span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-foreground/[0.06] overflow-hidden">
+                    <div
+                      className={cn('h-full rounded-full', cat.color)}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </TooltipPopup>
-    </Tooltip>
+      </PopoverPopup>
+    </Popover>
   );
 }
