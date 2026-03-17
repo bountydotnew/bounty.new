@@ -26,6 +26,7 @@
     "@trpc-studio/introspection": "^0.2.3",
     "@trpc/server": "catalog:",
     "@upstash/ratelimit": "catalog:",
+    "@unkey/ratelimit": "catalog:",
     "bs58": "^6.0.0",
     "drizzle-orm": "catalog:",
     "lru-cache": "catalog:",
