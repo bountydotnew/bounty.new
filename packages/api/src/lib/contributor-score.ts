@@ -158,13 +158,17 @@ function dossierToScoreInput(
     ...Array(dossier.openPrs).fill({ state: 'open' }),
   ] as { state: string }[];
 
+  // contributionCount uses reviews only (mergedPrs already counted in prsInRepo)
   const contributionCount = dossier.mergedPrs + dossier.reviewCount;
 
   return {
     followers: dossier.followers,
     publicRepos: dossier.publicRepos,
     accountCreated: dossier.accountCreated,
-    commitsInRepo: dossier.mergedPrs, // merged PRs as commit proxy
+    // commitsInRepo: 0 — we don't have a separate commit signal from GraphQL.
+    // Merged PRs are already counted in prsInRepo; setting this to 0 avoids
+    // double-counting in scoreRepoFamiliarity().
+    commitsInRepo: 0,
     prsInRepo,
     reviewsInRepo: dossier.reviewCount,
     isContributor: contributionCount > 0,

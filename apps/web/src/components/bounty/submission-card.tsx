@@ -125,7 +125,7 @@ export default function SubmissionCard({
             name={displayName}
             handle={username || null}
             image={displayAvatar || null}
-            href={`/profile/${username || displayName}`}
+            href={username ? `/profile/${username}` : undefined}
           >
             <span className="flex items-center gap-2">
               <span className="shrink-0">
@@ -279,22 +279,28 @@ export default function SubmissionCard({
           </a>
         )}
         {githubHeadSha && (
-          <a
-            href={
-              githubRepoOwner && githubRepoName && githubPullRequestNumber
-                ? `https://github.com/${githubRepoOwner}/${githubRepoName}/pull/${githubPullRequestNumber}/commits/${githubHeadSha}`
-                : prUrl || '#'
-            }
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-[9px] border border-[#232323] bg-[oklab(28.5%_0_0/32%)] px-1.5 py-0.5 transition-colors hover:bg-[oklab(28.5%_0_0/40%)]"
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1.5"
           >
-            <GithubIcon className="h-3 w-3 flex-shrink-0" />
-            <span className="text-xs text-text-muted">
-              {githubHeadSha.slice(0, 7)}
-            </span>
-            <ExternalLink className="h-3 w-3 flex-shrink-0 text-text-muted" />
-          </a>
+            <a
+              href={
+                githubRepoOwner && githubRepoName && githubPullRequestNumber
+                  ? `https://github.com/${githubRepoOwner}/${githubRepoName}/pull/${githubPullRequestNumber}/commits/${githubHeadSha}`
+                  : prUrl || '#'
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <GithubIcon className="h-3 w-3 flex-shrink-0" />
+              <span className="font-mono text-xs">
+                {githubHeadSha.slice(0, 7)}
+              </span>
+              <ExternalLink className="h-3 w-3 flex-shrink-0" />
+            </a>
+          </Button>
         )}
       </div>
 

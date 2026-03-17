@@ -176,6 +176,11 @@ export async function fetchProfileScore(
   githubUsername: string,
   github: GithubManager
 ): Promise<ProfileScoreResult | null> {
+  // Fast path: return cached score without a network call
+  const key = githubUsername.toLowerCase();
+  const cached = await profileScoreCache.get(key);
+  if (cached) return cached;
+
   const result = await fetchProfileScoreWithDossier(githubUsername, github);
   return result?.score ?? null;
 }

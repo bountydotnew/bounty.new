@@ -110,7 +110,7 @@ function UserPreviewCardContent({
   handle?: string | null;
   image?: string | null;
 }) {
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     ...trpc.profiles.getProfileScore.queryOptions({
       githubUsername: handle || '',
     }),
@@ -121,12 +121,13 @@ function UserPreviewCardContent({
   const score = data?.score;
   const dossier = data?.dossier;
   const bountyStats = data?.bountyStats;
+  const settled = !isLoading;
   const joinedDate = dossier?.accountCreated
     ? format(new Date(dossier.accountCreated), 'MMM yyyy')
     : null;
 
   return (
-    <div className="p-3">
+    <div className="p-3 w-full">
       {/* Identity + trust score */}
       <div className="flex items-start gap-3">
         <Avatar className="h-14 w-14 shrink-0 rounded-full ring-2 ring-border/50">
@@ -148,25 +149,32 @@ function UserPreviewCardContent({
 
       {/* Bounty stats */}
       <div className="flex items-center mt-3 pt-3 border-t border-border gap-3">
-        {bountyStats ? (
-          <>
-            <div className="flex items-center gap-1">
-              <span className="text-xs font-semibold text-foreground">
-                {bountyStats.bountiesCompleted}
-              </span>
-              <span className="text-xs text-foreground/45">completed</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-xs font-semibold text-foreground">
-                {bountyStats.bountiesCreated}
-              </span>
-              <span className="text-xs text-foreground/45">created</span>
-            </div>
-          </>
+        {settled ? (
+          bountyStats ? (
+            <>
+              <div className="flex items-center gap-1">
+                <span className="text-xs font-semibold text-foreground">
+                  {bountyStats.bountiesCompleted}
+                </span>
+                <span className="text-xs text-foreground/45">completed</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-xs font-semibold text-foreground">
+                  {bountyStats.bountiesCreated}
+                </span>
+                <span className="text-xs text-foreground/45">created</span>
+              </div>
+            </>
+          ) : (
+            <span className="text-xs text-foreground/30">
+              No bounty activity yet
+            </span>
+          )
         ) : (
-          <span className="text-xs text-foreground/30">
-            No bounty activity yet
-          </span>
+          <div className="flex items-center gap-3 animate-pulse">
+            <div className="h-3 w-16 rounded bg-foreground/[0.06]" />
+            <div className="h-3 w-14 rounded bg-foreground/[0.06]" />
+          </div>
         )}
       </div>
 

@@ -151,9 +151,11 @@ export function ProfileHeader({ user, profile }: ProfileHeaderProps) {
         </div>
 
         {/* Trust score — positioned top-right, shows regardless of profile privacy */}
-        {user.handle && (
+        {(profile?.githubUsername || user.handle) && (
           <div className="shrink-0">
-            <ProfileScoreRing githubUsername={user.handle} />
+            <ProfileScoreRing
+              githubUsername={profile?.githubUsername || user.handle!}
+            />
           </div>
         )}
 

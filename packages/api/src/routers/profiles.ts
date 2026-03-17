@@ -1,5 +1,7 @@
 import {
   db,
+  bounty,
+  submission,
   user,
   userProfile,
   userRating,
@@ -550,28 +552,38 @@ export const profilesRouter = router({
         github
       );
 
-      // Also fetch bounty-related stats from the user's reputation
+      // Also fetch bounty-related stats — count directly from bounty table
       let bountyStats: {
         bountiesCompleted: number;
         bountiesCreated: number;
-        totalEarned: string;
       } | null = null;
 
-      // Look up user by handle (which is the github username)
+      // Look up user by handle (case-insensitive)
       const [profileUser] = await db
-        .select({
-          reputation: userReputation,
-        })
+        .select({ id: user.id })
         .from(user)
-        .leftJoin(userReputation, eq(user.id, userReputation.userId))
-        .where(eq(user.handle, input.githubUsername.toLowerCase()))
+        .where(sql`LOWER(${user.handle}) = LOWER(${input.githubUsername})`)
         .limit(1);
 
-      if (profileUser?.reputation) {
+      if (profileUser) {
+        const [created] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(bounty)
+          .where(eq(bounty.createdById, profileUser.id));
+
+        const [completed] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(submission)
+          .where(
+            and(
+              eq(submission.contributorId, profileUser.id),
+              eq(submission.status, 'approved')
+            )
+          );
+
         bountyStats = {
-          bountiesCompleted: profileUser.reputation.bountiesCompleted ?? 0,
-          bountiesCreated: profileUser.reputation.bountiesCreated ?? 0,
-          totalEarned: profileUser.reputation.totalEarned ?? '0.00',
+          bountiesCreated: created?.count ?? 0,
+          bountiesCompleted: completed?.count ?? 0,
         };
       }
 

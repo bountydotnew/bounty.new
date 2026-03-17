@@ -954,7 +954,7 @@ export class GithubManager {
           topRepositories(first: 10, orderBy: {field: STARGAZERS, direction: DESC}) {
             nodes { stargazerCount }
           }
-          organizations(first: 10) {
+          organizations(first: 100) {
             nodes { login }
           }
         }

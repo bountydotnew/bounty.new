@@ -1017,6 +1017,7 @@ export const bountiesRouter = router({
               id: user.id,
               name: user.name,
               image: user.image,
+              handle: user.handle,
             },
           })
           .from(bounty)
@@ -3746,6 +3747,13 @@ export const bountiesRouter = router({
           .where(eq(submission.bountyId, input.bountyId))
           .orderBy(desc(submission.submittedAt));
 
+        if (submissions.length === 0) {
+          return {
+            success: true,
+            submissions: [],
+          };
+        }
+
         // Fetch bounty repo info for contributor scoring
         const [bountyRow] = await db
           .select({
@@ -3777,12 +3785,19 @@ export const bountiesRouter = router({
         );
 
         // Batch-fetch contributor scores (1 GraphQL call per user, Redis-cached)
+        // Best-effort: if scoring fails, submissions still load with score: null
         const scores = await fetchContributorScores(
           submissions.map((s) => s.githubUsername),
           repoOwner,
           repoName,
           github
-        );
+        ).catch((error) => {
+          console.warn(
+            '[getBountySubmissions] contributor scoring failed, returning null scores',
+            error
+          );
+          return Array(submissions.length).fill(null) as null[];
+        });
 
         const scoredSubmissions = submissions.map((s, i) => ({
           ...s,
