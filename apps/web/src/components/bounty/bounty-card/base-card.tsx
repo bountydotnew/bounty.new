@@ -61,6 +61,7 @@ export function BaseBountyCard({ compact }: BaseBountyCardProps) {
               ? `/profile/${bounty.creator.handle}`
               : `/profile/${bounty.creator.id}`
           }
+          asSpan
         >
           <span
             className={`flex items-center min-w-0 ${compact ? 'gap-1' : 'gap-[5px]'}`}

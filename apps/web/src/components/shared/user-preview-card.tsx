@@ -22,6 +22,8 @@ interface UserPreviewCardProps {
   handle?: string | null;
   image?: string | null;
   href?: string;
+  /** Use when nested inside a <button> — renders a <span> instead of <a> */
+  asSpan?: boolean;
 }
 
 function scoreColor(total: number): string {
@@ -83,6 +85,7 @@ export function UserPreviewCard({
   handle,
   image,
   href,
+  asSpan,
 }: UserPreviewCardProps) {
   const profileHref = href || (handle ? `/profile/${handle}` : undefined);
 
@@ -90,7 +93,7 @@ export function UserPreviewCard({
     <PreviewCard>
       <PreviewCardTrigger
         href={profileHref || '#'}
-        render={<span className="inline-flex" />}
+        {...(asSpan ? { render: <span className="inline-flex" /> } : {})}
       >
         {children}
       </PreviewCardTrigger>
