@@ -3,23 +3,11 @@ import { TRPCError } from '@trpc/server';
 import { eq, and, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { randomInt, randomBytes, timingSafeEqual } from 'node:crypto';
+import { generateOTP, generateAccessToken } from '../lib/generate-code';
 
 const info = console.info.bind(console);
 const error = console.error.bind(console);
 const warn = console.warn.bind(console);
-
-// Generate 6-digit OTP code using cryptographically secure random number
-const generateOTP = (): string => {
-  // Generate a number between 100000 (inclusive) and 1000000 (exclusive)
-  const code = randomInt(100_000, 1_000_000);
-  // Convert to string and pad with zeros if necessary (shouldn't be needed but ensures 6 digits)
-  return code.toString().padStart(6, '0');
-};
-
-// Generate secure random token for access grant
-const generateAccessToken = (): string => {
-  return randomBytes(32).toString('hex');
-};
 
 import {
   db,
@@ -31,6 +19,7 @@ import {
   member,
 } from '@bounty/db';
 import { auth } from '@bounty/auth/server';
+import { checkUnkeyRateLimit } from '../lib/unkey-ratelimit';
 import {
   AlphaAccessGranted,
   FROM_ADDRESSES,
@@ -106,7 +95,6 @@ export const earlyAccessRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        info('[addToWaitlist] Processing new entry');
 
         const userAlreadyInWaitlist = await db.query.waitlist.findFirst({
           where: (fields, { eq }) => eq(fields.email, input.email),
@@ -1167,7 +1155,8 @@ export const earlyAccessRouter = router({
    */
   generateInviteCode: adminProcedure
     .input(z.object({ email: z.string().email('Invalid email address') }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await checkUnkeyRateLimit('invite.generate', ctx.session.user.id);
       try {
         // sendVerificationOTP is disabled on the public HTTP endpoint via
         // disabledPaths, but the server-side API call still works. The type
@@ -1193,6 +1182,9 @@ export const earlyAccessRouter = router({
   redeemInviteCode: protectedProcedure
     .input(z.object({ code: z.string().min(1, 'Code is required') }))
     .mutation(async ({ input, ctx }) => {
+      // Rate limit: 5 attempts per minute per user to prevent brute force
+      await checkUnkeyRateLimit('invite.redeem', ctx.session.user.id);
+
       const email = ctx.session.user.email;
 
       try {
