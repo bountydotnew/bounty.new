@@ -176,19 +176,33 @@ export async function fetchProfileScore(
   githubUsername: string,
   github: GithubManager
 ): Promise<ProfileScoreResult | null> {
+  const result = await fetchProfileScoreWithDossier(githubUsername, github);
+  return result?.score ?? null;
+}
+
+/**
+ * Same as fetchProfileScore but also returns the raw dossier data
+ * for display in preview cards (followers, repos, join date, etc.)
+ */
+export async function fetchProfileScoreWithDossier(
+  githubUsername: string,
+  github: GithubManager
+): Promise<{ score: ProfileScoreResult; dossier: ProfileDossier } | null> {
   try {
     const key = githubUsername.toLowerCase();
-    const cached = await profileScoreCache.get(key);
-    if (cached) return cached;
 
     const dossier = await github.getProfileDossier(githubUsername);
     if (!dossier) return null;
+
+    // Check score cache
+    const cachedScore = await profileScoreCache.get(key);
+    if (cachedScore) return { score: cachedScore, dossier };
 
     const input = dossierToProfileScoreInput(dossier);
     const score = computeProfileScore(input);
 
     await profileScoreCache.set(key, score);
-    return score;
+    return { score, dossier };
   } catch {
     return null;
   }

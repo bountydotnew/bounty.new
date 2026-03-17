@@ -11,6 +11,7 @@ import { Check, ExternalLink, Loader2, X } from 'lucide-react';
 import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
 import { Badge } from '@/components/bounty/badge';
 import { ScoreRing } from '@/components/bounty/score-ring';
+import { UserPreviewCard } from '@/components/shared/user-preview-card';
 import type { ScoreResult } from '@/lib/contributor-score';
 
 interface SubmissionCardProps {
@@ -120,39 +121,44 @@ export default function SubmissionCard({
     >
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
-          <Link
+          <UserPreviewCard
+            name={displayName}
+            handle={username || null}
+            image={displayAvatar || null}
             href={`/profile/${username || displayName}`}
-            className="shrink-0"
           >
-            <Avatar className="h-10 w-10 transition-opacity hover:opacity-80">
-              <AvatarImage alt={displayName} src={displayAvatar} />
-              <AvatarFacehash name={displayName} size={40} />
-            </Avatar>
-          </Link>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1">
-              <Link
-                href={`/profile/${username || displayName}`}
-                className="font-medium text-sm text-foreground hover:underline"
-              >
-                {displayName}
-              </Link>
-              {hasBadge && <Badge />}
-            </div>
-            <div className="flex items-center gap-2">
-              {rank && <span className="text-text-muted text-xs">{rank}</span>}
-              {status && (
-                <span
-                  className={cn(
-                    'text-xs font-medium px-2 py-0.5 rounded-md',
-                    statusColors[status] || 'bg-muted text-text-muted'
-                  )}
-                >
-                  {statusLabels[status] || status}
+            <span className="flex items-center gap-2">
+              <span className="shrink-0">
+                <Avatar className="h-10 w-10 transition-opacity hover:opacity-80">
+                  <AvatarImage alt={displayName} src={displayAvatar} />
+                  <AvatarFacehash name={displayName} size={40} />
+                </Avatar>
+              </span>
+              <span className="flex flex-col">
+                <span className="flex items-center gap-1">
+                  <span className="font-medium text-sm text-foreground hover:underline">
+                    {displayName}
+                  </span>
+                  {hasBadge && <Badge />}
                 </span>
-              )}
-            </div>
-          </div>
+                <span className="flex items-center gap-2">
+                  {rank && (
+                    <span className="text-text-muted text-xs">{rank}</span>
+                  )}
+                  {status && (
+                    <span
+                      className={cn(
+                        'text-xs font-medium px-2 py-0.5 rounded-md',
+                        statusColors[status] || 'bg-muted text-text-muted'
+                      )}
+                    >
+                      {statusLabels[status] || status}
+                    </span>
+                  )}
+                </span>
+              </span>
+            </span>
+          </UserPreviewCard>
         </div>
         <div className="flex items-center gap-2">
           {score && <ScoreRing score={score} />}

@@ -12,7 +12,7 @@ import { z } from 'zod';
 import { LRUCache } from '../lib/lru-cache';
 import { protectedProcedure, publicProcedure, router } from '../trpc';
 import { GithubManager } from '@bounty/api/driver/github';
-import { fetchProfileScore } from '../lib/profile-score';
+import { fetchProfileScoreWithDossier } from '../lib/profile-score';
 
 const updateProfileSchema = z.object({
   bio: z.string().max(500).optional(),
@@ -545,7 +545,40 @@ export const profilesRouter = router({
       const github = new GithubManager(
         githubToken ? { token: githubToken } : {}
       );
-      const score = await fetchProfileScore(input.githubUsername, github);
-      return { score };
+      const result = await fetchProfileScoreWithDossier(
+        input.githubUsername,
+        github
+      );
+
+      // Also fetch bounty-related stats from the user's reputation
+      let bountyStats: {
+        bountiesCompleted: number;
+        bountiesCreated: number;
+        totalEarned: string;
+      } | null = null;
+
+      // Look up user by handle (which is the github username)
+      const [profileUser] = await db
+        .select({
+          reputation: userReputation,
+        })
+        .from(user)
+        .leftJoin(userReputation, eq(user.id, userReputation.userId))
+        .where(eq(user.handle, input.githubUsername.toLowerCase()))
+        .limit(1);
+
+      if (profileUser?.reputation) {
+        bountyStats = {
+          bountiesCompleted: profileUser.reputation.bountiesCompleted ?? 0,
+          bountiesCreated: profileUser.reputation.bountiesCreated ?? 0,
+          totalEarned: profileUser.reputation.totalEarned ?? '0.00',
+        };
+      }
+
+      return {
+        score: result?.score ?? null,
+        dossier: result?.dossier ?? null,
+        bountyStats,
+      };
     }),
 });
