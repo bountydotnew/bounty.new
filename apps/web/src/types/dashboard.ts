@@ -16,10 +16,17 @@ export interface Bounty {
     id: string;
     name: string | null;
     image: string | null;
+    handle?: string | null;
   };
   votes?: number;
   isFeatured?: boolean;
-  paymentStatus?: 'pending' | 'held' | 'released' | 'refunded' | 'failed' | null;
+  paymentStatus?:
+    | 'pending'
+    | 'held'
+    | 'released'
+    | 'refunded'
+    | 'failed'
+    | null;
   // Linear integration fields
   linearIssueId?: string | null;
   linearIssueIdentifier?: string | null; // e.g., "ENG-123"

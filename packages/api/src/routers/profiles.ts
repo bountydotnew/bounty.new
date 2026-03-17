@@ -1,9 +1,20 @@
-import { db, user, userProfile, userRating, userReputation } from '@bounty/db';
+import {
+  db,
+  bounty,
+  submission,
+  user,
+  userProfile,
+  userRating,
+  userReputation,
+  account,
+} from '@bounty/db';
 import { TRPCError } from '@trpc/server';
-import { desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { LRUCache } from '../lib/lru-cache';
 import { protectedProcedure, publicProcedure, router } from '../trpc';
+import { GithubManager } from '@bounty/api/driver/github';
+import { fetchProfileScoreWithDossier } from '../lib/profile-score';
 
 const updateProfileSchema = z.object({
   bio: z.string().max(500).optional(),
@@ -511,5 +522,75 @@ export const profilesRouter = router({
           cause: error,
         });
       }
+    }),
+
+  /**
+   * Fetch the profile-level trust score for a user's GitHub account.
+   * This score is based on overall GitHub presence (not repo-scoped).
+   * Shows regardless of whether the bounty.new profile is private.
+   */
+  getProfileScore: publicProcedure
+    .input(z.object({ githubUsername: z.string().min(1) }))
+    .query(async ({ input, ctx }) => {
+      // Use viewer's OAuth token if available, fall back to GITHUB_TOKEN
+      let githubToken: string | undefined;
+      if (ctx.session?.user?.id) {
+        const githubAccount = await ctx.db.query.account.findFirst({
+          where: and(
+            eq(account.userId, ctx.session.user.id),
+            eq(account.providerId, 'github')
+          ),
+        });
+        githubToken = githubAccount?.accessToken ?? undefined;
+      }
+
+      const github = new GithubManager(
+        githubToken ? { token: githubToken } : {}
+      );
+      const result = await fetchProfileScoreWithDossier(
+        input.githubUsername,
+        github
+      );
+
+      // Also fetch bounty-related stats — count directly from bounty table
+      let bountyStats: {
+        bountiesCompleted: number;
+        bountiesCreated: number;
+      } | null = null;
+
+      // Look up user by handle (case-insensitive)
+      const [profileUser] = await db
+        .select({ id: user.id })
+        .from(user)
+        .where(sql`LOWER(${user.handle}) = LOWER(${input.githubUsername})`)
+        .limit(1);
+
+      if (profileUser) {
+        const [created] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(bounty)
+          .where(eq(bounty.createdById, profileUser.id));
+
+        const [completed] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(submission)
+          .where(
+            and(
+              eq(submission.contributorId, profileUser.id),
+              eq(submission.status, 'approved')
+            )
+          );
+
+        bountyStats = {
+          bountiesCreated: created?.count ?? 0,
+          bountiesCompleted: completed?.count ?? 0,
+        };
+      }
+
+      return {
+        score: result?.score ?? null,
+        dossier: result?.dossier ?? null,
+        bountyStats,
+      };
     }),
 });

@@ -8,6 +8,7 @@ import {
 import { format } from 'date-fns';
 import { CalendarIcon, MapPinIcon, LinkIcon } from 'lucide-react';
 import { GitHubActivityChart } from './github-activity-chart';
+import { ProfileScoreRing } from './profile-score-ring';
 import type {
   ProfileUser,
   ProfileData,
@@ -148,6 +149,15 @@ export function ProfileHeader({ user, profile }: ProfileHeaderProps) {
             </div>
           </div>
         </div>
+
+        {/* Trust score — positioned top-right, shows regardless of profile privacy */}
+        {(profile?.githubUsername || user.handle) && (
+          <div className="shrink-0">
+            <ProfileScoreRing
+              githubUsername={profile?.githubUsername || user.handle!}
+            />
+          </div>
+        )}
 
         {/* <div className="flex gap-8 rounded-xl border border-border-subtle bg-surface-1 px-6 py-4">
           <div className="flex flex-col gap-1">

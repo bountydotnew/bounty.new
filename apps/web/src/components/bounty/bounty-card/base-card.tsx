@@ -10,6 +10,7 @@ import {
 
 import { SubmissionsPeopleIcon, GithubIcon, LinearIcon } from '@bounty/ui';
 import { BountyCardContext } from './context';
+import { UserPreviewCard } from '@/components/shared/user-preview-card';
 
 interface BaseBountyCardProps {
   compact: boolean;
@@ -51,24 +52,37 @@ export function BaseBountyCard({ compact }: BaseBountyCardProps) {
     >
       {/* Top row: Creator + Amount */}
       <div className="flex items-center justify-between min-w-0 overflow-hidden">
-        <div className={`flex items-center min-w-0 ${compact ? 'gap-1' : 'gap-[5px]'}`}>
-          <Avatar className={`shrink-0 ${compact ? 'h-3 w-3' : 'h-5 w-5'}`}>
-            <AvatarImage
-              alt={creatorName}
-              src={bounty.creator.image ?? undefined}
-            />
-            <AvatarFacehash
-              name={creatorName}
-              size={compact ? 12 : 20}
-              className="rounded-[6px]"
-            />
-          </Avatar>
+        <UserPreviewCard
+          name={creatorName}
+          handle={bounty.creator.handle}
+          image={bounty.creator.image}
+          href={
+            bounty.creator.handle
+              ? `/profile/${bounty.creator.handle}`
+              : `/profile/${bounty.creator.id}`
+          }
+        >
           <span
-            className={`${compact ? 'text-[10px]' : 'text-[15px]'} font-normal leading-[150%] text-foreground/60 truncate`}
+            className={`flex items-center min-w-0 ${compact ? 'gap-1' : 'gap-[5px]'}`}
           >
-            {creatorName}
+            <Avatar className={`shrink-0 ${compact ? 'h-3 w-3' : 'h-5 w-5'}`}>
+              <AvatarImage
+                alt={creatorName}
+                src={bounty.creator.image ?? undefined}
+              />
+              <AvatarFacehash
+                name={creatorName}
+                size={compact ? 12 : 20}
+                className="rounded-[6px]"
+              />
+            </Avatar>
+            <span
+              className={`${compact ? 'text-[10px]' : 'text-[15px]'} font-normal leading-[150%] text-foreground/60 truncate`}
+            >
+              {creatorName}
+            </span>
           </span>
-        </div>
+        </UserPreviewCard>
         <div
           className={`flex items-center shrink-0 ${compact ? 'gap-1 px-1' : 'h-5 gap-[5px] px-[3px]'}`}
         >

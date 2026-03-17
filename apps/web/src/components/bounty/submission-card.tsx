@@ -10,6 +10,9 @@ import Link from 'next/link';
 import { Check, ExternalLink, Loader2, X } from 'lucide-react';
 import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
 import { Badge } from '@/components/bounty/badge';
+import { ScoreRing } from '@/components/bounty/score-ring';
+import { UserPreviewCard } from '@/components/shared/user-preview-card';
+import type { ScoreResult } from '@/lib/contributor-score';
 
 interface SubmissionCardProps {
   // User info
@@ -35,6 +38,8 @@ interface SubmissionCardProps {
   hasBadge?: boolean;
   previewSrc?: string;
   className?: string;
+  // Contributor score
+  score?: ScoreResult | null;
   // Actions
   canManage?: boolean;
   isApproving?: boolean;
@@ -60,6 +65,7 @@ export default function SubmissionCard({
   hasBadge,
   previewSrc = '',
   className,
+  score,
   description = '',
   status,
   githubPullRequestNumber,
@@ -115,41 +121,47 @@ export default function SubmissionCard({
     >
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
-          <Link
-            href={`/profile/${username || displayName}`}
-            className="shrink-0"
+          <UserPreviewCard
+            name={displayName}
+            handle={username || null}
+            image={displayAvatar || null}
+            href={username ? `/profile/${username}` : undefined}
           >
-            <Avatar className="h-10 w-10 transition-opacity hover:opacity-80">
-              <AvatarImage alt={displayName} src={displayAvatar} />
-              <AvatarFacehash name={displayName} size={40} />
-            </Avatar>
-          </Link>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1">
-              <Link
-                href={`/profile/${username || displayName}`}
-                className="font-medium text-sm text-foreground hover:underline"
-              >
-                {displayName}
-              </Link>
-              {hasBadge && <Badge />}
-            </div>
-            <div className="flex items-center gap-2">
-              {rank && <span className="text-text-muted text-xs">{rank}</span>}
-              {status && (
-                <span
-                  className={cn(
-                    'text-xs font-medium px-2 py-0.5 rounded-md',
-                    statusColors[status] || 'bg-muted text-text-muted'
-                  )}
-                >
-                  {statusLabels[status] || status}
+            <span className="flex items-center gap-2">
+              <span className="shrink-0">
+                <Avatar className="h-10 w-10 transition-opacity hover:opacity-80">
+                  <AvatarImage alt={displayName} src={displayAvatar} />
+                  <AvatarFacehash name={displayName} size={40} />
+                </Avatar>
+              </span>
+              <span className="flex flex-col">
+                <span className="flex items-center gap-1">
+                  <span className="font-medium text-sm text-foreground hover:underline">
+                    {displayName}
+                  </span>
+                  {hasBadge && <Badge />}
                 </span>
-              )}
-            </div>
-          </div>
+                <span className="flex items-center gap-2">
+                  {rank && (
+                    <span className="text-text-muted text-xs">{rank}</span>
+                  )}
+                  {status && (
+                    <span
+                      className={cn(
+                        'text-xs font-medium px-2 py-0.5 rounded-md',
+                        statusColors[status] || 'bg-muted text-text-muted'
+                      )}
+                    >
+                      {statusLabels[status] || status}
+                    </span>
+                  )}
+                </span>
+              </span>
+            </span>
+          </UserPreviewCard>
         </div>
         <div className="flex items-center gap-2">
+          {score && <ScoreRing score={score} />}
           {canWithdraw && onWithdraw && (
             <Button
               onClick={onWithdraw}
@@ -267,22 +279,28 @@ export default function SubmissionCard({
           </a>
         )}
         {githubHeadSha && (
-          <a
-            href={
-              githubRepoOwner && githubRepoName && githubPullRequestNumber
-                ? `https://github.com/${githubRepoOwner}/${githubRepoName}/pull/${githubPullRequestNumber}/commits/${githubHeadSha}`
-                : prUrl || '#'
-            }
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-[9px] border border-[#232323] bg-[oklab(28.5%_0_0/32%)] px-1.5 py-0.5 transition-colors hover:bg-[oklab(28.5%_0_0/40%)]"
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1.5"
           >
-            <GithubIcon className="h-3 w-3 flex-shrink-0" />
-            <span className="text-xs text-text-muted">
-              {githubHeadSha.slice(0, 7)}
-            </span>
-            <ExternalLink className="h-3 w-3 flex-shrink-0 text-text-muted" />
-          </a>
+            <a
+              href={
+                githubRepoOwner && githubRepoName && githubPullRequestNumber
+                  ? `https://github.com/${githubRepoOwner}/${githubRepoName}/pull/${githubPullRequestNumber}/commits/${githubHeadSha}`
+                  : prUrl || '#'
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <GithubIcon className="h-3 w-3 flex-shrink-0" />
+              <span className="font-mono text-xs">
+                {githubHeadSha.slice(0, 7)}
+              </span>
+              <ExternalLink className="h-3 w-3 flex-shrink-0" />
+            </a>
+          </Button>
         )}
       </div>
 

@@ -146,6 +146,7 @@ export function BountyDetailSubmissions() {
                 pullRequestTitle={sub.pullRequestTitle ?? undefined}
                 githubHeadSha={sub.githubHeadSha ?? undefined}
                 deliverableUrl={sub.deliverableUrl ?? undefined}
+                score={sub.score}
                 canManage={canManage}
                 isApproving={
                   meta.isApprovingSubmission &&
