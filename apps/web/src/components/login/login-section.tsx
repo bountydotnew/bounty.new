@@ -19,7 +19,9 @@ interface LoginSectionProps {
 }
 
 export function LoginSection({ callbackUrl }: LoginSectionProps) {
-  const [loading, setLoading] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState<
+    'github' | 'google' | null
+  >(null);
   const [lastUsedMethod] = useState<string | null>(() => {
     try {
       return typeof localStorage !== 'undefined'
@@ -33,20 +35,19 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
   const { session, isPending } = useSession();
   const isAddingAccount = addAccountParam === 'true';
 
-  const handleGitHubSignIn = async () => {
+  const handleSocialSignIn = async (provider: 'github' | 'google') => {
     try {
-      setLoading(true);
+      setLoadingProvider(provider);
 
       await authClient.signIn.social(
         {
-          provider: 'github',
+          provider,
           callbackURL: isAddingAccount ? '/dashboard' : callbackUrl,
         },
         {
           onSuccess: () => {
             toast.success('Sign in successful');
             if (isAddingAccount) {
-              // Refresh the page to show updated sessions list
               setTimeout(() => {
                 window.location.href = '/dashboard';
               }, 1000);
@@ -54,44 +55,13 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
           },
           onError: (error) => {
             toast.error(error.error.message || 'Sign in failed');
-            setLoading(false);
+            setLoadingProvider(null);
           },
         }
       );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Sign in failed');
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    try {
-      setLoading(true);
-
-      await authClient.signIn.social(
-        {
-          provider: 'google',
-          callbackURL: isAddingAccount ? '/dashboard' : callbackUrl,
-        },
-        {
-          onSuccess: () => {
-            toast.success('Sign in successful');
-            if (isAddingAccount) {
-              // Refresh the page to show updated sessions list
-              setTimeout(() => {
-                window.location.href = '/dashboard';
-              }, 1000);
-            }
-          },
-          onError: (error) => {
-            toast.error(error.error.message || 'Sign in failed');
-            setLoading(false);
-          },
-        }
-      );
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Sign in failed');
-      setLoading(false);
+      setLoadingProvider(null);
     }
   };
 
@@ -150,15 +120,17 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
                 <Button
                   variant="outline"
                   className="flex w-full items-center justify-center gap-3"
-                  disabled={loading}
-                  onClick={handleGitHubSignIn}
+                  disabled={!!loadingProvider}
+                  onClick={() => handleSocialSignIn('github')}
                 >
-                  {loading ? (
+                  {loadingProvider === 'github' ? (
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-black/30 border-t-foreground dark:border-white/30 dark:border-t-white" />
                   ) : (
                     <GithubIcon className="h-5 w-5 fill-foreground" />
                   )}
-                  {loading ? 'Signing in…' : 'Continue with GitHub'}
+                  {loadingProvider === 'github'
+                    ? 'Signing in…'
+                    : 'Continue with GitHub'}
                 </Button>
                 {lastUsedMethod === 'github' && (
                   <Badge className="-top-2 -right-2 absolute bg-primary px-1 py-0.5 text-primary-foreground text-xs">
@@ -171,15 +143,17 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
                 <Button
                   variant="outline"
                   className="flex w-full items-center justify-center gap-3"
-                  disabled={loading}
-                  onClick={handleGoogleSignIn}
+                  disabled={!!loadingProvider}
+                  onClick={() => handleSocialSignIn('google')}
                 >
-                  {loading ? (
+                  {loadingProvider === 'google' ? (
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-black/30 border-t-foreground dark:border-white/30 dark:border-t-white" />
                   ) : (
                     <GoogleIcon className="h-5 w-5" />
                   )}
-                  {loading ? 'Signing in…' : 'Continue with Google'}
+                  {loadingProvider === 'google'
+                    ? 'Signing in…'
+                    : 'Continue with Google'}
                 </Button>
                 {lastUsedMethod === 'google' && (
                   <Badge className="-top-2 -right-2 absolute bg-primary px-1 py-0.5 text-primary-foreground text-xs">

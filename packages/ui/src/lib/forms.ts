@@ -352,3 +352,24 @@ export const createTeamSchema = z.object({
 });
 
 export type CreateTeamForm = z.infer<typeof createTeamSchema>;
+
+// =====================
+// INVITE CODE
+// =====================
+
+export const inviteCodeSchema = z.object({
+  code: z
+    .string()
+    .min(1, 'Invite code is required')
+    .refine(
+      (v) => /^BTY[A-Z2-9]{4}$/i.test(v),
+      'Invalid invite code (e.g. BTY1ZTF)'
+    )
+    .transform((v) => v.toUpperCase()),
+});
+
+export type InviteCodeForm = z.infer<typeof inviteCodeSchema>;
+
+export const inviteCodeDefaults: InviteCodeForm = {
+  code: '',
+};

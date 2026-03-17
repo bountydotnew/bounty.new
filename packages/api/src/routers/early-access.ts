@@ -30,6 +30,7 @@ import {
   organization,
   member,
 } from '@bounty/db';
+import { auth } from '@bounty/auth/server';
 import {
   AlphaAccessGranted,
   FROM_ADDRESSES,
@@ -537,10 +538,7 @@ export const earlyAccessRouter = router({
         const otpMatch =
           entry.otpCode != null &&
           entry.otpCode.length === input.code.length &&
-          timingSafeEqual(
-            Buffer.from(entry.otpCode),
-            Buffer.from(input.code)
-          );
+          timingSafeEqual(Buffer.from(entry.otpCode), Buffer.from(input.code));
         if (!otpMatch) {
           await db
             .update(waitlist)
@@ -1154,6 +1152,87 @@ export const earlyAccessRouter = router({
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to update bounty draft',
+        });
+      }
+    }),
+
+  // ========================================================================
+  // Invite Codes (via Better Auth email-otp plugin)
+  // ========================================================================
+
+  /**
+   * Admin generates and sends an invite code to a user's email.
+   * Uses Better Auth's email-otp plugin under the hood — the OTP is generated
+   * with a `bnty` prefix and sent via the InviteCode email template.
+   */
+  generateInviteCode: adminProcedure
+    .input(z.object({ email: z.string().email('Invalid email address') }))
+    .mutation(async ({ input }) => {
+      try {
+        // sendVerificationOTP is disabled on the public HTTP endpoint via
+        // disabledPaths, but the server-side API call still works. The type
+        // is stripped by Better Auth when the path is disabled, so we cast.
+        await (auth.api as any).sendVerificationOTP({
+          body: { email: input.email, type: 'sign-in' },
+        });
+        return { success: true, email: input.email };
+      } catch (err) {
+        error('[generateInviteCode] Failed:', err);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to generate invite code',
+        });
+      }
+    }),
+
+  /**
+   * User redeems an invite code to gain early access.
+   * Validates the code via Better Auth's email-otp plugin, then sets the
+   * user's role to 'early_access'.
+   */
+  redeemInviteCode: protectedProcedure
+    .input(z.object({ code: z.string().min(1, 'Code is required') }))
+    .mutation(async ({ input, ctx }) => {
+      const email = ctx.session.user.email;
+
+      try {
+        info(
+          `[redeemInviteCode] Checking OTP for email=${email} code=${input.code}`
+        );
+
+        const result = await (auth.api as any).checkVerificationOTP({
+          body: { email, otp: input.code, type: 'sign-in' },
+        });
+
+        info(
+          '[redeemInviteCode] checkVerificationOTP result:',
+          JSON.stringify(result)
+        );
+
+        if (!(result?.status || result?.success)) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Invalid or expired invite code',
+          });
+        }
+
+        // Grant early access
+        await db
+          .update(userTable)
+          .set({ role: 'early_access' })
+          .where(eq(userTable.id, ctx.session.user.id));
+
+        info(
+          `[redeemInviteCode] User ${ctx.session.user.id} granted early_access via invite code`
+        );
+
+        return { success: true };
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        error('[redeemInviteCode] Failed:', err);
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Invalid or expired invite code',
         });
       }
     }),

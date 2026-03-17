@@ -1,6 +1,6 @@
 import { env } from '@bounty/env/server';
 import { sendEmail } from '@bounty/email';
-import { OTPVerification, ForgotPassword } from '@bounty/email';
+import { OTPVerification, ForgotPassword, InviteCode } from '@bounty/email';
 
 /**
  * Shared configuration constants for Better Auth
@@ -119,6 +119,18 @@ export async function sendOTPEmail(params: {
   type: 'email-verification' | 'sign-in' | 'forget-password' | 'change-email';
 }): Promise<void> {
   const { email, otp, type } = params;
+
+  // Invite codes are prefixed with "bnty" — use the invite template
+  if (otp.startsWith('BTY')) {
+    await sendAuthEmail({
+      to: email,
+      subject: "You've been invited to bounty.new!",
+      react: InviteCode({ code: otp, email }),
+      context: 'Invite code',
+    });
+    return;
+  }
+
   const continueUrl = `${AUTH_CONFIG.baseURL}/sign-up/verify-email-address?email=${encodeURIComponent(email)}`;
 
   const subject =

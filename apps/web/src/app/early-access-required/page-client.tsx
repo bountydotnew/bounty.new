@@ -3,13 +3,35 @@ import Link from '@bounty/ui/components/link';
 import { authClient } from '@bounty/auth/client';
 import { Button } from '@bounty/ui/components/button';
 import { Spinner } from '@bounty/ui/components/spinner';
+import { Input } from '@bounty/ui/components/input';
 import { Logo } from '@/components/landing/logo';
 import { Header } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  inviteCodeSchema,
+  type InviteCodeForm,
+  inviteCodeDefaults,
+} from '@bounty/ui/lib/forms';
+import { getFirstError } from '@bounty/ui/lib/form-errors';
+import { trpcClient } from '@/utils/trpc';
+import { toast } from 'sonner';
 
 export default function EarlyAccessRequiredPage() {
   const [checking, setChecking] = useState(false);
+  const [redeeming, setRedeeming] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<InviteCodeForm>({
+    resolver: zodResolver(inviteCodeSchema),
+    defaultValues: inviteCodeDefaults,
+  });
 
   const handleCheckStatus = async () => {
     setChecking(true);
@@ -19,7 +41,6 @@ export default function EarlyAccessRequiredPage() {
       });
       const role = data?.user?.role ?? 'user';
       if (role === 'early_access' || role === 'admin') {
-        // Hard navigate to bust the cookie-cached session
         window.location.href = '/dashboard';
       }
       setChecking(false);
@@ -27,6 +48,26 @@ export default function EarlyAccessRequiredPage() {
       setChecking(false);
     }
   };
+
+  const onSubmitCode = async (data: InviteCodeForm) => {
+    setRedeeming(true);
+    setServerError(null);
+    try {
+      await trpcClient.earlyAccess.redeemInviteCode.mutate({
+        code: data.code,
+      });
+      toast.success('Access granted!');
+      await authClient.getSession({ query: { disableCookieCache: true } });
+      window.location.href = '/dashboard';
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Invalid or expired invite code';
+      setServerError(message);
+      setRedeeming(false);
+    }
+  };
+
+  const firstError = getFirstError(errors);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -75,6 +116,39 @@ export default function EarlyAccessRequiredPage() {
               Already joined the waitlist? Click &quot;Check Status&quot; to see
               if you have access.
             </p>
+
+            {/* Invite code section */}
+            <div className="mt-10 border-t border-border-subtle pt-8">
+              <p className="mb-4 text-sm font-medium text-foreground">
+                Have an invite code?
+              </p>
+              <form
+                onSubmit={handleSubmit(onSubmitCode)}
+                className="flex gap-2"
+              >
+                <Input
+                  {...register('code')}
+                  placeholder="BTY0000"
+                  className="flex-1 text-center font-mono uppercase"
+                  aria-invalid={!!errors.code}
+                />
+                <Button type="submit" disabled={redeeming} variant="default">
+                  {redeeming ? (
+                    <>
+                      <Spinner className="h-4 w-4" size="sm" />
+                      Verifying...
+                    </>
+                  ) : (
+                    'Redeem'
+                  )}
+                </Button>
+              </form>
+              {(firstError || serverError) && (
+                <p className="mt-2 text-sm text-red-500">
+                  {firstError || serverError}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </main>

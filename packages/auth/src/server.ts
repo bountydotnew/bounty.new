@@ -495,6 +495,9 @@ export const auth = betterAuth({
         ]),
   ],
 
+  // Block public OTP send endpoint — invite codes are sent by admins only
+  disabledPaths: ['/email-otp/send-verification-otp'],
+
   socialProviders: {
     github: {
       clientId: env.GITHUB_CLIENT_ID,
@@ -598,6 +601,15 @@ export const auth = betterAuth({
     // ========================================================================
     emailOTP({
       sendVerificationOTP: sendOTPEmail,
+      expiresIn: 60 * 60 * 24 * 7, // 7 days for invite codes
+      generateOTP: () => {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I/O/0/1 to avoid ambiguity
+        const suffix = Array.from(
+          { length: 4 },
+          () => chars[Math.floor(Math.random() * chars.length)]
+        ).join('');
+        return `BTY${suffix}`;
+      },
     }),
 
     // ========================================================================

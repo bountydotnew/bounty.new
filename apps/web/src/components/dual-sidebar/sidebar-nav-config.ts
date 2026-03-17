@@ -6,6 +6,7 @@ import {
   UserIcon,
   DollarBillIcon,
   CardIcon,
+  SecurityIcon,
 } from '@bounty/ui';
 import { Users } from 'lucide-react';
 
@@ -47,6 +48,27 @@ export const mainNavItems = (orgSlug?: string): NavItem[] => [
     // Integrations are org-scoped, requires active org
     url: orgSlug ? `/${orgSlug}/integrations` : '/dashboard',
     icon: SettingsGearIcon,
+  },
+];
+
+// ============================================================================
+// Settings Navigation Items
+// ============================================================================
+
+// ============================================================================
+// Admin Navigation Items
+// ============================================================================
+
+export const adminNavSections: SettingsSection[] = [
+  {
+    title: 'Admin',
+    items: [
+      {
+        title: 'Users',
+        url: '/admin/users',
+        icon: Users,
+      },
+    ],
   },
 ];
 

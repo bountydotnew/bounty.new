@@ -36,7 +36,11 @@ import { NotificationsDropdown } from '@/components/notifications/notifications-
 import { RecentBountiesGroup } from '@/components/dual-sidebar/recent-bounties';
 import { GettingStartedCard } from './getting-started-card';
 import { ChangelogCard } from './changelog-card';
-import { mainNavItems, settingsNavSections } from './sidebar-nav-config';
+import {
+  mainNavItems,
+  settingsNavSections,
+  adminNavSections,
+} from './sidebar-nav-config';
 import { ArrowLeftIcon } from 'lucide-react';
 
 const FALLBACK_USER = {
@@ -141,7 +145,11 @@ const lastNonSettingsPathRef = { current: '/dashboard' };
 function useTrackNonSettingsPath() {
   const pathname = usePathname();
   React.useEffect(() => {
-    if (pathname && !pathname.includes('/settings')) {
+    if (
+      pathname &&
+      !pathname.includes('/settings') &&
+      !pathname.startsWith('/admin')
+    ) {
       lastNonSettingsPathRef.current = pathname;
     }
   }, [pathname]);
@@ -278,7 +286,6 @@ const UnauthenticatedNavItems = () => {
   );
 };
 
-
 const SettingsNav = ({
   sections,
   pathname,
@@ -333,9 +340,13 @@ export const AppSidebar = ({
   const { activeOrgSlug } = useActiveOrg();
   const isAuthenticated = !!session?.user;
 
-  // Determine if we're on a settings route
+  // Determine if we're on a settings or admin route
   // Matches /{slug}/settings/* pattern
   const isSettingsRoute = pathname?.match(/\/[^/]+\/settings/);
+  const isAdminRoute = pathname?.startsWith('/admin');
+
+  // Treat admin routes like settings routes for sidebar switching
+  const isSpecialRoute = isSettingsRoute || isAdminRoute;
 
   // Get nav items based on context
   const mainNav = mainNavItems(activeOrgSlug || undefined).map((item) => ({
@@ -364,9 +375,9 @@ export const AppSidebar = ({
         {/* Header */}
         <SidebarHeader className="px-[15px] py-0 group-data-[collapsible=icon]:px-0">
           {isAuthenticated || isPending ? (
-            isSettingsRoute && activeOrgSlug ? (
+            isSpecialRoute ? (
               <div className="flex items-center justify-between group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:hidden">
-                <BackToMainButton slug={activeOrgSlug} />
+                <BackToMainButton slug={activeOrgSlug || 'dashboard'} />
                 <SidebarTrigger
                   aria-label="Toggle sidebar layout"
                   className="flex h-5 w-5 items-center justify-center p-0 hover:bg-transparent"
@@ -385,7 +396,11 @@ export const AppSidebar = ({
         {/* Content */}
         <SidebarContent className="flex-1 overflow-y-auto px-[15px] py-0 group-data-[collapsible=icon]:px-0">
           {isAuthenticated || isPending ? (
-            isSettingsRoute ? (
+            isAdminRoute ? (
+              <SidebarGroup>
+                <SettingsNav sections={adminNavSections} pathname={pathname} />
+              </SidebarGroup>
+            ) : isSettingsRoute ? (
               <SidebarGroup>
                 <SettingsNav sections={settingsNav} pathname={pathname} />
               </SidebarGroup>
@@ -405,7 +420,7 @@ export const AppSidebar = ({
         {/* Footer - cards on main nav, minimal on settings */}
         <SidebarFooter className="px-0 py-0 group-data-[collapsible=icon]:px-0">
           {isAuthenticated || isPending ? (
-            isSettingsRoute ? (
+            isSpecialRoute ? (
               <div className="px-[15px] py-0 group-data-[collapsible=icon]:px-0">
                 {/* Settings footer - minimal */}
               </div>
