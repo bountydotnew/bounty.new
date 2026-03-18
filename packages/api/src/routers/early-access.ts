@@ -660,7 +660,6 @@ export const earlyAccessRouter = router({
             .where(eq(waitlist.id as any, entry.id) as any);
         }
 
-        // Only return non-sensitive fields — no email, userId, or bounty details
         return {
           success: true,
           data: {
@@ -668,6 +667,10 @@ export const earlyAccessRouter = router({
             emailVerified: entry.emailVerified,
             position,
             createdAt: entry.createdAt,
+            bountyTitle: entry.bountyTitle,
+            bountyDescription: entry.bountyDescription,
+            bountyAmount: entry.bountyAmount,
+            bountyDeadline: entry.bountyDeadline,
           },
         };
       } catch (error: unknown) {

@@ -89,10 +89,10 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
 
   const bountyDraft = entry
     ? {
-        title: entry.bountyTitle,
-        description: entry.bountyDescription,
-        price: entry.bountyAmount,
-        deadline: entry.bountyDeadline,
+        title: entry.bountyTitle ?? undefined,
+        description: entry.bountyDescription ?? undefined,
+        price: entry.bountyAmount ?? undefined,
+        deadline: entry.bountyDeadline ?? undefined,
       }
     : null;
 
@@ -120,9 +120,7 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
                     description: bountyDraft.description,
                     amount: bountyDraft.price || '',
                     deadline: bountyDraft.deadline
-                      ? typeof bountyDraft.deadline === 'string'
-                        ? bountyDraft.deadline
-                        : bountyDraft.deadline.toISOString()
+                      ? String(bountyDraft.deadline)
                       : '',
                   }
                 : undefined
