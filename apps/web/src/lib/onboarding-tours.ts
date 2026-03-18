@@ -13,6 +13,31 @@ import type { Tour } from '@bounty/ui/components/tour';
 export function buildOnboardingTours(): Tour[] {
   return [
     {
+      id: 'claim-username',
+      steps: [
+        {
+          id: 'username-input',
+          title: 'Claim your username',
+          content:
+            'This is your username on bounty.new. Edit it to something you like, or keep the one we picked for you.',
+          side: 'bottom',
+          sideOffset: 12,
+          align: 'start',
+          nextLabel: 'Next',
+        },
+        {
+          id: 'username-save',
+          title: 'Save your username',
+          content:
+            'Happy with your username? Hit save to claim it. You can always change it later in settings.',
+          side: 'bottom',
+          sideOffset: 12,
+          align: 'end',
+          nextLabel: 'Got it',
+        },
+      ],
+    },
+    {
       id: 'connect-tools',
       steps: [
         {

@@ -25,9 +25,10 @@ import { setHandleSchema, type SetHandleForm } from '@bounty/ui/lib/forms';
 import { getFirstError } from '@bounty/ui/lib/form-errors';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useCallback, useState, useEffect, useRef } from 'react';
+import { useCallback, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useOptionalTour } from '@bounty/ui/components/tour';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { trpc, trpcClient } from '@/utils/trpc';
@@ -60,84 +61,6 @@ function ItemTitle({ children }: { children: React.ReactNode }) {
 function UserProfileSection() {
   const { session, isPending: sessionPending } = useSession();
   const { user: currentUser } = useUser();
-  const queryClient = useQueryClient();
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    watch,
-    setValue,
-    reset,
-  } = useForm<SetHandleForm>({
-    resolver: zodResolver(setHandleSchema),
-    defaultValues: { handle: currentUser?.handle || '' },
-  });
-
-  // Sync form when user data loads
-  useEffect(() => {
-    if (currentUser?.handle) {
-      reset({ handle: currentUser.handle });
-    }
-  }, [currentUser?.handle, reset]);
-
-  const handleValue = watch('handle');
-
-  // Debounced availability check
-  const [debouncedHandle, setDebouncedHandle] = useState('');
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    const trimmed = handleValue?.trim().toLowerCase() || '';
-    // Only check if valid format (3+ chars, alphanumeric)
-    if (trimmed.length >= 3 && /^[a-z0-9_-]+$/.test(trimmed)) {
-      debounceRef.current = setTimeout(() => setDebouncedHandle(trimmed), 300);
-    } else {
-      setDebouncedHandle('');
-    }
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [handleValue]);
-
-  const availabilityQuery = useQuery({
-    ...trpc.user.checkHandleAvailability.queryOptions({
-      handle: debouncedHandle,
-    }),
-    enabled:
-      !!debouncedHandle &&
-      debouncedHandle !== currentUser?.handle?.toLowerCase(),
-    staleTime: 10_000,
-  });
-
-  const isAvailable = availabilityQuery.data?.available;
-  const isChecking = availabilityQuery.isLoading && !!debouncedHandle;
-  const isSameAsCurrent =
-    debouncedHandle === currentUser?.handle?.toLowerCase();
-
-  const saveMutation = useMutation({
-    mutationFn: (data: SetHandleForm) =>
-      trpcClient.user.setHandle.mutate({ handle: data.handle }),
-    onSuccess: () => {
-      toast.success('Username saved');
-      queryClient.invalidateQueries({ queryKey: [['user', 'getMe']] });
-    },
-    onError: (err: Error) => {
-      toast.error(err.message || 'Failed to save username');
-    },
-  });
-
-  const onSubmit = (data: SetHandleForm) => {
-    saveMutation.mutate(data);
-  };
-
-  const firstError = getFirstError(errors);
-  const hasChanged =
-    handleValue?.trim().toLowerCase() !==
-    (currentUser?.handle || '').toLowerCase();
 
   if (sessionPending) {
     return (
@@ -181,65 +104,186 @@ function UserProfileSection() {
         </div>
       </div>
 
-      {/* Username edit section */}
-      <SettingsSection>
-        <SectionTitle>Username</SectionTitle>
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-tertiary pointer-events-none">
-                @
-              </span>
-              <Input
-                {...register('handle')}
-                placeholder="Set your username"
-                className="pl-7 font-mono text-sm"
-                aria-invalid={!!errors.handle}
-              />
-            </div>
-            <Button
-              type="submit"
-              disabled={
-                !hasChanged ||
-                saveMutation.isPending ||
-                (!isSameAsCurrent && isAvailable === false)
-              }
-              variant="default"
-            >
-              {saveMutation.isPending ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                'Save'
-              )}
-            </Button>
-          </div>
-
-          {/* Validation / availability feedback */}
-          {firstError && <p className="text-sm text-red-500">{firstError}</p>}
-          {!firstError && debouncedHandle && !isSameAsCurrent && (
-            <p
-              className={cn(
-                'text-sm',
-                isChecking
-                  ? 'text-text-tertiary'
-                  : isAvailable
-                    ? 'text-green-500'
-                    : 'text-red-500'
-              )}
-            >
-              {isChecking
-                ? 'Checking...'
-                : isAvailable
-                  ? 'Available'
-                  : 'Already taken'}
-            </p>
-          )}
-        </form>
-      </SettingsSection>
+      {/* Username edit — keyed by handle so it remounts cleanly on save */}
+      <UsernameForm
+        key={userHandle ?? '__no-handle__'}
+        currentHandle={userHandle || ''}
+      />
     </>
   );
 }
 
+// Separate component keyed by currentHandle — remounts on handle change,
+// eliminating all useEffect sync patterns (Rules 1 & 5 of no-useEffect).
+function UsernameForm({ currentHandle }: { currentHandle: string }) {
+  const queryClient = useQueryClient();
+  const tour = useOptionalTour();
+  const [isEditing, setIsEditing] = useState(!currentHandle);
+  const [debouncedHandle, setDebouncedHandle] = useState('');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-enter edit mode when the tour highlights the username input
+  const tourOnUsername =
+    tour?.isActive &&
+    tour.activeTourId === 'claim-username' &&
+    tour.currentStep?.id === 'username-input';
+  if (tourOnUsername && !isEditing) {
+    setIsEditing(true);
+  }
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    reset,
+  } = useForm<SetHandleForm>({
+    resolver: zodResolver(setHandleSchema),
+    defaultValues: { handle: currentHandle },
+  });
+
+  const handleValue = watch('handle');
+
+  // Derived state — no useEffect needed (Rule 1)
+  const trimmed = handleValue?.trim().toLowerCase() || '';
+  const hasChanged = trimmed !== currentHandle.toLowerCase();
+  const isSameAsCurrent = debouncedHandle === currentHandle.toLowerCase();
+
+  // Debounce via onChange handler (Rule 3 — event handler, not effect)
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Let react-hook-form handle the value update via register
+    register('handle').onChange(e);
+
+    const val = e.target.value.trim().toLowerCase();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (val.length >= 3 && /^[a-z0-9_-]+$/.test(val)) {
+      debounceRef.current = setTimeout(() => setDebouncedHandle(val), 300);
+    } else {
+      setDebouncedHandle('');
+    }
+  };
+
+  const availabilityQuery = useQuery({
+    ...trpc.user.checkHandleAvailability.queryOptions({
+      handle: debouncedHandle,
+    }),
+    enabled: !!debouncedHandle && !isSameAsCurrent,
+    staleTime: 10_000,
+  });
+
+  const isAvailable = availabilityQuery.data?.available;
+  const isChecking = availabilityQuery.isLoading && !!debouncedHandle;
+
+  const saveMutation = useMutation({
+    mutationFn: (data: SetHandleForm) =>
+      trpcClient.user.setHandle.mutate({ handle: data.handle }),
+    onSuccess: () => {
+      toast.success('Username saved');
+      setIsEditing(false);
+      queryClient.invalidateQueries({ queryKey: [['user', 'getMe']] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Failed to save username');
+    },
+  });
+
+  const onSubmit = (data: SetHandleForm) => {
+    saveMutation.mutate(data);
+  };
+
+  const handleCancel = () => {
+    reset({ handle: currentHandle });
+    setDebouncedHandle('');
+    setIsEditing(false);
+  };
+
+  const firstError = getFirstError(errors);
+
+  // Merge register with custom onChange for debouncing
+  const { onChange: rhfOnChange, ...registerRest } = register('handle');
+
+  return (
+    <SettingsSection>
+      <SectionTitle>Username</SectionTitle>
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
+        <div className="flex gap-2">
+          <div className="relative flex-1" data-tour-step-id="username-input">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-foreground/40 pointer-events-none z-10">
+              @
+            </span>
+            <Input
+              {...registerRest}
+              onChange={handleInputChange}
+              placeholder="Set your username"
+              className={cn(
+                'pl-7 font-mono text-sm',
+                !isEditing && 'pointer-events-none !shadow-none !ring-0'
+              )}
+              aria-invalid={isEditing ? !!errors.handle : undefined}
+              readOnly={!isEditing}
+              tabIndex={isEditing ? undefined : -1}
+            />
+          </div>
+          {isEditing ? (
+            <div className="flex gap-2" data-tour-step-id="username-save">
+              {currentHandle && (
+                <Button type="button" variant="outline" onClick={handleCancel}>
+                  Cancel
+                </Button>
+              )}
+              <Button
+                type="submit"
+                disabled={
+                  saveMutation.isPending ||
+                  (!isSameAsCurrent && isAvailable === false)
+                }
+                variant="default"
+              >
+                {saveMutation.isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  'Save'
+                )}
+              </Button>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsEditing(true)}
+            >
+              Edit
+            </Button>
+          )}
+        </div>
+
+        {/* Validation / availability feedback — only in edit mode */}
+        {isEditing && firstError && (
+          <p className="text-sm text-red-500">{firstError}</p>
+        )}
+        {isEditing && !firstError && debouncedHandle && !isSameAsCurrent && (
+          <p
+            className={cn(
+              'text-sm',
+              isChecking
+                ? 'text-text-tertiary'
+                : isAvailable
+                  ? 'text-green-500'
+                  : 'text-red-500'
+            )}
+          >
+            {isChecking
+              ? 'Checking...'
+              : isAvailable
+                ? 'Available'
+                : 'Already taken'}
+          </p>
+        )}
+      </form>
+    </SettingsSection>
+  );
+}
 // Linked accounts section
 function LinkedAccountsSection() {
   const queryClient = useQueryClient();

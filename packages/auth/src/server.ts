@@ -339,6 +339,96 @@ export const auth = betterAuth({
         after: async (user) => {
           // Auto-create a personal team for every new user
           await createPersonalTeam(user);
+
+          // Derive handle from OAuth provider.
+          // mapProfileToUser doesn't pass custom fields to the DB, so we
+          // set the handle here after creation via a direct DB update.
+          try {
+            // Find which OAuth provider was used
+            const [oauthAccount] = await db
+              .select({ providerId: account.providerId })
+              .from(account)
+              .where(eq(account.userId, user.id))
+              .limit(1);
+
+            if (!oauthAccount) return;
+
+            let candidateHandle: string | undefined;
+
+            if (oauthAccount.providerId === 'github') {
+              // GitHub: use login from the profile (stored in user name context)
+              // The access token is available — fetch /user for the login
+              const [ghAccount] = await db
+                .select({ accessToken: account.accessToken })
+                .from(account)
+                .where(
+                  and(
+                    eq(account.userId, user.id),
+                    eq(account.providerId, 'github')
+                  )
+                )
+                .limit(1);
+
+              if (ghAccount?.accessToken) {
+                try {
+                  const ghRes = await fetch('https://api.github.com/user', {
+                    headers: {
+                      Authorization: `Bearer ${ghAccount.accessToken}`,
+                      'User-Agent': 'bounty.new',
+                    },
+                    signal: AbortSignal.timeout(5000),
+                  });
+                  if (ghRes.ok) {
+                    const ghUser = (await ghRes.json()) as { login?: string };
+                    if (ghUser.login) {
+                      candidateHandle = ghUser.login.toLowerCase();
+                    }
+                  }
+                } catch {
+                  // Fall through to email fallback
+                }
+              }
+            }
+
+            // Google or GitHub fallback: derive from email username
+            if (!candidateHandle) {
+              const emailUser = user.email
+                ?.split('@')[0]
+                ?.toLowerCase()
+                ?.replace(/[^a-z0-9_-]/g, '')
+                ?.slice(0, 20);
+              candidateHandle =
+                emailUser && emailUser.length >= 3 ? emailUser : undefined;
+            }
+
+            if (!candidateHandle) return;
+
+            // Collision check
+            const [taken] = await db
+              .select({ id: userTable.id })
+              .from(userTable)
+              .where(eq(userTable.handle, candidateHandle))
+              .limit(1);
+
+            if (taken) {
+              console.log(
+                `[user.create] handle "${candidateHandle}" taken, skipping`
+              );
+              return;
+            }
+
+            await db
+              .update(userTable)
+              .set({ handle: candidateHandle })
+              .where(eq(userTable.id, user.id));
+
+            console.log(
+              `[user.create] set handle "${candidateHandle}" for user ${user.id}`
+            );
+          } catch (err) {
+            // Non-fatal — user can set handle manually
+            console.warn('[user.create] handle derivation failed:', err);
+          }
         },
       },
       update: {
@@ -513,6 +603,16 @@ export const auth = betterAuth({
       clientSecret: env.GOOGLE_CLIENT_SECRET || '',
       scope: ['openid', 'email', 'profile'],
       redirectURI: 'https://bounty.new/api/auth/callback/google',
+      mapProfileToUser: (profile) => {
+        const emailUser = profile.email
+          ?.split('@')[0]
+          ?.toLowerCase()
+          ?.replace(/[^a-z0-9_-]/g, '')
+          ?.slice(0, 20);
+        return {
+          handle: emailUser && emailUser.length >= 3 ? emailUser : undefined,
+        };
+      },
     },
     linear: {
       clientId: env.LINEAR_CLIENT_ID || '',

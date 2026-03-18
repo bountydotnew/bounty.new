@@ -8,6 +8,7 @@ import { AnimatePresence, m } from 'motion/react';
 import { cn } from '@bounty/ui/lib/utils';
 import { useActiveOrg } from '@/hooks/use-active-org';
 import { useSession } from '@/context/session-context';
+import { useUser } from '@/context/user-context';
 import { useOptionalTour } from '@bounty/ui/components/tour';
 import { trpc } from '@/utils/trpc';
 
@@ -109,7 +110,6 @@ function CloseIcon() {
 
 interface ChecklistItem {
   id: string;
-  taskKey: 'tools' | 'payouts' | 'bounty' | 'member';
   label: string;
   completed: boolean;
   tourId?: string;
@@ -125,6 +125,7 @@ export const GettingStartedCard = () => {
   const [isDismissed, setIsDismissed] = useState(false);
   const { activeOrgSlug } = useActiveOrg();
   const { isAuthenticated } = useSession();
+  const { user: currentUser } = useUser();
   const router = useRouter();
   const tour = useOptionalTour();
 
@@ -146,8 +147,14 @@ export const GettingStartedCard = () => {
 
   const items: ChecklistItem[] = [
     {
+      id: 'set-username',
+      label: 'Claim your username',
+      completed: !!currentUser?.handle,
+      tourId: 'claim-username',
+      href: activeOrgSlug ? `/${activeOrgSlug}/settings/account` : '/dashboard',
+    },
+    {
       id: 'tools',
-      taskKey: 'tools',
       label: 'Connect your repos',
       completed: onboardingState?.connectedTools ?? false,
       tourId: 'connect-tools',
@@ -155,7 +162,6 @@ export const GettingStartedCard = () => {
     },
     {
       id: 'payouts',
-      taskKey: 'payouts',
       label: 'Start receiving payouts',
       completed: onboardingState?.setupPayouts ?? false,
       tourId: 'setup-payouts',
@@ -165,7 +171,6 @@ export const GettingStartedCard = () => {
     },
     {
       id: 'first-bounty',
-      taskKey: 'bounty',
       label: 'Create your first bounty',
       completed: onboardingState?.createdBounty ?? false,
       tourId: 'create-bounty',
@@ -173,7 +178,6 @@ export const GettingStartedCard = () => {
     },
     {
       id: 'invite-member',
-      taskKey: 'member',
       label: 'Invite a member to your team',
       completed: onboardingState?.invitedMember ?? false,
       tourId: 'invite-member',
