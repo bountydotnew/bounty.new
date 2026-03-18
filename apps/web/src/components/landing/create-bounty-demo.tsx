@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import { Plus, ChevronDown } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState, useReducer } from 'react';
+import { useMemo, useRef, useState, useReducer } from 'react';
+import { useMountEffect, useAnimationTimeline } from '@bounty/ui';
 import {
   CompactBountyCard,
   StandardBountyCard,
@@ -332,7 +333,7 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
   const [visibleCount, setVisibleCount] = useState(0);
   const [mountTime] = useState(() => Date.now());
 
-  useEffect(() => {
+  useMountEffect(() => {
     if (compact) {
       return;
     }
@@ -342,7 +343,7 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
       }
     }, 1800);
     return () => clearTimeout(timer);
-  }, [compact]);
+  });
 
   const mockBounties = useMemo(() => {
     const titles = [
@@ -422,11 +423,9 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
     return shuffled;
   }, [mockBounties]);
 
-  useEffect(() => {
+  useMountEffect(() => {
     if (feedBounties.length === 0) {
-      return () => {
-        // no-op
-      };
+      return;
     }
     const interval = setInterval(() => {
       setVisibleCount((count) => {
@@ -438,7 +437,7 @@ function BountyDashboardPage({ compact = false }: BountyDashboardPageProps) {
       });
     }, 600);
     return () => clearInterval(interval);
-  }, [feedBounties]);
+  });
 
   const handleCreateBounty = () => {
     advanceStep();
@@ -687,24 +686,24 @@ function GitHubIssuePage({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Timed sequence for bot animations
-  useEffect(() => {
-    const timeline: Array<{ delay: number; action: BountyAnimAction }> = [
+  useAnimationTimeline<BountyAnimAction>(
+    [
       { delay: 800, action: { type: 'SHOW_COMMENT' } },
       { delay: 2000, action: { type: 'SET_REACTED' } },
       { delay: 3200, action: { type: 'SHOW_SUCCESS' } },
-    ];
-    const timers = timeline.map(({ delay, action }) =>
-      setTimeout(() => dispatch(action), delay)
-    );
-    const notifyTimer = setTimeout(() => onShowNotifications?.(), 3200);
-    return () => {
-      timers.forEach(clearTimeout);
-      clearTimeout(notifyTimer);
-    };
-  }, [onShowNotifications]);
+    ],
+    dispatch
+  );
 
-  // Auto-scroll when new content appears
-  useEffect(() => {
+  useMountEffect(() => {
+    const notifyTimer = setTimeout(() => onShowNotifications?.(), 3200);
+    return () => clearTimeout(notifyTimer);
+  });
+
+  // Auto-scroll when new content appears — render-time ref pattern
+  const prevGhAnimState = useRef(animState);
+  if (prevGhAnimState.current !== animState) {
+    prevGhAnimState.current = animState;
     if (
       animState.botCommentVisible ||
       animState.botReacted ||
@@ -712,16 +711,12 @@ function GitHubIssuePage({
     ) {
       setTimeout(() => {
         scrollRef.current?.scrollTo({
-          top: scrollRef.current.scrollHeight,
+          top: scrollRef.current?.scrollHeight ?? 0,
           behavior: 'smooth',
         });
       }, 100);
     }
-  }, [
-    animState.botCommentVisible,
-    animState.botReacted,
-    animState.showSuccess,
-  ]);
+  }
 
   return (
     <div className="h-full bg-gh-bg overflow-auto" ref={scrollRef}>

@@ -2,8 +2,8 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
+import { useMountEffect } from '@bounty/ui';
 import { trpcClient } from '@/utils/trpc';
 
 interface UsePaymentVerificationProps {
@@ -19,7 +19,6 @@ export function usePaymentVerification({
 }: UsePaymentVerificationProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const hasVerifiedRef = useRef(false);
 
   const verifyPaymentMutation = useMutation({
     mutationFn: async (input: { sessionId: string }) => {
@@ -48,16 +47,15 @@ export function usePaymentVerification({
     },
   });
 
-  useEffect(() => {
-    if (payment === 'success' && sessionId && !hasVerifiedRef.current) {
-      hasVerifiedRef.current = true;
+  useMountEffect(() => {
+    if (payment === 'success' && sessionId) {
       verifyPaymentMutation.mutate({ sessionId });
       router.replace(`/bounty/${bountyId}`);
     } else if (payment === 'cancelled') {
       toast.info('Payment was cancelled. You can complete payment later.');
       router.replace(`/bounty/${bountyId}`);
     }
-  }, [payment, sessionId, bountyId, router, verifyPaymentMutation]);
+  });
 
   return {
     isVerifying: verifyPaymentMutation.isPending,

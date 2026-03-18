@@ -20,6 +20,7 @@ import { TRPCError } from '@trpc/server';
 import { desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { LRUCache } from '../lib/lru-cache';
+import { checkUnkeyRateLimit } from '../lib/unkey-ratelimit';
 import { userProfileCache } from './profiles';
 import {
   adminProcedure,
@@ -507,8 +508,8 @@ export const userRouter = router({
   checkHandleAvailability: publicProcedure
     .input(z.object({ handle: z.string().min(3).max(20) }))
     .query(async ({ ctx, input }) => {
-      // No try-catch needed - let TRPC handle errors naturally
-      // Database errors will be caught by TRPC's error handler
+      await checkUnkeyRateLimit('user.checkHandle', ctx.clientIP || 'anon');
+
       const [existingUser] = await ctx.db
         .select({ id: user.id })
         .from(user)
@@ -524,6 +525,8 @@ export const userRouter = router({
   setHandle: protectedProcedure
     .input(z.object({ handle: z.string().min(3).max(20) }))
     .mutation(async ({ ctx, input }) => {
+      await checkUnkeyRateLimit('user.setHandle', ctx.session.user.id);
+
       try {
         const handleLower = input.handle.toLowerCase();
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import { useFeedback } from './context';
 import { FeedbackForm } from './form';
 
@@ -36,13 +36,16 @@ export function FeedbackModal() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const modalZIndex = config.ui?.zIndex ?? 10_000;
 
-  useEffect(() => {
+  // Sync dialog open/close state — render-time with ref tracking
+  const prevIsOpen = useRef(isOpen);
+  if (prevIsOpen.current !== isOpen) {
+    prevIsOpen.current = isOpen;
     if (isOpen) {
-      dialogRef.current?.showModal();
+      queueMicrotask(() => dialogRef.current?.showModal());
     } else {
-      dialogRef.current?.close();
+      queueMicrotask(() => dialogRef.current?.close());
     }
-  }, [isOpen]);
+  }
 
   return (
     <dialog

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { trpcClient } from '@/utils/trpc';
@@ -8,6 +8,7 @@ import { OnboardingDialog } from '@/components/onboarding-flow/onboarding-dialog
 
 export default function OnboardingStep1Page() {
   const router = useRouter();
+  const claimedRef = useRef(false);
 
   const { data: waitlistData, isLoading: isLoadingWaitlist } = useQuery({
     queryKey: ['onboarding.checkWaitlist'],
@@ -15,11 +16,8 @@ export default function OnboardingStep1Page() {
   });
 
   // Claim the discount in background if on waitlist (don't show the code)
-  const { mutate: claimDiscount } = useMutation({
+  const claimDiscountMutation = useMutation({
     mutationFn: () => trpcClient.onboarding.claimWaitlistDiscount.mutate(),
-    onSuccess: () => {
-      // Discount claimed silently
-    },
   });
 
   const completeStepMutation = useMutation({
@@ -29,12 +27,12 @@ export default function OnboardingStep1Page() {
     },
   });
 
-  // Claim discount if on waitlist
-  useEffect(() => {
-    if (waitlistData?.isOnWaitlist === true) {
-      claimDiscount();
-    }
-  }, [waitlistData?.isOnWaitlist, claimDiscount]);
+  // Claim discount once when waitlist data shows user is on waitlist
+  // Render-time side-effect: fires mutation once based on query result
+  if (waitlistData?.isOnWaitlist === true && !claimedRef.current) {
+    claimedRef.current = true;
+    claimDiscountMutation.mutate();
+  }
 
   const isLoading = isLoadingWaitlist;
 

@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useReducer } from 'react';
+import { useState, useRef, useReducer } from 'react';
+import { useMountEffect } from '@bounty/ui';
 import { Controller, type Control } from 'react-hook-form';
 import type { CreateBountyForm } from '@bounty/ui/lib/forms';
 import {
@@ -69,23 +70,26 @@ function DeadlinePicker({ value, onChange }: DeadlinePickerProps) {
     date: parseFieldValue(value),
   });
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const prevValueRef = useRef(value);
 
-  useEffect(() => {
-    if (!value) {
+  // Sync external value prop to internal reducer state (render-time)
+  if (prevValueRef.current !== value) {
+    prevValueRef.current = value;
+    if (value) {
+      const parsed = parseFieldValue(value);
+      if (parsed) {
+        dispatch({
+          type: 'SET_DATE',
+          date: parsed,
+          inputValue: formatDate(parsed),
+        });
+      } else {
+        dispatch({ type: 'SET_INPUT', inputValue: value });
+      }
+    } else {
       dispatch({ type: 'RESET' });
-      return;
     }
-    const parsed = parseFieldValue(value);
-    if (parsed) {
-      dispatch({
-        type: 'SET_DATE',
-        date: parsed,
-        inputValue: formatDate(parsed),
-      });
-      return;
-    }
-    dispatch({ type: 'SET_INPUT', inputValue: value });
-  }, [value]);
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -110,13 +114,13 @@ function DeadlinePicker({ value, onChange }: DeadlinePickerProps) {
     }, 300);
   };
 
-  useEffect(() => {
+  useMountEffect(() => {
     return () => {
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
     };
-  }, []);
+  });
 
   const handleCalendarSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {

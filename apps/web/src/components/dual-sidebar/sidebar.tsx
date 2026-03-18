@@ -144,15 +144,13 @@ const lastNonSettingsPathRef = { current: '/dashboard' };
 
 function useTrackNonSettingsPath() {
   const pathname = usePathname();
-  React.useEffect(() => {
-    if (
-      pathname &&
-      !pathname.includes('/settings') &&
-      !pathname.startsWith('/admin')
-    ) {
-      lastNonSettingsPathRef.current = pathname;
-    }
-  }, [pathname]);
+  if (
+    pathname &&
+    !pathname.includes('/settings') &&
+    !pathname.startsWith('/admin')
+  ) {
+    lastNonSettingsPathRef.current = pathname;
+  }
 }
 
 const BackToMainButton = (_props: { slug: string }) => {

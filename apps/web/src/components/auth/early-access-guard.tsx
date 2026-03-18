@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useSession } from '@/context/session-context';
 
 /**
@@ -29,47 +29,25 @@ export function EarlyAccessGuard({
   const lastCheckedSessionRef = useRef<string | null>(null);
   const hasRedirectedRef = useRef(false);
 
-  useEffect(() => {
-    // If early access is disabled, allow everyone
-    if (!isEarlyAccessEnabled) {
-      return;
-    }
-
-    if (isPending) {
-      return;
-    }
-
-    // No session - let AuthGuard handle it
-    if (!session?.user) {
-      return;
-    }
-
-    // Create a unique identifier for this session state
+  // Redirect during render if conditions are met
+  if (isEarlyAccessEnabled && !isPending && session?.user) {
     const sessionKey = `${session.user.id}-${session.user.role}`;
 
-    // Skip if we've already checked this exact session state
-    if (lastCheckedSessionRef.current === sessionKey) {
-      return;
+    if (lastCheckedSessionRef.current !== sessionKey) {
+      lastCheckedSessionRef.current = sessionKey;
+
+      const userRole = session.user.role ?? 'user';
+
+      if (
+        userRole !== 'early_access' &&
+        userRole !== 'admin' &&
+        !hasRedirectedRef.current
+      ) {
+        hasRedirectedRef.current = true;
+        router.push('/early-access-required');
+      }
     }
-
-    // Mark this session as checked
-    lastCheckedSessionRef.current = sessionKey;
-
-    const userRole = session.user.role ?? 'user';
-
-    // Allow early_access and admin roles
-    if (userRole === 'early_access' || userRole === 'admin') {
-      return;
-    }
-
-    // Don't redirect if already redirected
-    if (hasRedirectedRef.current) {
-      return;
-    }
-
-    hasRedirectedRef.current = true;
-    router.push('/early-access-required');
-  }, [session, isPending, router, isEarlyAccessEnabled]);
+  }
 
   // If early access is disabled, allow everyone
   if (!isEarlyAccessEnabled) {

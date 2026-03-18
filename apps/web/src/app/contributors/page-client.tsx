@@ -8,7 +8,7 @@ import {
 import Link from '@bounty/ui/components/link';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowUpRight, GitFork, GitGraph, Github, Star } from 'lucide-react';
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { DataBuddyIcon, MarbleIcon } from '@/components/icons';
 import { Header } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
@@ -27,23 +27,15 @@ const EXCLUDE = ['dependabot', 'github-actions', 'autofix-ci[bot]'];
 const CORE = ['ripgrim'];
 
 export default function ContributorsPage() {
-  const lastCommitRef = useRef<string>('');
-
   const { data: contributors } = useQuery(
     trpc.repository.contributors.queryOptions({ repo: REPOSITORY })
   );
   const { data: repoStatsServer } = useQuery(
     trpc.repository.stats.queryOptions({ repo: REPOSITORY })
   );
-  const { data: commitsData } = useQuery(
+  useQuery(
     trpc.repository.recentCommits.queryOptions({ repo: REPOSITORY, limit: 50 })
   );
-
-  useEffect(() => {
-    if (Array.isArray(commitsData) && commitsData.length) {
-      lastCommitRef.current = (commitsData as { sha?: string }[])[0]?.sha ?? '';
-    }
-  }, [commitsData]);
 
   const allContributors = useMemo(
     () =>

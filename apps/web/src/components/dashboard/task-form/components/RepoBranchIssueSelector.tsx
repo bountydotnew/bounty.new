@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
+import { useIsMobile } from '@bounty/ui';
 import { ChevronRight, ChevronLeft, Check, Loader2 } from 'lucide-react';
 import { GithubIcon, BranchIcon } from '@bounty/ui';
 import { IssueOpenedIcon } from '@bounty/ui/components/icons/huge/issue-opened';
@@ -1311,7 +1312,7 @@ export function RepoBranchIssueSelector({
   onSelectIssue,
   openStep = 'repos',
 }: RepoBranchIssueSelectorProps) {
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
 
   const [dropdownState, setDropdownState] = useState({
     accountsOpen: false,
@@ -1339,15 +1340,6 @@ export function RepoBranchIssueSelector({
     prevOpenStepRef.current = openStep;
     setMobileNav((prev) => ({ ...prev, step: openStep }));
   }
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 640);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   // Reset pagination when search queries change (update during render)
   const prevAccountQueryRef = useRef(accountSearchQuery);

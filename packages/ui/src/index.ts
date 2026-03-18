@@ -48,7 +48,11 @@ export * from './components/textarea';
 export * from './components/toast';
 export * from './components/toggle';
 // Export toggle-group components except Toggle (to avoid conflict)
-export { ToggleGroup, ToggleGroupItem, ToggleGroupSeparator } from './components/toggle-group';
+export {
+  ToggleGroup,
+  ToggleGroupItem,
+  ToggleGroupSeparator,
+} from './components/toggle-group';
 export * from './components/toolbar';
 export * from './components/tooltip';
 
@@ -98,6 +102,14 @@ export * from './hooks/use-passkey';
 export * from './hooks/use-window-size';
 export * from './hooks/use-branches';
 export * from './hooks/use-issues';
+
+// Effect-replacement hooks
+export * from './hooks/use-mount-effect';
+export * from './hooks/use-event-listener';
+export * from './hooks/use-debounced-value';
+export * from './hooks/use-auto-resize-textarea';
+export * from './hooks/use-animation-timeline';
+export * from './hooks/use-countdown';
 
 // Lib utilities
 export * from './lib/blog-query';

@@ -1,12 +1,7 @@
 'use client';
 
-import {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  type FormEvent,
-} from 'react';
+import { useState, useRef, useCallback, type FormEvent } from 'react';
+import { useMountEffect } from '@bounty/ui';
 import { useFeedback } from './context';
 
 /**
@@ -46,14 +41,16 @@ export function FeedbackForm({ onSuccess }: { onSuccess?: () => void }) {
     cancelLabel: config.ui?.cancelLabel ?? 'Cancel',
   };
 
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-    requestAnimationFrame(() => {
-      textareaRef.current?.focus();
+  // Focus textarea when opening — render-time with ref tracking
+  const prevIsOpen = useRef(isOpen);
+  if (isOpen && !prevIsOpen.current) {
+    queueMicrotask(() => {
+      requestAnimationFrame(() => {
+        textareaRef.current?.focus();
+      });
     });
-  }, [isOpen]);
+  }
+  prevIsOpen.current = isOpen;
 
   const handleClose = useCallback(() => {
     if (status === 'sending') {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useActiveOrg } from '@/hooks/use-active-org';
 
@@ -29,70 +29,51 @@ export function OrgSyncGuard({ slug, children }: OrgSyncGuardProps) {
   const syncingRef = useRef(false);
 
   // Reset synced state when slug changes (navigating between orgs)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional reset on slug change
-  useEffect(() => {
+  const prevSlugRef = useRef(slug);
+  if (prevSlugRef.current !== slug) {
+    prevSlugRef.current = slug;
     // Only reset if the new slug doesn't already match
     if (activeOrg?.slug !== slug) {
       setSynced(false);
       syncingRef.current = false;
     }
-  }, [slug]);
+  }
 
-  useEffect(() => {
-    if (syncingRef.current) {
-      return;
-    }
-
-    // Don't make any decisions while orgs are still loading.
-    // This prevents premature redirects when the orgs list is temporarily
-    // empty (e.g. after invalidateQueries during an org switch).
-    if (isLoading) {
-      return;
-    }
-
-    // Orgs loaded but list is empty — should not happen for authenticated
-    // users (they always have a personal team), but guard against it.
-    if (orgs.length === 0) {
-      return;
-    }
-
-    // Find the org matching the URL slug
+  // Main sync logic (render-time with ref guards)
+  if (!(syncingRef.current || isLoading) && orgs.length > 0) {
     const targetOrg = orgs.find((o) => o.slug === slug);
 
     if (!targetOrg) {
       // Slug doesn't match any user org — redirect to the first org's dashboard
       // or fallback to /dashboard if somehow no orgs exist
+      syncingRef.current = true; // prevent re-triggering
       const fallbackOrg = orgs[0];
       if (fallbackOrg?.slug) {
         router.replace(`/${fallbackOrg.slug}/integrations`);
       } else {
         router.replace('/dashboard');
       }
-      return;
-    }
-
-    if (activeOrg?.slug === slug) {
+    } else if (activeOrg?.slug === slug) {
       // Already synced
       if (!synced) {
         setSynced(true);
       }
-      return;
+    } else {
+      // Need to switch to this org
+      syncingRef.current = true;
+      switchOrg(targetOrg.id)
+        .then(() => {
+          setSynced(true);
+        })
+        .catch((err: unknown) => {
+          console.error('Failed to sync org from slug:', err);
+          router.replace('/dashboard');
+        })
+        .finally(() => {
+          syncingRef.current = false;
+        });
     }
-
-    // Need to switch to this org
-    syncingRef.current = true;
-    switchOrg(targetOrg.id)
-      .then(() => {
-        setSynced(true);
-      })
-      .catch((err: unknown) => {
-        console.error('Failed to sync org from slug:', err);
-        router.replace('/dashboard');
-      })
-      .finally(() => {
-        syncingRef.current = false;
-      });
-  }, [slug, activeOrg?.slug, orgs, isLoading, switchOrg, router, synced]);
+  }
 
   if (!synced) {
     return (

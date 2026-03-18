@@ -11,6 +11,12 @@ const NAMESPACES = {
   'invite.redeem': { limit: 5, duration: '60s' as const },
   /** Generating invite codes (admin) */
   'invite.generate': { limit: 20, duration: '60s' as const },
+  /** Setting a username */
+  'user.setHandle': { limit: 5, duration: '60s' as const },
+  /** Checking username availability */
+  'user.checkHandle': { limit: 20, duration: '60s' as const },
+  /** Joining the waitlist */
+  waitlist: { limit: 3, duration: '60s' as const },
 } as const;
 
 export type UnkeyNamespace = keyof typeof NAMESPACES;

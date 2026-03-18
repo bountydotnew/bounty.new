@@ -10,6 +10,7 @@ import {
 } from '@bounty/ui/components/avatar';
 import { Button } from '@bounty/ui/components/button';
 import { Badge } from '@bounty/ui/components/badge';
+import { Input } from '@bounty/ui/components/input';
 import { Switch } from '@bounty/ui/components/switch';
 import {
   Loader2,
@@ -20,12 +21,16 @@ import {
   Unlink,
 } from 'lucide-react';
 import { cn } from '@bounty/ui/lib/utils';
+import { setHandleSchema, type SetHandleForm } from '@bounty/ui/lib/forms';
+import { getFirstError } from '@bounty/ui/lib/form-errors';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { trpc } from '@/utils/trpc';
+import { trpc, trpcClient } from '@/utils/trpc';
 import { authClient } from '@bounty/auth/client';
 import { GithubIcon } from '../icons';
 import GoogleIcon from '../icons/google';
@@ -51,11 +56,90 @@ function ItemTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-// User profile row at the top
-function UserProfileRow() {
-  const { session, isPending } = useSession();
+// User profile + username section
+function UserProfileSection() {
+  const { session, isPending: sessionPending } = useSession();
+  const { user: currentUser } = useUser();
+  const queryClient = useQueryClient();
 
-  if (isPending) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    setValue,
+    reset,
+  } = useForm<SetHandleForm>({
+    resolver: zodResolver(setHandleSchema),
+    defaultValues: { handle: currentUser?.handle || '' },
+  });
+
+  // Sync form when user data loads
+  useEffect(() => {
+    if (currentUser?.handle) {
+      reset({ handle: currentUser.handle });
+    }
+  }, [currentUser?.handle, reset]);
+
+  const handleValue = watch('handle');
+
+  // Debounced availability check
+  const [debouncedHandle, setDebouncedHandle] = useState('');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    const trimmed = handleValue?.trim().toLowerCase() || '';
+    // Only check if valid format (3+ chars, alphanumeric)
+    if (trimmed.length >= 3 && /^[a-z0-9_-]+$/.test(trimmed)) {
+      debounceRef.current = setTimeout(() => setDebouncedHandle(trimmed), 300);
+    } else {
+      setDebouncedHandle('');
+    }
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [handleValue]);
+
+  const availabilityQuery = useQuery({
+    ...trpc.user.checkHandleAvailability.queryOptions({
+      handle: debouncedHandle,
+    }),
+    enabled:
+      !!debouncedHandle &&
+      debouncedHandle !== currentUser?.handle?.toLowerCase(),
+    staleTime: 10_000,
+  });
+
+  const isAvailable = availabilityQuery.data?.available;
+  const isChecking = availabilityQuery.isLoading && !!debouncedHandle;
+  const isSameAsCurrent =
+    debouncedHandle === currentUser?.handle?.toLowerCase();
+
+  const saveMutation = useMutation({
+    mutationFn: (data: SetHandleForm) =>
+      trpcClient.user.setHandle.mutate({ handle: data.handle }),
+    onSuccess: () => {
+      toast.success('Username saved');
+      queryClient.invalidateQueries({ queryKey: [['user', 'getMe']] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Failed to save username');
+    },
+  });
+
+  const onSubmit = (data: SetHandleForm) => {
+    saveMutation.mutate(data);
+  };
+
+  const firstError = getFirstError(errors);
+  const hasChanged =
+    handleValue?.trim().toLowerCase() !==
+    (currentUser?.handle || '').toLowerCase();
+
+  if (sessionPending) {
     return (
       <div className="flex items-center gap-4 w-full px-4 py-4 border-b border-border-subtle">
         <Loader2 className="size-9 animate-spin text-text-tertiary" />
@@ -71,20 +155,88 @@ function UserProfileRow() {
   const userName = user?.name || 'Anonymous';
   const userEmail = user?.email || '';
   const userImage = user?.image;
+  const userHandle = currentUser?.handle;
 
   return (
-    <div className="flex items-center gap-4 w-full px-4 py-4 border-b border-border-subtle">
-      <Avatar className="size-9">
-        <AvatarImage src={userImage ?? undefined} alt={userName} />
-        <AvatarFacehash name={userName || userEmail} size={36} />
-      </Avatar>
-      <div className="flex flex-col">
-        <span className="text-base font-semibold text-foreground">
-          {userName}
-        </span>
-        <span className="text-sm text-text-secondary">{userEmail}</span>
+    <>
+      {/* Profile display row */}
+      <div className="flex items-center gap-4 w-full px-4 py-4 border-b border-border-subtle">
+        <Avatar className="size-9">
+          <AvatarImage src={userImage ?? undefined} alt={userName} />
+          <AvatarFacehash name={userName || userEmail} size={36} />
+        </Avatar>
+        <div className="flex flex-col">
+          <span className="text-base font-semibold text-foreground">
+            {userName}
+          </span>
+          <div className="flex items-center gap-2">
+            {userHandle && (
+              <span className="text-sm text-text-secondary">@{userHandle}</span>
+            )}
+            {userHandle && (
+              <span className="text-sm text-text-tertiary">&middot;</span>
+            )}
+            <span className="text-sm text-text-tertiary">{userEmail}</span>
+          </div>
+        </div>
       </div>
-    </div>
+
+      {/* Username edit section */}
+      <SettingsSection>
+        <SectionTitle>Username</SectionTitle>
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-tertiary pointer-events-none">
+                @
+              </span>
+              <Input
+                {...register('handle')}
+                placeholder="Set your username"
+                className="pl-7 font-mono text-sm"
+                aria-invalid={!!errors.handle}
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={
+                !hasChanged ||
+                saveMutation.isPending ||
+                (!isSameAsCurrent && isAvailable === false)
+              }
+              variant="default"
+            >
+              {saveMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                'Save'
+              )}
+            </Button>
+          </div>
+
+          {/* Validation / availability feedback */}
+          {firstError && <p className="text-sm text-red-500">{firstError}</p>}
+          {!firstError && debouncedHandle && !isSameAsCurrent && (
+            <p
+              className={cn(
+                'text-sm',
+                isChecking
+                  ? 'text-text-tertiary'
+                  : isAvailable
+                    ? 'text-green-500'
+                    : 'text-red-500'
+              )}
+            >
+              {isChecking
+                ? 'Checking...'
+                : isAvailable
+                  ? 'Available'
+                  : 'Already taken'}
+            </p>
+          )}
+        </form>
+      </SettingsSection>
+    </>
   );
 }
 
@@ -546,7 +698,7 @@ function AccountActionsSection() {
 export function AccountSettings() {
   return (
     <div className="flex flex-col w-full">
-      <UserProfileRow />
+      <UserProfileSection />
       <LinkedAccountsSection />
       <PrivacySection />
       <AppearanceSection />

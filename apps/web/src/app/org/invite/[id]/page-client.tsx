@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useReducer, useRef } from 'react';
+import { useReducer, useRef } from 'react';
+import { useMountEffect } from '@bounty/ui';
 import { useParams, useRouter } from 'next/navigation';
 import { authClient } from '@bounty/auth/client';
 import { toast } from 'sonner';
@@ -41,7 +42,7 @@ export default function OrgInvitationAcceptPage() {
   const invitationId = params.id as string;
   const hasAccepted = useRef(false);
 
-  useEffect(() => {
+  useMountEffect(() => {
     if (hasAccepted.current) return;
 
     let cancelled = false;
@@ -101,7 +102,7 @@ export default function OrgInvitationAcceptPage() {
     return () => {
       cancelled = true;
     };
-  }, [invitationId, router]);
+  });
 
   if (state.isLoading) {
     return (

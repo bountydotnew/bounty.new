@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, use } from 'react';
+import { useRef, use } from 'react';
+import { useMountEffect, useEventListener } from '@bounty/ui';
 import { BountiesFeed } from '@/components/bounty/bounties-feed';
 import { Header } from '@/components/dual-sidebar/sidebar-header';
 // import { Onboarding } from '@/components/onboarding';
@@ -24,7 +25,7 @@ export function DashboardContent() {
   const { state } = context;
 
   // Focus textarea if hash is present (for navigation from other pages)
-  useEffect(() => {
+  useMountEffect(() => {
     const hash = window.location.hash;
     if (hash === '#focus-textarea' || hash === '#new-bounty') {
       // Small delay to ensure component is mounted
@@ -33,19 +34,14 @@ export function DashboardContent() {
         window.history.replaceState(null, '', window.location.pathname);
       }, 100);
     }
+  });
 
-    // Listen for custom event to focus textarea (when already on dashboard)
-    const handleFocusTextarea = () => {
-      setTimeout(() => {
-        taskInputRef.current?.focus();
-      }, 100);
-    };
-
-    window.addEventListener('focus-textarea', handleFocusTextarea);
-    return () => {
-      window.removeEventListener('focus-textarea', handleFocusTextarea);
-    };
-  }, []);
+  // Listen for custom event to focus textarea (when already on dashboard)
+  useEventListener('focus-textarea', () => {
+    setTimeout(() => {
+      taskInputRef.current?.focus();
+    }, 100);
+  });
 
   return (
     <>

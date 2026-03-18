@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LinearIcon } from '@bounty/ui';
 import { useIntegrations } from '@/hooks/use-integrations';
@@ -22,33 +22,31 @@ export default function LinearRootPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const orgPath = useOrgPath();
 
-  // Redirect to workspace-specific route if connected
-  useEffect(() => {
-    if (hasLinear && linearWorkspace) {
-      router.replace(orgPath(`/integrations/linear/${linearWorkspace.id}`));
-    }
-  }, [hasLinear, linearWorkspace, router, orgPath]);
+  // Redirect to workspace-specific route if connected (render-time ref guard)
+  const didRedirectRef = useRef(false);
+  if (hasLinear && linearWorkspace && !didRedirectRef.current) {
+    didRedirectRef.current = true;
+    router.replace(orgPath(`/integrations/linear/${linearWorkspace.id}`));
+  }
 
-  // Auto-sync workspace if user has OAuth but no connected workspace
-  useEffect(() => {
-    if (
-      hasLinearOAuth &&
-      !hasLinear &&
-      !isLinearLoading &&
-      !isSyncingRef.current
-    ) {
-      isSyncingRef.current = true;
-      setIsSyncing(true);
-      syncLinearWorkspace()
-        .catch(() => {
-          // sync failed silently
-        })
-        .then(() => {
-          isSyncingRef.current = false;
-          setIsSyncing(false);
-        });
-    }
-  }, [hasLinearOAuth, hasLinear, isLinearLoading, syncLinearWorkspace]);
+  // Auto-sync workspace if user has OAuth but no connected workspace (render-time ref guard)
+  if (
+    hasLinearOAuth &&
+    !hasLinear &&
+    !isLinearLoading &&
+    !isSyncingRef.current
+  ) {
+    isSyncingRef.current = true;
+    setIsSyncing(true);
+    syncLinearWorkspace()
+      .catch(() => {
+        // sync failed silently
+      })
+      .then(() => {
+        isSyncingRef.current = false;
+        setIsSyncing(false);
+      });
+  }
 
   // Show loading state while syncing or loading initial data
   if (isLinearLoading || isSyncing) {

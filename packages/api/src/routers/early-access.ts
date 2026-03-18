@@ -95,7 +95,6 @@ export const earlyAccessRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-
         const userAlreadyInWaitlist = await db.query.waitlist.findFirst({
           where: (fields, { eq }) => eq(fields.email, input.email),
         });
@@ -1228,4 +1227,73 @@ export const earlyAccessRouter = router({
         });
       }
     }),
+
+  // ========================================================================
+  // Waitlist
+  // ========================================================================
+
+  /**
+   * Join the waitlist. Requires authentication.
+   * Uses the session user's email and ID — no input needed.
+   */
+  joinWaitlist: protectedProcedure.mutation(async ({ ctx }) => {
+    await checkUnkeyRateLimit('waitlist', ctx.session.user.id);
+
+    const userId = ctx.session.user.id;
+    const userEmail = ctx.session.user.email;
+
+    if (!userEmail) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'User email is required',
+      });
+    }
+
+    // Check if user already has a waitlist entry (by userId or email)
+    const existingEntry = await db.query.waitlist.findFirst({
+      where: (fields, { eq: fieldEq, or: fieldOr }) =>
+        fieldOr(
+          fieldEq(fields.userId, userId),
+          fieldEq(fields.email, userEmail)
+        ),
+    });
+
+    if (existingEntry) {
+      // Update the entry with userId if not already set
+      if (!existingEntry.userId) {
+        await db
+          .update(waitlist)
+          .set({ userId })
+          .where(eq(waitlist.id, existingEntry.id));
+      }
+
+      return {
+        success: true,
+        message: "You're already on the waitlist!",
+        alreadyJoined: true,
+      };
+    }
+
+    // Calculate position
+    const [countResult] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(waitlist);
+    const position = (countResult?.count ?? 0) + 1;
+
+    // Create new waitlist entry linked to user
+    await db.insert(waitlist).values({
+      email: userEmail,
+      userId,
+      createdAt: new Date(),
+      position,
+    });
+
+    await track('waitlist_joined', { source: 'api', userId });
+
+    return {
+      success: true,
+      message: 'Successfully added to waitlist!',
+      position,
+    };
+  }),
 });

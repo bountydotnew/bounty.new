@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
+import { useMountEffect } from '@bounty/ui';
 import { devNames } from './demo-data';
 import { MockBrowser } from './mockup';
 
@@ -308,7 +309,7 @@ function GitHubIssuePage() {
     () => devNames[Math.floor(Math.random() * devNames.length)]
   );
 
-  useEffect(() => {
+  useMountEffect(() => {
     const timer = setTimeout(() => {
       if (scrollRef.current) {
         scrollRef.current.scrollTo({
@@ -318,18 +319,21 @@ function GitHubIssuePage() {
       }
     }, 1500);
     return () => clearTimeout(timer);
-  }, []);
+  });
 
-  useEffect(() => {
+  // Auto-scroll when bot replies — render-time ref pattern
+  const prevBotReplied = useRef(botReplied);
+  if (prevBotReplied.current !== botReplied) {
+    prevBotReplied.current = botReplied;
     if (botReplied && scrollRef.current) {
       setTimeout(() => {
         scrollRef.current?.scrollTo({
-          top: scrollRef.current.scrollHeight,
+          top: scrollRef.current?.scrollHeight ?? 0,
           behavior: 'smooth',
         });
       }, 300);
     }
-  }, [botReplied]);
+  }
 
   const handleSendComment = () => {
     setCommentSent(true);

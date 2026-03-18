@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useReducer } from 'react';
+import { useReducer } from 'react';
+import { useMountEffect } from '@bounty/ui';
 
 const GmailIcon = () => (
   <svg
@@ -57,7 +58,7 @@ export function MacNotification({
     'hidden' as const
   );
 
-  useEffect(() => {
+  useMountEffect(() => {
     let hideTimer: ReturnType<typeof setTimeout>;
     const showTimer = setTimeout(() => {
       dispatch('show');
@@ -67,7 +68,7 @@ export function MacNotification({
       clearTimeout(showTimer);
       clearTimeout(hideTimer);
     };
-  }, [delay]);
+  });
 
   if (phase === 'hidden') return null;
 

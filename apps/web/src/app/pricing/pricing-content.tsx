@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useState, Suspense } from 'react';
+import { useMountEffect } from '@bounty/ui';
 import { useSearchParams } from 'next/navigation';
 import { PricingCards } from '@/components/billing/pricing-cards';
 import { BillingToggle } from '@/components/billing/billing-toggle';
@@ -24,7 +25,7 @@ function PricingPageContentInner() {
   const recommendedPlan = getRecommendedPlan(monthlySpend);
 
   // Handle checkout callback after login redirect
-  useEffect(() => {
+  useMountEffect(() => {
     const checkoutPlan = searchParams.get('checkout');
     const shouldProcessCheckout = checkoutPlan && isAuthenticated && !isPending;
 
@@ -80,7 +81,7 @@ function PricingPageContentInner() {
       }
     };
     startCheckout();
-  }, [searchParams, isAuthenticated, isPending, attach]);
+  });
 
   return (
     <div className="mx-auto max-w-7xl px-8 pt-32 pb-24">

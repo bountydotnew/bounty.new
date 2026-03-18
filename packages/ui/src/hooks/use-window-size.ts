@@ -1,31 +1,39 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 
-// Hook
+function subscribe(callback: () => void) {
+  window.addEventListener('resize', callback);
+  return () => window.removeEventListener('resize', callback);
+}
+
+const serverSnapshot = {
+  width: undefined as number | undefined,
+  height: undefined as number | undefined,
+};
+
+function getSnapshot() {
+  return { width: window.innerWidth, height: window.innerHeight };
+}
+
+// useSyncExternalStore needs referential equality for snapshot, so memoize
+let cachedSnapshot = serverSnapshot;
+function getMemoizedSnapshot() {
+  const next = getSnapshot();
+  if (
+    cachedSnapshot.width === next.width &&
+    cachedSnapshot.height === next.height
+  ) {
+    return cachedSnapshot;
+  }
+  cachedSnapshot = next;
+  return cachedSnapshot;
+}
+
 export function useWindowSize() {
-  const [windowSize, setWindowSize] = useState<{
-    width: number | undefined;
-    height: number | undefined;
-  }>({
-    width: undefined,
-    height: undefined,
-  });
-
-  useEffect(() => {
-    function handleResize() {
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    }
-
-    window.addEventListener('resize', handleResize);
-
-    handleResize();
-
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  return windowSize;
+  return useSyncExternalStore(
+    subscribe,
+    getMemoizedSnapshot,
+    () => serverSnapshot
+  );
 }

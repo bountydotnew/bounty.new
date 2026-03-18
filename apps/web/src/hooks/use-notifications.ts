@@ -1,7 +1,8 @@
 'use client';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
+import { useEventListener } from '@bounty/ui';
 import { toast } from '@/context/toast';
 import type { NotificationItem } from '@/types/notifications';
 import { trpc, trpcClient } from '@/utils/trpc';
@@ -27,14 +28,15 @@ export const useNotifications = () => {
   });
   const unreadCount = Number(unreadCountQuery.data ?? 0);
 
-  // Initialize previous notification IDs on first load to avoid showing toasts for existing notifications
-  useEffect(() => {
-    if (notificationsQuery.data && previousNotificationIdsRef.current.size === 0) {
-      previousNotificationIdsRef.current = new Set(
-        notificationsQuery.data.map((n) => n.id)
-      );
-    }
-  }, [notificationsQuery.data]);
+  // Initialize previous notification IDs on first load (render-time)
+  if (
+    notificationsQuery.data &&
+    previousNotificationIdsRef.current.size === 0
+  ) {
+    previousNotificationIdsRef.current = new Set(
+      notificationsQuery.data.map((n) => n.id)
+    );
+  }
 
   const markAsReadMutation = useMutation(
     trpc.notifications.markAsRead.mutationOptions({
@@ -76,7 +78,8 @@ export const useNotifications = () => {
           .then((unreadNotifications) => {
             // Find new notifications that weren't in the previous set
             const newNotifications = unreadNotifications.filter(
-              (notification) => !previousNotificationIdsRef.current.has(notification.id)
+              (notification) =>
+                !previousNotificationIdsRef.current.has(notification.id)
             );
 
             // Show toast for each new notification
@@ -136,15 +139,15 @@ export const useNotifications = () => {
     unreadCountQuery.refetch();
   }, [notificationsQuery, unreadCountQuery]);
 
-  useEffect(() => {
-    const onVis = () => {
+  useEventListener(
+    'visibilitychange',
+    () => {
       if (document.visibilityState === 'visible') {
         refetch();
       }
-    };
-    document.addEventListener('visibilitychange', onVis);
-    return () => document.removeEventListener('visibilitychange', onVis);
-  }, [refetch]);
+    },
+    document
+  );
 
   return {
     notifications: (notificationsQuery.data ?? []) as NotificationItem[],

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { trpc, trpcClient } from '@/utils/trpc';
 
 interface InstallationRepos {
@@ -23,7 +23,10 @@ export function useGitHubInstallationRepositories() {
   const reposQueries = useQuery({
     enabled: installations.length > 0,
     staleTime: 120_000,
-    queryKey: ['github-installation-all-repos', installations.map((i) => i.id).sort()],
+    queryKey: [
+      'github-installation-all-repos',
+      installations.map((i) => i.id).sort(),
+    ],
     queryFn: async () => {
       if (installations.length === 0) {
         return {};
@@ -32,7 +35,9 @@ export function useGitHubInstallationRepositories() {
       // Fetch repos for all installations in parallel
       const results = await Promise.allSettled(
         installations.map((installation) =>
-          trpcClient.githubInstallation.getRepositories.query({ installationId: installation.id })
+          trpcClient.githubInstallation.getRepositories.query({
+            installationId: installation.id,
+          })
         )
       );
 
@@ -91,7 +96,9 @@ export function useGitHubInstallationRepositories() {
       return allRepositories;
     }
     const query = repoSearchQuery.toLowerCase();
-    return allRepositories.filter((repo: string) => repo.toLowerCase().includes(query));
+    return allRepositories.filter((repo: string) =>
+      repo.toLowerCase().includes(query)
+    );
   }, [allRepositories, repoSearchQuery]);
 
   // Filter installation repos based on search query
@@ -120,30 +127,38 @@ export function useGitHubInstallationRepositories() {
     );
   }, [installations, accountSearchQuery]);
 
-  // Set default repository when repos are loaded
-  useEffect(() => {
-    if (
-      allRepositories.length > 0 &&
-      !selectedRepository &&
-      !reposQueries.isLoading
-    ) {
-      setSelectedRepository(allRepositories[0]);
-    }
-  }, [allRepositories, selectedRepository, reposQueries.isLoading]);
+  // Set default repository when repos are loaded (render-time)
+  const hasSetDefaultRef = useRef(false);
+  if (
+    allRepositories.length > 0 &&
+    !selectedRepository &&
+    !reposQueries.isLoading &&
+    !hasSetDefaultRef.current
+  ) {
+    hasSetDefaultRef.current = true;
+    setSelectedRepository(allRepositories[0]);
+  }
+  // Reset the flag when selectedRepository is cleared so we can set default again
+  if (selectedRepository && hasSetDefaultRef.current === false) {
+    // no-op, already tracking
+  }
+  if (!selectedRepository && allRepositories.length === 0) {
+    hasSetDefaultRef.current = false;
+  }
 
-  // Reset selected repository when repositories change
+  // Reset selected repository when repositories change (render-time)
   const prevRepositoriesRef = useRef<string[]>([]);
-  useEffect(() => {
-    const reposChanged =
-      prevRepositoriesRef.current.length !== allRepositories.length ||
-      prevRepositoriesRef.current.some((repo, i) => repo !== allRepositories[i]);
+  const reposChanged =
+    prevRepositoriesRef.current.length !== allRepositories.length ||
+    prevRepositoriesRef.current.some((repo, i) => repo !== allRepositories[i]);
 
-    if (reposChanged && selectedRepository && !allRepositories.includes(selectedRepository)) {
-      setSelectedRepository('');
-    }
-
+  if (reposChanged) {
     prevRepositoriesRef.current = allRepositories;
-  }, [allRepositories, selectedRepository]);
+    if (selectedRepository && !allRepositories.includes(selectedRepository)) {
+      setSelectedRepository('');
+      hasSetDefaultRef.current = false;
+    }
+  }
 
   return {
     allRepositories,

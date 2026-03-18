@@ -25,6 +25,7 @@ import {
   TooltipPopup,
   TooltipTrigger,
 } from '@bounty/ui/components/tooltip';
+import { useEventListener } from '../hooks/use-event-listener';
 import { SidebarToggleIcon } from './icons/huge';
 import {
   SIDEBAR_COOKIE_NAME,
@@ -109,20 +110,15 @@ function SidebarProvider({
   }, [isMobile, setOpen]);
 
   // Adds a keyboard shortcut to toggle the sidebar.
-  React.useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
-        (event.metaKey || event.ctrlKey)
-      ) {
-        event.preventDefault();
-        toggleSidebar();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleSidebar]);
+  useEventListener('keydown', (event) => {
+    if (
+      event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
+      (event.metaKey || event.ctrlKey)
+    ) {
+      event.preventDefault();
+      toggleSidebar();
+    }
+  });
 
   // We add a state so that we can do data-state="expanded" or "collapsed".
   // This makes it easier to style the sidebar with Tailwind classes.
@@ -287,7 +283,7 @@ function SidebarTrigger({
       variant="ghost"
       {...props}
     >
-      <SidebarToggleIcon className="size-5"/>
+      <SidebarToggleIcon className="size-5" />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );

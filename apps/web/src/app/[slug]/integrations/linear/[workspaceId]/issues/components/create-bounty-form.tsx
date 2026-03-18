@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
+import { useIsMobile } from '@bounty/ui/hooks/use-mobile';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -65,7 +66,7 @@ function GitHubRepoSelector({
     repoName: string
   ) => void;
 }) {
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<{
     id: number;
@@ -76,28 +77,27 @@ function GitHubRepoSelector({
   const { installationRepos, installations, reposLoading } =
     useGitHubInstallationRepositories();
 
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 640);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  useEffect(() => {
-    if (!selectedRepository && installationRepos.length > 0 && !reposLoading) {
-      const defaultInstall =
-        installationRepos.find((i) => i.isDefault) || installationRepos[0];
-      if (defaultInstall.repositories.length > 0) {
-        const [owner, repoName] = defaultInstall.repositories[0].split('/');
-        onSelect(
-          defaultInstall.repositories[0],
-          defaultInstall.installationId,
-          owner,
-          repoName
-        );
-      }
+  // Auto-select default repo (render-time ref guard)
+  const didAutoSelectRef = useRef(false);
+  if (
+    !selectedRepository &&
+    installationRepos.length > 0 &&
+    !reposLoading &&
+    !didAutoSelectRef.current
+  ) {
+    didAutoSelectRef.current = true;
+    const defaultInstall =
+      installationRepos.find((i) => i.isDefault) || installationRepos[0];
+    if (defaultInstall.repositories.length > 0) {
+      const [owner, repoName] = defaultInstall.repositories[0].split('/');
+      onSelect(
+        defaultInstall.repositories[0],
+        defaultInstall.installationId,
+        owner,
+        repoName
+      );
     }
-  }, [installationRepos, reposLoading, selectedRepository, onSelect]);
+  }
 
   const selectedAccountRepos = selectedAccount
     ? installationRepos.find((r) => r.installationId === selectedAccount.id)

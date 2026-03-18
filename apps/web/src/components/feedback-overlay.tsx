@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
+import { useMountEffect } from '@bounty/ui';
 import { useFeedback } from '@/components/feedback-context';
 import { createPortal } from 'react-dom';
 import { getElementContext, freeze, unfreeze } from 'react-grab/primitives';
@@ -47,14 +48,19 @@ export function FeedbackOverlay() {
   const [isResolving, setIsResolving] = useState(false);
   const highlightRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!isSelecting) {
-      setHovered(null);
-      return;
-    }
+  // Refs to keep callbacks fresh without re-subscribing
+  const isSelectingRef = useRef(isSelecting);
+  isSelectingRef.current = isSelecting;
+  const isResolvingRef = useRef(isResolving);
+  isResolvingRef.current = isResolving;
+  const selectElementRef = useRef(selectElement);
+  selectElementRef.current = selectElement;
+  const cancelSelectionRef = useRef(cancelSelection);
+  cancelSelectionRef.current = cancelSelection;
 
+  useMountEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (isResolving) {
+      if (!isSelectingRef.current || isResolvingRef.current) {
         return;
       }
 
@@ -94,7 +100,7 @@ export function FeedbackOverlay() {
     };
 
     const handleClick = async (e: MouseEvent) => {
-      if (!isSelecting || isResolving) {
+      if (!isSelectingRef.current || isResolvingRef.current) {
         return;
       }
       e.preventDefault();
@@ -127,7 +133,7 @@ export function FeedbackOverlay() {
         const context = await getElementContext(target);
         unfreeze();
 
-        selectElement(context);
+        selectElementRef.current(context);
       } catch {
         unfreeze();
       } finally {
@@ -137,7 +143,7 @@ export function FeedbackOverlay() {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        cancelSelection();
+        cancelSelectionRef.current();
       }
     };
 
@@ -150,7 +156,16 @@ export function FeedbackOverlay() {
       window.removeEventListener('click', handleClick, true);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isSelecting, isResolving, selectElement, cancelSelection]);
+  });
+
+  // Clear hovered state when selection mode is turned off
+  const prevIsSelectingRef = useRef(isSelecting);
+  if (prevIsSelectingRef.current !== isSelecting) {
+    prevIsSelectingRef.current = isSelecting;
+    if (!isSelecting) {
+      setHovered(null);
+    }
+  }
 
   if (!isSelecting) {
     return null;

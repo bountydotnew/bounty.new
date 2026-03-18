@@ -13,7 +13,8 @@ import {
 } from '@bounty/ui/components/card';
 import { Spinner } from '@bounty/ui/components/spinner';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useReducer } from 'react';
+import { useMemo, useReducer, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 type DeviceStatus = 'pending' | 'approved' | 'denied';
@@ -111,32 +112,27 @@ export const DeviceApprovalPanel = ({ userCode }: DeviceApprovalPanelProps) => {
   const [state, dispatch] = useReducer(deviceReducer, initialState);
   const { session, isPending: sessionLoading } = useSession();
 
-  useEffect(() => {
-    if (!(sessionLoading || session?.user) && sanitizedCode) {
-      router.replace(
-        `/login?redirect=/device/approve?user_code=${sanitizedCode}`
-      );
-    }
-  }, [router, sanitizedCode, session, sessionLoading]);
+  // Auth redirect (render-time)
+  const hasRedirectedRef = useRef(false);
+  if (
+    !(sessionLoading || session?.user) &&
+    sanitizedCode &&
+    !hasRedirectedRef.current
+  ) {
+    hasRedirectedRef.current = true;
+    router.replace(
+      `/login?redirect=/device/approve?user_code=${sanitizedCode}`
+    );
+  }
 
-  useEffect(() => {
-    if (!sanitizedCode) {
-      dispatch({ type: 'RESET' });
-      return;
-    }
-
-    let active = true;
-
-    const fetchStatus = async () => {
-      dispatch({ type: 'START_LOADING' });
-
+  // Fetch device status via useQuery
+  const deviceQuery = useQuery({
+    queryKey: ['device-status', sanitizedCode],
+    enabled: !!sanitizedCode,
+    queryFn: async () => {
       const response = await authClient.device({
         query: { user_code: sanitizedCode },
       });
-
-      if (!active) {
-        return;
-      }
 
       if (!response.data) {
         throw new Error(
@@ -144,38 +140,36 @@ export const DeviceApprovalPanel = ({ userCode }: DeviceApprovalPanelProps) => {
         );
       }
 
-      dispatch({
-        type: 'SET_STATUS',
-        status: response.data.status as DeviceStatus,
-      });
-    };
+      return response.data.status as DeviceStatus;
+    },
+  });
 
-    const loadDeviceStatus = async () => {
-      try {
-        await fetchStatus();
-        if (active) {
-          dispatch({ type: 'STOP_LOADING' });
-        }
-      } catch (fetchError) {
-        if (active) {
-          const message = getErrorMessage(
-            fetchError,
-            'Unable to load device request.'
-          );
-          dispatch({ type: 'SET_ERROR', error: message });
-        }
-        if (active) {
-          dispatch({ type: 'STOP_LOADING' });
-        }
-      }
-    };
+  // Sync query results into reducer state (render-time)
+  const prevQueryStatusRef = useRef<string | null>(null);
+  const queryStatusKey = deviceQuery.isLoading
+    ? 'loading'
+    : deviceQuery.isError
+      ? `error:${deviceQuery.error?.message}`
+      : `status:${deviceQuery.data}`;
 
-    loadDeviceStatus();
-
-    return () => {
-      active = false;
-    };
-  }, [sanitizedCode]);
+  if (prevQueryStatusRef.current !== queryStatusKey) {
+    prevQueryStatusRef.current = queryStatusKey;
+    if (!sanitizedCode) {
+      dispatch({ type: 'RESET' });
+    } else if (deviceQuery.isLoading) {
+      dispatch({ type: 'START_LOADING' });
+    } else if (deviceQuery.isError) {
+      const message = getErrorMessage(
+        deviceQuery.error,
+        'Unable to load device request.'
+      );
+      dispatch({ type: 'SET_ERROR', error: message });
+      dispatch({ type: 'STOP_LOADING' });
+    } else if (deviceQuery.data) {
+      dispatch({ type: 'SET_STATUS', status: deviceQuery.data });
+      dispatch({ type: 'STOP_LOADING' });
+    }
+  }
 
   const executeDeviceAction = async (type: 'approve' | 'deny') => {
     const action =

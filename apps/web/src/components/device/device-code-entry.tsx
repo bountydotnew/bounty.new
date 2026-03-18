@@ -12,7 +12,7 @@ import {
 import { Input } from '@bounty/ui/components/input';
 import { Spinner } from '@bounty/ui/components/spinner';
 import { useRouter } from 'next/navigation';
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 interface DeviceCodeEntryProps {
@@ -44,9 +44,12 @@ export function DeviceCodeEntry({ initialCode = '' }: DeviceCodeEntryProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const inputId = useId();
 
-  useEffect(() => {
+  // Sync inputValue from normalizedInitial (render-time)
+  const prevNormalizedRef = useRef(normalizedInitial);
+  if (prevNormalizedRef.current !== normalizedInitial) {
+    prevNormalizedRef.current = normalizedInitial;
     setInputValue(formatForDisplay(normalizedInitial));
-  }, [normalizedInitial]);
+  }
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const nextValue = event.target.value;

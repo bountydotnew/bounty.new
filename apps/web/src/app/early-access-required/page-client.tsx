@@ -62,7 +62,10 @@ export default function EarlyAccessRequiredPage() {
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'Invalid or expired invite code';
-      setServerError(message);
+      const isRateLimited =
+        message.toLowerCase().includes('slow down') ||
+        message.toLowerCase().includes('too many');
+      setServerError(isRateLimited ? 'Whoa, slow down there buddy' : message);
       setRedeeming(false);
     }
   };

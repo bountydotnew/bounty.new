@@ -1,6 +1,7 @@
 'use client';
 
-import { use, useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useState } from 'react';
+import { useMountEffect } from '@bounty/ui';
 import { useRouter } from 'next/navigation';
 import { formatLargeNumber } from '@bounty/ui/lib/utils';
 import {
@@ -37,7 +38,7 @@ export function BountyDetailHeader() {
 
   const [hasPreviousPage, setHasPreviousPage] = useState(false);
 
-  useEffect(() => {
+  useMountEffect(() => {
     // Check if user navigated here from within the same app
     const referrer = document.referrer;
     if (referrer) {
@@ -48,7 +49,7 @@ export function BountyDetailHeader() {
         setHasPreviousPage(false);
       }
     }
-  }, []);
+  });
 
   const handleBack = useCallback(() => {
     if (hasPreviousPage) {

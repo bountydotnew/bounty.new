@@ -7,7 +7,8 @@ import { cn } from '@bounty/ui/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, m } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { useCountdown, useMountEffect } from '@bounty/ui';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import Bounty from '../icons/bounty';
@@ -249,10 +250,10 @@ export function EmailVerification({
   const [uiState, setUiState] = useState({
     isLoading: false,
     isResending: false,
-    resendCooldown: 0,
     focusedField: null as string | null,
     showResendSuggestion: false,
   });
+  const [resendCooldown, startCooldown] = useCountdown(0);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const form = useForm<VerificationFormData>({
@@ -261,27 +262,8 @@ export function EmailVerification({
   });
   const { setValue, setError } = form;
 
-  const {
-    isLoading,
-    isResending,
-    resendCooldown,
-    focusedField,
-    showResendSuggestion,
-  } = uiState;
-
-  useEffect(() => {
-    if (resendCooldown > 0) {
-      const timer = setTimeout(
-        () =>
-          setUiState((prev) => ({
-            ...prev,
-            resendCooldown: prev.resendCooldown - 1,
-          })),
-        1000
-      );
-      return () => clearTimeout(timer);
-    }
-  }, [resendCooldown]);
+  const { isLoading, isResending, focusedField, showResendSuggestion } =
+    uiState;
 
   const handleCodeInput = (value: string, index: number) => {
     // Only allow digits
@@ -382,7 +364,7 @@ export function EmailVerification({
         email,
         type: 'sign-in',
       });
-      setUiState((prev) => ({ ...prev, resendCooldown: 60 }));
+      startCooldown(60);
       setUiState((prev) => ({ ...prev, isResending: false }));
     } catch {
       // no-op; user can try again
@@ -424,7 +406,7 @@ export function EmailVerification({
     [email, onSuccess, setError]
   );
 
-  useEffect(() => {
+  useMountEffect(() => {
     const clean = (initialCode || '').replace(/\D/g, '').slice(0, 6);
     if (!autoSubmitRef.current && clean.length === 6) {
       autoSubmitRef.current = true;
@@ -433,7 +415,7 @@ export function EmailVerification({
         /* ignore auto-verify failure; user can enter code manually */
       });
     }
-  }, [initialCode, handleAutoVerify, setValue]);
+  });
 
   const code = form.watch('code');
 

@@ -23,7 +23,7 @@ import { trpc } from '@/utils/trpc';
 import { useIntegrations } from '@/hooks/use-integrations';
 import { useOrgPath } from '@/hooks/use-org-path';
 import { toast } from 'sonner';
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { cn } from '@bounty/ui/lib/utils';
 import type { LinearIssue } from '@bounty/api/driver/linear-client';
 
@@ -69,12 +69,16 @@ export default function LinearWorkspacePage() {
 
   const needsSync = accountData?.hasOAuth && !hasLinear;
 
-  // Redirect to correct workspace URL if workspaceId doesn't match
-  useEffect(() => {
-    if (linearWorkspace && linearWorkspace.id !== workspaceIdFromUrl) {
-      router.replace(orgPath(`/integrations/linear/${linearWorkspace.id}`));
-    }
-  }, [linearWorkspace, workspaceIdFromUrl, router, orgPath]);
+  // Redirect to correct workspace URL if workspaceId doesn't match (render-time ref guard)
+  const didRedirectRef = useRef(false);
+  if (
+    linearWorkspace &&
+    linearWorkspace.id !== workspaceIdFromUrl &&
+    !didRedirectRef.current
+  ) {
+    didRedirectRef.current = true;
+    router.replace(orgPath(`/integrations/linear/${linearWorkspace.id}`));
+  }
 
   const handleLinkAccount = async () => {
     setIsConnecting(true);

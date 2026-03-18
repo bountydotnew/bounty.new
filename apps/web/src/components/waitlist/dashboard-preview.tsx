@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useMountEffect } from '@bounty/ui';
 import Image from 'next/image';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { trpc, trpcClient } from '@/utils/trpc';
@@ -16,7 +17,6 @@ interface DashboardPreviewProps {
 }
 
 export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
-  const [entry, setEntry] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [hasAutoSaved, setHasAutoSaved] = useState(false);
   const queryClient = useQueryClient();
@@ -25,6 +25,9 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
   const { data, isLoading } = useQuery({
     ...trpc.earlyAccess.getWaitlistEntry.queryOptions({ entryId }),
   });
+
+  // Derive entry directly from query data — no need for separate state
+  const entry = data?.success ? data.data : null;
 
   const updateMutation = useMutation({
     mutationFn: async (input: {
@@ -47,32 +50,14 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
     },
   });
 
-  useEffect(() => {
-    if (data?.success && data.data) {
-      setEntry(data.data);
-    }
-  }, [data]);
-
   // Auto-save localStorage draft on mount if entry has no bounty
-  useEffect(() => {
-    if (
-      hasAutoSaved ||
-      isLoading ||
-      !entry ||
-      entry.bountyTitle ||
-      entry.bountyDescription ||
-      entry.bountyAmount
-    ) {
-      return;
-    }
-
+  useMountEffect(() => {
     const autoSaveDraft = async () => {
       try {
         const stored = localStorage.getItem(BOUNTY_DRAFT_STORAGE_KEY);
         if (stored) {
           const draft = JSON.parse(stored);
           if (draft.title || draft.description || draft.amount) {
-            // Auto-save draft to database
             await updateMutation.mutateAsync({
               entryId,
               bountyTitle: draft.title,
@@ -80,8 +65,6 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
               bountyAmount: draft.amount,
               bountyDeadline: draft.deadline,
             });
-
-            // Clear localStorage
             localStorage.removeItem(BOUNTY_DRAFT_STORAGE_KEY);
             setHasAutoSaved(true);
           }
@@ -90,10 +73,8 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
         // Ignore parse errors
       }
     };
-
     autoSaveDraft();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entry, isLoading, entryId, hasAutoSaved, updateMutation.mutateAsync]);
+  });
 
   if (isLoading || !entry) {
     return (
@@ -123,7 +104,8 @@ export function DashboardPreview({ entryId, email }: DashboardPreviewProps) {
         </h2>
         <p className="text-text-tertiary text-base">
           Your bounty draft is saved. We'll notify you at{' '}
-          <span className="text-foreground">{email}</span> when bounty.new launches.
+          <span className="text-foreground">{email}</span> when bounty.new
+          launches.
         </p>
       </div>
 

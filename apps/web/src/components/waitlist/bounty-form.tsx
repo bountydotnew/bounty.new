@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import { useMountEffect } from '@bounty/ui';
 import { useSession } from '@/context/session-context';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -94,27 +95,34 @@ function useBountyFormState({
   const [titlePopoverOpen, setTitlePopoverOpen] = useState(false);
   const [pricePopoverOpen, setPricePopoverOpen] = useState(false);
 
-  useEffect(() => {
-    if (onSubmit) {
-      return;
-    }
+  // Persist form to localStorage via a handler instead of an effect
+  const persistDraft = useCallback(
+    (fields: FormFields) => {
+      if (onSubmit) return;
+      const draft: BountyDraft = {
+        title: fields.title || undefined,
+        description: fields.description || undefined,
+        amount: fields.price || undefined,
+        deadline: fields.deadline || undefined,
+      };
+      localStorage.setItem(BOUNTY_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    },
+    [onSubmit]
+  );
 
-    const draft: BountyDraft = {
-      title: formFields.title || undefined,
-      description: formFields.description || undefined,
-      amount: formFields.price || undefined,
-      deadline: formFields.deadline || undefined,
-    };
-    localStorage.setItem(BOUNTY_DRAFT_STORAGE_KEY, JSON.stringify(draft));
-  }, [
-    formFields.title,
-    formFields.description,
-    formFields.price,
-    formFields.deadline,
-    onSubmit,
-  ]);
+  // Wrap setFormFields to also persist
+  const setFormFieldsWithPersist = useCallback(
+    (updater: React.SetStateAction<FormFields>) => {
+      setFormFields((prev) => {
+        const next = typeof updater === 'function' ? updater(prev) : updater;
+        persistDraft(next);
+        return next;
+      });
+    },
+    [persistDraft, setFormFields]
+  );
 
-  useEffect(() => {
+  useMountEffect(() => {
     if (descriptionRef.current) {
       descriptionRef.current.style.height = 'auto';
       const newHeight = Math.min(
@@ -123,7 +131,7 @@ function useBountyFormState({
       );
       descriptionRef.current.style.height = `${newHeight}px`;
     }
-  }, []);
+  });
 
   const { data: myEntry } = useQuery({
     ...trpc.earlyAccess.getMyWaitlistEntry.queryOptions(),
@@ -243,7 +251,7 @@ function useBountyFormState({
 
   return {
     formFields,
-    setFormFields,
+    setFormFields: setFormFieldsWithPersist,
     isSubmitting,
     titleRef,
     priceRef,

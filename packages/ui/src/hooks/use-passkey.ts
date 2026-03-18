@@ -1,5 +1,5 @@
 import { authClient } from '@bounty/auth/client';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 
 interface Passkey {
   id: string;

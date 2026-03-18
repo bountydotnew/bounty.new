@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState, useRef } from 'react';
+import { useMountEffect } from '@bounty/ui';
 import { useQueryState, parseAsString } from 'nuqs';
 import { GithubIcon, TwitterIcon, SlackIcon } from '@bounty/ui';
 import { LinearIcon } from '@bounty/ui/components/icons/huge/linear';
@@ -386,17 +387,14 @@ export function IntegrationsSettings() {
 
   const [filter, setFilter] = useState<'all' | 'installed'>('all');
 
-  // Track if we've already handled this setup action to prevent infinite loops
-  const handledSetupRef = useRef<string>(`${setupAction}-${installationId}`);
-  useEffect(() => {
-    const key = `${setupAction}-${installationId}`;
-    if (setupAction && installationId && key !== handledSetupRef.current) {
-      handledSetupRef.current = key;
+  // Handle setup action from URL params on mount
+  useMountEffect(() => {
+    if (setupAction && installationId) {
       invalidateAll();
       setSetupAction(null);
       setInstallationId(null);
     }
-  }, [setupAction, installationId, invalidateAll]);
+  });
 
   // NOTE: Auto-sync of Linear workspace removed from main integrations page.
   // The sync is handled on the Linear-specific page (/integrations/linear)

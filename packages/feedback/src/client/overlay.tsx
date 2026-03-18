@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
+import { useMountEffect } from '@bounty/ui';
 import { createPortal } from 'react-dom';
 import { getElementContext, freeze, unfreeze } from 'react-grab/primitives';
 import { getFiberFromHostInstance, getDisplayName, traverseFiber } from 'bippy';
@@ -41,14 +42,19 @@ export function FeedbackOverlay() {
   const highlightRef = useRef<HTMLDivElement>(null);
   const cancelledRef = useRef(false);
 
-  useEffect(() => {
-    if (!isSelecting) {
-      setHovered(null);
-      return;
-    }
+  // Keep reactive values in refs so the mount-only listeners always read fresh values
+  const isResolvingRef = useRef(isResolving);
+  isResolvingRef.current = isResolving;
+  const isSelectingRef = useRef(isSelecting);
+  isSelectingRef.current = isSelecting;
+  const selectElementRef = useRef(selectElement);
+  selectElementRef.current = selectElement;
+  const cancelSelectionRef = useRef(cancelSelection);
+  cancelSelectionRef.current = cancelSelection;
 
+  useMountEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (isResolving) {
+      if (isResolvingRef.current) {
         return;
       }
 
@@ -85,7 +91,7 @@ export function FeedbackOverlay() {
     };
 
     const handleClick = async (e: MouseEvent) => {
-      if (!isSelecting || isResolving) {
+      if (!isSelectingRef.current || isResolvingRef.current) {
         return;
       }
       e.preventDefault();
@@ -117,12 +123,12 @@ export function FeedbackOverlay() {
           return;
         }
         unfreeze();
-        selectElement(context);
+        selectElementRef.current(context);
       } catch (err) {
         unfreeze();
         if (!cancelledRef.current) {
           console.error('[feedback] Failed to resolve element context:', err);
-          cancelSelection();
+          cancelSelectionRef.current();
         }
       } finally {
         setIsResolving(false);
@@ -131,11 +137,11 @@ export function FeedbackOverlay() {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (isResolving) {
+        if (isResolvingRef.current) {
           cancelledRef.current = true;
           unfreeze();
         }
-        cancelSelection();
+        cancelSelectionRef.current();
       }
     };
 
@@ -147,7 +153,7 @@ export function FeedbackOverlay() {
       window.removeEventListener('click', handleClick, true);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isSelecting, isResolving, selectElement, cancelSelection]);
+  });
 
   if (!isSelecting) {
     return null;

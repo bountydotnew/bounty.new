@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { trpc } from '@/utils/trpc';
 import type { BountyData } from '@/components/bounty/bounty-detail';
@@ -33,11 +33,18 @@ export function useBountyDetail({
     enabled,
     staleTime: Number.POSITIVE_INFINITY,
     // Use server-provided initialData to avoid duplicate fetch
-    initialData: initialData as typeof queryOptions extends { queryFn: () => Promise<infer T> } ? T : never,
+    initialData: initialData as typeof queryOptions extends {
+      queryFn: () => Promise<infer T>;
+    }
+      ? T
+      : never,
     // Treat 404 errors as "not found" rather than a hard error
     retry: (failureCount, error) => {
       // Don't retry on 404 (bounty not found or deleted)
-      if (error?.message?.includes('not found') || error?.message?.includes('Bounty not found')) {
+      if (
+        error?.message?.includes('not found') ||
+        error?.message?.includes('Bounty not found')
+      ) {
         return false;
       }
       // Retry other errors up to 3 times
@@ -45,18 +52,18 @@ export function useBountyDetail({
     },
   });
 
-  // Prefetch related data in parallel to flatten waterfall
-  useEffect(() => {
-    if (id && enabled) {
-      // Prefetch votes and submissions in parallel
-      queryClient.prefetchQuery(
-        trpc.bounties.getBountyVotes.queryOptions({ bountyId: id })
-      );
-      queryClient.prefetchQuery(
-        trpc.bounties.getBountySubmissions.queryOptions({ bountyId: id })
-      );
-    }
-  }, [id, enabled, queryClient]);
+  // Prefetch related data in parallel to flatten waterfall (idempotent, de-duped by React Query)
+  const lastPrefetchKeyRef = useRef<string | null>(null);
+  const prefetchKey = `${id}:${enabled}`;
+  if (id && enabled && lastPrefetchKeyRef.current !== prefetchKey) {
+    lastPrefetchKeyRef.current = prefetchKey;
+    queryClient.prefetchQuery(
+      trpc.bounties.getBountyVotes.queryOptions({ bountyId: id })
+    );
+    queryClient.prefetchQuery(
+      trpc.bounties.getBountySubmissions.queryOptions({ bountyId: id })
+    );
+  }
 
   const isError = query.isError;
   const error = query.error instanceof Error ? query.error : null;
@@ -64,9 +71,9 @@ export function useBountyDetail({
   // Check if the error is specifically a "not found" error
   const isNotFound = Boolean(
     isError &&
-    (error?.message?.includes('not found') ||
-     error?.message?.includes('Bounty not found') ||
-     error?.message?.includes('does not exist'))
+      (error?.message?.includes('not found') ||
+        error?.message?.includes('Bounty not found') ||
+        error?.message?.includes('does not exist'))
   );
 
   return {

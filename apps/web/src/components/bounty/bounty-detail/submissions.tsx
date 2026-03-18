@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useRef, useEffect } from 'react';
+import { use, useState, useRef } from 'react';
 import Link from '@bounty/ui/components/link';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -237,29 +237,10 @@ function SubmitWorkForm({
         trpcClient.repository.listPullRequests.query(params),
     });
 
-  // Sync selected PR to form value
-  useEffect(() => {
-    if (selectedPr) {
-      setValue('pullRequestUrl', selectedPr.html_url, {
-        shouldValidate: false,
-      });
-    }
-  }, [selectedPr, setValue]);
-
   const handleFormSubmit = formHandleSubmit((data: SubmissionForm) => {
     onSubmit(data.pullRequestUrl, data.notes?.trim() || undefined);
     setSelectedPr(null);
     reset();
-  });
-
-  // Auto-resize textarea
-  useEffect(() => {
-    if (textareaRef.current) {
-      const textarea = textareaRef.current;
-      textarea.style.height = 'auto';
-      const newHeight = Math.min(Math.max(textarea.scrollHeight, 60), 300);
-      textarea.style.height = `${newHeight}px`;
-    }
   });
 
   const disabled = isSubmitting || isDisabled;

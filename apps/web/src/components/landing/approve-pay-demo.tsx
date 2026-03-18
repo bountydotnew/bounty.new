@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { useRef, useState, useEffect, useReducer } from 'react';
+import { useRef, useState, useReducer } from 'react';
+import { useMountEffect, useAnimationTimeline } from '@bounty/ui';
 import { ChevronDown } from 'lucide-react';
 import { devNames } from './demo-data';
 import { MockBrowser, useMockBrowser } from './mockup';
@@ -191,38 +192,34 @@ function PRCommentsPage({
     () => devNames[Math.floor(Math.random() * devNames.length)]
   );
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      setTimeout(() => {
-        scrollRef.current?.scrollTo({
-          top: scrollRef.current.scrollHeight,
-          behavior: 'smooth',
-        });
-      }, 300);
-    }
-  }, [
-    animState.devCommented,
-    animState.maintainerReviewed,
-    animState.maintainerApproved,
-    animState.botReplied,
-  ]);
+  // Auto-scroll whenever animation state changes — driven by a ref so no
+  // dependency array is needed; instead we scroll inside an animation-frame
+  // callback triggered by the reducer.
+  const prevAnimState = useRef(animState);
+  if (prevAnimState.current !== animState) {
+    prevAnimState.current = animState;
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({
+        top: scrollRef.current?.scrollHeight ?? 0,
+        behavior: 'smooth',
+      });
+    }, 300);
+  }
 
-  useEffect(() => {
-    const timeline: Array<{ delay: number; action: AnimAction }> = [
+  useAnimationTimeline<AnimAction>(
+    [
       { delay: 400, action: { type: 'DEV_COMMENTED' } },
       { delay: 1600, action: { type: 'MAINTAINER_REVIEWED' } },
       { delay: 3600, action: { type: 'MAINTAINER_APPROVED' } },
       { delay: 5100, action: { type: 'BOT_REPLIED' } },
-    ];
-    const timers = timeline.map(({ delay, action }) =>
-      setTimeout(() => dispatch(action), delay)
-    );
+    ],
+    dispatch
+  );
+
+  useMountEffect(() => {
     const notifyTimer = setTimeout(() => onShowNotifications(), 5900);
-    return () => {
-      timers.forEach(clearTimeout);
-      clearTimeout(notifyTimer);
-    };
-  }, [onShowNotifications]);
+    return () => clearTimeout(notifyTimer);
+  });
 
   const { devCommented, maintainerReviewed, maintainerApproved, botReplied } =
     animState;

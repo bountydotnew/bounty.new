@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useMountEffect } from '@bounty/ui';
 import { cn } from '@bounty/ui/lib/utils';
 
 interface Section {
@@ -15,7 +16,7 @@ interface TableOfContentsProps {
 export function TableOfContents({ sections }: TableOfContentsProps) {
   const [activeId, setActiveId] = useState<string>('');
 
-  useEffect(() => {
+  useMountEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         // Find the first section that is intersecting
@@ -45,7 +46,7 @@ export function TableOfContents({ sections }: TableOfContentsProps) {
     }
 
     return () => observer.disconnect();
-  }, [sections]);
+  });
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();

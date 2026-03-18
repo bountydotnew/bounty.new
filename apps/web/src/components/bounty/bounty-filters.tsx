@@ -16,7 +16,8 @@ import {
 } from '@bounty/ui/components/select';
 import { useQuery } from '@tanstack/react-query';
 import { Search, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
+import { useCallback, useMemo, useReducer, useRef } from 'react';
+import { useDebouncedValue } from '@bounty/ui';
 import { parseAsString, useQueryState } from 'nuqs';
 import { trpc } from '@/utils/trpc';
 import { Button } from '@bounty/ui/components/button';
@@ -44,14 +45,12 @@ export function BountyFilters() {
   type FilterLocalState = {
     creatorSearchQuery: string;
     creatorDropdownOpen: boolean;
-    debouncedCreatorQuery: string;
     localSearchQuery: string;
   };
 
   type FilterAction =
     | { type: 'SET_CREATOR_SEARCH'; value: string }
     | { type: 'SET_CREATOR_DROPDOWN'; value: boolean }
-    | { type: 'SET_DEBOUNCED_CREATOR'; value: string }
     | { type: 'SET_LOCAL_SEARCH'; value: string }
     | { type: 'SELECT_CREATOR' }
     | { type: 'CLEAR_CREATOR' }
@@ -64,8 +63,6 @@ export function BountyFilters() {
           return { ...state, creatorSearchQuery: action.value };
         case 'SET_CREATOR_DROPDOWN':
           return { ...state, creatorDropdownOpen: action.value };
-        case 'SET_DEBOUNCED_CREATOR':
-          return { ...state, debouncedCreatorQuery: action.value };
         case 'SET_LOCAL_SEARCH':
           return { ...state, localSearchQuery: action.value };
         case 'SELECT_CREATOR':
@@ -85,17 +82,12 @@ export function BountyFilters() {
     {
       creatorSearchQuery: '',
       creatorDropdownOpen: false,
-      debouncedCreatorQuery: '',
       localSearchQuery: searchQuery || '',
     }
   );
 
-  const {
-    creatorSearchQuery,
-    creatorDropdownOpen,
-    debouncedCreatorQuery,
-    localSearchQuery,
-  } = filterState;
+  const { creatorSearchQuery, creatorDropdownOpen, localSearchQuery } =
+    filterState;
   const setCreatorSearchQuery = useCallback(
     (v: string) => dispatchFilter({ type: 'SET_CREATOR_SEARCH', value: v }),
     []
@@ -111,20 +103,17 @@ export function BountyFilters() {
   const creatorInputRef = useRef<HTMLInputElement>(null);
 
   // Debounced search for creators
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      dispatchFilter({
-        type: 'SET_DEBOUNCED_CREATOR',
-        value: creatorSearchQuery,
-      });
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [creatorSearchQuery]);
+  const debouncedCreatorSearchQuery = useDebouncedValue(
+    creatorSearchQuery,
+    300
+  );
 
   // Fetch creators - only search if query is at least 1 character
   const creatorsQuery = useQuery({
-    ...trpc.user.searchCreators.queryOptions({ query: debouncedCreatorQuery }),
-    enabled: debouncedCreatorQuery.length >= 1,
+    ...trpc.user.searchCreators.queryOptions({
+      query: debouncedCreatorSearchQuery,
+    }),
+    enabled: debouncedCreatorSearchQuery.length >= 1,
   });
 
   const creators = useMemo(
@@ -155,23 +144,22 @@ export function BountyFilters() {
     dispatchFilter({ type: 'CLEAR_CREATOR' });
   }, [setCreatorId]);
 
-  // Sync local search with URL search query when it changes externally
+  // Sync local search with URL search query when it changes externally (render-time ref comparison)
   const prevSearchQueryRef = useRef(searchQuery);
-  useEffect(() => {
-    if (searchQuery !== prevSearchQueryRef.current) {
-      prevSearchQueryRef.current = searchQuery;
-      dispatchFilter({ type: 'SYNC_SEARCH', value: searchQuery || '' });
-    }
-  }, [searchQuery]);
+  if (searchQuery !== prevSearchQueryRef.current) {
+    prevSearchQueryRef.current = searchQuery;
+    dispatchFilter({ type: 'SYNC_SEARCH', value: searchQuery || '' });
+  }
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (localSearchQuery !== searchQuery) {
-        setSearchQuery(localSearchQuery || null);
-      }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [localSearchQuery, searchQuery, setSearchQuery]);
+  // Debounce local search to URL
+  const debouncedLocalSearch = useDebouncedValue(localSearchQuery, 300);
+  const prevDebouncedRef = useRef(debouncedLocalSearch);
+  if (debouncedLocalSearch !== prevDebouncedRef.current) {
+    prevDebouncedRef.current = debouncedLocalSearch;
+    if (debouncedLocalSearch !== searchQuery) {
+      setSearchQuery(debouncedLocalSearch || null);
+    }
+  }
 
   const handleSortChange = useCallback(
     (value: string) => {

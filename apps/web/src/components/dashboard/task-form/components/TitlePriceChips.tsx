@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Controller, type Control } from 'react-hook-form';
 import type { CreateBountyForm } from '@bounty/ui/lib/forms';
 import { Popover as PopoverPrimitive } from '@base-ui/react/popover';
@@ -29,19 +29,17 @@ export function TitlePriceChips({ control }: TitlePriceChipsProps) {
   const titleChipRef = useRef<HTMLButtonElement>(null);
   const priceChipRef = useRef<HTMLButtonElement>(null);
 
-  // Focus the correct input when activeField changes
-  useEffect(() => {
-    if (activeField === 'title') {
-      // Small delay to let the popover render
+  const focusField = (field: ActiveField) => {
+    if (field === 'title') {
       requestAnimationFrame(() => {
         titleInputRef.current?.focus();
       });
-    } else if (activeField === 'price') {
+    } else if (field === 'price') {
       requestAnimationFrame(() => {
         priceInputRef.current?.focus();
       });
     }
-  }, [activeField]);
+  };
 
   // Anchor to whichever chip is active
   const anchorRef = activeField === 'price' ? priceChipRef : titleChipRef;
@@ -52,7 +50,11 @@ export function TitlePriceChips({ control }: TitlePriceChipsProps) {
       <button
         ref={titleChipRef}
         type="button"
-        onClick={() => setActiveField(activeField === 'title' ? null : 'title')}
+        onClick={() => {
+          const next = activeField === 'title' ? null : 'title';
+          setActiveField(next);
+          focusField(next);
+        }}
         className={cn(
           'rounded-full flex justify-center items-center px-[6px] py-[3px] shrink-0 gap-2 bg-surface-hover border border-solid transition-colors cursor-pointer',
           activeField === 'title'
@@ -83,7 +85,11 @@ export function TitlePriceChips({ control }: TitlePriceChipsProps) {
       <button
         ref={priceChipRef}
         type="button"
-        onClick={() => setActiveField(activeField === 'price' ? null : 'price')}
+        onClick={() => {
+          const next = activeField === 'price' ? null : 'price';
+          setActiveField(next);
+          focusField(next);
+        }}
         className={cn(
           'rounded-full flex justify-center items-center px-[6px] py-[3px] shrink-0 gap-2 bg-surface-hover border border-solid transition-colors cursor-pointer',
           activeField === 'price'
@@ -165,6 +171,7 @@ export function TitlePriceChips({ control }: TitlePriceChipsProps) {
                           if (e.key === 'Tab' && !e.shiftKey) {
                             e.preventDefault();
                             setActiveField('price');
+                            focusField('price');
                           }
                         }}
                         placeholder="Enter a title"
@@ -208,6 +215,7 @@ export function TitlePriceChips({ control }: TitlePriceChipsProps) {
                             if (e.key === 'Tab' && e.shiftKey) {
                               e.preventDefault();
                               setActiveField('title');
+                              focusField('title');
                             }
                           }}
                           placeholder="0.00"

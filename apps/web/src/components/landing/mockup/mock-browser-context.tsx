@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
 import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useRef,
   useState,
   type ReactNode,
 } from 'react';
+import { useMountEffect } from '@bounty/ui';
 
 interface MockBrowserState {
   currentUrl: string;
@@ -36,7 +36,11 @@ interface MockBrowserProviderProps {
   compact?: boolean;
 }
 
-export function MockBrowserProvider({ initialUrl, children, compact = false }: MockBrowserProviderProps) {
+export function MockBrowserProvider({
+  initialUrl,
+  children,
+  compact = false,
+}: MockBrowserProviderProps) {
   const [state, setState] = useState<MockBrowserState>({
     currentUrl: initialUrl,
     history: [initialUrl],
@@ -89,13 +93,22 @@ export function MockBrowserProvider({ initialUrl, children, compact = false }: M
                   clearInterval(loadingIntervalRef.current);
                 }
               }
-              setState((prev) => ({ ...prev, loadingProgress: Math.min(progress, 90) }));
+              setState((prev) => ({
+                ...prev,
+                loadingProgress: Math.min(progress, 90),
+              }));
             }, 100);
           }
-          setState((prev) => ({ ...prev, loadingProgress: Math.min(progress, 70) }));
+          setState((prev) => ({
+            ...prev,
+            loadingProgress: Math.min(progress, 70),
+          }));
         }, 80);
       }
-      setState((prev) => ({ ...prev, loadingProgress: Math.min(progress, 30) }));
+      setState((prev) => ({
+        ...prev,
+        loadingProgress: Math.min(progress, 30),
+      }));
     }, 50);
   }, []);
 
@@ -113,12 +126,16 @@ export function MockBrowserProvider({ initialUrl, children, compact = false }: M
 
     // Hide after complete
     loadingTimeoutRef.current = setTimeout(() => {
-      setState((prev) => ({ ...prev, isNavigating: false, loadingProgress: 0 }));
+      setState((prev) => ({
+        ...prev,
+        isNavigating: false,
+        loadingProgress: 0,
+      }));
     }, 200);
   }, []);
 
   // Cleanup on unmount
-  useEffect(() => {
+  useMountEffect(() => {
     return () => {
       if (loadingIntervalRef.current) {
         clearInterval(loadingIntervalRef.current);
@@ -127,25 +144,31 @@ export function MockBrowserProvider({ initialUrl, children, compact = false }: M
         clearTimeout(loadingTimeoutRef.current);
       }
     };
-  }, []);
+  });
 
-  const navigate = useCallback((url: string) => {
-    startLoading();
+  const navigate = useCallback(
+    (url: string) => {
+      startLoading();
 
-    setState((prev) => {
-      const newHistory = [...prev.history.slice(0, prev.historyIndex + 1), url];
-      return {
-        ...prev,
-        currentUrl: url,
-        history: newHistory,
-        historyIndex: newHistory.length - 1,
-      };
-    });
+      setState((prev) => {
+        const newHistory = [
+          ...prev.history.slice(0, prev.historyIndex + 1),
+          url,
+        ];
+        return {
+          ...prev,
+          currentUrl: url,
+          history: newHistory,
+          historyIndex: newHistory.length - 1,
+        };
+      });
 
-    // Simulate network delay then finish loading
-    const delay = 400 + Math.random() * 300;
-    loadingTimeoutRef.current = setTimeout(finishLoading, delay);
-  }, [startLoading, finishLoading]);
+      // Simulate network delay then finish loading
+      const delay = 400 + Math.random() * 300;
+      loadingTimeoutRef.current = setTimeout(finishLoading, delay);
+    },
+    [startLoading, finishLoading]
+  );
 
   const back = useCallback(() => {
     setState((prev) => {
@@ -196,7 +219,9 @@ export function MockBrowserProvider({ initialUrl, children, compact = false }: M
   );
 
   return (
-    <MockBrowserContext.Provider value={value}>{children}</MockBrowserContext.Provider>
+    <MockBrowserContext.Provider value={value}>
+      {children}
+    </MockBrowserContext.Provider>
   );
 }
 

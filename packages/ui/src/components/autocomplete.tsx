@@ -317,7 +317,8 @@ export {
 // Legacy component for backward compatibility
 // This was a custom component that was part of the original codebase
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useMountEffect } from '../hooks/use-mount-effect';
 
 type AutocompleteDropdownProps<T> = {
   open: boolean;
@@ -343,10 +344,10 @@ function AutocompleteDropdown<T>({
   renderSkeleton,
 }: AutocompleteDropdownProps<T>) {
   const [entered, setEntered] = useState(false);
-  useEffect(() => {
+  useMountEffect(() => {
     const id = requestAnimationFrame(() => setEntered(true));
     return () => cancelAnimationFrame(id);
-  }, []);
+  });
   if (!open) {
     return null;
   }

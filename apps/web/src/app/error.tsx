@@ -6,7 +6,7 @@ import { Button } from '@bounty/ui/components/button';
 import Link from '@bounty/ui/components/link';
 import { AlertTriangle, Copy, Home, RefreshCw } from 'lucide-react';
 import posthog from 'posthog-js';
-import { useEffect } from 'react';
+import { useRef } from 'react';
 
 export default function ErrorPage({
   error,
@@ -15,7 +15,9 @@ export default function ErrorPage({
   error: Error;
   reset: () => void;
 }) {
-  useEffect(() => {
+  const lastReportedErrorRef = useRef<Error | null>(null);
+  if (error !== lastReportedErrorRef.current) {
+    lastReportedErrorRef.current = error;
     // Log to both Sentry and PostHog
     Sentry.captureException(error, {
       tags: {
@@ -23,7 +25,7 @@ export default function ErrorPage({
       },
     });
     posthog.captureException(error);
-  }, [error]);
+  }
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-muted/20 px-4">

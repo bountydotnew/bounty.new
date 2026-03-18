@@ -10,7 +10,6 @@ import { AwardBalanceIcon } from '@/components/icons/award-balance-icon';
 import { StripePaymentIcon } from '@/components/icons/stripe-payment-icon';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import * as React from 'react';
 
 interface FundBountyModalProps {
   open: boolean;
@@ -48,19 +47,16 @@ export function FundBountyModal({
     setSelectedMethod(null);
   };
 
-  // Reset selection when modal closes
-  React.useEffect(() => {
-    if (!open) {
-      setSelectedMethod(null);
-    }
-  }, [open]);
-
   return (
     <Dialog
       open={open}
       onOpenChange={(newOpen) => {
         // Prevent closing modal while processing
         if (!isLoading) {
+          // Reset selection when modal closes
+          if (!newOpen) {
+            setSelectedMethod(null);
+          }
           onOpenChange(newOpen);
         }
       }}

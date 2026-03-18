@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
 import { Controller, type Control } from 'react-hook-form';
 import type { CreateBountyForm } from '@bounty/ui/lib/forms';
+import { useAutoResizeTextarea } from '@bounty/ui';
 
 interface DescriptionTextareaProps {
   control: Control<CreateBountyForm>;
@@ -13,13 +13,9 @@ export function DescriptionTextarea({
   placeholder,
   textareaRef,
 }: DescriptionTextareaProps) {
-  useEffect(() => {
-    if (textareaRef.current) {
-      const textarea = textareaRef.current;
-      textarea.style.height = 'auto';
-      const newHeight = Math.min(Math.max(textarea.scrollHeight, 100), 600);
-      textarea.style.height = `${newHeight}px`;
-    }
+  const resize = useAutoResizeTextarea(textareaRef, {
+    minHeight: 100,
+    maxHeight: 600,
   });
 
   return (
@@ -37,10 +33,7 @@ export function DescriptionTextarea({
           value={field.value}
           onChange={(e) => {
             field.onChange(e.target.value);
-            const target = e.target;
-            target.style.height = 'auto';
-            const newHeight = Math.min(Math.max(target.scrollHeight, 100), 600);
-            target.style.height = `${newHeight}px`;
+            resize();
           }}
           placeholder={placeholder}
           className="flex-1 min-h-[100px] bg-transparent text-foreground text-[16px] leading-6 outline-none resize-none placeholder:text-text-tertiary"

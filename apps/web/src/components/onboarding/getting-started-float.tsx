@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useMountEffect } from '@bounty/ui';
 import { useRouter, usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, m } from 'motion/react';
@@ -141,7 +142,7 @@ export function GettingStartedFloat() {
   const [isDismissed, setIsDismissed] = useState(false);
 
   // Load dismiss state from localStorage on mount
-  useEffect(() => {
+  useMountEffect(() => {
     try {
       if (localStorage.getItem(DISMISS_KEY) === 'true') {
         setIsDismissed(true);
@@ -149,7 +150,7 @@ export function GettingStartedFloat() {
     } catch {
       // localStorage may not be available
     }
-  }, []);
+  });
 
   const { data: onboardingState } = useQuery({
     ...trpc.onboarding.getState.queryOptions(),

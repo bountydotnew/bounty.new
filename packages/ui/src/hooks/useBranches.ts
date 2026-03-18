@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useRef } from 'react';
 
 export function useBranches(
   selectedRepository: string,
@@ -72,7 +72,14 @@ export function useBranches(
   }, [sortedBranches, branchSearchQuery]);
 
   // Set default branch when repository changes or default branch is fetched
-  useEffect(() => {
+  // Render-time pattern: track previous inputs in a ref, update state synchronously
+  const prevRef = useRef({ selectedRepository, defaultBranch, branches });
+  if (
+    prevRef.current.selectedRepository !== selectedRepository ||
+    prevRef.current.defaultBranch !== defaultBranch ||
+    prevRef.current.branches !== branches
+  ) {
+    prevRef.current = { selectedRepository, defaultBranch, branches };
     if (selectedRepository && defaultBranch) {
       setSelectedBranch(defaultBranch);
     } else if (selectedRepository && branches.length > 0 && !defaultBranch) {
@@ -83,7 +90,7 @@ export function useBranches(
         setSelectedBranch(fallbackBranch);
       }
     }
-  }, [selectedRepository, defaultBranch, branches]);
+  }
 
   return {
     branches,

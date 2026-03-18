@@ -1,13 +1,8 @@
 'use client';
 
 import { AnimatePresence, m } from 'motion/react';
-import {
-  type ReactNode,
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from 'react';
+import { type ReactNode, useRef, useState, useSyncExternalStore } from 'react';
+import { useMountEffect, useEventListener } from '@bounty/ui';
 import { createPortal } from 'react-dom';
 import { useTutorialOptional } from './tutorial-context';
 
@@ -46,35 +41,32 @@ export function TutorialHighlight({
     () => false
   );
 
-  useEffect(() => {
+  const updatePosition = () => {
     if (!(isActive && contentRef.current)) {
       return;
     }
+    const targetEl = contentRef.current
+      ?.firstElementChild as HTMLElement | null;
+    const rect =
+      targetEl?.getBoundingClientRect() ??
+      contentRef.current?.getBoundingClientRect();
+    if (!rect) {
+      return;
+    }
 
-    const updatePosition = () => {
-      const targetEl = contentRef.current
-        ?.firstElementChild as HTMLElement | null;
-      const rect =
-        targetEl?.getBoundingClientRect() ??
-        contentRef.current?.getBoundingClientRect();
-      if (!rect) {
-        return;
-      }
+    const x = rect.left + rect.width / 2;
+    const y = tooltipPosition === 'top' ? rect.top - 12 : rect.bottom + 12;
+    setTooltipPos({ x, y });
+  };
 
-      const x = rect.left + rect.width / 2;
-      const y = tooltipPosition === 'top' ? rect.top - 12 : rect.bottom + 12;
-      setTooltipPos({ x, y });
-    };
-
+  // Initial position calculation on mount
+  useMountEffect(() => {
     updatePosition();
-    window.addEventListener('scroll', updatePosition, true);
-    window.addEventListener('resize', updatePosition);
+  });
 
-    return () => {
-      window.removeEventListener('scroll', updatePosition, true);
-      window.removeEventListener('resize', updatePosition);
-    };
-  }, [isActive, tooltipPosition]);
+  // Re-calculate on scroll and resize
+  useEventListener('scroll', updatePosition, undefined, true);
+  useEventListener('resize', updatePosition);
 
   return (
     <div className={`relative ${fullWidth ? 'w-full' : 'inline-block'}`}>

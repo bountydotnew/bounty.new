@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
+import { useMountEffect } from '../hooks/use-mount-effect';
 import { parseDate } from 'chrono-node';
 import { Button } from '@bounty/ui/components/button';
 import { Calendar } from '@bounty/ui/components/calendar';
@@ -64,7 +65,10 @@ export function DatePicker({
   const [month, setMonth] = useState<Date | undefined>(initialParse.date);
 
   // Sync with external value changes (only when not actively typing)
-  useEffect(() => {
+  // Render-time pattern: track previous value in a ref
+  const prevValueRef = useRef(value);
+  if (prevValueRef.current !== value) {
+    prevValueRef.current = value;
     if (!isTypingRef.current) {
       const parsed = parseValue(value);
       setTextValue(parsed.text);
@@ -73,7 +77,7 @@ export function DatePicker({
         setMonth(parsed.date);
       }
     }
-  }, [value]);
+  }
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -125,13 +129,13 @@ export function DatePicker({
   };
 
   // Cleanup timer on unmount
-  useEffect(() => {
+  useMountEffect(() => {
     return () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, []);
+  });
 
   return (
     <div className={cn('relative flex-1', className)}>

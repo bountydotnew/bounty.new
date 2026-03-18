@@ -2,32 +2,17 @@
 
 import { authClient } from '@bounty/auth/client';
 import { Button } from '@bounty/ui/components/button';
-import { Input } from '@bounty/ui/components/input';
 import NumberFlow from '@bounty/ui/components/number-flow';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { getThumbmark } from '@thumbmarkjs/thumbmarkjs';
 import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState } from 'react';
+import { useMountEffect } from '@bounty/ui';
 import { toast } from 'sonner';
-import { z } from 'zod';
 import { useConfetti } from '@/context/confetti-context';
-import type {
-  RateLimitInfo,
-  WaitlistCookieData,
-  WaitlistHookResult,
-  WaitlistSubmissionData,
-} from '@/types/waitlist';
-import { trpc } from '@/utils/trpc';
+import type { WaitlistCookieData } from '@/types/waitlist';
+import { trpc, trpcClient } from '@/utils/trpc';
 import { MockBrowser } from './mockup';
-
-const formSchema = z.object({
-  email: z.string().email(),
-});
-
-type FormSchema = z.infer<typeof formSchema>;
 
 const WAITLIST_STORAGE_KEY = 'waitlist_data';
 
@@ -50,61 +35,46 @@ function writeStoredWaitlist(data: WaitlistCookieData) {
   }
 }
 
-function useWaitlistSubmission(): WaitlistHookResult {
+function useWaitlistSubmission() {
   const { celebrate } = useConfetti();
   const [success, setSuccess] = useState(false);
-  const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitInfo | null>(
-    null
-  );
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async ({ email, fingerprintData }: WaitlistSubmissionData) => {
-      const response = await fetch('/api/waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, fingerprintData }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to join waitlist');
-      }
-
-      return data;
-    },
-    onSuccess: (_data, variables) => {
+    mutationFn: () => trpcClient.earlyAccess.joinWaitlist.mutate(),
+    onSuccess: () => {
       setSuccess(true);
 
       const cookieData: WaitlistCookieData = {
         submitted: true,
         timestamp: new Date().toISOString(),
-        email: btoa(variables.email).substring(0, 16),
+        email: '',
       };
       writeStoredWaitlist(cookieData);
 
       celebrate();
-      toast.success("You're on the list! 🎉");
+      toast.success("You're on the list!");
     },
     onError: (error: Error) => {
-      if (error.message.includes('Must be logged in to join waitlist')) {
+      if (
+        error.message.includes('UNAUTHORIZED') ||
+        error.message.includes('Must be logged in')
+      ) {
         authClient.signIn.social({
           provider: 'github',
           callbackURL: '/',
         });
-      } else if (error.message.includes('Rate limit exceeded')) {
+      } else if (
+        error.message.toLowerCase().includes('too many') ||
+        error.message.toLowerCase().includes('slow down')
+      ) {
         toast.error('Too many attempts. Please try again later.');
-      } else if (error.message.includes('Invalid device fingerprint')) {
-        toast.error(
-          'Security validation failed. Please refresh and try again.'
-        );
       } else {
         toast.error(error.message || 'Something went wrong. Please try again.');
       }
     },
   });
 
-  return { mutate, isPending, success, setSuccess, rateLimitInfo };
+  return { mutate, isPending, success, setSuccess };
 }
 
 interface WaitlistPageProps {
@@ -112,57 +82,20 @@ interface WaitlistPageProps {
 }
 
 function WaitlistPage({ compact = false }: WaitlistPageProps) {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FormSchema>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { email: '' },
-  });
-
-  type FingerprintData = Awaited<ReturnType<typeof getThumbmark>>;
-  const [fingerprint, setFingerprint] = useState<{
-    data: FingerprintData | null;
-    loading: boolean;
-  }>({ data: null, loading: true });
   const waitlistSubmission = useWaitlistSubmission();
 
-  useEffect(() => {
+  useMountEffect(() => {
     const stored = readStoredWaitlist();
     if (stored?.submitted) {
       waitlistSubmission.setSuccess(true);
     }
-  }, [waitlistSubmission.setSuccess]);
+  });
 
-  useEffect(() => {
-    const generateFingerprint = async () => {
-      try {
-        const result = await getThumbmark();
-        setFingerprint({ data: result, loading: false });
-      } catch {
-        toast.error(
-          'Device fingerprinting failed. Please refresh and try again.'
-        );
-        setFingerprint({ data: null, loading: false });
-      }
-    };
-
-    generateFingerprint();
-  }, []);
-
-  function joinWaitlist({ email }: FormSchema) {
-    if (!fingerprint.data) {
-      toast.error(
-        'Device fingerprint not ready. Please wait a moment and try again.'
-      );
-      return;
-    }
-    waitlistSubmission.mutate({ email, fingerprintData: fingerprint.data });
+  function joinWaitlist() {
+    waitlistSubmission.mutate();
   }
 
-  const isFormDisabled =
-    waitlistSubmission.isPending || fingerprint.loading || !fingerprint.data;
+  const isFormDisabled = waitlistSubmission.isPending;
 
   const waitlistCountQuery = useQuery({
     ...trpc.earlyAccess.getWaitlistCount.queryOptions(),
@@ -236,58 +169,32 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
             </div>
           ) : (
             <>
-              {/* Form */}
-              <form
-                className={compact ? 'mb-3' : 'mb-6'}
-                onSubmit={handleSubmit(joinWaitlist)}
-              >
-                <div className={`flex ${compact ? 'flex-col gap-2' : 'flex-col sm:flex-row gap-3'}`}>
-                  <div className="flex-1">
-                    <Input
-                      className="flex-1 border border-border-default text-foreground placeholder:text-text-muted"
-                      placeholder="your@email.com"
-                      style={{
-                        background: 'var(--surface-1)',
-                        borderRadius: compact ? '10px' : '14px',
-                        padding: compact ? '8px 12px' : '12px 16px',
-                        height: compact ? '36px' : '44px',
-                        fontSize: compact ? '13px' : undefined,
-                      }}
-                      type="email"
-                      {...register('email')}
-                      disabled={isFormDisabled}
-                    />
-                    {errors.email && (
-                      <p className="mt-1 text-red-400 text-xs">
-                        {errors.email.message}
-                      </p>
-                    )}
-                  </div>
-                  <Button
-                    className={`text-background hover:opacity-90 font-medium ${compact ? 'text-xs' : 'w-full sm:w-auto'}`}
-                    disabled={isFormDisabled}
-                    style={{
-                      background: 'var(--foreground)',
-                      borderRadius: compact ? '10px' : '14px',
-                      padding: compact ? '8px 12px' : '12px 20px',
-                      height: compact ? '36px' : '44px',
-                      minWidth: compact ? undefined : '138px',
-                    }}
-                    type="submit"
-                  >
-                    {waitlistSubmission.isPending ? (
-                      'Joining...'
-                    ) : (
-                      <>
-                        <GithubIcon
-                          className={`${compact ? 'w-3 h-3 mr-1' : 'w-4 h-4 mr-1'} text-background`}
-                        />{' '}
-                        {compact ? 'Join' : 'Join Waitlist'}
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
+              {/* Join button */}
+              <div className={compact ? 'mb-3' : 'mb-6'}>
+                <Button
+                  className={`text-background hover:opacity-90 font-medium ${compact ? 'text-xs w-full' : 'w-full'}`}
+                  disabled={isFormDisabled}
+                  style={{
+                    background: 'var(--foreground)',
+                    borderRadius: compact ? '10px' : '14px',
+                    padding: compact ? '8px 12px' : '12px 20px',
+                    height: compact ? '36px' : '44px',
+                  }}
+                  onClick={joinWaitlist}
+                  type="button"
+                >
+                  {waitlistSubmission.isPending ? (
+                    'Joining...'
+                  ) : (
+                    <>
+                      <GithubIcon
+                        className={`${compact ? 'w-3 h-3 mr-1' : 'w-4 h-4 mr-1'} text-background`}
+                      />{' '}
+                      {compact ? 'Join' : 'Join Waitlist'}
+                    </>
+                  )}
+                </Button>
+              </div>
 
               {/* Social proof */}
               <div

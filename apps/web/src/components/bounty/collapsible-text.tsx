@@ -1,7 +1,8 @@
 'use client';
 
 import { useMediaQuery } from '@bounty/ui/hooks/use-media-query';
-import { useEffect, useRef, useReducer } from 'react';
+import { useMountEffect } from '@bounty/ui';
+import { useRef, useReducer, useCallback } from 'react';
 
 interface CollapsibleTextProps {
   children: React.ReactNode;
@@ -59,15 +60,15 @@ export default function CollapsibleText({
     maxHeight: null,
   });
 
-  useEffect(() => {
+  // Measure DOM and update collapse state. Called on mount and whenever
+  // isMobile / collapsedHeight change via a prev-value ref comparison.
+  const measure = useCallback(() => {
     if (!isMobile) {
       dispatch({ type: 'RESET' });
       return;
     }
     const el = contentRef.current;
-    if (!el) {
-      return;
-    }
+    if (!el) return;
     const full = el.scrollHeight;
     if (full > collapsedHeight) {
       dispatch({ type: 'SET_COLLAPSIBLE', maxHeight: collapsedHeight });
@@ -75,6 +76,23 @@ export default function CollapsibleText({
       dispatch({ type: 'SET_NOT_COLLAPSIBLE' });
     }
   }, [isMobile, collapsedHeight]);
+
+  // Re-measure when isMobile or collapsedHeight change (render-time ref comparison)
+  const prevMeasureKeyRef = useRef<string | null>(null);
+  const measureKey = `${isMobile}-${collapsedHeight}`;
+  if (
+    prevMeasureKeyRef.current !== null &&
+    prevMeasureKeyRef.current !== measureKey
+  ) {
+    // Schedule measurement for after this render commits
+    queueMicrotask(measure);
+  }
+  prevMeasureKeyRef.current = measureKey;
+
+  // Initial DOM measurement on mount
+  useMountEffect(() => {
+    measure();
+  });
 
   const handleExpand = () => {
     const el = contentRef.current;

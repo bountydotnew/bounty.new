@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { trpcClient } from '@/utils/trpc';
 import { toast } from 'sonner';
@@ -147,11 +147,6 @@ export function SendInviteConfirmDialog({
 }: SendInviteConfirmDialogProps) {
   const [sent, setSent] = useState(false);
 
-  // Reset sent state when dialog opens with a new email
-  useEffect(() => {
-    if (open) setSent(false);
-  }, [open, email]);
-
   const mutation = useMutation({
     mutationFn: () =>
       trpcClient.earlyAccess.generateInviteCode.mutate({ email }),
@@ -165,7 +160,7 @@ export function SendInviteConfirmDialog({
   });
 
   const handleClose = () => {
-    setSent(false);
+    setSent(false); // Reset sent state when dialog closes
     mutation.reset();
     onOpenChange(false);
   };

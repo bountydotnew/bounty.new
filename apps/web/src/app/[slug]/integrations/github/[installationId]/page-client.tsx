@@ -3,7 +3,8 @@
 import type * as React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useMountEffect } from '@bounty/ui';
 import { GithubIcon } from '@bounty/ui';
 import { Button } from '@bounty/ui/components/button';
 import { ConfirmAlertDialog } from '@bounty/ui/components/alert-dialog';
@@ -136,7 +137,7 @@ export default function GitHubInstallationPage() {
   });
 
   // Invalidate caches when arriving from a new installation (one-time)
-  useEffect(() => {
+  useMountEffect(() => {
     if (!newFlag) return;
 
     void Promise.all([
@@ -152,7 +153,7 @@ export default function GitHubInstallationPage() {
     ]).then(() => {
       setNewFlag(null);
     });
-  }, [newFlag, installationId, queryClientLocal, setNewFlag]);
+  });
 
   const accountLogin = installation?.installation?.account.login || '';
   const accountType = installation?.installation?.account.type;

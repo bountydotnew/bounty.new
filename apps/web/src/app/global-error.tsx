@@ -1,7 +1,7 @@
 'use client';
 
 import * as Sentry from '@sentry/nextjs';
-import { useEffect } from 'react';
+import { useRef } from 'react';
 import { Button } from '@bounty/ui/components/button';
 export default function GlobalError({
   error,
@@ -10,13 +10,15 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
+  const lastReportedErrorRef = useRef<Error | null>(null);
+  if (error !== lastReportedErrorRef.current) {
+    lastReportedErrorRef.current = error;
     Sentry.captureException(error, {
       tags: {
         errorBoundary: 'global',
       },
     });
-  }, [error]);
+  }
 
   return (
     <html lang="en">

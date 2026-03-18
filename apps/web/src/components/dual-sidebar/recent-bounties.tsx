@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useEventListener } from '@bounty/ui';
 import Link from '@bounty/ui/components/link';
 import { useQuery } from '@tanstack/react-query';
 import { ClockIcon, HourglassIcon } from '@bounty/ui';
@@ -60,16 +61,11 @@ export function RecentBountiesGroup() {
     enabled: isAuthenticated && !!userId,
   });
 
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === RECENT_BOUNTIES_KEY) {
-        setRecentBounties(parseStoredBounties(e.newValue));
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  useEventListener('storage', (e: StorageEvent) => {
+    if (e.key === RECENT_BOUNTIES_KEY) {
+      setRecentBounties(parseStoredBounties(e.newValue));
+    }
+  });
 
   const clearRecent = useCallback(() => {
     localStorage.removeItem(RECENT_BOUNTIES_KEY);

@@ -1,11 +1,14 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRef, useEffect, useMemo } from 'react';
+import { useRef, useMemo } from 'react';
 import { trpc } from '@/utils/trpc';
 import { useSession } from '@/context/session-context';
 import { PAGINATION_DEFAULTS, PAGINATION_LIMITS } from '@/constants';
-import { DashboardPageContext, type DashboardPageContextValue } from './context';
+import {
+  DashboardPageContext,
+  type DashboardPageContextValue,
+} from './context';
 
 // Export context for use in consuming components
 export { DashboardPageContext } from './context';
@@ -21,7 +24,10 @@ interface DashboardPageProviderProps {
  * Provider component that implements the DashboardPageContext interface.
  * Handles all data fetching and state management for the dashboard page.
  */
-export function DashboardPageProvider({ children, initialAllBounties }: DashboardPageProviderProps) {
+export function DashboardPageProvider({
+  children,
+  initialAllBounties,
+}: DashboardPageProviderProps) {
   const { isAuthenticated, isPending: isSessionPending } = useSession();
   const taskInputRef = useRef<{ focus: () => void } | null>(null);
   const queryClient = useQueryClient();
@@ -37,7 +43,13 @@ export function DashboardPageProvider({ children, initialAllBounties }: Dashboar
     enabled: isAuthenticated && !isSessionPending,
     staleTime: 2 * 60 * 1000,
     ...(initialAllBounties
-      ? { initialData: initialAllBounties as typeof allBountiesOptions extends { queryFn: () => Promise<infer T> } ? T : never }
+      ? {
+          initialData: initialAllBounties as typeof allBountiesOptions extends {
+            queryFn: () => Promise<infer T>;
+          }
+            ? T
+            : never,
+        }
       : {}),
   });
 
@@ -50,25 +62,20 @@ export function DashboardPageProvider({ children, initialAllBounties }: Dashboar
     staleTime: 2 * 60 * 1000,
   });
 
-  // Prefetch stats for all bounties as soon as they arrive (flatten waterfall)
-  useEffect(() => {
-    if (bounties.data?.data && bounties.data.data.length > 0) {
-      const bountyIds = bounties.data.data.map((b) => b.id);
-      queryClient.prefetchQuery(
-        trpc.bounties.getBountyStatsMany.queryOptions({ bountyIds })
-      );
-    }
-  }, [bounties.data?.data, queryClient]);
+  // Prefetch stats for all bounties (derived from query data, no effect needed)
+  const allBountyIds = bounties.data?.data?.map((b) => b.id);
+  if (allBountyIds && allBountyIds.length > 0) {
+    queryClient.prefetchQuery(
+      trpc.bounties.getBountyStatsMany.queryOptions({ bountyIds: allBountyIds })
+    );
+  }
 
-  // Also prefetch stats for myBounties
-  useEffect(() => {
-    if (myBounties.data?.data && myBounties.data.data.length > 0) {
-      const bountyIds = myBounties.data.data.map((b) => b.id);
-      queryClient.prefetchQuery(
-        trpc.bounties.getBountyStatsMany.queryOptions({ bountyIds })
-      );
-    }
-  }, [myBounties.data?.data, queryClient]);
+  const myBountyIds = myBounties.data?.data?.map((b) => b.id);
+  if (myBountyIds && myBountyIds.length > 0) {
+    queryClient.prefetchQuery(
+      trpc.bounties.getBountyStatsMany.queryOptions({ bountyIds: myBountyIds })
+    );
+  }
 
   // TODO: Re-enable onboarding when needed
   // const onboardingQuery = useQuery({
@@ -79,7 +86,8 @@ export function DashboardPageProvider({ children, initialAllBounties }: Dashboar
   const bountiesData = bounties.data?.data;
   const myBountiesData = myBounties.data?.data;
   const bountiesError = bounties.error instanceof Error ? bounties.error : null;
-  const myBountiesError = myBounties.error instanceof Error ? myBounties.error : null;
+  const myBountiesError =
+    myBounties.error instanceof Error ? myBounties.error : null;
 
   const state = useMemo(
     () => ({
@@ -92,7 +100,14 @@ export function DashboardPageProvider({ children, initialAllBounties }: Dashboar
       bountiesError,
       myBountiesError,
     }),
-    [bountiesData, myBountiesData, bounties.isLoading, myBounties.isLoading, bountiesError, myBountiesError]
+    [
+      bountiesData,
+      myBountiesData,
+      bounties.isLoading,
+      myBounties.isLoading,
+      bountiesError,
+      myBountiesError,
+    ]
   );
 
   const actions = useMemo(
@@ -112,8 +127,6 @@ export function DashboardPageProvider({ children, initialAllBounties }: Dashboar
   );
 
   return (
-    <DashboardPageContext value={contextValue}>
-      {children}
-    </DashboardPageContext>
+    <DashboardPageContext value={contextValue}>{children}</DashboardPageContext>
   );
 }

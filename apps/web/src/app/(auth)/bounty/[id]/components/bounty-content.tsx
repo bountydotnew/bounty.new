@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useRef } from 'react';
 import { canEditBounty } from '@bounty/ui/lib/bounty-utils';
 import { useSession } from '@/context/session-context';
 import BountyDetailPage from '@/components/bounty/bounty-detail';
@@ -18,9 +18,12 @@ export function BountyContent({ id, bountyData }: BountyContentProps) {
     ? canEditBounty(bountyData.bounty, session.user.id)
     : false;
 
-  useEffect(() => {
+  const lastAddedRef = useRef<string | null>(null);
+  const bountyKey = `${id}:${bountyData.bounty.title}`;
+  if (lastAddedRef.current !== bountyKey) {
+    lastAddedRef.current = bountyKey;
     addRecentBounty({ id, title: bountyData.bounty.title });
-  }, [id, bountyData.bounty.title]);
+  }
 
   return (
     <div className="mx-auto w-full max-w-[800px] px-4 pt-16 pb-8 md:pt-24 md:pb-12">

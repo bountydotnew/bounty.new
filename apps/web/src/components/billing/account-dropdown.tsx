@@ -29,6 +29,11 @@ import { SwitchArrowsIcon } from '@bounty/ui/components/icons/huge/switch-arrows
 import { BillingSettingsIcon } from '@bounty/ui/components/icons/huge/billing-settings';
 import { Feedback } from '@bounty/ui';
 import { UserIcon } from '@bounty/ui';
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverPopup,
+} from '@bounty/ui/components/popover';
 
 import { useFeedback } from '@bounty/feedback';
 import { useActiveOrg } from '@/hooks/use-active-org';
@@ -188,17 +193,7 @@ function CreateTeamDialog({
     errors: {} as { name?: string; slug?: string },
   });
 
-  React.useEffect(() => {
-    if (!open) {
-      setFormState({
-        name: '',
-        slug: '',
-        slugTouched: false,
-        isCreating: false,
-        errors: {},
-      });
-    }
-  }, [open]);
+  // Form state is reset via onOpenChange handler — no effect needed
 
   const { name, slug, slugTouched, isCreating, errors } = formState;
 
@@ -285,7 +280,21 @@ function CreateTeamDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(newOpen) => {
+        if (!newOpen) {
+          setFormState({
+            name: '',
+            slug: '',
+            slugTouched: false,
+            isCreating: false,
+            errors: {},
+          });
+        }
+        onOpenChange(newOpen);
+      }}
+    >
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create Team</DialogTitle>
@@ -596,17 +605,56 @@ export function AccountDropdown({
                 }
               />
             </div>
-            <button
-              className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={handleProfileNavigation}
-              disabled={!profileHref}
-              type="button"
-            >
-              <UserIcon className="h-[19px] w-[19px]" />
-              <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
-                Profile
-              </span>
-            </button>
+            {profileHref ? (
+              <button
+                className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-foreground"
+                onClick={handleProfileNavigation}
+                type="button"
+              >
+                <UserIcon className="h-[19px] w-[19px]" />
+                <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
+                  Profile
+                </span>
+              </button>
+            ) : (
+              <Popover>
+                <PopoverTrigger>
+                  <button
+                    className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary opacity-50"
+                    type="button"
+                  >
+                    <UserIcon className="h-[19px] w-[19px]" />
+                    <span className="text-[17px] font-medium leading-[150%] tracking-[0.03em]">
+                      Profile
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverPopup
+                  side="right"
+                  sideOffset={8}
+                  tooltipStyle
+                  className="w-56"
+                >
+                  <div className="p-3">
+                    <p className="text-xs text-foreground/60 mb-2">
+                      Set a username to view your profile
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        if (activeOrgSlug) {
+                          router.push(`/${activeOrgSlug}/settings/account`);
+                        }
+                      }}
+                    >
+                      Go to settings
+                    </Button>
+                  </div>
+                </PopoverPopup>
+              </Popover>
+            )}
             <button
               className="flex items-center gap-2 rounded-[10px] px-0 py-1.5 text-text-tertiary transition-colors hover:text-foreground"
               onClick={() => {

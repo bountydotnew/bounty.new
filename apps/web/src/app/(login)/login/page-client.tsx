@@ -3,7 +3,8 @@
 import { Spinner } from '@bounty/ui/components/spinner';
 import { useMutation } from '@tanstack/react-query';
 import { useQueryState, parseAsString } from 'nuqs';
-import { Suspense, useEffect, useRef } from 'react';
+import { Suspense, useRef } from 'react';
+import { useMountEffect } from '@bounty/ui';
 import LoginPageClient from '@/components/login/login.page.client';
 import { trpcClient } from '@/utils/trpc';
 
@@ -17,12 +18,12 @@ function LoginContent() {
       trpcClient.user.applyInvite.mutate({ token: inviteToken }),
   });
 
-  useEffect(() => {
+  useMountEffect(() => {
     if (token && appliedTokenRef.current !== token) {
       appliedTokenRef.current = token;
       applyInvite.mutate(token);
     }
-  }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
+  });
   // const handleGitHubSignIn = async () => {
   //   try {
   //     const callbackURL = redirectUrl ? `${redirectUrl}` : `${baseUrl}/dashboard`;

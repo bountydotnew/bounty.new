@@ -4,6 +4,8 @@ import * as React from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, m } from 'motion/react';
 import { cn } from '@bounty/ui/lib/utils';
+import { useMountEffect } from '../hooks/use-mount-effect';
+import { useEventListener } from '../hooks/use-event-listener';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -132,87 +134,93 @@ export function TourProvider({
   // once the target element for the step is actually found and the tour is
   // visually active. This way, if the component remounts before the page is
   // ready (strict mode, layout re-render), the state survives.
-  React.useEffect(() => {
+  useMountEffect(() => {
     const persisted = loadPersistedTourState();
     if (persisted && tours.some((t) => t.id === persisted.tourId)) {
       setActiveTourId(persisted.tourId);
       setCurrentStepIndex(persisted.stepIndex);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  });
 
-  // Find and track target element
-  React.useEffect(() => {
-    if (!currentStep) {
+  // Find and track target element.
+  // We use useMountEffect with a ref-based change-detection approach so the
+  // polling logic re-triggers whenever the step key changes.
+  const stepKeyRef = React.useRef<string | null>(null);
+  const pollCleanupRef = React.useRef<(() => void) | null>(null);
+
+  const currentStepKey = currentStep
+    ? `${activeTourId}:${currentStepIndex}:${currentStep.id}`
+    : null;
+
+  if (stepKeyRef.current !== currentStepKey) {
+    // Cleanup previous poll if any
+    pollCleanupRef.current?.();
+    pollCleanupRef.current = null;
+    stepKeyRef.current = currentStepKey;
+
+    if (currentStep) {
+      let attempts = 0;
+      const maxAttempts = 50; // 5 seconds total
+      let cancelled = false;
+      const stepId = currentStep.id;
+
+      const findElement = () => {
+        const el = document.querySelector(`[data-tour-step-id="${stepId}"]`);
+        if (el) {
+          setTargetElement(el);
+          setTargetRect(getElementRect(el));
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => {
+            if (!cancelled) {
+              setTargetRect(getElementRect(el));
+            }
+          }, 400);
+          persistTourState(null);
+          return true;
+        }
+        return false;
+      };
+
+      if (!findElement()) {
+        const interval = setInterval(() => {
+          attempts++;
+          if (findElement()) {
+            clearInterval(interval);
+          } else if (attempts >= maxAttempts) {
+            clearInterval(interval);
+            setActiveTourId(null);
+            setCurrentStepIndex(0);
+            persistTourState(null);
+          }
+        }, 100);
+
+        pollCleanupRef.current = () => {
+          cancelled = true;
+          clearInterval(interval);
+        };
+      }
+    } else {
       setTargetElement(null);
       setTargetRect(null);
-      return;
     }
+  }
 
-    let attempts = 0;
-    const maxAttempts = 50; // 5 seconds total — generous for cross-page navigations
-    let cancelled = false;
-
-    const findElement = () => {
-      const el = document.querySelector(
-        `[data-tour-step-id="${currentStep.id}"]`
-      );
-      if (el) {
-        setTargetElement(el);
-        setTargetRect(getElementRect(el));
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        // Recalculate rect after scroll settles
-        setTimeout(() => {
-          if (!cancelled) {
-            setTargetRect(getElementRect(el));
-          }
-        }, 400);
-        // Now that the element is found and the tour is visually active,
-        // clear the persisted state so it doesn't re-trigger.
-        persistTourState(null);
-        return true;
-      }
-      return false;
-    };
-
-    if (findElement()) return;
-
-    // Retry with polling for route transitions
-    const interval = setInterval(() => {
-      attempts++;
-      if (findElement()) {
-        clearInterval(interval);
-      } else if (attempts >= maxAttempts) {
-        // Element never appeared — silently dismiss so the user isn't stuck
-        // with an invisible active tour.
-        clearInterval(interval);
-        setActiveTourId(null);
-        setCurrentStepIndex(0);
-        persistTourState(null);
-      }
-    }, 100);
-
+  // Cleanup polling on unmount
+  useMountEffect(() => {
     return () => {
-      cancelled = true;
-      clearInterval(interval);
+      pollCleanupRef.current?.();
     };
-  }, [currentStep?.id, currentStepIndex, activeTourId]);
+  });
 
   // Keep rect in sync on scroll/resize
-  React.useEffect(() => {
-    if (!(targetElement && isActive)) return;
-
-    const update = () => {
+  const scrollResizeUpdate = React.useCallback(() => {
+    if (targetElement && isActive) {
       setTargetRect(getElementRect(targetElement));
-    };
-
-    window.addEventListener('scroll', update, true);
-    window.addEventListener('resize', update);
-
-    return () => {
-      window.removeEventListener('scroll', update, true);
-      window.removeEventListener('resize', update);
-    };
+    }
   }, [targetElement, isActive]);
+
+  useEventListener('scroll', scrollResizeUpdate, undefined, true);
+  useEventListener('resize', scrollResizeUpdate);
 
   const dismiss = React.useCallback(() => {
     const tourId = activeTourId;
@@ -484,11 +492,13 @@ function TourOverlay({
   }, [targetRect, step.side, step.sideOffset, step.align]);
 
   // Reset hasPositioned when stepIndex changes so we don't CSS-transition
-  // from the old step's position
-  React.useEffect(() => {
+  // from the old step's position (render-time pattern)
+  const prevStepIndex = React.useRef(stepIndex);
+  if (prevStepIndex.current !== stepIndex) {
+    prevStepIndex.current = stepIndex;
     hasPositioned.current = false;
     setPopoverPos(null);
-  }, [stepIndex]);
+  }
 
   const cutout = {
     x: targetRect.left - padding,

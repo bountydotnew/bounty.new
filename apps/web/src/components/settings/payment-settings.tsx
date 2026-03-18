@@ -35,7 +35,8 @@ import { PaymentActivity } from './payment-activity';
 import { BalanceCard } from './payment/balance-card';
 import { StripeDashIcon } from '@bounty/ui/components/icons/huge/stripe';
 import { CardIcon } from '@bounty/ui/components/icons/huge/card';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useMountEffect } from '@bounty/ui';
 import { useQueryState, parseAsString } from 'nuqs';
 import Image from 'next/image';
 import { cn, formatAmount, formatDate } from '@bounty/ui/lib/utils';
@@ -182,7 +183,7 @@ function useHandleConnectRedirect({
   refetch: () => void;
   clearParams: () => void;
 }) {
-  useEffect(() => {
+  useMountEffect(() => {
     if (onboardingStatus === 'success') {
       toast.success('Stripe account connected successfully!');
       refetch();
@@ -195,7 +196,7 @@ function useHandleConnectRedirect({
       refetch();
       clearParams();
     }
-  }, [onboardingStatus, refreshParam, refetch, clearParams]);
+  });
 }
 
 function FAQAccordionItem({
@@ -819,7 +820,10 @@ function SettingsTabContent({
   const [showResetDialog, setShowResetDialog] = useState(false);
   return (
     <>
-      <div data-tour-step-id="stripe-connect" className="shrink-0 w-full h-fit flex flex-col items-start justify-between rounded-none opacity-100 gap-[18px] self-stretch px-[18px] py-[18px] overflow-clip border-b border-b-solid border-border">
+      <div
+        data-tour-step-id="stripe-connect"
+        className="shrink-0 w-full h-fit flex flex-col items-start justify-between rounded-none opacity-100 gap-[18px] self-stretch px-[18px] py-[18px] overflow-clip border-b border-b-solid border-border"
+      >
         <div className="shrink-0 flex flex-col justify-center items-start gap-0 w-full h-fit self-stretch p-0">
           <div className="text-[20px] leading-[150%] shrink-0 text-foreground font-['Inter',system-ui,sans-serif] font-medium size-fit">
             Payouts
