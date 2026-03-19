@@ -649,7 +649,7 @@ function FeesTabContent({
         onManageSubscription={handleManageSubscription}
       />
 
-      <PricingTiersGrid
+      {/* <PricingTiersGrid
         allPlans={allPlans}
         currentPlanSlug={currentPlanSlug}
         currentPlan={currentPlan}
@@ -659,7 +659,7 @@ function FeesTabContent({
         isCheckoutLoading={isCheckoutLoading}
         isPortalLoading={isPortalLoading}
         onPlanAction={handlePlanAction}
-      />
+      /> */}
 
       <p className="text-xs text-text-muted">
         Stripe processing fees (2.9% + 30¢) apply to all transactions.

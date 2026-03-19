@@ -90,18 +90,18 @@ function PricingPageContentInner() {
         Pricing
       </h1>
 
-      {/* Billing Toggle */}
-      <div className="mt-8">
+      {/* Billing Toggle — hidden for MVP (only free plan) */}
+      {/* <div className="mt-8">
         <BillingToggle value={billingPeriod} onChange={setBillingPeriod} />
-      </div>
+      </div> */}
 
-      {/* Spend Slider */}
-      <div className="mt-12">
+      {/* Spend Slider — hidden for MVP (only free plan) */}
+      {/* <div className="mt-12">
         <SpendSlider value={monthlySpend} onChange={setMonthlySpend} />
-      </div>
+      </div> */}
 
       {/* Plans Section */}
-      <section className="mt-8">
+      <section className="mt-12">
         <PricingCards
           isYearly={billingPeriod === 'yearly'}
           recommendedPlan={recommendedPlan}

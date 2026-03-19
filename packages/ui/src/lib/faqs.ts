@@ -84,12 +84,12 @@ export const PRICING_FAQ_ITEMS: FAQItem[] = [
   {
     question: 'What is the fee-free allowance?',
     answer:
-      'The fee-free allowance is the monthly amount you can spend on bounties without any platform fee. For example, with the Basic plan ($500 allowance), you pay 0% platform fee on the first $500 in bounties each month. (Stripe fees still apply).',
+      'The fee-free allowance is the monthly amount you can spend on bounties without any platform fee.',
   },
   {
     question: 'What happens when I exceed my allowance?',
     answer:
-      'When you exceed your fee-free allowance, a small platform fee is applied to amounts over the limit. The fee varies by plan: Free (5%), Basic (4%), Pro (3%), and Pro+ (2%).',
+      'When you exceed your fee-free allowance, a small platform fee is applied to amounts over the limit',
   },
   {
     question: 'Can I change plans anytime?',

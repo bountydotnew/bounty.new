@@ -21,9 +21,10 @@ import {
 
 const PLAN_ORDER: BountyProPlan[] = [
   'free',
-  'tier_1_basic',
-  'tier_2_pro',
-  'tier_3_pro_plus',
+  // Paid plans hidden for MVP launch — infra remains intact
+  // 'tier_1_basic',
+  // 'tier_2_pro',
+  // 'tier_3_pro_plus',
 ];
 
 // Get the base URL for success/redirects
@@ -202,7 +203,7 @@ function PricingCard({
           const totalFees = platformFee + stripeFee;
 
           return (
-            <div className="mt-4 pt-4 border-t border-border-subtle space-y-1.5">
+            <div className="mt-4 pt-4 border-t border-border-subtle space-y-1.5 hidden">
               <div className="flex items-baseline justify-between">
                 <span className="text-xs text-text-muted">Platform fee</span>
                 <span className="text-xs text-text-muted">
@@ -284,7 +285,7 @@ export function PricingCards({
   estimatedMonthlySpend,
 }: PricingCardsProps) {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 max-w-md mx-auto">
       {PLAN_ORDER.map((plan) => (
         <PricingCard
           key={plan}

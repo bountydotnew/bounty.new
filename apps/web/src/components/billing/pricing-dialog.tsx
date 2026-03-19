@@ -145,11 +145,15 @@ function PricingCard({
           </div>
           <div className="mb-2 flex justify-between text-xs text-gray-400">
             <span>Platform fee</span>
-            <span className="text-foreground">${costs.platformFee.toFixed(2)}</span>
+            <span className="text-foreground">
+              ${costs.platformFee.toFixed(2)}
+            </span>
           </div>
           <div className="flex justify-between border-t border-gray-700 pt-2 text-sm font-semibold">
             <span className="text-gray-300">Est. total</span>
-            <span className="text-foreground">${costs.total.toFixed(2)}/mo</span>
+            <span className="text-foreground">
+              ${costs.total.toFixed(2)}/mo
+            </span>
           </div>
         </div>
       )}
@@ -244,7 +248,8 @@ function SpendSlider({
 
       {/* Hint */}
       <p className="text-center text-xs text-gray-500">
-        Platform fees only apply to spend exceeding your plan&apos;s fee-free limit
+        Platform fees only apply to spend exceeding your plan&apos;s fee-free
+        limit
       </p>
     </div>
   );
@@ -258,9 +263,10 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
   const recommendedPlan = getRecommendedPlan(monthlySpend);
   const plans: BountyProPlan[] = [
     'free',
-    'tier_1_basic',
-    'tier_2_pro',
-    'tier_3_pro_plus',
+    // Paid plans hidden for MVP launch — infra remains intact
+    // 'tier_1_basic',
+    // 'tier_2_pro',
+    // 'tier_3_pro_plus',
   ];
 
   const handleUpgrade = async (plan: BountyProPlan) => {
