@@ -16,7 +16,7 @@ const NAMESPACES = {
   /** Checking username availability */
   'user.checkHandle': { limit: 20, duration: '60s' as const },
   /** Joining the waitlist */
-  waitlist: { limit: 3, duration: '60s' as const },
+  waitlist1: { limit: 3, duration: '60s' as const },
 } as const;
 
 export type UnkeyNamespace = keyof typeof NAMESPACES;
@@ -67,14 +67,21 @@ export async function checkUnkeyRateLimit(
     return { success: true, remaining: -1 };
   }
 
-  const result = await limiter.limit(identifier);
+  try {
+    const result = await limiter.limit(identifier);
 
-  if (!result.success) {
-    throw new TRPCError({
-      code: 'TOO_MANY_REQUESTS',
-      message: 'whoaaaa, slow down there pal',
-    });
+    if (!result.success) {
+      throw new TRPCError({
+        code: 'TOO_MANY_REQUESTS',
+        message: 'whoaaaa, slow down there pal',
+      });
+    }
+
+    return { success: true, remaining: result.remaining };
+  } catch (err) {
+    // Re-throw rate limit errors, but silently allow on infrastructure failures
+    // (deleted namespace, network issues, etc.)
+    if (err instanceof TRPCError) throw err;
+    return { success: true, remaining: -1 };
   }
-
-  return { success: true, remaining: result.remaining };
 }

@@ -410,24 +410,14 @@ export const auth = betterAuth({
               .where(eq(userTable.handle, candidateHandle))
               .limit(1);
 
-            if (taken) {
-              console.log(
-                `[user.create] handle "${candidateHandle}" taken, skipping`
-              );
-              return;
-            }
+            if (taken) return;
 
             await db
               .update(userTable)
               .set({ handle: candidateHandle })
               .where(eq(userTable.id, user.id));
-
-            console.log(
-              `[user.create] set handle "${candidateHandle}" for user ${user.id}`
-            );
-          } catch (err) {
-            // Non-fatal — user can set handle manually
-            console.warn('[user.create] handle derivation failed:', err);
+          } catch {
+            // Non-fatal — user can set handle manually via settings
           }
         },
       },

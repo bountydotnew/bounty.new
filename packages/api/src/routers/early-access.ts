@@ -1190,18 +1190,9 @@ export const earlyAccessRouter = router({
       const email = ctx.session.user.email;
 
       try {
-        info(
-          `[redeemInviteCode] Checking OTP for email=${email} code=${input.code}`
-        );
-
         const result = await (auth.api as any).checkVerificationOTP({
           body: { email, otp: input.code, type: 'sign-in' },
         });
-
-        info(
-          '[redeemInviteCode] checkVerificationOTP result:',
-          JSON.stringify(result)
-        );
 
         if (!(result?.status || result?.success)) {
           throw new TRPCError({
@@ -1215,10 +1206,6 @@ export const earlyAccessRouter = router({
           .update(userTable)
           .set({ role: 'early_access' })
           .where(eq(userTable.id, ctx.session.user.id));
-
-        info(
-          `[redeemInviteCode] User ${ctx.session.user.id} granted early_access via invite code`
-        );
 
         return { success: true };
       } catch (err) {
