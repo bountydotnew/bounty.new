@@ -1227,7 +1227,7 @@ export const earlyAccessRouter = router({
    * Uses the session user's email and ID — no input needed.
    */
   joinWaitlist: protectedProcedure.mutation(async ({ ctx }) => {
-    await checkUnkeyRateLimit('waitlist', ctx.session.user.id);
+    await checkUnkeyRateLimit('waitlist1', ctx.session.user.id);
 
     const userId = ctx.session.user.id;
     const userEmail = ctx.session.user.email;
