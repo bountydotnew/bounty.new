@@ -104,7 +104,7 @@ export function LoginSection({ callbackUrl }: LoginSectionProps) {
               </h1>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-6 px-6">
               <SignInForm callbackUrl={callbackUrl} showHeader />
 
               <div className="relative">
