@@ -1,7 +1,7 @@
 <br />
 <br />
 <a href="https://vercel.com/oss">
-  <!-- Vercel OSS Program Badge -->
+  <!-- Vercel OSS Program badge -->
   <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge.svg" />
 </a>
 <br />
