@@ -122,7 +122,11 @@ export async function getAdminEvents(options: {
         description: adminEvents.description,
         metadata: adminEvents.metadata,
         ipAddress: adminEvents.ipAddress,
+        country: adminEvents.country,
+        region: adminEvents.region,
+        city: adminEvents.city,
         createdAt: adminEvents.createdAt,
+        expiresAt: adminEvents.expiresAt,
         actor: {
           id: user.id,
           name: user.name,
