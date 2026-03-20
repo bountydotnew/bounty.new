@@ -8,7 +8,7 @@ import {
   CardIcon,
   SecurityIcon,
 } from '@bounty/ui';
-import { Users } from 'lucide-react';
+import { Users, EyeOff, Activity } from 'lucide-react';
 
 type NavItem = {
   title: string;
@@ -67,6 +67,16 @@ export const adminNavSections: SettingsSection[] = [
         title: 'Users',
         url: '/admin/users',
         icon: Users,
+      },
+      {
+        title: 'Moderation',
+        url: '/admin/moderation',
+        icon: EyeOff,
+      },
+      {
+        title: 'Events',
+        url: '/admin/events',
+        icon: Activity,
       },
     ],
   },

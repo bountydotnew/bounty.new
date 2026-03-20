@@ -43,6 +43,12 @@ interface BountyActionsProviderProps {
   onToggleBookmark?: () => void;
   /** Additional action items to display in dropdown */
   actions?: ActionItem[];
+  /** Custom on hide callback (admin only) */
+  onHide?: () => void;
+  /** Whether the current user is an admin */
+  isAdmin?: boolean;
+  /** Whether the user is logged in */
+  isLoggedIn?: boolean;
 }
 
 /**
@@ -81,6 +87,9 @@ export function BountyActionsProvider({
   onDelete,
   onShare,
   onToggleBookmark,
+  onHide,
+  isAdmin = false,
+  isLoggedIn = false,
   actions,
 }: BountyActionsProviderProps) {
   const queryClient = useQueryClient();
@@ -180,6 +189,34 @@ export function BountyActionsProvider({
     },
   });
 
+  // Report bounty mutation
+  const reportMutation = useMutation({
+    mutationFn: async ({
+      reason,
+      description,
+    }: {
+      reason: 'spam' | 'harassment' | 'inappropriate' | 'scam' | 'other';
+      description?: string;
+    }) => {
+      return await trpcClient.moderation.reportContent.mutate({
+        contentType: 'bounty',
+        contentId: bountyId,
+        reason,
+        description,
+      });
+    },
+    onSuccess: () => {
+      toast.success('Report submitted', {
+        description: 'Thank you for helping keep our community safe.',
+      });
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to submit report', {
+        description: error.message,
+      });
+    },
+  });
+
   // Actions object
   const actionsValue: BountyActionsActions = useMemo(
     () => ({
@@ -226,6 +263,15 @@ export function BountyActionsProvider({
       syncToGithub: () => {
         syncToGithubMutation.mutate();
       },
+      hide: () => {
+        onHide?.();
+      },
+      report: (
+        reason: 'spam' | 'harassment' | 'inappropriate' | 'scam' | 'other',
+        description?: string
+      ) => {
+        reportMutation.mutate({ reason, description });
+      },
     }),
     [
       onToggleBookmark,
@@ -236,9 +282,11 @@ export function BountyActionsProvider({
       onShare,
       onEdit,
       onDelete,
+      onHide,
       createGithubIssueMutation,
       checkGithubSyncMutation,
       syncToGithubMutation,
+      reportMutation,
     ]
   );
 
@@ -255,8 +303,11 @@ export function BountyActionsProvider({
       isCreateGithubIssuePending: createGithubIssueMutation.isPending,
       isCheckGithubSyncPending: checkGithubSyncMutation.isPending,
       isSyncToGithubPending: syncToGithubMutation.isPending,
+      isReportPending: reportMutation.isPending,
       repositoryUrl,
       issueUrl,
+      isAdmin,
+      isLoggedIn,
     }),
     [
       isVoted,
@@ -269,8 +320,11 @@ export function BountyActionsProvider({
       createGithubIssueMutation.isPending,
       checkGithubSyncMutation.isPending,
       syncToGithubMutation.isPending,
+      reportMutation.isPending,
       repositoryUrl,
       issueUrl,
+      isAdmin,
+      isLoggedIn,
     ]
   );
 
@@ -282,8 +336,9 @@ export function BountyActionsProvider({
       onEdit,
       onDelete,
       onShare,
+      onHide,
     }),
-    [bountyId, actions, onEdit, onDelete, onShare]
+    [bountyId, actions, onEdit, onDelete, onShare, onHide]
   );
 
   const contextValue: BountyActionsContextValue = useMemo(

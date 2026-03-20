@@ -80,6 +80,7 @@ export function BountyDetailHeader() {
     canRequestCancellation,
     hasPendingCancellation,
     isCancelled,
+    isAdmin,
   } = state;
 
   const githubUrl = issueUrl || repositoryUrl;
@@ -175,6 +176,9 @@ export function BountyDetailHeader() {
             onDelete={canDelete ? actions.delete : undefined}
             onEdit={actions.openEditModal}
             onShare={actions.share}
+            onHide={isAdmin ? actions.toggleHide : undefined}
+            isAdmin={isAdmin}
+            isLoggedIn={isAuthenticated}
             onUpvote={actions.upvote}
             repositoryUrl={repositoryUrl}
             issueUrl={issueUrl}

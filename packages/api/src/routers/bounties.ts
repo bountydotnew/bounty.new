@@ -32,6 +32,7 @@ import {
   approvalWithdrawnComment,
 } from '@bounty/api/src/lib/bot-comments';
 import { track } from '@bounty/track';
+import { trackAdminEvent } from '@bounty/track/server';
 import { TRPCError } from '@trpc/server';
 import {
   createBountyCheckoutSession,
@@ -86,6 +87,7 @@ import {
 import { realtime } from '@bounty/realtime';
 import { GITHUB_ISSUE_URL_REGEX, GITHUB_URL_REGEX } from '@bounty/ui/lib/utils';
 import { parseLinksFromMarkdown } from '@bounty/ui/lib/links';
+import { noProfanityWithTracking } from '../lib/profanity-tracker';
 import { GithubManager } from '@bounty/api/driver/github';
 import { fetchContributorScores } from '../lib/contributor-score';
 import { account } from '@bounty/db';
@@ -233,8 +235,15 @@ async function ensureOrgStripeCustomer(
 }
 
 const createBountySchema = z.object({
-  title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
+  title: z
+    .string()
+    .min(1, 'Title is required')
+    .max(200, 'Title too long')
+    .superRefine(noProfanityWithTracking('title', 'bounty')),
+  description: z
+    .string()
+    .min(10, 'Description must be at least 10 characters')
+    .superRefine(noProfanityWithTracking('description', 'bounty')),
   amount: z.string().regex(/^\d{1,13}(\.\d{1,2})?$/, 'Incorrect amount.'),
   currency: z.string().default('USD'),
   deadline: z
@@ -285,8 +294,17 @@ const createBountySchema = z.object({
 
 const updateBountySchema = z.object({
   id: z.string().uuid(),
-  title: z.string().min(1).max(200).optional(),
-  description: z.string().min(10).optional(),
+  title: z
+    .string()
+    .min(1)
+    .max(200)
+    .superRefine(noProfanityWithTracking('title', 'bounty'))
+    .optional(),
+  description: z
+    .string()
+    .min(10)
+    .superRefine(noProfanityWithTracking('description', 'bounty'))
+    .optional(),
   // Removed: amount, currency - prices cannot be changed after creation
   deadline: z
     .string()
@@ -345,7 +363,8 @@ const submitBountyApplicationSchema = z.object({
   bountyId: z.string().uuid(),
   message: z
     .string()
-    .min(10, 'Application message must be at least 10 characters'),
+    .min(10, 'Application message must be at least 10 characters')
+    .superRefine(noProfanityWithTracking('message', 'submission')),
 });
 
 const submitBountyWorkSchema = z.object({
@@ -965,6 +984,9 @@ export const bountiesRouter = router({
 
         const conditions: (SQL | undefined)[] = [];
 
+        // Exclude hidden bounties from feeds
+        conditions.push(eq(bounty.isHidden, false));
+
         // Exclude draft, completed, and cancelled bounties unless the caller
         // is explicitly filtering by status.
         if (input.status) {
@@ -1170,7 +1192,7 @@ export const bountiesRouter = router({
         })
         .from(bounty)
         .innerJoin(user, eq(bounty.createdById, user.id))
-        .where(eq(bounty.status, 'open'))
+        .where(and(eq(bounty.status, 'open'), eq(bounty.isHidden, false)))
         .orderBy(sql`RANDOM()`)
         .limit(1);
 
@@ -1229,7 +1251,12 @@ export const bountiesRouter = router({
           })
           .from(bounty)
           .innerJoin(user, eq(bounty.createdById, user.id))
-          .where(eq(bounty.createdById, input.userId))
+          .where(
+            and(
+              eq(bounty.createdById, input.userId),
+              eq(bounty.isHidden, false)
+            )
+          )
           .orderBy(desc(bounty.createdAt));
         return {
           success: true,
@@ -1275,7 +1302,8 @@ export const bountiesRouter = router({
           .where(
             and(
               eq(bounty.createdById, input.userId),
-              eq(bounty.isFeatured, true)
+              eq(bounty.isFeatured, true),
+              eq(bounty.isHidden, false)
             )
           )
           .orderBy(desc(bounty.createdAt));
@@ -2106,7 +2134,11 @@ export const bountiesRouter = router({
     .input(
       z.object({
         bountyId: z.string().uuid(),
-        content: z.string().min(1).max(245),
+        content: z
+          .string()
+          .min(1)
+          .max(245)
+          .superRefine(noProfanityWithTracking('content', 'comment')),
         parentId: z.string().uuid().optional(),
       })
     )
@@ -2315,7 +2347,11 @@ export const bountiesRouter = router({
     .input(
       z.object({
         commentId: z.string().uuid(),
-        content: z.string().min(1).max(245),
+        content: z
+          .string()
+          .min(1)
+          .max(245)
+          .superRefine(noProfanityWithTracking('content', 'comment')),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -2743,6 +2779,18 @@ export const bountiesRouter = router({
           amount: existingBounty.amount,
           stripeId: existingBounty.stripePaymentIntentId,
         });
+
+        // Track bounty funded event
+        try {
+          await track('bounty_funded', {
+            bounty_id: input.bountyId,
+            user_id: ctx.session.user.id,
+            amount: parseAmount(existingBounty.amount),
+            source: 'confirm_payment',
+          });
+        } catch {
+          // Ignore tracking errors
+        }
 
         return {
           success: true,
@@ -4007,6 +4055,19 @@ To process this request:
         console.log(
           `[Cancellation] Request created for bounty ${input.bountyId}, ${pendingSubmitters.length} submitters to notify`
         );
+
+        // Track cancellation request event
+        try {
+          await track('bounty_cancellation_requested', {
+            bounty_id: input.bountyId,
+            user_id: ctx.session.user.id,
+            amount: bountyAmount,
+            pending_submissions: pendingSubmitters.length,
+            source: 'api',
+          });
+        } catch {
+          // Ignore tracking errors
+        }
 
         return {
           success: true,
@@ -5632,6 +5693,19 @@ ${formattedAmount} ${isFunded ? `![Funded](${fundedBadgeUrl})` : ''}
         });
       }
 
+      // Track bounty completed event
+      try {
+        await track('bounty_completed', {
+          bounty_id: bountyRecord.id,
+          amount: parseAmount(bountyRecord.amount),
+          solver_id: solver.id,
+          is_free_bounty: isFreeBounty,
+          source: 'merge_submission',
+        });
+      } catch {
+        // Ignore tracking errors
+      }
+
       return {
         success: true,
         message: isFreeBounty
@@ -5936,6 +6010,64 @@ ${formattedAmount} ${isFunded ? `![Funded](${fundedBadgeUrl})` : ''}
       return {
         success: true,
         message: 'Submission withdrawn',
+      };
+    }),
+
+  // ========================================================================
+  // Admin Moderation
+  // ========================================================================
+
+  getHiddenBounties: adminProcedure.query(async () => {
+    const results = await db
+      .select({
+        id: bounty.id,
+        title: bounty.title,
+        amount: bounty.amount,
+        status: bounty.status,
+        createdAt: bounty.createdAt,
+        creator: {
+          id: user.id,
+          name: user.name,
+          image: user.image,
+        },
+      })
+      .from(bounty)
+      .innerJoin(user, eq(bounty.createdById, user.id))
+      .where(eq(bounty.isHidden, true))
+      .orderBy(desc(bounty.updatedAt));
+
+    return results.map((r) => ({ ...r, amount: parseAmount(r.amount) }));
+  }),
+
+  hideBounty: adminProcedure
+    .input(z.object({ bountyId: z.string(), hidden: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const [updated] = await db
+        .update(bounty)
+        .set({ isHidden: input.hidden, updatedAt: new Date() })
+        .where(eq(bounty.id, input.bountyId))
+        .returning({ id: bounty.id, title: bounty.title, isHidden: bounty.isHidden });
+
+      if (!updated) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Bounty not found',
+        });
+      }
+
+      // Track admin event
+      void trackAdminEvent(input.hidden ? 'content_hidden' : 'content_unhidden', {
+        actorId: ctx.session.user.id,
+        targetType: 'bounty',
+        targetId: input.bountyId,
+        description: `${ctx.session.user.name || 'Admin'} ${input.hidden ? 'hid' : 'unhid'} bounty "${updated.title}"`,
+      });
+
+      await invalidateBountyCaches();
+
+      return {
+        success: true,
+        hidden: updated.isHidden,
       };
     }),
 });

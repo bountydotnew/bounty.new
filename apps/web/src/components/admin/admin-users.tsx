@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryState, parseAsInteger, parseAsString } from 'nuqs';
 import { authClient } from '@bounty/auth/client';
 import { toast } from 'sonner';
 import {
@@ -12,8 +13,10 @@ import {
 import { Input } from '@bounty/ui/components/input';
 import { cn } from '@bounty/ui/lib/utils';
 import { Button } from '@bounty/ui/components/button';
-import { Mail, Search, Plus } from 'lucide-react';
+import { Mail, Search, Plus, Ban, CheckCircle2 } from 'lucide-react';
 import { useSession } from '@/context/session-context';
+import { trpcClient } from '@/utils/trpc';
+import Link from 'next/link';
 import {
   CreateInviteDialog,
   SendInviteConfirmDialog,
@@ -27,6 +30,7 @@ interface UserRow {
   role: string | null;
   banned: boolean | null;
   createdAt: Date | string;
+  handle?: string | null;
 }
 
 const PAGE_SIZE = 25;
@@ -53,8 +57,14 @@ function roleBadge(role: string | null) {
 
 export function AdminUsers() {
   const { session } = useSession();
-  const [search, setSearch] = useState('');
-  const [offset, setOffset] = useState(0);
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useQueryState(
+    'search',
+    parseAsString.withDefault('')
+  );
+  const [userId, setUserId] = useQueryState('id', parseAsString.withDefault(''));
+  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
+  const offset = (page - 1) * PAGE_SIZE;
 
   // Create invite dialog (manual email entry)
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -63,20 +73,54 @@ export function AdminUsers() {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState('');
 
+  const banMutation = useMutation({
+    mutationFn: (userId: string) =>
+      trpcClient.user.adminBanUser.mutate({ userId, reason: 'Banned by admin' }),
+    onSuccess: () => {
+      toast.success('User banned');
+      queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Failed to ban user');
+    },
+  });
+
+  const unbanMutation = useMutation({
+    mutationFn: (userId: string) =>
+      trpcClient.user.adminUnbanUser.mutate({ userId }),
+    onSuccess: () => {
+      toast.success('User unbanned');
+      queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Failed to unban user');
+    },
+  });
+
   const { data, isLoading } = useQuery({
-    queryKey: ['admin', 'listUsers', search, offset],
+    queryKey: ['admin', 'listUsers', search, userId, offset],
     queryFn: async () => {
+      // Build search params - ID takes priority over email search
+      let searchParams = {};
+      if (userId.trim()) {
+        searchParams = {
+          searchValue: userId.trim(),
+          searchField: 'id' as const,
+          searchOperator: 'eq' as const,
+        };
+      } else if (search.trim()) {
+        searchParams = {
+          searchValue: search.trim(),
+          searchField: 'email' as const,
+          searchOperator: 'contains' as const,
+        };
+      }
+
       const result = await authClient.admin.listUsers({
         query: {
           limit: PAGE_SIZE,
           offset,
-          ...(search.trim()
-            ? {
-                searchValue: search.trim(),
-                searchField: 'email' as const,
-                searchOperator: 'contains' as const,
-              }
-            : {}),
+          ...searchParams,
           sortBy: 'createdAt',
           sortDirection: 'desc',
         },
@@ -98,7 +142,6 @@ export function AdminUsers() {
   const users = data?.users ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / PAGE_SIZE);
-  const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
 
   return (
     <div className="space-y-8">
@@ -124,12 +167,28 @@ export function AdminUsers() {
           value={search}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             setSearch(e.target.value);
-            setOffset(0);
+            setUserId(''); // Clear ID filter when searching by email
+            setPage(1);
           }}
           placeholder="Search by email..."
           className="pl-9"
         />
       </div>
+
+      {/* Show ID filter indicator */}
+      {userId && (
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-text-muted">Filtering by ID:</span>
+          <code className="bg-surface-2 px-2 py-0.5 rounded text-xs">{userId}</code>
+          <button
+            type="button"
+            onClick={() => setUserId('')}
+            className="text-text-tertiary hover:text-foreground text-xs underline"
+          >
+            Clear
+          </button>
+        </div>
+      )}
 
       {/* User list */}
       <div className="rounded-xl border border-border-subtle overflow-hidden">
@@ -150,12 +209,18 @@ export function AdminUsers() {
           <div className="divide-y divide-border-subtle">
             {users.map((u) => {
               const badge = roleBadge(u.role);
+              const isCurrentUser = u.id === session?.user?.id;
+              const isBanned = u.banned === true;
+
               return (
                 <div
                   key={u.id}
-                  className="flex items-center justify-between px-4 py-3 hover:bg-surface-hover transition-colors"
+                  className="flex items-center justify-between px-4 py-3"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <Link
+                    href={u.handle ? `/profile/${u.handle}` : `/profile/${u.id}`}
+                    className="flex items-center gap-3 min-w-0 hover:opacity-80"
+                  >
                     <Avatar className="h-8 w-8 rounded-full shrink-0">
                       {u.image && (
                         <AvatarImage alt={u.name ?? ''} src={u.image} />
@@ -167,9 +232,14 @@ export function AdminUsers() {
                         <span className="text-sm font-medium text-foreground truncate">
                           {u.name ?? u.email}
                         </span>
-                        {u.id === session?.user?.id && (
+                        {isCurrentUser && (
                           <span className="text-[11px] text-text-tertiary bg-surface-2 px-1.5 py-0.5 rounded">
                             you
+                          </span>
+                        )}
+                        {isBanned && (
+                          <span className="text-[11px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded">
+                            banned
                           </span>
                         )}
                       </div>
@@ -177,9 +247,9 @@ export function AdminUsers() {
                         {u.email}
                       </span>
                     </div>
-                  </div>
+                  </Link>
 
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0">
                     <span
                       className={cn(
                         'text-xs font-medium px-2 py-0.5 rounded',
@@ -189,18 +259,43 @@ export function AdminUsers() {
                       {badge.label}
                     </span>
 
-                    {u.role === 'user' && (
-                      <button
-                        type="button"
+                    {u.role === 'user' && !isBanned && (
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => {
                           setConfirmEmail(u.email);
                           setConfirmDialogOpen(true);
                         }}
-                        className="p-1.5 rounded-md text-text-tertiary hover:text-foreground hover:bg-surface-hover transition-colors"
                         title={`Send invite to ${u.email}`}
                       >
-                        <Mail className="h-4 w-4" />
-                      </button>
+                        <Mail className="h-3.5 w-3.5" />
+                        Invite
+                      </Button>
+                    )}
+
+                    {!isCurrentUser && u.role !== 'admin' && (
+                      isBanned ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => unbanMutation.mutate(u.id)}
+                          disabled={unbanMutation.isPending}
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Unban
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => banMutation.mutate(u.id)}
+                          disabled={banMutation.isPending}
+                        >
+                          <Ban className="h-3.5 w-3.5" />
+                          Ban
+                        </Button>
+                      )
                     )}
                   </div>
                 </div>
@@ -214,21 +309,21 @@ export function AdminUsers() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-sm text-text-muted">
           <span>
-            Page {currentPage} of {totalPages}
+            Page {page} of {totalPages}
           </span>
           <div className="flex gap-2">
             <button
               type="button"
-              disabled={offset === 0}
-              onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
+              disabled={page <= 1}
+              onClick={() => setPage(Math.max(1, page - 1))}
               className="rounded-lg border border-border-subtle px-3 py-1.5 text-sm transition-colors hover:bg-surface-hover disabled:opacity-40"
             >
               Previous
             </button>
             <button
               type="button"
-              disabled={currentPage >= totalPages}
-              onClick={() => setOffset(offset + PAGE_SIZE)}
+              disabled={page >= totalPages}
+              onClick={() => setPage(page + 1)}
               className="rounded-lg border border-border-subtle px-3 py-1.5 text-sm transition-colors hover:bg-surface-hover disabled:opacity-40"
             >
               Next

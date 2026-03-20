@@ -1,9 +1,11 @@
 'use client';
 
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import {
   Bookmark,
   Edit,
+  EyeOff,
+  Flag,
   MoreHorizontal,
   RefreshCw,
   Share2,
@@ -25,6 +27,7 @@ import {
 import { Button } from '@bounty/ui/components/button';
 import { GithubIcon } from '@bounty/ui';
 import { BountyActionsContext } from './context';
+import { ReportDialog } from '../report-dialog';
 import type { ActionItem } from '@/types/bounty-actions';
 
 /**
@@ -45,6 +48,8 @@ export function Dropdown() {
   if (!context) {
     throw new Error('Dropdown must be used within BountyActionsProvider');
   }
+
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
   const { state, actions, meta } = context;
   const {
@@ -88,6 +93,7 @@ export function Dropdown() {
     ) || [];
 
   return (
+    <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild nativeButton>
         <Button
@@ -135,6 +141,18 @@ export function Dropdown() {
             />
             {bookmarked ? 'Remove bookmark' : 'Bookmark'}
           </DropdownMenuItem>
+
+          {/* Report action - only for logged in non-owners */}
+          {state.isLoggedIn && !isOwner && (
+            <DropdownMenuItem
+              className="text-foreground hover:bg-surface-hover rounded-md"
+              onClick={() => setReportDialogOpen(true)}
+              disabled={state.isReportPending}
+            >
+              <Flag className="h-3.5 w-3.5" />
+              Report
+            </DropdownMenuItem>
+          )}
         </div>
 
         {/* GitHub actions group - only visible to bounty owner */}
@@ -228,7 +246,9 @@ export function Dropdown() {
         )}
 
         {/* Destructive actions at the bottom */}
-        {(destructiveActions.length > 0 || (canDelete && onDelete)) && (
+        {(destructiveActions.length > 0 ||
+          (canDelete && onDelete) ||
+          (state.isAdmin && meta.onHide)) && (
           <div className="flex flex-col gap-0.5 mt-2 pt-2 border-t border-border-subtle">
             {destructiveActions.map((action) => {
               const menuItem = (
@@ -266,6 +286,15 @@ export function Dropdown() {
 
               return menuItem;
             })}
+            {state.isAdmin && meta.onHide && (
+              <DropdownMenuItem
+                className="text-destructive hover:bg-destructive/10 focus:text-destructive focus:bg-destructive/10 rounded-md"
+                onClick={() => actions.hide()}
+              >
+                <EyeOff className="h-3.5 w-3.5" />
+                Hide bounty
+              </DropdownMenuItem>
+            )}
             {canDelete && onDelete && (
               <DropdownMenuItem
                 className="text-destructive hover:bg-destructive/10 focus:text-destructive focus:bg-destructive/10 rounded-md"
@@ -279,5 +308,18 @@ export function Dropdown() {
         )}
       </DropdownMenuContent>
     </DropdownMenu>
+
+    {/* Report Dialog */}
+    <ReportDialog
+      open={reportDialogOpen}
+      onOpenChange={setReportDialogOpen}
+      onSubmit={(reason, description) => {
+        actions.report(reason, description);
+        setReportDialogOpen(false);
+      }}
+      isSubmitting={state.isReportPending}
+      contentType="bounty"
+    />
+    </>
   );
 }

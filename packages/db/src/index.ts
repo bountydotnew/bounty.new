@@ -1,11 +1,13 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
+import * as adminEventsSchema from './schema/admin-events';
 import * as authSchema from './schema/auth';
 import * as betaApplicationsSchema from './schema/beta-applications';
 import * as bountiesSchema from './schema/bounties';
 import * as featureVotesSchema from './schema/feature-votes';
 import * as invitesSchema from './schema/invites';
 import * as linearAccountSchema from './schema/linear-account';
+import * as moderationSchema from './schema/moderation';
 import * as notificationsSchema from './schema/notifications';
 import * as organizationSchema from './schema/organization';
 import * as passkeySchema from './schema/passkey';
@@ -26,11 +28,13 @@ const pool = new Pool({
 
 export const db = drizzle(pool, {
   schema: {
+    ...adminEventsSchema,
     ...authSchema,
     ...bountiesSchema,
     ...profilesSchema,
     ...betaApplicationsSchema,
     ...passkeySchema,
+    ...moderationSchema,
     ...notificationsSchema,
     ...invitesSchema,
     ...organizationSchema,
@@ -41,12 +45,14 @@ export const db = drizzle(pool, {
 });
 
 // Export all schemas
+export * from './schema/admin-events';
 export * from './schema/auth';
 export * from './schema/beta-applications';
 export * from './schema/bounties';
 export * from './schema/feature-votes';
 export * from './schema/invites';
 export * from './schema/linear-account';
+export * from './schema/moderation';
 export * from './schema/notifications';
 export * from './schema/organization';
 export * from './schema/passkey';

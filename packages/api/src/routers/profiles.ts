@@ -15,10 +15,19 @@ import { LRUCache } from '../lib/lru-cache';
 import { protectedProcedure, publicProcedure, router } from '../trpc';
 import { GithubManager } from '@bounty/api/driver/github';
 import { fetchProfileScoreWithDossier } from '../lib/profile-score';
+import { noProfanityWithTracking } from '../lib/profanity-tracker';
 
 const updateProfileSchema = z.object({
-  bio: z.string().max(500).optional(),
-  location: z.string().max(100).optional(),
+  bio: z
+    .string()
+    .max(500)
+    .superRefine(noProfanityWithTracking('bio', 'user'))
+    .optional(),
+  location: z
+    .string()
+    .max(100)
+    .superRefine(noProfanityWithTracking('location', 'user'))
+    .optional(),
   website: z.string().url().optional(),
   githubUsername: z.string().max(50).optional(),
   twitterUsername: z.string().max(50).optional(),
@@ -38,7 +47,11 @@ const rateUserSchema = z.object({
   ratedUserId: z.string().uuid(),
   bountyId: z.string().uuid(),
   rating: z.number().int().min(1).max(5),
-  comment: z.string().max(500).optional(),
+  comment: z
+    .string()
+    .max(500)
+    .superRefine(noProfanityWithTracking('comment', 'user'))
+    .optional(),
 });
 
 // LRU Cache for user profiles (cache for 5 minutes, max 200 profiles)

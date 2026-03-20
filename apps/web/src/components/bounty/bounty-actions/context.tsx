@@ -23,10 +23,15 @@ export interface BountyActionsState {
   isCreateGithubIssuePending: boolean;
   isCheckGithubSyncPending: boolean;
   isSyncToGithubPending: boolean;
+  isReportPending: boolean;
   /** Repository URL if linked */
   repositoryUrl: string | null;
   /** Issue URL if linked */
   issueUrl: string | null;
+  /** Whether the current user is an admin */
+  isAdmin: boolean;
+  /** Whether the user is logged in */
+  isLoggedIn: boolean;
 }
 
 /**
@@ -50,6 +55,10 @@ export interface BountyActionsActions {
   checkGithubSync: () => void;
   /** Sync to GitHub */
   syncToGithub: () => void;
+  /** Hide/unhide bounty (admin only) */
+  hide: () => void;
+  /** Report bounty for moderation */
+  report: (reason: 'spam' | 'harassment' | 'inappropriate' | 'scam' | 'other', description?: string) => void;
   /** Request cancellation (for funded bounties) */
   requestCancellation?: (reason?: string) => void;
   /** Cancel cancellation request */
@@ -71,6 +80,8 @@ export interface BountyActionsMeta {
   onDelete?: () => void;
   /** Custom on share callback */
   onShare?: () => void;
+  /** Custom on hide callback (admin only) */
+  onHide?: () => void;
 }
 
 /**
@@ -87,4 +98,5 @@ export interface BountyActionsContextValue {
  * Context for BountyActions compound components
  * Null means we're outside the provider
  */
-export const BountyActionsContext = createContext<BountyActionsContextValue | null>(null);
+export const BountyActionsContext =
+  createContext<BountyActionsContextValue | null>(null);

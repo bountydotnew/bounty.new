@@ -62,6 +62,7 @@
     "./styles/index.css": "./src/styles/index.css",
     "./postcss.config": "./postcss.config.mjs",
     "./lib/*": "./src/lib/*.ts",
+    "./lib/profanity": "./src/lib/profanity/index.ts",
     "./components/*": "./src/components/*.tsx",
     "./hooks/*": "./src/hooks/*.ts"
   },

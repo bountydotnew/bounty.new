@@ -1,14 +1,27 @@
 'use client';
 
+import { useState } from 'react';
 import {
   Avatar,
   AvatarFacehash,
   AvatarImage,
 } from '@bounty/ui/components/avatar';
+import { Button } from '@bounty/ui/components/button';
 import { format } from 'date-fns';
-import { CalendarIcon, MapPinIcon, LinkIcon } from 'lucide-react';
+import { CalendarIcon, MapPinIcon, LinkIcon, Flag, MoreHorizontal } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@bounty/ui/components/dropdown-menu';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { GitHubActivityChart } from './github-activity-chart';
 import { ProfileScoreRing } from './profile-score-ring';
+import { ReportDialog } from '@/components/bounty/report-dialog';
+import { useSession } from '@/context/session-context';
+import { trpcClient } from '@/utils/trpc';
 import type {
   ProfileUser,
   ProfileData,
@@ -75,6 +88,35 @@ function sanitizeUrl(url: string | null | undefined): string | null {
 }
 
 export function ProfileHeader({ user, profile }: ProfileHeaderProps) {
+  const { session } = useSession();
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+
+  const isOwnProfile = session?.user?.id === user.id;
+  const isLoggedIn = !!session?.user;
+
+  const reportMutation = useMutation({
+    mutationFn: ({
+      reason,
+      description,
+    }: {
+      reason: 'spam' | 'harassment' | 'inappropriate' | 'scam' | 'other';
+      description?: string;
+    }) =>
+      trpcClient.moderation.reportContent.mutate({
+        contentType: 'user',
+        contentId: user.id,
+        reason,
+        description,
+      }),
+    onSuccess: () => {
+      toast.success('Report submitted. Our team will review it.');
+      setReportDialogOpen(false);
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Failed to submit report');
+    },
+  });
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
@@ -95,19 +137,42 @@ export function ProfileHeader({ user, profile }: ProfileHeaderProps) {
           </Avatar>
 
           <div className="flex flex-col gap-2 pt-1">
-            <div className="flex flex-col gap-1">
-              <h1 className="text-2xl font-semibold text-foreground md:text-3xl">
-                {user.name || 'Anonymous User'}
-              </h1>
-              {profile?.githubUsername && (
-                <a
-                  href={`https://github.com/${profile.githubUsername}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-text-tertiary hover:text-text-secondary transition-colors w-fit"
-                >
-                  @{profile.githubUsername}
-                </a>
+            <div className="flex items-start gap-2">
+              <div className="flex flex-col gap-1">
+                <h1 className="text-2xl font-semibold text-foreground md:text-3xl">
+                  {user.name || 'Anonymous User'}
+                </h1>
+                {profile?.githubUsername && (
+                  <a
+                    href={`https://github.com/${profile.githubUsername}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-text-tertiary hover:text-text-secondary transition-colors w-fit"
+                  >
+                    @{profile.githubUsername}
+                  </a>
+                )}
+              </div>
+
+              {/* Actions dropdown - only show if logged in and not own profile */}
+              {isLoggedIn && !isOwnProfile && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="size-4 shrink-0">
+                      <MoreHorizontal className="size-3.5" />
+                      <span className="sr-only">More options</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => setReportDialogOpen(true)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Flag className="size-3.5 mr-2" />
+                      Report user
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
 
@@ -186,6 +251,17 @@ export function ProfileHeader({ user, profile }: ProfileHeaderProps) {
       {profile?.githubUsername && (
         <GitHubActivityChart username={profile.githubUsername} />
       )}
+
+      {/* Report dialog */}
+      <ReportDialog
+        open={reportDialogOpen}
+        onOpenChange={setReportDialogOpen}
+        onSubmit={(reason, description) => {
+          reportMutation.mutate({ reason, description });
+        }}
+        isSubmitting={reportMutation.isPending}
+        contentType="user"
+      />
     </div>
   );
 }

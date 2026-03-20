@@ -28,6 +28,8 @@ import {
   publicProcedure,
   router,
 } from '../trpc';
+import { noProfanityWithTracking } from '../lib/profanity-tracker';
+import { trackAdminEvent } from '@bounty/track/server';
 
 type UserReputationRow = typeof userReputation.$inferSelect;
 
@@ -118,7 +120,14 @@ export const userRouter = router({
 
   adminUpdateName: adminProcedure
     .input(
-      z.object({ userId: z.string().uuid(), name: z.string().min(1).max(80) })
+      z.object({
+        userId: z.string().uuid(),
+        name: z
+          .string()
+          .min(1)
+          .max(80)
+          .superRefine(noProfanityWithTracking('name', 'user')),
+      })
     )
     .mutation(async ({ input }) => {
       const [updated] = await db
@@ -757,4 +766,131 @@ export const userRouter = router({
       accounts,
     };
   }),
+
+  // ==========================================================================
+  // Admin User Ban/Unban
+  // ==========================================================================
+
+  adminBanUser: adminProcedure
+    .input(
+      z.object({
+        userId: z.string().min(1), // Can be UUID or cuid2
+        reason: z.string().min(1).max(500),
+        expiresAt: z.string().datetime().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [target] = await db
+        .select({ id: user.id, name: user.name, banned: user.banned })
+        .from(user)
+        .where(eq(user.id, input.userId))
+        .limit(1);
+
+      if (!target) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'User not found',
+        });
+      }
+
+      if (target.banned) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'User is already banned',
+        });
+      }
+
+      // Don't allow banning yourself
+      if (target.id === ctx.session.user.id) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Cannot ban yourself',
+        });
+      }
+
+      const expiresAt = input.expiresAt ? new Date(input.expiresAt) : null;
+
+      await db
+        .update(user)
+        .set({
+          banned: true,
+          banReason: input.reason,
+          banExpires: expiresAt,
+          updatedAt: new Date(),
+        })
+        .where(eq(user.id, input.userId));
+
+      // Invalidate sessions for banned user
+      await db.delete(session).where(eq(session.userId, input.userId));
+
+      // Track admin event
+      void trackAdminEvent('user_banned', {
+        actorId: ctx.session.user.id,
+        targetType: 'user',
+        targetId: input.userId,
+        description: `${ctx.session.user.name || 'Admin'} banned ${target.name || 'user'}`,
+        metadata: {
+          reason: input.reason,
+          expiresAt: expiresAt?.toISOString() ?? null,
+        },
+      });
+
+      // Invalidate cache
+      currentUserCache.delete(input.userId);
+
+      return {
+        success: true,
+        message: 'User banned successfully',
+      };
+    }),
+
+  adminUnbanUser: adminProcedure
+    .input(z.object({ userId: z.string().min(1) })) // Can be UUID or cuid2
+    .mutation(async ({ ctx, input }) => {
+      const [target] = await db
+        .select({ id: user.id, name: user.name, banned: user.banned })
+        .from(user)
+        .where(eq(user.id, input.userId))
+        .limit(1);
+
+      if (!target) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'User not found',
+        });
+      }
+
+      if (!target.banned) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'User is not banned',
+        });
+      }
+
+      await db
+        .update(user)
+        .set({
+          banned: false,
+          banReason: null,
+          banExpires: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(user.id, input.userId));
+
+      // Track admin event
+      void trackAdminEvent('user_unbanned', {
+        actorId: ctx.session.user.id,
+        targetType: 'user',
+        targetId: input.userId,
+        description: `${ctx.session.user.name || 'Admin'} unbanned ${target.name || 'user'}`,
+      });
+
+      // Invalidate cache
+      currentUserCache.delete(input.userId);
+
+      return {
+        success: true,
+        message: 'User unbanned successfully',
+      };
+    }),
 });

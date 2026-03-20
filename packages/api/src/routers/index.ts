@@ -1,5 +1,6 @@
 import { withIntrospection } from '@trpc-studio/introspection';
 import { protectedProcedure, publicProcedure, router, t } from '../trpc';
+import { adminEventsRouter } from './admin-events';
 import { bountiesRouter } from './bounties';
 import { connectRouter } from './connect';
 import { earlyAccessRouter } from './early-access';
@@ -7,6 +8,7 @@ import { emailsRouter } from './emails';
 import { featureVotesRouter } from './feature-votes';
 import { githubInstallationRouter } from './github-installation';
 import { linearRouter } from './linear';
+import { moderationRouter } from './moderation';
 import { notificationsRouter } from './notifications';
 import { onboardingRouter } from './onboarding';
 import { organizationRouter } from './organization';
@@ -47,6 +49,8 @@ const baseRouter = router({
   onboarding: onboardingRouter,
   featureVotes: featureVotesRouter,
   organization: organizationRouter,
+  moderation: moderationRouter,
+  adminEvents: adminEventsRouter,
 });
 
 export const appRouter = withIntrospection(t, baseRouter, {

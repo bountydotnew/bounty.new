@@ -26,6 +26,7 @@
     "@better-auth/passkey": "catalog:",
     "@bounty/db": "workspace:*",
     "@bounty/email": "workspace:*",
+    "@bounty/track": "workspace:*",
     "@bounty/env": "workspace:*",
     "@bounty/types": "workspace:*",
     "@octokit/core": "catalog:",

@@ -3,17 +3,35 @@ import { db } from '@bounty/db';
 import type { NextRequest } from 'next/server';
 
 function getClientIP(req: NextRequest): string {
+  // Prefer Vercel's IP header, then fall back to others
+  const vercelIP = req.headers.get('x-vercel-forwarded-for');
   const forwarded = req.headers.get('x-forwarded-for');
   const realIP = req.headers.get('x-real-ip');
   const cfConnectingIP = req.headers.get('cf-connecting-ip');
 
-  let clientIP = forwarded || realIP || cfConnectingIP || 'unknown';
+  let clientIP = vercelIP || forwarded || realIP || cfConnectingIP || 'unknown';
 
   if (clientIP?.includes(',')) {
     clientIP = clientIP.split(',')[0]?.trim() ?? clientIP;
   }
 
   return clientIP;
+}
+
+/**
+ * Extract geolocation from Vercel's geolocation headers
+ * @see https://vercel.com/docs/functions/edge-functions/edge-functions-api#geolocation
+ */
+function getGeolocation(req: NextRequest): {
+  country?: string;
+  region?: string;
+  city?: string;
+} {
+  return {
+    country: req.headers.get('x-vercel-ip-country') ?? undefined,
+    region: req.headers.get('x-vercel-ip-country-region') ?? undefined,
+    city: req.headers.get('x-vercel-ip-city') ?? undefined,
+  };
 }
 
 /**
@@ -73,10 +91,12 @@ export async function createContext(req: NextRequest) {
 
   const clientIP = getClientIP(req);
   const requestId = getRequestId(req);
+  const geo = getGeolocation(req);
 
   return {
     session,
     clientIP,
+    geo,
     requestId,
     req,
     db,

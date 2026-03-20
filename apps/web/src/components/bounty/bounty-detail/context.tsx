@@ -95,6 +95,10 @@ export interface BountyDetailState {
   needsConnectSetup: boolean;
   /** Cancellation status query loading */
   isCancellationStatusLoading: boolean;
+  /** Is current user an admin */
+  isAdmin: boolean;
+  /** Is bounty currently hidden */
+  isHidden: boolean;
 }
 
 /**
@@ -131,6 +135,8 @@ export interface BountyDetailActions {
   submitWork: (pullRequestUrl: string, description?: string) => void;
   /** Withdraw (retract) a pending submission */
   withdrawSubmission: (submissionId: string) => void;
+  /** Hide/unhide bounty (admin only) */
+  toggleHide: () => void;
 }
 
 /**

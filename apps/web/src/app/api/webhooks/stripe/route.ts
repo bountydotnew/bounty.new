@@ -27,6 +27,7 @@ import {
 import { sendBountyCreatedWebhook } from '@bounty/api/src/lib/use-discord-webhook';
 import { createNotification } from '@bounty/db/src/services/notifications';
 import { clearOperationPerformed } from '@bounty/api/src/lib/payment-lock';
+import { track } from '@bounty/track';
 
 /**
  * Sends Discord webhook notification when a bounty becomes funded
@@ -403,6 +404,17 @@ export async function POST(request: Request) {
             await updateGitHubBotCommentOnFunding(bountyId);
             await updateSubmissionReceivedCommentsOnFunding(bountyId);
             await sendFundedBountyWebhook(bountyId);
+
+            // Track bounty funded event
+            try {
+              await track('bounty_funded', {
+                bounty_id: bountyId,
+                amount: Number(existingBounty.amount),
+                source: 'stripe_webhook',
+              });
+            } catch {
+              // Ignore tracking errors
+            }
           }
 
           console.log(
@@ -502,6 +514,17 @@ export async function POST(request: Request) {
           await updateGitHubBotCommentOnFunding(bountyId);
           await updateSubmissionReceivedCommentsOnFunding(bountyId);
           await sendFundedBountyWebhook(bountyId);
+
+          // Track bounty funded event
+          try {
+            await track('bounty_funded', {
+              bounty_id: bountyId,
+              amount: Number(existingBounty.amount),
+              source: 'stripe_webhook',
+            });
+          } catch {
+            // Ignore tracking errors
+          }
 
           console.log(
             `[Stripe Webhook] Successfully updated bounty ${bountyId} to held/open`
@@ -943,6 +966,18 @@ export async function POST(request: Request) {
           console.log(
             `[Stripe Webhook] Created refund transaction for charge ${charge.id}`
           );
+        }
+
+        // Track bounty cancelled event
+        try {
+          await track('bounty_cancelled', {
+            bounty_id: bountyRecord.id,
+            amount: originalAmount,
+            refund_amount: refundedAmount,
+            source: 'stripe_refund',
+          });
+        } catch {
+          // Ignore tracking errors
         }
 
         console.log(

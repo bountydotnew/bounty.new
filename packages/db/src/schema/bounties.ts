@@ -36,12 +36,10 @@ export const paymentStatusEnum = pgEnum('payment_status', [
   'failed',
 ]);
 
-export const cancellationRequestStatusEnum = pgEnum('cancellation_request_status', [
-  'pending',
-  'approved',
-  'rejected',
-  'withdrawn',
-]);
+export const cancellationRequestStatusEnum = pgEnum(
+  'cancellation_request_status',
+  ['pending', 'approved', 'rejected', 'withdrawn']
+);
 
 export const bounty = pgTable(
   'bounty',
@@ -68,12 +66,13 @@ export const bounty = pgTable(
     linearIssueUrl: text('linear_issue_url'),
     linearAccountId: text('linear_account_id'), // Reference to linear_account.id
     linearCommentId: text('linear_comment_id'), // For editing bot comments
-    submissionKeyword: text('submission_keyword').default('@bountydotnew submit'),
-    // Organization scoping — which team owns this bounty
-    organizationId: text('organization_id').references(
-      () => organization.id,
-      { onDelete: 'cascade' }
+    submissionKeyword: text('submission_keyword').default(
+      '@bountydotnew submit'
     ),
+    // Organization scoping — which team owns this bounty
+    organizationId: text('organization_id').references(() => organization.id, {
+      onDelete: 'cascade',
+    }),
     createdById: text('created_by_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
@@ -81,6 +80,7 @@ export const bounty = pgTable(
       onDelete: 'set null',
     }),
     isFeatured: boolean('is_featured').default(false).notNull(),
+    isHidden: boolean('is_hidden').default(false).notNull(),
     // Stripe payment fields
     stripePaymentIntentId: text('stripe_payment_intent_id'),
     stripeCheckoutSessionId: text('stripe_checkout_session_id'),
@@ -89,9 +89,7 @@ export const bounty = pgTable(
     createdAt: timestamp('created_at').notNull().default(sql`now()`),
     updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
   },
-  (t) => [
-    index('bounty_organization_id_idx').on(t.organizationId),
-  ]
+  (t) => [index('bounty_organization_id_idx').on(t.organizationId)]
 );
 
 export const submission = pgTable('submission', {
@@ -136,9 +134,7 @@ export const bounty_links = pgTable(
     createdAt: timestamp('created_at').notNull().default(sql`now()`),
     updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
   },
-  (t) => [
-    index('bounty_links_bounty_id_idx').on(t.bountyId),
-  ]
+  (t) => [index('bounty_links_bounty_id_idx').on(t.bountyId)]
 );
 
 export const bountyApplication = pgTable('bounty_application', {
@@ -252,7 +248,9 @@ export const cancellationRequest = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
     reason: text('reason'),
-    status: cancellationRequestStatusEnum('status').notNull().default('pending'),
+    status: cancellationRequestStatusEnum('status')
+      .notNull()
+      .default('pending'),
     processedById: text('processed_by_id').references(() => user.id, {
       onDelete: 'set null',
     }),

@@ -31,6 +31,7 @@ import {
   verification,
   waitlist,
 } from '@bounty/db';
+import { trackAdminEvent } from '@bounty/track/server';
 import { eq, and } from 'drizzle-orm';
 import crypto from 'node:crypto';
 import { env } from '@bounty/env/server';
@@ -339,6 +340,14 @@ export const auth = betterAuth({
         after: async (user) => {
           // Auto-create a personal team for every new user
           await createPersonalTeam(user);
+
+          // Track user signup for admin panel
+          void trackAdminEvent('user_signup', {
+            actorId: user.id,
+            targetType: 'user',
+            targetId: user.id,
+            description: `${user.name || user.email || 'New user'} signed up`,
+          });
 
           // Derive handle from OAuth provider.
           // mapProfileToUser doesn't pass custom fields to the DB, so we
@@ -744,6 +753,7 @@ export const auth = betterAuth({
     // ========================================================================
     // Dash (Better Auth Infrastructure / Analytics)
     // ========================================================================
+    // @ts-ignore
     dash(),
   ],
 });

@@ -1,15 +1,33 @@
 import { z } from 'zod';
+import { hasProfanity } from './profanity';
+
+// =====================
+// PROFANITY VALIDATION
+// =====================
+
+const PROFANITY_ERROR = 'Your submission contains prohibited language.';
+
+/** Reusable profanity check refinement */
+const noProfanity = (message = PROFANITY_ERROR) => ({
+  check: (val: string) => !hasProfanity(val),
+  message,
+});
 
 // =====================
 // BOUNTY FORMS
 // =====================
 
 export const createBountySchema = z.object({
-  title: z.string().min(1, 'Title cannot be empty').max(200, 'Title too long'),
+  title: z
+    .string()
+    .min(1, 'Title cannot be empty')
+    .max(200, 'Title too long')
+    .refine(noProfanity().check, noProfanity().message),
   description: z
     .string()
     .min(10, 'Description must be at least 10 characters')
-    .max(50_000, 'Description too long'),
+    .max(50_000, 'Description too long')
+    .refine(noProfanity().check, noProfanity().message),
 
   amount: z
     .string()
@@ -113,7 +131,11 @@ export const formatTagsOutput = (tags: string[]): string => {
 // =====================
 
 export const betaApplicationSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
+  name: z
+    .string()
+    .min(1, 'Name is required')
+    .max(100, 'Name too long')
+    .refine(noProfanity().check, noProfanity().message),
   twitter: z
     .string()
     .min(1, 'X/Twitter handle is required')
@@ -121,7 +143,8 @@ export const betaApplicationSchema = z.object({
   projectName: z
     .string()
     .min(1, 'Project name is required')
-    .max(200, 'Project name too long'),
+    .max(200, 'Project name too long')
+    .refine(noProfanity().check, noProfanity().message),
   projectLink: z
     .string()
     .url('Please enter a valid URL')
@@ -133,7 +156,8 @@ export const betaApplicationSchema = z.object({
   description: z
     .string()
     .min(10, 'Description must be at least 10 characters')
-    .max(1000, 'Description too long'),
+    .max(1000, 'Description too long')
+    .refine(noProfanity().check, noProfanity().message),
 });
 
 export type BetaApplicationForm = z.infer<typeof betaApplicationSchema>;
@@ -163,7 +187,8 @@ export const handleSchema = z
   })
   .refine((val) => !(val.startsWith('_') || val.endsWith('_')), {
     message: 'Handle cannot start or end with an underscore',
-  });
+  })
+  .refine(noProfanity().check, noProfanity().message);
 
 export const checkHandleSchema = z.object({
   handle: handleSchema,
@@ -185,9 +210,18 @@ export const profileSchema = z.object({
   displayName: z
     .string()
     .min(1, 'Display name is required')
-    .max(50, 'Display name too long'),
-  bio: z.string().max(500, 'Bio too long').optional(),
-  location: z.string().max(100, 'Location too long').optional(),
+    .max(50, 'Display name too long')
+    .refine(noProfanity().check, noProfanity().message),
+  bio: z
+    .string()
+    .max(500, 'Bio too long')
+    .refine(noProfanity().check, noProfanity().message)
+    .optional(),
+  location: z
+    .string()
+    .max(100, 'Location too long')
+    .refine(noProfanity().check, noProfanity().message)
+    .optional(),
   website: z.string().url('Invalid URL').optional().or(z.literal('')),
   github: z.string().optional(),
   twitter: z.string().optional(),
@@ -204,11 +238,13 @@ export const taskSchema = z.object({
   title: z
     .string()
     .min(1, 'Task title is required')
-    .max(200, 'Task title too long'),
+    .max(200, 'Task title too long')
+    .refine(noProfanity().check, noProfanity().message),
   description: z
     .string()
     .min(1, 'Task description is required')
-    .max(1000, 'Task description too long'),
+    .max(1000, 'Task description too long')
+    .refine(noProfanity().check, noProfanity().message),
   dueDate: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high'], {
     message: 'Please select a priority',
@@ -242,6 +278,7 @@ export const submissionSchema = z.object({
   notes: z
     .string()
     .max(500, 'Notes too long (max 500 characters)')
+    .refine(noProfanity().check, noProfanity().message)
     .optional()
     .or(z.literal('')),
 });
@@ -278,7 +315,10 @@ const optionalWithMinMax = (
     .refine((val) => !val || val.length === 0 || val.length >= min, {
       message: minMsg,
     })
-    .refine((val) => !val || val.length <= max, { message: maxMsg });
+    .refine((val) => !val || val.length <= max, { message: maxMsg })
+    .refine((val) => !val || val.length === 0 || !hasProfanity(val), {
+      message: PROFANITY_ERROR,
+    });
 
 export const waitlistBountySchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -335,7 +375,8 @@ export type WaitlistBountyForm = z.infer<typeof waitlistBountySchema>;
 export const teamNameSchema = z
   .string()
   .min(2, 'Team name must be at least 2 characters')
-  .max(64, 'Team name must be at most 64 characters');
+  .max(64, 'Team name must be at most 64 characters')
+  .refine(noProfanity().check, noProfanity().message);
 
 export const teamSlugSchema = z
   .string()
@@ -344,7 +385,8 @@ export const teamSlugSchema = z
   .regex(
     /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/,
     'Slug can only contain lowercase letters, numbers, and hyphens (cannot start or end with a hyphen)'
-  );
+  )
+  .refine(noProfanity().check, noProfanity().message);
 
 export const createTeamSchema = z.object({
   name: teamNameSchema,

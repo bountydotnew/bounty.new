@@ -1,6 +1,7 @@
 import { Ratelimit } from '@unkey/ratelimit';
 import { env } from '@bounty/env/server';
 import { TRPCError } from '@trpc/server';
+import { trackAdminEvent } from '@bounty/track/server';
 
 // ---------------------------------------------------------------------------
 // Namespace configs
@@ -71,6 +72,12 @@ export async function checkUnkeyRateLimit(
     const result = await limiter.limit(identifier);
 
     if (!result.success) {
+      // Track rate limit hit for admin visibility
+      void trackAdminEvent('ratelimit_hit', {
+        description: `Rate limit hit on ${namespace}`,
+        metadata: { namespace, identifier },
+      });
+
       throw new TRPCError({
         code: 'TOO_MANY_REQUESTS',
         message: 'whoaaaa, slow down there pal',

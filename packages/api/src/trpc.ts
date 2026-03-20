@@ -10,6 +10,7 @@ import {
 } from './lib/ratelimiter';
 import { member, organization } from '@bounty/db';
 import { eq, and } from 'drizzle-orm';
+import { trackAdminEvent } from '@bounty/track/server';
 
 export const t = initTRPC.context<Context>().create({
   errorFormatter({ shape, error, path }) {
@@ -205,6 +206,15 @@ const createPublicRateLimitMiddleware = (operation: RateLimitOperation) => {
     const result = await checkRateLimit(identifier, operation);
 
     if (!result.success) {
+      // Track rate limit hit for admin visibility
+      void trackAdminEvent('ratelimit_hit', {
+        actorId: ctx.session?.user?.id ?? null,
+        ipAddress: ctx.clientIP,
+        geo: ctx.geo,
+        description: `Rate limit hit on ${operation}`,
+        metadata: { operation, retryAfter: result.retryAfter },
+      });
+
       throw new TRPCError({
         code: 'TOO_MANY_REQUESTS',
         message: `Rate limit exceeded. Try again in ${result.retryAfter} seconds.`,
@@ -241,6 +251,15 @@ export const rateLimitedProtectedProcedure = (operation: RateLimitOperation) =>
     const result = await checkRateLimit(identifier, operation);
 
     if (!result.success) {
+      // Track rate limit hit for admin visibility
+      void trackAdminEvent('ratelimit_hit', {
+        actorId: ctx.session.user.id,
+        ipAddress: ctx.clientIP,
+        geo: ctx.geo,
+        description: `Rate limit hit on ${operation}`,
+        metadata: { operation, retryAfter: result.retryAfter },
+      });
+
       throw new TRPCError({
         code: 'TOO_MANY_REQUESTS',
         message: `Rate limit exceeded. Try again in ${result.retryAfter} seconds.`,

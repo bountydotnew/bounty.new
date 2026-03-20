@@ -21,6 +21,7 @@ import {
 import { bounty, member, organization, submission, user } from '@bounty/db';
 import { eq, and, sql, count, ne, inArray } from 'drizzle-orm';
 import { isReservedSlug } from '@bounty/types/auth';
+import { noProfanityWithTracking } from '../lib/profanity-tracker';
 import {
   FROM_ADDRESSES,
   sendEmail,
@@ -275,7 +276,8 @@ export const organizationRouter = router({
           .refine(
             (val) => !/--/.test(val),
             'Slug cannot contain consecutive hyphens'
-          ),
+          )
+          .superRefine(noProfanityWithTracking('slug', 'organization')),
       })
     )
     .mutation(async ({ ctx, input }) => {

@@ -396,6 +396,21 @@ function useBountyDetailMutations({
     },
   });
 
+  const hideBountyMutation = useMutation({
+    mutationFn: async (input: { bountyId: string; hidden: boolean }) => {
+      return await trpcClient.bounties.hideBounty.mutate(input);
+    },
+    onSuccess: (data) => {
+      toast.success(data.hidden ? 'Bounty hidden' : 'Bounty unhidden');
+      queryClient.invalidateQueries({
+        queryKey: [['bounties']],
+      });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update bounty visibility');
+    },
+  });
+
   return {
     queryClient,
     voteMutation,
@@ -410,6 +425,7 @@ function useBountyDetailMutations({
     mergeSubmissionMutation,
     submitWorkMutation,
     withdrawSubmissionMutation,
+    hideBountyMutation,
   };
 }
 
@@ -518,6 +534,7 @@ export function BountyDetailProvider({
     mergeSubmissionMutation,
     submitWorkMutation,
     withdrawSubmissionMutation,
+    hideBountyMutation,
   } = useBountyDetailMutations({
     bountyId,
     organizationId,
@@ -586,6 +603,8 @@ export function BountyDetailProvider({
       needsPayment,
       needsConnectSetup,
       isCancellationStatusLoading: cancellationStatusQuery.isLoading,
+      isAdmin: session?.user?.role === 'admin',
+      isHidden: false, // Populated from bounty data when available
     }),
     [
       bountyId,
@@ -618,6 +637,7 @@ export function BountyDetailProvider({
       needsPayment,
       needsConnectSetup,
       cancellationStatusQuery.isLoading,
+      session?.user?.role,
     ]
   );
 
@@ -836,6 +856,9 @@ export function BountyDetailProvider({
           }
         );
       },
+      toggleHide: () => {
+        hideBountyMutation.mutate({ bountyId, hidden: true });
+      },
     }),
     [
       bountyId,
@@ -855,6 +878,7 @@ export function BountyDetailProvider({
       mergeSubmissionMutation,
       submitWorkMutation,
       withdrawSubmissionMutation,
+      hideBountyMutation,
       onEdit,
       title,
       description,

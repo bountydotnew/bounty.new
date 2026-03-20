@@ -39,6 +39,9 @@ interface BountyActionsProps {
   onEdit?: () => void;
   onShare?: () => void;
   onUpvote?: () => void;
+  onHide?: () => void;
+  isAdmin?: boolean;
+  isLoggedIn?: boolean;
   repositoryUrl?: string | null;
   issueUrl?: string | null;
   actions?: ActionItem[];
@@ -61,6 +64,9 @@ export default function BountyActions({
   onEdit,
   onShare,
   onUpvote,
+  onHide,
+  isAdmin = false,
+  isLoggedIn = false,
   repositoryUrl = null,
   issueUrl = null,
   actions,
@@ -111,6 +117,9 @@ export default function BountyActions({
         onDelete={onDelete}
         onEdit={onEdit}
         onShare={onShare}
+        onHide={onHide}
+        isAdmin={isAdmin}
+        isLoggedIn={isLoggedIn}
       >
         <Dropdown />
       </BountyActionsProvider>
