@@ -61,16 +61,53 @@ export const moderationRouter = router({
         userMap = Object.fromEntries(users.map((u) => [u.id, u]));
       }
 
+      // Enrich bounty reports with bounty data
+      const bountyFlagIds = flags
+        .filter((f) => f.contentType === 'bounty')
+        .map((f) => f.contentId);
+
+      let bountyMap: Record<
+        string,
+        {
+          title: string;
+          amount: string;
+          status: string;
+          creatorName: string | null;
+          creatorHandle: string | null;
+          creatorImage: string | null;
+        }
+      > = {};
+
+      if (bountyFlagIds.length > 0) {
+        const bounties = await ctx.db
+          .select({
+            id: bounty.id,
+            title: bounty.title,
+            amount: bounty.amount,
+            status: bounty.status,
+            creatorName: user.name,
+            creatorHandle: user.handle,
+            creatorImage: user.image,
+          })
+          .from(bounty)
+          .leftJoin(user, eq(bounty.createdById, user.id))
+          .where(inArray(bounty.id, bountyFlagIds));
+
+        bountyMap = Object.fromEntries(bounties.map((b) => [b.id, b]));
+      }
+
       return flags.map((flag) => ({
         ...flag,
         reportedUser:
           flag.contentType === 'user' ? userMap[flag.contentId] ?? null : null,
+        reportedBounty:
+          flag.contentType === 'bounty' ? bountyMap[flag.contentId] ?? null : null,
       }));
     }),
 
   /**
    * Get all moderation flags with optional filtering
-   * Enriches user reports with user data (email, image, etc.)
+   * Enriches user and bounty reports with relevant data
    */
   getFlags: adminProcedure
     .input(
@@ -127,10 +164,47 @@ export const moderationRouter = router({
         userMap = Object.fromEntries(users.map((u) => [u.id, u]));
       }
 
+      // Enrich bounty reports with bounty data
+      const bountyFlagIds = flags
+        .filter((f) => f.contentType === 'bounty')
+        .map((f) => f.contentId);
+
+      let bountyMap: Record<
+        string,
+        {
+          title: string;
+          amount: string;
+          status: string;
+          creatorName: string | null;
+          creatorHandle: string | null;
+          creatorImage: string | null;
+        }
+      > = {};
+
+      if (bountyFlagIds.length > 0) {
+        const bounties = await ctx.db
+          .select({
+            id: bounty.id,
+            title: bounty.title,
+            amount: bounty.amount,
+            status: bounty.status,
+            creatorName: user.name,
+            creatorHandle: user.handle,
+            creatorImage: user.image,
+          })
+          .from(bounty)
+          .leftJoin(user, eq(bounty.createdById, user.id))
+          .where(inArray(bounty.id, bountyFlagIds));
+
+        bountyMap = Object.fromEntries(bounties.map((b) => [b.id, b]));
+      }
+
       return flags.map((flag) => ({
         ...flag,
         reportedUser:
           flag.contentType === 'user' ? userMap[flag.contentId] ?? null : null,
+        reportedBounty:
+          flag.contentType === 'bounty' ? bountyMap[flag.contentId] ?? null : null,
       }));
     }),
 

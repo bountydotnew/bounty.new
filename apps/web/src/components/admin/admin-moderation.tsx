@@ -27,6 +27,7 @@ import {
   ExternalLink,
   User,
   Ban,
+  EyeOff,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -47,6 +48,14 @@ type ModerationFlag = {
     email: string;
     image: string | null;
     handle: string | null;
+  } | null;
+  reportedBounty?: {
+    title: string;
+    amount: string;
+    status: string;
+    creatorName: string | null;
+    creatorHandle: string | null;
+    creatorImage: string | null;
   } | null;
 };
 
@@ -256,7 +265,101 @@ function ReportsSection() {
     );
   };
 
-  const renderContentReportCard = (flag: ModerationFlag, showActions = true) => {
+  const renderBountyReportCard = (flag: ModerationFlag, showActions = true) => {
+    const statusCfg = statusConfig[flag.status];
+    const reportedBounty = flag.reportedBounty;
+    const displayTitle = reportedBounty?.title ?? flag.flaggedText ?? 'Unknown bounty';
+    const amount = reportedBounty?.amount ? `$${reportedBounty.amount}` : null;
+    const creatorDisplay = reportedBounty?.creatorHandle ?? reportedBounty?.creatorName ?? 'Unknown';
+
+    return (
+      <div
+        key={flag.id}
+        className="flex items-center justify-between gap-4 px-4 py-4 border-b border-border-subtle last:border-b-0"
+      >
+        <div className="flex items-center gap-4 min-w-0">
+          {/* Bounty info */}
+          <Link
+            href={`/bounty/${flag.contentId}`}
+            className="flex items-center gap-3 min-w-0 hover:opacity-80"
+          >
+            <Avatar className="h-10 w-10 rounded-lg shrink-0">
+              {reportedBounty?.creatorImage && (
+                <AvatarImage alt={creatorDisplay} src={reportedBounty.creatorImage} />
+              )}
+              <AvatarFacehash name={creatorDisplay} size={40} />
+            </Avatar>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-foreground truncate max-w-[200px]">
+                  {displayTitle}
+                </span>
+                {flag.status !== 'pending' && (
+                  <Badge variant={statusCfg.variant} className="text-xs">
+                    {flag.status === 'approved' ? 'Hidden' : 'Dismissed'}
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2 text-xs text-text-muted">
+                <span>by {creatorDisplay}</span>
+                {amount && (
+                  <>
+                    <span>·</span>
+                    <span className="text-green-600">{amount}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </Link>
+
+          {/* Report details */}
+          <div className="hidden sm:block h-8 w-px bg-border-subtle" />
+          <div className="hidden sm:flex flex-col gap-0.5 min-w-0">
+            <span className="text-xs text-text-muted">Reason</span>
+            <span className="text-sm text-foreground truncate max-w-[200px]">
+              {flag.reason}
+            </span>
+          </div>
+
+          <div className="hidden md:block h-8 w-px bg-border-subtle" />
+          <div className="hidden md:flex flex-col gap-0.5">
+            <span className="text-xs text-text-muted">Reported</span>
+            <span className="text-sm text-text-secondary">
+              {formatDistanceToNow(new Date(flag.createdAt), { addSuffix: true })}
+            </span>
+          </div>
+        </div>
+
+        {showActions && flag.status === 'pending' && (
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                reviewMutation.mutate({ flagId: flag.id, status: 'rejected' })
+              }
+              disabled={reviewMutation.isPending}
+            >
+              <XCircle className="h-3.5 w-3.5" />
+              Dismiss
+            </Button>
+            <Button
+              size="sm"
+              onClick={() =>
+                reviewMutation.mutate({ flagId: flag.id, status: 'approved' })
+              }
+              disabled={reviewMutation.isPending}
+            >
+              <EyeOff className="h-3.5 w-3.5" />
+              Hide
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderGenericReportCard = (flag: ModerationFlag, showActions = true) => {
     const config = contentTypeConfig[flag.contentType];
     const Icon = config.icon;
     const statusCfg = statusConfig[flag.status];
@@ -328,7 +431,7 @@ function ReportsSection() {
                 }
                 disabled={reviewMutation.isPending}
               >
-                <CheckCircle2 className="h-3.5 w-3.5" />
+                <EyeOff className="h-3.5 w-3.5" />
                 Hide
               </Button>
             </div>
@@ -342,7 +445,10 @@ function ReportsSection() {
     if (flag.contentType === 'user') {
       return renderUserReportCard(flag, showActions);
     }
-    return renderContentReportCard(flag, showActions);
+    if (flag.contentType === 'bounty') {
+      return renderBountyReportCard(flag, showActions);
+    }
+    return renderGenericReportCard(flag, showActions);
   };
 
   return (
@@ -366,7 +472,7 @@ function ReportsSection() {
           </div>
         ) : pending.length === 0 ? (
           <div className="p-8 text-center text-sm text-text-tertiary">
-            No pending reports. 🎉
+            No pending reports
           </div>
         ) : (
           <div>{pending.map((flag) => renderReportCard(flag as ModerationFlag))}</div>
