@@ -409,9 +409,15 @@ function AmountStep({ value, onKeyPress, onContinue, onBack, canContinue, showBa
   );
 }
 
+interface InstallationReposItem {
+  installationId: number;
+  accountLogin: string | null;
+  repositories: string[];
+}
+
 interface RepoStepProps {
-  installations: Array<{ id: number; account: { login: string } }>;
-  installationRepos: Record<number, Array<{ full_name: string; name: string }>>;
+  installations: Array<{ id: number; accountLogin: string | null }>;
+  installationRepos: InstallationReposItem[];
   selectedRepository: string;
   onSelectRepository: (repo: string) => void;
   onContinue: () => void;
@@ -433,10 +439,10 @@ function RepoStep({
   const haptics = useHaptics();
 
   // Flatten all repos from all installations
-  const allRepos = installations.flatMap((installation) =>
-    (installationRepos[installation.id] || []).map((repo) => ({
-      ...repo,
-      account: installation.account.login,
+  const allRepos = installationRepos.flatMap((install) =>
+    install.repositories.map((repoFullName) => ({
+      full_name: repoFullName,
+      account: install.accountLogin ?? '',
     }))
   );
 
