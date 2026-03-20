@@ -47,3 +47,4 @@ export * from './pull-request';
 export * from './sparkles';
 export * from './file-code';
 export * from './close-x';
+export * from './plus';

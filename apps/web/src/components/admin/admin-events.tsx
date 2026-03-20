@@ -38,7 +38,7 @@ type AdminEvent = {
   country: string | null;
   region: string | null;
   city: string | null;
-  createdAt: Date;
+  createdAt: string;
   actor: {
     id: string;
     name: string | null;
