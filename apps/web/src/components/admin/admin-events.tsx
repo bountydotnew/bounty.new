@@ -183,7 +183,7 @@ function EventRow({ event }: { event: AdminEvent }) {
                   {event.actor.image ? (
                     <AvatarImage src={event.actor.image} />
                   ) : (
-                    <AvatarFacehash id={event.actor.id} />
+                    <AvatarFacehash name={event.actor.name ?? event.actor.handle ?? 'User'} size={16} />
                   )}
                 </Avatar>
                 <span>
