@@ -40,9 +40,9 @@ type ModerationFlag = {
   reporterId: string | null;
   status: 'pending' | 'approved' | 'rejected' | 'auto_flagged';
   reviewedBy: string | null;
-  reviewedAt: Date | null;
+  reviewedAt: string | null;
   reviewNotes: string | null;
-  createdAt: Date;
+  createdAt: string;
   reportedUser?: {
     name: string | null;
     email: string;
