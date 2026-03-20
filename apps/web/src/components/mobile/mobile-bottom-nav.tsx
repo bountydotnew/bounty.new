@@ -24,7 +24,9 @@ interface MobileBottomNavProps {
 export function MobileBottomNav({ onCreateClick }: MobileBottomNavProps) {
   const pathname = usePathname();
   const { session } = useSession();
-  const user = session?.user;
+  const user = session?.user as
+    | (typeof session)['user'] & { handle?: string | null }
+    | undefined;
   const haptics = useHaptics();
 
   const handleNavClick = () => {

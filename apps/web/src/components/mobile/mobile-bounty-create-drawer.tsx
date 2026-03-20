@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -73,6 +73,15 @@ export function MobileBountyCreateDrawer({
   const title = watch('title');
   const amount = watch('amount');
 
+  // Reset state when drawer opens
+  useEffect(() => {
+    if (open) {
+      setStep('title');
+      reset();
+      setSelectedRepository('');
+    }
+  }, [open, reset, setSelectedRepository]);
+
   // Create bounty mutation
   const createBounty = useMutation({
     mutationFn: async (input: {
@@ -110,13 +119,7 @@ export function MobileBountyCreateDrawer({
   const handleClose = useCallback(() => {
     haptics.trigger('light');
     onOpenChange(false);
-    // Reset after animation
-    setTimeout(() => {
-      setStep('title');
-      reset();
-      setSelectedRepository('');
-    }, 300);
-  }, [onOpenChange, haptics, reset, setSelectedRepository]);
+  }, [onOpenChange, haptics]);
 
   const handleContinue = useCallback(async () => {
     if (step === 'title') {
@@ -183,28 +186,38 @@ export function MobileBountyCreateDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent
-        className={cn(
-          'flex flex-col rounded-t-[34px] bg-surface-1 border-none !h-auto',
-          step === 'amount' ? 'min-h-[36rem]' : 'min-h-[25rem]'
-        )}
-      >
+      <DrawerContent className="flex flex-col rounded-t-[34px] bg-surface-1 border-none">
         {/* Header */}
         <div className="flex h-[72px] items-center justify-between px-6">
-          <h2 className="text-[19px] font-semibold tracking-tight text-foreground">
-            {getStepTitle()}
-          </h2>
+          <div className="flex flex-col gap-1">
+            <h2 className="text-[19px] font-semibold tracking-tight text-foreground">
+              {getStepTitle()}
+            </h2>
+            {/* Step indicator */}
+            <div className="flex gap-1">
+              {(['title', 'amount', 'repo'] as const).map((s) => (
+                <div
+                  key={s}
+                  className={cn(
+                    'h-1 w-6 rounded-full transition-colors duration-150',
+                    s === step ? 'bg-foreground' : 'bg-foreground/20'
+                  )}
+                />
+              ))}
+            </div>
+          </div>
           <button
             type="button"
             onClick={handleClose}
-            className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-foreground/10 active:bg-foreground/20 transition-colors"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-foreground/10 active:bg-foreground/20 transition-colors"
+            aria-label="Close"
           >
             <CloseXIcon className="h-[18px] w-[18px] text-foreground/30" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex flex-1 flex-col px-7">
+        <div className="flex flex-1 flex-col px-7 overflow-y-auto">
           {step === 'title' && (
             <TitleStep
               value={title}
@@ -275,7 +288,7 @@ function TitleStep({ value, onChange, onContinue, onBack, canContinue, showBack,
         <div className="flex gap-2">
           <div
             className={cn(
-              'overflow-hidden transition-all duration-300 ease-out',
+              'overflow-hidden transition-[width,opacity] duration-200 ease-out motion-reduce:transition-none',
               showBack ? 'w-12 opacity-100' : 'w-0 opacity-0'
             )}
           >
@@ -283,6 +296,7 @@ function TitleStep({ value, onChange, onContinue, onBack, canContinue, showBack,
               type="button"
               onClick={onBack}
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-foreground/10 active:bg-foreground/20 transition-colors"
+              aria-label="Go back"
             >
               <ChevronLeft className="h-5 w-5 text-foreground" strokeWidth={2} />
             </button>
@@ -292,7 +306,7 @@ function TitleStep({ value, onChange, onContinue, onBack, canContinue, showBack,
             onClick={onContinue}
             disabled={!canContinue}
             className={cn(
-              'flex h-12 flex-1 items-center justify-center rounded-full font-semibold text-[18px] transition-all duration-300 active:scale-[0.98]',
+              'flex h-12 flex-1 items-center justify-center rounded-full font-semibold text-[18px] transition-[background-color,color,transform] duration-150 active:scale-[0.98] motion-reduce:transform-none',
               canContinue
                 ? 'bg-foreground text-background'
                 : 'bg-foreground/20 text-foreground/40 cursor-not-allowed'
@@ -320,16 +334,16 @@ function AmountStep({ value, onKeyPress, onContinue, onBack, canContinue, showBa
   const displayAmount = value === '' ? '$0' : `$${value}`;
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-between pb-6">
+    <div className="flex flex-1 flex-col items-center justify-between pb-6 min-h-[420px]">
       {/* Amount display */}
-      <div className="flex flex-1 flex-col items-center justify-center py-10">
-        <span className="text-[67px] font-bold tracking-tight text-foreground">
+      <div className="flex flex-col items-center justify-center py-6">
+        <span className="text-[56px] font-bold tracking-tight text-foreground tabular-nums">
           {displayAmount}
         </span>
       </div>
 
       {/* Number pad */}
-      <div className="flex w-full max-w-[257px] flex-col gap-9">
+      <div className="flex w-full max-w-[280px] flex-col gap-2">
         {[
           ['1', '2', '3'],
           ['4', '5', '6'],
@@ -342,7 +356,7 @@ function AmountStep({ value, onKeyPress, onContinue, onBack, canContinue, showBa
                 key={key}
                 type="button"
                 onClick={() => onKeyPress(key)}
-                className="flex h-[25px] w-[25px] items-center justify-center text-[24px] font-semibold text-foreground active:opacity-50 transition-opacity"
+                className="flex h-11 w-11 items-center justify-center text-[24px] font-semibold text-foreground active:opacity-50 transition-opacity"
               >
                 {key === 'backspace' ? (
                   <ChevronLeft className="h-6 w-6" strokeWidth={1.5} />
@@ -356,14 +370,14 @@ function AmountStep({ value, onKeyPress, onContinue, onBack, canContinue, showBa
       </div>
 
       {/* Continue button */}
-      <div className="mt-8 w-full">
+      <div className="mt-6 w-full">
         {error && (
           <p className="mb-3 text-sm text-destructive">{error}</p>
         )}
         <div className="flex gap-2">
           <div
             className={cn(
-              'overflow-hidden transition-all duration-300 ease-out',
+              'overflow-hidden transition-[width,opacity] duration-200 ease-out motion-reduce:transition-none',
               showBack ? 'w-12 opacity-100' : 'w-0 opacity-0'
             )}
           >
@@ -371,6 +385,7 @@ function AmountStep({ value, onKeyPress, onContinue, onBack, canContinue, showBa
               type="button"
               onClick={onBack}
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-foreground/10 active:bg-foreground/20 transition-colors"
+              aria-label="Go back"
             >
               <ChevronLeft className="h-5 w-5 text-foreground" strokeWidth={2} />
             </button>
@@ -380,7 +395,7 @@ function AmountStep({ value, onKeyPress, onContinue, onBack, canContinue, showBa
             onClick={onContinue}
             disabled={!canContinue}
             className={cn(
-              'flex h-12 flex-1 items-center justify-center rounded-full font-semibold text-[18px] transition-all duration-300 active:scale-[0.98]',
+              'flex h-12 flex-1 items-center justify-center rounded-full font-semibold text-[18px] transition-[background-color,color,transform] duration-150 active:scale-[0.98] motion-reduce:transform-none',
               canContinue
                 ? 'bg-foreground text-background'
                 : 'bg-foreground/20 text-foreground/40 cursor-not-allowed'
@@ -484,7 +499,7 @@ function RepoStep({
         <div className="flex gap-2">
           <div
             className={cn(
-              'overflow-hidden transition-all duration-300 ease-out',
+              'overflow-hidden transition-[width,opacity] duration-200 ease-out motion-reduce:transition-none',
               showBack ? 'w-12 opacity-100' : 'w-0 opacity-0'
             )}
           >
@@ -492,6 +507,7 @@ function RepoStep({
               type="button"
               onClick={onBack}
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-foreground/10 active:bg-foreground/20 transition-colors"
+              aria-label="Go back"
             >
               <ChevronLeft className="h-5 w-5 text-foreground" strokeWidth={2} />
             </button>
@@ -501,7 +517,7 @@ function RepoStep({
             onClick={onContinue}
             disabled={isLoading}
             className={cn(
-              'flex h-12 flex-1 items-center justify-center rounded-full font-semibold text-[18px] transition-all duration-300 active:scale-[0.98]',
+              'flex h-12 flex-1 items-center justify-center rounded-full font-semibold text-[18px] transition-[background-color,opacity,transform] duration-150 active:scale-[0.98] motion-reduce:transform-none',
               'bg-foreground text-background',
               isLoading && 'opacity-50 cursor-not-allowed'
             )}
