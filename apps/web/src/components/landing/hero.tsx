@@ -52,10 +52,7 @@ export function Hero() {
             Human fixes for the AI era
           </h1>
           <p className="text-base sm:text-lg text-text-secondary mb-8 max-w-2xl">
-            "You're absolutely right, I've fixed the issue!" - your AI, four builds deep. Meanwhile your tests are failing, your company is on fire, and you're mass accepting diffs at 2am while your boss yells at you.
-          </p>
-          <p className="text-base sm:text-lg text-text-secondary mb-8 max-w-xl">
-            Post a bounty. Get a human who fixes it once.
+          Your AI has 'fixed it' four times. Post a bounty, get a human who fixes it once
           </p>
           <div className="flex items-center gap-4">
             <Link

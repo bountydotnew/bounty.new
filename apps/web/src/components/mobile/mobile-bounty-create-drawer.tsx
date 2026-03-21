@@ -334,16 +334,16 @@ function AmountStep({ value, onKeyPress, onContinue, onBack, canContinue, showBa
   const displayAmount = value === '' ? '$0' : `$${value}`;
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-between pb-6 min-h-[420px]">
+    <div className="flex flex-1 flex-col items-center justify-between pb-4">
       {/* Amount display */}
-      <div className="flex flex-col items-center justify-center py-6">
-        <span className="text-[56px] font-bold tracking-tight text-foreground tabular-nums">
+      <div className="flex flex-col items-center justify-center py-4">
+        <span className="text-[48px] font-bold tracking-tight text-foreground tabular-nums">
           {displayAmount}
         </span>
       </div>
 
       {/* Number pad */}
-      <div className="flex w-full max-w-[280px] flex-col gap-2">
+      <div className="flex w-full max-w-[260px] flex-col gap-1">
         {[
           ['1', '2', '3'],
           ['4', '5', '6'],
@@ -370,7 +370,7 @@ function AmountStep({ value, onKeyPress, onContinue, onBack, canContinue, showBa
       </div>
 
       {/* Continue button */}
-      <div className="mt-6 w-full">
+      <div className="mt-4 w-full">
         {error && (
           <p className="mb-3 text-sm text-destructive">{error}</p>
         )}
