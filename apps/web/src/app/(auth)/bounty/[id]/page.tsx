@@ -1,6 +1,5 @@
 import { cache } from 'react';
 import type { Metadata } from 'next';
-import { baseUrl } from '../../../../../../../packages/ui/src/lib/constants';
 import { createServerCaller } from '@bounty/api/src/server-caller';
 import BountyPage from './page.client';
 
@@ -30,31 +29,20 @@ export async function generateMetadata({
   }
 
   const thisBounty = bountyData.bounty;
-  const ogImageUrl = `${baseUrl}/api/og-image/${id}`;
 
+  // OG images are automatically generated via opengraph-image.tsx and twitter-image.tsx
   return {
     title: `"${thisBounty.title}" - bounty`,
     description: thisBounty.description,
     openGraph: {
       title: thisBounty.title,
       description: thisBounty.description,
-      images: ogImageUrl
-        ? [
-            {
-              url: ogImageUrl,
-              width: 1200,
-              height: 630,
-              alt: thisBounty.title,
-            },
-          ]
-        : [],
       type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
       title: thisBounty.title,
       description: thisBounty.description,
-      images: ogImageUrl ? [ogImageUrl] : [],
     },
   };
 }
