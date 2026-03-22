@@ -707,11 +707,9 @@ export function BountyDetailProvider({
         onEdit?.();
       },
       share: () => {
-        navigator.share({
-          title,
-          text: description,
-          url: `${window.location.origin}/bounty/${bountyId}`,
-        });
+        const url = `${window.location.origin}/bounty/${bountyId}`;
+        navigator.clipboard.writeText(url);
+        toast.success('Link copied to clipboard');
       },
       approveSubmission: (submissionId: string) => {
         if (
