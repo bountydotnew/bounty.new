@@ -544,6 +544,7 @@ function PrSelectorDropdown({
               placeholder="Search pull requests..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
+              onKeyDown={(e) => e.stopPropagation()}
               autoComplete="off"
               spellCheck={false}
             />

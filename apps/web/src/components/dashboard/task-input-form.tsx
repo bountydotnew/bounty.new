@@ -272,7 +272,7 @@ export const TaskInputForm = forwardRef<TaskInputFormRef, TaskInputFormProps>(
     };
 
     return (
-      <div className="flex w-full shrink-0 flex-col px-4 lg:max-w-[805px] xl:px-0 mx-auto min-w-0 max-w-full overflow-x-hidden">
+      <div className="flex w-full shrink-0 flex-col px-4 lg:max-w-[805px] xl:px-0 mx-auto min-w-0 max-w-full">
         <form
           className="w-full flex flex-col mt-3 mb-3 md:mt-10 md:mb-6 min-w-0"
           onSubmit={onSubmit}

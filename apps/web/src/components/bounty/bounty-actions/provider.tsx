@@ -241,11 +241,12 @@ export function BountyActionsProvider({
           return onShare();
         }
         try {
-          if (typeof window !== 'undefined' && navigator.share) {
-            navigator.share({ url: window.location.href });
+          if (typeof window !== 'undefined') {
+            navigator.clipboard.writeText(window.location.href);
+            toast.success('Link copied to clipboard');
           }
         } catch {
-          // Silently ignore share errors
+          // Silently ignore clipboard errors
         }
       },
       edit: () => {

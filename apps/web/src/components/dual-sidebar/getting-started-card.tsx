@@ -243,17 +243,17 @@ export const GettingStartedCard = () => {
       </div>
 
       {/* Progress bar — always visible */}
-      <m.div className="flex items-center px-1.5" layout="position">
+      <div className="flex items-center px-1.5">
         <div className="grow h-1.5 rounded-full overflow-clip bg-surface-2">
           <div
-            className="h-full rounded-full bg-[#4A6FDC] transition-all duration-500 ease-out"
+            className="h-full rounded-full bg-[#4A6FDC]"
             style={{ width: `${progress}%` }}
           />
         </div>
         <span className="text-[11px] ml-2 text-foreground/50 font-[520]">
           {progress}%
         </span>
-      </m.div>
+      </div>
 
       {/* Checklist items — animated in/out */}
       <AnimatePresence>
