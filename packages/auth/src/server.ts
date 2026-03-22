@@ -686,6 +686,7 @@ export const auth = betterAuth({
       redirectURI: env.LINEAR_REDIRECT_URI,
     },
     twitter: {
+      id: 'twitter',
       clientId: env.X_CLIENT_ID || '',
       clientSecret: env.X_CLIENT_SECRET || '',
       scope: ['tweet.read', 'tweet.write', 'users.read'],

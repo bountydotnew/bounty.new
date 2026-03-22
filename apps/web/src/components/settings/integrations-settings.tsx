@@ -9,7 +9,6 @@ import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useOrgPath } from '@/hooks/use-org-path';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -298,6 +297,9 @@ function renderIntegrationCard(
     case 'twitter': {
       const isConnected = !!item.account;
       const displayName = item.account?.username ?? 'your X account';
+      const twitterHref = isConnected
+        ? `${pathPrefix}/integrations/twitter`
+        : undefined;
       const description = isConnected
         ? `Connected to @${displayName}`
         : 'Create bounties from any tweet or thread';
@@ -318,6 +320,7 @@ function renderIntegrationCard(
                       id: item.account!.id,
                       accountLogin: `@${item.account!.username ?? ''}`,
                       icon: undefined,
+                      href: twitterHref,
                     },
                   ],
                 }
@@ -326,8 +329,8 @@ function renderIntegrationCard(
           action={
             isConnected
               ? {
-                  label: 'Unlink',
-                  onClick: () => item.onUnlinkAccount(),
+                  label: 'Manage',
+                  onClick: () => {},
                   disabled: false,
                 }
               : {
@@ -336,6 +339,7 @@ function renderIntegrationCard(
                   disabled: false,
                 }
           }
+          href={twitterHref}
         />
       );
     }
