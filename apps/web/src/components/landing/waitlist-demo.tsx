@@ -54,22 +54,33 @@ function useWaitlistSubmission() {
       celebrate();
       toast.success("You're on the list!");
     },
-    onError: (error: Error) => {
-      if (
-        error.message.includes('UNAUTHORIZED') ||
-        error.message.includes('Must be logged in')
-      ) {
+    onError: (error: unknown) => {
+      // Check for tRPC UNAUTHORIZED errors
+      const isAuthError =
+        error &&
+        typeof error === 'object' &&
+        'data' in error &&
+        typeof error.data === 'object' &&
+        error.data &&
+        'code' in error.data &&
+        error.data.code === 'UNAUTHORIZED';
+
+      if (isAuthError) {
         authClient.signIn.social({
           provider: 'github',
           callbackURL: '/',
         });
-      } else if (
-        error.message.toLowerCase().includes('too many') ||
-        error.message.toLowerCase().includes('slow down')
+        return;
+      }
+
+      if (
+        error instanceof Error &&
+        (error.message.toLowerCase().includes('too many') ||
+          error.message.toLowerCase().includes('slow down'))
       ) {
         toast.error('Too many attempts. Please try again later.');
       } else {
-        toast.error(error.message || 'Something went wrong. Please try again.');
+        toast.error(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
       }
     },
   });
