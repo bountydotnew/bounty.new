@@ -144,24 +144,90 @@ async function syncGitHubHandle({
   }
 }
 
+// ============================================================================
+// X (Twitter) Integration
+// ============================================================================
+
+interface XSyncParams {
+  userId: string;
+  accessToken: string;
+}
+
 /**
- * Unified handler for GitHub account linking (create and update)
+ * Sync X username as user handle.
+ * Only updates if handle is not already set.
  */
-function handleGitHubAccountLinking() {
+async function syncXHandle({
+  userId,
+  accessToken,
+}: XSyncParams): Promise<void> {
+  if (!(userId && accessToken)) {
+    return;
+  }
+
+  try {
+    const response = await fetch('https://api.x.com/2/users/me', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'User-Agent': 'bounty.new',
+      },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!response.ok) {
+      return;
+    }
+
+    const data = await response.json() as { data?: { username?: string } };
+    const xHandle = data.data?.username?.toLowerCase();
+    if (!xHandle) {
+      return;
+    }
+
+    // Check if user already has a handle
+    const existingUser = await db.query.user.findFirst({
+      where: (fields, { eq }) => eq(fields.id, userId),
+      columns: { id: true, handle: true },
+    });
+
+    if (existingUser?.handle) {
+      return;
+    }
+
+    // Update with X handle
+    await db
+      .update(userTable)
+      .set({ handle: xHandle, updatedAt: new Date() })
+      .where(eq(userTable.id, userId));
+
+    console.warn(`✅ Synced X handle for user ${userId}: ${xHandle}`);
+  } catch {
+    // Silently fail - don't block account creation/update
+  }
+}
+
+/**
+ * Unified handler for account linking (create and update)
+ * Handles both GitHub and X (Twitter)
+ */
+function handleAccountLinking() {
   return async (account: {
     providerId: string;
     userId: string;
     accessToken?: string | null | undefined;
   }) => {
-    if (
-      account.providerId === 'github' &&
-      account.userId &&
-      account.accessToken
-    ) {
-      await syncGitHubHandle({
-        userId: account.userId,
-        accessToken: account.accessToken,
-      });
+    if (account.userId && account.accessToken) {
+      if (account.providerId === 'github') {
+        await syncGitHubHandle({
+          userId: account.userId,
+          accessToken: account.accessToken,
+        });
+      } else if (account.providerId === 'twitter') {
+        await syncXHandle({
+          userId: account.userId,
+          accessToken: account.accessToken,
+        });
+      }
     }
   };
 }
@@ -327,7 +393,7 @@ export const auth = betterAuth({
   account: {
     accountLinking: {
       enabled: true,
-      trustedProviders: ['github', 'google', 'linear'],
+      trustedProviders: ['github', 'google', 'linear', 'twitter'],
       allowDifferentEmails: true,
     },
   },
@@ -550,10 +616,10 @@ export const auth = betterAuth({
     },
     account: {
       create: {
-        after: handleGitHubAccountLinking(),
+        after: handleAccountLinking(),
       },
       update: {
-        after: handleGitHubAccountLinking(),
+        after: handleAccountLinking(),
       },
     },
   },
@@ -618,6 +684,14 @@ export const auth = betterAuth({
       clientSecret: env.LINEAR_CLIENT_SECRET || '',
       scope: ['read', 'write'],
       redirectURI: env.LINEAR_REDIRECT_URI,
+    },
+    twitter: {
+      clientId: env.X_CLIENT_ID || '',
+      clientSecret: env.X_CLIENT_SECRET || '',
+      scope: ['tweet.read', 'tweet.write', 'users.read'],
+      mapProfileToUser: (profile) => ({
+        handle: profile.data?.username?.toLowerCase(),
+      }),
     },
   },
 

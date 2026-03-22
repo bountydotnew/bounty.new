@@ -9,6 +9,7 @@ import { SettingsGearIcon } from '@bounty/ui/components/icons/huge/settings-gear
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useOrgPath } from '@/hooks/use-org-path';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +28,7 @@ interface IntegrationCardProps {
     type: 'installed' | 'coming-soon';
     count?: number;
     accounts?: Array<{
-      id: number;
+      id: number | string;
       accountLogin?: string | null;
       icon?: string;
       href?: string;
@@ -192,7 +193,15 @@ type IntegrationItem =
       } | null;
       onLinkAccount: () => Promise<void>;
     }
-  | { type: 'twitter' }
+  | {
+      type: 'twitter';
+      account: {
+        id: string;
+        username?: string | null;
+      } | null;
+      onLinkAccount: () => Promise<void>;
+      onUnlinkAccount: () => Promise<void>;
+    }
   | { type: 'slack' };
 
 function GitHubIntegrationCard({
@@ -286,16 +295,50 @@ function renderIntegrationCard(
           pathPrefix={pathPrefix}
         />
       );
-    case 'twitter':
+    case 'twitter': {
+      const isConnected = !!item.account;
+      const displayName = item.account?.username ?? 'your X account';
+      const description = isConnected
+        ? `Connected to @${displayName}`
+        : 'Create bounties from any tweet or thread';
+
       return (
         <IntegrationCard
           key="twitter"
           icon={<TwitterIcon className="size-7 text-foreground" />}
           title="X (Twitter)"
-          description="Create bounties from any tweet or thread"
-          {...comingSoonProps}
+          description={description}
+          status={
+            isConnected
+              ? {
+                  type: 'installed',
+                  count: 1,
+                  accounts: [
+                    {
+                      id: item.account!.id,
+                      accountLogin: `@${item.account!.username ?? ''}`,
+                      icon: undefined,
+                    },
+                  ],
+                }
+              : undefined
+          }
+          action={
+            isConnected
+              ? {
+                  label: 'Unlink',
+                  onClick: () => item.onUnlinkAccount(),
+                  disabled: false,
+                }
+              : {
+                  label: 'Connect',
+                  onClick: item.onLinkAccount,
+                  disabled: false,
+                }
+          }
         />
       );
+    }
     case 'slack':
       return (
         <IntegrationCard
@@ -382,6 +425,10 @@ export function IntegrationsSettings() {
     linearWorkspace,
     hasLinear,
     linkLinear,
+    twitterAccount,
+    hasTwitter,
+    linkTwitter,
+    unlinkTwitter,
     invalidateAll,
   } = useIntegrations();
 
@@ -400,7 +447,7 @@ export function IntegrationsSettings() {
   // The sync is handled on the Linear-specific page (/integrations/linear)
   // after the user completes the OAuth flow — not here on every visit.
 
-  const installedCount = githubInstallations.length + (hasLinear ? 1 : 0);
+  const installedCount = githubInstallations.length + (hasLinear ? 1 : 0) + (hasTwitter ? 1 : 0);
 
   const allIntegrations = useMemo(
     () => [
@@ -413,10 +460,15 @@ export function IntegrationsSettings() {
         workspace: linearWorkspace,
         onLinkAccount: linkLinear,
       },
-      { type: 'twitter' as const },
+      {
+        type: 'twitter' as const,
+        account: twitterAccount,
+        onLinkAccount: linkTwitter,
+        onUnlinkAccount: unlinkTwitter,
+      },
       { type: 'slack' as const },
     ],
-    [githubInstallations, linearWorkspace, linkLinear]
+    [githubInstallations, linearWorkspace, linkLinear, twitterAccount, linkTwitter, unlinkTwitter]
   );
 
   const filteredIntegrations =
@@ -424,7 +476,8 @@ export function IntegrationsSettings() {
       ? allIntegrations.filter(
           (item) =>
             (item.type === 'github' && item.installations.length > 0) ||
-            (item.type === 'linear' && item.workspace)
+            (item.type === 'linear' && item.workspace) ||
+            (item.type === 'twitter' && item.account)
         )
       : allIntegrations;
 

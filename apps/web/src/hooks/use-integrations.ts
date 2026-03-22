@@ -20,11 +20,17 @@ interface LinearWorkspace {
   url?: string;
 }
 
+interface TwitterAccount {
+  id: string;
+  username?: string | null;
+}
+
 interface IntegrationsState {
   // Loading states
   isLoading: boolean;
   isGitHubLoading: boolean;
   isLinearLoading: boolean;
+  isTwitterLoading: boolean;
 
   // GitHub installations
   githubInstallations: GitHubInstallation[];
@@ -35,6 +41,10 @@ interface IntegrationsState {
   linearWorkspace: LinearWorkspace | null;
   hasLinear: boolean;
   hasLinearOAuth: boolean;
+
+  // Twitter (X)
+  twitterAccount: TwitterAccount | null;
+  hasTwitter: boolean;
 
   // Combined
   totalCount: number;
@@ -50,6 +60,10 @@ interface IntegrationsActions {
   unlinkLinear: (workspaceId: string) => Promise<void>;
   refreshLinear: () => void;
   syncLinearWorkspace: () => Promise<void>;
+
+  // Twitter (X) actions
+  linkTwitter: () => Promise<void>;
+  unlinkTwitter: () => Promise<void>;
 
   // Global refresh
   refreshAll: () => void;
@@ -79,6 +93,13 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
   const { data: linearAccountStatusData } = useQuery(
     trpc.linear.getAccountStatus.queryOptions()
   );
+
+  // Twitter (X) - use linked accounts query
+  const {
+    data: linkedAccountsData,
+    isLoading: twitterLoading,
+    refetch: refetchTwitter,
+  } = useQuery(trpc.user.getLinkedAccounts.queryOptions());
 
   // Unlink Linear mutation
   const unlinkLinearMutation = useMutation({
@@ -117,39 +138,76 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
     },
   });
 
+  // Unlink Twitter mutation
+  const unlinkTwitterMutation = useMutation({
+    mutationFn: () =>
+      authClient.unlinkAccount({
+        providerId: 'twitter',
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [['user', 'getLinkedAccounts']],
+      });
+      toast.success('X (Twitter) account disconnected');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to disconnect X (Twitter)');
+    },
+  });
+
   // Computed state
   const state: IntegrationsState = useMemo(
-    () => ({
-      isLoading: githubLoading || linearLoading,
-      isGitHubLoading: githubLoading,
-      isLinearLoading: linearLoading,
+    () => {
+      // Extract Twitter account from linked accounts
+      const twitterAccount =
+        linkedAccountsData?.accounts?.find(
+          (a: { providerId: string }) => a.providerId === 'twitter'
+        ) ?? null;
 
-      githubInstallations: githubData?.installations ?? [],
-      githubInstallUrl: installUrlData?.url,
-      hasGitHub: (githubData?.installations?.length ?? 0) > 0,
+      return {
+        isLoading: githubLoading || linearLoading || twitterLoading,
+        isGitHubLoading: githubLoading,
+        isLinearLoading: linearLoading,
+        isTwitterLoading: twitterLoading,
 
-      linearWorkspace: linearConnectionData?.workspace
-        ? {
-            id: linearConnectionData.workspace.id,
-            name: linearConnectionData.workspace.name,
-            key: linearConnectionData.workspace.key ?? undefined,
-            url: linearConnectionData.workspace.url ?? undefined,
-          }
-        : null,
-      hasLinear: linearConnectionData?.connected ?? false,
-      hasLinearOAuth: linearAccountStatusData?.hasOAuth ?? false,
+        githubInstallations: githubData?.installations ?? [],
+        githubInstallUrl: installUrlData?.url,
+        hasGitHub: (githubData?.installations?.length ?? 0) > 0,
 
-      totalCount:
-        (githubData?.installations?.length ?? 0) +
-        (linearConnectionData?.connected ? 1 : 0),
-    }),
+        linearWorkspace: linearConnectionData?.workspace
+          ? {
+              id: linearConnectionData.workspace.id,
+              name: linearConnectionData.workspace.name,
+              key: linearConnectionData.workspace.key ?? undefined,
+              url: linearConnectionData.workspace.url ?? undefined,
+            }
+          : null,
+        hasLinear: linearConnectionData?.connected ?? false,
+        hasLinearOAuth: linearAccountStatusData?.hasOAuth ?? false,
+
+        twitterAccount: twitterAccount
+          ? {
+              id: twitterAccount.accountId,
+              username: twitterAccount.accountId,
+            }
+          : null,
+        hasTwitter: !!twitterAccount,
+
+        totalCount:
+          (githubData?.installations?.length ?? 0) +
+          (linearConnectionData?.connected ? 1 : 0) +
+          (twitterAccount ? 1 : 0),
+      };
+    },
     [
       githubData,
       installUrlData,
       linearConnectionData,
       linearAccountStatusData,
+      linkedAccountsData,
       githubLoading,
       linearLoading,
+      twitterLoading,
     ]
   );
 
@@ -181,6 +239,17 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
     await syncLinearWorkspaceMutation.mutateAsync();
   }, [syncLinearWorkspaceMutation]);
 
+  const linkTwitter = useCallback(async () => {
+    await authClient.linkSocial({
+      provider: 'twitter',
+      callbackURL: `/${orgSlug}/integrations`,
+    });
+  }, [orgSlug]);
+
+  const unlinkTwitter = useCallback(async () => {
+    await unlinkTwitterMutation.mutateAsync();
+  }, [unlinkTwitterMutation]);
+
   const refreshAll = useCallback(() => {
     refetchGitHub();
     refetchLinear();
@@ -204,6 +273,8 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
       unlinkLinear,
       refreshLinear,
       syncLinearWorkspace,
+      linkTwitter,
+      unlinkTwitter,
       refreshAll,
       invalidateAll,
     }),
@@ -215,6 +286,8 @@ export function useIntegrations(): IntegrationsState & IntegrationsActions {
       unlinkLinear,
       refreshLinear,
       syncLinearWorkspace,
+      linkTwitter,
+      unlinkTwitter,
       refreshAll,
       invalidateAll,
     ]
