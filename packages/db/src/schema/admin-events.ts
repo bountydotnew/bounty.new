@@ -7,6 +7,7 @@ export const adminEventTypeEnum = pgEnum('admin_event_type', [
   'user_signup',
   'user_banned',
   'user_unbanned',
+  'early_access_granted',
 
   // Content moderation
   'content_reported',

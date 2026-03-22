@@ -347,6 +347,20 @@ export const earlyAccessRouter = router({
 
         info('[acceptAccessToken] Granted early_access to user:', userId);
 
+        // Log event for retention tracking
+        const { logAdminEvent } = await import('@bounty/db');
+        try {
+          await logAdminEvent({
+            eventType: 'early_access_granted',
+            actorId: userId,
+            description: 'User accepted waitlist access token and gained early access',
+            metadata: { source: 'waitlist', waitlistEntryId: entry.id },
+          });
+        } catch (eventErr) {
+          // Don't fail the request if event logging fails
+          warn('[acceptAccessToken] Failed to log event:', eventErr);
+        }
+
         return { success: true };
       } catch (err) {
         error('[acceptAccessToken] Error:', err);
@@ -1177,6 +1191,73 @@ export const earlyAccessRouter = router({
     }),
 
   /**
+   * Admin generates and sends invite codes to all users without early access.
+   * Finds all users with role = 'user' (not 'early_access' or 'admin') and
+   * generates valid invite codes for each via Better Auth's email-otp plugin.
+   */
+  inviteAllUsers: adminProcedure
+    .input(z.object({}).strict())
+    .mutation(async ({ ctx }) => {
+      await checkUnkeyRateLimit('invite.generate', ctx.session.user.id);
+      try {
+        // Find all users without early access (role = 'user')
+        const usersToInvite = await db
+          .select({
+            id: userTable.id,
+            email: userTable.email,
+            name: userTable.name,
+          })
+          .from(userTable)
+          .where(sql`${userTable.role} = 'user'`);
+
+        if (usersToInvite.length === 0) {
+          return {
+            success: true,
+            invited: 0,
+            failed: 0,
+            message: 'No users to invite - all users already have early access',
+          };
+        }
+
+        let invited = 0;
+        let failed = 0;
+        const errors: { email: string; error: string }[] = [];
+
+        // Send invite code to each user
+        for (const user of usersToInvite) {
+          try {
+            await (auth.api as any).sendVerificationOTP({
+              body: { email: user.email, type: 'sign-in' },
+            });
+            invited++;
+            info('[inviteAllUsers] Invite sent to:', user.email);
+          } catch (err) {
+            failed++;
+            const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+            errors.push({ email: user.email, error: errorMsg });
+            error('[inviteAllUsers] Failed to invite:', user.email, errorMsg);
+          }
+        }
+
+        return {
+          success: true,
+          invited,
+          failed,
+          errors: failed > 0 ? errors : undefined,
+          message: `Invited ${invited} user${invited === 1 ? '' : ''}${
+            failed > 0 ? ` (${failed} failed)` : ''
+          }`,
+        };
+      } catch (err) {
+        error('[inviteAllUsers] Failed:', err);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to bulk invite users',
+        });
+      }
+    }),
+
+  /**
    * User redeems an invite code to gain early access.
    * Validates the code via Better Auth's email-otp plugin, then sets the
    * user's role to 'early_access'.
@@ -1188,6 +1269,7 @@ export const earlyAccessRouter = router({
       await checkUnkeyRateLimit('invite.redeem', ctx.session.user.id);
 
       const email = ctx.session.user.email;
+      const userId = ctx.session.user.id;
 
       try {
         const result = await (auth.api as any).checkVerificationOTP({
@@ -1205,7 +1287,21 @@ export const earlyAccessRouter = router({
         await db
           .update(userTable)
           .set({ role: 'early_access' })
-          .where(eq(userTable.id, ctx.session.user.id));
+          .where(eq(userTable.id, userId));
+
+        // Log event for retention tracking
+        const { logAdminEvent } = await import('@bounty/db');
+        try {
+          await logAdminEvent({
+            eventType: 'early_access_granted',
+            actorId: userId,
+            description: 'User redeemed invite code and gained early access',
+            metadata: { code: input.code },
+          });
+        } catch (eventErr) {
+          // Don't fail the request if event logging fails
+          warn('[redeemInviteCode] Failed to log event:', eventErr);
+        }
 
         return { success: true };
       } catch (err) {

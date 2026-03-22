@@ -13,7 +13,16 @@ import {
 import { Input } from '@bounty/ui/components/input';
 import { cn } from '@bounty/ui/lib/utils';
 import { Button } from '@bounty/ui/components/button';
-import { Mail, Search, Plus, Ban, CheckCircle2 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@bounty/ui/components/dialog';
+import { Mail, Search, Plus, Ban, CheckCircle2, Send } from 'lucide-react';
 import { useSession } from '@/context/session-context';
 import { trpcClient } from '@/utils/trpc';
 import Link from 'next/link';
@@ -73,6 +82,14 @@ export function AdminUsers() {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState('');
 
+  // Invite all dialog
+  const [inviteAllDialogOpen, setInviteAllDialogOpen] = useState(false);
+  const [inviteAllResult, setInviteAllResult] = useState<{
+    invited: number;
+    failed: number;
+    errors?: Array<{ email: string; error: string }>;
+  } | null>(null);
+
   const banMutation = useMutation({
     mutationFn: (userId: string) =>
       trpcClient.user.adminBanUser.mutate({ userId, reason: 'Banned by admin' }),
@@ -94,6 +111,28 @@ export function AdminUsers() {
     },
     onError: (err: Error) => {
       toast.error(err.message || 'Failed to unban user');
+    },
+  });
+
+  const inviteAllMutation = useMutation({
+    mutationFn: () => trpcClient.earlyAccess.inviteAllUsers.mutate({}),
+    onSuccess: (data) => {
+      setInviteAllResult({
+        invited: data.invited,
+        failed: data.failed,
+        errors: data.errors,
+      });
+      if (data.invited > 0) {
+        toast.success(`Invited ${data.invited} user${data.invited === 1 ? '' : 's'}`);
+      }
+      if (data.failed > 0) {
+        toast.error(`${data.failed} invite${data.failed === 1 ? '' : 's'} failed`);
+      }
+      queryClient.invalidateQueries({ queryKey: ['admin', 'listUsers'] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Failed to invite users');
+      setInviteAllDialogOpen(false);
     },
   });
 
@@ -143,25 +182,44 @@ export function AdminUsers() {
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
+  const handleInviteAll = () => {
+    setInviteAllResult(null);
+    inviteAllMutation.mutate();
+  };
+
+  const handleInviteAllDialogClose = () => {
+    setInviteAllDialogOpen(false);
+    setInviteAllResult(null);
+  };
+
   return (
     <div className="space-y-8">
-      {/* Header + Create invite */}
-      <div className="flex items-start justify-between">
+      {/* Header + Create invite + Invite all */}
+      <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Users</h1>
           <p className="text-sm text-text-muted mt-1">
             Manage users and send invite codes.
           </p>
         </div>
-        <Button variant="outline" onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="h-3.5 w-3.5" />
-          Create invite
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setInviteAllDialogOpen(true)}
+          >
+            <Send className="h-3.5 w-3.5" />
+            Invite all
+          </Button>
+          <Button variant="outline" onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="h-3.5 w-3.5" />
+            Create invite
+          </Button>
+        </div>
       </div>
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-tertiary pointer-events-none" />
+        <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-secondary pointer-events-none" />
         <Input
           type="search"
           value={search}
@@ -342,6 +400,92 @@ export function AdminUsers() {
         onOpenChange={setConfirmDialogOpen}
         email={confirmEmail}
       />
+
+      {/* Invite All Dialog */}
+      <Dialog open={inviteAllDialogOpen} onOpenChange={handleInviteAllDialogClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Invite all users</DialogTitle>
+            <DialogDescription>
+              Send invite codes to all users without early access.
+            </DialogDescription>
+          </DialogHeader>
+
+          {inviteAllResult ? (
+            <div className="py-4 space-y-4">
+              <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-green-500/10">
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-medium text-foreground">
+                    Invited {inviteAllResult.invited} user
+                    {inviteAllResult.invited !== 1 ? 's' : ''}
+                  </p>
+                  {inviteAllResult.failed > 0 && (
+                    <p className="text-xs text-text-muted">
+                      {inviteAllResult.failed} failed
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {inviteAllResult.errors && inviteAllResult.errors.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-xs font-medium text-foreground mb-2">
+                    Failed invites:
+                  </p>
+                  <div className="max-h-32 overflow-y-auto text-xs">
+                    {inviteAllResult.errors.map((err) => (
+                      <div key={err.email} className="text-text-muted">
+                        {err.email}: {err.error}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2 px-6 bg-white max-sm:pb-4">
+              <p className="text-sm text-text-foreground">
+                This will send invite codes to all users with the{' '}
+                <span className="font-medium">User</span> role who don't have
+                early access yet.
+              </p>
+            </div>
+          )}
+
+          <DialogFooter>
+            {inviteAllResult ? (
+              <DialogClose asChild>
+                <Button variant="default">Done</Button>
+              </DialogClose>
+            ) : (
+              <>
+                <DialogClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+                <Button
+                  onClick={handleInviteAll}
+                  disabled={inviteAllMutation.isPending}
+                >
+                  {inviteAllMutation.isPending ? (
+                    <>
+                      <CheckCircle2 className="h-3.5 w-3.5 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-3.5 w-3.5" />
+                      Send invites
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

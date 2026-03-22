@@ -22,6 +22,7 @@ import {
   Activity,
   MapPin,
   RefreshCw,
+  Gift,
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@bounty/ui/lib/utils';
@@ -69,6 +70,11 @@ const eventConfig: Record<
     icon: CheckCircle2,
     color: 'text-green-500',
     label: 'User unbanned',
+  },
+  early_access_granted: {
+    icon: Gift,
+    color: 'text-purple-500',
+    label: 'Early access granted',
   },
   content_reported: {
     icon: Flag,
