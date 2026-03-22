@@ -2,6 +2,7 @@
 
 import { useSession } from '@/context/session-context';
 import { useUser } from '@/context/user-context';
+import { useOrgSlug } from '@/context/org-slug-context';
 import { useTheme } from 'next-themes';
 import {
   Avatar,
@@ -287,6 +288,7 @@ function UsernameForm({ currentHandle }: { currentHandle: string }) {
 // Linked accounts section
 function LinkedAccountsSection() {
   const queryClient = useQueryClient();
+  const orgSlug = useOrgSlug();
   const [isLinking, setIsLinking] = useState<string | null>(null);
   const [isUnlinking, setIsUnlinking] = useState<string | null>(null);
 
@@ -317,10 +319,15 @@ function LinkedAccountsSection() {
     setIsLinking(provider);
     try {
       // Use Better Auth's built-in linkSocial method with error handling
+      // Callback to current org context if available, otherwise to personal settings
+      const callbackURL = orgSlug
+        ? `/${orgSlug}/settings/account`
+        : '/settings/account';
+
       await authClient.linkSocial(
         {
           provider,
-          callbackURL: '/settings/account',
+          callbackURL,
         },
         {
           onError: (ctx) => {
