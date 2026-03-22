@@ -3,9 +3,11 @@
 import { use, useState, useRef } from 'react';
 import Link from '@bounty/ui/components/link';
 import { useForm, Controller } from 'react-hook-form';
+import { useQuery } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Check } from 'lucide-react';
+import { Loader2, Check, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Spinner } from '@bounty/ui';
+import { m, AnimatePresence } from 'motion/react';
 import { PullRequestIcon } from '@bounty/ui/components/icons/huge/pull-request';
 import { ChevronSortIcon } from '@bounty/ui/components/icons/huge/chevron-sort';
 import {
@@ -25,7 +27,8 @@ import {
 } from '@bounty/ui/hooks/usePullRequests';
 import SubmissionCard from '@/components/bounty/submission-card';
 import { useSession } from '@/context/session-context';
-import { trpcClient } from '@/utils/trpc';
+import { useActiveOrg } from '@/hooks/use-active-org';
+import { trpc, trpcClient } from '@/utils/trpc';
 import { BountyDetailContext, type SubmissionData } from './context';
 import { Textarea, Fieldset, Button } from '@bounty/ui';
 
@@ -87,6 +90,7 @@ export function BountyDetailSubmissions() {
             isDisabled={!!userHasSubmission}
             githubRepoOwner={bounty.githubRepoOwner ?? undefined}
             githubRepoName={bounty.githubRepoName ?? undefined}
+            bountyAmount={bounty.amount}
           />
         </div>
       )}
@@ -202,15 +206,35 @@ function SubmitWorkForm({
   isDisabled,
   githubRepoOwner,
   githubRepoName,
+  bountyAmount,
 }: {
   onSubmit: (pullRequestUrl: string, description?: string) => void;
   isSubmitting: boolean;
   isDisabled: boolean;
   githubRepoOwner?: string;
   githubRepoName?: string;
+  bountyAmount: number;
 }) {
   const hasRepo = !!(githubRepoOwner && githubRepoName);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { activeOrgSlug } = useActiveOrg();
+
+  // Check if submitter has Stripe Connect set up (only for paid bounties)
+  const connectStatusQuery = useQuery({
+    ...trpc.connect.getConnectStatus.queryOptions(),
+    enabled: bountyAmount > 0,
+    staleTime: 60_000,
+  });
+
+  const connectData = connectStatusQuery.data?.data;
+  const needsConnectSetup =
+    bountyAmount > 0 &&
+    connectData &&
+    !(connectData.hasConnectAccount && connectData.onboardingComplete);
+
+  const paymentsHref = activeOrgSlug
+    ? `/${activeOrgSlug}/settings/payments?tab=settings`
+    : '/settings/payments?tab=settings';
 
   const [selectedPr, setSelectedPr] = useState<PullRequestItem | null>(null);
   const [showManualInput, setShowManualInput] = useState(!hasRepo);
@@ -245,8 +269,77 @@ function SubmitWorkForm({
 
   const disabled = isSubmitting || isDisabled;
 
+  const [isAlertExpanded, setIsAlertExpanded] = useState(false);
+
   return (
     <form onSubmit={handleFormSubmit} className="min-w-0 w-full">
+      {/* Stripe Connect setup warning - collapsible */}
+      {needsConnectSetup && (
+        <div className="mb-3">
+          <AnimatePresence mode="wait" initial={false}>
+            {isAlertExpanded ? (
+              <m.div
+                key="expanded"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0, transition: { duration: 0.15 } }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                className="space-y-2 overflow-hidden"
+              >
+                {/* Header */}
+                <button
+                  type="button"
+                  onClick={() => setIsAlertExpanded(false)}
+                  className="flex w-full items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-surface-1 border border-border-subtle text-foreground text-sm font-medium hover:bg-surface-2 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-orange-500" />
+                    <span>1 issue to resolve</span>
+                  </div>
+                  <ChevronUp className="w-4 h-4 shrink-0" />
+                </button>
+
+                {/* Problem item */}
+                <m.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <div className="rounded-lg border border-border-subtle bg-surface-2 px-4 py-3">
+                    <div className="flex-1 min-w-0 space-y-2.5">
+                      <p className="text-sm text-foreground">
+                        Set up payouts to receive earnings from this bounty.
+                      </p>
+                      <Button type="button" size="sm" asChild>
+                        <Link href={paymentsHref}>Set up payouts</Link>
+                      </Button>
+                    </div>
+                  </div>
+                </m.div>
+              </m.div>
+            ) : (
+              <m.button
+                type="button"
+                key="collapsed"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, transition: { duration: 0.1 } }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
+                onClick={() => setIsAlertExpanded(true)}
+                className="flex w-full items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-surface-1 border border-border-subtle text-foreground text-sm font-medium hover:bg-surface-2 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-orange-500" />
+                  <span>1 issue to resolve</span>
+                </div>
+                <ChevronDown className="w-4 h-4 shrink-0" />
+              </m.button>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
       {/* Using raw fieldset with [all:unset] — same pattern as TaskInputForm */}
       <Fieldset disabled={disabled} className="w-full! min-w-full gap-0">
         {/* Top: textarea area */}
