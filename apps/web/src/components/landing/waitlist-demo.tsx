@@ -55,7 +55,7 @@ function useWaitlistSubmission() {
       toast.success("You're on the list!");
     },
     onError: (error: unknown) => {
-      // Check for tRPC UNAUTHORIZED errors
+      // Check for tRPC UNAUTHORIZED errors or "Authentication required" message
       const isAuthError =
         error &&
         typeof error === 'object' &&
@@ -65,7 +65,19 @@ function useWaitlistSubmission() {
         'code' in error.data &&
         error.data.code === 'UNAUTHORIZED';
 
-      if (isAuthError) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'object' && error && 'message' in error
+            ? (error.message as string)
+            : '';
+
+      const isAuthMessage =
+        message.includes('Authentication required') ||
+        message.includes('Must be logged in') ||
+        message.includes('UNAUTHORIZED');
+
+      if (isAuthError || isAuthMessage) {
         authClient.signIn.social({
           provider: 'github',
           callbackURL: '/',
@@ -74,13 +86,12 @@ function useWaitlistSubmission() {
       }
 
       if (
-        error instanceof Error &&
-        (error.message.toLowerCase().includes('too many') ||
-          error.message.toLowerCase().includes('slow down'))
+        message.toLowerCase().includes('too many') ||
+        message.toLowerCase().includes('slow down')
       ) {
         toast.error('Too many attempts. Please try again later.');
       } else {
-        toast.error(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
+        toast.error(message || 'Something went wrong. Please try again.');
       }
     },
   });
