@@ -1215,6 +1215,7 @@ export const earlyAccessRouter = router({
             success: true,
             invited: 0,
             failed: 0,
+            errors: undefined,
             message: 'No users to invite - all users already have early access',
           };
         }

@@ -120,7 +120,7 @@ export function AdminUsers() {
       setInviteAllResult({
         invited: data.invited,
         failed: data.failed,
-        errors: data.errors,
+        errors: ('errors' in data && data.errors) || undefined,
       });
       if (data.invited > 0) {
         toast.success(`Invited ${data.invited} user${data.invited === 1 ? '' : 's'}`);
