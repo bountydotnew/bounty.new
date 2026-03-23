@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@bounty/ui/lib/utils';
+import { useMemo } from 'react';
 
 type AdminEvent = {
   id: string;
@@ -128,6 +129,44 @@ const eventConfig: Record<
   },
 };
 
+type GroupedEvent = AdminEvent & {
+  count: number;
+  latestAt: string;
+};
+
+/**
+ * Groups events by eventType + actorId + description
+ * Events from the same user with the same type/description are collapsed
+ */
+function groupEvents(events: AdminEvent[]): GroupedEvent[] {
+  const groups = new Map<string, GroupedEvent>();
+
+  for (const event of events) {
+    // Create a unique key for grouping: eventType + actorId + description
+    const groupKey = `${event.eventType}::${event.actorId ?? 'system'}::${event.description ?? ''}`;
+
+    const existing = groups.get(groupKey);
+    if (existing) {
+      existing.count += 1;
+      // Keep the most recent timestamp
+      if (new Date(event.createdAt) > new Date(existing.latestAt)) {
+        existing.latestAt = event.createdAt;
+      }
+    } else {
+      groups.set(groupKey, {
+        ...event,
+        count: 1,
+        latestAt: event.createdAt,
+      });
+    }
+  }
+
+  // Sort by latest timestamp descending
+  return Array.from(groups.values()).sort(
+    (a, b) => new Date(b.latestAt).getTime() - new Date(a.latestAt).getTime()
+  );
+}
+
 function EventIcon({ eventType }: { eventType: string }) {
   const config = eventConfig[eventType] ?? {
     icon: Activity,
@@ -143,14 +182,14 @@ function EventIcon({ eventType }: { eventType: string }) {
   );
 }
 
-function EventRow({ event }: { event: AdminEvent }) {
+function EventRow({ event }: { event: GroupedEvent }) {
   const config = eventConfig[event.eventType] ?? {
     icon: Activity,
     color: 'text-text-secondary',
     label: event.eventType,
   };
 
-  const timeAgo = formatDistanceToNow(new Date(event.createdAt), {
+  const timeAgo = formatDistanceToNow(new Date(event.latestAt), {
     addSuffix: false,
   });
 
@@ -207,6 +246,11 @@ function EventRow({ event }: { event: AdminEvent }) {
             >
               View {event.targetType}
             </Link>
+          )}
+          {event.count > 1 && (
+            <span className="rounded bg-surface-3 px-1.5 py-0.5 text-xs font-medium text-text-tertiary">
+              +{event.count - 1} more
+            </span>
           )}
         </div>
       </div>
@@ -270,6 +314,9 @@ export function AdminEvents() {
   const events = (data?.events ?? []) as AdminEvent[];
   const total = data?.total ?? 0;
 
+  // Group identical events from the same user
+  const groupedEvents = useMemo(() => groupEvents(events), [events]);
+
   return (
     <div className="relative flex min-h-0 w-full flex-1 flex-col">
       {/* Header */}
@@ -306,17 +353,17 @@ export function AdminEvents() {
             <EventSkeleton />
             <EventSkeleton />
           </>
-        ) : events.length === 0 ? (
+        ) : groupedEvents.length === 0 ? (
           <div className="py-8 text-center text-text-secondary">
             No events yet
           </div>
         ) : (
-          events.map((event) => <EventRow key={event.id} event={event} />)
+          groupedEvents.map((event) => <EventRow key={event.id} event={event} />)
         )}
       </div>
 
       {/* Load more button */}
-      {events.length > 0 && events.length < total && (
+      {groupedEvents.length > 0 && events.length < total && (
         <div className="mt-4 flex justify-center">
           <Button variant="outline" size="sm">
             Load more
