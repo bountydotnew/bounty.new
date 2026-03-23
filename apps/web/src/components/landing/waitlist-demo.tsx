@@ -151,11 +151,12 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
           {/* Success state */}
           {waitlistSubmission.success ? (
             <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
+              {/* Animated success icon */}
               <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
+                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-14 h-14 mb-4'} rounded-full bg-brand-accent/10 ring-4 ring-brand-accent/5 animate-in zoom-in duration-500`}
               >
                 <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
+                  className={`${compact ? 'w-4 h-4' : 'w-7 h-7'} text-brand-accent`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -165,6 +166,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                     strokeLinejoin="round"
                     strokeWidth={2.5}
                     d="M5 13l4 4L19 7"
+                    className="animate-[dash_0.6s_ease-in-out]"
                   />
                 </svg>
               </div>
@@ -174,20 +176,46 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                 You're on the list
               </h2>
               <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
+                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-4'} text-text-muted`}
               >
                 We'll reach out when it's your turn.
               </p>
+
+              {/* Position card */}
               <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
+                className={`${compact ? 'mb-2' : 'mb-4'} rounded-xl border border-border-subtle bg-surface-1 ${compact ? 'p-2.5' : 'p-4'}`}
               >
-                <span className="text-xs text-text-muted">Position</span>
-                <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
-                >
-                  #{waitlistCount}
-                </span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className={`${compact ? 'w-1.5 h-1.5' : 'w-2 h-2'} rounded-full bg-emerald-500 animate-pulse`} />
+                    <span className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}>
+                      Your position
+                    </span>
+                  </div>
+                  <span
+                    className={`${compact ? 'text-base' : 'text-lg'} font-semibold text-foreground tabular-nums`}
+                  >
+                    #{waitlistCount}
+                  </span>
+                </div>
+                {/* Progress bar */}
+                <div className={`${compact ? 'mt-1.5' : 'mt-3'} h-1 w-full rounded-full bg-surface-2 overflow-hidden`}>
+                  <div
+                    className="h-full rounded-full bg-brand-accent/60 animate-[grow_1s_ease-out]"
+                    style={{ width: `${Math.min(100, Math.max(15, 100 - waitlistCount / 10))}%` }}
+                  />
+                </div>
               </div>
+
+              {/* What's next */}
+              {!compact && (
+                <div className="flex items-start gap-2 text-xs text-text-muted">
+                  <svg className="w-3.5 h-3.5 mt-0.5 shrink-0 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>We'll email you when a bounty matches your skills.</span>
+                </div>
+              )}
             </div>
           ) : (
             <>
