@@ -172,6 +172,23 @@ export function BountyFilters() {
 
   const sortValue = `${sortBy}::${sortOrder}`;
 
+  // Map sort values to display labels
+  const sortLabels: Record<string, string> = {
+    'created_at::desc': 'Newest',
+    'created_at::asc': 'Oldest',
+    'amount::desc': 'Price: High to Low',
+    'amount::asc': 'Price: Low to High',
+  };
+
+  // Map status values to display labels
+  const statusLabels: Record<string, string> = {
+    all: 'All Statuses',
+    open: 'Open',
+    in_progress: 'In Progress',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+  };
+
   return (
     <div className="flex flex-col gap-4 pb-6">
       <div className="flex flex-wrap items-center gap-3">
@@ -280,7 +297,9 @@ export function BountyFilters() {
           value={status || 'all'}
         >
           <SelectTrigger className="w-[150px] border-border-subtle bg-surface-1 text-foreground">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder="Status">
+              {statusLabels[status || 'all'] || 'Status'}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent className="border-border-subtle bg-surface-1">
             <SelectItem value="all">All Statuses</SelectItem>
@@ -297,7 +316,9 @@ export function BountyFilters() {
           value={sortValue}
         >
           <SelectTrigger className="w-[180px] border-border-subtle bg-surface-1 text-foreground">
-            <SelectValue placeholder="Sort by..." />
+            <SelectValue placeholder="Sort by...">
+              {sortLabels[sortValue] || 'Sort by...'}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent className="border-border-subtle bg-surface-1">
             <SelectItem value="created_at::desc">Newest</SelectItem>

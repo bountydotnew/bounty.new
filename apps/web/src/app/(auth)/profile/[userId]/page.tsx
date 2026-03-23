@@ -1,6 +1,5 @@
 import { cache } from 'react';
 import type { Metadata } from 'next';
-import { baseUrl } from '@bounty/ui/lib/constants';
 import { createServerCaller } from '@bounty/api/src/server-caller';
 import ProfilePageClient from './page.client';
 import type { ProfileData } from './hooks/use-profile-data';
@@ -32,33 +31,20 @@ export async function generateMetadata({
 
   const profileUser = profileResponse.data.user;
   const displayName = profileUser.name || profileUser.handle || 'User';
-  const ogImageUrl = profileUser.handle
-    ? `${baseUrl}/api/og-image/profile/${profileUser.handle}`
-    : `${baseUrl}/api/og-image/profile/${profileUser.id}`;
 
+  // OG images are automatically generated via opengraph-image.tsx and twitter-image.tsx
   return {
     title: `@${profileUser.handle || displayName} — bounty`,
     description: `View ${displayName}'s profile on bounty.new`,
     openGraph: {
       title: `@${profileUser.handle || displayName} — bounty`,
       description: `View ${displayName}'s profile on bounty.new`,
-      images: ogImageUrl
-        ? [
-            {
-              url: ogImageUrl,
-              width: 1200,
-              height: 630,
-              alt: `${displayName}'s profile`,
-            },
-          ]
-        : [],
       type: 'profile',
     },
     twitter: {
       card: 'summary_large_image',
       title: `@${profileUser.handle || profileUser.id} - ${displayName}`,
       description: `View ${displayName}'s profile on bounty.new`,
-      images: ogImageUrl ? [ogImageUrl] : [],
     },
   };
 }
