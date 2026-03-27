@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { trpcClient } from '@/utils/trpc';
 import { toast } from 'sonner';
 import {
@@ -31,6 +31,7 @@ export function CreateInviteDialog({
   open,
   onOpenChange,
 }: CreateInviteDialogProps) {
+  const queryClient = useQueryClient();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
 
@@ -40,6 +41,8 @@ export function CreateInviteDialog({
     onSuccess: (_data, targetEmail) => {
       toast.success(`Invite sent to ${targetEmail}`);
       setSent(true);
+      // Invalidate the invited emails cache so the UI updates
+      queryClient.invalidateQueries({ queryKey: ['admin', 'invitedEmails'] });
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to send invite');
@@ -138,21 +141,26 @@ interface SendInviteConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   email: string;
+  isResend?: boolean;
 }
 
 export function SendInviteConfirmDialog({
   open,
   onOpenChange,
   email,
+  isResend = false,
 }: SendInviteConfirmDialogProps) {
+  const queryClient = useQueryClient();
   const [sent, setSent] = useState(false);
 
   const mutation = useMutation({
     mutationFn: () =>
       trpcClient.earlyAccess.generateInviteCode.mutate({ email }),
     onSuccess: () => {
-      toast.success(`Invite sent to ${email}`);
+      toast.success(`Invite ${isResend ? 'resent' : 'sent'} to ${email}`);
       setSent(true);
+      // Invalidate the invited emails cache so the UI updates
+      queryClient.invalidateQueries({ queryKey: ['admin', 'invitedEmails'] });
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to send invite');
@@ -169,9 +177,11 @@ export function SendInviteConfirmDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Send invite code</DialogTitle>
+          <DialogTitle>{isResend ? 'Resend invite code' : 'Send invite code'}</DialogTitle>
           <DialogDescription>
-            An invite code will be generated and emailed to this user.
+            {isResend
+              ? 'A new invite code will be generated and emailed to this user.'
+              : 'An invite code will be generated and emailed to this user.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -180,7 +190,7 @@ export function SendInviteConfirmDialog({
             <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-green-500/10">
               <Mail className="h-5 w-5 text-green-500" />
             </div>
-            <p className="text-sm font-medium text-foreground">Invite sent</p>
+            <p className="text-sm font-medium text-foreground">Invite {isResend ? 'resent' : 'sent'}</p>
             <p className="mt-1 text-xs text-text-muted">
               A code has been emailed to {email}
             </p>
@@ -188,7 +198,7 @@ export function SendInviteConfirmDialog({
         ) : (
           <div className="px-4 py-3">
             <p className="text-sm text-foreground">
-              Send an invite code to{' '}
+              {isResend ? 'Resend' : 'Send'} an invite code to{' '}
               <span className="font-medium">{email}</span>?
             </p>
           </div>
@@ -211,7 +221,7 @@ export function SendInviteConfirmDialog({
               ) : (
                 <>
                   <Mail className="h-3.5 w-3.5" />
-                  Send invite
+                  {isResend ? 'Resend invite' : 'Send invite'}
                 </>
               )}
             </Button>
