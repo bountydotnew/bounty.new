@@ -57,6 +57,11 @@ export const env = createEnv({
     LINEAR_CLIENT_ID: z.string().min(1).optional(),
     LINEAR_CLIENT_SECRET: z.string().min(1).optional(),
     LINEAR_REDIRECT_URI: z.string().url().optional(),
+    // X (Twitter) API
+    X_ACCESS_TOKEN: z.string().min(1).optional(),
+    X_WEBHOOK_SECRET: z.string().min(1).optional(),
+    X_CLIENT_ID: z.string().min(1).optional(),
+    X_CLIENT_SECRET: z.string().min(1).optional(),
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
@@ -92,6 +97,11 @@ export const env = createEnv({
     LINEAR_CLIENT_ID: process.env.LINEAR_CLIENT_ID,
     LINEAR_CLIENT_SECRET: process.env.LINEAR_CLIENT_SECRET,
     LINEAR_REDIRECT_URI: process.env.LINEAR_REDIRECT_URI,
+    // X (Twitter) API
+    X_ACCESS_TOKEN: process.env.X_ACCESS_TOKEN,
+    X_WEBHOOK_SECRET: process.env.X_WEBHOOK_SECRET,
+    X_CLIENT_ID: process.env.X_CLIENT_ID,
+    X_CLIENT_SECRET: process.env.X_CLIENT_SECRET,
   },
   // Always validate environment variables, even in development
   // This catches missing critical secrets early

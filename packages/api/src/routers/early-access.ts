@@ -1,6 +1,6 @@
 import { track } from '@bounty/track';
 import { TRPCError } from '@trpc/server';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { randomInt, randomBytes, timingSafeEqual } from 'node:crypto';
 import { generateOTP, generateAccessToken } from '../lib/generate-code';
@@ -25,6 +25,7 @@ import {
   FROM_ADDRESSES,
   sendEmail,
   OTPVerification,
+  getInvitedEmails,
 } from '@bounty/email';
 import {
   adminProcedure,
@@ -1166,6 +1167,38 @@ export const earlyAccessRouter = router({
   // ========================================================================
 
   /**
+   * Get a list of emails that have been sent invite codes.
+   * Uses the inviteSentAt column in the user table (synced via sync-invite-status script).
+   * Falls back to Resend API if no users have inviteSentAt set.
+   */
+  getInvitedEmails: adminProcedure.query(async () => {
+    try {
+      // First check if we have any users with inviteSentAt set (database is synced)
+      const usersWithInvites = await db
+        .select({ email: userTable.email })
+        .from(userTable)
+        .where(sql`${userTable.inviteSentAt} IS NOT NULL`);
+
+      if (usersWithInvites.length > 0) {
+        // Use database records
+        return {
+          emails: usersWithInvites.map((u) => u.email.toLowerCase()),
+        };
+      }
+
+      // Fallback to Resend API if no synced data
+      const invitedEmails = await getInvitedEmails();
+      return {
+        emails: Array.from(invitedEmails),
+      };
+    } catch (err) {
+      error('[getInvitedEmails] Failed:', err);
+      // Return empty array on error to not break the UI
+      return { emails: [] };
+    }
+  }),
+
+  /**
    * Admin generates and sends an invite code to a user's email.
    * Uses Better Auth's email-otp plugin under the hood — the OTP is generated
    * with a `bnty` prefix and sent via the InviteCode email template.
@@ -1181,6 +1214,13 @@ export const earlyAccessRouter = router({
         await (auth.api as any).sendVerificationOTP({
           body: { email: input.email, type: 'sign-in' },
         });
+
+        // Update inviteSentAt on the user record
+        await db
+          .update(userTable)
+          .set({ inviteSentAt: new Date() })
+          .where(eq(userTable.email, input.email));
+
         return { success: true, email: input.email };
       } catch (err) {
         error('[generateInviteCode] Failed:', err);
@@ -1192,24 +1232,40 @@ export const earlyAccessRouter = router({
     }),
 
   /**
-   * Admin generates and sends invite codes to all users without early access.
-   * Finds all users with role = 'user' (not 'early_access' or 'admin') and
-   * generates valid invite codes for each via Better Auth's email-otp plugin.
+   * Admin generates and sends invite codes to users.
+   * If emails array is provided, only invites those specific emails.
+   * Otherwise, finds all users with role = 'user' (not 'early_access' or 'admin').
    */
   inviteAllUsers: adminProcedure
-    .input(z.object({}).strict())
-    .mutation(async ({ ctx }) => {
+    .input(z.object({
+      emails: z.array(z.string().email()).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
       await checkUnkeyRateLimit('invite.generate', ctx.session.user.id);
       try {
-        // Find all users without early access (role = 'user')
-        const usersToInvite = await db
-          .select({
-            id: userTable.id,
-            email: userTable.email,
-            name: userTable.name,
-          })
-          .from(userTable)
-          .where(sql`${userTable.role} = 'user'`);
+        // Find users to invite - either specific emails or all without early access
+        let usersToInvite;
+        if (input.emails && input.emails.length > 0) {
+          // Invite specific emails
+          usersToInvite = await db
+            .select({
+              id: userTable.id,
+              email: userTable.email,
+              name: userTable.name,
+            })
+            .from(userTable)
+            .where(inArray(userTable.email, input.emails));
+        } else {
+          // Invite all users without early access
+          usersToInvite = await db
+            .select({
+              id: userTable.id,
+              email: userTable.email,
+              name: userTable.name,
+            })
+            .from(userTable)
+            .where(sql`${userTable.role} = 'user'`);
+        }
 
         if (usersToInvite.length === 0) {
           return {
@@ -1226,19 +1282,25 @@ export const earlyAccessRouter = router({
         const errors: { email: string; error: string }[] = [];
 
         // Send invite code to each user
-        for (const user of usersToInvite) {
+        for (const u of usersToInvite) {
           try {
             await (auth.api as any).sendVerificationOTP({
-              body: { email: user.email, type: 'sign-in' },
+              body: { email: u.email, type: 'sign-in' },
             });
+
+            // Update inviteSentAt on the user record
+            await db
+              .update(userTable)
+              .set({ inviteSentAt: new Date() })
+              .where(eq(userTable.id, u.id));
+
             invited++;
-            info('[inviteAllUsers] Invite sent to:', user.email);
+            info('[inviteAllUsers] Invite sent to:', u.email);
           } catch (err) {
             failed++;
-            const errorMsg =
-              err instanceof Error ? err.message : 'Unknown error';
-            errors.push({ email: user.email, error: errorMsg });
-            error('[inviteAllUsers] Failed to invite:', user.email, errorMsg);
+            const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+            errors.push({ email: u.email, error: errorMsg });
+            error('[inviteAllUsers] Failed to invite:', u.email, errorMsg);
           }
         }
 

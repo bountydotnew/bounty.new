@@ -207,7 +207,7 @@ export default function OrgGeneralSettingsPage() {
               onChange={(e) => setSlugInput(e.target.value)}
               placeholder="new-slug"
               className="w-full rounded-lg border border-border-subtle bg-background px-3 py-2 text-sm text-foreground placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
-              disabled={!isOwner || isPersonalTeam}
+              disabled={!isOwner}
             />
             <p className="text-[11px] text-text-muted mt-1.5">
               Current:{' '}
@@ -222,7 +222,7 @@ export default function OrgGeneralSettingsPage() {
           >
             <AlertDialogTrigger asChild>
               <Button
-                disabled={!(slugInput.trim() && isOwner) || isPersonalTeam}
+                disabled={!(slugInput.trim() && isOwner)}
                 onClick={() => setIsSlugDialogOpen(true)}
               >
                 Change Slug
@@ -259,11 +259,6 @@ export default function OrgGeneralSettingsPage() {
           </AlertDialogRoot>
         </div>
 
-        {isPersonalTeam && (
-          <p className="text-xs text-text-muted mt-3">
-            Personal team slugs cannot be changed.
-          </p>
-        )}
       </Card>
 
       {/* Danger Zone - Delete Organization */}
