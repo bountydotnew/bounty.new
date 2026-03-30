@@ -1354,10 +1354,21 @@ export const earlyAccessRouter = router({
           .where(eq(waitlist.id, existingEntry.id));
       }
 
+      // Calculate position if not set
+      let position = existingEntry.position;
+      if (!position) {
+        const [posRes] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(waitlist)
+          .where(sql`${waitlist.createdAt} < ${existingEntry.createdAt}`);
+        position = (posRes?.count ?? 0) + 1;
+      }
+
       return {
         success: true,
         message: "You're already on the waitlist!",
         alreadyJoined: true,
+        position,
       };
     }
 
