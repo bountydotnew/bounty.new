@@ -1,5 +1,6 @@
 export * from './client';
 export * from './constants';
+export * from './list-emails';
 export * from './receiving';
 export * from './send';
 export * from './subscribe';

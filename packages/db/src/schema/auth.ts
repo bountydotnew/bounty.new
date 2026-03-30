@@ -36,6 +36,8 @@ export const user = pgTable('user', {
     .default(false),
   // Payment card background (e.g., 'mountain', 'autumn', etc.)
   cardBackground: text('card_background'),
+  // Invite tracking
+  inviteSentAt: timestamp('invite_sent_at'),
   // Note: Consider using timestamptz for timezone-aware timestamps in production
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),

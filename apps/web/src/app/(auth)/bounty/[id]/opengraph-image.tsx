@@ -10,18 +10,22 @@ export const size = {
 };
 export const contentType = 'image/png';
 
-// Load Inter font weights
-const interMedium = fetch(
-  'https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuI6fAZ9hjp-Ek-_EeA.woff'
-).then((res) => res.arrayBuffer());
+async function loadGoogleFont(font: string, weight: number, text: string) {
+  const url = `https://fonts.googleapis.com/css2?family=${font}:wght@${weight}&text=${encodeURIComponent(text)}`;
+  const css = await (await fetch(url)).text();
+  const resource = css.match(
+    /src: url\((.+)\) format\('(opentype|truetype|woff2)'\)/
+  );
 
-const interSemiBold = fetch(
-  'https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuGKYAZ9hjp-Ek-_EeA.woff'
-).then((res) => res.arrayBuffer());
+  if (resource) {
+    const response = await fetch(resource[1]);
+    if (response.status === 200) {
+      return await response.arrayBuffer();
+    }
+  }
 
-const interBold = fetch(
-  'https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuFuYAZ9hjp-Ek-_EeA.woff'
-).then((res) => res.arrayBuffer());
+  throw new Error('failed to load font data');
+}
 
 export default async function Image({
   params,
@@ -30,52 +34,25 @@ export default async function Image({
 }) {
   const { id } = await params;
 
-  // Load fonts in parallel with data
-  const [interMediumData, interSemiBoldData, interBoldData, dbResult] = await Promise.all([
-    interMedium,
-    interSemiBold,
-    interBold,
-    db
-      .select({
-        title: bounty.title,
-        amount: bounty.amount,
-        currency: bounty.currency,
-        creator: {
-          name: user.name,
-          image: user.image,
-        },
-      })
-      .from(bounty)
-      .innerJoin(user, eq(bounty.createdById, user.id))
-      .where(eq(bounty.id, id))
-      .limit(1),
-  ]);
+  // Fetch bounty with creator
+  const result = await db
+    .select({
+      title: bounty.title,
+      amount: bounty.amount,
+      currency: bounty.currency,
+      creator: {
+        name: user.name,
+        image: user.image,
+      },
+    })
+    .from(bounty)
+    .innerJoin(user, eq(bounty.createdById, user.id))
+    .where(eq(bounty.id, id))
+    .limit(1);
 
-  const thisBounty = dbResult[0];
-
-  const fonts = [
-    {
-      name: 'Inter',
-      data: interMediumData,
-      style: 'normal' as const,
-      weight: 500 as const,
-    },
-    {
-      name: 'Inter',
-      data: interSemiBoldData,
-      style: 'normal' as const,
-      weight: 600 as const,
-    },
-    {
-      name: 'Inter',
-      data: interBoldData,
-      style: 'normal' as const,
-      weight: 700 as const,
-    },
-  ];
+  const thisBounty = result[0];
 
   if (!thisBounty) {
-    // Fallback for missing bounty
     return new ImageResponse(
       (
         <div
@@ -94,13 +71,36 @@ export default async function Image({
           Bounty Not Found
         </div>
       ),
-      { ...size, fonts }
+      {
+        ...size,
+        fonts: [
+          {
+            name: 'Inter',
+            data: await loadGoogleFont('Inter', 500, 'Bounty Not Found'),
+            style: 'normal',
+            weight: 500,
+          },
+        ],
+      }
     );
   }
 
   const creatorName = thisBounty.creator.name || 'Anonymous';
   const creatorInitial = creatorName.charAt(0).toUpperCase();
-  const creatorHandle = creatorName.startsWith('@') ? creatorName : `@${creatorName.toLowerCase().replace(/\s+/g, '')}`;
+  const creatorHandle = creatorName.startsWith('@')
+    ? creatorName
+    : `@${creatorName.toLowerCase().replace(/\s+/g, '')}`;
+  const priceText = formatCurrency(Number(thisBounty.amount), thisBounty.currency);
+
+  // Collect all text to load fonts for
+  const allText = `bounty.new${priceText}${thisBounty.title}${creatorHandle}Author${creatorInitial}`;
+
+  // Load fonts in parallel
+  const [interMedium, interSemiBold, interBold] = await Promise.all([
+    loadGoogleFont('Inter', 500, allText),
+    loadGoogleFont('Inter', 600, allText),
+    loadGoogleFont('Inter', 700, allText),
+  ]);
 
   return new ImageResponse(
     (
@@ -124,7 +124,7 @@ export default async function Image({
             width: '100%',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {/* Chain link icon */}
             <svg
               width="20"
@@ -173,7 +173,7 @@ export default async function Image({
                 lineHeight: 1,
               }}
             >
-              {formatCurrency(Number(thisBounty.amount), thisBounty.currency)}
+              {priceText}
             </span>
           </div>
 
@@ -257,6 +257,28 @@ export default async function Image({
         </div>
       </div>
     ),
-    { ...size, fonts }
+    {
+      ...size,
+      fonts: [
+        {
+          name: 'Inter',
+          data: interMedium,
+          style: 'normal',
+          weight: 500,
+        },
+        {
+          name: 'Inter',
+          data: interSemiBold,
+          style: 'normal',
+          weight: 600,
+        },
+        {
+          name: 'Inter',
+          data: interBold,
+          style: 'normal',
+          weight: 700,
+        },
+      ],
+    }
   );
 }

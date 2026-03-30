@@ -35,6 +35,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { authClient } from '@bounty/auth/client';
 import { GithubIcon } from '../icons';
+import { TwitterIcon } from '@bounty/ui';
 import GoogleIcon from '../icons/google';
 
 // Section wrapper component
@@ -303,14 +304,17 @@ function LinkedAccountsSection() {
   const hasGoogle = accountsData?.accounts?.some(
     (a: { providerId: string }) => a.providerId === 'google'
   );
+  const hasTwitter = accountsData?.accounts?.some(
+    (a: { providerId: string }) => a.providerId === 'twitter'
+  );
   const hasEmail = accountsData?.accounts?.some(
     (a: { providerId: string }) => a.providerId === 'email'
   );
 
-  // Count total OAuth providers (excluding email)
+  // Count total OAuth providers (excluding email and twitter - twitter is optional)
   const oauthCount = (hasGitHub ? 1 : 0) + (hasGoogle ? 1 : 0);
 
-  const handleLinkProvider = async (provider: 'github' | 'google') => {
+  const handleLinkProvider = async (provider: 'github' | 'google' | 'twitter') => {
     // Prevent double-clicks
     if (isLinking !== null || isUnlinking !== null) {
       return;
@@ -333,7 +337,7 @@ function LinkedAccountsSection() {
           onError: (ctx) => {
             const errorMessage =
               ctx.error?.message ||
-              `Failed to link ${provider === 'github' ? 'GitHub' : 'Google'}`;
+              `Failed to link ${provider === 'github' ? 'GitHub' : provider === 'google' ? 'Google' : 'X (Twitter)'}`;
             toast.error(errorMessage);
             setIsLinking(null);
           },
@@ -343,16 +347,16 @@ function LinkedAccountsSection() {
       const errorMessage =
         err instanceof Error
           ? err.message
-          : `Failed to link ${provider === 'github' ? 'GitHub' : 'Google'}`;
+          : `Failed to link ${provider === 'github' ? 'GitHub' : provider === 'google' ? 'Google' : 'X (Twitter)'}`;
       toast.error(errorMessage);
       setIsLinking(null);
     }
   };
 
-  const handleUnlinkProvider = async (provider: 'github' | 'google') => {
-    // Don't allow unlinking if it's the only OAuth provider
-    // Users must have at least one social connection (GitHub or Google)
-    if (oauthCount <= 1) {
+  const handleUnlinkProvider = async (provider: 'github' | 'google' | 'twitter') => {
+    // Don't allow unlinking GitHub or Google if they're the only required OAuth providers
+    // Twitter can be unlinked freely since it's optional
+    if (provider !== 'twitter' && oauthCount <= 1) {
       toast.error(
         'You must have at least one social connection (GitHub or Google) to access your account'
       );
@@ -369,7 +373,7 @@ function LinkedAccountsSection() {
         {
           onSuccess: () => {
             toast.success(
-              `${provider === 'github' ? 'GitHub' : 'Google'} unlinked`
+              `${provider === 'github' ? 'GitHub' : provider === 'google' ? 'Google' : 'X (Twitter)'} unlinked`
             );
             // Refetch accounts
             queryClient.invalidateQueries({
@@ -379,7 +383,7 @@ function LinkedAccountsSection() {
           onError: (ctx) => {
             const errorMessage =
               ctx.error?.message ||
-              `Failed to unlink ${provider === 'github' ? 'GitHub' : 'Google'}`;
+              `Failed to unlink ${provider === 'github' ? 'GitHub' : provider === 'google' ? 'Google' : 'X (Twitter)'}`;
             toast.error(errorMessage);
           },
         }
@@ -389,7 +393,7 @@ function LinkedAccountsSection() {
       const errorMessage =
         err instanceof Error
           ? err.message
-          : `Failed to unlink ${provider === 'github' ? 'GitHub' : 'Google'}`;
+          : `Failed to unlink ${provider === 'github' ? 'GitHub' : provider === 'google' ? 'Google' : 'X (Twitter)'}`;
       toast.error(errorMessage);
       setIsUnlinking(null);
     }
@@ -399,8 +403,9 @@ function LinkedAccountsSection() {
     <SettingsSection>
       <SectionTitle>Linked accounts</SectionTitle>
       <p className="text-sm text-text-secondary">
-        Link your GitHub and Google accounts for easier sign-in. You can use
-        either to sign in.
+        Link your GitHub, Google, and X (Twitter) accounts for easier sign-in.
+        You can use GitHub or Google to sign in. Twitter is optional and used
+        for bounty creation features.
       </p>
 
       <div className="flex flex-col gap-3 mt-2">
@@ -489,6 +494,54 @@ function LinkedAccountsSection() {
               disabled={isLinking !== null}
             >
               {isLinking === 'google' ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <>
+                  <LinkIcon className="size-4" />
+                  Link
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+
+        {/* X (Twitter) */}
+        <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-surface-2">
+          <div className="flex items-center gap-3">
+            <TwitterIcon className="h-5 w-5 fill-foreground" />
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-foreground">
+                X (Twitter)
+              </span>
+              {hasTwitter && (
+                <span className="text-xs text-text-tertiary">Connected</span>
+              )}
+            </div>
+          </div>
+          {hasTwitter ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleUnlinkProvider('twitter')}
+              disabled={isUnlinking !== null || isLinking !== null}
+            >
+              {isUnlinking === 'twitter' ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <>
+                  <Unlink className="size-4" />
+                  Unlink
+                </>
+              )}
+            </Button>
+          ) : (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => handleLinkProvider('twitter')}
+              disabled={isLinking !== null}
+            >
+              {isLinking === 'twitter' ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
                 <>

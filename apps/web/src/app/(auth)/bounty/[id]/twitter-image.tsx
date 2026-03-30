@@ -10,6 +10,23 @@ export const size = {
 };
 export const contentType = 'image/png';
 
+async function loadGoogleFont(font: string, weight: number, text: string) {
+  const url = `https://fonts.googleapis.com/css2?family=${font}:wght@${weight}&text=${encodeURIComponent(text)}`;
+  const css = await (await fetch(url)).text();
+  const resource = css.match(
+    /src: url\((.+)\) format\('(opentype|truetype|woff2)'\)/
+  );
+
+  if (resource) {
+    const response = await fetch(resource[1]);
+    if (response.status === 200) {
+      return await response.arrayBuffer();
+    }
+  }
+
+  throw new Error('failed to load font data');
+}
+
 export default async function Image({
   params,
 }: {
@@ -36,7 +53,6 @@ export default async function Image({
   const thisBounty = result[0];
 
   if (!thisBounty) {
-    // Fallback for missing bounty
     return new ImageResponse(
       (
         <div
@@ -49,19 +65,42 @@ export default async function Image({
             backgroundColor: '#0E0E0E',
             color: '#FFFFFF',
             fontSize: 48,
-            fontFamily: 'system-ui, sans-serif',
+            fontFamily: 'Inter',
           }}
         >
           Bounty Not Found
         </div>
       ),
-      { ...size }
+      {
+        ...size,
+        fonts: [
+          {
+            name: 'Inter',
+            data: await loadGoogleFont('Inter', 500, 'Bounty Not Found'),
+            style: 'normal',
+            weight: 500,
+          },
+        ],
+      }
     );
   }
 
   const creatorName = thisBounty.creator.name || 'Anonymous';
   const creatorInitial = creatorName.charAt(0).toUpperCase();
-  const creatorHandle = creatorName.startsWith('@') ? creatorName : `@${creatorName.toLowerCase().replace(/\s+/g, '')}`;
+  const creatorHandle = creatorName.startsWith('@')
+    ? creatorName
+    : `@${creatorName.toLowerCase().replace(/\s+/g, '')}`;
+  const priceText = formatCurrency(Number(thisBounty.amount), thisBounty.currency);
+
+  // Collect all text to load fonts for
+  const allText = `bounty.new${priceText}${thisBounty.title}${creatorHandle}Author${creatorInitial}`;
+
+  // Load fonts in parallel
+  const [interMedium, interSemiBold, interBold] = await Promise.all([
+    loadGoogleFont('Inter', 500, allText),
+    loadGoogleFont('Inter', 600, allText),
+    loadGoogleFont('Inter', 700, allText),
+  ]);
 
   return new ImageResponse(
     (
@@ -73,7 +112,7 @@ export default async function Image({
           flexDirection: 'column',
           padding: '56px 64px',
           backgroundColor: '#0E0E0E',
-          fontFamily: 'system-ui, sans-serif',
+          fontFamily: 'Inter',
         }}
       >
         {/* Header */}
@@ -85,7 +124,7 @@ export default async function Image({
             width: '100%',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {/* Chain link icon */}
             <svg
               width="20"
@@ -134,7 +173,7 @@ export default async function Image({
                 lineHeight: 1,
               }}
             >
-              {formatCurrency(Number(thisBounty.amount), thisBounty.currency)}
+              {priceText}
             </span>
           </div>
 
@@ -218,6 +257,28 @@ export default async function Image({
         </div>
       </div>
     ),
-    { ...size }
+    {
+      ...size,
+      fonts: [
+        {
+          name: 'Inter',
+          data: interMedium,
+          style: 'normal',
+          weight: 500,
+        },
+        {
+          name: 'Inter',
+          data: interSemiBold,
+          style: 'normal',
+          weight: 600,
+        },
+        {
+          name: 'Inter',
+          data: interBold,
+          style: 'normal',
+          weight: 700,
+        },
+      ],
+    }
   );
 }
