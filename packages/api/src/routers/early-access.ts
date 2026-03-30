@@ -353,7 +353,8 @@ export const earlyAccessRouter = router({
           await logAdminEvent({
             eventType: 'early_access_granted',
             actorId: userId,
-            description: 'User accepted waitlist access token and gained early access',
+            description:
+              'User accepted waitlist access token and gained early access',
             metadata: { source: 'waitlist', waitlistEntryId: entry.id },
           });
         } catch (eventErr) {
@@ -1234,7 +1235,8 @@ export const earlyAccessRouter = router({
             info('[inviteAllUsers] Invite sent to:', user.email);
           } catch (err) {
             failed++;
-            const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+            const errorMsg =
+              err instanceof Error ? err.message : 'Unknown error';
             errors.push({ email: user.email, error: errorMsg });
             error('[inviteAllUsers] Failed to invite:', user.email, errorMsg);
           }

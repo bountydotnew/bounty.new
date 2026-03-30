@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { authClient } from "@bounty/auth/client";
-import { Button } from "@bounty/ui/components/button";
-import NumberFlow from "@bounty/ui/components/number-flow";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { GithubIcon } from "@bounty/ui/components/icons/huge/github";
-import Image from "next/image";
-import { useState } from "react";
-import { toast } from "sonner";
-import { useConfetti } from "@/context/confetti-context";
-import { trpc, trpcClient } from "@/utils/trpc";
-import { MockBrowser } from "./mockup";
+import { authClient } from '@bounty/auth/client';
+import { Button } from '@bounty/ui/components/button';
+import NumberFlow from '@bounty/ui/components/number-flow';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
+import Image from 'next/image';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { useConfetti } from '@/context/confetti-context';
+import { trpc, trpcClient } from '@/utils/trpc';
+import { MockBrowser } from './mockup';
 
 function useWaitlistSubmission(onPositionUpdate: (position: number) => void) {
   const { celebrate } = useConfetti();
@@ -28,40 +28,40 @@ function useWaitlistSubmission(onPositionUpdate: (position: number) => void) {
       // Check for tRPC UNAUTHORIZED errors or "Authentication required" message
       const isAuthError =
         error &&
-        typeof error === "object" &&
-        "data" in error &&
-        typeof error.data === "object" &&
+        typeof error === 'object' &&
+        'data' in error &&
+        typeof error.data === 'object' &&
         error.data &&
-        "code" in error.data &&
-        error.data.code === "UNAUTHORIZED";
+        'code' in error.data &&
+        error.data.code === 'UNAUTHORIZED';
 
       const message =
         error instanceof Error
           ? error.message
-          : typeof error === "object" && error && "message" in error
+          : typeof error === 'object' && error && 'message' in error
             ? (error.message as string)
-            : "";
+            : '';
 
       const isAuthMessage =
-        message.includes("Authentication required") ||
-        message.includes("Must be logged in") ||
-        message.includes("UNAUTHORIZED");
+        message.includes('Authentication required') ||
+        message.includes('Must be logged in') ||
+        message.includes('UNAUTHORIZED');
 
       if (isAuthError || isAuthMessage) {
         authClient.signIn.social({
-          provider: "github",
-          callbackURL: "/",
+          provider: 'github',
+          callbackURL: '/',
         });
         return;
       }
 
       if (
-        message.toLowerCase().includes("too many") ||
-        message.toLowerCase().includes("slow down")
+        message.toLowerCase().includes('too many') ||
+        message.toLowerCase().includes('slow down')
       ) {
-        toast.error("Too many attempts. Please try again later.");
+        toast.error('Too many attempts. Please try again later.');
       } else {
-        toast.error(message || "Something went wrong. Please try again.");
+        toast.error(message || 'Something went wrong. Please try again.');
       }
     },
   });
@@ -106,33 +106,33 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
   return (
     <div className="h-full bg-background overflow-auto">
       <div
-        className={`flex flex-col items-center justify-center h-full ${compact ? "px-3 py-4" : "px-6 py-10"}`}
+        className={`flex flex-col items-center justify-center h-full ${compact ? 'px-3 py-4' : 'px-6 py-10'}`}
       >
-        <div className={`w-full ${compact ? "max-w-xs" : "max-w-sm"}`}>
+        <div className={`w-full ${compact ? 'max-w-xs' : 'max-w-sm'}`}>
           {/* Header */}
-          <div className={`text-left ${compact ? "mb-4" : "mb-8"}`}>
+          <div className={`text-left ${compact ? 'mb-4' : 'mb-8'}`}>
             <h1
-              className={`${compact ? "text-lg" : "text-2xl"} font-medium text-foreground tracking-tight ${compact ? "mb-1" : "mb-2"}`}
+              className={`${compact ? 'text-lg' : 'text-2xl'} font-medium text-foreground tracking-tight ${compact ? 'mb-1' : 'mb-2'}`}
             >
               Get early access
             </h1>
             <p
-              className={`${compact ? "text-xs" : "text-sm"} text-text-muted leading-relaxed`}
+              className={`${compact ? 'text-xs' : 'text-sm'} text-text-muted leading-relaxed`}
             >
               {compact
-                ? "Join the waitlist to get started."
-                : "Join the waitlist to start creating bounties and getting paid to build."}
+                ? 'Join the waitlist to get started.'
+                : 'Join the waitlist to start creating bounties and getting paid to build.'}
             </p>
           </div>
 
           {/* Success state */}
           {isOnWaitlist ? (
-            <div className={`text-left ${compact ? "py-2" : "py-4"}`}>
+            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
               <div
-                className={`inline-flex items-center justify-center ${compact ? "w-8 h-8 mb-2" : "w-12 h-12 mb-4"} rounded-full bg-brand-accent/10`}
+                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
               >
                 <svg
-                  className={`${compact ? "w-4 h-4" : "w-6 h-6"} text-brand-accent`}
+                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -146,21 +146,21 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                 </svg>
               </div>
               <h2
-                className={`${compact ? "text-base" : "text-xl"} font-medium text-foreground mb-1`}
+                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
               >
                 You're on the list
               </h2>
               <p
-                className={`${compact ? "text-xs mb-3" : "text-sm mb-6"} text-text-muted`}
+                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
               >
                 We'll reach out when it's your turn.
               </p>
               <div
-                className={`inline-flex items-center gap-2 ${compact ? "px-2 py-1" : "px-3 py-1.5"} rounded-full bg-surface-1 border border-border-subtle`}
+                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
               >
                 <span className="text-xs text-text-muted">Position</span>
                 <span
-                  className={`${compact ? "text-xs" : "text-sm"} font-medium text-brand-accent-muted`}
+                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
                 >
                   #{displayPosition ?? waitlistCount}
                 </span>
@@ -169,27 +169,27 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
           ) : (
             <>
               {/* Join button */}
-              <div className={compact ? "mb-3" : "mb-6"}>
+              <div className={compact ? 'mb-3' : 'mb-6'}>
                 <Button
-                  className={`text-background hover:opacity-90 font-medium ${compact ? "text-xs w-full" : "w-full"}`}
+                  className={`text-background hover:opacity-90 font-medium ${compact ? 'text-xs w-full' : 'w-full'}`}
                   disabled={isFormDisabled}
                   style={{
-                    background: "var(--foreground)",
-                    borderRadius: compact ? "10px" : "14px",
-                    padding: compact ? "8px 12px" : "12px 20px",
-                    height: compact ? "36px" : "44px",
+                    background: 'var(--foreground)',
+                    borderRadius: compact ? '10px' : '14px',
+                    padding: compact ? '8px 12px' : '12px 20px',
+                    height: compact ? '36px' : '44px',
                   }}
                   onClick={joinWaitlist}
                   type="button"
                 >
                   {waitlistSubmission.isPending ? (
-                    "Joining..."
+                    'Joining...'
                   ) : (
                     <>
                       <GithubIcon
-                        className={`${compact ? "w-3 h-3 mr-1" : "w-4 h-4 mr-1"} text-background`}
-                      />{" "}
-                      {compact ? "Join" : "Join Waitlist"}
+                        className={`${compact ? 'w-3 h-3 mr-1' : 'w-4 h-4 mr-1'} text-background`}
+                      />{' '}
+                      {compact ? 'Join' : 'Join Waitlist'}
                     </>
                   )}
                 </Button>
@@ -197,11 +197,11 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
               {/* Social proof */}
               <div
-                className={`flex items-center ${compact ? "gap-2" : "gap-3"}`}
+                className={`flex items-center ${compact ? 'gap-2' : 'gap-3'}`}
               >
                 <div className="-space-x-2 flex">
                   <div
-                    className={`${compact ? "w-5 h-5" : "w-7 h-7"} rounded-full border-2 border-background overflow-hidden`}
+                    className={`${compact ? 'w-5 h-5' : 'w-7 h-7'} rounded-full border-2 border-background overflow-hidden`}
                   >
                     <Image
                       alt="waitlist"
@@ -211,7 +211,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                     />
                   </div>
                   <div
-                    className={`${compact ? "w-5 h-5" : "w-7 h-7"} rounded-full border-2 border-background overflow-hidden`}
+                    className={`${compact ? 'w-5 h-5' : 'w-7 h-7'} rounded-full border-2 border-background overflow-hidden`}
                   >
                     <Image
                       alt="waitlist"
@@ -221,7 +221,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                     />
                   </div>
                   <div
-                    className={`${compact ? "w-5 h-5" : "w-7 h-7"} rounded-full border-2 border-background overflow-hidden`}
+                    className={`${compact ? 'w-5 h-5' : 'w-7 h-7'} rounded-full border-2 border-background overflow-hidden`}
                   >
                     <Image
                       alt="waitlist"
@@ -231,7 +231,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                     />
                   </div>
                   <div
-                    className={`${compact ? "w-5 h-5" : "w-7 h-7"} rounded-full border-2 border-background overflow-hidden`}
+                    className={`${compact ? 'w-5 h-5' : 'w-7 h-7'} rounded-full border-2 border-background overflow-hidden`}
                   >
                     <Image
                       alt="waitlist"
@@ -242,7 +242,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                   </div>
                 </div>
                 <span
-                  className={`${compact ? "text-[10px]" : "text-xs"} text-text-muted`}
+                  className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
                 >
                   <NumberFlow value={waitlistCount} />+ on the list
                 </span>
@@ -252,7 +252,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
           {/* Footer note */}
           <p
-            className={`${compact ? "text-[10px] mt-4" : "text-xs mt-8"} text-text-muted`}
+            className={`${compact ? 'text-[10px] mt-4' : 'text-xs mt-8'} text-text-muted`}
           >
             No spam, unsubscribe anytime.
           </p>
@@ -272,7 +272,7 @@ export function WaitlistDemo({ compact = false }: WaitlistDemoProps) {
       initialUrl="bounty.new/waitlist"
       headlights
       compact={compact}
-      className={compact ? "h-[340px]" : undefined}
+      className={compact ? 'h-[340px]' : undefined}
     >
       <MockBrowser.Toolbar />
       <div className="flex-1 relative overflow-hidden">
