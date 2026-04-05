@@ -44,6 +44,23 @@
   }
 }
 
+@keyframes dash {
+  0% {
+    stroke-dasharray: 0, 60;
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dasharray: 60, 0;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes grow {
+  0% {
+    width: 0%;
+  }
+}
+
 @layer components {
   .waitlist-attention {
     position: relative;
