@@ -15,6 +15,11 @@ import { trpc, trpcClient } from '@/utils/trpc';
 import { MockBrowser } from './mockup';
 
 const WAITLIST_STORAGE_KEY = 'waitlist_data';
+const SUCCESS_STEPS = [
+  'Account reserved',
+  'Invite priority saved',
+  'Launch updates enabled',
+] as const;
 
 function readStoredWaitlist(): WaitlistCookieData | null {
   if (typeof window === 'undefined') return null;
@@ -125,6 +130,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     retryDelay: 1000,
   });
   const waitlistCount = waitlistCountQuery.data?.count ?? 0;
+  const displayPosition = Math.max(waitlistCount, 1);
 
   return (
     <div className="h-full bg-background overflow-auto">
@@ -150,43 +156,73 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
-              <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
-              >
-                <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+            <div
+              className={`relative overflow-hidden rounded-3xl border border-brand-accent/20 bg-gradient-to-br from-brand-accent/12 via-surface-1 to-background shadow-[0_24px_80px_rgba(0,0,0,0.14)] ${compact ? 'p-4' : 'p-6'}`}
+            >
+              <div className="-right-10 -top-10 absolute h-28 w-28 rounded-full bg-brand-accent/20 blur-3xl" />
+              <div className="-bottom-12 -left-12 absolute h-32 w-32 rounded-full bg-foreground/10 blur-3xl" />
+
+              <div className="relative">
+                <div className="mb-4 flex items-start justify-between gap-4">
+                  <div
+                    className={`inline-flex items-center justify-center rounded-2xl bg-brand-accent text-background shadow-lg shadow-brand-accent/20 ${compact ? 'h-10 w-10' : 'h-12 w-12'}`}
+                  >
+                    <svg
+                      className={compact ? 'h-5 w-5' : 'h-6 w-6'}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M5 13l4 4L19 7"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                      />
+                    </svg>
+                  </div>
+                  <div className="rounded-full border border-brand-accent/20 bg-background/70 px-3 py-1 text-[11px] text-brand-accent-muted">
+                    Confirmed
+                  </div>
+                </div>
+
+                <h2
+                  className={`${compact ? 'text-lg' : 'text-2xl'} font-medium text-foreground tracking-tight`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <h2
-                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
-              >
-                You're on the list
-              </h2>
-              <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
-              >
-                We'll reach out when it's your turn.
-              </p>
-              <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
-              >
-                <span className="text-xs text-text-muted">Position</span>
-                <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
+                  You're on the list
+                </h2>
+                <p
+                  className={`${compact ? 'mt-1 text-xs' : 'mt-2 text-sm'} text-text-muted leading-relaxed`}
                 >
-                  #{waitlistCount}
-                </span>
+                  Your spot is saved. We'll send your invite as soon as your
+                  account is ready.
+                </p>
+
+                <div
+                  className={`mt-5 grid grid-cols-[auto_1fr] items-center gap-4 rounded-2xl border border-border-subtle bg-background/70 ${compact ? 'p-3' : 'p-4'}`}
+                >
+                  <div className="text-text-muted text-xs uppercase tracking-[0.18em]">
+                    Position
+                  </div>
+                  <div className="text-right font-medium text-brand-accent-muted text-2xl tabular-nums">
+                    #
+                    <NumberFlow value={displayPosition} />
+                  </div>
+                </div>
+
+                {!compact && (
+                  <div className="mt-5 space-y-2">
+                    {SUCCESS_STEPS.map((step) => (
+                      <div
+                        className="flex items-center gap-2 text-sm text-text-secondary"
+                        key={step}
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
+                        <span>{step}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           ) : (
