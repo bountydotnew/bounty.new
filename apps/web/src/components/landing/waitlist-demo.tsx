@@ -17,7 +17,9 @@ import { MockBrowser } from './mockup';
 const WAITLIST_STORAGE_KEY = 'waitlist_data';
 
 function readStoredWaitlist(): WaitlistCookieData | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') {
+    return null;
+  }
   try {
     const raw = window.localStorage.getItem(WAITLIST_STORAGE_KEY);
     return raw ? (JSON.parse(raw) as WaitlistCookieData) : null;
@@ -27,7 +29,9 @@ function readStoredWaitlist(): WaitlistCookieData | null {
 }
 
 function writeStoredWaitlist(data: WaitlistCookieData) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     window.localStorage.setItem(WAITLIST_STORAGE_KEY, JSON.stringify(data));
   } catch {
@@ -105,6 +109,7 @@ interface WaitlistPageProps {
 
 function WaitlistPage({ compact = false }: WaitlistPageProps) {
   const waitlistSubmission = useWaitlistSubmission();
+  const [copiedShareText, setCopiedShareText] = useState(false);
 
   useMountEffect(() => {
     const stored = readStoredWaitlist();
@@ -125,6 +130,38 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     retryDelay: 1000,
   });
   const waitlistCount = waitlistCountQuery.data?.count ?? 0;
+  const shareText = `I just joined the bounty.new waitlist at #${waitlistCount}. Build better bounties with me.`;
+
+  function copyShareText() {
+    if (typeof window === 'undefined' || !navigator.clipboard) {
+      return;
+    }
+
+    navigator.clipboard
+      .writeText(`${shareText} ${window.location.origin}`)
+      .then(() => {
+        setCopiedShareText(true);
+        window.setTimeout(() => setCopiedShareText(false), 2000);
+      })
+      .catch(() => {
+        toast.error('Could not copy share text.');
+      });
+  }
+
+  function shareOnX() {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const params = new URLSearchParams({
+      text: shareText,
+      url: window.location.origin,
+    });
+    window.open(
+      `https://twitter.com/intent/tweet?${params.toString()}`,
+      '_blank'
+    );
+  }
 
   return (
     <div className="h-full bg-background overflow-auto">
@@ -132,30 +169,18 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
         className={`flex flex-col items-center justify-center h-full ${compact ? 'px-3 py-4' : 'px-6 py-10'}`}
       >
         <div className={`w-full ${compact ? 'max-w-xs' : 'max-w-sm'}`}>
-          {/* Header */}
-          <div className={`text-left ${compact ? 'mb-4' : 'mb-8'}`}>
-            <h1
-              className={`${compact ? 'text-lg' : 'text-2xl'} font-medium text-foreground tracking-tight ${compact ? 'mb-1' : 'mb-2'}`}
-            >
-              Get early access
-            </h1>
-            <p
-              className={`${compact ? 'text-xs' : 'text-sm'} text-text-muted leading-relaxed`}
-            >
-              {compact
-                ? 'Join the waitlist to get started.'
-                : 'Join the waitlist to start creating bounties and getting paid to build.'}
-            </p>
-          </div>
-
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
+            <div
+              className={`relative overflow-hidden rounded-2xl border border-border-subtle bg-surface-1/80 text-center shadow-2xl shadow-black/20 ${compact ? 'px-4 py-6' : 'px-8 py-10'}`}
+            >
+              <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-brand-accent/50 to-transparent" />
               <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
+                className={`mx-auto flex items-center justify-center ${compact ? 'mb-3 h-10 w-10' : 'mb-5 h-14 w-14'} rounded-full bg-brand-accent/10 ring-1 ring-brand-accent/25`}
               >
                 <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
+                  aria-hidden="true"
+                  className={`${compact ? 'h-5 w-5' : 'h-7 w-7'} text-brand-accent`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -169,28 +194,67 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                 </svg>
               </div>
               <h2
-                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
+                className={`${compact ? 'mb-1 text-lg' : 'mb-2 text-2xl'} font-medium tracking-tight text-foreground`}
               >
                 You're on the list
               </h2>
               <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
+                className={`${compact ? 'mb-4 text-xs' : 'mb-6 text-sm'} text-text-muted`}
               >
-                We'll reach out when it's your turn.
+                We'll reach out when it's your turn to start creating bounties.
               </p>
               <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
+                className={`mx-auto inline-flex items-center gap-2 rounded-full border border-brand-accent/20 bg-brand-accent/10 ${compact ? 'px-3 py-1.5' : 'px-4 py-2'}`}
               >
                 <span className="text-xs text-text-muted">Position</span>
                 <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
+                  className={`${compact ? 'text-sm' : 'text-base'} font-medium text-brand-accent-muted`}
                 >
                   #{waitlistCount}
                 </span>
               </div>
+              <div
+                className={`grid grid-cols-2 gap-2 ${compact ? 'mt-4' : 'mt-6'}`}
+              >
+                <button
+                  className={`rounded-xl border border-border-subtle bg-background/80 font-medium text-foreground transition-colors hover:border-brand-accent/40 hover:bg-brand-accent/10 ${compact ? 'px-3 py-2 text-xs' : 'px-4 py-2.5 text-sm'}`}
+                  onClick={shareOnX}
+                  type="button"
+                >
+                  Share on X
+                </button>
+                <button
+                  className={`rounded-xl border border-border-subtle bg-background/80 font-medium text-foreground transition-colors hover:border-brand-accent/40 hover:bg-brand-accent/10 ${compact ? 'px-3 py-2 text-xs' : 'px-4 py-2.5 text-sm'}`}
+                  onClick={copyShareText}
+                  type="button"
+                >
+                  {copiedShareText ? 'Copied' : 'Copy text'}
+                </button>
+              </div>
+              <p
+                className={`${compact ? 'mt-4 text-[10px]' : 'mt-6 text-xs'} text-text-muted`}
+              >
+                No spam, unsubscribe anytime.
+              </p>
             </div>
           ) : (
             <>
+              {/* Header */}
+              <div className={`text-left ${compact ? 'mb-4' : 'mb-8'}`}>
+                <h1
+                  className={`${compact ? 'text-lg' : 'text-2xl'} font-medium text-foreground tracking-tight ${compact ? 'mb-1' : 'mb-2'}`}
+                >
+                  Get early access
+                </h1>
+                <p
+                  className={`${compact ? 'text-xs' : 'text-sm'} text-text-muted leading-relaxed`}
+                >
+                  {compact
+                    ? 'Join the waitlist to get started.'
+                    : 'Join the waitlist to start creating bounties and getting paid to build.'}
+                </p>
+              </div>
+
               {/* Join button */}
               <div className={compact ? 'mb-3' : 'mb-6'}>
                 <Button
@@ -270,15 +334,15 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                   <NumberFlow value={waitlistCount} />+ on the list
                 </span>
               </div>
+
+              {/* Footer note */}
+              <p
+                className={`${compact ? 'text-[10px] mt-4' : 'text-xs mt-8'} text-text-muted`}
+              >
+                No spam, unsubscribe anytime.
+              </p>
             </>
           )}
-
-          {/* Footer note */}
-          <p
-            className={`${compact ? 'text-[10px] mt-4' : 'text-xs mt-8'} text-text-muted`}
-          >
-            No spam, unsubscribe anytime.
-          </p>
         </div>
       </div>
     </div>
