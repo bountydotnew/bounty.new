@@ -5,6 +5,7 @@ import { Button } from '@bounty/ui/components/button';
 import NumberFlow from '@bounty/ui/components/number-flow';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
+import { CheckCircle2 } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useMountEffect } from '@bounty/ui';
@@ -17,7 +18,9 @@ import { MockBrowser } from './mockup';
 const WAITLIST_STORAGE_KEY = 'waitlist_data';
 
 function readStoredWaitlist(): WaitlistCookieData | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') {
+    return null;
+  }
   try {
     const raw = window.localStorage.getItem(WAITLIST_STORAGE_KEY);
     return raw ? (JSON.parse(raw) as WaitlistCookieData) : null;
@@ -27,7 +30,9 @@ function readStoredWaitlist(): WaitlistCookieData | null {
 }
 
 function writeStoredWaitlist(data: WaitlistCookieData) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     window.localStorage.setItem(WAITLIST_STORAGE_KEY, JSON.stringify(data));
   } catch {
@@ -125,6 +130,8 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     retryDelay: 1000,
   });
   const waitlistCount = waitlistCountQuery.data?.count ?? 0;
+  const waitlistPosition =
+    waitlistCount > 0 ? `#${waitlistCount}` : 'Confirmed';
 
   return (
     <div className="h-full bg-background overflow-auto">
@@ -150,43 +157,71 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
+            <div
+              className={`relative overflow-hidden rounded-2xl border border-brand-accent/20 bg-surface-1/80 text-left shadow-lg shadow-brand-accent/5 ${compact ? 'p-3' : 'p-5'}`}
+            >
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-accent/60 to-transparent" />
               <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
+                className={`flex items-start ${compact ? 'gap-2' : 'gap-3'}`}
               >
-                <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <div
+                  className={`flex shrink-0 items-center justify-center rounded-full bg-brand-accent/10 ring-1 ring-brand-accent/25 ${compact ? 'h-8 w-8' : 'h-11 w-11'}`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M5 13l4 4L19 7"
+                  <CheckCircle2
+                    className={`${compact ? 'h-4 w-4' : 'h-5 w-5'} text-brand-accent`}
                   />
-                </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div
+                    className={`mb-1 inline-flex items-center rounded-full border border-brand-accent/20 bg-brand-accent/10 px-2 py-0.5 font-medium text-brand-accent-muted ${compact ? 'text-[10px]' : 'text-xs'}`}
+                  >
+                    Submitted
+                  </div>
+                  <h2
+                    className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground tracking-tight`}
+                  >
+                    You're on the list
+                  </h2>
+                  <p
+                    className={`${compact ? 'mt-1 text-xs' : 'mt-2 text-sm'} text-text-muted leading-relaxed`}
+                  >
+                    {compact
+                      ? 'Your invite is queued.'
+                      : "We'll reach out as soon as your early access invite is ready."}
+                  </p>
+                </div>
               </div>
-              <h2
-                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
-              >
-                You're on the list
-              </h2>
-              <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
-              >
-                We'll reach out when it's your turn.
-              </p>
               <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
+                className={`grid grid-cols-2 ${compact ? 'mt-3 gap-2' : 'mt-5 gap-3'}`}
               >
-                <span className="text-xs text-text-muted">Position</span>
-                <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
+                <div
+                  className={`rounded-xl border border-border-subtle bg-background/70 ${compact ? 'p-2' : 'p-3'}`}
                 >
-                  #{waitlistCount}
-                </span>
+                  <span
+                    className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
+                  >
+                    Position
+                  </span>
+                  <div
+                    className={`${compact ? 'text-sm' : 'text-lg'} font-medium text-brand-accent-muted`}
+                  >
+                    {waitlistPosition}
+                  </div>
+                </div>
+                <div
+                  className={`rounded-xl border border-border-subtle bg-background/70 ${compact ? 'p-2' : 'p-3'}`}
+                >
+                  <span
+                    className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
+                  >
+                    Next step
+                  </span>
+                  <div
+                    className={`${compact ? 'text-sm' : 'text-lg'} font-medium text-foreground`}
+                  >
+                    Invite
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
