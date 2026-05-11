@@ -117,10 +117,11 @@ function SuccessState({
   isLoadingCount,
   hasCountError,
 }: SuccessStateProps) {
-  const hasWaitlistCount =
-    typeof waitlistCount === 'number' && waitlistCount > 0;
+  const hasWaitlistCount = typeof waitlistCount === 'number';
   const waitlistCountLabel = hasWaitlistCount
-    ? `${waitlistCount.toLocaleString()}+ builders waiting`
+    ? waitlistCount > 0
+      ? `${waitlistCount.toLocaleString()}+ builders waiting`
+      : 'No builders waiting yet'
     : isLoadingCount
       ? 'Updating waitlist size'
       : hasCountError
@@ -233,8 +234,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     retryDelay: 1000,
   });
   const waitlistCount = waitlistCountQuery.data?.count;
-  const hasWaitlistCount =
-    typeof waitlistCount === 'number' && waitlistCount > 0;
+  const hasWaitlistCount = typeof waitlistCount === 'number';
 
   return (
     <div className="h-full bg-background overflow-auto">
@@ -345,9 +345,13 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                   className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
                 >
                   {hasWaitlistCount ? (
-                    <>
-                      <NumberFlow value={waitlistCount} />+ on the list
-                    </>
+                    waitlistCount > 0 ? (
+                      <>
+                        <NumberFlow value={waitlistCount} />+ on the list
+                      </>
+                    ) : (
+                      'Be the first on the list'
+                    )
                   ) : waitlistCountQuery.isLoading ? (
                     'Loading waitlist'
                   ) : (
