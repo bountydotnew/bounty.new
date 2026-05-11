@@ -3,8 +3,9 @@
 import { authClient } from '@bounty/auth/client';
 import { Button } from '@bounty/ui/components/button';
 import NumberFlow from '@bounty/ui/components/number-flow';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
+import { CheckCircle2, Clock3, Mail } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useMountEffect } from '@bounty/ui';
@@ -17,7 +18,9 @@ import { MockBrowser } from './mockup';
 const WAITLIST_STORAGE_KEY = 'waitlist_data';
 
 function readStoredWaitlist(): WaitlistCookieData | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') {
+    return null;
+  }
   try {
     const raw = window.localStorage.getItem(WAITLIST_STORAGE_KEY);
     return raw ? (JSON.parse(raw) as WaitlistCookieData) : null;
@@ -27,7 +30,9 @@ function readStoredWaitlist(): WaitlistCookieData | null {
 }
 
 function writeStoredWaitlist(data: WaitlistCookieData) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     window.localStorage.setItem(WAITLIST_STORAGE_KEY, JSON.stringify(data));
   } catch {
@@ -37,6 +42,7 @@ function writeStoredWaitlist(data: WaitlistCookieData) {
 
 function useWaitlistSubmission() {
   const { celebrate } = useConfetti();
+  const queryClient = useQueryClient();
   const [success, setSuccess] = useState(false);
 
   const { mutate, isPending } = useMutation({
@@ -50,6 +56,9 @@ function useWaitlistSubmission() {
         email: '',
       };
       writeStoredWaitlist(cookieData);
+      queryClient.invalidateQueries({
+        queryKey: trpc.earlyAccess.getWaitlistCount.queryKey(),
+      });
 
       celebrate();
       toast.success("You're on the list!");
@@ -103,6 +112,91 @@ interface WaitlistPageProps {
   compact?: boolean;
 }
 
+interface WaitlistSuccessStateProps {
+  compact: boolean;
+  waitlistCount?: number;
+  isCountLoading: boolean;
+  isCountError: boolean;
+}
+
+function WaitlistSuccessState({
+  compact,
+  waitlistCount,
+  isCountLoading,
+  isCountError,
+}: WaitlistSuccessStateProps) {
+  const hasWaitlistCount = typeof waitlistCount === 'number';
+  const queueLabel = hasWaitlistCount
+    ? `${waitlistCount.toLocaleString()} builders queued`
+    : isCountLoading
+      ? 'Syncing queue'
+      : isCountError
+        ? 'Queue unavailable'
+        : 'Queue open';
+
+  return (
+    <div className={`text-left ${compact ? 'py-1' : 'py-3'}`}>
+      <div className={compact ? 'mb-4' : 'mb-6'}>
+        <div
+          className={`inline-flex items-center gap-2 ${compact ? 'mb-3' : 'mb-4'}`}
+        >
+          <span
+            className={`inline-flex items-center justify-center ${compact ? 'h-6 w-6' : 'h-8 w-8'} rounded-full bg-foreground text-background`}
+          >
+            <CheckCircle2 className={compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
+          </span>
+          <span
+            className={`${compact ? 'text-[10px]' : 'text-xs'} font-medium uppercase tracking-[0.14em] text-text-muted`}
+          >
+            Request received
+          </span>
+        </div>
+        <h2
+          className={`${compact ? 'text-base' : 'text-xl'} font-medium tracking-tight text-foreground`}
+        >
+          You're on the early access list
+        </h2>
+        <p
+          className={`${compact ? 'mt-1 text-xs' : 'mt-2 text-sm'} text-text-secondary leading-relaxed`}
+        >
+          We'll send your invite as soon as your account is ready.
+        </p>
+      </div>
+
+      <div
+        className={`divide-y divide-border-subtle rounded-xl border border-border-subtle bg-surface-1 ${compact ? 'text-[11px]' : 'text-sm'}`}
+      >
+        <div
+          className={`flex items-center justify-between gap-3 ${compact ? 'px-3 py-2' : 'px-4 py-3'}`}
+        >
+          <span className="flex items-center gap-2 text-text-muted">
+            <Clock3 className={compact ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
+            Queue
+          </span>
+          <span className="font-medium text-foreground">
+            {hasWaitlistCount ? (
+              <>
+                <NumberFlow value={waitlistCount} /> builders
+              </>
+            ) : (
+              queueLabel
+            )}
+          </span>
+        </div>
+        <div
+          className={`flex items-center justify-between gap-3 ${compact ? 'px-3 py-2' : 'px-4 py-3'}`}
+        >
+          <span className="flex items-center gap-2 text-text-muted">
+            <Mail className={compact ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
+            Next
+          </span>
+          <span className="font-medium text-foreground">Invite email</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function WaitlistPage({ compact = false }: WaitlistPageProps) {
   const waitlistSubmission = useWaitlistSubmission();
 
@@ -124,7 +218,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     retry: 2,
     retryDelay: 1000,
   });
-  const waitlistCount = waitlistCountQuery.data?.count ?? 0;
+  const waitlistCount = waitlistCountQuery.data?.count;
 
   return (
     <div className="h-full bg-background overflow-auto">
@@ -150,45 +244,12 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
-              <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
-              >
-                <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <h2
-                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
-              >
-                You're on the list
-              </h2>
-              <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
-              >
-                We'll reach out when it's your turn.
-              </p>
-              <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
-              >
-                <span className="text-xs text-text-muted">Position</span>
-                <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
-                >
-                  #{waitlistCount}
-                </span>
-              </div>
-            </div>
+            <WaitlistSuccessState
+              compact={compact}
+              isCountError={waitlistCountQuery.isError}
+              isCountLoading={waitlistCountQuery.isLoading}
+              waitlistCount={waitlistCount}
+            />
           ) : (
             <>
               {/* Join button */}
@@ -222,7 +283,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
               <div
                 className={`flex items-center ${compact ? 'gap-2' : 'gap-3'}`}
               >
-                <div className="-space-x-2 flex">
+                <div className="flex [&>*+*]:-ml-2">
                   <div
                     className={`${compact ? 'w-5 h-5' : 'w-7 h-7'} rounded-full border-2 border-background overflow-hidden`}
                   >
@@ -267,7 +328,15 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                 <span
                   className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
                 >
-                  <NumberFlow value={waitlistCount} />+ on the list
+                  {typeof waitlistCount === 'number' ? (
+                    <>
+                      <NumberFlow value={waitlistCount} />+ on the list
+                    </>
+                  ) : waitlistCountQuery.isLoading ? (
+                    'Loading waitlist'
+                  ) : (
+                    'Join the early access list'
+                  )}
                 </span>
               </div>
             </>
