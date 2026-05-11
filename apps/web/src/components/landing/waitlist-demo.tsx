@@ -5,6 +5,7 @@ import { Button } from '@bounty/ui/components/button';
 import NumberFlow from '@bounty/ui/components/number-flow';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
+import { Check, Clock3, Github, Mail, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useMountEffect } from '@bounty/ui';
@@ -17,7 +18,9 @@ import { MockBrowser } from './mockup';
 const WAITLIST_STORAGE_KEY = 'waitlist_data';
 
 function readStoredWaitlist(): WaitlistCookieData | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') {
+    return null;
+  }
   try {
     const raw = window.localStorage.getItem(WAITLIST_STORAGE_KEY);
     return raw ? (JSON.parse(raw) as WaitlistCookieData) : null;
@@ -27,7 +30,9 @@ function readStoredWaitlist(): WaitlistCookieData | null {
 }
 
 function writeStoredWaitlist(data: WaitlistCookieData) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     window.localStorage.setItem(WAITLIST_STORAGE_KEY, JSON.stringify(data));
   } catch {
@@ -125,6 +130,28 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     retryDelay: 1000,
   });
   const waitlistCount = waitlistCountQuery.data?.count ?? 0;
+  const waitlistPosition = waitlistCount > 0 ? waitlistCount : 1;
+  const successSteps = [
+    {
+      icon: Github,
+      label: 'GitHub connected',
+      value: 'Verified',
+    },
+    {
+      icon: Mail,
+      label: 'Invite email',
+      value: 'Queued',
+    },
+    ...(compact
+      ? []
+      : [
+          {
+            icon: Clock3,
+            label: 'Access window',
+            value: 'Next batch',
+          },
+        ]),
+  ];
 
   return (
     <div className="h-full bg-background overflow-auto">
@@ -150,43 +177,92 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
+            <div
+              className={`waitlist-pulse text-left rounded-[22px] border border-border-subtle bg-surface-1/95 shadow-[0_18px_50px_rgba(0,0,0,0.08)] ${compact ? 'space-y-2.5 p-2.5' : 'space-y-5 p-5'}`}
+            >
               <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
+                className={`flex items-start ${compact ? 'gap-2.5' : 'gap-3.5'}`}
               >
-                <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <div
+                  className={`shrink-0 rounded-full border border-brand-accent/25 bg-brand-accent/10 text-brand-accent shadow-[0_0_0_6px_rgba(34,197,94,0.06)] ${compact ? 'p-1.5' : 'p-2.5'}`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                  <Check
+                    aria-hidden="true"
+                    className={compact ? 'h-4 w-4' : 'h-5 w-5'}
                     strokeWidth={2.5}
-                    d="M5 13l4 4L19 7"
                   />
-                </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  {!compact && (
+                    <div className="mb-2 inline-flex items-center gap-1 rounded-full border border-border-subtle bg-background/80 px-2.5 py-1 text-text-muted text-xs">
+                      <Sparkles aria-hidden="true" className="h-3.5 w-3.5" />
+                      Invite queued
+                    </div>
+                  )}
+                  <h2
+                    className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground tracking-tight`}
+                  >
+                    You're on the list
+                  </h2>
+                  <p
+                    className={`${compact ? 'text-[11px]' : 'text-sm'} text-text-muted leading-relaxed`}
+                  >
+                    {compact
+                      ? 'Your invite is queued.'
+                      : "Your invite is queued. We'll email you when your spot opens."}
+                  </p>
+                </div>
               </div>
-              <h2
-                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
-              >
-                You're on the list
-              </h2>
-              <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
-              >
-                We'll reach out when it's your turn.
-              </p>
+
               <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
+                className={`grid grid-cols-2 border-y border-border-subtle ${compact ? 'py-1.5' : 'py-3'}`}
               >
-                <span className="text-xs text-text-muted">Position</span>
-                <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
-                >
-                  #{waitlistCount}
-                </span>
+                <div className="min-w-0">
+                  <p
+                    className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
+                  >
+                    Position
+                  </p>
+                  <p
+                    className={`${compact ? 'text-lg' : 'text-2xl'} font-medium tabular-nums text-foreground`}
+                  >
+                    #<NumberFlow value={waitlistPosition} />
+                  </p>
+                </div>
+                <div className="min-w-0 text-right">
+                  <p
+                    className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
+                  >
+                    Status
+                  </p>
+                  <p
+                    className={`${compact ? 'text-sm' : 'text-base'} font-medium text-brand-accent-muted`}
+                  >
+                    Queued
+                  </p>
+                </div>
+              </div>
+
+              <div
+                className={`divide-y divide-border-subtle ${compact ? 'text-[11px]' : 'text-sm'}`}
+              >
+                {successSteps.map((step) => (
+                  <div
+                    className={`flex items-center justify-between gap-3 ${compact ? 'py-1' : 'py-2'}`}
+                    key={step.label}
+                  >
+                    <div className="flex min-w-0 items-center gap-2 text-text-muted">
+                      <step.icon
+                        aria-hidden="true"
+                        className={compact ? 'h-3.5 w-3.5' : 'h-4 w-4'}
+                      />
+                      <span className="truncate">{step.label}</span>
+                    </div>
+                    <span className="shrink-0 font-medium text-foreground">
+                      {step.value}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           ) : (
