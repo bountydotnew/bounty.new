@@ -5,6 +5,7 @@ import { Button } from '@bounty/ui/components/button';
 import NumberFlow from '@bounty/ui/components/number-flow';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
+import { Check } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useMountEffect } from '@bounty/ui';
@@ -16,18 +17,26 @@ import { MockBrowser } from './mockup';
 
 const WAITLIST_STORAGE_KEY = 'waitlist_data';
 
-function readStoredWaitlist(): WaitlistCookieData | null {
-  if (typeof window === 'undefined') return null;
+type StoredWaitlistData = WaitlistCookieData & {
+  position?: number | null;
+};
+
+function readStoredWaitlist(): StoredWaitlistData | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
   try {
     const raw = window.localStorage.getItem(WAITLIST_STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as WaitlistCookieData) : null;
+    return raw ? (JSON.parse(raw) as StoredWaitlistData) : null;
   } catch {
     return null;
   }
 }
 
-function writeStoredWaitlist(data: WaitlistCookieData) {
-  if (typeof window === 'undefined') return;
+function writeStoredWaitlist(data: StoredWaitlistData) {
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     window.localStorage.setItem(WAITLIST_STORAGE_KEY, JSON.stringify(data));
   } catch {
@@ -38,16 +47,26 @@ function writeStoredWaitlist(data: WaitlistCookieData) {
 function useWaitlistSubmission() {
   const { celebrate } = useConfetti();
   const [success, setSuccess] = useState(false);
+  const [position, setPosition] = useState<number | null>(null);
 
   const { mutate, isPending } = useMutation({
     mutationFn: () => trpcClient.earlyAccess.joinWaitlist.mutate(),
-    onSuccess: () => {
-      setSuccess(true);
+    onSuccess: (result) => {
+      const waitlistPosition =
+        'position' in result &&
+        typeof result.position === 'number' &&
+        result.position > 0
+          ? result.position
+          : null;
 
-      const cookieData: WaitlistCookieData = {
+      setSuccess(true);
+      setPosition(waitlistPosition);
+
+      const cookieData: StoredWaitlistData = {
         submitted: true,
         timestamp: new Date().toISOString(),
         email: '',
+        position: waitlistPosition,
       };
       writeStoredWaitlist(cookieData);
 
@@ -96,7 +115,7 @@ function useWaitlistSubmission() {
     },
   });
 
-  return { mutate, isPending, success, setSuccess };
+  return { mutate, isPending, success, setSuccess, position, setPosition };
 }
 
 interface WaitlistPageProps {
@@ -110,6 +129,9 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     const stored = readStoredWaitlist();
     if (stored?.submitted) {
       waitlistSubmission.setSuccess(true);
+      if (typeof stored.position === 'number' && stored.position > 0) {
+        waitlistSubmission.setPosition(stored.position);
+      }
     }
   });
 
@@ -125,6 +147,9 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     retryDelay: 1000,
   });
   const waitlistCount = waitlistCountQuery.data?.count ?? 0;
+  const hasPosition =
+    typeof waitlistSubmission.position === 'number' &&
+    waitlistSubmission.position > 0;
 
   return (
     <div className="h-full bg-background overflow-auto">
@@ -150,43 +175,101 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
+            <div className={`text-left ${compact ? 'py-1' : 'py-2'}`}>
               <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
+                className={`overflow-hidden rounded-lg border border-border-subtle bg-surface-1 ${compact ? 'p-3' : 'p-4'}`}
               >
-                <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <div
+                  className={`flex items-start ${compact ? 'gap-2.5' : 'gap-3'}`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <h2
-                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
-              >
-                You're on the list
-              </h2>
-              <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
-              >
-                We'll reach out when it's your turn.
-              </p>
-              <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
-              >
-                <span className="text-xs text-text-muted">Position</span>
-                <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
+                  <div
+                    className={`flex shrink-0 items-center justify-center rounded-full bg-brand-accent/10 ${compact ? 'size-8' : 'size-10'}`}
+                  >
+                    <Check
+                      className={`${compact ? 'size-4' : 'size-5'} text-brand-accent`}
+                      strokeWidth={2.5}
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span
+                      className={`${compact ? 'text-[11px]' : 'text-xs'} font-medium text-brand-accent-muted`}
+                    >
+                      Confirmed
+                    </span>
+                    <h2
+                      className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground leading-tight`}
+                    >
+                      You're on the list
+                    </h2>
+                    <p
+                      className={`${compact ? 'mt-1 text-xs' : 'mt-1.5 text-sm'} text-text-muted leading-relaxed`}
+                    >
+                      We'll reach out as early access opens.
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  className={`mt-4 grid grid-cols-2 border-y border-border-subtle ${compact ? 'py-2.5' : 'py-3'}`}
                 >
-                  #{waitlistCount}
-                </span>
+                  <div>
+                    <span className="block text-xs text-text-muted">
+                      {hasPosition ? 'Your spot' : 'Status'}
+                    </span>
+                    <span
+                      className={`${compact ? 'text-sm' : 'text-lg'} font-medium text-foreground`}
+                    >
+                      {hasPosition
+                        ? `#${waitlistSubmission.position}`
+                        : 'Joined'}
+                    </span>
+                  </div>
+                  <div className="border-l border-border-subtle pl-3">
+                    <span className="block text-xs text-text-muted">
+                      On the list
+                    </span>
+                    <span
+                      className={`${compact ? 'text-sm' : 'text-lg'} font-medium text-foreground`}
+                    >
+                      <NumberFlow value={waitlistCount} />+
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  className={`flex items-center justify-between ${compact ? 'pt-3' : 'pt-4'}`}
+                >
+                  {['Joined', 'Reviewing', 'Invite'].map((label, index) => (
+                    <div
+                      className="flex min-w-0 flex-1 items-center last:flex-none"
+                      key={label}
+                    >
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <span
+                          className={`size-2 shrink-0 rounded-full ${
+                            index === 0
+                              ? 'bg-brand-accent'
+                              : 'bg-border-default'
+                          }`}
+                        />
+                        {!compact && (
+                          <span
+                            className={`text-xs ${
+                              index === 0
+                                ? 'text-foreground'
+                                : 'text-text-muted'
+                            }`}
+                          >
+                            {label}
+                          </span>
+                        )}
+                      </div>
+                      {index < 2 && (
+                        <span className="mx-2 h-px flex-1 bg-border-subtle" />
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           ) : (
