@@ -17,7 +17,9 @@ import { MockBrowser } from './mockup';
 const WAITLIST_STORAGE_KEY = 'waitlist_data';
 
 function readStoredWaitlist(): WaitlistCookieData | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') {
+    return null;
+  }
   try {
     const raw = window.localStorage.getItem(WAITLIST_STORAGE_KEY);
     return raw ? (JSON.parse(raw) as WaitlistCookieData) : null;
@@ -27,7 +29,9 @@ function readStoredWaitlist(): WaitlistCookieData | null {
 }
 
 function writeStoredWaitlist(data: WaitlistCookieData) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     window.localStorage.setItem(WAITLIST_STORAGE_KEY, JSON.stringify(data));
   } catch {
@@ -99,6 +103,34 @@ function useWaitlistSubmission() {
   return { mutate, isPending, success, setSuccess };
 }
 
+function WaitlistCount({
+  count,
+  isLoading = false,
+  unavailableLabel = 'Count unavailable',
+}: {
+  count: number | undefined;
+  isLoading?: boolean;
+  unavailableLabel?: string;
+}) {
+  if (isLoading) {
+    return <span>Loading count</span>;
+  }
+
+  if (typeof count !== 'number') {
+    return <span>{unavailableLabel}</span>;
+  }
+
+  if (count === 0) {
+    return <span>No public count yet</span>;
+  }
+
+  return (
+    <span>
+      <NumberFlow value={count} />+ on the list
+    </span>
+  );
+}
+
 interface WaitlistPageProps {
   compact?: boolean;
 }
@@ -124,7 +156,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     retry: 2,
     retryDelay: 1000,
   });
-  const waitlistCount = waitlistCountQuery.data?.count ?? 0;
+  const waitlistCount = waitlistCountQuery.data?.count;
 
   return (
     <div className="h-full bg-background overflow-auto">
@@ -150,43 +182,82 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
+            <div
+              className={`rounded-[18px] border border-border-subtle bg-surface-1/80 shadow-[0_18px_60px_rgba(0,0,0,0.22)] ${compact ? 'p-3' : 'p-5'}`}
+            >
               <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
+                className={`flex items-center ${compact ? 'gap-2 mb-3' : 'gap-3 mb-5'}`}
               >
-                <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <div
+                  className={`flex shrink-0 items-center justify-center rounded-full bg-brand-accent text-background shadow-[0_0_0_6px_rgba(255,255,255,0.04)] ${compact ? 'size-8' : 'size-11'}`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
+                  <svg
+                    aria-hidden="true"
+                    className={compact ? 'size-4' : 'size-5'}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M5 12.5l4.2 4L19 7"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.4}
+                    />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <p
+                    className={`${compact ? 'text-[10px]' : 'text-xs'} font-medium uppercase tracking-[0.16em] text-brand-accent-muted`}
+                  >
+                    Request saved
+                  </p>
+                  <h2
+                    className={`${compact ? 'text-base' : 'text-xl'} font-medium leading-tight text-foreground`}
+                  >
+                    You're on the list
+                  </h2>
+                </div>
               </div>
-              <h2
-                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
-              >
-                You're on the list
-              </h2>
+
               <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
+                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-5'} leading-relaxed text-text-muted`}
               >
-                We'll reach out when it's your turn.
+                We'll email you as soon as a spot opens.
               </p>
-              <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
-              >
-                <span className="text-xs text-text-muted">Position</span>
-                <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
+
+              <div className="divide-y divide-border-subtle rounded-xl border border-border-subtle bg-background/45">
+                <div
+                  className={`flex items-center justify-between gap-3 ${compact ? 'px-3 py-2' : 'px-4 py-3'}`}
                 >
-                  #{waitlistCount}
-                </span>
+                  <span
+                    className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
+                  >
+                    Waitlist size
+                  </span>
+                  <span
+                    className={`${compact ? 'text-[10px]' : 'text-xs'} text-right font-medium text-foreground`}
+                  >
+                    <WaitlistCount
+                      count={waitlistCount}
+                      isLoading={waitlistCountQuery.isPending}
+                    />
+                  </span>
+                </div>
+                <div
+                  className={`flex items-center justify-between gap-3 ${compact ? 'px-3 py-2' : 'px-4 py-3'}`}
+                >
+                  <span
+                    className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
+                  >
+                    Status
+                  </span>
+                  <span
+                    className={`${compact ? 'text-[10px]' : 'text-xs'} font-medium text-brand-accent-muted`}
+                  >
+                    Invite pending
+                  </span>
+                </div>
               </div>
             </div>
           ) : (
@@ -267,7 +338,11 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                 <span
                   className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
                 >
-                  <NumberFlow value={waitlistCount} />+ on the list
+                  <WaitlistCount
+                    count={waitlistCount}
+                    isLoading={waitlistCountQuery.isPending}
+                    unavailableLabel="Join the early list"
+                  />
                 </span>
               </div>
             </>
