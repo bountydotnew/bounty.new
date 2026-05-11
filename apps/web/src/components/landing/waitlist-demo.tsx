@@ -5,6 +5,7 @@ import { Button } from '@bounty/ui/components/button';
 import NumberFlow from '@bounty/ui/components/number-flow';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
+import { Check, Clock3, Mail } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useMountEffect } from '@bounty/ui';
@@ -17,7 +18,9 @@ import { MockBrowser } from './mockup';
 const WAITLIST_STORAGE_KEY = 'waitlist_data';
 
 function readStoredWaitlist(): WaitlistCookieData | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') {
+    return null;
+  }
   try {
     const raw = window.localStorage.getItem(WAITLIST_STORAGE_KEY);
     return raw ? (JSON.parse(raw) as WaitlistCookieData) : null;
@@ -27,7 +30,9 @@ function readStoredWaitlist(): WaitlistCookieData | null {
 }
 
 function writeStoredWaitlist(data: WaitlistCookieData) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     window.localStorage.setItem(WAITLIST_STORAGE_KEY, JSON.stringify(data));
   } catch {
@@ -99,6 +104,109 @@ function useWaitlistSubmission() {
   return { mutate, isPending, success, setSuccess };
 }
 
+interface SuccessStateProps {
+  compact?: boolean;
+  waitlistCount?: number;
+  isLoadingCount: boolean;
+  hasCountError: boolean;
+}
+
+function SuccessState({
+  compact = false,
+  waitlistCount,
+  isLoadingCount,
+  hasCountError,
+}: SuccessStateProps) {
+  const hasWaitlistCount =
+    typeof waitlistCount === 'number' && waitlistCount > 0;
+  const waitlistCountLabel = hasWaitlistCount
+    ? `${waitlistCount.toLocaleString()}+ builders waiting`
+    : isLoadingCount
+      ? 'Updating waitlist size'
+      : hasCountError
+        ? 'Waitlist size unavailable'
+        : 'Waitlist is open';
+
+  return (
+    <div className={`text-left ${compact ? 'py-1' : 'py-2'}`}>
+      <div
+        aria-live="polite"
+        className={`rounded-xl border border-border-default bg-surface-1 shadow-sm ${
+          compact ? 'p-3' : 'p-4'
+        }`}
+      >
+        <div className={`flex items-start ${compact ? 'gap-2.5' : 'gap-3'}`}>
+          <div
+            className={`flex shrink-0 items-center justify-center rounded-full border border-brand-accent/25 bg-brand-accent/10 text-brand-accent ${
+              compact ? 'size-8' : 'size-10'
+            }`}
+          >
+            <Check
+              className={compact ? 'size-4' : 'size-5'}
+              strokeWidth={2.25}
+            />
+          </div>
+          <div className="min-w-0">
+            <p
+              className={`font-medium text-brand-accent ${
+                compact ? 'text-[10px]' : 'text-xs'
+              }`}
+            >
+              Request received
+            </p>
+            <h2
+              className={`font-medium text-foreground ${
+                compact ? 'text-base' : 'text-xl'
+              }`}
+            >
+              You're on the waitlist
+            </h2>
+            <p
+              className={`mt-1 text-text-muted leading-relaxed ${
+                compact ? 'text-xs' : 'text-sm'
+              }`}
+            >
+              We'll email you when early access opens.
+            </p>
+          </div>
+        </div>
+
+        <div
+          className={`mt-4 rounded-lg border border-border-subtle bg-surface-2 ${
+            compact
+              ? 'divide-y divide-border-subtle'
+              : 'grid grid-cols-2 divide-x divide-border-subtle'
+          }`}
+        >
+          <div className={compact ? 'px-3 py-2' : 'px-3 py-2.5'}>
+            <p className="text-[10px] text-text-muted">Status</p>
+            <div className="mt-1 flex items-center gap-2 text-xs font-medium text-foreground">
+              <span className="size-1.5 rounded-full bg-brand-accent" />
+              Submitted
+            </div>
+          </div>
+          <div className={compact ? 'px-3 py-2' : 'px-3 py-2.5'}>
+            <p className="text-[10px] text-text-muted">Next</p>
+            <div className="mt-1 flex items-center gap-2 text-xs font-medium text-foreground">
+              <Mail className="size-3.5 text-text-muted" />
+              Invite by email
+            </div>
+          </div>
+        </div>
+
+        <div
+          className={`mt-3 flex items-center gap-2 text-text-muted ${
+            compact ? 'text-[10px]' : 'text-xs'
+          }`}
+        >
+          <Clock3 className="size-3.5 shrink-0" />
+          <span>{waitlistCountLabel}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface WaitlistPageProps {
   compact?: boolean;
 }
@@ -124,7 +232,9 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     retry: 2,
     retryDelay: 1000,
   });
-  const waitlistCount = waitlistCountQuery.data?.count ?? 0;
+  const waitlistCount = waitlistCountQuery.data?.count;
+  const hasWaitlistCount =
+    typeof waitlistCount === 'number' && waitlistCount > 0;
 
   return (
     <div className="h-full bg-background overflow-auto">
@@ -150,45 +260,12 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
-              <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
-              >
-                <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <h2
-                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
-              >
-                You're on the list
-              </h2>
-              <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
-              >
-                We'll reach out when it's your turn.
-              </p>
-              <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
-              >
-                <span className="text-xs text-text-muted">Position</span>
-                <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
-                >
-                  #{waitlistCount}
-                </span>
-              </div>
-            </div>
+            <SuccessState
+              compact={compact}
+              hasCountError={waitlistCountQuery.isError}
+              isLoadingCount={waitlistCountQuery.isLoading}
+              waitlistCount={waitlistCount}
+            />
           ) : (
             <>
               {/* Join button */}
@@ -267,7 +344,15 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                 <span
                   className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
                 >
-                  <NumberFlow value={waitlistCount} />+ on the list
+                  {hasWaitlistCount ? (
+                    <>
+                      <NumberFlow value={waitlistCount} />+ on the list
+                    </>
+                  ) : waitlistCountQuery.isLoading ? (
+                    'Loading waitlist'
+                  ) : (
+                    'Join builders on the list'
+                  )}
                 </span>
               </div>
             </>
