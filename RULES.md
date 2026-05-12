@@ -1,6 +1,6 @@
 # Contribution rules for bountydotnew/bounty.new
 
-These rules are enforced automatically by [Tripwire](https://tripwire.run). Contributions that violate them may be closed or held for review.
+These rules are enforced automatically by [Tripwire](https://tripwire.sh). Contributions that violate them may be closed or held for review.
 
 ## What we check
 
