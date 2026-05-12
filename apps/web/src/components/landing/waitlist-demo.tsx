@@ -5,6 +5,7 @@ import { Button } from '@bounty/ui/components/button';
 import NumberFlow from '@bounty/ui/components/number-flow';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
+import { Check, Mail, UsersRound } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useMountEffect } from '@bounty/ui';
@@ -17,7 +18,9 @@ import { MockBrowser } from './mockup';
 const WAITLIST_STORAGE_KEY = 'waitlist_data';
 
 function readStoredWaitlist(): WaitlistCookieData | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') {
+    return null;
+  }
   try {
     const raw = window.localStorage.getItem(WAITLIST_STORAGE_KEY);
     return raw ? (JSON.parse(raw) as WaitlistCookieData) : null;
@@ -27,12 +30,18 @@ function readStoredWaitlist(): WaitlistCookieData | null {
 }
 
 function writeStoredWaitlist(data: WaitlistCookieData) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     window.localStorage.setItem(WAITLIST_STORAGE_KEY, JSON.stringify(data));
   } catch {
     // Ignore storage failures
   }
+}
+
+function isKnownWaitlistCount(count: number | undefined): count is number {
+  return typeof count === 'number' && Number.isFinite(count);
 }
 
 function useWaitlistSubmission() {
@@ -124,7 +133,8 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     retry: 2,
     retryDelay: 1000,
   });
-  const waitlistCount = waitlistCountQuery.data?.count ?? 0;
+  const waitlistCount = waitlistCountQuery.data?.count;
+  const hasWaitlistCount = isKnownWaitlistCount(waitlistCount);
 
   return (
     <div className="h-full bg-background overflow-auto">
@@ -137,56 +147,91 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
             <h1
               className={`${compact ? 'text-lg' : 'text-2xl'} font-medium text-foreground tracking-tight ${compact ? 'mb-1' : 'mb-2'}`}
             >
-              Get early access
+              {waitlistSubmission.success
+                ? 'Request received'
+                : 'Get early access'}
             </h1>
             <p
               className={`${compact ? 'text-xs' : 'text-sm'} text-text-muted leading-relaxed`}
             >
-              {compact
-                ? 'Join the waitlist to get started.'
-                : 'Join the waitlist to start creating bounties and getting paid to build.'}
+              {waitlistSubmission.success
+                ? 'Your early access request is saved.'
+                : compact
+                  ? 'Join the waitlist to get started.'
+                  : 'Join the waitlist to start creating bounties and getting paid to build.'}
             </p>
           </div>
 
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
+            <div className={`text-left ${compact ? 'py-1' : 'py-2'}`}>
               <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
+                className={`overflow-hidden rounded-lg border border-border-subtle bg-surface-1 shadow-sm ${compact ? 'mb-3' : 'mb-5'}`}
               >
-                <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <div
+                  className={`flex items-start gap-3 border-border-subtle border-b ${compact ? 'p-3' : 'p-4'}`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <h2
-                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
-              >
-                You're on the list
-              </h2>
-              <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
-              >
-                We'll reach out when it's your turn.
-              </p>
-              <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
-              >
-                <span className="text-xs text-text-muted">Position</span>
-                <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
+                  <div
+                    className={`flex shrink-0 items-center justify-center rounded-full bg-brand-accent/10 text-brand-accent ${compact ? 'h-7 w-7' : 'h-9 w-9'}`}
+                  >
+                    <Check className={compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
+                  </div>
+                  <div className="min-w-0">
+                    <div
+                      className={`${compact ? 'text-[10px]' : 'text-xs'} font-medium text-brand-accent-muted`}
+                    >
+                      Confirmed
+                    </div>
+                    <h2
+                      className={`${compact ? 'text-sm' : 'text-base'} font-medium text-foreground`}
+                    >
+                      You're on the waitlist
+                    </h2>
+                    <p
+                      className={`${compact ? 'text-[11px]' : 'text-sm'} mt-1 text-text-muted leading-relaxed`}
+                    >
+                      We'll reach out when early access opens.
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  className={`${compact ? 'text-[11px]' : 'text-xs'} divide-y divide-border-subtle`}
                 >
-                  #{waitlistCount}
-                </span>
+                  <div
+                    className={`flex items-center justify-between gap-3 ${compact ? 'px-3 py-2' : 'px-4 py-2.5'}`}
+                  >
+                    <span className="flex min-w-0 items-center gap-2 text-text-muted">
+                      <UsersRound
+                        className={`shrink-0 ${compact ? 'h-3 w-3' : 'h-3.5 w-3.5'}`}
+                      />
+                      <span>Waitlist size</span>
+                    </span>
+                    <span className="shrink-0 font-medium text-foreground tabular-nums">
+                      {hasWaitlistCount ? (
+                        <>
+                          <NumberFlow value={waitlistCount} />+
+                        </>
+                      ) : (
+                        'Updating'
+                      )}
+                    </span>
+                  </div>
+
+                  <div
+                    className={`flex items-center justify-between gap-3 ${compact ? 'px-3 py-2' : 'px-4 py-2.5'}`}
+                  >
+                    <span className="flex min-w-0 items-center gap-2 text-text-muted">
+                      <Mail
+                        className={`shrink-0 ${compact ? 'h-3 w-3' : 'h-3.5 w-3.5'}`}
+                      />
+                      <span>Next step</span>
+                    </span>
+                    <span className="shrink-0 font-medium text-foreground">
+                      Invite by email
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
@@ -267,7 +312,13 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                 <span
                   className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
                 >
-                  <NumberFlow value={waitlistCount} />+ on the list
+                  {hasWaitlistCount ? (
+                    <>
+                      <NumberFlow value={waitlistCount} />+ on the list
+                    </>
+                  ) : (
+                    'Builders are joining now'
+                  )}
                 </span>
               </div>
             </>
