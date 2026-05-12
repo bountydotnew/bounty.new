@@ -150,43 +150,90 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
-              <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
-              >
-                <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+            <div
+              className={`text-left ${compact ? 'py-2' : 'py-4'} animate-in fade-in slide-in-from-bottom-2 duration-500`}
+            >
+              <div className={compact ? 'mb-3' : 'mb-5'}>
+                <div
+                  className={`mb-3 inline-flex items-center gap-2 rounded-full border border-brand-accent/30 bg-brand-accent/10 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'}`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M5 13l4 4L19 7"
+                  <span
+                    className={`${compact ? 'h-1.5 w-1.5' : 'h-2 w-2'} rounded-full bg-brand-accent`}
                   />
-                </svg>
-              </div>
-              <h2
-                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
-              >
-                You're on the list
-              </h2>
-              <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
-              >
-                We'll reach out when it's your turn.
-              </p>
-              <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
-              >
-                <span className="text-xs text-text-muted">Position</span>
-                <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
+                  <span
+                    className={`${compact ? 'text-[10px]' : 'text-xs'} font-medium text-brand-accent-muted`}
+                  >
+                    Invite secured
+                  </span>
+                </div>
+                <div
+                  className={`flex items-center ${compact ? 'gap-3' : 'gap-4'}`}
                 >
-                  #{waitlistCount}
-                </span>
+                  <div
+                    className={`relative inline-flex shrink-0 items-center justify-center ${compact ? 'h-9 w-9' : 'h-12 w-12'} rounded-full bg-foreground text-background shadow-lg shadow-foreground/10`}
+                  >
+                    <svg
+                      className={`${compact ? 'h-4 w-4' : 'h-5 w-5'}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M5 13l4 4L19 7"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2
+                      className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground tracking-tight`}
+                    >
+                      You're on the list
+                    </h2>
+                    <p
+                      className={`${compact ? 'text-xs' : 'text-sm'} text-text-muted`}
+                    >
+                      We'll send your invite as soon as access opens.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="overflow-hidden rounded-lg border border-border-subtle bg-surface-1/80">
+                <div
+                  className={`flex items-center justify-between border-border-subtle border-b ${compact ? 'px-3 py-2' : 'px-4 py-3'}`}
+                >
+                  <span
+                    className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
+                  >
+                    Queue position
+                  </span>
+                  <span
+                    className={`${compact ? 'text-sm' : 'text-base'} font-semibold text-brand-accent-muted tabular-nums`}
+                  >
+                    #{waitlistCount}
+                  </span>
+                </div>
+                <div className={compact ? 'px-3 py-2' : 'px-4 py-3'}>
+                  <div
+                    className={`flex items-center justify-between ${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
+                  >
+                    <span>GitHub sign-in</span>
+                    <span className="text-foreground">Complete</span>
+                  </div>
+                  <div
+                    className={`mt-2 h-1.5 overflow-hidden rounded-full bg-surface-3/40`}
+                  >
+                    <div className="h-full w-2/3 rounded-full bg-brand-accent" />
+                  </div>
+                  {!compact && (
+                    <p className="mt-3 text-text-muted text-xs">
+                      Next up: an invite email and workspace setup.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           ) : (
