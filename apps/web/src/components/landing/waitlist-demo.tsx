@@ -16,18 +16,26 @@ import { MockBrowser } from './mockup';
 
 const WAITLIST_STORAGE_KEY = 'waitlist_data';
 
-function readStoredWaitlist(): WaitlistCookieData | null {
-  if (typeof window === 'undefined') return null;
+type StoredWaitlistData = WaitlistCookieData & {
+  position?: number;
+};
+
+function readStoredWaitlist(): StoredWaitlistData | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
   try {
     const raw = window.localStorage.getItem(WAITLIST_STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as WaitlistCookieData) : null;
+    return raw ? (JSON.parse(raw) as StoredWaitlistData) : null;
   } catch {
     return null;
   }
 }
 
-function writeStoredWaitlist(data: WaitlistCookieData) {
-  if (typeof window === 'undefined') return;
+function writeStoredWaitlist(data: StoredWaitlistData) {
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     window.localStorage.setItem(WAITLIST_STORAGE_KEY, JSON.stringify(data));
   } catch {
@@ -38,16 +46,19 @@ function writeStoredWaitlist(data: WaitlistCookieData) {
 function useWaitlistSubmission() {
   const { celebrate } = useConfetti();
   const [success, setSuccess] = useState(false);
+  const [position, setPosition] = useState<number>();
 
   const { mutate, isPending } = useMutation({
     mutationFn: () => trpcClient.earlyAccess.joinWaitlist.mutate(),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      setPosition(data.position);
       setSuccess(true);
 
-      const cookieData: WaitlistCookieData = {
+      const cookieData: StoredWaitlistData = {
         submitted: true,
         timestamp: new Date().toISOString(),
         email: '',
+        position: data.position,
       };
       writeStoredWaitlist(cookieData);
 
@@ -96,7 +107,7 @@ function useWaitlistSubmission() {
     },
   });
 
-  return { mutate, isPending, success, setSuccess };
+  return { mutate, isPending, position, setPosition, success, setSuccess };
 }
 
 interface WaitlistPageProps {
@@ -109,6 +120,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
   useMountEffect(() => {
     const stored = readStoredWaitlist();
     if (stored?.submitted) {
+      waitlistSubmission.setPosition(stored.position);
       waitlistSubmission.setSuccess(true);
     }
   });
@@ -124,7 +136,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     retry: 2,
     retryDelay: 1000,
   });
-  const waitlistCount = waitlistCountQuery.data?.count ?? 0;
+  const waitlistCount = waitlistCountQuery.data?.count;
 
   return (
     <div className="h-full bg-background overflow-auto">
@@ -150,42 +162,64 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
+            <div
+              className={`rounded-xl border border-border-subtle bg-surface-1 text-left shadow-sm ${
+                compact ? 'p-3' : 'p-5'
+              }`}
+            >
               <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
+                className={`flex items-start ${compact ? 'gap-2' : 'gap-3'}`}
               >
-                <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <div
+                  className={`flex shrink-0 items-center justify-center rounded-full border border-brand-accent/20 bg-brand-accent/10 ${
+                    compact ? 'h-7 w-7' : 'h-9 w-9'
+                  }`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
+                  <svg
+                    aria-hidden="true"
+                    className={`${compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} text-brand-accent`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M5 13l4 4L19 7"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                    />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <h2
+                    className={`${compact ? 'text-sm' : 'text-lg'} font-medium text-foreground`}
+                  >
+                    You're on the list
+                  </h2>
+                  <p
+                    className={`${compact ? 'mt-0.5 text-[11px]' : 'mt-1 text-sm'} text-text-muted`}
+                  >
+                    We saved your spot and will email you when access opens.
+                  </p>
+                </div>
               </div>
-              <h2
-                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
-              >
-                You're on the list
-              </h2>
-              <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
-              >
-                We'll reach out when it's your turn.
-              </p>
+
               <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
+                className={`mt-4 grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1 rounded-lg border border-border-subtle bg-background/60 ${
+                  compact ? 'px-2.5 py-2 text-[11px]' : 'px-3 py-2.5 text-xs'
+                }`}
               >
-                <span className="text-xs text-text-muted">Position</span>
-                <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
-                >
-                  #{waitlistCount}
+                <span className="text-text-muted">Status</span>
+                <span className="font-medium text-foreground">Confirmed</span>
+                <span className="text-text-muted">Position</span>
+                <span className="font-medium text-brand-accent-muted">
+                  {typeof waitlistSubmission.position === 'number' ? (
+                    <>
+                      #<NumberFlow value={waitlistSubmission.position} />
+                    </>
+                  ) : (
+                    'Reserved'
+                  )}
                 </span>
               </div>
             </div>
@@ -267,7 +301,13 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                 <span
                   className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
                 >
-                  <NumberFlow value={waitlistCount} />+ on the list
+                  {typeof waitlistCount === 'number' ? (
+                    <>
+                      <NumberFlow value={waitlistCount} />+ on the list
+                    </>
+                  ) : (
+                    'Join builders already waiting'
+                  )}
                 </span>
               </div>
             </>
