@@ -20,13 +20,70 @@ type StoredWaitlistData = WaitlistCookieData & {
   position?: number;
 };
 
+function normalizeSubmitted(value: unknown): boolean | null {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    if (value === 'true') {
+      return true;
+    }
+    if (value === 'false') {
+      return false;
+    }
+  }
+
+  return null;
+}
+
+function normalizePosition(value: unknown): number | undefined {
+  if (typeof value === 'undefined') {
+    return;
+  }
+
+  const position =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && value.trim()
+        ? Number(value)
+        : Number.NaN;
+
+  return Number.isFinite(position) ? position : undefined;
+}
+
 function readStoredWaitlist(): StoredWaitlistData | null {
   if (typeof window === 'undefined') {
     return null;
   }
   try {
     const raw = window.localStorage.getItem(WAITLIST_STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as StoredWaitlistData) : null;
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    if (!parsed || typeof parsed !== 'object') {
+      return null;
+    }
+
+    const submitted = normalizeSubmitted(parsed.submitted);
+    const position = normalizePosition(parsed.position);
+
+    if (
+      submitted === null ||
+      (typeof parsed.position !== 'undefined' &&
+        typeof position === 'undefined')
+    ) {
+      return null;
+    }
+
+    return {
+      submitted,
+      timestamp: typeof parsed.timestamp === 'string' ? parsed.timestamp : '',
+      email: typeof parsed.email === 'string' ? parsed.email : '',
+      ...(typeof position === 'number' ? { position } : {}),
+    };
   } catch {
     return null;
   }
@@ -133,6 +190,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
   const waitlistCountQuery = useQuery({
     ...trpc.earlyAccess.getWaitlistCount.queryOptions(),
+    enabled: !waitlistSubmission.success,
     retry: 2,
     retryDelay: 1000,
   });
