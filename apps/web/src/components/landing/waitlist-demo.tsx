@@ -20,6 +20,10 @@ type StoredWaitlistData = WaitlistCookieData & {
   position?: number | null;
 };
 
+function normalizeWaitlistPosition(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
 function readStoredWaitlist(): StoredWaitlistData | null {
   if (typeof window === 'undefined') {
     return null;
@@ -33,10 +37,7 @@ function readStoredWaitlist(): StoredWaitlistData | null {
     const parsed = JSON.parse(raw) as StoredWaitlistData;
     return {
       ...parsed,
-      position:
-        typeof parsed.position === 'number' && Number.isFinite(parsed.position)
-          ? parsed.position
-          : null,
+      position: normalizeWaitlistPosition(parsed.position),
     };
   } catch {
     return null;
@@ -63,11 +64,7 @@ function useWaitlistSubmission() {
     mutationFn: () => trpcClient.earlyAccess.joinWaitlist.mutate(),
     onSuccess: (data) => {
       const nextPosition =
-        'position' in data &&
-        typeof data.position === 'number' &&
-        Number.isFinite(data.position)
-          ? data.position
-          : null;
+        'position' in data ? normalizeWaitlistPosition(data.position) : null;
       setSuccess(true);
       setPosition(nextPosition);
 
