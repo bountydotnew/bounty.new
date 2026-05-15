@@ -143,11 +143,15 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
       return;
     }
 
-    await navigator.clipboard.writeText(
-      `${shareText} ${hasWaitlistCount ? `Current waitlist: ${waitlistCountLabel}. ` : ''}https://bounty.new`
-    );
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
+    try {
+      await navigator.clipboard.writeText(
+        `${shareText} ${hasWaitlistCount ? `Current waitlist: ${waitlistCountLabel}. ` : ''}https://bounty.new`
+      );
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      toast.error('Could not copy update. Please copy manually.');
+    }
   }
 
   function shareWaitlistStatus() {
