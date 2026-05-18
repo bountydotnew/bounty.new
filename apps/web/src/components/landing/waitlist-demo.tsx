@@ -17,7 +17,9 @@ import { MockBrowser } from './mockup';
 const WAITLIST_STORAGE_KEY = 'waitlist_data';
 
 function readStoredWaitlist(): WaitlistCookieData | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') {
+    return null;
+  }
   try {
     const raw = window.localStorage.getItem(WAITLIST_STORAGE_KEY);
     return raw ? (JSON.parse(raw) as WaitlistCookieData) : null;
@@ -27,7 +29,9 @@ function readStoredWaitlist(): WaitlistCookieData | null {
 }
 
 function writeStoredWaitlist(data: WaitlistCookieData) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     window.localStorage.setItem(WAITLIST_STORAGE_KEY, JSON.stringify(data));
   } catch {
@@ -125,6 +129,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     retryDelay: 1000,
   });
   const waitlistCount = waitlistCountQuery.data?.count ?? 0;
+  const hasWaitlistCount = waitlistCount > 0;
 
   return (
     <div className="h-full bg-background overflow-auto">
@@ -150,43 +155,125 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
+            <div
+              aria-live="polite"
+              className={`text-left ${compact ? 'py-1' : 'py-2'}`}
+            >
               <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
+                className={`relative overflow-hidden border border-border-subtle bg-surface-1 shadow-sm ${compact ? 'p-3' : 'p-5'}`}
+                style={{ borderRadius: 8 }}
               >
-                <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-accent/70 to-transparent" />
+                <div
+                  className={`mb-4 flex items-start justify-between gap-3 ${compact ? 'mb-3' : ''}`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <h2
-                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
-              >
-                You're on the list
-              </h2>
-              <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
-              >
-                We'll reach out when it's your turn.
-              </p>
-              <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
-              >
-                <span className="text-xs text-text-muted">Position</span>
-                <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
+                  <div
+                    className={`inline-flex shrink-0 items-center justify-center rounded-full border border-brand-accent/30 bg-brand-accent/10 ${compact ? 'h-8 w-8' : 'h-11 w-11'}`}
+                  >
+                    <svg
+                      aria-hidden="true"
+                      className={`${compact ? 'h-4 w-4' : 'h-5 w-5'} text-brand-accent`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M5 13l4 4L19 7"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                      />
+                    </svg>
+                  </div>
+                  <div
+                    className={`inline-flex items-center gap-1.5 border border-brand-accent/20 bg-brand-accent/10 text-brand-accent-muted ${compact ? 'px-2 py-1 text-[10px]' : 'px-2.5 py-1 text-xs'}`}
+                    style={{ borderRadius: 999 }}
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
+                    Confirmed
+                  </div>
+                </div>
+
+                <h2
+                  className={`${compact ? 'text-base' : 'text-xl'} mb-1 font-medium text-foreground`}
                 >
-                  #{waitlistCount}
-                </span>
+                  You're on the waitlist
+                </h2>
+                <p
+                  className={`${compact ? 'mb-3 text-xs' : 'mb-5 text-sm'} text-text-muted leading-relaxed`}
+                >
+                  We'll email your invite as soon as early access opens for your
+                  account.
+                </p>
+
+                <div
+                  className={`grid grid-cols-2 gap-2 ${compact ? 'mb-3' : 'mb-4'}`}
+                >
+                  <div
+                    className={`border border-border-subtle bg-background/55 ${compact ? 'p-2' : 'p-3'}`}
+                    style={{ borderRadius: 8 }}
+                  >
+                    <p className="text-[10px] uppercase tracking-wide text-text-muted">
+                      Position
+                    </p>
+                    <p
+                      className={`${compact ? 'text-sm' : 'text-base'} font-medium text-foreground`}
+                    >
+                      {hasWaitlistCount ? (
+                        <>
+                          #<NumberFlow value={waitlistCount} />
+                        </>
+                      ) : (
+                        'Queued'
+                      )}
+                    </p>
+                  </div>
+                  <div
+                    className={`border border-border-subtle bg-background/55 ${compact ? 'p-2' : 'p-3'}`}
+                    style={{ borderRadius: 8 }}
+                  >
+                    <p className="text-[10px] uppercase tracking-wide text-text-muted">
+                      Next step
+                    </p>
+                    <p
+                      className={`${compact ? 'text-sm' : 'text-base'} font-medium text-foreground`}
+                    >
+                      Check email
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  className={`flex items-start gap-2 border border-border-subtle bg-background/45 ${compact ? 'p-2' : 'p-3'}`}
+                  style={{ borderRadius: 8 }}
+                >
+                  <svg
+                    aria-hidden="true"
+                    className={`${compact ? 'mt-0.5 h-3.5 w-3.5' : 'mt-0.5 h-4 w-4'} shrink-0 text-brand-accent`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M12 6v6l4 2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                    />
+                    <path
+                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                    />
+                  </svg>
+                  <p
+                    className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted leading-relaxed`}
+                  >
+                    Your spot is saved on this device. You can close this page
+                    and come back later.
+                  </p>
+                </div>
               </div>
             </div>
           ) : (
