@@ -5,6 +5,7 @@ import { Button } from '@bounty/ui/components/button';
 import NumberFlow from '@bounty/ui/components/number-flow';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
+import { CheckCircle2, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useMountEffect } from '@bounty/ui';
@@ -17,7 +18,9 @@ import { MockBrowser } from './mockup';
 const WAITLIST_STORAGE_KEY = 'waitlist_data';
 
 function readStoredWaitlist(): WaitlistCookieData | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') {
+    return null;
+  }
   try {
     const raw = window.localStorage.getItem(WAITLIST_STORAGE_KEY);
     return raw ? (JSON.parse(raw) as WaitlistCookieData) : null;
@@ -27,7 +30,9 @@ function readStoredWaitlist(): WaitlistCookieData | null {
 }
 
 function writeStoredWaitlist(data: WaitlistCookieData) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     window.localStorage.setItem(WAITLIST_STORAGE_KEY, JSON.stringify(data));
   } catch {
@@ -150,43 +155,70 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
+            <div className={`text-left ${compact ? 'py-1' : 'py-2'}`}>
               <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
+                className={`relative overflow-hidden rounded-[18px] border border-brand-accent/20 bg-brand-accent/[0.04] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] ${compact ? 'p-3' : 'p-5'}`}
               >
-                <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-accent/70 to-transparent" />
+
+                <div
+                  className={`flex items-start justify-between gap-3 ${compact ? 'mb-3' : 'mb-5'}`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <h2
-                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
-              >
-                You're on the list
-              </h2>
-              <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
-              >
-                We'll reach out when it's your turn.
-              </p>
-              <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
-              >
-                <span className="text-xs text-text-muted">Position</span>
-                <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
+                  <div
+                    className={`flex shrink-0 items-center justify-center rounded-full bg-brand-accent text-background shadow-[0_0_24px_rgba(108,255,0,0.22)] ${compact ? 'h-8 w-8' : 'h-11 w-11'}`}
+                  >
+                    <CheckCircle2
+                      className={compact ? 'h-4 w-4' : 'h-5 w-5'}
+                      strokeWidth={2.5}
+                    />
+                  </div>
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles
+                        className={`${compact ? 'h-3 w-3' : 'h-3.5 w-3.5'} text-brand-accent-muted`}
+                      />
+                      <span
+                        className={`${compact ? 'text-[10px]' : 'text-xs'} font-medium text-brand-accent-muted`}
+                      >
+                        Spot secured
+                      </span>
+                    </div>
+                    <h2
+                      className={`${compact ? 'text-base leading-5' : 'text-xl leading-6'} font-medium text-foreground`}
+                    >
+                      You're on the list
+                    </h2>
+                  </div>
+                </div>
+
+                <p
+                  className={`${compact ? 'mb-3 text-xs leading-5' : 'mb-5 text-sm leading-6'} text-text-secondary`}
                 >
-                  #{waitlistCount}
-                </span>
+                  We saved your early-access spot and will email you when your
+                  invite is ready.
+                </p>
+
+                <div
+                  className={`grid grid-cols-[1fr_auto] items-center gap-3 rounded-[14px] border border-border-subtle bg-background/70 ${compact ? 'px-3 py-2' : 'px-4 py-3'}`}
+                >
+                  <div className="min-w-0">
+                    <p
+                      className={`${compact ? 'text-[10px]' : 'text-xs'} text-text-muted`}
+                    >
+                      Waitlist position
+                    </p>
+                    <p
+                      className={`${compact ? 'text-sm' : 'text-base'} font-medium text-foreground`}
+                    >
+                      #{waitlistCount}
+                    </p>
+                  </div>
+                  <div
+                    className={`rounded-full border border-brand-accent/30 bg-brand-accent/10 text-brand-accent-muted ${compact ? 'px-2 py-1 text-[10px]' : 'px-3 py-1.5 text-xs'}`}
+                  >
+                    Confirmed
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
