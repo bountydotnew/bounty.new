@@ -125,6 +125,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
     retryDelay: 1000,
   });
   const waitlistCount = waitlistCountQuery.data?.count ?? 0;
+  const hasWaitlistCount = waitlistCount > 0;
 
   return (
     <div className="h-full bg-background overflow-auto">
@@ -150,15 +151,19 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
+            <div
+              className={`relative overflow-hidden rounded-2xl border border-border-subtle bg-surface-1 shadow-sm ${compact ? 'p-3' : 'p-5'}`}
+            >
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-accent/60 to-transparent" />
               <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
+                className={`inline-flex items-center justify-center ${compact ? 'w-7 h-7 mb-3' : 'w-10 h-10 mb-4'} rounded-full border border-brand-accent/25 bg-brand-accent/10`}
               >
                 <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
+                  className={`${compact ? 'w-3.5 h-3.5' : 'w-5 h-5'} text-brand-accent`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -171,21 +176,55 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
               <h2
                 className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
               >
-                You're on the list
+                You're on the waitlist
               </h2>
               <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
+                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-5'} text-text-muted leading-relaxed`}
               >
-                We'll reach out when it's your turn.
+                We'll email you as soon as your early access invite is ready.
               </p>
               <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
+                className={`grid grid-cols-2 gap-2 ${compact ? 'mb-3' : 'mb-5'}`}
               >
-                <span className="text-xs text-text-muted">Position</span>
-                <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
+                <div
+                  className={`rounded-xl border border-border-subtle bg-background/50 ${compact ? 'p-2' : 'p-3'}`}
                 >
-                  #{waitlistCount}
+                  <p className="text-[10px] uppercase tracking-wide text-text-muted">
+                    Status
+                  </p>
+                  <p
+                    className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-foreground`}
+                  >
+                    Confirmed
+                  </p>
+                </div>
+                <div
+                  className={`rounded-xl border border-border-subtle bg-background/50 ${compact ? 'p-2' : 'p-3'}`}
+                >
+                  <p className="text-[10px] uppercase tracking-wide text-text-muted">
+                    Community
+                  </p>
+                  <p
+                    className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-foreground`}
+                  >
+                    {hasWaitlistCount ? (
+                      <>
+                        <NumberFlow value={waitlistCount} />+ joined
+                      </>
+                    ) : (
+                      'Growing'
+                    )}
+                  </p>
+                </div>
+              </div>
+              <div
+                className={`flex items-center gap-2 rounded-xl border border-brand-accent/20 bg-brand-accent/10 ${compact ? 'px-2 py-2' : 'px-3 py-2.5'}`}
+              >
+                <div className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
+                <span
+                  className={`${compact ? 'text-[10px]' : 'text-xs'} text-brand-accent-muted`}
+                >
+                  Next step: watch your inbox for the invite link.
                 </span>
               </div>
             </div>
