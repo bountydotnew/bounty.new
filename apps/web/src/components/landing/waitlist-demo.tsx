@@ -160,8 +160,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
               className={`text-left ${compact ? 'py-1' : 'py-2'}`}
             >
               <div
-                className={`relative overflow-hidden border border-border-subtle bg-surface-1 shadow-sm ${compact ? 'p-3' : 'p-5'}`}
-                style={{ borderRadius: 8 }}
+                className={`relative overflow-hidden rounded-lg border border-border-subtle bg-surface-1 shadow-sm ${compact ? 'p-3' : 'p-5'}`}
               >
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-accent/70 to-transparent" />
                 <div
@@ -186,8 +185,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                     </svg>
                   </div>
                   <div
-                    className={`inline-flex items-center gap-1.5 border border-brand-accent/20 bg-brand-accent/10 text-brand-accent-muted ${compact ? 'px-2 py-1 text-[10px]' : 'px-2.5 py-1 text-xs'}`}
-                    style={{ borderRadius: 999 }}
+                    className={`inline-flex items-center gap-1.5 rounded-full border border-brand-accent/20 bg-brand-accent/10 text-brand-accent-muted ${compact ? 'px-2 py-1 text-[10px]' : 'px-2.5 py-1 text-xs'}`}
                   >
                     <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
                     Confirmed
@@ -210,27 +208,25 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                   className={`grid grid-cols-2 gap-2 ${compact ? 'mb-3' : 'mb-4'}`}
                 >
                   <div
-                    className={`border border-border-subtle bg-background/55 ${compact ? 'p-2' : 'p-3'}`}
-                    style={{ borderRadius: 8 }}
+                    className={`rounded-lg border border-border-subtle bg-background/55 ${compact ? 'p-2' : 'p-3'}`}
                   >
                     <p className="text-[10px] uppercase tracking-wide text-text-muted">
-                      Position
+                      Community
                     </p>
                     <p
                       className={`${compact ? 'text-sm' : 'text-base'} font-medium text-foreground`}
                     >
                       {hasWaitlistCount ? (
                         <>
-                          #<NumberFlow value={waitlistCount} />
+                          <NumberFlow value={waitlistCount} />+ joined
                         </>
                       ) : (
-                        'Queued'
+                        'Growing'
                       )}
                     </p>
                   </div>
                   <div
-                    className={`border border-border-subtle bg-background/55 ${compact ? 'p-2' : 'p-3'}`}
-                    style={{ borderRadius: 8 }}
+                    className={`rounded-lg border border-border-subtle bg-background/55 ${compact ? 'p-2' : 'p-3'}`}
                   >
                     <p className="text-[10px] uppercase tracking-wide text-text-muted">
                       Next step
@@ -244,8 +240,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                 </div>
 
                 <div
-                  className={`flex items-start gap-2 border border-border-subtle bg-background/45 ${compact ? 'p-2' : 'p-3'}`}
-                  style={{ borderRadius: 8 }}
+                  className={`flex items-start gap-2 rounded-lg border border-border-subtle bg-background/45 ${compact ? 'p-2' : 'p-3'}`}
                 >
                   <svg
                     aria-hidden="true"
