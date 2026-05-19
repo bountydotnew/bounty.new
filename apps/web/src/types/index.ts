@@ -6,5 +6,4 @@ export * from './confetti';
 export * from './dashboard';
 export * from './notifications';
 export * from './svg';
-export * from './waitlist';
 export * from './post';

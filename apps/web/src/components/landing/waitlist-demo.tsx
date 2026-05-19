@@ -7,50 +7,20 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { GithubIcon } from '@bounty/ui/components/icons/huge/github';
 import Image from 'next/image';
 import { useState } from 'react';
-import { useMountEffect } from '@bounty/ui';
 import { toast } from 'sonner';
 import { useConfetti } from '@/context/confetti-context';
-import type { WaitlistCookieData } from '@/types/waitlist';
 import { trpc, trpcClient } from '@/utils/trpc';
 import { MockBrowser } from './mockup';
 
-const WAITLIST_STORAGE_KEY = 'waitlist_data';
-
-function readStoredWaitlist(): WaitlistCookieData | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem(WAITLIST_STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as WaitlistCookieData) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeStoredWaitlist(data: WaitlistCookieData) {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(WAITLIST_STORAGE_KEY, JSON.stringify(data));
-  } catch {
-    // Ignore storage failures
-  }
-}
-
-function useWaitlistSubmission() {
+function useWaitlistSubmission(onPositionUpdate: (position: number) => void) {
   const { celebrate } = useConfetti();
-  const [success, setSuccess] = useState(false);
 
-  const { mutate, isPending } = useMutation({
+  const { mutate, isPending, isSuccess } = useMutation({
     mutationFn: () => trpcClient.earlyAccess.joinWaitlist.mutate(),
-    onSuccess: () => {
-      setSuccess(true);
-
-      const cookieData: WaitlistCookieData = {
-        submitted: true,
-        timestamp: new Date().toISOString(),
-        email: '',
-      };
-      writeStoredWaitlist(cookieData);
-
+    onSuccess: (data) => {
+      if (data.position) {
+        onPositionUpdate(data.position);
+      }
       celebrate();
       toast.success("You're on the list!");
     },
@@ -96,7 +66,7 @@ function useWaitlistSubmission() {
     },
   });
 
-  return { mutate, isPending, success, setSuccess };
+  return { mutate, isPending, isSuccess };
 }
 
 interface WaitlistPageProps {
@@ -104,14 +74,21 @@ interface WaitlistPageProps {
 }
 
 function WaitlistPage({ compact = false }: WaitlistPageProps) {
-  const waitlistSubmission = useWaitlistSubmission();
+  const [position, setPosition] = useState<number | null>(null);
 
-  useMountEffect(() => {
-    const stored = readStoredWaitlist();
-    if (stored?.submitted) {
-      waitlistSubmission.setSuccess(true);
-    }
+  const waitlistSubmission = useWaitlistSubmission(setPosition);
+
+  // Check if user has already joined the waitlist
+  const myEntryQuery = useQuery({
+    ...trpc.earlyAccess.getMyWaitlistEntry.queryOptions(),
+    retry: false,
   });
+
+  // User is on waitlist if query succeeded or mutation succeeded
+  const isOnWaitlist = myEntryQuery.isSuccess || waitlistSubmission.isSuccess;
+
+  // Use position from query, mutation, or state (in that priority)
+  const displayPosition = myEntryQuery.data?.position ?? position;
 
   function joinWaitlist() {
     waitlistSubmission.mutate();
@@ -149,7 +126,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
           </div>
 
           {/* Success state */}
-          {waitlistSubmission.success ? (
+          {isOnWaitlist ? (
             <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
               <div
                 className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
@@ -185,7 +162,7 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
                 <span
                   className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
                 >
-                  #{waitlistCount}
+                  #{displayPosition ?? waitlistCount}
                 </span>
               </div>
             </div>
