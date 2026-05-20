@@ -17,7 +17,9 @@ import { MockBrowser } from './mockup';
 const WAITLIST_STORAGE_KEY = 'waitlist_data';
 
 function readStoredWaitlist(): WaitlistCookieData | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') {
+    return null;
+  }
   try {
     const raw = window.localStorage.getItem(WAITLIST_STORAGE_KEY);
     return raw ? (JSON.parse(raw) as WaitlistCookieData) : null;
@@ -27,7 +29,9 @@ function readStoredWaitlist(): WaitlistCookieData | null {
 }
 
 function writeStoredWaitlist(data: WaitlistCookieData) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     window.localStorage.setItem(WAITLIST_STORAGE_KEY, JSON.stringify(data));
   } catch {
@@ -150,43 +154,70 @@ function WaitlistPage({ compact = false }: WaitlistPageProps) {
 
           {/* Success state */}
           {waitlistSubmission.success ? (
-            <div className={`text-left ${compact ? 'py-2' : 'py-4'}`}>
-              <div
-                className={`inline-flex items-center justify-center ${compact ? 'w-8 h-8 mb-2' : 'w-12 h-12 mb-4'} rounded-full bg-brand-accent/10`}
-              >
-                <svg
-                  className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} text-brand-accent`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+            <div
+              className={`rounded-2xl border border-border-subtle bg-surface-1 ${compact ? 'p-3' : 'p-5'}`}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className={`flex shrink-0 items-center justify-center rounded-full bg-brand-accent/10 ring-1 ring-brand-accent/20 ${compact ? 'h-9 w-9' : 'h-11 w-11'}`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
+                  <svg
+                    className={`${compact ? 'h-4 w-4' : 'h-5 w-5'} text-brand-accent`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={`${compact ? 'text-[10px]' : 'text-xs'} font-medium uppercase tracking-wide text-brand-accent-muted`}
+                  >
+                    Submitted
+                  </p>
+                  <h2
+                    className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground`}
+                  >
+                    You're on the list
+                  </h2>
+                  <p
+                    className={`${compact ? 'mt-1 text-xs' : 'mt-2 text-sm'} text-text-muted leading-relaxed`}
+                  >
+                    We'll email you when your workspace is ready.
+                  </p>
+                </div>
               </div>
-              <h2
-                className={`${compact ? 'text-base' : 'text-xl'} font-medium text-foreground mb-1`}
-              >
-                You're on the list
-              </h2>
-              <p
-                className={`${compact ? 'text-xs mb-3' : 'text-sm mb-6'} text-text-muted`}
-              >
-                We'll reach out when it's your turn.
-              </p>
+
               <div
-                className={`inline-flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-full bg-surface-1 border border-border-subtle`}
+                className={`grid grid-cols-2 gap-2 ${compact ? 'mt-4' : 'mt-5'}`}
               >
-                <span className="text-xs text-text-muted">Position</span>
-                <span
-                  className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-brand-accent-muted`}
-                >
-                  #{waitlistCount}
-                </span>
+                <div className="rounded-xl border border-border-subtle bg-background/60 p-3">
+                  <p className="text-[10px] uppercase tracking-wide text-text-muted">
+                    Position
+                  </p>
+                  <p
+                    className={`${compact ? 'text-sm' : 'text-lg'} font-medium text-foreground`}
+                  >
+                    #<NumberFlow value={waitlistCount} />
+                  </p>
+                </div>
+                <div className="rounded-xl border border-border-subtle bg-background/60 p-3">
+                  <p className="text-[10px] uppercase tracking-wide text-text-muted">
+                    Status
+                  </p>
+                  <p
+                    className={`${compact ? 'text-sm' : 'text-lg'} font-medium text-foreground`}
+                  >
+                    Confirmed
+                  </p>
+                </div>
               </div>
             </div>
           ) : (
