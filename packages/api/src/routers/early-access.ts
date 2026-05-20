@@ -1409,6 +1409,20 @@ export const earlyAccessRouter = router({
     });
 
     if (existingEntry) {
+      let position = existingEntry.position;
+      if (!position) {
+        const entriesBefore = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(waitlist)
+          .where(sql`${waitlist.createdAt} < ${existingEntry.createdAt}`);
+        position = (entriesBefore[0]?.count ?? 0) + 1;
+
+        await db
+          .update(waitlist)
+          .set({ position })
+          .where(eq(waitlist.id as any, existingEntry.id) as any);
+      }
+
       // Update the entry with userId if not already set
       if (!existingEntry.userId) {
         await db
@@ -1421,6 +1435,7 @@ export const earlyAccessRouter = router({
         success: true,
         message: "You're already on the waitlist!",
         alreadyJoined: true,
+        position,
       };
     }
 
