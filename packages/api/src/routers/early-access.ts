@@ -1412,7 +1412,7 @@ export const earlyAccessRouter = router({
       let position = existingEntry.position;
       if (!position) {
         const entriesBefore = await db
-          .select({ count: sql<number>`count(*)` })
+          .select({ count: sql<number>`count(*)::int` })
           .from(waitlist)
           .where(sql`${waitlist.createdAt} < ${existingEntry.createdAt}`);
         position = (entriesBefore[0]?.count ?? 0) + 1;
